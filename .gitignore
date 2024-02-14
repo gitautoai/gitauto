@@ -1,5 +1,8 @@
-
+# VSCode extension directory
+.history
 .env
-venv*
-venv/
-venv/*
+# Virtual Environment
+venv
+
+# requirements.txt file
+requirements.txt
