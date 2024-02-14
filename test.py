@@ -52,7 +52,12 @@ def get_github_token():
 	return encoded_jwt
 
 
-def main(message):
+def main(req):
+  # TODO if action.added or action.created from req, add to supabase
+  
+  # TODO parse from req to get payload. req.body.payload
+  # TODO if payload.action.labeled === genpr then run the code below
+  
   token = get_github_token()
 
 	# TODO clone git repo in folder /tmp
@@ -60,6 +65,11 @@ def main(message):
   
   # TODO set git root to /tmp
   git_root = get_git_root()
+  
+  
+  # TODO parse message(text in issue) from payload
+  message = ''
+  
   
   conf_fname = Path(".aider.conf.yml")
 
@@ -167,9 +177,9 @@ def main(message):
   
         
 @app.get("/test/{message}")
-async def root(message: str = None):
+async def root(req: str = None):
   try:
-    main(message)
+    main(req)
   except Exception as e: 
     return {"message": f'Error {e}'}
   return {"message": "Hello World"}
