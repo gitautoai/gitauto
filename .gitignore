@@ -10,3 +10,6 @@ venv
 
 # requirements.txt file
 requirements.txt
+
+# Others
+.aider.tags.cache.v3
