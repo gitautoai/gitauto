@@ -1,3 +1,6 @@
+# Standard imports
+import json
+
 # Third-party imports
 from fastapi import FastAPI, HTTPException, Request
 
@@ -8,13 +11,6 @@ from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET
 
 # Create FastAPI instance
 app = FastAPI()
-
-# # Initialize Supabase client
-# supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
-# # Create an instance of HTTPBearer for JWT token authentication
-# auth_scheme = HTTPBearer()
-
 
 # Initialize GitHub manager
 github_manager = GitHubManager(GITHUB_APP_ID, GITHUB_PRIVATE_KEY)
@@ -30,7 +26,8 @@ async def handle_webhook(request: Request):
 
         # Process the webhook event
         webhook_payload = await request.json()
-        print(f"Payload: {webhook_payload}")
+        formatted_payload = json.dumps(webhook_payload, indent=4)
+        print(f"Payload: {formatted_payload}")
 
         # Sanitize the payload to remove any sensitive information
         await handle_webhook_event(webhook_payload)
