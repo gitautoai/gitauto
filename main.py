@@ -13,7 +13,9 @@ from fastapi import FastAPI
 import models
 from coders import Coder
 
+from mangum import Mangum
 app = FastAPI()
+handler = Mangum(app)
 
 
 def get_git_root():
@@ -148,10 +150,15 @@ def main(message):
   coder.run(with_message=message)
   
         
-@app.get("/{message}")
+@app.get("/webhook/{message}")
 async def root(message: str = None):
   try:
     main(message)
   except Exception as e: 
     return {"message": f'Error {e}'}
   return {"message": "Hello World"}
+
+@app.get("/users")
+async def get_users():
+    return {"message": "Get Users!"}
+

@@ -8,8 +8,10 @@ __pycache__
 # Virtual Environment
 venv
 
-# requirements.txt file
-requirements.txt
-
+venv/
+venv*
+.venv
+/venv
+/venv/
 # Others
 .aider.tags.cache.v3
