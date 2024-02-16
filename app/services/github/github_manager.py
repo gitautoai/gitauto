@@ -29,8 +29,6 @@ class GitHubManager:
 
         # Compare the computed signature with the one in the headers
         expected_signature = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
-        print(f"Expected Signature: {expected_signature}")
-        print(f"Received Signature: {signature}")
         if not hmac.compare_digest(signature, expected_signature):
             raise ValueError("Invalid webhook signature")
 
