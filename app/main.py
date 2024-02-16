@@ -20,16 +20,16 @@ github_manager = GitHubManager(GITHUB_APP_ID, GITHUB_PRIVATE_KEY)
 async def handle_webhook(request: Request):
     try:
         print("Webhook received")
-        # Validate the webhook signature
-        await github_manager.verify_webhook_signature(request, GITHUB_WEBHOOK_SECRET)
-        print("Webhook signature verified")
+        # Don't think a secret will be necessary, unless we can hide it from end users
+        # await github_manager.verify_webhook_signature(request, GITHUB_WEBHOOK_SECRET)
 
         # Process the webhook event
-        webhook_payload = await request.json()
+        webhook_payload = await request.body()
+        print("PAYLOAD: ", webhook_payload)
         formatted_payload = json.dumps(webhook_payload, indent=4)
         print(f"Payload: {formatted_payload}")
 
-        # Sanitize the payload to remove any sensitive information
+        # Handle Create, Delete, and Labeled events
         await handle_webhook_event(webhook_payload)
         print("Webhook event handled")
 
@@ -42,3 +42,4 @@ async def handle_webhook(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
