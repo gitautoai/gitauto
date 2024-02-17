@@ -6,14 +6,19 @@ class InstallationTokenManager:
     def __init__(self, url, key):
         self.client: Client = create_client(url, key)
 
-    # Save the installation token to the database
-    def save_installation_token(self, installation_id, account_login, html_url):
+    def save_installation_token(self, installation_id, account_login, html_url, repositories):
         data = {
             "installation_id": installation_id,
             "login": account_login,
-            'html_url': html_url
+            'html_url': html_url,
+            "repositories": repositories,
+            "deleted_at": None,
         }
-        self.client.table("installation_tokens").upsert(data).execute()
+        response = self.client.table("repo_info").select("*").eq("installation_id", installation_id).execute()
+        if(response[0]):
+            self.client.table("repo_info").update(data).eq("installation_id", installation_id).execute()
+        else:
+            self.client.table("repo_info").insert(data).execute()
         return None
 
     def get_installation_token(self, installation_id):
@@ -29,4 +34,5 @@ class InstallationTokenManager:
         self.client.table("installation_tokens").update(data).eq("installation_id", installation_id).execute()
 
     def delete_installation_token(self, installation_id):
-        self.client.table("installation_tokens").delete().eq("installation_id", installation_id).execute()
+        data = {"deleted_at": datetime.datetime.utcnow().isoformat()}
+        self.client.table("repo_info").update(data).eq("installation_id", installation_id).execute()

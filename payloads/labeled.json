@@ -35,11 +35,11 @@
             {
                 "id": 6552700825,
                 "node_id": "LA_kwDOLRrmus8AAAABhpJHmQ",
-                "url": "https://api.github.com/repos/issue-to-pr/issue-to-pr/labels/documentation",
-                "name": "documentation",
+                "url": "https://api.github.com/repos/issue-to-pr/issue-to-pr/labels/pragent",
+                "name": "pragent",
                 "color": "0075ca",
                 "default": true,
-                "description": "Improvements+or+additions+to+documentation"
+                "description": "Improvements+or+additions+to+pragent"
             }
         ],
         "state": "open",
@@ -73,11 +73,11 @@
     "label": {
         "id": 6552700825,
         "node_id": "LA_kwDOLRrmus8AAAABhpJHmQ",
-        "url": "https://api.github.com/repos/issue-to-pr/issue-to-pr/labels/documentation",
-        "name": "documentation",
+        "url": "https://api.github.com/repos/issue-to-pr/issue-to-pr/labels/pragent",
+        "name": "pragent",
         "color": "0075ca",
         "default": true,
-        "description": "Improvements+or+additions+to+documentation"
+        "description": "Improvements+or+additions+to+pragent"
     },
     "repository": {
         "id": 756737722,

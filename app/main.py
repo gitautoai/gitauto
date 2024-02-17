@@ -3,6 +3,7 @@ import json
 
 # Third-party imports
 from fastapi import FastAPI, HTTPException, Request
+import urllib.parse
 
 # Local imports
 from .services.github.github_manager import GitHubManager
@@ -20,17 +21,12 @@ github_manager = GitHubManager(GITHUB_APP_ID, GITHUB_PRIVATE_KEY)
 async def handle_webhook(request: Request):
     try:
         print("Webhook received")
-        # Don't think a secret will be necessary, unless we can hide it from end users
-        # await github_manager.verify_webhook_signature(request, GITHUB_WEBHOOK_SECRET)
-
-        # Process the webhook event
-        webhook_payload = await request.body()
-        print("PAYLOAD: ", webhook_payload)
-        formatted_payload = json.dumps(webhook_payload, indent=4)
-        print(f"Payload: {formatted_payload}")
+        payload = await request.body()
+        decoded_data = urllib.parse.unquote(payload.decode())
+        json_data = json.loads(decoded_data)
 
         # Handle Create, Delete, and Labeled events
-        await handle_webhook_event(webhook_payload)
+        await handle_webhook_event(json_data)
         print("Webhook event handled")
 
         return {"message": "Webhook processed successfully"}
