@@ -1,9 +1,9 @@
 import argparse
 import json
 
-import models, prompts
+from . import models, prompts
 # from dump import dump  # noqa: F401
-from sendchat import simple_send_with_retries
+from .sendchat import simple_send_with_retries
 
 
 class ChatSummary:

@@ -14,17 +14,18 @@ import openai
 from jsonschema import Draft7Validator
 from rich.console import Console, Text
 from rich.markdown import Markdown
+from .. import utils, prompts
 
-import models, prompts, utils
-from commands import Commands
-from history import ChatSummary
-from inputoutput import InputOutput
-from mdstream import MarkdownStream
-from repo import GitRepo
-from repomap import RepoMap
-from sendchat import send_with_retries
-from utils import is_image_file
+from ..models import Model
+from ..commands import Commands
+from ..history import ChatSummary
 
+from ..mdstream import MarkdownStream
+from ..repo import GitRepo
+from ..repomap import RepoMap
+from ..sendchat import send_with_retries
+from ..utils import is_image_file
+from app.services.inputoutput import InputOutput
 # from ..dump import dump  # noqa: F401
 
 
@@ -68,12 +69,12 @@ class Coder:
         from . import EditBlockCoder, UnifiedDiffCoder, WholeFileCoder
 
         if not main_model:
-            main_model = models.GPT4
+            main_model = Model.create("gpt-4")
 
         if not skip_model_availabily_check and not main_model.always_available:
             if not check_model_availability(io, client, main_model):
-                fallback_model = models.GPT35_0125
-                io.tool_error(
+                fallback_model = Model.create("gpt-3.5-turbo-0125")
+                print(
                     f"API key does not support {main_model.name}, falling back to"
                     f" {fallback_model.name}"
                 )
@@ -216,7 +217,7 @@ class Coder:
 
         self.summarizer = ChatSummary(
             self.client,
-            models.Model.weak_model(),
+            Model.weak_model(),
             self.main_model.max_chat_history_tokens,
         )
 

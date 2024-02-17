@@ -15,7 +15,7 @@ from pygments.util import ClassNotFound
 from tqdm import tqdm
 from tree_sitter_languages import get_language, get_parser
 
-import models
+from . import models
 
 # from .dump import dump  # noqa: F402
 

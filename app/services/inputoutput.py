@@ -96,7 +96,7 @@ class InputOutput:
     def __init__(
         self,
         pretty=True,
-        yes=False,
+        yes=True,
         input_history_file=None,
         chat_history_file=None,
         input=None,

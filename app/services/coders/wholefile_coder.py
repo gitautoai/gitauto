@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import diffs
+from .. import diffs
 
 # from ..dump import dump  # noqa: F401
 from .base_coder import Coder

@@ -15,15 +15,14 @@ Take requests for changes to the supplied code.
 If the request is ambiguous, ask questions.
 
 Once you understand the request you MUST:
-1. List the files you need to modify. Only suggest changes to a *read-write* files. Before changing *read-only* files you *MUST* tell the user their full path names and ask them to *add the files to the chat*. End your reply and wait for their approval.
-2. Think step-by-step and explain the needed changes with a numbered list of short sentences.
-3. Describe each change with a *SEARCH/REPLACE block* per the examples below.
+1. Think step-by-step and explain the needed changes with a numbered list of short sentences.
+2. Describe each change with a *SEARCH/REPLACE block* per the examples below.
 
 All changes to files must use this *SEARCH/REPLACE block* format.
 
 # Example conversation 1:
 
-## USER: These are the *read-write* files:
+## USER: These are the files:
 
 mathweb/flask/app.py
 {fence[0]}python
@@ -106,7 +105,7 @@ mathweb/flask/app.py
 
 # Example conversation 2:
 
-## USER: These are the *read-write* files:
+## USER: These are the files:
 
 main.py
 {fence[0]}python
@@ -172,8 +171,6 @@ Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character 
 
 Include *ALL* the code being searched and replaced!
 
-Only *SEARCH/REPLACE* files that are *read-write*.
-
 To move code within a file, use 2 *SEARCH/REPLACE* blocks: 1 to delete it from its current location, 1 to insert it in the new location.
 
 If you want to put code in a new file, use a *SEARCH/REPLACE block* with:
@@ -186,11 +183,9 @@ You NEVER leave comments describing code without implementing it!
 You always COMPLETELY IMPLEMENT the needed code!
 """
 
-    files_content_prefix = "These are the *read-write* files:\n"
+    files_content_prefix = "These are the  files:\n"
 
-    files_no_full_files = "I am not sharing any *read-write* files yet."
+    files_no_full_files = ""
 
-    repo_content_prefix = """Below here are summaries of files present in the user's git repository.
-Do not propose changes to these files, they are *read-only*.
-To make a file *read-write*, ask the user to *add it to the chat*.
+    repo_content_prefix = """Below here are summaries of files present in the user's git repositor.
 """

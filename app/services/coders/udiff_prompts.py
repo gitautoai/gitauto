@@ -105,11 +105,9 @@ You NEVER leave comments describing code without implementing it!
 You always COMPLETELY IMPLEMENT the needed code!
 """
 
-    files_content_prefix = "These are the *read-write* files:\n"
+    files_content_prefix = "These are the  files:\n"
 
-    files_no_full_files = "I am not sharing any *read-write* files yet."
+    files_no_full_files = ""
 
     repo_content_prefix = """Below here are summaries of other files present in this git repository.
-Do not propose changes to these files, they are *read-only*.
-To make a file *read-write*, ask the user to *add it to the chat*.
 """

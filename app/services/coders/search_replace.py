@@ -8,7 +8,7 @@ from diff_match_patch import diff_match_patch
 from tqdm import tqdm
 
 # from aider.dump import dump
-from utils import GitTemporaryDirectory
+from ..utils import GitTemporaryDirectory
 
 
 class RelativeIndenter:

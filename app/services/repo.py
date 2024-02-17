@@ -4,8 +4,8 @@ from pathlib import Path, PurePosixPath
 import git
 import pathspec
 
-import models, prompts, utils
-from sendchat import simple_send_with_retries
+from . import models, prompts, utils
+from .sendchat import simple_send_with_retries
 
 # from .dump import dump  # noqa: F401
 

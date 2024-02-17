@@ -8,7 +8,7 @@ import openai
 # from diskcache import Cache
 from openai import APIConnectionError, InternalServerError, RateLimitError
 
-from utils import is_gpt4_with_openai_base_url
+from .utils import is_gpt4_with_openai_base_url
 # from dump import dump  # noqa: F401
 
 CACHE_PATH = "~/.aider.send.cache.v1"

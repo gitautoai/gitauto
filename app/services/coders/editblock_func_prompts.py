@@ -22,6 +22,5 @@ NEVER return code outside the `replace_lines` function.
     redacted_edit_message = "No changes are needed."
 
     repo_content_prefix = (
-        "Below here are summaries of other files! Do not propose changes to these *read-only*"
-        " files without asking me first.\n"
+        "Below here are summaries of other files!\n"
     )

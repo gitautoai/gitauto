@@ -8,7 +8,7 @@ sys.path.insert(0, parent_dir)
 import configargparse
 import git
 import openai
-from inputoutput import InputOutput
+from app.services.inputoutput import InputOutput
 from fastapi import FastAPI
 import models
 from coders import Coder
