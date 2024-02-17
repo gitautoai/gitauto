@@ -1,0 +1,79 @@
+{
+  "action": "created",
+  "installation": {
+    "id": 47406978,
+    "account": {
+      "login": "issue-to-pr",
+      "id": 159883862,
+      "node_id": "O_kgDOCYeiVg",
+      "avatar_url": "https://avatars.githubusercontent.com/u/159883862?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/issue-to-pr",
+      "html_url": "https://github.com/issue-to-pr",
+      "followers_url": "https://api.github.com/users/issue-to-pr/followers",
+      "following_url": "https://api.github.com/users/issue-to-pr/following{/other_user}",
+      "gists_url": "https://api.github.com/users/issue-to-pr/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/issue-to-pr/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/issue-to-pr/subscriptions",
+      "organizations_url": "https://api.github.com/users/issue-to-pr/orgs",
+      "repos_url": "https://api.github.com/users/issue-to-pr/repos",
+      "events_url": "https://api.github.com/users/issue-to-pr/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/issue-to-pr/received_events",
+      "type": "Organization",
+      "site_admin": false
+    },
+    "repository_selection": "selected",
+    "access_tokens_url": "https://api.github.com/app/installations/47406978/access_tokens",
+    "repositories_url": "https://api.github.com/installation/repositories",
+    "html_url": "https://github.com/organizations/issue-to-pr/settings/installations/47406978",
+    "app_id": 827944,
+    "app_slug": "issue-to-pull-request",
+    "target_id": 159883862,
+    "target_type": "Organization",
+    "permissions": {
+      "actions": "write",
+      "contents": "write",
+      "metadata": "read",
+      "workflows": "write",
+      "repository_hooks": "write"
+    },
+    "events": ["label"],
+    "created_at": "2024-02-16T20:59:00.000-08:00",
+    "updated_at": "2024-02-16T20:59:00.000-08:00",
+    "single_file_name": null,
+    "has_multiple_single_files": false,
+    "single_file_paths": [],
+    "suspended_by": null,
+    "suspended_at": null
+  },
+  "repositories": [
+    {
+      "id": 756737722,
+      "node_id": "R_kgDOLRrmug",
+      "name": "issue-to-pr",
+      "full_name": "issue-to-pr/issue-to-pr",
+      "private": true
+    }
+  ],
+  "requester": null,
+  "sender": {
+    "login": "nikitamalinov",
+    "id": 66699290,
+    "node_id": "MDQ6VXNlcjY2Njk5Mjkw",
+    "avatar_url": "https://avatars.githubusercontent.com/u/66699290?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nikitamalinov",
+    "html_url": "https://github.com/nikitamalinov",
+    "followers_url": "https://api.github.com/users/nikitamalinov/followers",
+    "following_url": "https://api.github.com/users/nikitamalinov/following{/other_user}",
+    "gists_url": "https://api.github.com/users/nikitamalinov/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/nikitamalinov/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/nikitamalinov/subscriptions",
+    "organizations_url": "https://api.github.com/users/nikitamalinov/orgs",
+    "repos_url": "https://api.github.com/users/nikitamalinov/repos",
+    "events_url": "https://api.github.com/users/nikitamalinov/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/nikitamalinov/received_events",
+    "type": "User",
+    "site_admin": false
+  }
+}

@@ -1,0 +1,55 @@
+
+{
+    "action": "deleted",
+    "hook_id": 461405934,
+    "hook": {
+        "type": "Organization",
+        "id": 461405934,
+        "name": "web",
+        "active": true,
+        "events": [
+            "*"
+        ],
+        "config": {
+            "content_type": "form",
+            "insecure_ssl": "0",
+            "url": "https://uodfoiuzx57zmsxoow5lwafudq0exinc.lambda-url.us-west-1.on.aws/webhook/"
+        },
+        "updated_at": "2024-02-17T04:40:20Z",
+        "created_at": "2024-02-17T04:40:20Z"
+    },
+    "organization": {
+        "login": "issue-to-pr",
+        "id": 159883862,
+        "node_id": "O_kgDOCYeiVg",
+        "url": "https://api.github.com/orgs/issue-to-pr",
+        "repos_url": "https://api.github.com/orgs/issue-to-pr/repos",
+        "events_url": "https://api.github.com/orgs/issue-to-pr/events",
+        "hooks_url": "https://api.github.com/orgs/issue-to-pr/hooks",
+        "issues_url": "https://api.github.com/orgs/issue-to-pr/issues",
+        "members_url": "https://api.github.com/orgs/issue-to-pr/members{/member}",
+        "public_members_url": "https://api.github.com/orgs/issue-to-pr/public_members{/member}",
+        "avatar_url": "https://avatars.githubusercontent.com/u/159883862?v=4",
+        "description": null
+    },
+    "sender": {
+        "login": "nikitamalinov",
+        "id": 66699290,
+        "node_id": "MDQ6VXNlcjY2Njk5Mjkw",
+        "avatar_url": "https://avatars.githubusercontent.com/u/66699290?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/nikitamalinov",
+        "html_url": "https://github.com/nikitamalinov",
+        "followers_url": "https://api.github.com/users/nikitamalinov/followers",
+        "following_url": "https://api.github.com/users/nikitamalinov/following{/other_user}",
+        "gists_url": "https://api.github.com/users/nikitamalinov/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/nikitamalinov/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/nikitamalinov/subscriptions",
+        "organizations_url": "https://api.github.com/users/nikitamalinov/orgs",
+        "repos_url": "https://api.github.com/users/nikitamalinov/repos",
+        "events_url": "https://api.github.com/users/nikitamalinov/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/nikitamalinov/received_events",
+        "type": "User",
+        "site_admin": false
+    }
+}
