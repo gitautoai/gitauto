@@ -47,14 +47,14 @@ jobs:
       - name: Create archive of dependencies
         run: |
           cd ./venv/lib/python3.9/site-packages
-          zip -r9 ../../../../api.zip .
-      - name: Add API files to Zip file
-        run: cd ./api && zip -g ../api.zip -r .
+          zip -r9 ../../../../app.zip .
+      - name: Add APP files to Zip file
+        run: cd ./app && zip -g ../app.zip -r .
       - name: Upload zip file artifact
         uses: actions/upload-artifact@v2
         with:
-          name: api
-          path: api.zip
+          name: app
+          path: app.zip
 
   CD:
     runs-on: ubuntu-latest
@@ -69,18 +69,18 @@ jobs:
           AWS_ACCESS_KEY_ID: AKIA5ZOUUDPV4JSVHC5U
           AWS_SECRET_ACCESS_KEY: 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
           AWS_DEFAULT_REGION: us-west-1
-      - name: Download Lambda api.zip
+      - name: Download Lambda app.zip
         uses: actions/download-artifact@v2
         with:
-          name: api
+          name: app
       - name: Upload to S3
-        run: aws s3 cp api.zip s3://hiroshi-nikita/api.zip
+        run: aws s3 cp app.zip s3://hiroshi-nikita/app.zip
         env:
           AWS_ACCESS_KEY_ID: AKIA5ZOUUDPV4JSVHC5U
           AWS_SECRET_ACCESS_KEY: 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
           AWS_DEFAULT_REGION: us-west-1
       - name: Deploy new Lambda
-        run: aws lambda update-function-code --function-name Webhook --s3-bucket hiroshi-nikita --s3-key api.zip
+        run: aws lambda update-function-code --function-name Webhook --s3-bucket hiroshi-nikita --s3-key app.zip
         env:
           AWS_ACCESS_KEY_ID: AKIA5ZOUUDPV4JSVHC5U
           AWS_SECRET_ACCESS_KEY: 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
