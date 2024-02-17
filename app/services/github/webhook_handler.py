@@ -172,6 +172,8 @@ async def handle_issue_labeled(payload):
     response = requests.post(url, headers=headers, json=data)
 
     os.chdir(original_path)
+    
+    # TODO delete tmp folder
 
 async def handle_webhook_event(payload):
     # TODO Verify webhook using webhoo.verify from octokit
