@@ -9,10 +9,10 @@ from .services.github.github_manager import GitHubManager
 from .services.github.webhook_handler import handle_webhook_event
 from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET
 
-# Create FastAPI instance
+from mangum import Mangum
 app = FastAPI()
+handler = Mangum(app=app)
 
-# Initialize GitHub manager
 github_manager = GitHubManager(GITHUB_APP_ID, GITHUB_PRIVATE_KEY)
 
 
@@ -38,6 +38,9 @@ async def handle_webhook(request: Request):
         print(f"Error: {e}")        
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/yo")
+async def root():
+    return {"message": "Hello World"}
 
 if __name__ == "__main__":
     import uvicorn
