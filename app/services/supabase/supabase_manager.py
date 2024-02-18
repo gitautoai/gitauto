@@ -1,5 +1,4 @@
 from supabase import create_client, Client
-import datetime
 
 
 # Manager class to handle installation tokens
@@ -9,29 +8,28 @@ class InstallationTokenManager:
         self.client: Client = create_client(url, key)
 
     # Save the installation token to the database
-    def save_installation_token(self, installation_id, access_token, expires_in):
-        expires_at = datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in)
-        data = {
-            "installation_id": installation_id,
-            "access_token": access_token,
-            "expires_at": expires_at
-        }
-        self.client.table("installation_tokens").upsert(data).execute()
-        return None
+    def save_installation_token(self, installation_target_type, installation_target_id, installation_target_name, installation_id, installation_status, created_by_id, created_by_name):
+        try:
+            data = {
+                "installation_target_type": installation_target_type,
+                "installation_target_id": installation_target_id,
+                "installation_target_name": installation_target_name,
+                "installation_id": installation_id,
+                "installation_status": installation_status,
+                "created_by_id": created_by_id,
+                "created_by_name": created_by_name,
+            }
+            self.client.table("installation_history").insert(data).execute()
+            return None
+        except Exception as e:
+            print(f"Error saving installation token: {e}")
 
     # Get the installation token from the database
-    def get_installation_token(self, installation_id):
-        query = self.client.table("installation_tokens").select("access_token").eq("installation_id", installation_id)
-        data = query.execute()
-        if data.data and len(data.data) > 0:
-            return data.data[0]['access_token']
-        return None
-
-    # Invalidate the installation token by setting it to an empty string
-    def invalidate_installation_token(self, installation_id):
-        data = {"access_token": ""}
-        self.client.table("installation_tokens").update(data).eq("installation_id", installation_id).execute()
-
-    # Delete the installation token from the database
-    def delete_installation_token(self, installation_id):
-        self.client.table("installation_tokens").delete().eq("installation_id", installation_id).execute()
+    def get_latest_installation_info(self, installation_target_type, installation_target_id):
+        try:
+            query = self.client.table("installation_view").select("*").eq("installation_target_type", installation_target_type).eq("installation_target_id", installation_target_id)
+            data = query.execute()
+            return data.data[0] if data.data else None
+        except Exception as e:
+            print(f"Error getting installation token: {e}")
+            return None
