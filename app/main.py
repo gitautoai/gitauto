@@ -1,20 +1,13 @@
-# Standard imports
 import json
 
-# Third-party imports
 from fastapi import FastAPI, HTTPException, Request
 import urllib.parse
 
-# Local imports
-from .services.github.github_manager import GitHubManager
 from .services.github.webhook_handler import handle_webhook_event
-from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET
 
 from mangum import Mangum
 app = FastAPI()
 handler = Mangum(app=app)
-
-github_manager = GitHubManager(GITHUB_APP_ID, GITHUB_PRIVATE_KEY)
 
 
 @app.post("/webhook")
