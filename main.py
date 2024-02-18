@@ -3,7 +3,7 @@ import json
 from fastapi import FastAPI, HTTPException, Request
 import urllib.parse
 
-from .services.github.webhook_handler import handle_webhook_event
+from services.github.webhook_handler import handle_webhook_event
 
 from mangum import Mangum
 app = FastAPI()

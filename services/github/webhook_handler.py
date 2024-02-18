@@ -16,11 +16,11 @@ import uuid
 import requests
 
 import openai
-from ..models import Model
-from ..coders import Coder
+from agent.models import Model
+from agent.coders import Coder
 import subprocess
 import os
-from app.services.inputoutput import InputOutput
+from agent.inputoutput import InputOutput
 from pathlib import Path
 
 async def handle_installation_created(payload):

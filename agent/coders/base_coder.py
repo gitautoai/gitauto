@@ -25,7 +25,7 @@ from ..repo import GitRepo
 from ..repomap import RepoMap
 from ..sendchat import send_with_retries
 from ..utils import is_image_file
-from app.services.inputoutput import InputOutput
+from agent.inputoutput import InputOutput
 # from ..dump import dump  # noqa: F401
 
 
