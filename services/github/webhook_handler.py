@@ -1,28 +1,31 @@
-# Local imports
-from config import LABEL, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-from ..supabase.supabase_manager import InstallationTokenManager
-from .github_manager import GitHubManager
-from jwt import JWT, jwk_from_pem
-import git
-
-import time
-import sys
-import uuid
+# Standard imports
+import os
 import requests
+import sys
+import time
+import uuid
+from pathlib import Path
 
+# Third-party imports
+import git
+import jwt
 import openai
+
+# Local imports
 from agent.models import Model
 from agent.coders import Coder
-import os
 from agent.inputoutput import InputOutput
-from pathlib import Path
+from config import LABEL, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from github_manager import GitHubManager
+from github_types import GitHubInstallationPayload, GitHubLabeledPayload
+from services.supabase.supabase_manager import InstallationTokenManager
 
 # Initialize managers
 github_manager = GitHubManager(GITHUB_APP_ID, GITHUB_PRIVATE_KEY)
 supabase_manager = InstallationTokenManager(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 
-async def handle_installation_created(payload):
+async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
     installation_id = payload["installation"]["id"]
     account_login = payload["installation"]["account"]["login"]
     html_url = payload["installation"]["account"]["html_url"]
@@ -40,7 +43,7 @@ async def handle_installation_created(payload):
 
 
 # Handle the installation created event
-async def handle_installation_event(payload):
+async def handle_installation_event(payload: GitHubInstallationPayload) -> tuple[str | None, str | None]:
     installation_target_type = payload["installation"]["target_type"]
     installation_target_id = payload["installation"]["target_id"]
     installation_id = payload["installation"]["id"]
@@ -76,7 +79,7 @@ async def handle_installation_event(payload):
 
 
 # Handle the issue labeled event
-async def handle_issue_labeled(payload):
+async def handle_issue_labeled(payload: GitHubLabeledPayload):
     label = payload["label"]["name"]
     if label != LABEL:
         return
@@ -98,8 +101,7 @@ async def handle_issue_labeled(payload):
         'iss': GITHUB_APP_ID
     }
 
-    jwt_instance = JWT()
-    encoded_jwt = jwt_instance.encode(payload, jwk_from_pem(signing_key), alg='RS256')
+    encoded_jwt = jwt.encode(payload, jwk_from_pem(signing_key), alg='RS256')
 
     print(f"JWT:  {encoded_jwt}")
 
