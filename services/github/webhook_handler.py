@@ -39,40 +39,9 @@ async def handle_installation_created(payload):
     supabase_manager.save_installation_token(installation_id, account_login, html_url, repositories, repository_ids)
 
 
-# Handle the installation created event
-async def handle_installation_event(payload):
-    installation_target_type = payload["installation"]["target_type"]
-    installation_target_id = payload["installation"]["target_id"]
-    installation_id = payload["installation"]["id"]
-    installation_status = payload["action"]
-    created_by_id = payload["sender"]["id"]
-    created_by_name = payload["sender"]["login"]
-
-    # Get the installation access token if the installation was not deleted
-    access_token, expires_at = (github_manager.get_installation_access_token(installation_id) if installation_status != "deleted" else (None, None))
-
-    # Determine the installation target name
-    if installation_target_type == "User":
-        installation_target_name = payload["installation"]["account"]["login"]
-    elif installation_target_type == "Organization":
-        installation_target_name = payload["installation"]["account"]["login"]
-    elif installation_target_type == "Repository":
-        installation_target_name = payload["repository"]["name"]
-    else:
-        installation_target_name = "Unknown"
-
-    # Print the installation event based on the action
-    if installation_status == "created":
-        print(f"\nGitHub App installed on {installation_target_type}: {installation_target_name}")
-    elif installation_status == "deleted":
-        print(f"\nGitHub App uninstalled from {installation_target_type}: {installation_target_name}")
-
-    # Save the installation details to the database
-    supabase_manager.save_installation_info(
-        installation_target_type, installation_target_id, installation_target_name, installation_id, installation_status, created_by_id, created_by_name
-    )
-
-    return access_token, expires_at
+async def handle_installation_deleted(payload: GitHubInstallationPayload) -> None:
+    installation_id: int = payload["installation"]["id"]
+    supabase_manager.delete_installation_token(installation_id=installation_id)
 
 
 # Handle the issue labeled event
