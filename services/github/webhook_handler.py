@@ -173,24 +173,20 @@ async def handle_issue_labeled(payload):
 
 
 # Determine the event type and call the appropriate handler
-async def handle_webhook_event(payload):
+async def handle_webhook_event(payload) -> None:
     # TODO Verify webhook using webhoo.verify from octokit
     if ('action' in payload):
         action = payload.get("action")
 
         # Check the type of webhook event and handle accordingly
-        if action == "created" and "installation" in payload:
+        if (action == "created" or action == "added") and "installation" in payload:
             print("Installaton is created")
-            await handle_installation_created(payload)
-            await handle_installation_event(payload)
+            await handle_installation_created(payload=payload)
 
-        elif action == "updated" and "installation" in payload:
-            await handle_installation_event(payload)
-
-        elif action == "deleted" and "installation" in payload:
+        elif (action == "deleted" or action == "removed") and "installation" in payload:
             print("Installaton is deleted")
-            await handle_installation_event(payload)
+            await handle_installation_deleted(payload=payload)
 
         elif action == "labeled" and "issue" in payload:
             print("Issue is labeled")
-            await handle_issue_labeled(payload)
+            await handle_issue_labeled(payload=payload)
