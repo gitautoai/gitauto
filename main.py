@@ -3,7 +3,7 @@ import json
 
 # Third-party imports
 from fastapi import FastAPI, HTTPException, Request
-# from mangum import Mangum
+from mangum import Mangum
 
 # Local imports
 from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET
@@ -12,13 +12,13 @@ from services.github.webhook_handler import handle_webhook_event
 
 # Create FastAPI instance
 app = FastAPI()
-# handler = Mangum(app=app)
+handler = Mangum(app=app)
 
 # Initialize GitHub manager
 github_manager = GitHubManager(app_id=GITHUB_APP_ID, private_key=GITHUB_PRIVATE_KEY)
 
 
-@app.post("/webhook")
+@app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
     try:
         print("Webhook received")
@@ -28,7 +28,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
         # Process the webhook event
         payload = await request.json()
-        formatted_payload = json.dumps(obj=payload, indent=4)
+        formatted_payload: str = json.dumps(obj=payload, indent=4)
         print(f"Payload: {formatted_payload}")
 
         # TODO: Sanitize the payload to remove any sensitive information
@@ -38,7 +38,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
         return {"message": "Webhook processed successfully"}
     except Exception as e:
-        print(f"Error: {e}")        
+        print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(object=e))
 
 

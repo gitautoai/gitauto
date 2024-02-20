@@ -12,17 +12,17 @@ import jwt
 import openai
 
 # Local imports
-from agent.models import Model
 from agent.coders import Coder
 from agent.inputoutput import InputOutput
+from agent.models import Model
 from config import LABEL, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-from github_manager import GitHubManager
-from github_types import GitHubInstallationPayload, GitHubLabeledPayload
+from services.github.github_manager import GitHubManager
+from services.github.github_types import GitHubInstallationPayload, GitHubLabeledPayload, IssueInfo
 from services.supabase.supabase_manager import InstallationTokenManager
 
 # Initialize managers
-github_manager = GitHubManager(GITHUB_APP_ID, GITHUB_PRIVATE_KEY)
-supabase_manager = InstallationTokenManager(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+github_manager = GitHubManager(app_id=GITHUB_APP_ID, private_key=GITHUB_PRIVATE_KEY)
+supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
 async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
@@ -42,40 +42,9 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
     supabase_manager.save_installation_token(installation_id, account_login, html_url, repositories, repository_ids)
 
 
-# Handle the installation created event
-async def handle_installation_event(payload: GitHubInstallationPayload) -> tuple[str | None, str | None]:
-    installation_target_type = payload["installation"]["target_type"]
-    installation_target_id = payload["installation"]["target_id"]
-    installation_id = payload["installation"]["id"]
-    installation_status = payload["action"]
-    created_by_id = payload["sender"]["id"]
-    created_by_name = payload["sender"]["login"]
-
-    # Get the installation access token if the installation was not deleted
-    access_token, expires_at = (github_manager.get_installation_access_token(installation_id) if installation_status != "deleted" else (None, None))
-
-    # Determine the installation target name
-    if installation_target_type == "User":
-        installation_target_name = payload["installation"]["account"]["login"]
-    elif installation_target_type == "Organization":
-        installation_target_name = payload["installation"]["account"]["login"]
-    elif installation_target_type == "Repository":
-        installation_target_name = payload["repository"]["name"]
-    else:
-        installation_target_name = "Unknown"
-
-    # Print the installation event based on the action
-    if installation_status == "created":
-        print(f"\nGitHub App installed on {installation_target_type}: {installation_target_name}")
-    elif installation_status == "deleted":
-        print(f"\nGitHub App uninstalled from {installation_target_type}: {installation_target_name}")
-
-    # Save the installation details to the database
-    supabase_manager.save_installation_info(
-        installation_target_type, installation_target_id, installation_target_name, installation_id, installation_status, created_by_id, created_by_name
-    )
-
-    return access_token, expires_at
+async def handle_installation_deleted(payload: GitHubInstallationPayload) -> None:
+    installation_id: int = payload["installation"]["id"]
+    supabase_manager.delete_installation_token(installation_id=installation_id)
 
 
 # Handle the issue labeled event
@@ -206,24 +175,20 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
 
 
 # Determine the event type and call the appropriate handler
-async def handle_webhook_event(payload):
+async def handle_webhook_event(payload) -> None:
     # TODO Verify webhook using webhoo.verify from octokit
     if ('action' in payload):
         action = payload.get("action")
 
         # Check the type of webhook event and handle accordingly
-        if action == "created" and "installation" in payload:
+        if (action == "created" or action == "added") and "installation" in payload:
             print("Installaton is created")
-            await handle_installation_created(payload)
-            await handle_installation_event(payload)
+            await handle_installation_created(payload=payload)
 
-        elif action == "updated" and "installation" in payload:
-            await handle_installation_event(payload)
-
-        elif action == "deleted" and "installation" in payload:
+        elif (action == "deleted" or action == "removed") and "installation" in payload:
             print("Installaton is deleted")
-            await handle_installation_event(payload)
+            await handle_installation_deleted(payload=payload)
 
         elif action == "labeled" and "issue" in payload:
             print("Issue is labeled")
-            await handle_issue_labeled(payload)
+            await handle_issue_labeled(payload=payload)

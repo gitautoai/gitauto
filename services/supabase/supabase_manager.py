@@ -1,4 +1,5 @@
 from supabase import create_client, Client
+import datetime
 
 
 # Manager class to handle installation tokens
@@ -27,35 +28,12 @@ class InstallationTokenManager:
             "repository_ids": repository_ids,
         }).execute()
 
-    # Save the installation token to the database
-    def save_installation_info(self, installation_target_type, installation_target_id, installation_target_name, installation_id, installation_status, created_by_id, created_by_name):
-        try:
-            data = {
-                "installation_target_type": installation_target_type,
-                "installation_target_id": installation_target_id,
-                "installation_target_name": installation_target_name,
-                "installation_id": installation_id,
-                "installation_status": installation_status,
-                "created_by_id": created_by_id,
-                "created_by_name": created_by_name,
-            }
-            self.client.table("installation_history").insert(data).execute()
-            return None
-        except Exception as e:
-            print(f"Error saving installation token: {e}")
-
-    # Get the installation token from the database
-    def get_latest_installation_info(self, installation_target_type, installation_target_id):
-        try:
-            query = self.client.table("installation_view").select("*").eq("installation_target_type", installation_target_type).eq("installation_target_id", installation_target_id)
-            data = query.execute()
-            return data.data[0] if data.data else None
-        except Exception as e:
-            print(f"Error getting installation token: {e}")
-            return None
-
-    def get_installation_id(self, repository_id):
-        data, _ = self.client.table("repo_info").select("installation_id").contains('repository_ids', [str(repository_id)]).execute()
+    def get_installation_id(self, repository_id: int) -> str:
+        data, _ = self.client.table(table_name="repo_info").select("installation_id").contains(column='repository_ids', value=[str(object=repository_id)]).execute()
         if (data[1] and data[0][1]):
             return data[1][0].get('installation_id')
         raise RuntimeError("Installation ID for this repo not found.")
+
+    def delete_installation_token(self, installation_id: int) -> None:
+        data: dict[str, str] = {"deleted_at": datetime.datetime.utcnow().isoformat()}
+        self.client.table(table_name="repo_info").update(json=data).eq(column="installation_id", value=installation_id).execute()
