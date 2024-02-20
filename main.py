@@ -6,9 +6,9 @@ from fastapi import FastAPI, HTTPException, Request
 from mangum import Mangum
 
 # Local imports
+from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET
 from services.github.github_manager import GitHubManager
 from services.github.webhook_handler import handle_webhook_event
-from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET
 
 # Create FastAPI instance
 app = FastAPI()

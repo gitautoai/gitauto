@@ -5,28 +5,28 @@ import datetime
 # Manager class to handle installation tokens
 class InstallationTokenManager:
     # Initialize Supabase client when the manager is created
-    def __init__(self, url, key):
-        self.client: Client = create_client(url, key)
+    def __init__(self, url: str, key: str) -> None:
+        self.client: Client = create_client(supabase_url=url, supabase_key=key)
 
-    def save_installation_token(self, installation_id, account_login, html_url, repositories, repository_ids):
-        data, _ = self.client.table("repo_info").select("*").eq("installation_id", installation_id).execute()
+    def save_installation_token(self, installation_id, account_login: str, html_url: str, repositories, repository_ids) -> None:
+        data, _ = self.client.table(table_name="repo_info").select("*").eq(column="installation_id", value=installation_id).execute()
         if (len(data[1]) > 0):
-            self.client.table("repo_info").update({
-            "installation_id": installation_id,
-            "login": account_login,
-            'html_url': html_url,
-            "repositories": repositories,
-            "repository_ids": repository_ids,
-            "deleted_at": None,
-        }).eq("installation_id", installation_id).execute()
+            self.client.table(table_name="repo_info").update(json={
+                "installation_id": installation_id,
+                "login": account_login,
+                'html_url': html_url,
+                "repositories": repositories,
+                "repository_ids": repository_ids,
+                "deleted_at": None,
+            }).eq(column="installation_id", value=installation_id).execute()
         else:
-                self.client.table("repo_info").insert({
-            "installation_id": installation_id,
-            "login": account_login,
-            'html_url': html_url,
-            "repositories": repositories,
-            "repository_ids": repository_ids,
-        }).execute()
+            self.client.table(table_name="repo_info").insert(json={
+                "installation_id": installation_id,
+                "login": account_login,
+                'html_url': html_url,
+                "repositories": repositories,
+                "repository_ids": repository_ids,
+            }).execute()
 
     def get_installation_id(self, repository_id: int) -> str:
         data, _ = self.client.table(table_name="repo_info").select("installation_id").contains(column='repository_ids', value=[str(object=repository_id)]).execute()
