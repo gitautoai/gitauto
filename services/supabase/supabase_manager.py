@@ -30,7 +30,6 @@ class InstallationTokenManager:
 
     def get_installation_id(self, repository_id: int) -> str:
         data, _ = self.client.table(table_name="repo_info").select("installation_id").contains(column='repository_ids', value=[str(object=repository_id)]).execute()
-
         if (data[1] and data[0][1]):
             return data[1][0].get('installation_id')
         raise RuntimeError("Installation ID for this repo not found.")
