@@ -1,25 +1,27 @@
-# Local imports
-from config import LABEL, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-from ..supabase.supabase_manager import InstallationTokenManager
-from .github_manager import GitHubManager
-from jwt import JWT, jwk_from_pem
-import git
-
-import time
-import sys
-import uuid
-import requests
-
-import openai
-from agent.models import Model
-from agent.coders import Coder
+# Standard imports
 import os
+import requests
+import sys
+import time
+import uuid
+
+# Third-party imports
+import git
+import jwt
+import openai
+
+# Local imports
+from agent.coders import Coder
 from agent.inputoutput import InputOutput
-from pathlib import Path
+from agent.models import Model
+from config import LABEL, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from github_manager import GitHubManager
+from github_types import GitHubInstallationPayload, GitHubLabeledPayload, IssueInfo
+from services.supabase.supabase_manager import InstallationTokenManager
 
 # Initialize managers
-github_manager = GitHubManager(GITHUB_APP_ID, GITHUB_PRIVATE_KEY)
-supabase_manager = InstallationTokenManager(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+github_manager = GitHubManager(app_id=GITHUB_APP_ID, private_key=GITHUB_PRIVATE_KEY)
+supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
 async def handle_installation_created(payload):
