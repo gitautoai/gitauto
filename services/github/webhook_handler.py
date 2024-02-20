@@ -1,27 +1,28 @@
-from config import LABEL, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-from ..supabase.supabase_manager import InstallationTokenManager
-from .github_manager import GitHubManager
+# Standard imports
+import os
+import requests
+import sys
+import time
+import uuid
 
+# Third-party imports
+import git
+import jwt
+import openai
+
+# Local imports
+from agent.coders import Coder
+from agent.inputoutput import InputOutput
+from agent.models import Model
+from config import LABEL, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from services.github.github_manager import GitHubManager
+from services.github.github_types import GitHubInstallationPayload, GitHubLabeledPayload, IssueInfo
+from services.supabase.supabase_manager import InstallationTokenManager
 
 # Initialize managers
-github_manager = GitHubManager(GITHUB_APP_ID, GITHUB_PRIVATE_KEY)
-supabase_manager = InstallationTokenManager(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+github_manager = GitHubManager(app_id=GITHUB_APP_ID, private_key=GITHUB_PRIVATE_KEY)
+supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
-from jwt import JWT, jwk_from_pem
-import git
-
-import time
-import sys
-import uuid
-import requests
-
-import openai
-from agent.models import Model
-from agent.coders import Coder
-import subprocess
-import os
-from agent.inputoutput import InputOutput
-from pathlib import Path
 
 async def handle_installation_created(payload):
     installation_id = payload["installation"]["id"]
@@ -40,11 +41,12 @@ async def handle_installation_created(payload):
     supabase_manager.save_installation_token(installation_id, account_login, html_url, repositories, repository_ids)
 
 
-async def handle_installation_deleted(payload):
-    installation_id = payload["installation"]["id"]
-    supabase_manager.delete_installation_token(installation_id)
+async def handle_installation_deleted(payload: GitHubInstallationPayload) -> None:
+    installation_id: int = payload["installation"]["id"]
+    supabase_manager.delete_installation_token(installation_id=installation_id)
 
 
+# Handle the issue labeled event
 async def handle_issue_labeled(payload):
     label = payload["label"]["name"]
     if label != LABEL:
@@ -59,7 +61,6 @@ async def handle_issue_labeled(payload):
     with open('privateKey.pem', 'rb') as pem_file:
         signing_key = pem_file.read()
 
-
     new_uuid = uuid.uuid4()
     print("UUID: ", new_uuid)
     payload = {
@@ -72,12 +73,12 @@ async def handle_issue_labeled(payload):
     encoded_jwt = jwt_instance.encode(payload, jwk_from_pem(signing_key), alg='RS256')
 
     print(f"JWT:  {encoded_jwt}")
-    
+
     headers = {
-    "Authorization": f"Bearer {encoded_jwt}",
-    "Content-Type": "application/json"
+        "Authorization": f"Bearer {encoded_jwt}",
+        "Content-Type": "application/json"
     }   
-    
+
     response = requests.post(f'https://api.github.com/app/installations/{installation_id}/access_tokens', headers=headers)
     token = response.json().get('token')
 
@@ -97,13 +98,11 @@ async def handle_issue_labeled(payload):
       dry_run=False,
     ) 
     io.tool_output(*sys.argv, log_only=True)
-    
-    
+
     git_dname = str(Path.cwd() / f'tmp/{new_uuid}')
-            
+
     openai_api_key = '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'
-    
-    
+
     kwargs = dict()
     client = openai.OpenAI(api_key=openai_api_key, **kwargs)
 
@@ -137,11 +136,10 @@ async def handle_issue_labeled(payload):
         return 1
     io.tool_output("Use /help to see in-chat commands, run with --help to see cmd line args")
 
-
     io.add_to_input_history("add header with tag 'Hello World' to homepage")
     io.tool_output()
     coder.run(with_message="add header with tag 'Hello World' to homepage")
-    
+
     repo_path = Path.cwd() / f'tmp/{new_uuid}'
     original_path = os.getcwd()
     os.chdir(repo_path)
@@ -152,7 +150,7 @@ async def handle_issue_labeled(payload):
     branch = str_uuid
     repo.create_head(branch)
     repo.git.push('origin', branch)
-    
+
     # Push to branch to create PR
     remote_url = repo.remotes.origin.url
     repo_name = remote_url.split('/')[-1].replace('.git', '')
@@ -172,19 +170,25 @@ async def handle_issue_labeled(payload):
     response = requests.post(url, headers=headers, json=data)
 
     os.chdir(original_path)
-    
+
     # TODO delete tmp folder
 
-async def handle_webhook_event(payload):
+
+# Determine the event type and call the appropriate handler
+async def handle_webhook_event(payload) -> None:
     # TODO Verify webhook using webhoo.verify from octokit
-    if('action' in payload):
+    if ('action' in payload):
         action = payload.get("action")
+
+        # Check the type of webhook event and handle accordingly
         if (action == "created" or action == "added") and "installation" in payload:
-            print("CREATED")
-            await handle_installation_created(payload)
-        elif (action == "deleted" or  action == "removed") and "installation" in payload:
-            print("DELETED")
-            await handle_installation_deleted(payload)
+            print("Installaton is created")
+            await handle_installation_created(payload=payload)
+
+        elif (action == "deleted" or action == "removed") and "installation" in payload:
+            print("Installaton is deleted")
+            await handle_installation_deleted(payload=payload)
+
         elif action == "labeled" and "issue" in payload:
-            print("LABELED")
-            await handle_issue_labeled(payload)
+            print("Issue is labeled")
+            await handle_issue_labeled(payload=payload)

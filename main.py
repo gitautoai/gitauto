@@ -1,37 +1,47 @@
+# Standard imports
 import json
 
+# Third-party imports
 from fastapi import FastAPI, HTTPException, Request
-import urllib.parse
-
-from services.github.webhook_handler import handle_webhook_event
-
 from mangum import Mangum
+
+# Local imports
+from services.github.github_manager import GitHubManager
+from services.github.webhook_handler import handle_webhook_event
+from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET
+
+# Create FastAPI instance
 app = FastAPI()
 handler = Mangum(app=app)
 
+# Initialize GitHub manager
+github_manager = GitHubManager(app_id=GITHUB_APP_ID, private_key=GITHUB_PRIVATE_KEY)
 
-@app.post("/webhook")
-async def handle_webhook(request: Request):
+
+@app.post(path="/webhook")
+async def handle_webhook(request: Request) -> dict[str, str]:
     try:
         print("Webhook received")
-        payload = await request.body()
-        decoded_data = urllib.parse.unquote(payload.decode())
-        json_data = json.loads(decoded_data)
+        # Validate the webhook signature
+        await github_manager.verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)
+        print("Webhook signature verified")
 
+        # Process the webhook event
+        payload = await request.json()
+        formatted_payload: str = json.dumps(obj=payload, indent=4)
+        print(f"Payload: {formatted_payload}")
+
+        # TODO: Sanitize the payload to remove any sensitive information
         # Handle Create, Delete, and Labeled events
-        await handle_webhook_event(json_data)
+        await handle_webhook_event(payload=payload)
         print("Webhook event handled")
 
         return {"message": "Webhook processed successfully"}
     except Exception as e:
-        print(f"Error: {e}")        
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=str(object=e))
 
-@app.get("/yo")
-async def root():
+
+@app.get(path="/yo")
+async def root() -> dict[str, str]:
     return {"message": "Hello World"}
-
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="0.0.0.0", port=8000)
-
