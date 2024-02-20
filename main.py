@@ -3,7 +3,7 @@ import json
 
 # Third-party imports
 from fastapi import FastAPI, HTTPException, Request
-# from mangum import Mangum
+from mangum import Mangum
 
 # Local imports
 from services.github.github_manager import GitHubManager
@@ -12,7 +12,7 @@ from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET
 
 # Create FastAPI instance
 app = FastAPI()
-# handler = Mangum(app=app)
+handler = Mangum(app=app)
 
 # Initialize GitHub manager
 github_manager = GitHubManager(GITHUB_APP_ID, GITHUB_PRIVATE_KEY)
