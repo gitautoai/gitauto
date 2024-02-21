@@ -6,27 +6,41 @@ on:
       - nikita
 
 jobs:
-  build:
+  deploy_lambda:
+    name: Publish and Deploy
     runs-on: ubuntu-latest
-    env:
-      AWS_ACCESS_KEY_ID: AKIA5ZOUUDPV4JSVHC5U
-      AWS_SECRET_ACCESS_KEY: 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
-      AWS_DEFAULT_REGION: us-west-1
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Login to ECR
-        env:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          AWS_ACCESS_KEY_ID: AKIA5ZOUUDPV4JSVHC5U
+          AWS_SECRET_ACCESS_KEY: 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
+          AWS_DEFAULT_REGION: us-west-1
           AWS_REGION: us-west-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: fastapi-demo
+          IMAGE_TAG: fastapi-demo
         run: |
-          aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin 948023073771.dkr.ecr.us-west-1.amazonaws.com
-
-      - name: Build Docker image
-        run: docker build -t fastapi-demo .
-
-      - name: Tag Docker image
-        run: docker tag fastapi-demo:latest 948023073771.dkr.ecr.us-west-1.amazonaws.com/fastapi-demo:latest
-
-      - name: Push Docker image to ECR
-        run: docker push 948023073771.dkr.ecr.us-west-1.amazonaws.com/fastapi-demo:latest
+          docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+      - name: Update Lambda function with latest ECR image
+        env:
+          LAMBDA_NAME: lambda-container
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: fastapi-demo
+          IMAGE_TAG: latest
+        run: |
+          aws lambda update-function-code \
+          --function-name $LAMBDA_NAME \
+          --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
