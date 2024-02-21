@@ -23,7 +23,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     try:
         print("Webhook received")
         # Validate the webhook signature
-        # await github_manager.verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)
+        await github_manager.verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)
         print("Webhook signature verified")
 
         # Process the webhook event
@@ -41,14 +41,8 @@ async def handle_webhook(request: Request) -> dict[str, str]:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(object=e))
 
-
-@app.get(path="/yo")
-async def root() -> dict[str, str]:
-    return {"message": "Hello World"}
-
-
 @app.get("/")
 async def root():
-    return {"message": "Hello HOME"}
+    return {"message": "PR Agent APP"}
 
 

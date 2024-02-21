@@ -25,12 +25,11 @@ github_manager = GitHubManager(app_id=GITHUB_APP_ID, private_key=GITHUB_PRIVATE_
 supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
-async def handle_installation_created(payload):
-    print("INSTALLING")
-    installation_id = payload["installation"]["id"]
-    account_login = payload["installation"]["account"]["login"]
-    html_url = payload["installation"]["account"]["html_url"]
-    action = payload.get("action")
+async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
+    installation_id: int = payload["installation"]["id"]
+    account_login: str = payload["installation"]["account"]["login"]
+    html_url: str = payload["installation"]["account"]["html_url"]
+    action: str = payload.get("action")
     repositories = []
     repository_ids = []
     if action == 'created':
