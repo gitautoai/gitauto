@@ -29,7 +29,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: pr-agent-hiroshi
-          IMAGE_TAG: hiroshi:latest
+          IMAGE_TAG: hiroshi
         run: |
           docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
@@ -39,7 +39,7 @@ jobs:
           LAMBDA_NAME: pr-agent-hiroshi
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: pr-agent-hiroshi
-          IMAGE_TAG: hiroshi:latest
+          IMAGE_TAG: hiroshi
         run: |
           aws lambda update-function-code \
           --function-name $LAMBDA_NAME \
