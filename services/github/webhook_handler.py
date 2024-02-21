@@ -1,27 +1,29 @@
-from config import LABEL, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-from ..supabase.supabase_manager import InstallationTokenManager
-from .github_manager import GitHubManager
+# Standard imports
+import os
+import requests
+import sys
+import time
+import uuid
+from pathlib import Path
 
+# Third-party imports
+import git
+import jwt
+import openai
+
+# Local imports
+from agent.coders import Coder
+from agent.inputoutput import InputOutput
+from agent.models import Model
+from config import LABEL, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from services.github.github_manager import GitHubManager
+from services.github.github_types import GitHubInstallationPayload, GitHubLabeledPayload, IssueInfo
+from services.supabase.supabase_manager import InstallationTokenManager
 
 # Initialize managers
-github_manager = GitHubManager(GITHUB_APP_ID, GITHUB_PRIVATE_KEY)
-supabase_manager = InstallationTokenManager(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+github_manager = GitHubManager(app_id=GITHUB_APP_ID, private_key=GITHUB_PRIVATE_KEY)
+supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
-from jwt import JWT, jwk_from_pem
-import git
-
-import time
-import sys
-import uuid
-import requests
-
-import openai
-from agent.models import Model
-from agent.coders import Coder
-import subprocess
-import os
-from agent.inputoutput import InputOutput
-from pathlib import Path
 
 async def handle_installation_created(payload):
     print("INSTALLING")
@@ -32,59 +34,60 @@ async def handle_installation_created(payload):
     repositories = []
     repository_ids = []
     if action == 'created':
-        repositories = [obj.get('full_name') for obj in payload["repositories"]]
-        repository_ids = [obj.get('id') for obj in payload["repositories"]]
+        repositories: list[str] = [obj.get('full_name') for obj in payload["repositories"]]
+        repository_ids: list[int] = [obj.get('id') for obj in payload["repositories"]]
     if action == 'added':
         repositories = [obj.get('full_name') for obj in payload["repositories_added"]]
         repository_ids = [obj.get('id') for obj in payload["repositories_added"]]
-    print("SUPA")
-    supabase_manager.save_installation_token(installation_id, account_login, html_url, repositories, repository_ids)
+
+    supabase_manager.save_installation_token(installation_id=installation_id, account_login=account_login, html_url=html_url, repositories=repositories, repository_ids=repository_ids)
 
 
-async def handle_installation_deleted(payload):
-    installation_id = payload["installation"]["id"]
-    supabase_manager.delete_installation_token(installation_id)
+async def handle_installation_deleted(payload: GitHubInstallationPayload) -> None:
+    installation_id: int = payload["installation"]["id"]
+    supabase_manager.delete_installation_token(installation_id=installation_id)
 
 
-async def handle_issue_labeled(payload):
-    label = payload["label"]["name"]
+# Handle the issue labeled event
+async def handle_issue_labeled(payload: GitHubLabeledPayload):
+    # Extract label and validate it
+    label: str = payload["label"]["name"]
     if label != LABEL:
         return
-    issue = payload["issue"]
-    url = issue["html_url"]
-    repository_id = payload["repository"]["id"]
 
-    installation_id = supabase_manager.get_installation_id(repository_id)
-    print("Installation ID: ", installation_id)
+    # Extract issue and repository information
+    issue: IssueInfo = payload["issue"]
+    # url: str = issue["html_url"]
+    repository_id: int = payload["repository"]["id"]
 
-    with open('privateKey.pem', 'rb') as pem_file:
-        signing_key = pem_file.read()
+    # Retrieve the installation ID from Supabase
+    installation_id: str = supabase_manager.get_installation_id(repository_id=repository_id)
 
-    # Create JWT TOken
-    new_uuid = uuid.uuid4()
-    print("UUID: ", new_uuid)
+    # Read the private key for JWT
+    # https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app
+    with open(file='privateKey.pem', mode='rb') as pem_file:
+        signing_key: bytes = pem_file.read()
+
+    # Create a JWT token for authentication
+    now = int(time.time())
     payload = {
-        'iat': int(time.time()),
-        'exp': int(time.time()) + 600,
+        'iat': now,
+        'exp': now + 600,  # JWT expires in 10 minutes
         'iss': GITHUB_APP_ID
     }
+    encoded_jwt: str = jwt.encode(payload=payload, key=signing_key, algorithm='RS256')
+    headers: dict[str, str] = {
+        "Authorization": f"Bearer {encoded_jwt}",
+        "Content-Type": "application/json"
+    }
 
-    jwt_instance = JWT()
-    encoded_jwt = jwt_instance.encode(payload, jwk_from_pem(signing_key), alg='RS256')
+    response = requests.post(url=f'https://api.github.com/app/installations/{installation_id}/access_tokens', headers=headers)
+    token: str = response.json().get('token')
 
-    print(f"JWT:  {encoded_jwt}")
-    
-    headers = {
-    "Authorization": f"Bearer {encoded_jwt}",
-    "Content-Type": "application/json"
-    }   
-    
-    response = requests.post(f'https://api.github.com/app/installations/{installation_id}/access_tokens', headers=headers)
-    token = response.json().get('token')
-    
-    # Clone Repo in /tmp folder
-    git.Repo.clone_from(f'https://x-access-token:{token}@github.com/nikitamalinov/lalager', f'./tmp/{new_uuid}')
-    
+    new_uuid = uuid.uuid4()
+    git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager', to_path=f'./tmp/{new_uuid}')
+
+    # Initialize the OpenAI API
     io = InputOutput(
       pretty=True,
       yes=True,
@@ -97,20 +100,22 @@ async def handle_issue_labeled(payload):
       tool_error_color="red",
       encoding="utf-8",
       dry_run=False,
-    ) 
+    )
+
+    # Print the tool output
     io.tool_output(*sys.argv, log_only=True)
-    
-    
+
+
     git_dname = str(Path.cwd() / f'tmp/{new_uuid}')
-            
+
     openai_api_key = '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'
-    
-    
+
     kwargs = dict()
     client = openai.OpenAI(api_key=openai_api_key, **kwargs)
 
     main_model = Model.create('gpt-4-1106-preview', client)
 
+    # Create a new coder instance
     try:
         coder = Coder.create(
             main_model=main_model,
@@ -137,58 +142,63 @@ async def handle_issue_labeled(payload):
     except ValueError as err:
         print(err)
         return 1
+
+    # Run the coder
     io.tool_output("Use /help to see in-chat commands, run with --help to see cmd line args")
-
-
-    io.add_to_input_history("add header with tag 'Hello World' to homepage")
+    io.add_to_input_history(inp="add header with tag 'Hello World' to homepage")
     io.tool_output()
     coder.run(with_message="add header with tag 'Hello World' to homepage")
-    
-    # Go into tmp repo
-    repo_path = Path.cwd() / f'tmp/{new_uuid}'
-    original_path = os.getcwd()
-    os.chdir(repo_path)
 
-    str_uuid = str(new_uuid)
     # Create a new branch and push to it
-    repo = git.Repo(repo_path)
-    branch = str_uuid
-    repo.create_head(branch)
+    repo_path: Path = Path.cwd() / f'tmp/{new_uuid}'  # cwd stands for current working directory
+    original_path: str = os.getcwd()
+    os.chdir(path=repo_path)
+
+    str_uuid = str(object=new_uuid)
+    # Create a new branch and push to it
+    repo = git.Repo(path=repo_path)
+    branch: str = str_uuid
+    repo.create_head(path=branch)
     repo.git.push('origin', branch)
-    
-    # Creates PR
-    remote_url = repo.remotes.origin.url
-    repo_name = remote_url.split('/')[-1].replace('.git', '')
-    repo_owner = remote_url.split('/')[-2]
+
+    # Push to branch to create PR
+    remote_url: str = repo.remotes.origin.url
+    repo_name: str = remote_url.split(sep='/')[-1].replace('.git', '')
+    repo_owner: str = remote_url.split(sep='/')[-2]
     url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/pulls"
     headers = {
         "Accept": "application/vnd.github+json",
         "Authorization": f"Bearer {token}",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    data = {
+    data: dict[str, str] = {
         "title": issue['title'],
         "body": "World",
         "head": f"nikitamalinov:{str_uuid}",
         "base": 'main',
     }
-    response = requests.post(url, headers=headers, json=data)
+    response = requests.post(url=url, headers=headers, json=data)
 
     os.chdir(original_path)
-    
+
     # TODO delete tmp folder
 
-async def handle_webhook_event(payload):
+
+# Determine the event type and call the appropriate handler
+async def handle_webhook_event(payload) -> None:
     # TODO Verify webhook using webhoo.verify from octokit
-    
-    if('action' in payload):
+    if ('action' in payload):
         action = payload.get("action")
+
+        # Check the type of webhook event and handle accordingly
         if (action == "created" or action == "added") and "installation" in payload:
-            print("CREATED")
-            await handle_installation_created(payload)
-        elif (action == "deleted" or  action == "removed") and "installation" in payload:
-            print("DELETED")
-            await handle_installation_deleted(payload)
+            print("Installaton is created")
+            await handle_installation_created(payload=payload)
+
+        elif (action == "deleted" or action == "removed") and "installation" in payload:
+            print("Installaton is deleted")
+            await handle_installation_deleted(payload=payload)
+
         elif action == "labeled" and "issue" in payload:
-            print("LABELED")
-            await handle_issue_labeled(payload)
+            print("Issue is labeled")
+            await handle_issue_labeled(payload=payload)

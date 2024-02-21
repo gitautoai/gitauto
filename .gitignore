@@ -8,10 +8,5 @@ __pycache__
 # Virtual Environment
 venv
 
-venv/
-venv*
-.venv
-/venv
-/venv/
 # Others
 .aider.tags.cache.v3
