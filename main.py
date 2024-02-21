@@ -41,7 +41,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(object=e))
 
-@app.get("/")
+@app.get(path="/")
 async def root():
     return {"message": "PR Agent APP"}
 
