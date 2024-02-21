@@ -24,6 +24,7 @@ from agent.inputoutput import InputOutput
 from pathlib import Path
 
 async def handle_installation_created(payload):
+    print("INSTALLING")
     installation_id = payload["installation"]["id"]
     account_login = payload["installation"]["account"]["login"]
     html_url = payload["installation"]["account"]["html_url"]
@@ -36,7 +37,7 @@ async def handle_installation_created(payload):
     if action == 'added':
         repositories = [obj.get('full_name') for obj in payload["repositories_added"]]
         repository_ids = [obj.get('id') for obj in payload["repositories_added"]]
-
+    print("SUPA")
     supabase_manager.save_installation_token(installation_id, account_login, html_url, repositories, repository_ids)
 
 
@@ -59,7 +60,7 @@ async def handle_issue_labeled(payload):
     with open('privateKey.pem', 'rb') as pem_file:
         signing_key = pem_file.read()
 
-
+    # Create JWT TOken
     new_uuid = uuid.uuid4()
     print("UUID: ", new_uuid)
     payload = {
@@ -80,7 +81,8 @@ async def handle_issue_labeled(payload):
     
     response = requests.post(f'https://api.github.com/app/installations/{installation_id}/access_tokens', headers=headers)
     token = response.json().get('token')
-
+    
+    # Clone Repo in /tmp folder
     git.Repo.clone_from(f'https://x-access-token:{token}@github.com/nikitamalinov/lalager', f'./tmp/{new_uuid}')
     
     io = InputOutput(
@@ -142,6 +144,7 @@ async def handle_issue_labeled(payload):
     io.tool_output()
     coder.run(with_message="add header with tag 'Hello World' to homepage")
     
+    # Go into tmp repo
     repo_path = Path.cwd() / f'tmp/{new_uuid}'
     original_path = os.getcwd()
     os.chdir(repo_path)
@@ -153,7 +156,7 @@ async def handle_issue_labeled(payload):
     repo.create_head(branch)
     repo.git.push('origin', branch)
     
-    # Push to branch to create PR
+    # Creates PR
     remote_url = repo.remotes.origin.url
     repo_name = remote_url.split('/')[-1].replace('.git', '')
     repo_owner = remote_url.split('/')[-2]
@@ -177,6 +180,7 @@ async def handle_issue_labeled(payload):
 
 async def handle_webhook_event(payload):
     # TODO Verify webhook using webhoo.verify from octokit
+    
     if('action' in payload):
         action = payload.get("action")
         if (action == "created" or action == "added") and "installation" in payload:

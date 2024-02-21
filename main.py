@@ -1,19 +1,25 @@
+
+
 import json
 
 from fastapi import FastAPI, HTTPException, Request
 import urllib.parse
 
+from config import GITHUB_APP_ID
+
 from services.github.webhook_handler import handle_webhook_event
 
 from mangum import Mangum
-app = FastAPI()
-handler = Mangum(app=app)
+app = FastAPI( title="hello world",
+    openapi_prefix="/prod")
+handler = Mangum(app)
 
 
 @app.post("/webhook")
 async def handle_webhook(request: Request):
     try:
         print("Webhook received")
+        print("GITHUB APP ID: ", GITHUB_APP_ID)
         payload = await request.body()
         decoded_data = urllib.parse.unquote(payload.decode())
         json_data = json.loads(decoded_data)
@@ -31,7 +37,9 @@ async def handle_webhook(request: Request):
 async def root():
     return {"message": "Hello World"}
 
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+@app.get("/")
+async def root():
+    return {"message": "Hello HOME"}
+
 

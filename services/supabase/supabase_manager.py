@@ -7,25 +7,30 @@ class InstallationTokenManager:
         self.client: Client = create_client(url, key)
 
     def save_installation_token(self, installation_id, account_login, html_url, repositories, repository_ids):
-        data, _ = self.client.table("repo_info").select("*").eq("installation_id", installation_id).execute()
-        if(len(data[1]) > 0):
-            self.client.table("repo_info").update({
-            "installation_id": installation_id,
-            "login": account_login,
-            'html_url': html_url,
-            "repositories": repositories,
-            "repository_ids": repository_ids,
-            "deleted_at": None,
-        }).eq("installation_id", installation_id).execute()
-        else:
-                self.client.table("repo_info").insert({
-            "installation_id": installation_id,
-            "login": account_login,
-            'html_url': html_url,
-            "repositories": repositories,
-            "repository_ids": repository_ids,
-        }).execute()
-
+        print("SAVING")
+        try:
+            data, _ = self.client.table("repo_info").select("*").eq("installation_id", installation_id).execute()
+            if(len(data[1]) > 0):
+                self.client.table("repo_info").update({
+                "installation_id": installation_id,
+                "login": account_login,
+                'html_url': html_url,
+                "repositories": repositories,
+                "repository_ids": repository_ids,
+                "deleted_at": None,
+                }).eq("installation_id", installation_id).execute()
+            else:
+                    self.client.table("repo_info").insert({
+                "installation_id": installation_id,
+                "login": account_login,
+                'html_url': html_url,
+                "repositories": repositories,
+                "repository_ids": repository_ids,
+            }).execute()
+        except Exception as e:
+            print(e)
+        print("DONE")
+        
     def get_installation_id(self, repository_id):
         data, _ = self.client.table("repo_info").select("installation_id").contains('repository_ids', [str(repository_id)]).execute()
         if(data[1] and data[0][1]):
