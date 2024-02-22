@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# Function to get environment variable with error handling
 def get_env_var(name: str) -> str:
     value: str | None = os.environ.get(name)
     if value is None:

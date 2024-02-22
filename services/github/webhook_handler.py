@@ -47,14 +47,13 @@ async def handle_installation_deleted(payload: GitHubInstallationPayload) -> Non
     supabase_manager.delete_installation_token(installation_id=installation_id)
 
 
-# Handle the issue labeled event
 async def handle_issue_labeled(payload: GitHubLabeledPayload):
     # Extract label and validate it
     label: str = payload["label"]["name"]
     if label != LABEL:
         return
 
-    # Extract issue and repository information
+    # Extract information from the payload
     issue: IssueInfo = payload["issue"]
     # url: str = issue["html_url"]
     repository_id: int = payload["repository"]["id"]
@@ -142,7 +141,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         print(err)
         return 1
 
-    # Run the coder
+    # Run the coder with a specific command
     io.tool_output("Use /help to see in-chat commands, run with --help to see cmd line args")
     io.add_to_input_history(inp="add header with tag 'Hello World' to homepage")
     io.tool_output()
@@ -180,7 +179,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
 
     os.chdir(original_path)
 
-    # TODO delete tmp folder
+    # Delete the cloned repository
 
 
 # Determine the event type and call the appropriate handler
