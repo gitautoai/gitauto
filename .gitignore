@@ -10,3 +10,6 @@ venv
 
 # Others
 .aider.tags.cache.v3
+
+
+ngrok.yml
