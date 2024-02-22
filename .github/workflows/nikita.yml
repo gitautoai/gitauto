@@ -1,9 +1,9 @@
-name: main branch prod deployment
+name: nikita branch staging deployment
 
 on:
   push:
     branches:
-      - main
+      - nikita
 
 jobs:
   deploy_lambda:
@@ -28,7 +28,7 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: pr-agent-prod
+          ECR_REPOSITORY: fastapi-demo
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
@@ -36,9 +36,9 @@ jobs:
 
       - name: Update Lambda function with latest ECR image
         env:
-          LAMBDA_NAME: pr-agent-prod
+          LAMBDA_NAME: lambda-container
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: pr-agent-prod
+          ECR_REPOSITORY: fastapi-demo
           IMAGE_TAG: ${{ github.sha }}
         run: |
           aws lambda update-function-code \
