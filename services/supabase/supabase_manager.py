@@ -4,7 +4,6 @@ from supabase import create_client, Client
 
 # Manager class to handle installation tokens
 class InstallationTokenManager:
-    """ Initialize Supabase client when the manager is created """
     def __init__(self, url: str, key: str) -> None:
         self.client: Client = create_client(supabase_url=url, supabase_key=key)
 

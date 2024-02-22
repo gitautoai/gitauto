@@ -8,7 +8,6 @@ load_dotenv()
 
 
 def get_env_var(name: str) -> str:
-    """ Function to get environment variable with error handling """
     value: str | None = os.environ.get(name)
     if value is None:
         raise ValueError(f"Environment variable {name} not set.")
