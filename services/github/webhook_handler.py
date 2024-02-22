@@ -72,8 +72,8 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         "Content-Type": "application/json"
     }
     print("decoded")
-
-    response = requests.post(url=f'https://api.github.com/app/installations/{installation_id}/access_tokens', headers=headers)
+    # TODO 47287862 should be {installation_id}
+    response = requests.post(url=f'https://api.github.com/app/installations/47287862/access_tokens', headers=headers)
     token: str = response.json().get('token')
 
     new_uuid = uuid.uuid4()
