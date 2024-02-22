@@ -19,9 +19,7 @@ def get_env_var(name: str) -> str:
 # GitHub Credentials from environment variables
 GITHUB_APP_ID: str = get_env_var(name="GITHUB_APP_ID")
 GITHUB_PRIVATE_KEY_ENCODED: str = get_env_var(name="GITHUB_PRIVATE_KEY")
-print("dec: ", GITHUB_PRIVATE_KEY_ENCODED)
 GITHUB_PRIVATE_KEY_JSON = json.loads(GITHUB_PRIVATE_KEY_ENCODED)
-print("json: ", GITHUB_PRIVATE_KEY_JSON)
 GITHUB_PRIVATE_KEY = GITHUB_PRIVATE_KEY_JSON['value']
 GITHUB_WEBHOOK_SECRET: str = get_env_var(name="GITHUB_WEBHOOK_SECRET")
 

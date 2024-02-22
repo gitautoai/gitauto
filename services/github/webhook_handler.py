@@ -75,7 +75,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
 
     new_uuid = uuid.uuid4()
     git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager', to_path=f'./tmp/{new_uuid}')
-    return 
+    print("Repo cloned")
     # Initialize the OpenAI API
     io = InputOutput(
       pretty=True,
@@ -169,7 +169,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     response = requests.post(url=url, headers=headers, json=data)
 
     os.chdir(original_path)
-
+    print("Created PR")
     # TODO delete tmp folder
 
 
