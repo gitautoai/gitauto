@@ -64,11 +64,14 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         'exp': now + 600,  # JWT expires in 10 minutes
         'iss': GITHUB_APP_ID
     }
+    print("decoding")
+    print('key: ', GITHUB_PRIVATE_KEY)
     encoded_jwt: str = jwt.encode(payload=payload, key=GITHUB_PRIVATE_KEY, algorithm='RS256')
     headers: dict[str, str] = {
         "Authorization": f"Bearer {encoded_jwt}",
         "Content-Type": "application/json"
     }
+    print("decoded")
 
     response = requests.post(url=f'https://api.github.com/app/installations/{installation_id}/access_tokens', headers=headers)
     token: str = response.json().get('token')
