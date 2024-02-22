@@ -47,20 +47,14 @@ async def handle_installation_deleted(payload: GitHubInstallationPayload) -> Non
     supabase_manager.delete_installation_token(installation_id=installation_id)
 
 
-# Handle the issue labeled event
 async def handle_issue_labeled(payload: GitHubLabeledPayload):
-    # Extract label and validate it
     label: str = payload["label"]["name"]
     if label != LABEL:
         return
 
-    # Extract issue and repository information
     issue: IssueInfo = payload["issue"]
-    # url: str = issue["html_url"]
-    repository_id: int = payload["repository"]["id"]
 
-    # Retrieve the installation ID from Supabase
-    installation_id: str = supabase_manager.get_installation_id(repository_id=repository_id)
+    installation_id: str = payload["installation"]["id"]
 
     # Read the private key for JWT
     # https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app
@@ -183,19 +177,15 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     # TODO delete tmp folder
 
 
-# Determine the event type and call the appropriate handler
 async def handle_webhook_event(payload) -> None:
-    # TODO Verify webhook using webhoo.verify from octokit
     if ('action' in payload):
         action = payload.get("action")
-
-        # Check the type of webhook event and handle accordingly
         if (action == "created" or action == "added") and "installation" in payload:
-            print("Installaton is created")
+            print("Installaton is created/added")
             await handle_installation_created(payload=payload)
 
         elif (action == "deleted" or action == "removed") and "installation" in payload:
-            print("Installaton is deleted")
+            print("Installaton is deleted/removed")
             await handle_installation_deleted(payload=payload)
 
         elif action == "labeled" and "issue" in payload:

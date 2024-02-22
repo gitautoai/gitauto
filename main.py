@@ -21,10 +21,8 @@ github_manager = GitHubManager(app_id=GITHUB_APP_ID, private_key=GITHUB_PRIVATE_
 @app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
     try:
-        print("Webhook received")
         # Validate the webhook signature
         await github_manager.verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)
-        print("Webhook signature verified")
 
         # Process the webhook event
         payload = await request.json()

@@ -28,6 +28,12 @@ class InstallationTokenManager:
                 "repository_ids": repository_ids,
             }).execute()
 
+    def increment_installation_id(self, installation_id: int) -> None:
+        data, _ = self.client.table(table_name="repo_info").select("requests").eq(column="installation_id", value=installation_id).execute()
+        if (data[1] and data[1][0]):
+            self.client.table(table_name="repo_info").update(json={"requests": data[1][0]['requests'] + 1}).eq(column="installation_id", value=installation_id).execute()
+
+    # Not using right now (possible delete)
     def get_installation_id(self, repository_id: int) -> str:
         data, _ = self.client.table(table_name="repo_info").select("installation_id").contains(column='repository_ids', value=[str(object=repository_id)]).execute()
         if (data[1] and data[0][1]):

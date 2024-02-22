@@ -33,7 +33,6 @@ class GitHubManager:
         if signature is None:
             raise ValueError("Missing webhook signature")
         body: bytes = await request.body()
-
         # Compare the computed signature with the one in the headers
         hmac_key: bytes = secret.encode()
         hmac_signature: str = hmac.new(key=hmac_key, msg=body, digestmod=hashlib.sha256).hexdigest()
