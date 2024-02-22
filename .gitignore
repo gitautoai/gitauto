@@ -1,15 +1,7 @@
-# VSCode extension directory
+.aider.tags.cache.v3
 .history
 .env
-
-# Cache
 __pycache__
-
-# Virtual Environment
-venv
-
-# Others
-.aider.tags.cache.v3
-
-
 ngrok.yml
+tmp
+venv
