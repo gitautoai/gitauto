@@ -56,10 +56,6 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
 
     installation_id: str = payload["installation"]["id"]
 
-    # Read the private key for JWT
-    # https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app
-    with open(file='privateKey.pem', mode='rb') as pem_file:
-        signing_key: bytes = pem_file.read()
 
     # Create a JWT token for authentication
     now = int(time.time())
@@ -68,7 +64,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         'exp': now + 600,  # JWT expires in 10 minutes
         'iss': GITHUB_APP_ID
     }
-    encoded_jwt: str = jwt.encode(payload=payload, key=signing_key, algorithm='RS256')
+    encoded_jwt: str = jwt.encode(payload=payload, key=GITHUB_PRIVATE_KEY, algorithm='RS256')
     headers: dict[str, str] = {
         "Authorization": f"Bearer {encoded_jwt}",
         "Content-Type": "application/json"
@@ -79,7 +75,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
 
     new_uuid = uuid.uuid4()
     git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager', to_path=f'./tmp/{new_uuid}')
-
+    return 
     # Initialize the OpenAI API
     io = InputOutput(
       pretty=True,
