@@ -71,13 +71,14 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         "Authorization": f"Bearer {encoded_jwt}",
         "Content-Type": "application/json"
     }
-    print("decoded")
+    print("decoded, getting authenticated with gh")
     # TODO 47287862 should be {installation_id}
     response = requests.post(url=f'https://api.github.com/app/installations/47287862/access_tokens', headers=headers)
     token: str = response.json().get('token')
-
+    print("got response")
     new_uuid = uuid.uuid4()
     os.chdir(path='/tmp')
+    print("got into tmp")
     git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager', to_path=f'./{new_uuid}')
     print("Repo cloned")
     # Initialize the OpenAI API
