@@ -7,5 +7,8 @@ COPY . ${LAMBDA_TASK_ROOT}
 # Install dependencies
 RUN pip install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 
+RUN apt-get update && apt-get install -y git
+
+
 # Command to run from Lambda function
 CMD ["main.handler"]
