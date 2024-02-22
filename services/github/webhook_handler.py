@@ -77,7 +77,8 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     token: str = response.json().get('token')
 
     new_uuid = uuid.uuid4()
-    git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager', to_path=f'./tmp/{new_uuid}')
+    os.chdir(path='/tmp')
+    git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager', to_path=f'./{new_uuid}')
     print("Repo cloned")
     # Initialize the OpenAI API
     io = InputOutput(
@@ -142,7 +143,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     coder.run(with_message="add header with tag 'Hello World' to homepage")
 
     # Create a new branch and push to it
-    repo_path: Path = Path.cwd() / f'tmp/{new_uuid}'  # cwd stands for current working directory
+    repo_path: Path = Path.cwd() / f'{new_uuid}'  # cwd stands for current working directory
     original_path: str = os.getcwd()
     os.chdir(path=repo_path)
 
