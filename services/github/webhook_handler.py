@@ -77,7 +77,15 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     token: str = response.json().get('token')
     print("got response")
     new_uuid = uuid.uuid4()
-    os.chdir(path='/tmp')
+    
+    # Create and get into tmp folder
+    original_path: str = os.getcwd()
+    tmp_folder = '/tmp'
+    if not os.path.exists(tmp_folder):
+        os.makedirs(tmp_folder)
+    os.chdir(tmp_folder)
+    
+    
     print("got into tmp")
     git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager', to_path=f'./{new_uuid}')
     print("Repo cloned")
@@ -100,7 +108,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     io.tool_output(*sys.argv, log_only=True)
 
 
-    git_dname = str(Path.cwd() / f'tmp/{new_uuid}')
+    git_dname = str(Path.cwd() / f'{new_uuid}')
 
     openai_api_key = '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'
 
@@ -145,7 +153,6 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
 
     # Create a new branch and push to it
     repo_path: Path = Path.cwd() / f'{new_uuid}'  # cwd stands for current working directory
-    original_path: str = os.getcwd()
     os.chdir(path=repo_path)
 
     str_uuid = str(object=new_uuid)

@@ -19,8 +19,13 @@ def get_env_var(name: str) -> str:
 # GitHub Credentials from environment variables
 GITHUB_APP_ID: str = get_env_var(name="GITHUB_APP_ID")
 GITHUB_PRIVATE_KEY_ENCODED: str = get_env_var(name="GITHUB_PRIVATE_KEY")
-
-GITHUB_PRIVATE_KEY_JSON = json.loads(GITHUB_PRIVATE_KEY_ENCODED)
+print(GITHUB_PRIVATE_KEY_ENCODED)
+print(len(GITHUB_PRIVATE_KEY_ENCODED))
+if(get_env_var("ENV") == "local"):
+    GITHUB_PRIVATE_KEY_ENCODED = GITHUB_PRIVATE_KEY_ENCODED + '==\n-----END RSA PRIVATE KEY-----"}' 
+    print(GITHUB_PRIVATE_KEY_ENCODED)
+    print(len(GITHUB_PRIVATE_KEY_ENCODED))
+GITHUB_PRIVATE_KEY_JSON = json.loads(GITHUB_PRIVATE_KEY_ENCODED, strict=False)
 GITHUB_PRIVATE_KEY = GITHUB_PRIVATE_KEY_JSON['value']
 print(GITHUB_PRIVATE_KEY_JSON)
 
