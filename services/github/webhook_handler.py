@@ -26,7 +26,6 @@ supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVI
 
 
 async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
-    """ Handle the installation created event """
     installation_id: int = payload["installation"]["id"]
     account_login: str = payload["installation"]["account"]["login"]
     html_url: str = payload["installation"]["account"]["html_url"]
@@ -44,13 +43,11 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
 
 
 async def handle_installation_deleted(payload: GitHubInstallationPayload) -> None:
-    """ Handle the installation deleted event """
     installation_id: int = payload["installation"]["id"]
     supabase_manager.delete_installation_token(installation_id=installation_id)
 
 
 async def handle_issue_labeled(payload: GitHubLabeledPayload):
-    """ Handle the issue labeled event """
     # Extract label and validate it
     label: str = payload["label"]["name"]
     if label != LABEL:
