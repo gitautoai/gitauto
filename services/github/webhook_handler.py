@@ -103,10 +103,10 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         
 
         print("cloned!!!")
-        print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
+        print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git {new_uuid}')
         print('listing: ')
         os.system(f'ls')
-        os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
+        os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git {new_uuid}')
         print("LITING: ")
         os.system(f'ls')
         # git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', to_path=f'./{new_uuid}')
