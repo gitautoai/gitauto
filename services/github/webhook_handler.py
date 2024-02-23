@@ -107,6 +107,8 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         print('listing: ')
         os.system(f'ls')
         os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
+        print("LITING: ")
+        os.system(f'ls')
         # git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', to_path=f'./{new_uuid}')
     except Exception as e:
         print(e)
