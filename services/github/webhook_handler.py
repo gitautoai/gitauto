@@ -80,7 +80,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     
     # Create and get into tmp folder
     original_path: str = os.getcwd()
-    tmp_folder = '/tmp'
+    tmp_folder = original_path + '/tmp'
     if not os.path.exists(tmp_folder):
         os.makedirs(tmp_folder)
     os.chdir(tmp_folder)
@@ -88,13 +88,14 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     
     print("got into tmp")
     try:
+        print(os.getcwd())
         print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git ./{new_uuid}')
         os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git ./{new_uuid}')
         # git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', to_path=f'./{new_uuid}')
     except Exception as e:
         print(e)
     print("Repo cloned")
-    return
+
     # Initialize the OpenAI API
     io = InputOutput(
       pretty=True,
