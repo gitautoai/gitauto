@@ -113,7 +113,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     except Exception as e:
         print(e)
     print("Repo cloned")
-    return
+    
     # Initialize the OpenAI API
     io = InputOutput(
       pretty=True,
