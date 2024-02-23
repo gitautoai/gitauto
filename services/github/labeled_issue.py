@@ -8,6 +8,7 @@ from pathlib import Path
 import git
 import jwt
 import openai
+import subprocess
 
 # Local imports
 from agent.coders import Coder
@@ -16,8 +17,6 @@ from agent.models import Model
 from services.github.github_types import GitHubLabeledPayload, IssueInfo
 from config import OPEN_API_KEY, ENV
 from .github_manager import github_access_token
-
-
 
 
 async def handle_issue_labeled(payload: GitHubLabeledPayload):
@@ -37,6 +36,12 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     
     new_uuid = uuid.uuid4()
     
+    repo_dir = '/tmp/repo'
+    os.makedirs(repo_dir, exist_ok=True)
+    print('make dir')
+    subprocess.run(['git', 'clone', f' https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', repo_dir], check=True)
+    print('FINISHED')
+    return
     # Create and get into tmp folder
     original_path: str = os.getcwd()
     tmp_folder = '/tmp'
@@ -47,11 +52,9 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     os.chdir(tmp_folder)
     
     try:
-        print('listing: ')
-        os.system(f'ls')
-        print('current dir: ')
-        os.system(f'pwd')
-        print("created folder")
+        repo_dir = '/tmp/repo'
+        os.makedirs(repo_dir, exist_ok=True)
+        subprocess.run(['git', 'clone', f' https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', repo_dir], check=True)
 
         print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
         print('listing: ')
