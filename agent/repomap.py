@@ -434,5 +434,5 @@ if __name__ == "__main__":
     rm = RepoMap(root=".")
     repo_map = rm.get_ranked_tags_map(chat_fnames, other_fnames)
 
-    dump(len(repo_map))
+    # dump(len(repo_map))
     print(repo_map)

@@ -66,7 +66,7 @@ class Coder:
         skip_model_availabily_check=False,
         **kwargs,
     ):
-        from . import EditBlockCoder, UnifiedDiffCoder, WholeFileCoder
+        from . import  UnifiedDiffCoder
 
         if not main_model:
             main_model = Model.create("gpt-4")
@@ -83,11 +83,7 @@ class Coder:
         if edit_format is None:
             edit_format = main_model.edit_format
 
-        if edit_format == "diff":
-            return EditBlockCoder(client, main_model, io, **kwargs)
-        elif edit_format == "whole":
-            return WholeFileCoder(client, main_model, io, **kwargs)
-        elif edit_format == "udiff":
+        if edit_format == "udiff":
             return UnifiedDiffCoder(client, main_model, io, **kwargs)
         else:
             raise ValueError(f"Unknown edit format {edit_format}")
@@ -383,36 +379,9 @@ class Coder:
         return {"role": "user", "content": image_messages}
 
     def run(self, with_message=None):
+        # Will exist once commited
         while True:
-            try:
-                if with_message:
-                    new_user_message = with_message
-                    self.io.user_input(with_message)
-                else:
-                    new_user_message = self.run_loop()
-
-                while new_user_message:
-                    new_user_message = self.send_new_user_message(new_user_message)
-
-                if with_message:
-                    return self.partial_response_content
-
-            except KeyboardInterrupt:
-                self.keyboard_interrupt()
-            except EOFError:
-                return
-
-    def keyboard_interrupt(self):
-        now = time.time()
-
-        thresh = 2  # seconds
-        if self.last_keyboard_interrupt and now - self.last_keyboard_interrupt < thresh:
-            self.io.tool_error("\n\n^C KeyboardInterrupt")
-            sys.exit()
-
-        self.io.tool_error("\n\n^C again to exit")
-
-        self.last_keyboard_interrupt = now
+            self.send_new_user_message(with_message)
 
     def summarize_start(self):
         if not self.summarizer.too_big(self.done_messages):
@@ -456,24 +425,6 @@ class Coder:
                 dict(role="assistant", content="Ok."),
             ]
         self.cur_messages = []
-
-    def run_loop(self):
-        inp = self.io.get_input(
-            self.root,
-            self.get_inchat_relative_files(),
-            self.get_addable_relative_files(),
-            self.commands,
-        )
-
-        if not inp:
-            return
-
-        if self.commands.is_command(inp):
-            return self.commands.run(inp)
-
-        self.check_for_file_mentions(inp)
-
-        return self.send_new_user_message(inp)
 
     def fmt_system_prompt(self, prompt):
         prompt = prompt.format(fence=self.fence)
@@ -526,11 +477,8 @@ class Coder:
             utils.show_messages(messages, functions=self.functions)
 
         exhausted = False
-        interrupted = False
         try:
-            interrupted = self.send(messages, functions=self.functions)
-        except ExhaustedContextWindow:
-            exhausted = True
+            self.send(messages, functions=self.functions)
         except openai.BadRequestError as err:
             if "maximum context length" in str(err):
                 exhausted = True
@@ -557,13 +505,7 @@ class Coder:
         else:
             content = ""
 
-        if interrupted:
-            content += "\n^C KeyboardInterrupt"
-
         self.io.tool_output()
-        if interrupted:
-            self.cur_messages += [dict(role="assistant", content=content)]
-            return
 
         edited, edit_error = self.apply_updates()
         if edit_error:
@@ -646,20 +588,16 @@ class Coder:
         self.partial_response_content = ""
         self.partial_response_function_call = dict()
 
-        interrupted = False
-        try:
-            hash_object, completion = send_with_retries(
-                self.client, model, messages, functions, self.stream
-            )
-            self.chat_completion_call_hashes.append(hash_object.hexdigest())
+        hash_object, completion = send_with_retries(
+            self.client, model, messages, functions, self.stream
+        )
+        self.chat_completion_call_hashes.append(hash_object.hexdigest())
 
-            if self.stream:
-                self.show_send_output_stream(completion)
-            else:
-                self.show_send_output(completion)
-        except KeyboardInterrupt:
-            self.keyboard_interrupt()
-            interrupted = True
+        if self.stream:
+            self.show_send_output_stream(completion)
+        else:
+            self.show_send_output(completion)
+
 
         if self.partial_response_content:
             self.io.ai_output(self.partial_response_content)
@@ -669,7 +607,7 @@ class Coder:
             if args:
                 self.io.ai_output(json.dumps(args, indent=4))
 
-        return interrupted
+        return False
 
     def show_send_output(self, completion):
         if self.verbose:

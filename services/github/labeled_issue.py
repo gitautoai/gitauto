@@ -51,7 +51,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     def clone_progress(output):
       print(output.strip())
     clone_process = subprocess.Popen(
-        ['git', 'clone', f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', tmp_folder],
+        ['git', 'clone', f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', tmp_folder + '/' + str(new_uuid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True
@@ -68,23 +68,23 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
 
     print("Clone successful")
     print('FINISHED')
-    return
+    
   
   
-    try:
-        repo_dir = '/tmp/repo'
-        os.makedirs(repo_dir, exist_ok=True)
-        subprocess.run(['git', 'clone', f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', repo_dir], check=True)
+    # try:
+    #     repo_dir = '/tmp/repo'
+    #     os.makedirs(repo_dir, exist_ok=True)
+    #     subprocess.run(['git', 'clone', f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', repo_dir], check=True)
 
-        print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
-        print('listing: ')
-        os.system(f'ls')
-        # os.system('rm -rf lalager')
-        os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
-        print("LINING: ")
-        os.system(f'ls')
-    except Exception as e:
-        print(e)
+    #     print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
+    #     print('listing: ')
+    #     os.system(f'ls')
+    #     # os.system('rm -rf lalager')
+    #     os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
+    #     print("LINING: ")
+    #     os.system(f'ls')
+    # except Exception as e:
+    #     print(e)
 
     # Initialize the OpenAI API
     io = InputOutput(
@@ -110,39 +110,39 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     client = openai.OpenAI(api_key=OPEN_API_KEY, **kwargs)
 
     main_model = Model.create('gpt-4-1106-preview', client)
-    return
+    # return
     # Create a new coder instance
-    try:
-        coder = Coder.create(
-            main_model=main_model,
-            edit_format=None,
-            skip_model_availabily_check=False,
-            client=client,
-            io=None,
-            fnames=None,
-            git_dname=git_dname,
-            pretty=True,
-            show_diffs=False,
-            auto_commits=True,
-            dirty_commits=True,
-            dry_run=False,
-            map_tokens=1024,
-            verbose=True,
-            assistant_output_color="blue",
-            code_theme="default",
-            stream=True,
-            use_git=True,
-            voice_language=None,
-            aider_ignore_file=None,
-        )
-    except ValueError as err:
-        print(err)
-        return 1
+    
+    coder = Coder.create(
+        main_model=main_model,
+        edit_format=None,
+        skip_model_availabily_check=False,
+        client=client,
+        io=None,
+        fnames=None,
+        git_dname=git_dname,
+        pretty=True,
+        show_diffs=False,
+        auto_commits=True,
+        dirty_commits=True,
+        dry_run=False,
+        map_tokens=1024,
+        verbose=True,
+        assistant_output_color="blue",
+        code_theme="default",
+        stream=True,
+        use_git=True,
+        voice_language=None,
+        aider_ignore_file=None,
+    )
+
+
 
     # Run the coder
     io.tool_output("Use /help to see in-chat commands, run with --help to see cmd line args")
     io.add_to_input_history(inp="add header with tag 'Hello World' to homepage")
     io.tool_output()
+    print('start')
     coder.run(with_message="add header with tag 'Hello World' to homepage")
 
     # Create a new branch and push to it
