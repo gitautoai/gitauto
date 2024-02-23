@@ -89,8 +89,8 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     
     try:
         print("creating folder")
-        os.system(f'mkdir {new_uuid}')
-        os.system(f'cd {new_uuid}')
+        # os.system(f'mkdir {new_uuid}')
+        # os.system(f'cd {new_uuid}')
         print('listing: ')
         os.system(f'ls')
         print('current dir: ')
@@ -104,6 +104,8 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
 
         print("cloned!!!")
         print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
+        print('listing: ')
+        os.system(f'ls')
         os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
         # git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', to_path=f'./{new_uuid}')
     except Exception as e:
