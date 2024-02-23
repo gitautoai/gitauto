@@ -36,21 +36,23 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     
     new_uuid = uuid.uuid4()
     
-    repo_dir = '/tmp/repo'
-    os.makedirs(repo_dir, exist_ok=True)
-    print('make dir')
-    subprocess.run(['git', 'clone', f' https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', repo_dir], check=True)
-    print('FINISHED')
-    return
+
     # Create and get into tmp folder
     original_path: str = os.getcwd()
-    tmp_folder = '/tmp'
+    tmp_folder = '/tmp/repo'
     if(ENV == "local"):
         tmp_folder = original_path + '/tmp'
     if not os.path.exists(tmp_folder):
         os.makedirs(tmp_folder)
     os.chdir(tmp_folder)
     
+    os.makedirs(tmp_folder, exist_ok=True)
+    print('make dir')
+    subprocess.run(['git', 'clone', f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', tmp_folder], check=True)
+    print('FINISHED')
+    return
+  
+  
     try:
         repo_dir = '/tmp/repo'
         os.makedirs(repo_dir, exist_ok=True)
