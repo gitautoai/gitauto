@@ -41,14 +41,32 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     original_path: str = os.getcwd()
     tmp_folder = '/tmp/repo'
     if(ENV == "local"):
-        tmp_folder = original_path + '/tmp'
+        tmp_folder = original_path + '/tmp/repo'
     if not os.path.exists(tmp_folder):
         os.makedirs(tmp_folder)
     os.chdir(tmp_folder)
     
     os.makedirs(tmp_folder, exist_ok=True)
     print('make dir')
-    subprocess.run(['git', 'clone', f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', tmp_folder], check=True)
+    def clone_progress(output):
+      print(output.strip())
+    clone_process = subprocess.Popen(
+        ['git', 'clone', f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', tmp_folder],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True
+    )
+
+    for stdout_line in iter(clone_process.stdout.readline, ""):
+        clone_progress(stdout_line)
+
+    clone_process.stdout.close()
+    return_code = clone_process.wait()
+
+    if return_code != 0:
+        raise subprocess.CalledProcessError(return_code, 'git clone', output='Failed to clone repository')
+
+    print("Clone successful")
     print('FINISHED')
     return
   
@@ -56,7 +74,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     try:
         repo_dir = '/tmp/repo'
         os.makedirs(repo_dir, exist_ok=True)
-        subprocess.run(['git', 'clone', f' https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', repo_dir], check=True)
+        subprocess.run(['git', 'clone', f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', repo_dir], check=True)
 
         print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
         print('listing: ')
