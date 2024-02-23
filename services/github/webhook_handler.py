@@ -87,7 +87,10 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     
     
     print("got into tmp")
-    # git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager', to_path=f'./{new_uuid}')
+    try:
+        git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager', to_path=f'./{new_uuid}')
+    except Exception as e:
+        print(e)
     print("Repo cloned")
     # Initialize the OpenAI API
     io = InputOutput(
