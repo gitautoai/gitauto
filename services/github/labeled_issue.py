@@ -52,14 +52,13 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         print('current dir: ')
         os.system(f'pwd')
         print("created folder")
-        os.system(f'git init')
 
-        print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git {new_uuid}')
+        print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
         print('listing: ')
         os.system(f'ls')
-        os.system('rm -rf lalager')
+        # os.system('rm -rf lalager')
         os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
-        print("LITING: ")
+        print("LINING: ")
         os.system(f'ls')
     except Exception as e:
         print(e)
@@ -88,7 +87,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     client = openai.OpenAI(api_key=OPEN_API_KEY, **kwargs)
 
     main_model = Model.create('gpt-4-1106-preview', client)
-
+    return
     # Create a new coder instance
     try:
         coder = Coder.create(
