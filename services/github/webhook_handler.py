@@ -5,7 +5,7 @@ import sys
 import time
 import uuid
 from pathlib import Path
-import subprocess
+
 # Third-party imports
 import git
 import jwt
@@ -87,24 +87,21 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         os.makedirs(tmp_folder)
     os.chdir(tmp_folder)
     
-    
-    print("got into tmp")
     try:
-        print(os.getcwd())
-        os.system(f'ls')
-        os.system(f'pwd')
         print("creating folder")
         os.system(f'mkdir {new_uuid}')
-        print('listing: ', os.system(f'ls'))
-        print('current dir: ', os.system(f'pwd'))
-        print("created folder", os.system(f'cd {new_uuid}'))
+        os.system(f'cd {new_uuid}')
+        print('listing: ')
+        os.system(f'ls')
+        print('current dir: ')
+        os.system(f'pwd')
+        print("created folder")
+        os.system(f'git init')
+        print("git inited")
+        
+        # os.system(f'git config --global user.email "nikita@malinovsky.net')
+        
 
-        print("got into folder")
-        print('listing: ', os.system(f'ls'))
-        print('current dir: ', os.system(f'pwd'))
-        print("created folder", os.system(f'cd {new_uuid}'))
-
-        subprocess.run(["git", "clone", f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git'])
         print("cloned!!!")
         print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
         os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
