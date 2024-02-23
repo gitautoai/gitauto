@@ -1,9 +1,4 @@
-from pathlib import Path
 
-# Local imports
-from agent.coders import Coder
-from agent.inputoutput import InputOutput
-from agent.models import Model
 from config import  GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ENV
 from services.github.github_manager import GitHubManager
 from services.github.github_types import GitHubInstallationPayload

@@ -1,19 +1,33 @@
-from services.github.github_types import GitHubLabeledPayload, IssueInfo
-from config import  ENV
-from .github_manager import github_access_token
 import os
 import requests
 import sys
 import time
 import uuid
 
+from pathlib import Path
 import git
 import jwt
 import openai
 
+# Local imports
+from agent.coders import Coder
+from agent.inputoutput import InputOutput
+from agent.models import Model
+from services.github.github_types import GitHubLabeledPayload, IssueInfo
+from config import OPEN_API_KEY, ENV
+from .github_manager import github_access_token
+
+
+
+
 async def handle_issue_labeled(payload: GitHubLabeledPayload):
     label: str = payload["label"]["name"]
-    if label != 'pragent':
+    model = ''
+    if label == 'pragent':
+        model = 'gpt-4-1106-preview'
+    elif label == 'pragent-2':
+        model = 'gemini'
+    else:
         return
 
     issue: IssueInfo = payload["issue"]
@@ -33,32 +47,23 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     os.chdir(tmp_folder)
     
     try:
-        print("creating folder")
-        # os.system(f'mkdir {new_uuid}')
-        # os.system(f'cd {new_uuid}')
         print('listing: ')
         os.system(f'ls')
         print('current dir: ')
         os.system(f'pwd')
         print("created folder")
         os.system(f'git init')
-        print("git inited")
-        
-        # os.system(f'git config --global user.email "nikita@malinovsky.net')
-        
 
-        print("cloned!!!")
         print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git {new_uuid}')
         print('listing: ')
         os.system(f'ls')
-        os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git {new_uuid}')
+        os.system('rm -rf lalager')
+        os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
         print("LITING: ")
         os.system(f'ls')
-        # git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', to_path=f'./{new_uuid}')
     except Exception as e:
         print(e)
-    print("Repo cloned")
-    return
+
     # Initialize the OpenAI API
     io = InputOutput(
       pretty=True,
@@ -77,10 +82,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     # Print the tool output
     io.tool_output(*sys.argv, log_only=True)
 
-
     git_dname = str(Path.cwd() / f'{new_uuid}')
-
-
 
     kwargs = dict()
     client = openai.OpenAI(api_key=OPEN_API_KEY, **kwargs)
