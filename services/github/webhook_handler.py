@@ -5,7 +5,7 @@ import sys
 import time
 import uuid
 from pathlib import Path
-
+import subprocess
 # Third-party imports
 import git
 import jwt
@@ -91,11 +91,17 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     print("got into tmp")
     try:
         print(os.getcwd())
-        os.system(f'mkdir {new_uuid}')
-        print("created folder")
         os.system(f'ls')
+        os.system(f'pwd')
+        print("creating folder")
+        os.system(f'mkdir {new_uuid}')
+        os.system(f'ls')
+        os.system(f'pwd')
+        print("created folder")
         os.system(f'cd {new_uuid}')
         print("got into folder")
+        subprocess.run(["git", "clone", 'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', "/repository"])
+        print("cloned!!!")
         print(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
         os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
         # git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', to_path=f'./{new_uuid}')
