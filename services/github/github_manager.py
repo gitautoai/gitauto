@@ -8,7 +8,7 @@ import time
 # Third-party imports
 from fastapi import Request
 import jwt  # For generating JWTs (JSON Web Tokens)
-
+from config import  GITHUB_APP_ID, GITHUB_PRIVATE_KEY
 
 class GitHubManager:
     # Constructor to initialize the GitHub App ID and private key to this instance
@@ -61,3 +61,21 @@ class GitHubManager:
         except Exception as e:
             logging.error(msg=f"Error: {e}")
             raise
+
+
+def github_access_token(installation_id) -> str:
+    now = int(time.time())
+    payload = {
+        'iat': now,
+        'exp': now + 600,  # JWT expires in 10 minutes
+        'iss': GITHUB_APP_ID
+    }
+    encoded_jwt: str = jwt.encode(payload=payload, key=GITHUB_PRIVATE_KEY, algorithm='RS256')
+    headers: dict[str, str] = {
+        "Authorization": f"Bearer {encoded_jwt}",
+        "Content-Type": "application/json"
+    }
+    # TODO 47287862 should be {installation_id}
+    response = requests.post(url=f'https://api.github.com/app/installations/47287862/access_tokens', headers=headers)
+    token: str = response.json().get('token')
+    return token
