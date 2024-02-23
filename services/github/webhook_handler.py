@@ -15,7 +15,7 @@ import openai
 from agent.coders import Coder
 from agent.inputoutput import InputOutput
 from agent.models import Model
-from config import LABEL, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from config import LABEL, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ENV
 from services.github.github_manager import GitHubManager
 from services.github.github_types import GitHubInstallationPayload, GitHubLabeledPayload, IssueInfo
 from services.supabase.supabase_manager import InstallationTokenManager
@@ -80,7 +80,9 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     
     # Create and get into tmp folder
     original_path: str = os.getcwd()
-    tmp_folder = original_path + '/tmp'
+    tmp_folder = '/tmp'
+    if(ENV == "local"):
+        tmp_folder = original_path + '/tmp'
     if not os.path.exists(tmp_folder):
         os.makedirs(tmp_folder)
     os.chdir(tmp_folder)

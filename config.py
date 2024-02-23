@@ -21,7 +21,8 @@ GITHUB_APP_ID: str = get_env_var(name="GITHUB_APP_ID")
 GITHUB_PRIVATE_KEY_ENCODED: str = get_env_var(name="GITHUB_PRIVATE_KEY")
 print(GITHUB_PRIVATE_KEY_ENCODED)
 print(len(GITHUB_PRIVATE_KEY_ENCODED))
-if(get_env_var("ENV") == "local"):
+ENV = get_env_var("ENV")
+if(ENV == "local"):
     GITHUB_PRIVATE_KEY_ENCODED = GITHUB_PRIVATE_KEY_ENCODED + '==\n-----END RSA PRIVATE KEY-----"}' 
     print(GITHUB_PRIVATE_KEY_ENCODED)
     print(len(GITHUB_PRIVATE_KEY_ENCODED))
