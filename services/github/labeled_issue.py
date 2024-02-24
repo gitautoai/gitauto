@@ -46,32 +46,10 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         os.makedirs(tmp_folder)
     os.chdir(tmp_folder)
     
-    print("cloning:")
-    os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
+    print(f'cloning into /tmp/{new_uuid}:')
+    os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git {new_uuid}')
     print('DONE')
     return
-
-    print('make dir')
-    def clone_progress(output):
-      print(output.strip())
-    clone_process = subprocess.Popen(
-        ['git', 'clone', f'https://x-access-token:{token}@github.com/nikitamalinov/lalager.git', tmp_folder + '/' + str(new_uuid)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True
-    )
-
-    for stdout_line in iter(clone_process.stdout.readline, ""):
-        clone_progress(stdout_line)
-
-    clone_process.stdout.close()
-    return_code = clone_process.wait()
-
-    if return_code != 0:
-        raise subprocess.CalledProcessError(return_code, 'git clone', output='Failed to clone repository')
-
-    print("Clone successful")
-    print('FINISHED')
     
     return
   

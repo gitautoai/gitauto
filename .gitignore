@@ -1,6 +1,6 @@
 # VSCode extension directory
 .history
-.env
+# .env
 
 # Cache
 __pycache__
