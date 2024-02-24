@@ -1,23 +1,23 @@
 # Standard imports
 import os
-import requests
+import shutil
 import sys
 import time
-import uuid
 from pathlib import Path
+from uuid import UUID, uuid4
 
 # Third-party imports
 import git
-import jwt
 import openai
+import requests
 
 # Local imports
 from agent.coders import Coder
 from agent.inputoutput import InputOutput
 from agent.models import Model
-from config import LABEL, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, LABEL, OPENAI_API_KEY, OPENAI_MODEL_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 from services.github.github_manager import GitHubManager
-from services.github.github_types import GitHubInstallationPayload, GitHubLabeledPayload, IssueInfo
+from services.github.github_types import GitHubInstallationPayload, GitHubLabeledPayload, IssueInfo, RepositoryInfo
 from services.supabase.supabase_manager import InstallationTokenManager
 
 # Initialize managers
@@ -55,35 +55,14 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
 
     # Extract information from the payload
     issue: IssueInfo = payload["issue"]
-    # url: str = issue["html_url"]
-    repository_id: int = payload["repository"]["id"]
+    installation_id: int = payload["installation"]["id"]
+    repo: RepositoryInfo = payload["repository"]
+    repo_url: str = repo["html_url"]
 
-    # Retrieve the installation ID from Supabase
-    installation_id: str = supabase_manager.get_installation_id(repository_id=repository_id)
-
-    # Read the private key for JWT
-    # https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app
-    with open(file='privateKey.pem', mode='rb') as pem_file:
-        signing_key: bytes = pem_file.read()
-
-    # Create a JWT token for authentication
-    now = int(time.time())
-    payload = {
-        'iat': now,
-        'exp': now + 600,  # JWT expires in 10 minutes
-        'iss': GITHUB_APP_ID
-    }
-    encoded_jwt: str = jwt.encode(payload=payload, key=signing_key, algorithm='RS256')
-    headers: dict[str, str] = {
-        "Authorization": f"Bearer {encoded_jwt}",
-        "Content-Type": "application/json"
-    }
-
-    response = requests.post(url=f'https://api.github.com/app/installations/{installation_id}/access_tokens', headers=headers)
-    token: str = response.json().get('token')
-
-    new_uuid = uuid.uuid4()
-    git.Repo.clone_from(url=f'https://x-access-token:{token}@github.com/nikitamalinov/lalager', to_path=f'./tmp/{new_uuid}')
+    # Clone the repository
+    new_uuid: UUID = uuid4()
+    token: str = github_manager.get_installation_access_token(installation_id=installation_id)
+    github_manager.clone_repository(token=token, repo_url=repo_url, uuid=new_uuid)
 
     # Initialize the OpenAI API
     io = InputOutput(
@@ -103,15 +82,15 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     # Print the tool output
     io.tool_output(*sys.argv, log_only=True)
 
+    # Define the directory for the cloned repository
+    root_path: str = os.getcwd()
+    cloned_repo_path_instance: Path = Path.cwd() / f'tmp/{new_uuid}'
+    cloned_repo_path_str = str(object=Path.cwd() / f'tmp/{new_uuid}')
 
-    git_dname = str(Path.cwd() / f'tmp/{new_uuid}')
-
-    openai_api_key = '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'
-
-    kwargs = dict()
-    client = openai.OpenAI(api_key=openai_api_key, **kwargs)
-
-    main_model = Model.create('gpt-4-1106-preview', client)
+    # Configure the OpenAI client
+    kwargs = {}
+    client = openai.OpenAI(api_key=OPENAI_API_KEY, **kwargs)
+    main_model = Model.create(name=OPENAI_MODEL_ID, client=client)
 
     # Create a new coder instance
     try:
@@ -122,7 +101,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
             client=client,
             io=None,
             fnames=None,
-            git_dname=git_dname,
+            git_dname=cloned_repo_path_str,
             pretty=True,
             show_diffs=False,
             auto_commits=True,
@@ -142,44 +121,27 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         return 1
 
     # Run the coder with a specific command
-    io.tool_output("Use /help to see in-chat commands, run with --help to see cmd line args")
-    io.add_to_input_history(inp="add header with tag 'Hello World' to homepage")
-    io.tool_output()
-    coder.run(with_message="add header with tag 'Hello World' to homepage")
+    issue_title: str = issue.get('title')
+    issue_body: str = issue.get('body') or ""
+    message: str = f"Issue Title: {issue_title}\n\nIssue Body: {issue_body}"
+    coder.run(with_message=message)
 
-    # Create a new branch and push to it
-    repo_path: Path = Path.cwd() / f'tmp/{new_uuid}'  # cwd stands for current working directory
-    original_path: str = os.getcwd()
-    os.chdir(path=repo_path)
-
+    # Create a new branch (head) in local repo and push it to the remote repo
+    os.chdir(path=cloned_repo_path_instance)
     str_uuid = str(object=new_uuid)
-    # Create a new branch and push to it
-    repo = git.Repo(path=repo_path)
-    branch: str = str_uuid
-    repo.create_head(path=branch)
+    repo_instance = git.Repo(path=cloned_repo_path_instance)
+    branch_name: str = str_uuid
+    repo_instance.create_head(path=branch_name)
+    repo_instance.git.push('origin', branch_name)
     repo.git.push('origin', branch)
 
-    # Push to branch to create PR
-    remote_url: str = repo.remotes.origin.url
-    repo_name: str = remote_url.split(sep='/')[-1].replace('.git', '')
-    repo_owner: str = remote_url.split(sep='/')[-2]
-    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/pulls"
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "Authorization": f"Bearer {token}",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-    data: dict[str, str] = {
-        "title": issue['title'],
-        "body": "World",
-        "head": f"nikitamalinov:{str_uuid}",
-        "base": 'main',
-    }
-    response = requests.post(url=url, headers=headers, json=data)
+    # Create a Pull Request
+    response: requests.Response = github_manager.create_pull_request(repo=repo, branch_name=branch_name, issue=issue, token=token)
 
-    os.chdir(original_path)
+    os.chdir(path=root_path)
 
     # Delete the cloned repository
+    shutil.rmtree(path=cloned_repo_path_instance)
 
 
 # Determine the event type and call the appropriate handler
