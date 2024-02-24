@@ -17,8 +17,8 @@ def get_env_var(name: str) -> str:
 GITHUB_APP_ID: str = get_env_var(name="GITHUB_APP_ID")
 GITHUB_PRIVATE_KEY_ENCODED: str = get_env_var(name="GITHUB_PRIVATE_KEY")
 ENV = get_env_var("ENV")
-if(ENV == "local"):
-    GITHUB_PRIVATE_KEY_ENCODED = GITHUB_PRIVATE_KEY_ENCODED + '==\n-----END RSA PRIVATE KEY-----"}' 
+# if(ENV == "local"):
+    # GITHUB_PRIVATE_KEY_ENCODED = GITHUB_PRIVATE_KEY_ENCODED + '==\n-----END RSA PRIVATE KEY-----"}' 
 GITHUB_PRIVATE_KEY_JSON = json.loads(GITHUB_PRIVATE_KEY_ENCODED, strict=False)
 GITHUB_PRIVATE_KEY = GITHUB_PRIVATE_KEY_JSON['value']
 OPEN_API_KEY= get_env_var("OPEN_API_KEY")

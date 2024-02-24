@@ -1,15 +1,14 @@
 # Use Lambda base image
-FROM public.ecr.aws/lambda/python:3.10
+FROM python:3.10-bullseye
 
-RUN yum install -y git
+# RUN yum install -y git
 
+ENV PYTHONUNBUFFERED 1 
+EXPOSE 8000
+WORKDIR /app 
+# Copy requirements from host, to docker container in /app 
+COPY . .
 
-# Copy to Lambda root(which is specified in Lambda function, usually /var/task/ directory)
-COPY . ${LAMBDA_TASK_ROOT}
-
-# Install dependencies
-RUN pip install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
-
-
-# Command to run from Lambda function
-CMD ["main.handler"]
+RUN pip install -r requirements.txt 
+# Run the application in the port 8000
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "8000", "main:app"]
