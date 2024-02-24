@@ -52,7 +52,8 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     print('DONE')
     print("LINING: ")
     os.system('ls')
-
+    os.system('git config --global user.email "nikita@malinovsky.net"')
+    os.system('git config --global user.name "nikitamalinov"')
     # try:
     #     repo_dir = '/tmp/repo'
     #     os.makedirs(repo_dir, exist_ok=True)

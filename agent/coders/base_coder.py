@@ -379,9 +379,16 @@ class Coder:
         return {"role": "user", "content": image_messages}
 
     def run(self, with_message=None):
-        # Will exist once commited
-        while True:
-            self.send_new_user_message(with_message)
+        if with_message:
+            new_user_message = with_message
+            self.io.user_input(with_message)
+            
+        while new_user_message:
+            new_user_message = self.send_new_user_message(new_user_message)
+
+        if with_message:
+            return self.partial_response_content
+
 
     def summarize_start(self):
         if not self.summarizer.too_big(self.done_messages):
