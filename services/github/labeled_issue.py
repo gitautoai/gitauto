@@ -39,14 +39,18 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
 
     # Create and get into tmp folder
     original_path: str = os.getcwd()
-    tmp_folder = '/tmp/repo'
+    tmp_folder = '/tmp'
     if(ENV == "local"):
-        tmp_folder = original_path + '/tmp/repo'
+        tmp_folder = original_path + '/tmp'
     if not os.path.exists(tmp_folder):
         os.makedirs(tmp_folder)
     os.chdir(tmp_folder)
     
-    os.makedirs(tmp_folder, exist_ok=True)
+    print("cloning:")
+    os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git')
+    print('DONE')
+    return
+
     print('make dir')
     def clone_progress(output):
       print(output.strip())
@@ -69,7 +73,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     print("Clone successful")
     print('FINISHED')
     
-  
+    return
   
     # try:
     #     repo_dir = '/tmp/repo'
