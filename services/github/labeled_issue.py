@@ -40,19 +40,19 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     # Create and get into tmp folder
     original_path: str = os.getcwd()
     tmp_folder = '/tmp'
-    if(ENV == "local"):
-        tmp_folder = original_path + '/tmp'
+
+    tmp_folder = original_path + '/tmp'
     if not os.path.exists(tmp_folder):
         os.makedirs(tmp_folder)
     os.chdir(tmp_folder)
-    
+    os.system('pwd')
+    os.system('ls')
     print(f'cloning into /tmp/{new_uuid}:')
     os.system(f'git clone https://x-access-token:{token}@github.com/nikitamalinov/lalager.git {new_uuid}')
     print('DONE')
-    return
-    
-    return
-  
+    print("LINING: ")
+    os.system('ls')
+
     # try:
     #     repo_dir = '/tmp/repo'
     #     os.makedirs(repo_dir, exist_ok=True)
