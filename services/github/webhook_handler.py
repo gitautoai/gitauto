@@ -133,7 +133,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     branch_name: str = str_uuid
     repo_instance.create_head(path=branch_name)
     repo_instance.git.push('origin', branch_name)
-    repo.git.push('origin', branch)
+
 
     # Create a Pull Request
     response: requests.Response = github_manager.create_pull_request(repo=repo, branch_name=branch_name, issue=issue, token=token)
