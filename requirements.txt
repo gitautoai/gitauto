@@ -84,3 +84,5 @@ uvicorn==0.27.1
 wcwidth==0.2.13
 websockets==11.0.3
 XlsxWriter==3.1.9
+pytest>=6.0
+pytest-cov>=2.10
