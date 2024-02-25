@@ -2,7 +2,7 @@
 import hashlib  # For HMAC (Hash-based Message Authentication Code) signatures
 import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
 import logging
-import os
+# import os
 import time
 from uuid import UUID
 
@@ -75,16 +75,16 @@ class GitHubManager:
             logging.error(msg=f"Error: {e}")
             raise
 
-    def detect_modified_files(self, repo: Repo) -> list[str]:
-        """ Detect modified files that are already tracked by Git. """
-        return [item.a_path for item in repo.index.diff(other=None) if item.change_type != 'D']
+    # def detect_modified_files(self, repo: Repo) -> list[str]:
+    #     """ Detect modified files that are already tracked by Git. """
+    #     return [item.a_path for item in repo.index.diff(other=None) if item.change_type != 'D']
 
-    def detect_new_files(self, repo: Repo) -> list[str]:
-        return repo.untracked_files
+    # def detect_new_files(self, repo: Repo) -> list[str]:
+    #     return repo.untracked_files
 
-    def detect_removed_files(self, repo: Repo) -> list[str]:
-        """ Detect files removed from the filesystem but still tracked by Git. """
-        return [item.a_path for item in repo.index.diff(other=None) if item.change_type == 'D']
+    # def detect_removed_files(self, repo: Repo) -> list[str]:
+    #     """ Detect files removed from the filesystem but still tracked by Git. """
+    #     return [item.a_path for item in repo.index.diff(other=None) if item.change_type == 'D']
 
     def get_installation_access_token(self, installation_id: int) -> str:
         """ Get an access token for the installed GitHub App """
@@ -108,19 +108,19 @@ class GitHubManager:
             logging.error(msg=f"Error: {e}")
             raise
 
-    def get_repository_file_tree(self, repo: Repo) -> list[str]:
-        return [item.a_path for item in repo.tree().traverse()]
+    # def get_repository_file_tree(self, repo: Repo) -> list[str]:
+    #     return [item.a_path for item in repo.tree().traverse()]
 
-    def remove_files(self, repo: Repo, files_to_remove: list[str]) -> None:
-        """ Remove specified files from the Git repository. """
-        for file in files_to_remove:
-            if not os.path.exists(os.path.join(repo_path, file)):
-                repo.git.rm(file)
+    # def remove_files(self, repo: Repo, files_to_remove: list[str]) -> None:
+    #     """ Remove specified files from the Git repository. """
+    #     for file in files_to_remove:
+    #         if not os.path.exists(os.path.join(repo_path, file)):
+    #             repo.git.rm(file)
 
-    def stage_files(self, repo: Repo, files_to_stage: list[str]) -> None:
-        """ Stage specified files in the Git repository. """
-        for file in files_to_stage:
-            repo.git.add(file)
+    # def stage_files(self, repo: Repo, files_to_stage: list[str]) -> None:
+    #     """ Stage specified files in the Git repository. """
+    #     for file in files_to_stage:
+    #         repo.git.add(file)
 
     async def verify_webhook_signature(self, request: Request, secret: str) -> None:
         """ Verify the webhook signature for security """
