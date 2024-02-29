@@ -15,6 +15,7 @@ def get_env_var(name: str) -> str:
 
 
 # GitHub Credentials from environment variables
+GITHUB_API_URL: str = "https://api.github.com"
 GITHUB_API_VERSION: str = "2022-11-28"
 GITHUB_APP_ID: str = get_env_var(name="GITHUB_APP_ID")
 GITHUB_PRIVATE_KEY_ENCODED: str = get_env_var(name="GITHUB_PRIVATE_KEY")
@@ -32,7 +33,7 @@ SUPABASE_URL: str = get_env_var(name="SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY: str = get_env_var(name="SUPABASE_SERVICE_ROLE_KEY")
 
 # General
-LABEL = "agent"
-PRODUCT_NAME = "Agent AI"
+LABEL = "gitauto"
+PRODUCT_NAME = "GitAuto"
 PRODUCT_NAME_LOWER_HYPHENEATED = PRODUCT_NAME.lower().replace(" ", "-")
 TIMEOUT_IN_SECONDS = 120

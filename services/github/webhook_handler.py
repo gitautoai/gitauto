@@ -1,27 +1,16 @@
 # Standard imports
-import os
-import shutil
-import sys
 import time
-from pathlib import Path
-from uuid import UUID, uuid4
-
-# Third-party imports
-import git
-import openai
-import requests
 
 # Local imports
-from agent.coders import Coder
-from agent.inputoutput import InputOutput
-from agent.models import Model
-from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, LABEL, OPENAI_API_KEY, OPENAI_MODEL_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, LABEL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 from services.github.github_manager import GitHubManager
 from services.github.github_types import GitHubInstallationPayload, GitHubLabeledPayload, IssueInfo, RepositoryInfo
+from services.openai.openai_agent import OpenAIAgent
 from services.supabase.supabase_manager import InstallationTokenManager
 
 # Initialize managers
 github_manager = GitHubManager(app_id=GITHUB_APP_ID, private_key=GITHUB_PRIVATE_KEY)
+openai_agent = OpenAIAgent()
 supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
@@ -55,93 +44,30 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
 
     # Extract information from the payload
     issue: IssueInfo = payload["issue"]
+    issue_title: str = issue["title"]
+    issue_body: str = issue["body"] or ""
+    issue_comments: list[str] = [""]
     installation_id: int = payload["installation"]["id"]
     repo: RepositoryInfo = payload["repository"]
     repo_url: str = repo["html_url"]
+    owner: str = repo["owner"]["login"]
+    repo_name: str = repo["name"]
 
     # Clone the repository
-    new_uuid: UUID = uuid4()
     token: str = github_manager.get_installation_access_token(installation_id=installation_id)
-    github_manager.clone_repository(token=token, repo_url=repo_url, uuid=new_uuid)
+    file_paths: list[str] = github_manager.get_remote_file_tree(owner=owner, repo=repo_name, ref="main", token=token)
+    print(f"{time.strftime('%H:%M:%S', time.localtime())} Repository cloned: {repo_url}.\n")
 
-    # Initialize the OpenAI API
-    io = InputOutput(
-      pretty=True,
-      yes=True,
-      input_history_file=None,
-      chat_history_file=None,
-      input=input,
-      output=None,
-      user_input_color="blue",
-      tool_output_color=None,
-      tool_error_color="red",
-      encoding="utf-8",
-      dry_run=False,
-    )
-
-    # Print the tool output
-    io.tool_output(*sys.argv, log_only=True)
-
-    # Define the directory for the cloned repository
-    root_path: str = os.getcwd()
-    cloned_repo_path_instance: Path = Path.cwd() / f'tmp/{new_uuid}'
-    cloned_repo_path_str = str(object=Path.cwd() / f'tmp/{new_uuid}')
-
-    # Configure the OpenAI client
-    kwargs = {}
-    client = openai.OpenAI(api_key=OPENAI_API_KEY, **kwargs)
-    main_model = Model.create(name=OPENAI_MODEL_ID, client=client)
-
-    # Create a new coder instance
-    try:
-        coder = Coder.create(
-            main_model=main_model,
-            edit_format=None,
-            skip_model_availabily_check=False,
-            client=client,
-            io=None,
-            fnames=None,
-            git_dname=cloned_repo_path_str,
-            pretty=True,
-            show_diffs=False,
-            auto_commits=True,
-            dirty_commits=True,
-            dry_run=False,
-            map_tokens=1024,
-            verbose=True,
-            assistant_output_color="blue",
-            code_theme="default",
-            stream=True,
-            use_git=True,
-            voice_language=None,
-            aider_ignore_file=None,
+    openai_agent.run_assistant(
+        file_paths=file_paths,
+        issue_title=issue_title,
+        issue_body=issue_body,
+        issue_comments=issue_comments,
+        owner=owner,
+        ref="main",
+        repo=repo_name
         )
-    except ValueError as err:
-        print(err)
-        return 1
-
-    # Run the coder with a specific command
-    issue_title: str = issue.get('title')
-    issue_body: str = issue.get('body') or ""
-    message: str = f"Issue Title: {issue_title}\n\nIssue Body: {issue_body}"
-    coder.run(with_message=message)
-
-    # Create a new branch (head) in local repo and push it to the remote repo
-    os.chdir(path=cloned_repo_path_instance)
-    str_uuid = str(object=new_uuid)
-    repo_instance = git.Repo(path=cloned_repo_path_instance)
-    branch_name: str = str_uuid
-    repo_instance.create_head(path=branch_name)
-    repo_instance.git.push('origin', branch_name)
-
-
-    # Create a Pull Request
-    response: requests.Response = github_manager.create_pull_request(repo=repo, branch_name=branch_name, issue=issue, token=token)
-
-    os.chdir(path=root_path)
-
-    # Delete the cloned repository
-    shutil.rmtree(path=cloned_repo_path_instance)
+    return
 
 
 # Determine the event type and call the appropriate handler
