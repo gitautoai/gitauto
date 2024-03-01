@@ -1,4 +1,4 @@
-from typing import TypedDict, Dict, List, Optional
+from typing import TypedDict, Dict, List, Optional, Union
 
 
 class LabelInfo(TypedDict):
@@ -214,3 +214,6 @@ class GitHubLabeledPayload(TypedDict):
     organization: OrganizationInfo
     sender: UserInfo
     installation: InstallationMiniInfo
+
+
+GitHubEventPayload = Union[GitHubInstallationPayload, GitHubLabeledPayload]

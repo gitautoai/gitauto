@@ -1,4 +1,5 @@
-from openai.types.beta.assistant_create_params import ToolAssistantToolsFunction
+# flake8: noqa
+from openai.types import shared_params
 
 FILE_PATH: dict[str, str] = {
     "type": "string",
@@ -17,20 +18,17 @@ REPO: dict[str, str] = {
     "description": "The name of the repository. For example, 'openai-python'."
 }
 
-get_remote_file_content: ToolAssistantToolsFunction = {
-    "type": "function",
-    "function": {
-        "name": "get_remote_file_content",
-        "description": "Fetches the content of a file from GitHub remote repository given the owner, repo, file_path, and ref.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "owner": OWNER,
-                "repo": REPO,
-                "file_path": FILE_PATH,
-                "ref": REF
-            },
-            "required": ["owner", "repo", "file_path", "ref"]
+get_remote_file_content: shared_params.FunctionDefinition = {
+    "name": "get_remote_file_content",
+    "description": "Fetches the content of a file from GitHub remote repository given the owner, repo, file_path, and ref.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "owner": OWNER,
+            "repo": REPO,
+            "file_path": FILE_PATH,
+            "ref": REF
         },
-    }
+        "required": ["owner", "repo", "file_path", "ref"]
+    },
 }

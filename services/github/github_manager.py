@@ -100,15 +100,11 @@ class GitHubManager:
             sha: str,
             token: str
             ) -> None:
-        url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/refs"
-        headers: dict[str, str] = self.create_headers(token=token)
-        data: dict[str, str] = {"ref": f"refs/heads/{branch_name}", "sha": sha}
-
         try:
             response: requests.Response = requests.post(
-                url=url,
-                headers=headers,
-                json=data,
+                url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/refs",
+                headers=self.create_headers(token=token),
+                json={"ref": f"refs/heads/{branch_name}", "sha": sha},
                 timeout=TIMEOUT_IN_SECONDS
             )
             response.raise_for_status()
