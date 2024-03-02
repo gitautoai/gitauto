@@ -1,6 +1,7 @@
 # Standard imports
 import json
 import time
+from typing import Any
 
 # Third-party imports
 from openai import OpenAI
@@ -10,8 +11,8 @@ from openai.types.beta.threads import Run, ThreadMessage, MessageContentText
 from openai.types.beta.threads.runs import RunStep
 
 # Local imports
-from config import OPENAI_API_KEY, OPENAI_MODEL_ID, OPENAI_ORG_ID
-from services.openai.functions import get_remote_file_content
+from config import OPENAI_API_KEY, OPENAI_FINAL_STATUSES, OPENAI_MODEL_ID, OPENAI_ORG_ID
+from services.openai.functions import GET_REMOTE_FILE_CONTENT, functions
 from services.openai.instructions import SYSTEM_INSTRUCTION
 from utils.file_manager import split_diffs
 
@@ -25,7 +26,7 @@ assistant: Assistant = client.beta.assistants.create(
     tools=[
         {"type": "code_interpreter"},
         {"type": "retrieval"},
-        {"type": "function", "function": get_remote_file_content}
+        {"type": "function", "function": GET_REMOTE_FILE_CONTENT}
     ],
     model=OPENAI_MODEL_ID
 )
@@ -34,7 +35,7 @@ print(f"Assistant is created: {assistant_id}\n")
 
 
 def create_thread_and_run(user_input: str) -> tuple[Thread, Run]:
-    """ thread represents a conversation. 1 thread per 1 issue. 
+    """ thread represents a conversation. 1 thread per 1 issue.
     Assistants API will manage the context window.
     https://cookbook.openai.com/examples/assistants_api_overview_python """
     thread: Thread = client.beta.threads.create()
@@ -44,7 +45,7 @@ def create_thread_and_run(user_input: str) -> tuple[Thread, Run]:
 
 def get_response(thread: Thread) -> SyncCursorPage[ThreadMessage]:
     """ https://cookbook.openai.com/examples/assistants_api_overview_python """
-    return client.beta.threads.messages.list(thread_id=thread.id, order="asc")
+    return client.beta.threads.messages.list(thread_id=thread.id, order="desc")
 
 
 def run_assistant(
@@ -55,6 +56,7 @@ def run_assistant(
         owner: str,
         ref: str,
         repo: str,
+        token: str
         ) -> list[str]:
 
     # Create a message in the thread
@@ -76,15 +78,15 @@ def run_assistant(
     print(f"Run is created: {run.id}\n")
 
     # Wait for the run to complete
-    run: Run = wait_on_run(run=run, thread=thread)
+    run: Run = wait_on_run(run=run, thread=thread, token=token)
 
     # Get the steps
     run_steps: SyncCursorPage[RunStep] = client.beta.threads.runs.steps.list(
-        thread_id=thread.id, run_id=run.id, order="asc"
+        thread_id=thread.id, run_id=run.id, order="desc"
     )
     for step in run_steps.data:
         step_details = step.step_details
-        print(json.dumps(obj=step_details, indent=2))
+        print(f"Step details: {step_details}\n")
 
     # Get the response
     messages: SyncCursorPage[ThreadMessage] = get_response(thread=thread)
@@ -96,7 +98,8 @@ def run_assistant(
     print(f"Last message: {value}\n")
 
     text_diffs: list[str] = split_diffs(diff_text=value)
-    print(f"Text diffs: {text_diffs}\n")
+    for diff in text_diffs:
+        print(f"Diff: {diff}\n")
     return text_diffs
 
 
@@ -106,15 +109,53 @@ def submit_message(thread: Thread, user_message: str) -> Run:
     return client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant_id)
 
 
-def wait_on_run(run: Run, thread: Thread) -> Run:
+def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
     """ https://cookbook.openai.com/examples/assistants_api_overview_python """
     print(f"Run status before loop: {run.status}")
-    while run.status in ["queued", "in_progress"]:
+    while run.status not in OPENAI_FINAL_STATUSES:
         print(f"Run status during loop: {run.status}")
         run = client.beta.threads.runs.retrieve(
             thread_id=thread.id,
             run_id=run.id,
         )
+
+        # If the run requires action, call the function and run again with the output
+        if run.status == "requires_action":
+            print("Run requires action")
+            try:
+                tool_call, func_res = call_function(run=run, funcs=functions, token=token)
+                run = client.beta.threads.runs.submit_tool_outputs(
+                    thread_id=thread.id,
+                    run_id=run.id,
+                    tool_outputs=[
+                        {"tool_call_id": tool_call.id, "output": json.dumps(obj=func_res)}
+                    ],
+                )
+            except Exception as e:
+                raise ValueError(f"Error: {e}") from e
         time.sleep(0.5)
     print(f"Run status after loop: {run.status}")
     return run
+
+
+def call_function(run: Run, funcs: dict[str, Any], token: str):
+    # Get the tool call
+    if run.required_action is not None:
+        tool_call = run.required_action.submit_tool_outputs.tool_calls[0]
+    else:
+        raise ValueError("No tool call in the run.")
+
+    # Get the function name and arguments to call
+    name: str = tool_call.function.name
+    args: Any = json.loads(s=tool_call.function.arguments)
+    args["token"] = token
+    print(f"{name=}\n{args=}\n")
+
+    # Call the function
+    try:
+        func = funcs[name]
+        return tool_call, func(**args)
+    except KeyError as e:
+        raise ValueError(f"Function not found: {e}") from e
+    except Exception as e:
+        raise ValueError(f"Error: {e}") from e

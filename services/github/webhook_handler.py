@@ -2,8 +2,8 @@
 import time
 
 # Local imports
-from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, LABEL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-from services.github.github_manager import GitHubManager
+from config import LABEL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from services.github.github_manager import get_installation_access_token, get_remote_file_tree
 from services.github.github_types import (
     GitHubEventPayload,
     GitHubInstallationPayload,
@@ -15,7 +15,6 @@ from services.openai.openai_agent import run_assistant
 from services.supabase.supabase_manager import InstallationTokenManager
 
 # Initialize managers
-github_manager = GitHubManager(app_id=GITHUB_APP_ID, private_key=GITHUB_PRIVATE_KEY)
 supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
@@ -65,8 +64,8 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     repo_name: str = repo["name"]
 
     # Clone the repository
-    token: str = github_manager.get_installation_access_token(installation_id=installation_id)
-    file_paths: list[str] = github_manager.get_remote_file_tree(
+    token: str = get_installation_access_token(installation_id=installation_id)
+    file_paths: list[str] = get_remote_file_tree(
         owner=owner, repo=repo_name, ref="main", token=token
     )
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Repository cloned: {repo_url}.\n")
@@ -78,7 +77,8 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         issue_comments=issue_comments,
         owner=owner,
         ref="main",
-        repo=repo_name
+        repo=repo_name,
+        token=token
         )
     return
 

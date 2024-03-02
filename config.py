@@ -27,6 +27,7 @@ OPENAI_API_KEY: str = get_env_var(name="OPENAI_API_KEY")
 OPENAI_MAX_TOKENS = 4096
 OPENAI_MODEL_ID = "gpt-4-turbo-preview"
 OPENAI_ORG_ID: str = get_env_var(name="OPENAI_ORG_ID")
+OPENAI_FINAL_STATUSES: list[str] = ["cancelled", "completed", "expired", "failed"]
 
 # Supabase Credentials from environment variables
 SUPABASE_URL: str = get_env_var(name="SUPABASE_URL")

@@ -6,16 +6,13 @@ from fastapi import FastAPI, HTTPException, Request
 from mangum import Mangum
 
 # Local imports
-from config import GITHUB_APP_ID, GITHUB_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET
-from services.github.github_manager import GitHubManager
+from config import GITHUB_WEBHOOK_SECRET
+from services.github.github_manager import verify_webhook_signature
 from services.github.webhook_handler import handle_webhook_event
 
 # Create FastAPI instance
 app = FastAPI()
 handler = Mangum(app=app)
-
-# Initialize GitHub manager
-github_manager = GitHubManager(app_id=GITHUB_APP_ID, private_key=GITHUB_PRIVATE_KEY)
 
 
 @app.post(path="/webhook")
@@ -23,7 +20,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     try:
         print("Webhook received")
         # Validate the webhook signature
-        await github_manager.verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)
+        await verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)
         print("Webhook signature verified")
 
         # Process the webhook event
@@ -39,7 +36,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
         return {"message": "Webhook processed successfully"}
     except Exception as e:
         print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(object=e))
+        raise HTTPException(status_code=500, detail=str(object=e)) from e
 
 
 @app.get(path="/")

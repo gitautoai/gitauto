@@ -1,5 +1,12 @@
 # flake8: noqa
+# Standard imports
+from typing import Any
+
+# Third-party imports
 from openai.types import shared_params
+
+# Local imports
+from services.github.github_manager import get_remote_file_content
 
 FILE_PATH: dict[str, str] = {
     "type": "string",
@@ -18,9 +25,9 @@ REPO: dict[str, str] = {
     "description": "The name of the repository. For example, 'openai-python'."
 }
 
-get_remote_file_content: shared_params.FunctionDefinition = {
+GET_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
     "name": "get_remote_file_content",
-    "description": "Fetches the content of a file from GitHub remote repository given the owner, repo, file_path, and ref.",
+    "description": "Fetches the content of a file from GitHub remote repository given the owner, repo, file_path, and ref when you need to access the file content to analyze or modify it.",
     "parameters": {
         "type": "object",
         "properties": {
@@ -31,4 +38,9 @@ get_remote_file_content: shared_params.FunctionDefinition = {
         },
         "required": ["owner", "repo", "file_path", "ref"]
     },
+}
+
+# Define functions
+functions: dict[str, Any] = {
+    "get_remote_file_content": get_remote_file_content
 }
