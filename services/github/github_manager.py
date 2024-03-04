@@ -18,6 +18,7 @@ from config import (
     GITHUB_API_URL, GITHUB_API_VERSION, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, TIMEOUT_IN_SECONDS
 )
 from services.github.github_types import GitHubContentInfo
+from utils.file_manager import apply_patch
 
 
 def clone_repository(token: str, repo_url: str, uuid: UUID) -> str:
@@ -38,7 +39,7 @@ def clone_repository(token: str, repo_url: str, uuid: UUID) -> str:
 def commit_changes_to_remote_branch(
         branch: str,
         commit_message: str,
-        content: str,
+        diff_text: str,
         file_path: str,
         owner: str,
         repo: str,
@@ -53,17 +54,26 @@ def commit_changes_to_remote_branch(
             headers=create_headers(token=token),
             timeout=TIMEOUT_IN_SECONDS
         )
-        get_response.raise_for_status()
+        original_text = ""
+        sha = ""
+        print(f"{get_response.status_code=}\n")
+        if get_response.status_code == 200:
+            get_json: GitHubContentInfo = get_response.json()
+            original_text: str = base64.b64decode(s=get_json['content']).decode(encoding='utf-8')
+            sha: str = get_json['sha']
+        elif get_response.status_code != 404:  # Error other than 'file not found'
+            get_response.raise_for_status()
 
-        # Update the file if it exists or create a new file if it doesn't
-        get_json: GitHubContentInfo = get_response.json()
+        # Create a new commit
+        modified_text: str = apply_patch(original_text=original_text, diff_text=diff_text)
         data: dict[str, str | None] = {
             "message": commit_message,
-            "content": base64.b64encode(s=content.encode(encoding='utf-8'))
+            "content": base64.b64encode(s=modified_text.encode(encoding='utf-8'))
             .decode(encoding='utf-8'),
             "branch": branch,
-            "sha": get_json['sha'] if 'sha' in get_json else None
         }
+        if sha != "":
+            data["sha"] = sha
         put_response = requests.put(
             url=url,
             json=data,

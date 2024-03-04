@@ -5,7 +5,12 @@ from uuid import uuid4
 # Local imports
 from config import PRODUCT_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 from services.github.github_manager import (
-    commit_changes_to_remote_branch, create_pull_request, create_remote_branch, get_installation_access_token, get_latest_remote_commit_sha, get_remote_file_tree
+    commit_changes_to_remote_branch,
+    create_pull_request,
+    create_remote_branch,
+    get_installation_access_token,
+    get_latest_remote_commit_sha,
+    get_remote_file_tree
 )
 from services.github.github_types import (
     GitHubEventPayload,
@@ -63,7 +68,6 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     issue_comments: list[str] = [""]
     installation_id: int = payload["installation"]["id"]
     repo: RepositoryInfo = payload["repository"]
-    repo_url: str = repo["html_url"]
     owner: str = repo["owner"]["login"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
@@ -73,7 +77,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     file_paths: list[str] = get_remote_file_tree(
         owner=owner, repo=repo_name, ref=base_branch, token=token
     )
-    print(f"{time.strftime('%H:%M:%S', time.localtime())} Repository cloned: {repo_url}.\n")
+    print(f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n")
 
     diffs: list[str] = run_assistant(
         file_paths=file_paths,
@@ -108,7 +112,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         commit_changes_to_remote_branch(
             branch=new_branch,
             commit_message=f"Update {file_path}",
-            content=diff,
+            diff_text=diff,
             file_path=file_path,
             owner=owner,
             repo=repo_name,
