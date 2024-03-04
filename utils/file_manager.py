@@ -25,6 +25,13 @@ def apply_patch(original_text: str, diff_text: str) -> str:
     return modified_text
 
 
+def extract_file_name(diff_text: str) -> str:
+    match = re.search(pattern=r'^\+\+\+ (.+)$', string=diff_text, flags=re.MULTILINE)
+    if match:
+        return match.group(1)
+    raise ValueError("No file name found in the diff text.")
+
+
 def split_diffs(diff_text: str) -> list[str]:
     # Split the diff text into parts for each file
     file_diffs: list[str] = re.split(pattern=r'(?=^---\s)', string=diff_text, flags=re.MULTILINE)

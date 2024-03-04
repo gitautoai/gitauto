@@ -1,9 +1,12 @@
 # Standard imports
 import time
+from uuid import uuid4
 
 # Local imports
-from config import LABEL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-from services.github.github_manager import get_installation_access_token, get_remote_file_tree
+from config import PRODUCT_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from services.github.github_manager import (
+    commit_changes_to_remote_branch, create_pull_request, create_remote_branch, get_installation_access_token, get_latest_remote_commit_sha, get_remote_file_tree
+)
 from services.github.github_types import (
     GitHubEventPayload,
     GitHubInstallationPayload,
@@ -13,6 +16,7 @@ from services.github.github_types import (
 )
 from services.openai.openai_agent import run_assistant
 from services.supabase.supabase_manager import InstallationTokenManager
+from utils.file_manager import extract_file_name
 
 # Initialize managers
 supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
@@ -49,7 +53,7 @@ async def handle_installation_deleted(payload: GitHubInstallationPayload) -> Non
 async def handle_issue_labeled(payload: GitHubLabeledPayload):
     # Extract label and validate it
     label: str = payload["label"]["name"]
-    if label != LABEL:
+    if label != PRODUCT_ID:
         return
 
     # Extract information from the payload
@@ -62,24 +66,68 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     repo_url: str = repo["html_url"]
     owner: str = repo["owner"]["login"]
     repo_name: str = repo["name"]
+    base_branch: str = repo["default_branch"]
 
     # Clone the repository
     token: str = get_installation_access_token(installation_id=installation_id)
     file_paths: list[str] = get_remote_file_tree(
-        owner=owner, repo=repo_name, ref="main", token=token
+        owner=owner, repo=repo_name, ref=base_branch, token=token
     )
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Repository cloned: {repo_url}.\n")
 
-    run_assistant(
+    diffs: list[str] = run_assistant(
         file_paths=file_paths,
         issue_title=issue_title,
         issue_body=issue_body,
         issue_comments=issue_comments,
         owner=owner,
-        ref="main",
+        ref=base_branch,
         repo=repo_name,
         token=token
+    )
+
+    # Create a remote branch
+    uuid: str = str(object=uuid4())
+    new_branch: str = f"{PRODUCT_ID}/issue-#{issue['number']}-{uuid}"
+    latest_commit_sha = get_latest_remote_commit_sha(
+        owner=owner, repo=repo_name, branch=base_branch, token=token
+    )
+    create_remote_branch(
+        branch_name=new_branch,
+        owner=owner,
+        repo=repo_name,
+        sha=latest_commit_sha,
+        token=token
+    )
+    print(f"{time.strftime('%H:%M:%S', time.localtime())} Remote branch created: {new_branch}.\n")
+
+    # Commit the changes to the new remote branch
+    for diff in diffs:
+        file_path: str = extract_file_name(diff_text=diff)
+        print(f"{time.strftime('%H:%M:%S', time.localtime())} File path: {file_path}.\n")
+        commit_changes_to_remote_branch(
+            branch=new_branch,
+            commit_message=f"Update {file_path}",
+            content=diff,
+            file_path=file_path,
+            owner=owner,
+            repo=repo_name,
+            token=token
         )
+        print(f"{time.strftime('%H:%M:%S', time.localtime())} Changes committed to {new_branch}.\n")
+
+    # Create a pull request to the base branch
+    create_pull_request(
+        base=base_branch,
+        body=issue_body,
+        head=new_branch,
+        owner=owner,
+        repo=repo_name,
+        title=f"Fix {issue_title} with {PRODUCT_ID} model",
+        token=token
+    )
+    print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
+
     return
 
 

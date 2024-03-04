@@ -17,6 +17,7 @@ from git import Repo
 from config import (
     GITHUB_API_URL, GITHUB_API_VERSION, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, TIMEOUT_IN_SECONDS
 )
+from services.github.github_types import GitHubContentInfo
 
 
 def clone_repository(token: str, repo_url: str, uuid: UUID) -> str:
@@ -32,6 +33,50 @@ def clone_repository(token: str, repo_url: str, uuid: UUID) -> str:
         to_path=repo_clone_path
     )
     return repo_clone_path
+
+
+def commit_changes_to_remote_branch(
+        branch: str,
+        commit_message: str,
+        content: str,
+        file_path: str,
+        owner: str,
+        repo: str,
+        token: str
+        ) -> None:
+    """ https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents """
+    url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}"
+    try:
+        # Get the SHA of the file if it exists
+        get_response = requests.get(
+            url=url,
+            headers=create_headers(token=token),
+            timeout=TIMEOUT_IN_SECONDS
+        )
+        get_response.raise_for_status()
+
+        # Update the file if it exists or create a new file if it doesn't
+        get_json: GitHubContentInfo = get_response.json()
+        data: dict[str, str | None] = {
+            "message": commit_message,
+            "content": base64.b64encode(s=content.encode(encoding='utf-8'))
+            .decode(encoding='utf-8'),
+            "branch": branch,
+            "sha": get_json['sha'] if 'sha' in get_json else None
+        }
+        put_response = requests.put(
+            url=url,
+            json=data,
+            headers=create_headers(token=token),
+            timeout=TIMEOUT_IN_SECONDS
+        )
+        put_response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        raise
+    except Exception as e:
+        logging.error(msg=f"Error: {e}")
+        raise
 
 
 def create_headers(token: str) -> dict[str, str]:
@@ -55,28 +100,20 @@ def create_jwt() -> str:
 
 
 def create_pull_request(
-        base: str,  # The branch name you want to merge your changes into
+        base: str,  # The branch name you want to merge your changes into. ex) 'main'
         body: str,
-        head: str,
+        head: str,  # The branch name that contains your changes
         owner: str,
         repo: str,
         title: str,
         token: str
         ) -> dict[str, Any]:
-    url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls"
-    headers: dict[str, str] = create_headers(token=token)
-    data: dict[str, str] = {
-        "title": title,
-        "body": body,
-        "head": head,
-        "base": base,
-    }
-
+    """ https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request """
     try:
         response: requests.Response = requests.post(
-            url=url,
-            headers=headers,
-            json=data,
+            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls",
+            headers=create_headers(token=token),
+            json={"title": title, "body": body, "head": head, "base": base},
             timeout=TIMEOUT_IN_SECONDS
         )
         response.raise_for_status()
@@ -134,6 +171,25 @@ def get_installation_access_token(installation_id: int) -> str:
         raise
 
 
+def get_latest_remote_commit_sha(owner: str, repo: str, branch: str, token: str) -> str:
+    """ SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
+    https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference """
+    try:
+        response: requests.Response = requests.get(
+            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/ref/heads/{branch}",
+            headers=create_headers(token=token),
+            timeout=TIMEOUT_IN_SECONDS
+        )
+        response.raise_for_status()
+        return response.json()["object"]["sha"]
+    except requests.exceptions.HTTPError as e:
+        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        raise
+    except Exception as e:
+        logging.error(msg=f"Error: {e}")
+        raise
+
+
 def get_remote_file_content(
         file_path: str,  # Ex) 'src/main.py'
         owner: str,
@@ -154,7 +210,7 @@ def get_remote_file_content(
         response.raise_for_status()
         encoded_content: str = response.json()["content"]
         decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding="utf-8")
-        print(f"```{file_path}:\n{decoded_content}```")
+        # print(f"```{file_path}:\n{decoded_content}```")
         return decoded_content
     except requests.exceptions.HTTPError as e:
         logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")

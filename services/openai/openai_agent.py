@@ -24,8 +24,8 @@ assistant: Assistant = client.beta.assistants.create(
     name="GitAuto: Automated Issue Resolver",
     instructions=SYSTEM_INSTRUCTION,
     tools=[
-        {"type": "code_interpreter"},
-        {"type": "retrieval"},
+        # {"type": "code_interpreter"},
+        # {"type": "retrieval"},
         {"type": "function", "function": GET_REMOTE_FILE_CONTENT}
     ],
     model=OPENAI_MODEL_ID

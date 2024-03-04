@@ -34,7 +34,6 @@ SUPABASE_URL: str = get_env_var(name="SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY: str = get_env_var(name="SUPABASE_SERVICE_ROLE_KEY")
 
 # General
-LABEL = "gitauto"
+PRODUCT_ID = "gitauto"
 PRODUCT_NAME = "GitAuto"
-PRODUCT_NAME_LOWER_HYPHENEATED = PRODUCT_NAME.lower().replace(" ", "-")
 TIMEOUT_IN_SECONDS = 120
