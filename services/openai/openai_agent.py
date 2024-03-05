@@ -96,7 +96,10 @@ def run_assistant(
 
     # Get the response
     messages: SyncCursorPage[ThreadMessage] = get_response(thread=thread)
-    latest_message: ThreadMessage = list(messages)[0]
+    messages_list = list(messages)
+    if not messages_list:
+        raise ValueError("No messages in the list.")
+    latest_message: ThreadMessage = messages_list[0]
     if isinstance(latest_message.content[0], MessageContentText):
         value: str = latest_message.content[0].text.value
     else:
