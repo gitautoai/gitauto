@@ -8,32 +8,48 @@ import re
 _hdr_pat = re.compile("^@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@$")
 
 def apply_raw_patch(original_text: str, diff_text: str) -> str:
+  """Taken from here https://stackoverflow.com/questions/2307472/generating-and-applying-diffs-in-python"""
+  # Remove Open AI leading and trailing markdown syntax
   if(diff_text.startswith('```diff\n')):
       diff_text = diff_text[len('```diff\n'):]
   if(diff_text.endswith('\n```')):
         diff_text = diff_text[:-len('\n```')]
-  print(diff_text)
-  s = original_text.splitlines(True)
-  p = diff_text.splitlines(True)
-  t = ''
-  i = sl = 0
+
+  original_split = original_text.splitlines(True)
+  diff_split = diff_text.splitlines(True)
+  final_text = ''
+  i = starting_line = 0
   (midx,sign) = (1,'+')
-  while i < len(p) and p[i].startswith(("---","+++")): i += 1 # skip header lines
-  while i < len(p):
-    m = _hdr_pat.match(p[i])
-    if not m: raise Exception("Cannot process diff")
+  
+  # skip header lines in diff
+  while i < len(diff_split) and diff_split[i].startswith(("---","+++")): 
+      i += 1 
+  
+  # Proccess each diff line
+  while i < len(diff_split):
+    match = _hdr_pat.match(diff_split[i])
+    if not match:
+        raise Exception("Cannot process diff")
     i += 1
-    l = int(m.group(midx))-1 + (m.group(midx+1) == '0')
-    t += ''.join(s[sl:l])
-    sl = l
-    while i < len(p) and p[i][0] != '@':
-      if i+1 < len(p) and p[i+1][0] == '\\': line = p[i][:-1]; i += 2
-      else: line = p[i]; i += 1
+    # Add lines to original text that aren't affected(as specified in diff header)
+    ending_line = int(match.group(midx))-1 + (match.group(midx+1) == '0')
+    final_text += ''.join(original_split[starting_line:ending_line])
+    starting_line = ending_line
+    
+    # While not reaching another diff header, add or remove lines from original text
+    while i < len(diff_split) and diff_split[i][0] != '@':
+      if i+1 < len(diff_split) and diff_split[i+1][0] == '\\': 
+          line = diff_split[i][:-1]
+          i += 2
+      else: 
+          line = diff_split[i]
+          i += 1
       if len(line) > 0:
-        if line[0] == sign or line[0] == ' ': t += line[1:]
-        sl += (line[0] != sign)
-  t += ''.join(s[sl:])
-  return t
+        if line[0] == sign or line[0] == ' ': 
+            final_text += line[1:]
+        starting_line += (line[0] != sign)
+  final_text += ''.join(original_split[starting_line:])
+  return final_text
 
 def apply_patch(original_text: str, diff_text: str) -> str:
     return apply_raw_patch(original_text, diff_text)
