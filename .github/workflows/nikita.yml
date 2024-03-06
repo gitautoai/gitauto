@@ -3,7 +3,7 @@ name: nikita branch staging deployment
 on:
   push:
     branches:
-      - nikita
+      - 'nikita*'
 
 jobs:
   deploy_lambda:
