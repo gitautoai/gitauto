@@ -3,8 +3,40 @@ import re
 import subprocess
 import tempfile
 
+import re
+
+_hdr_pat = re.compile("^@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@$")
+
+def apply_raw_patch(original_text: str, diff_text: str) -> str:
+  if(diff_text.startswith('```diff\n')):
+      diff_text = diff_text[len('```diff\n'):]
+  if(diff_text.endswith('\n```')):
+        diff_text = diff_text[:-len('\n```')]
+  print(diff_text)
+  s = original_text.splitlines(True)
+  p = diff_text.splitlines(True)
+  t = ''
+  i = sl = 0
+  (midx,sign) = (1,'+')
+  while i < len(p) and p[i].startswith(("---","+++")): i += 1 # skip header lines
+  while i < len(p):
+    m = _hdr_pat.match(p[i])
+    if not m: raise Exception("Cannot process diff")
+    i += 1
+    l = int(m.group(midx))-1 + (m.group(midx+1) == '0')
+    t += ''.join(s[sl:l])
+    sl = l
+    while i < len(p) and p[i][0] != '@':
+      if i+1 < len(p) and p[i+1][0] == '\\': line = p[i][:-1]; i += 2
+      else: line = p[i]; i += 1
+      if len(line) > 0:
+        if line[0] == sign or line[0] == ' ': t += line[1:]
+        sl += (line[0] != sign)
+  t += ''.join(s[sl:])
+  return t
 
 def apply_patch(original_text: str, diff_text: str) -> str:
+    return apply_raw_patch(original_text, diff_text)
     """ Apply a diff using the patch command via temporary files """
     with tempfile.NamedTemporaryFile(mode='w+', delete=False) as original_file:
         original_file_name: str = original_file.name
