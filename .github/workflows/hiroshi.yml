@@ -3,7 +3,7 @@ name: hiroshi-dev branch staging deployment
 on:
   push:
     branches:
-      - "hiroshi*"
+      - 'hiroshi*'
 
 jobs:
   deploy_lambda:
