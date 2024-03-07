@@ -14,7 +14,6 @@ from services.github.webhook_handler import handle_webhook_event
 app = FastAPI()
 handler = Mangum(app=app)
 
-
 @app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
     try:
