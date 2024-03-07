@@ -33,10 +33,10 @@ from fastapi import FastAPI
 app = FastAPI()
 
 # Testing in Lambda
-@app.get("/sentry-debug")
-async def trigger_error():
-    division_by_zero = 1 / 0
-    return {"message": f'Yes, just tested sentry. {division_by_zero}'}
+# @app.get("/sentry-debug")
+# async def trigger_error():
+#     division_by_zero = 1 / 0
+#     return {"message": f'Yes, just tested sentry. {division_by_zero}'}
 @app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
     try:
