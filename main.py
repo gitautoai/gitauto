@@ -18,17 +18,17 @@ handler = Mangum(app=app)
 
 from fastapi import FastAPI
 
-import sentry_sdk
-from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
+# import sentry_sdk
+# from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
-sentry_sdk.init(
-    dsn="https://b7ca4effebf7d7825b6464eade11734f@o4506827828101120.ingest.us.sentry.io/4506865231200256",
-        integrations=[
-        AwsLambdaIntegration(),
-    ],
-    traces_sample_rate=1.0,
-    profiles_sample_rate=1.0,
-)
+# sentry_sdk.init(
+#     dsn="https://b7ca4effebf7d7825b6464eade11734f@o4506827828101120.ingest.us.sentry.io/4506865231200256",
+#         integrations=[
+#         AwsLambdaIntegration(),
+#     ],
+#     traces_sample_rate=1.0,
+#     profiles_sample_rate=1.0,
+# )
 
 app = FastAPI()
 
