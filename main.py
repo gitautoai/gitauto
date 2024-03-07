@@ -4,7 +4,6 @@
 # Third-party imports
 from fastapi import FastAPI, HTTPException, Request
 from mangum import Mangum
-import sentry_sdk
 
 
 # Local imports
