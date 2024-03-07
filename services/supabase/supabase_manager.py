@@ -7,7 +7,9 @@ class InstallationTokenManager:
     def __init__(self, url: str, key: str) -> None:
         self.client: Client = create_client(supabase_url=url, supabase_key=key)
 
-    def save_installation_token(self, installation_id, account_login: str, html_url: str, repositories, repository_ids) -> None:
+    def save_installation_token(
+            self, installation_id: int, account_login: str, html_url: str,
+            repositories: list[str], repository_ids: list[int]) -> None:
         data, _ = self.client.table(table_name="repo_info").select("*").eq(column="installation_id", value=installation_id).execute()
         if (len(data[1]) > 0):
             self.client.table(table_name="repo_info").update(json={
