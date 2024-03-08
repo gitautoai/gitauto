@@ -34,6 +34,6 @@ SUPABASE_URL: str = get_env_var(name="SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY: str = get_env_var(name="SUPABASE_SERVICE_ROLE_KEY")
 
 # General
-PRODUCT_ID = "gitauto"
+PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 TIMEOUT_IN_SECONDS = 120
