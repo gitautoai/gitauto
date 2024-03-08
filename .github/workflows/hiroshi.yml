@@ -3,7 +3,7 @@ name: hiroshi-dev branch staging deployment
 on:
   push:
     branches:
-      - hiroshi-dev
+      - 'hiroshi*'
 
 jobs:
   deploy_lambda:
@@ -44,3 +44,8 @@ jobs:
           aws lambda update-function-code \
           --function-name $LAMBDA_NAME \
           --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        
+      - name: Execute Slack Webhook
+        if: always()
+        run: |
+          curl -X POST https://hooks.slack.com/workflows/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
