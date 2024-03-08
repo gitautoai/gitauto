@@ -19,7 +19,6 @@ GITHUB_API_URL: str = "https://api.github.com"
 GITHUB_API_VERSION: str = "2022-11-28"
 GITHUB_APP_ID: str = get_env_var(name="GITHUB_APP_ID")
 GITHUB_PRIVATE_KEY_ENCODED: str = get_env_var(name="GITHUB_PRIVATE_KEY")
-# GITHUB_PRIVATE_KEY= ''
 GITHUB_PRIVATE_KEY: bytes = base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED)
 GITHUB_WEBHOOK_SECRET: str = get_env_var(name="GITHUB_WEBHOOK_SECRET")
 
