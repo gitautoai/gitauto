@@ -11,7 +11,6 @@ from uuid import UUID
 import jwt  # For generating JWTs (JSON Web Tokens)
 import requests
 from fastapi import Request
-from git import Repo
 
 # Local imports
 from config import (
@@ -19,21 +18,6 @@ from config import (
 )
 from services.github.github_types import GitHubContentInfo
 from utils.file_manager import apply_patch
-
-
-def clone_repository(token: str, repo_url: str, uuid: UUID) -> str:
-    repo_clone_path: str = f'./tmp/{uuid}'
-
-    # Remove the https:// prefix if it's already in the repo_url
-    normalized_repo_url: str = repo_url
-    if normalized_repo_url.startswith('https://'):
-        normalized_repo_url = normalized_repo_url[8:]
-
-    Repo.clone_from(
-        url=f'https://x-access-token:{token}@{normalized_repo_url}',
-        to_path=repo_clone_path
-    )
-    return repo_clone_path
 
 
 def commit_changes_to_remote_branch(
