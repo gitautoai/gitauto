@@ -8,7 +8,7 @@ from mangum import Mangum
 # Local imports
 from config import GITHUB_WEBHOOK_SECRET
 from services.github.github_manager import verify_webhook_signature
-from services.github.webhook_handler import handle_webhook_event
+from services.webhook_handler import handle_webhook_event
 
 # Create FastAPI instance
 app = FastAPI()

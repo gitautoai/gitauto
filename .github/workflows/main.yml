@@ -44,3 +44,9 @@ jobs:
           aws lambda update-function-code \
           --function-name $LAMBDA_NAME \
           --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Execute Slack Webhook
+        if: always()
+        run: |
+          curl -X POST https://hooks.slack.com/workflows/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
+
