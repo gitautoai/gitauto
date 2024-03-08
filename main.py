@@ -8,7 +8,7 @@ import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
-from config import GITHUB_WEBHOOK_SECRET
+from config import GITHUB_WEBHOOK_SECRET, ENV
 from services.github.github_manager import verify_webhook_signature
 from services.github.webhook_handler import handle_webhook_event
 
@@ -17,6 +17,7 @@ app = FastAPI()
 
 sentry_sdk.init(
     "https://b7ca4effebf7d7825b6464eade11734f@o4506827828101120.ingest.us.sentry.io/4506865231200256",
+    environment=ENV,
     integrations=[AwsLambdaIntegration()],
     traces_sample_rate=1.0
 )
