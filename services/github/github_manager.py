@@ -5,7 +5,6 @@ import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
 import logging
 import time
 from typing import Any
-from uuid import UUID
 
 # Third-party imports
 import jwt  # For generating JWTs (JSON Web Tokens)
@@ -157,6 +156,26 @@ def get_installation_access_token(installation_id: int) -> str:
         )
         response.raise_for_status()
         return response.json()["token"]
+    except requests.exceptions.HTTPError as e:
+        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        raise
+    except Exception as e:
+        logging.error(msg=f"Error: {e}")
+        raise
+
+
+def get_issue_comments(owner: str, repo: str, issue_number: int, token: str) -> list[str]:
+    """ https://docs.github.com/en/rest/issues/comments#list-issue-comments """
+    try:
+        response = requests.get(
+            url=f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/comments",
+            headers=create_headers(token=token),
+            timeout=TIMEOUT_IN_SECONDS
+        )
+        response.raise_for_status()
+        comments = response.json()
+        comment_texts: list[str] = [comment['body'] for comment in comments]
+        return comment_texts
     except requests.exceptions.HTTPError as e:
         logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
         raise

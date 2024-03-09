@@ -9,6 +9,7 @@ from services.github.github_manager import (
     create_pull_request,
     create_remote_branch,
     get_installation_access_token,
+    get_issue_comments,
     get_latest_remote_commit_sha,
     get_remote_file_tree
 )
@@ -65,7 +66,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     issue: IssueInfo = payload["issue"]
     issue_title: str = issue["title"]
     issue_body: str = issue["body"] or ""
-    issue_comments: list[str] = [""]
+    issue_number: int = issue["number"]
     installation_id: int = payload["installation"]["id"]
     repo: RepositoryInfo = payload["repository"]
     owner: str = repo["owner"]["login"]
@@ -78,6 +79,9 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     token: str = get_installation_access_token(installation_id=installation_id)
     file_paths: list[str] = get_remote_file_tree(
         owner=owner, repo=repo_name, ref=base_branch, token=token
+    )
+    issue_comments: list[str] = get_issue_comments(
+        owner=owner, repo=repo_name, issue_number=issue_number, token=token
     )
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n")
 
@@ -139,7 +143,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
 
 async def handle_webhook_event(payload: GitHubEventPayload) -> None:
     """ Determine the event type and call the appropriate handler """
-    action = payload.get("action")
+    action: str = payload.get("action")
     if not action:
         return
 
