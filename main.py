@@ -56,9 +56,3 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 @app.get(path="/")
 async def root():
     return {"message": "PR Agent APP"}
-
-
-@app.get(path="/increment")
-async def root():
-    supabase_manager.increment_request_count(installation_id=48187131)
-    return {"message": "PR Agent APP"}
