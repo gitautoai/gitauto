@@ -49,6 +49,8 @@ def commit_changes_to_remote_branch(
             get_response.raise_for_status()
 
         # Create a new commit
+        print("ORIGINAL TEXT: ", original_text)
+        print("DIFF TEXT: ", diff_text)
         modified_text: str = apply_patch(original_text=original_text, diff_text=diff_text)
         data: dict[str, str | None] = {
             "message": commit_message,
