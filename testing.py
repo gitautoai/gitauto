@@ -51,7 +51,7 @@ def apply_patch(original_text: str, diff_text: str) -> str:
             print(f"{modified_text=}\n")
 
     except Exception as e:
-        print("Failed to apply patch.")
+        print("Failed to apply patch.", e)
         print(f"stdout: {e.stdout}")
         print(f"stderr: {e.stderr}\n")
         print(f"Command: {' '.join(e.cmd)}")
