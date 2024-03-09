@@ -15,12 +15,13 @@ from services.webhook_handler import handle_webhook_event
 # Create FastAPI instance
 app = FastAPI()
 
-sentry_sdk.init(
+if(ENV != "local"):
+    sentry_sdk.init(
     "https://b7ca4effebf7d7825b6464eade11734f@o4506827828101120.ingest.us.sentry.io/4506865231200256",
     environment=ENV,
     integrations=[AwsLambdaIntegration()],
     traces_sample_rate=1.0
-)
+    )
 
 handler = Mangum(app=app)
 
