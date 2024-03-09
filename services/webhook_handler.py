@@ -72,7 +72,9 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
 
-    # Clone the repository
+    supabase_manager.increment_request_count(installation_id=installation_id)
+    
+    # Prepare token and file tree for Agent
     token: str = get_installation_access_token(installation_id=installation_id)
     file_paths: list[str] = get_remote_file_tree(
         owner=owner, repo=repo_name, ref=base_branch, token=token
