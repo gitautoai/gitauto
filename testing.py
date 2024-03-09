@@ -22,6 +22,7 @@ def apply_patch(original_text: str, diff_text: str) -> str:
     print('3')
     try:
         # New file
+        print('new file')
         if original_text == "" and "+++ " in diff_text:
             lines: list[str] = diff_text.split(sep='\n')
             new_content_lines: list[str] = [
@@ -33,6 +34,7 @@ def apply_patch(original_text: str, diff_text: str) -> str:
 
         # Modified or deleted file
         else:
+            print('modified')
             with open(file=diff_file_name, mode='r', encoding='utf-8') as input_diff:
                 subprocess.run(
                     args=['patch', '-u', original_file_name],
@@ -48,7 +50,7 @@ def apply_patch(original_text: str, diff_text: str) -> str:
             modified_text: str = modified_file.read()
             print(f"{modified_text=}\n")
 
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         print("Failed to apply patch.")
         print(f"stdout: {e.stdout}")
         print(f"stderr: {e.stderr}\n")
