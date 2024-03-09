@@ -12,8 +12,6 @@ from config import GITHUB_WEBHOOK_SECRET, ENV
 from services.github.github_manager import verify_webhook_signature
 from services.webhook_handler import handle_webhook_event
 
-from testing import apply_patch, original_text, diff
-
 # Create FastAPI instance
 app = FastAPI()
 
@@ -23,13 +21,6 @@ sentry_sdk.init(
     integrations=[AwsLambdaIntegration()],
     traces_sample_rate=1.0
 )
-@app.get('/test')
-def test():
-    try:
-        apply_patch(original_text, diff)
-    except Exception as e:
-        return {"message": "Error occurred"}
-    return {"message": original_text}
 
 @app.get("/sentry-debug")
 def read_health_check():
