@@ -41,3 +41,4 @@ class InstallationTokenManager:
                 self.client.table(table_name="repo_info").update(json={"requests": data[1][0]['requests'] + 1}).eq(column="installation_id", value=installation_id).execute()
         except Exception as e:
             logging.error(msg=f"Increment Request Count Error: {e}")
+            
