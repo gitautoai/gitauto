@@ -50,7 +50,11 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         print(f"stderr: {e.stderr}\n")
         print(f"Command: {' '.join(e.cmd)}")
         print(f"Exit status: {e.returncode}")
-        raise
+        
+        # Don't raise for now, just log it
+        print("Original text:", original_text)
+        print("Diff text:", diff_text)
+        # raise
     except Exception as e:
         print(f"Error: {e}")
     finally:
