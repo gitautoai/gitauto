@@ -8,17 +8,18 @@ import re
 
 def apply_patch(original_text: str, diff_text: str) -> str:
     """ Apply a diff using the patch command via temporary files """
+    print('1')
     with tempfile.NamedTemporaryFile(mode='w+', delete=False) as original_file:
         original_file_name: str = original_file.name
         if original_text:
             original_file.write(
                 original_text if original_text.endswith('\n') else original_text + '\n'
             )
-
+    print('2')
     with tempfile.NamedTemporaryFile(mode='w+', delete=False) as diff_file:
         diff_file_name: str = diff_file.name
         diff_file.write(diff_text if diff_text.endswith('\n') else diff_text + '\n')
-
+    print('3')
     try:
         # New file
         if original_text == "" and "+++ " in diff_text:

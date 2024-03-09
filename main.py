@@ -25,7 +25,10 @@ sentry_sdk.init(
 )
 @app.get('/test')
 def test():
-    apply_patch(original_text, diff)
+    try:
+        apply_patch(original_text, diff)
+    except Exception as e:
+        return {"message": "Error occurred"}
     return {"message": original_text}
 
 @app.get("/sentry-debug")
