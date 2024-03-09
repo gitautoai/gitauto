@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: pip-freeze
+        name: pip freeze
+        entry: bash -c 'pip freeze > requirements.txt && git add requirements.txt'
+        language: system
+        always_run: true
+        stages: [pre-commit]
