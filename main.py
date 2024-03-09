@@ -11,6 +11,7 @@ from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 from config import GITHUB_WEBHOOK_SECRET, ENV
 from services.github.github_manager import verify_webhook_signature
 from services.webhook_handler import handle_webhook_event
+
 # Create FastAPI instance
 app = FastAPI()
 
