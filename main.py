@@ -22,11 +22,6 @@ sentry_sdk.init(
     traces_sample_rate=1.0
 )
 
-@app.get("/sentry-debug")
-def read_health_check():
-    division_by_zero = 1/0
-    return {"version": "1.0.0"}
-
 handler = Mangum(app=app)
 
 @app.post(path="/webhook")

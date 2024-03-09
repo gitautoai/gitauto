@@ -51,7 +51,8 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         print(f"Command: {' '.join(e.cmd)}")
         print(f"Exit status: {e.returncode}")
         raise
-
+    except Exception as e:
+        print(f"Error: {e}")
     finally:
         os.remove(path=original_file_name)
         os.remove(path=diff_file_name)
