@@ -72,8 +72,6 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     owner: str = repo["owner"]["login"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
-
-    supabase_manager.increment_request_count(installation_id=installation_id)
     
     # Prepare token and file tree for Agent
     token: str = get_installation_access_token(installation_id=installation_id)
@@ -137,6 +135,8 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         token=token
     )
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
+    
+    supabase_manager.increment_request_count(installation_id=installation_id)
 
     return
 

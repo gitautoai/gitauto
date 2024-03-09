@@ -11,10 +11,6 @@ from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 from config import GITHUB_WEBHOOK_SECRET, ENV
 from services.github.github_manager import verify_webhook_signature
 from services.webhook_handler import handle_webhook_event
-from services.supabase.supabase_manager import InstallationTokenManager
-from config import PRODUCT_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-# Initialize managers
-supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 # Create FastAPI instance
 app = FastAPI()
