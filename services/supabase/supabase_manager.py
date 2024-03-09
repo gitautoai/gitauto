@@ -35,6 +35,6 @@ class InstallationTokenManager:
         self.client.table(table_name="repo_info").update(json=data).eq(column="installation_id", value=installation_id).execute()
         
     def increment_request_count(self, installation_id: int) -> None:
-        data, _ = self.client.table(table_name="repo_info").select("requests").eq(column="installation_id", value=installation_id).execute()
+        data, _ = self.client.table(table_name="repo_info").select("*").eq(column="installation_id", value=installation_id).execute()
         if (data[1] and data[1][0]):
             self.client.table(table_name="repo_info").update(json={"requests": data[1][0]['requests'] + 1}).eq(column="installation_id", value=installation_id).execute()
