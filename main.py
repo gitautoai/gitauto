@@ -8,25 +8,29 @@ import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
-from config import GITHUB_WEBHOOK_SECRET, ENV
+from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME
 from services.github.github_manager import verify_webhook_signature
 from services.webhook_handler import handle_webhook_event
 
 # Create FastAPI instance
 app = FastAPI()
 
-if(ENV != "local"):
+if ENV != "local":
     sentry_sdk.init(
-    "https://b7ca4effebf7d7825b6464eade11734f@o4506827828101120.ingest.us.sentry.io/4506865231200256",
-    environment=ENV,
-    integrations=[AwsLambdaIntegration()],
-    traces_sample_rate=1.0
+        dsn="https://b7ca4effebf7d7825b6464eade11734f@o4506827828101120.ingest.us.sentry.io/4506865231200256",  # noqa
+        environment=ENV,
+        integrations=[AwsLambdaIntegration()],
+        traces_sample_rate=1.0
     )
 
 handler = Mangum(app=app)
 
+
 @app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
+    event_name: str = request.headers.get('X-GitHub-Event', 'Event not specified')
+    print(f"Received event: {event_name}")
+
     try:
         print("Webhook received")
         # Validate the webhook signature
@@ -40,7 +44,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
         # TODO: Sanitize the payload to remove any sensitive information
         # Handle Create, Delete, and Labeled events
-        await handle_webhook_event(payload=payload)
+        await handle_webhook_event(event_name=event_name, payload=payload)
         print("Webhook event handled")
 
         return {"message": "Webhook processed successfully"}
@@ -50,5 +54,5 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
 
 @app.get(path="/")
-async def root():
-    return {"message": "PR Agent APP"}
+async def root() -> dict[str, str]:
+    return {"message": PRODUCT_NAME}
