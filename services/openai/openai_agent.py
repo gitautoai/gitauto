@@ -9,14 +9,13 @@ from openai.pagination import SyncCursorPage
 from openai.types.beta import Assistant, Thread
 from openai.types.beta.threads import Run, ThreadMessage, MessageContentText
 from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
-from openai.types.beta.threads.runs import RunStep
 
 # Local imports
 from config import (
     OPENAI_API_KEY, OPENAI_FINAL_STATUSES, OPENAI_MODEL_ID, OPENAI_ORG_ID, TIMEOUT_IN_SECONDS
 )
 from services.openai.functions import GET_REMOTE_FILE_CONTENT, functions
-from services.openai.instructions import SYSTEM_INSTRUCTION
+from services.openai.instructions import SYSTEM_INSTRUCTION_FOR_AGENT
 from utils.file_manager import clean_specific_lines, split_diffs
 
 # Initialize OpenAI client
@@ -25,7 +24,7 @@ client = OpenAI(api_key=OPENAI_API_KEY, organization=OPENAI_ORG_ID)
 # Create an assistant
 assistant: Assistant = client.beta.assistants.create(
     name="GitAuto: Automated Issue Resolver",
-    instructions=SYSTEM_INSTRUCTION,
+    instructions=SYSTEM_INSTRUCTION_FOR_AGENT,
     tools=[
         # {"type": "code_interpreter"},
         # {"type": "retrieval"},
@@ -60,6 +59,7 @@ def run_assistant(
         issue_body: str,
         issue_comments: list[str],
         owner: str,
+        pr_body: str,
         ref: str,
         repo: str,
         token: str
@@ -68,6 +68,7 @@ def run_assistant(
     # Create a message in the thread
     data: dict[str, str | list[str]] = {
         "owner": owner,
+        "pr_body": pr_body,
         "repo": repo,
         "ref": ref,
         "issue_title": issue_title,
@@ -85,14 +86,6 @@ def run_assistant(
 
     # Wait for the run to complete
     run: Run = wait_on_run(run=run, thread=thread, token=token)
-
-    # Get the steps
-    run_steps: SyncCursorPage[RunStep] = client.beta.threads.runs.steps.list(
-        thread_id=thread.id, run_id=run.id, order="desc", timeout=TIMEOUT_IN_SECONDS
-    )
-    for step in run_steps.data:
-        step_details = step.step_details
-        print(f"Step details: {step_details}\n")
 
     # Get the response
     messages: SyncCursorPage[ThreadMessage] = get_response(thread=thread)

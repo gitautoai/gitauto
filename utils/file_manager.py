@@ -3,6 +3,7 @@ import re
 import subprocess
 import tempfile
 
+
 def apply_patch(original_text: str, diff_text: str) -> str:
     """ Apply a diff using the patch command via temporary files """
     with tempfile.NamedTemporaryFile(mode='w+', delete=False) as original_file:
@@ -50,7 +51,7 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         print(f"stderr: {e.stderr}\n")
         print(f"Command: {' '.join(e.cmd)}")
         print(f"Exit status: {e.returncode}")
-        
+
         # Don't raise for now, just log it
         print("Original text:", original_text)
         print("Diff text:", diff_text)
@@ -66,12 +67,10 @@ def apply_patch(original_text: str, diff_text: str) -> str:
 
 
 def clean_specific_lines(text: str) -> str:
-    lines: list[str] = text.strip().split(sep='\n')
-    cleaned_lines: list[str] = [
-        line for line in lines if not (
-            line.startswith('```diff') or line == '```' or line.strip() == '')
-    ]
-    return '\n'.join(cleaned_lines).strip()
+    return '\n'.join([
+        line for line in text.strip().split(sep='\n')
+        if line.startswith(('+++', '---', '@@', '+', '-'))
+    ]).strip()
 
 
 def extract_file_name(diff_text: str) -> str:
@@ -89,5 +88,11 @@ def split_diffs(diff_text: str) -> list[str]:
         file_diffs.pop(0)
 
     # Remove leading and trailing whitespace from each diff
-    file_diffs = [diff.strip() for diff in file_diffs]
-    return file_diffs
+    cleaned_diffs: list[str] = []
+    for diff in file_diffs:
+        stripped_diff: str = diff.strip()
+        if not stripped_diff.endswith('\n'):
+            stripped_diff += '\n'
+        cleaned_diffs.append(stripped_diff)
+
+    return cleaned_diffs

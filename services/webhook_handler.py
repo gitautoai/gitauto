@@ -1,4 +1,5 @@
 # Standard imports
+import json
 import time
 from uuid import uuid4
 
@@ -20,6 +21,7 @@ from services.github.github_types import (
     IssueInfo,
     RepositoryInfo
 )
+from services.openai.chat import write_pr_body
 from services.openai.openai_agent import run_assistant
 from services.supabase.supabase_manager import InstallationTokenManager
 from utils.file_manager import extract_file_name
@@ -56,7 +58,7 @@ async def handle_installation_deleted(payload: GitHubInstallationPayload) -> Non
     supabase_manager.delete_installation_token(installation_id=installation_id)
 
 
-async def handle_issue_labeled(payload: GitHubLabeledPayload):
+async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
     # Extract label and validate it
     label: str = payload["label"]["name"]
     if label != PRODUCT_ID:
@@ -72,7 +74,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     owner: str = repo["owner"]["login"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
-    
+
     # Prepare token and file tree for Agent
     token: str = get_installation_access_token(installation_id=installation_id)
     file_paths: list[str] = get_remote_file_tree(
@@ -81,6 +83,11 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     issue_comments: list[str] = get_issue_comments(
         owner=owner, repo=repo_name, issue_number=issue_number, token=token
     )
+    pr_body: str = write_pr_body(input_message=json.dumps(obj={
+        "issue_title": issue_title,
+        "issue_body": issue_body,
+        "issue_comments": issue_comments
+    }))
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n")
 
     diffs: list[str] = run_assistant(
@@ -89,6 +96,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         issue_body=issue_body,
         issue_comments=issue_comments,
         owner=owner,
+        pr_body=pr_body,
         ref=base_branch,
         repo=repo_name,
         token=token
@@ -97,7 +105,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
     # Create a remote branch
     uuid: str = str(object=uuid4())
     new_branch: str = f"{PRODUCT_ID}/issue-#{issue['number']}-{uuid}"
-    latest_commit_sha = get_latest_remote_commit_sha(
+    latest_commit_sha: str = get_latest_remote_commit_sha(
         owner=owner, repo=repo_name, branch=base_branch, token=token
     )
     create_remote_branch(
@@ -125,9 +133,10 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         print(f"{time.strftime('%H:%M:%S', time.localtime())} Changes committed to {new_branch}.\n")
 
     # Create a pull request to the base branch
+    issue_link: str = f"Original issue is [#{issue_number}]({issue['html_url']})\n\n"
     create_pull_request(
         base=base_branch,
-        body=issue_body,
+        body=issue_link + pr_body,
         head=new_branch,
         owner=owner,
         repo=repo_name,
@@ -135,27 +144,27 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload):
         token=token
     )
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
-    
+
     supabase_manager.increment_request_count(installation_id=installation_id)
 
     return
 
 
-async def handle_webhook_event(payload: GitHubEventPayload) -> None:
+async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> None:
     """ Determine the event type and call the appropriate handler """
     action: str = payload.get("action")
     if not action:
         return
 
     # Check the type of webhook event and handle accordingly
-    if action in ("created", "added") and "installation" in payload:
+    if event_name == "installation" and action in ("created", "added"):
         print("Installaton is created")
         await handle_installation_created(payload=payload)
 
-    elif action in ("deleted", "removed") and "installation" in payload:
+    elif event_name == "installation" and action in ("deleted", "removed"):
         print("Installaton is deleted")
         await handle_installation_deleted(payload=payload)
 
-    elif action == "labeled" and "issue" in payload:
+    elif event_name == "issues" and action == "labeled":
         print("Issue is labeled")
         await handle_issue_labeled(payload=payload)

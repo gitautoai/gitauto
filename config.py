@@ -24,17 +24,18 @@ GITHUB_WEBHOOK_SECRET: str = get_env_var(name="GITHUB_WEBHOOK_SECRET")
 
 # OpenAI Credentials from environment variables
 OPENAI_API_KEY: str = get_env_var(name="OPENAI_API_KEY")
+OPENAI_FINAL_STATUSES: list[str] = ["cancelled", "completed", "expired", "failed"]
 OPENAI_MAX_TOKENS = 4096
 OPENAI_MODEL_ID = "gpt-4-turbo-preview"
 OPENAI_ORG_ID: str = get_env_var(name="OPENAI_ORG_ID")
-OPENAI_FINAL_STATUSES: list[str] = ["cancelled", "completed", "expired", "failed"]
+OPENAI_TEMPERATURE = 0.0
 
 # Supabase Credentials from environment variables
-SUPABASE_URL: str = get_env_var(name="SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY: str = get_env_var(name="SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_URL: str = get_env_var(name="SUPABASE_URL")
 
 # General
+ENV: str = get_env_var(name="ENV")
 PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 TIMEOUT_IN_SECONDS = 120
-ENV: str = get_env_var(name="ENV")
