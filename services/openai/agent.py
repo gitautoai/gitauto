@@ -11,36 +11,33 @@ from openai.types.beta.threads import Run, ThreadMessage, MessageContentText
 from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
 
 # Local imports
-from config import (
-    OPENAI_API_KEY, OPENAI_FINAL_STATUSES, OPENAI_MODEL_ID, OPENAI_ORG_ID, TIMEOUT_IN_SECONDS
-)
+from config import OPENAI_FINAL_STATUSES, OPENAI_MODEL_ID, TIMEOUT_IN_SECONDS
 from services.openai.functions import GET_REMOTE_FILE_CONTENT, functions
+from services.openai.init import create_openai_client
 from services.openai.instructions import SYSTEM_INSTRUCTION_FOR_AGENT
 from utils.file_manager import clean_specific_lines, split_diffs
 
-# Initialize OpenAI client
-client = OpenAI(api_key=OPENAI_API_KEY, organization=OPENAI_ORG_ID)
 
-# Create an assistant
-assistant: Assistant = client.beta.assistants.create(
-    name="GitAuto: Automated Issue Resolver",
-    instructions=SYSTEM_INSTRUCTION_FOR_AGENT,
-    tools=[
-        # {"type": "code_interpreter"},
-        # {"type": "retrieval"},
-        {"type": "function", "function": GET_REMOTE_FILE_CONTENT}
-    ],
-    model=OPENAI_MODEL_ID,
-    timeout=TIMEOUT_IN_SECONDS
-)
-assistant_id: str = assistant.id
-print(f"Assistant is created: {assistant_id}\n")
+def create_assistant() -> Assistant:
+    client: OpenAI = create_openai_client()
+    return client.beta.assistants.create(
+        name="GitAuto: Automated Issue Resolver",
+        instructions=SYSTEM_INSTRUCTION_FOR_AGENT,
+        tools=[
+            # {"type": "code_interpreter"},
+            # {"type": "retrieval"},
+            {"type": "function", "function": GET_REMOTE_FILE_CONTENT}
+        ],
+        model=OPENAI_MODEL_ID,
+        timeout=TIMEOUT_IN_SECONDS
+    )
 
 
 def create_thread_and_run(user_input: str) -> tuple[Thread, Run]:
     """ thread represents a conversation. 1 thread per 1 issue.
     Assistants API will manage the context window.
     https://cookbook.openai.com/examples/assistants_api_overview_python """
+    client: OpenAI = create_openai_client()
     thread: Thread = client.beta.threads.create(timeout=TIMEOUT_IN_SECONDS)
     run: Run = submit_message(thread=thread, user_message=user_input)
     return thread, run
@@ -48,6 +45,7 @@ def create_thread_and_run(user_input: str) -> tuple[Thread, Run]:
 
 def get_response(thread: Thread) -> SyncCursorPage[ThreadMessage]:
     """ https://cookbook.openai.com/examples/assistants_api_overview_python """
+    client: OpenAI = create_openai_client()
     return client.beta.threads.messages.list(
         thread_id=thread.id, order="desc", timeout=TIMEOUT_IN_SECONDS
     )
@@ -103,23 +101,26 @@ def run_assistant(
     diff: str = clean_specific_lines(text=value)
     text_diffs: list[str] = split_diffs(diff_text=diff)
     for diff in text_diffs:
-        print(f"Diff: {diff}\n")
+        print(f"Diff: {repr(diff)}\n")
     return text_diffs
 
 
 def submit_message(thread: Thread, user_message: str) -> Run:
     """ https://cookbook.openai.com/examples/assistants_api_overview_python """
+    client: OpenAI = create_openai_client()
+    assistant: Assistant = create_assistant()
     client.beta.threads.messages.create(
         thread_id=thread.id, role="user", content=user_message, timeout=TIMEOUT_IN_SECONDS
     )
     return client.beta.threads.runs.create(
-        thread_id=thread.id, assistant_id=assistant_id, timeout=TIMEOUT_IN_SECONDS
+        thread_id=thread.id, assistant_id=assistant.id, timeout=TIMEOUT_IN_SECONDS
     )
 
 
 def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
     """ https://cookbook.openai.com/examples/assistants_api_overview_python """
     print(f"Run status before loop: {run.status}")
+    client: OpenAI = create_openai_client()
     while run.status not in OPENAI_FINAL_STATUSES:
         print(f"Run status during loop: {run.status}")
         run = client.beta.threads.runs.retrieve(

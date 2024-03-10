@@ -3,16 +3,15 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletion
 
 # Local imports
-from config import OPENAI_API_KEY, OPENAI_MODEL_ID, OPENAI_ORG_ID, OPENAI_TEMPERATURE
+from config import OPENAI_MODEL_ID, OPENAI_TEMPERATURE
+from services.openai.init import create_openai_client
 from services.openai.instructions import SYSTEM_INSTRUCTION_FOR_WRITING_PR
 
 
-# Initialize OpenAI client
-client = OpenAI(api_key=OPENAI_API_KEY, organization=OPENAI_ORG_ID)
-
-
 def write_pr_body(input_message: str) -> str:
+    """ https://platform.openai.com/docs/api-reference/chat/create """
     try:
+        client: OpenAI = create_openai_client()
         completion: ChatCompletion = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": SYSTEM_INSTRUCTION_FOR_WRITING_PR},

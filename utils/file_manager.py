@@ -17,6 +17,7 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         diff_file_name: str = diff_file.name
         diff_file.write(diff_text if diff_text.endswith('\n') else diff_text + '\n')
 
+    modified_text = ""
     try:
         # New file
         if original_text == "" and "+++ " in diff_text:
@@ -51,13 +52,10 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         print(f"stderr: {e.stderr}\n")
         print(f"Command: {' '.join(e.cmd)}")
         print(f"Exit status: {e.returncode}")
-
-        # Don't raise for now, just log it
-        print("Original text:", original_text)
-        print("Diff text:", diff_text)
-        # raise
+        raise
     except Exception as e:
         print(f"Error: {e}")
+        raise
     finally:
         os.remove(path=original_file_name)
         os.remove(path=diff_file_name)
