@@ -32,24 +32,11 @@ supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVI
 
 async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
     installation_id: int = payload["installation"]["id"]
-    account_login: str = payload["installation"]["account"]["login"]
-    html_url: str = payload["installation"]["account"]["html_url"]
-    action: str = payload.get("action")
-    repositories = []
-    repository_ids = []
-    if action == 'created':
-        repositories: list[str] = [obj.get('full_name') for obj in payload["repositories"]]
-        repository_ids: list[int] = [obj.get('id') for obj in payload["repositories"]]
-    if action == 'added':
-        repositories = [obj.get('full_name') for obj in payload["repositories_added"]]
-        repository_ids = [obj.get('id') for obj in payload["repositories_added"]]
-
+    owner_name: str = payload["installation"]["account"]["login"]
+    
     supabase_manager.save_installation_token(
         installation_id=installation_id,
-        account_login=account_login,
-        html_url=html_url,
-        repositories=repositories,
-        repository_ids=repository_ids
+        owner_name=owner_name,
     )
 
 
@@ -74,7 +61,13 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
     owner: str = repo["owner"]["login"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
-
+    
+    supabase_manager.increment_request_count(installation_id=installation_id)
+    
+    # Start progress and check if current issue is already in progress from another invocation
+    unique_issue_id = f"{owner}/{repo_name}#{issue_number}"
+    if(supabase_manager.start_progress(unique_issue_id=unique_issue_id)):
+        return
     # Prepare token and file tree for Agent
     token: str = get_installation_access_token(installation_id=installation_id)
     file_paths: list[str] = get_remote_file_tree(
@@ -101,6 +94,8 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
         repo=repo_name,
         token=token
     )
+    
+    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=50)
 
     # Create a remote branch
     uuid: str = str(object=uuid4())
@@ -145,8 +140,8 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
     )
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
 
-    supabase_manager.increment_request_count(installation_id=installation_id)
-
+    supabase_manager.increment_completed_count(installation_id=installation_id)
+    supabase_manager.finish_progress(unique_issue_id=unique_issue_id)
     return
 
 
