@@ -22,7 +22,7 @@ from services.github.github_types import (
     RepositoryInfo
 )
 from services.openai.chat import write_pr_body
-from services.openai.openai_agent import run_assistant
+from services.openai.agent import run_assistant
 from services.supabase.supabase_manager import InstallationTokenManager
 from utils.file_manager import extract_file_name
 
