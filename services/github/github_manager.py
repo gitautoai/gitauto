@@ -26,6 +26,7 @@ def commit_changes_to_remote_branch(
         file_path: str,
         owner: str,
         repo: str,
+        comment_url: str,
         token: str
         ) -> None:
     """ https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents """
@@ -66,9 +67,11 @@ def commit_changes_to_remote_branch(
         put_response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. This is likely a GitHub.com issue. Please try again later.")
         raise
     except Exception as e:
         logging.error(msg=f"Error: {e}")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
         raise
 
 
@@ -99,6 +102,7 @@ def create_pull_request(
         owner: str,
         repo: str,
         title: str,
+        comment_url: str,
         token: str
         ) -> dict[str, Any]:
     """ https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request """
@@ -113,9 +117,11 @@ def create_pull_request(
         return response.json()
     except requests.exceptions.HTTPError as e:
         logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. This is likely a GitHub.com issue. Please try again later.")
         raise
     except Exception as e:
         logging.error(msg=f"Error: {e}")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
         raise
 
 
@@ -124,6 +130,7 @@ def create_remote_branch(
         owner: str,
         repo: str,
         sha: str,
+        comment_url: str,
         token: str
         ) -> None:
     try:
@@ -135,10 +142,12 @@ def create_remote_branch(
         )
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        logging.error(msg=f"create_remote_branch HTTP Error: {e.response.status_code} - {e.response.text}")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
         raise
     except Exception as e:
-        logging.error(msg=f"Error: {e}")
+        logging.error(msg=f"create_remote_branch Error: {e}")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
         raise
 
 
@@ -157,10 +166,10 @@ def get_installation_access_token(installation_id: int) -> str:
         response.raise_for_status()
         return response.json()["token"]
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        logging.error(msg=f"get_installation_access_token HTTP Error: {e.response.status_code} - {e.response.text}")
         raise
     except Exception as e:
-        logging.error(msg=f"Error: {e}")
+        logging.error(msg=f"get_installation_access_token Error: {e}")
         raise
 
 
@@ -177,14 +186,12 @@ def get_issue_comments(owner: str, repo: str, issue_number: int, token: str) -> 
         comment_texts: list[str] = [comment['body'] for comment in comments]
         return comment_texts
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
-        raise
+        logging.error(msg=f"get_issue_comments HTTP Error: {e.response.status_code} - {e.response.text}")
     except Exception as e:
-        logging.error(msg=f"Error: {e}")
-        raise
+        logging.error(msg=f"get_issue_comments Error: {e}")
 
 
-def get_latest_remote_commit_sha(owner: str, repo: str, branch: str, token: str) -> str:
+def get_latest_remote_commit_sha(owner: str, repo: str, branch: str, comment_url: str, token: str) -> str:
     """ SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
     https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference """
     try:
@@ -196,12 +203,13 @@ def get_latest_remote_commit_sha(owner: str, repo: str, branch: str, token: str)
         response.raise_for_status()
         return response.json()["object"]["sha"]
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        logging.error(msg=f"get_latest_remote_commit_sha HTTP Error: {e.response.status_code} - {e.response.text}")
+        update_comment(comment_url=comment_url, token=token, body="Sorry, I couldn't get the latest commit SHA. This is likely a GitHub.com issue. Please try again later.")
         raise
     except Exception as e:
-        logging.error(msg=f"Error: {e}")
+        logging.error(msg=f"get_latest_remote_commit_sha Error: {e}")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
         raise
-
 
 def get_remote_file_content(
         file_path: str,  # Ex) 'src/main.py'
@@ -226,14 +234,13 @@ def get_remote_file_content(
         # print(f"```{file_path}:\n{decoded_content}```")
         return decoded_content
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
-        raise
+        logging.error(msg=f"get_remote_file_content HTTP Error: {e.response.status_code} - {e.response.text}")
     except Exception as e:
-        logging.error(msg=f"Error: {e}")
-        raise
+        # TODO in future ask GPT to try again
+        logging.error(msg=f"get_remote_file_content Error: {e}")
+        
 
-
-def get_remote_file_tree(owner: str, repo: str, ref: str, token: str) -> list[str]:
+def get_remote_file_tree(owner: str, repo: str, ref: str, comment_url: str, token: str) -> list[str]:
     """ Get the file tree of a GitHub repository. """
     try:
         response: requests.Response = requests.get(
@@ -244,10 +251,12 @@ def get_remote_file_tree(owner: str, repo: str, ref: str, token: str) -> list[st
         response.raise_for_status()
         return [item["path"] for item in response.json()["tree"]]
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        logging.error(msg=f"get_remote_file_tree HTTP Error: {e.response.status_code} - {e.response.text}")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. This is likely a GitHub.com issue. Please try again later.")
         raise
     except Exception as e:
-        logging.error(msg=f"Error: {e}")
+        logging.error(msg=f"get_remote_file_tree Error: {e}")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
         raise
 
 
@@ -285,9 +294,9 @@ def create_comment(
         
         return response.json()
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        logging.error(msg=f"create_comment HTTP Error: {e.response.status_code} - {e.response.text}")
     except Exception as e:
-        logging.error(msg=f"Error: {e}")
+        logging.error(msg=f"create_comment Error: {e}")
         
 def update_comment(
         comment_url: str, 
@@ -306,9 +315,9 @@ def update_comment(
         
         return response.json()
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        logging.error(msg=f"update_comment HTTP Error: {e.response.status_code} - {e.response.text}")
     except Exception as e:
-        logging.error(msg=f"Error: {e}")
+        logging.error(msg=f"update_comment Error: {e}")
         
         
 def add_reaction_to_issue(
@@ -330,6 +339,6 @@ def add_reaction_to_issue(
         
         return response.json()
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        logging.error(msg=f"add_reaction_to_issue HTTP Error: {e.response.status_code} - {e.response.text}")
     except Exception as e:
-        logging.error(msg=f"Error: {e}")
+        logging.error(msg=f"add_reaction_to_issue Error: {e}")
