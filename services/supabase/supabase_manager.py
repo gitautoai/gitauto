@@ -46,13 +46,14 @@ class InstallationTokenManager:
             logging.error(msg=f"Increment Completed Issues Count Error: {e}")
             
             
-    def start_progress(self, unique_issue_id: str) -> bool:
+    def start_progress(self, unique_issue_id: str, installation_id: int) -> bool:
         try: 
             data, _ = self.client.table(table_name="issues").select("progress").eq(column="unique_id", value=unique_issue_id).execute()
             if(len(data[1]) == 0 or data[1][0]['progress'] == 100):
                 self.client.table(table_name="issues").insert(json={
                     "unique_id": unique_issue_id,
                     "progress": 0,
+                    "installation_id": installation_id,
                 }).execute()
                 return False
             else: 

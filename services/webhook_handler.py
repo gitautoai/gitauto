@@ -71,7 +71,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
     
     # Start progress and check if current issue is already in progress from another invocation
     unique_issue_id = f"{owner}/{repo_name}#{issue_number}"
-    if(supabase_manager.start_progress(unique_issue_id=unique_issue_id)):
+    if(supabase_manager.start_progress(unique_issue_id=unique_issue_id, installation_id=installation_id)):
         create_comment(
             owner=owner,
             repo=repo_name,
