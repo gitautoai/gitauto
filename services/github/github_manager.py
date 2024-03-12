@@ -50,6 +50,8 @@ def commit_changes_to_remote_branch(
 
         # Create a new commit
         modified_text: str = apply_patch(original_text=original_text, diff_text=diff_text)
+        if(modified_text == ''):
+            return
         data: dict[str, str | None] = {
             "message": commit_message,
             "content": base64.b64encode(s=modified_text.encode(encoding='utf-8'))

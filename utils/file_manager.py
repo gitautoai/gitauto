@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 import tempfile
-
+import logging
 
 def apply_patch(original_text: str, diff_text: str) -> str:
     """ Apply a diff using the patch command via temporary files """
@@ -50,12 +50,13 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         print("Failed to apply patch.")
         print(f"stdout: {e.stdout}")
         print(f"stderr: {e.stderr}\n")
+        logging.error(f'apply_patch stderr: {e.stderr}')
         print(f"Command: {' '.join(e.cmd)}")
         print(f"Exit status: {e.returncode}")
-        raise
+        return ''
     except Exception as e:
-        print(f"Error: {e}")
-        raise
+        logging.error(f"Error: {e}")
+        return ''
     finally:
         os.remove(path=original_file_name)
         os.remove(path=diff_file_name)
