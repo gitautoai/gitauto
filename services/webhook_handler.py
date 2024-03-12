@@ -89,7 +89,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
     )['url']
     # Prepare contents for Agent
     file_paths: list[str] = get_remote_file_tree(
-        owner=owner, repo=repo_name, ref=base_branch, comment_url=comment_url, token=token
+        owner=owner, repo=repo_name, ref=base_branch, comment_url=comment_url, unique_issue_id=unique_issue_id, token=token
     )
     issue_comments: list[str] = get_issue_comments(
         owner=owner, repo=repo_name, issue_number=issue_number, token=token
@@ -120,7 +120,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
     uuid: str = str(object=uuid4())
     new_branch: str = f"{PRODUCT_ID}/issue-#{issue['number']}-{uuid}"
     latest_commit_sha: str = get_latest_remote_commit_sha(
-        owner=owner, repo=repo_name, branch=base_branch, comment_url=comment_url, token=token
+        owner=owner, repo=repo_name, branch=base_branch, comment_url=comment_url, unique_issue_id=unique_issue_id, token=token
     )
     create_remote_branch(
         branch_name=new_branch,
@@ -128,6 +128,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
         repo=repo_name,
         sha=latest_commit_sha,
         comment_url=comment_url,
+        unique_issue_id=unique_issue_id,
         token=token
     )
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Remote branch created: {new_branch}.\n")
@@ -144,6 +145,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
             owner=owner,
             repo=repo_name,
             comment_url=comment_url,
+            unique_issue_id=unique_issue_id,
             token=token
         )
         print(f"{time.strftime('%H:%M:%S', time.localtime())} Changes committed to {new_branch}.\n")
@@ -158,11 +160,15 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
         repo=repo_name,
         title=f"Fix {issue_title} with {PRODUCT_ID} model",
         comment_url=comment_url,
+        unique_issue_id=unique_issue_id,
         token=token
     )['url']
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
-
-    update_comment(comment_url=comment_url, token=token, body=f"Pull request completed! Check it out here {pull_request_url.replace('https://api.github.com/repos', 'https://github.com')} 🚀")
+    
+    rsplit = pull_request_url.replace('https://api.github.com/repos', 'https://github.com').rsplit('pulls', 1)
+    pr_url = 'pull'.join(rsplit)
+    update_comment(comment_url=comment_url, token=token, body=f"Pull request completed! Check it out here {pr_url} 🚀")
+    
     supabase_manager.increment_completed_count(installation_id=installation_id)
     supabase_manager.finish_progress(unique_issue_id=unique_issue_id)
     return

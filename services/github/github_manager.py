@@ -18,6 +18,13 @@ from config import (
 from services.github.github_types import GitHubContentInfo
 from utils.file_manager import apply_patch
 
+from services.supabase.supabase_manager import InstallationTokenManager
+from config import  SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+
+class GitHubManager:
+    def __init__(self, token: str):
+        self.token = token
+
 
 def commit_changes_to_remote_branch(
         branch: str,
@@ -27,6 +34,7 @@ def commit_changes_to_remote_branch(
         owner: str,
         repo: str,
         comment_url: str,
+        unique_issue_id: str,
         token: str
         ) -> None:
     """ https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents """
@@ -67,14 +75,8 @@ def commit_changes_to_remote_branch(
             timeout=TIMEOUT_IN_SECONDS
         )
         put_response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. This is likely a GitHub.com issue. Please try again later.")
-        raise
     except Exception as e:
-        logging.error(msg=f"Error: {e}")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
-        raise
+        update_comment_for_raised_errors(error=e, comment_url=comment_url, unique_issue_id=unique_issue_id, token=token)
 
 
 def create_headers(token: str) -> dict[str, str]:
@@ -105,6 +107,7 @@ def create_pull_request(
         repo: str,
         title: str,
         comment_url: str,
+        unique_issue_id: str,
         token: str
         ) -> dict[str, Any]:
     """ https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request """
@@ -117,14 +120,8 @@ def create_pull_request(
         )
         response.raise_for_status()
         return response.json()
-    except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. This is likely a GitHub.com issue. Please try again later.")
-        raise
     except Exception as e:
-        logging.error(msg=f"Error: {e}")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
-        raise
+        update_comment_for_raised_errors(error=e, comment_url=comment_url, unique_issue_id=unique_issue_id, token=token)
 
 
 def create_remote_branch(
@@ -133,6 +130,7 @@ def create_remote_branch(
         repo: str,
         sha: str,
         comment_url: str,
+        unique_issue_id: str,
         token: str
         ) -> None:
     try:
@@ -143,14 +141,9 @@ def create_remote_branch(
             timeout=TIMEOUT_IN_SECONDS
         )
         response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"create_remote_branch HTTP Error: {e.response.status_code} - {e.response.text}")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
-        raise
     except Exception as e:
-        logging.error(msg=f"create_remote_branch Error: {e}")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
-        raise
+        update_comment_for_raised_errors(error=e, comment_url=comment_url, unique_issue_id=unique_issue_id, token=token)
+        
 
 
 def get_installation_access_token(installation_id: int) -> str:
@@ -193,7 +186,7 @@ def get_issue_comments(owner: str, repo: str, issue_number: int, token: str) -> 
         logging.error(msg=f"get_issue_comments Error: {e}")
 
 
-def get_latest_remote_commit_sha(owner: str, repo: str, branch: str, comment_url: str, token: str) -> str:
+def get_latest_remote_commit_sha(owner: str, repo: str, branch: str, comment_url: str, unique_issue_id: str, token: str) -> str:
     """ SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
     https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference """
     try:
@@ -204,14 +197,9 @@ def get_latest_remote_commit_sha(owner: str, repo: str, branch: str, comment_url
         )
         response.raise_for_status()
         return response.json()["object"]["sha"]
-    except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"get_latest_remote_commit_sha HTTP Error: {e.response.status_code} - {e.response.text}")
-        update_comment(comment_url=comment_url, token=token, body="Sorry, I couldn't get the latest commit SHA. This is likely a GitHub.com issue. Please try again later.")
-        raise
     except Exception as e:
-        logging.error(msg=f"get_latest_remote_commit_sha Error: {e}")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
-        raise
+        update_comment_for_raised_errors(error=e, comment_url=comment_url, unique_issue_id=unique_issue_id, token=token)
+        
 
 def get_remote_file_content(
         file_path: str,  # Ex) 'src/main.py'
@@ -242,7 +230,7 @@ def get_remote_file_content(
         logging.error(msg=f"get_remote_file_content Error: {e}")
         
 
-def get_remote_file_tree(owner: str, repo: str, ref: str, comment_url: str, token: str) -> list[str]:
+def get_remote_file_tree(owner: str, repo: str, ref: str, comment_url: str, unique_issue_id: str, token: str) -> list[str]:
     """ Get the file tree of a GitHub repository. """
     try:
         response: requests.Response = requests.get(
@@ -252,14 +240,8 @@ def get_remote_file_tree(owner: str, repo: str, ref: str, comment_url: str, toke
         )
         response.raise_for_status()
         return [item["path"] for item in response.json()["tree"]]
-    except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"get_remote_file_tree HTTP Error: {e.response.status_code} - {e.response.text}")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. This is likely a GitHub.com issue. Please try again later.")
-        raise
     except Exception as e:
-        logging.error(msg=f"get_remote_file_tree Error: {e}")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
-        raise
+        update_comment_for_raised_errors(error=e, comment_url=comment_url, unique_issue_id=unique_issue_id, token=token)
 
 
 async def verify_webhook_signature(request: Request, secret: str) -> None:
@@ -344,3 +326,21 @@ def add_reaction_to_issue(
         logging.error(msg=f"add_reaction_to_issue HTTP Error: {e.response.status_code} - {e.response.text}")
     except Exception as e:
         logging.error(msg=f"add_reaction_to_issue Error: {e}")
+        
+def update_comment_for_raised_errors(
+        error: str,
+        comment_url: str, 
+        unique_issue_id: str,
+        token: str
+        ) -> dict[str, Any]:
+    """ https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment """
+    if isinstance(error, requests.exceptions.HTTPError):
+        logging.error(msg=f"HTTP Error: {error.response.status_code} - {error.response.text}")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. This is likely a GitHub.com issue. Please try again later.")
+    else:
+        logging.error(msg=f"Error: {error}")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
+    
+    supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
+    supabase_manager.finish_progress(unique_issue_id=unique_issue_id)
+    raise
