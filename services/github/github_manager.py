@@ -1,3 +1,13 @@
+class GitHubManager:
+    def __init__(self, token: str):
+        self.token = token
+
+    def commit_changes_to_remote_branch(self, branch: str, commit_message: str, diff_text: str, file_path: str, owner: str, repo: str) -> None:
+        # Method implementation ...
+
+    # Other methods ...
+
+
 # Standard imports
 import base64
 import hashlib  # For HMAC (Hash-based Message Authentication Code) signatures
