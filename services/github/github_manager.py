@@ -336,10 +336,12 @@ def update_comment_for_raised_errors(
     """ https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment """
     if isinstance(error, requests.exceptions.HTTPError):
         logging.error(msg=f"HTTP Error: {error.response.status_code} - {error.response.text}")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. This is likely a GitHub.com issue. Please try again later.")
+        if(error.response.status_code == 422 and error.message == "Validation Failed" and error[0].message.includes('No commits between main and')):
+            update_comment(comment_url=comment_url, token=token, body=f"No changes were detected. Please add more details to the issue and try again.")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again.")
     else:
         logging.error(msg=f"Error: {error}")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again later.")
+        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again.")
     
     supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
     supabase_manager.finish_progress(unique_issue_id=unique_issue_id)
