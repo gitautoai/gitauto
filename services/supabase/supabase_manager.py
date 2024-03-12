@@ -46,7 +46,7 @@ class InstallationTokenManager:
             logging.error(msg=f"Increment Completed Issues Count Error: {e}")
             
             
-    def start_progress(self, unique_issue_id: str) -> None:
+    def start_progress(self, unique_issue_id: str) -> bool:
         try: 
             data, _ = self.client.table(table_name="issues").select("progress").eq(column="unique_id", value=unique_issue_id).execute()
             if(len(data[1]) == 0 or data[1][0]['progress'] == 100):
@@ -64,11 +64,13 @@ class InstallationTokenManager:
     def update_progress(self,unique_issue_id: str, progress: int) -> None:
         try: 
             self.client.table(table_name="issues").update(json={"progress": progress}).eq(column="unique_id", value=unique_issue_id).execute()
+            # Update progress on issue
         except Exception as e:
             logging.error(msg=f"Update Progress Error: {e}")
             
     def finish_progress(self, unique_issue_id: str) -> None:
         try: 
-            self.client.table(table_name="issues").update(json={"progress": 50}).eq(column="unique_id", value=unique_issue_id).execute()
+            self.client.table(table_name="issues").update(json={"progress": 100}).eq(column="unique_id", value=unique_issue_id).execute()
+            # update progress on issue
         except Exception as e:
             logging.error(msg=f"Finish Progress Error: {e}")

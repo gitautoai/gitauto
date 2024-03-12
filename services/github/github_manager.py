@@ -264,3 +264,72 @@ async def verify_webhook_signature(request: Request, secret: str) -> None:
     expected_signature: str = "sha256=" + hmac_signature
     if not hmac.compare_digest(signature, expected_signature):
         raise ValueError("Invalid webhook signature")
+
+
+def create_comment(
+        owner: str,
+        repo: str,
+        issue_number: str, 
+        body: str,
+        token: str
+        ) -> dict[str, Any]:
+    """ https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment """
+    try:
+        response: requests.Response = requests.post(
+            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
+            headers=create_headers(token=token),
+            json={"body": body,},
+            timeout=TIMEOUT_IN_SECONDS
+        )
+        response.raise_for_status()
+        
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+    except Exception as e:
+        logging.error(msg=f"Error: {e}")
+        
+def update_comment(
+        comment_url: str, 
+        body: str,
+        token: str
+        ) -> dict[str, Any]:
+    """ https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment """
+    try:
+        response: requests.Response = requests.post(
+            url=comment_url,
+            headers=create_headers(token=token),
+            json={"body": body,},
+            timeout=TIMEOUT_IN_SECONDS
+        )
+        response.raise_for_status()
+        
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+    except Exception as e:
+        logging.error(msg=f"Error: {e}")
+        
+        
+def add_reaction_to_issue(
+        owner: str,
+        repo: str,
+        issue_number: str, 
+        content: str,
+        token: str
+        ) -> dict[str, Any]:
+    """ https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment """
+    try:
+        response: requests.Response = requests.post(
+            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/reactions",
+            headers=create_headers(token=token),
+            json={"content": content },
+            timeout=TIMEOUT_IN_SECONDS
+        )
+        response.raise_for_status()
+        
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logging.error(msg=f"HTTP Error: {e.response.status_code} - {e.response.text}")
+    except Exception as e:
+        logging.error(msg=f"Error: {e}")

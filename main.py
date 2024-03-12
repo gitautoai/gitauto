@@ -8,7 +8,7 @@ import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
-from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME
 from services.github.github_manager import verify_webhook_signature
 from services.webhook_handler import handle_webhook_event
 
@@ -24,12 +24,6 @@ if ENV != "local":
     )
 
 handler = Mangum(app=app)
-
-from services.supabase.supabase_manager import InstallationTokenManager
-# Initialize managers
-supabase_manager = InstallationTokenManager(url="https://vfaiywatlxbadxlrmjfq.supabase.co", key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYWl5d2F0bHhiYWR4bHJtamZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDk2OTA1NDcsImV4cCI6MjAyNTI2NjU0N30.x5D7U5Ra6Bj2HQf6b-c-PTDL7EK41gYcBUqSNCZxLMg")
-
-
 
 @app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
@@ -57,8 +51,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(object=e)) from e
 
-
 @app.get(path="/")
 async def root() -> dict[str, str]:
-    supabase_manager.start_progress("yo/1/1")
     return {"message": PRODUCT_NAME}
+

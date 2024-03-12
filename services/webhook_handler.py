@@ -12,7 +12,10 @@ from services.github.github_manager import (
     get_installation_access_token,
     get_issue_comments,
     get_latest_remote_commit_sha,
-    get_remote_file_tree
+    get_remote_file_tree,
+    create_comment,
+    update_comment,
+    add_reaction_to_issue
 )
 from services.github.github_types import (
     GitHubEventPayload,
@@ -63,13 +66,29 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
     base_branch: str = repo["default_branch"]
     
     supabase_manager.increment_request_count(installation_id=installation_id)
+    token: str = get_installation_access_token(installation_id=installation_id)
+    add_reaction_to_issue(owner=owner, repo=repo, issue_number=issue_number, content='eyes', token=token)
     
     # Start progress and check if current issue is already in progress from another invocation
     unique_issue_id = f"{owner}/{repo_name}#{issue_number}"
     if(supabase_manager.start_progress(unique_issue_id=unique_issue_id)):
-        return
-    # Prepare token and file tree for Agent
-    token: str = get_installation_access_token(installation_id=installation_id)
+        create_comment(
+            owner=owner,
+            repo=repo_name,
+            issue_number=issue_number,
+            body="The issue is already in progress. Please wait for the previous request to complete.",
+            token=token
+        )
+        return {"message": "The issue is already in progress."}
+    comment_url = create_comment(
+        owner=owner,
+        repo=repo_name,
+        issue_number=issue_number,
+        body="We are creating a pull request. Progress: 0%",
+        token=token
+    )['url']
+    
+    # Prepare contents for Agent
     file_paths: list[str] = get_remote_file_tree(
         owner=owner, repo=repo_name, ref=base_branch, token=token
     )
@@ -96,6 +115,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
     )
     
     supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=50)
+    update_comment(comment_url=comment_url, token=token, body="We are creating a pull request. Progress: 50%")
 
     # Create a remote branch
     uuid: str = str(object=uuid4())
@@ -129,7 +149,7 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
 
     # Create a pull request to the base branch
     issue_link: str = f"Original issue is [#{issue_number}]({issue['html_url']})\n\n"
-    create_pull_request(
+    pull_request_url = create_pull_request(
         base=base_branch,
         body=issue_link + pr_body,
         head=new_branch,
@@ -137,9 +157,10 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
         repo=repo_name,
         title=f"Fix {issue_title} with {PRODUCT_ID} model",
         token=token
-    )
+    )['url']
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
 
+    update_comment(comment_url=comment_url, token=token, body=f"Pull request completed! Check it out here {pull_request_url} 🚀")
     supabase_manager.increment_completed_count(installation_id=installation_id)
     supabase_manager.finish_progress(unique_issue_id=unique_issue_id)
     return

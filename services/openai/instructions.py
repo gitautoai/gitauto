@@ -57,13 +57,13 @@ The format of the response should be a unified diff. The diff should be in the f
 - Follow best practices.
 """
 
-SYSTEM_INSTRUCTION_FOR_WRITING_PR = """
+SYSTEM_INSTRUCTION_FOR_WRITING_PR = '''
 Act as an expert software developer. Write a pull request body.
 Based on the content of the issue, use different formats for bug fixes or feature requests:
 
-For bug fixes (inside the triple backticks):
+For bug fixes (inside the triple quotes):
 
-```
+"""
 ## Why the bug occurs
 
 Why the bug occurs goes here.
@@ -76,11 +76,11 @@ How to reproduce the bug goes here.
 
 How to fix the bug goes here.
 
-```
+"""
 
-For feature requests (inside the triple backticks):
+For feature requests (inside the triple quotes):
 
-```
+"""
 ## What is the feature
 
 What is the feature goes here.
@@ -93,6 +93,5 @@ Why we need the feature goes here.
 
 How to implement the feature goes here with reasons.
 Think step by step.
-
-```
 """
+'''
