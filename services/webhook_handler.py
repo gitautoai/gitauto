@@ -193,7 +193,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
     if pr_body.endswith("```"):
         pr_body = pr_body[:-3]
     git_commands = (
-        f"\n\n```git checkout -b {new_branch}\ngit pull origin {new_branch}\n```"
+        f"\n\n```\ngit checkout -b {new_branch}\ngit pull origin {new_branch}\n```"
     )
     pull_request_url = create_pull_request(
         base=base_branch,
@@ -251,4 +251,4 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             await handle_gitauto(payload=payload, type="comment")
         else:
             print("Edit is not an activated GitAtuo trigger.")
-            print("VALUE: ", eval(payload["comment"]["body"]))
+            print("VALUE: ", payload["comment"]["body"])
