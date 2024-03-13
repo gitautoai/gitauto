@@ -133,6 +133,42 @@ def create_comment(
         logging.error(msg=f"create_comment Error: {e}")
 
 
+def create_gitauto_issue_trigger_comment(payload: str) -> None:
+    """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
+    installation_id: int = payload["installation"]["id"]
+    token: str = get_installation_access_token(installation_id=installation_id)
+
+    owner: str = payload["repository"]["owner"]["login"]
+    repo_name: str = payload["repository"]["name"]
+    issue_number: int = payload["issue"]["number"]
+
+    body = "- [ ] Generate PR"
+    supabase_manager = InstallationTokenManager(
+        url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY
+    )
+    if supabase_manager.is_first_login(installation_id):
+        body = "Welcome to GitAuto! 🎉\nAfter you create your issue, click the checkbox below to generate a PR!\n- [ ] Generate PR"
+        supabase_manager.set_first_login_false(installation_id)
+    try:
+        response: requests.Response = requests.post(
+            url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",
+            headers=create_headers(token=token),
+            json={
+                "body": body,
+            },
+            timeout=TIMEOUT_IN_SECONDS,
+        )
+        response.raise_for_status()
+
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logging.error(
+            msg=f"create_comment HTTP Error: {e.response.status_code} - {e.response.text}"
+        )
+    except Exception as e:
+        logging.error(msg=f"create_comment Error: {e}")
+
+
 def create_headers(token: str) -> dict[str, str]:
     return {
         "Accept": "application/vnd.github.v3+json",

@@ -39,9 +39,6 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
         # Process the webhook event
         payload = await request.json()
-        # formatted_payload: str = json.dumps(obj=payload, indent=4)
-        # print(f"Payload: {formatted_payload}")
-
         # TODO: Sanitize the payload to remove any sensitive information
         # Handle Create, Delete, and Labeled events
         await handle_webhook_event(event_name=event_name, payload=payload)

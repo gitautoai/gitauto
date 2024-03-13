@@ -37,7 +37,23 @@ class InstallationTokenManager:
             column="installation_id", value=installation_id
         ).execute()
 
+    def is_first_login(self, installation_id: int) -> bool:
+        """Checks if it's the owners first issue"""
+        try:
+            data, _ = (
+                self.client.table(table_name="owner_info")
+                .select("first_issue")
+                .eq(column="installation_id", value=installation_id)
+                .execute()
+            )
+            if data[1] and data[1][0]["first_issue"]:
+                return True
+            return False
+        except Exception as e:
+            logging.error(msg=f"Increment Request Count Error: {e}")
+
     def increment_request_count(self, installation_id: int) -> None:
+        "Increments the total request count"
         try:
             data, _ = (
                 self.client.table(table_name="owner_info")
@@ -53,6 +69,7 @@ class InstallationTokenManager:
             logging.error(msg=f"Increment Request Count Error: {e}")
 
     def increment_completed_count(self, installation_id: int) -> None:
+        "Increments the total completed requests count"
         try:
             data, _ = (
                 self.client.table(table_name="owner_info")
@@ -94,7 +111,20 @@ class InstallationTokenManager:
         except Exception as e:
             logging.error(msg=f"Start Progress Error: {e}")
 
+    def set_first_login_false(self, installation_id: int) -> None:
+        """Set's the owners first login to false"""
+        try:
+            data, _ = (
+                self.client.table(table_name="owner_info")
+                .update(json={"first_issue": False})
+                .eq(column="installation_id", value=installation_id)
+                .execute()
+            )
+        except Exception as e:
+            logging.error(msg=f"Increment Request Count Error: {e}")
+
     def update_progress(self, unique_issue_id: str, progress: int) -> None:
+        """Update the progress of generating the PR in a comment of the issue."""
         try:
             self.client.table(table_name="issues").update(
                 json={"progress": progress}

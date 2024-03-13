@@ -16,6 +16,7 @@ from services.github.github_manager import (
     create_comment,
     update_comment,
     add_reaction_to_issue,
+    create_gitauto_issue_trigger_comment,
 )
 from services.github.github_types import (
     GitHubEventPayload,
@@ -50,10 +51,9 @@ async def handle_installation_deleted(payload: GitHubInstallationPayload) -> Non
     supabase_manager.delete_installation_token(installation_id=installation_id)
 
 
-async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
+async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
     # Extract label and validate it
-    label: str = payload["label"]["name"]
-    if label != PRODUCT_ID:
+    if type == "label" and payload["label"]["name"] != PRODUCT_ID:
         return
 
     # Extract information from the payload
@@ -187,10 +187,17 @@ async def handle_issue_labeled(payload: GitHubLabeledPayload) -> None:
         )
 
     # Create a pull request to the base branch
-    issue_link: str = f"Original issue is [#{issue_number}]({issue['html_url']})\n\n"
+    issue_link: str = f"Original issue: [#{issue_number}]({issue['html_url']})\n\n"
+    if pr_body[:3] == "```\n":
+        pr_body = pr_body[4:]
+    if pr_body.endswith("```"):
+        pr_body = pr_body[:-3]
+    git_commands = (
+        f"\n\n```git checkout -b {new_branch}\ngit pull origin {new_branch}```"
+    )
     pull_request_url = create_pull_request(
         base=base_branch,
-        body=issue_link + pr_body,
+        body=issue_link + pr_body + git_commands,
         head=new_branch,
         owner=owner,
         repo=repo_name,
@@ -227,6 +234,20 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
         print("Installaton is deleted")
         await handle_installation_deleted(payload=payload)
 
-    elif event_name == "issues" and action == "labeled":
-        print("Issue is labeled")
-        await handle_issue_labeled(payload=payload)
+    elif event_name == "issues":
+        if action == "labeled":
+            print("Issue is labeled")
+            await handle_gitauto(payload=payload, type="label")
+        elif action == "opened":
+            create_gitauto_issue_trigger_comment(payload=payload)
+
+    elif event_name == "issue_comment" and action == "edited":
+        if (
+            payload["comment"]["body"] == "- [x] Generate PR"
+            or payload["comment"]["body"]
+            == "Welcome to GitAuto! 🎉\r\nAfter you create your issue, click the checkbox below to generate a PR!\r\n- [x] Generate PR"
+        ):
+            print("Issue is labeled")
+            await handle_gitauto(payload=payload, type="comment")
+        else:
+            print("Edit is not an activated GitAtuo trigger.")
