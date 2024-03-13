@@ -242,13 +242,8 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             create_gitauto_issue_trigger_comment(payload=payload)
 
     elif event_name == "issue_comment" and action == "edited":
-        if (
-            payload["comment"]["body"] == "- [x] Generate PR"
-            or payload["comment"]["body"]
-            == "Welcome to GitAuto! 🎉\r\nAfter you create your issue, click the checkbox below to generate a PR!\r\n- [x] Generate PR"
-        ):
+        if payload["comment"]["body"].includes("- [x] Generate PR"):
             print("Issue is labeled")
             await handle_gitauto(payload=payload, type="comment")
         else:
             print("Edit is not an activated GitAtuo trigger.")
-            print("VALUE: ", payload["comment"]["body"])
