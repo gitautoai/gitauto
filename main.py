@@ -20,14 +20,15 @@ if ENV != "local":
         dsn="https://b7ca4effebf7d7825b6464eade11734f@o4506827828101120.ingest.us.sentry.io/4506865231200256",  # noqa
         environment=ENV,
         integrations=[AwsLambdaIntegration()],
-        traces_sample_rate=1.0
+        traces_sample_rate=1.0,
     )
 
 handler = Mangum(app=app)
 
+
 @app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
-    event_name: str = request.headers.get('X-GitHub-Event', 'Event not specified')
+    event_name: str = request.headers.get("X-GitHub-Event", "Event not specified")
     print(f"Received event: {event_name}")
 
     try:
@@ -51,7 +52,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(object=e)) from e
 
+
 @app.get(path="/")
 async def root() -> dict[str, str]:
     return {"message": PRODUCT_NAME}
-

@@ -13,57 +13,82 @@ from fastapi import Request
 
 # Local imports
 from config import (
-    GITHUB_API_URL, GITHUB_API_VERSION, GITHUB_APP_ID, GITHUB_PRIVATE_KEY, TIMEOUT_IN_SECONDS
+    GITHUB_API_URL,
+    GITHUB_API_VERSION,
+    GITHUB_APP_ID,
+    GITHUB_PRIVATE_KEY,
+    TIMEOUT_IN_SECONDS,
 )
 from services.github.github_types import GitHubContentInfo
 from utils.file_manager import apply_patch
 
 from services.supabase.supabase_manager import InstallationTokenManager
-from config import  SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
-class GitHubManager:
-    def __init__(self, token: str):
-        self.token = token
+
+def add_reaction_to_issue(
+    owner: str, repo: str, issue_number: str, content: str, token: str
+) -> dict[str, Any]:
+    """https://docs.github.com/en/rest/reactions/reactions?apiVersion=2022-11-28#create-reaction-for-an-issue"""
+    try:
+        response: requests.Response = requests.post(
+            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/reactions",
+            headers=create_headers(token=token),
+            json={"content": content},
+            timeout=TIMEOUT_IN_SECONDS,
+        )
+        response.raise_for_status()
+
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logging.error(
+            msg=f"add_reaction_to_issue HTTP Error: {e.response.status_code} - {e.response.text}"
+        )
+    except Exception as e:
+        logging.error(msg=f"add_reaction_to_issue Error: {e}")
 
 
 def commit_changes_to_remote_branch(
-        branch: str,
-        commit_message: str,
-        diff_text: str,
-        file_path: str,
-        owner: str,
-        repo: str,
-        comment_url: str,
-        unique_issue_id: str,
-        token: str
-        ) -> None:
-    """ https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents """
+    branch: str,
+    commit_message: str,
+    diff_text: str,
+    file_path: str,
+    owner: str,
+    repo: str,
+    comment_url: str,
+    unique_issue_id: str,
+    token: str,
+) -> None:
+    """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
     url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}"
     try:
         # Get the SHA of the file if it exists
         get_response = requests.get(
-            url=url,
-            headers=create_headers(token=token),
-            timeout=TIMEOUT_IN_SECONDS
+            url=url, headers=create_headers(token=token), timeout=TIMEOUT_IN_SECONDS
         )
         original_text = ""
         sha = ""
         print(f"{get_response.status_code=}\n")
         if get_response.status_code == 200:
             get_json: GitHubContentInfo = get_response.json()
-            original_text: str = base64.b64decode(s=get_json['content']).decode(encoding='utf-8')
-            sha: str = get_json['sha']
+            original_text: str = base64.b64decode(s=get_json["content"]).decode(
+                encoding="utf-8"
+            )
+            sha: str = get_json["sha"]
         elif get_response.status_code != 404:  # Error other than 'file not found'
             get_response.raise_for_status()
 
         # Create a new commit
-        modified_text: str = apply_patch(original_text=original_text, diff_text=diff_text)
-        if(modified_text == ''):
+        modified_text: str = apply_patch(
+            original_text=original_text, diff_text=diff_text
+        )
+        if modified_text == "":
             return
         data: dict[str, str | None] = {
             "message": commit_message,
-            "content": base64.b64encode(s=modified_text.encode(encoding='utf-8'))
-            .decode(encoding='utf-8'),
+            "content": base64.b64encode(
+                s=modified_text.encode(encoding="utf-8")
+            ).decode(encoding="utf-8"),
             "branch": branch,
         }
         if sha != "":
@@ -72,11 +97,40 @@ def commit_changes_to_remote_branch(
             url=url,
             json=data,
             headers=create_headers(token=token),
-            timeout=TIMEOUT_IN_SECONDS
+            timeout=TIMEOUT_IN_SECONDS,
         )
         put_response.raise_for_status()
     except Exception as e:
-        update_comment_for_raised_errors(error=e, comment_url=comment_url, unique_issue_id=unique_issue_id, token=token)
+        update_comment_for_raised_errors(
+            error=e,
+            comment_url=comment_url,
+            unique_issue_id=unique_issue_id,
+            token=token,
+        )
+
+
+def create_comment(
+    owner: str, repo: str, issue_number: str, body: str, token: str
+) -> dict[str, Any]:
+    """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
+    try:
+        response: requests.Response = requests.post(
+            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
+            headers=create_headers(token=token),
+            json={
+                "body": body,
+            },
+            timeout=TIMEOUT_IN_SECONDS,
+        )
+        response.raise_for_status()
+
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logging.error(
+            msg=f"create_comment HTTP Error: {e.response.status_code} - {e.response.text}"
+        )
+    except Exception as e:
+        logging.error(msg=f"create_comment Error: {e}")
 
 
 def create_headers(token: str) -> dict[str, str]:
@@ -88,7 +142,7 @@ def create_headers(token: str) -> dict[str, str]:
 
 
 def create_jwt() -> str:
-    """ Generate a JWT (JSON Web Token) for GitHub App authentication """
+    """Generate a JWT (JSON Web Token) for GitHub App authentication"""
     now = int(time.time())
     payload: dict[str, int | str] = {
         "iat": now,  # Issued at time
@@ -100,152 +154,188 @@ def create_jwt() -> str:
 
 
 def create_pull_request(
-        base: str,  # The branch name you want to merge your changes into. ex) 'main'
-        body: str,
-        head: str,  # The branch name that contains your changes
-        owner: str,
-        repo: str,
-        title: str,
-        comment_url: str,
-        unique_issue_id: str,
-        token: str
-        ) -> dict[str, Any]:
-    """ https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request """
+    base: str,  # The branch name you want to merge your changes into. ex) 'main'
+    body: str,
+    head: str,  # The branch name that contains your changes
+    owner: str,
+    repo: str,
+    title: str,
+    comment_url: str,
+    unique_issue_id: str,
+    token: str,
+) -> dict[str, Any]:
+    """https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request"""
     try:
         response: requests.Response = requests.post(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls",
             headers=create_headers(token=token),
             json={"title": title, "body": body, "head": head, "base": base},
-            timeout=TIMEOUT_IN_SECONDS
+            timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
         return response.json()
     except Exception as e:
-        update_comment_for_raised_errors(error=e, comment_url=comment_url, unique_issue_id=unique_issue_id, token=token)
+        update_comment_for_raised_errors(
+            error=e,
+            comment_url=comment_url,
+            unique_issue_id=unique_issue_id,
+            token=token,
+        )
 
 
 def create_remote_branch(
-        branch_name: str,
-        owner: str,
-        repo: str,
-        sha: str,
-        comment_url: str,
-        unique_issue_id: str,
-        token: str
-        ) -> None:
+    branch_name: str,
+    owner: str,
+    repo: str,
+    sha: str,
+    comment_url: str,
+    unique_issue_id: str,
+    token: str,
+) -> None:
     try:
         response: requests.Response = requests.post(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/refs",
             headers=create_headers(token=token),
             json={"ref": f"refs/heads/{branch_name}", "sha": sha},
-            timeout=TIMEOUT_IN_SECONDS
+            timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
     except Exception as e:
-        update_comment_for_raised_errors(error=e, comment_url=comment_url, unique_issue_id=unique_issue_id, token=token)
-        
+        update_comment_for_raised_errors(
+            error=e,
+            comment_url=comment_url,
+            unique_issue_id=unique_issue_id,
+            token=token,
+        )
 
 
 def get_installation_access_token(installation_id: int) -> str:
-    """ Get an access token for the installed GitHub App """
+    """Get an access token for the installed GitHub App"""
     jwt_token: str = create_jwt()
     headers: dict[str, str] = create_headers(token=jwt_token)
-    url: str = f"https://api.github.com/app/installations/{installation_id}/access_tokens"
+    url: str = (
+        f"https://api.github.com/app/installations/{installation_id}/access_tokens"
+    )
 
     try:
         response: requests.Response = requests.post(
-            url=url,
-            headers=headers,
-            timeout=TIMEOUT_IN_SECONDS
+            url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS
         )
         response.raise_for_status()
         return response.json()["token"]
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"get_installation_access_token HTTP Error: {e.response.status_code} - {e.response.text}")
+        logging.error(
+            msg=f"get_installation_access_token HTTP Error: {e.response.status_code} - {e.response.text}"
+        )
         raise
     except Exception as e:
         logging.error(msg=f"get_installation_access_token Error: {e}")
         raise
 
 
-def get_issue_comments(owner: str, repo: str, issue_number: int, token: str) -> list[str]:
-    """ https://docs.github.com/en/rest/issues/comments#list-issue-comments """
+def get_issue_comments(
+    owner: str, repo: str, issue_number: int, token: str
+) -> list[str]:
+    """https://docs.github.com/en/rest/issues/comments#list-issue-comments"""
     try:
         response = requests.get(
             url=f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/comments",
             headers=create_headers(token=token),
-            timeout=TIMEOUT_IN_SECONDS
+            timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
         comments = response.json()
-        comment_texts: list[str] = [comment['body'] for comment in comments]
+        comment_texts: list[str] = [comment["body"] for comment in comments]
         return comment_texts
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"get_issue_comments HTTP Error: {e.response.status_code} - {e.response.text}")
+        logging.error(
+            msg=f"get_issue_comments HTTP Error: {e.response.status_code} - {e.response.text}"
+        )
     except Exception as e:
         logging.error(msg=f"get_issue_comments Error: {e}")
 
 
-def get_latest_remote_commit_sha(owner: str, repo: str, branch: str, comment_url: str, unique_issue_id: str, token: str) -> str:
-    """ SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
-    https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference """
+def get_latest_remote_commit_sha(
+    owner: str,
+    repo: str,
+    branch: str,
+    comment_url: str,
+    unique_issue_id: str,
+    token: str,
+) -> str:
+    """SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
+    https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference"""
     try:
         response: requests.Response = requests.get(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/ref/heads/{branch}",
             headers=create_headers(token=token),
-            timeout=TIMEOUT_IN_SECONDS
+            timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
         return response.json()["object"]["sha"]
     except Exception as e:
-        update_comment_for_raised_errors(error=e, comment_url=comment_url, unique_issue_id=unique_issue_id, token=token)
-        
+        update_comment_for_raised_errors(
+            error=e,
+            comment_url=comment_url,
+            unique_issue_id=unique_issue_id,
+            token=token,
+        )
+
 
 def get_remote_file_content(
-        file_path: str,  # Ex) 'src/main.py'
-        owner: str,
-        ref: str,  # Ex) 'main'
-        repo: str,
-        token: str
-        ) -> str:
-    """ @link https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28 """
+    file_path: str,  # Ex) 'src/main.py'
+    owner: str,
+    ref: str,  # Ex) 'main'
+    repo: str,
+    token: str,
+) -> str:
+    """@link https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28"""
     url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
     headers: dict[str, str] = create_headers(token=token)
 
     try:
         response: requests.Response = requests.get(
-            url=url,
-            headers=headers,
-            timeout=TIMEOUT_IN_SECONDS
+            url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS
         )
         response.raise_for_status()
         encoded_content: str = response.json()["content"]
-        decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding="utf-8")
+        decoded_content: str = base64.b64decode(s=encoded_content).decode(
+            encoding="utf-8"
+        )
         # print(f"```{file_path}:\n{decoded_content}```")
         return decoded_content
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"get_remote_file_content HTTP Error: {e.response.status_code} - {e.response.text}")
+        logging.error(
+            msg=f"get_remote_file_content HTTP Error: {e.response.status_code} - {e.response.text}"
+        )
     except Exception as e:
         # TODO in future ask GPT to try again
         logging.error(msg=f"get_remote_file_content Error: {e}")
-        
 
-def get_remote_file_tree(owner: str, repo: str, ref: str, comment_url: str, unique_issue_id: str, token: str) -> list[str]:
-    """ Get the file tree of a GitHub repository. """
+
+def get_remote_file_tree(
+    owner: str, repo: str, ref: str, comment_url: str, unique_issue_id: str, token: str
+) -> list[str]:
+    """Get the file tree of a GitHub repository."""
     try:
         response: requests.Response = requests.get(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/trees/{ref}?recursive=1",
             headers=create_headers(token=token),
-            timeout=TIMEOUT_IN_SECONDS
+            timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
         return [item["path"] for item in response.json()["tree"]]
     except Exception as e:
-        update_comment_for_raised_errors(error=e, comment_url=comment_url, unique_issue_id=unique_issue_id, token=token)
+        update_comment_for_raised_errors(
+            error=e,
+            comment_url=comment_url,
+            unique_issue_id=unique_issue_id,
+            token=token,
+        )
 
 
 async def verify_webhook_signature(request: Request, secret: str) -> None:
-    """ Verify the webhook signature for security """
+    """Verify the webhook signature for security"""
     signature: str | None = request.headers.get("X-Hub-Signature-256")
     if signature is None:
         raise ValueError("Missing webhook signature")
@@ -253,96 +343,59 @@ async def verify_webhook_signature(request: Request, secret: str) -> None:
 
     # Compare the computed signature with the one in the headers
     hmac_key: bytes = secret.encode()
-    hmac_signature: str = hmac.new(key=hmac_key, msg=body, digestmod=hashlib.sha256).hexdigest()
+    hmac_signature: str = hmac.new(
+        key=hmac_key, msg=body, digestmod=hashlib.sha256
+    ).hexdigest()
     expected_signature: str = "sha256=" + hmac_signature
     if not hmac.compare_digest(signature, expected_signature):
         raise ValueError("Invalid webhook signature")
 
 
-def create_comment(
-        owner: str,
-        repo: str,
-        issue_number: str, 
-        body: str,
-        token: str
-        ) -> dict[str, Any]:
-    """ https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment """
+def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
+    """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
     try:
-        response: requests.Response = requests.post(
-            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
-            headers=create_headers(token=token),
-            json={"body": body,},
-            timeout=TIMEOUT_IN_SECONDS
-        )
-        response.raise_for_status()
-        
-        return response.json()
-    except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"create_comment HTTP Error: {e.response.status_code} - {e.response.text}")
-    except Exception as e:
-        logging.error(msg=f"create_comment Error: {e}")
-        
-def update_comment(
-        comment_url: str, 
-        body: str,
-        token: str
-        ) -> dict[str, Any]:
-    """ https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment """
-    try:
-        response: requests.Response = requests.post(
+        response: requests.Response = requests.patch(
             url=comment_url,
             headers=create_headers(token=token),
-            json={"body": body,},
-            timeout=TIMEOUT_IN_SECONDS
+            json={
+                "body": body,
+            },
+            timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
-        
+
         return response.json()
     except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"update_comment HTTP Error: {e.response.status_code} - {e.response.text}")
+        logging.error(
+            msg=f"update_comment HTTP Error: {e.response.status_code} - {e.response.text}"
+        )
     except Exception as e:
         logging.error(msg=f"update_comment Error: {e}")
-        
-        
-def add_reaction_to_issue(
-        owner: str,
-        repo: str,
-        issue_number: str, 
-        content: str,
-        token: str
-        ) -> dict[str, Any]:
-    """ https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment """
-    try:
-        response: requests.Response = requests.post(
-            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/reactions",
-            headers=create_headers(token=token),
-            json={"content": content },
-            timeout=TIMEOUT_IN_SECONDS
-        )
-        response.raise_for_status()
-        
-        return response.json()
-    except requests.exceptions.HTTPError as e:
-        logging.error(msg=f"add_reaction_to_issue HTTP Error: {e.response.status_code} - {e.response.text}")
-    except Exception as e:
-        logging.error(msg=f"add_reaction_to_issue Error: {e}")
-        
+
+
 def update_comment_for_raised_errors(
-        error: str,
-        comment_url: str, 
-        unique_issue_id: str,
-        token: str
-        ) -> dict[str, Any]:
-    """ https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment """
+    error: str, comment_url: str, unique_issue_id: str, token: str
+) -> dict[str, Any]:
+    """Update the comment on issue with an error message, set progress to 100, and raise the error."""
     if isinstance(error, requests.exceptions.HTTPError):
-        logging.error(msg=f"HTTP Error: {error.response.status_code} - {error.response.text}")
-        if(error.response.status_code == 422 and error.message == "Validation Failed" and error[0].message.includes('No commits between main and')):
-            update_comment(comment_url=comment_url, token=token, body=f"No changes were detected. Please add more details to the issue and try again.")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again.")
+        body = "Sorry, we have an error. Please try again."
+        logging.error(
+            msg=f"HTTP Error: {error.response.status_code} - {error.response.text}"
+        )
+        if (
+            error.response.status_code == 422
+            and error.message == "Validation Failed"
+            and error[0].message.includes("No commits between main and")
+        ):
+            body = (
+                "No changes were detected. Please add more details to the issue and try again.",
+            )
     else:
         logging.error(msg=f"Error: {error}")
-        update_comment(comment_url=comment_url, token=token, body=f"Sorry, we have an error. Please try again.")
-    
-    supabase_manager = InstallationTokenManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-    supabase_manager.finish_progress(unique_issue_id=unique_issue_id)
+    update_comment(comment_url=comment_url, token=token, body=body)
+
+    supabase_manager = InstallationTokenManager(
+        url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY
+    )
+    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=100)
     raise
