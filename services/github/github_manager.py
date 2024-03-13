@@ -421,7 +421,7 @@ def update_comment_for_raised_errors(
         if (
             error.response.status_code == 422
             and error.message == "Validation Failed"
-            and error[0].message.find("No commits between main and") != -1
+            and error.errors[0].message.find("No commits between main and") != -1
         ):
             body = (
                 "No changes were detected. Please add more details to the issue and try again.",
