@@ -5,3 +5,4 @@ __pycache__
 ngrok.yml
 tmp
 venv
+utils/quick_access.txt
