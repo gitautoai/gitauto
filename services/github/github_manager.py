@@ -418,9 +418,6 @@ def update_comment_for_raised_errors(
     """Update the comment on issue with an error message, set progress to 100, and raise the error."""
     if isinstance(error, requests.exceptions.HTTPError):
         body = "Sorry, we have an error. Please try again."
-        logging.error(
-            msg=f"HTTP Error: {error.response.status_code} - {error.response.text}"
-        )
         if (
             error.response.status_code == 422
             and error.message == "Validation Failed"
@@ -428,6 +425,10 @@ def update_comment_for_raised_errors(
         ):
             body = (
                 "No changes were detected. Please add more details to the issue and try again.",
+            )
+        else:
+            logging.error(
+                msg=f"HTTP Error: {error.response.status_code} - {error.response.text}"
             )
     else:
         logging.error(msg=f"Error: {error}")
