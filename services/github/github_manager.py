@@ -18,6 +18,7 @@ from config import (
     GITHUB_APP_ID,
     GITHUB_PRIVATE_KEY,
     TIMEOUT_IN_SECONDS,
+    PRODUCT_ID,
 )
 from services.github.github_types import GitHubContentInfo
 from utils.file_manager import apply_patch
@@ -142,13 +143,15 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     repo_name: str = payload["repository"]["name"]
     issue_number: int = payload["issue"]["number"]
 
-    body = "- [ ] Generate PR"
+    body = "Click the checkbox below to generate a PR!\n- [ ] Generate PR"
     supabase_manager = InstallationTokenManager(
         url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY
     )
     if supabase_manager.is_users_first_issue(installation_id):
-        body = "Welcome to GitAuto! 🎉\nAfter you create your issue, click the checkbox below to generate a PR!\n- [ ] Generate PR"
+        body = "Welcome to GitAuto! 🎉\n" + body
         supabase_manager.set_user_first_issue_to_false(installation_id)
+    if PRODUCT_ID != "gitauto":
+        body += " - " + PRODUCT_ID
     try:
         response: requests.Response = requests.post(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",
@@ -413,21 +416,25 @@ def update_comment_for_raised_errors(
     error: str, comment_url: str, unique_issue_id: str, token: str
 ) -> dict[str, Any]:
     """Update the comment on issue with an error message, set progress to 100, and raise the error."""
-    if isinstance(error, requests.exceptions.HTTPError):
-        body = "Sorry, we have an error. Please try again."
-        logging.error(
-            msg=f"HTTP Error: {error.response.status_code} - {error.response.text}"
-        )
-        if (
-            error.response.status_code == 422
-            and error.message == "Validation Failed"
-            and error.errors[0].message.find("No commits between main and") != -1
-        ):
-            body = (
-                "No changes were detected. Please add more details to the issue and try again.",
-            )
-    else:
-        logging.error(msg=f"Error: {error}")
+    body = "Sorry, we have an error. Please try again."
+    try:
+        if isinstance(error, requests.exceptions.HTTPError):
+            if (
+                error.response.status_code == 422
+                and error.message == "Validation Failed"
+                and error.errors[0][0].message.find("No commits between main and") != -1
+            ):
+                body = (
+                    "No changes were detected. Please add more details to the issue and try again.",
+                )
+            else:
+                logging.error(
+                    msg=f"HTTP Error: {error.response.status_code} - {error.response.text}"
+                )
+        else:
+            logging.error(msg=f"Error: {error}")
+    except Exception as e:
+        logging.error(msg=f"update_comment_for_raised_errors Error: {e}")
     update_comment(comment_url=comment_url, token=token, body=body)
 
     supabase_manager = InstallationTokenManager(
