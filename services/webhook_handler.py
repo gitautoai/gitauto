@@ -236,7 +236,10 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             create_comment_on_issue_with_gitauto_button(payload=payload)
 
     elif event_name == "issue_comment" and action == "edited":
-        if payload["comment"]["body"].find("- [x] Generate PR") != -1:
+        search_text = "- [x] Generate PR"
+        if PRODUCT_ID != "gitauto":
+            search_text += PRODUCT_ID
+        if payload["comment"]["body"].find(search_text) != -1:
             print("Issue is labeled")
             await handle_gitauto(payload=payload, type="comment")
         else:

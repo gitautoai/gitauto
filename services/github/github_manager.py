@@ -18,6 +18,7 @@ from config import (
     GITHUB_APP_ID,
     GITHUB_PRIVATE_KEY,
     TIMEOUT_IN_SECONDS,
+    PRODUCT_ID,
 )
 from services.github.github_types import GitHubContentInfo
 from utils.file_manager import apply_patch
@@ -149,6 +150,8 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     if supabase_manager.is_users_first_issue(installation_id):
         body = "Welcome to GitAuto! 🎉\nAfter you create your issue, click the checkbox below to generate a PR!\n- [ ] Generate PR"
         supabase_manager.set_user_first_issue_to_false(installation_id)
+    if PRODUCT_ID != "gitauto":
+        body += PRODUCT_ID
     try:
         response: requests.Response = requests.post(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",
@@ -421,7 +424,7 @@ def update_comment_for_raised_errors(
         if (
             error.response.status_code == 422
             and error.message == "Validation Failed"
-            and error.errors[0].message.find("No commits between main and") != -1
+            and error.errors[0][0].message.find("No commits between main and") != -1
         ):
             body = (
                 "No changes were detected. Please add more details to the issue and try again.",
