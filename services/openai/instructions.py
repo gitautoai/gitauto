@@ -58,7 +58,8 @@ The format of the response should be a unified diff. The diff should be in the f
 """
 
 SYSTEM_INSTRUCTION_FOR_WRITING_PR = '''
-Act as an expert software developer. Write a pull request body.
+Act as an expert software developer. Write a pull request body. 
+NEVER use triple backticks unless it's a code block.
 Based on the content of the issue, use different formats for bug fixes or feature requests:
 
 For bug fixes (inside the triple quotes):
