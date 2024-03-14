@@ -133,7 +133,7 @@ def create_comment(
         logging.error(msg=f"create_comment Error: {e}")
 
 
-def create_comment_on_issue_with_gitauto_(payload) -> None:
+def create_comment_on_issue_with_gitauto_button(payload) -> None:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
