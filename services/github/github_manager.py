@@ -133,7 +133,7 @@ def create_comment(
         logging.error(msg=f"create_comment Error: {e}")
 
 
-def create_gitauto_issue_trigger_comment(payload: str) -> None:
+def create_comment_on_issue_with_gitauto_(payload) -> None:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
@@ -146,9 +146,9 @@ def create_gitauto_issue_trigger_comment(payload: str) -> None:
     supabase_manager = InstallationTokenManager(
         url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY
     )
-    if supabase_manager.is_first_login(installation_id):
+    if supabase_manager.is_users_first_issue(installation_id):
         body = "Welcome to GitAuto! 🎉\nAfter you create your issue, click the checkbox below to generate a PR!\n- [ ] Generate PR"
-        supabase_manager.set_first_login_false(installation_id)
+        supabase_manager.set_user_first_login_false(installation_id)
     try:
         response: requests.Response = requests.post(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",

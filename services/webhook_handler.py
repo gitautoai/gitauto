@@ -16,7 +16,7 @@ from services.github.github_manager import (
     create_comment,
     update_comment,
     add_reaction_to_issue,
-    create_gitauto_issue_trigger_comment,
+    create_comment_on_issue_with_gitauto_button,
 )
 from services.github.github_types import (
     GitHubEventPayload,
@@ -188,13 +188,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
 
     # Create a pull request to the base branch
     issue_link: str = f"Original issue: [#{issue_number}]({issue['html_url']})\n\n"
-    if pr_body[:3] == "```\n":
-        pr_body = pr_body[4:]
-    if pr_body.endswith("```"):
-        pr_body = pr_body[:-3]
-    git_commands = (
-        f"\n\n```\ngit checkout -b {new_branch}\ngit pull origin {new_branch}\n```"
-    )
+    git_commands = f"\n\n# Test these changes locally\n\n```\ngit checkout -b {new_branch}\ngit pull origin {new_branch}\n```"
     pull_request_url = create_pull_request(
         base=base_branch,
         body=issue_link + pr_body + git_commands,
@@ -239,7 +233,7 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             print("Issue is labeled")
             await handle_gitauto(payload=payload, type="label")
         elif action == "opened":
-            create_gitauto_issue_trigger_comment(payload=payload)
+            create_comment_on_issue_with_gitauto_button(payload=payload)
 
     elif event_name == "issue_comment" and action == "edited":
         if payload["comment"]["body"].find("- [x] Generate PR") != -1:
