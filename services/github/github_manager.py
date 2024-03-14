@@ -416,22 +416,25 @@ def update_comment_for_raised_errors(
     error: str, comment_url: str, unique_issue_id: str, token: str
 ) -> dict[str, Any]:
     """Update the comment on issue with an error message, set progress to 100, and raise the error."""
-    if isinstance(error, requests.exceptions.HTTPError):
-        body = "Sorry, we have an error. Please try again."
-        if (
-            error.response.status_code == 422
-            and error.message == "Validation Failed"
-            and error.errors[0][0].message.find("No commits between main and") != -1
-        ):
-            body = (
-                "No changes were detected. Please add more details to the issue and try again.",
-            )
+    body = "Sorry, we have an error. Please try again."
+    try:
+        if isinstance(error, requests.exceptions.HTTPError):
+            if (
+                error.response.status_code == 422
+                and error.message == "Validation Failed"
+                and error.errors[0][0].message.find("No commits between main and") != -1
+            ):
+                body = (
+                    "No changes were detected. Please add more details to the issue and try again.",
+                )
+            else:
+                logging.error(
+                    msg=f"HTTP Error: {error.response.status_code} - {error.response.text}"
+                )
         else:
-            logging.error(
-                msg=f"HTTP Error: {error.response.status_code} - {error.response.text}"
-            )
-    else:
-        logging.error(msg=f"Error: {error}")
+            logging.error(msg=f"Error: {error}")
+    except Exception as e:
+        logging.error(msg=f"update_comment_for_raised_errors Error: {e}")
     update_comment(comment_url=comment_url, token=token, body=body)
 
     supabase_manager = InstallationTokenManager(
