@@ -220,11 +220,11 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
         return
 
     # Check the type of webhook event and handle accordingly
-    if event_name == "installation" and action in ("created", "added"):
+    if event_name == "installation" and action in ("created"):
         print("Installaton is created")
         await handle_installation_created(payload=payload)
 
-    elif event_name == "installation" and action in ("deleted", "removed"):
+    elif event_name == "installation" and action in ("deleted"):
         print("Installaton is deleted")
         await handle_installation_deleted(payload=payload)
 

@@ -12,7 +12,7 @@ class InstallationTokenManager:
         data, _ = (
             self.client.table(table_name="owner_info")
             .select("*")
-            .eq(column="installation_id", value=installation_id)
+            .eq(column="owner_name", value=owner_name)
             .execute()
         )
         if len(data[1]) > 0:
@@ -22,7 +22,7 @@ class InstallationTokenManager:
                     "owner_name": owner_name,
                     "deleted_at": None,
                 }
-            ).eq(column="installation_id", value=installation_id).execute()
+            ).eq(column="owner_name", value=owner_name).execute()
         else:
             self.client.table(table_name="owner_info").insert(
                 json={
