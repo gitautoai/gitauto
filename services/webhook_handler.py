@@ -94,7 +94,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
         owner=owner,
         repo=repo_name,
         issue_number=issue_number,
-        body="![X](https://progress-bar.dev/0/?title=Progress&width=800)\nGitAuto just stared crafting a pull request.",
+        body="![X](https://progress-bar.dev/0/?title=Progress&width=800)\nGitAuto just started crafting a pull request.",
         token=token,
     )["url"]
     # Prepare contents for Agent
