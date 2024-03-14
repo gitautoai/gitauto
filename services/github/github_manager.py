@@ -151,7 +151,7 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
         body = "Welcome to GitAuto! 🎉\nAfter you create your issue, click the checkbox below to generate a PR!\n- [ ] Generate PR"
         supabase_manager.set_user_first_issue_to_false(installation_id)
     if PRODUCT_ID != "gitauto":
-        body += PRODUCT_ID
+        body += " - " + PRODUCT_ID
     try:
         response: requests.Response = requests.post(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",
