@@ -265,13 +265,14 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
     elif event_name == "pull_request":
         if action == "closed":
             try:
+                pull_request = payload["pull_request"]
                 # Check PR is merged and this is correct GitAuto environment
-                if payload["pull_request"]["merged_at"] is not None and payload[
-                    "pull_request"
-                ]["head"]["ref"].startswith(PRODUCT_ID + "/issue-#"):
+                if pull_request["merged_at"] is not None and pull_request["head"][
+                    "ref"
+                ].startswith(PRODUCT_ID + "/issue-#"):
                     # Create unique_issue_id to update merged status
                     print("FOUND MERGE")
-                    body = payload["body"]
+                    body = pull_request["body"]
                     if body.startswith("Original issue: [#"):
                         pattern = re.compile(r"/issues/(.*?)\)\n")
                         match = re.search(pattern, body)
