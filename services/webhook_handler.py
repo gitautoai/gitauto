@@ -224,8 +224,6 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
     if not action:
         return
 
-    print("EVENT NAME: ", event_name)
-
     # Check the type of webhook event and handle accordingly
     if event_name == "installation" and action in ("created"):
         print("Installaton is created")
