@@ -102,6 +102,8 @@ class InstallationTokenManager:
 
     def save_progress_started(self, unique_issue_id: str, installation_id: int) -> bool:
         try:
+            print("INSTALL ID: ", installation_id)
+            print("UID", unique_issue_id)
             data, _ = (
                 self.client.table(table_name="issues")
                 .select("progress")

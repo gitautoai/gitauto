@@ -40,7 +40,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
         # Process the webhook event
         payload = await request.json()
-        pprint.PrettyPrinter(indent=4).pprint(payload)
+        # pprint.PrettyPrinter(indent=4).pprint(payload)
 
         await handle_webhook_event(event_name=event_name, payload=payload)
         print("Webhook event handled")
