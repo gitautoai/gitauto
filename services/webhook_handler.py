@@ -273,10 +273,11 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
                     # Create unique_issue_id to update merged status
                     print("FOUND MERGE")
                     body = pull_request["body"]
-                    if body.startswith("Original issue: [#"):
-                        pattern = re.compile(r"/issues/(.*?)\)\n")
-                        match = re.search(pattern, body)
+                    if body[0].startswith("Original issue: [#"):
+                        pattern = re.compile(r"/issues/(\d+)")
+                        match = re.search(pattern, body[1])
                         print("STARTS WITH")
+                        print("BODY 1: ", body[1])
                         if match:
                             print("MATCH")
                             issue_number = match.group(1)
