@@ -40,7 +40,7 @@ supabase_manager = InstallationTokenManager(
 
 async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
     installation_id: int = payload["installation"]["id"]
-    owner_type: str = payload["user"]["type"][0]
+    owner_type: str = payload["sender"]["type"][0]
     owner_name: str = payload["installation"]["account"]["login"]
 
     supabase_manager.save_installation_token(
@@ -67,7 +67,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
     issue_number: int = issue["number"]
     installation_id: int = payload["installation"]["id"]
     repo: RepositoryInfo = payload["repository"]
-    owner_type = payload["user"]["type"][0]
+    owner_type = payload["sender"]["type"][0]
     owner: str = repo["owner"]["login"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
@@ -265,14 +265,18 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
     elif event_name == "pull_request":
         if action == "closed":
             try:
-                if payload["merged_at"] is not None:
+                # Check PR is merged and this is correct GitAuto environment
+                if payload["merged_at"] is not None and payload["pull_request"]["head"][
+                    "ref"
+                ].startswith(PRODUCT_ID + "/issue-#"):
+                    # Create unique_issue_id to update merged status
                     body = payload["body"]
                     if body.startswith("Original issue: [#"):
                         pattern = re.compile(r"/issues/(.*?)\)\n")
                         match = re.search(pattern, body)
                         if match:
                             issue_number = match.group(1)
-                            owner_type = payload["user"]["type"][0]
+                            owner_type = payload["sender"]["type"][0]
                             unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
                             supabase_manager.set_issue_to_merged(
                                 unique_issue_id=unique_issue_id
