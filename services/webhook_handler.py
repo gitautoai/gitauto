@@ -2,6 +2,8 @@
 import json
 import time
 from uuid import uuid4
+import logging
+import re
 
 # Local imports
 from config import PRODUCT_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -38,10 +40,12 @@ supabase_manager = InstallationTokenManager(
 
 async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
     installation_id: int = payload["installation"]["id"]
+    owner_type: str = payload["type"][0]
     owner_name: str = payload["installation"]["account"]["login"]
 
     supabase_manager.save_installation_token(
         installation_id=installation_id,
+        owner_type=owner_type,
         owner_name=owner_name,
     )
 
@@ -63,6 +67,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
     issue_number: int = issue["number"]
     installation_id: int = payload["installation"]["id"]
     repo: RepositoryInfo = payload["repository"]
+    owner_type = payload["type"][0]
     owner: str = repo["owner"]["login"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
@@ -78,7 +83,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
     )
 
     # Start progress and check if current issue is already in progress from another invocation
-    unique_issue_id = f"{owner}/{repo_name}#{issue_number}"
+    unique_issue_id = f"{owner_type}/{owner}/{repo_name}#{issue_number}"
     if not supabase_manager.save_progress_started(
         unique_issue_id=unique_issue_id, installation_id=installation_id
     ):
@@ -188,7 +193,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
 
     # Create a pull request to the base branch
     issue_link: str = f"Original issue: [#{issue_number}]({issue['html_url']})\n\n"
-    git_commands = f"\n\n# Test these changes locally\n\n```\ngit checkout -b {new_branch}\ngit pull origin {new_branch}\n```"
+    git_commands = f"\n\n## Test these changes locally\n\n```\ngit checkout -b {new_branch}\ngit pull origin {new_branch}\n```"
     pull_request_url = create_pull_request(
         base=base_branch,
         body=issue_link + pr_body + git_commands,
@@ -219,6 +224,8 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
     if not action:
         return
 
+    print("EVENT NAME: ", event_name)
+
     # Check the type of webhook event and handle accordingly
     if event_name == "installation" and action in ("created"):
         print("Installaton is created")
@@ -235,6 +242,7 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
         elif action == "opened":
             create_comment_on_issue_with_gitauto_button(payload=payload)
 
+    # Run agent on proper environment
     elif event_name == "issue_comment" and action == "edited":
         issue_handled = False
 
@@ -255,3 +263,21 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
                 await handle_gitauto(payload=payload, type="comment")
         if not issue_handled:
             print("Edit is not an activated GitAtuo trigger.")
+
+    elif event_name == "pull_request":
+        if action == "closed":
+            try:
+                if payload["merged_at"] is not None:
+                    body = payload["body"]
+                    if body.startswith("Original issue: [#"):
+                        pattern = re.compile(r"/issues/(.*?)\)\n")
+                        match = re.search(pattern, body)
+                        if match:
+                            issue_number = match.group(1)
+                            owner_type = payload["type"][0]
+                            unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
+                            supabase_manager.set_issue_to_merged(
+                                unique_issue_id=unique_issue_id
+                            )
+            except Exception as e:
+                logging.error(msg=f"Handle PR Merge: {e}")
