@@ -24,30 +24,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # - name: List images in Amazon ECR repository
-      #   id: list-images
-      #   env:
-      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      #     ECR_REPOSITORY: fastapi-demo
-      #   run: |
-      #     images=$(aws ecr list-images --repository-name $ECR_REPOSITORY --registry-id $ECR_REGISTRY --query 'imageIds[*]' --output json)
-      #     echo $images > images.json
-      
-      # - name: Sort images by creation date
-      #   id: sort-images
-      #   run: |
-      #     jq -r 'sort_by(.imagePushedAt)[:-1] | .[]' images.json > old_images.json
-      
-      # - name: Delete old images from Amazon ECR repository
-      #   id: delete-images
-      #   env:
-      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      #     ECR_REPOSITORY: fastapi-demo
-      #   run: |
-      #     while IFS=$'\n' read -r image; do
-      #       aws ecr batch-delete-image --repository-name $ECR_REPOSITORY --registry-id $ECR_REGISTRY --image-ids imageDigest=$image
-      #     done < old_images.json
-
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
