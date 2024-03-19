@@ -103,7 +103,6 @@ def correct_hunk_headers(diff_text: str) -> str:
 
         # Correct the hunk header if match is not None
         l1, _s1, l2, _s2 = (int(x) if x is not None else 0 for x in match.groups())
-        print(f"{l1=}, {_s1=}, {l2=}, {_s2=}")
         s1_actual, s2_actual = 0, 0
         i += 1
 
@@ -117,13 +116,10 @@ def correct_hunk_headers(diff_text: str) -> str:
             i += 1
 
         # Update the hunk header with actual numbers
-        print(f"{s1_actual=}, {s2_actual=}")
         updated_hunk_header: str = f'@@ -{l1},{s1_actual} +{l2},{s2_actual} @@'
         updated_lines.append(updated_hunk_header)
         updated_lines.extend(lines[start_index:i])
 
-    output: str = '\n'.join(updated_lines)
-    print(f"{output=}\n")
     return '\n'.join(updated_lines)
 
 
