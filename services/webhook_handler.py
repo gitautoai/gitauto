@@ -6,7 +6,13 @@ import logging
 import re
 
 # Local imports
-from config import PRODUCT_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from config import (
+    PRODUCT_ID,
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY,
+    PARSE_ISSUE_FROM_PR_BODY,
+    PR_BODY_STARTS_WITH,
+)
 from services.github.github_manager import (
     commit_changes_to_remote_branch,
     create_pull_request,
@@ -262,25 +268,25 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
         if not issue_handled:
             print("Edit is not an activated GitAtuo trigger.")
 
-    elif event_name == "pull_request":
-        if action == "closed":
-            try:
-                pull_request = payload["pull_request"]
-                # Check PR is merged and this is correct GitAuto environment
-                if pull_request["merged_at"] is not None and pull_request["head"][
-                    "ref"
-                ].startswith(PRODUCT_ID + "/issue-#"):
-                    # Create unique_issue_id to update merged status
-                    body = pull_request["body"]
-                    if body.startswith("Original issue: [#"):
-                        pattern = re.compile(r"/issues/(\d+)")
-                        match = re.search(pattern, body)
-                        if match:
-                            issue_number = match.group(1)
-                            owner_type = payload["repository"]["owner"]["type"][0]
-                            unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
-                            supabase_manager.set_issue_to_merged(
-                                unique_issue_id=unique_issue_id
-                            )
-            except Exception as e:
-                logging.error(msg=f"Handle PR Merge: {e}")
+    elif event_name == "pull_request" and action == "closed":
+        pull_request = payload.get("pull_request")
+        if not pull_request:
+            return
+
+        # Check PR is merged and this is correct GitAuto environment
+        if pull_request["merged_at"] is not None and pull_request["head"][
+            "ref"
+        ].startswith(PRODUCT_ID + PARSE_ISSUE_FROM_PR_BODY):
+            # Create unique_issue_id to update merged status
+            body = pull_request["body"]
+            if not body.startswith(PR_BODY_STARTS_WITH):
+                return
+
+        pattern = re.compile(r"/issues/(\d+)")
+        match = re.search(pattern, body)
+        if not match:
+            return
+        issue_number = match.group(1)
+        owner_type = payload["repository"]["owner"]["type"][0]
+        unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
+        supabase_manager.set_issue_to_merged(unique_issue_id=unique_issue_id)
