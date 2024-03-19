@@ -100,10 +100,12 @@ def run_assistant(
     # Clean the diff text and split it
     diff: str = clean_specific_lines(text=value)
     text_diffs: list[str] = split_diffs(diff_text=diff)
+    output: list[str] = []
     for diff in text_diffs:
         diff = correct_hunk_headers(diff_text=diff)
         print(f"Diff: {repr(diff)}\n")
-    return text_diffs
+        output.append(diff)
+    return output
 
 
 def submit_message(thread: Thread, user_message: str) -> Run:

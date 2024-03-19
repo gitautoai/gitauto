@@ -108,6 +108,7 @@ def correct_hunk_headers(diff_text: str) -> str:
         i += 1
 
         # Count actual number of lines changed
+        start_index: int = i
         while i < len(lines) and not lines[i].startswith('@@'):
             if lines[i].startswith('+'):
                 s2_actual += 1
@@ -119,6 +120,7 @@ def correct_hunk_headers(diff_text: str) -> str:
         print(f"{s1_actual=}, {s2_actual=}")
         updated_hunk_header: str = f'@@ -{l1},{s1_actual} +{l2},{s2_actual} @@'
         updated_lines.append(updated_hunk_header)
+        updated_lines.extend(lines[start_index:i])
 
     output: str = '\n'.join(updated_lines)
     print(f"{output=}\n")
