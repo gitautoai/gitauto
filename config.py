@@ -41,4 +41,5 @@ PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 TIMEOUT_IN_SECONDS = 120
 PARSE_ISSUE_FROM_PR_BODY = "/issue-#"
+ISSUE_NUMBER_FORMAT = "/issue-#"
 PR_BODY_STARTS_WITH = "Original issue: [#"

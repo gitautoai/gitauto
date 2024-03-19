@@ -12,6 +12,7 @@ from config import (
     SUPABASE_SERVICE_ROLE_KEY,
     PARSE_ISSUE_FROM_PR_BODY,
     PR_BODY_STARTS_WITH,
+    ISSUE_NUMBER_FORMAT,
 )
 from services.github.github_manager import (
     commit_changes_to_remote_branch,
@@ -154,7 +155,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
 
     # Create a remote branch
     uuid: str = str(object=uuid4())
-    new_branch: str = f"{PRODUCT_ID}/issue-#{issue['number']}-{uuid}"
+    new_branch: str = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}{issue['number']}-{uuid}"
     latest_commit_sha: str = get_latest_remote_commit_sha(
         owner=owner,
         repo=repo_name,
@@ -198,7 +199,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
         )
 
     # Create a pull request to the base branch
-    issue_link: str = f"Original issue: [#{issue_number}]({issue['html_url']})\n\n"
+    issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}]({issue['html_url']})\n\n"
     git_commands = f"\n\n## Test these changes locally\n\n```\ngit checkout -b {new_branch}\ngit pull origin {new_branch}\n```"
     pull_request_url = create_pull_request(
         base=base_branch,
@@ -282,11 +283,11 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             if not body.startswith(PR_BODY_STARTS_WITH):
                 return
 
-        pattern = re.compile(r"/issues/(\d+)")
-        match = re.search(pattern, body)
-        if not match:
-            return
-        issue_number = match.group(1)
-        owner_type = payload["repository"]["owner"]["type"][0]
-        unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
-        supabase_manager.set_issue_to_merged(unique_issue_id=unique_issue_id)
+            pattern = re.compile(r"/issues/(\d+)")
+            match = re.search(pattern, body)
+            if not match:
+                return
+            issue_number = match.group(1)
+            owner_type = payload["repository"]["owner"]["type"][0]
+            unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
+            supabase_manager.set_issue_to_merged(unique_issue_id=unique_issue_id)

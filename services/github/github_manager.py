@@ -151,8 +151,8 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     # if supabase_manager.is_users_first_issue(installation_id):
     #     body = "Welcome to GitAuto! 🎉\n" + body
     #     supabase_manager.set_user_first_issue_to_false(installation_id)
-    # if PRODUCT_ID != "gitauto":
-    #     body += " - " + PRODUCT_ID
+    if PRODUCT_ID != "gitauto":
+        body += " - " + PRODUCT_ID
     try:
         response: requests.Response = requests.post(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",
