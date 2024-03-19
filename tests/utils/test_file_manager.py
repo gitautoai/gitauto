@@ -29,5 +29,7 @@ def test_correct_hunk_headers_2() -> None:
 + new line 1"""
     expected_result = """--- a/example2.txt
 +++ b/example2.txt
-@@ -1,1 +1,1 @@"""
+@@ -1,1 +1,1 @@
+- old line 1
++ new line 1"""
     assert correct_hunk_headers(diff_text=diff_text) == expected_result
