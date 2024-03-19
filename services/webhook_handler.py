@@ -272,23 +272,19 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
         pull_request = payload.get("pull_request")
         if not pull_request:
             return
-        print("1")
 
         # Check PR is merged and this is correct GitAuto environment
         if pull_request["merged_at"] is not None and pull_request["head"][
             "ref"
         ].startswith(PRODUCT_ID + ISSUE_NUMBER_FORMAT):
             # Create unique_issue_id to update merged status
-            print("2")
             body = pull_request["body"]
             if not body.startswith(PR_BODY_STARTS_WITH):
                 return
-            print("3")
             pattern = re.compile(r"/issues/(\d+)")
             match = re.search(pattern, body)
             if not match:
                 return
-            print("4")
             issue_number = match.group(1)
             owner_type = payload["repository"]["owner"]["type"][0]
             unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
