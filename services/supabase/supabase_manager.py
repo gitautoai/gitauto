@@ -8,11 +8,13 @@ class InstallationTokenManager:
     def __init__(self, url: str, key: str) -> None:
         self.client: Client = create_client(supabase_url=url, supabase_key=key)
 
-    def save_installation_token(self, installation_id: int, owner_name: str) -> None:
+    def save_installation_token(
+        self, installation_id: int, owner_type: str, owner_name: str
+    ) -> None:
         data, _ = (
             self.client.table(table_name="owner_info")
             .select("*")
-            .eq(column="installation_id", value=installation_id)
+            .eq(column="owner_name", value=owner_name)
             .execute()
         )
         if len(data[1]) > 0:
@@ -20,14 +22,16 @@ class InstallationTokenManager:
                 json={
                     "installation_id": installation_id,
                     "owner_name": owner_name,
+                    "owner_type": owner_type,
                     "deleted_at": None,
                 }
-            ).eq(column="installation_id", value=installation_id).execute()
+            ).eq(column="owner_name", value=owner_name).execute()
         else:
             self.client.table(table_name="owner_info").insert(
                 json={
                     "installation_id": installation_id,
                     "owner_name": owner_name,
+                    "owner_type": owner_type,
                 }
             ).execute()
 
@@ -50,7 +54,7 @@ class InstallationTokenManager:
                     json={"request_count": data[1][0]["request_count"] + 1}
                 ).eq(column="installation_id", value=installation_id).execute()
         except Exception as e:
-            logging.error(msg=f"Increment Request Count Error: {e}")
+            logging.error(msg=f"increment_request_count Error: {e}")
 
     def is_users_first_issue(self, installation_id: int) -> bool:
         """Checks if it's the users first issue"""
@@ -65,7 +69,7 @@ class InstallationTokenManager:
                 return True
             return False
         except Exception as e:
-            logging.error(msg=f"Increment Request Count Error: {e}")
+            logging.error(msg=f"is_users_first_issue Error: {e}")
 
     def increment_completed_count(self, installation_id: int) -> None:
         try:
@@ -83,10 +87,23 @@ class InstallationTokenManager:
                     }
                 ).eq(column="installation_id", value=installation_id).execute()
         except Exception as e:
-            logging.error(msg=f"Increment Completed Issues Count Error: {e}")
+            logging.error(msg=f"increment_completed_count Error: {e}")
+
+    def set_issue_to_merged(self, unique_issue_id: str) -> None:
+        try:
+            data, _ = (
+                self.client.table(table_name="issues")
+                .update(json={"merged": True})
+                .eq(column="unique_id", value=unique_issue_id)
+                .execute()
+            )
+        except Exception as e:
+            logging.error(msg=f"set_issue_to_merged Error: {e}")
 
     def save_progress_started(self, unique_issue_id: str, installation_id: int) -> bool:
         try:
+            print("INSTALL ID: ", installation_id)
+            print("UID", unique_issue_id)
             data, _ = (
                 self.client.table(table_name="issues")
                 .select("progress")

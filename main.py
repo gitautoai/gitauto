@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException, Request
 from mangum import Mangum
 import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
+import pprint
 
 # Local imports
 from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME
@@ -39,8 +40,8 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
         # Process the webhook event
         payload = await request.json()
-        # TODO: Sanitize the payload to remove any sensitive information
-        # Handle Create, Delete, and Labeled events
+        # pprint.PrettyPrinter(indent=4).pprint(payload)
+
         await handle_webhook_event(event_name=event_name, payload=payload)
         print("Webhook event handled")
 

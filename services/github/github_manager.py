@@ -147,9 +147,10 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     supabase_manager = InstallationTokenManager(
         url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY
     )
-    if supabase_manager.is_users_first_issue(installation_id):
-        body = "Welcome to GitAuto! 🎉\n" + body
-        supabase_manager.set_user_first_issue_to_false(installation_id)
+    # Will redo in Stripe integration
+    # if supabase_manager.is_users_first_issue(installation_id):
+    #     body = "Welcome to GitAuto! 🎉\n" + body
+    #     supabase_manager.set_user_first_issue_to_false(installation_id)
     if PRODUCT_ID != "gitauto":
         body += " - " + PRODUCT_ID
     try:
