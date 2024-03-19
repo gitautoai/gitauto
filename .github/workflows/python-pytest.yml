@@ -14,5 +14,7 @@ jobs:
         python-version: 3.12
     - name: Install pytest
       run: pip install pytest
+    - name: Set PYTHONPATH
+      run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
     - name: Run pytest
       run: pytest
