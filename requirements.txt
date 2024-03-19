@@ -16,11 +16,9 @@ h11==0.14.0
 httpcore==1.0.4
 httpx==0.25.2
 idna==3.6
-iniconfig==2.0.0
 mangum==0.17.0
 openai==1.13.3
 packaging==23.2
-pluggy==1.4.0
 postgrest==0.16.1
 pre-commit==3.6.2
 pycparser==2.21
@@ -28,7 +26,6 @@ pydantic==2.6.3
 pydantic_core==2.16.3
 PyJWT==2.8.0
 pylint==3.1.0
-pytest==8.1.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 realtime==1.0.2
