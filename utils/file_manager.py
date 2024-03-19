@@ -87,7 +87,8 @@ def correct_hunk_headers(diff_text: str) -> str:
     # Split the diff into lines
     lines: list[str] = diff_text.splitlines()
     updated_lines: list[str] = []
-    hunk_pattern: re.Pattern[str] = re.compile(pattern=r'^@@ -(\d+),(\d+)? \+(\d+),(\d+)? @@.*')
+    hunk_pattern: re.Pattern[str] = re.compile(
+        pattern=r'^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
 
     i = 0
     while i < len(lines):
@@ -115,9 +116,12 @@ def correct_hunk_headers(diff_text: str) -> str:
             i += 1
 
         # Update the hunk header with actual numbers
+        print(f"{s1_actual=}, {s2_actual=}")
         updated_hunk_header: str = f'@@ -{l1},{s1_actual} +{l2},{s2_actual} @@'
         updated_lines.append(updated_hunk_header)
 
+    output = '\n'.join(updated_lines)
+    print(f"{output=}\n")
     return '\n'.join(updated_lines)
 
 
