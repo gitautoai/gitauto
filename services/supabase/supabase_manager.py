@@ -110,6 +110,7 @@ class InstallationTokenManager:
                 .eq(column="unique_id", value=unique_issue_id)
                 .execute()
             )
+            print(data)
             if len(data[1]) == 0:
                 self.client.table(table_name="issues").insert(
                     json={
