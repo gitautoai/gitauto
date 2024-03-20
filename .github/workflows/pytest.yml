@@ -1,0 +1,26 @@
+name: Python PyTest Workflow
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.12
+
+    - name: Install pytest
+      run: |
+        pip install pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Set PYTHONPATH
+      run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+
+    - name: Run pytest
+      run: pytest
