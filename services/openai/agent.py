@@ -15,7 +15,7 @@ from config import OPENAI_FINAL_STATUSES, OPENAI_MODEL_ID, TIMEOUT_IN_SECONDS
 from services.openai.functions import GET_REMOTE_FILE_CONTENT, functions
 from services.openai.init import create_openai_client
 from services.openai.instructions import SYSTEM_INSTRUCTION_FOR_AGENT
-from utils.file_manager import clean_specific_lines, split_diffs
+from utils.file_manager import clean_specific_lines, correct_hunk_headers, split_diffs
 
 
 def create_assistant() -> Assistant:
@@ -100,9 +100,12 @@ def run_assistant(
     # Clean the diff text and split it
     diff: str = clean_specific_lines(text=value)
     text_diffs: list[str] = split_diffs(diff_text=diff)
+    output: list[str] = []
     for diff in text_diffs:
+        diff = correct_hunk_headers(diff_text=diff)
         print(f"Diff: {repr(diff)}\n")
-    return text_diffs
+        output.append(diff)
+    return output
 
 
 def submit_message(thread: Thread, user_message: str) -> Run:
