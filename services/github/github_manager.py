@@ -23,7 +23,7 @@ from config import (
 from services.github.github_types import GitHubContentInfo
 from utils.file_manager import apply_patch
 
-from services.supabase.supabase_manager import InstallationTokenManager
+from services.supabase import SupabaseManager
 from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 
@@ -142,16 +142,35 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     owner: str = payload["repository"]["owner"]["login"]
     repo_name: str = payload["repository"]["name"]
     issue_number: int = payload["issue"]["number"]
+    user_id: int = payload["sender"]["id"]
+    login: str = payload["sender"]["login"]
 
     body = "Click the checkbox below to generate a PR!\n- [ ] Generate PR"
-    supabase_manager = InstallationTokenManager(
-        url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY
+    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
+
+    # Proper issue generation comment, create user if not exists
+    first_issue = False
+    if not supabase_manager.user_exists(id=payload["sender"]["id"]):
+        supabase_manager.create_user(
+            user_id=user_id,
+            login=login,
+            installation_id=installation_id,
+        )
+        first_issue = True
+    else:
+        if supabase_manager.is_users_first_issue(
+            user_id=user_id, installation_id=installation_id
+        ):
+            first_issue = True
+
+    # If there's 0 left, do not show generate pr [] checkbox
+    requests_left = supabase_manager.get_how_many_requests_left(
+        user_id=user_id, installation_id=installation_id
     )
-    # 
-    # Will redo in Stripe integration
-    # if supabase_manager.is_users_first_issue(installation_id):
-    #     body = "Welcome to GitAuto! 🎉\n" + body
-    #     supabase_manager.set_user_first_issue_to_false(installation_id)
+    if first_issue:
+        body = "Welcome to GitAuto! 🎉\n" + body
+        supabase_manager.set_user_first_issue_to_false(id=payload["sender"]["id"])
+
     if PRODUCT_ID != "gitauto":
         body += " - " + PRODUCT_ID
     try:
@@ -454,8 +473,6 @@ def update_comment_for_raised_errors(
         logging.error(msg=f"update_comment_for_raised_errors Error: {e}")
     update_comment(comment_url=comment_url, token=token, body=body)
 
-    supabase_manager = InstallationTokenManager(
-        url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY
-    )
+    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
     supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=100)
     raise

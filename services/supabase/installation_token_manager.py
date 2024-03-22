@@ -5,8 +5,8 @@ import logging
 
 # Manager class to handle installation tokens
 class InstallationTokenManager:
-    def __init__(self, url: str, key: str) -> None:
-        self.client: Client = create_client(supabase_url=url, supabase_key=key)
+    def __init__(self, client: Client) -> None:
+        self.client = client
 
     def save_installation_token(
         self, installation_id: int, owner_type: str, owner_name: str

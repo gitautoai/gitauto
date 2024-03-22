@@ -35,13 +35,11 @@ from services.github.github_types import (
 )
 from services.openai.chat import write_pr_body
 from services.openai.agent import run_assistant
-from services.supabase.supabase_manager import InstallationTokenManager
+from services.supabase import SupabaseManager
 from utils.file_manager import extract_file_name
 
 # Initialize managers
-supabase_manager = InstallationTokenManager(
-    url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY
-)
+supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
 async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
@@ -77,6 +75,11 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
     owner: str = repo["owner"]["login"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
+
+    # TODO Check users tier/how many requests they have left.
+    requests_left = supabase_manager.get_how_many_requests_left(
+        user_id=66699290, installation_id=installation_id
+    )
 
     supabase_manager.increment_request_count(installation_id=installation_id)
     token: str = get_installation_access_token(installation_id=installation_id)
