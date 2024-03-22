@@ -107,12 +107,13 @@ class InstallationTokenManager:
         except Exception as e:
             logging.error(msg=f"Start Progress Error: {e}")
 
-    def is_users_first_issue(self, installation_id: int) -> bool:
+    def is_users_first_issue(self, user_id: int, installation_id: int) -> bool:
         """Checks if it's the users first issue"""
         try:
             data, _ = (
-                self.client.table(table_name="owner_info")
+                self.client.table(table_name="users")
                 .select("first_issue")
+                .eq(column="user_id", value=user_id)
                 .eq(column="installation_id", value=installation_id)
                 .execute()
             )
@@ -133,12 +134,12 @@ class InstallationTokenManager:
         except Exception as e:
             logging.error(msg=f"set_issue_to_merged Error: {e}")
 
-    def set_user_first_issue_to_false(self, installation_id: int) -> None:
-        # TODO change this first login to false on a user and not owner
+    def set_user_first_issue_to_false(self, user_id: int, installation_id: int) -> None:
         try:
             data, _ = (
-                self.client.table(table_name="owner_info")
+                self.client.table(table_name="users")
                 .update(json={"first_issue": False})
+                .eq(column="user_id", value=user_id)
                 .eq(column="installation_id", value=installation_id)
                 .execute()
             )

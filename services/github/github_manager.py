@@ -160,20 +160,20 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
         )
         first_issue = True
     else:
-        print("userId", type(user_id), "installationId", type(installation_id))
-        # TODO fix this function
-        # if supabase_manager.is_users_first_issue(
-        #     user_id=user_id, installation_id=installation_id
-        # ):
-        #     first_issue = True
-    print("HERE!")
-    # If there's 0 left, do not show generate pr [] checkbox
+        if supabase_manager.is_users_first_issue(
+            user_id=user_id, installation_id=installation_id
+        ):
+            first_issue = True
+
+    # TODO If there's 0 left, do not show generate pr [] checkbox
     requests_left = supabase_manager.get_how_many_requests_left(
         user_id=user_id, installation_id=installation_id
     )
     if first_issue:
         body = "Welcome to GitAuto! 🎉\n" + body
-        supabase_manager.set_user_first_issue_to_false(id=payload["sender"]["id"])
+        supabase_manager.set_user_first_issue_to_false(
+            user_id=user_id, installation_id=installation_id
+        )
 
     if PRODUCT_ID != "gitauto":
         body += " - " + PRODUCT_ID
@@ -446,6 +446,7 @@ def update_comment_for_raised_errors(
         if isinstance(error, requests.exceptions.HTTPError):
             if (
                 error.response.status_code == 422
+                and error.message
                 and error.message == "Validation Failed"
                 and (
                     (
