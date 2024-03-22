@@ -10,7 +10,7 @@ class UsersManager:
         self.client = client
 
     def create_user(self, user_id: int, login: str, installation_id: int) -> None:
-        self.client.table(table_name="user_info").insert(
+        self.client.table(table_name="users").insert(
             json={
                 "user_id": user_id,
                 "login": login,
@@ -72,28 +72,32 @@ class UsersManager:
 
             return 5
         except Exception as err:
-            logging.error(f"is_users_first_issue {err}")
+            logging.error(f"get_how_many_requests_left {err}")
             return -1
 
     def is_users_first_issue(self, user_id: int, installation_id: int) -> bool:
         try:
+            print("OMG HERE")
             data, _ = (
                 self.client.table(table_name="users")
-                .select("first_issue")
+                .select("*")
                 .eq(column="user_id", value=user_id)
                 .eq(column="installation_id", value=installation_id)
                 .execute()
             )
+            print("DATA: ", data[1][0]["first_issue"])
+            return True
             return data[1][0]["first_issue"]
         except Exception as err:
             logging.error(f"is_users_first_issue {err}")
             return True
 
-    def user_exists(self, id: int) -> None:
+    def user_exists(self, user_id: int, installation_id: int) -> None:
         data, _ = (
-            self.client.table(table_name="user_info")
+            self.client.table(table_name="users")
             .select("*")
-            .eq(column="user_id", value=id)
+            .eq(column="user_id", value=user_id)
+            .eq(column="installation_id", value=installation_id)
             .execute()
         )
         if len(data[1]) > 0:

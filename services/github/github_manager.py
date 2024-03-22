@@ -150,7 +150,9 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
 
     # Proper issue generation comment, create user if not exists
     first_issue = False
-    if not supabase_manager.user_exists(id=payload["sender"]["id"]):
+    if not supabase_manager.user_exists(
+        user_id=user_id, installation_id=installation_id
+    ):
         supabase_manager.create_user(
             user_id=user_id,
             login=login,
@@ -158,11 +160,13 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
         )
         first_issue = True
     else:
-        if supabase_manager.is_users_first_issue(
-            user_id=user_id, installation_id=installation_id
-        ):
-            first_issue = True
-
+        print("userId", type(user_id), "installationId", type(installation_id))
+        # TODO fix this function
+        # if supabase_manager.is_users_first_issue(
+        #     user_id=user_id, installation_id=installation_id
+        # ):
+        #     first_issue = True
+    print("HERE!")
     # If there's 0 left, do not show generate pr [] checkbox
     requests_left = supabase_manager.get_how_many_requests_left(
         user_id=user_id, installation_id=installation_id
