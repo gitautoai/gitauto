@@ -21,12 +21,12 @@ class UsersManager:
     def get_how_many_requests_left(self, user_id: int, installation_id: int) -> int:
         try:
             data, _ = (
-                self.client.table(table_name="owner_info")
-                .select("owner_id, owner_info_table(stripe_customer_id)")
+                self.client.table(table_name="installations")
+                .select("owner_id, owner_info(stripe_customer_id)")
                 .eq(column="installation_id", value=installation_id)
                 .execute()
             )
-            stripe_customer_id = data[1][0]["owner_info_table"]["stripe_customer_id"]
+            stripe_customer_id = data[1][0]["owner_info"]["stripe_customer_id"]
             print("STRIPE: ", stripe_customer_id)
             if stripe_customer_id:
                 # TODO use stripe api to get the number of requests(tier) and billing period

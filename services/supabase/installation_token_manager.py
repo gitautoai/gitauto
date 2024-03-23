@@ -29,18 +29,18 @@ class InstallationTokenManager:
         try:
             # If owner doesn't exist in owner_info table, insert owner record
             data, _ = (
-                self.client.table(table_name="owner_info_table")
+                self.client.table(table_name="owner_info")
                 .select("owner_id")
                 .eq(column="owner_id", value=owner_id)
                 .execute()
             )
             if not data[1]:
-                self.client.table(table_name="owner_info_table").insert(
+                self.client.table(table_name="owner_info").insert(
                     json={"owner_id": owner_id}
                 ).execute()
 
             # Insert installation record
-            self.client.table(table_name="owner_info").insert(
+            self.client.table(table_name="installations").insert(
                 json={
                     "installation_id": installation_id,
                     "owner_name": owner_name,
@@ -89,7 +89,7 @@ class InstallationTokenManager:
         data: dict[str, str] = {
             "uninstalled_at": datetime.datetime.utcnow().isoformat()
         }
-        self.client.table(table_name="owner_info").update(json=data).eq(
+        self.client.table(table_name="installations").update(json=data).eq(
             column="installation_id", value=installation_id
         ).execute()
 
