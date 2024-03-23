@@ -27,15 +27,15 @@ class InstallationTokenManager:
         self, installation_id: int, owner_type: str, owner_name: str, owner_id: int
     ) -> None:
         try:
-            # If owner doesn't exist in owner_info table, insert owner record
+            # If owner doesn't exist in owners table, insert owner record
             data, _ = (
-                self.client.table(table_name="owner_info")
+                self.client.table(table_name="owners")
                 .select("owner_id")
                 .eq(column="owner_id", value=owner_id)
                 .execute()
             )
             if not data[1]:
-                self.client.table(table_name="owner_info").insert(
+                self.client.table(table_name="owners").insert(
                     json={"owner_id": owner_id}
                 ).execute()
 
