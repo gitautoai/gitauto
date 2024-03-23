@@ -2,6 +2,7 @@ import datetime
 import re
 from supabase import create_client, Client
 import logging
+from services.stripe.customer import get_subscription
 
 
 # Manager class to handle installation tokens
@@ -28,18 +29,12 @@ class UsersManager:
             )
             stripe_customer_id = data[1][0]["owners"]["stripe_customer_id"]
             print("STRIPE: ", stripe_customer_id)
+            has_billing_cycle = False
             if stripe_customer_id:
-                # TODO use stripe api to get the number of requests(tier) and billing period
-                # total_requests, _ = (
-                #     self.client.table(table_name="users")
-                #     .select("id, usage(surrogate_user_id)")
-                #     .eq(column="user_id", value=user_id)
-                #     .eq(column="installation_id", value=installation_id)
-                #     .execute()
-                # )
-                # print(total_requests)
-                pass
-            else:
+                if get_subscription(stripe_customer_id) != -1:
+                    has_billing_cycle = True
+                    # TODO parse the billing cycle from stripe
+            if not has_billing_cycle:
                 first_request, _ = (
                     self.client.table("usage")
                     .select("created_at")

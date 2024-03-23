@@ -53,19 +53,26 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
     user_id: str = payload["sender"]["id"]
+    token: str = get_installation_access_token(installation_id=installation_id)
 
-    # TODO Check users tier/how many requests they have left.
     requests_left = supabase_manager.get_how_many_requests_left(
         user_id=66699290, installation_id=installation_id
     )
-
+    if requests_left == 0:
+        create_comment(
+            owner=owner,
+            repo=repo_name,
+            issue_number=issue_number,
+            body="You have reached your request limit. Consider subscribing if you want more requests.",
+            token=token,
+        )
+        return {"message": "The issue is already in progress."}
     unique_issue_id = f"{owner_type}/{owner}/{repo_name}#{issue_number}"
     supabase_manager.create_user_request(
         user_id=user_id,
         installation_id=installation_id,
         unique_issue_id=unique_issue_id,
     )
-    token: str = get_installation_access_token(installation_id=installation_id)
     add_reaction_to_issue(
         owner=owner,
         repo=repo_name,

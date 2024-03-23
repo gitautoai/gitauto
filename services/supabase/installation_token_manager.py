@@ -2,6 +2,7 @@ import datetime
 import logging
 
 from supabase import Client
+from services.stripe.customer import create_stripe_customer
 
 
 # Manager class to handle installation tokens
@@ -27,7 +28,7 @@ class InstallationTokenManager:
         self, installation_id: int, owner_type: str, owner_name: str, owner_id: int
     ) -> None:
         try:
-            # If owner doesn't exist in owners table, insert owner record
+            # If owner doesn't exist in owners table, insert owner and stripe customer
             data, _ = (
                 self.client.table(table_name="owners")
                 .select("owner_id")
@@ -35,8 +36,11 @@ class InstallationTokenManager:
                 .execute()
             )
             if not data[1]:
+                customer_id = create_stripe_customer(
+                    owner_name, owner_id, installation_id
+                )
                 self.client.table(table_name="owners").insert(
-                    json={"owner_id": owner_id}
+                    json={"owner_id": owner_id, "stripe_customer_id": customer_id}
                 ).execute()
 
             # Insert installation record
@@ -48,6 +52,7 @@ class InstallationTokenManager:
                     "owner_id": owner_id,
                 }
             ).execute()
+
         except Exception as e:
             logging.error(
                 msg=f"create_installation installation_id: {installation_id} owner_id: {owner_id} Error: {e}"

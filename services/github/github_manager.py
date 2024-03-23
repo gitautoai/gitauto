@@ -165,10 +165,13 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
         ):
             first_issue = True
 
-    # TODO If there's 0 left, do not show generate pr [] checkbox
     requests_left = supabase_manager.get_how_many_requests_left(
         user_id=user_id, installation_id=installation_id
     )
+    if requests_left == 0:
+        # TODO get cycle date from get_how_many_requests_left to post here
+        body = "You have reached the limit of requests for today. Please try again on {date}"
+
     if first_issue:
         body = "Welcome to GitAuto! 🎉\n" + body
         supabase_manager.set_user_first_issue_to_false(
