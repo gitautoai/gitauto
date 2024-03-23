@@ -1,7 +1,9 @@
 name: Python PyTest Workflow
 
-on: [push]
-
+on:
+  push:
+    branches:
+      - '!nikita*'
 jobs:
   build:
     runs-on: ubuntu-latest
