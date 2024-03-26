@@ -9,12 +9,12 @@ class UsersManager:
     def __init__(self, client: Client) -> None:
         self.client = client
 
-    def create_user(self, user_id: int, user_login: str, installation_id: int) -> None:
+    def create_user(self, user_id: int, user_name: str, installation_id: int) -> None:
         try:
             self.client.table(table_name="users").insert(
                 json={
                     "user_id": user_id,
-                    "login": user_login,
+                    "login": user_name,
                     "installation_id": installation_id,
                 }
             ).execute()

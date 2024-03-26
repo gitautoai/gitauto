@@ -143,7 +143,7 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     repo_name: str = payload["repository"]["name"]
     issue_number: int = payload["issue"]["number"]
     user_id: int = payload["sender"]["id"]
-    user_login: str = payload["sender"]["login"]
+    user_name: str = payload["sender"]["login"]
 
     body = "Click the checkbox below to generate a PR!\n- [ ] Generate PR"
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
@@ -155,7 +155,7 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     ):
         supabase_manager.create_user(
             user_id=user_id,
-            login=user_login,
+            login=user_name,
             installation_id=installation_id,
         )
         first_issue = True

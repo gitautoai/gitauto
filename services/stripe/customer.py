@@ -5,7 +5,7 @@ stripe.api_key = STRIPE_API_KEY
 
 
 def create_stripe_customer(
-    owner_name: str, owner_id: int, installation_id: int, user_id: int, user_login: str
+    owner_name: str, owner_id: int, installation_id: int, user_id: int, user_name: str
 ) -> str:
     customer = stripe.Customer.create(
         name=owner_name,
@@ -14,7 +14,7 @@ def create_stripe_customer(
             "installation_id": installation_id,
             "description": "GitAuto Github App Installation Event",
             "user_id": user_id,
-            "user_login": user_login,
+            "user_name": user_name,
         },
     )
     print(customer)

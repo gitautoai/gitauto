@@ -30,7 +30,7 @@ class GitAutoAgentManager:
         owner_name: str,
         owner_id: int,
         user_id: int,
-        user_login: str,
+        user_name: str,
     ) -> None:
         try:
             # If owner doesn't exist in owners table, insert owner and stripe customer
@@ -46,7 +46,7 @@ class GitAutoAgentManager:
                     owner_id=owner_id,
                     installation_id=installation_id,
                     user_id=user_id,
-                    user_login=user_login,
+                    user_name=user_name,
                 )
                 self.client.table(table_name="owners").insert(
                     json={"owner_id": owner_id, "stripe_customer_id": customer_id}
