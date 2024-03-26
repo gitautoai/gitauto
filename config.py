@@ -35,6 +35,9 @@ OPENAI_TEMPERATURE = 0.0
 SUPABASE_SERVICE_ROLE_KEY: str = get_env_var(name="SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_URL: str = get_env_var(name="SUPABASE_URL")
 
+# Stripe
+STRIPE_API_KEY: str = get_env_var(name="STRIPE_API_KEY")
+
 # General
 ENV: str = get_env_var(name="ENV")
 PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")

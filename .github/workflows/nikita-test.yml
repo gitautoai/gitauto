@@ -1,9 +1,10 @@
-name: Python PyTest Workflow
+name: nikita PyTest Workflow
 
 on:
   push:
     branches:
-      - '!nikita*'
+      - 'nikita*'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,4 +26,7 @@ jobs:
       run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
 
     - name: Run pytest
+      env:
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NIKITA_SUPABASE_SERVICE_ROLE_KEY }}
+        SUPABASE_URL: ${{ secrets.NIKITA_SUPABASE_URL }}
       run: pytest
