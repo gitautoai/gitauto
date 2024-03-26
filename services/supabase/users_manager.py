@@ -5,19 +5,21 @@ import logging
 from services.stripe.customer import get_subscription
 
 
-# Manager class to handle installation tokens
 class UsersManager:
     def __init__(self, client: Client) -> None:
         self.client = client
 
-    def create_user(self, user_id: int, login: str, installation_id: int) -> None:
-        self.client.table(table_name="users").insert(
-            json={
-                "user_id": user_id,
-                "login": login,
-                "installation_id": installation_id,
-            }
-        ).execute()
+    def create_user(self, user_id: int, user_login: str, installation_id: int) -> None:
+        try:
+            self.client.table(table_name="users").insert(
+                json={
+                    "user_id": user_id,
+                    "login": user_login,
+                    "installation_id": installation_id,
+                }
+            ).execute()
+        except Exception as err:
+            logging.error(f"create_user {err}")
 
     def get_how_many_requests_left(self, user_id: int, installation_id: int) -> int:
         try:
@@ -72,7 +74,6 @@ class UsersManager:
 
     def is_users_first_issue(self, user_id: int, installation_id: int) -> bool:
         try:
-            print("OMG HERE")
             data, _ = (
                 self.client.table(table_name="users")
                 .select("*")
@@ -88,13 +89,16 @@ class UsersManager:
             return True
 
     def user_exists(self, user_id: int, installation_id: int) -> None:
-        data, _ = (
-            self.client.table(table_name="users")
-            .select("*")
-            .eq(column="user_id", value=user_id)
-            .eq(column="installation_id", value=installation_id)
-            .execute()
-        )
-        if len(data[1]) > 0:
-            return True
-        return False
+        try:
+            data, _ = (
+                self.client.table(table_name="users")
+                .select("*")
+                .eq(column="user_id", value=user_id)
+                .eq(column="installation_id", value=installation_id)
+                .execute()
+            )
+            if len(data[1]) > 0:
+                return True
+            return False
+        except Exception as err:
+            logging.error(f"user_exists {err}")

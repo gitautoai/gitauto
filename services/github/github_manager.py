@@ -143,7 +143,7 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     repo_name: str = payload["repository"]["name"]
     issue_number: int = payload["issue"]["number"]
     user_id: int = payload["sender"]["id"]
-    login: str = payload["sender"]["login"]
+    user_login: str = payload["sender"]["login"]
 
     body = "Click the checkbox below to generate a PR!\n- [ ] Generate PR"
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
@@ -155,7 +155,7 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     ):
         supabase_manager.create_user(
             user_id=user_id,
-            login=login,
+            login=user_login,
             installation_id=installation_id,
         )
         first_issue = True
@@ -168,10 +168,10 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     requests_left = supabase_manager.get_how_many_requests_left(
         user_id=user_id, installation_id=installation_id
     )
-    if requests_left == 0:
+    if requests_left <= 0:
         # TODO get cycle date from get_how_many_requests_left to post here
         body = "You have reached the limit of requests for today. Please try again on {date}"
-
+    # TODO Add requests_left in issue comment body
     if first_issue:
         body = "Welcome to GitAuto! 🎉\n" + body
         supabase_manager.set_user_first_issue_to_false(

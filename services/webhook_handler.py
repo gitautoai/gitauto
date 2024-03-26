@@ -29,12 +29,16 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
     owner_type: str = payload["installation"]["account"]["type"][0]
     owner_name: str = payload["installation"]["account"]["login"]
     owner_id: str = payload["installation"]["account"]["id"]
+    user_id: str = payload["sender"]["id"]
+    user_login: str = payload["sender"]["login"]
 
     supabase_manager.create_installation(
         installation_id=installation_id,
         owner_type=owner_type,
         owner_name=owner_name,
         owner_id=owner_id,
+        user_id=user_id,
+        user_login=user_login,
     )
 
 
@@ -61,7 +65,7 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
     elif event_name == "issues":
         if action == "labeled":
             print("Issue is labeled")
-            await handle_gitauto(payload=payload, type="label")
+            await handle_gitauto(payload=payload, trigger_type="label")
         elif action == "opened":
             create_comment_on_issue_with_gitauto_button(payload=payload)
 
@@ -75,7 +79,7 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             if payload["comment"]["body"].find(search_text) != -1:
                 issue_handled = True
                 print("Triggered GitAuto PR")
-                await handle_gitauto(payload=payload, type="comment")
+                await handle_gitauto(payload=payload, trigger_type="comment")
         else:
             if (
                 payload["comment"]["body"].find(search_text) != -1
@@ -83,7 +87,7 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             ):
                 issue_handled = True
                 print("Triggered GitAuto PR")
-                await handle_gitauto(payload=payload, type="comment")
+                await handle_gitauto(payload=payload, trigger_type="comment")
         if not issue_handled:
             print("Edit is not an activated GitAtuo trigger.")
 

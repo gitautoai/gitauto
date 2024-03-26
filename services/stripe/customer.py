@@ -1,12 +1,21 @@
 import stripe
+from config import STRIPE_API_KEY
 
-stripe.api_key = "sk_test_51OpME5KUN3yUNaHzn23LOJXtSJGapueOkEh0yZrBM7Yo8UQ0lFcRwbfjZUuLLSTjXPqu7pkP5KZgBYnaOYiaoy1y006HMOIwIg"
+stripe.api_key = STRIPE_API_KEY
 
 
-def create_stripe_customer(login: str, user_id: int, installation_id: int) -> str:
+def create_stripe_customer(
+    owner_name: str, owner_id: int, installation_id: int, user_id: int, user_login: str
+) -> str:
     customer = stripe.Customer.create(
-        name=login,
-        metadata={"user_id": user_id, "installation_id": installation_id},
+        name=owner_name,
+        metadata={
+            "owner_id": owner_id,
+            "installation_id": installation_id,
+            "description": "GitAuto Github App Installation Event",
+            "user_id": user_id,
+            "user_login": user_login,
+        },
     )
     print(customer)
 

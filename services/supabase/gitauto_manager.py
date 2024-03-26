@@ -5,8 +5,7 @@ from supabase import Client
 from services.stripe.customer import create_stripe_customer
 
 
-# Manager class to handle installation tokens
-class InstallationTokenManager:
+class GitAutoAgentManager:
     def __init__(self, client: Client) -> None:
         self.client = client
 
@@ -25,7 +24,13 @@ class InstallationTokenManager:
             )
 
     def create_installation(
-        self, installation_id: int, owner_type: str, owner_name: str, owner_id: int
+        self,
+        installation_id: int,
+        owner_type: str,
+        owner_name: str,
+        owner_id: int,
+        user_id: int,
+        user_login: str,
     ) -> None:
         try:
             # If owner doesn't exist in owners table, insert owner and stripe customer
@@ -37,7 +42,11 @@ class InstallationTokenManager:
             )
             if not data[1]:
                 customer_id = create_stripe_customer(
-                    owner_name, owner_id, installation_id
+                    owner_name=owner_name,
+                    owner_id=owner_id,
+                    installation_id=installation_id,
+                    user_id=user_id,
+                    user_login=user_login,
                 )
                 self.client.table(table_name="owners").insert(
                     json={"owner_id": owner_id, "stripe_customer_id": customer_id}
@@ -91,12 +100,18 @@ class InstallationTokenManager:
             )
 
     def delete_installation(self, installation_id: int) -> None:
-        data: dict[str, str] = {
-            "uninstalled_at": datetime.datetime.utcnow().isoformat()
-        }
-        self.client.table(table_name="installations").update(json=data).eq(
-            column="installation_id", value=installation_id
-        ).execute()
+        """We don't cancel a subscription associated with this installation id since paid users sometimes mistakenly uninstall our app"""
+        try:
+            data: dict[str, str] = {
+                "uninstalled_at": datetime.datetime.utcnow().isoformat()
+            }
+            self.client.table(table_name="installations").update(json=data).eq(
+                column="installation_id", value=installation_id
+            ).execute()
+        except Exception as e:
+            logging.error(
+                msg=f"delete_installation installation_id: {installation_id} Error: {e}"
+            )
 
     def is_issue_in_progress(self, unique_issue_id: str) -> bool:
         try:

@@ -36,9 +36,9 @@ from utils.file_manager import extract_file_name
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
-async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
+async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> None:
     # Extract label and validate it
-    if type == "label" and payload["label"]["name"] != PRODUCT_ID:
+    if trigger_type == "label" and payload["label"]["name"] != PRODUCT_ID:
         return
 
     # Extract information from the payload
@@ -56,9 +56,9 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
     token: str = get_installation_access_token(installation_id=installation_id)
 
     requests_left = supabase_manager.get_how_many_requests_left(
-        user_id=66699290, installation_id=installation_id
+        user_id=user_id, installation_id=installation_id
     )
-    if requests_left == 0:
+    if requests_left <= 0:
         create_comment(
             owner=owner,
             repo=repo_name,
@@ -66,7 +66,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
             body="You have reached your request limit. Consider subscribing if you want more requests.",
             token=token,
         )
-        return {"message": "The issue is already in progress."}
+        return {"message": "Request limit reached."}
     unique_issue_id = f"{owner_type}/{owner}/{repo_name}#{issue_number}"
     supabase_manager.create_user_request(
         user_id=user_id,
@@ -82,15 +82,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, type: str) -> None:
     )
 
     # Start progress and check if current issue is already in progress from another invocation
-    unique_issue_id = f"{owner_type}/{owner}/{repo_name}#{issue_number}"
     if supabase_manager.is_issue_in_progress(unique_issue_id=unique_issue_id):
-        create_comment(
-            owner=owner,
-            repo=repo_name,
-            issue_number=issue_number,
-            body="The issue is already in progress. Please wait for the previous request to complete.",
-            token=token,
-        )
         return {"message": "The issue is already in progress."}
     comment_url = create_comment(
         owner=owner,
