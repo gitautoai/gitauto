@@ -155,7 +155,7 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     ):
         supabase_manager.create_user(
             user_id=user_id,
-            login=user_name,
+            user_name=user_name,
             installation_id=installation_id,
         )
         first_issue = True

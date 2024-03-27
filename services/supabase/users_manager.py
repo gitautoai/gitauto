@@ -14,7 +14,7 @@ class UsersManager:
             self.client.table(table_name="users").insert(
                 json={
                     "user_id": user_id,
-                    "login": user_name,
+                    "user_name": user_name,
                     "installation_id": installation_id,
                 }
             ).execute()
