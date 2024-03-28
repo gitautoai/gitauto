@@ -168,7 +168,13 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
         user_id=user_id, installation_id=installation_id
     )
 
-    body = f"Click the checkbox below to generate a PR!\n- [ ] Generate PR\nYou have {requests_left} requests left in this cycle which ends {end_date}."
+    body = "Click the checkbox below to generate a PR!\n- [ ] Generate PR\n"
+    if PRODUCT_ID != "gitauto":
+        body += " - " + PRODUCT_ID
+    body += (
+        f"\nYou have {requests_left} requests left in this cycle which ends {end_date}."
+    )
+
     if requests_left <= 0:
         body = f"You have reached the limit of requests for this cycle. Please try again on {end_date}"
 
@@ -178,8 +184,6 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
             user_id=user_id, installation_id=installation_id
         )
 
-    if PRODUCT_ID != "gitauto":
-        body += " - " + PRODUCT_ID
     try:
         response: requests.Response = requests.post(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",
