@@ -168,12 +168,10 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
         user_id=user_id, installation_id=installation_id
     )
 
-    body = "Click the checkbox below to generate a PR!\n- [ ] Generate PR\n"
+    body = "Click the checkbox below to generate a PR!\n- [ ] Generate PR"
     if PRODUCT_ID != "gitauto":
         body += " - " + PRODUCT_ID
-    body += (
-        f"\nYou have {requests_left} requests left in this cycle which ends {end_date}."
-    )
+    body += f"\n\nYou have {requests_left} requests left in this cycle which ends {end_date}."
 
     if requests_left <= 0:
         body = f"You have reached the limit of requests for this cycle. Please try again on {end_date}"
