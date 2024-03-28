@@ -1,7 +1,18 @@
 import stripe
-from config import STRIPE_API_KEY
+import logging
+from config import (
+    STRIPE_API_KEY,
+    STRIPE_FREE_TIER_PRICE_ID,
+)
 
 stripe.api_key = STRIPE_API_KEY
+
+
+def subscribe_to_free_plan(customer_id: str):
+    stripe.Subscription.create(
+        customer=customer_id,
+        items=[{"price": STRIPE_FREE_TIER_PRICE_ID}],
+    )
 
 
 def create_stripe_customer(
@@ -17,22 +28,22 @@ def create_stripe_customer(
             "user_name": user_name,
         },
     )
-    print(customer)
-
     return customer["id"]
 
 
-def get_subscription(stripe_customer_id: str):
-    # Retrieve the customer object
-    customer = stripe.Customer.retrieve(stripe_customer_id)
+def get_subscription(customer_id: str):
+    try:
+        subscription = stripe.Subscription.list(customer=customer_id)
+        return subscription
+    except Exception as e:
+        logging.error(f"get_subscriptiont {e}")
+    return None
 
-    # Check if the customer has any subscriptions
-    if "subscriptions" in customer:
-        subscriptions = customer.subscriptions.data
-        # TODO return billing cycle
-        if subscriptions:
-            print("Customer has an active subscription.")
-        else:
-            print("Customer does not have an active subscription.")
-    else:
-        return -1
+
+def get_request_count_from_product_id_metadata(price_id: str) -> int:
+    try:
+        price = stripe.Product.retrieve(price_id)
+        return int(price["metadata"]["request_count"])
+    except Exception as e:
+        logging.error(f"get_request_count_from_price_id_metadata {e}")
+    return None

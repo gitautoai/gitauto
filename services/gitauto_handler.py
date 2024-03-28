@@ -55,7 +55,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     user_id: str = payload["sender"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
 
-    requests_left = supabase_manager.get_how_many_requests_left(
+    requests_left, end_date = supabase_manager.get_how_many_requests_left_and_cycle(
         user_id=user_id, installation_id=installation_id
     )
     if requests_left <= 0:
@@ -63,7 +63,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             owner=owner,
             repo=repo_name,
             issue_number=issue_number,
-            body="You have reached your request limit. Consider subscribing if you want more requests.",
+            body=f"You have reached your request limit, your cycle ends {end_date}. Consider subscribing if you want more requests.",
             token=token,
         )
         return {"message": "Request limit reached."}

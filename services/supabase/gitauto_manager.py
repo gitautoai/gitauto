@@ -2,7 +2,7 @@ import datetime
 import logging
 
 from supabase import Client
-from services.stripe.customer import create_stripe_customer
+from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 
 
 class GitAutoAgentManager:
@@ -48,6 +48,7 @@ class GitAutoAgentManager:
                     user_id=user_id,
                     user_name=user_name,
                 )
+                subscribe_to_free_plan(customer_id=customer_id)
                 self.client.table(table_name="owners").insert(
                     json={"owner_id": owner_id, "stripe_customer_id": customer_id}
                 ).execute()

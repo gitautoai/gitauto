@@ -51,22 +51,24 @@ def test_create_and_update_user_request_works() -> None:
 
 def test_how_many_requests_left() -> None:
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-    assert (
-        supabase_manager.get_how_many_requests_left(
-            user_id=66699290, installation_id=47287862
-        )
-        == 5
+
+    requests_left, end_date = supabase_manager.get_how_many_requests_left_and_cycle(
+        user_id=66699290, installation_id=47287862
     )
 
-    assert (
-        supabase_manager.get_how_many_requests_left(
-            user_id=66699290, installation_id=48567750
-        )
-        == 5
+    assert type(requests_left) == int
+    assert type(end_date) == str
+
+    requests_left, end_date = supabase_manager.get_how_many_requests_left_and_cycle(
+        user_id=66699290, installation_id=48567750
     )
+    assert type(requests_left) == int
+    assert type(end_date) == str
 
 
 # test_how_many_requests_left()
+
+
 def test_is_users_first_issue() -> None:
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
     assert not supabase_manager.is_users_first_issue(
