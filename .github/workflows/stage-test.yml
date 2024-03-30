@@ -1,9 +1,9 @@
-name: nikita PyTest Workflow
+name: Stage PyTest Workflow
 
 on:
   push:
     branches:
-      - 'nikita*'
+      - 'stage*'
 
 jobs:
   build:
@@ -27,6 +27,12 @@ jobs:
 
     - name: Run pytest
       env:
+<<<<<<< HEAD:.github/workflows/nikita-test.yml
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NIKITA_SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_URL: ${{ secrets.NIKITA_SUPABASE_URL }}
       run: pytest --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+=======
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGE_SUPABASE_SERVICE_ROLE_KEY }}
+        SUPABASE_URL: ${{ secrets.STAGE_SUPABASE_URL }}
+      run: pytest
+>>>>>>> 2058a35f68f0040aa22f6b4e556a72431fa1d771:.github/workflows/stage-test.yml

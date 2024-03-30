@@ -15,8 +15,8 @@ from fastapi import Request
 from config import (
     GITHUB_API_URL,
     GITHUB_API_VERSION,
-    GITHUB_APP_ID,
-    GITHUB_PRIVATE_KEY,
+    GH_APP_ID,
+    GH_PRIVATE_KEY,
     TIMEOUT_IN_SECONDS,
     PRODUCT_ID,
 )
@@ -221,10 +221,10 @@ def create_jwt() -> str:
     payload: dict[str, int | str] = {
         "iat": now,  # Issued at time
         "exp": now + 600,  # JWT expires in 10 minutes
-        "iss": GITHUB_APP_ID,  # Issuer
+        "iss": GH_APP_ID,  # Issuer
     }
     # The reason we use RS256 is that GitHub requires it for JWTs
-    return jwt.encode(payload=payload, key=GITHUB_PRIVATE_KEY, algorithm="RS256")
+    return jwt.encode(payload=payload, key=GH_PRIVATE_KEY, algorithm="RS256")
 
 
 def create_pull_request(
