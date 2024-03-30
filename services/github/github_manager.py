@@ -124,8 +124,9 @@ def create_comment(
             },
             timeout=TIMEOUT_IN_SECONDS,
         )
+
         response.raise_for_status()
-        return response
+        return response.json()
     except requests.exceptions.HTTPError as e:
         logging.error(
             msg=f"create_comment HTTP Error: {e.response.status_code} - {e.response.text}"
