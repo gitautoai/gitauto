@@ -7,7 +7,10 @@ from services.stripe.customer import (
     get_subscription,
     get_request_count_from_product_id_metadata,
 )
-from config import FREE_TIER_REQUEST_AMOUNT, STRIPE_FREE_TIER_PRICE_ID
+from config import (
+    FREE_TIER_REQUEST_AMOUNT,
+    STRIPE_FREE_TIER_PRICE_ID,
+)
 
 
 class UsersManager:
@@ -26,105 +29,11 @@ class UsersManager:
         except Exception as err:
             logging.error(f"create_user {err}")
 
-    def get_data_from_subscription_object(
-        self, subscription, user_id: int, installation_id: int
-    ):
-        try:
-            # Only one subscription, should be free tier
-            if len(subscription["data"]) == 0:
-                return subscription["data"][0]
-
-            for sub in subscription["data"]:
-                if sub["items"]["data"][0].price.id != STRIPE_FREE_TIER_PRICE_ID:
-                    # Check if this user is eligible/has a seat in this subscription
-                    if self.user_eligible_for_seat_handler(
-                        user_id=user_id,
-                        installation_id=installation_id,
-                        quantity=sub["items"]["data"][0].quantity,
-                    ):
-                        return sub
-                    else:
-                        return subscription["data"][0]
-            logging.error(
-                f"get_current_period_from_subscription_object: No non-free tier found for userId {user_id} installationId {installation_id}"
-            )
-            return subscription["data"][0]
-        except Exception as e:
-            logging.error(f"get_current_period_from_subscription_object {e}")
-
-    def get_how_many_requests_left_and_cycle(
-        self, user_id: int, installation_id: int
-    ) -> tuple[int, str]:
-        try:
-            data, _ = (
-                self.client.table(table_name="installations")
-                .select("owner_id, owners(stripe_customer_id)")
-                .eq(column="installation_id", value=installation_id)
-                .execute()
-            )
-            stripe_customer_id = data[1][0]["owners"]["stripe_customer_id"]
-
-            if stripe_customer_id:
-                subscription = get_subscription(
-                    customer_id=stripe_customer_id,
-                )
-                subscription_data = self.get_data_from_subscription_object(
-                    subscription=subscription,
-                    user_id=user_id,
-                    installation_id=installation_id,
-                )
-
-                start_date_seconds = subscription_data["current_period_start"]
-                request_count = get_request_count_from_product_id_metadata(
-                    subscription_data["items"]["data"][0]["price"]["product"]
-                )
-
-                start_date = datetime.datetime.fromtimestamp(start_date_seconds)
-
-                data, _ = (
-                    self.client.table("usage")
-                    .select("*")
-                    .gt("created_at", start_date)
-                    .execute()
-                )
-                requests_left = request_count - len(data[1])
-                end_date = (start_date + datetime.timedelta(days=30)).strftime(
-                    "%m-%d-%Y"
-                )
-                return requests_left, end_date
-
-            else:
-                logging.error(
-                    "No Stripe Customer ID found for installation %s user %s",
-                    installation_id,
-                    user_id,
-                )
-
-            return FREE_TIER_REQUEST_AMOUNT, "N/A"
-        except Exception as err:
-            logging.error(f"get_how_many_requests_left {err}")
-            return -1
-
-    def is_users_first_issue(self, user_id: int, installation_id: int) -> bool:
-        try:
-            data, _ = (
-                self.client.table(table_name="users")
-                .select("*")
-                .eq(column="user_id", value=user_id)
-                .eq(column="installation_id", value=installation_id)
-                .execute()
-            )
-            print("DATA: ", data[1][0]["first_issue"])
-            return True
-            return data[1][0]["first_issue"]
-        except Exception as err:
-            logging.error(f"is_users_first_issue {err}")
-            return True
-
-    def user_eligible_for_seat_handler(
+    def is_user_eligible_for_seat_handler(
         self, user_id: int, installation_id: int, quantity: int
     ) -> bool:
         try:
+            # Check is user already assigned to a seat
             data, _ = (
                 self.client.table(table_name="users")
                 .select("*")
@@ -135,24 +44,118 @@ class UsersManager:
             if data[1][0]["is_user_assigned"]:
                 return True
             else:
-                users, _ = (
+                # Check if a seat is available for a user
+                assigned_users, _ = (
                     self.client.table(table_name="users")
                     .select("*")
-                    .eq(column="user_id", value=user_id)
                     .eq(column="installation_id", value=installation_id)
+                    .eq(column="is_user_assigned", value=True)
                     .execute()
                 )
-                if len(users[1]) >= quantity:
+                if len(assigned_users[1]) >= quantity:
                     return False
                 else:
+                    # Set user as assigned in db
                     self.client.table(table_name="users").update(
                         json={"is_user_assigned": True}
                     ).eq(column="user_id", value=user_id).eq(
                         column="installation_id", value=installation_id
                     ).execute()
-        except Exception as err:
-            logging.error(f"is_users_first_issue {err}")
             return True
+        except Exception as err:
+            logging.error(f"is_user_eligible_for_seat_handler {err}")
+            return True
+
+    def parse_subscription_object(
+        self, subscription, user_id, installation_id
+    ) -> [int, int, str, int]:
+        try:
+            free_tier_start_date = 0
+            free_tier_end_date = 0
+            free_tier_product_id = ""
+            for sub in subscription["data"]:
+                if sub.status == "active":
+                    for item in sub["items"]["data"]:
+                        if item["price"]["active"] is True:
+                            if item["price"][
+                                "id"
+                            ] != STRIPE_FREE_TIER_PRICE_ID and self.is_user_eligible_for_seat_handler(
+                                user_id=user_id,
+                                installation_id=installation_id,
+                                quantity=item["quantity"],
+                            ):
+                                # Return from Paid Subscription
+                                return (
+                                    sub.current_period_start,
+                                    sub.current_period_end,
+                                    item["price"]["product"],
+                                )
+                            else:
+                                free_tier_start_date = sub.current_period_start
+                                free_tier_end_date = sub.current_period_end
+                                free_tier_product_id = item["price"]["product"]
+            # Return from Free Tier Subscription
+            return free_tier_start_date, free_tier_end_date, free_tier_product_id
+        except Exception as e:
+            print("ERROR: ", e)
+            logging.error(f"parse_subscription_object {e}")
+            raise
+
+    def get_how_many_requests_left_and_cycle(
+        self, user_id: int, installation_id: int
+    ) -> tuple[int, int, str]:
+        try:
+            data, _ = (
+                self.client.table(table_name="installations")
+                .select("owner_id, owners(stripe_customer_id)")
+                .eq(column="installation_id", value=installation_id)
+                .execute()
+            )
+
+            stripe_customer_id = data[1][0]["owners"]["stripe_customer_id"]
+
+            if stripe_customer_id:
+                subscription = get_subscription(
+                    customer_id=stripe_customer_id,
+                )
+                start_date_seconds, end_date_seconds, product_id = (
+                    self.parse_subscription_object(
+                        subscription=subscription,
+                        user_id=user_id,
+                        installation_id=installation_id,
+                    )
+                )
+
+                request_count = get_request_count_from_product_id_metadata(product_id)
+
+                start_date = datetime.datetime.fromtimestamp(start_date_seconds)
+                end_date = datetime.datetime.fromtimestamp(end_date_seconds)
+
+                # Calculate how many completed requests for this user account
+                data, _ = (
+                    self.client.table("usage")
+                    .select("*")
+                    .gt("created_at", start_date)
+                    .eq("user_id", user_id)
+                    .eq("installation_id", installation_id)
+                    .eq("is_completed ", True)
+                    .execute()
+                )
+                requests_left = request_count - len(data[1])
+                requests_made_in_this_cycle = len(data[1])
+
+                return requests_left, requests_made_in_this_cycle, end_date
+
+            logging.error(
+                "No Stripe Customer ID found for installation %s user %s",
+                installation_id,
+                user_id,
+            )
+            raise
+        except Exception as err:
+            logging.error(f"get_how_many_requests_left_and_cycle {err}")
+            # TODO Send comment to user issue
+            return "N/A", "N/A", "N/A"
 
     def user_exists(self, user_id: int, installation_id: int) -> None:
         try:

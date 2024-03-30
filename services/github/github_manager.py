@@ -140,6 +140,7 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     token: str = get_installation_access_token(installation_id=installation_id)
 
     owner: str = payload["repository"]["owner"]["login"]
+    owner_id: str = payload["repository"]["owner"]["id"]
     repo_name: str = payload["repository"]["name"]
     issue_number: int = payload["issue"]["number"]
     user_id: int = payload["sender"]["id"]
@@ -149,6 +150,7 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
 
     # Proper issue generation comment, create user if not exists
     first_issue = False
+    # Extreme edge case, a user should always exist after installation
     if not supabase_manager.user_exists(
         user_id=user_id, installation_id=installation_id
     ):
@@ -158,14 +160,11 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
             installation_id=installation_id,
         )
         first_issue = True
-    else:
-        if supabase_manager.is_users_first_issue(
-            user_id=user_id, installation_id=installation_id
-        ):
-            first_issue = True
 
-    requests_left, end_date = supabase_manager.get_how_many_requests_left_and_cycle(
-        user_id=user_id, installation_id=installation_id
+    requests_left, requests_made_in_this_cycle, end_date = (
+        supabase_manager.get_how_many_requests_left_and_cycle(
+            user_id=user_id, installation_id=installation_id
+        )
     )
 
     body = "Click the checkbox below to generate a PR!\n- [ ] Generate PR"
@@ -174,7 +173,9 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     body += f"\n\nYou have {requests_left} requests left in this cycle which ends {end_date}."
 
     if requests_left <= 0:
-        body = f"You have reached the limit of requests for this cycle. Please try again on {end_date}"
+        body = (
+            f"Hello {user_name}, you have reached your request limit of {requests_made_in_this_cycle}, your cycle will refresh on {end_date}. Consider <a href='https://gitauto.ai/#pricing'>subscribing</a> if you want more requests.",
+        )
 
     if first_issue:
         body = "Welcome to GitAuto! 🎉\n" + body

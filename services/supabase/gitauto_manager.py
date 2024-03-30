@@ -48,7 +48,14 @@ class GitAutoAgentManager:
                     user_id=user_id,
                     user_name=user_name,
                 )
-                subscribe_to_free_plan(customer_id=customer_id)
+                subscribe_to_free_plan(
+                    customer_id=customer_id,
+                    user_id=user_id,
+                    user_name=user_name,
+                    owner_id=owner_id,
+                    owner_name=owner_name,
+                    installation_id=installation_id,
+                )
                 self.client.table(table_name="owners").insert(
                     json={"owner_id": owner_id, "stripe_customer_id": customer_id}
                 ).execute()
@@ -60,6 +67,26 @@ class GitAutoAgentManager:
                     "owner_name": owner_name,
                     "owner_type": owner_type,
                     "owner_id": owner_id,
+                }
+            ).execute()
+
+            # Create User, and set is_selected to True if user has no selected account
+            is_selected = True
+            data, _ = (
+                self.client.table(table_name="users")
+                .select("user_id")
+                .eq(column="user_id", value=user_id)
+                .eq(column="is_selected", value=True)
+                .execute()
+            )
+            if len(data[1]) > 0:
+                is_selected = False
+            self.client.table(table_name="users").insert(
+                json={
+                    "user_id": user_id,
+                    "user_name": user_name,
+                    "installation_id": installation_id,
+                    "is_selected": is_selected,
                 }
             ).execute()
 

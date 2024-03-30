@@ -50,20 +50,25 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     repo: RepositoryInfo = payload["repository"]
     owner_type = payload["repository"]["owner"]["type"][0]
     owner: str = repo["owner"]["login"]
+    owner_id: str = repo["owner"]["id"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
     user_id: str = payload["sender"]["id"]
+    user_name: str = payload["sender"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
 
-    requests_left, end_date = supabase_manager.get_how_many_requests_left_and_cycle(
-        user_id=user_id, installation_id=installation_id
+    requests_left, requests_made_in_this_cycle, end_date = (
+        supabase_manager.get_how_many_requests_left_and_cycle(
+            user_id=user_id,
+            installation_id=installation_id
+        )
     )
     if requests_left <= 0:
         create_comment(
             owner=owner,
             repo=repo_name,
             issue_number=issue_number,
-            body=f"You have reached your request limit, your cycle ends {end_date}. Consider subscribing if you want more requests.",
+            body=f"Hello {user_name}, you have reached your request limit of {requests_made_in_this_cycle}, your cycle will refresh on {end_date}. Consider <a href='https://gitauto.ai/#pricing'>subscribing</a> if you want more requests.",
             token=token,
         )
         return {"message": "Request limit reached."}

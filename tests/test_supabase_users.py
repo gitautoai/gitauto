@@ -27,7 +27,6 @@ issues: installation_id = 48332126, unique_issue_id="U/gitautoai/nextjs-website#
 
 def test_create_and_update_user_request_works() -> None:
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-    print(SUPABASE_URL)
     assert SUPABASE_URL == "https://atarljruiontapnenrsj.supabase.co"
     assert (
         supabase_manager.create_user_request(
