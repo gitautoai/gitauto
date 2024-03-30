@@ -28,6 +28,9 @@ jobs:
     - name: Run pytest
       env:
         GH_APP_ID: ${{ secrets.STAGE_GH_APP_ID }}
+        GH_PRIVATE_KEY: ${{ secrets.STAGE_GH_PRIVATE_KEY }}
+        GH_WEBHOOK_SECRET: ${{ secrets.STAGE_GH_WEBHOOK_SECRET }}
+        
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGE_SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_URL: ${{ secrets.STAGE_SUPABASE_URL }}
       run: pytest --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
