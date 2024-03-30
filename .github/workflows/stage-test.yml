@@ -31,7 +31,7 @@ jobs:
         GH_PRIVATE_KEY: ${{ secrets.STAGE_GH_PRIVATE_KEY }}
         GH_WEBHOOK_SECRET: ${{ secrets.STAGE_GH_WEBHOOK_SECRET }}
 
-        OPEN_API_KEY: ${{ secrets.STAGE_OPEN_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.STAGE_OPENAI_API_KEY }}
         OPENAI_ORG_ID: ${{ secrets.STAGE_OPENAI_ORG_ID }}
 
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGE_SUPABASE_SERVICE_ROLE_KEY }}
