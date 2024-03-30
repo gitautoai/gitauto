@@ -96,9 +96,9 @@ class UsersManager:
                                 free_tier_end_date = sub.current_period_end
                                 free_tier_product_id = item["price"]["product"]
             if (
-                first_tier_start_date == 0
-                or first_tier_end_date == 0
-                or first_tier_product_id == ""
+                free_tier_start_date == 0
+                or free_tier_end_date == 0
+                or free_tier_product_id == ""
             ):
                 raise Exception("No active subscription found")
             # Return from Free Tier Subscription if there is no paid subscription object
