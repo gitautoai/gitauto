@@ -4,7 +4,7 @@ import hashlib  # For HMAC (Hash-based Message Authentication Code) signatures
 import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
 import logging
 import time
-from typing import Any
+from typing import Any, Union
 
 # Third-party imports
 import jwt  # For generating JWTs (JSON Web Tokens)
@@ -25,6 +25,7 @@ from utils.file_manager import apply_patch
 
 from services.supabase import SupabaseManager
 from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from utils.text_copy import request_limit_reached
 
 
 def add_reaction_to_issue(
@@ -112,7 +113,7 @@ def commit_changes_to_remote_branch(
 
 def create_comment(
     owner: str, repo: str, issue_number: str, body: str, token: str
-) -> dict[str, Any]:
+) -> requests.Response:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     try:
         response: requests.Response = requests.post(
@@ -124,8 +125,7 @@ def create_comment(
             timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
-
-        return response.json()
+        return response
     except requests.exceptions.HTTPError as e:
         logging.error(
             msg=f"create_comment HTTP Error: {e.response.status_code} - {e.response.text}"
@@ -140,7 +140,6 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     token: str = get_installation_access_token(installation_id=installation_id)
 
     owner: str = payload["repository"]["owner"]["login"]
-    owner_id: str = payload["repository"]["owner"]["id"]
     repo_name: str = payload["repository"]["name"]
     issue_number: int = payload["issue"]["number"]
     user_id: int = payload["sender"]["id"]
@@ -148,9 +147,8 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
 
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
-    # Proper issue generation comment, create user if not exists
+    # Proper issue generation comment, create user if not exist (first issue in an orgnanization)
     first_issue = False
-    # Extreme edge case, a user should always exist after installation
     if not supabase_manager.user_exists(
         user_id=user_id, installation_id=installation_id
     ):
@@ -159,6 +157,10 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
             user_name=user_name,
             installation_id=installation_id,
         )
+        first_issue = True
+    elif supabase_manager.is_users_first_issue(
+        user_id=user_id, installation_id=installation_id
+    ):
         first_issue = True
 
     requests_left, requests_made_in_this_cycle, end_date = (
@@ -173,8 +175,10 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     body += f"\n\nYou have {requests_left} requests left in this cycle which ends {end_date}."
 
     if requests_left <= 0:
-        body = (
-            f"Hello {user_name}, you have reached your request limit of {requests_made_in_this_cycle}, your cycle will refresh on {end_date}. Consider <a href='https://gitauto.ai/#pricing'>subscribing</a> if you want more requests.",
+        body = request_limit_reached(
+            user_name=user_name,
+            requests_made_in_this_cycle=requests_made_in_this_cycle,
+            end_date=end_date,
         )
 
     if first_issue:
@@ -486,4 +490,4 @@ def update_comment_for_raised_errors(
 
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
     supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=100)
-    raise
+    raise RuntimeError("Error occurred")

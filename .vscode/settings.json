@@ -3,5 +3,6 @@
   "editor.formatOnSave": true,
   "python.analysis.autoFormatStrings": true,
   "python.analysis.addImport.heuristics": true,
-  "python.analysis.autoImportCompletions": true
+  "python.analysis.autoImportCompletions": true,
+  
 }

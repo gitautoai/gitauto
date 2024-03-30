@@ -1,16 +1,16 @@
+"""Manager for all user related operations"""
+
+from typing import Union
 import datetime
-import re
-import time
-from supabase import Client
 import logging
 from services.stripe.customer import (
     get_subscription,
     get_request_count_from_product_id_metadata,
 )
 from config import (
-    FREE_TIER_REQUEST_AMOUNT,
     STRIPE_FREE_TIER_PRICE_ID,
 )
+from supabase import Client
 
 
 class UsersManager:
@@ -68,11 +68,12 @@ class UsersManager:
 
     def parse_subscription_object(
         self, subscription, user_id, installation_id
-    ) -> [int, int, str, int]:
+    ) -> Union[int, int, str]:
         try:
             free_tier_start_date = 0
             free_tier_end_date = 0
             free_tier_product_id = ""
+            # Find all active subscriptions, return the first paid subscription if found, if not return the free one found
             for sub in subscription["data"]:
                 if sub.status == "active":
                     for item in sub["items"]["data"]:
@@ -84,7 +85,7 @@ class UsersManager:
                                 installation_id=installation_id,
                                 quantity=item["quantity"],
                             ):
-                                # Return from Paid Subscription
+                                # Return from Paid Subscription if we find one
                                 return (
                                     sub.current_period_start,
                                     sub.current_period_end,
@@ -94,7 +95,13 @@ class UsersManager:
                                 free_tier_start_date = sub.current_period_start
                                 free_tier_end_date = sub.current_period_end
                                 free_tier_product_id = item["price"]["product"]
-            # Return from Free Tier Subscription
+            if (
+                first_tier_start_date == 0
+                or first_tier_end_date == 0
+                or first_tier_product_id == ""
+            ):
+                raise Exception("No active subscription found")
+            # Return from Free Tier Subscription if there is no paid subscription object
             return free_tier_start_date, free_tier_end_date, free_tier_product_id
         except Exception as e:
             print("ERROR: ", e)

@@ -30,8 +30,9 @@ from services.github.github_types import (
 )
 from services.openai.chat import write_pr_body
 from services.openai.agent import run_assistant
-from services.supabase import SupabaseManager
+from services.supabase import SupabaseManager  # [no-name-in-module]
 from utils.file_manager import extract_file_name
+from utils.text_copy import pull_request_completed, request_limit_reached
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
@@ -50,7 +51,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     repo: RepositoryInfo = payload["repository"]
     owner_type = payload["repository"]["owner"]["type"][0]
     owner: str = repo["owner"]["login"]
-    owner_id: str = repo["owner"]["id"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
     user_id: str = payload["sender"]["id"]
@@ -59,8 +59,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
 
     requests_left, requests_made_in_this_cycle, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=user_id,
-            installation_id=installation_id
+            user_id=user_id, installation_id=installation_id
         )
     )
     if requests_left <= 0:
@@ -68,7 +67,11 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             owner=owner,
             repo=repo_name,
             issue_number=issue_number,
-            body=f"Hello {user_name}, you have reached your request limit of {requests_made_in_this_cycle}, your cycle will refresh on {end_date}. Consider <a href='https://gitauto.ai/#pricing'>subscribing</a> if you want more requests.",
+            body=request_limit_reached(
+                user_name=user_name,
+                requests_made_in_this_cycle=requests_made_in_this_cycle,
+                end_date=end_date,
+            ),
             token=token,
         )
         return {"message": "Request limit reached."}
@@ -204,7 +207,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     update_comment(
         comment_url=comment_url,
         token=token,
-        body=f"Pull request completed! Check it out here {pull_request_url} 🚀",
+        body=pull_request_completed(pull_request_url=pull_request_url),
     )
 
     supabase_manager.complete_user_request(

@@ -19,7 +19,7 @@ jobs:
 
     - name: Install pytest
       run: |
-        pip install pytest
+        pip install pytest pytest-cov
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Set PYTHONPATH
@@ -29,4 +29,4 @@ jobs:
       env:
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NIKITA_SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_URL: ${{ secrets.NIKITA_SUPABASE_URL }}
-      run: pytest
+      run: pytest --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html

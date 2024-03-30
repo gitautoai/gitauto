@@ -1,6 +1,7 @@
+"""Class to manage all GitAuto related operations"""
+
 import datetime
 import logging
-
 from supabase import Client
 from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 
@@ -10,6 +11,7 @@ class GitAutoAgentManager:
         self.client = client
 
     def complete_user_request(self, user_id: int, installation_id: int) -> None:
+        """Set users usage request to completed"""
         try:
             self.client.table(table_name="usage").update(
                 json={
@@ -32,6 +34,7 @@ class GitAutoAgentManager:
         user_id: int,
         user_name: str,
     ) -> None:
+        """Create owners record with stripe customerId, subscribe to free plan, create installation record, create users record on Installation Webhook event"""
         try:
             # If owner doesn't exist in owners table, insert owner and stripe customer
             data, _ = (
@@ -160,12 +163,13 @@ class GitAutoAgentManager:
         try:
             data, _ = (
                 self.client.table(table_name="users")
-                .select("first_issue")
+                .select("*")
                 .eq(column="user_id", value=user_id)
                 .eq(column="installation_id", value=installation_id)
+                .eq(column="first_issue", value=True)
                 .execute()
             )
-            if data[1] and data[1][0]["first_issue"]:
+            if len(data[1]) > 0:
                 return True
             return False
         except Exception as e:
