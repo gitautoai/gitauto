@@ -1,9 +1,9 @@
-name: nikita PyTest Workflow
+name: Stage PyTest Workflow
 
 on:
   push:
     branches:
-      - 'nikita*'
+      - 'stage*'
 
 jobs:
   build:
@@ -27,6 +27,6 @@ jobs:
 
     - name: Run pytest
       env:
-        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NIKITA_SUPABASE_SERVICE_ROLE_KEY }}
-        SUPABASE_URL: ${{ secrets.NIKITA_SUPABASE_URL }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGE_SUPABASE_SERVICE_ROLE_KEY }}
+        SUPABASE_URL: ${{ secrets.STAGE_SUPABASE_URL }}
       run: pytest
