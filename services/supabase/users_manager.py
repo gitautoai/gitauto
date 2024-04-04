@@ -75,9 +75,12 @@ class UsersManager:
             free_tier_product_id = ""
             # Find all active subscriptions, return the first paid subscription if found, if not return the free one found
             for sub in subscription["data"]:
+                # Check this subscription is active
                 if sub.status == "active":
                     for item in sub["items"]["data"]:
+                        # Iterate over all items in the subscription, check if item is active
                         if item["price"]["active"] is True:
+                            # Check item is not in free tier
                             if item["price"][
                                 "id"
                             ] != STRIPE_FREE_TIER_PRICE_ID and self.is_user_eligible_for_seat_handler(

@@ -53,7 +53,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     owner: str = repo["owner"]["login"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
-    user_id: str = payload["sender"]["id"]
+    user_id: int = payload["sender"]["id"]
     user_name: str = payload["sender"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
 
@@ -74,7 +74,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             ),
             token=token,
         )
-        return {"message": "Request limit reached."}
+        return
     unique_issue_id = f"{owner_type}/{owner}/{repo_name}#{issue_number}"
     supabase_manager.create_user_request(
         user_id=user_id,
@@ -91,14 +91,14 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
 
     # Start progress and check if current issue is already in progress from another invocation
     if supabase_manager.is_issue_in_progress(unique_issue_id=unique_issue_id):
-        return {"message": "The issue is already in progress."}
+        return
     comment_url = create_comment(
         owner=owner,
         repo=repo_name,
         issue_number=issue_number,
         body="![X](https://progress-bar.dev/0/?title=Progress&width=800)\nGitAuto just started crafting a pull request.",
         token=token,
-    )["url"]
+    )
     # Prepare contents for Agent
     file_paths: list[str] = get_remote_file_tree(
         owner=owner,

@@ -29,7 +29,7 @@ from utils.text_copy import request_limit_reached
 
 
 def add_reaction_to_issue(
-    owner: str, repo: str, issue_number: str, content: str, token: str
+    owner: str, repo: str, issue_number: int, content: str, token: str
 ) -> dict[str, Any]:
     """https://docs.github.com/en/rest/reactions/reactions?apiVersion=2022-11-28#create-reaction-for-an-issue"""
     try:
@@ -112,8 +112,8 @@ def commit_changes_to_remote_branch(
 
 
 def create_comment(
-    owner: str, repo: str, issue_number: str, body: str, token: str
-) -> requests.Response:
+    owner: str, repo: str, issue_number: int, body: str, token: str
+) -> Union[str, None]:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     try:
         response: requests.Response = requests.post(
@@ -126,7 +126,7 @@ def create_comment(
         )
 
         response.raise_for_status()
-        return response.json()
+        return response.json()["url"]
     except requests.exceptions.HTTPError as e:
         logging.error(
             msg=f"create_comment HTTP Error: {e.response.status_code} - {e.response.text}"
@@ -449,7 +449,7 @@ def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
 
 
 def update_comment_for_raised_errors(
-    error: str, comment_url: str, unique_issue_id: str, token: str
+    error: Any, comment_url: str, unique_issue_id: str, token: str
 ) -> dict[str, Any]:
     """Update the comment on issue with an error message, set progress to 100, and raise the error."""
     body = "Sorry, we have an error. Please try again."
@@ -457,7 +457,7 @@ def update_comment_for_raised_errors(
         if isinstance(error, requests.exceptions.HTTPError):
             if (
                 error.response.status_code == 422
-                and error.message
+                and error["message"]
                 and error.message == "Validation Failed"
                 and (
                     (
