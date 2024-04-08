@@ -1,6 +1,6 @@
 """Manager for all user related operations"""
 
-from typing import Union
+from supabase import Client
 import datetime
 import logging
 from services.stripe.customer import (
@@ -10,14 +10,18 @@ from services.stripe.customer import (
 from config import (
     STRIPE_FREE_TIER_PRICE_ID,
 )
-from supabase import Client
+
+from stripe import Subscription
 
 
 class UsersManager:
+    """Manager for all user related operations"""
+
     def __init__(self, client: Client) -> None:
-        self.client = client
+        self.client: Client = client
 
     def create_user(self, user_id: int, user_name: str, installation_id: int) -> None:
+        """Creates an account for the user in the users table"""
         try:
             self.client.table(table_name="users").insert(
                 json={
@@ -27,8 +31,9 @@ class UsersManager:
                 }
             ).execute()
         except Exception as err:
-            logging.error(f"create_user {err}")
+            logging.error("create_user %s", err)
 
+    # Check if user has a seat in an org or can be given a seat
     def is_user_eligible_for_seat_handler(
         self, user_id: int, installation_id: int, quantity: int
     ) -> bool:
@@ -64,46 +69,58 @@ class UsersManager:
             return True
         except Exception as err:
             logging.error(f"is_user_eligible_for_seat_handler {err}")
+            # Give user a seat even if there is an error
             return True
 
     def parse_subscription_object(
-        self, subscription, user_id, installation_id
-    ) -> Union[int, int, str]:
+        self, subscription: Subscription, user_id: int, installation_id: int
+    ) -> tuple[int, int, str]:
+        """Parsing stripe subscription object to get the start date, end date and product id of either a paid or free tier customer subscription"""
         try:
             free_tier_start_date = 0
             free_tier_end_date = 0
             free_tier_product_id = ""
             # Find all active subscriptions, return the first paid subscription if found, if not return the free one found
             for sub in subscription["data"]:
+
                 # Check this subscription is active
-                if sub.status == "active":
-                    for item in sub["items"]["data"]:
-                        # Iterate over all items in the subscription, check if item is active
-                        if item["price"]["active"] is True:
-                            # Check item is not in free tier
-                            if item["price"][
-                                "id"
-                            ] != STRIPE_FREE_TIER_PRICE_ID and self.is_user_eligible_for_seat_handler(
-                                user_id=user_id,
-                                installation_id=installation_id,
-                                quantity=item["quantity"],
-                            ):
-                                # Return from Paid Subscription if we find one
-                                return (
-                                    sub.current_period_start,
-                                    sub.current_period_end,
-                                    item["price"]["product"],
-                                )
-                            else:
-                                free_tier_start_date = sub.current_period_start
-                                free_tier_end_date = sub.current_period_end
-                                free_tier_product_id = item["price"]["product"]
+                if sub.status != "active":
+                    continue
+
+                # Iterate over the items, there should only be one item, but we are iterating just in case
+                for item in sub["items"]["data"]:
+                    # Check item is active subscription
+                    if item["price"]["active"] is False:
+                        continue
+
+                    # Check if item is non-free tier
+                    if item["price"]["id"] == STRIPE_FREE_TIER_PRICE_ID:
+                        continue
+
+                    # Check if user has or can be assigned a seat
+                    if self.is_user_eligible_for_seat_handler(
+                        user_id=user_id,
+                        installation_id=installation_id,
+                        quantity=item["quantity"],
+                    ):
+                        return (
+                            sub["current_period_start"],
+                            sub["current_period_end"],
+                            item["price"]["product"],
+                        )
+
+                    else:
+                        free_tier_start_date = sub.current_period_start
+                        free_tier_end_date = sub.current_period_end
+                        free_tier_product_id = item["price"]["product"]
+
             if (
                 free_tier_start_date == 0
                 or free_tier_end_date == 0
                 or free_tier_product_id == ""
             ):
-                raise Exception("No active subscription found")
+                # Customer should alawys have at least a free tier subscription, set by this codebase on installation webhook from github
+                raise ValueError("No active stripe subscription found.")
             # Return from Free Tier Subscription if there is no paid subscription object
             return free_tier_start_date, free_tier_end_date, free_tier_product_id
         except Exception as e:
@@ -113,7 +130,7 @@ class UsersManager:
 
     def get_how_many_requests_left_and_cycle(
         self, user_id: int, installation_id: int
-    ) -> tuple[int, int, str]:
+    ) -> tuple[int, int, datetime.datetime]:
         try:
             data, _ = (
                 self.client.table(table_name="installations")
@@ -122,7 +139,7 @@ class UsersManager:
                 .execute()
             )
 
-            stripe_customer_id = data[1][0]["owners"]["stripe_customer_id"]
+            stripe_customer_id: str = data[1][0]["owners"]["stripe_customer_id"]
 
             if stripe_customer_id:
                 subscription = get_subscription(
@@ -167,7 +184,8 @@ class UsersManager:
             # TODO Send comment to user issue
             return "N/A", "N/A", "N/A"
 
-    def user_exists(self, user_id: int, installation_id: int) -> None:
+    def user_exists(self, user_id: int, installation_id: int) -> bool:
+        """Check if user(installation_id, user_id) exists in GitAuto database"""
         try:
             data, _ = (
                 self.client.table(table_name="users")
@@ -181,3 +199,4 @@ class UsersManager:
             return False
         except Exception as err:
             logging.error(f"user_exists {err}")
+            return False

@@ -28,8 +28,8 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
     installation_id: int = payload["installation"]["id"]
     owner_type: str = payload["installation"]["account"]["type"][0]
     owner_name: str = payload["installation"]["account"]["login"]
-    owner_id: str = payload["installation"]["account"]["id"]
-    user_id: str = payload["sender"]["id"]
+    owner_id: int = payload["installation"]["account"]["id"]
+    user_id: int = payload["sender"]["id"]
     user_name: str = payload["sender"]["login"]
 
     supabase_manager.create_installation(

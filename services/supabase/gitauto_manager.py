@@ -7,6 +7,8 @@ from services.stripe.customer import create_stripe_customer, subscribe_to_free_p
 
 
 class GitAutoAgentManager:
+    """Class to manage all GitAuto related operations"""
+
     def __init__(self, client: Client) -> None:
         self.client = client
 
@@ -97,6 +99,8 @@ class GitAutoAgentManager:
             logging.error(
                 msg=f"create_installation installation_id: {installation_id} owner_id: {owner_id} Error: {e}"
             )
+            # Raise as installation flow was not successful
+            raise RuntimeError("Installation flow was not successful")
 
     def create_user_request(
         self, user_id: int, installation_id: int, unique_issue_id: str

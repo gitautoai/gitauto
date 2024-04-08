@@ -4,7 +4,7 @@ import hashlib  # For HMAC (Hash-based Message Authentication Code) signatures
 import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
 import logging
 import time
-from typing import Any, Union
+from typing import Any
 
 # Third-party imports
 import jwt  # For generating JWTs (JSON Web Tokens)
@@ -20,17 +20,18 @@ from config import (
     TIMEOUT_IN_SECONDS,
     PRODUCT_ID,
 )
-from services.github.github_types import GitHubContentInfo
-from utils.file_manager import apply_patch
-
+from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload
 from services.supabase import SupabaseManager
-from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+
+from utils.file_manager import apply_patch
 from utils.text_copy import request_limit_reached
+
+from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 
 def add_reaction_to_issue(
     owner: str, repo: str, issue_number: int, content: str, token: str
-) -> dict[str, Any]:
+) -> None:
     """https://docs.github.com/en/rest/reactions/reactions?apiVersion=2022-11-28#create-reaction-for-an-issue"""
     try:
         response: requests.Response = requests.post(
@@ -40,8 +41,8 @@ def add_reaction_to_issue(
             timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
+        response.json()
 
-        return response.json()
     except requests.exceptions.HTTPError as e:
         logging.error(
             msg=f"add_reaction_to_issue HTTP Error: {e.response.status_code} - {e.response.text}"
@@ -113,7 +114,7 @@ def commit_changes_to_remote_branch(
 
 def create_comment(
     owner: str, repo: str, issue_number: int, body: str, token: str
-) -> Union[str, None]:
+) -> str:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     try:
         response: requests.Response = requests.post(
@@ -127,15 +128,18 @@ def create_comment(
 
         response.raise_for_status()
         return response.json()["url"]
+    # If this doesn't work, it means GitHub APIs are likely down, so we should raise
     except requests.exceptions.HTTPError as e:
         logging.error(
             msg=f"create_comment HTTP Error: {e.response.status_code} - {e.response.text}"
         )
+        raise
     except Exception as e:
         logging.error(msg=f"create_comment Error: {e}")
+        raise
 
 
-def create_comment_on_issue_with_gitauto_button(payload) -> None:
+def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -> None:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
@@ -238,7 +242,7 @@ def create_pull_request(
     comment_url: str,
     unique_issue_id: str,
     token: str,
-) -> dict[str, Any]:
+) -> str:
     """https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request"""
     try:
         response: requests.Response = requests.post(
@@ -248,7 +252,7 @@ def create_pull_request(
             timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
-        return response.json()
+        return response.json()["html_url"]
     except Exception as e:
         update_comment_for_raised_errors(
             error=e,

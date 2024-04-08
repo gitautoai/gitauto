@@ -30,7 +30,7 @@ from services.github.github_types import (
 )
 from services.openai.chat import write_pr_body
 from services.openai.agent import run_assistant
-from services.supabase import SupabaseManager  # [no-name-in-module]
+from services.supabase import SupabaseManager
 from utils.file_manager import extract_file_name
 from utils.text_copy import pull_request_completed, request_limit_reached
 
@@ -38,6 +38,7 @@ supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_K
 
 
 async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> None:
+    """Core functionality to create comments on issue, create PRs, and update progress."""
     # Extract label and validate it
     if trigger_type == "label" and payload["label"]["name"] != PRODUCT_ID:
         return
@@ -201,7 +202,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         comment_url=comment_url,
         unique_issue_id=unique_issue_id,
         token=token,
-    )["html_url"]
+    )
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
 
     update_comment(
