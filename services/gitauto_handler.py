@@ -58,7 +58,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     user_name: str = payload["sender"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
 
-    requests_left, requests_made_in_this_cycle, end_date = (
+    requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
             user_id=user_id, installation_id=installation_id
         )
@@ -70,7 +70,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             issue_number=issue_number,
             body=request_limit_reached(
                 user_name=user_name,
-                requests_made_in_this_cycle=requests_made_in_this_cycle,
+                request_count=request_count,
                 end_date=end_date,
             ),
             token=token,

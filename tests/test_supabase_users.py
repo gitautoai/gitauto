@@ -55,24 +55,24 @@ def test_how_many_requests_left() -> None:
     """Test that get_how_many_requests_left_and_cycle returns the correct values"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
-    requests_left, requests_made_in_this_cycle, end_date = (
+    requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
             user_id=66699290, installation_id=47287862
         )
     )
 
     assert isinstance(requests_left, int)
-    assert isinstance(requests_made_in_this_cycle, int)
+    assert isinstance(request_count, int)
     assert isinstance(end_date, datetime.datetime)
 
-    requests_left, requests_made_in_this_cycle, end_date = (
+    requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
             user_id=66699290, installation_id=48567750
         )
     )
 
     assert isinstance(requests_left, int)
-    assert isinstance(requests_made_in_this_cycle, int)
+    assert isinstance(request_count, int)
     assert isinstance(end_date, datetime.datetime)
 
 

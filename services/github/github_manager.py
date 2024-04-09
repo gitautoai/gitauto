@@ -25,7 +25,7 @@ from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload
 from services.supabase import SupabaseManager
 
 from utils.file_manager import apply_patch
-from utils.text_copy import request_limit_reached
+from utils.text_copy import request_issue_comment, request_limit_reached
 
 from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
@@ -169,7 +169,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     ):
         first_issue = True
 
-    requests_left, requests_made_in_this_cycle, end_date = (
+    requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
             user_id=user_id, installation_id=installation_id
         )
@@ -182,12 +182,12 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     if end_date != datetime.datetime(
         year=1, month=1, day=1, hour=0, minute=0, second=0
     ):
-        body += f"\n\nYou have {requests_left} requests left in this cycle which ends {end_date}."
+        body += request_issue_comment(requests_left=requests_left, end_date=end_date)
 
     if requests_left <= 0:
         body = request_limit_reached(
             user_name=user_name,
-            requests_made_in_this_cycle=requests_made_in_this_cycle,
+            request_count=request_count,
             end_date=end_date,
         )
 

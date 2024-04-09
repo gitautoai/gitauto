@@ -162,9 +162,12 @@ class UsersManager:
                     .execute()
                 )
                 requests_left = request_count - len(data[1])
-                requests_made_in_this_cycle = len(data[1])
 
-                return requests_left, requests_made_in_this_cycle, end_date
+                return (
+                    requests_left,
+                    request_count,
+                    end_date,
+                )
 
             logging.error(
                 "No Stripe Customer ID found for installation %s user %s",
