@@ -136,24 +136,6 @@ def test_parse_subscription_object() -> None:
     # TODO, not possible for users to do this right now on Website
     # [paid1, paid2] -> paid1
 
-    ## First not active ##
-
-    # [free - not active, paid] -> paid
-
-    # [paid - not active, free] -> free
-
-    # TODO, not possible for users to do this right now on Website
-    # [paid1 - not active, paid2] -> paid2
-
-    # Second not active ##
-
-    # [free - not active, paid] -> paid
-
-    # [paid - not active, free] -> free
-
-    # TODO, not possible for users to do this right now on Website
-    # [paid1 - not active, paid2] -> paid2
-
 
 test_parse_subscription_object()
 

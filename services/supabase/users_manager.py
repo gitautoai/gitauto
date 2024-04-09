@@ -80,6 +80,11 @@ class UsersManager:
     ) -> tuple[int, int, str]:
         """Parsing stripe subscription object to get the start date, end date and product id of either a paid or free tier customer subscription"""
         try:
+            if len(subscription.data) > 2:
+                raise ValueError(
+                    "There are more than 2 active subscriptions for this customer. This is a check when we move to multiple paid subscriptions."
+                )
+
             free_tier_start_date = 0
             free_tier_end_date = 0
             free_tier_product_id = ""
