@@ -1,5 +1,6 @@
 # Standard imports
 import base64
+import datetime
 import hashlib  # For HMAC (Hash-based Message Authentication Code) signatures
 import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
 import logging
@@ -177,7 +178,11 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     body = "Click the checkbox below to generate a PR!\n- [ ] Generate PR"
     if PRODUCT_ID != "gitauto":
         body += " - " + PRODUCT_ID
-    body += f"\n\nYou have {requests_left} requests left in this cycle which ends {end_date}."
+
+    if end_date != datetime.datetime(
+        year=1, month=1, day=1, hour=0, minute=0, second=0
+    ):
+        body += f"\n\nYou have {requests_left} requests left in this cycle which ends {end_date}."
 
     if requests_left <= 0:
         body = request_limit_reached(

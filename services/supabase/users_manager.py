@@ -11,7 +11,7 @@ from config import (
     STRIPE_FREE_TIER_PRICE_ID,
 )
 
-from stripe import Subscription
+import stripe
 
 
 class UsersManager:
@@ -73,28 +73,26 @@ class UsersManager:
             return True
 
     def parse_subscription_object(
-        self, subscription: Subscription, user_id: int, installation_id: int
+        self,
+        subscription: stripe.ListObject[stripe.Subscription],
+        user_id: int,
+        installation_id: int,
     ) -> tuple[int, int, str]:
         """Parsing stripe subscription object to get the start date, end date and product id of either a paid or free tier customer subscription"""
         try:
             free_tier_start_date = 0
             free_tier_end_date = 0
             free_tier_product_id = ""
-            # Find all active subscriptions, return the first paid subscription if found, if not return the free one found
-            for sub in subscription["data"]:
-
-                # Check this subscription is active
-                if sub.status != "active":
-                    continue
-
+            # return the first paid subscription if found, if not return the free one found
+            for sub in subscription.data:
                 # Iterate over the items, there should only be one item, but we are iterating just in case
                 for item in sub["items"]["data"]:
-                    # Check item is active subscription
-                    if item["price"]["active"] is False:
-                        continue
-
                     # Check if item is non-free tier
                     if item["price"]["id"] == STRIPE_FREE_TIER_PRICE_ID:
+                        # Save free tier info to return just in case paid tier is not found
+                        free_tier_start_date = sub.current_period_start
+                        free_tier_end_date = sub.current_period_end
+                        free_tier_product_id = item["price"]["product"]
                         continue
 
                     # Check if user has or can be assigned a seat
@@ -108,11 +106,6 @@ class UsersManager:
                             sub["current_period_end"],
                             item["price"]["product"],
                         )
-
-                    else:
-                        free_tier_start_date = sub.current_period_start
-                        free_tier_end_date = sub.current_period_end
-                        free_tier_product_id = item["price"]["product"]
 
             if (
                 free_tier_start_date == 0
@@ -139,7 +132,7 @@ class UsersManager:
                 .execute()
             )
 
-            stripe_customer_id: str = data[1][0]["owners"]["stripe_customer_id"]
+            stripe_customer_id = data[1][0]["owners"]["stripe_customer_id"]
 
             if stripe_customer_id:
                 subscription = get_subscription(
@@ -181,8 +174,12 @@ class UsersManager:
             raise
         except Exception as err:
             logging.error(f"get_how_many_requests_left_and_cycle {err}")
-            # TODO Send comment to user issue
-            return "N/A", "N/A", "N/A"
+            # Send back valid values and do not raise to give user benefit of the doubt
+            return (
+                1,
+                1,
+                datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, second=0),
+            )
 
     def user_exists(self, user_id: int, installation_id: int) -> bool:
         """Check if user(installation_id, user_id) exists in GitAuto database"""

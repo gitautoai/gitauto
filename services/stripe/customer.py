@@ -46,9 +46,9 @@ def create_stripe_customer(
     return customer["id"]
 
 
-def get_subscription(customer_id: str):
+def get_subscription(customer_id: str) -> stripe.ListObject[stripe.Subscription]:
     try:
-        subscription = stripe.Subscription.list(customer=customer_id)
+        subscription = stripe.Subscription.list(customer=customer_id, status="active")
         return subscription
     except Exception as e:
         logging.error(f"get_subscriptiont {e}")

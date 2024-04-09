@@ -1,6 +1,9 @@
 # run this file locally with: python -m tests.test_supabase_users
 
 import os
+
+import supabase
+from services.stripe.customer import get_subscription
 from services.supabase import SupabaseManager
 import datetime
 
@@ -10,7 +13,6 @@ import datetime
 
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
 SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
-
 
 dummy = """
 # Dummy data in each environment
@@ -91,5 +93,68 @@ def test_is_users_first_issue() -> None:
 
 # test_is_users_first_issue()
 
+
+def test_parse_subscription_object() -> None:
+    """Test parse_subscription_object function"""
+    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
+
+    # insert data into the db. is_selected will be true since we're not testing is_user_eligible_for_seat_handler here
+    supabase_manager.client.table("owners").upsert(json={"owner_id": -1}).execute()
+    supabase_manager.client.table("installations").upsert(
+        json={
+            "owner_id": -1,
+            "installation_id": -1,
+            "owner_name": "test_parse_subscription",
+        }
+    ).execute()
+    try:
+        supabase_manager.client.table("users").upsert(
+            json={"user_id": -1, "installation_id": -1, "is_selected": True}
+        ).execute()
+
+    except Exception as e:
+        pass
+
+    STANDARD_PRICE_ID = "prod_PqZFpCs1Jq6X4E"
+    FREE_PRICE_ID = "prod_PokLGIxiVUwCi6"
+    EXAMPLE_PAID_PLAN = "prod_PtFfTPPNV18uEo"
+
+    def assertion_test(customer_id: str, product_id: str):
+        subscription = get_subscription(customer_id)
+        _, _, product_id_output = supabase_manager.parse_subscription_object(
+            subscription, -1, -1
+        )
+        assert product_id_output == product_id
+
+    ## All active ##
+    # [free, paid] -> paid
+    assertion_test("cus_PtCxNdGs23X4QR", STANDARD_PRICE_ID)
+
+    # [paid, free] -> paid
+    assertion_test("cus_PpmpFh1sw0Gfcz", STANDARD_PRICE_ID)
+
+    # TODO, not possible for users to do this right now on Website
+    # [paid1, paid2] -> paid1
+
+    ## First not active ##
+
+    # [free - not active, paid] -> paid
+
+    # [paid - not active, free] -> free
+
+    # TODO, not possible for users to do this right now on Website
+    # [paid1 - not active, paid2] -> paid2
+
+    # Second not active ##
+
+    # [free - not active, paid] -> paid
+
+    # [paid - not active, free] -> free
+
+    # TODO, not possible for users to do this right now on Website
+    # [paid1 - not active, paid2] -> paid2
+
+
+test_parse_subscription_object()
 
 # TODO Test install uninstall
