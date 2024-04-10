@@ -1,4 +1,9 @@
 # Standard imports
+# New imports
+import requests
+
+    # Slack notification code
+    requests.post(webhook_url, json={'text': f"GitAuto has been successfully installed by {payload['sender']['login']}!"})
 import json
 import time
 from uuid import uuid4
