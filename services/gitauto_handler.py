@@ -1,3 +1,10 @@
+def handle_installation_event(payload):
+    # Process installation event
+    pass
+
+def handle_deletion_event(payload):
+    # Process deletion event
+    pass
 # Standard imports
 import json
 import time
