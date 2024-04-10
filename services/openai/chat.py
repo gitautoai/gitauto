@@ -23,10 +23,23 @@ def write_pr_body(input_message: str) -> str:
         )
         content: str | None = completion.choices[0].message.content
         response: str = content if content else "No response from OpenAI"
-        if response[:3] == "```\n":
+
+        # Check for backticks
+        if response[:4] == "```\n":
             response = response[4:]
+        if response[:3] == "```":
+            response = response[3:]
         if response.endswith("```"):
             response = response[:-3]
+
+        # Check for triple quotes
+        if response[:4] == '"""\n':
+            response = response[4:]
+        if response[:3] == '"""\n':
+            response = response[3:]
+        if response.endswith('"""'):
+            response = response[:-3]
+
         print(f"OpenAI response: {response}")
         return response
     except Exception as e:

@@ -112,15 +112,18 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     issue_comments: list[str] = get_issue_comments(
         owner=owner, repo=repo_name, issue_number=issue_number, token=token
     )
+    print("HERE")
     pr_body: str = write_pr_body(
         input_message=json.dumps(
             obj={
                 "issue_title": issue_title,
                 "issue_body": issue_body,
                 "issue_comments": issue_comments,
+                "file_paths": file_paths,
             }
         )
     )
+    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=5)
     print(
         f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n"
     )
@@ -137,7 +140,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token=token,
     )
 
-    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=50)
+    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=90)
     update_comment(
         comment_url=comment_url,
         token=token,
