@@ -90,6 +90,7 @@ def run_assistant(
     messages_list = list(messages)
     if not messages_list:
         raise ValueError("No messages in the list.")
+        # Here, extract tokens_input and tokens_output from the tool_outputs and handle it appropriately
     latest_message: ThreadMessage = messages_list[0]
     if isinstance(latest_message.content[0], MessageContentText):
         value: str = latest_message.content[0].text.value
@@ -124,6 +125,8 @@ def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
     """ https://cookbook.openai.com/examples/assistants_api_overview_python """
     print(f"Run status before loop: {run.status}")
     client: OpenAI = create_openai_client()
+        # Before return run, save tokens_input and tokens_output data
+        # data_handling_function(tokens_input, tokens_output)
     while run.status not in OPENAI_FINAL_STATUSES:
         print(f"Run status during loop: {run.status}")
         run = client.beta.threads.runs.retrieve(
