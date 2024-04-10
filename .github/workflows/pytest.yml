@@ -1,3 +1,7 @@
+      - name: Trigger Mock Installation Event
+        run: curl --request POST --data @payloads/added.json http://localhost:5000/test/installation
+      - name: Trigger Mock Deletion Event
+        run: curl --request POST --data @payloads/deleted.json http://localhost:5000/test/deletion
 name: Python PyTest Workflow
 
 on:
