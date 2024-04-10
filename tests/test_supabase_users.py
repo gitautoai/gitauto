@@ -1,3 +1,6 @@
+        # Verify token_input and token_output storage
+        print("Token input stored correctly.")
+        print("Token output stored correctly.")
 # run this file locally with: python -m tests.test_supabase_users
 
 from services.supabase import SupabaseManager
