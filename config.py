@@ -1,4 +1,6 @@
 # Standard imports
+# Slack Webhook URL
+SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/XXXXXXXXX/YYYYYYYYY/ZZZZZZZZZZZZZZZZZZZZZZZZ"
 import base64
 import os
 
