@@ -1,3 +1,5 @@
+                    "token_input": token_input,
+                    "token_output": token_output,
 import datetime
 import logging
 
