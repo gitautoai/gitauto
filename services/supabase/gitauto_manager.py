@@ -79,6 +79,10 @@ class GitAutoAgentManager:
                 .execute()
             )
             if not data[1]:
+            # Add tokens_input and tokens_output to usage table
+            self.client.table(table_name="usage").update(
+                {"tokens_input": tokens_input, "tokens_output": tokens_output}
+            ).execute()
                 self.client.table(table_name="issues").insert(
                     json={
                         "unique_id": unique_issue_id,
