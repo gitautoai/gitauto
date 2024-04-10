@@ -47,6 +47,16 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     issue_body: str = issue["body"] or ""
     issue_number: int = issue["number"]
     installation_id: int = payload["installation"]["id"]
+import slack_sdk
+
+def post_to_slack_channel(channel:str, message:str):
+    client = slack_sdk.WebClient(token=os.environ['SLACK_BOT_TOKEN'])
+    try:
+        response = client.chat_postMessage(channel=channel, text=message)
+    except slack_sdk.errors.SlackApiError as e:
+        # Log errors
+        print(f"Error posting to Slack: {e.response['error']}")
+
     repo: RepositoryInfo = payload["repository"]
     owner_type = payload["repository"]["owner"]["type"][0]
     owner: str = repo["owner"]["login"]
@@ -132,6 +142,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     update_comment(
         comment_url=comment_url,
         token=token,
+            # Post to Slack channel upon successful installation
+            post_to_slack_channel(channel='your-slack-channel', message=f'GitAuto has been successfully installed by {user_name}')
         body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
     )
 
