@@ -1,3 +1,6 @@
+        # Calculate tokens for input and output
+        token_input = len(input_text.split())
+        token_output = len(output_text.split())
 # Standard imports
 import json
 import time
