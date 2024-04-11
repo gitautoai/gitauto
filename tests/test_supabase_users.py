@@ -28,6 +28,17 @@ issues: installation_id = 48332126, unique_issue_id="U/gitautoai/nextjs-website#
 def test_create_and_update_user_request_works() -> None:
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
     print(SUPABASE_URL)
+def test_token_metrics_storage() -> None:
+    # Assuming token metrics are calculated and available
+    token_input = 50
+    token_output = 75
+    # Insert token metrics into the Supabase usage table and verify
+    assert (
+        supabase_manager.insert_token_metrics(
+            user_id=66699290, installation_id=48332126, token_input=token_input, token_output=token_output,
+        ) is None
+    )
+
     assert SUPABASE_URL == "https://atarljruiontapnenrsj.supabase.co"
     assert (
         supabase_manager.create_user_request(
