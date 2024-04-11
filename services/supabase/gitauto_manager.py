@@ -55,6 +55,8 @@ class GitAutoAgentManager:
             # Insert installation record
             self.client.table(table_name="installations").insert(
                 json={
+                    "token_input": 0,
+                    "token_output": 0,
                     "installation_id": installation_id,
                     "owner_name": owner_name,
                     "owner_type": owner_type,
