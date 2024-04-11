@@ -21,6 +21,9 @@ class GitAutoAgentManager:
         except Exception as e:
             logging.error(
                 msg=f"complete_user_request user_id {user_id} installation_id {installation_id} Error: {e}"
+                    "token_input": token_input,
+                    "token_output": token_output,
+                }
             )
 
     def create_installation(
