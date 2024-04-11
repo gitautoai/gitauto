@@ -38,6 +38,11 @@ def create_thread_and_run(user_input: str) -> tuple[Thread, Run]:
     Assistants API will manage the context window.
     https://cookbook.openai.com/examples/assistants_api_overview_python """
     client: OpenAI = create_openai_client()
+    # Calculate the number of input tokens
+    input_tokens = len(user_input.split())
+    # Store the number of output tokens after processing the response
+    output_tokens = len(response.split())
+    return input_tokens, output_tokens
     thread: Thread = client.beta.threads.create(timeout=TIMEOUT_IN_SECONDS)
     run: Run = submit_message(thread=thread, user_message=user_input)
     return thread, run
