@@ -101,8 +101,8 @@ def run_assistant(
 
     # Run the assistant
     client, assistant, thread, run = create_thread_and_run(user_input=user_input)
-    logging.info(f"Thread is created: {thread.id}\n")
-    logging.info(f"Run is created: {run.id}\n")
+    print(f"Thread is created: {thread.id}\n")
+    print(f"Run is created: {run.id}\n")
 
     # Wait for the run to complete, handle function calling if necessary
     run: Run = wait_on_run(run=run, thread=thread, token=token)
@@ -117,7 +117,7 @@ def run_assistant(
         value: str = latest_message.content[0].text.value
     else:
         raise ValueError("Last message content is not text.")
-    logging.info(f"Last message: {value}\n")
+    print(f"Last message: {value}\n")
 
     # Clean the diff text and split it
     diff: str = clean_specific_lines(text=value)
@@ -125,7 +125,7 @@ def run_assistant(
     output: list[str] = []
     for diff in text_diffs:
         diff = correct_hunk_headers(diff_text=diff)
-        logging.info(f"Diff: {repr(diff)}\n")
+        print(f"Diff: {repr(diff)}\n")
         output.append(diff)
 
     update_comment(
@@ -175,17 +175,17 @@ def submit_message(
 
 
 def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
-    logging.info("Run status before loop: %s", run.status)
+    print("Run status before loop: %s", run.status)
     client: OpenAI = create_openai_client()
     while run.status not in OPENAI_FINAL_STATUSES:
-        logging.info(f"Run status during loop: {run.status}")
+        print(f"Run status during loop: {run.status}")
         run = client.beta.threads.runs.retrieve(
             thread_id=thread.id, run_id=run.id, timeout=TIMEOUT_IN_SECONDS
         )
 
         # If the run requires action, call the function and run again with the output
         if run.status == "requires_action":
-            logging.info("Run requires action")
+            print("Run requires action")
             try:
                 tool_outputs: list[Any] = call_functions(
                     run=run, funcs=functions, token=token
@@ -203,7 +203,7 @@ def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
             except Exception as e:
                 raise ValueError(f"Error: {e}") from e
         time.sleep(0.5)
-    logging.info(f"Run status after loop: {run.status}")
+    print(f"Run status after loop: {run.status}")
     return run
 
 
@@ -218,10 +218,10 @@ def call_functions(run: Run, funcs: dict[str, Any], token: str) -> list[Any]:
         name: str = tool_call.function.name
         args = json.loads(s=tool_call.function.arguments)
         args["token"] = token
-        logging.info(f"{name=}\n{args=}\n")
+        print(f"{name=}\n{args=}\n")
 
         if name not in funcs:
-            logging.info(f"Function not found: {name}, skipping it.")
+            print(f"Function not found: {name}, skipping it.")
             continue
 
         # Call the function if it exists

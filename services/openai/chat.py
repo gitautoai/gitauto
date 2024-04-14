@@ -28,7 +28,7 @@ def write_pr_body(input_message: str) -> str:
             response = response[4:]
         if response.endswith("```"):
             response = response[:-3]
-        logging.info(f"OpenAI response: {response}")
+        print(f"OpenAI response: {response}")
         return response
     except Exception as e:
         raise ValueError(f"Error: {e}") from e

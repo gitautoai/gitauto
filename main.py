@@ -31,26 +31,25 @@ handler = Mangum(app=app)
 @app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
     """Handles Webhook event from Github"""
-    logging.basicConfig(level=logging.INFO)
     event_name: str = request.headers.get("X-GitHub-Event", "Event not specified")
-    logging.info(f"Received event: {event_name}")
+    print(f"Received event: {event_name}")
 
     try:
-        logging.info("Webhook received")
+        print("Webhook received")
         # Validate the webhook signature
         await verify_webhook_signature(request=request, secret=GH_WEBHOOK_SECRET)
-        logging.info("Webhook signature verified")
+        print("Webhook signature verified")
 
         # Process the webhook event
         payload = await request.json()
         # pprint.PrettyPrinter(indent=4).pprint(payload)
 
         await handle_webhook_event(event_name=event_name, payload=payload)
-        logging.info("Webhook event handled")
+        print("Webhook event handled")
 
         return {"message": "Webhook processed successfully"}
     except Exception as e:
-        logging.info(f"Error: {e}")
+        print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(object=e)) from e
 
 

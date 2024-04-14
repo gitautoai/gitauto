@@ -7,7 +7,7 @@ from openai.types.beta.threads import ThreadMessage
 
 # Pretty printing helper
 def pretty_print(messages: SyncCursorPage[ThreadMessage]) -> None:
-    logging.info("# Messages")
+    print("# Messages")
     for m in messages:
-        logging.info(f"{m.role}: {m.content[0].text.value}")
-    logging.info()
+        print(f"{m.role}: {m.content[0].text.value}")
+    print()

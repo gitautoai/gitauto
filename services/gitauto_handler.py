@@ -139,7 +139,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         unique_issue_id=unique_issue_id,
         token=token,
     )
-    logging.info(
+    print(
         f"{time.strftime('%H:%M:%S', time.localtime())} Remote branch created: {new_branch}.\n"
     )
 
@@ -172,9 +172,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         unique_issue_id=unique_issue_id,
         token=token,
     )["html_url"]
-    logging.info(
-        f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n"
-    )
+    print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
 
     update_comment(
         comment_url=comment_url,

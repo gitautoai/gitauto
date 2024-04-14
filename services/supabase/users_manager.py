@@ -31,7 +31,7 @@ class UsersManager:
                 .execute()
             )
             stripe_customer_id = data[1][0]["owners"]["stripe_customer_id"]
-            logging.info("STRIPE: ", stripe_customer_id)
+            print("STRIPE: ", stripe_customer_id)
             has_billing_cycle = False
             if stripe_customer_id:
                 if get_subscription(stripe_customer_id) != -1:
@@ -65,7 +65,7 @@ class UsersManager:
                 #     .eq(column="installation_id", value=installation_id)
                 #     .execute()
                 # )
-                # logging.info(total_requests)
+                # print(total_requests)
                 # return 5 - total_requests
 
             return 5
@@ -82,7 +82,7 @@ class UsersManager:
                 .eq(column="installation_id", value=installation_id)
                 .execute()
             )
-            logging.info("DATA: ", data[1][0]["first_issue"])
+            print("DATA: ", data[1][0]["first_issue"])
             return True
             return data[1][0]["first_issue"]
         except Exception as err:

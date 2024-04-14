@@ -62,12 +62,11 @@ def commit_multiple_changes_to_remote_branch(
     token: str,
 ) -> None:
     """Called from assistants api to commit multiple changes to a new branch."""
-    print(type(diffs))
     print(diffs)
     # Commit the changes to the new remote branch
     for diff in diffs:
         file_path: str = extract_file_name(diff_text=diff)
-        logging.info(
+        print(
             f"{time.strftime('%H:%M:%S', time.localtime())} File path: {file_path}.\n"
         )
         commit_changes_to_remote_branch(
@@ -81,7 +80,7 @@ def commit_multiple_changes_to_remote_branch(
             unique_issue_id=unique_issue_id,
             token=token,
         )
-        logging.info(
+        print(
             f"{time.strftime('%H:%M:%S', time.localtime())} Changes committed to https://github.com/{owner}/{repo}/tree/{new_branch}.\n"
         )
 
@@ -106,7 +105,7 @@ def commit_changes_to_remote_branch(
         )
         original_text = ""
         sha = ""
-        logging.info(f"{get_response.status_code=}\n")
+        print(f"{get_response.status_code=}\n")
         if get_response.status_code == 200:
             get_json: GitHubContentInfo = get_response.json()
             original_text: str = base64.b64decode(s=get_json["content"]).decode(

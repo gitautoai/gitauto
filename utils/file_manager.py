@@ -42,20 +42,20 @@ def apply_patch(original_text: str, diff_text: str) -> str:
                     stderr=subprocess.PIPE,
                 )
 
-        logging.info("Patch applied successfully.")
+        print("Patch applied successfully.")
         with open(file=original_file_name, mode="r", encoding="utf-8") as modified_file:
             modified_text: str = modified_file.read()
-            logging.info(f"{modified_text=}\n")
+            print(f"{modified_text=}\n")
 
     except subprocess.CalledProcessError as e:
-        logging.info("Failed to apply patch.")
-        logging.info(f"stdout: {e.stdout}")
-        logging.info(f"stderr: {e.stderr}\n")
+        print("Failed to apply patch.")
+        print(f"stdout: {e.stdout}")
+        print(f"stderr: {e.stderr}\n")
         logging.error(
             msg=f"apply_patch stderr: {e.stderr}"
         )  # pylint: disable=no-member
-        logging.info(f"Command: {' '.join(e.cmd)}")
-        logging.info(f"Exit status: {e.returncode}")
+        print(f"Command: {' '.join(e.cmd)}")
+        print(f"Exit status: {e.returncode}")
         return ""
     except Exception as e:  # pylint: disable=broad-except
         logging.error(msg=f"Error: {e}")  # pylint: disable=no-member
@@ -63,7 +63,7 @@ def apply_patch(original_text: str, diff_text: str) -> str:
     finally:
         os.remove(path=original_file_name)
         os.remove(path=diff_file_name)
-        logging.info("Temporary files removed.\n")
+        print("Temporary files removed.\n")
 
     return modified_text
 
