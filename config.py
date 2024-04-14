@@ -21,7 +21,7 @@ GITHUB_API_VERSION: str = "2022-11-28"
 GH_APP_ID: str = get_env_var(name="GH_APP_ID")
 GH_PRIVATE_KEY_ENCODED: str = get_env_var(name="GH_PRIVATE_KEY")
 GH_PRIVATE_KEY: bytes = base64.b64decode(s=GH_PRIVATE_KEY_ENCODED)
-GITHUB_WEBHOOK_SECRET: str = get_env_var(name="GITHUB_WEBHOOK_SECRET")
+GH_WEBHOOK_SECRET: str = get_env_var(name="GH_WEBHOOK_SECRET")
 
 # OpenAI Credentials from environment variables
 OPENAI_API_KEY: str = get_env_var(name="OPENAI_API_KEY")

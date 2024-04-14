@@ -10,7 +10,7 @@ import pprint
 
 
 # Local imports
-from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME
+from config import GH_WEBHOOK_SECRET, ENV, PRODUCT_NAME
 from services.github.github_manager import verify_webhook_signature
 from services.webhook_handler import handle_webhook_event
 
@@ -38,7 +38,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     try:
         logging.info("Webhook received")
         # Validate the webhook signature
-        await verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)
+        await verify_webhook_signature(request=request, secret=GH_WEBHOOK_SECRET)
         logging.info("Webhook signature verified")
 
         # Process the webhook event
