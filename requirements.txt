@@ -39,6 +39,7 @@ StrEnum==0.4.15
 stripe==8.8.0
 supabase==2.4.0
 supafunc==0.3.3
+tiktoken==0.6.0
 tqdm==4.66.2
 typing_extensions==4.10.0
 urllib3==2.2.1
