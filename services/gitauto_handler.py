@@ -103,16 +103,15 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         owner=owner, repo=repo_name, issue_number=issue_number, token=token
     )
 
-    # pr_body: str = write_pr_body(
-    #     input_message=json.dumps(
-    #         obj={
-    #             "issue_title": issue_title,
-    #             "issue_body": issue_body,
-    #             "issue_comments": issue_comments,
-    #         }
-    #     )
-    # )
-    pr_body = "create an api to get cloudinary images"
+    pr_body: str = write_pr_body(
+        input_message=json.dumps(
+            obj={
+                "issue_title": issue_title,
+                "issue_body": issue_body,
+                "issue_comments": issue_comments,
+            }
+        )
+    )
 
     update_comment(
         comment_url=comment_url,
