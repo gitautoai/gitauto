@@ -1,5 +1,5 @@
 # Standard imports
-# import json
+import logging
 
 # Third-party imports
 from fastapi import FastAPI, HTTPException, Request
@@ -7,6 +7,7 @@ from mangum import Mangum
 import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 import pprint
+
 
 # Local imports
 from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME
@@ -29,25 +30,27 @@ handler = Mangum(app=app)
 
 @app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
+    """Handles Webhook event from Github"""
+    logging.basicConfig(level=logging.INFO)
     event_name: str = request.headers.get("X-GitHub-Event", "Event not specified")
-    print(f"Received event: {event_name}")
+    logging.info(f"Received event: {event_name}")
 
     try:
-        print("Webhook received")
+        logging.info("Webhook received")
         # Validate the webhook signature
         await verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)
-        print("Webhook signature verified")
+        logging.info("Webhook signature verified")
 
         # Process the webhook event
         payload = await request.json()
         # pprint.PrettyPrinter(indent=4).pprint(payload)
 
         await handle_webhook_event(event_name=event_name, payload=payload)
-        print("Webhook event handled")
+        logging.info("Webhook event handled")
 
         return {"message": "Webhook processed successfully"}
     except Exception as e:
-        print(f"Error: {e}")
+        logging.info(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(object=e)) from e
 
 

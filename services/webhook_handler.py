@@ -1,5 +1,6 @@
 # Standard imports
 import re
+import logging
 
 # Local imports
 from config import (
@@ -55,16 +56,16 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
 
     # Check the type of webhook event and handle accordingly
     if event_name == "installation" and action in ("created"):
-        print("Installation is created")
+        logging.info("Installation is created")
         await handle_installation_created(payload=payload)
 
     elif event_name == "installation" and action in ("deleted"):
-        print("Installation is deleted")
+        logging.info("Installation is deleted")
         await handle_installation_deleted(payload=payload)
 
     elif event_name == "issues":
         if action == "labeled":
-            print("Issue is labeled")
+            logging.info("Issue is labeled")
             await handle_gitauto(payload=payload, trigger_type="label")
         elif action == "opened":
             create_comment_on_issue_with_gitauto_button(payload=payload)
@@ -78,7 +79,7 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             search_text += " - " + PRODUCT_ID
             if payload["comment"]["body"].find(search_text) != -1:
                 issue_handled = True
-                print("Triggered GitAuto PR")
+                logging.info("Triggered GitAuto PR")
                 await handle_gitauto(payload=payload, trigger_type="comment")
         else:
             if (
@@ -86,10 +87,10 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
                 and payload["comment"]["body"].find(search_text + " - ") == -1
             ):
                 issue_handled = True
-                print("Triggered GitAuto PR")
+                logging.info("Triggered GitAuto PR")
                 await handle_gitauto(payload=payload, trigger_type="comment")
         if not issue_handled:
-            print("Edit is not an activated GitAtuo trigger.")
+            logging.info("Edit is not an activated GitAtuo trigger.")
 
     elif event_name == "pull_request" and action == "closed":
         pull_request = payload.get("pull_request")

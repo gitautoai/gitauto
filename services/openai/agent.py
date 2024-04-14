@@ -2,6 +2,7 @@
 import json
 import time
 from typing import Any
+import logging
 
 # Third-party imports
 from openai import OpenAI
@@ -9,16 +10,27 @@ from openai.pagination import SyncCursorPage
 from openai.types.beta import Assistant, Thread
 from openai.types.beta.threads import Run, ThreadMessage, MessageContentText
 from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
+import tiktoken
+
 
 # Local imports
 from config import OPENAI_FINAL_STATUSES, OPENAI_MODEL_ID, TIMEOUT_IN_SECONDS
-from services.openai.functions import GET_REMOTE_FILE_CONTENT, functions
+from services.github.github_manager import update_comment
+from services.openai.functions import (
+    COMMIT_MULTIPLE_CHANGES_TO_REMOTE_BRANCH,
+    GET_REMOTE_FILE_CONTENT,
+    functions,
+)
 from services.openai.init import create_openai_client
-from services.openai.instructions import SYSTEM_INSTRUCTION_FOR_AGENT
+from services.openai.instructions import (
+    SYSTEM_INSTRUCTION_FOR_AGENT,
+    SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS,
+)
 from utils.file_manager import clean_specific_lines, correct_hunk_headers, split_diffs
 
 
 def create_assistant() -> Assistant:
+    """https://platform.openai.com/docs/assistants/overview/step-1-create-an-assistant"""
     client: OpenAI = create_openai_client()
     return client.beta.assistants.create(
         name="GitAuto: Automated Issue Resolver",
@@ -26,25 +38,30 @@ def create_assistant() -> Assistant:
         tools=[
             # {"type": "code_interpreter"},
             # {"type": "retrieval"},
-            {"type": "function", "function": GET_REMOTE_FILE_CONTENT}
+            {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
+            {"type": "function", "function": COMMIT_MULTIPLE_CHANGES_TO_REMOTE_BRANCH},
         ],
         model=OPENAI_MODEL_ID,
-        timeout=TIMEOUT_IN_SECONDS
+        timeout=TIMEOUT_IN_SECONDS,
     )
 
 
-def create_thread_and_run(user_input: str) -> tuple[Thread, Run]:
-    """ thread represents a conversation. 1 thread per 1 issue.
+def create_thread_and_run(user_input: str) -> tuple[OpenAI, Assistant, Thread, Run]:
+    """thread represents a conversation. 1 thread per 1 issue.
     Assistants API will manage the context window.
-    https://cookbook.openai.com/examples/assistants_api_overview_python """
+    https://cookbook.openai.com/examples/assistants_api_overview_python"""
     client: OpenAI = create_openai_client()
     thread: Thread = client.beta.threads.create(timeout=TIMEOUT_IN_SECONDS)
-    run: Run = submit_message(thread=thread, user_message=user_input)
-    return thread, run
+    assistant: Assistant = create_assistant()
+
+    run: Run = submit_message(
+        client=client, assistant=assistant, thread=thread, user_message=user_input
+    )
+    return client, assistant, thread, run
 
 
 def get_response(thread: Thread) -> SyncCursorPage[ThreadMessage]:
-    """ https://cookbook.openai.com/examples/assistants_api_overview_python """
+    """https://cookbook.openai.com/examples/assistants_api_overview_python"""
     client: OpenAI = create_openai_client()
     return client.beta.threads.messages.list(
         thread_id=thread.id, order="desc", timeout=TIMEOUT_IN_SECONDS
@@ -52,17 +69,20 @@ def get_response(thread: Thread) -> SyncCursorPage[ThreadMessage]:
 
 
 def run_assistant(
-        file_paths: list[str],
-        issue_title: str,
-        issue_body: str,
-        issue_comments: list[str],
-        owner: str,
-        pr_body: str,
-        ref: str,
-        repo: str,
-        token: str
-        ) -> list[str]:
-
+    file_paths: list[str],
+    issue_title: str,
+    issue_body: str,
+    issue_comments: list[str],
+    owner: str,
+    pr_body: str,
+    ref: str,
+    repo: str,
+    comment_url: str,
+    token: str,
+    new_branch: str,
+    unique_issue_id: str,
+) -> tuple[int, int, list[str]]:
+    """Starts the Assistants API and the flow of GitAuto Agent."""
     # Create a message in the thread
     data: dict[str, str | list[str]] = {
         "owner": owner,
@@ -72,17 +92,19 @@ def run_assistant(
         "issue_title": issue_title,
         "issue_body": issue_body,
         "issue_comments": issue_comments,
-        "file_path": file_paths
+        "file_path": file_paths,
+        "comment_url": comment_url,
+        "new_branch": new_branch,
+        "unique_issue_id": unique_issue_id,
     }
-    content: str = json.dumps(obj=data)
-    # print(f"{data=}\n")
+    user_input: str = json.dumps(obj=data)
 
     # Run the assistant
-    thread, run = create_thread_and_run(user_input=content)
-    print(f"Thread is created: {thread.id}\n")
-    print(f"Run is created: {run.id}\n")
+    client, assistant, thread, run = create_thread_and_run(user_input=user_input)
+    logging.info(f"Thread is created: {thread.id}\n")
+    logging.info(f"Run is created: {run.id}\n")
 
-    # Wait for the run to complete
+    # Wait for the run to complete, handle function calling if necessary
     run: Run = wait_on_run(run=run, thread=thread, token=token)
 
     # Get the response
@@ -95,7 +117,7 @@ def run_assistant(
         value: str = latest_message.content[0].text.value
     else:
         raise ValueError("Last message content is not text.")
-    print(f"Last message: {value}\n")
+    logging.info(f"Last message: {value}\n")
 
     # Clean the diff text and split it
     diff: str = clean_specific_lines(text=value)
@@ -103,17 +125,49 @@ def run_assistant(
     output: list[str] = []
     for diff in text_diffs:
         diff = correct_hunk_headers(diff_text=diff)
-        print(f"Diff: {repr(diff)}\n")
+        logging.info(f"Diff: {repr(diff)}\n")
         output.append(diff)
-    return output
+
+    update_comment(
+        comment_url=comment_url,
+        token=token,
+        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\n50% Half way there!",
+    )
+
+    # Self review diff
+    self_review_run = submit_message(
+        client,
+        assistant,
+        thread,
+        SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS + json.dumps(output),
+    )
+
+    self_review_run: Run = wait_on_run(run=self_review_run, thread=thread, token=token)
+
+    update_comment(
+        comment_url=comment_url,
+        token=token,
+        body="![X](https://progress-bar.dev/80/?title=Progress&width=800)\n80% there! We're reviweing your new code changes!",
+    )
+
+    # TODO Review all changes
+
+    encoding = tiktoken.encoding_for_model(OPENAI_MODEL_ID)
+    token_input = len(encoding.encode(user_input))
+    token_output = len(encoding.encode(json.dumps(output)))
+
+    return token_input, token_output, output
 
 
-def submit_message(thread: Thread, user_message: str) -> Run:
-    """ https://cookbook.openai.com/examples/assistants_api_overview_python """
-    client: OpenAI = create_openai_client()
-    assistant: Assistant = create_assistant()
+def submit_message(
+    client: OpenAI, assistant: Assistant, thread: Thread, user_message: str
+) -> Run:
+    """https://cookbook.openai.com/examples/assistants_api_overview_python"""
     client.beta.threads.messages.create(
-        thread_id=thread.id, role="user", content=user_message, timeout=TIMEOUT_IN_SECONDS
+        thread_id=thread.id,
+        role="user",
+        content=user_message,
+        timeout=TIMEOUT_IN_SECONDS,
     )
     return client.beta.threads.runs.create(
         thread_id=thread.id, assistant_id=assistant.id, timeout=TIMEOUT_IN_SECONDS
@@ -121,39 +175,35 @@ def submit_message(thread: Thread, user_message: str) -> Run:
 
 
 def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
-    """ https://cookbook.openai.com/examples/assistants_api_overview_python """
-    print(f"Run status before loop: {run.status}")
+    logging.info("Run status before loop: %s", run.status)
     client: OpenAI = create_openai_client()
     while run.status not in OPENAI_FINAL_STATUSES:
-        print(f"Run status during loop: {run.status}")
+        logging.info(f"Run status during loop: {run.status}")
         run = client.beta.threads.runs.retrieve(
-            thread_id=thread.id,
-            run_id=run.id,
-            timeout=TIMEOUT_IN_SECONDS
+            thread_id=thread.id, run_id=run.id, timeout=TIMEOUT_IN_SECONDS
         )
 
         # If the run requires action, call the function and run again with the output
         if run.status == "requires_action":
-            print("Run requires action")
+            logging.info("Run requires action")
             try:
                 tool_outputs: list[Any] = call_functions(
-                    run=run,
-                    funcs=functions,
-                    token=token
+                    run=run, funcs=functions, token=token
                 )
-                tool_outputs_json: list[ToolOutput] = [{
-                        "tool_call_id": tool_call.id, "output": json.dumps(obj=result)
-                    } for tool_call, result in tool_outputs]
+                tool_outputs_json: list[ToolOutput] = [
+                    {"tool_call_id": tool_call.id, "output": json.dumps(obj=result)}
+                    for tool_call, result in tool_outputs
+                ]
                 run = client.beta.threads.runs.submit_tool_outputs(
                     thread_id=thread.id,
                     run_id=run.id,
                     tool_outputs=tool_outputs_json,
-                    timeout=TIMEOUT_IN_SECONDS
+                    timeout=TIMEOUT_IN_SECONDS,
                 )
             except Exception as e:
                 raise ValueError(f"Error: {e}") from e
         time.sleep(0.5)
-    print(f"Run status after loop: {run.status}")
+    logging.info(f"Run status after loop: {run.status}")
     return run
 
 
@@ -168,10 +218,10 @@ def call_functions(run: Run, funcs: dict[str, Any], token: str) -> list[Any]:
         name: str = tool_call.function.name
         args = json.loads(s=tool_call.function.arguments)
         args["token"] = token
-        print(f"{name=}\n{args=}\n")
+        logging.info(f"{name=}\n{args=}\n")
 
         if name not in funcs:
-            print(f"Function not found: {name}, skipping it.")
+            logging.info(f"Function not found: {name}, skipping it.")
             continue
 
         # Call the function if it exists

@@ -2,6 +2,7 @@
 import json
 import time
 from uuid import uuid4
+import logging
 
 # Local imports
 from config import (
@@ -12,7 +13,6 @@ from config import (
     ISSUE_NUMBER_FORMAT,
 )
 from services.github.github_manager import (
-    commit_changes_to_remote_branch,
     create_pull_request,
     create_remote_branch,
     get_installation_access_token,
@@ -31,7 +31,6 @@ from services.github.github_types import (
 from services.openai.chat import write_pr_body
 from services.openai.agent import run_assistant
 from services.supabase import SupabaseManager
-from utils.file_manager import extract_file_name
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
@@ -52,7 +51,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     owner: str = repo["owner"]["login"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
-    user_id: str = payload["sender"]["id"]
+    user_id: int = payload["sender"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
 
     requests_left = supabase_manager.get_how_many_requests_left(
@@ -66,9 +65,9 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             body="You have reached your request limit. Consider subscribing if you want more requests.",
             token=token,
         )
-        return {"message": "Request limit reached."}
+        return
     unique_issue_id = f"{owner_type}/{owner}/{repo_name}#{issue_number}"
-    supabase_manager.create_user_request(
+    usage_record_id = supabase_manager.create_user_request(
         user_id=user_id,
         installation_id=installation_id,
         unique_issue_id=unique_issue_id,
@@ -103,36 +102,22 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     issue_comments: list[str] = get_issue_comments(
         owner=owner, repo=repo_name, issue_number=issue_number, token=token
     )
-    pr_body: str = write_pr_body(
-        input_message=json.dumps(
-            obj={
-                "issue_title": issue_title,
-                "issue_body": issue_body,
-                "issue_comments": issue_comments,
-            }
-        )
-    )
-    print(
-        f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n"
-    )
 
-    diffs: list[str] = run_assistant(
-        file_paths=file_paths,
-        issue_title=issue_title,
-        issue_body=issue_body,
-        issue_comments=issue_comments,
-        owner=owner,
-        pr_body=pr_body,
-        ref=base_branch,
-        repo=repo_name,
-        token=token,
-    )
+    # pr_body: str = write_pr_body(
+    #     input_message=json.dumps(
+    #         obj={
+    #             "issue_title": issue_title,
+    #             "issue_body": issue_body,
+    #             "issue_comments": issue_comments,
+    #         }
+    #     )
+    # )
+    pr_body = "create an api to get cloudinary images"
 
-    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=50)
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
+        body="![X](https://progress-bar.dev/20/?title=Progress&width=800)\n20% Just getting started!",
     )
 
     # Create a remote branch
@@ -155,30 +140,24 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         unique_issue_id=unique_issue_id,
         token=token,
     )
-    print(
+    logging.info(
         f"{time.strftime('%H:%M:%S', time.localtime())} Remote branch created: {new_branch}.\n"
     )
 
-    # Commit the changes to the new remote branch
-    for diff in diffs:
-        file_path: str = extract_file_name(diff_text=diff)
-        print(
-            f"{time.strftime('%H:%M:%S', time.localtime())} File path: {file_path}.\n"
-        )
-        commit_changes_to_remote_branch(
-            branch=new_branch,
-            commit_message=f"Update {file_path}",
-            diff_text=diff,
-            file_path=file_path,
-            owner=owner,
-            repo=repo_name,
-            comment_url=comment_url,
-            unique_issue_id=unique_issue_id,
-            token=token,
-        )
-        print(
-            f"{time.strftime('%H:%M:%S', time.localtime())} Changes committed to {new_branch}.\n"
-        )
+    token_input, token_output, diffs = run_assistant(
+        file_paths=file_paths,
+        issue_title=issue_title,
+        issue_body=issue_body,
+        issue_comments=issue_comments,
+        owner=owner,
+        pr_body=pr_body,
+        ref=base_branch,
+        repo=repo_name,
+        comment_url=comment_url,
+        token=token,
+        new_branch=new_branch,
+        unique_issue_id=unique_issue_id,
+    )
 
     # Create a pull request to the base branch
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}]({issue['html_url']})\n\n"
@@ -194,7 +173,9 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         unique_issue_id=unique_issue_id,
         token=token,
     )["html_url"]
-    print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
+    logging.info(
+        f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n"
+    )
 
     update_comment(
         comment_url=comment_url,
@@ -202,8 +183,12 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         body=f"Pull request completed! Check it out here {pull_request_url} 🚀",
     )
 
-    supabase_manager.complete_user_request(
-        user_id=user_id, installation_id=installation_id
+    supabase_manager.complete_and_update_usage_record(
+        usage_record_id=usage_record_id,
+        token_input=token_input,
+        token_output=token_output,
+        pr_body=pr_body,
+        diffs=diffs,
     )
     supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=100)
     return

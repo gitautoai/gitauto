@@ -19,16 +19,19 @@ from config import (
     GITHUB_PRIVATE_KEY,
     TIMEOUT_IN_SECONDS,
     PRODUCT_ID,
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY,
 )
-from services.github.github_types import GitHubContentInfo
-from utils.file_manager import apply_patch
 
+from utils.file_manager import apply_patch
+from utils.file_manager import extract_file_name
+
+from services.github.github_types import GitHubContentInfo
 from services.supabase import SupabaseManager
-from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 
 def add_reaction_to_issue(
-    owner: str, repo: str, issue_number: str, content: str, token: str
+    owner: str, repo: str, issue_number: int, content: str, token: str
 ) -> dict[str, Any]:
     """https://docs.github.com/en/rest/reactions/reactions?apiVersion=2022-11-28#create-reaction-for-an-issue"""
     try:
@@ -47,6 +50,40 @@ def add_reaction_to_issue(
         )
     except Exception as e:
         logging.error(msg=f"add_reaction_to_issue Error: {e}")
+
+
+def commit_multiple_changes_to_remote_branch(
+    diffs: list[str],
+    new_branch: str,
+    owner: str,
+    repo: str,
+    comment_url: str,
+    unique_issue_id: str,
+    token: str,
+) -> None:
+    """Called from assistants api to commit multiple changes to a new branch."""
+    print(type(diffs))
+    print(diffs)
+    # Commit the changes to the new remote branch
+    for diff in diffs:
+        file_path: str = extract_file_name(diff_text=diff)
+        logging.info(
+            f"{time.strftime('%H:%M:%S', time.localtime())} File path: {file_path}.\n"
+        )
+        commit_changes_to_remote_branch(
+            branch=new_branch,
+            commit_message=f"Update {file_path}",
+            diff_text=diff,
+            file_path=file_path,
+            owner=owner,
+            repo=repo,
+            comment_url=comment_url,
+            unique_issue_id=unique_issue_id,
+            token=token,
+        )
+        logging.info(
+            f"{time.strftime('%H:%M:%S', time.localtime())} Changes committed to https://github.com/{owner}/{repo}/tree/{new_branch}.\n"
+        )
 
 
 def commit_changes_to_remote_branch(
@@ -69,7 +106,7 @@ def commit_changes_to_remote_branch(
         )
         original_text = ""
         sha = ""
-        print(f"{get_response.status_code=}\n")
+        logging.info(f"{get_response.status_code=}\n")
         if get_response.status_code == 200:
             get_json: GitHubContentInfo = get_response.json()
             original_text: str = base64.b64decode(s=get_json["content"]).decode(
@@ -111,7 +148,7 @@ def commit_changes_to_remote_branch(
 
 
 def create_comment(
-    owner: str, repo: str, issue_number: str, body: str, token: str
+    owner: str, repo: str, issue_number: int, body: str, token: str
 ) -> dict[str, Any]:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     try:
@@ -369,7 +406,6 @@ def get_remote_file_content(
         decoded_content: str = base64.b64decode(s=encoded_content).decode(
             encoding="utf-8"
         )
-        # print(f"```{file_path}:\n{decoded_content}```")
         return decoded_content
     except requests.exceptions.HTTPError as e:
         logging.error(
@@ -447,10 +483,11 @@ def update_comment_for_raised_errors(
     body = "Sorry, we have an error. Please try again."
     try:
         if isinstance(error, requests.exceptions.HTTPError):
+            logging.error("update_comment_for_raised_errors Error: %s", error)
             if (
                 error.response.status_code == 422
-                and error.message
-                and error.message == "Validation Failed"
+                and str(error)
+                and str(error) == "Validation Failed"
                 and (
                     (
                         isinstance(error.errors[0], list)

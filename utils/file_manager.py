@@ -42,18 +42,20 @@ def apply_patch(original_text: str, diff_text: str) -> str:
                     stderr=subprocess.PIPE,
                 )
 
-        print("Patch applied successfully.")
+        logging.info("Patch applied successfully.")
         with open(file=original_file_name, mode="r", encoding="utf-8") as modified_file:
             modified_text: str = modified_file.read()
-            print(f"{modified_text=}\n")
+            logging.info(f"{modified_text=}\n")
 
     except subprocess.CalledProcessError as e:
-        print("Failed to apply patch.")
-        print(f"stdout: {e.stdout}")
-        print(f"stderr: {e.stderr}\n")
-        logging.error(msg=f"apply_patch stderr: {e.stderr}")  # pylint: disable=no-member
-        print(f"Command: {' '.join(e.cmd)}")
-        print(f"Exit status: {e.returncode}")
+        logging.info("Failed to apply patch.")
+        logging.info(f"stdout: {e.stdout}")
+        logging.info(f"stderr: {e.stderr}\n")
+        logging.error(
+            msg=f"apply_patch stderr: {e.stderr}"
+        )  # pylint: disable=no-member
+        logging.info(f"Command: {' '.join(e.cmd)}")
+        logging.info(f"Exit status: {e.returncode}")
         return ""
     except Exception as e:  # pylint: disable=broad-except
         logging.error(msg=f"Error: {e}")  # pylint: disable=no-member
@@ -61,7 +63,7 @@ def apply_patch(original_text: str, diff_text: str) -> str:
     finally:
         os.remove(path=original_file_name)
         os.remove(path=diff_file_name)
-        print("Temporary files removed.\n")
+        logging.info("Temporary files removed.\n")
 
     return modified_text
 
@@ -88,7 +90,8 @@ def correct_hunk_headers(diff_text: str) -> str:
     lines: list[str] = diff_text.splitlines()
     updated_lines: list[str] = []
     hunk_pattern: re.Pattern[str] = re.compile(
-        pattern=r'^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
+        pattern=r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@"
+    )
 
     i = 0
     while i < len(lines):
@@ -108,19 +111,19 @@ def correct_hunk_headers(diff_text: str) -> str:
 
         # Count actual number of lines changed
         start_index: int = i
-        while i < len(lines) and not lines[i].startswith('@@'):
-            if lines[i].startswith('+'):
+        while i < len(lines) and not lines[i].startswith("@@"):
+            if lines[i].startswith("+"):
                 s2_actual += 1
-            if lines[i].startswith('-'):
+            if lines[i].startswith("-"):
                 s1_actual += 1
             i += 1
 
         # Update the hunk header with actual numbers
-        updated_hunk_header: str = f'@@ -{l1},{s1_actual} +{l2},{s2_actual} @@'
+        updated_hunk_header: str = f"@@ -{l1},{s1_actual} +{l2},{s2_actual} @@"
         updated_lines.append(updated_hunk_header)
         updated_lines.extend(lines[start_index:i])
 
-    return '\n'.join(updated_lines)
+    return "\n".join(updated_lines)
 
 
 def extract_file_name(diff_text: str) -> str:

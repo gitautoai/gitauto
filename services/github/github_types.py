@@ -1,4 +1,4 @@
-from typing import TypedDict, Dict, List, Optional, Union
+from typing import TypedDict, Dict, Optional, Union
 
 
 class LabelInfo(TypedDict):
@@ -44,11 +44,11 @@ class IssueInfo(TypedDict):
     number: int
     title: str
     user: UserInfo
-    labels: List[LabelInfo]
+    labels: list[LabelInfo]
     state: str
     locked: bool
     assignee: Optional[UserInfo]
-    assignees: List[UserInfo]
+    assignees: list[UserInfo]
     milestone: Optional[str]
     comments: int
     created_at: str
@@ -151,7 +151,7 @@ class RepositoryInfo(TypedDict):
     allow_forking: bool
     is_template: bool
     web_commit_signoff_required: bool
-    topics: List[str]
+    topics: list[str]
     visibility: str
     forks: int
     open_issues: int
@@ -185,12 +185,12 @@ class InstallationInfo(TypedDict):
     target_id: int
     target_type: str
     permissions: PermissionsInfo
-    events: List[str]
+    events: list[str]
     created_at: str
     updated_at: str
     single_file_name: Optional[str]
     has_multiple_single_files: bool
-    single_file_paths: List[str]
+    single_file_paths: list[str]
     suspended_by: Optional[str]
     suspended_at: Optional[str]
 
@@ -198,10 +198,10 @@ class InstallationInfo(TypedDict):
 class GitHubInstallationPayload(TypedDict):
     action: str
     installation: InstallationInfo
-    repositories: List[RepositoryInfo]
+    repositories: list[RepositoryInfo]
     repository_selection: str
-    repositories_added: List[RepositoryInfo]
-    repositories_removed: List[RepositoryInfo]
+    repositories_added: list[RepositoryInfo]
+    repositories_removed: list[RepositoryInfo]
     requester: Optional[UserInfo]
     sender: UserInfo
 
@@ -217,7 +217,8 @@ class GitHubLabeledPayload(TypedDict):
 
 
 class GitHubContentInfo(TypedDict):
-    """ https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28 """
+    """https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28"""
+
     type: str
     encoding: str
     size: int

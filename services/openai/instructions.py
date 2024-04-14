@@ -57,6 +57,13 @@ The format of the response should be a unified diff. The diff should be in the f
 - Follow best practices.
 """
 
+
+SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS = """
+Please review your output below. 
+If everything is correct, please commit the changes.
+If there are any issues, please fix the diffs.
+"""
+
 SYSTEM_INSTRUCTION_FOR_WRITING_PR = '''
 Act as an expert software developer. Write a pull request body. 
 NEVER use triple backticks unless it's a code block.

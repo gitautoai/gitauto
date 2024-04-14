@@ -1,6 +1,7 @@
 # Third-party imports
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
+import logging
 
 # Local imports
 from config import OPENAI_MODEL_ID, OPENAI_TEMPERATURE
@@ -27,7 +28,7 @@ def write_pr_body(input_message: str) -> str:
             response = response[4:]
         if response.endswith("```"):
             response = response[:-3]
-        print(f"OpenAI response: {response}")
+        logging.info(f"OpenAI response: {response}")
         return response
     except Exception as e:
         raise ValueError(f"Error: {e}") from e
