@@ -27,7 +27,7 @@ GH_WEBHOOK_SECRET: str = get_env_var(name="GH_WEBHOOK_SECRET")
 OPENAI_API_KEY: str = get_env_var(name="OPENAI_API_KEY")
 OPENAI_FINAL_STATUSES: list[str] = ["cancelled", "completed", "expired", "failed"]
 OPENAI_MAX_TOKENS = 4096
-OPENAI_MODEL_ID = "gpt-4-turbo-preview"
+OPENAI_MODEL_ID = "gpt-4-turbo"
 OPENAI_ORG_ID: str = get_env_var(name="OPENAI_ORG_ID")
 OPENAI_TEMPERATURE = 0.0
 

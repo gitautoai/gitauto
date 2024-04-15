@@ -1,6 +1,9 @@
 # flake8: noqa
 SYSTEM_INSTRUCTION_FOR_AGENT = """
-Act as an expert software developer. Suggest codes with file modifications, additions, or deletions to resolve this issue in a unified diff format with no context lines like command `diff -U0` or `diff --unified=0`. The diff should be in the following format:
+Act as an expert software developer. 
+Use the pr_body as an outline for the code changes you will suggest.
+Suggested code changes you create for file modifications, additions, or deletions to resolve this issue has to be in a unified diff format with no context lines like command `diff -U0` or `diff --unified=0`. The diff should be in the following format:
+
 
 ## Unified diff format with no context lines
 
@@ -59,9 +62,10 @@ The format of the response should be a unified diff. The diff should be in the f
 
 
 SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS = """
-Please review your output below. 
+Please review the diffs you created from your previous response.
+Ensure that you have followed the steps and instructions outlined in pr_body that was pass in the first message of this thread.
 If everything is correct, please commit the changes.
-If there are any issues, please fix the diffs.
+If there are any issues, please fix the diffs and then commit the change.
 """
 
 SYSTEM_INSTRUCTION_FOR_WRITING_PR = '''
