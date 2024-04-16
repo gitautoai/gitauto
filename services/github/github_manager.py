@@ -138,12 +138,8 @@ def commit_changes_to_remote_branch(
         )
         put_response.raise_for_status()
     except Exception as e:
-        update_comment_for_raised_errors(
-            error=e,
-            comment_url=comment_url,
-            unique_issue_id=unique_issue_id,
-            token=token,
-        )
+        # Do not raise/comment an error, we want to finish the PR
+        logging.error(msg=f"commit_changes_to_remote_branch Error: {e}")
 
 
 def create_comment(
@@ -283,6 +279,7 @@ def create_pull_request(
             comment_url=comment_url,
             unique_issue_id=unique_issue_id,
             token=token,
+            which_function="create_pull_request",
         )
 
 
@@ -309,6 +306,7 @@ def create_remote_branch(
             comment_url=comment_url,
             unique_issue_id=unique_issue_id,
             token=token,
+            which_function="create_remote_branch",
         )
 
 
@@ -382,6 +380,7 @@ def get_latest_remote_commit_sha(
             comment_url=comment_url,
             unique_issue_id=unique_issue_id,
             token=token,
+            which_function="get_latest_remote_commit_sha",
         )
 
 
@@ -393,6 +392,9 @@ def get_remote_file_content(
     token: str,
 ) -> str:
     """@link https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28"""
+    ref = ref.replace(
+        "#", "%23"
+    )  # Encoding ref to avoid issues with special characters
     url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
     headers: dict[str, str] = create_headers(token=token)
 
@@ -411,7 +413,6 @@ def get_remote_file_content(
             msg=f"get_remote_file_content HTTP Error: {e.response.status_code} - {e.response.text}"
         )
     except Exception as e:
-        # TODO in future ask GPT to try again
         logging.error(msg=f"get_remote_file_content Error: {e}")
 
 
@@ -433,6 +434,7 @@ def get_remote_file_tree(
             comment_url=comment_url,
             unique_issue_id=unique_issue_id,
             token=token,
+            which_function="get_remote_file_tree",
         )
 
 
@@ -476,13 +478,13 @@ def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
 
 
 def update_comment_for_raised_errors(
-    error: str, comment_url: str, unique_issue_id: str, token: str
+    error: str, comment_url: str, unique_issue_id: str, token: str, which_function: str
 ) -> dict[str, Any]:
     """Update the comment on issue with an error message, set progress to 100, and raise the error."""
     body = "Sorry, we have an error. Please try again."
     try:
         if isinstance(error, requests.exceptions.HTTPError):
-            logging.error("update_comment_for_raised_errors Error: %s", error)
+            logging.error("%s HTTP Error: %s", which_function, error)
             if (
                 error.response.status_code == 422
                 and str(error)
@@ -509,12 +511,15 @@ def update_comment_for_raised_errors(
                 )
             else:
                 logging.error(
-                    msg=f"HTTP Error: {error.response.status_code} - {error.response.text}"
+                    "%s HTTP Error: %s - %s",
+                    which_function,
+                    error.response.status_code,
+                    error.response.text,
                 )
         else:
             logging.error(msg=f"Error: {error}")
     except Exception as e:
-        logging.error(msg=f"update_comment_for_raised_errors Error: {e}")
+        logging.error("%s Error: {e}", which_function)
     update_comment(comment_url=comment_url, token=token, body=body)
 
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)

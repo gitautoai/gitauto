@@ -55,6 +55,7 @@ The format of the response should be a unified diff. The diff should be in the f
 - NEVER EVER include any comments or explanations.
 - NEVER EVER abbreviate code at all.
 - NEVER EVER make changes that are not related to the issue.
+- NEVER EVER make local imports if you haven't verified that they exist. If they don't exist, create them.
 - Return ONLY the unified diff format. NEVER EVER respond anything else.
 - Minimize modifications.
 - Follow best practices.
@@ -66,6 +67,13 @@ Please review the diffs you created from your previous response.
 Ensure that you have followed the steps and instructions outlined in pr_body that was pass in the first message of this thread.
 If everything is correct, please commit the changes.
 If there are any issues, please fix the diffs and then commit the change.
+"""
+
+SYSTEM_INSTRUCTIONS_FOR_REVIEWING_FILE_CHANGES = """
+Review the files to ensure correctness and quality.
+I will supplement you with the paths to the files that need to be reviewed.
+You will use the get_remote_file_content function to fetch the content of the file.
+If any changes are needed, please make them and then commit the changes using commit_multiple_changes_to_remote_branch function.
 """
 
 SYSTEM_INSTRUCTION_FOR_WRITING_PR = '''

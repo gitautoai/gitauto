@@ -25,6 +25,7 @@ from services.openai.init import create_openai_client
 from services.openai.instructions import (
     SYSTEM_INSTRUCTION_FOR_AGENT,
     SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS,
+    SYSTEM_INSTRUCTIONS_FOR_REVIEWING_FILE_CHANGES,
 )
 from utils.file_manager import clean_specific_lines, correct_hunk_headers, split_diffs
 
@@ -105,7 +106,9 @@ def run_assistant(
     print(f"Run is created: {run.id}\n")
 
     # Wait for the run to complete, handle function calling if necessary
-    run: Run = wait_on_run(run=run, thread=thread, token=token)
+    run: Run = wait_on_run(
+        run=run, thread=thread, token=token, run_name="generate diffs"
+    )
 
     # Get the response
     messages: SyncCursorPage[ThreadMessage] = get_response(thread=thread)
@@ -123,8 +126,10 @@ def run_assistant(
     diff: str = clean_specific_lines(text=value)
     text_diffs: list[str] = split_diffs(diff_text=diff)
     output: list[str] = []
+    diff_files: list[str] = []
     for diff in text_diffs:
         diff = correct_hunk_headers(diff_text=diff)
+        diff_files.append(diff.split("\n")[1][4:])
         print(f"Diff: {repr(diff)}\n")
         output.append(diff)
 
@@ -142,15 +147,33 @@ def run_assistant(
         SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS + json.dumps(output),
     )
 
-    self_review_run: Run = wait_on_run(run=self_review_run, thread=thread, token=token)
+    self_review_run: Run = wait_on_run(
+        run=self_review_run, thread=thread, token=token, run_name="review diffs"
+    )
 
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/80/?title=Progress&width=800)\n80% there! We're reviweing your new code changes!",
+        body="![X](https://progress-bar.dev/70/?title=Progress&width=800)\n70% there! We're reviweing your new code changes!",
     )
 
-    # TODO Review all changes
+    # Review all changes
+    review_files_run = submit_message(
+        client,
+        assistant,
+        thread,
+        SYSTEM_INSTRUCTIONS_FOR_REVIEWING_FILE_CHANGES + json.dumps(diff_files),
+    )
+
+    review_files_run: Run = wait_on_run(
+        run=review_files_run, thread=thread, token=token, run_name="review files"
+    )
+
+    update_comment(
+        comment_url=comment_url,
+        token=token,
+        body="![X](https://progress-bar.dev/90/?title=Progress&width=800)\n90% there! Adding our last touches",
+    )
 
     encoding = tiktoken.encoding_for_model(OPENAI_MODEL_ID)
     token_input = len(encoding.encode(user_input))
@@ -174,11 +197,11 @@ def submit_message(
     )
 
 
-def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
-    print("Run status before loop: %s", run.status)
+def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> Run:
+    print("Run %s status before loop: %s", run_name, run.status)
     client: OpenAI = create_openai_client()
     while run.status not in OPENAI_FINAL_STATUSES:
-        print(f"Run status during loop: {run.status}")
+        print("Run %s status during loop: %s", run_name, run.status)
         run = client.beta.threads.runs.retrieve(
             thread_id=thread.id, run_id=run.id, timeout=TIMEOUT_IN_SECONDS
         )
@@ -203,7 +226,7 @@ def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
             except Exception as e:
                 raise ValueError(f"Error: {e}") from e
         time.sleep(0.5)
-    print(f"Run status after loop: {run.status}")
+    print("Run %s status after loop: %s", run_name, run.status)
     return run
 
 
