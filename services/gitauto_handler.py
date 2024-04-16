@@ -52,7 +52,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     owner: str = repo["owner"]["login"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
-    user_id: str = payload["sender"]["id"]
+    user_id: int = payload["sender"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
 
     requests_left = supabase_manager.get_how_many_requests_left(
@@ -68,7 +68,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         )
         return {"message": "Request limit reached."}
     unique_issue_id = f"{owner_type}/{owner}/{repo_name}#{issue_number}"
-    supabase_manager.create_user_request(
+    usage_record_id = supabase_manager.create_user_request(
         user_id=user_id,
         installation_id=installation_id,
         unique_issue_id=unique_issue_id,
@@ -91,6 +91,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         body="![X](https://progress-bar.dev/0/?title=Progress&width=800)\nGitAuto just started crafting a pull request.",
         token=token,
     )["url"]
+
     # Prepare contents for Agent
     file_paths: list[str] = get_remote_file_tree(
         owner=owner,
@@ -116,25 +117,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n"
     )
 
-    diffs: list[str] = run_assistant(
-        file_paths=file_paths,
-        issue_title=issue_title,
-        issue_body=issue_body,
-        issue_comments=issue_comments,
-        owner=owner,
-        pr_body=pr_body,
-        ref=base_branch,
-        repo=repo_name,
-        token=token,
-    )
-
-    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=50)
-    update_comment(
-        comment_url=comment_url,
-        token=token,
-        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
-    )
-
     # Create a remote branch
     uuid: str = str(object=uuid4())
     new_branch: str = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}{issue['number']}-{uuid}"
@@ -157,6 +139,28 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     )
     print(
         f"{time.strftime('%H:%M:%S', time.localtime())} Remote branch created: {new_branch}.\n"
+    )
+
+    token_input, token_output, diffs = run_assistant(
+        file_paths=file_paths,
+        issue_title=issue_title,
+        issue_body=issue_body,
+        issue_comments=issue_comments,
+        owner=owner,
+        pr_body=pr_body,
+        ref=base_branch,
+        repo=repo_name,
+        comment_url=comment_url,
+        token=token,
+        new_branch=new_branch,
+        unique_issue_id=unique_issue_id,
+    )
+
+    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=50)
+    update_comment(
+        comment_url=comment_url,
+        token=token,
+        body="![X](https://progress-bar.dev/20/?title=Progress&width=800)\n20% Just getting started!",
     )
 
     # Commit the changes to the new remote branch
@@ -202,8 +206,12 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         body=f"Pull request completed! Check it out here {pull_request_url} 🚀",
     )
 
-    supabase_manager.complete_user_request(
-        user_id=user_id, installation_id=installation_id
+    supabase_manager.complete_and_update_usage_record(
+        usage_record_id=usage_record_id,
+        token_input=token_input,
+        token_output=token_output,
+        pr_body=pr_body,
+        diffs=diffs,
     )
     supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=100)
     return

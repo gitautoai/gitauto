@@ -15,8 +15,8 @@ from fastapi import Request
 from config import (
     GITHUB_API_URL,
     GITHUB_API_VERSION,
-    GITHUB_APP_ID,
-    GITHUB_PRIVATE_KEY,
+    GH_APP_ID,
+    GH_PRIVATE_KEY,
     TIMEOUT_IN_SECONDS,
     PRODUCT_ID,
 )
@@ -28,7 +28,7 @@ from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 
 def add_reaction_to_issue(
-    owner: str, repo: str, issue_number: str, content: str, token: str
+    owner: str, repo: str, issue_number: int, content: str, token: str
 ) -> dict[str, Any]:
     """https://docs.github.com/en/rest/reactions/reactions?apiVersion=2022-11-28#create-reaction-for-an-issue"""
     try:
@@ -111,7 +111,7 @@ def commit_changes_to_remote_branch(
 
 
 def create_comment(
-    owner: str, repo: str, issue_number: str, body: str, token: str
+    owner: str, repo: str, issue_number: int, body: str, token: str
 ) -> dict[str, Any]:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     try:
@@ -214,10 +214,10 @@ def create_jwt() -> str:
     payload: dict[str, int | str] = {
         "iat": now,  # Issued at time
         "exp": now + 600,  # JWT expires in 10 minutes
-        "iss": GITHUB_APP_ID,  # Issuer
+        "iss": GH_APP_ID,  # Issuer
     }
     # The reason we use RS256 is that GitHub requires it for JWTs
-    return jwt.encode(payload=payload, key=GITHUB_PRIVATE_KEY, algorithm="RS256")
+    return jwt.encode(payload=payload, key=GH_PRIVATE_KEY, algorithm="RS256")
 
 
 def create_pull_request(
