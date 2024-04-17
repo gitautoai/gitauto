@@ -112,7 +112,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     issue_comments: list[str] = get_issue_comments(
         owner=owner, repo=repo_name, issue_number=issue_number, token=token
     )
-    print("HERE")
+
     pr_body: str = write_pr_body(
         input_message=json.dumps(
             obj={
