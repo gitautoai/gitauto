@@ -102,12 +102,8 @@ def commit_changes_to_remote_branch(
         )
         put_response.raise_for_status()
     except Exception as e:
-        update_comment_for_raised_errors(
-            error=e,
-            comment_url=comment_url,
-            unique_issue_id=unique_issue_id,
-            token=token,
-        )
+        # Do not raise/comment an error, we want to finish the PR even if there is a diff doesn't get added
+        logging.error(msg=f"commit_changes_to_remote_branch Error: {e}")
 
 
 def create_comment(
