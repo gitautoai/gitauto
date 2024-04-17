@@ -42,4 +42,4 @@ jobs:
         
         ENV: stage
         PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
-      run: python -m pytest --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+      run: python -m pytest 
