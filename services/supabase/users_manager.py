@@ -122,7 +122,6 @@ class UsersManager:
             # Return from Free Tier Subscription if there is no paid subscription object
             return free_tier_start_date, free_tier_end_date, free_tier_product_id
         except Exception as e:
-            print("ERROR: ", e)
             logging.error(f"parse_subscription_object {e}")
             raise
 
@@ -136,13 +135,12 @@ class UsersManager:
                 .eq(column="installation_id", value=installation_id)
                 .execute()
             )
-
-            stripe_customer_id = data[1][0]["owners"]["stripe_customer_id"]
-
+            stripe_customer_id: str = data[1][0]["owners"]["stripe_customer_id"]
             if stripe_customer_id:
                 subscription = get_subscription(
                     customer_id=stripe_customer_id,
                 )
+
                 start_date_seconds, end_date_seconds, product_id = (
                     self.parse_subscription_object(
                         subscription=subscription,
