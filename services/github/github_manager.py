@@ -105,12 +105,8 @@ def commit_changes_to_remote_branch(
         )
         put_response.raise_for_status()
     except Exception as e:
-        update_comment_for_raised_errors(
-            error=e,
-            comment_url=comment_url,
-            unique_issue_id=unique_issue_id,
-            token=token,
-        )
+        # Do not cancel PR if just one commit fails
+        logging.error("commit_chages_to_remove_branch Error: %s", e)
 
 
 def create_comment(
