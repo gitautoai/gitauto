@@ -1,7 +1,7 @@
 from supabase import create_client, Client
 
-from services.supabase.gitauto_manager import GitAutoAgentManager
-from services.supabase.users_manager import UsersManager
+from .gitauto_manager import GitAutoAgentManager
+from .users_manager import UsersManager
 
 
 class SupabaseManager(GitAutoAgentManager, UsersManager):
