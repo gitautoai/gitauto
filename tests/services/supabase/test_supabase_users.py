@@ -183,7 +183,7 @@ def test_is_users_first_issue() -> None:
     wipe_installation_owner_user_data()
 
 
-test_is_users_first_issue()
+# test_is_users_first_issue()
 
 
 def test_parse_subscription_object() -> None:
