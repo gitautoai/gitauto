@@ -12,10 +12,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with:
-        python-version: 3.12
+        python-version: "3.10"
 
     - name: Install pytest
       run: |
@@ -29,4 +29,4 @@ jobs:
       env:
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGE_SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_URL: ${{ secrets.STAGE_SUPABASE_URL }}
-      run: pytest
+      run: python -m pytest -r fE

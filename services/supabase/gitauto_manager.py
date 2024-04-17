@@ -14,8 +14,6 @@ class GitAutoAgentManager:
         usage_record_id: int,
         token_input: int,
         token_output: int,
-        pr_body: str,
-        diffs: list[str],
     ) -> None:
         """Add agent information to usage record and set is_completed to True."""
         try:
@@ -24,8 +22,6 @@ class GitAutoAgentManager:
                     "is_completed": True,
                     "token_input": token_input,
                     "token_output": token_output,
-                    "pr_body": pr_body,
-                    "diffs": diffs,
                 }
             ).eq(column="id", value=usage_record_id).execute()
         except Exception as e:

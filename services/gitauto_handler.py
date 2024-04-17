@@ -150,10 +150,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         pr_body=pr_body,
         ref=base_branch,
         repo=repo_name,
-        comment_url=comment_url,
         token=token,
-        new_branch=new_branch,
-        unique_issue_id=unique_issue_id,
     )
 
     supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=50)
@@ -210,8 +207,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         usage_record_id=usage_record_id,
         token_input=token_input,
         token_output=token_output,
-        pr_body=pr_body,
-        diffs=diffs,
     )
     supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=100)
     return

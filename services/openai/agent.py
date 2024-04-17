@@ -61,10 +61,7 @@ def run_assistant(
     pr_body: str,
     ref: str,
     repo: str,
-    comment_url: str,
     token: str,
-    new_branch: str,
-    unique_issue_id: str,
 ) -> tuple[int, int, list[str]]:
     """Starts the Assistants API and the flow of GitAuto Agent."""
 
@@ -78,9 +75,6 @@ def run_assistant(
         "issue_body": issue_body,
         "issue_comments": issue_comments,
         "file_paths": file_paths,
-        "comment_url": comment_url,
-        "new_branch": new_branch,
-        "unique_issue_id": unique_issue_id,
     }
     issue_input: str = json.dumps(obj=data)
 
