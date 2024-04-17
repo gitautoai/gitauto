@@ -1,51 +1,51 @@
-name: Stage Deployment
+# name: Stage Deployment
 
-on:
-  push:
-    branches:
-      - 'stage*'
+# on:
+#   push:
+#     branches:
+#       - 'stage*'
 
-jobs:
-  deploy_lambda:
-    name: Publish and Deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+# jobs:
+#   deploy_lambda:
+#     name: Publish and Deploy
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: AKIA5ZOUUDPV4JSVHC5U
-          aws-secret-access-key: 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
-          aws-region: us-west-1
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v1
+#         with:
+#           aws-access-key-id: AKIA5ZOUUDPV4JSVHC5U
+#           aws-secret-access-key: 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
+#           aws-region: us-west-1
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+#       - name: Login to Amazon ECR
+#         id: login-ecr
+#         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: stage
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+#       - name: Build, tag, and push image to Amazon ECR
+#         id: build-image
+#         env:
+#           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+#           ECR_REPOSITORY: stage
+#           IMAGE_TAG: ${{ github.sha }}
+#         run: |
+#           docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+#           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Update Lambda function with latest ECR image
-        env:
-          LAMBDA_NAME: stage
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: stage
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          aws lambda update-function-code \
-          --function-name $LAMBDA_NAME \
-          --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+#       - name: Update Lambda function with latest ECR image
+#         env:
+#           LAMBDA_NAME: stage
+#           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+#           ECR_REPOSITORY: stage
+#           IMAGE_TAG: ${{ github.sha }}
+#         run: |
+#           aws lambda update-function-code \
+#           --function-name $LAMBDA_NAME \
+#           --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           
-      - name: Execute Slack Webhook
-        if: always()
-        run: |
-          curl -X POST https://hooks.slack.com/workflows/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
+#       - name: Execute Slack Webhook
+#         if: always()
+#         run: |
+#           curl -X POST https://hooks.slack.com/workflows/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

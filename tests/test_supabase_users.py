@@ -82,7 +82,7 @@ def test_create_and_update_user_request_works() -> None:
     )
 
 
-test_create_and_update_user_request_works()
+# test_create_and_update_user_request_works()
 
 
 def test_how_many_requests_left() -> None:
