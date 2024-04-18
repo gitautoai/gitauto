@@ -12,14 +12,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with:
-        python-version: 3.12
+        python-version: "3.10"
 
     - name: Install pytest
       run: |
-        pip install pytest
+        pip install pytest pytest-cov
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Set PYTHONPATH
@@ -27,6 +27,19 @@ jobs:
 
     - name: Run pytest
       env:
+        GH_APP_ID: ${{ secrets.STAGE_GH_APP_ID }}
+        GH_PRIVATE_KEY: ${{ secrets.STAGE_GH_PRIVATE_KEY }}
+        GH_WEBHOOK_SECRET: ${{ secrets.STAGE_GH_WEBHOOK_SECRET }}
+
+        OPENAI_API_KEY: ${{ secrets.STAGE_OPENAI_API_KEY }}
+        OPENAI_ORG_ID: ${{ secrets.STAGE_OPENAI_ORG_ID }}
+
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGE_SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_URL: ${{ secrets.STAGE_SUPABASE_URL }}
-      run: pytest
+
+        STRIPE_API_KEY: ${{ secrets.STAGE_STRIPE_API_KEY }}
+        STRIPE_FREE_TIER_PRICE_ID: ${{ secrets.STAGE_STRIPE_FREE_TIER_PRICE_ID }}
+        
+        ENV: stage
+        PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
+      run: python -m pytest -r fE
