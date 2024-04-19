@@ -1,4 +1,4 @@
-# run this file locally with: python -m tests.test_supabase_users
+# run this file locally with: python -m tests.services.supabase.test_supabase_users
 import os
 
 from services.supabase import SupabaseManager

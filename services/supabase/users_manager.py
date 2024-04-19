@@ -135,49 +135,58 @@ class UsersManager:
                 .eq(column="installation_id", value=installation_id)
                 .execute()
             )
+            if (
+                not data
+                or not data[1]
+                or not data[1][0]
+                or not data[1][0]["owners"]
+                or not data[1][0]["owners"]["stripe_customer_id"]
+                or not isinstance(data[1][0]["owners"]["stripe_customer_id"], str)
+            ):
+                logging.error(
+                    "No Stripe Customer ID found for installation %s user %s. This has to due with fetching from supabase.",
+                    installation_id,
+                    user_id,
+                )
+                raise
+
             stripe_customer_id: str = data[1][0]["owners"]["stripe_customer_id"]
-            if stripe_customer_id:
-                subscription = get_subscription(
-                    customer_id=stripe_customer_id,
-                )
 
-                start_date_seconds, end_date_seconds, product_id = (
-                    self.parse_subscription_object(
-                        subscription=subscription,
-                        user_id=user_id,
-                        installation_id=installation_id,
-                    )
-                )
-
-                request_count = get_request_count_from_product_id_metadata(product_id)
-
-                start_date = datetime.datetime.fromtimestamp(start_date_seconds)
-                end_date = datetime.datetime.fromtimestamp(end_date_seconds)
-
-                # Calculate how many completed requests for this user account
-                data, _ = (
-                    self.client.table("usage")
-                    .select("*")
-                    .gt("created_at", start_date)
-                    .eq("user_id", user_id)
-                    .eq("installation_id", installation_id)
-                    .eq("is_completed ", True)
-                    .execute()
-                )
-                requests_left = request_count - len(data[1])
-
-                return (
-                    requests_left,
-                    request_count,
-                    end_date,
-                )
-
-            logging.error(
-                "No Stripe Customer ID found for installation %s user %s",
-                installation_id,
-                user_id,
+            subscription = get_subscription(
+                customer_id=stripe_customer_id,
             )
-            raise
+
+            start_date_seconds, end_date_seconds, product_id = (
+                self.parse_subscription_object(
+                    subscription=subscription,
+                    user_id=user_id,
+                    installation_id=installation_id,
+                )
+            )
+
+            request_count = get_request_count_from_product_id_metadata(product_id)
+
+            start_date = datetime.datetime.fromtimestamp(start_date_seconds)
+            end_date = datetime.datetime.fromtimestamp(end_date_seconds)
+
+            # Calculate how many completed requests for this user account
+            data, _ = (
+                self.client.table("usage")
+                .select("*")
+                .gt("created_at", start_date)
+                .eq("user_id", user_id)
+                .eq("installation_id", installation_id)
+                .eq("is_completed ", True)
+                .execute()
+            )
+            requests_left = request_count - len(data[1])
+
+            return (
+                requests_left,
+                request_count,
+                end_date,
+            )
+
         except Exception as err:
             logging.error(f"get_how_many_requests_left_and_cycle {err}")
             # Send back valid values and do not raise to give user benefit of the doubt

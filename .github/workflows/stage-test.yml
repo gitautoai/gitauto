@@ -43,11 +43,3 @@ jobs:
         ENV: stage
         PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
       run: python -m pytest -r fE
-
-
-        STRIPE_API_KEY: ${{ secrets.STAGE_STRIPE_API_KEY }}
-        STRIPE_FREE_TIER_PRICE_ID: ${{ secrets.STAGE_STRIPE_FREE_TIER_PRICE_ID }}
-        
-        ENV: stage
-        PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
-      run: python -m pytest -r fE
