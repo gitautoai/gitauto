@@ -129,23 +129,23 @@ class UsersManager:
                     user_id,
                     installation_id,
                 )
-                subscribe_to_free_plan(
-                    customer_id=customer_id,
-                    user_id=user_id,
-                    user_name=user_name,
-                    owner_id=owner_id,
-                    owner_name=owner_name,
-                    installation_id=installation_id,
-                )
-                self.parse_subscription_object(
-                    subscription=subscription,
-                    user_id=user_id,
-                    installation_id=installation_id,
-                    customer_id=customer_id,
-                    user_name=user_name,
-                    owner_id=owner_id,
-                    owner_name=owner_name,
-                )
+                # subscribe_to_free_plan(
+                #     customer_id=customer_id,
+                #     user_id=user_id,
+                #     user_name=user_name,
+                #     owner_id=owner_id,
+                #     owner_name=owner_name,
+                #     installation_id=installation_id,
+                # )
+                # self.parse_subscription_object(
+                #     subscription=subscription,
+                #     user_id=user_id,
+                #     installation_id=installation_id,
+                #     customer_id=customer_id,
+                #     user_name=user_name,
+                #     owner_id=owner_id,
+                #     owner_name=owner_name,
+                # )
             # Return from Free Tier Subscription if there is no paid subscription object
             return free_tier_start_date, free_tier_end_date, free_tier_product_id
         except Exception as e:

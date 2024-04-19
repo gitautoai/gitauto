@@ -1,8 +1,7 @@
-# run this file locally with: python -m tests.test_supabase_users
+# run this file locally with: python -m tests.services.supabase.test_supabase_users
 
 import os
 
-import supabase
 from services.stripe.customer import get_subscription
 from services.supabase import SupabaseManager
 import datetime
