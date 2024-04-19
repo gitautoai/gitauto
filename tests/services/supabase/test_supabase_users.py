@@ -188,6 +188,11 @@ def test_is_users_first_issue() -> None:
 def test_parse_subscription_object() -> None:
     """Test parse_subscription_object function"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
+    installation_id = -1
+    user_id = -1
+    owner_id = -1
+    user_name = "test"
+    owner_name = "gitautoai"
 
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
@@ -195,10 +200,10 @@ def test_parse_subscription_object() -> None:
     supabase_manager.create_installation(
         installation_id=-1,
         owner_type="O",
-        owner_name="gitautoai",
-        owner_id=-1,
-        user_id=-1,
-        user_name="test",
+        owner_name=owner_name,
+        owner_id=owner_id,
+        user_id=user_id,
+        user_name=user_name,
     )
 
     standard_product_id = "prod_PqZFpCs1Jq6X4E"
@@ -206,7 +211,13 @@ def test_parse_subscription_object() -> None:
     def assertion_test(customer_id: str, product_id: str):
         subscription = get_subscription(customer_id)
         _, _, product_id_output = supabase_manager.parse_subscription_object(
-            subscription, -1, -1
+            subscription=subscription,
+            user_id=user_id,
+            installation_id=installation_id,
+            customer_id=customer_id,
+            user_name=user_name,
+            owner_id=owner_id,
+            owner_name=owner_name,
         )
         assert product_id_output == product_id
 
