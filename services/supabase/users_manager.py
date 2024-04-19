@@ -3,7 +3,6 @@
 from supabase import Client
 import datetime
 import logging
-from services.openai.functions import OWNER
 from services.stripe.customer import (
     get_subscription,
     get_request_count_from_product_id_metadata,
