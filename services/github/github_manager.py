@@ -260,7 +260,7 @@ def create_pull_request(
             comment_url=comment_url,
             unique_issue_id=unique_issue_id,
             token=token,
-            which_function="create_pull_request",
+            which_function=create_pull_request.__name__,
         )
 
 
@@ -287,7 +287,7 @@ def create_remote_branch(
             comment_url=comment_url,
             unique_issue_id=unique_issue_id,
             token=token,
-            which_function="create_remote_branch",
+            which_function=create_remote_branch.__name__,
         )
 
 
@@ -361,7 +361,7 @@ def get_latest_remote_commit_sha(
             comment_url=comment_url,
             unique_issue_id=unique_issue_id,
             token=token,
-            which_function="get_latest_remote_commit_sha",
+            which_function=get_latest_remote_commit_sha.__name__,
         )
 
 
@@ -414,7 +414,7 @@ def get_remote_file_tree(
             comment_url=comment_url,
             unique_issue_id=unique_issue_id,
             token=token,
-            which_function="get_remote_file_tree",
+            which_function=get_remote_file_tree.__name__,
         )
 
 
