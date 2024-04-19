@@ -32,11 +32,13 @@ from services.openai.chat import write_pr_body
 from services.openai.agent import run_assistant
 from services.supabase import SupabaseManager
 from utils.file_manager import extract_file_name
+from utils.text_copy import pull_request_completed, request_limit_reached
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
 async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> None:
+    """Core functionality to create comments on issue, create PRs, and update progress."""
     # Extract label and validate it
     if trigger_type == "label" and payload["label"]["name"] != PRODUCT_ID:
         return
@@ -53,20 +55,27 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
     user_id: int = payload["sender"]["id"]
+    user_name: str = payload["sender"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
 
-    requests_left = supabase_manager.get_how_many_requests_left(
-        user_id=user_id, installation_id=installation_id
+    requests_left, request_count, end_date = (
+        supabase_manager.get_how_many_requests_left_and_cycle(
+            user_id=user_id, installation_id=installation_id
+        )
     )
     if requests_left <= 0:
         create_comment(
             owner=owner,
             repo=repo_name,
             issue_number=issue_number,
-            body="You have reached your request limit. Consider subscribing if you want more requests.",
+            body=request_limit_reached(
+                user_name=user_name,
+                request_count=request_count,
+                end_date=end_date,
+            ),
             token=token,
         )
-        return {"message": "Request limit reached."}
+        return
     unique_issue_id = f"{owner_type}/{owner}/{repo_name}#{issue_number}"
     usage_record_id = supabase_manager.create_user_request(
         user_id=user_id,
@@ -83,15 +92,14 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
 
     # Start progress and check if current issue is already in progress from another invocation
     if supabase_manager.is_issue_in_progress(unique_issue_id=unique_issue_id):
-        return {"message": "The issue is already in progress."}
+        return
     comment_url = create_comment(
         owner=owner,
         repo=repo_name,
         issue_number=issue_number,
         body="![X](https://progress-bar.dev/0/?title=Progress&width=800)\nGitAuto just started crafting a pull request.",
         token=token,
-    )["url"]
-
+    )
     # Prepare contents for Agent
     file_paths: list[str] = get_remote_file_tree(
         owner=owner,
@@ -104,17 +112,39 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     issue_comments: list[str] = get_issue_comments(
         owner=owner, repo=repo_name, issue_number=issue_number, token=token
     )
+
     pr_body: str = write_pr_body(
         input_message=json.dumps(
             obj={
                 "issue_title": issue_title,
                 "issue_body": issue_body,
                 "issue_comments": issue_comments,
+                "file_paths": file_paths,
             }
         )
     )
+    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=5)
     print(
         f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n"
+    )
+
+    diffs: list[str] = run_assistant(
+        file_paths=file_paths,
+        issue_title=issue_title,
+        issue_body=issue_body,
+        issue_comments=issue_comments,
+        owner=owner,
+        pr_body=pr_body,
+        ref=base_branch,
+        repo=repo_name,
+        token=token,
+    )
+
+    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=90)
+    update_comment(
+        comment_url=comment_url,
+        token=token,
+        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
     )
 
     # Create a remote branch
@@ -194,13 +224,13 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         comment_url=comment_url,
         unique_issue_id=unique_issue_id,
         token=token,
-    )["html_url"]
+    )
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
 
     update_comment(
         comment_url=comment_url,
         token=token,
-        body=f"Pull request completed! Check it out here {pull_request_url} 🚀",
+        body=pull_request_completed(pull_request_url=pull_request_url),
     )
 
     supabase_manager.complete_and_update_usage_record(

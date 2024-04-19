@@ -1,11 +1,14 @@
+"""Class to manage all GitAuto related operations"""
+
 import datetime
 import logging
-
 from supabase import Client
-from services.stripe.customer import create_stripe_customer
+from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 
 
 class GitAutoAgentManager:
+    """Class to manage all GitAuto related operations"""
+
     def __init__(self, client: Client) -> None:
         self.client = client
 
@@ -38,6 +41,7 @@ class GitAutoAgentManager:
         user_id: int,
         user_name: str,
     ) -> None:
+        """Create owners record with stripe customerId, subscribe to free plan, create installation record, create users record on Installation Webhook event"""
         try:
             # If owner doesn't exist in owners table, insert owner and stripe customer
             data, _ = (
@@ -54,6 +58,14 @@ class GitAutoAgentManager:
                     user_id=user_id,
                     user_name=user_name,
                 )
+                subscribe_to_free_plan(
+                    customer_id=customer_id,
+                    user_id=user_id,
+                    user_name=user_name,
+                    owner_id=owner_id,
+                    owner_name=owner_name,
+                    installation_id=installation_id,
+                )
                 self.client.table(table_name="owners").insert(
                     json={"owner_id": owner_id, "stripe_customer_id": customer_id}
                 ).execute()
@@ -68,10 +80,32 @@ class GitAutoAgentManager:
                 }
             ).execute()
 
+            # Create User, and set is_selected to True if user has no selected account
+            is_selected = True
+            data, _ = (
+                self.client.table(table_name="users")
+                .select("user_id")
+                .eq(column="user_id", value=user_id)
+                .eq(column="is_selected", value=True)
+                .execute()
+            )
+            if len(data[1]) > 0:
+                is_selected = False
+            self.client.table(table_name="users").insert(
+                json={
+                    "user_id": user_id,
+                    "user_name": user_name,
+                    "installation_id": installation_id,
+                    "is_selected": is_selected,
+                }
+            ).execute()
+
         except Exception as e:
             logging.error(
                 msg=f"create_installation installation_id: {installation_id} owner_id: {owner_id} Error: {e}"
             )
+            # Raise as installation flow was not successful
+            raise RuntimeError("Installation flow was not successful")
 
     def create_user_request(
         self, user_id: int, installation_id: int, unique_issue_id: str
@@ -145,12 +179,13 @@ class GitAutoAgentManager:
         try:
             data, _ = (
                 self.client.table(table_name="users")
-                .select("first_issue")
+                .select("*")
                 .eq(column="user_id", value=user_id)
                 .eq(column="installation_id", value=installation_id)
+                .eq(column="first_issue", value=True)
                 .execute()
             )
-            if data[1] and data[1][0]["first_issue"]:
+            if len(data[1]) > 0:
                 return True
             return False
         except Exception as e:

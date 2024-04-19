@@ -38,12 +38,14 @@ SUPABASE_URL: str = get_env_var(name="SUPABASE_URL")
 
 # Stripe
 STRIPE_API_KEY: str = get_env_var(name="STRIPE_API_KEY")
+STRIPE_FREE_TIER_PRICE_ID: str = get_env_var(name="STRIPE_FREE_TIER_PRICE_ID")
 
 # General
 ENV: str = get_env_var(name="ENV")
 PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 TIMEOUT_IN_SECONDS = 120
+FREE_TIER_REQUEST_AMOUNT = 5
 
 ISSUE_NUMBER_FORMAT = "/issue-#"
 PR_BODY_STARTS_WITH = "Original issue: [#"

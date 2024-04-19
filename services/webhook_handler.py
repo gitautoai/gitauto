@@ -28,8 +28,8 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
     installation_id: int = payload["installation"]["id"]
     owner_type: str = payload["installation"]["account"]["type"][0]
     owner_name: str = payload["installation"]["account"]["login"]
-    owner_id: str = payload["installation"]["account"]["id"]
-    user_id: str = payload["sender"]["id"]
+    owner_id: int = payload["installation"]["account"]["id"]
+    user_id: int = payload["sender"]["id"]
     user_name: str = payload["sender"]["login"]
 
     supabase_manager.create_installation(
@@ -52,7 +52,6 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
     action: str = payload.get("action")
     if not action:
         return
-
     # Check the type of webhook event and handle accordingly
     if event_name == "installation" and action in ("created"):
         print("Installation is created")
@@ -87,6 +86,7 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             ):
                 issue_handled = True
                 print("Triggered GitAuto PR")
+
                 await handle_gitauto(payload=payload, trigger_type="comment")
         if not issue_handled:
             print("Edit is not an activated GitAtuo trigger.")

@@ -1,4 +1,8 @@
 {
   "editor.defaultFormatter": "ms-python.black-formatter",
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "python.analysis.autoFormatStrings": true,
+  "python.analysis.addImport.heuristics": true,
+  "python.analysis.autoImportCompletions": true,
+  
 }

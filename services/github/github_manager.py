@@ -1,5 +1,6 @@
 # Standard imports
 import base64
+import datetime
 import hashlib  # For HMAC (Hash-based Message Authentication Code) signatures
 import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
 import logging
@@ -20,16 +21,18 @@ from config import (
     TIMEOUT_IN_SECONDS,
     PRODUCT_ID,
 )
-from services.github.github_types import GitHubContentInfo
-from utils.file_manager import apply_patch
-
+from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload
 from services.supabase import SupabaseManager
+
+from utils.file_manager import apply_patch
+from utils.text_copy import request_issue_comment, request_limit_reached
+
 from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 
 def add_reaction_to_issue(
     owner: str, repo: str, issue_number: int, content: str, token: str
-) -> dict[str, Any]:
+) -> None:
     """https://docs.github.com/en/rest/reactions/reactions?apiVersion=2022-11-28#create-reaction-for-an-issue"""
     try:
         response: requests.Response = requests.post(
@@ -39,8 +42,8 @@ def add_reaction_to_issue(
             timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
+        response.json()
 
-        return response.json()
     except requests.exceptions.HTTPError as e:
         logging.error(
             msg=f"add_reaction_to_issue HTTP Error: {e.response.status_code} - {e.response.text}"
@@ -102,13 +105,15 @@ def commit_changes_to_remote_branch(
         )
         put_response.raise_for_status()
     except Exception as e:
+        # Do not cancel PR if just one commit fails
+        logging.error("commit_chages_to_remove_branch Error: %s", e)
         # Do not raise/comment an error, we want to finish the PR even if there is a diff doesn't get added
         logging.error(msg=f"commit_changes_to_remote_branch Error: {e}")
 
 
 def create_comment(
     owner: str, repo: str, issue_number: int, body: str, token: str
-) -> dict[str, Any]:
+) -> str:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     try:
         response: requests.Response = requests.post(
@@ -119,18 +124,21 @@ def create_comment(
             },
             timeout=TIMEOUT_IN_SECONDS,
         )
-        response.raise_for_status()
 
-        return response.json()
+        response.raise_for_status()
+        return response.json()["url"]
+    # If this doesn't work, it means GitHub APIs are likely down, so we should raise
     except requests.exceptions.HTTPError as e:
         logging.error(
             msg=f"create_comment HTTP Error: {e.response.status_code} - {e.response.text}"
         )
+        raise
     except Exception as e:
         logging.error(msg=f"create_comment Error: {e}")
+        raise
 
 
-def create_comment_on_issue_with_gitauto_button(payload) -> None:
+def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -> None:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
@@ -141,10 +149,9 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
     user_id: int = payload["sender"]["id"]
     user_name: str = payload["sender"]["login"]
 
-    body = "Click the checkbox below to generate a PR!\n- [ ] Generate PR"
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
-    # Proper issue generation comment, create user if not exists
+    # Proper issue generation comment, create user if not exist (first issue in an orgnanization)
     first_issue = False
     if not supabase_manager.user_exists(
         user_id=user_id, installation_id=installation_id
@@ -155,27 +162,39 @@ def create_comment_on_issue_with_gitauto_button(payload) -> None:
             installation_id=installation_id,
         )
         first_issue = True
-    else:
-        if supabase_manager.is_users_first_issue(
-            user_id=user_id, installation_id=installation_id
-        ):
-            first_issue = True
-
-    requests_left = supabase_manager.get_how_many_requests_left(
+    elif supabase_manager.is_users_first_issue(
         user_id=user_id, installation_id=installation_id
+    ):
+        first_issue = True
+
+    requests_left, request_count, end_date = (
+        supabase_manager.get_how_many_requests_left_and_cycle(
+            user_id=user_id, installation_id=installation_id
+        )
     )
+
+    body = "Click the checkbox below to generate a PR!\n- [ ] Generate PR"
+    if PRODUCT_ID != "gitauto":
+        body += " - " + PRODUCT_ID
+
+    if end_date != datetime.datetime(
+        year=1, month=1, day=1, hour=0, minute=0, second=0
+    ):
+        body += request_issue_comment(requests_left=requests_left, end_date=end_date)
+
     if requests_left <= 0:
-        # TODO get cycle date from get_how_many_requests_left to post here
-        body = "You have reached the limit of requests for today. Please try again on {date}"
-    # TODO Add requests_left in issue comment body
+        body = request_limit_reached(
+            user_name=user_name,
+            request_count=request_count,
+            end_date=end_date,
+        )
+
     if first_issue:
         body = "Welcome to GitAuto! 🎉\n" + body
         supabase_manager.set_user_first_issue_to_false(
             user_id=user_id, installation_id=installation_id
         )
 
-    if PRODUCT_ID != "gitauto":
-        body += " - " + PRODUCT_ID
     try:
         response: requests.Response = requests.post(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",
@@ -226,7 +245,7 @@ def create_pull_request(
     comment_url: str,
     unique_issue_id: str,
     token: str,
-) -> dict[str, Any]:
+) -> str:
     """https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request"""
     try:
         response: requests.Response = requests.post(
@@ -236,7 +255,7 @@ def create_pull_request(
             timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
-        return response.json()
+        return response.json()["html_url"]
     except Exception as e:
         update_comment_for_raised_errors(
             error=e,
@@ -437,7 +456,7 @@ def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
 
 
 def update_comment_for_raised_errors(
-    error: str, comment_url: str, unique_issue_id: str, token: str
+    error: Any, comment_url: str, unique_issue_id: str, token: str
 ) -> dict[str, Any]:
     """Update the comment on issue with an error message, set progress to 100, and raise the error."""
     body = "Sorry, we have an error. Please try again."
@@ -445,7 +464,7 @@ def update_comment_for_raised_errors(
         if isinstance(error, requests.exceptions.HTTPError):
             if (
                 error.response.status_code == 422
-                and error.message
+                and error["message"]
                 and error.message == "Validation Failed"
                 and (
                     (
@@ -479,4 +498,4 @@ def update_comment_for_raised_errors(
 
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
     supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=100)
-    raise
+    raise RuntimeError("Error occurred")
