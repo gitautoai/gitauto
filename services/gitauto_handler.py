@@ -128,18 +128,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n"
     )
 
-    diffs: list[str] = run_assistant(
-        file_paths=file_paths,
-        issue_title=issue_title,
-        issue_body=issue_body,
-        issue_comments=issue_comments,
-        owner=owner,
-        pr_body=pr_body,
-        ref=base_branch,
-        repo=repo_name,
-        token=token,
-    )
-
     supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=90)
     update_comment(
         comment_url=comment_url,
