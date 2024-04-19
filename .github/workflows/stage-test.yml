@@ -43,3 +43,4 @@ jobs:
         ENV: stage
         PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
       run: python -m pytest -r fE
+      
