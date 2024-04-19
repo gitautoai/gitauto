@@ -3,9 +3,11 @@
 from supabase import Client
 import datetime
 import logging
+from services.openai.functions import OWNER
 from services.stripe.customer import (
     get_subscription,
     get_request_count_from_product_id_metadata,
+    subscribe_to_free_plan,
 )
 from config import (
     STRIPE_FREE_TIER_PRICE_ID,
@@ -77,6 +79,10 @@ class UsersManager:
         subscription: stripe.ListObject[stripe.Subscription],
         user_id: int,
         installation_id: int,
+        customer_id: str,
+        user_name: str,
+        owner_id: int,
+        owner_name: str,
     ) -> tuple[int, int, str]:
         """Parsing stripe subscription object to get the start date, end date and product id of either a paid or free tier customer subscription"""
         try:
@@ -118,7 +124,28 @@ class UsersManager:
                 or free_tier_product_id == ""
             ):
                 # Customer should alawys have at least a free tier subscription, set by this codebase on installation webhook from github
-                raise ValueError("No active stripe subscription found.")
+                logging.error(
+                    "No active stripe subscription found. user_id: %s installation_id: %s",
+                    user_id,
+                    installation_id,
+                )
+                subscribe_to_free_plan(
+                    customer_id=customer_id,
+                    user_id=user_id,
+                    user_name=user_name,
+                    owner_id=owner_id,
+                    owner_name=owner_name,
+                    installation_id=installation_id,
+                )
+                self.parse_subscription_object(
+                    subscription=subscription,
+                    user_id=user_id,
+                    installation_id=installation_id,
+                    customer_id=customer_id,
+                    user_name=user_name,
+                    owner_id=owner_id,
+                    owner_name=owner_name,
+                )
             # Return from Free Tier Subscription if there is no paid subscription object
             return free_tier_start_date, free_tier_end_date, free_tier_product_id
         except Exception as e:
@@ -126,7 +153,12 @@ class UsersManager:
             raise
 
     def get_how_many_requests_left_and_cycle(
-        self, user_id: int, installation_id: int
+        self,
+        user_id: int,
+        installation_id: int,
+        user_name: str,
+        owner_id: int,
+        owner_name: str,
     ) -> tuple[int, int, datetime.datetime]:
         try:
             data, _ = (
@@ -146,6 +178,10 @@ class UsersManager:
                         subscription=subscription,
                         user_id=user_id,
                         installation_id=installation_id,
+                        customer_id=stripe_customer_id,
+                        user_name=user_name,
+                        owner_id=owner_id,
+                        owner_name=owner_name,
                     )
                 )
 
