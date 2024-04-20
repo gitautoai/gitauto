@@ -1,4 +1,5 @@
 # Standard imports
+import time
 import json
 import time
 from uuid import uuid4
@@ -21,6 +22,8 @@ from services.github.github_manager import (
     get_remote_file_tree,
     create_comment,
     update_comment,
+    start_time = time.time()
+
     add_reaction_to_issue,
 )
 from services.github.github_types import (
@@ -143,6 +146,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=90)
     update_comment(
         comment_url=comment_url,
+    end_time = time.time()
+    execution_time = end_time - start_time
         token=token,
         body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
     )
@@ -214,8 +219,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         body=pull_request_completed(pull_request_url=pull_request_url),
     )
 
-    supabase_manager.complete_user_request(
-        user_id=user_id, installation_id=installation_id
+    supabase_manager.complete_and_update_usage_record(
+        user_id=user_id, installation_id=installation_id, execution_time=execution_time
     )
     supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=100)
     return
