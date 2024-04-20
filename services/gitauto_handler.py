@@ -64,7 +64,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         )
     )
     if requests_left <= 0:
-        print("HERE OMG")
         create_comment(
             owner=owner,
             repo=repo_name,
