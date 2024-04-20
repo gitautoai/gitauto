@@ -12,9 +12,12 @@ class GitAutoAgentManager:
     def __init__(self, client: Client) -> None:
         self.client = client
 
-    def complete_user_request(self, user_id: int, installation_id: int) -> None:
+    def complete_and_update_usage_record(self, user_id: int, installation_id: int, execution_time: float) -> None:
         """Set users usage request to completed"""
         try:
+            self.client.table("usage").update(
+                {"execution_time": execution_time}
+            ).eq("user_id", user_id).eq("installation_id", installation_id).execute()
             self.client.table(table_name="usage").update(
                 json={
                     "is_completed": True,
