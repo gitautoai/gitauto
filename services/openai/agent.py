@@ -127,12 +127,15 @@ def run_assistant(
         diff = correct_hunk_headers(diff_text=diff)
         print(f"Diff: {repr(diff)}\n")
         output.append(diff)
-
+    print('encoding')
     encoding = tiktoken.encoding_for_model(OPENAI_MODEL_ID)
+    print('after')
     output_data += json.dumps(output)
+    print('after 2')
     token_input = len(encoding.encode(input_data))
+    print('afte 3')
     token_output = len(encoding.encode(json.dumps(output)))
-
+    print('after 4')  
     return token_input, token_output, output
 
 
