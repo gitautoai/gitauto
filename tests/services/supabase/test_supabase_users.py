@@ -1,5 +1,3 @@
-import asyncio
-
 # run this file locally with: python -m tests.services.supabase.test_supabase_users
 
 import datetime
@@ -342,6 +340,3 @@ async def test_install_uninstall() -> None:
 
     # Clean Up
     wipe_installation_owner_user_data()
-
-
-asyncio.run(test_install_uninstall())
