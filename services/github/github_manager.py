@@ -20,14 +20,14 @@ from config import (
     GH_PRIVATE_KEY,
     TIMEOUT_IN_SECONDS,
     PRODUCT_ID,
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY,
 )
 from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload
 from services.supabase import SupabaseManager
 
 from utils.file_manager import apply_patch
 from utils.text_copy import request_issue_comment, request_limit_reached
-
-from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 
 def add_reaction_to_issue(
@@ -460,6 +460,7 @@ def update_comment_for_raised_errors(
     body = "Sorry, we have an error. Please try again."
     try:
         if isinstance(error, requests.exceptions.HTTPError):
+            error = error.response.json()
             if (
                 error.response.status_code == 422
                 and error["message"]
