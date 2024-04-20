@@ -20,14 +20,14 @@ from config import (
     GH_PRIVATE_KEY,
     TIMEOUT_IN_SECONDS,
     PRODUCT_ID,
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY,
 )
 from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload
 from services.supabase import SupabaseManager
 
-from utils.file_manager import apply_patch
+from utils.file_manager import apply_patch, extract_file_name
 from utils.text_copy import request_issue_comment, request_limit_reached
-
-from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 
 def add_reaction_to_issue(
@@ -52,6 +52,35 @@ def add_reaction_to_issue(
         logging.error(msg=f"add_reaction_to_issue Error: {e}")
 
 
+def commit_multiple_changes_to_remote_branch(
+    diffs: list[str],
+    new_branch: str,
+    owner: str,
+    repo: str,
+    token: str,
+) -> None:
+    """Called from assistants api to commit multiple changes to a new branch."""
+    print(diffs)
+    # Commit the changes to the new remote branch
+    for diff in diffs:
+        file_path: str = extract_file_name(diff_text=diff)
+        print(
+            f"{time.strftime('%H:%M:%S', time.localtime())} File path: {file_path}.\n"
+        )
+        commit_changes_to_remote_branch(
+            branch=new_branch,
+            commit_message=f"Update {file_path}",
+            diff_text=diff,
+            file_path=file_path,
+            owner=owner,
+            repo=repo,
+            token=token,
+        )
+        print(
+            f"{time.strftime('%H:%M:%S', time.localtime())} Changes committed to https://github.com/{owner}/{repo}/tree/{new_branch}.\n"
+        )
+
+
 def commit_changes_to_remote_branch(
     branch: str,
     commit_message: str,
@@ -59,8 +88,6 @@ def commit_changes_to_remote_branch(
     file_path: str,
     owner: str,
     repo: str,
-    comment_url: str,
-    unique_issue_id: str,
     token: str,
 ) -> None:
     """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
@@ -105,7 +132,7 @@ def commit_changes_to_remote_branch(
         )
         put_response.raise_for_status()
     except Exception as e:
-        # Do not cancel PR if just one commit fails
+        # Do not cancel PR if this commit fails
         logging.error("commit_chages_to_remove_branch Error: %s", e)
 
 

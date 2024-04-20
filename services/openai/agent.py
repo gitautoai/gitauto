@@ -12,10 +12,18 @@ from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
 
 # Local imports
 from config import OPENAI_FINAL_STATUSES, OPENAI_MODEL_ID, TIMEOUT_IN_SECONDS
-from services.openai.functions import GET_REMOTE_FILE_CONTENT, functions
+from services.openai.functions import (
+    GET_REMOTE_FILE_CONTENT,
+    functions,
+    COMMIT_MULTIPLE_CHANGES_TO_REMOTE_BRANCH,
+)
 from services.openai.init import create_openai_client
-from services.openai.instructions import SYSTEM_INSTRUCTION_FOR_AGENT
+from services.openai.instructions import (
+    SYSTEM_INSTRUCTION_FOR_AGENT,
+    SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS,
+)
 from utils.file_manager import clean_specific_lines, correct_hunk_headers, split_diffs
+from services.github.github_manager import update_comment
 
 
 def create_assistant() -> Assistant:
@@ -26,25 +34,29 @@ def create_assistant() -> Assistant:
         tools=[
             # {"type": "code_interpreter"},
             # {"type": "retrieval"},
-            {"type": "function", "function": GET_REMOTE_FILE_CONTENT}
+            {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
+            {"type": "function", "function": COMMIT_MULTIPLE_CHANGES_TO_REMOTE_BRANCH},
         ],
         model=OPENAI_MODEL_ID,
-        timeout=TIMEOUT_IN_SECONDS
+        timeout=TIMEOUT_IN_SECONDS,
     )
 
 
-def create_thread_and_run(user_input: str) -> tuple[Thread, Run]:
-    """ thread represents a conversation. 1 thread per 1 issue.
+def create_thread_and_run(user_input: str) -> tuple[OpenAI, Assistant, Thread, Run]:
+    """thread represents a conversation. 1 thread per 1 issue.
     Assistants API will manage the context window.
-    https://cookbook.openai.com/examples/assistants_api_overview_python """
+    https://cookbook.openai.com/examples/assistants_api_overview_python"""
     client: OpenAI = create_openai_client()
     thread: Thread = client.beta.threads.create(timeout=TIMEOUT_IN_SECONDS)
-    run: Run = submit_message(thread=thread, user_message=user_input)
-    return thread, run
+    assistant: Assistant = create_assistant()
+    run: Run = submit_message(
+        client=client, assistant=assistant, thread=thread, user_message=user_input
+    )
+    return client, assistant, thread, run
 
 
 def get_response(thread: Thread) -> SyncCursorPage[ThreadMessage]:
-    """ https://cookbook.openai.com/examples/assistants_api_overview_python """
+    """https://cookbook.openai.com/examples/assistants_api_overview_python"""
     client: OpenAI = create_openai_client()
     return client.beta.threads.messages.list(
         thread_id=thread.id, order="desc", timeout=TIMEOUT_IN_SECONDS
@@ -52,16 +64,18 @@ def get_response(thread: Thread) -> SyncCursorPage[ThreadMessage]:
 
 
 def run_assistant(
-        file_paths: list[str],
-        issue_title: str,
-        issue_body: str,
-        issue_comments: list[str],
-        owner: str,
-        pr_body: str,
-        ref: str,
-        repo: str,
-        token: str
-        ) -> list[str]:
+    file_paths: list[str],
+    issue_title: str,
+    issue_body: str,
+    issue_comments: list[str],
+    owner: str,
+    pr_body: str,
+    ref: str,
+    repo: str,
+    comment_url: str,
+    token: str,
+    new_branch: str,
+) -> list[str]:
 
     # Create a message in the thread
     data: dict[str, str | list[str]] = {
@@ -72,18 +86,22 @@ def run_assistant(
         "issue_title": issue_title,
         "issue_body": issue_body,
         "issue_comments": issue_comments,
-        "file_path": file_paths
+        "file_path": file_paths,
+        "comment_url": comment_url,
+        "new_branch": new_branch,
     }
     content: str = json.dumps(obj=data)
     # print(f"{data=}\n")
 
     # Run the assistant
-    thread, run = create_thread_and_run(user_input=content)
+    client, assistant, thread, run = create_thread_and_run(user_input=content)
     print(f"Thread is created: {thread.id}\n")
     print(f"Run is created: {run.id}\n")
 
     # Wait for the run to complete
-    run: Run = wait_on_run(run=run, thread=thread, token=token)
+    run: Run = wait_on_run(
+        run=run, thread=thread, token=token, run_name="generate diffs"
+    )
 
     # Get the response
     messages: SyncCursorPage[ThreadMessage] = get_response(thread=thread)
@@ -105,31 +123,57 @@ def run_assistant(
         diff = correct_hunk_headers(diff_text=diff)
         print(f"Diff: {repr(diff)}\n")
         output.append(diff)
+
+    update_comment(
+        comment_url=comment_url,
+        token=token,
+        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\n50% Half way there!",
+    )
+
+    # Self review diff
+    self_review_run = submit_message(
+        client,
+        assistant,
+        thread,
+        SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS + json.dumps(output),
+    )
+
+    self_review_run: Run = wait_on_run(
+        run=self_review_run, thread=thread, token=token, run_name="review diffs"
+    )
+
+    update_comment(
+        comment_url=comment_url,
+        token=token,
+        body="![X](https://progress-bar.dev/70/?title=Progress&width=800)\n70% there! We're reviewing your new code changes!",
+    )
+
     return output
 
 
-def submit_message(thread: Thread, user_message: str) -> Run:
-    """ https://cookbook.openai.com/examples/assistants_api_overview_python """
-    client: OpenAI = create_openai_client()
-    assistant: Assistant = create_assistant()
+def submit_message(
+    client: OpenAI, assistant: Assistant, thread: Thread, user_message: str
+) -> Run:
+    """https://cookbook.openai.com/examples/assistants_api_overview_python"""
     client.beta.threads.messages.create(
-        thread_id=thread.id, role="user", content=user_message, timeout=TIMEOUT_IN_SECONDS
+        thread_id=thread.id,
+        role="user",
+        content=user_message,
+        timeout=TIMEOUT_IN_SECONDS,
     )
     return client.beta.threads.runs.create(
         thread_id=thread.id, assistant_id=assistant.id, timeout=TIMEOUT_IN_SECONDS
     )
 
 
-def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
-    """ https://cookbook.openai.com/examples/assistants_api_overview_python """
-    print(f"Run status before loop: {run.status}")
+def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> Run:
+    """https://cookbook.openai.com/examples/assistants_api_overview_python"""
+    print("Run %s status before loop: %s", run_name, run.status)
     client: OpenAI = create_openai_client()
     while run.status not in OPENAI_FINAL_STATUSES:
-        print(f"Run status during loop: {run.status}")
+        print("Run %s status during loop: %s", run_name, run.status)
         run = client.beta.threads.runs.retrieve(
-            thread_id=thread.id,
-            run_id=run.id,
-            timeout=TIMEOUT_IN_SECONDS
+            thread_id=thread.id, run_id=run.id, timeout=TIMEOUT_IN_SECONDS
         )
 
         # If the run requires action, call the function and run again with the output
@@ -137,23 +181,22 @@ def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
             print("Run requires action")
             try:
                 tool_outputs: list[Any] = call_functions(
-                    run=run,
-                    funcs=functions,
-                    token=token
+                    run=run, funcs=functions, token=token
                 )
-                tool_outputs_json: list[ToolOutput] = [{
-                        "tool_call_id": tool_call.id, "output": json.dumps(obj=result)
-                    } for tool_call, result in tool_outputs]
+                tool_outputs_json: list[ToolOutput] = [
+                    {"tool_call_id": tool_call.id, "output": json.dumps(obj=result)}
+                    for tool_call, result in tool_outputs
+                ]
                 run = client.beta.threads.runs.submit_tool_outputs(
                     thread_id=thread.id,
                     run_id=run.id,
                     tool_outputs=tool_outputs_json,
-                    timeout=TIMEOUT_IN_SECONDS
+                    timeout=TIMEOUT_IN_SECONDS,
                 )
             except Exception as e:
                 raise ValueError(f"Error: {e}") from e
         time.sleep(0.5)
-    print(f"Run status after loop: {run.status}")
+    print("Run %s status after loop: %s", run_name, run.status)
     return run
 
 

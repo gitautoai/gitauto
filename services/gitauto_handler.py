@@ -128,25 +128,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n"
     )
 
-    diffs: list[str] = run_assistant(
-        file_paths=file_paths,
-        issue_title=issue_title,
-        issue_body=issue_body,
-        issue_comments=issue_comments,
-        owner=owner,
-        pr_body=pr_body,
-        ref=base_branch,
-        repo=repo_name,
-        token=token,
-    )
-
-    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=90)
-    update_comment(
-        comment_url=comment_url,
-        token=token,
-        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
-    )
-
     # Create a remote branch
     uuid: str = str(object=uuid4())
     new_branch: str = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}{issue['number']}-{uuid}"
@@ -171,6 +152,27 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         f"{time.strftime('%H:%M:%S', time.localtime())} Remote branch created: {new_branch}.\n"
     )
 
+    diffs: list[str] = run_assistant(
+        file_paths=file_paths,
+        issue_title=issue_title,
+        issue_body=issue_body,
+        issue_comments=issue_comments,
+        owner=owner,
+        pr_body=pr_body,
+        ref=base_branch,
+        repo=repo_name,
+        comment_url=comment_url,
+        new_branch=new_branch,
+        token=token,
+    )
+
+    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=90)
+    update_comment(
+        comment_url=comment_url,
+        token=token,
+        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
+    )
+
     # Commit the changes to the new remote branch
     for diff in diffs:
         file_path: str = extract_file_name(diff_text=diff)
@@ -184,8 +186,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             file_path=file_path,
             owner=owner,
             repo=repo_name,
-            comment_url=comment_url,
-            unique_issue_id=unique_issue_id,
             token=token,
         )
         print(
@@ -194,7 +194,13 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
 
     # Create a pull request to the base branch
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}]({issue['html_url']})\n\n"
-    git_commands = f"\n\n## Test these changes locally\n\n```\ngit checkout -b {new_branch}\ngit pull origin {new_branch}\n```"
+    git_commands = (
+        f"\n\n## Test these changes locally\n\n"
+        f"```\n"
+        f"git checkout -b {new_branch}\n"
+        f"git pull origin {new_branch}\n"
+        f"```"
+    )
     pull_request_url = create_pull_request(
         base=base_branch,
         body=issue_link + pr_body + git_commands,
