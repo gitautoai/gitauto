@@ -1,4 +1,5 @@
 # Standard imports
+from email import message
 import json
 import time
 from typing import Any
@@ -19,29 +20,46 @@ from services.openai.instructions import SYSTEM_INSTRUCTION_FOR_AGENT
 from utils.file_manager import clean_specific_lines, correct_hunk_headers, split_diffs
 
 
-def create_assistant() -> Assistant:
+def create_assistant() -> tuple[Assistant, str]:
+    """Create Open AI client and then create the assistant."""
     client: OpenAI = create_openai_client()
-    return client.beta.assistants.create(
-        name="GitAuto: Automated Issue Resolver",
-        instructions=SYSTEM_INSTRUCTION_FOR_AGENT,
-        tools=[
-            # {"type": "code_interpreter"},
-            # {"type": "retrieval"},
-            {"type": "function", "function": GET_REMOTE_FILE_CONTENT}
-        ],
-        model=OPENAI_MODEL_ID,
-        timeout=TIMEOUT_IN_SECONDS,
+    input_data = json.dumps(
+        {
+            "name": "GitAuto: Automated Issue Resolver",
+            "instructions": SYSTEM_INSTRUCTION_FOR_AGENT,
+            "tools": [
+                # {"type": "code_interpreter"},
+                # {"type": "retrieval"},
+                {"type": "function", "function": GET_REMOTE_FILE_CONTENT}
+            ],
+            "model": OPENAI_MODEL_ID,
+            "timeout": TIMEOUT_IN_SECONDS,
+        }
+    )
+    return (
+        client.beta.assistants.create(
+            name="GitAuto: Automated Issue Resolver",
+            instructions=SYSTEM_INSTRUCTION_FOR_AGENT,
+            tools=[
+                # {"type": "code_interpreter"},
+                # {"type": "retrieval"},
+                {"type": "function", "function": GET_REMOTE_FILE_CONTENT}
+            ],
+            model=OPENAI_MODEL_ID,
+            timeout=TIMEOUT_IN_SECONDS,
+        ),
+        input_data,
     )
 
 
-def create_thread_and_run(user_input: str) -> tuple[Thread, Run]:
+def create_thread_and_run(user_input: str) -> tuple[Thread, Run, str]:
     """thread represents a conversation. 1 thread per 1 issue.
     Assistants API will manage the context window.
     https://cookbook.openai.com/examples/assistants_api_overview_python"""
     client: OpenAI = create_openai_client()
     thread: Thread = client.beta.threads.create(timeout=TIMEOUT_IN_SECONDS)
-    run: Run = submit_message(thread=thread, user_message=user_input)
-    return thread, run
+    run, input_data = submit_message(thread=thread, user_message=user_input)
+    return thread, run, input_data
 
 
 def get_response(thread: Thread) -> SyncCursorPage[ThreadMessage]:
@@ -79,12 +97,14 @@ def run_assistant(
     issue_input: str = json.dumps(obj=data)
 
     # Run the assistant
-    thread, run = create_thread_and_run(user_input=issue_input)
+    thread, run, input_data = create_thread_and_run(user_input=issue_input)
     print(f"Thread is created: {thread.id}\n")
     print(f"Run is created: {run.id}\n")
 
     # Wait for the run to complete, handle function calling if necessary
-    run: Run = wait_on_run(run=run, thread=thread, token=token)
+    run, input_output_data = wait_on_run(run=run, thread=thread, token=token)
+    input_data += input_output_data
+    output_data = input_output_data
 
     # Get the response
     messages: SyncCursorPage[ThreadMessage] = get_response(thread=thread)
@@ -94,6 +114,7 @@ def run_assistant(
     latest_message: ThreadMessage = messages_list[0]
     if isinstance(latest_message.content[0], MessageContentText):
         value: str = latest_message.content[0].text.value
+        output_data += json.dumps(latest_message.content[0].text.value)
     else:
         raise ValueError("Last message content is not text.")
     print(f"Last message: {value}\n")
@@ -108,31 +129,44 @@ def run_assistant(
         output.append(diff)
 
     encoding = tiktoken.encoding_for_model(OPENAI_MODEL_ID)
-    token_input = len(encoding.encode(issue_input))
+    output_data += json.dumps(output)
+    token_input = len(encoding.encode(input_data))
     token_output = len(encoding.encode(json.dumps(output)))
 
     return token_input, token_output, output
 
 
-def submit_message(thread: Thread, user_message: str) -> Run:
+def submit_message(thread: Thread, user_message: str) -> tuple[Run, str]:
     """https://cookbook.openai.com/examples/assistants_api_overview_python"""
     client: OpenAI = create_openai_client()
-    assistant: Assistant = create_assistant()
+    assistant, input_data = create_assistant()
     client.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
         content=user_message,
         timeout=TIMEOUT_IN_SECONDS,
     )
-    return client.beta.threads.runs.create(
-        thread_id=thread.id, assistant_id=assistant.id, timeout=TIMEOUT_IN_SECONDS
+    input_data += json.dumps(
+        {
+            "thread_id": str(thread.id),
+            "content": str(user_message),
+            "role": "'user",
+            "timeout": str(TIMEOUT_IN_SECONDS),
+        }
+    )
+    return (
+        client.beta.threads.runs.create(
+            thread_id=thread.id, assistant_id=assistant.id, timeout=TIMEOUT_IN_SECONDS
+        ),
+        input_data,
     )
 
 
-def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
+def wait_on_run(run: Run, thread: Thread, token: str) -> tuple[Run, str]:
     """https://cookbook.openai.com/examples/assistants_api_overview_python"""
     print(f"Run status before loop: {run.status}")
     client: OpenAI = create_openai_client()
+    input_output_data = ""
     while run.status not in OPENAI_FINAL_STATUSES:
         print(f"Run status during loop: {run.status}")
         run = client.beta.threads.runs.retrieve(
@@ -146,10 +180,12 @@ def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
                 tool_outputs: list[Any] = call_functions(
                     run=run, funcs=functions, token=token
                 )
+
                 tool_outputs_json: list[ToolOutput] = [
                     {"tool_call_id": tool_call.id, "output": json.dumps(obj=result)}
                     for tool_call, result in tool_outputs
                 ]
+                input_output_data += json.dumps(tool_outputs_json)
                 run = client.beta.threads.runs.submit_tool_outputs(
                     thread_id=thread.id,
                     run_id=run.id,
@@ -160,7 +196,7 @@ def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
                 raise ValueError(f"Error: {e}") from e
         time.sleep(0.5)
     print(f"Run status after loop: {run.status}")
-    return run
+    return run, input_output_data
 
 
 def call_functions(run: Run, funcs: dict[str, Any], token: str) -> list[Any]:
