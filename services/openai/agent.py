@@ -29,14 +29,14 @@ def create_assistant() -> Assistant:
             {"type": "function", "function": GET_REMOTE_FILE_CONTENT}
         ],
         model=OPENAI_MODEL_ID,
-        timeout=TIMEOUT_IN_SECONDS
+        timeout=TIMEOUT_IN_SECONDS,
     )
 
 
 def create_thread_and_run(user_input: str) -> tuple[Thread, Run]:
-    """ thread represents a conversation. 1 thread per 1 issue.
+    """thread represents a conversation. 1 thread per 1 issue.
     Assistants API will manage the context window.
-    https://cookbook.openai.com/examples/assistants_api_overview_python """
+    https://cookbook.openai.com/examples/assistants_api_overview_python"""
     client: OpenAI = create_openai_client()
     thread: Thread = client.beta.threads.create(timeout=TIMEOUT_IN_SECONDS)
     run: Run = submit_message(thread=thread, user_message=user_input)
@@ -44,7 +44,7 @@ def create_thread_and_run(user_input: str) -> tuple[Thread, Run]:
 
 
 def get_response(thread: Thread) -> SyncCursorPage[ThreadMessage]:
-    """ https://cookbook.openai.com/examples/assistants_api_overview_python """
+    """https://cookbook.openai.com/examples/assistants_api_overview_python"""
     client: OpenAI = create_openai_client()
     return client.beta.threads.messages.list(
         thread_id=thread.id, order="desc", timeout=TIMEOUT_IN_SECONDS
@@ -52,16 +52,16 @@ def get_response(thread: Thread) -> SyncCursorPage[ThreadMessage]:
 
 
 def run_assistant(
-        file_paths: list[str],
-        issue_title: str,
-        issue_body: str,
-        issue_comments: list[str],
-        owner: str,
-        pr_body: str,
-        ref: str,
-        repo: str,
-        token: str
-        ) -> list[str]:
+    file_paths: list[str],
+    issue_title: str,
+    issue_body: str,
+    issue_comments: list[str],
+    owner: str,
+    pr_body: str,
+    ref: str,
+    repo: str,
+    token: str,
+) -> list[str]:
 
     # Create a message in the thread
     data: dict[str, str | list[str]] = {
@@ -72,7 +72,7 @@ def run_assistant(
         "issue_title": issue_title,
         "issue_body": issue_body,
         "issue_comments": issue_comments,
-        "file_path": file_paths
+        "file_path": file_paths,
     }
     content: str = json.dumps(obj=data)
     # print(f"{data=}\n")
@@ -109,11 +109,14 @@ def run_assistant(
 
 
 def submit_message(thread: Thread, user_message: str) -> Run:
-    """ https://cookbook.openai.com/examples/assistants_api_overview_python """
+    """https://cookbook.openai.com/examples/assistants_api_overview_python"""
     client: OpenAI = create_openai_client()
     assistant: Assistant = create_assistant()
     client.beta.threads.messages.create(
-        thread_id=thread.id, role="user", content=user_message, timeout=TIMEOUT_IN_SECONDS
+        thread_id=thread.id,
+        role="user",
+        content=user_message,
+        timeout=TIMEOUT_IN_SECONDS,
     )
     return client.beta.threads.runs.create(
         thread_id=thread.id, assistant_id=assistant.id, timeout=TIMEOUT_IN_SECONDS
@@ -121,15 +124,13 @@ def submit_message(thread: Thread, user_message: str) -> Run:
 
 
 def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
-    """ https://cookbook.openai.com/examples/assistants_api_overview_python """
+    """https://cookbook.openai.com/examples/assistants_api_overview_python"""
     print(f"Run status before loop: {run.status}")
     client: OpenAI = create_openai_client()
     while run.status not in OPENAI_FINAL_STATUSES:
         print(f"Run status during loop: {run.status}")
         run = client.beta.threads.runs.retrieve(
-            thread_id=thread.id,
-            run_id=run.id,
-            timeout=TIMEOUT_IN_SECONDS
+            thread_id=thread.id, run_id=run.id, timeout=TIMEOUT_IN_SECONDS
         )
 
         # If the run requires action, call the function and run again with the output
@@ -137,18 +138,17 @@ def wait_on_run(run: Run, thread: Thread, token: str) -> Run:
             print("Run requires action")
             try:
                 tool_outputs: list[Any] = call_functions(
-                    run=run,
-                    funcs=functions,
-                    token=token
+                    run=run, funcs=functions, token=token
                 )
-                tool_outputs_json: list[ToolOutput] = [{
-                        "tool_call_id": tool_call.id, "output": json.dumps(obj=result)
-                    } for tool_call, result in tool_outputs]
+                tool_outputs_json: list[ToolOutput] = [
+                    {"tool_call_id": tool_call.id, "output": json.dumps(obj=result)}
+                    for tool_call, result in tool_outputs
+                ]
                 run = client.beta.threads.runs.submit_tool_outputs(
                     thread_id=thread.id,
                     run_id=run.id,
                     tool_outputs=tool_outputs_json,
-                    timeout=TIMEOUT_IN_SECONDS
+                    timeout=TIMEOUT_IN_SECONDS,
                 )
             except Exception as e:
                 raise ValueError(f"Error: {e}") from e
