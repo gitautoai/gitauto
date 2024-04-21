@@ -8,8 +8,5 @@ COPY . ${LAMBDA_TASK_ROOT}
 RUN pip install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 RUN yum install -y patch
 
-# Cache the tiktoken encoding file
-RUN python -c "import tiktoken; tiktoken.encoding_for_model('gpt-4-turbo-preview')"
-
 # Command to run from Lambda function
 CMD ["main.handler"]
