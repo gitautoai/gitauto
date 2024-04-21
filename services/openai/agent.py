@@ -1,5 +1,4 @@
 # Standard imports
-from email import message
 import json
 import time
 from typing import Any
@@ -10,7 +9,6 @@ from openai.pagination import SyncCursorPage
 from openai.types.beta import Assistant, Thread
 from openai.types.beta.threads import Run, ThreadMessage, MessageContentText
 from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
-import tiktoken
 
 # Local imports
 from config import OPENAI_FINAL_STATUSES, OPENAI_MODEL_ID, TIMEOUT_IN_SECONDS
