@@ -128,13 +128,11 @@ def run_assistant(
         print(f"Diff: {repr(diff)}\n")
         output.append(diff)
 
-    try:
-        encoding = tiktoken.encoding_for_model(OPENAI_MODEL_ID)
-    except Exception as e:
-        print(e)
     output_data += json.dumps(output)
-    token_input = len(encoding.encode(input_data))
-    token_output = len(encoding.encode(json.dumps(output)))
+
+    # One token is ~4 characters of text https://platform.openai.com/tokenizer
+    token_input = int(len(issue_input) / 4)
+    token_output = int(len(output_data) / 4)
 
     return token_input, token_output, output
 
