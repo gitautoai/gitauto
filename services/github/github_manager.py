@@ -105,8 +105,8 @@ def commit_changes_to_remote_branch(
         )
         put_response.raise_for_status()
     except Exception as e:
-        # Do not cancel PR if just one commit fails
-        logging.error("commit_chages_to_remove_branch Error: %s", e)
+        # Do not raise/comment an error, we want to finish the PR even if there is a commit that fails
+        logging.error(msg=f"commit_changes_to_remote_branch Error: {e}")
 
 
 def create_comment(

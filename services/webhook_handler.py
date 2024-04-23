@@ -25,6 +25,7 @@ supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_K
 
 
 async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
+    """Creates installation records on GitAuto APP installation"""
     installation_id: int = payload["installation"]["id"]
     owner_type: str = payload["installation"]["account"]["type"][0]
     owner_name: str = payload["installation"]["account"]["login"]
@@ -43,6 +44,7 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
 
 
 async def handle_installation_deleted(payload: GitHubInstallationPayload) -> None:
+    """Soft deletes installation record on GitAuto APP installation"""
     installation_id: int = payload["installation"]["id"]
     supabase_manager.delete_installation(installation_id=installation_id)
 
