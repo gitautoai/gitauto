@@ -123,11 +123,6 @@ class UsersManager:
                 or free_tier_product_id == ""
             ):
                 # Customer should alawys have at least a free tier subscription, set by this codebase on installation webhook from github
-                logging.error(
-                    "No active stripe subscription found. user_id: %s installation_id: %s",
-                    user_id,
-                    installation_id,
-                )
                 subscribe_to_free_plan(
                     customer_id=customer_id,
                     user_id=user_id,
