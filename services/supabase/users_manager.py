@@ -185,17 +185,17 @@ class UsersManager:
                 customer_id=stripe_customer_id,
             )
 
-                start_date_seconds, end_date_seconds, product_id = (
-                    self.parse_subscription_object(
-                        subscription=subscription,
-                        user_id=user_id,
-                        installation_id=installation_id,
-                        customer_id=stripe_customer_id,
-                        user_name=user_name,
-                        owner_id=owner_id,
-                        owner_name=owner_name,
-                    )
+            start_date_seconds, end_date_seconds, product_id = (
+                self.parse_subscription_object(
+                    subscription=subscription,
+                    user_id=user_id,
+                    installation_id=installation_id,
+                    customer_id=stripe_customer_id,
+                    user_name=user_name,
+                    owner_id=owner_id,
+                    owner_name=owner_name,
                 )
+            )
 
             request_count = get_request_count_from_product_id_metadata(product_id)
 

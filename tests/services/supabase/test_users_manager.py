@@ -4,6 +4,17 @@ import datetime
 import os
 from pickle import INST
 
+from config import (
+    OWNER_ID,
+    OWNER_NAME,
+    OWNER_TYPE,
+    USER_ID,
+    USER_NAME,
+    INSTALLATION_ID,
+    UNIQUE_ISSUE_ID,
+)
+
+
 import asyncio
 import pytest
 
@@ -15,16 +26,6 @@ from services.webhook_handler import handle_webhook_event
 
 from tests.test_payloads.installation import installation_payload
 from tests.test_payloads.deleted import deleted_payload
-
-from config import (
-    OWNER_ID,
-    OWNER_NAME,
-    OWNER_TYPE,
-    USER_ID,
-    USER_NAME,
-    INSTALLATION_ID,
-    UNIQUE_ISSUE_ID,
-)
 
 # from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 # SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYWl5d2F0bHhiYWR4bHJtamZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTY5MDU0NywiZXhwIjoyMDI1MjY2NTQ3fQ.N9EIYESe2xNwddfgznuC_clkBdCZxDWSgbT111aaQFU"
@@ -72,18 +73,17 @@ def test_create_and_update_user_request_works() -> None:
         user_name=USER_NAME,
     )
 
-    assert (
-        supabase_manager.create_user_request(
-            user_id=USER_ID,
-            installation_id=INSTALLATION_ID,
-            unique_issue_id="U/gitautoai/nextjs-website#52",
-        )
-        is None
+    usage_record_id = supabase_manager.create_user_request(
+        user_id=USER_ID,
+        installation_id=INSTALLATION_ID,
+        unique_issue_id="U/gitautoai/nextjs-website#52",
     )
+    assert isinstance(usage_record_id, int)
     assert (
-        supabase_manager.complete_user_request(
-            user_id=USER_ID,
-            installation_id=INSTALLATION_ID,
+        supabase_manager.complete_and_update_usage_record(
+            usage_record_id=usage_record_id,
+            token_input=1000,
+            token_output=100,
         )
         is None
     )
