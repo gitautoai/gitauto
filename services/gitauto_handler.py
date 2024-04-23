@@ -123,7 +123,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             }
         )
     )
-    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=5)
+
     print(
         f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n"
     )
@@ -152,7 +152,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         f"{time.strftime('%H:%M:%S', time.localtime())} Remote branch created: {new_branch}.\n"
     )
 
-    diffs: list[str] = run_assistant(
+    run_assistant(
         file_paths=file_paths,
         issue_title=issue_title,
         issue_body=issue_body,
@@ -166,31 +166,11 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token=token,
     )
 
-    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=90)
     update_comment(
         comment_url=comment_url,
         token=token,
         body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
     )
-
-    # Commit the changes to the new remote branch
-    for diff in diffs:
-        file_path: str = extract_file_name(diff_text=diff)
-        print(
-            f"{time.strftime('%H:%M:%S', time.localtime())} File path: {file_path}.\n"
-        )
-        commit_changes_to_remote_branch(
-            branch=new_branch,
-            commit_message=f"Update {file_path}",
-            diff_text=diff,
-            file_path=file_path,
-            owner=owner,
-            repo=repo_name,
-            token=token,
-        )
-        print(
-            f"{time.strftime('%H:%M:%S', time.localtime())} Changes committed to {new_branch}.\n"
-        )
 
     # Create a pull request to the base branch
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}]({issue['html_url']})\n\n"

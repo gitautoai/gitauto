@@ -78,7 +78,6 @@ def run_assistant(
     token: str,
     new_branch: str,
 ) -> list[str]:
-
     # Create a message in the thread
     data: dict[str, str | list[str]] = {
         "owner": owner,
