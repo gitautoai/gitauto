@@ -52,6 +52,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     repo: RepositoryInfo = payload["repository"]
     owner_type = payload["repository"]["owner"]["type"][0]
     owner: str = repo["owner"]["login"]
+    owner_id: int = repo["owner"]["id"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
     user_id: int = payload["sender"]["id"]
@@ -60,7 +61,11 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
 
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=user_id, installation_id=installation_id
+            user_id=user_id,
+            installation_id=installation_id,
+            user_name=user_name,
+            owner_id=owner_id,
+            owner_name=owner,
         )
     )
     if requests_left <= 0:
