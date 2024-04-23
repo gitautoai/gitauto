@@ -30,8 +30,6 @@ def create_assistant() -> tuple[Assistant, str]:
                 # {"type": "retrieval"},
                 {"type": "function", "function": GET_REMOTE_FILE_CONTENT}
             ],
-            "model": OPENAI_MODEL_ID,
-            "timeout": TIMEOUT_IN_SECONDS,
         }
     )
     return (
@@ -147,10 +145,8 @@ def submit_message(thread: Thread, user_message: str) -> tuple[Run, str]:
     )
     input_data += json.dumps(
         {
-            "thread_id": str(thread.id),
             "content": str(user_message),
             "role": "'user",
-            "timeout": str(TIMEOUT_IN_SECONDS),
         }
     )
     return (

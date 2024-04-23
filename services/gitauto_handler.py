@@ -123,16 +123,14 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             }
         )
     )
-    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=5)
     print(
         f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n"
     )
 
-    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=90)
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
+        body="![X](https://progress-bar.dev/30/?title=Progress&width=800)\nJust getting started!",
     )
 
     # Create a remote branch
@@ -171,11 +169,10 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token=token,
     )
 
-    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=50)
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/20/?title=Progress&width=800)\n20% Just getting started!",
+        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
     )
 
     # Commit the changes to the new remote branch
@@ -226,5 +223,4 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token_input=token_input,
         token_output=token_output,
     )
-    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=100)
     return
