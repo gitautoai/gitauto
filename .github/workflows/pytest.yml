@@ -1,4 +1,4 @@
-name: Stage PyTest Workflow
+name: PyTest Workflow
 
 on:
   push:
