@@ -3,7 +3,8 @@ name: Stage PyTest Workflow
 on:
   push:
     branches:
-      - 'stage*'
+      - '*'
+      - '!main'
 
 jobs:
   build:

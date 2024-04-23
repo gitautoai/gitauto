@@ -3,7 +3,8 @@ name: Stage Deployment
 on:
   push:
     branches:
-      - 'stage*'
+      - '*'
+      - '!main'
 
 jobs:
   deploy_lambda:
