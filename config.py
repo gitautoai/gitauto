@@ -48,3 +48,13 @@ FREE_TIER_REQUEST_AMOUNT = 5
 
 ISSUE_NUMBER_FORMAT = "/issue-#"
 PR_BODY_STARTS_WITH = "Original issue: [#"
+
+
+# Testing
+OWNER_ID = -1
+USER_ID = -1
+INSTALLATION_ID = -1
+OWNER_NAME = "installation-test"
+OWNER_TYPE = "O"
+USER_NAME = "username-test"
+UNIQUE_ISSUE_ID = "O/gitautoai/test#1"
