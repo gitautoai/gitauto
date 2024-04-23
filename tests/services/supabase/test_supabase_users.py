@@ -1,4 +1,5 @@
 # run this file locally with: python -m tests.services.supabase.test_supabase_users
+# run this file locally with: python -m tests.services.supabase.test_supabase_users
 
 import datetime
 import os
@@ -110,7 +111,7 @@ def test_how_many_requests_left() -> None:
 
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
-    # insert data into the db -> create installation + create an issue
+    # insert data into the db -> create installation
     supabase_manager.create_installation(
         installation_id=INSTALLATION_ID,
         owner_type=OWNER_TYPE,
@@ -122,7 +123,11 @@ def test_how_many_requests_left() -> None:
     # Testing 0 requests have been made on free tier
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=USER_ID, installation_id=INSTALLATION_ID
+            user_id=USER_ID,
+            installation_id=INSTALLATION_ID,
+            user_name=USER_NAME,
+            owner_id=OWNER_ID,
+            owner_name=OWNER_NAME,
         )
     )
 
@@ -150,7 +155,11 @@ def test_how_many_requests_left() -> None:
     # Test no requests left
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=USER_ID, installation_id=INSTALLATION_ID
+            user_id=USER_ID,
+            installation_id=INSTALLATION_ID,
+            user_name=USER_NAME,
+            owner_id=OWNER_ID,
+            owner_name=OWNER_NAME,
         )
     )
 
@@ -222,7 +231,13 @@ def test_parse_subscription_object() -> None:
     def assertion_test(customer_id: str, product_id: str):
         subscription = get_subscription(customer_id)
         _, _, product_id_output = supabase_manager.parse_subscription_object(
-            subscription, USER_ID, INSTALLATION_ID
+            subscription,
+            USER_ID,
+            INSTALLATION_ID,
+            customer_id,
+            USER_NAME,
+            OWNER_ID,
+            OWNER_NAME,
         )
         assert product_id_output == product_id
 
