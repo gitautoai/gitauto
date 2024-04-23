@@ -2,8 +2,12 @@
 
 import datetime
 import os
+from pickle import INST
 
-from platformdirs import user_cache_dir
+import asyncio
+import pytest
+
+pytest_plugins = ("pytest_asyncio",)
 
 from services.stripe.customer import get_subscription
 from services.supabase import SupabaseManager
@@ -11,6 +15,16 @@ from services.webhook_handler import handle_webhook_event
 
 from tests.test_payloads.installation import installation_payload
 from tests.test_payloads.deleted import deleted_payload
+
+from config import (
+    OWNER_ID,
+    OWNER_NAME,
+    OWNER_TYPE,
+    USER_ID,
+    USER_NAME,
+    INSTALLATION_ID,
+    UNIQUE_ISSUE_ID,
+)
 
 # from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 # SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYWl5d2F0bHhiYWR4bHJtamZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTY5MDU0NywiZXhwIjoyMDI1MjY2NTQ3fQ.N9EIYESe2xNwddfgznuC_clkBdCZxDWSgbT111aaQFU"
@@ -35,26 +49,26 @@ issues: installation_id = 48332126, unique_issue_id="U/gitautoai/nextjs-website#
 def wipe_installation_owner_user_data() -> None:
     """Wipe all data from installations, owners, and users tables"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-    supabase_manager.client.table("usage").delete().eq("user_id", -1).eq(
-        "installation_id", -1
+    supabase_manager.client.table("usage").delete().eq("user_id", USER_ID).eq(
+        "installation_id", INSTALLATION_ID
     ).execute()
 
-    supabase_manager.client.table("users").delete().eq("user_id", -1).eq(
-        "installation_id", -1
+    supabase_manager.client.table("users").delete().eq("user_id", USER_ID).eq(
+        "installation_id", INSTALLATION_ID
     ).execute()
 
-    supabase_manager.client.table("issues").delete().eq("installation_id", -1).execute()
+    supabase_manager.client.table("issues").delete().eq(
+        "installation_id", INSTALLATION_ID
+    ).execute()
 
     supabase_manager.client.table("installations").delete().eq(
-        "installation_id", -1
+        "installation_id", INSTALLATION_ID
     ).execute()
-    supabase_manager.client.table("owners").delete().eq("owner_id", -1).execute()
+    supabase_manager.client.table("owners").delete().eq("owner_id", OWNER_ID).execute()
 
 
 def test_create_and_update_user_request_works() -> None:
     """Test that I can create and complete user request in usage table"""
-    user_id = -1
-    installation_id = -1
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
     # Clean up at the beginning just in case a prior test failed to clean
@@ -62,26 +76,26 @@ def test_create_and_update_user_request_works() -> None:
 
     # insert data into the db -> create installation
     supabase_manager.create_installation(
-        installation_id=-1,
-        owner_type="O",
-        owner_name="gitautoai",
-        owner_id=-1,
-        user_id=-1,
-        user_name="test",
+        installation_id=INSTALLATION_ID,
+        owner_type=OWNER_TYPE,
+        owner_name=OWNER_NAME,
+        owner_id=OWNER_ID,
+        user_id=USER_ID,
+        user_name=USER_NAME,
     )
 
     assert (
         supabase_manager.create_user_request(
-            user_id=user_id,
-            installation_id=installation_id,
+            user_id=USER_ID,
+            installation_id=INSTALLATION_ID,
             unique_issue_id="U/gitautoai/nextjs-website#52",
         )
         is None
     )
     assert (
         supabase_manager.complete_user_request(
-            user_id=user_id,
-            installation_id=installation_id,
+            user_id=USER_ID,
+            installation_id=INSTALLATION_ID,
         )
         is None
     )
@@ -98,17 +112,17 @@ def test_how_many_requests_left() -> None:
     wipe_installation_owner_user_data()
     # insert data into the db -> create installation + create an issue
     supabase_manager.create_installation(
-        installation_id=-1,
-        owner_type="O",
-        owner_name="gitautoai",
-        owner_id=-1,
-        user_id=-1,
-        user_name="test",
+        installation_id=INSTALLATION_ID,
+        owner_type=OWNER_TYPE,
+        owner_name=OWNER_NAME,
+        owner_id=OWNER_ID,
+        user_id=USER_ID,
+        user_name=USER_NAME,
     )
     # Testing 0 requests have been made on free tier
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=-1, installation_id=-1
+            user_id=USER_ID, installation_id=INSTALLATION_ID
         )
     )
 
@@ -118,25 +132,25 @@ def test_how_many_requests_left() -> None:
 
     supabase_manager.client.table("issues").insert(
         json={
-            "installation_id": -1,
-            "unique_id": "O/gitautoai/test#1",
+            "installation_id": INSTALLATION_ID,
+            "unique_id": UNIQUE_ISSUE_ID,
             "progress": 100,
         }
     ).execute()
     for _ in range(1, 6):
         supabase_manager.client.table("usage").insert(
             json={
-                "user_id": -1,
-                "installation_id": -1,
+                "user_id": USER_ID,
+                "installation_id": INSTALLATION_ID,
                 "is_completed": True,
-                "unique_issue_id": "O/gitautoai/test#1",
+                "unique_issue_id": UNIQUE_ISSUE_ID,
             }
         ).execute()
 
     # Test no requests left
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=-1, installation_id=-1
+            user_id=USER_ID, installation_id=INSTALLATION_ID
         )
     )
 
@@ -145,7 +159,7 @@ def test_how_many_requests_left() -> None:
     assert isinstance(end_date, datetime.datetime)
 
     # Clean Up
-    supabase_manager.delete_installation(installation_id=-1)
+    supabase_manager.delete_installation(installation_id=INSTALLATION_ID)
 
 
 # test_how_many_requests_left()
@@ -154,8 +168,6 @@ def test_how_many_requests_left() -> None:
 def test_is_users_first_issue() -> None:
     """Check if it's a users first issue."""
 
-    user_id = -1
-    installation_id = -1
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
     # Clean up at the beginning just in case a prior test failed to clean
@@ -163,25 +175,24 @@ def test_is_users_first_issue() -> None:
 
     # insert data into the db -> create installation
     supabase_manager.create_installation(
-        installation_id=-1,
-        owner_type="O",
-        owner_name="gitautoai",
-        owner_id=-1,
-        user_id=-1,
-        user_name="test",
+        installation_id=INSTALLATION_ID,
+        owner_type=OWNER_TYPE,
+        owner_name=OWNER_NAME,
+        owner_id=OWNER_ID,
+        user_id=USER_ID,
+        user_name=USER_NAME,
     )
-
     assert supabase_manager.is_users_first_issue(
-        user_id=user_id, installation_id=installation_id
+        user_id=USER_ID, installation_id=INSTALLATION_ID
     )
 
     # Set user table user's first_issue to false
     supabase_manager.set_user_first_issue_to_false(
-        user_id=user_id, installation_id=installation_id
+        user_id=USER_ID, installation_id=INSTALLATION_ID
     )
 
     assert not supabase_manager.is_users_first_issue(
-        user_id=user_id, installation_id=installation_id
+        user_id=USER_ID, installation_id=INSTALLATION_ID
     )
 
     # Clean Up
@@ -199,20 +210,19 @@ def test_parse_subscription_object() -> None:
     wipe_installation_owner_user_data()
     # insert data into the db -> create installation
     supabase_manager.create_installation(
-        installation_id=-1,
-        owner_type="O",
-        owner_name="gitautoai",
-        owner_id=-1,
-        user_id=-1,
-        user_name="test",
+        installation_id=INSTALLATION_ID,
+        owner_type=OWNER_TYPE,
+        owner_name=OWNER_NAME,
+        owner_id=OWNER_ID,
+        user_id=USER_ID,
+        user_name=USER_NAME,
     )
-
     standard_product_id = "prod_PqZFpCs1Jq6X4E"
 
     def assertion_test(customer_id: str, product_id: str):
         subscription = get_subscription(customer_id)
         _, _, product_id_output = supabase_manager.parse_subscription_object(
-            subscription, -1, -1
+            subscription, USER_ID, INSTALLATION_ID
         )
         assert product_id_output == product_id
 
@@ -230,17 +240,11 @@ def test_parse_subscription_object() -> None:
 # test_parse_subscription_object()
 
 
+@pytest.mark.asyncio
 async def test_install_uninstall() -> None:
     """Testing install uninstall methods"""
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
-
-    owner_id = -1
-    user_id = -1
-    installation_id = -1
-    owner_name = "installation-test"
-    owner_type = "O"
-    user_name = "username-test"
 
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
     await handle_webhook_event(event_name="installation", payload=installation_payload)
@@ -249,38 +253,38 @@ async def test_install_uninstall() -> None:
     owners_data, _ = (
         supabase_manager.client.table(table_name="owners")
         .select("*")
-        .eq(column="owner_id", value=owner_id)
+        .eq(column="owner_id", value=OWNER_ID)
         .execute()
     )
-    assert owners_data[1][0]["owner_id"] == owner_id
+    assert owners_data[1][0]["owner_id"] == OWNER_ID
     assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
 
     # Check Installation Record
     installation_data, _ = (
         supabase_manager.client.table(table_name="installations")
         .select("*")
-        .eq(column="installation_id", value=installation_id)
+        .eq(column="installation_id", value=INSTALLATION_ID)
         .execute()
     )
 
-    assert installation_data[1][0]["installation_id"] == installation_id
-    assert installation_data[1][0]["owner_name"] == owner_name
-    assert installation_data[1][0]["owner_id"] == owner_id
-    assert installation_data[1][0]["owner_type"] == owner_type
+    assert installation_data[1][0]["installation_id"] == INSTALLATION_ID
+    assert installation_data[1][0]["owner_name"] == OWNER_NAME
+    assert installation_data[1][0]["owner_id"] == OWNER_ID
+    assert installation_data[1][0]["owner_type"] == OWNER_TYPE
     assert installation_data[1][0]["uninstalled_at"] is None
 
     # Check Users Record
     users_data, _ = (
         supabase_manager.client.table(table_name="users")
         .select("*")
-        .eq(column="user_id", value=user_id)
-        .eq(column="installation_id", value=installation_id)
+        .eq(column="user_id", value=USER_ID)
+        .eq(column="installation_id", value=INSTALLATION_ID)
         .execute()
     )
 
-    assert users_data[1][0]["user_id"] == user_id
-    assert users_data[1][0]["installation_id"] == installation_id
-    assert users_data[1][0]["user_name"] == user_name
+    assert users_data[1][0]["user_id"] == USER_ID
+    assert users_data[1][0]["installation_id"] == INSTALLATION_ID
+    assert users_data[1][0]["user_name"] == USER_NAME
     # Should be selected since it's the only user -> used for account selected in website
     assert users_data[1][0]["is_selected"] is True
     assert (
@@ -297,38 +301,38 @@ async def test_install_uninstall() -> None:
     owners_data, _ = (
         supabase_manager.client.table(table_name="owners")
         .select("*")
-        .eq(column="owner_id", value=owner_id)
+        .eq(column="owner_id", value=OWNER_ID)
         .execute()
     )
-    assert owners_data[1][0]["owner_id"] == owner_id
+    assert owners_data[1][0]["owner_id"] == OWNER_ID
     assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
 
     # Check Installation Record
     installation_data, _ = (
         supabase_manager.client.table(table_name="installations")
         .select("*")
-        .eq(column="installation_id", value=installation_id)
+        .eq(column="installation_id", value=INSTALLATION_ID)
         .execute()
     )
 
-    assert installation_data[1][0]["installation_id"] == installation_id
-    assert installation_data[1][0]["owner_name"] == owner_name
-    assert installation_data[1][0]["owner_id"] == owner_id
-    assert installation_data[1][0]["owner_type"] == owner_type
+    assert installation_data[1][0]["installation_id"] == INSTALLATION_ID
+    assert installation_data[1][0]["owner_name"] == OWNER_NAME
+    assert installation_data[1][0]["owner_id"] == OWNER_ID
+    assert installation_data[1][0]["owner_type"] == OWNER_TYPE
     assert installation_data[1][0]["uninstalled_at"] is not None
 
     # Check Users Record
     users_data, _ = (
         supabase_manager.client.table(table_name="users")
         .select("*")
-        .eq(column="user_id", value=user_id)
-        .eq(column="installation_id", value=installation_id)
+        .eq(column="user_id", value=USER_ID)
+        .eq(column="installation_id", value=INSTALLATION_ID)
         .execute()
     )
 
-    assert users_data[1][0]["user_id"] == user_id
-    assert users_data[1][0]["installation_id"] == installation_id
-    assert users_data[1][0]["user_name"] == user_name
+    assert users_data[1][0]["user_id"] == USER_ID
+    assert users_data[1][0]["installation_id"] == INSTALLATION_ID
+    assert users_data[1][0]["user_name"] == USER_NAME
     # Should be selected since it's the only user -> used for account selected in website
     assert users_data[1][0]["is_selected"] is True
     assert (
