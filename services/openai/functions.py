@@ -60,9 +60,21 @@ TOKEN: dict[str, str] = {
     "description": "The github token used to authenticate requests to github",
 }
 
+
+# Assistant API sometime adds a token as an input which is the reason for catchall '*args and *kwargs'
+def why_modifying_diffs(why: str, *args: str, **kwargs: str) -> None:
+    """Assistant API function calling to explain why it's going to modify the diffs before actually modifying the diffs."""
+    print(f"\n\nWhy Agent Modifying diffs: {why}\n\n")
+
+
+WHY: dict[str, str] = {
+    "type": "string",
+    "description": "Reason for modifying this diff",
+}
+
 COMMIT_MULTIPLE_CHANGES_TO_REMOTE_BRANCH: shared_params.FunctionDefinition = {
     "name": "commit_multiple_changes_to_remote_branch",
-    "description": "Commits diffs to GitHub remote branch given the diffs, new_branch, owner, repo, comment_url, unique_issue_id, and token",
+    "description": "Commits diffs to GitHub remote branch given the diffs, new_branch, owner, repo, and token",
     "parameters": {
         "type": "object",
         "properties": {
@@ -81,9 +93,19 @@ COMMIT_MULTIPLE_CHANGES_TO_REMOTE_BRANCH: shared_params.FunctionDefinition = {
         ],
     },
 }
+WHY_MODIFYING_DIFFS: shared_params.FunctionDefinition = {
+    "name": "why_modifying_diffs",
+    "description": "Explain why are you modifying the diffs before you actually modify the diffs. Only argument is 'why' which is a string.",
+    "parameters": {
+        "type": "object",
+        "properties": {"why": WHY},
+        "required": ["why"],
+    },
+}
 
 # Define functions
 functions: dict[str, Any] = {
     "get_remote_file_content": get_remote_file_content,
     "commit_multiple_changes_to_remote_branch": commit_multiple_changes_to_remote_branch,
+    "why_modifying_diffs": why_modifying_diffs,
 }

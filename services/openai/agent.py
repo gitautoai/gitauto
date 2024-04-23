@@ -16,6 +16,7 @@ from services.openai.functions import (
     GET_REMOTE_FILE_CONTENT,
     functions,
     COMMIT_MULTIPLE_CHANGES_TO_REMOTE_BRANCH,
+    WHY_MODIFYING_DIFFS,
 )
 from services.openai.init import create_openai_client
 from services.openai.instructions import (
@@ -36,6 +37,7 @@ def create_assistant() -> Assistant:
             # {"type": "retrieval"},
             {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
             {"type": "function", "function": COMMIT_MULTIPLE_CHANGES_TO_REMOTE_BRANCH},
+            {"type": "function", "function": WHY_MODIFYING_DIFFS},
         ],
         model=OPENAI_MODEL_ID,
         timeout=TIMEOUT_IN_SECONDS,
@@ -168,10 +170,10 @@ def submit_message(
 
 def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> Run:
     """https://cookbook.openai.com/examples/assistants_api_overview_python"""
-    print("Run %s status before loop: %s", run_name, run.status)
+    print(f"Run {run_name} status before loop: { run.status}")
     client: OpenAI = create_openai_client()
     while run.status not in OPENAI_FINAL_STATUSES:
-        print("Run %s status during loop: %s", run_name, run.status)
+        print(f"Run {run_name} status during loop: {run.status}")
         run = client.beta.threads.runs.retrieve(
             thread_id=thread.id, run_id=run.id, timeout=TIMEOUT_IN_SECONDS
         )
@@ -196,7 +198,7 @@ def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> Run:
             except Exception as e:
                 raise ValueError(f"Error: {e}") from e
         time.sleep(0.5)
-    print("Run %s status after loop: %s", run_name, run.status)
+    print(f"Run {run_name} status after loop: {run.status}")
     return run
 
 
