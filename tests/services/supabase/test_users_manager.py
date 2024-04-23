@@ -33,16 +33,6 @@ from config import (
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
 SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
 
-dummy = """
-# Dummy data in each environment
-installations: installation_id = 47287862, owner_name="nikita_dummy", owner_type="U", owner_id=1
-Users: User Id = 66699290, installation_id = 47287862
-installations: installation_id = 48567750, owner_name="lalager_dummy", owner_type="O", owner_id=4
-Users: User Id = 66699290, installation_id = 48567750
-installations: installation_id = 48332126, owner_name="gitautoai_dummy", owner_type="O", owner_id=3
-issues: installation_id = 48332126, unique_issue_id="U/gitautoai/nextjs-website#52"
-"""
-
 
 def wipe_installation_owner_user_data() -> None:
     """Wipe all data from installations, owners, and users tables"""
