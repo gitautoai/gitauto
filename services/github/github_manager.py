@@ -142,6 +142,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     token: str = get_installation_access_token(installation_id=installation_id)
 
     owner: str = payload["repository"]["owner"]["login"]
+    owner_id: int = payload["repository"]["owner"]["id"]
     repo_name: str = payload["repository"]["name"]
     issue_number: int = payload["issue"]["number"]
     user_id: int = payload["sender"]["id"]
@@ -167,7 +168,11 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
 
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=user_id, installation_id=installation_id
+            user_id=user_id,
+            installation_id=installation_id,
+            user_name=user_name,
+            owner_id=owner_id,
+            owner_name=owner,
         )
     )
 
