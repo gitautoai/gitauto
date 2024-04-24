@@ -1,8 +1,6 @@
 # run this file locally with: python -m tests.services.supabase.test_gitauto_manager
 import os
-from config import (
-    OWNER_TYPE,
-)
+from config import OWNER_TYPE
 from services.supabase import SupabaseManager
 
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
