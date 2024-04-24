@@ -55,6 +55,6 @@ OWNER_ID = -1
 USER_ID = -1
 INSTALLATION_ID = -1
 OWNER_NAME = "installation-test"
-OWNER_TYPE = "O"
+OWNER_TYPE = "Organization"
 USER_NAME = "username-test"
 UNIQUE_ISSUE_ID = "O/gitautoai/test#1"
