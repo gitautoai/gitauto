@@ -270,8 +270,8 @@ def call_functions(run: Run, funcs: dict[str, Any], token: str) -> list[Any]:
             result: Any = func(**args)
             results.append((tool_call, result))
         except KeyError as e:
-            raise ValueError(f"Function not found: {e}") from e
+            raise ValueError(f"call_functions Function not found: {e}") from e
         except Exception as e:
-            raise ValueError(f"Error: {e}") from e
+            raise ValueError(f"call_functions Error: {e}") from e
 
     return results
