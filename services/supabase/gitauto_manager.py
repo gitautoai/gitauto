@@ -12,19 +12,24 @@ class GitAutoAgentManager:
     def __init__(self, client: Client) -> None:
         self.client = client
 
-    def complete_user_request(self, user_id: int, installation_id: int) -> None:
-        """Set users usage request to completed"""
+    def complete_and_update_usage_record(
+        self,
+        usage_record_id: int,
+        token_input: int,
+        token_output: int,
+    ) -> None:
+        """Add agent information to usage record and set is_completed to True."""
         try:
             self.client.table(table_name="usage").update(
                 json={
                     "is_completed": True,
+                    "token_input": token_input,
+                    "token_output": token_output,
                 }
-            ).eq(column="user_id", value=user_id).eq(
-                column="installation_id", value=installation_id
-            ).execute()
+            ).eq(column="id", value=usage_record_id).execute()
         except Exception as e:
             logging.error(
-                msg=f"complete_user_request user_id {user_id} installation_id {installation_id} Error: {e}"
+                msg=f"complete_and_update_usage_record usage_table_id {usage_record_id} Error: {e}"
             )
 
     def create_installation(
@@ -104,7 +109,8 @@ class GitAutoAgentManager:
 
     def create_user_request(
         self, user_id: int, installation_id: int, unique_issue_id: str
-    ) -> None:
+    ) -> int:
+        """Creates record in usage table for this user and issue."""
         try:
             # If issue doesn't exist, create one
             data, _ = (
@@ -122,17 +128,23 @@ class GitAutoAgentManager:
                     }
                 ).execute()
             # Add user request to usage table
-            self.client.table(table_name="usage").insert(
-                json={
-                    "user_id": user_id,
-                    "installation_id": installation_id,
-                    "unique_issue_id": unique_issue_id,
-                }
-            ).execute()
+            data, _ = (
+                self.client.table(table_name="usage")
+                .insert(
+                    json={
+                        "user_id": user_id,
+                        "installation_id": installation_id,
+                        "unique_issue_id": unique_issue_id,
+                    }
+                )
+                .execute()
+            )
+            return data[1][0]["id"]
         except Exception as e:
             logging.error(
                 msg=f"create_user_request user_id: {user_id} installation_id: {installation_id} Error: {e}"
             )
+            raise e
 
     def delete_installation(self, installation_id: int) -> None:
         """We don't cancel a subscription associated with this installation id since paid users sometimes mistakenly uninstall our app"""

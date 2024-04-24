@@ -6,6 +6,7 @@ import logging
 from services.stripe.customer import (
     get_subscription,
     get_request_count_from_product_id_metadata,
+    subscribe_to_free_plan,
 )
 from config import (
     STRIPE_FREE_TIER_PRICE_ID,
@@ -77,6 +78,10 @@ class UsersManager:
         subscription: stripe.ListObject[stripe.Subscription],
         user_id: int,
         installation_id: int,
+        customer_id: str,
+        user_name: str,
+        owner_id: int,
+        owner_name: str,
     ) -> tuple[int, int, str]:
         """Parsing stripe subscription object to get the start date, end date and product id of either a paid or free tier customer subscription"""
         try:
@@ -118,7 +123,26 @@ class UsersManager:
                 or free_tier_product_id == ""
             ):
                 # Customer should alawys have at least a free tier subscription, set by this codebase on installation webhook from github
-                raise ValueError("No active stripe subscription found.")
+                subscribe_to_free_plan(
+                    customer_id=customer_id,
+                    user_id=user_id,
+                    user_name=user_name,
+                    owner_id=owner_id,
+                    owner_name=owner_name,
+                    installation_id=installation_id,
+                )
+                subscription = get_subscription(
+                    customer_id=customer_id,
+                )
+                return self.parse_subscription_object(
+                    subscription=subscription,
+                    user_id=user_id,
+                    installation_id=installation_id,
+                    customer_id=customer_id,
+                    user_name=user_name,
+                    owner_id=owner_id,
+                    owner_name=owner_name,
+                )
             # Return from Free Tier Subscription if there is no paid subscription object
             return free_tier_start_date, free_tier_end_date, free_tier_product_id
         except Exception as e:
@@ -126,7 +150,12 @@ class UsersManager:
             raise
 
     def get_how_many_requests_left_and_cycle(
-        self, user_id: int, installation_id: int
+        self,
+        user_id: int,
+        installation_id: int,
+        user_name: str,
+        owner_id: int,
+        owner_name: str,
     ) -> tuple[int, int, datetime.datetime]:
         try:
             data, _ = (
@@ -135,49 +164,62 @@ class UsersManager:
                 .eq(column="installation_id", value=installation_id)
                 .execute()
             )
+            if (
+                not data
+                or not data[1]
+                or not data[1][0]
+                or not data[1][0]["owners"]
+                or not data[1][0]["owners"]["stripe_customer_id"]
+                or not isinstance(data[1][0]["owners"]["stripe_customer_id"], str)
+            ):
+                logging.error(
+                    "No Stripe Customer ID found for installation %s user %s. This has to due with fetching from supabase.",
+                    installation_id,
+                    user_id,
+                )
+                raise
+
             stripe_customer_id: str = data[1][0]["owners"]["stripe_customer_id"]
-            if stripe_customer_id:
-                subscription = get_subscription(
-                    customer_id=stripe_customer_id,
-                )
 
-                start_date_seconds, end_date_seconds, product_id = (
-                    self.parse_subscription_object(
-                        subscription=subscription,
-                        user_id=user_id,
-                        installation_id=installation_id,
-                    )
-                )
-
-                request_count = get_request_count_from_product_id_metadata(product_id)
-
-                start_date = datetime.datetime.fromtimestamp(start_date_seconds)
-                end_date = datetime.datetime.fromtimestamp(end_date_seconds)
-
-                # Calculate how many completed requests for this user account
-                data, _ = (
-                    self.client.table("usage")
-                    .select("*")
-                    .gt("created_at", start_date)
-                    .eq("user_id", user_id)
-                    .eq("installation_id", installation_id)
-                    .eq("is_completed ", True)
-                    .execute()
-                )
-                requests_left = request_count - len(data[1])
-
-                return (
-                    requests_left,
-                    request_count,
-                    end_date,
-                )
-
-            logging.error(
-                "No Stripe Customer ID found for installation %s user %s",
-                installation_id,
-                user_id,
+            subscription = get_subscription(
+                customer_id=stripe_customer_id,
             )
-            raise
+
+            start_date_seconds, end_date_seconds, product_id = (
+                self.parse_subscription_object(
+                    subscription=subscription,
+                    user_id=user_id,
+                    installation_id=installation_id,
+                    customer_id=stripe_customer_id,
+                    user_name=user_name,
+                    owner_id=owner_id,
+                    owner_name=owner_name,
+                )
+            )
+
+            request_count = get_request_count_from_product_id_metadata(product_id)
+
+            start_date = datetime.datetime.fromtimestamp(start_date_seconds)
+            end_date = datetime.datetime.fromtimestamp(end_date_seconds)
+
+            # Calculate how many completed requests for this user account
+            data, _ = (
+                self.client.table("usage")
+                .select("*")
+                .gt("created_at", start_date)
+                .eq("user_id", user_id)
+                .eq("installation_id", installation_id)
+                .eq("is_completed ", True)
+                .execute()
+            )
+            requests_left = request_count - len(data[1])
+
+            return (
+                requests_left,
+                request_count,
+                end_date,
+            )
+
         except Exception as err:
             logging.error(f"get_how_many_requests_left_and_cycle {err}")
             # Send back valid values and do not raise to give user benefit of the doubt

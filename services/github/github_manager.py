@@ -169,6 +169,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     token: str = get_installation_access_token(installation_id=installation_id)
 
     owner: str = payload["repository"]["owner"]["login"]
+    owner_id: int = payload["repository"]["owner"]["id"]
     repo_name: str = payload["repository"]["name"]
     issue_number: int = payload["issue"]["number"]
     user_id: int = payload["sender"]["id"]
@@ -194,7 +195,11 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
 
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=user_id, installation_id=installation_id
+            user_id=user_id,
+            installation_id=installation_id,
+            user_name=user_name,
+            owner_id=owner_id,
+            owner_name=owner,
         )
     )
 
@@ -287,6 +292,7 @@ def create_pull_request(
             comment_url=comment_url,
             unique_issue_id=unique_issue_id,
             token=token,
+            which_function=create_pull_request.__name__,
         )
 
 
@@ -313,6 +319,7 @@ def create_remote_branch(
             comment_url=comment_url,
             unique_issue_id=unique_issue_id,
             token=token,
+            which_function=create_remote_branch.__name__,
         )
 
 
@@ -386,6 +393,7 @@ def get_latest_remote_commit_sha(
             comment_url=comment_url,
             unique_issue_id=unique_issue_id,
             token=token,
+            which_function=get_latest_remote_commit_sha.__name__,
         )
 
 
@@ -438,6 +446,7 @@ def get_remote_file_tree(
             comment_url=comment_url,
             unique_issue_id=unique_issue_id,
             token=token,
+            which_function=get_remote_file_tree.__name__,
         )
 
 
@@ -481,12 +490,18 @@ def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
 
 
 def update_comment_for_raised_errors(
-    error: Any, comment_url: str, unique_issue_id: str, token: str
+    error: Any, comment_url: str, unique_issue_id: str, token: str, which_function: str
 ) -> dict[str, Any]:
     """Update the comment on issue with an error message, set progress to 100, and raise the error."""
     body = "Sorry, we have an error. Please try again."
     try:
         if isinstance(error, requests.exceptions.HTTPError):
+            logging.error(
+                "%s HTTP Error: %s - %s",
+                which_function,
+                error.response.status_code,
+                error.response.text,
+            )
             if (
                 error.response.status_code == 422
                 and error["message"]
@@ -513,12 +528,15 @@ def update_comment_for_raised_errors(
                 )
             else:
                 logging.error(
-                    msg=f"HTTP Error: {error.response.status_code} - {error.response.text}"
+                    "%s HTTP Error: %s - %s",
+                    which_function,
+                    error.response.status_code,
+                    error.response.text,
                 )
         else:
-            logging.error(msg=f"Error: {error}")
+            logging.error("%s Error: %s", which_function, error)
     except Exception as e:
-        logging.error(msg=f"update_comment_for_raised_errors Error: {e}")
+        logging.error("%s Error: %s", which_function, e)
     update_comment(comment_url=comment_url, token=token, body=body)
 
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)

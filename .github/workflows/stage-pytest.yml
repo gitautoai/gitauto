@@ -1,10 +1,11 @@
-name: Stage PyTest Workflow
+name: PyTest Workflow
 
 on:
   push:
     branches:
-      - 'stage*'
-
+      - '*'
+      - '!main'
+      
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,7 +20,7 @@ jobs:
 
     - name: Install pytest
       run: |
-        pip install pytest pytest-cov
+        pip install pytest pytest-cov pytest-asyncio
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Set PYTHONPATH
