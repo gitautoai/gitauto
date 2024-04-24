@@ -134,7 +134,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/30/?title=Progress&width=800)\nJust getting started!",
+        body="![X](https://progress-bar.dev/20/?title=Progress&width=800)\nJust getting started!",
     )
 
     # Create a remote branch
@@ -178,7 +178,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
+        body="![X](https://progress-bar.dev/90/?title=Progress&width=800)\nAlmost there!",
     )
 
     # Create a pull request to the base branch

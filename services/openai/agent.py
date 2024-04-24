@@ -174,7 +174,7 @@ def run_assistant(
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/70/?title=Progress&width=800)\n70% there! We're reviewing your new code changes!",
+        body="![X](https://progress-bar.dev/70/?title=Progress&width=800)\n80% there! We're reviewing your new code changes!",
     )
 
     output_data += json.dumps(output)
