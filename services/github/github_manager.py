@@ -60,9 +60,9 @@ def commit_multiple_changes_to_remote_branch(
     token: str,
 ) -> None:
     """Called from assistants api to commit multiple changes to a new branch."""
-    print(diffs)
     # Commit the changes to the new remote branch
     for diff in diffs:
+        # TODO KAN-191: Compile Files and call GPT if it fails
         file_path: str = extract_file_name(diff_text=diff)
         print(
             f"{time.strftime('%H:%M:%S', time.localtime())} File path: {file_path}.\n"
