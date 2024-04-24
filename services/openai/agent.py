@@ -98,7 +98,7 @@ def run_assistant(
     comment_url: str,
     token: str,
     new_branch: str,
-) -> tuple[int, int, list[str]]:
+) -> tuple[int, int]:
     # Create a message in the thread
     data: dict[str, str | list[str]] = {
         "owner": owner,
@@ -183,7 +183,7 @@ def run_assistant(
     token_input = int(len(input_data) / 4)
     token_output = int(len(output_data) / 4)
 
-    return token_input, token_output, output
+    return token_input, token_output
 
 
 def submit_message(

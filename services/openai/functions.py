@@ -74,7 +74,7 @@ WHY: dict[str, str] = {
 
 COMMIT_MULTIPLE_CHANGES_TO_REMOTE_BRANCH: shared_params.FunctionDefinition = {
     "name": "commit_multiple_changes_to_remote_branch",
-    "description": "Commits diffs to GitHub remote branch given the diffs, new_branch, owner, repo, and token",
+    "description": "Commits diffs to GitHub remote branch. Inputs are the array diffs, new_branch, owner, repo, and token",
     "parameters": {
         "type": "object",
         "properties": {

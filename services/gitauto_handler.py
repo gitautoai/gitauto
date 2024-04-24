@@ -12,7 +12,6 @@ from config import (
     ISSUE_NUMBER_FORMAT,
 )
 from services.github.github_manager import (
-    commit_changes_to_remote_branch,
     create_pull_request,
     create_remote_branch,
     get_installation_access_token,
@@ -31,7 +30,6 @@ from services.github.github_types import (
 from services.openai.chat import write_pr_body
 from services.openai.agent import run_assistant
 from services.supabase import SupabaseManager
-from utils.file_manager import extract_file_name
 from utils.text_copy import pull_request_completed, request_limit_reached
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
@@ -163,25 +161,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         f"{time.strftime('%H:%M:%S', time.localtime())} Remote branch created: {new_branch}.\n"
     )
 
-    token_input, token_output, diffs = run_assistant(
-        file_paths=file_paths,
-        issue_title=issue_title,
-        issue_body=issue_body,
-        issue_comments=issue_comments,
-        owner=owner,
-        pr_body=pr_body,
-        ref=base_branch,
-        repo=repo_name,
-        token=token,
-    )
-
-    update_comment(
-        comment_url=comment_url,
-        token=token,
-        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
-    )
-
-    run_assistant(
+    token_input, token_output = run_assistant(
         file_paths=file_paths,
         issue_title=issue_title,
         issue_body=issue_body,
