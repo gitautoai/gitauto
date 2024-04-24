@@ -127,7 +127,7 @@ def run_assistant(
     output_data += json.dumps(output)
 
     # One token is ~4 characters of text https://platform.openai.com/tokenizer
-    token_input = int(len(issue_input) / 4)
+    token_input = int(len(input_data) / 4)
     token_output = int(len(output_data) / 4)
 
     return token_input, token_output, output
