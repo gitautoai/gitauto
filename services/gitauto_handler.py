@@ -231,6 +231,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         usage_record_id=usage_record_id,
         token_input=token_input,
         token_output=token_output,
-        total_time=int(end_time - current_time),
+        total_seconds=int(end_time - current_time),
     )
     return
