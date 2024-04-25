@@ -27,7 +27,7 @@ supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_K
 async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
     """Creates installation records on GitAuto APP installation"""
     installation_id: int = payload["installation"]["id"]
-    owner_type: str = payload["installation"]["account"]["type"][0]
+    owner_type: str = payload["installation"]["account"]["type"]
     owner_name: str = payload["installation"]["account"]["login"]
     owner_id: int = payload["installation"]["account"]["id"]
     user_id: int = payload["sender"]["id"]
@@ -111,6 +111,6 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             if not match:
                 return
             issue_number = match.group(1)
-            owner_type = payload["repository"]["owner"]["type"][0]
+            owner_type = payload["repository"]["owner"]["type"]
             unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
             supabase_manager.set_issue_to_merged(unique_issue_id=unique_issue_id)

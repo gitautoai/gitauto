@@ -50,7 +50,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     issue_number: int = issue["number"]
     installation_id: int = payload["installation"]["id"]
     repo: RepositoryInfo = payload["repository"]
-    owner_type = payload["repository"]["owner"]["type"][0]
+    owner_type = payload["repository"]["owner"]["type"]
     owner: str = repo["owner"]["login"]
     owner_id: int = repo["owner"]["id"]
     repo_name: str = repo["name"]
