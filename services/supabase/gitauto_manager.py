@@ -115,7 +115,7 @@ class GitAutoAgentManager:
             # If issue doesn't exist, create one
             data, _ = (
                 self.client.table(table_name="issues")
-                .select("progress")
+                .select("*")
                 .eq(column="unique_id", value=unique_issue_id)
                 .execute()
             )
@@ -123,7 +123,6 @@ class GitAutoAgentManager:
                 self.client.table(table_name="issues").insert(
                     json={
                         "unique_id": unique_issue_id,
-                        "progress": 100,
                         "installation_id": installation_id,
                     }
                 ).execute()
@@ -159,20 +158,6 @@ class GitAutoAgentManager:
             logging.error(
                 msg=f"delete_installation installation_id: {installation_id} Error: {e}"
             )
-
-    def is_issue_in_progress(self, unique_issue_id: str) -> bool:
-        try:
-            data, _ = (
-                self.client.table(table_name="issues")
-                .select("progress")
-                .eq(column="unique_id", value=unique_issue_id)
-                .execute()
-            )
-            if data[1][0]["progress"] == 100:
-                return False
-            return True
-        except Exception as e:
-            logging.error(msg=f"Start Progress Error: {e}")
 
     def is_users_first_issue(self, user_id: int, installation_id: int) -> bool:
         """Checks if it's the users first issue"""
@@ -213,12 +198,3 @@ class GitAutoAgentManager:
             )
         except Exception as e:
             logging.error(msg=f"Increment Request Count Error: {e}")
-
-    def update_progress(self, unique_issue_id: str, progress: int) -> None:
-        """Update the progress of generating the PR in a comment of the issue."""
-        try:
-            self.client.table(table_name="issues").update(
-                json={"progress": progress}
-            ).eq(column="unique_id", value=unique_issue_id).execute()
-        except Exception as e:
-            logging.error(msg=f"Update Progress Error: {e}")

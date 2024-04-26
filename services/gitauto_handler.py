@@ -38,7 +38,7 @@ supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_K
 
 
 async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> None:
-    """Core functionality to create comments on issue, create PRs, and update progress."""
+    """Core functionality to create and update comments on issue, call agent, and create PR."""
     # Extract label and validate it
     if trigger_type == "label" and payload["label"]["name"] != PRODUCT_ID:
         return
@@ -95,9 +95,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token=token,
     )
 
-    # Start progress and check if current issue is already in progress from another invocation
-    if supabase_manager.is_issue_in_progress(unique_issue_id=unique_issue_id):
-        return
     comment_url = create_comment(
         owner=owner,
         repo=repo_name,
