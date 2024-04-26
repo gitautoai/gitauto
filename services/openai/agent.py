@@ -10,12 +10,12 @@ from openai.types.beta import Assistant, Thread
 from openai.types.beta.threads import Run, ThreadMessage, MessageContentText
 from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
 
+
 # Local imports
 from config import OPENAI_FINAL_STATUSES, OPENAI_MODEL_ID, TIMEOUT_IN_SECONDS
 from services.openai.functions import (
     GET_REMOTE_FILE_CONTENT,
     functions,
-    COMMIT_MULTIPLE_CHANGES_TO_REMOTE_BRANCH,
     WHY_MODIFYING_DIFFS,
 )
 from services.openai.init import create_openai_client
@@ -23,8 +23,17 @@ from services.openai.instructions import (
     SYSTEM_INSTRUCTION_FOR_AGENT,
     SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS,
 )
-from utils.file_manager import clean_specific_lines, correct_hunk_headers, split_diffs
-from services.github.github_manager import update_comment
+from services.github.github_manager import (
+    update_comment,
+    commit_changes_to_remote_branch,
+)
+
+from utils.file_manager import (
+    clean_specific_lines,
+    correct_hunk_headers,
+    split_diffs,
+    extract_file_name,
+)
 
 
 def create_assistant() -> tuple[Assistant, str]:
@@ -49,10 +58,6 @@ def create_assistant() -> tuple[Assistant, str]:
                 # {"type": "code_interpreter"},
                 # {"type": "retrieval"},
                 {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
-                {
-                    "type": "function",
-                    "function": COMMIT_MULTIPLE_CHANGES_TO_REMOTE_BRANCH,
-                },
                 {"type": "function", "function": WHY_MODIFYING_DIFFS},
             ],
             model=OPENAI_MODEL_ID,
@@ -168,6 +173,48 @@ def run_assistant(
     self_review_run, self_review_input_output_data = wait_on_run(
         run=self_review_run, thread=thread, token=token, run_name="review diffs"
     )
+
+    # Get the response
+    messages: SyncCursorPage[ThreadMessage] = get_response(thread=thread)
+    messages_list = list(messages)
+    if not messages_list:
+        raise ValueError("No messages in the list.")
+    latest_message: ThreadMessage = messages_list[0]
+    if isinstance(latest_message.content[0], MessageContentText):
+        value: str = latest_message.content[0].text.value
+        output_data += json.dumps(latest_message.content[0].text.value)
+    else:
+        raise ValueError("Last message content is not text.")
+    print(f"Last message: {value}\n")
+
+    # Clean the diff text and split it
+    diff: str = clean_specific_lines(text=value)
+    text_diffs: list[str] = split_diffs(diff_text=diff)
+    output: list[str] = []
+    for diff in text_diffs:
+        diff = correct_hunk_headers(diff_text=diff)
+        print(f"Diff: {repr(diff)}\n")
+        output.append(diff)
+
+    # Commit the changes to the new remote branch
+    for diff in output:
+        file_path: str = extract_file_name(diff_text=diff)
+        print(
+            f"{time.strftime('%H:%M:%S', time.localtime())} File path: {file_path}.\n"
+        )
+        commit_changes_to_remote_branch(
+            branch=new_branch,
+            commit_message=f"Update {file_path}",
+            diff_text=diff,
+            file_path=file_path,
+            owner=owner,
+            repo=repo,
+            token=token,
+        )
+        print(
+            f"{time.strftime('%H:%M:%S', time.localtime())} Changes committed to {new_branch}.\n"
+        )
+
     input_data += self_review_input_output_data
     output_data = self_review_input_output_data
 

@@ -63,8 +63,8 @@ The format of the response should be a unified diff. The diff should be in the f
 SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS = """
 Please review the diffs you created from your previous response.
 Ensure that you have followed the steps and instructions outlined in pr_body that was pass in the first message of this thread.
-If everything is correct, please commit the changes.
-If there are any issues, please use why_modifying_diffs function to explain why you're modifying it, then fix the diff. Lastly, commit the changes using commit_multiple_changes_to_remote_branch function.
+If everything is correct, return all the diffs in the unified diff format.
+If there are any issues, please use why_modifying_diffs function to explain why you're modifying it. Then return all the diffs in the unified diff format with the new changes.
 """
 
 SYSTEM_INSTRUCTION_FOR_WRITING_PR = '''
