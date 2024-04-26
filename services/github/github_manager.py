@@ -370,6 +370,24 @@ def get_latest_remote_commit_sha(
         )
 
 
+def get_organization_members(owner_name: str, token: str):
+    """Get members of an organization https://docs.github.com/en/rest/orgs/members?apiVersion=2022-11-28#list-organization-members"""
+    try:
+        response = requests.get(
+            url=f"https://api.github.com/orgs/{owner_name}/members",
+            headers=create_headers(token=token),
+            timeout=TIMEOUT_IN_SECONDS,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logging.error(
+            msg=f"get_organization_members HTTP Error: {e.response.status_code} - {e.response.text}"
+        )
+    except Exception as e:
+        logging.error(msg=f"get_organization_members Error: {e}")
+
+
 def get_remote_file_content(
     file_path: str,  # Ex) 'src/main.py'
     owner: str,
@@ -421,6 +439,24 @@ def get_remote_file_tree(
             token=token,
             which_function=get_remote_file_tree.__name__,
         )
+
+
+def get_user_email(user_name: str, token: str):
+    """Get the email of a GitHub user. https://docs.github.com/en/rest/users/users?apiVersion=2022-11-28#get-a-user"""
+    try:
+        response: requests.Response = requests.get(
+            url=f"{GITHUB_API_URL}/user/{user_name}",
+            headers=create_headers(token=token),
+            timeout=TIMEOUT_IN_SECONDS,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logging.error(
+            msg=f"get_user_email HTTP Error: {e.response.status_code} - {e.response.text}"
+        )
+    except Exception as e:
+        logging.error(msg=f"get_user_email Error: {e}")
 
 
 async def verify_webhook_signature(request: Request, secret: str) -> None:

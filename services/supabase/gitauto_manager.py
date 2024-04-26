@@ -3,6 +3,7 @@
 import datetime
 import logging
 from supabase import Client
+from services.github.github_manager import get_installation_access_token, get_organization_members, get_user_email
 from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 
 
@@ -80,6 +81,15 @@ class GitAutoAgentManager:
                 }
             ).execute()
 
+            self.create_users_on_installation(
+                installation_id=installation_id,
+                owner_id=owner_id,
+                owner_type=owner_type,
+                owner_name=owner_name,
+                user_id=user_id,
+                user_name=user_name,
+            )
+
             # Create User, and set is_selected to True if user has no selected account
             is_selected = True
             data, _ = (
@@ -106,6 +116,40 @@ class GitAutoAgentManager:
             )
             # Raise as installation flow was not successful
             raise RuntimeError("Installation flow was not successful")
+
+    def create_users_on_installation(self,
+        installation_id: int,
+        owner_id: int,
+        owner_type: str,
+        owner_name: str,
+        user_id: int,
+        user_name: str,
+    ):
+        token = get_installation_access_token(installation_id=installation_id)
+        """Create users and get their emails depending on the owner type(user or organization)"""
+        if(owner_type === "Organization"):
+            members = get_organization_members(owner_name=owner_name, token=token)
+            for member in members:
+                email = get_user_email(user_name=user_name, token=token)
+                is_selected = user_id == member["id"]
+                self.client.table(table_name="users").insert(
+                    json={
+                        "user_id": member["id"],
+                        "user_name": member["login"],
+                        "installation_id": installation_id,
+                        "is_selected": is_selected,
+                    }
+                ).execute()
+        # Is just a user
+        else:
+            email = get_user_email(user_name=user_name, token=token)
+            self.client.table(table_name="users").insert(
+                json={
+                    "user_id": member["id"],
+                    "user_name": member["login"],
+                    "installation_id": installation_id,
+                    "is_selected": True,
+                }
 
     def create_user_request(
         self, user_id: int, installation_id: int, unique_issue_id: str
