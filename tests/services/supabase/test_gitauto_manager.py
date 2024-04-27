@@ -62,6 +62,7 @@ def test_create_update_user_request_works() -> None:
             usage_record_id=usage_record_id,
             token_input=1000,
             token_output=100,
+            total_seconds=100,
         )
         is None
     )
@@ -118,6 +119,7 @@ def test_complete_and_update_usage_record_only_updates_one_record() -> None:
             usage_record_id=usage_record_id,
             token_input=1000,
             token_output=100,
+            total_seconds=100,
         )
         is None
     )
