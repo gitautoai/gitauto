@@ -2,6 +2,7 @@
 import json
 import time
 from typing import Any
+import difflib
 
 # Third-party imports
 from openai import OpenAI
@@ -149,11 +150,10 @@ def run_assistant(
     # Clean the diff text and split it
     diff: str = clean_specific_lines(text=value)
     text_diffs: list[str] = split_diffs(diff_text=diff)
-    output: list[str] = []
+    first_run_output: list[str] = []
     for diff in text_diffs:
         diff = correct_hunk_headers(diff_text=diff)
-        print(f"Diff: {repr(diff)}\n")
-        output.append(diff)
+        first_run_output.append(diff)
 
     update_comment(
         comment_url=comment_url,
@@ -166,7 +166,7 @@ def run_assistant(
         client,
         assistant,
         thread,
-        SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS + json.dumps(output),
+        SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS + json.dumps(first_run_output),
     )
     input_data += self_review_input_data
 
@@ -191,10 +191,18 @@ def run_assistant(
     diff: str = clean_specific_lines(text=value)
     text_diffs: list[str] = split_diffs(diff_text=diff)
     output: list[str] = []
+    i = 0
     for diff in text_diffs:
         diff = correct_hunk_headers(diff_text=diff)
-        print(f"Diff: {repr(diff)}\n")
+        if i < len(first_run_output):
+            difference_from_first = "\n".join(
+                difflib.unified_diff(
+                    first_run_output[i].splitlines(), diff.splitlines(), lineterm=""
+                )
+            )
+            print(f"Difference from first: {difference_from_first}\n")
         output.append(diff)
+        i += 1
 
     # Commit the changes to the new remote branch
     for diff in output:
