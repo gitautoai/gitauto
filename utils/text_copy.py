@@ -18,3 +18,7 @@ def request_issue_comment(requests_left: int, end_date: datetime.datetime):
     if requests_left == 1:
         return f"\n\nYou have 1 request left in this cycle which refreshes on {end_date}.\nIf you have any questions or concerns, please contact us at [info@gitauto.ai](mailto:info@gitauto.ai)."
     return f"\n\nYou have {requests_left} requests left in this cycle which refreshes on {end_date}.\nIf you have any questions or concerns, please contact us at [info@gitauto.ai](mailto:info@gitauto.ai)."
+
+
+UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY = "Sorry, we have an error. Please try again.\n\nHave feedback or need help?\n[info@gitauto.ai](mailto:info@gitauto.ai)"
+UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE = "No changes were detected. Please add more details to the issue and try again.\n\nHave feedback or need help?\n[info@gitauto.ai](mailto:info@gitauto.ai)"
