@@ -98,9 +98,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token=token,
     )
 
-    # Start progress and check if current issue is already in progress from another invocation
-    if supabase_manager.is_issue_in_progress(unique_issue_id=unique_issue_id):
-        return
     comment_url = create_comment(
         owner=owner,
         repo=repo_name,

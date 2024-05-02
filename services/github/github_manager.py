@@ -470,7 +470,7 @@ def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
 def update_comment_for_raised_errors(
     error: Any, comment_url: str, unique_issue_id: str, token: str, which_function: str
 ) -> dict[str, Any]:
-    """Update the comment on issue with an error message, set progress to 100, and raise the error."""
+    """Update the comment on issue with an error message and raise the error."""
     body = UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY
     try:
         if isinstance(error, requests.exceptions.HTTPError):
@@ -515,6 +515,4 @@ def update_comment_for_raised_errors(
         logging.error("%s Error: %s", which_function, e)
     update_comment(comment_url=comment_url, token=token, body=body)
 
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=100)
     raise RuntimeError("Error occurred")

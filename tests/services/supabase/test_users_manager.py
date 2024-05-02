@@ -127,7 +127,6 @@ def test_how_many_requests_left() -> None:
         json={
             "installation_id": INSTALLATION_ID,
             "unique_id": UNIQUE_ISSUE_ID,
-            "progress": 100,
         }
     ).execute()
     for _ in range(1, 6):
