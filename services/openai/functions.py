@@ -7,7 +7,6 @@ from openai.types import shared_params
 
 # Local imports
 from services.github.github_manager import (
-    commit_multiple_changes_to_remote_branch,
     get_remote_file_content,
 )
 
@@ -44,9 +43,8 @@ GET_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
 }
 
 
-# Assistant API sometime adds a token as an input which is the reason for catchall '*args and *kwargs'
 def why_modifying_diffs(why: str, *args: str, **kwargs: str) -> None:
-    """Assistant API function calling to explain why it's going to modify the diffs before actually modifying the diffs."""
+    """Assistant API function calling to explain why it's going to modify the diffs before actually modifying the diffs. Have inputs '*args and *kwargs' as Assistant API sometimes adds a token as an input."""
     print(f"\n\nWhy Agent Modifying diffs: {why}\n\n")
 
 

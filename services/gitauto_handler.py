@@ -3,6 +3,7 @@ import json
 import time
 from uuid import uuid4
 
+
 # Local imports
 from config import (
     PRODUCT_ID,
@@ -37,6 +38,8 @@ supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_K
 
 async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> None:
     """Core functionality to create comments on issue, create PRs, and update progress."""
+    current_time = time.time()
+
     # Extract label and validate it
     if trigger_type == "label" and payload["label"]["name"] != PRODUCT_ID:
         return
@@ -48,7 +51,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     issue_number: int = issue["number"]
     installation_id: int = payload["installation"]["id"]
     repo: RepositoryInfo = payload["repository"]
-    owner_type = payload["repository"]["owner"]["type"][0]
+    owner_type = payload["repository"]["owner"]["type"]
     owner: str = repo["owner"]["login"]
     owner_id: int = repo["owner"]["id"]
     repo_name: str = repo["name"]
@@ -93,9 +96,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token=token,
     )
 
-    # Start progress and check if current issue is already in progress from another invocation
-    if supabase_manager.is_issue_in_progress(unique_issue_id=unique_issue_id):
-        return
     comment_url = create_comment(
         owner=owner,
         repo=repo_name,
@@ -209,9 +209,11 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         body=pull_request_completed(pull_request_url=pull_request_url),
     )
 
+    end_time = time.time()
     supabase_manager.complete_and_update_usage_record(
         usage_record_id=usage_record_id,
         token_input=token_input,
         token_output=token_output,
+        total_seconds=int(end_time - current_time),
     )
     return

@@ -26,8 +26,15 @@ from config import (
 from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload
 from services.supabase import SupabaseManager
 
-from utils.file_manager import apply_patch, extract_file_name
-from utils.text_copy import request_issue_comment, request_limit_reached
+from utils.file_manager import apply_patch
+from utils.text_copy import (
+    UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
+    UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,
+    request_issue_comment,
+    request_limit_reached,
+)
+
+from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 
 def add_reaction_to_issue(
@@ -492,8 +499,8 @@ def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
 def update_comment_for_raised_errors(
     error: Any, comment_url: str, unique_issue_id: str, token: str, which_function: str
 ) -> dict[str, Any]:
-    """Update the comment on issue with an error message, set progress to 100, and raise the error."""
-    body = "Sorry, we have an error. Please try again."
+    """Update the comment on issue with an error message and raise the error."""
+    body = UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY
     try:
         if isinstance(error, requests.exceptions.HTTPError):
             logging.error(
@@ -523,9 +530,7 @@ def update_comment_for_raised_errors(
                     )
                 )
             ):
-                body = (
-                    "No changes were detected. Please add more details to the issue and try again.",
-                )
+                body = UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE
             else:
                 logging.error(
                     "%s HTTP Error: %s - %s",
@@ -539,6 +544,4 @@ def update_comment_for_raised_errors(
         logging.error("%s Error: %s", which_function, e)
     update_comment(comment_url=comment_url, token=token, body=body)
 
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-    supabase_manager.update_progress(unique_issue_id=unique_issue_id, progress=100)
     raise RuntimeError("Error occurred")

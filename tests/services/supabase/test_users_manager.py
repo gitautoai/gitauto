@@ -84,6 +84,7 @@ def test_create_and_update_user_request_works() -> None:
             usage_record_id=usage_record_id,
             token_input=1000,
             token_output=100,
+            total_seconds=100,
         )
         is None
     )
@@ -126,7 +127,6 @@ def test_how_many_requests_left() -> None:
         json={
             "installation_id": INSTALLATION_ID,
             "unique_id": UNIQUE_ISSUE_ID,
-            "progress": 100,
         }
     ).execute()
     for _ in range(1, 6):

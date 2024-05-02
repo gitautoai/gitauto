@@ -1,6 +1,6 @@
 # run this file locally with: python -m tests.services.supabase.test_gitauto_manager
 import os
-
+from config import OWNER_TYPE
 from services.supabase import SupabaseManager
 
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -40,7 +40,7 @@ def test_create_update_user_request_works() -> None:
     # insert data into the db -> create installation
     supabase_manager.create_installation(
         installation_id=installation_id,
-        owner_type="O",
+        owner_type=OWNER_TYPE,
         owner_name="gitautoai",
         owner_id=-1,
         user_id=user_id,
@@ -62,6 +62,7 @@ def test_create_update_user_request_works() -> None:
             usage_record_id=usage_record_id,
             token_input=1000,
             token_output=100,
+            total_seconds=100,
         )
         is None
     )
@@ -87,7 +88,7 @@ def test_complete_and_update_usage_record_only_updates_one_record() -> None:
     # insert data into the db -> create installation
     supabase_manager.create_installation(
         installation_id=installation_id,
-        owner_type="O",
+        owner_type=OWNER_TYPE,
         owner_name="gitautoai",
         owner_id=-1,
         user_id=user_id,
@@ -118,6 +119,7 @@ def test_complete_and_update_usage_record_only_updates_one_record() -> None:
             usage_record_id=usage_record_id,
             token_input=1000,
             token_output=100,
+            total_seconds=100,
         )
         is None
     )
