@@ -26,7 +26,7 @@ from config import (
 from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload
 from services.supabase import SupabaseManager
 
-from utils.file_manager import apply_patch
+from utils.file_manager import apply_patch, extract_file_name
 from utils.text_copy import (
     UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
     UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,

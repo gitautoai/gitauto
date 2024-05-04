@@ -43,18 +43,18 @@ GET_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
 }
 
 
-def why_modifying_diffs(why: str, *args: str, **kwargs: str) -> None:
-    """Assistant API function calling to explain why it's going to modify the diffs before actually modifying the diffs. Have inputs '*args and *kwargs' as Assistant API sometimes adds a token as an input."""
+def reason_for_modying_diff(why: str, *args: str, **kwargs: str) -> None:
+    """When prompted to review a list of diffs, use this function to explain why and what you're going to modify in the given diff before actually modifying it. Have inputs '*args and *kwargs' as Assistant API sometimes adds a token as an input."""
     print(f"\n\nWhy Agent Modifying diffs: {why}\n\n")
 
 
 WHY: dict[str, str] = {
     "type": "string",
-    "description": "Reason for modifying this diff",
+    "description": "Reason for modifying the diff you are currently reviewing.",
 }
 
-WHY_MODIFYING_DIFFS: shared_params.FunctionDefinition = {
-    "name": "why_modifying_diffs",
+REASON_FOR_MODYING_DIFF: shared_params.FunctionDefinition = {
+    "name": "reason_for_modying_diff",
     "description": "Explain why are you modifying the diffs before you actually modify the diffs. Only argument is 'why' which is a string.",
     "parameters": {
         "type": "object",
@@ -66,5 +66,5 @@ WHY_MODIFYING_DIFFS: shared_params.FunctionDefinition = {
 # Define functions
 functions: dict[str, Any] = {
     "get_remote_file_content": get_remote_file_content,
-    "why_modifying_diffs": why_modifying_diffs,
+    "reason_for_modying_diff": reason_for_modying_diff,
 }

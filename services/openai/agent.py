@@ -17,7 +17,7 @@ from config import OPENAI_FINAL_STATUSES, OPENAI_MODEL_ID, TIMEOUT_IN_SECONDS
 from services.openai.functions import (
     GET_REMOTE_FILE_CONTENT,
     functions,
-    WHY_MODIFYING_DIFFS,
+    REASON_FOR_MODYING_DIFF,
 )
 from services.openai.init import create_openai_client
 from services.openai.instructions import (
@@ -25,6 +25,7 @@ from services.openai.instructions import (
     SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS,
 )
 from services.github.github_manager import (
+    commit_multiple_changes_to_remote_branch,
     update_comment,
     commit_changes_to_remote_branch,
 )
@@ -59,7 +60,7 @@ def create_assistant() -> tuple[Assistant, str]:
                 # {"type": "code_interpreter"},
                 # {"type": "retrieval"},
                 {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
-                {"type": "function", "function": WHY_MODIFYING_DIFFS},
+                {"type": "function", "function": REASON_FOR_MODYING_DIFF},
             ],
             model=OPENAI_MODEL_ID,
             timeout=TIMEOUT_IN_SECONDS,
@@ -170,9 +171,10 @@ def run_assistant(
     )
     input_data += self_review_input_data
 
-    self_review_run, self_review_input_output_data = wait_on_run(
+    self_review_run, self_review_input_data = wait_on_run(
         run=self_review_run, thread=thread, token=token, run_name="review diffs"
     )
+    input_data += self_review_input_data
 
     # Get the response
     messages: SyncCursorPage[ThreadMessage] = get_response(thread=thread)
@@ -194,6 +196,7 @@ def run_assistant(
     i = 0
     for diff in text_diffs:
         diff = correct_hunk_headers(diff_text=diff)
+        # Show difference between the create diff and the modified diff
         if i < len(first_run_output):
             difference_from_first = "\n".join(
                 difflib.unified_diff(
@@ -204,27 +207,13 @@ def run_assistant(
         output.append(diff)
         i += 1
 
-    # Commit the changes to the new remote branch
-    for diff in output:
-        file_path: str = extract_file_name(diff_text=diff)
-        print(
-            f"{time.strftime('%H:%M:%S', time.localtime())} File path: {file_path}.\n"
-        )
-        commit_changes_to_remote_branch(
-            branch=new_branch,
-            commit_message=f"Update {file_path}",
-            diff_text=diff,
-            file_path=file_path,
-            owner=owner,
-            repo=repo,
-            token=token,
-        )
-        print(
-            f"{time.strftime('%H:%M:%S', time.localtime())} Changes committed to {new_branch}.\n"
-        )
-
-    input_data += self_review_input_output_data
-    output_data = self_review_input_output_data
+    commit_multiple_changes_to_remote_branch(
+        diffs=output,
+        new_branch=new_branch,
+        owner=owner,
+        repo=repo,
+        token=token,
+    )
 
     update_comment(
         comment_url=comment_url,
@@ -269,7 +258,7 @@ def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> tuple[Ru
     """https://cookbook.openai.com/examples/assistants_api_overview_python"""
     print(f"Run {run_name} status before loop: { run.status}")
     client: OpenAI = create_openai_client()
-    input_output_data = ""
+    input_data = ""
     while run.status not in OPENAI_FINAL_STATUSES:
         print(f"Run {run_name} status during loop: {run.status}")
         run = client.beta.threads.runs.retrieve(
@@ -288,7 +277,7 @@ def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> tuple[Ru
                     {"tool_call_id": tool_call.id, "output": json.dumps(obj=result)}
                     for tool_call, result in tool_outputs
                 ]
-                input_output_data += json.dumps(tool_outputs_json)
+                input_data += json.dumps(tool_outputs_json)
                 run = client.beta.threads.runs.submit_tool_outputs(
                     thread_id=thread.id,
                     run_id=run.id,
@@ -299,7 +288,7 @@ def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> tuple[Ru
                 raise ValueError(f"Error: {e}") from e
         time.sleep(0.5)
     print(f"Run {run_name} status after loop: {run.status}")
-    return run, input_output_data
+    return run, input_data
 
 
 def call_functions(run: Run, funcs: dict[str, Any], token: str) -> list[Any]:
