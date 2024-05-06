@@ -115,7 +115,7 @@ def run_assistant(
         "issue_title": issue_title,
         "issue_body": issue_body,
         "issue_comments": issue_comments,
-        "file_path": file_paths,
+        "file_paths": file_paths,
         "comment_url": comment_url,
         "new_branch": new_branch,
     }

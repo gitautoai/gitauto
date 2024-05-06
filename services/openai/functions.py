@@ -55,7 +55,7 @@ WHY: dict[str, str] = {
 
 REASON_FOR_MODYING_DIFF: shared_params.FunctionDefinition = {
     "name": "reason_for_modying_diff",
-    "description": "Explain why are you modifying the diffs before you actually modify the diffs. Only argument is 'why' which is a string.",
+    "description": "When instructed to review the diffs you've created, if you find out you need to modify a diff, first explain using this function why you are modifying the diffs before you actually modify the diffs in your response. Only argument is 'why' which is a string.",
     "parameters": {
         "type": "object",
         "properties": {"why": WHY},

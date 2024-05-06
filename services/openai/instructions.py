@@ -54,7 +54,7 @@ The format of the response should be a unified diff. The diff should be in the f
 - NEVER EVER include any comments or explanations.
 - NEVER EVER abbreviate code at all.
 - NEVER EVER make changes that are not related to the issue.
-- NEVER EVER make local imports if you haven't verified that those local imports exist. If local imports don't exist, create them.
+- NEVER EVER make local imports if those files do not exist in file_paths that's been given to you. If the local import doesn't exist, create the component.
 - Return ONLY the unified diff format. NEVER EVER respond anything else.
 - Minimize modifications.
 - Follow best practices.
@@ -63,7 +63,7 @@ The format of the response should be a unified diff. The diff should be in the f
 SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS = """
 Please review these diffs you created from your previous response.
 Ensure that you have followed the steps and instructions outlined in pr_body that was passed in the first message of this thread.
-If the diffs are correct, please submit them. If there are any issues, please make the necessary corrections and submit the corrected diffs.
+If the diffs are correct, please return them as is. If there are any issues, please make the necessary corrections to the proper diffs and return all the diffs.
 """
 
 SYSTEM_INSTRUCTION_FOR_WRITING_PR = '''
