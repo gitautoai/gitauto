@@ -64,6 +64,7 @@ SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS = """
 Please review these diffs you created from your previous response.
 Ensure that you have followed the steps and instructions outlined in pr_body that was passed in the first message of this thread.
 If the diffs are correct, please return them as is. If there are any issues, please make the necessary corrections to the proper diffs and return all the diffs.
+Return ONLY the unified diff format. NEVER EVER respond anything else.
 """
 
 SYSTEM_INSTRUCTION_FOR_WRITING_PR = '''
