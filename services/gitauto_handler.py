@@ -13,7 +13,6 @@ from config import (
     ISSUE_NUMBER_FORMAT,
 )
 from services.github.github_manager import (
-    commit_changes_to_remote_branch,
     create_pull_request,
     create_remote_branch,
     get_installation_access_token,
@@ -32,7 +31,6 @@ from services.github.github_types import (
 from services.openai.chat import write_pr_body
 from services.openai.agent import run_assistant
 from services.supabase import SupabaseManager
-from utils.file_manager import extract_file_name
 from utils.text_copy import pull_request_completed, request_limit_reached
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
@@ -128,6 +126,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             }
         )
     )
+
     print(
         f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n"
     )
@@ -135,7 +134,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/30/?title=Progress&width=800)\nJust getting started!",
+        body="![X](https://progress-bar.dev/20/?title=Progress&width=800)\nJust getting started!",
     )
 
     # Create a remote branch
@@ -162,7 +161,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         f"{time.strftime('%H:%M:%S', time.localtime())} Remote branch created: {new_branch}.\n"
     )
 
-    token_input, token_output, diffs = run_assistant(
+    token_input, token_output = run_assistant(
         file_paths=file_paths,
         issue_title=issue_title,
         issue_body=issue_body,
@@ -171,39 +170,26 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         pr_body=pr_body,
         ref=base_branch,
         repo=repo_name,
+        comment_url=comment_url,
+        new_branch=new_branch,
         token=token,
     )
 
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\nHalf way there!",
+        body="![X](https://progress-bar.dev/90/?title=Progress&width=800)\nAlmost there!",
     )
-
-    # Commit the changes to the new remote branch
-    for diff in diffs:
-        file_path: str = extract_file_name(diff_text=diff)
-        print(
-            f"{time.strftime('%H:%M:%S', time.localtime())} File path: {file_path}.\n"
-        )
-        commit_changes_to_remote_branch(
-            branch=new_branch,
-            commit_message=f"Update {file_path}",
-            diff_text=diff,
-            file_path=file_path,
-            owner=owner,
-            repo=repo_name,
-            comment_url=comment_url,
-            unique_issue_id=unique_issue_id,
-            token=token,
-        )
-        print(
-            f"{time.strftime('%H:%M:%S', time.localtime())} Changes committed to {new_branch}.\n"
-        )
 
     # Create a pull request to the base branch
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}]({issue['html_url']})\n\n"
-    git_commands = f"\n\n## Test these changes locally\n\n```\ngit checkout -b {new_branch}\ngit pull origin {new_branch}\n```"
+    git_commands = (
+        f"\n\n## Test these changes locally\n\n"
+        f"```\n"
+        f"git checkout -b {new_branch}\n"
+        f"git pull origin {new_branch}\n"
+        f"```"
+    )
     pull_request_url = create_pull_request(
         base=base_branch,
         body=issue_link + pr_body + git_commands,

@@ -1,6 +1,8 @@
 # flake8: noqa
 SYSTEM_INSTRUCTION_FOR_AGENT = """
-Act as an expert software developer. Suggest codes with file modifications, additions, or deletions to resolve this issue in a unified diff format with no context lines like command `diff -U0` or `diff --unified=0`. The diff should be in the following format:
+Act as an expert software developer. 
+Use the pr_body as an outline for the code changes you will suggest.
+Suggested code changes you create for file modifications, additions, or deletions to resolve this issue has to be in a unified diff format with no context lines like command `diff -U0` or `diff --unified=0`. The diff should be in the following format:
 
 ## Unified diff format with no context lines
 
@@ -52,9 +54,17 @@ The format of the response should be a unified diff. The diff should be in the f
 - NEVER EVER include any comments or explanations.
 - NEVER EVER abbreviate code at all.
 - NEVER EVER make changes that are not related to the issue.
+- NEVER EVER make local imports if those files do not exist in file_paths that's been given to you. If the local import doesn't exist, create the component.
 - Return ONLY the unified diff format. NEVER EVER respond anything else.
 - Minimize modifications.
 - Follow best practices.
+"""
+
+SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS = """
+Please review these diffs you created from your previous response.
+Ensure that you have followed the steps and instructions outlined in pr_body that was passed in the first message of this thread.
+If the diffs are correct, please return them as is. If there are any issues, please make the necessary corrections to the proper diffs and return all the diffs.
+Return ONLY the unified diff format. NEVER EVER respond anything else.
 """
 
 SYSTEM_INSTRUCTION_FOR_WRITING_PR = '''
