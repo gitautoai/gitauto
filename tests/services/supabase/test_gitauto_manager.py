@@ -14,7 +14,7 @@ def wipe_installation_owner_user_data() -> None:
         "installation_id", -1
     ).execute()
 
-    supabase_manager.client.table("users").delete().eq("user_id", -1).eq(
+    supabase_manager.client.table("user_installations").delete().eq("user_id", -1).eq(
         "installation_id", -1
     ).execute()
 

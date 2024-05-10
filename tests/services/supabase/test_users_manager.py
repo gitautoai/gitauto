@@ -42,9 +42,9 @@ def wipe_installation_owner_user_data() -> None:
         "installation_id", INSTALLATION_ID
     ).execute()
 
-    supabase_manager.client.table("users").delete().eq("user_id", USER_ID).eq(
-        "installation_id", INSTALLATION_ID
-    ).execute()
+    supabase_manager.client.table("user_installations").delete().eq(
+        "user_id", USER_ID
+    ).eq("installation_id", INSTALLATION_ID).execute()
 
     supabase_manager.client.table("issues").delete().eq(
         "installation_id", INSTALLATION_ID
@@ -277,7 +277,7 @@ async def test_install_uninstall() -> None:
 
     # Check Users Record
     users_data, _ = (
-        supabase_manager.client.table(table_name="users")
+        supabase_manager.client.table(table_name="user_installations")
         .select("*")
         .eq(column="user_id", value=USER_ID)
         .eq(column="installation_id", value=INSTALLATION_ID)
@@ -325,7 +325,7 @@ async def test_install_uninstall() -> None:
 
     # Check Users Record
     users_data, _ = (
-        supabase_manager.client.table(table_name="users")
+        supabase_manager.client.table(table_name="user_installations")
         .select("*")
         .eq(column="user_id", value=USER_ID)
         .eq(column="installation_id", value=INSTALLATION_ID)

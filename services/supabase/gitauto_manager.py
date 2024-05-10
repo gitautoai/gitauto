@@ -85,7 +85,7 @@ class GitAutoAgentManager:
             # Create User, and set is_selected to True if user has no selected account
             is_selected = True
             data, _ = (
-                self.client.table(table_name="users")
+                self.client.table(table_name="user_installations")
                 .select("user_id")
                 .eq(column="user_id", value=user_id)
                 .eq(column="is_selected", value=True)
@@ -93,7 +93,7 @@ class GitAutoAgentManager:
             )
             if len(data[1]) > 0:
                 is_selected = False
-            self.client.table(table_name="users").insert(
+            self.client.table(table_name="user_installations").insert(
                 json={
                     "user_id": user_id,
                     "user_name": user_name,
@@ -165,7 +165,7 @@ class GitAutoAgentManager:
         """Checks if it's the users first issue"""
         try:
             data, _ = (
-                self.client.table(table_name="users")
+                self.client.table(table_name="user_installations")
                 .select("*")
                 .eq(column="user_id", value=user_id)
                 .eq(column="installation_id", value=installation_id)
@@ -192,7 +192,7 @@ class GitAutoAgentManager:
     def set_user_first_issue_to_false(self, user_id: int, installation_id: int) -> None:
         try:
             data, _ = (
-                self.client.table(table_name="users")
+                self.client.table(table_name="user_installations")
                 .update(json={"first_issue": False})
                 .eq(column="user_id", value=user_id)
                 .eq(column="installation_id", value=installation_id)
