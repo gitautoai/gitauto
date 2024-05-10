@@ -24,6 +24,13 @@ class UsersManager:
     def create_user(self, user_id: int, user_name: str, installation_id: int) -> None:
         """Creates an account for the user in the users table"""
         try:
+            self.client.table(table_name="users").upsert(
+                json={
+                    "user_id": user_id,
+                    "user_name": user_name,
+                }
+            ).execute()
+
             self.client.table(table_name="user_installations").insert(
                 json={
                     "user_id": user_id,

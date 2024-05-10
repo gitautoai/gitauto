@@ -82,6 +82,12 @@ class GitAutoAgentManager:
                 }
             ).execute()
 
+            self.client.table(table_name="users").upsert(
+                json={
+                    "user_id": user_id,
+                    "user_name": user_name,
+                }
+            ).execute()
             # Create User, and set is_selected to True if user has no selected account
             is_selected = True
             data, _ = (
@@ -93,6 +99,7 @@ class GitAutoAgentManager:
             )
             if len(data[1]) > 0:
                 is_selected = False
+
             self.client.table(table_name="user_installations").insert(
                 json={
                     "user_id": user_id,

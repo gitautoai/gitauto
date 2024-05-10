@@ -2,28 +2,12 @@
 import os
 from config import OWNER_TYPE
 from services.supabase import SupabaseManager
+from tests.services.supabase.utils import (
+    wipe_installation_owner_user_data,
+)
 
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-
-
-def wipe_installation_owner_user_data() -> None:
-    """Wipe all data from installations, owners, and users tables"""
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-    supabase_manager.client.table("usage").delete().eq("user_id", -1).eq(
-        "installation_id", -1
-    ).execute()
-
-    supabase_manager.client.table("user_installations").delete().eq("user_id", -1).eq(
-        "installation_id", -1
-    ).execute()
-
-    supabase_manager.client.table("issues").delete().eq("installation_id", -1).execute()
-
-    supabase_manager.client.table("installations").delete().eq(
-        "installation_id", -1
-    ).eq("owner_id", -1).execute()
-    supabase_manager.client.table("owners").delete().eq("owner_id", -1).execute()
 
 
 def test_create_update_user_request_works() -> None:

@@ -18,7 +18,12 @@ from config import (
 import asyncio
 import pytest
 
+
 pytest_plugins = ("pytest_asyncio",)
+
+from tests.services.supabase.utils import (
+    wipe_installation_owner_user_data,
+)
 
 from services.stripe.customer import get_subscription
 from services.supabase import SupabaseManager
@@ -33,27 +38,6 @@ from tests.test_payloads.deleted import deleted_payload
 
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
 SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
-
-
-def wipe_installation_owner_user_data() -> None:
-    """Wipe all data from installations, owners, and users tables"""
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-    supabase_manager.client.table("usage").delete().eq("user_id", USER_ID).eq(
-        "installation_id", INSTALLATION_ID
-    ).execute()
-
-    supabase_manager.client.table("user_installations").delete().eq(
-        "user_id", USER_ID
-    ).eq("installation_id", INSTALLATION_ID).execute()
-
-    supabase_manager.client.table("issues").delete().eq(
-        "installation_id", INSTALLATION_ID
-    ).execute()
-
-    supabase_manager.client.table("installations").delete().eq(
-        "installation_id", INSTALLATION_ID
-    ).execute()
-    supabase_manager.client.table("owners").delete().eq("owner_id", OWNER_ID).execute()
 
 
 def test_create_and_update_user_request_works() -> None:
@@ -276,6 +260,16 @@ async def test_install_uninstall() -> None:
     assert installation_data[1][0]["uninstalled_at"] is None
 
     # Check Users Record
+     users_data, _ = (
+        supabase_manager.client.table(table_name="users")
+        .select("*")
+        .eq(column="user_id", value=USER_ID)
+        .execute()
+    )
+    
+    assert users_data[1][0]["user_id"] == USER_ID
+    assert users_data[1][0]["user_name"] == USER_NAME
+    # Check User Installation Record
     users_data, _ = (
         supabase_manager.client.table(table_name="user_installations")
         .select("*")
@@ -324,6 +318,16 @@ async def test_install_uninstall() -> None:
     assert installation_data[1][0]["uninstalled_at"] is not None
 
     # Check Users Record
+    users_data, _ = (
+        supabase_manager.client.table(table_name="users")
+        .select("*")
+        .eq(column="user_id", value=USER_ID)
+        .execute()
+    )
+    
+    assert users_data[1][0]["user_id"] == USER_ID
+    assert users_data[1][0]["user_name"] == USER_NAME
+    # Check User Installation Record
     users_data, _ = (
         supabase_manager.client.table(table_name="user_installations")
         .select("*")
