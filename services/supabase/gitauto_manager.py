@@ -86,9 +86,10 @@ class GitAutoAgentManager:
                 json={
                     "user_id": user_id,
                     "user_name": user_name,
-                }
+                },
+                on_conflict="user_id",
             ).execute()
-            # Create User, and set is_selected to True if user has no selected account
+            # Create User, and set is_selected to True if user has no selected account for this installation
             is_selected = True
             data, _ = (
                 self.client.table(table_name="user_installations")

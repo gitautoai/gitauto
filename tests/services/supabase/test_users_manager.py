@@ -3,6 +3,7 @@
 import datetime
 import os
 from pickle import INST
+from sre_constants import IN
 
 from config import (
     OWNER_ID,
@@ -12,6 +13,7 @@ from config import (
     USER_NAME,
     INSTALLATION_ID,
     UNIQUE_ISSUE_ID,
+    NEW_INSTALLATION_ID,
 )
 
 
@@ -20,7 +22,7 @@ import pytest
 
 pytest_plugins = ("pytest_asyncio",)
 
-from tests.services.supabase.utils import (
+from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
 )
 
@@ -28,7 +30,10 @@ from services.stripe.customer import get_subscription
 from services.supabase import SupabaseManager
 from services.webhook_handler import handle_webhook_event
 
-from tests.test_payloads.installation import installation_payload
+from tests.test_payloads.installation import (
+    installation_payload,
+    new_installation_payload,
+)
 from tests.test_payloads.deleted import deleted_payload
 
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
@@ -222,10 +227,11 @@ def test_parse_subscription_object() -> None:
 
 
 @pytest.mark.asyncio
-async def test_install_uninstall() -> None:
+async def test_install_uninstall_install() -> None:
     """Testing install uninstall methods"""
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
+    wipe_installation_owner_user_data(NEW_INSTALLATION_ID)
 
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
     await handle_webhook_event(event_name="installation", payload=installation_payload)
@@ -343,5 +349,65 @@ async def test_install_uninstall() -> None:
     assert users_data[1][0]["deleted_at"] is None
     assert users_data[1][0]["deleted_by"] is None
 
+    await handle_webhook_event(
+        event_name="installation", payload=new_installation_payload
+    )
+
+    # Check Owners Record (owner_id, stripe_customer_id)
+    owners_data, _ = (
+        supabase_manager.client.table(table_name="owners")
+        .select("*")
+        .eq(column="owner_id", value=OWNER_ID)
+        .execute()
+    )
+    assert owners_data[1][0]["owner_id"] == OWNER_ID
+    assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
+
+    # Check Installation Record
+    installation_data, _ = (
+        supabase_manager.client.table(table_name="installations")
+        .select("*")
+        .eq(column="installation_id", value=NEW_INSTALLATION_ID)
+        .execute()
+    )
+
+    assert installation_data[1][0]["installation_id"] == NEW_INSTALLATION_ID
+    assert installation_data[1][0]["owner_name"] == OWNER_NAME
+    assert installation_data[1][0]["owner_id"] == OWNER_ID
+    assert installation_data[1][0]["owner_type"] == OWNER_TYPE
+    assert installation_data[1][0]["uninstalled_at"] is None
+
+    # Check Users Record
+    users_data, _ = (
+        supabase_manager.client.table(table_name="users")
+        .select("*")
+        .eq(column="user_id", value=USER_ID)
+        .execute()
+    )
+
+    assert users_data[1][0]["user_id"] == USER_ID
+    assert users_data[1][0]["user_name"] == USER_NAME
+    # Check User Installation Record
+    users_data, _ = (
+        supabase_manager.client.table(table_name="user_installations")
+        .select("*")
+        .eq(column="user_id", value=USER_ID)
+        .eq(column="installation_id", value=NEW_INSTALLATION_ID)
+        .execute()
+    )
+
+    assert users_data[1][0]["user_id"] == USER_ID
+    assert users_data[1][0]["installation_id"] == NEW_INSTALLATION_ID
+    assert users_data[1][0]["user_name"] == USER_NAME
+    # Should be selected since it's the only user -> used for account selected in website
+    assert users_data[1][0]["is_selected"] is False
+    assert (
+        users_data[1][0]["first_issue"] is True
+    )  # first issue since hasn't had an issue
+    assert users_data[1][0]["is_user_assigned"] is False
+    assert users_data[1][0]["deleted_at"] is None
+    assert users_data[1][0]["deleted_by"] is None
+
     # Clean Up
     wipe_installation_owner_user_data()
+    wipe_installation_owner_user_data(NEW_INSTALLATION_ID)

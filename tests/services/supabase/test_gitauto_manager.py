@@ -2,7 +2,7 @@
 import os
 from config import OWNER_TYPE
 from services.supabase import SupabaseManager
-from tests.services.supabase.utils import (
+from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
 )
 
