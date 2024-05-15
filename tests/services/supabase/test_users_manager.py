@@ -18,7 +18,6 @@ from config import (
 import asyncio
 import pytest
 
-
 pytest_plugins = ("pytest_asyncio",)
 
 from tests.services.supabase.utils import (
@@ -31,10 +30,6 @@ from services.webhook_handler import handle_webhook_event
 
 from tests.test_payloads.installation import installation_payload
 from tests.test_payloads.deleted import deleted_payload
-
-# from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-# SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYWl5d2F0bHhiYWR4bHJtamZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwOTY5MDU0NywiZXhwIjoyMDI1MjY2NTQ3fQ.N9EIYESe2xNwddfgznuC_clkBdCZxDWSgbT111aaQFU"
-# SUPABASE_URL = "https://vfaiywatlxbadxlrmjfq.supabase.co"
 
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
 SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
@@ -212,7 +207,7 @@ def test_parse_subscription_object() -> None:
         )
         assert product_id_output == product_id
 
-    ## All active ##
+    # All active ##
     # [free, paid] -> paid
     assertion_test("cus_PtCxNdGs23X4QR", standard_product_id)
 
@@ -260,13 +255,13 @@ async def test_install_uninstall() -> None:
     assert installation_data[1][0]["uninstalled_at"] is None
 
     # Check Users Record
-     users_data, _ = (
+    users_data, _ = (
         supabase_manager.client.table(table_name="users")
         .select("*")
         .eq(column="user_id", value=USER_ID)
         .execute()
     )
-    
+
     assert users_data[1][0]["user_id"] == USER_ID
     assert users_data[1][0]["user_name"] == USER_NAME
     # Check User Installation Record
@@ -324,7 +319,7 @@ async def test_install_uninstall() -> None:
         .eq(column="user_id", value=USER_ID)
         .execute()
     )
-    
+
     assert users_data[1][0]["user_id"] == USER_ID
     assert users_data[1][0]["user_name"] == USER_NAME
     # Check User Installation Record
