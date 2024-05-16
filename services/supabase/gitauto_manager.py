@@ -104,7 +104,6 @@ class GitAutoAgentManager:
             self.client.table(table_name="user_installations").insert(
                 json={
                     "user_id": user_id,
-                    "user_name": user_name,
                     "installation_id": installation_id,
                     "is_selected": is_selected,
                 }

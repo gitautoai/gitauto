@@ -281,7 +281,6 @@ async def test_install_uninstall_install() -> None:
 
     assert users_data[1][0]["user_id"] == USER_ID
     assert users_data[1][0]["installation_id"] == INSTALLATION_ID
-    assert users_data[1][0]["user_name"] == USER_NAME
     # Should be selected since it's the only user -> used for account selected in website
     assert users_data[1][0]["is_selected"] is True
     assert (
@@ -339,7 +338,6 @@ async def test_install_uninstall_install() -> None:
 
     assert users_data[1][0]["user_id"] == USER_ID
     assert users_data[1][0]["installation_id"] == INSTALLATION_ID
-    assert users_data[1][0]["user_name"] == USER_NAME
     # Should be selected since it's the only user -> used for account selected in website
     assert users_data[1][0]["is_selected"] is True
     assert (
@@ -398,7 +396,6 @@ async def test_install_uninstall_install() -> None:
 
     assert users_data[1][0]["user_id"] == USER_ID
     assert users_data[1][0]["installation_id"] == NEW_INSTALLATION_ID
-    assert users_data[1][0]["user_name"] == USER_NAME
     # Should be selected since it's the only user -> used for account selected in website
     assert users_data[1][0]["is_selected"] is False
     assert (
