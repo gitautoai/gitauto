@@ -438,15 +438,24 @@ def get_remote_file_content(
 def get_remote_file_tree(
     owner: str, repo: str, ref: str, comment_url: str, unique_issue_id: str, token: str
 ) -> list[str]:
-    """Get the file tree of a GitHub repository."""
+    """
+    Get the file tree of a GitHub repository at a ref branch.
+    https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#get-a-tree
+    """
+    response: requests.Response | None = None  # Otherwise response could be Unbound
     try:
-        response: requests.Response = requests.get(
+        response = requests.get(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/trees/{ref}?recursive=1",
             headers=create_headers(token=token),
             timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
         return [item["path"] for item in response.json()["tree"]]
+    except requests.exceptions.HTTPError as http_err:
+        logging.error(
+            msg=f"get_remote_file_tree HTTP Error: {http_err.response.status_code} - {http_err.response.text}"
+        )
+        return []
     except Exception as e:
         update_comment_for_raised_errors(
             error=e,
@@ -455,6 +464,7 @@ def get_remote_file_tree(
             token=token,
             which_function=get_remote_file_tree.__name__,
         )
+        return []
 
 
 async def verify_webhook_signature(request: Request, secret: str) -> None:
