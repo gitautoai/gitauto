@@ -372,7 +372,11 @@ def get_issue_comments(
         logging.error(
             msg=f"get_issue_comments HTTP Error: {e.response.status_code} - {e.response.text}"
         )
-    except Exception as e:
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 409:  # Repository is empty
+            return "0000000000000000000000000000000000000000"  # Indicate empty repository
+        else:
+            raise
         logging.error(msg=f"get_issue_comments Error: {e}")
 
 
