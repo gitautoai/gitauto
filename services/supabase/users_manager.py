@@ -24,10 +24,16 @@ class UsersManager:
     def create_user(self, user_id: int, user_name: str, installation_id: int) -> None:
         """Creates an account for the user in the users table"""
         try:
-            self.client.table(table_name="users").insert(
+            self.client.table(table_name="users").upsert(
                 json={
                     "user_id": user_id,
                     "user_name": user_name,
+                }
+            ).execute()
+
+            self.client.table(table_name="user_installations").insert(
+                json={
+                    "user_id": user_id,
                     "installation_id": installation_id,
                 }
             ).execute()
@@ -41,7 +47,7 @@ class UsersManager:
         try:
             # Check is user already assigned to a seat
             data, _ = (
-                self.client.table(table_name="users")
+                self.client.table(table_name="user_installations")
                 .select("*")
                 .eq(column="user_id", value=user_id)
                 .eq(column="installation_id", value=installation_id)
@@ -52,7 +58,7 @@ class UsersManager:
             else:
                 # Check if a seat is available for a user
                 assigned_users, _ = (
-                    self.client.table(table_name="users")
+                    self.client.table(table_name="user_installations")
                     .select("*")
                     .eq(column="installation_id", value=installation_id)
                     .eq(column="is_user_assigned", value=True)
@@ -62,7 +68,7 @@ class UsersManager:
                     return False
                 else:
                     # Set user as assigned in db
-                    self.client.table(table_name="users").update(
+                    self.client.table(table_name="user_installations").update(
                         json={"is_user_assigned": True}
                     ).eq(column="user_id", value=user_id).eq(
                         column="installation_id", value=installation_id
@@ -233,7 +239,7 @@ class UsersManager:
         """Check if user(installation_id, user_id) exists in GitAuto database"""
         try:
             data, _ = (
-                self.client.table(table_name="users")
+                self.client.table(table_name="user_installations")
                 .select("*")
                 .eq(column="user_id", value=user_id)
                 .eq(column="installation_id", value=installation_id)

@@ -34,8 +34,6 @@ from utils.text_copy import (
     request_limit_reached,
 )
 
-from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-
 
 def add_reaction_to_issue(
     owner: str, repo: str, issue_number: int, content: str, token: str

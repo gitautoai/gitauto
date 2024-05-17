@@ -51,10 +51,11 @@ PR_BODY_STARTS_WITH = "Original issue: [#"
 
 
 # Testing
-OWNER_ID = -1
-USER_ID = -1
 INSTALLATION_ID = -1
+OWNER_ID = -1
 OWNER_NAME = "installation-test"
 OWNER_TYPE = "Organization"
 USER_NAME = "username-test"
+USER_ID = -1
 UNIQUE_ISSUE_ID = "O/gitautoai/test#1"
+NEW_INSTALLATION_ID = -2
