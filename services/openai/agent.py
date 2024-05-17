@@ -1,3 +1,8 @@
+from services.github.github_manager import get_user_locale
+
+def enhance_personalization_for_user(username):
+    user_locale = get_user_locale(username)
+    # Further implementation to utilize user_locale for personalization
 # Standard imports
 import json
 import time
