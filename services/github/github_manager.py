@@ -1,3 +1,15 @@
+import requests
+
+def get_user_locale(username):
+    url = f"https://api.github.com/users/{username}"
+    response = requests.get(url)
+    response_data = response.json()
+    if 'locale' in response_data:
+        return response_data['locale']
+    else:
+        # Assuming default locale if not specified
+        return 'en-US'
+
 # Standard imports
 import base64
 import datetime
