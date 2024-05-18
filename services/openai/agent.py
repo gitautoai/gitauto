@@ -8,7 +8,7 @@ import difflib
 from openai import OpenAI
 from openai.pagination import SyncCursorPage
 from openai.types.beta import Assistant, Thread
-from openai.types.beta.threads import Run, ThreadMessage, MessageContentText
+from openai.types.beta.threads import Run, Message, TextContentBlock
 from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
 
 
@@ -27,14 +27,12 @@ from services.openai.instructions import (
 from services.github.github_manager import (
     commit_multiple_changes_to_remote_branch,
     update_comment,
-    commit_changes_to_remote_branch,
 )
 
 from utils.file_manager import (
     clean_specific_lines,
     correct_hunk_headers,
     split_diffs,
-    extract_file_name,
 )
 
 
@@ -85,7 +83,7 @@ def create_thread_and_run(
     return client, assistant, thread, run, input_data
 
 
-def get_response(thread: Thread) -> SyncCursorPage[ThreadMessage]:
+def get_response(thread: Thread) -> SyncCursorPage[Message]:
     """https://cookbook.openai.com/examples/assistants_api_overview_python"""
     client: OpenAI = create_openai_client()
     return client.beta.threads.messages.list(
@@ -136,12 +134,12 @@ def run_assistant(
     output_data = input_output_data
 
     # Get the response
-    messages: SyncCursorPage[ThreadMessage] = get_response(thread=thread)
+    messages: SyncCursorPage[Message] = get_response(thread=thread)
     messages_list = list(messages)
     if not messages_list:
         raise ValueError("No messages in the list.")
-    latest_message: ThreadMessage = messages_list[0]
-    if isinstance(latest_message.content[0], MessageContentText):
+    latest_message: Message = messages_list[0]
+    if isinstance(latest_message.content[0], TextContentBlock):
         value: str = latest_message.content[0].text.value
         output_data += json.dumps(latest_message.content[0].text.value)
     else:
@@ -177,12 +175,12 @@ def run_assistant(
     input_data += self_review_input_data
 
     # Get the response
-    messages: SyncCursorPage[ThreadMessage] = get_response(thread=thread)
+    messages: SyncCursorPage[Message] = get_response(thread=thread)
     messages_list = list(messages)
     if not messages_list:
         raise ValueError("No messages in the list.")
-    latest_message: ThreadMessage = messages_list[0]
-    if isinstance(latest_message.content[0], MessageContentText):
+    latest_message: Message = messages_list[0]
+    if isinstance(latest_message.content[0], TextContentBlock):
         value: str = latest_message.content[0].text.value
         output_data += json.dumps(latest_message.content[0].text.value)
     else:
