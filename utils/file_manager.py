@@ -130,6 +130,21 @@ def extract_file_name(diff_text: str) -> str:
     raise ValueError("No file name found in the diff text.")
 
 
+def run_command(command: str, cwd: str) -> str:
+    try:
+        result: subprocess.CompletedProcess[str] = subprocess.run(
+            args=command,
+            capture_output=True,
+            check=True,
+            cwd=cwd,
+            text=True,
+            shell=True,
+        )
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        raise ValueError(f"Command failed: {e.stderr}") from e
+
+
 def split_diffs(diff_text: str) -> list[str]:
     file_diffs: list[str] = re.split(
         pattern=r"(?=^---\s)", string=diff_text, flags=re.MULTILINE

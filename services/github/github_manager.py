@@ -4,6 +4,7 @@ import datetime
 import hashlib  # For HMAC (Hash-based Message Authentication Code) signatures
 import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
 import logging
+import os
 import time
 from typing import Any
 
@@ -18,6 +19,8 @@ from config import (
     GITHUB_API_VERSION,
     GH_APP_ID,
     GH_PRIVATE_KEY,
+    PRODUCT_NAME,
+    PRODUCT_URL,
     TIMEOUT_IN_SECONDS,
     PRODUCT_ID,
     SUPABASE_URL,
@@ -25,16 +28,13 @@ from config import (
 )
 from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload
 from services.supabase import SupabaseManager
-
-from utils.file_manager import apply_patch, extract_file_name
+from utils.file_manager import apply_patch, extract_file_name, run_command
 from utils.text_copy import (
     UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
     UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,
     request_issue_comment,
     request_limit_reached,
 )
-
-from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 
 def add_reaction_to_issue(
@@ -330,6 +330,20 @@ def create_remote_branch(
         )
 
 
+def initialize_repo(repo_path: str, remote_url: str) -> None:
+    """Push an initial empty commit to the remote repository to create a commit sha."""
+    if not os.path.exists(path=repo_path):
+        os.makedirs(name=repo_path)
+
+    run_command(command="git init", cwd=repo_path)
+    with open(file=os.path.join(repo_path, "README.md"), mode="w", encoding="utf-8") as f:
+        f.write(f"# Initial commit by [{PRODUCT_NAME}]({PRODUCT_URL})\n")
+    run_command(command="git add README.md", cwd=repo_path)
+    run_command(command='git commit -m "Initial commit"', cwd=repo_path)
+    run_command(command=f"git remote add origin {remote_url}", cwd=repo_path)
+    run_command(command="git push -u origin main", cwd=repo_path)
+
+
 def get_installation_access_token(installation_id: int) -> str:
     """Get an access token for the installed GitHub App"""
     jwt_token: str = create_jwt()
@@ -382,6 +396,7 @@ def get_latest_remote_commit_sha(
     branch: str,
     comment_url: str,
     unique_issue_id: str,
+    clone_url: str,
     token: str,
 ) -> str:
     """SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
@@ -394,6 +409,20 @@ def get_latest_remote_commit_sha(
         )
         response.raise_for_status()
         return response.json()["object"]["sha"]
+    except requests.exceptions.HTTPError as e:
+        if (e.response.status_code == 409 and e.response.json()["message"] == "Git Repository is empty."):
+            logging.info(msg="Repository is empty. So, creating an initial empty commit.")
+            initialize_repo(repo_path=f"/tmp/repo/{owner}-{repo}", remote_url=clone_url)
+            return get_latest_remote_commit_sha(
+                owner=owner,
+                repo=repo,
+                branch=branch,
+                comment_url=comment_url,
+                unique_issue_id=unique_issue_id,
+                clone_url=clone_url,
+                token=token,
+            )
+        raise
     except Exception as e:
         update_comment_for_raised_errors(
             error=e,
@@ -402,6 +431,10 @@ def get_latest_remote_commit_sha(
             token=token,
             which_function=get_latest_remote_commit_sha.__name__,
         )
+        # Raise an error because we can't continue without the latest commit SHA
+        raise RuntimeError(
+            f"Error: Could not get the latest commit SHA in {get_latest_remote_commit_sha.__name__}"
+        ) from e
 
 
 def get_remote_file_content(
