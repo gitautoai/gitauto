@@ -46,10 +46,8 @@ PRODUCT_NAME = "GitAuto"
 PRODUCT_URL = "https://gitauto.ai"
 TIMEOUT_IN_SECONDS = 120
 FREE_TIER_REQUEST_AMOUNT = 5
-
 ISSUE_NUMBER_FORMAT = "/issue-#"
 PR_BODY_STARTS_WITH = "Original issue: [#"
-
 
 # Testing
 OWNER_ID = -1

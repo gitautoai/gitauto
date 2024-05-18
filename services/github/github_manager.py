@@ -485,9 +485,11 @@ def get_remote_file_tree(
         response.raise_for_status()
         return [item["path"] for item in response.json()["tree"]]
     except requests.exceptions.HTTPError as http_err:
-        logging.error(
-            msg=f"get_remote_file_tree HTTP Error: {http_err.response.status_code} - {http_err.response.text}"
-        )
+        # Log the error if it's not a 409 error (empty repository)
+        if http_err.response.status_code != 409:
+            logging.error(
+                msg=f"get_remote_file_tree HTTP Error: {http_err.response.status_code} - {http_err.response.text}"
+            )
         return []
     except Exception as e:
         update_comment_for_raised_errors(
