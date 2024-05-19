@@ -140,7 +140,7 @@ def commit_changes_to_remote_branch(
         put_response.raise_for_status()
     except Exception as e:
         # Do not cancel PR if this commit fails
-        logging.error("commit_chages_to_remove_branch Error: %s", e)
+        logging.error("commit_chages_to_remote_branch(commit failed) Error: %s", e)
 
 
 def create_comment(
@@ -336,7 +336,9 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
         os.makedirs(name=repo_path)
 
     run_command(command="git init", cwd=repo_path)
-    with open(file=os.path.join(repo_path, "README.md"), mode="w", encoding="utf-8") as f:
+    with open(
+        file=os.path.join(repo_path, "README.md"), mode="w", encoding="utf-8"
+    ) as f:
         f.write(f"# Initial commit by [{PRODUCT_NAME}]({PRODUCT_URL})\n")
     run_command(command="git add README.md", cwd=repo_path)
     run_command(command='git commit -m "Initial commit"', cwd=repo_path)
@@ -410,8 +412,13 @@ def get_latest_remote_commit_sha(
         response.raise_for_status()
         return response.json()["object"]["sha"]
     except requests.exceptions.HTTPError as e:
-        if (e.response.status_code == 409 and e.response.json()["message"] == "Git Repository is empty."):
-            logging.info(msg="Repository is empty. So, creating an initial empty commit.")
+        if (
+            e.response.status_code == 409
+            and e.response.json()["message"] == "Git Repository is empty."
+        ):
+            logging.info(
+                msg="Repository is empty. So, creating an initial empty commit."
+            )
             initialize_repo(repo_path=f"/tmp/repo/{owner}-{repo}", remote_url=clone_url)
             return get_latest_remote_commit_sha(
                 owner=owner,
