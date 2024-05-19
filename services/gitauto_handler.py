@@ -146,6 +146,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         branch=base_branch,
         comment_url=comment_url,
         unique_issue_id=unique_issue_id,
+        clone_url=repo["clone_url"],
         token=token,
     )
     create_remote_branch(
