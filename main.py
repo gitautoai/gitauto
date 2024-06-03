@@ -24,6 +24,7 @@ if ENV != "local":
         traces_sample_rate=1.0,
     )
 
+import json
 handler = Mangum(app=app)
 
 
@@ -34,6 +35,8 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
     try:
         print("Webhook received")
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload") from e
         # Validate the webhook signature
         await verify_webhook_signature(request=request, secret=GH_WEBHOOK_SECRET)
         print("Webhook signature verified")
