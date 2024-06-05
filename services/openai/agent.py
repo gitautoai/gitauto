@@ -131,14 +131,16 @@ def run_assistant(
         run=run, thread=thread, token=token, run_name="generate diffs"
     )
     input_data += input_output_data
-    output_data = input_output_data
+    output_data: str = input_output_data
 
     # Get the response
     messages: SyncCursorPage[Message] = get_response(thread=thread)
     messages_list = list(messages)
     if not messages_list:
-        raise ValueError("No messages in the list.")
+        raise ValueError("messages_list is empty.")
     latest_message: Message = messages_list[0]
+    if not latest_message.content:
+        raise ValueError("latest_message.content is empty.")
     if isinstance(latest_message.content[0], TextContentBlock):
         value: str = latest_message.content[0].text.value
         output_data += json.dumps(latest_message.content[0].text.value)
@@ -254,11 +256,11 @@ def submit_message(
 
 def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> tuple[Run, str]:
     """https://cookbook.openai.com/examples/assistants_api_overview_python"""
-    print(f"Run {run_name} status before loop: { run.status}")
+    print(f"Run `{run_name}` status before loop: { run.status}")
     client: OpenAI = create_openai_client()
     input_data = ""
     while run.status not in OPENAI_FINAL_STATUSES:
-        print(f"Run {run_name} status during loop: {run.status}")
+        print(f"Run `{run_name}` status during loop: {run.status}")
         run = client.beta.threads.runs.retrieve(
             thread_id=thread.id, run_id=run.id, timeout=TIMEOUT_IN_SECONDS
         )
