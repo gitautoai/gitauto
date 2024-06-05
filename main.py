@@ -1,10 +1,12 @@
 # Standard imports
+import json
+import urllib.parse
 from typing import Any
 
 # Third-party imports
+import sentry_sdk
 from fastapi import FastAPI, HTTPException, Request
 from mangum import Mangum
-import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
@@ -44,11 +46,21 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     # Process the webhook event but never raise an exception as some event_name like "marketplace_purchase" doesn't have a payload
     try:
         request_body: bytes = await request.body()
-        print(f"Request body: {request_body.decode(encoding='utf-8')}")
-        payload = await request.json()
+    except Exception as e:
+        print(f"Error in reading request body: {e}")
+        request_body = b''
+
+    payload: Any = {}
+    try:
+        # First try to parse the body as JSON
+        payload = json.loads(s=request_body.decode(encoding='utf-8'))
+    except json.JSONDecodeError:
+        # If JSON parsing fails, treat the body as URL-encoded
+        decoded_body: dict[str, list[str]] = urllib.parse.parse_qs(qs=request_body.decode(encoding='utf-8'))
+        if 'payload' in decoded_body:
+            payload = json.loads(s=decoded_body['payload'][0])
     except Exception as e:
         print(f"Error in parsing JSON payload: {e}")
-        payload: Any = {}
 
     try:
         await handle_webhook_event(event_name=event_name, payload=payload)
