@@ -55,6 +55,10 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
     if not action:
         return
     # Check the type of webhook event and handle accordingly
+    # if event_name == "marketplace_purchase" and action in ("purchased"):
+    #     print("Marketplace purchase is triggered")
+    #     await handle_installation_created(payload=payload)
+
     if event_name == "installation" and action in ("created"):
         print("Installation is created")
         await handle_installation_created(payload=payload)
@@ -114,3 +118,6 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             owner_type = payload["repository"]["owner"]["type"]
             unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
             supabase_manager.set_issue_to_merged(unique_issue_id=unique_issue_id)
+
+    print(f"Event {event_name} with action {action} is not handled")
+    print(f"Payload: {payload}")

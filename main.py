@@ -1,12 +1,11 @@
 # Standard imports
-# import json
+from typing import Any
 
 # Third-party imports
 from fastapi import FastAPI, HTTPException, Request
 from mangum import Mangum
 import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
-import pprint
 
 # Local imports
 from config import GH_WEBHOOK_SECRET, ENV, PRODUCT_NAME
@@ -32,16 +31,23 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     event_name: str = request.headers.get("X-GitHub-Event", "Event not specified")
     print(f"Received event: {event_name}")
 
+    # Validate if the webhook signature comes from GitHub
     try:
         print("Webhook received")
-        # Validate the webhook signature
         await verify_webhook_signature(request=request, secret=GH_WEBHOOK_SECRET)
         print("Webhook signature verified")
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=401, detail=str(object=e)) from e
 
-        # Process the webhook event
+    # Process the webhook event but never raise an exception as some event_name like "marketplace_purchase" doesn't have a payload
+    try:
         payload = await request.json()
-        # pprint.PrettyPrinter(indent=4).pprint(payload)
+    except Exception as e:
+        print(f"Error in parsing JSON payload: {e}")
+        payload: Any = {}
 
+    try:
         await handle_webhook_event(event_name=event_name, payload=payload)
         print("Webhook event handled")
 
