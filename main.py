@@ -28,8 +28,9 @@ handler = Mangum(app=app)
 
 @app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
+    content_type: str = request.headers.get("Content-Type", "Content-Type not specified")
     event_name: str = request.headers.get("X-GitHub-Event", "Event not specified")
-    print(f"Received event: {event_name}")
+    print(f"Received event: {event_name} with content type: {content_type}")
 
     # Validate if the webhook signature comes from GitHub
     try:
@@ -42,6 +43,8 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
     # Process the webhook event but never raise an exception as some event_name like "marketplace_purchase" doesn't have a payload
     try:
+        request_body: bytes = await request.body()
+        print(f"Request body: {request_body.decode(encoding='utf-8')}")
         payload = await request.json()
     except Exception as e:
         print(f"Error in parsing JSON payload: {e}")
