@@ -1,18 +1,14 @@
-"""Manager for all user related operations"""
-
-from supabase import Client
 import datetime
 import logging
+import stripe
+from supabase import Client
+from config import STRIPE_FREE_TIER_PRICE_ID
 from services.stripe.customer import (
     get_subscription,
     get_request_count_from_product_id_metadata,
     subscribe_to_free_plan,
 )
-from config import (
-    STRIPE_FREE_TIER_PRICE_ID,
-)
-
-import stripe
+from utils.handle_exceptions import handle_exceptions
 
 
 class UsersManager:
@@ -235,19 +231,15 @@ class UsersManager:
                 datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, second=0),
             )
 
-    def user_exists(self, user_id: int, installation_id: int) -> bool:
-        """Check if user(installation_id, user_id) exists in GitAuto database"""
-        try:
-            data, _ = (
-                self.client.table(table_name="user_installations")
-                .select("*")
-                .eq(column="user_id", value=user_id)
-                .eq(column="installation_id", value=installation_id)
-                .execute()
-            )
-            if len(data[1]) > 0:
-                return True
-            return False
-        except Exception as err:
-            logging.error(f"user_exists {err}")
-            return False
+    @handle_exceptions(default_return_value=False)
+    def user_exists(self, user_id: int) -> bool:
+        """Check if user exists in users table"""
+        data, _ = (
+            self.client.table(table_name="users")
+            .select("*")
+            .eq(column="user_id", value=user_id)
+            .execute()
+        )
+        if len(data[1]) > 0:
+            return True
+        return False
