@@ -1,5 +1,6 @@
 # Standard imports
 import base64
+import datetime
 import os
 
 # Third-party imports
@@ -40,21 +41,22 @@ STRIPE_API_KEY: str = get_env_var(name="STRIPE_API_KEY")
 STRIPE_FREE_TIER_PRICE_ID: str = get_env_var(name="STRIPE_FREE_TIER_PRICE_ID")
 
 # General
+DEFAULT_TIME = datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
 ENV: str = get_env_var(name="ENV")
+FREE_TIER_REQUEST_AMOUNT = 5
+ISSUE_NUMBER_FORMAT = "/issue-#"
+PR_BODY_STARTS_WITH = "Original issue: [#"
 PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 PRODUCT_URL = "https://gitauto.ai"
 TIMEOUT_IN_SECONDS = 120
-FREE_TIER_REQUEST_AMOUNT = 5
-ISSUE_NUMBER_FORMAT = "/issue-#"
-PR_BODY_STARTS_WITH = "Original issue: [#"
 
 # Testing
 INSTALLATION_ID = -1
+NEW_INSTALLATION_ID = -2
 OWNER_ID = -1
 OWNER_NAME = "installation-test"
 OWNER_TYPE = "Organization"
-USER_NAME = "username-test"
-USER_ID = -1
 UNIQUE_ISSUE_ID = "O/gitautoai/test#1"
-NEW_INSTALLATION_ID = -2
+USER_ID = -1
+USER_NAME = "username-test"
