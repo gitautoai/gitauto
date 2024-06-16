@@ -186,9 +186,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
 
     # Proper issue generation comment, create user if not exist (first issue in an orgnanization)
     first_issue = False
-    if not supabase_manager.user_exists(
-        user_id=user_id, installation_id=installation_id
-    ):
+    if not supabase_manager.user_exists(user_id=user_id):
         supabase_manager.create_user(
             user_id=user_id,
             user_name=user_name,
@@ -336,7 +334,9 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
         os.makedirs(name=repo_path)
 
     run_command(command="git init", cwd=repo_path)
-    with open(file=os.path.join(repo_path, "README.md"), mode="w", encoding="utf-8") as f:
+    with open(
+        file=os.path.join(repo_path, "README.md"), mode="w", encoding="utf-8"
+    ) as f:
         f.write(f"# Initial commit by [{PRODUCT_NAME}]({PRODUCT_URL})\n")
     run_command(command="git add README.md", cwd=repo_path)
     run_command(command='git commit -m "Initial commit"', cwd=repo_path)
@@ -410,8 +410,13 @@ def get_latest_remote_commit_sha(
         response.raise_for_status()
         return response.json()["object"]["sha"]
     except requests.exceptions.HTTPError as e:
-        if (e.response.status_code == 409 and e.response.json()["message"] == "Git Repository is empty."):
-            logging.info(msg="Repository is empty. So, creating an initial empty commit.")
+        if (
+            e.response.status_code == 409
+            and e.response.json()["message"] == "Git Repository is empty."
+        ):
+            logging.info(
+                msg="Repository is empty. So, creating an initial empty commit."
+            )
             initialize_repo(repo_path=f"/tmp/repo/{owner}-{repo}", remote_url=clone_url)
             return get_latest_remote_commit_sha(
                 owner=owner,
