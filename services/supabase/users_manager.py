@@ -47,26 +47,26 @@ class UsersManager:
             .eq(column="installation_id", value=installation_id)
             .execute()
         )
-        if data[1][0]["is_user_assigned"]:
+        if data[1] and data[1][0]["is_user_assigned"]:
             return True
-        else:
-            # Check if a seat is available for a user
-            assigned_users, _ = (
-                self.client.table(table_name="user_installations")
-                .select("*")
-                .eq(column="installation_id", value=installation_id)
-                .eq(column="is_user_assigned", value=True)
-                .execute()
-            )
-            if len(assigned_users[1]) >= quantity:
-                return False
-            else:
-                # Set user as assigned in db
-                self.client.table(table_name="user_installations").update(
-                    json={"is_user_assigned": True}
-                ).eq(column="user_id", value=user_id).eq(
-                    column="installation_id", value=installation_id
-                ).execute()
+
+        # Check if a seat is available for a user
+        assigned_users, _ = (
+            self.client.table(table_name="user_installations")
+            .select("*")
+            .eq(column="installation_id", value=installation_id)
+            .eq(column="is_user_assigned", value=True)
+            .execute()
+        )
+        if len(assigned_users[1]) >= quantity:
+            return False
+
+        # Set user as assigned in db
+        self.client.table(table_name="user_installations").update(
+            json={"is_user_assigned": True}
+        ).eq(column="user_id", value=user_id).eq(
+            column="installation_id", value=installation_id
+        ).execute()
         return True
 
     @handle_exceptions(default_return_value=None, raise_on_error=True)
