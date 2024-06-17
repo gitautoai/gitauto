@@ -29,6 +29,7 @@ from config import (
 from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload
 from services.supabase import SupabaseManager
 from utils.file_manager import apply_patch, extract_file_name, run_command
+from utils.handle_exceptions import handle_exceptions
 from utils.text_copy import (
     UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
     UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,
@@ -344,50 +345,33 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
     run_command(command="git push -u origin main", cwd=repo_path)
 
 
+@handle_exceptions(raise_on_error=True)
 def get_installation_access_token(installation_id: int) -> str:
     """Get an access token for the installed GitHub App"""
     jwt_token: str = create_jwt()
     headers: dict[str, str] = create_headers(token=jwt_token)
-    url: str = (
-        f"https://api.github.com/app/installations/{installation_id}/access_tokens"
+    url = f"https://api.github.com/app/installations/{installation_id}/access_tokens"
+    response: requests.Response = requests.post(
+        url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS
     )
-
-    try:
-        response: requests.Response = requests.post(
-            url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS
-        )
-        response.raise_for_status()
-        return response.json()["token"]
-    except requests.exceptions.HTTPError as e:
-        logging.error(
-            msg=f"get_installation_access_token HTTP Error: {e.response.status_code} - {e.response.text}"
-        )
-        raise
-    except Exception as e:
-        logging.error(msg=f"get_installation_access_token Error: {e}")
-        raise
+    response.raise_for_status()
+    return response.json()["token"]
 
 
+@handle_exceptions(default_return_value=[], raise_on_error=False)
 def get_issue_comments(
     owner: str, repo: str, issue_number: int, token: str
 ) -> list[str]:
     """https://docs.github.com/en/rest/issues/comments#list-issue-comments"""
-    try:
-        response = requests.get(
-            url=f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/comments",
-            headers=create_headers(token=token),
-            timeout=TIMEOUT_IN_SECONDS,
-        )
-        response.raise_for_status()
-        comments = response.json()
-        comment_texts: list[str] = [comment["body"] for comment in comments]
-        return comment_texts
-    except requests.exceptions.HTTPError as e:
-        logging.error(
-            msg=f"get_issue_comments HTTP Error: {e.response.status_code} - {e.response.text}"
-        )
-    except Exception as e:
-        logging.error(msg=f"get_issue_comments Error: {e}")
+    response = requests.get(
+        url=f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/comments",
+        headers=create_headers(token=token),
+        timeout=TIMEOUT_IN_SECONDS,
+    )
+    response.raise_for_status()
+    comments = response.json()
+    comment_texts: list[str] = [comment["body"] for comment in comments]
+    return comment_texts
 
 
 def get_latest_remote_commit_sha(
@@ -442,6 +426,7 @@ def get_latest_remote_commit_sha(
         ) from e
 
 
+@handle_exceptions(default_return_value="", raise_on_error=False)
 def get_remote_file_content(
     file_path: str,  # Ex) 'src/main.py'
     owner: str,
@@ -449,28 +434,16 @@ def get_remote_file_content(
     repo: str,
     token: str,
 ) -> str:
-    """@link https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28"""
+    """https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28"""
     url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
     headers: dict[str, str] = create_headers(token=token)
-
-    try:
-        response: requests.Response = requests.get(
-            url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS
-        )
-        response.raise_for_status()
-        encoded_content: str = response.json()["content"]
-        decoded_content: str = base64.b64decode(s=encoded_content).decode(
-            encoding="utf-8"
-        )
-        # print(f"```{file_path}:\n{decoded_content}```")
-        return decoded_content
-    except requests.exceptions.HTTPError as e:
-        logging.error(
-            msg=f"get_remote_file_content HTTP Error: {e.response.status_code} - {e.response.text}"
-        )
-    except Exception as e:
-        # TODO in future ask GPT to try again
-        logging.error(msg=f"get_remote_file_content Error: {e}")
+    response: requests.Response = requests.get(
+        url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS
+    )
+    response.raise_for_status()
+    encoded_content: str = response.json()["content"]
+    decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding="utf-8")
+    return decoded_content
 
 
 def get_remote_file_tree(
@@ -524,26 +497,17 @@ async def verify_webhook_signature(request: Request, secret: str) -> None:
         raise ValueError("Invalid webhook signature")
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
     """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
-    try:
-        response: requests.Response = requests.patch(
-            url=comment_url,
-            headers=create_headers(token=token),
-            json={
-                "body": body,
-            },
-            timeout=TIMEOUT_IN_SECONDS,
-        )
-        response.raise_for_status()
-
-        return response.json()
-    except requests.exceptions.HTTPError as e:
-        logging.error(
-            msg=f"update_comment HTTP Error: {e.response.status_code} - {e.response.text}"
-        )
-    except Exception as e:
-        logging.error(msg=f"update_comment Error: {e}")
+    response: requests.Response = requests.patch(
+        url=comment_url,
+        headers=create_headers(token=token),
+        json={"body": body},
+        timeout=TIMEOUT_IN_SECONDS,
+    )
+    response.raise_for_status()
+    return response.json()
 
 
 def update_comment_for_raised_errors(
