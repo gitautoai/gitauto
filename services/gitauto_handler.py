@@ -118,6 +118,11 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
 
     pr_body: str = write_pr_body(
         input_message=json.dumps(
+    try:
+        if len(user_list) < required_length:
+            return False
+        # existing code to process the user_list
+    except IndexError:
             obj={
                 "issue_title": issue_title,
                 "issue_body": issue_body,
