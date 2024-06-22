@@ -3,7 +3,6 @@ import json
 import time
 from uuid import uuid4
 
-
 # Local imports
 from config import (
     PRODUCT_ID,
@@ -31,7 +30,11 @@ from services.github.github_types import (
 from services.openai.chat import write_pr_body
 from services.openai.agent import run_assistant
 from services.supabase import SupabaseManager
-from utils.text_copy import pull_request_completed, request_limit_reached
+from utils.text_copy import (
+    UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
+    pull_request_completed,
+    request_limit_reached,
+)
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
@@ -109,7 +112,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         repo=repo_name,
         ref=base_branch,
         comment_url=comment_url,
-        unique_issue_id=unique_issue_id,
         token=token,
     )
     issue_comments: list[str] = get_issue_comments(
@@ -155,7 +157,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         repo=repo_name,
         sha=latest_commit_sha,
         comment_url=comment_url,
-        unique_issue_id=unique_issue_id,
         token=token,
     )
     print(
@@ -191,24 +192,23 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         f"git pull origin {new_branch}\n"
         f"```"
     )
-    pull_request_url = create_pull_request(
+    pull_request_url: str | None = create_pull_request(
         base=base_branch,
         body=issue_link + pr_body + git_commands,
         head=new_branch,
         owner=owner,
         repo=repo_name,
         title=f"Fix {issue_title} with {PRODUCT_ID} model",
-        comment_url=comment_url,
-        unique_issue_id=unique_issue_id,
         token=token,
     )
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
 
-    update_comment(
-        comment_url=comment_url,
-        token=token,
-        body=pull_request_completed(pull_request_url=pull_request_url),
-    )
+    # Update the issue comment based on if the PR was created or not
+    if pull_request_url is not None:
+        body_after_pr: str = pull_request_completed(pull_request_url=pull_request_url)
+    else:
+        body_after_pr = UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY
+    update_comment(comment_url=comment_url, token=token, body=body_after_pr)
 
     end_time = time.time()
     supabase_manager.complete_and_update_usage_record(

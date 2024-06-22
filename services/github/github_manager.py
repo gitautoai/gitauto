@@ -271,6 +271,7 @@ def create_jwt() -> str:
     return jwt.encode(payload=payload, key=GH_PRIVATE_KEY, algorithm="RS256")
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def create_pull_request(
     base: str,  # The branch name you want to merge your changes into. ex) 'main'
     body: str,
@@ -278,28 +279,17 @@ def create_pull_request(
     owner: str,
     repo: str,
     title: str,
-    comment_url: str,
-    unique_issue_id: str,
     token: str,
-) -> str:
+) -> str | None:
     """https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request"""
-    try:
-        response: requests.Response = requests.post(
-            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls",
-            headers=create_headers(token=token),
-            json={"title": title, "body": body, "head": head, "base": base},
-            timeout=TIMEOUT_IN_SECONDS,
-        )
-        response.raise_for_status()
-        return response.json()["html_url"]
-    except Exception as e:
-        update_comment_for_raised_errors(
-            error=e,
-            comment_url=comment_url,
-            unique_issue_id=unique_issue_id,
-            token=token,
-            which_function=create_pull_request.__name__,
-        )
+    response: requests.Response = requests.post(
+        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls",
+        headers=create_headers(token=token),
+        json={"title": title, "body": body, "head": head, "base": base},
+        timeout=TIMEOUT_IN_SECONDS,
+    )
+    response.raise_for_status()
+    return response.json()["html_url"]
 
 
 def create_remote_branch(
@@ -308,7 +298,6 @@ def create_remote_branch(
     repo: str,
     sha: str,
     comment_url: str,
-    unique_issue_id: str,
     token: str,
 ) -> None:
     try:
@@ -323,7 +312,6 @@ def create_remote_branch(
         update_comment_for_raised_errors(
             error=e,
             comment_url=comment_url,
-            unique_issue_id=unique_issue_id,
             token=token,
             which_function=create_remote_branch.__name__,
         )
@@ -416,7 +404,6 @@ def get_latest_remote_commit_sha(
         update_comment_for_raised_errors(
             error=e,
             comment_url=comment_url,
-            unique_issue_id=unique_issue_id,
             token=token,
             which_function=get_latest_remote_commit_sha.__name__,
         )
@@ -447,7 +434,7 @@ def get_remote_file_content(
 
 
 def get_remote_file_tree(
-    owner: str, repo: str, ref: str, comment_url: str, unique_issue_id: str, token: str
+    owner: str, repo: str, ref: str, comment_url: str, token: str
 ) -> list[str]:
     """
     Get the file tree of a GitHub repository at a ref branch.
@@ -473,7 +460,6 @@ def get_remote_file_tree(
         update_comment_for_raised_errors(
             error=e,
             comment_url=comment_url,
-            unique_issue_id=unique_issue_id,
             token=token,
             which_function=get_remote_file_tree.__name__,
         )
@@ -511,7 +497,7 @@ def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
 
 
 def update_comment_for_raised_errors(
-    error: Any, comment_url: str, unique_issue_id: str, token: str, which_function: str
+    error: Any, comment_url: str, token: str, which_function: str
 ) -> dict[str, Any]:
     """Update the comment on issue with an error message and raise the error."""
     body = UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY
