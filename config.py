@@ -43,13 +43,15 @@ STRIPE_FREE_TIER_PRICE_ID: str = get_env_var(name="STRIPE_FREE_TIER_PRICE_ID")
 # General
 DEFAULT_TIME = datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
 ENV: str = get_env_var(name="ENV")
-FREE_TIER_REQUEST_AMOUNT = 5
+# Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
+# FREE_TIER_REQUEST_AMOUNT = 5
 ISSUE_NUMBER_FORMAT = "/issue-#"
 PR_BODY_STARTS_WITH = "Original issue: [#"
 PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 PRODUCT_URL = "https://gitauto.ai"
 TIMEOUT_IN_SECONDS = 120
+UTF8 = "utf-8"
 
 # Testing
 INSTALLATION_ID = -1

@@ -122,4 +122,3 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             supabase_manager.set_issue_to_merged(unique_issue_id=unique_issue_id)
 
     print(f"Event {event_name} with action {action} is not handled")
-    print(f"Payload: {payload}")

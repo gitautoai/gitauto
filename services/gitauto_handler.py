@@ -1,5 +1,6 @@
 # Standard imports
 import json
+import logging
 import time
 from uuid import uuid4
 
@@ -73,6 +74,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         )
     )
     if requests_left <= 0:
+        logging.info("\nRequest limit reached for user %s.", user_name)
         create_comment(
             owner=owner,
             repo=repo_name,

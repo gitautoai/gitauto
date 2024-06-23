@@ -2,8 +2,7 @@
 
 import datetime
 import os
-from pickle import INST
-from sre_constants import IN
+import pytest
 
 from config import (
     OWNER_ID,
@@ -15,27 +14,19 @@ from config import (
     UNIQUE_ISSUE_ID,
     NEW_INSTALLATION_ID,
 )
-
-
-import asyncio
-import pytest
-
-pytest_plugins = ("pytest_asyncio",)
-
-from tests.services.supabase.wipe_data import (
-    wipe_installation_owner_user_data,
-)
-
 from services.stripe.customer import get_subscription
 from services.supabase import SupabaseManager
 from services.webhook_handler import handle_webhook_event
-
+from tests.services.supabase.wipe_data import (
+    wipe_installation_owner_user_data,
+)
+from tests.test_payloads.deleted import deleted_payload
 from tests.test_payloads.installation import (
     installation_payload,
     new_installation_payload,
 )
-from tests.test_payloads.deleted import deleted_payload
 
+pytest_plugins = ("pytest_asyncio",)
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
 SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
 
@@ -103,6 +94,7 @@ def test_how_many_requests_left() -> None:
         )
     )
 
+    # Match request_count in Metadata in https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
     assert requests_left == 5
     assert request_count == 5
     assert isinstance(end_date, datetime.datetime)

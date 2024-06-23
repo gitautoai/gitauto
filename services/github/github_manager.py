@@ -102,20 +102,22 @@ def commit_changes_to_remote_branch(
     url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}"
     try:
         # Get the SHA of the file if it exists
-        get_response = requests.get(
+        response = requests.get(
             url=url, headers=create_headers(token=token), timeout=TIMEOUT_IN_SECONDS
         )
         original_text = ""
         sha = ""
-        print(f"{get_response.status_code=}\n")
-        if get_response.status_code == 200:
-            get_json: GitHubContentInfo = get_response.json()
-            original_text: str = base64.b64decode(s=get_json["content"]).decode(
-                encoding="utf-8"
+        print(f"{response.status_code=}\n")
+        if response.status_code == 200:
+            file_info: GitHubContentInfo = response.json()
+            content: str = file_info.get("content")
+            # content is base64 encoded by default in GitHub API
+            original_text: str = base64.b64decode(s=content).decode(
+                encoding="utf-8", errors="replace"
             )
-            sha: str = get_json["sha"]
-        elif get_response.status_code != 404:  # Error other than 'file not found'
-            get_response.raise_for_status()
+            sha: str = file_info["sha"]
+        elif response.status_code != 404:  # Error other than 'file not found'
+            response.raise_for_status()
 
         # Create a new commit
         modified_text: str = apply_patch(
@@ -141,7 +143,7 @@ def commit_changes_to_remote_branch(
         put_response.raise_for_status()
     except Exception as e:
         # Do not cancel PR if this commit fails
-        logging.error("commit_chages_to_remove_branch Error: %s", e)
+        logging.error("commit_changes_to_remove_branch Error: %s", e)
 
 
 def create_comment(
@@ -219,6 +221,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
         body += request_issue_comment(requests_left=requests_left, end_date=end_date)
 
     if requests_left <= 0:
+        logging.info("\nRequest limit reached for user %s.", user_name)
         body = request_limit_reached(
             user_name=user_name,
             request_count=request_count,
