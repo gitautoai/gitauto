@@ -1,5 +1,6 @@
 # Standard imports
 import json
+import logging
 import time
 from typing import Any
 import difflib
@@ -287,6 +288,12 @@ def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> tuple[Ru
             except Exception as e:
                 raise ValueError(f"Error: {e}") from e
         time.sleep(0.5)
+
+    # Loop is done, check if the run failed
+    # See https://platform.openai.com/docs/api-reference/runs/object#runs/object-last_error
+    if run.status == "failed":
+        error = run.last_error
+        logging.error("Run {run_name} failed: {error}", run_name=run_name, error=error)
     print(f"Run {run_name} status after loop: {run.status}")
     return run, input_data
 
