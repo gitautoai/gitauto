@@ -292,8 +292,7 @@ def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> tuple[Ru
     # Loop is done, check if the run failed
     # See https://platform.openai.com/docs/api-reference/runs/object#runs/object-last_error
     if run.status == "failed":
-        error = run.last_error
-        logging.error("Run {run_name} failed: {error}", run_name=run_name, error=error)
+        logging.error("Run %s failed: %s", run_name, run.last_error)
     print(f"Run {run_name} status after loop: {run.status}")
     return run, input_data
 

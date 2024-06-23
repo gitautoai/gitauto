@@ -4,18 +4,22 @@ import re
 import subprocess
 import tempfile
 
+from config import UTF8
+
 
 def apply_patch(original_text: str, diff_text: str) -> str:
     """Apply a diff using the patch command via temporary files"""
-    with tempfile.NamedTemporaryFile(mode="w+", delete=False) as original_file:
-        original_file_name: str = original_file.name
+    with tempfile.NamedTemporaryFile(
+        mode="w+", newline="", delete=False
+    ) as original_file:
+        org_fname: str = original_file.name
         if original_text:
             original_file.write(
                 original_text if original_text.endswith("\n") else original_text + "\n"
             )
 
-    with tempfile.NamedTemporaryFile(mode="w+", delete=False) as diff_file:
-        diff_file_name: str = diff_file.name
+    with tempfile.NamedTemporaryFile(mode="w+", newline="", delete=False) as diff_file:
+        diff_fname: str = diff_file.name
         diff_file.write(diff_text if diff_text.endswith("\n") else diff_text + "\n")
 
     modified_text = ""
@@ -27,15 +31,15 @@ def apply_patch(original_text: str, diff_text: str) -> str:
                 line[1:] if line.startswith("+") else line for line in lines[3:]
             ]
             new_content: str = "\n".join(new_content_lines)
-            with open(file=original_file_name, mode="w", encoding="utf-8") as new_file:
+            with open(file=org_fname, mode="w", encoding=UTF8, newline="") as new_file:
                 new_file.write(new_content)
 
         # Modified or deleted file
         else:
-            with open(file=diff_file_name, mode="r", encoding="utf-8") as input_diff:
+            with open(file=diff_fname, mode="r", encoding=UTF8, newline="") as diff:
                 subprocess.run(
-                    args=["patch", "-u", original_file_name],
-                    input=input_diff.read(),
+                    args=["patch", "-u", "--fuzz=3", org_fname],
+                    input=diff.read(),
                     text=True,
                     check=True,
                     stdout=subprocess.PIPE,
@@ -43,24 +47,36 @@ def apply_patch(original_text: str, diff_text: str) -> str:
                 )
 
         print("Patch applied successfully.")
-        with open(file=original_file_name, mode="r", encoding="utf-8") as modified_file:
+        with open(file=org_fname, mode="r", encoding=UTF8, newline="") as modified_file:
             modified_text: str = modified_file.read()
             print(f"{modified_text=}\n")
 
     except subprocess.CalledProcessError as e:
-        print("Failed to apply patch.")
-        print(f"stdout: {e.stdout}")
-        print(f"stderr: {e.stderr}\n")
-        logging.error(msg=f"apply_patch stderr: {e.stderr}")  # pylint: disable=no-member
-        print(f"Command: {' '.join(e.cmd)}")
-        print(f"Exit status: {e.returncode}")
-        return ""
+        stdout, stderr = e.stdout, e.stderr
+        cmd, code = " ".join(e.cmd), e.returncode
+
+        # Get the original, diff, and reject file contents for debugging
+        with open(file=org_fname, mode="r", encoding=UTF8, newline="") as modified_file:
+            modified_text: str = modified_file.read()
+        with open(file=diff_fname, mode="r", encoding=UTF8, newline="") as diff_file:
+            diff_text: str = diff_file.read()
+        rej_f_name: str = f"{org_fname}.rej"
+        reject_text = None
+        if os.path.exists(path=rej_f_name):
+            with open(file=rej_f_name, mode="r", encoding=UTF8, newline="") as rej_file:
+                reject_text = rej_file.read()
+
+        # Log the error and return an empty string not to break the flow
+        msg = f"Failed to apply patch. See details below.\nstdout: {stdout}\nstderr: {stderr}\nCommand: {cmd}\nExit status: {code}\nDiff content: {diff_text}\nReject content: {reject_text}\nOriginal content: {original_text}"
+        logging.error(msg=msg)
+        return modified_text
+
     except Exception as e:  # pylint: disable=broad-except
-        logging.error(msg=f"Error: {e}")  # pylint: disable=no-member
+        logging.error(msg=f"Error: {e}")
         return ""
     finally:
-        os.remove(path=original_file_name)
-        os.remove(path=diff_file_name)
+        os.remove(path=org_fname)
+        os.remove(path=diff_fname)
         print("Temporary files removed.\n")
 
     return modified_text
@@ -88,7 +104,8 @@ def correct_hunk_headers(diff_text: str) -> str:
     lines: list[str] = diff_text.splitlines()
     updated_lines: list[str] = []
     hunk_pattern: re.Pattern[str] = re.compile(
-        pattern=r'^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
+        pattern=r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@"
+    )
 
     i = 0
     while i < len(lines):
@@ -108,19 +125,19 @@ def correct_hunk_headers(diff_text: str) -> str:
 
         # Count actual number of lines changed
         start_index: int = i
-        while i < len(lines) and not lines[i].startswith('@@'):
-            if lines[i].startswith('+'):
+        while i < len(lines) and not lines[i].startswith("@@"):
+            if lines[i].startswith("+"):
                 s2_actual += 1
-            if lines[i].startswith('-'):
+            if lines[i].startswith("-"):
                 s1_actual += 1
             i += 1
 
         # Update the hunk header with actual numbers
-        updated_hunk_header: str = f'@@ -{l1},{s1_actual} +{l2},{s2_actual} @@'
+        updated_hunk_header: str = f"@@ -{l1},{s1_actual} +{l2},{s2_actual} @@"
         updated_lines.append(updated_hunk_header)
         updated_lines.extend(lines[start_index:i])
 
-    return '\n'.join(updated_lines)
+    return "\n".join(updated_lines)
 
 
 def extract_file_name(diff_text: str) -> str:
