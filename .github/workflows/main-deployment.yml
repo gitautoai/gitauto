@@ -16,8 +16,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: AKIA5ZOUUDPV4JSVHC5U
-          aws-secret-access-key: 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
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-1
 
       - name: Login to Amazon ECR
@@ -48,5 +48,4 @@ jobs:
       - name: Execute Slack Webhook
         if: always()
         run: |
-          curl -X POST https://hooks.slack.com/workflows/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
-
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD_DEPLOYMENT_CHANNEL }}
