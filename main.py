@@ -10,7 +10,7 @@ from mangum import Mangum
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
-from config import GH_WEBHOOK_SECRET, ENV, PRODUCT_NAME
+from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME, UTF8
 from services.github.github_manager import verify_webhook_signature
 from services.webhook_handler import handle_webhook_event
 
@@ -30,14 +30,17 @@ handler = Mangum(app=app)
 
 @app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
-    content_type: str = request.headers.get("Content-Type", "Content-Type not specified")
+    content_type: str = request.headers.get(
+        "Content-Type", "Content-Type not specified"
+    )
     event_name: str = request.headers.get("X-GitHub-Event", "Event not specified")
+    print("\n" * 3 + "-" * 70)
     print(f"Received event: {event_name} with content type: {content_type}")
 
     # Validate if the webhook signature comes from GitHub
     try:
         print("Webhook received")
-        await verify_webhook_signature(request=request, secret=GH_WEBHOOK_SECRET)
+        await verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)
         print("Webhook signature verified")
     except Exception as e:
         print(f"Error: {e}")
@@ -48,17 +51,19 @@ async def handle_webhook(request: Request) -> dict[str, str]:
         request_body: bytes = await request.body()
     except Exception as e:
         print(f"Error in reading request body: {e}")
-        request_body = b''
+        request_body = b""
 
     payload: Any = {}
     try:
         # First try to parse the body as JSON
-        payload = json.loads(s=request_body.decode(encoding='utf-8'))
+        payload = json.loads(s=request_body.decode(encoding=UTF8))
     except json.JSONDecodeError:
         # If JSON parsing fails, treat the body as URL-encoded
-        decoded_body: dict[str, list[str]] = urllib.parse.parse_qs(qs=request_body.decode(encoding='utf-8'))
-        if 'payload' in decoded_body:
-            payload = json.loads(s=decoded_body['payload'][0])
+        decoded_body: dict[str, list[str]] = urllib.parse.parse_qs(
+            qs=request_body.decode(encoding=UTF8)
+        )
+        if "payload" in decoded_body:
+            payload = json.loads(s=decoded_body["payload"][0])
     except Exception as e:
         print(f"Error in parsing JSON payload: {e}")
 

@@ -3,6 +3,7 @@ import base64
 import datetime
 import hashlib  # For HMAC (Hash-based Message Authentication Code) signatures
 import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
+import json
 import logging
 import os
 import time
@@ -17,14 +18,16 @@ from fastapi import Request
 from config import (
     GITHUB_API_URL,
     GITHUB_API_VERSION,
-    GH_APP_ID,
-    GH_PRIVATE_KEY,
+    GITHUB_APP_ID,
+    GITHUB_APP_IDS,
+    GITHUB_PRIVATE_KEY,
     PRODUCT_NAME,
     PRODUCT_URL,
     TIMEOUT_IN_SECONDS,
     PRODUCT_ID,
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
+    UTF8,
 )
 from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload
 from services.supabase import SupabaseManager
@@ -113,7 +116,7 @@ def commit_changes_to_remote_branch(
             content: str = file_info.get("content")
             # content is base64 encoded by default in GitHub API
             original_text: str = base64.b64decode(s=content).decode(
-                encoding="utf-8", errors="replace"
+                encoding=UTF8, errors="replace"
             )
             sha: str = file_info["sha"]
         elif response.status_code != 404:  # Error other than 'file not found'
@@ -127,9 +130,9 @@ def commit_changes_to_remote_branch(
             return
         data: dict[str, str | None] = {
             "message": commit_message,
-            "content": base64.b64encode(
-                s=modified_text.encode(encoding="utf-8")
-            ).decode(encoding="utf-8"),
+            "content": base64.b64encode(s=modified_text.encode(encoding=UTF8)).decode(
+                encoding=UTF8
+            ),
             "branch": branch,
         }
         if sha != "":
@@ -268,10 +271,10 @@ def create_jwt() -> str:
     payload: dict[str, int | str] = {
         "iat": now,  # Issued at time
         "exp": now + 600,  # JWT expires in 10 minutes
-        "iss": GH_APP_ID,  # Issuer
+        "iss": GITHUB_APP_ID,  # Issuer
     }
     # The reason we use RS256 is that GitHub requires it for JWTs
-    return jwt.encode(payload=payload, key=GH_PRIVATE_KEY, algorithm="RS256")
+    return jwt.encode(payload=payload, key=GITHUB_PRIVATE_KEY, algorithm="RS256")
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -326,9 +329,7 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
         os.makedirs(name=repo_path)
 
     run_command(command="git init", cwd=repo_path)
-    with open(
-        file=os.path.join(repo_path, "README.md"), mode="w", encoding="utf-8"
-    ) as f:
+    with open(file=os.path.join(repo_path, "README.md"), mode="w", encoding=UTF8) as f:
         f.write(f"# Initial commit by [{PRODUCT_NAME}]({PRODUCT_URL})\n")
     run_command(command="git add README.md", cwd=repo_path)
     run_command(command='git commit -m "Initial commit"', cwd=repo_path)
@@ -360,8 +361,15 @@ def get_issue_comments(
         timeout=TIMEOUT_IN_SECONDS,
     )
     response.raise_for_status()
-    comments = response.json()
-    comment_texts: list[str] = [comment["body"] for comment in comments]
+    comments: list[Any] = response.json()
+    print(f"GITHUB_APP_IDS: {GITHUB_APP_IDS}")
+    filtered_comments: list[Any] = [
+        comment
+        for comment in comments
+        if comment.get("performed_via_github_app", {}).get("id") not in GITHUB_APP_IDS
+    ]
+    print(f"\nIssue comments: {json.dumps(filtered_comments, indent=2)}\n")
+    comment_texts: list[str] = [comment["body"] for comment in filtered_comments]
     return comment_texts
 
 
@@ -432,7 +440,7 @@ def get_remote_file_content(
     )
     response.raise_for_status()
     encoded_content: str = response.json()["content"]
-    decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding="utf-8")
+    decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
     return decoded_content
 
 
