@@ -49,4 +49,4 @@ jobs:
       - name: Execute Slack Webhook
         if: always()
         run: |
-          curl -X POST https://hooks.slack.com/workflows/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
+          curl -X POST https://hooks.slack.com/triggers/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
