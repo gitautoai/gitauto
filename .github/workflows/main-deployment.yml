@@ -47,5 +47,7 @@ jobs:
 
       - name: Execute Slack Webhook
         if: always()
+        env:
+          SLACK_MESSAGE: ${{ job.status == 'success' && 'Deployment successful' || 'Deployment failed' }}
         run: |
-          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD_DEPLOYMENT_CHANNEL }}
+          curl -X POST -H 'Content-type: application/json' --data '{"msg":"'"${SLACK_MESSAGE}"'"}' ${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD_DEPLOYMENT_CHANNEL }}
