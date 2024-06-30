@@ -1,0 +1,61 @@
+name: Deployment to AWS Lambda with Docker
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  deploy_lambda:
+    name: Publish and Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set deployment environment variables
+        run: |
+          {
+            echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}"
+            echo "IMAGE_TAG=${{ github.sha }}"
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              echo "ECR_REPOSITORY=pr-agent-prod"
+              echo "LAMBDA_NAME=pr-agent-prod"
+              echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD }}"
+            else
+              echo "ECR_REPOSITORY=stage"
+              echo "LAMBDA_NAME=stage"
+              echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_STG }}"
+            fi
+          } >> $GITHUB_ENV
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        run: |
+          docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Update Lambda function with latest ECR image
+        run: |
+          aws lambda update-function-code \
+          --function-name $LAMBDA_NAME \
+          --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Notify Slack of deployment status
+        # Execute this step even if the previous steps fail
+        if: always()
+        env:
+          SLACK_MESSAGE: ${{ job.status == 'success' && 'Deployment successful' || 'Deployment failed' }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"msg":"'"${SLACK_MESSAGE}"'"}' $SLACK_WEBHOOK_URL
