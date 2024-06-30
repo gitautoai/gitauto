@@ -5,7 +5,8 @@ from services.stripe.customer import get_subscription
 
 def test_get_subscription() -> None:
     # free tier subscription
-    subscription = get_subscription("cus_PpmBT8nwkEC6Vn")
+    # https://dashboard.stripe.com/test/customers/cus_QO4R5vh6FJuN7t
+    subscription = get_subscription("cus_QO4R5vh6FJuN7t")
     assert len(subscription["data"]) == 1
     assert (
         subscription["data"][0]["items"]["data"][0]["price"]["id"]
