@@ -5,10 +5,6 @@ on:
     branches:
       - '*'
 
-# Global environment variables
-env:
-  AWS_REGION: us-west-1
-
 jobs:
   deploy_lambda:
     name: Publish and Deploy
@@ -22,26 +18,24 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-west-1
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # LAMBDA_ARN is only used in production
       - name: Set deployment environment variables
         run: |
           {
             echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}"
             echo "IMAGE_TAG=${{ github.sha }}"
             if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-              echo "ECR_REPOSITORY=${{ secrets.PROD_LAMBDA_NAME }}"
-              echo "LAMBDA_NAME=${{ secrets.PROD_LAMBDA_NAME }}"
-              echo "LAMBDA_ARN=arn:aws:lambda:${{ env.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:function:${{ secrets.PROD_LAMBDA_NAME }}"
+              echo "ECR_REPOSITORY=pr-agent-prod"
+              echo "LAMBDA_NAME=pr-agent-prod"
               echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD }}"
             else
-              echo "ECR_REPOSITORY=${{ secrets.STAGE_LAMBDA_NAME }}"
-              echo "LAMBDA_NAME=${{ secrets.STAGE_LAMBDA_NAME }}"
+              echo "ECR_REPOSITORY=stage"
+              echo "LAMBDA_NAME=stage"
               echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_STG }}"
             fi
           } >> $GITHUB_ENV
@@ -58,16 +52,6 @@ jobs:
           --function-name $LAMBDA_NAME \
           --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # Create or update the CloudFormation stack only for the main branch
-      - name: Deploy CloudFormation stack for scheduled event
-        if: github.ref == 'refs/heads/main'
-        run: |
-          aws cloudformation deploy \
-          --stack-name ScheduleStack \
-          --template-file cloudformation.yml \
-          --parameter-overrides LambdaFunctionName=$LAMBDA_NAME LambdaFunctionArn=$LAMBDA_ARN \
-          --capabilities CAPABILITY_NAMED_IAM
-  
       - name: Notify Slack of deployment status
         # Execute this step even if the previous steps fail
         if: always()
