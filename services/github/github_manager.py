@@ -29,7 +29,7 @@ from config import (
     SUPABASE_SERVICE_ROLE_KEY,
     UTF8,
 )
-from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload
+from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload, IssueInfo
 from services.supabase import SupabaseManager
 from utils.file_manager import apply_patch, extract_file_name, run_command
 from utils.handle_exceptions import handle_exceptions
@@ -315,7 +315,7 @@ def get_installation_access_token(installation_id: int) -> str:
     """Get an access token for the installed GitHub App"""
     jwt_token: str = create_jwt()
     headers: dict[str, str] = create_headers(token=jwt_token)
-    url = f"https://api.github.com/app/installations/{installation_id}/access_tokens"
+    url = f"{GITHUB_API_URL}/app/installations/{installation_id}/access_tokens"
     response: requests.Response = requests.post(
         url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS
     )
@@ -329,7 +329,7 @@ def get_issue_comments(
 ) -> list[str]:
     """https://docs.github.com/en/rest/issues/comments#list-issue-comments"""
     response = requests.get(
-        url=f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/comments",
+        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
         headers=create_headers(token=token),
         timeout=TIMEOUT_IN_SECONDS,
     )
@@ -395,6 +395,28 @@ def get_latest_remote_commit_sha(
         raise RuntimeError(
             f"Error: Could not get the latest commit SHA in {get_latest_remote_commit_sha.__name__}"
         ) from e
+
+
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def get_oldest_unassigned_open_issue(owner: str, repo: str, token: str) -> IssueInfo | None:
+    """https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues"""
+    response: requests.Response = requests.get(
+        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues",
+        headers=create_headers(token=token),
+        params={
+            "assignee": "none",  # none, *, or username
+            "direction": "asc",  # asc or desc
+            "page": 1,
+            "per_page": 1,
+            "sort": "created",  # created, updated, comments
+            "state": "open",  # open, closed, or all
+        },
+        timeout=TIMEOUT_IN_SECONDS,
+    )
+    response.raise_for_status()
+    issues: list[IssueInfo] = response.json()
+    return issues[0] if issues else None
+
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)

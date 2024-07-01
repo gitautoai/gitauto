@@ -42,7 +42,7 @@ supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_K
 
 async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> None:
     """Core functionality to create comments on issue, create PRs, and update progress."""
-    current_time = time.time()
+    current_time: float = time.time()
 
     # Extract label and validate it
     if trigger_type == "label" and payload["label"]["name"] != PRODUCT_ID:
@@ -55,7 +55,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     issue_number: int = issue["number"]
     installation_id: int = payload["installation"]["id"]
     repo: RepositoryInfo = payload["repository"]
-    owner_type: str = payload["repository"]["owner"]["type"]
+    owner_type: str = repo["owner"]["type"]
     owner: str = repo["owner"]["login"]
     owner_id: int = repo["owner"]["id"]
     repo_name: str = repo["name"]

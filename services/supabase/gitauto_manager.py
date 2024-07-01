@@ -149,6 +149,17 @@ class GitAutoAgentManager:
             .execute()
         )
 
+    @handle_exceptions(default_return_value=None, raise_on_error=False)
+    def get_installation_id(self, owner_id: int) -> int:
+        """Get installation id for the owner"""
+        data, _ = (
+            self.client.table(table_name="installations")
+            .select("installation_id")
+            .eq(column="owner_id", value=owner_id)
+            .execute()
+        )
+        return data[1][0]["installation_id"]
+
     @handle_exceptions(default_return_value=False, raise_on_error=False)
     def is_users_first_issue(self, user_id: int, installation_id: int) -> bool:
         """Checks if it's the users first issue"""

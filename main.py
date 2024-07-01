@@ -30,7 +30,6 @@ mangum_handler = Mangum(app=app)
 
 # Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 def handler(event, context):
-    print(f"Received event: {event}")
     if "source" in event and event["source"] == "aws.events":
         schedule_handler(event=event, context=context)
         return {"statusCode": 200}
@@ -59,7 +58,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     # Process the webhook event but never raise an exception as some event_name like "marketplace_purchase" doesn't have a payload
     try:
         request_body: bytes = await request.body()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print(f"Error in reading request body: {e}")
         request_body = b""
 
@@ -74,7 +73,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
         )
         if "payload" in decoded_body:
             payload = json.loads(s=decoded_body["payload"][0])
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print(f"Error in parsing JSON payload: {e}")
 
     try:

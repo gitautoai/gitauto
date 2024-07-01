@@ -14,12 +14,13 @@ Resources:
   # https://us-west-1.console.aws.amazon.com/lambda/home?region=us-west-1#/functions
 
   # Define AWS EventBridge (CloudWatch Events) rule to schedule the Lambda function
+  # You can see here: https://us-west-1.console.aws.amazon.com/events/home?region=us-west-1#/eventbus/default/rules/SchedulerEventRule
   SchedulerEventRule:
     Type: AWS::Events::Rule
     Properties:
       Name: SchedulerEventRule
       Description: "Schedule Lambda function to run every weekday at 0 AM UTC"
-      ScheduleExpression: cron(35 6 ? * MON-FRI *)  # min hour day month day-of-week year
+      ScheduleExpression: cron(0 0 ? * MON-FRI *)  # min hour day month day-of-week year
       State: ENABLED
       Targets:
         - Arn: !Ref LambdaFunctionArn
