@@ -41,28 +41,22 @@ from utils.text_copy import (
 )
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def add_reaction_to_issue(
     owner: str, repo: str, issue_number: int, content: str, token: str
 ) -> None:
     """https://docs.github.com/en/rest/reactions/reactions?apiVersion=2022-11-28#create-reaction-for-an-issue"""
-    try:
-        response: requests.Response = requests.post(
-            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/reactions",
-            headers=create_headers(token=token),
-            json={"content": content},
-            timeout=TIMEOUT_IN_SECONDS,
-        )
-        response.raise_for_status()
-        response.json()
-
-    except requests.exceptions.HTTPError as e:
-        logging.error(
-            msg=f"add_reaction_to_issue HTTP Error: {e.response.status_code} - {e.response.text}"
-        )
-    except Exception as e:
-        logging.error(msg=f"add_reaction_to_issue Error: {e}")
+    response: requests.Response = requests.post(
+        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/reactions",
+        headers=create_headers(token=token),
+        json={"content": content},
+        timeout=TIMEOUT_IN_SECONDS,
+    )
+    response.raise_for_status()
+    response.json()
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def commit_multiple_changes_to_remote_branch(
     diffs: list[str],
     new_branch: str,
@@ -71,9 +65,7 @@ def commit_multiple_changes_to_remote_branch(
     token: str,
 ) -> None:
     """Called from assistants api to commit multiple changes to a new branch."""
-    # Commit the changes to the new remote branch
     for diff in diffs:
-        # TODO KAN-191: Compile Files and call GPT if it fails
         file_path: str = extract_file_name(diff_text=diff)
         print(
             f"{time.strftime('%H:%M:%S', time.localtime())} File path: {file_path}.\n"
@@ -92,6 +84,7 @@ def commit_multiple_changes_to_remote_branch(
         )
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def commit_changes_to_remote_branch(
     branch: str,
     commit_message: str,
@@ -103,79 +96,66 @@ def commit_changes_to_remote_branch(
 ) -> None:
     """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
     url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}"
-    try:
-        # Get the SHA of the file if it exists
-        response = requests.get(
-            url=url, headers=create_headers(token=token), timeout=TIMEOUT_IN_SECONDS
-        )
-        original_text = ""
-        sha = ""
-        print(f"{response.status_code=}\n")
-        if response.status_code == 200:
-            file_info: GitHubContentInfo = response.json()
-            content: str = file_info.get("content")
-            # content is base64 encoded by default in GitHub API
-            original_text: str = base64.b64decode(s=content).decode(
-                encoding=UTF8, errors="replace"
-            )
-            sha: str = file_info["sha"]
-        elif response.status_code != 404:  # Error other than 'file not found'
-            response.raise_for_status()
 
-        # Create a new commit
-        modified_text: str = apply_patch(
-            original_text=original_text, diff_text=diff_text
+    # Get the SHA of the file if it exists
+    response = requests.get(
+        url=url, headers=create_headers(token=token), timeout=TIMEOUT_IN_SECONDS
+    )
+    original_text = ""
+    sha = ""
+    print(f"{response.status_code=}\n")
+    if response.status_code == 200:
+        file_info: GitHubContentInfo = response.json()
+        content: str = file_info.get("content")
+        # content is base64 encoded by default in GitHub API
+        original_text: str = base64.b64decode(s=content).decode(
+            encoding=UTF8, errors="replace"
         )
-        if modified_text == "":
-            return
-        data: dict[str, str | None] = {
-            "message": commit_message,
-            "content": base64.b64encode(s=modified_text.encode(encoding=UTF8)).decode(
-                encoding=UTF8
-            ),
-            "branch": branch,
-        }
-        if sha != "":
-            data["sha"] = sha
-        put_response = requests.put(
-            url=url,
-            json=data,
-            headers=create_headers(token=token),
-            timeout=TIMEOUT_IN_SECONDS,
-        )
-        put_response.raise_for_status()
-    except Exception as e:
-        # Do not cancel PR if this commit fails
-        logging.error("commit_changes_to_remove_branch Error: %s", e)
+        sha: str = file_info["sha"]
+    elif response.status_code != 404:  # Error other than 'file not found'
+        response.raise_for_status()
+
+    # Create a new commit
+    modified_text: str = apply_patch(original_text=original_text, diff_text=diff_text)
+    if modified_text == "":
+        return
+    data: dict[str, str | None] = {
+        "message": commit_message,
+        "content": base64.b64encode(s=modified_text.encode(encoding=UTF8)).decode(
+            encoding=UTF8
+        ),
+        "branch": branch,
+    }
+    if sha != "":
+        data["sha"] = sha
+    put_response = requests.put(
+        url=url,
+        json=data,
+        headers=create_headers(token=token),
+        timeout=TIMEOUT_IN_SECONDS,
+    )
+    put_response.raise_for_status()
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def create_comment(
     owner: str, repo: str, issue_number: int, body: str, token: str
 ) -> str:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
-    try:
-        response: requests.Response = requests.post(
-            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
-            headers=create_headers(token=token),
-            json={
-                "body": body,
-            },
-            timeout=TIMEOUT_IN_SECONDS,
-        )
+    response: requests.Response = requests.post(
+        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
+        headers=create_headers(token=token),
+        json={
+            "body": body,
+        },
+        timeout=TIMEOUT_IN_SECONDS,
+    )
 
-        response.raise_for_status()
-        return response.json()["url"]
-    # If this doesn't work, it means GitHub APIs are likely down, so we should raise
-    except requests.exceptions.HTTPError as e:
-        logging.error(
-            msg=f"create_comment HTTP Error: {e.response.status_code} - {e.response.text}"
-        )
-        raise
-    except Exception as e:
-        logging.error(msg=f"create_comment Error: {e}")
-        raise
+    response.raise_for_status()
+    return response.json()["url"]
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -> None:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     installation_id: int = payload["installation"]["id"]
@@ -237,24 +217,17 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
             user_id=user_id, installation_id=installation_id
         )
 
-    try:
-        response: requests.Response = requests.post(
-            url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",
-            headers=create_headers(token=token),
-            json={
-                "body": body,
-            },
-            timeout=TIMEOUT_IN_SECONDS,
-        )
-        response.raise_for_status()
+    response: requests.Response = requests.post(
+        url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",
+        headers=create_headers(token=token),
+        json={
+            "body": body,
+        },
+        timeout=TIMEOUT_IN_SECONDS,
+    )
+    response.raise_for_status()
 
-        return response.json()
-    except requests.exceptions.HTTPError as e:
-        logging.error(
-            msg=f"create_comment HTTP Error: {e.response.status_code} - {e.response.text}"
-        )
-    except Exception as e:
-        logging.error(msg=f"create_comment Error: {e}")
+    return response.json()
 
 
 def create_headers(token: str) -> dict[str, str]:
