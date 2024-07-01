@@ -23,7 +23,7 @@ if ENV != "local":
         traces_sample_rate=1.0,
     )
 
-# Create FastAPI instance and Mangum handler
+# Create FastAPI instance and Mangum handler. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 app = FastAPI()
 mangum_handler = Mangum(app=app)
 
