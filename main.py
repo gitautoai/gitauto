@@ -11,11 +11,9 @@ from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
 from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME, UTF8
+from scheduler import schedule_handler
 from services.github.github_manager import verify_webhook_signature
 from services.webhook_handler import handle_webhook_event
-
-# Create FastAPI instance
-app = FastAPI()
 
 if ENV != "local":
     sentry_sdk.init(
@@ -25,7 +23,18 @@ if ENV != "local":
         traces_sample_rate=1.0,
     )
 
-handler = Mangum(app=app)
+# Create FastAPI instance and Mangum handler
+app = FastAPI()
+mangum_handler = Mangum(app=app)
+
+
+# Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
+def handler(event, context):
+    if "source" in event and event["source"] == "aws.events":
+        schedule_handler(event=event, context=context)
+        return {"statusCode": 200}
+
+    return mangum_handler(event=event, context=context)
 
 
 @app.post(path="/webhook")
