@@ -28,7 +28,7 @@ app = FastAPI()
 mangum_handler = Mangum(app=app)
 
 
-# Here is an entry point for the AWS Lambda function.
+# Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 def handler(event, context):
     if "source" in event and event["source"] == "aws.events":
         schedule_handler(event=event, context=context)
