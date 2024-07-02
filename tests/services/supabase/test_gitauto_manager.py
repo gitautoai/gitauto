@@ -1,3 +1,22 @@
+from unittest.mock import patch, MagicMock
+from services.gitauto_handler import send_slack_message
+
+def test_send_slack_message():
+    installation_details = "Test installation details"
+
+    with patch('services.gitauto_handler.WebClient') as MockWebClient:
+        mock_client = MockWebClient.return_value
+        mock_client.chat_postMessage.return_value = MagicMock()
+
+        send_slack_message(installation_details)
+
+        MockWebClient.assert_called_once_with(token='your-slack-bot-token')
+        mock_client.chat_postMessage.assert_called_once_with(
+            channel='#your-channel',
+            text=f"New installation: {installation_details}"
+        )
+
+test_send_slack_message()
 # run this file locally with: python -m tests.services.supabase.test_gitauto_manager
 import os
 from config import OWNER_TYPE
