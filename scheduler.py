@@ -1,9 +1,8 @@
 """This is scheduled to run by AWS Lambda"""
 
-import asyncio
-from config import SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
-from services.gitauto_handler import handle_gitauto
+from config import PRODUCT_ID, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
 from services.github.github_manager import (
+    add_label_to_issue,
     get_installation_access_token,
     get_oldest_unassigned_open_issue,
 )
@@ -24,44 +23,16 @@ def schedule_handler(event, context) -> dict[str, int]:
     # Identify the oldest open and unassigned issue for each repository.
     owner_id = 159883862  # gitautoai
     owner = "gitautoai"
-    owner_type = "Organization"
     repo = "gitauto"
-    default_branch = "main"
-    user_id = 4620828
-    user = "hiroshinishio"
     installation_id = supabase_manager.get_installation_id(owner_id=owner_id)
     token: str = get_installation_access_token(installation_id=installation_id)
     issue: IssueInfo | None = get_oldest_unassigned_open_issue(
         owner=owner, repo=repo, token=token
     )
+    issue_number = issue["number"]
 
-    # Resolve that issue.
-    payload = (
-        {
-            "issue": {
-                "number": issue["number"],
-                "title": issue["title"],
-                "body": issue["body"],
-            },
-            "installation": {
-                "id": installation_id,
-            },
-            "repository": {
-                "owner": {
-                    "type": owner_type,
-                    "id": owner_id,
-                    "login": owner,
-                },
-                "name": repo,
-                "default_branch": default_branch,
-            },
-            "sender": {
-                "id": user_id,
-                "login": user,
-            },
-        },
+    # Label the issue with the product ID to trigger GitAuto.
+    add_label_to_issue(
+        owner=owner, repo=repo, issue_number=issue_number, label=PRODUCT_ID, token=token
     )
-
-    # Use asyncio.run() to run the async function.
-    asyncio.run(main=handle_gitauto(payload=payload, trigger_type="label"))
     return {"statusCode": 200}
