@@ -49,7 +49,7 @@ from utils.text_copy import (
 def add_label_to_issue(
     owner: str, repo: str, issue_number: int, label: str, token: str
 ) -> None:
-    """https://docs.github.com/en/rest/issues/labels?apiVersion=2022-11-28#add-labels-to-an-issue"""
+    """If the label doesn't exist, it will be created. Color will be automatically assigned. If the issue already has the label, no change will be made and no error will be raised. https://docs.github.com/en/rest/issues/labels?apiVersion=2022-11-28#add-labels-to-an-issue"""
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/labels",
         headers=create_headers(token=token),
@@ -420,7 +420,7 @@ def get_latest_remote_commit_sha(
 def get_oldest_unassigned_open_issue(
     owner: str, repo: str, token: str
 ) -> IssueInfo | None:
-    """https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues"""
+    """Get an oldest unassigned open issue without "gitauto" label in a repository. https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues"""
     response: requests.Response = requests.get(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues",
         headers=create_headers(token=token),
@@ -436,7 +436,11 @@ def get_oldest_unassigned_open_issue(
     )
     response.raise_for_status()
     issues: list[IssueInfo] = response.json()
-    return issues[0] if issues else None
+    for issue in issues:
+        if all(label['name'] != PRODUCT_ID for label in issue['labels']):
+            return issue
+    return None
+
 
 
 
