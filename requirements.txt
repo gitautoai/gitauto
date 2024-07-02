@@ -37,6 +37,7 @@ starlette==0.37.2
 storage3==0.7.6
 StrEnum==0.4.15
 stripe==10.1.0
+slack_sdk==3.12.0
 supabase==2.5.1
 supafunc==0.4.6
 tqdm==4.66.4
