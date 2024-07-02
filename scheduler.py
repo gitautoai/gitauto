@@ -29,6 +29,12 @@ def schedule_handler(event, context) -> dict[str, int]:
     issue: IssueInfo | None = get_oldest_unassigned_open_issue(
         owner=owner, repo=repo, token=token
     )
+
+    # Return early if there are no open issues.
+    if issue is None:
+        return {"statusCode": 200}
+
+    # Extract the issue number if there is an open issue.
     issue_number = issue["number"]
 
     # Label the issue with the product ID to trigger GitAuto.
