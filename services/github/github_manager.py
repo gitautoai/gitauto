@@ -357,7 +357,8 @@ def get_issue_comments(
     filtered_comments: list[Any] = [
         comment
         for comment in comments
-        if comment.get("performed_via_github_app", {}).get("id") not in GITHUB_APP_IDS
+        if comment.get("performed_via_github_app")
+        and comment["performed_via_github_app"].get("id") not in GITHUB_APP_IDS
     ]
     print(f"\nIssue comments: {json.dumps(filtered_comments, indent=2)}\n")
     comment_texts: list[str] = [comment["body"] for comment in filtered_comments]
