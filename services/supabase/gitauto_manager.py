@@ -1,7 +1,6 @@
 """Class to manage all GitAuto related operations"""
 
 from datetime import datetime, timezone
-import json
 from supabase import Client
 from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 from utils.handle_exceptions import handle_exceptions
@@ -152,7 +151,7 @@ class GitAutoAgentManager:
 
     @handle_exceptions(default_return_value=None, raise_on_error=False)
     def get_installation_id(self, owner_id: int) -> int:
-        """Get installation id for the owner"""
+        """https://supabase.com/docs/reference/python/is"""
         data, _ = (
             self.client.table(table_name="installations")
             .select("installation_id")
@@ -160,7 +159,6 @@ class GitAutoAgentManager:
             .is_(column="uninstalled_at", value="null")  # Not uninstalled
             .execute()
         )
-        print(f"Data: {json.dumps(obj=data, indent=2)}")
         # Return the first installation id even if there are multiple installations
         return data[1][0]["installation_id"]
 

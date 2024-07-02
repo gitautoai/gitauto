@@ -316,8 +316,6 @@ def get_installation_access_token(installation_id: int) -> str:
     jwt_token: str = create_jwt()
     headers: dict[str, str] = create_headers(token=jwt_token)
     url = f"{GITHUB_API_URL}/app/installations/{installation_id}/access_tokens"
-    print(f"jwt_token: {jwt_token}\n")
-    print(f"headers: {headers}\n")
     response: requests.Response = requests.post(
         url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS
     )
