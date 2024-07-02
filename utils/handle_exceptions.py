@@ -16,6 +16,7 @@ def handle_exceptions(default_return_value: Any = None, raise_on_error: bool = F
                 if raise_on_error:
                     raise
             except KeyError as err:
+            except ValueError as err:
                 logging.error("%s encountered a KeyError: %s", func.__name__, err)
                 if raise_on_error:
                     raise
