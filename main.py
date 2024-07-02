@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException, Request
 from mangum import Mangum
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
+from services.gitauto_handler import send_slack_message
 # Local imports
 from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME, UTF8
 from scheduler import schedule_handler
@@ -68,6 +69,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
         payload = json.loads(s=request_body.decode(encoding=UTF8))
     except json.JSONDecodeError:
         # If JSON parsing fails, treat the body as URL-encoded
+    send_slack_message(event)
         decoded_body: dict[str, list[str]] = urllib.parse.parse_qs(
             qs=request_body.decode(encoding=UTF8)
         )
