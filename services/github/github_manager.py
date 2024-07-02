@@ -153,6 +153,7 @@ def create_comment(
 
     response.raise_for_status()
     return response.json()["url"]
+        raise ValueError("Empty or malformed JSON response received")
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
