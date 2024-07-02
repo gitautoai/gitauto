@@ -39,11 +39,15 @@ def handler(event, context):
 
 @app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
+        if not request_body:
+            raise HTTPException(status_code=400, detail="Request body is empty")
     content_type: str = request.headers.get(
         "Content-Type", "Content-Type not specified"
     )
     event_name: str = request.headers.get("X-GitHub-Event", "Event not specified")
     print("\n" * 3 + "-" * 70)
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
     print(f"Received event: {event_name} with content type: {content_type}")
 
     # Validate if the webhook signature comes from GitHub
