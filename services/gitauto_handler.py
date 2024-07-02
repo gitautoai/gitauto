@@ -1,3 +1,15 @@
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+
+def send_slack_message(installation_details):
+    client = WebClient(token='your-slack-bot-token')
+    try:
+        response = client.chat_postMessage(
+            channel='#your-channel',
+            text=f"New installation: {installation_details}"
+        )
+    except SlackApiError as e:
+        print(f"Error sending message: {e.response['error']}")
 # Standard imports
 import json
 import logging
