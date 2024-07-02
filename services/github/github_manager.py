@@ -29,7 +29,11 @@ from config import (
     SUPABASE_SERVICE_ROLE_KEY,
     UTF8,
 )
-from services.github.github_types import GitHubContentInfo, GitHubLabeledPayload, IssueInfo
+from services.github.github_types import (
+    GitHubContentInfo,
+    GitHubLabeledPayload,
+    IssueInfo,
+)
 from services.supabase import SupabaseManager
 from utils.file_manager import apply_patch, extract_file_name, run_command
 from utils.handle_exceptions import handle_exceptions
@@ -39,6 +43,20 @@ from utils.text_copy import (
     request_issue_comment,
     request_limit_reached,
 )
+
+
+@handle_exceptions(default_return_value=None, raise_on_error=True)
+def add_label_to_issue(
+    owner: str, repo: str, issue_number: int, label: str, token: str
+) -> None:
+    """https://docs.github.com/en/rest/issues/labels?apiVersion=2022-11-28#add-labels-to-an-issue"""
+    response: requests.Response = requests.post(
+        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/labels",
+        headers=create_headers(token=token),
+        json={"labels": [label]},
+        timeout=TIMEOUT_IN_SECONDS,
+    )
+    response.raise_for_status()
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -398,7 +416,9 @@ def get_latest_remote_commit_sha(
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_oldest_unassigned_open_issue(owner: str, repo: str, token: str) -> IssueInfo | None:
+def get_oldest_unassigned_open_issue(
+    owner: str, repo: str, token: str
+) -> IssueInfo | None:
     """https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues"""
     response: requests.Response = requests.get(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues",
