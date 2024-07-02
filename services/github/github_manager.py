@@ -1,6 +1,153 @@
 # Standard imports
 import base64
 import datetime
+import hashlib
+import hmac
+import json
+import logging
+import os
+import time
+import jwt
+import requests
+from fastapi import Request
+from typing import Any
+from config import (
+    GITHUB_API_URL,
+    GITHUB_API_VERSION,
+    GITHUB_APP_ID,
+    GITHUB_APP_IDS,
+    GITHUB_PRIVATE_KEY,
+    PRODUCT_NAME,
+    PRODUCT_URL,
+    TIMEOUT_IN_SECONDS,
+    PRODUCT_ID,
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY,
+    UTF8,
+)
+from services.github.github_types import (
+    GitHubContentInfo,
+    GitHubLabeledPayload,
+    IssueInfo,
+)
+from services.supabase import SupabaseManager
+from utils.file_manager import apply_patch, extract_file_name, run_command
+from utils.handle_exceptions import handle_exceptions
+from utils.text_copy import (
+    UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
+    UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,
+    request_issue_comment,
+    request_limit_reached,
+)
+
+class GitHubManager:
+    def __init__(self):
+        self.api_url = GITHUB_API_URL
+        self.api_version = GITHUB_API_VERSION
+        self.timeout = TIMEOUT_IN_SECONDS
+
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def add_label_to_issue(self, owner: str, repo: str, issue_number: int, label: str, token: str) -> None:
+        response = requests.post(
+            url=f"{self.api_url}/repos/{owner}/{repo}/issues/{issue_number}/labels",
+            headers=self.create_headers(token=token),
+            json={"labels": [label]},
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+
+    @handle_exceptions(default_return_value=None, raise_on_error=False)
+    def add_reaction_to_issue(self, owner: str, repo: str, issue_number: int, content: str, token: str) -> None:
+        response = requests.post(
+            url=f"{self.api_url}/repos/{owner}/{repo}/issues/{issue_number}/reactions",
+            headers=self.create_headers(token=token),
+            json={"content": content},
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+        response.json()
+
+    @handle_exceptions(default_return_value=None, raise_on_error=False)
+    def commit_multiple_changes_to_remote_branch(self, diffs: list[str], new_branch: str, owner: str, repo: str, token: str) -> None:
+        for diff in diffs:
+            file_path = extract_file_name(diff_text=diff)
+            self.commit_changes_to_remote_branch(
+                branch=new_branch,
+                commit_message=f"Update {file_path}",
+                diff_text=diff,
+                file_path=file_path,
+                owner=owner,
+                repo=repo,
+                token=token,
+            )
+
+    @handle_exceptions(default_return_value=None, raise_on_error=False)
+    def commit_changes_to_remote_branch(self, branch: str, commit_message: str, diff_text: str, file_path: str, owner: str, repo: str, token: str) -> None:
+        url = f"{self.api_url}/repos/{owner}/{repo}/contents/{file_path}"
+
+        response = requests.get(
+            url=url, headers=self.create_headers(token=token), timeout=self.timeout
+        )
+        original_text = ""
+        sha = ""
+        if response.status_code == 200:
+            file_info = response.json()
+            content = file_info.get("content")
+            original_text = base64.b64decode(content).decode(UTF8, errors="replace")
+            sha = file_info.get("sha", "")
+
+        elif response.status_code != 404:
+            response.raise_for_status()
+
+        modified_text = apply_patch(original_text=original_text, diff_text=diff_text)
+        if not modified_text:
+            return
+
+        data = {
+            "message": commit_message,
+            "content": base64.b64encode(modified_text.encode(UTF8)).decode(UTF8),
+            "branch": branch,
+        }
+        if sha:
+            data["sha"] = sha
+
+        put_response = requests.put(
+            url=url,
+            headers=self.create_headers(token=token),
+            json=data,
+            timeout=self.timeout,
+        )
+        put_response.raise_for_status()
+
+    @staticmethod
+    def create_headers(token: str) -> dict[str, str]:
+        return {
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": GITHUB_API_VERSION,
+        }
+    
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def get_installation_access_token(self, installation_id: int) -> str:
+        jwt_token = self.create_jwt()
+        headers = self.create_headers(token=jwt_token)
+        url = f"{self.api_url}/app/installations/{installation_id}/access_tokens"
+        response = requests.post(
+            url=url, headers=headers, timeout=self.timeout
+        )
+        response.raise_for_status()
+        return response.json().get("token")
+    
+    def create_jwt(self) -> str:
+        now = int(time.time())
+        payload = {
+            "iat": now,
+            "exp": now + 600,
+            "iss": GITHUB_APP_ID,
+        }
+        return jwt.encode(payload=payload, key=GITHUB_PRIVATE_KEY, algorithm="RS256")
+import base64
+import datetime
 import hashlib  # For HMAC (Hash-based Message Authentication Code) signatures
 import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
 import json
