@@ -421,25 +421,35 @@ def get_oldest_unassigned_open_issue(
     owner: str, repo: str, token: str
 ) -> IssueInfo | None:
     """Get an oldest unassigned open issue without "gitauto" label in a repository. https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues"""
-    response: requests.Response = requests.get(
-        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues",
-        headers=create_headers(token=token),
-        params={
-            "assignee": "none",  # none, *, or username
-            "direction": "asc",  # asc or desc
-            "page": 1,
-            "per_page": 1,
-            "sort": "created",  # created, updated, comments
-            "state": "open",  # open, closed, or all
-        },
-        timeout=TIMEOUT_IN_SECONDS,
-    )
-    response.raise_for_status()
-    issues: list[IssueInfo] = response.json()
-    for issue in issues:
-        if all(label['name'] != PRODUCT_ID for label in issue['labels']):
-            return issue
-    return None
+    page = 1
+    while True:
+        response: requests.Response = requests.get(
+            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues",
+            headers=create_headers(token=token),
+            params={
+                "assignee": "none",  # none, *, or username
+                "direction": "asc",  # asc or desc
+                "page": page,
+                "per_page": 100,
+                "sort": "created",  # created, updated, comments
+                "state": "open",  # open, closed, or all
+            },
+            timeout=TIMEOUT_IN_SECONDS,
+        )
+        response.raise_for_status()
+        issues: list[IssueInfo] = response.json()
+
+        # If there are no corresponding issues, return None
+        if not issues:
+            return None
+
+        # Find the first issue without the PRODUCT_ID label
+        for issue in issues:
+            if all(label['name'] != PRODUCT_ID for label in issue['labels']):
+                return issue
+
+        # If there are open issues, but all of them have the PRODUCT_ID label, continue to the next page
+        page += 1
 
 
 
