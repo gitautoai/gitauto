@@ -156,8 +156,10 @@ class GitAutoAgentManager:
             self.client.table(table_name="installations")
             .select("installation_id")
             .eq(column="owner_id", value=owner_id)
+            .eq(column="uninstalled_at", value=None)  # Not uninstalled
             .execute()
         )
+        # Return the first installation id even if there are multiple installations
         return data[1][0]["installation_id"]
 
     @handle_exceptions(default_return_value=False, raise_on_error=False)
