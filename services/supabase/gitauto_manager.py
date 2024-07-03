@@ -1,7 +1,6 @@
 """Class to manage all GitAuto related operations"""
 
 from datetime import datetime, timezone
-import json
 from supabase import Client
 from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 from utils.handle_exceptions import handle_exceptions
