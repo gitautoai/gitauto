@@ -42,6 +42,25 @@ def test_create_update_user_request_works() -> None:
         int,
     )
     assert (
+    assert (
+        supabase_manager.complete_and_update_usage_record(
+            usage_record_id=usage_record_id,
+            token_input=1000,
+            token_output=100,
+            total_seconds=100,
+        )
+        is None
+    )
+    data, _ = (
+        supabase_manager.client.table("usage")
+        .select("*")
+        .eq("user_id", user_id)
+        .eq("installation_id", installation_id)
+        .eq("token_input", 1000)
+        .eq("token_output", 100)
+        .execute()
+    )
+    assert len(data[1]) == 1
         supabase_manager.complete_and_update_usage_record(
             usage_record_id=usage_record_id,
             token_input=1000,
