@@ -18,6 +18,8 @@ jobs:
         python-version: "3.10"
 
     - name: Install pytest
+    - name: Run mock event tests
+      run: python -m pytest tests/test_payloads/installation.py tests/test_payloads/deleted.py
       run: |
         pip install pytest pytest-cov pytest-asyncio
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
