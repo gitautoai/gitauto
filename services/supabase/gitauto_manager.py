@@ -1,6 +1,7 @@
 """Class to manage all GitAuto related operations"""
 
 from datetime import datetime, timezone
+import json
 from supabase import Client
 from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 from utils.handle_exceptions import handle_exceptions
@@ -161,6 +162,18 @@ class GitAutoAgentManager:
         )
         # Return the first installation id even if there are multiple installations
         return data[1][0]["installation_id"]
+
+    @handle_exceptions(default_return_value=None, raise_on_error=False)
+    def get_installation_ids(self) -> list[int]:
+        """https://supabase.com/docs/reference/python/is"""
+        data, _ = (
+            self.client.table(table_name="installations")
+            .select("installation_id")
+            .is_(column="uninstalled_at", value="null")  # Not uninstalled
+            .execute()
+        )
+        print(f"Installation ids: {json.dumps(data)}")
+        return data[1]
 
     @handle_exceptions(default_return_value=False, raise_on_error=False)
     def is_users_first_issue(self, user_id: int, installation_id: int) -> bool:

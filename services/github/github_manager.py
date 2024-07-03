@@ -305,7 +305,7 @@ def create_remote_branch(
             timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         update_comment_for_raised_errors(
             error=e,
             comment_url=comment_url,
@@ -339,6 +339,21 @@ def get_installation_access_token(installation_id: int) -> str:
     )
     response.raise_for_status()
     return response.json()["token"]
+
+
+@handle_exceptions(default_return_value=[], raise_on_error=False)
+def get_installed_owners_and_repos(
+    installation_id: str, token: str
+) -> list[dict[str, str]]:
+    """https://docs.github.com/en/rest/apps/installations?apiVersion=2022-11-28#list-repositories-accessible-to-the-app-installation"""
+    response: requests.Response = requests.get(
+        url=f"{GITHUB_API_URL}/user/installations/{installation_id}/repositories",
+        headers=create_headers(token=token),
+        timeout=TIMEOUT_IN_SECONDS,
+    )
+    response.raise_for_status()
+    repos = response.json().get("repositories", [])
+    return [{"owner": repo["owner"]["login"], "repo": repo["name"]} for repo in repos]
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
@@ -445,13 +460,23 @@ def get_oldest_unassigned_open_issue(
 
         # Find the first issue without the PRODUCT_ID label
         for issue in issues:
-            if all(label['name'] != PRODUCT_ID for label in issue['labels']):
+            if all(label["name"] != PRODUCT_ID for label in issue["labels"]):
                 return issue
 
         # If there are open issues, but all of them have the PRODUCT_ID label, continue to the next page
         page += 1
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def get_owner_name(owner_id: int, token: str) -> str | None:
+    """https://docs.github.com/en/rest/users/users?apiVersion=2022-11-28#get-a-user-using-their-id"""
+    response: requests.Response = requests.get(
+        url=f"{GITHUB_API_URL}/user/{owner_id}",
+        headers=create_headers(token=token),
+        timeout=TIMEOUT_IN_SECONDS,
+    )
+    response.raise_for_status()
+    return response.json()["login"]
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
@@ -497,7 +522,7 @@ def get_remote_file_tree(
                 msg=f"get_remote_file_tree HTTP Error: {http_err.response.status_code} - {http_err.response.text}"
             )
         return []
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         update_comment_for_raised_errors(
             error=e,
             comment_url=comment_url,
@@ -581,7 +606,7 @@ def update_comment_for_raised_errors(
                 )
         else:
             logging.error("%s Error: %s", which_function, error)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         logging.error("%s Error: %s", which_function, e)
     update_comment(comment_url=comment_url, token=token, body=body)
 
