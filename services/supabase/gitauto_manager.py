@@ -1,7 +1,6 @@
 """Class to manage all GitAuto related operations"""
 
 from datetime import datetime, timezone
-import json
 from supabase import Client
 from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 from utils.handle_exceptions import handle_exceptions
@@ -172,8 +171,7 @@ class GitAutoAgentManager:
             .is_(column="uninstalled_at", value="null")  # Not uninstalled
             .execute()
         )
-        print(f"Installation ids: {json.dumps(data)}")
-        return data[1]
+        return [item["installation_id"] for item in data[1]]
 
     @handle_exceptions(default_return_value=False, raise_on_error=False)
     def is_users_first_issue(self, user_id: int, installation_id: int) -> bool:
