@@ -1,3 +1,14 @@
+import pytest
+import json
+from main import app
+
+with open("payloads/mock_deletion_event.json") as f:
+    deletion_payload = json.load(f)
+
+def test_handle_deletion_event():
+    response = app.test_client().post('/webhook', json=deletion_payload)
+    assert response.status_code == 200
+    assert response.json == {"status": "installation deleted"}
 from services.github.github_types import GitHubEventPayload
 
 
