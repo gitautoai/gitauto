@@ -7,6 +7,11 @@ from config import OPENAI_MODEL_ID, OPENAI_TEMPERATURE
 from services.openai.init import create_openai_client
 from services.openai.instructions import SYSTEM_INSTRUCTION_FOR_WRITING_PR
 
+from typing import Tuple
+
+def extract_token_usage(response: dict) -> Tuple[int, int]:
+    return response['usage']['total_tokens'], response['usage']['completion_tokens']
+
 
 def write_pr_body(input_message: str) -> str:
     """https://platform.openai.com/docs/api-reference/chat/create"""
