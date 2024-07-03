@@ -1,3 +1,14 @@
+import pytest
+import json
+from main import app
+
+with open("payloads/mock_installation_event.json") as f:
+    installation_payload = json.load(f)
+
+def test_handle_installation_event():
+    response = app.test_client().post('/webhook', json=installation_payload)
+    assert response.status_code == 200
+    assert response.json == {"status": "installation created"}
 from config import (
     INSTALLATION_ID,
     NEW_INSTALLATION_ID,
