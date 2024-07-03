@@ -13,11 +13,12 @@ def request_limit_reached(
 
 def pull_request_completed(issuer_name: str, sender_name: str, pr_url: str) -> str:
     """Comment text to issue when pull request is completed"""
-    user_part = (
-        f"@{issuer_name}"
-        if sender_name == PRODUCT_ID
-        else f"@{issuer_name} and @{sender_name}"
-    )
+    if sender_name == issuer_name:
+        user_part = f"@{issuer_name}"
+    elif sender_name == PRODUCT_ID:
+        user_part = f"@{issuer_name}"
+    else:
+        user_part = f"@{issuer_name} and @{sender_name}"
     return f"{user_part} Pull request completed! Check it out here {pr_url} 🚀"
 
 
