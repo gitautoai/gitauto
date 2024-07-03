@@ -6,6 +6,8 @@ from services.stripe.customer import create_stripe_customer, subscribe_to_free_p
 from utils.handle_exceptions import handle_exceptions
 
 
+                "token_input": token_input,
+                "token_output": token_output,
 class GitAutoAgentManager:
     """Class to manage all GitAuto related operations"""
 
