@@ -60,27 +60,28 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     owner_id: int = repo["owner"]["id"]
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
-    user_id: int = payload["sender"]["id"]
-    user_name: str = payload["sender"]["login"]
+    sender_id: int = payload["sender"]["id"]
+    sender_name: str = payload["sender"]["login"]
+    issuer_name: str = issue["user"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
 
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=user_id,
+            user_id=sender_id,
             installation_id=installation_id,
-            user_name=user_name,
+            user_name=sender_name,
             owner_id=owner_id,
             owner_name=owner,
         )
     )
     if requests_left <= 0:
-        logging.info("\nRequest limit reached for user %s.", user_name)
+        logging.info("\nRequest limit reached for user %s.", sender_name)
         create_comment(
             owner=owner,
             repo=repo_name,
             issue_number=issue_number,
             body=request_limit_reached(
-                user_name=user_name,
+                user_name=sender_name,
                 request_count=request_count,
                 end_date=end_date,
             ),
@@ -89,7 +90,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         return
     unique_issue_id = f"{owner_type}/{owner}/{repo_name}#{issue_number}"
     usage_record_id = supabase_manager.create_user_request(
-        user_id=user_id,
+        user_id=sender_id,
         installation_id=installation_id,
         unique_issue_id=unique_issue_id,
     )
@@ -194,7 +195,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         f"git pull origin {new_branch}\n"
         f"```"
     )
-    pull_request_url: str | None = create_pull_request(
+    pr_url: str | None = create_pull_request(
         base=base_branch,
         body=issue_link + pr_body + git_commands,
         head=new_branch,
@@ -206,8 +207,10 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
 
     # Update the issue comment based on if the PR was created or not
-    if pull_request_url is not None:
-        body_after_pr: str = pull_request_completed(pull_request_url=pull_request_url)
+    if pr_url is not None:
+        body_after_pr = pull_request_completed(
+            issuer_name=issuer_name, sender_name=sender_name, pr_url=pr_url
+        )
     else:
         body_after_pr = UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY
     update_comment(comment_url=comment_url, token=token, body=body_after_pr)
