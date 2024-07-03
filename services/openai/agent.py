@@ -12,6 +12,11 @@ from openai.types.beta import Assistant, Thread
 from openai.types.beta.threads import Run, Message, TextContentBlock
 from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
 
+from typing import Tuple
+
+def extract_token_usage(response: dict) -> Tuple[int, int]:
+    return response['usage']['total_tokens'], response['usage']['completion_tokens']
+
 
 # Local imports
 from config import OPENAI_FINAL_STATUSES, OPENAI_MODEL_ID, TIMEOUT_IN_SECONDS
