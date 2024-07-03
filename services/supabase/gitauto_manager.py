@@ -172,8 +172,7 @@ class GitAutoAgentManager:
             .is_(column="uninstalled_at", value="null")  # Not uninstalled
             .execute()
         )
-        print(f"Installation ids: {json.dumps(data)}")
-        return data[1]
+        return [item["installation_id"] for item in data[1]]
 
     @handle_exceptions(default_return_value=False, raise_on_error=False)
     def is_users_first_issue(self, user_id: int, installation_id: int) -> bool:
