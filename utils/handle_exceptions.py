@@ -15,6 +15,8 @@ F = TypeVar("F", bound=Callable[..., Any])
 def handle_exceptions(
     default_return_value: Any = None, raise_on_error: bool = False
 ) -> Callable[[F], F]:
+    """https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#checking-the-status-of-your-rate-limit"""
+
     def decorator(func: F) -> F:
         @wraps(wrapped=func)
         def wrapper(*args: Tuple[Any, ...], **kwargs: Any):
@@ -25,10 +27,13 @@ def handle_exceptions(
                     err.response.status_code == 403
                     and "X-RateLimit-Reset" in err.response.headers
                 ):
+                    limit = int(err.response.headers["X-RateLimit-Limit"])
+                    remaining = int(err.response.headers["X-RateLimit-Remaining"])
+                    used = int(err.response.headers["X-RateLimit-Used"])
                     reset_timestamp = int(err.response.headers["X-RateLimit-Reset"])
                     current_timestamp = int(time.time())
                     wait_time = reset_timestamp - current_timestamp
-                    err_msg = f"{func.__name__} encountered a GitHubRateLimitError: {err}. Retrying after {wait_time} seconds."
+                    err_msg = f"{func.__name__} encountered a GitHubRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}"
                     logging.error(msg=err_msg)
                     time.sleep(wait_time + 5)  # 5 seconds is a buffer
                     return wrapper(*args, **kwargs)
