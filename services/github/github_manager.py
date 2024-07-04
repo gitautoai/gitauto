@@ -354,6 +354,7 @@ def get_installed_owners_and_repos(token: str) -> list[dict[str, str]]:
             timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
+        print("response.json() in get_installed_owners_and_repos: ", response.json())
         repos = response.json().get("repositories", [])
 
         # If there are no more repositories, break the loop. Otherwise, add them to the list
