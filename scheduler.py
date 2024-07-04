@@ -29,13 +29,12 @@ def schedule_handler(_event, _context) -> dict[str, int]:
         # Get the installation access token for each installation ID.
         token = get_installation_access_token(installation_id=installation_id)
         if token is None:
-            logging.info("Token is None for installation_id: %s, so skipping", installation_id)
+            msg = f"Token is None for installation_id: {installation_id}, so skipping"
+            logging.info(msg)
             continue
 
         # Get all owners and repositories for each installation ID.
-        owners_repos: list[dict[str, str]] = get_installed_owners_and_repos(
-            installation_id=installation_id, token=token
-        )
+        owners_repos: list[dict[str, str]] = get_installed_owners_and_repos(token=token)
 
         # Process each owner and repository.
         for owner_repo in owners_repos:

@@ -71,6 +71,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
         print(f"Error in parsing JSON payload: {e}")
 
     await handle_webhook_event(event_name=event_name, payload=payload)
+    return {"message": "Webhook processed successfully"}
 
 
 @app.get(path="/")
