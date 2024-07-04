@@ -20,7 +20,7 @@ Resources:
     Properties:
       Name: SchedulerEventRule
       Description: "Schedule Lambda function to run every weekday at 0 AM UTC"
-      ScheduleExpression: cron(50 4 ? * MON-FRI *)  # min hour day month day-of-week year
+      ScheduleExpression: cron(36 5 ? * MON-FRI *)  # min hour day month day-of-week year
       State: ENABLED
       Targets:
         - Arn: !Ref LambdaFunctionArn
