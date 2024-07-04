@@ -354,7 +354,6 @@ def get_installed_owners_and_repos(token: str) -> list[dict[str, str]]:
             timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
-        print("response.json() in get_installed_owners_and_repos: ", response.json())
         repos = response.json().get("repositories", [])
 
         # If there are no more repositories, break the loop. Otherwise, add them to the list
@@ -364,6 +363,7 @@ def get_installed_owners_and_repos(token: str) -> list[dict[str, str]]:
         owners_repos.extend(i)
 
         # https://docs.github.com/en/rest/using-the-rest-api/using-pagination-in-the-rest-api?apiVersion=2022-11-28
+        print("response.links:", json.dumps(response.links, indent=2))
         if "next" not in response.links:
             break
         page += 1
