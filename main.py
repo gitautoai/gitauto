@@ -5,7 +5,7 @@ from typing import Any
 
 # Third-party imports
 import sentry_sdk
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from mangum import Mangum
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
@@ -47,13 +47,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     print(f"Received event: {event_name} with content type: {content_type}")
 
     # Validate if the webhook signature comes from GitHub
-    try:
-        print("Webhook received")
-        await verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)
-        print("Webhook signature verified")
-    except Exception as e:
-        print(f"Error: {e}")
-        raise HTTPException(status_code=401, detail=str(object=e)) from e
+    await verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)
 
     # Process the webhook event but never raise an exception as some event_name like "marketplace_purchase" doesn't have a payload
     try:
@@ -76,14 +70,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     except Exception as e:  # pylint: disable=broad-except
         print(f"Error in parsing JSON payload: {e}")
 
-    try:
-        await handle_webhook_event(event_name=event_name, payload=payload)
-        print("Webhook event handled")
-
-        return {"message": "Webhook processed successfully"}
-    except Exception as e:
-        print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(object=e)) from e
+    await handle_webhook_event(event_name=event_name, payload=payload)
 
 
 @app.get(path="/")

@@ -19,6 +19,7 @@ from services.github.github_types import (
 )
 from services.supabase import SupabaseManager
 from services.gitauto_handler import handle_gitauto
+from utils.handle_exceptions import handle_exceptions
 
 # Initialize managers
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
@@ -49,6 +50,7 @@ async def handle_installation_deleted(payload: GitHubInstallationPayload) -> Non
     supabase_manager.delete_installation(installation_id=installation_id)
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=True)
 async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> None:
     """Determine the event type and call the appropriate handler"""
     action: str = payload.get("action")
