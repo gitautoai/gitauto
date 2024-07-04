@@ -23,20 +23,39 @@ def handle_exceptions(
             try:
                 return func(*args, **kwargs)
             except requests.exceptions.HTTPError as err:
-                if (
-                    err.response.status_code == 403
-                    and "X-RateLimit-Reset" in err.response.headers
-                ):
+                if err.response.status_code in {403, 429}:
                     limit = int(err.response.headers["X-RateLimit-Limit"])
                     remaining = int(err.response.headers["X-RateLimit-Remaining"])
                     used = int(err.response.headers["X-RateLimit-Used"])
-                    reset_timestamp = int(err.response.headers["X-RateLimit-Reset"])
-                    current_timestamp = int(time.time())
-                    wait_time = reset_timestamp - current_timestamp
-                    err_msg = f"{func.__name__} encountered a GitHubRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}"
+
+                    # Check if the primary rate limit has been exceeded
+                    if remaining == 0:
+                        reset_ts = int(err.response.headers.get("X-RateLimit-Reset", 0))
+                        current_ts = int(time.time())
+                        wait_time = reset_ts - current_ts
+                        err_msg = f"{func.__name__} encountered a GitHubPrimaryRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}"
+                        logging.error(msg=err_msg)
+                        time.sleep(wait_time + 5)  # 5 seconds is a buffer
+                        return wrapper(*args, **kwargs)
+
+                    # Check if the secondary rate limit has been exceeded
+                    if "exceeded a secondary rate limit" in err.response.text.lower():
+                        retry_after = int(err.response.headers.get("Retry-After", 60))
+                        err_msg = f"{func.__name__} encountered a GitHubSecondaryRateLimitError: {err}. Retrying after {retry_after} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}"
+                        logging.error(msg=err_msg)
+                        time.sleep(retry_after)
+                        return wrapper(*args, **kwargs)
+
+                    # Otherwise, log the error and return the default return value
+                    err_msg = f"{func.__name__} encountered an HTTPError: {err}. Limit: {limit}, Remaining: {remaining}, Used: {used}"
                     logging.error(msg=err_msg)
-                    time.sleep(wait_time + 5)  # 5 seconds is a buffer
-                    return wrapper(*args, **kwargs)
+                    if raise_on_error:
+                        raise
+                else:
+                    err_msg = f"{func.__name__} encountered an HTTPError: {err}"
+                    logging.error(msg=err_msg)
+                if raise_on_error:
+                    raise
             except (AttributeError, KeyError, TypeError, Exception) as err:
                 error_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\nArgs: {args}\nKwargs: {kwargs}"
                 logging.error(msg=error_msg)

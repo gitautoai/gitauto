@@ -328,8 +328,8 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
     run_command(command="git push -u origin main", cwd=repo_path)
 
 
-@handle_exceptions(raise_on_error=True)
-def get_installation_access_token(installation_id: int) -> str:
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def get_installation_access_token(installation_id: int) -> str | None:
     """https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-an-installation-access-token-for-an-app"""
     jwt_token: str = create_jwt()
     response: requests.Response = requests.post(

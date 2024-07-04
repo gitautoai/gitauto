@@ -26,8 +26,13 @@ def schedule_handler(_event, _context) -> dict[str, int]:
         # Pause for 1+ second to avoid secondary rate limits. https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api?apiVersion=2022-11-28#pause-between-mutative-requests
         time.sleep(1)
 
-        # Start processing this loop.
-        token: str = get_installation_access_token(installation_id=installation_id)
+        # Get the installation access token for each installation ID.
+        token = get_installation_access_token(installation_id=installation_id)
+        if token is None:
+            logging.info("Token is None for installation_id: %s, so skipping", installation_id)
+            continue
+
+        # Get all owners and repositories for each installation ID.
         owners_repos: list[dict[str, str]] = get_installed_owners_and_repos(
             installation_id=installation_id, token=token
         )
