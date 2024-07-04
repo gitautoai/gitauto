@@ -1,32 +1,44 @@
+# pylint: disable=broad-exception-caught
+
+# Standard imports
+import time
 from functools import wraps
-import logging
 from typing import Any, Callable, Tuple, TypeVar
 
-F = TypeVar('F', bound=Callable[..., Any])
+# Third party imports
+import logging
+import requests
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
-def handle_exceptions(default_return_value: Any = None, raise_on_error: bool = False) -> Callable[[F], F]:
+def handle_exceptions(
+    default_return_value: Any = None, raise_on_error: bool = False
+) -> Callable[[F], F]:
     def decorator(func: F) -> F:
         @wraps(wrapped=func)
         def wrapper(*args: Tuple[Any, ...], **kwargs: Any):
             try:
                 return func(*args, **kwargs)
-            except AttributeError as err:
-                logging.error("%s encountered an AttributeError: %s", func.__name__, err)
-                if raise_on_error:
-                    raise
-            except KeyError as err:
-                logging.error("%s encountered a KeyError: %s", func.__name__, err)
-                if raise_on_error:
-                    raise
-            except TypeError as err:
-                logging.error("%s encountered a TypeError: %s", func.__name__, err)
-                if raise_on_error:
-                    raise
-            except Exception as err:  # pylint: disable=broad-except
-                logging.error("%s encountered an Exception: %s", func.__name__, err)
+            except requests.exceptions.HTTPError as err:
+                if (
+                    err.response.status_code == 403
+                    and "X-RateLimit-Reset" in err.response.headers
+                ):
+                    reset_timestamp = int(err.response.headers["X-RateLimit-Reset"])
+                    current_timestamp = int(time.time())
+                    wait_time = reset_timestamp - current_timestamp
+                    err_msg = f"{func.__name__} encountered a GitHubRateLimitError: {err}. Retrying after {wait_time} seconds."
+                    logging.error(msg=err_msg)
+                    time.sleep(wait_time + 5)  # 5 seconds is a buffer
+                    return wrapper(*args, **kwargs)
+            except (AttributeError, KeyError, TypeError, Exception) as err:
+                error_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\nArgs: {args}\nKwargs: {kwargs}"
+                logging.error(msg=error_msg)
                 if raise_on_error:
                     raise
             return default_return_value
+
         return wrapper  # type: ignore
+
     return decorator
