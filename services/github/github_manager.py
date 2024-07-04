@@ -342,18 +342,31 @@ def get_installation_access_token(installation_id: int) -> str | None:
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_installed_owners_and_repos(
-    installation_id: str, token: str
-) -> list[dict[str, str]]:
+def get_installed_owners_and_repos(token: str) -> list[dict[str, str]]:
     """https://docs.github.com/en/rest/apps/installations?apiVersion=2022-11-28#list-repositories-accessible-to-the-app-installation"""
-    response: requests.Response = requests.get(
-        url=f"{GITHUB_API_URL}/user/installations/{installation_id}/repositories",
-        headers=create_headers(token=token),
-        timeout=TIMEOUT_IN_SECONDS,
-    )
-    response.raise_for_status()
-    repos = response.json().get("repositories", [])
-    return [{"owner": repo["owner"]["login"], "repo": repo["name"]} for repo in repos]
+    owners_repos = []
+    page = 1
+    while True:
+        response: requests.Response = requests.get(
+            url=f"{GITHUB_API_URL}/installation/repositories",
+            headers=create_headers(token=token),
+            params={"per_page": 100, "page": page},
+            timeout=TIMEOUT_IN_SECONDS,
+        )
+        response.raise_for_status()
+        repos = response.json().get("repositories", [])
+
+        # If there are no more repositories, break the loop. Otherwise, add them to the list
+        if not repos:
+            break
+        i = [{"owner": repo["owner"]["login"], "repo": repo["name"]} for repo in repos]
+        owners_repos.extend(i)
+
+        # https://docs.github.com/en/rest/using-the-rest-api/using-pagination-in-the-rest-api?apiVersion=2022-11-28
+        if "next" not in response.links:
+            break
+        page += 1
+    return owners_repos
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
@@ -532,6 +545,7 @@ def get_remote_file_tree(
         return []
 
 
+@handle_exceptions(raise_on_error=True)
 async def verify_webhook_signature(request: Request, secret: str) -> None:
     """Verify the webhook signature for security"""
     signature: str | None = request.headers.get("X-Hub-Signature-256")
