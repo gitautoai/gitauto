@@ -1,6 +1,7 @@
 """This is scheduled to run by AWS Lambda"""
 
 import logging
+import time
 from config import PRODUCT_ID, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
 from services.github.github_manager import (
     add_label_to_issue,
@@ -22,6 +23,10 @@ def schedule_handler(_event, _context) -> dict[str, int]:
 
     # Get all owners and repositories from GitHub.
     for installation_id in installation_ids:
+        # Pause for 1+ second to avoid secondary rate limits. https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api?apiVersion=2022-11-28#pause-between-mutative-requests
+        time.sleep(1)
+
+        # Start processing this loop.
         token: str = get_installation_access_token(installation_id=installation_id)
         owners_repos: list[dict[str, str]] = get_installed_owners_and_repos(
             installation_id=installation_id, token=token
@@ -51,6 +56,7 @@ def schedule_handler(_event, _context) -> dict[str, int]:
             issue_number = issue["number"]
 
             # Label the issue with the product ID to trigger GitAuto.
+            time.sleep(1)
             add_label_to_issue(
                 owner=owner,
                 repo=repo,
