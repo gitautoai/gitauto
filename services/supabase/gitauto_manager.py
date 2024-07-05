@@ -6,6 +6,7 @@ from services.stripe.customer import create_stripe_customer, subscribe_to_free_p
 from utils.handle_exceptions import handle_exceptions
 
 
+from httpx import Client, ReadTimeout
 class GitAutoAgentManager:
     """Class to manage all GitAuto related operations"""
 
@@ -27,6 +28,7 @@ class GitAutoAgentManager:
                 "token_input": token_input,
                 "token_output": token_output,
                 "total_seconds": total_seconds,
+        self.http_client = Client(timeout=30.0)  # Increased timeout setting
             }
         ).eq(column="id", value=usage_record_id).execute()
 
@@ -49,6 +51,12 @@ class GitAutoAgentManager:
             .execute()
         )
         if not data[1]:
+        while retries > 0:
+            try:
+                self.client.table(table_name="owners").insert(json={"owner_id": owner_id, "stripe_customer_id": customer_id}).execute()
+                break
+            except ReadTimeout:
+                retries -= 1
             customer_id = create_stripe_customer(
                 owner_name=owner_name,
                 owner_id=owner_id,
@@ -56,11 +64,23 @@ class GitAutoAgentManager:
                 user_id=user_id,
                 user_name=user_name,
             )
+        while retries > 0:
+            try:
+                self.client.table(table_name="installations").insert(json={"installation_id": installation_id, "owner_name": owner_name, "owner_type": owner_type, "owner_id": owner_id}).execute()
+                break
+            except ReadTimeout:
+                retries -= 1
             subscribe_to_free_plan(
                 customer_id=customer_id,
                 user_id=user_id,
                 user_name=user_name,
                 owner_id=owner_id,
+        while retries > 0:
+            try:
+                self.client.table(table_name="users").upsert(json={"user_id": user_id, "user_name": user_name}, on_conflict="user_id").execute()
+                break
+            except ReadTimeout:
+                retries -= 1
                 owner_name=owner_name,
                 installation_id=installation_id,
             )
