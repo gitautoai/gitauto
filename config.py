@@ -52,7 +52,7 @@ DEFAULT_TIME = datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, secon
 EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
 ENV: str = get_env_var(name="ENV")
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
-# FREE_TIER_REQUEST_AMOUNT = 5
+FREE_TIER_REQUEST_AMOUNT = 5
 ISSUE_NUMBER_FORMAT = "/issue-#"
 PR_BODY_STARTS_WITH = "Original issue: [#"
 PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
