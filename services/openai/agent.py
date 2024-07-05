@@ -274,6 +274,7 @@ def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> tuple[Ru
                     run=run, funcs=functions, token=token
                 )
 
+                # The combined tool outputs must be less than 512kb.
                 tool_outputs_json: list[ToolOutput] = [
                     {"tool_call_id": tool_call.id, "output": json.dumps(obj=result)}
                     for tool_call, result in tool_outputs
