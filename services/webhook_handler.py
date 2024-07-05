@@ -3,15 +3,23 @@ import re
 
 # Local imports
 from config import (
+from httpx import ReadTimeout
+from utils.logging import logger
     PRODUCT_ID,
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
     PR_BODY_STARTS_WITH,
     ISSUE_NUMBER_FORMAT,
 )
+    except ReadTimeout:
+        logger.error(f"ReadTimeout error while processing installation created event: {payload}")
+        raise
 
 from services.github.github_manager import (
     create_comment_on_issue_with_gitauto_button,
+    except ReadTimeout:
+        logger.error(f"ReadTimeout error while processing installation deleted event: {payload}")
+        raise
 )
 from services.github.github_types import (
     GitHubEventPayload,
