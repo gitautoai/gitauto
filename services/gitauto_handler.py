@@ -6,6 +6,7 @@ from uuid import uuid4
 
 # Local imports
 from config import (
+    GITHUB_APP_USER_ID,
     PRODUCT_ID,
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
@@ -61,6 +62,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     repo_name: str = repo["name"]
     base_branch: str = repo["default_branch"]
     sender_id: int = payload["sender"]["id"]
+    is_automation: bool = sender_id == GITHUB_APP_USER_ID
     sender_name: str = payload["sender"]["login"]
     issuer_name: str = issue["user"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
@@ -209,7 +211,10 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     # Update the issue comment based on if the PR was created or not
     if pr_url is not None:
         body_after_pr = pull_request_completed(
-            issuer_name=issuer_name, sender_name=sender_name, pr_url=pr_url
+            issuer_name=issuer_name,
+            sender_name=sender_name,
+            pr_url=pr_url,
+            is_automation=is_automation,
         )
     else:
         body_after_pr = UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY
