@@ -13,11 +13,19 @@ def request_limit_reached(
 
 def pull_request_completed(issuer_name: str, sender_name: str, pr_url: str) -> str:
     """Comment text to issue when pull request is completed"""
-    if sender_name == issuer_name or PRODUCT_ID in sender_name:
-        user_part = f"@{issuer_name}"
+    # Ex) sentry-io[bot] is the issuer and gitauto-ai[bot] is the sender
+    if "[bot]" in issuer_name and ("[bot]" in sender_name or PRODUCT_ID in sender_name):
+        user_part = ""
+
+    # Ex1) A user is the issuer and sender
+    # Ex2) sender_name contains gitauto
+    elif issuer_name == sender_name or PRODUCT_ID in sender_name:
+        user_part = f"@{issuer_name} "
+
+    # Ex) A user is the issuer and another user is the sender
     else:
-        user_part = f"@{issuer_name} and @{sender_name}"
-    return f"{user_part} Pull request completed! Check it out here {pr_url} 🚀"
+        user_part = f"@{issuer_name} @{sender_name} "
+    return f"{user_part}Pull request completed! Check it out here {pr_url} 🚀"
 
 
 def request_issue_comment(requests_left: int, end_date: datetime.datetime):
