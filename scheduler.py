@@ -2,7 +2,7 @@
 
 import logging
 import time
-from config import PRODUCT_ID, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
+from config import GITHUB_APP_USER_ID, GITHUB_APP_USER_NAME, PRODUCT_ID, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
 from services.github.github_manager import (
     add_label_to_issue,
     get_installation_access_token,
@@ -34,10 +34,11 @@ def schedule_handler(_event, _context) -> dict[str, int]:
             continue
 
         # Get all owners and repositories for each installation ID.
-        owners_repos: list[dict[str, str]] = get_installed_owners_and_repos(token=token)
+        owners_repos = get_installed_owners_and_repos(token=token)
 
         # Process each owner and repository.
         for owner_repo in owners_repos:
+            owner_id: int = owner_repo["owner_id"]
             owner: str = owner_repo["owner"]
             repo: str = owner_repo["repo"]
             logging.info("Processing %s/%s", owner, repo)
@@ -49,7 +50,7 @@ def schedule_handler(_event, _context) -> dict[str, int]:
             logging.info("Issue: %s", issue)
 
             # This is testing purpose.
-            if owner != "gitautoai":
+            if owner not in ["gitautoai", "hiroshinishio"]:
                 continue
 
             # Continue to the next set of owners and repositories if there is no open issue.
@@ -58,6 +59,21 @@ def schedule_handler(_event, _context) -> dict[str, int]:
 
             # Extract the issue number if there is an open issue.
             issue_number = issue["number"]
+
+            # Check the remaining available usage count, continue if it's less than 1.
+            requests_left, _request_count, _end_date = (
+                supabase_manager.get_how_many_requests_left_and_cycle(
+                    user_id=GITHUB_APP_USER_ID,
+                    installation_id=installation_id,
+                    user_name=GITHUB_APP_USER_NAME,
+                    owner_id=owner_id,
+                    owner_name=owner,
+                )
+            )
+            if requests_left < 1:
+                msg = f"Requests left: {requests_left} for owner: {owner}, repo: {repo}, issue_number: {issue_number}, so skipping"
+                logging.info(msg)
+                continue
 
             # Label the issue with the product ID to trigger GitAuto.
             time.sleep(1)
