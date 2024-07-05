@@ -34,6 +34,7 @@ from services.github.github_types import (
     GitHubLabeledPayload,
     IssueInfo,
 )
+from services.openai.vision import describe_image
 from services.supabase import SupabaseManager
 from utils.file_manager import apply_patch, extract_file_name, run_command
 from utils.handle_exceptions import handle_exceptions
@@ -389,7 +390,6 @@ def get_issue_comments(
     )
     response.raise_for_status()
     comments: list[Any] = response.json()
-    print(f"GITHUB_APP_IDS: {GITHUB_APP_IDS}")
     filtered_comments: list[Any] = [
         comment
         for comment in comments
@@ -515,7 +515,13 @@ def get_remote_file_content(
         url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS
     )
     response.raise_for_status()
-    encoded_content: str = response.json()["content"]
+    encoded_content: str = response.json()["content"]  # Base64 encoded content
+
+    # If encoded_content is image, describe the image content in text by vision API
+    if file_path.endswith((".png", ".jpeg", ".jpg", ".webp", ".gif")):
+        return describe_image(base64_image=encoded_content)
+
+    # Otherwise, decode the content
     decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
     return decoded_content
 
