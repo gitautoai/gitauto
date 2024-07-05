@@ -51,9 +51,19 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
     # Process the webhook event but never raise an exception as some event_name like "marketplace_purchase" doesn't have a payload
     try:
+from httpx import ReadTimeout
+from fastapi import HTTPException
         request_body: bytes = await request.body()
     except Exception as e:  # pylint: disable=broad-except
         print(f"Error in reading request body: {e}")
+    try:
+        await handle_webhook_event(event_name=event_name, payload=payload)
+    except ReadTimeout:
+        raise HTTPException(status_code=504, detail="Gateway Timeout: The request took too long to process")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"message": "Webhook processed successfully"}
+
         request_body = b""
 
     payload: Any = {}
