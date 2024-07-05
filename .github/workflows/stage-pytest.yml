@@ -29,6 +29,8 @@ jobs:
     - name: Run pytest
       env:
         GH_APP_ID: ${{ secrets.STAGE_GH_APP_ID }}
+        GH_APP_USER_ID: ${{ secrets.GH_APP_USER_ID }}
+        GH_APP_USER_NAME: ${{ secrets.GH_APP_USER_NAME }}
         GH_PRIVATE_KEY: ${{ secrets.STAGE_GH_PRIVATE_KEY }}
         GH_WEBHOOK_SECRET: ${{ secrets.STAGE_GH_WEBHOOK_SECRET }}
 
