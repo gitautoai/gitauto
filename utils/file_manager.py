@@ -67,8 +67,9 @@ def apply_patch(original_text: str, diff_text: str) -> str:
                 reject_text = rej_file.read()
 
         # Log the error and return an empty string not to break the flow
-        msg = f"Failed to apply patch. See details below.\nstdout: {stdout}\nstderr: {stderr}\nCommand: {cmd}\nExit status: {code}\nDiff content: {diff_text}\nReject content: {reject_text}\nOriginal content: {original_text}"
+        msg = f"Failed to apply patch. stdout: {stdout}\n\nDiff content: {diff_text}\n\nReject content: {reject_text}\n\nOriginal content: {original_text}"
         logging.error(msg=msg)
+        logging.info("stderr: %s\nCommand: %s\nReturn code: %s", stderr, cmd, code)
         return modified_text
 
     except Exception as e:  # pylint: disable=broad-except
