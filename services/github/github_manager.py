@@ -342,7 +342,7 @@ def get_installation_access_token(installation_id: int) -> str | None:
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_installed_owners_and_repos(token: str) -> list[dict[str, str]]:
+def get_installed_owners_and_repos(token: str) -> list[dict[str, int | str]]:
     """https://docs.github.com/en/rest/apps/installations?apiVersion=2022-11-28#list-repositories-accessible-to-the-app-installation"""
     owners_repos = []
     page = 1
@@ -359,8 +359,15 @@ def get_installed_owners_and_repos(token: str) -> list[dict[str, str]]:
         # If there are no more repositories, break the loop. Otherwise, add them to the list
         if not repos:
             break
-        i = [{"owner": repo["owner"]["login"], "repo": repo["name"]} for repo in repos]
-        owners_repos.extend(i)
+        items: list[dict[str, int | str]] = [
+            {
+                "owner_id": repo["owner"]["id"],
+                "owner": repo["owner"]["login"],
+                "repo": repo["name"],
+            }
+            for repo in repos
+        ]
+        owners_repos.extend(items)
 
         # https://docs.github.com/en/rest/using-the-rest-api/using-pagination-in-the-rest-api?apiVersion=2022-11-28
         print("response.links:", json.dumps(response.links, indent=2))
