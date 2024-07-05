@@ -49,6 +49,7 @@ STRIPE_FREE_TIER_PRICE_ID: str = get_env_var(name="STRIPE_FREE_TIER_PRICE_ID")
 
 # General
 DEFAULT_TIME = datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
+EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
 ENV: str = get_env_var(name="ENV")
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
 # FREE_TIER_REQUEST_AMOUNT = 5
