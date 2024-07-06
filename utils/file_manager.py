@@ -53,8 +53,13 @@ def apply_patch(original_text: str, diff_text: str) -> str:
             print(f"{modified_text=}\n")
 
     except subprocess.CalledProcessError as e:
-        stdout, stderr = e.stdout, e.stderr
+        stdout: str = e.stdout
+        stderr: str = e.stderr
         cmd, code = " ".join(e.cmd), e.returncode
+
+        # Check if the error message indicates that the patch was already applied
+        if "which already exists! assume -r? [n]" in stdout.lower():
+            return ""
 
         # Get the original, diff, and reject file contents for debugging
         original_text_repr: str = repr(original_text).replace(" ", "·")
