@@ -4,6 +4,10 @@ import re
 import subprocess
 import tempfile
 
+    if os.path.exists(org_fname):
+        os.remove(org_fname)
+    if os.path.exists(diff_fname):
+        os.remove(diff_fname)
 from config import UTF8
 
 
