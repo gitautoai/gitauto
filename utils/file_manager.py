@@ -40,8 +40,9 @@ def apply_patch(original_text: str, diff_text: str) -> str:
                 subprocess.run(
                     args=["patch", "-u", "--fuzz=3", org_fname],
                     input=diff.read(),
-                    text=True,
-                    check=True,
+                    text=True,  # If True, input and output are strings
+                    # capture_output=True,  # Redundant so commented out
+                    check=True,  # If True, raise a CalledProcessError if the return code is non-zero
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                 )
@@ -56,20 +57,23 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         cmd, code = " ".join(e.cmd), e.returncode
 
         # Get the original, diff, and reject file contents for debugging
+        original_text_repr: str = repr(original_text).replace(" ", "·")
         with open(file=org_fname, mode="r", encoding=UTF8, newline="") as modified_file:
             modified_text: str = modified_file.read()
+            modified_text_repr: str = repr(modified_text).replace(" ", "·")
         with open(file=diff_fname, mode="r", encoding=UTF8, newline="") as diff_file:
             diff_text: str = diff_file.read()
+            diff_text_repr: str = repr(diff_text).replace(" ", "·")
         rej_f_name: str = f"{org_fname}.rej"
         reject_text = None
         if os.path.exists(path=rej_f_name):
             with open(file=rej_f_name, mode="r", encoding=UTF8, newline="") as rej_file:
                 reject_text = rej_file.read()
+                reject_text_repr: str = repr(reject_text).replace(" ", "·")
 
         # Log the error and return an empty string not to break the flow
-        msg = f"Failed to apply patch. stdout: {stdout}\n\nDiff content: {diff_text}\n\nReject content: {reject_text}\n\nOriginal content: {original_text}"
+        msg = f"Failed to apply patch. stdout: {stdout}\n\nDiff content: {diff_text_repr}\n\nReject content: {reject_text_repr}\n\nOriginal content: {original_text_repr}\n\nModified content: {modified_text_repr}\n\nstderr: {stderr}\n\nCommand: {cmd}\n\nReturn code: {code}"
         logging.error(msg=msg)
-        logging.info("stderr: %s\nCommand: %s\nReturn code: %s", stderr, cmd, code)
         return modified_text
 
     except Exception as e:  # pylint: disable=broad-except
