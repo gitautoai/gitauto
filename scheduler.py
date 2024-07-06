@@ -49,10 +49,6 @@ def schedule_handler(_event, _context) -> dict[str, int]:
             )
             logging.info("Issue: %s", issue)
 
-            # This is testing purpose.
-            if owner not in ["gitautoai", "hiroshinishio"]:
-                continue
-
             # Continue to the next set of owners and repositories if there is no open issue.
             if issue is None:
                 continue
