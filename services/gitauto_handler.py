@@ -1,5 +1,6 @@
 # Standard imports
 import json
+import tempfile
 import logging
 import time
 from uuid import uuid4
@@ -81,6 +82,11 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         create_comment(
             owner=owner,
             repo=repo_name,
+    temp_dir = tempfile.gettempdir()
+    for patch_file in file_paths:
+        tmp_file_path = os.path.join(temp_dir, os.path.basename(patch_file))
+        if os.path.exists(tmp_file_path):
+            os.remove(tmp_file_path)
             issue_number=issue_number,
             body=request_limit_reached(
                 user_name=sender_name,
