@@ -502,7 +502,7 @@ def get_owner_name(owner_id: int, token: str) -> str | None:
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
 def get_remote_file_content(
-    file_path: str,  # Ex) 'src/main.py'
+    file_path: str,  # Ex) 'src/main.py' but techically directory path is also accepted by GitHub API
     owner: str,
     ref: str,  # Ex) 'main'
     repo: str,
@@ -515,15 +515,30 @@ def get_remote_file_content(
         url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS
     )
     response.raise_for_status()
-    encoded_content: str = response.json()["content"]  # Base64 encoded content
+    response_json = response.json()
+
+    # file_path is expected to be a file path, but it can be a directory path due to AI's volatility. See Example2 at https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
+    if response_json["type"] == "dir":
+        entries: list[dict[str, str, int, dict]] = response_json["entries"]
+        contents: list[str] = []
+        for entry in entries:
+            entry_path = entry["path"]
+            contents.append(
+                get_remote_file_content(
+                    file_path=entry_path, owner=owner, ref=ref, repo=repo, token=token
+                )
+            )
+        return "\n\n".join(contents)
+
+    encoded_content: str = response_json["content"]  # Base64 encoded content
 
     # If encoded_content is image, describe the image content in text by vision API
     if file_path.endswith((".png", ".jpeg", ".jpg", ".webp", ".gif")):
-        return describe_image(base64_image=encoded_content)
+        return f"## {file_path}\n\n{describe_image(base64_image=encoded_content)}"
 
     # Otherwise, decode the content
     decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
-    return decoded_content
+    return f"## {file_path}\n\n{decoded_content}"
 
 
 def get_remote_file_tree(
