@@ -1,5 +1,6 @@
 # run this file locally with: python -m tests.services.supabase.test_gitauto_manager
 import os
+import tempfile
 from config import OWNER_TYPE
 from services.supabase import SupabaseManager
 from tests.services.supabase.wipe_data import (
@@ -40,6 +41,15 @@ def test_create_update_user_request_works() -> None:
     assert isinstance(
         usage_record_id,
         int,
+def test_patching_with_existing_tmp_file(monkeypatch):
+    existing_file = tempfile.NamedTemporaryFile(delete=False)
+    try:
+        supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
+        existing_file.close()
+        handle_gitauto(...) # Add appropriate parameters for the function call
+        assert not os.path.exists(existing_file.name)
+    finally:
+        os.remove(existing_file.name)
     )
     assert (
         supabase_manager.complete_and_update_usage_record(
