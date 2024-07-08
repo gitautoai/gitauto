@@ -255,7 +255,7 @@ def submit_message(
 
 def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> tuple[Run, str]:
     """https://cookbook.openai.com/examples/assistants_api_overview_python"""
-    print(f"Run `{run_name}` status before loop: { run.status}")
+    print(f"Run `{run_name}` status before loop: {run.status}")
     client: OpenAI = create_openai_client()
     input_data = ""
     while run.status not in OPENAI_FINAL_STATUSES:
