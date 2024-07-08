@@ -12,9 +12,8 @@ from openai.types.beta import Assistant, Thread
 from openai.types.beta.threads import Run, Message, TextContentBlock
 from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
 
-
 # Local imports
-from config import OPENAI_FINAL_STATUSES, OPENAI_MODEL_ID, TIMEOUT_IN_SECONDS
+from config import OPENAI_FINAL_STATUSES, OPENAI_MAX_STRING_LENGTH, OPENAI_MODEL_ID, TIMEOUT_IN_SECONDS
 from services.openai.functions import (
     GET_REMOTE_FILE_CONTENT,
     functions,
@@ -29,12 +28,12 @@ from services.github.github_manager import (
     commit_multiple_changes_to_remote_branch,
     update_comment,
 )
-
 from utils.file_manager import (
     clean_specific_lines,
     correct_hunk_headers,
     split_diffs,
 )
+from utils.handle_exceptions import handle_exceptions
 
 
 def create_assistant() -> tuple[Assistant, str]:
@@ -231,22 +230,21 @@ def run_assistant(
     return token_input, token_output
 
 
+@handle_exceptions(raise_on_error=True)
 def submit_message(
     client: OpenAI, assistant: Assistant, thread: Thread, user_message: str
 ) -> tuple[Run, str]:
     """https://cookbook.openai.com/examples/assistants_api_overview_python"""
-    client.beta.threads.messages.create(
-        thread_id=thread.id,
-        role="user",
-        content=user_message,
-        timeout=TIMEOUT_IN_SECONDS,
-    )
-    input_data = json.dumps(
-        {
-            "content": str(user_message),
-            "role": "'user",
-        }
-    )
+    # Ensure the message string length is <= 256,000 characters. See https://community.openai.com/t/assistant-threads-create-400-messages-array-too-long/754574/5
+    for i in range(0, len(user_message), OPENAI_MAX_STRING_LENGTH):
+        chunk = user_message[i: i + OPENAI_MAX_STRING_LENGTH]
+        client.beta.threads.messages.create(
+            thread_id=thread.id,
+            role="user",
+            content=chunk,
+            timeout=TIMEOUT_IN_SECONDS,
+        )
+    input_data = json.dumps({"role": "'user", "content": str(user_message)})
     return (
         client.beta.threads.runs.create(
             thread_id=thread.id, assistant_id=assistant.id, timeout=TIMEOUT_IN_SECONDS
