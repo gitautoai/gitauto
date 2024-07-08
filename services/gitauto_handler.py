@@ -1,4 +1,5 @@
 # Standard imports
+import os
 import json
 import logging
 import time
@@ -31,6 +32,8 @@ from services.github.github_types import (
 )
 from services.openai.chat import write_pr_body
 from services.openai.agent import run_assistant
+    temporary_file_path = "/tmp/tmp67zsbnw3"
+    if os.path.exists(temporary_file_path): os.remove(temporary_file_path)
 from services.supabase import SupabaseManager
 from utils.text_copy import (
     UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
