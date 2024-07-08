@@ -28,6 +28,7 @@ jobs:
     - name: Run pytest
       env:
         GH_APP_ID: ${{ secrets.PROD_GH_APP_ID }}
+        GH_APP_NAME: ${{ secrets.GH_APP_NAME }}
         GH_APP_USER_ID: ${{ secrets.GH_APP_USER_ID }}
         GH_APP_USER_NAME: ${{ secrets.GH_APP_USER_NAME }}
         GH_PRIVATE_KEY: ${{ secrets.PROD_GH_PRIVATE_KEY }}
