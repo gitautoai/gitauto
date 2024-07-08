@@ -36,6 +36,7 @@ OPENAI_API_KEY: str = get_env_var(name="OPENAI_API_KEY")
 OPENAI_FINAL_STATUSES: list[str] = ["cancelled", "completed", "expired", "failed"]
 OPENAI_MAX_ARRAY_LENGTH = 32  # https://community.openai.com/t/assistant-threads-create-400-messages-array-too-long/754574/1
 OPENAI_MAX_STRING_LENGTH = 256000  # https://community.openai.com/t/assistant-threads-create-400-messages-array-too-long/754574/5
+OPENAI_MAX_CONTEXT_TOKENS = 128000  # https://gitauto-ai.sentry.io/issues/5582421515/events/9a09416e714c4a66bf1bd86916702be2/?project=4506865231200256&referrer=issue_details.related_trace_issue
 OPENAI_MAX_TOKENS = 4096
 OPENAI_MODEL_ID = "gpt-4o"
 OPENAI_ORG_ID: str = get_env_var(name="OPENAI_ORG_ID")
