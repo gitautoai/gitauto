@@ -125,6 +125,12 @@ def commit_changes_to_remote_branch(
     print(f"{response.status_code=}\n")
     if response.status_code == 200:
         file_info: GitHubContentInfo = response.json()
+
+        # Return if the file_path is a directory. See Example2 at https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
+        if file_info["type"] == "dir":
+            return
+
+        # Get the original text and SHA of the file
         content: str = file_info.get("content")
         # content is base64 encoded by default in GitHub API
         original_text: str = base64.b64decode(s=content).decode(
