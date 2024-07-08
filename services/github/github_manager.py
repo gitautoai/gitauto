@@ -519,10 +519,14 @@ def get_remote_file_content(
     response: requests.Response = requests.get(
         url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS
     )
+
+    # If 404 error, return early. Otherwise, raise a HTTPError
+    if response.status_code != 404:
+        return f"{get_remote_file_content.__name__} encountered an HTTPError: 404 Client Error: Not Found for url: {url}"
     response.raise_for_status()
-    response_json = response.json()
 
     # file_path is expected to be a file path, but it can be a directory path due to AI's volatility. See Example2 at https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
+    response_json = response.json()
     if response_json["type"] == "dir":
         entries: list[dict[str, str, int, dict]] = response_json["entries"]
         contents: list[str] = []
