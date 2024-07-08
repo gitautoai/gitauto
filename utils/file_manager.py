@@ -71,6 +71,7 @@ def apply_patch(original_text: str, diff_text: str) -> str:
             diff_text_repr: str = repr(diff_text).replace(" ", "·")
         rej_f_name: str = f"{org_fname}.rej"
         reject_text = None
+        reject_text_repr = ""
         if os.path.exists(path=rej_f_name):
             with open(file=rej_f_name, mode="r", encoding=UTF8, newline="") as rej_file:
                 reject_text = rej_file.read()
