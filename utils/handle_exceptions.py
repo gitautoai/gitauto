@@ -23,6 +23,9 @@ def handle_exceptions(
             try:
                 return func(*args, **kwargs)
             except requests.exceptions.HTTPError as err:
+                reason: str | Any = err.response.reason
+                text: str | Any = err.response.text
+
                 if err.response.status_code in {403, 429}:
                     limit = int(err.response.headers["X-RateLimit-Limit"])
                     remaining = int(err.response.headers["X-RateLimit-Remaining"])
@@ -47,12 +50,12 @@ def handle_exceptions(
                         return wrapper(*args, **kwargs)
 
                     # Otherwise, log the error and return the default return value
-                    err_msg = f"{func.__name__} encountered an HTTPError: {err}. Limit: {limit}, Remaining: {remaining}, Used: {used}"
+                    err_msg = f"{func.__name__} encountered an HTTPError: {err}. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}"
                     logging.error(msg=err_msg)
                     if raise_on_error:
                         raise
                 else:
-                    err_msg = f"{func.__name__} encountered an HTTPError: {err}"
+                    err_msg = f"{func.__name__} encountered an HTTPError: {err}. Reason: {reason}. Text: {text}"
                     logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
