@@ -36,7 +36,7 @@ def handle_exceptions(
                         reset_ts = int(err.response.headers.get("X-RateLimit-Reset", 0))
                         current_ts = int(time.time())
                         wait_time = reset_ts - current_ts
-                        err_msg = f"{func.__name__} encountered a GitHubPrimaryRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}"
+                        err_msg = f"{func.__name__} encountered a GitHubPrimaryRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}"
                         logging.error(msg=err_msg)
                         time.sleep(wait_time + 5)  # 5 seconds is a buffer
                         return wrapper(*args, **kwargs)
@@ -44,7 +44,7 @@ def handle_exceptions(
                     # Check if the secondary rate limit has been exceeded
                     if "exceeded a secondary rate limit" in err.response.text.lower():
                         retry_after = int(err.response.headers.get("Retry-After", 60))
-                        err_msg = f"{func.__name__} encountered a GitHubSecondaryRateLimitError: {err}. Retrying after {retry_after} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}"
+                        err_msg = f"{func.__name__} encountered a GitHubSecondaryRateLimitError: {err}. Retrying after {retry_after} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}"
                         logging.error(msg=err_msg)
                         time.sleep(retry_after)
                         return wrapper(*args, **kwargs)
@@ -54,6 +54,8 @@ def handle_exceptions(
                     logging.error(msg=err_msg)
                     if raise_on_error:
                         raise
+
+                # Ex) 409: Conflict, and etc.
                 else:
                     err_msg = f"{func.__name__} encountered an HTTPError: {err}. Reason: {reason}. Text: {text}"
                     logging.error(msg=err_msg)

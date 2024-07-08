@@ -122,7 +122,6 @@ def commit_changes_to_remote_branch(
     )
     original_text = ""
     sha = ""
-    print(f"{response.status_code=}\n")
     if response.status_code == 200:
         file_info: GitHubContentInfo = response.json()
 
