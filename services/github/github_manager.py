@@ -20,6 +20,7 @@ from config import (
     GITHUB_API_VERSION,
     GITHUB_APP_ID,
     GITHUB_APP_IDS,
+    GITHUB_APP_NAME,
     GITHUB_PRIVATE_KEY,
     PRODUCT_NAME,
     PRODUCT_URL,
@@ -255,9 +256,11 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
 
 
 def create_headers(token: str) -> dict[str, str]:
+    """https://docs.github.com/en/rest/using-the-rest-api/getting-started-with-the-rest-api?apiVersion=2022-11-28#headers"""
     return {
         "Accept": "application/vnd.github.v3+json",
         "Authorization": f"Bearer {token}",
+        "User-Agent": GITHUB_APP_NAME,
         "X-GitHub-Api-Version": GITHUB_API_VERSION,
     }
 
