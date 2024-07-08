@@ -104,7 +104,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token=token,
     )
 
-    comment_url = create_comment(
+    comment_url: str = create_comment(
         owner=owner,
         repo=repo_name,
         issue_number=issue_number,

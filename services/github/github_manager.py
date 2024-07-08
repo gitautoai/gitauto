@@ -162,7 +162,7 @@ def commit_changes_to_remote_branch(
     put_response.raise_for_status()
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(raise_on_error=True)
 def create_comment(
     owner: str, repo: str, issue_number: int, body: str, token: str
 ) -> str:
