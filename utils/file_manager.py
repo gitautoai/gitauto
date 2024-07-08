@@ -169,6 +169,21 @@ def run_command(command: str, cwd: str) -> str:
         )
         return result.stdout
     except subprocess.CalledProcessError as e:
+        # 127: Command not found so check if Git is installed
+        if e.returncode == 127:
+            try:
+                # Check if Git is installed
+                version_result = subprocess.run(
+                    args="git --version",
+                    capture_output=True,
+                    check=True,
+                    text=True,
+                    shell=True,
+                )
+                logging.info("Git version: %s", version_result.stdout)
+            except subprocess.CalledProcessError as ve:
+                logging.error("Failed to get Git version: %s", ve.stderr)
+
         raise ValueError(f"Command failed: {e.stderr}") from e
 
 

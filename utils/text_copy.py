@@ -19,6 +19,9 @@ def pull_request_completed(
     if "[bot]" in issuer_name and ("[bot]" in sender_name or PRODUCT_ID in sender_name):
         user_part = ""
 
+    elif "[bot]" in issuer_name and ("[bot]" not in sender_name and PRODUCT_ID not in sender_name):
+        user_part = f"@{sender_name} "
+
     # Ex1) A user is the issuer and sender
     # Ex2) sender_name contains gitauto
     elif issuer_name == sender_name or PRODUCT_ID in sender_name:
