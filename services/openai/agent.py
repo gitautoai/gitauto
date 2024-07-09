@@ -13,7 +13,12 @@ from openai.types.beta.threads import Run, Message, TextContentBlock
 from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
 
 # Local imports
-from config import OPENAI_FINAL_STATUSES, OPENAI_MAX_STRING_LENGTH, OPENAI_MODEL_ID, TIMEOUT_IN_SECONDS
+from config import (
+    OPENAI_FINAL_STATUSES,
+    OPENAI_MAX_STRING_LENGTH,
+    OPENAI_MODEL_ID,
+    TIMEOUT_IN_SECONDS,
+)
 from services.openai.functions import (
     GET_REMOTE_FILE_CONTENT,
     functions,
@@ -137,16 +142,18 @@ def run_assistant(
     messages: SyncCursorPage[Message] = get_response(thread=thread)
     messages_list = list(messages)
     if not messages_list:
-        raise ValueError("messages_list is empty.")
+        msg = f"In run_assistant(), messages_list is empty: '{messages_list}'"
+        raise ValueError(msg)
     latest_message: Message = messages_list[0]
     if not latest_message.content:
-        raise ValueError("latest_message.content is empty.")
+        msg = f"In run_assistant(), latest_message.content is empty. latest_message: '{latest_message}'"
+        raise ValueError(msg)
     if isinstance(latest_message.content[0], TextContentBlock):
         value: str = latest_message.content[0].text.value
         output_data += json.dumps(latest_message.content[0].text.value)
     else:
-        raise ValueError("Last message content is not text.")
-    print(f"Last message: {value}\n")
+        msg = f"In run_assistant(), Last message content is not text. latest_message: '{latest_message}'"
+        raise ValueError(msg)
 
     # Clean the diff text and split it
     diff: str = clean_specific_lines(text=value)
@@ -187,7 +194,6 @@ def run_assistant(
         output_data += json.dumps(latest_message.content[0].text.value)
     else:
         raise ValueError("Last message content is not text.")
-    print(f"Last message: {value}\n")
 
     # Clean the diff text and split it
     diff: str = clean_specific_lines(text=value)
