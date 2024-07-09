@@ -5,6 +5,7 @@ from utils.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
 def truncate_message(input_message: str) -> str:
+    truncated_message: str = input_message
     encoding: tiktoken.Encoding = tiktoken.encoding_for_model(
         model_name=OPENAI_MODEL_ID
     )
