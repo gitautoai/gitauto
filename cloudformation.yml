@@ -2,6 +2,9 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: 'CloudFormation template to schedule a Lambda function using AWS EventBridge (formerly CloudWatch Events)'
 
 Parameters:
+  Email:
+    Type: String
+    Description: Email address to receive notifications
   LambdaFunctionName:
     Type: String
     Description: Name of the Lambda function to trigger
@@ -34,3 +37,36 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
       SourceArn: !GetAtt SchedulerEventRule.Arn
+
+  # SNS Topic for sending notifications
+  ErrorNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: LambdaErrorNotificationTopic
+
+  # SNS Subscription to send notifications to an email
+  ErrorNotificationSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref ErrorNotificationTopic
+      Protocol: email
+      Endpoint: !Ref Email
+
+  # CloudWatch Alarm for Lambda function errors
+  LambdaErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: LambdaFunctionErrorAlarm
+      AlarmDescription: Alarm for Lambda function errors
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum  # Total number of errors in each period
+      Period: 300  # in seconds
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref ErrorNotificationTopic
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LambdaFunctionName
