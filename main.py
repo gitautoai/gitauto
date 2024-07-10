@@ -1,3 +1,24 @@
+import os
+import time
+import config
+
+def show_progress_bar(total, uploaded):
+    progress = (uploaded / total) * 100
+    print(f"Upload Progress: {progress:.2f}%", end='\r')
+
+def upload_file(file_path):
+    file_size = os.path.getsize(file_path)
+    if file_size > config.LARGE_FILE_THRESHOLD:
+        with open(file_path, 'rb') as f:
+            uploaded = 0
+            while chunk := f.read(1024 * 1024):
+                uploaded += len(chunk)
+                show_progress_bar(file_size, uploaded)
+                time.sleep(0.1)  # Simulate upload delay
+                if uploaded >= file_size:
+                    print("\nUpload Complete")
+    else:
+        # existing upload logic for smaller files
 # Standard imports
 import json
 import urllib.parse
