@@ -1,3 +1,15 @@
+import unittest
+from main import upload_file
+
+class TestFileUpload(unittest.TestCase):
+    def test_large_file_upload(self):
+        try:
+            upload_file('large_file.test')
+        except Timeout:
+            self.fail("Upload failed due to timeout")
+
+if __name__ == '__main__':
+    unittest.main()
 # run this file locally with: python -m tests.services.supabase.test_gitauto_manager
 import os
 from config import OWNER_TYPE
