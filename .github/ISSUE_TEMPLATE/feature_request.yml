@@ -2,7 +2,7 @@ name: Feature Request
 description: Share your problem and suggest a new feature
 title: "Feature Request: "
 labels: ["enhancement", "gitauto"]
-assignees: ""
+# assignees: [""]
 
 body:
   - type: textarea
@@ -32,7 +32,7 @@ body:
     validations:
       required: true
 
-  - type: input
+  - type: textarea
     id: attachments
     attributes:
       label: Screenshots or Diagrams
