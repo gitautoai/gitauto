@@ -1,14 +1,31 @@
+# Standard imports
 import logging
 import os
 import re
 import subprocess
 import tempfile
 
+# Local imports
 from config import UTF8
+from utils.handle_exceptions import handle_exceptions
 
 
 def apply_patch(original_text: str, diff_text: str) -> str:
-    """Apply a diff using the patch command via temporary files"""
+    """Apply a diff using the patch command via temporary files.
+    Here is comparison of patch options in handling "Assume -R?" and "Apply anyway?" prompts:
+
+    --forward:
+    Assume -R? [n]: No
+    Apply anyway? [n]: No
+
+    --batch:
+    Assume -R? [y]: Yes
+    Apply anyway? [y]: Yes
+
+    --force:
+    Assume -R? [n]: No
+    Apply anyway? [y]: Yes
+    """
     with tempfile.NamedTemporaryFile(
         mode="w+", newline="", delete=False
     ) as original_file:
@@ -38,7 +55,13 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         else:
             with open(file=diff_fname, mode="r", encoding=UTF8, newline="") as diff:
                 subprocess.run(
-                    args=["patch", "-u", "--fuzz=3", org_fname],
+                    args=[
+                        "patch",
+                        "-u",
+                        "--fuzz=3",
+                        "--forward",
+                        org_fname,
+                    ],  # See https://www.man7.org/linux/man-pages/man1/patch.1.html
                     input=diff.read(),
                     text=True,  # If True, input and output are strings
                     # capture_output=True,  # Redundant so commented out
@@ -47,10 +70,8 @@ def apply_patch(original_text: str, diff_text: str) -> str:
                     stderr=subprocess.PIPE,
                 )
 
-        print("Patch applied successfully.")
-        with open(file=org_fname, mode="r", encoding=UTF8, newline="") as modified_file:
-            modified_text: str = modified_file.read()
-            print(f"{modified_text=}\n")
+        # If the patch was successfully applied, get the modified text
+        modified_text, modified_text_repr = get_file_content(file_path=org_fname)
 
     except subprocess.CalledProcessError as e:
         stdout: str = e.stdout
@@ -58,24 +79,17 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         cmd, code = " ".join(e.cmd), e.returncode
 
         # Check if the error message indicates that the patch was already applied
-        if "which already exists!" in stdout.lower():
+        if "already exists!" in stdout.lower():
             return ""
 
         # Get the original, diff, and reject file contents for debugging
         original_text_repr: str = repr(original_text).replace(" ", "·")
-        with open(file=org_fname, mode="r", encoding=UTF8, newline="") as modified_file:
-            modified_text: str = modified_file.read()
-            modified_text_repr: str = repr(modified_text).replace(" ", "·")
-        with open(file=diff_fname, mode="r", encoding=UTF8, newline="") as diff_file:
-            diff_text: str = diff_file.read()
-            diff_text_repr: str = repr(diff_text).replace(" ", "·")
+        modified_text, modified_text_repr = get_file_content(file_path=org_fname)
+        diff_text, diff_text_repr = get_file_content(file_path=diff_fname)
         rej_f_name: str = f"{org_fname}.rej"
-        reject_text = None
-        reject_text_repr = ""
+        _reject_text, reject_text_repr = "", ""
         if os.path.exists(path=rej_f_name):
-            with open(file=rej_f_name, mode="r", encoding=UTF8, newline="") as rej_file:
-                reject_text = rej_file.read()
-                reject_text_repr: str = repr(reject_text).replace(" ", "·")
+            _reject_text, reject_text_repr = get_file_content(file_path=rej_f_name)
 
         # Log the error and return an empty string not to break the flow
         msg = f"Failed to apply patch. stdout: {stdout}\n\nDiff content: {diff_text_repr}\n\nReject content: {reject_text_repr}\n\nOriginal content: {original_text_repr}\n\nModified content: {modified_text_repr}\n\nstderr: {stderr}\n\nCommand: {cmd}\n\nReturn code: {code}"
@@ -88,7 +102,6 @@ def apply_patch(original_text: str, diff_text: str) -> str:
     finally:
         os.remove(path=org_fname)
         os.remove(path=diff_fname)
-        print("Temporary files removed.\n")
 
     return modified_text
 
@@ -156,6 +169,13 @@ def extract_file_name(diff_text: str) -> str:
     if match:
         return match.group(1)
     raise ValueError("No file name found in the diff text.")
+
+
+@handle_exceptions(default_return_value=("", ""), raise_on_error=False)
+def get_file_content(file_path: str) -> tuple[str, str]:
+    with open(file=file_path, mode="r", encoding=UTF8, newline="") as file:
+        text: str = file.read()
+    return text, repr(text).replace(" ", "·")
 
 
 def run_command(command: str, cwd: str) -> str:
