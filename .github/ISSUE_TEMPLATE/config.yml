@@ -1,14 +1,14 @@
-"""
-Configuring issue templates for your repository: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
-Syntax for GitHub's form schema: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-githubs-form-schema
-Syntax for issue forms: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
-"""
-
 blank_issues_enabled: false
 contact_links:
-  - name: GitAuto 
-    url: https://github.com/orgs/community/discussions
-    about: Please ask and answer questions here.
-  - name: GitHub Security Bug Bounty
-    url: https://bounty.github.com/
-    about: Please report security vulnerabilities here.
+  - name: GitAuto Support
+    url: https://calendly.com/gitauto/30min
+    about: Contact our support team for help with GitAuto.
+  - name: GitAuto Website
+    url: https://gitauto.ai
+    about: Visit our website for more information about GitAuto.
+  - name: GitAuto X
+    url: https://x.com/gitautoai 
+    about: Follow us on X for feature updates and use cases.
+  - name: GitAuto LinkedIn
+    url: https://www.linkedin.com/company/gitauto/
+    about: Follow us on LinkedIn for hiring updates and company news.
