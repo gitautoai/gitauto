@@ -79,7 +79,9 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         cmd, code = " ".join(e.cmd), e.returncode
 
         # Check if the error message indicates that the patch was already applied
-        if "already exists!" in stdout.lower():
+        if "already exists!" in stdout:
+            return ""
+        if "Ignoring previously applied (or reversed) patch." in stdout:
             return ""
 
         # Get the original, diff, and reject file contents for debugging
