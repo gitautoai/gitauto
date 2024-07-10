@@ -1,3 +1,13 @@
+import requests
+from requests.exceptions import Timeout
+from main import upload_file
+
+def upload_to_github(file_path):
+    try:
+        upload_file(file_path)
+    except Timeout:
+        print("Timeout occurred. Retrying upload...")
+        upload_file(file_path)
 # Standard imports
 import base64
 import datetime
