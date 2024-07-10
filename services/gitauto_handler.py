@@ -206,7 +206,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         title=f"Fix {issue_title} with {PRODUCT_ID} model",
         token=token,
     )
-    print(f"{time.strftime('%H:%M:%S', time.localtime())} Pull request created.\n")
 
     # Update the issue comment based on if the PR was created or not
     if pr_url is not None:

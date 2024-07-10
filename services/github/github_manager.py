@@ -87,10 +87,8 @@ def commit_multiple_changes_to_remote_branch(
     """Called from assistants api to commit multiple changes to a new branch."""
     for diff in diffs:
         file_path: str = extract_file_name(diff_text=diff)
-        print(
-            f"{time.strftime('%H:%M:%S', time.localtime())} File path: {file_path}.\n"
-        )
-        commit_changes_to_remote_branch(
+        print(f"Committing: {file_path}.\n")
+        is_commit: bool = commit_changes_to_remote_branch(
             branch=new_branch,
             commit_message=f"Update {file_path}",
             diff_text=diff,
@@ -99,12 +97,13 @@ def commit_multiple_changes_to_remote_branch(
             repo=repo,
             token=token,
         )
-        print(
-            f"{time.strftime('%H:%M:%S', time.localtime())} Changes committed to https://github.com/{owner}/{repo}/tree/{new_branch}.\n"
-        )
+        if not is_commit:
+            print(f"No changes made to: {file_path}.\n")
+        else:
+            print(f"Changes made to: {file_path}.\n")
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(default_return_value=False, raise_on_error=False)
 def commit_changes_to_remote_branch(
     branch: str,
     commit_message: str,
@@ -113,7 +112,7 @@ def commit_changes_to_remote_branch(
     owner: str,
     repo: str,
     token: str,
-) -> None:
+) -> bool:
     """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
     url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}"
 
@@ -160,6 +159,7 @@ def commit_changes_to_remote_branch(
         timeout=TIMEOUT_IN_SECONDS,
     )
     put_response.raise_for_status()
+    return True
 
 
 @handle_exceptions(raise_on_error=True)
