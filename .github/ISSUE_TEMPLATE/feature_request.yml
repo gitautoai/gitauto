@@ -1,13 +1,11 @@
 name: Feature Request
 description: Share your problem and suggest a new feature
 title: "Feature Request: "
-labels:
-  - enhancement
-  - gitauto
+labels: ["enhancement", "gitauto"]
 assignees: ""
 
 body:
-  - type: markdown
+  - type: textarea
     id: problem
     attributes:
       label: Problem
@@ -16,7 +14,7 @@ body:
     validations:
       required: true
 
-  - type: markdown
+  - type: textarea
     id: current_solution
     attributes:
       label: Current Solution
@@ -25,7 +23,7 @@ body:
     validations:
       required: true
 
-  - type: markdown
+  - type: textarea
     id: proposed_solution
     attributes:
       label: Proposed Solution

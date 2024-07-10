@@ -1,18 +1,10 @@
 name: Bug Report
 description: Create a report to identify and fix a bug
 title: "Bug: "
-labels:
-  - bug
-  - gitauto
+labels: ["bug", "gitauto"]
 assignees: ""
 
 body:
-  - type: markdown
-    attributes:
-      value: |
-        ## Bug Behavior
-        What is the bug? What is currently happening?
-
   - type: textarea
     id: bug_behavior
     attributes:
@@ -21,12 +13,6 @@ body:
       placeholder: "Example: 'When I try to upload a file (over 100MB), the process fails with a timeout error. This disrupts my workflow and causes delays in my project.'"
     validations:
       required: true
-
-  - type: markdown
-    attributes:
-      value: |
-        ## Logs
-        Include any logs such as error objects, stack traces, or console logs.
 
   - type: textarea
     id: logs
@@ -37,26 +23,14 @@ body:
     validations:
       required: true
 
-  - type: markdown
-    attributes:
-      value: |
-        ## Screenshots
-        Add any screenshots such as error messages or unexpected behavior.
-
-  - type: file
+  - type: textarea
     id: screenshots
     attributes:
       label: Screenshots
       description: Add any screenshots such as error messages or unexpected behavior.
-      multiple: true
+      placeholder: "Attach it here"
     validations:
       required: false
-
-  - type: markdown
-    attributes:
-      value: |
-        ## Possible Cause
-        If you have any idea what might be causing the issue, describe it.
 
   - type: input
     id: when_it_occurred
@@ -66,12 +40,6 @@ body:
       placeholder: "Example: 'Jul 10, 2024 12:08:00 AM UTC'"
     validations:
       required: true
-
-  - type: markdown
-    attributes:
-      value: |
-        ## Steps to Reproduce
-        How can we reproduce the bug?
 
   - type: textarea
     id: steps_to_reproduce
@@ -90,12 +58,6 @@ body:
     validations:
       required: true
 
-  - type: markdown
-    attributes:
-      value: |
-        ## Expected Behavior
-        What do you expect to happen?
-
   - type: textarea
     id: expected_behavior
     attributes:
@@ -105,12 +67,6 @@ body:
     validations:
       required: true
 
-  - type: markdown
-    attributes:
-      value: |
-        ## Possible Cause
-        If you have any idea what might be causing the issue, describe it.
-
   - type: textarea
     id: possible_cause
     attributes:
@@ -119,15 +75,6 @@ body:
       placeholder: "Example: 'The issue may be related to the new file upload library introduced in version 1.2.3.'"
     validations:
       required: false
-
-  - type: markdown
-    attributes:
-      value: |
-        ## Device, OS, and Browser
-        Example:
-        - Device: MacBook Pro, 14-inch, 2023 (Check in 'About This Mac' for Mac)
-        - OS: Sonoma 14.5 (Check in 'About This Mac' for Mac)
-        - Browser: Chrome, Version 126.0.6478.127 (Official Build) (arm64) (Open Chrome, click on the three dots in the upper right corner, select 'Help', then 'About Google Chrome')
 
   - type: input
     id: device
@@ -155,12 +102,6 @@ body:
       placeholder: "Example: 'Chrome, Version 126.0.6478.127 (Official Build) (arm64) (Open Chrome, click on the three dots in the upper right corner, select 'Help', then 'About Google Chrome')'"
     validations:
       required: true
-
-  - type: markdown
-    attributes:
-      value: |
-        ## Additional Information
-        Include any other context or information.
 
   - type: textarea
     id: additional_information
