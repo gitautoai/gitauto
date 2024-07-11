@@ -80,8 +80,8 @@ body:
     id: device
     attributes:
       label: Device
-      description: Describe your device.
-      placeholder: "Example: 'MacBook Pro, 14-inch, 2023 (Check in 'About This Mac' for Mac)'"
+      description: Describe your device or server.
+      placeholder: "MacBook Pro, 14-inch, 2023 (Check in 'About This Mac')"
     validations:
       required: true
 
@@ -89,8 +89,14 @@ body:
     id: os
     attributes:
       label: OS
-      description: Describe your operating system.
-      placeholder: "Example: 'Sonoma 14.5 (Check in 'About This Mac' for Mac)'"
+      description: |
+        Describe your operating system.
+        - For Mac, check in "About This Mac".
+        - For Windows, check in "Settings" > "System" > "About".
+        - For iOS, check in "Settings" > "General" > "About" > "iOS Version".
+        - For Linux, run `uname -a` in the terminal.
+        - For your server, specify the provider such as AWS EC2, AWS Lambda, or etc.
+      placeholder: "Sonoma 14.5"
     validations:
       required: true
 
@@ -98,8 +104,12 @@ body:
     id: browser
     attributes:
       label: Browser
-      description: Describe your browser.
-      placeholder: "Example: 'Chrome, Version 126.0.6478.127 (Official Build) (arm64) (Open Chrome, click on the three dots in the upper right corner, select 'Help', then 'About Google Chrome')'"
+      description: |
+        Describe your browser.
+        - For Chrome, "Chrome, Version 126.0.6478.127 (Official Build) (arm64)". Check in "3 dots" on the top right > "Help" > "About Google Chrome".
+        - For Safari, "Safari, Version 17.5 (19618.2.12.11.6)". Check in "Safari" on the top left > "About Safari".
+        - For non-browser issues, type "Server-side" or "Mobile App".
+      placeholder: "Chrome, Version 126.0.6478.127 (Official Build) (arm64)"
     validations:
       required: true
 
