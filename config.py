@@ -28,6 +28,8 @@ GITHUB_APP_IDS: list[int] = list(set([
 GITHUB_APP_NAME: str = get_env_var(name="GH_APP_NAME")
 GITHUB_APP_USER_ID: int = int(get_env_var(name="GH_APP_USER_ID"))
 GITHUB_APP_USER_NAME: str = get_env_var(name="GH_APP_USER_NAME")
+GITHUB_ISSUE_DIR = ".github/ISSUE_TEMPLATE"
+GITHUB_ISSUE_TEMPLATES: list[str] = ["bug_report.yml", "feature_request.yml"]
 GITHUB_PRIVATE_KEY_ENCODED: str = get_env_var(name="GH_PRIVATE_KEY")
 GITHUB_PRIVATE_KEY: bytes = base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED)
 GITHUB_WEBHOOK_SECRET: str = get_env_var(name="GH_WEBHOOK_SECRET")
