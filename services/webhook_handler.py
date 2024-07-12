@@ -61,15 +61,30 @@ async def handle_installation_deleted(payload: GitHubInstallationPayload) -> Non
     supabase_manager.delete_installation(installation_id=installation_id)
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+async def handle_installation_repos_added(payload) -> None:
+    installation_id: int = payload["installation"]["id"]
+    repo_full_names: list[str] = [
+        repo["full_name"] for repo in payload["repositories_added"]
+    ]
+    sender_name: str = payload["sender"]["login"]
+    token: str = get_installation_access_token(installation_id=installation_id)
+    for full_name in repo_full_names:
+        add_issue_templates(full_name=full_name, installer_name=sender_name, token=token)
+
+
 @handle_exceptions(default_return_value=None, raise_on_error=True)
 async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> None:
-    """Determine the event type and call the appropriate handler"""
+    """
+    Determine the event type and call the appropriate handler.
+    Check the type of webhook event and handle accordingly.
+    https://docs.github.com/en/apps/github-marketplace/using-the-github-marketplace-api-in-your-app/handling-new-purchases-and-free-trials
+    https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=purchased#marketplace_purchase
+    """
     action: str = payload.get("action")
     if not action:
         return
-    # Check the type of webhook event and handle accordingly
-    # See https://docs.github.com/en/apps/github-marketplace/using-the-github-marketplace-api-in-your-app/handling-new-purchases-and-free-trials
-    # See https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=purchased#marketplace_purchase
+
     # if event_name == "marketplace_purchase" and action in ("purchased"):
     #     print("Marketplace purchase is triggered")
     #     await handle_installation_created(payload=payload)
@@ -81,6 +96,10 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
     elif event_name == "installation" and action in ("deleted"):
         print("Installation is deleted")
         await handle_installation_deleted(payload=payload)
+
+    # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation_repositories
+    elif event_name == "installation_repositories" and action in ("added"):
+        await handle_installation_repos_added(payload=payload)
 
     elif event_name == "issues":
         if action == "labeled":
@@ -134,4 +153,5 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
             supabase_manager.set_issue_to_merged(unique_issue_id=unique_issue_id)
 
-    print(f"Event {event_name} with action {action} is not handled")
+    else:
+        print(f"Event {event_name} with action {action} is not handled")
