@@ -1,0 +1,90 @@
+{
+  "action": "added",
+  "installation": {
+    "id": 52733965,
+    "account": {
+      "login": "hiroshinishio",
+      "id": 4620828,
+      "node_id": "MDQ6VXNlcjQ2MjA4Mjg=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4620828?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/hiroshinishio",
+      "html_url": "https://github.com/hiroshinishio",
+      "followers_url": "https://api.github.com/users/hiroshinishio/followers",
+      "following_url": "https://api.github.com/users/hiroshinishio/following{/other_user}",
+      "gists_url": "https://api.github.com/users/hiroshinishio/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/hiroshinishio/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/hiroshinishio/subscriptions",
+      "organizations_url": "https://api.github.com/users/hiroshinishio/orgs",
+      "repos_url": "https://api.github.com/users/hiroshinishio/repos",
+      "events_url": "https://api.github.com/users/hiroshinishio/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/hiroshinishio/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "repository_selection": "selected",
+    "access_tokens_url": "https://api.github.com/app/installations/52733965/access_tokens",
+    "repositories_url": "https://api.github.com/installation/repositories",
+    "html_url": "https://github.com/settings/installations/52733965",
+    "app_id": 828792,
+    "app_slug": "gitauto-for-dev",
+    "target_id": 4620828,
+    "target_type": "User",
+    "permissions": {
+      "contents": "write",
+      "issues": "write",
+      "metadata": "read",
+      "pull_requests": "write",
+      "workflows": "write"
+    },
+    "events": [
+      "commit_comment",
+      "issues",
+      "issue_comment",
+      "label",
+      "pull_request",
+      "pull_request_review",
+      "pull_request_review_comment",
+      "pull_request_review_thread"
+    ],
+    "created_at": "2024-07-12T16:14:07.000+09:00",
+    "updated_at": "2024-07-12T17:33:24.000+09:00",
+    "single_file_name": null,
+    "has_multiple_single_files": false,
+    "single_file_paths": [],
+    "suspended_by": null,
+    "suspended_at": null
+  },
+  "repository_selection": "selected",
+  "repositories_added": [
+    {
+      "id": 416759137,
+      "node_id": "R_kgDOGNc9YQ",
+      "name": "slack-analysis",
+      "full_name": "hiroshinishio/slack-analysis",
+      "private": true
+    }
+  ],
+  "repositories_removed": [],
+  "requester": null,
+  "sender": {
+    "login": "hiroshinishio",
+    "id": 4620828,
+    "node_id": "MDQ6VXNlcjQ2MjA4Mjg=",
+    "avatar_url": "https://avatars.githubusercontent.com/u/4620828?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/hiroshinishio",
+    "html_url": "https://github.com/hiroshinishio",
+    "followers_url": "https://api.github.com/users/hiroshinishio/followers",
+    "following_url": "https://api.github.com/users/hiroshinishio/following{/other_user}",
+    "gists_url": "https://api.github.com/users/hiroshinishio/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/hiroshinishio/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/hiroshinishio/subscriptions",
+    "organizations_url": "https://api.github.com/users/hiroshinishio/orgs",
+    "repos_url": "https://api.github.com/users/hiroshinishio/repos",
+    "events_url": "https://api.github.com/users/hiroshinishio/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/hiroshinishio/received_events",
+    "type": "User",
+    "site_admin": false
+  }
+}
