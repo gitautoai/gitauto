@@ -660,6 +660,15 @@ def get_remote_file_tree(
         return []
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def turn_on_issue(full_name: str, token: str) -> None:
+    """We can turn on the issues feature for a repository using the GitHub API."""
+    gh = Github(login_or_token=token)
+    repo: Repository = gh.get_repo(full_name_or_id=full_name)
+    if not repo.has_issues:
+        repo.edit(has_issues=True)
+
+
 @handle_exceptions(raise_on_error=True)
 async def verify_webhook_signature(request: Request, secret: str) -> None:
     """Verify the webhook signature for security"""

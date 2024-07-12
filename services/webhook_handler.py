@@ -13,6 +13,7 @@ from services.github.github_manager import (
     add_issue_templates,
     create_comment_on_issue_with_gitauto_button,
     get_installation_access_token,
+    turn_on_issue,
 )
 from services.github.github_types import (
     GitHubEventPayload,
@@ -51,6 +52,7 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
     # Add issue templates to the repositories
     for i, full_name in enumerate(iterable=repo_full_names, start=1):
         print(f"\nAdding issue templates ({i}/{len(repo_full_names)}): {full_name}")
+        turn_on_issue(full_name=full_name, token=token)
         add_issue_templates(full_name=full_name, installer_name=user_name, token=token)
 
 
@@ -70,6 +72,7 @@ async def handle_installation_repos_added(payload) -> None:
     sender_name: str = payload["sender"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
     for full_name in repo_full_names:
+        turn_on_issue(full_name=full_name, token=token)
         add_issue_templates(full_name=full_name, installer_name=sender_name, token=token)
 
 
