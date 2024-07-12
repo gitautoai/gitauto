@@ -9,9 +9,10 @@ from config import (
     PR_BODY_STARTS_WITH,
     ISSUE_NUMBER_FORMAT,
 )
-
 from services.github.github_manager import (
+    add_issue_templates,
     create_comment_on_issue_with_gitauto_button,
+    get_installation_access_token,
 )
 from services.github.github_types import (
     GitHubEventPayload,
@@ -25,15 +26,19 @@ from utils.handle_exceptions import handle_exceptions
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
     """Creates installation records on GitAuto APP installation"""
     installation_id: int = payload["installation"]["id"]
     owner_type: str = payload["installation"]["account"]["type"]
     owner_name: str = payload["installation"]["account"]["login"]
     owner_id: int = payload["installation"]["account"]["id"]
+    repo_full_names: list[str] = [repo["full_name"] for repo in payload["repositories"]]
     user_id: int = payload["sender"]["id"]
     user_name: str = payload["sender"]["login"]
+    token: str = get_installation_access_token(installation_id=installation_id)
 
+    # Create installation record in Supabase
     supabase_manager.create_installation(
         installation_id=installation_id,
         owner_type=owner_type,
@@ -43,7 +48,13 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
         user_name=user_name,
     )
 
+    # Add issue templates to the repositories
+    for i, full_name in enumerate(iterable=repo_full_names, start=1):
+        print(f"\nAdding issue templates ({i}/{len(repo_full_names)}): {full_name}")
+        add_issue_templates(full_name=full_name, installer_name=user_name, token=token)
 
+
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 async def handle_installation_deleted(payload: GitHubInstallationPayload) -> None:
     """Soft deletes installation record on GitAuto APP installation"""
     installation_id: int = payload["installation"]["id"]
