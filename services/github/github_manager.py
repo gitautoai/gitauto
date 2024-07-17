@@ -598,7 +598,7 @@ def get_remote_file_content(
     )
 
     # If 404 error, return early. Otherwise, raise a HTTPError
-    if response.status_code != 404:
+    if response.status_code == 404:
         return f"{get_remote_file_content.__name__} encountered an HTTPError: 404 Client Error: Not Found for url: {url}"
     response.raise_for_status()
 
