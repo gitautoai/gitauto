@@ -501,7 +501,11 @@ def get_latest_remote_commit_sha(
             timeout=TIMEOUT_IN_SECONDS,
         )
         response.raise_for_status()
-        return response.json()["object"]["sha"]
+        return response.json().get("object", {}).get("sha")
+    except requests.exceptions.HTTPError as http_err:
+        if http_err.response.status_code == 409:
+            return None
+        raise
     except requests.exceptions.HTTPError as e:
         if (
             e.response.status_code == 409
