@@ -1,3 +1,22 @@
+import requests
+
+class GitHubManager:
+    def __init__(self, token):
+        self.token = token
+
+    def get_user_locale(self, username):
+        url = f"https://api.github.com/users/{username}"
+        headers = {"Authorization": f"token {self.token}"}
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            user_data = response.json()
+            return user_data.get('locale', 'Locale not specified')
+        elif response.status_code == 404:
+            return 'User not found'
+        elif response.status_code == 403:
+            return 'API rate limit exceeded'
+        else:
+            return 'Error retrieving locale'
 # Standard imports
 import base64
 import datetime
