@@ -128,8 +128,6 @@ def run_assistant(
     client, assistant, thread, run, input_data = create_thread_and_run(
         user_input=user_input
     )
-    print(f"Thread is created: {thread.id}\n")
-    print(f"Run is created: {run.id}\n")
 
     # Wait for the run to complete, handle function calling if necessary
     run, input_output_data = wait_on_run(
@@ -243,7 +241,7 @@ def submit_message(
     """https://cookbook.openai.com/examples/assistants_api_overview_python"""
     # Ensure the message string length is <= 256,000 characters. See https://community.openai.com/t/assistant-threads-create-400-messages-array-too-long/754574/5
     for i in range(0, len(user_message), OPENAI_MAX_STRING_LENGTH):
-        chunk = user_message[i: i + OPENAI_MAX_STRING_LENGTH]
+        chunk = user_message[i : i + OPENAI_MAX_STRING_LENGTH]  # noqa: E203
         client.beta.threads.messages.create(
             thread_id=thread.id,
             role="user",
@@ -261,18 +259,15 @@ def submit_message(
 
 def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> tuple[Run, str]:
     """https://cookbook.openai.com/examples/assistants_api_overview_python"""
-    print(f"Run `{run_name}` status before loop: {run.status}")
     client: OpenAI = create_openai_client()
     input_data = ""
     while run.status not in OPENAI_FINAL_STATUSES:
-        print(f"Run `{run_name}` status during loop: {run.status}")
         run = client.beta.threads.runs.retrieve(
             thread_id=thread.id, run_id=run.id, timeout=TIMEOUT_IN_SECONDS
         )
 
         # If the run requires action, call the function and run again with the output
         if run.status == "requires_action":
-            print("Run requires action")
             try:
                 tool_outputs: list[Any] = call_functions(
                     run=run, funcs=functions, token=token
@@ -298,7 +293,6 @@ def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> tuple[Ru
     # See https://platform.openai.com/docs/api-reference/runs/object#runs/object-last_error
     if run.status == "failed":
         logging.error("Run %s failed: %s", run_name, run.last_error)
-    print(f"Run {run_name} status after loop: {run.status}")
     return run, input_data
 
 
