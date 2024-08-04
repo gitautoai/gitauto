@@ -32,6 +32,7 @@ from services.github.github_types import (
 from services.openai.chat import write_pr_body
 from services.openai.agent import run_assistant
 from services.supabase import SupabaseManager
+from utils.progress_bar import generate_progress_bar
 from utils.text_copy import (
     UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
     pull_request_completed,
@@ -108,7 +109,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         owner=owner,
         repo=repo_name,
         issue_number=issue_number,
-        body="![X](https://progress-bar.dev/0/?title=Progress&width=800)\nGitAuto just started crafting a pull request.",
+        body=generate_progress_bar(p=0),
         token=token,
     )
     # Prepare contents for Agent
@@ -141,7 +142,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/20/?title=Progress&width=800)\nJust getting started!",
+        body=generate_progress_bar(p=20),
     )
 
     # Create a remote branch
@@ -185,7 +186,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/90/?title=Progress&width=800)\nAlmost there!",
+        body=generate_progress_bar(p=90),
     )
 
     # Create a pull request to the base branch

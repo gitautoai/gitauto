@@ -39,6 +39,7 @@ from utils.file_manager import (
     split_diffs,
 )
 from utils.handle_exceptions import handle_exceptions
+from utils.progress_bar import generate_progress_bar
 
 
 def create_assistant() -> tuple[Assistant, str]:
@@ -164,7 +165,7 @@ def run_assistant(
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/50/?title=Progress&width=800)\n50% Half way there!",
+        body=generate_progress_bar(p=50),
     )
 
     # Self review diff
@@ -222,7 +223,7 @@ def run_assistant(
     update_comment(
         comment_url=comment_url,
         token=token,
-        body="![X](https://progress-bar.dev/70/?title=Progress&width=800)\n80% there! We're reviewing your new code changes!",
+        body=generate_progress_bar(p=80),
     )
 
     output_data += json.dumps(output)
