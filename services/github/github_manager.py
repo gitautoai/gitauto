@@ -624,7 +624,10 @@ def get_remote_file_content(
 
     # Otherwise, decode the content
     decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
-    return f"## {file_path}\n\n{decoded_content}"
+    numbered_content: str = "\n".join(
+        f"{i + 1}: {line}" for i, line in enumerate(decoded_content.split("\n"))
+    )
+    return f"## {file_path}\n\n{numbered_content}"
 
 
 def get_remote_file_tree(
