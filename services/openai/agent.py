@@ -16,8 +16,10 @@ from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
 from config import (
     OPENAI_FINAL_STATUSES,
     OPENAI_MAX_STRING_LENGTH,
+    OPENAI_MAX_TOOL_OUTPUTS_SIZE,
     OPENAI_MODEL_ID,
     TIMEOUT_IN_SECONDS,
+    UTF8,
 )
 from services.openai.functions import (
     GET_REMOTE_FILE_CONTENT,
@@ -268,27 +270,32 @@ def wait_on_run(run: Run, thread: Thread, token: str, run_name: str) -> tuple[Ru
         )
 
         # If the run requires action, call the function and run again with the output
-        if run.status == "requires_action":
-            try:
-                tool_outputs: list[Any] = call_functions(
-                    run=run, funcs=functions, token=token
-                )
+        if run.status != "requires_action":
+            time.sleep(0.5)
+            continue
 
-                # The combined tool outputs must be less than 512kb.
-                tool_outputs_json: list[ToolOutput] = [
-                    {"tool_call_id": tool_call.id, "output": json.dumps(obj=result)}
-                    for tool_call, result in tool_outputs
-                ]
-                input_data += json.dumps(tool_outputs_json)
+        try:
+            tool_outputs = call_functions(run=run, funcs=functions, token=token)
+            tool_outputs_json: list[ToolOutput] = [
+                {"tool_call_id": tool_call.id, "output": json.dumps(obj=result)}
+                for tool_call, result in tool_outputs
+            ]
+
+            # The combined tool outputs must be less than 512kb.
+            input_data += json.dumps(tool_outputs_json)
+            input_data_size = len(input_data.encode(UTF8))
+            if input_data_size < OPENAI_MAX_TOOL_OUTPUTS_SIZE:
                 run = client.beta.threads.runs.submit_tool_outputs(
                     thread_id=thread.id,
                     run_id=run.id,
                     tool_outputs=tool_outputs_json,
                     timeout=TIMEOUT_IN_SECONDS,
                 )
-            except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
+            if "the combined tool outputs must be less than 512kb" in str(e):
+                logging.warning("Tool outputs too large, skipping this submission.")
+            else:
                 raise ValueError(f"Error: {e}") from e
-        time.sleep(0.5)
 
     # Loop is done, check if the run failed
     # See https://platform.openai.com/docs/api-reference/runs/object#runs/object-last_error
