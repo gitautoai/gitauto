@@ -46,7 +46,10 @@ from utils.progress_bar import generate_progress_bar
 
 
 def create_assistant() -> tuple[Assistant, str]:
-    """Create Open AI client and then create the assistant."""
+    """
+    Create Open AI client and then create the assistant.
+    https://platform.openai.com/docs/api-reference/assistants/createAssistant
+    """
     client: OpenAI = create_openai_client()
     input_data = json.dumps(
         {
