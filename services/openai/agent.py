@@ -18,6 +18,7 @@ from config import (
     OPENAI_MAX_STRING_LENGTH,
     OPENAI_MAX_TOOL_OUTPUTS_SIZE,
     OPENAI_MODEL_ID,
+    OPENAI_TEMPERATURE,
     TIMEOUT_IN_SECONDS,
     UTF8,
 )
@@ -45,7 +46,10 @@ from utils.progress_bar import generate_progress_bar
 
 
 def create_assistant() -> tuple[Assistant, str]:
-    """Create Open AI client and then create the assistant."""
+    """
+    Create Open AI client and then create the assistant.
+    https://platform.openai.com/docs/api-reference/assistants/createAssistant
+    """
     client: OpenAI = create_openai_client()
     input_data = json.dumps(
         {
@@ -69,6 +73,7 @@ def create_assistant() -> tuple[Assistant, str]:
                 {"type": "function", "function": REASON_FOR_MODYING_DIFF},
             ],
             model=OPENAI_MODEL_ID,
+            temperature=OPENAI_TEMPERATURE,
             timeout=TIMEOUT_IN_SECONDS,
         ),
         input_data,

@@ -8,6 +8,8 @@ from config import (
     OWNER_ID,
     OWNER_NAME,
     OWNER_TYPE,
+    PRODUCT_ID_FOR_FREE,
+    PRODUCT_ID_FOR_STANDARD,
     USER_ID,
     USER_NAME,
     INSTALLATION_ID,
@@ -189,7 +191,6 @@ def test_parse_subscription_object() -> None:
         user_id=USER_ID,
         user_name=USER_NAME,
     )
-    standard_product_id = "prod_PqZFpCs1Jq6X4E"
 
     def assertion_test(customer_id: str, product_id: str):
         subscription = get_subscription(customer_id)
@@ -206,10 +207,10 @@ def test_parse_subscription_object() -> None:
 
     # All active ##
     # [free, paid] -> paid
-    assertion_test("cus_PtCxNdGs23X4QR", standard_product_id)
+    assertion_test(customer_id="cus_PtCxNdGs23X4QR", product_id=PRODUCT_ID_FOR_STANDARD)
 
     # [paid, free] -> paid
-    assertion_test("cus_PpmpFh1sw0Gfcz", standard_product_id)
+    assertion_test(customer_id="cus_PpmpFh1sw0Gfcz", product_id=PRODUCT_ID_FOR_FREE)
 
     # Clean Up
     wipe_installation_owner_user_data()
