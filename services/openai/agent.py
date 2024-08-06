@@ -18,6 +18,7 @@ from config import (
     OPENAI_MAX_STRING_LENGTH,
     OPENAI_MAX_TOOL_OUTPUTS_SIZE,
     OPENAI_MODEL_ID,
+    OPENAI_TEMPERATURE,
     TIMEOUT_IN_SECONDS,
     UTF8,
 )
@@ -69,6 +70,7 @@ def create_assistant() -> tuple[Assistant, str]:
                 {"type": "function", "function": REASON_FOR_MODYING_DIFF},
             ],
             model=OPENAI_MODEL_ID,
+            temperature=OPENAI_TEMPERATURE,
             timeout=TIMEOUT_IN_SECONDS,
         ),
         input_data,
