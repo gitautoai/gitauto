@@ -76,6 +76,8 @@ UTF8 = "utf-8"
 # Testing
 INSTALLATION_ID = -1
 NEW_INSTALLATION_ID = -2
+PRODUCT_ID_FOR_FREE = "prod_PokLGIxiVUwCi6"  # https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
+PRODUCT_ID_FOR_STANDARD = "prod_PqZFpCs1Jq6X4E"  # https://dashboard.stripe.com/test/products/prod_PqZFpCs1Jq6X4E
 OWNER_ID = -1
 OWNER_NAME = "installation-test"
 OWNER_TYPE = "Organization"
