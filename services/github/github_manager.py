@@ -638,7 +638,12 @@ def get_remote_file_content(
 def get_remote_file_content_by_url(url: str, token: str) -> str:
     """https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28"""
     parts = parse_github_url(url)
-    owner, repo, ref, file_path = parts["owner"], parts["repo"], parts["ref"], parts["file_path"]
+    owner, repo, ref, file_path = (
+        parts["owner"],
+        parts["repo"],
+        parts["ref"],
+        parts["file_path"],
+    )
     start, end = parts["start_line"], parts["end_line"]
     url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
     headers: dict[str, str] = create_headers(token=token)
@@ -647,13 +652,15 @@ def get_remote_file_content_by_url(url: str, token: str) -> str:
     response_json = response.json()
     encoded_content: str = response_json["content"]  # Base64 encoded content
     decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
-    numbered_lines = [f"{i + 1}: {line}" for i, line in enumerate(decoded_content.split("\n"))]
+    numbered_lines = [
+        f"{i + 1}: {line}" for i, line in enumerate(decoded_content.split("\n"))
+    ]
 
     if start is not None and end is not None:
-        numbered_lines = numbered_lines[start - 1: end]
+        numbered_lines = numbered_lines[start - 1 : end]
         file_path_with_lines = f"{file_path}#L{start}-L{end}"
     elif start is not None:
-        numbered_lines = numbered_lines[start - 1:]
+        numbered_lines = numbered_lines[start - 1 :]
         file_path_with_lines = f"{file_path}#L{start}"
     else:
         file_path_with_lines = file_path
@@ -727,8 +734,8 @@ def search_remote_file_content(
         text_matches = item.get("text_matches", [])
 
         for match in text_matches:
-            fragment = match.get("fragment", "").replace('\n', ' ')
-            results.append(f"Searched File {i}: {item["path"]}\nFragment: {fragment}\n")
+            fragment = match.get("fragment", "").replace("\n", " ")
+            results.append(f"Searched File {i}: {item['path']}\nFragment: {fragment}\n")
 
     print(f"results: {json.dumps(results, indent=2)}")
     return "\n".join(results)
