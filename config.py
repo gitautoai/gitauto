@@ -17,7 +17,7 @@ def get_env_var(name: str) -> str:
 
 
 # GitHub Credentials from environment variables
-GITHUB_API_URL: str = "https://api.github.com"
+GITHUB_API_URL = "https://api.github.com"
 GITHUB_API_VERSION: str = "2022-11-28"
 GITHUB_APP_ID = int(get_env_var(name="GH_APP_ID"))
 GITHUB_APP_IDS: list[int] = list(
@@ -40,6 +40,7 @@ GITHUB_WEBHOOK_SECRET: str = get_env_var(name="GH_WEBHOOK_SECRET")
 
 # OpenAI Credentials from environment variables
 OPENAI_API_KEY: str = get_env_var(name="OPENAI_API_KEY")
+OPENAI_ASSISTANT_NAME = "GitAuto: AI Coding Agent that generates GitHub pull requests from issues"
 OPENAI_FINAL_STATUSES: list[str] = ["cancelled", "completed", "expired", "failed"]
 OPENAI_MAX_ARRAY_LENGTH = 32  # https://community.openai.com/t/assistant-threads-create-400-messages-array-too-long/754574/1
 OPENAI_MAX_STRING_LENGTH = 256000  # https://community.openai.com/t/assistant-threads-create-400-messages-array-too-long/754574/5
@@ -63,9 +64,11 @@ STRIPE_FREE_TIER_PRICE_ID: str = get_env_var(name="STRIPE_FREE_TIER_PRICE_ID")
 DEFAULT_TIME = datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
 EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
 ENV: str = get_env_var(name="ENV")
+IS_PRD: bool = ENV == "prod"
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
 FREE_TIER_REQUEST_AMOUNT = 5
 ISSUE_NUMBER_FORMAT = "/issue-#"
+PER_PAGE = 100
 PR_BODY_STARTS_WITH = "Original issue: [#"
 PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"

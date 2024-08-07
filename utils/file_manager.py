@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 # Local imports
-from config import UTF8
+from config import IS_PRD, UTF8
 from utils.handle_exceptions import handle_exceptions
 
 
@@ -94,7 +94,10 @@ def apply_patch(original_text: str, diff_text: str) -> str:
             _reject_text, reject_text_repr = get_file_content(file_path=rej_f_name)
 
         # Log the error and return an empty string not to break the flow
-        msg = f"Failed to apply patch. stdout: {stdout}\n\nDiff content: {diff_text_repr}\n\nReject content: {reject_text_repr}\n\nOriginal content: {original_text_repr}\n\nModified content: {modified_text_repr}\n\nstderr: {stderr}\n\nCommand: {cmd}\n\nReturn code: {code}"
+        if IS_PRD:
+            msg = f"Failed to apply patch. stdout:\n{stdout}\n\nDiff content:\n{diff_text_repr}\n\nReject content:\n{reject_text_repr}\n\nOriginal content:\n{original_text_repr}\n\nModified content:\n{modified_text_repr}\n\nstderr:\n{stderr}\n\nCommand: {cmd}\n\nReturn code: {code}"
+        else:
+            msg = f"Failed to apply patch.\n\nDiff content:\n{diff_text}\n\nReject content:\n{reject_text_repr}\n\nstderr: {stderr}"
         logging.error(msg=msg)
         return modified_text
 

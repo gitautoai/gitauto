@@ -57,6 +57,9 @@ def get_subscription(customer_id: str) -> stripe.ListObject[stripe.Subscription]
 
 @handle_exceptions(default_return_value=FREE_TIER_REQUEST_AMOUNT, raise_on_error=False)
 def get_request_count_from_product_id_metadata(product_id: str) -> int:
-    """https://docs.stripe.com/api/products/retrieve?lang=python"""
+    """
+    https://docs.stripe.com/api/products/retrieve?lang=python
+    https://dashboard.stripe.com/test/products/prod_PqZFpCs1Jq6X4E
+    """
     price = stripe.Product.retrieve(product_id)
     return int(price["metadata"]["request_count"])

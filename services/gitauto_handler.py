@@ -19,6 +19,7 @@ from services.github.github_manager import (
     get_installation_access_token,
     get_issue_comments,
     get_latest_remote_commit_sha,
+    get_remote_file_content_by_url,
     get_remote_file_tree,
     create_comment,
     update_comment,
@@ -32,6 +33,7 @@ from services.github.github_types import (
 from services.openai.chat import write_pr_body
 from services.openai.agent import run_assistant
 from services.supabase import SupabaseManager
+from utils.extract_urls import extract_urls
 from utils.progress_bar import generate_progress_bar
 from utils.text_copy import (
     UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
@@ -53,8 +55,9 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     # Extract information from the payload
     issue: IssueInfo = payload["issue"]
     issue_title: str = issue["title"]
-    issue_body: str = issue["body"] or ""
     issue_number: int = issue["number"]
+    issue_body: str = issue["body"] or ""
+    github_urls, other_urls = extract_urls(text=issue_body)
     installation_id: int = payload["installation"]["id"]
     repo: RepositoryInfo = payload["repository"]
     owner_type: str = repo["owner"]["type"]
@@ -67,6 +70,12 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     sender_name: str = payload["sender"]["login"]
     issuer_name: str = issue["user"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
+    print(f"\nIssue Title: {issue_title}\n")
+    print(f"Issue Body:\n{issue_body}")
+    if github_urls:
+        print(f"\nGitHub URLs: {json.dumps(github_urls, indent=2)}")
+    if other_urls:
+        print(f"\nOther URLs: {json.dumps(other_urls, indent=2)}")
 
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
@@ -123,20 +132,22 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     issue_comments: list[str] = get_issue_comments(
         owner=owner, repo=repo_name, issue_number=issue_number, token=token
     )
+    reference_contents: list[str] = []
+    for url in github_urls:
+        content = get_remote_file_content_by_url(url=url, token=token)
+        print(f"```{url}\n{content}```\n")
+        reference_contents.append(content)
 
     pr_body: str = write_pr_body(
         input_message=json.dumps(
             obj={
                 "issue_title": issue_title,
                 "issue_body": issue_body,
+                "reference_contents": reference_contents,
                 "issue_comments": issue_comments,
                 "file_paths": file_paths,
             }
         )
-    )
-
-    print(
-        f"{time.strftime('%H:%M:%S', time.localtime())} Installation token received.\n"
     )
 
     update_comment(
@@ -165,14 +176,11 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         comment_url=comment_url,
         token=token,
     )
-    print(
-        f"{time.strftime('%H:%M:%S', time.localtime())} Remote branch created: {new_branch}.\n"
-    )
-
     token_input, token_output = run_assistant(
         file_paths=file_paths,
         issue_title=issue_title,
         issue_body=issue_body,
+        reference_contents=reference_contents,
         issue_comments=issue_comments,
         owner=owner,
         pr_body=pr_body,
