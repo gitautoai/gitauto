@@ -2,18 +2,21 @@
 import json
 import logging
 import time
-from typing import Any
-import difflib
+from typing import Any, Iterable
+
+# import difflib
 
 # Third-party imports
 from openai import OpenAI
 from openai.pagination import SyncCursorPage
 from openai.types.beta import Assistant, Thread
+from openai.types.beta.assistant_tool_param import AssistantToolParam
 from openai.types.beta.threads import Run, Message, TextContentBlock
 from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
 
 # Local imports
 from config import (
+    OPENAI_ASSISTANT_NAME,
     OPENAI_FINAL_STATUSES,
     OPENAI_MAX_STRING_LENGTH,
     OPENAI_MAX_TOOL_OUTPUTS_SIZE,
@@ -24,13 +27,14 @@ from config import (
 )
 from services.openai.functions import (
     GET_REMOTE_FILE_CONTENT,
+    SEARCH_REMOTE_FILE_CONTENT,
     functions,
-    REASON_FOR_MODYING_DIFF,
+    # REASON_FOR_MODYING_DIFF,
 )
 from services.openai.init import create_openai_client
 from services.openai.instructions import (
     SYSTEM_INSTRUCTION_FOR_AGENT,
-    SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS,
+    # SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS,
 )
 from services.github.github_manager import (
     commit_multiple_changes_to_remote_branch,
@@ -51,27 +55,25 @@ def create_assistant() -> tuple[Assistant, str]:
     https://platform.openai.com/docs/api-reference/assistants/createAssistant
     """
     client: OpenAI = create_openai_client()
+    tools: Iterable[AssistantToolParam] = [
+        # {"type": "code_interpreter"},
+        # {"type": "retrieval"},
+        {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
+        {"type": "function", "function": SEARCH_REMOTE_FILE_CONTENT},
+        # {"type": "function", "function": REASON_FOR_MODYING_DIFF},
+    ]
     input_data = json.dumps(
         {
-            "name": "GitAuto: Automated Issue Resolver",
+            "name": OPENAI_ASSISTANT_NAME,
             "instructions": SYSTEM_INSTRUCTION_FOR_AGENT,
-            "tools": [
-                # {"type": "code_interpreter"},
-                # {"type": "retrieval"},
-                {"type": "function", "function": GET_REMOTE_FILE_CONTENT}
-            ],
+            "tools": tools,
         }
     )
     return (
         client.beta.assistants.create(
-            name="GitAuto: Automated Issue Resolver",
+            name=OPENAI_ASSISTANT_NAME,
             instructions=SYSTEM_INSTRUCTION_FOR_AGENT,
-            tools=[
-                # {"type": "code_interpreter"},
-                # {"type": "retrieval"},
-                {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
-                {"type": "function", "function": REASON_FOR_MODYING_DIFF},
-            ],
+            tools=tools,
             model=OPENAI_MODEL_ID,
             temperature=OPENAI_TEMPERATURE,
             timeout=TIMEOUT_IN_SECONDS,
@@ -108,6 +110,7 @@ def run_assistant(
     file_paths: list[str],
     issue_title: str,
     issue_body: str,
+    reference_contents: list[str],
     issue_comments: list[str],
     owner: str,
     pr_body: str,
@@ -125,6 +128,7 @@ def run_assistant(
         "ref": ref,
         "issue_title": issue_title,
         "issue_body": issue_body,
+        "reference_contents": reference_contents,
         "issue_comments": issue_comments,
         "file_paths": file_paths,
         "comment_url": comment_url,
@@ -133,7 +137,7 @@ def run_assistant(
     user_input: str = json.dumps(obj=data)
 
     # Run the assistant
-    client, assistant, thread, run, input_data = create_thread_and_run(
+    _client, _assistant, thread, run, input_data = create_thread_and_run(
         user_input=user_input
     )
 
@@ -164,10 +168,10 @@ def run_assistant(
     # Clean the diff text and split it
     diff: str = clean_specific_lines(text=value)
     text_diffs: list[str] = split_diffs(diff_text=diff)
-    first_run_output: list[str] = []
+    output: list[str] = []
     for diff in text_diffs:
         diff = correct_hunk_headers(diff_text=diff)
-        first_run_output.append(diff)
+        output.append(diff)
 
     update_comment(
         comment_url=comment_url,
@@ -175,49 +179,49 @@ def run_assistant(
         body=generate_progress_bar(p=50),
     )
 
-    # Self review diff
-    self_review_run, self_review_input_data = submit_message(
-        client,
-        assistant,
-        thread,
-        SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS + json.dumps(first_run_output),
-    )
-    input_data += self_review_input_data
+    # # Self review diff
+    # self_review_run, self_review_input_data = submit_message(
+    #     client,
+    #     assistant,
+    #     thread,
+    #     SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS + json.dumps(first_run_output),
+    # )
+    # input_data += self_review_input_data
 
-    self_review_run, self_review_input_data = wait_on_run(
-        run=self_review_run, thread=thread, token=token, run_name="review diffs"
-    )
-    input_data += self_review_input_data
+    # self_review_run, self_review_input_data = wait_on_run(
+    #     run=self_review_run, thread=thread, token=token, run_name="review diffs"
+    # )
+    # input_data += self_review_input_data
 
-    # Get the response
-    messages: SyncCursorPage[Message] = get_response(thread=thread)
-    messages_list = list(messages)
-    if not messages_list:
-        raise ValueError("No messages in the list.")
-    latest_message: Message = messages_list[0]
-    if isinstance(latest_message.content[0], TextContentBlock):
-        value: str = latest_message.content[0].text.value
-        output_data += json.dumps(latest_message.content[0].text.value)
-    else:
-        raise ValueError("Last message content is not text.")
+    # # Get the response
+    # messages: SyncCursorPage[Message] = get_response(thread=thread)
+    # messages_list = list(messages)
+    # if not messages_list:
+    #     raise ValueError("No messages in the list.")
+    # latest_message: Message = messages_list[0]
+    # if isinstance(latest_message.content[0], TextContentBlock):
+    #     value: str = latest_message.content[0].text.value
+    #     output_data += json.dumps(latest_message.content[0].text.value)
+    # else:
+    #     raise ValueError("Last message content is not text.")
 
-    # Clean the diff text and split it
-    diff: str = clean_specific_lines(text=value)
-    text_diffs: list[str] = split_diffs(diff_text=diff)
-    output: list[str] = []
-    i = 0
-    for diff in text_diffs:
-        diff = correct_hunk_headers(diff_text=diff)
-        # Show difference between the create diff and the modified diff
-        if i < len(first_run_output):
-            difference_from_first = "\n".join(
-                difflib.unified_diff(
-                    first_run_output[i].splitlines(), diff.splitlines(), lineterm=""
-                )
-            )
-            print(f"Difference from first: {difference_from_first}\n")
-        output.append(diff)
-        i += 1
+    # # Clean the diff text and split it
+    # diff: str = clean_specific_lines(text=value)
+    # text_diffs: list[str] = split_diffs(diff_text=diff)
+    # output: list[str] = []
+    # i = 0
+    # for diff in text_diffs:
+    #     diff = correct_hunk_headers(diff_text=diff)
+    #     # Show difference between the create diff and the modified diff
+    #     if i < len(first_run_output):
+    #         difference_from_first = "\n".join(
+    #             difflib.unified_diff(
+    #                 first_run_output[i].splitlines(), diff.splitlines(), lineterm=""
+    #             )
+    #         )
+    #         print(f"Difference from first: {difference_from_first}\n")
+    #     output.append(diff)
+    #     i += 1
 
     commit_multiple_changes_to_remote_branch(
         diffs=output,

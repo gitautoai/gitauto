@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import time
+import urllib.parse
 from typing import Any
 from uuid import uuid4
 
@@ -30,6 +31,8 @@ from config import (
     GITHUB_ISSUE_DIR,
     GITHUB_ISSUE_TEMPLATES,
     GITHUB_PRIVATE_KEY,
+    IS_PRD,
+    PER_PAGE,
     PRODUCT_NAME,
     PRODUCT_URL,
     TIMEOUT_IN_SECONDS,
@@ -52,6 +55,7 @@ from utils.file_manager import (
     run_command,
 )
 from utils.handle_exceptions import handle_exceptions
+from utils.parse_urls import parse_github_url
 from utils.text_copy import (
     UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
     UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,
@@ -161,7 +165,8 @@ def commit_multiple_changes_to_remote_branch(
     """Called from assistants api to commit multiple changes to a new branch."""
     for diff in diffs:
         file_path: str = extract_file_name(diff_text=diff)
-        print(f"Committing: {file_path}.\n")
+        if IS_PRD:
+            print(f"Committing: {file_path}.\n")
         is_commit: bool = commit_changes_to_remote_branch(
             branch=new_branch,
             commit_message=f"Update {file_path}",
@@ -173,7 +178,7 @@ def commit_multiple_changes_to_remote_branch(
         )
         if not is_commit:
             print(f"No changes made to: {file_path}.\n")
-        else:
+        elif IS_PRD:
             print(f"Changes made to: {file_path}.\n")
 
 
@@ -475,11 +480,11 @@ def get_issue_comments(
     filtered_comments: list[Any] = [
         comment
         for comment in comments
-        if comment.get("performed_via_github_app")
-        and comment["performed_via_github_app"].get("id") not in GITHUB_APP_IDS
+        if comment.get("performed_via_github_app") is None
+        or comment["performed_via_github_app"].get("id") not in GITHUB_APP_IDS
     ]
-    print(f"\nIssue comments: {json.dumps(filtered_comments, indent=2)}\n")
     comment_texts: list[str] = [comment["body"] for comment in filtered_comments]
+    print(f"\nIssue comments: {json.dumps(comment_texts, indent=2)}\n")
     return comment_texts
 
 
@@ -593,13 +598,11 @@ def get_remote_file_content(
     """https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28"""
     url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
     headers: dict[str, str] = create_headers(token=token)
-    response: requests.Response = requests.get(
-        url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS
-    )
+    response = requests.get(url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS)
 
     # If 404 error, return early. Otherwise, raise a HTTPError
     if response.status_code == 404:
-        return f"{get_remote_file_content.__name__} encountered an HTTPError: 404 Client Error: Not Found for url: {url}"
+        return f"{get_remote_file_content.__name__} encountered an HTTPError: 404 Client Error: Not Found for url: {url}. Check the file path, correct it, and try again."
     response.raise_for_status()
 
     # file_path is expected to be a file path, but it can be a directory path due to AI's volatility. See Example2 at https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
@@ -627,7 +630,36 @@ def get_remote_file_content(
     numbered_content: str = "\n".join(
         f"{i + 1}: {line}" for i, line in enumerate(decoded_content.split("\n"))
     )
+    # print(f"## {file_path}\n\n{numbered_content}")
     return f"## {file_path}\n\n{numbered_content}"
+
+
+@handle_exceptions(default_return_value="", raise_on_error=False)
+def get_remote_file_content_by_url(url: str, token: str) -> str:
+    """https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28"""
+    parts = parse_github_url(url)
+    owner, repo, ref, file_path = parts["owner"], parts["repo"], parts["ref"], parts["file_path"]
+    start, end = parts["start_line"], parts["end_line"]
+    url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
+    headers: dict[str, str] = create_headers(token=token)
+    response = requests.get(url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS)
+    response.raise_for_status()
+    response_json = response.json()
+    encoded_content: str = response_json["content"]  # Base64 encoded content
+    decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
+    numbered_lines = [f"{i + 1}: {line}" for i, line in enumerate(decoded_content.split("\n"))]
+
+    if start is not None and end is not None:
+        numbered_lines = numbered_lines[start - 1: end]
+        file_path_with_lines = f"{file_path}#L{start}-L{end}"
+    elif start is not None:
+        numbered_lines = numbered_lines[start - 1:]
+        file_path_with_lines = f"{file_path}#L{start}"
+    else:
+        file_path_with_lines = file_path
+
+    numbered_content: str = "\n".join(numbered_lines)
+    return f"## {file_path_with_lines}\n\n{numbered_content}"
 
 
 def get_remote_file_tree(
@@ -661,6 +693,45 @@ def get_remote_file_tree(
             which_function=get_remote_file_tree.__name__,
         )
         return []
+
+
+@handle_exceptions(default_return_value="", raise_on_error=False)
+def search_remote_file_content(
+    owner: str,
+    repo: str,
+    # lang: str,
+    query: str,
+    token: str,
+) -> str:
+    """
+    - Only the default branch is considered.
+    - Only files smaller than 384 KB are searchable.
+    - This endpoint requires you to authenticate and limits you to 10 requests per minute.
+
+    https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28
+    https://docs.github.com/en/search-github/getting-started-with-searching-on-github/understanding-the-search-syntax
+    """
+    encoded_query = urllib.parse.quote(query)
+    url = f"{GITHUB_API_URL}/search/code?q={encoded_query}+repo:{owner}/{repo}+in:file&per_page={PER_PAGE}&page=1"
+    print(f"Search Url: {url}")
+    headers: dict[str, str] = create_headers(token=token)
+    # headers["Accept"] = "application/vnd.github.text-match+json"
+    headers["Accept"] = "application/vnd.github+json"
+    response = requests.get(url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS)
+    response.raise_for_status()
+    response_json = response.json()
+    print(f"response_json: {json.dumps(response_json, indent=2)}")
+    results = []
+    for i, item in enumerate(response_json.get("items", []), start=1):
+        # file_path = item["path"]
+        text_matches = item.get("text_matches", [])
+
+        for match in text_matches:
+            fragment = match.get("fragment", "").replace('\n', ' ')
+            results.append(f"Searched File {i}: {item["path"]}\nFragment: {fragment}\n")
+
+    print(f"results: {json.dumps(results, indent=2)}")
+    return "\n".join(results)
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)

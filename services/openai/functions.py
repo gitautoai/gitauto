@@ -8,6 +8,7 @@ from openai.types import shared_params
 # Local imports
 from services.github.github_manager import (
     get_remote_file_content,
+    search_remote_file_content,
 )
 
 FILE_PATH: dict[str, str] = {
@@ -63,8 +64,27 @@ REASON_FOR_MODYING_DIFF: shared_params.FunctionDefinition = {
     },
 }
 
+QUERY: dict[str, str] = {
+    "type": "string",
+    "description": "The keywords to search for in the remote repository. For example, 'SEARCH_KEYWORD_1 SEARCH_KEYWORD_N QUALIFIER_1 QUALIFIER_N'.",
+}
+SEARCH_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
+    "name": "search_remote_file_content",
+    "description": "Search for keywords in the specified remote repository to identify the files and specific sections that need to be corrected. Especially if you change the definition of variables, as they are likely used elsewhere, so you should search for those places.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "owner": OWNER,
+            "repo": REPO,
+            "query": QUERY,
+        },
+        "required": ["owner", "repo", "query"],
+    },
+}
+
 # Define functions
 functions: dict[str, Any] = {
     "get_remote_file_content": get_remote_file_content,
-    "reason_for_modying_diff": reason_for_modying_diff,
+    # "reason_for_modying_diff": reason_for_modying_diff,
+    "search_remote_file_content": search_remote_file_content,
 }
