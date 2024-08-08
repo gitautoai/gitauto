@@ -120,7 +120,6 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             search_text += " - " + PRODUCT_ID
             if payload["comment"]["body"].find(search_text) != -1:
                 issue_handled = True
-                print("Triggered GitAuto PR")
                 await handle_gitauto(payload=payload, trigger_type="comment")
         else:
             if (
@@ -128,8 +127,6 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
                 and payload["comment"]["body"].find(search_text + " - ") == -1
             ):
                 issue_handled = True
-                print("Triggered GitAuto PR")
-
                 await handle_gitauto(payload=payload, trigger_type="comment")
         if not issue_handled:
             print("Edit is not an activated GitAtuo trigger.")

@@ -7,7 +7,6 @@ import json
 import logging
 import os
 import time
-import urllib.parse
 from typing import Any
 from uuid import uuid4
 
@@ -32,7 +31,6 @@ from config import (
     GITHUB_ISSUE_TEMPLATES,
     GITHUB_PRIVATE_KEY,
     IS_PRD,
-    PER_PAGE,
     PRODUCT_NAME,
     PRODUCT_URL,
     TIMEOUT_IN_SECONDS,
@@ -657,10 +655,10 @@ def get_remote_file_content_by_url(url: str, token: str) -> str:
     ]
 
     if start is not None and end is not None:
-        numbered_lines = numbered_lines[start - 1 : end]
+        numbered_lines = numbered_lines[start - 1 : end]  # noqa: E203
         file_path_with_lines = f"{file_path}#L{start}-L{end}"
     elif start is not None:
-        numbered_lines = numbered_lines[start - 1 :]
+        numbered_lines = numbered_lines[start - 1 :]  # noqa: E203
         file_path_with_lines = f"{file_path}#L{start}"
     else:
         file_path_with_lines = file_path
@@ -703,7 +701,7 @@ def get_remote_file_tree(
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
-def search_remote_file_content(
+def search_remote_file_contents(
     owner: str,
     repo: str,
     # lang: str,
@@ -717,27 +715,31 @@ def search_remote_file_content(
 
     https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28
     https://docs.github.com/en/search-github/getting-started-with-searching-on-github/understanding-the-search-syntax
+    https://docs.github.com/en/search-github/searching-on-github/searching-in-forks
     """
-    encoded_query = urllib.parse.quote(query)
-    url = f"{GITHUB_API_URL}/search/code?q={encoded_query}+repo:{owner}/{repo}+in:file&per_page={PER_PAGE}&page=1"
-    print(f"Search Url: {url}")
+    params = {
+        "q": f"{query} repo:{owner}/{repo} fork:true",
+        "per_page": 10,  # Maximum is 100
+        "page": 1,
+    }
+    url = f"{GITHUB_API_URL}/search/code"
     headers: dict[str, str] = create_headers(token=token)
-    # headers["Accept"] = "application/vnd.github.text-match+json"
-    headers["Accept"] = "application/vnd.github+json"
-    response = requests.get(url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS)
+    headers["Accept"] = "application/vnd.github.text-match+json"
+    response = requests.get(
+        url=url, headers=headers, params=params, timeout=TIMEOUT_IN_SECONDS
+    )
     response.raise_for_status()
     response_json = response.json()
-    print(f"response_json: {json.dumps(response_json, indent=2)}")
     results = []
     for i, item in enumerate(response_json.get("items", []), start=1):
-        # file_path = item["path"]
+        file_path = item["path"]
         text_matches = item.get("text_matches", [])
 
         for match in text_matches:
             fragment = match.get("fragment", "").replace("\n", " ")
-            results.append(f"Searched File {i}: {item['path']}\nFragment: {fragment}\n")
+            results.append(f"Searched File {i}: {file_path}\nFragment: {fragment}\n")
 
-    print(f"results: {json.dumps(results, indent=2)}")
+    print(f"{len(results)} results found for the search query: {query}")
     return "\n".join(results)
 
 

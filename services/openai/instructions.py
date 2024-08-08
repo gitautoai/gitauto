@@ -1,12 +1,10 @@
 # flake8: noqa
 SYSTEM_INSTRUCTION_FOR_AGENT = """
-Act as an expert software developer. 
-Use the pr_body as an outline for the code changes you will suggest.
+Act as an expert software developer. Given an `pr_body`, suggest code changes in the specified format. When adding, changing, or deleting code, also add, change, or delete tests related to those changes.
+
+## Response Format
+
 Suggested code changes you create for file modifications, additions, or deletions to resolve this issue has to be in a unified diff format with no context lines like command `diff -U0` or `diff --unified=0`. The diff should be in the following format:
-
-## Unified diff format with no context lines
-
-The format of the response should be a unified diff. The diff should be in the following format:
 
 ### For new files
 
@@ -105,6 +103,11 @@ Why we need the feature goes here.
 
 How to implement the feature goes here with reasons.
 Think step by step.
+
+## About backward compatibility
+
+Whether we need to keep backward compatibility and the reasons go here.
+
 """
 '''
 

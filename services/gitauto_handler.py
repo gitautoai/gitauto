@@ -8,6 +8,7 @@ from uuid import uuid4
 from config import (
     GITHUB_APP_USER_ID,
     PRODUCT_ID,
+    PRODUCT_NAME,
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
     PR_BODY_STARTS_WITH,
@@ -70,7 +71,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     sender_name: str = payload["sender"]["login"]
     issuer_name: str = issue["user"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
-    print(f"\nIssue Title: {issue_title}\n")
+    print(f"Issue Title: {issue_title}\n")
     print(f"Issue Body:\n{issue_body}")
     if github_urls:
         print(f"\nGitHub URLs: {json.dumps(github_urls, indent=2)}")
@@ -212,7 +213,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         head=new_branch,
         owner=owner,
         repo=repo_name,
-        title=f"Fix {issue_title} with {PRODUCT_ID} model",
+        title=f"{PRODUCT_NAME}: {issue_title}",
         token=token,
     )
 
