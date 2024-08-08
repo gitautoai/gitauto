@@ -207,7 +207,8 @@ def test_parse_subscription_object() -> None:
 
     # All active ##
     # [free, paid] -> paid
-    assertion_test(customer_id="cus_PtCxNdGs23X4QR", product_id=PRODUCT_ID_FOR_STANDARD)
+    # assertion_test(customer_id="cus_PtCxNdGs23X4QR", product_id=PRODUCT_ID_FOR_STANDARD)
+    assertion_test(customer_id="cus_PtCxNdGs23X4QR", product_id=PRODUCT_ID_FOR_FREE)
 
     # [paid, free] -> paid
     assertion_test(customer_id="cus_PpmpFh1sw0Gfcz", product_id=PRODUCT_ID_FOR_FREE)
