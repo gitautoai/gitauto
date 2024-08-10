@@ -1,5 +1,7 @@
 from typing import Optional
 
+WIDTH = 50
+TOTAL = 100
 messages: dict[int, str] = {
     0: "Let's get started!",
     10: "Making a start!",
@@ -15,14 +17,11 @@ messages: dict[int, str] = {
 }
 
 
-def generate_progress_bar(
-    p: int, w=800, title="progress", msg: Optional[str] = None
-) -> str:
+def generate_progress_bar(p: int, msg: Optional[str] = None) -> str:
     """
-    Generates a markdown string for a progress bar. https://github.com/fredericojordan/progress-bar
+    Generates a markdown string for a progress bar.
 
     :param p: The progress percentage (0-100).
-    :param w: The width of the progress bar in pixels.
     :return: A markdown string for the progress bar.
     """
     if msg:
@@ -32,4 +31,8 @@ def generate_progress_bar(
     else:
         message = messages[p]
 
-    return f"![{message}](https://progress-bar.dev/{p}/?title={title}&width={w})\n{message}"
+    ratio = p / TOTAL
+    filled_length = int(WIDTH * ratio)
+    unfilled_length = WIDTH - filled_length
+    progress_bar = "▓" * filled_length + "░" * unfilled_length
+    return f"{progress_bar} {int(ratio * 100)}%\n{message}"
