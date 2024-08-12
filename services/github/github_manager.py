@@ -724,17 +724,16 @@ def search_remote_file_contents(
     )
     response.raise_for_status()
     response_json = response.json()
-    results = []
-    for i, item in enumerate(response_json.get("items", []), start=1):
+    files = []
+    for item in response_json.get("items", []):
         file_path = item["path"]
         text_matches = item.get("text_matches", [])
 
         for match in text_matches:
-            fragment = match.get("fragment", "").replace("\n", " ")
-            results.append(f"Searched File {i}: {file_path}\nFragment: {fragment}\n")
-
-    print(f"{len(results)} results found for the search query: {query}")
-    return "\n".join(results)
+            fragment = match.get("fragment", "")
+            files.append(f"```A fragment where search query '{query}' matched from {file_path}\n{fragment}\n```")
+    output = "\n\n".join(files)
+    return output
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
