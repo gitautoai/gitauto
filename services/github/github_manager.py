@@ -64,6 +64,7 @@ from utils.text_copy import (
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def add_issue_templates(full_name: str, installer_name: str, token: str) -> None:
+    print(f"Adding issue templates to the repo: '{full_name}' by '{installer_name}'.\n")
     gh = Github(login_or_token=token)
     repo: Repository = gh.get_repo(full_name_or_id=full_name)
 
@@ -732,7 +733,9 @@ def search_remote_file_contents(
 
         for match in text_matches:
             fragment = match.get("fragment", "")
-            files.append(f"```A fragment where search query '{query}' matched from {file_path}\n{fragment}\n```")
+            files.append(
+                f"```A fragment where search query '{query}' matched from {file_path}\n{fragment}\n```"
+            )
     output = "\n\n".join(files)
     return output
 
