@@ -35,9 +35,10 @@ from services.openai.chat import write_pr_body
 from services.openai.agent import run_assistant
 from services.supabase import SupabaseManager
 from utils.extract_urls import extract_urls
-from utils.progress_bar import generate_progress_bar
+from utils.progress_bar import create_progress_bar
 from utils.text_copy import (
     UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
+    git_command,
     pull_request_completed,
     request_limit_reached,
 )
@@ -101,6 +102,14 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             token=token,
         )
         return
+    msg = "Reading this issue body, comments, and file tree..."
+    comment_url: str = create_comment(
+        owner=owner,
+        repo=repo_name,
+        issue_number=issue_number,
+        body=create_progress_bar(p=0, msg=msg),
+        token=token,
+    )
     unique_issue_id = f"{owner_type}/{owner}/{repo_name}#{issue_number}"
     usage_record_id = supabase_manager.create_user_request(
         user_id=sender_id,
@@ -115,13 +124,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token=token,
     )
 
-    comment_url: str = create_comment(
-        owner=owner,
-        repo=repo_name,
-        issue_number=issue_number,
-        body=generate_progress_bar(p=0),
-        token=token,
-    )
     # Prepare contents for Agent
     file_paths: list[str] = get_remote_file_tree(
         owner=owner,
@@ -139,6 +141,9 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         print(f"```{url}\n{content}```\n")
         reference_contents.append(content)
 
+    # Prepare PR body
+    comment_body = create_progress_bar(p=10, msg="Writing a pull request body...")
+    update_comment(comment_url=comment_url, token=token, body=comment_body)
     pr_body: str = write_pr_body(
         input_message=json.dumps(
             obj={
@@ -151,13 +156,9 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         )
     )
 
-    update_comment(
-        comment_url=comment_url,
-        token=token,
-        body=generate_progress_bar(p=20),
-    )
-
     # Create a remote branch
+    comment_body = create_progress_bar(p=20, msg="Creating a remote branch...")
+    update_comment(comment_url=comment_url, token=token, body=comment_body)
     uuid: str = str(object=uuid4())
     new_branch: str = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}{issue['number']}-{uuid}"
     latest_commit_sha: str = get_latest_remote_commit_sha(
@@ -177,6 +178,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         comment_url=comment_url,
         token=token,
     )
+    comment_body = create_progress_bar(p=30, msg="Writing code...")
+    update_comment(comment_url=comment_url, token=token, body=comment_body)
     token_input, token_output = run_assistant(
         file_paths=file_paths,
         issue_title=issue_title,
@@ -192,24 +195,13 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token=token,
     )
 
-    update_comment(
-        comment_url=comment_url,
-        token=token,
-        body=generate_progress_bar(p=90),
-    )
-
     # Create a pull request to the base branch
+    comment_body = create_progress_bar(p=90, msg="Creating a pull request...")
+    update_comment(comment_url=comment_url, token=token, body=comment_body)
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}]({issue['html_url']})\n\n"
-    git_commands = (
-        f"\n\n## Test these changes locally\n\n"
-        f"```\n"
-        f"git checkout -b {new_branch}\n"
-        f"git pull origin {new_branch}\n"
-        f"```"
-    )
     pr_url: str | None = create_pull_request(
         base=base_branch,
-        body=issue_link + pr_body + git_commands,
+        body=issue_link + pr_body + git_command(new_branch_name=new_branch),
         head=new_branch,
         owner=owner,
         repo=repo_name,
