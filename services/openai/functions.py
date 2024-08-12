@@ -70,7 +70,7 @@ QUERY: dict[str, str] = {
 }
 SEARCH_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
     "name": "search_remote_file_contents",
-    "description": "Search for keywords in the specified remote repository to identify the files and specific sections that need to be corrected. Especially if you change the definition of variables, as they are likely used elsewhere, so you should search for those places.",
+    "description": "Search for keywords in the specified remote repository to identify the files and specific sections that need to be corrected. Especially if you change the definition of variables, as they are likely used elsewhere, so you should search for those places. To reduce bugs, search multiple times from as many angles as possible.",
     "parameters": {
         "type": "object",
         "properties": {
