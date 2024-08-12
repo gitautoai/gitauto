@@ -1,8 +1,25 @@
 {
+  // "editor.codeActionsOnSave": {
+    //   "source.fixAll": true,
+    //   "source.organizeImports": true,
+    // },
   "editor.defaultFormatter": "ms-python.black-formatter",
   "editor.formatOnSave": true,
   "editor.wordWrap": "bounded",
   "editor.wordWrapColumn": 100,
+  
+  // Which formatter or linter to use.
+  // "blackFormatter.enabled": true,
+  "eslint.enable": false,
+  // "flake8.enabled": false,
+  "prettier.enable": false,
+  // "pylint.enabled": false,
+  // "python.formatting.provider": "black",
+  "stylelint.enable": false,
+
+  // Python settings
+  // "python.formatting.blackArgs": ["--line-length", "100"],
+  // "python.analysis.enabled": false,
   "python.analysis.autoFormatStrings": true,
   "python.analysis.addImport.heuristics": true,
   "python.analysis.autoImportCompletions": true,
