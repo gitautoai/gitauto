@@ -178,7 +178,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         comment_url=comment_url,
         token=token,
     )
-    comment_body = create_progress_bar(p=30, msg="Writing code...")
+    comment_body = create_progress_bar(p=30, msg="Thinking about how to code...")
     update_comment(comment_url=comment_url, token=token, body=comment_body)
     token_input, token_output = run_assistant(
         file_paths=file_paths,
