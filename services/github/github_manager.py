@@ -247,12 +247,9 @@ def create_comment(
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
         headers=create_headers(token=token),
-        json={
-            "body": body,
-        },
+        json={"body": body},
         timeout=TIMEOUT_IN_SECONDS,
     )
-
     response.raise_for_status()
     return response.json()["url"]
 
@@ -262,7 +259,6 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
-
     owner: str = payload["repository"]["owner"]["login"]
     owner_id: int = payload["repository"]["owner"]["id"]
     repo_name: str = payload["repository"]["name"]
@@ -322,9 +318,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",
         headers=create_headers(token=token),
-        json={
-            "body": body,
-        },
+        json={"body": body},
         timeout=TIMEOUT_IN_SECONDS,
     )
     response.raise_for_status()
@@ -658,7 +652,7 @@ def get_remote_file_content_by_url(url: str, token: str) -> str:
         numbered_lines = numbered_lines[start - 1 : end]  # noqa: E203
         file_path_with_lines = f"{file_path}#L{start}-L{end}"
     elif start is not None:
-        numbered_lines = numbered_lines[start - 1 :]  # noqa: E203
+        numbered_lines = numbered_lines[start - 1]  # noqa: E203
         file_path_with_lines = f"{file_path}#L{start}"
     else:
         file_path_with_lines = file_path
