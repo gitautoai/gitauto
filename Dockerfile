@@ -5,8 +5,9 @@ FROM public.ecr.aws/lambda/python:3.12
 COPY . ${LAMBDA_TASK_ROOT}
 
 # Install dependencies
+# For Amazon Linux 2023-based images (Python 3.12): https://aws.amazon.com/blogs/compute/python-3-12-runtime-now-available-in-aws-lambda/
 RUN pip install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
-RUN yum install -y patch
+RUN dnf install -y patch
 
 # Command to run from Lambda function
 CMD ["main.handler"]
