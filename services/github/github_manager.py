@@ -600,6 +600,7 @@ def get_remote_file_content(
     # file_path is expected to be a file path, but it can be a directory path due to AI's volatility. See Example2 at https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
     response_json = response.json()
     if response_json["type"] == "dir":
+        print(f"response_json: {json.dumps(response_json, indent=2)}")
         entries: list[dict[str, str, int, dict]] = response_json["entries"]
         contents: list[str] = []
         for entry in entries:
