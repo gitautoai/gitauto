@@ -14,10 +14,15 @@ def extract_urls(text) -> tuple[list[str], list[str]]:
     GitHub URL Ex2: https://github.com/{owner}/{repo}/blob/{sha}/{file_path}
     """
     github_pattern = (
-        r"https://github\.com/[A-Za-z0-9_-]+/[A-Za-z0-9_-]+/blob/"
-        r"([A-Za-z0-9_-]+|[a-f0-9]+)/(?:[^\s#]+)(?:#L\d+(?:-L\d+)?)?"
+        r"https://github\.com/"
+        r"[A-Za-z0-9_-]+/"  # owner
+        r"[A-Za-z0-9_-]+/"  # repo
+        r"blob/"  # blob, which is a fixed string
+        r"([A-Za-z0-9_-]+|[a-f0-9]+)/"  # branch name or sha (commit hash)
+        r"(?:[^\s#)]+)"  # file path, any character except whitespace and #
+        r"(?:#L\d+(?:-L\d+)?)?$"  # optional line number(s), e.g., #L10 or #L10-L20
     )
-    all_url_pattern = r"https?://[^\s]+"
+    all_url_pattern = r"https?://[^\s)]+"
 
     all_urls = re.findall(all_url_pattern, text)
     github_urls = [url for url in all_urls if re.match(github_pattern, url)]
