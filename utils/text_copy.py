@@ -4,6 +4,16 @@ import datetime
 from config import EMAIL_LINK, PRODUCT_ID
 
 
+def git_command(new_branch_name: str) -> str:
+    return (
+        f"\n\n## Test these changes locally\n\n"
+        f"```\n"
+        f"git checkout -b {new_branch_name}\n"
+        f"git pull origin {new_branch_name}\n"
+        f"```"
+    )
+
+
 def request_limit_reached(
     user_name: str, request_count: int, end_date: datetime.datetime
 ) -> str:
@@ -19,7 +29,9 @@ def pull_request_completed(
     if "[bot]" in issuer_name and ("[bot]" in sender_name or PRODUCT_ID in sender_name):
         user_part = ""
 
-    elif "[bot]" in issuer_name and ("[bot]" not in sender_name and PRODUCT_ID not in sender_name):
+    elif "[bot]" in issuer_name and (
+        "[bot]" not in sender_name and PRODUCT_ID not in sender_name
+    ):
         user_part = f"@{sender_name} "
 
     # Ex1) A user is the issuer and sender

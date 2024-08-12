@@ -17,7 +17,7 @@ messages: dict[int, str] = {
 }
 
 
-def generate_progress_bar(p: int, msg: Optional[str] = None) -> str:
+def create_progress_bar(p: int, msg: Optional[str] = None) -> str:
     """
     Generates a markdown string for a progress bar.
 

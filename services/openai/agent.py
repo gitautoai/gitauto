@@ -46,7 +46,7 @@ from utils.file_manager import (
     split_diffs,
 )
 from utils.handle_exceptions import handle_exceptions
-from utils.progress_bar import generate_progress_bar
+from utils.progress_bar import create_progress_bar
 
 
 def create_assistant() -> tuple[Assistant, str]:
@@ -137,13 +137,14 @@ def run_assistant(
     user_input: str = json.dumps(obj=data)
 
     # Run the assistant
-    _client, _assistant, thread, run, input_data = create_thread_and_run(
-        user_input=user_input
-    )
+    _c, _a, thread, run, input_data = create_thread_and_run(user_input=user_input)
 
     # Wait for the run to complete, handle function calling if necessary
+    comment_body = create_progress_bar(p=40, msg="Creating diffs...")
+    update_comment(comment_url=comment_url, token=token, body=comment_body)
+    run_name = "generate diffs"
     run, input_output_data = wait_on_run(
-        run=run, thread=thread, token=token, run_name="generate diffs"
+        run=run, thread=thread, token=token, run_name=run_name
     )
     input_data += input_output_data
     output_data: str = input_output_data
@@ -166,6 +167,8 @@ def run_assistant(
         raise ValueError(msg)
 
     # Clean the diff text and split it
+    comment_body = create_progress_bar(p=50, msg="Applying diffs...")
+    update_comment(comment_url=comment_url, token=token, body=comment_body)
     diff: str = clean_specific_lines(text=value)
     text_diffs: list[str] = split_diffs(diff_text=diff)
     output: list[str] = []
@@ -173,56 +176,9 @@ def run_assistant(
         diff = correct_hunk_headers(diff_text=diff)
         output.append(diff)
 
-    update_comment(
-        comment_url=comment_url,
-        token=token,
-        body=generate_progress_bar(p=50),
-    )
-
-    # # Self review diff
-    # self_review_run, self_review_input_data = submit_message(
-    #     client,
-    #     assistant,
-    #     thread,
-    #     SYSTEM_INSTRUCTION_FOR_AGENT_REVIEW_DIFFS + json.dumps(first_run_output),
-    # )
-    # input_data += self_review_input_data
-
-    # self_review_run, self_review_input_data = wait_on_run(
-    #     run=self_review_run, thread=thread, token=token, run_name="review diffs"
-    # )
-    # input_data += self_review_input_data
-
-    # # Get the response
-    # messages: SyncCursorPage[Message] = get_response(thread=thread)
-    # messages_list = list(messages)
-    # if not messages_list:
-    #     raise ValueError("No messages in the list.")
-    # latest_message: Message = messages_list[0]
-    # if isinstance(latest_message.content[0], TextContentBlock):
-    #     value: str = latest_message.content[0].text.value
-    #     output_data += json.dumps(latest_message.content[0].text.value)
-    # else:
-    #     raise ValueError("Last message content is not text.")
-
-    # # Clean the diff text and split it
-    # diff: str = clean_specific_lines(text=value)
-    # text_diffs: list[str] = split_diffs(diff_text=diff)
-    # output: list[str] = []
-    # i = 0
-    # for diff in text_diffs:
-    #     diff = correct_hunk_headers(diff_text=diff)
-    #     # Show difference between the create diff and the modified diff
-    #     if i < len(first_run_output):
-    #         difference_from_first = "\n".join(
-    #             difflib.unified_diff(
-    #                 first_run_output[i].splitlines(), diff.splitlines(), lineterm=""
-    #             )
-    #         )
-    #         print(f"Difference from first: {difference_from_first}\n")
-    #     output.append(diff)
-    #     i += 1
-
+    # Commit the changes to the remote branch
+    comment_body = create_progress_bar(p=60, msg="Committing changes...")
+    update_comment(comment_url=comment_url, token=token, body=comment_body)
     commit_multiple_changes_to_remote_branch(
         diffs=output,
         new_branch=new_branch,
@@ -230,13 +186,6 @@ def run_assistant(
         repo=repo,
         token=token,
     )
-
-    update_comment(
-        comment_url=comment_url,
-        token=token,
-        body=generate_progress_bar(p=80),
-    )
-
     output_data += json.dumps(output)
 
     # One token is ~4 characters of text https://platform.openai.com/tokenizer
