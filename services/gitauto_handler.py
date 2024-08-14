@@ -4,9 +4,13 @@ import logging
 import time
 from uuid import uuid4
 
+# Third-party imports
+import tiktoken
+
 # Local imports
 from config import (
     GITHUB_APP_USER_ID,
+    OPENAI_MODEL_ID,
     PRODUCT_ID,
     PRODUCT_NAME,
     SUPABASE_URL,
@@ -73,7 +77,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     issuer_name: str = issue["user"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
     print(f"Issue Title: {issue_title}\n")
-    print(f"Issue Body:\n{issue_body}")
+    print(f"Issue Body:\n{issue_body}\n")
     if github_urls:
         print(f"\nGitHub URLs: {json.dumps(github_urls, indent=2)}")
     if other_urls:
@@ -132,6 +136,10 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         comment_url=comment_url,
         token=token,
     )
+    file_paths_json = json.dumps(file_paths)
+    print(f"{len(file_paths)} file paths found in the repository.")
+    print(f"File Paths Characters: {len(file_paths_json)}")
+    print(f"File Paths Tokens: {len(tiktoken.encoding_for_model(OPENAI_MODEL_ID).encode(file_paths_json))}\n")
     issue_comments: list[str] = get_issue_comments(
         owner=owner, repo=repo_name, issue_number=issue_number, token=token
     )
@@ -160,7 +168,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     comment_body = create_progress_bar(p=20, msg="Creating a remote branch...")
     update_comment(comment_url=comment_url, token=token, body=comment_body)
     uuid: str = str(object=uuid4())
-    new_branch: str = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}{issue['number']}-{uuid}"
+    branch: str = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}{issue['number']}-{uuid}"
     latest_commit_sha: str = get_latest_remote_commit_sha(
         owner=owner,
         repo=repo_name,
@@ -171,7 +179,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token=token,
     )
     create_remote_branch(
-        branch_name=new_branch,
+        branch_name=branch,
         owner=owner,
         repo=repo_name,
         sha=latest_commit_sha,
@@ -191,7 +199,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         ref=base_branch,
         repo=repo_name,
         comment_url=comment_url,
-        new_branch=new_branch,
+        branch=branch,
         token=token,
     )
 
@@ -201,8 +209,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}]({issue['html_url']})\n\n"
     pr_url: str | None = create_pull_request(
         base=base_branch,
-        body=issue_link + pr_body + git_command(new_branch_name=new_branch),
-        head=new_branch,
+        body=issue_link + pr_body + git_command(new_branch_name=branch),
+        head=branch,
         owner=owner,
         repo=repo_name,
         title=f"{PRODUCT_NAME}: {issue_title}",
