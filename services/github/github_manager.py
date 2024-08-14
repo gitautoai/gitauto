@@ -14,7 +14,7 @@ from uuid import uuid4
 import jwt  # For generating JWTs (JSON Web Tokens)
 import requests
 from fastapi import Request
-from github import Github
+from github import Github, GithubException
 from github.Branch import Branch
 from github.ContentFile import ContentFile
 from github.PullRequest import PullRequest
@@ -30,7 +30,7 @@ from config import (
     GITHUB_ISSUE_DIR,
     GITHUB_ISSUE_TEMPLATES,
     GITHUB_PRIVATE_KEY,
-    IS_PRD,
+    MAX_RETRIES,
     PRODUCT_NAME,
     PRODUCT_URL,
     TIMEOUT_IN_SECONDS,
@@ -70,12 +70,19 @@ def add_issue_templates(full_name: str, installer_name: str, token: str) -> None
 
     # Create a new branch
     default_branch_name: str = repo.default_branch
-    default_branch: Branch = repo.get_branch(branch=default_branch_name)
+    retries = 0
+    while retries < MAX_RETRIES:
+        try:
+            default_branch: Branch = repo.get_branch(branch=default_branch_name)
+            break
+        except GithubException as e:
+            retries += 1
+            msg = f"Error: {e.data['message']}. Retrying to get the default branch for repo: {full_name} and branch: {default_branch_name}."
+            logging.error(msg)
+            time.sleep(10)
     new_branch_name: str = f"{PRODUCT_ID}/add-issue-templates-{str(object=uuid4())}"
-    repo.create_git_ref(
-        ref=f"refs/heads/{new_branch_name}",
-        sha=default_branch.commit.sha,
-    )
+    ref = f"refs/heads/{new_branch_name}"
+    repo.create_git_ref(ref=ref, sha=default_branch.commit.sha)
 
     # Add issue templates to the new branch
     added_templates: list[str] = []
@@ -96,11 +103,9 @@ def add_issue_templates(full_name: str, installer_name: str, token: str) -> None
             continue
 
         # Add file to the new branch
+        msg = f"Add a template: {template_file}"
         repo.create_file(
-            path=template_path,
-            message=f"Add a template: {template_file}",
-            content=content,
-            branch=new_branch_name,
+            path=template_path, message=msg, content=content, branch=new_branch_name
         )
         added_templates.append(template_file)
 

@@ -68,6 +68,7 @@ IS_PRD: bool = ENV == "prod"
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
 FREE_TIER_REQUEST_AMOUNT = 5
 ISSUE_NUMBER_FORMAT = "/issue-#"
+MAX_RETRIES = 3
 PER_PAGE = 100
 PR_BODY_STARTS_WITH = "Original issue: [#"
 PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
