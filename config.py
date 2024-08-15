@@ -74,7 +74,7 @@ PR_BODY_STARTS_WITH = "Original issue: [#"
 PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 PRODUCT_URL = "https://gitauto.ai"
-TIMEOUT_IN_SECONDS = 120
+TIMEOUT = 120  # seconds
 UTF8 = "utf-8"
 
 # Testing

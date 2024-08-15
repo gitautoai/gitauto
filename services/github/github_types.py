@@ -1,6 +1,16 @@
 from typing import TypedDict, Dict, List, Optional, Union
 
 
+class BaseArgs(TypedDict):
+    owner: str
+    repo: str
+    is_fork: bool
+    base_branch: str
+    new_branch: str
+    comment_url: str
+    token: str
+
+
 class LabelInfo(TypedDict):
     id: int
     node_id: str

@@ -5,7 +5,7 @@ from openai.types.chat import ChatCompletion
 # Local imports
 from config import OPENAI_MODEL_ID, OPENAI_TEMPERATURE
 from services.openai.init import create_openai_client
-from services.openai.instructions import SYSTEM_INSTRUCTION_FOR_WRITING_PR
+from services.openai.instructions.index import SYSTEM_INSTRUCTION_FOR_WRITING_PR
 from services.openai.truncate import truncate_message
 from utils.handle_exceptions import handle_exceptions
 
