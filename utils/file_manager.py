@@ -26,14 +26,11 @@ def apply_patch(original_text: str, diff_text: str) -> str:
     Assume -R? [n]: No
     Apply anyway? [y]: Yes
     """
-    with tempfile.NamedTemporaryFile(
-        mode="w+", newline="", delete=False
-    ) as original_file:
-        org_fname: str = original_file.name
+    with tempfile.NamedTemporaryFile(mode="w+", newline="", delete=False) as org_file:
+        org_fname: str = org_file.name
         if original_text:
-            original_file.write(
-                original_text if original_text.endswith("\n") else original_text + "\n"
-            )
+            s = original_text if original_text.endswith("\n") else original_text + "\n"
+            org_file.write(s)
 
     with tempfile.NamedTemporaryFile(mode="w+", newline="", delete=False) as diff_file:
         diff_fname: str = diff_file.name
@@ -71,7 +68,7 @@ def apply_patch(original_text: str, diff_text: str) -> str:
                 )
 
         # If the patch was successfully applied, get the modified text
-        modified_text, modified_text_repr = get_file_content(file_path=org_fname)
+        modified_text, modified_text_repr = get_file_content_tuple(file_path=org_fname)
 
     except subprocess.CalledProcessError as e:
         stdout: str = e.stdout
@@ -79,19 +76,22 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         cmd, code = " ".join(e.cmd), e.returncode
 
         # Check if the error message indicates that the patch was already applied
+        msg = f"Failed to apply patch because the diff is already applied.\n\n{diff_text=}"
         if "already exists!" in stdout:
+            print(msg)
             return ""
         if "Ignoring previously applied (or reversed) patch." in stdout:
+            print(msg)
             return ""
 
         # Get the original, diff, and reject file contents for debugging
         original_text_repr: str = repr(original_text).replace(" ", "·")
-        modified_text, modified_text_repr = get_file_content(file_path=org_fname)
-        diff_text, diff_text_repr = get_file_content(file_path=diff_fname)
+        modified_text, modified_text_repr = get_file_content_tuple(file_path=org_fname)
+        diff_text, diff_text_repr = get_file_content_tuple(file_path=diff_fname)
         rej_f_name: str = f"{org_fname}.rej"
-        _reject_text, reject_text_repr = "", ""
+        _rej_text, reject_text_repr = "", ""
         if os.path.exists(path=rej_f_name):
-            _reject_text, reject_text_repr = get_file_content(file_path=rej_f_name)
+            _rej_text, reject_text_repr = get_file_content_tuple(file_path=rej_f_name)
 
         # Log the error and return an empty string not to break the flow
         if IS_PRD:
@@ -176,8 +176,14 @@ def extract_file_name(diff_text: str) -> str:
     raise ValueError("No file name found in the diff text.")
 
 
+@handle_exceptions(default_return_value="", raise_on_error=False)
+def get_file_content(file_path: str):
+    with open(file=file_path, mode="r", encoding=UTF8, newline="") as file:
+        return file.read()
+
+
 @handle_exceptions(default_return_value=("", ""), raise_on_error=False)
-def get_file_content(file_path: str) -> tuple[str, str]:
+def get_file_content_tuple(file_path: str):
     with open(file=file_path, mode="r", encoding=UTF8, newline="") as file:
         text: str = file.read()
     return text, repr(text).replace(" ", "·")

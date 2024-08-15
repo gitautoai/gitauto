@@ -89,7 +89,7 @@ def add_issue_templates(full_name: str, installer_name: str, token: str) -> None
     for template_file in GITHUB_ISSUE_TEMPLATES:
         # Get an issue template content from GitAuto repository
         template_path: str = GITHUB_ISSUE_DIR + "/" + template_file
-        content, _ = get_file_content(file_path=template_path)
+        content = get_file_content(file_path=template_path)
 
         # Get the list of existing files in the user's remote repository at the GITHUB_ISSUE_DIR. We need to use try except as repo.get_contents() raises a 404 error if the directory doesn't exist. Also directory path MUST end without a slash.
         try:
