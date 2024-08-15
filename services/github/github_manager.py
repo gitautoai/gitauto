@@ -7,7 +7,7 @@ import json
 import logging
 import os
 import time
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 
 # Third-party imports
@@ -33,25 +33,21 @@ from config import (
     MAX_RETRIES,
     PRODUCT_NAME,
     PRODUCT_URL,
-    TIMEOUT_IN_SECONDS,
+    TIMEOUT,
     PRODUCT_ID,
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
     UTF8,
 )
 from services.github.github_types import (
+    BaseArgs,
     GitHubContentInfo,
     GitHubLabeledPayload,
     IssueInfo,
 )
 from services.openai.vision import describe_image
 from services.supabase import SupabaseManager
-from utils.file_manager import (
-    apply_patch,
-    extract_file_name,
-    get_file_content,
-    run_command,
-)
+from utils.file_manager import apply_patch, get_file_content, run_command
 from utils.handle_exceptions import handle_exceptions
 from utils.parse_urls import parse_github_url
 from utils.text_copy import (
@@ -138,100 +134,63 @@ def add_label_to_issue(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/labels",
         headers=create_headers(token=token),
         json={"labels": [label]},
-        timeout=TIMEOUT_IN_SECONDS,
+        timeout=TIMEOUT,
     )
     response.raise_for_status()
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def add_reaction_to_issue(
-    owner: str, repo: str, issue_number: int, content: str, token: str
-) -> None:
+def add_reaction_to_issue(issue_number: int, content: str, base_args: BaseArgs) -> None:
     """https://docs.github.com/en/rest/reactions/reactions?apiVersion=2022-11-28#create-reaction-for-an-issue"""
+    owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/reactions",
         headers=create_headers(token=token),
         json={"content": content},
-        timeout=TIMEOUT_IN_SECONDS,
+        timeout=TIMEOUT,
     )
     response.raise_for_status()
     response.json()
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def commit_multiple_changes_to_remote_branch(
-    diffs: list[str],
-    new_branch: str,
-    owner: str,
-    repo: str,
-    token: str,
-) -> None:
-    """Called from assistants api to commit multiple changes to a new branch."""
-    for diff in diffs:
-        file_path: str = extract_file_name(diff_text=diff)
-        if IS_PRD:
-            print(f"Committing: {file_path}.\n")
-        is_commit: bool = commit_changes_to_remote_branch(
-            branch=new_branch,
-            commit_message=f"Update {file_path}",
-            diff_text=diff,
-            file_path=file_path,
-            owner=owner,
-            repo=repo,
-            token=token,
-        )
-        if not is_commit:
-            print(f"No changes made to: {file_path}.\n")
-        elif IS_PRD:
-            print(f"Changes made to: {file_path}.\n")
-
-
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 def commit_changes_to_remote_branch(
-    branch: str,
-    commit_message: str,
-    diff_text: str,
-    file_path: str,
-    owner: str,
-    repo: str,
-    token: str,
-) -> bool:
+    diff: str, file_path: str, base_args: BaseArgs, message: Optional[str] = None
+):
     """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
+    if message is None:
+        message = f"Update {file_path}."
+    owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}"
+    headers = create_headers(token=token)
+    get_response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
 
-    # Get the SHA of the file if it exists
-    response = requests.get(
-        url=url, headers=create_headers(token=token), timeout=TIMEOUT_IN_SECONDS
-    )
-    original_text = ""
-    sha = ""
-    if response.status_code == 200:
-        file_info: GitHubContentInfo = response.json()
+    # If 404 error, the file doesn't exist.
+    if get_response.status_code == 404:
+        original_text, sha = "", ""
+    else:
+        get_response.raise_for_status()
+        file_info: GitHubContentInfo = get_response.json()
 
         # Return if the file_path is a directory. See Example2 at https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
         if file_info["type"] == "dir":
-            return
+            return f"file_path: '{file_path}' is a directory. It should be a file path."
 
         # Get the original text and SHA of the file
-        content: str = file_info.get("content")
+        s1: str = file_info.get("content")
         # content is base64 encoded by default in GitHub API
-        original_text: str = base64.b64decode(s=content).decode(
-            encoding=UTF8, errors="replace"
-        )
+        original_text = base64.b64decode(s=s1).decode(encoding=UTF8, errors="replace")
         sha: str = file_info["sha"]
-    elif response.status_code != 404:  # Error other than 'file not found'
-        response.raise_for_status()
 
     # Create a new commit
-    modified_text: str = apply_patch(original_text=original_text, diff_text=diff_text)
+    modified_text: str = apply_patch(original_text=original_text, diff_text=diff)
     if modified_text == "":
-        return
+        return f"diff format is incorrect. No changes were made to the file: {file_path}. Review the diff, correct it, and try again.\n\n{diff=}"
+    s2 = modified_text.encode(encoding=UTF8)
     data: dict[str, str | None] = {
-        "message": commit_message,
-        "content": base64.b64encode(s=modified_text.encode(encoding=UTF8)).decode(
-            encoding=UTF8
-        ),
-        "branch": branch,
+        "message": message,
+        "content": base64.b64encode(s=s2).decode(encoding=UTF8),
+        "branch": base_args["new_branch"],
     }
     if sha != "":
         data["sha"] = sha
@@ -239,22 +198,22 @@ def commit_changes_to_remote_branch(
         url=url,
         json=data,
         headers=create_headers(token=token),
-        timeout=TIMEOUT_IN_SECONDS,
+        timeout=TIMEOUT,
     )
     put_response.raise_for_status()
-    return True
+    return f"diff applied to the file: {file_path} successfully by {commit_changes_to_remote_branch.__name__}()."
 
 
 @handle_exceptions(raise_on_error=True)
-def create_comment(
-    owner: str, repo: str, issue_number: int, body: str, token: str
-) -> str:
+def create_comment(issue_number: int, body: str, base_args: BaseArgs) -> str:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
+    print(body + "\n")
+    owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
         headers=create_headers(token=token),
         json={"body": body},
-        timeout=TIMEOUT_IN_SECONDS,
+        timeout=TIMEOUT,
     )
     response.raise_for_status()
     return response.json()["url"]
@@ -325,7 +284,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",
         headers=create_headers(token=token),
         json={"body": body},
-        timeout=TIMEOUT_IN_SECONDS,
+        timeout=TIMEOUT,
     )
     response.raise_for_status()
 
@@ -355,49 +314,44 @@ def create_jwt() -> str:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def create_pull_request(
-    base: str,  # The branch name you want to merge your changes into. ex) 'main'
-    body: str,
-    head: str,  # The branch name that contains your changes
-    owner: str,
-    repo: str,
-    title: str,
-    token: str,
-) -> str | None:
+def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | None:
     """https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request"""
+    owner, repo, base, head, token = (
+        base_args["owner"],
+        base_args["repo"],
+        base_args["base_branch"],
+        base_args["new_branch"],
+        base_args["token"],
+    )
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls",
         headers=create_headers(token=token),
         json={"title": title, "body": body, "head": head, "base": base},
-        timeout=TIMEOUT_IN_SECONDS,
+        timeout=TIMEOUT,
     )
+    if response.status_code == 422:
+        msg = f"{create_pull_request.__name__} encountered an HTTPError: 422 Client Error: Unprocessable Entity for url: {response.url}, which is because no commits between the base branch and the working branch."
+        print(msg)
+        return None
     response.raise_for_status()
     return response.json()["html_url"]
 
 
-def create_remote_branch(
-    branch_name: str,
-    owner: str,
-    repo: str,
-    sha: str,
-    comment_url: str,
-    token: str,
-) -> None:
-    try:
-        response: requests.Response = requests.post(
-            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/refs",
-            headers=create_headers(token=token),
-            json={"ref": f"refs/heads/{branch_name}", "sha": sha},
-            timeout=TIMEOUT_IN_SECONDS,
-        )
-        response.raise_for_status()
-    except Exception as e:  # pylint: disable=broad-except
-        update_comment_for_raised_errors(
-            error=e,
-            comment_url=comment_url,
-            token=token,
-            which_function=create_remote_branch.__name__,
-        )
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def create_remote_branch(sha: str, base_args: BaseArgs) -> None:
+    owner, repo, branch_name, token = (
+        base_args["owner"],
+        base_args["repo"],
+        base_args["new_branch"],
+        base_args["token"],
+    )
+    response: requests.Response = requests.post(
+        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/refs",
+        headers=create_headers(token=token),
+        json={"ref": f"refs/heads/{branch_name}", "sha": sha},
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
 
 
 def initialize_repo(repo_path: str, remote_url: str) -> None:
@@ -421,7 +375,7 @@ def get_installation_access_token(installation_id: int) -> str | None:
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/app/installations/{installation_id}/access_tokens",
         headers=create_headers(token=jwt_token),
-        timeout=TIMEOUT_IN_SECONDS,
+        timeout=TIMEOUT,
     )
     response.raise_for_status()
     return response.json()["token"]
@@ -437,7 +391,7 @@ def get_installed_owners_and_repos(token: str) -> list[dict[str, int | str]]:
             url=f"{GITHUB_API_URL}/installation/repositories",
             headers=create_headers(token=token),
             params={"per_page": 100, "page": page},
-            timeout=TIMEOUT_IN_SECONDS,
+            timeout=TIMEOUT,
         )
         response.raise_for_status()
         repos = response.json().get("repositories", [])
@@ -464,14 +418,13 @@ def get_installed_owners_and_repos(token: str) -> list[dict[str, int | str]]:
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_issue_comments(
-    owner: str, repo: str, issue_number: int, token: str
-) -> list[str]:
+def get_issue_comments(issue_number: int, base_args: BaseArgs) -> list[str]:
     """https://docs.github.com/en/rest/issues/comments#list-issue-comments"""
+    owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     response = requests.get(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
         headers=create_headers(token=token),
-        timeout=TIMEOUT_IN_SECONDS,
+        timeout=TIMEOUT,
     )
     response.raise_for_status()
     comments: list[Any] = response.json()
@@ -482,26 +435,28 @@ def get_issue_comments(
         or comment["performed_via_github_app"].get("id") not in GITHUB_APP_IDS
     ]
     comment_texts: list[str] = [comment["body"] for comment in filtered_comments]
-    print(f"\nIssue comments: {json.dumps(comment_texts, indent=2)}\n")
+    if comment_texts:
+        print(f"\nIssue comments: {json.dumps(comment_texts, indent=2)}\n")
     return comment_texts
 
 
 def get_latest_remote_commit_sha(
-    owner: str,
-    repo: str,
-    branch: str,
-    comment_url: str,
-    unique_issue_id: str,
-    clone_url: str,
-    token: str,
+    unique_issue_id: str, clone_url: str, base_args: BaseArgs
 ) -> str:
     """SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
     https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference"""
+    owner, repo, branch, comment_url = (
+        base_args["owner"],
+        base_args["repo"],
+        base_args["base_branch"],
+        base_args["comment_url"],
+    )
+    token = base_args["token"]
     try:
         response: requests.Response = requests.get(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/ref/heads/{branch}",
             headers=create_headers(token=token),
-            timeout=TIMEOUT_IN_SECONDS,
+            timeout=TIMEOUT,
         )
         response.raise_for_status()
         return response.json()["object"]["sha"]
@@ -515,13 +470,9 @@ def get_latest_remote_commit_sha(
             )
             initialize_repo(repo_path=f"/tmp/repo/{owner}-{repo}", remote_url=clone_url)
             return get_latest_remote_commit_sha(
-                owner=owner,
-                repo=repo,
-                branch=branch,
-                comment_url=comment_url,
                 unique_issue_id=unique_issue_id,
                 clone_url=clone_url,
-                token=token,
+                base_args=base_args,
             )
         raise
     except Exception as e:
@@ -555,7 +506,7 @@ def get_oldest_unassigned_open_issue(
                 "sort": "created",  # created, updated, comments
                 "state": "open",  # open, closed, or all
             },
-            timeout=TIMEOUT_IN_SECONDS,
+            timeout=TIMEOUT,
         )
         response.raise_for_status()
         issues: list[IssueInfo] = response.json()
@@ -579,24 +530,29 @@ def get_owner_name(owner_id: int, token: str) -> str | None:
     response: requests.Response = requests.get(
         url=f"{GITHUB_API_URL}/user/{owner_id}",
         headers=create_headers(token=token),
-        timeout=TIMEOUT_IN_SECONDS,
+        timeout=TIMEOUT,
     )
     response.raise_for_status()
     return response.json()["login"]
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
-def get_remote_file_content(
-    file_path: str,  # Ex) 'src/main.py' but techically directory path is also accepted by GitHub API
-    owner: str,
-    ref: str,  # Ex) 'main'
-    repo: str,
-    token: str,
-) -> str:
-    """https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28"""
-    url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
+def get_remote_file_content(file_path: str, base_args: BaseArgs) -> str:
+    """
+    https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
+
+    params:
+    - file_path: file path or directory path. Ex) 'src/main.py' or 'src'
+    """
+    owner, repo, ref, token = (
+        base_args["owner"],
+        base_args["repo"],
+        base_args["base_branch"],
+        base_args["token"],
+    )
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
     headers: dict[str, str] = create_headers(token=token)
-    response = requests.get(url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS)
+    response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
 
     # If 404 error, return early. Otherwise, raise a HTTPError
     if response.status_code == 404:
@@ -612,25 +568,25 @@ def get_remote_file_content(
         for entry in entries:
             entry_path = entry["path"]
             contents.append(
-                get_remote_file_content(
-                    file_path=entry_path, owner=owner, ref=ref, repo=repo, token=token
-                )
+                get_remote_file_content(file_path=entry_path, base_args=base_args)
             )
-        return "\n\n".join(contents)
+        msg = f"Searched directory '{file_path}' and found: {json.dumps(contents)}"
+        return msg
 
     encoded_content: str = response_json["content"]  # Base64 encoded content
 
     # If encoded_content is image, describe the image content in text by vision API
     if file_path.endswith((".png", ".jpeg", ".jpg", ".webp", ".gif")):
-        return f"## {file_path}\n\n{describe_image(base64_image=encoded_content)}"
+        msg = f"Opened image file: '{file_path}' and described the content.\n\n"
+        return msg + describe_image(base64_image=encoded_content)
 
     # Otherwise, decode the content
     decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
     numbered_content: str = "\n".join(
         f"{i + 1}: {line}" for i, line in enumerate(decoded_content.split("\n"))
     )
-    # print(f"## {file_path}\n\n{numbered_content}")
-    return f"## {file_path}\n\n{numbered_content}"
+    msg = f"Opened file: '{file_path}' with line numbers for your information.\n\n"
+    return msg + f"```{file_path}\n{numbered_content}\n```"
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
@@ -646,7 +602,7 @@ def get_remote_file_content_by_url(url: str, token: str) -> str:
     start, end = parts["start_line"], parts["end_line"]
     url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
     headers: dict[str, str] = create_headers(token=token)
-    response = requests.get(url=url, headers=headers, timeout=TIMEOUT_IN_SECONDS)
+    response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
     response.raise_for_status()
     response_json = response.json()
     encoded_content: str = response_json["content"]  # Base64 encoded content
@@ -668,47 +624,28 @@ def get_remote_file_content_by_url(url: str, token: str) -> str:
     return f"## {file_path_with_lines}\n\n{numbered_content}"
 
 
-def get_remote_file_tree(
-    owner: str, repo: str, ref: str, comment_url: str, token: str
-) -> list[str]:
+@handle_exceptions(default_return_value=[], raise_on_error=False)
+def get_remote_file_tree(base_args: BaseArgs) -> list[str]:
     """
     Get the file tree of a GitHub repository at a ref branch.
     https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#get-a-tree
     """
+    owner, repo, ref = base_args["owner"], base_args["repo"], base_args["base_branch"]
     response: requests.Response | None = None  # Otherwise response could be Unbound
-    try:
-        response = requests.get(
-            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/trees/{ref}?recursive=1",
-            headers=create_headers(token=token),
-            timeout=TIMEOUT_IN_SECONDS,
-        )
-        response.raise_for_status()
-        return [item["path"] for item in response.json()["tree"]]
-    except requests.exceptions.HTTPError as http_err:
-        # Log the error if it's not a 409 error (empty repository)
-        if http_err.response.status_code != 409:
-            logging.error(
-                msg=f"get_remote_file_tree HTTP Error: {http_err.response.status_code} - {http_err.response.text}"
-            )
-        return []
-    except Exception as e:  # pylint: disable=broad-except
-        update_comment_for_raised_errors(
-            error=e,
-            comment_url=comment_url,
-            token=token,
-            which_function=get_remote_file_tree.__name__,
-        )
-        return []
+    response = requests.get(
+        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/trees/{ref}",
+        headers=create_headers(token=base_args["token"]),
+        # params={"recursive": 1},  # 0, 1, "true", or "false" are all True!! Just remove it to disable recursion.
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
+    file_paths = [item["path"] for item in response.json()["tree"]]
+    print(f"{len(file_paths)} file or directory paths found in the root directory.")
+    return file_paths
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
-def search_remote_file_contents(
-    owner: str,
-    repo: str,
-    # lang: str,
-    query: str,
-    token: str,
-) -> str:
+def search_remote_file_contents(query: str, base_args: BaseArgs) -> str:
     """
     - Only the default branch is considered.
     - Only files smaller than 384 KB are searchable.
@@ -718,17 +655,20 @@ def search_remote_file_contents(
     https://docs.github.com/en/search-github/getting-started-with-searching-on-github/understanding-the-search-syntax
     https://docs.github.com/en/search-github/searching-on-github/searching-in-forks
     """
-    params = {
-        "q": f"{query} repo:{owner}/{repo} fork:true",
-        "per_page": 10,  # Maximum is 100
-        "page": 1,
-    }
+    owner, repo, is_fork, token = (
+        base_args["owner"],
+        base_args["repo"],
+        base_args["is_fork"],
+        base_args["token"],
+    )
+    q = f"{query} repo:{owner}/{repo}"
+    if is_fork:
+        q = f"{query} repo:{owner}/{repo} fork:true"
+    params = {"q": q, "per_page": 10, "page": 1}  # per_page: max 100
     url = f"{GITHUB_API_URL}/search/code"
     headers: dict[str, str] = create_headers(token=token)
     headers["Accept"] = "application/vnd.github.text-match+json"
-    response = requests.get(
-        url=url, headers=headers, params=params, timeout=TIMEOUT_IN_SECONDS
-    )
+    response = requests.get(url=url, headers=headers, params=params, timeout=TIMEOUT)
     response.raise_for_status()
     response_json = response.json()
     files = []
@@ -741,7 +681,9 @@ def search_remote_file_contents(
             files.append(
                 f"```A fragment where search query '{query}' matched from {file_path}\n{fragment}\n```"
             )
-    output = "\n\n".join(files)
+    msg = f"{len(files)} files found for the search query '{query}'\n"
+    print(msg)
+    output = msg + "\n" + "\n\n".join(files)
     return output
 
 
@@ -779,11 +721,12 @@ async def verify_webhook_signature(request: Request, secret: str) -> None:
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
     """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
+    print(body + "\n")
     response: requests.Response = requests.patch(
         url=comment_url,
         headers=create_headers(token=token),
         json={"body": body},
-        timeout=TIMEOUT_IN_SECONDS,
+        timeout=TIMEOUT,
     )
     response.raise_for_status()
     return response.json()
