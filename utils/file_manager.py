@@ -26,14 +26,11 @@ def apply_patch(original_text: str, diff_text: str) -> str:
     Assume -R? [n]: No
     Apply anyway? [y]: Yes
     """
-    with tempfile.NamedTemporaryFile(
-        mode="w+", newline="", delete=False
-    ) as original_file:
-        org_fname: str = original_file.name
+    with tempfile.NamedTemporaryFile(mode="w+", newline="", delete=False) as org_file:
+        org_fname: str = org_file.name
         if original_text:
-            original_file.write(
-                original_text if original_text.endswith("\n") else original_text + "\n"
-            )
+            s = original_text if original_text.endswith("\n") else original_text + "\n"
+            org_file.write(s)
 
     with tempfile.NamedTemporaryFile(mode="w+", newline="", delete=False) as diff_file:
         diff_fname: str = diff_file.name
@@ -79,9 +76,12 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         cmd, code = " ".join(e.cmd), e.returncode
 
         # Check if the error message indicates that the patch was already applied
+        msg = f"Failed to apply patch because the diff is already applied.\n\n{diff_text=}"
         if "already exists!" in stdout:
+            print(msg)
             return ""
         if "Ignoring previously applied (or reversed) patch." in stdout:
+            print(msg)
             return ""
 
         # Get the original, diff, and reject file contents for debugging
