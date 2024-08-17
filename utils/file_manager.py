@@ -10,7 +10,7 @@ from config import IS_PRD, UTF8
 from utils.handle_exceptions import handle_exceptions
 
 
-def apply_patch(original_text: str, diff_text: str) -> str:
+def apply_patch(original_text: str, diff_text: str):
     """Apply a diff using the patch command via temporary files.
     Here is comparison of patch options in handling "Assume -R?" and "Apply anyway?" prompts:
 
@@ -79,19 +79,19 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         msg = f"Failed to apply patch because the diff is already applied.\n\n{diff_text=}"
         if "already exists!" in stdout:
             print(msg)
-            return ""
+            return "", msg
         if "Ignoring previously applied (or reversed) patch." in stdout:
             print(msg)
-            return ""
+            return "", msg
 
         # Get the original, diff, and reject file contents for debugging
         original_text_repr: str = repr(original_text).replace(" ", "·")
         modified_text, modified_text_repr = get_file_content_tuple(file_path=org_fname)
         diff_text, diff_text_repr = get_file_content_tuple(file_path=diff_fname)
         rej_f_name: str = f"{org_fname}.rej"
-        _rej_text, reject_text_repr = "", ""
+        rej_text, reject_text_repr = "", ""
         if os.path.exists(path=rej_f_name):
-            _rej_text, reject_text_repr = get_file_content_tuple(file_path=rej_f_name)
+            rej_text, reject_text_repr = get_file_content_tuple(file_path=rej_f_name)
 
         # Log the error and return an empty string not to break the flow
         if IS_PRD:
@@ -99,16 +99,16 @@ def apply_patch(original_text: str, diff_text: str) -> str:
         else:
             msg = f"Failed to apply patch.\n\nDiff content:\n{diff_text}\n\nReject content:\n{reject_text_repr}\n\nstderr: {stderr}"
         logging.error(msg=msg)
-        return modified_text
+        return modified_text, rej_text
 
     except Exception as e:  # pylint: disable=broad-except
         logging.error(msg=f"Error: {e}")
-        return ""
+        return "", f"Error: {e}"
     finally:
         os.remove(path=org_fname)
         os.remove(path=diff_fname)
 
-    return modified_text
+    return modified_text, ""
 
 
 def clean_specific_lines(text: str) -> str:

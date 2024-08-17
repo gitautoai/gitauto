@@ -183,9 +183,11 @@ def commit_changes_to_remote_branch(
         sha: str = file_info["sha"]
 
     # Create a new commit
-    modified_text: str = apply_patch(original_text=original_text, diff_text=diff)
+    modified_text, rej_text = apply_patch(original_text=original_text, diff_text=diff)
     if modified_text == "":
         return f"diff format is incorrect. No changes were made to the file: {file_path}. Review the diff, correct it, and try again.\n\n{diff=}"
+    if modified_text != "" and rej_text != "":
+        return f"diff partially applied to the file: {file_path}. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\n{diff=}\n\n{rej_text=}"
     s2 = modified_text.encode(encoding=UTF8)
     data: dict[str, str | None] = {
         "message": message,
