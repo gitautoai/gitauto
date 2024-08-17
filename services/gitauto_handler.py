@@ -6,6 +6,7 @@ from uuid import uuid4
 
 # Local imports
 from config import (
+    EXCEPTION_OWNERS,
     GITHUB_APP_USER_ID,
     IS_PRD,
     PRODUCT_ID,
@@ -113,7 +114,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             owner_name=owner_name,
         )
     )
-    if requests_left <= 0 and IS_PRD:
+    if requests_left <= 0 and IS_PRD and owner_name not in EXCEPTION_OWNERS:
         logging.info("\nRequest limit reached for user %s.", sender_name)
         body = request_limit_reached(
             user_name=sender_name,
