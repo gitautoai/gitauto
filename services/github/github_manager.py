@@ -1,12 +1,12 @@
 # Standard imports
 import base64
-import datetime
 import hashlib  # For HMAC (Hash-based Message Authentication Code) signatures
 import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
 import json
 import logging
 import os
 import time
+from datetime import datetime
 from typing import Any, Optional
 from uuid import uuid4
 
@@ -261,10 +261,10 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     if PRODUCT_ID != "gitauto":
         body += " - " + PRODUCT_ID
 
-    if end_date != datetime.datetime(
-        year=1, month=1, day=1, hour=0, minute=0, second=0
-    ):
-        body += request_issue_comment(requests_left=requests_left, end_date=end_date)
+    if end_date != datetime(year=1, month=1, day=1, hour=0, minute=0, second=0):
+        body += request_issue_comment(
+            requests_left=requests_left, sender_name=user_name, end_date=end_date
+        )
 
     if requests_left <= 0:
         logging.info("\nRequest limit reached for user %s.", user_name)

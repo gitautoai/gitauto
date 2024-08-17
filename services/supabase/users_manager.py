@@ -1,8 +1,13 @@
-import datetime
+# Standard imports
 import logging
+from datetime import datetime
+
+# Third Party imports
 import stripe
 from supabase import Client
-from config import DEFAULT_TIME, STRIPE_FREE_TIER_PRICE_ID
+
+# Local imports
+from config import DEFAULT_TIME, STRIPE_FREE_TIER_PRICE_ID, TZ
 from services.stripe.customer import (
     get_subscription,
     get_request_count_from_product_id_metadata,
@@ -150,7 +155,7 @@ class UsersManager:
         user_name: str,
         owner_id: int,
         owner_name: str,
-    ) -> tuple[int, int, datetime.datetime]:
+    ) -> tuple[int, int, datetime]:
         data, _ = (
             self.client.table(table_name="installations")
             .select("owner_id, owners(stripe_customer_id)")
@@ -192,8 +197,8 @@ class UsersManager:
 
         request_count = get_request_count_from_product_id_metadata(product_id)
 
-        start_date = datetime.datetime.fromtimestamp(start_date_seconds)
-        end_date = datetime.datetime.fromtimestamp(end_date_seconds)
+        start_date = datetime.fromtimestamp(timestamp=start_date_seconds, tz=TZ)
+        end_date = datetime.fromtimestamp(timestamp=end_date_seconds, tz=TZ)
 
         # Calculate how many completed requests for this user account
         data, _ = (
