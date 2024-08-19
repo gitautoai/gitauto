@@ -541,13 +541,23 @@ def get_owner_name(owner_id: int, token: str) -> str | None:
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
-def get_remote_file_content(file_path: str, base_args: BaseArgs) -> str:
+def get_remote_file_content(
+    file_path: str,
+    base_args: BaseArgs,
+    line_number: Optional[int] = None,
+    keyword: Optional[str] = None,
+) -> str:
     """
     https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
 
     params:
     - file_path: file path or directory path. Ex) 'src/main.py' or 'src'
+    - line_number: specific line number to focus on
+    - keyword: keyword to search in the file content
     """
+    if line_number is not None and keyword is not None:
+        return "Error: You can only specify either line_number or keyword, not both."
+
     owner, repo, ref, token = (
         base_args["owner"],
         base_args["repo"],
@@ -586,11 +596,37 @@ def get_remote_file_content(file_path: str, base_args: BaseArgs) -> str:
 
     # Otherwise, decode the content
     decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
-    numbered_content: str = "\n".join(
-        f"{i + 1}: {line}" for i, line in enumerate(decoded_content.split("\n"))
-    )
+    lines = decoded_content.split("\n")
+    numbered_lines = [f"{i + 1}: {line}" for i, line in enumerate(lines)]
+    file_path_with_lines = file_path
+
+    # If line_number is specified, show the lines around the line_number
+    if line_number is not None:
+        start = max(line_number - 6, 0)
+        end = min(line_number + 5, len(lines))
+        numbered_lines = numbered_lines[start:end]
+        file_path_with_lines = f"{file_path}#L{start + 1}-L{end}"
+
+    # If keyword is specified, show the lines containing the keyword
+    elif keyword is not None:
+        segments = []
+        for i, line in enumerate(lines):
+            if keyword not in line:
+                continue
+            start = max(i - 5, 0)
+            end = min(i + 6, len(lines))
+            segment = "\n".join(numbered_lines[start:end])
+            file_path_with_lines = f"{file_path}#L{start + 1}-L{end}"
+            segments.append(f"```{file_path_with_lines}\n" + segment + "\n```")
+
+        if not segments:
+            return f"Keyword '{keyword}' not found in the file '{file_path}'."
+        msg = f"Opened file: '{file_path}' and found multiple occurrences of '{keyword}'.\n\n"
+        return msg + "\n\n•••\n\n".join(segments)
+
+    numbered_content: str = "\n".join(numbered_lines)
     msg = f"Opened file: '{file_path}' with line numbers for your information.\n\n"
-    return msg + f"```{file_path}\n{numbered_content}\n```"
+    return msg + f"```{file_path_with_lines}\n{numbered_content}\n```"
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
