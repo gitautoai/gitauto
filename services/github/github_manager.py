@@ -295,10 +295,10 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     return response.json()
 
 
-def create_headers(token: str) -> dict[str, str]:
+def create_headers(token: str, media_type: Optional[str] = "v3") -> dict[str, str]:
     """https://docs.github.com/en/rest/using-the-rest-api/getting-started-with-the-rest-api?apiVersion=2022-11-28#headers"""
     return {
-        "Accept": "application/vnd.github.v3+json",
+        "Accept": f"application/vnd.github.{media_type}+json",
         "Authorization": f"Bearer {token}",
         "User-Agent": GITHUB_APP_NAME,
         "X-GitHub-Api-Version": GITHUB_API_VERSION,
