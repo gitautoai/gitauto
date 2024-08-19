@@ -8,6 +8,7 @@ class BaseArgs(TypedDict):
     base_branch: str
     new_branch: str
     comment_url: str
+    pr_body: str
     token: str
 
 
