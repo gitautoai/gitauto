@@ -162,6 +162,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             }
         )
     )
+    base_args["pr_body"] = pr_body
 
     # Create a remote branch
     comment_body = create_progress_bar(p=20, msg="Creating a remote branch...")
@@ -179,7 +180,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         issue_body=issue_body,
         reference_contents=reference_contents,
         issue_comments=issue_comments,
-        pr_body=pr_body,
         root_files_and_dirs=root_files_and_dirs,
         base_args=base_args,
     )

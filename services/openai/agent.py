@@ -100,15 +100,15 @@ def run_assistant(
     issue_body: str,
     reference_contents: list[str],
     issue_comments: list[str],
-    pr_body: str,
     root_files_and_dirs: list[str],
     base_args: BaseArgs,
 ) -> tuple[int, int]:
     # Create a message in the thread
-    owner, repo, comment_url, token = (
+    owner, repo, comment_url, pr_body, token = (
         base_args["owner"],
         base_args["repo"],
         base_args["comment_url"],
+        base_args["pr_body"],
         base_args["token"],
     )
     data: dict[str, str | list[str]] = {
