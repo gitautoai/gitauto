@@ -194,8 +194,9 @@ def wait_on_run(
                 client.beta.threads.runs.cancel(thread_id=thread.id, run_id=run.id)
                 return run, input_data
 
+            # Serialize the tool outputs. Use default=str to serialize unterminated strings. (I encountered this error here: https://github.com/hiroshinishio/ClickHouse/blob/master/src/Functions/FunctionsStringHashFixedString.cpp)
             tool_outputs_json: list[ToolOutput] = [
-                {"tool_call_id": tool_call.id, "output": json.dumps(obj=result)}
+                {"tool_call_id": tool_call.id, "output": json.dumps(result, default=str)}
                 for tool_call, result in tool_outputs
             ]
 
