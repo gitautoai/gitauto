@@ -2,7 +2,7 @@
 # https://platform.openai.com/docs/guides/function-calling/should-i-include-function-call-instructions-in-the-tool-specification-or-in-the-system-prompt
 
 DIFF_DESCRIPTION = """
-A unified diff format with no context lines like command `diff -U0` or `diff --unified=0`. This diff must specifically be in one of the following three formats: addition, modification, or deletion:
+A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff --unified=0`. This diff must specifically be in one of the following three formats: addition, modification, or deletion:
 
 1. For new files
 
@@ -47,4 +47,5 @@ A unified diff format with no context lines like command `diff -U0` or `diff --u
 ## Other rules about diff format
 
 - NEVER EVER include any comments or explanations.
+- NEVER EVER include any context lines. ONLY include the changed lines.
 """
