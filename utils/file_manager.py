@@ -52,13 +52,8 @@ def apply_patch(original_text: str, diff_text: str):
         else:
             with open(file=diff_fname, mode="r", encoding=UTF8, newline="") as diff:
                 subprocess.run(
-                    args=[
-                        "patch",
-                        "-u",
-                        "--fuzz=3",
-                        "--forward",
-                        org_fname,
-                    ],  # See https://www.man7.org/linux/man-pages/man1/patch.1.html
+                    # See https://www.man7.org/linux/man-pages/man1/patch.1.html
+                    args=["patch", "-u", "--fuzz=3", "--forward", org_fname],
                     input=diff.read(),
                     text=True,  # If True, input and output are strings
                     # capture_output=True,  # Redundant so commented out
