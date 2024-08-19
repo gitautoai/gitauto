@@ -574,20 +574,13 @@ def get_remote_file_content(
     response.raise_for_status()
 
     # file_path is expected to be a file path, but it can be a directory path due to AI's volatility. See Example2 at https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
-    response_json = response.json()
-    if response_json["type"] == "dir":
-        print(f"response_json: {json.dumps(response_json, indent=2)}")
-        entries: list[dict[str, str, int, dict]] = response_json["entries"]
-        contents: list[str] = []
-        for entry in entries:
-            entry_path = entry["path"]
-            contents.append(
-                get_remote_file_content(file_path=entry_path, base_args=base_args)
-            )
-        msg = f"Searched directory '{file_path}' and found: {json.dumps(contents)}"
+    res_json = response.json()
+    if not isinstance(res_json, dict):
+        file_paths: list[str] = [item["path"] for item in res_json]
+        msg = f"Searched directory '{file_path}' and found: {json.dumps(file_paths)}"
         return msg
 
-    encoded_content: str = response_json["content"]  # Base64 encoded content
+    encoded_content: str = res_json["content"]  # Base64 encoded content
 
     # If encoded_content is image, describe the image content in text by vision API
     if file_path.endswith((".png", ".jpeg", ".jpg", ".webp", ".gif")):
