@@ -22,6 +22,7 @@ from github.Repository import Repository
 
 # Local imports
 from config import (
+    EXCEPTION_OWNERS,
     GITHUB_API_URL,
     GITHUB_API_VERSION,
     GITHUB_APP_ID,
@@ -30,6 +31,7 @@ from config import (
     GITHUB_ISSUE_DIR,
     GITHUB_ISSUE_TEMPLATES,
     GITHUB_PRIVATE_KEY,
+    IS_PRD,
     MAX_RETRIES,
     PRODUCT_NAME,
     PRODUCT_URL,
@@ -226,7 +228,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
-    owner: str = payload["repository"]["owner"]["login"]
+    owner_name: str = payload["repository"]["owner"]["login"]
     owner_id: int = payload["repository"]["owner"]["id"]
     repo_name: str = payload["repository"]["name"]
     issue_number: int = payload["issue"]["number"]
@@ -255,7 +257,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
             installation_id=installation_id,
             user_name=user_name,
             owner_id=owner_id,
-            owner_name=owner,
+            owner_name=owner_name,
         )
     )
 
@@ -268,7 +270,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
             requests_left=requests_left, sender_name=user_name, end_date=end_date
         )
 
-    if requests_left <= 0:
+    if requests_left <= 0 and IS_PRD and owner_name not in EXCEPTION_OWNERS:
         logging.info("\nRequest limit reached for user %s.", user_name)
         body = request_limit_reached(
             user_name=user_name,
@@ -283,7 +285,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
         )
 
     response: requests.Response = requests.post(
-        url=f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues/{issue_number}/comments",
+        url=f"{GITHUB_API_URL}/repos/{owner_name}/{repo_name}/issues/{issue_number}/comments",
         headers=create_headers(token=token),
         json={"body": body},
         timeout=TIMEOUT,
