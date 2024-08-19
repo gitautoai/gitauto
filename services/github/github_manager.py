@@ -561,7 +561,7 @@ def get_remote_file_content(
     owner, repo, ref, token = (
         base_args["owner"],
         base_args["repo"],
-        base_args["base_branch"],
+        base_args["new_branch"],
         base_args["token"],
     )
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
