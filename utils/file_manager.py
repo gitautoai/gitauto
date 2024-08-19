@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 # Local imports
-from config import IS_PRD, UTF8
+from config import UTF8
 from utils.handle_exceptions import handle_exceptions
 
 
@@ -63,15 +63,14 @@ def apply_patch(original_text: str, diff_text: str):
                 )
 
         # If the patch was successfully applied, get the modified text
-        modified_text, modified_text_repr = get_file_content_tuple(file_path=org_fname)
+        modified_text = get_file_content(file_path=org_fname)
 
     except subprocess.CalledProcessError as e:
         stdout: str = e.stdout
         stderr: str = e.stderr
-        cmd, code = " ".join(e.cmd), e.returncode
 
         # Check if the error message indicates that the patch was already applied
-        msg = f"Failed to apply patch because the diff is already applied.\n\n{diff_text=}"
+        msg = f"Failed to apply patch because the diff is already applied. But it's OK, move on to the next fix!\n\n{diff_text=}\n\n{stderr=}"
         if "already exists!" in stdout:
             print(msg)
             return "", msg
@@ -80,21 +79,18 @@ def apply_patch(original_text: str, diff_text: str):
             return "", msg
 
         # Get the original, diff, and reject file contents for debugging
-        original_text_repr: str = repr(original_text).replace(" ", "·")
-        modified_text, modified_text_repr = get_file_content_tuple(file_path=org_fname)
-        diff_text, diff_text_repr = get_file_content_tuple(file_path=diff_fname)
+        modified_text = get_file_content(file_path=org_fname)
+        diff_text = get_file_content(file_path=diff_fname)
         rej_f_name: str = f"{org_fname}.rej"
-        rej_text, reject_text_repr = "", ""
+        rej_text = ""
         if os.path.exists(path=rej_f_name):
-            rej_text, reject_text_repr = get_file_content_tuple(file_path=rej_f_name)
+            rej_text = get_file_content(file_path=rej_f_name)
 
         # Log the error and return an empty string not to break the flow
-        if IS_PRD:
-            msg = f"Failed to apply patch. stdout:\n{stdout}\n\nDiff content:\n{diff_text_repr}\n\nReject content:\n{reject_text_repr}\n\nOriginal content:\n{original_text_repr}\n\nModified content:\n{modified_text_repr}\n\nstderr:\n{stderr}\n\nCommand: {cmd}\n\nReturn code: {code}"
-        else:
-            msg = f"Failed to apply patch.\n\nDiff content:\n{diff_text}\n\nReject content:\n{reject_text_repr}\n\nstderr: {stderr}"
-        logging.error(msg=msg)
-        return modified_text, rej_text
+        msg = f"Failed to apply patch partially or entirelly because something is wrong in diff. Analyze the reason from stderr and rej_text, modify the diff, and try again.\n\n{diff_text=}\n\n{stderr=}\n\n{rej_text=}\n"
+        logging.error(msg)
+        msg += f"\n{modified_text=}\n\n{original_text=}"
+        return modified_text, msg
 
     except Exception as e:  # pylint: disable=broad-except
         logging.error(msg=f"Error: {e}")
