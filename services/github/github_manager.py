@@ -15,7 +15,6 @@ import jwt  # For generating JWTs (JSON Web Tokens)
 import requests
 from fastapi import Request
 from github import Github, GithubException
-from github.Branch import Branch
 from github.ContentFile import ContentFile
 from github.PullRequest import PullRequest
 from github.Repository import Repository
@@ -67,19 +66,23 @@ def add_issue_templates(full_name: str, installer_name: str, token: str) -> None
     repo: Repository = gh.get_repo(full_name_or_id=full_name)
 
     # Create a new branch
+    default_branch = None
     default_branch_name: str = repo.default_branch
     retries = 0
     while retries < MAX_RETRIES:
         try:
-            default_branch: Branch = repo.get_branch(branch=default_branch_name)
+            default_branch = repo.get_branch(branch=default_branch_name)
             break
         except GithubException as e:
             retries += 1
             msg = f"Error: {e.data['message']}. Retrying to get the default branch for repo: {full_name} and branch: {default_branch_name}."
             logging.info(msg)
-            time.sleep(10)
+            time.sleep(20)
     new_branch_name: str = f"{PRODUCT_ID}/add-issue-templates-{str(object=uuid4())}"
     ref = f"refs/heads/{new_branch_name}"
+    if default_branch is None:
+        msg = f"Error: Could not get the default branch for repo: {full_name} and branch: {default_branch_name}."
+        raise RuntimeError(msg)
     repo.create_git_ref(ref=ref, sha=default_branch.commit.sha)
 
     # Add issue templates to the new branch
