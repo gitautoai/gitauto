@@ -37,6 +37,7 @@ When working on an issue in a GitHub repository, you may need to interact with r
 - Minimize File Access: Only open or modify the files that are absolutely necessary. Avoid accessing the same file more than once or opening too many files to reduce penalties.
 - Efficient Use of Functions: Ensure that you use the appropriate function at the right time based on the specific task (creation, modification, or deletion) to avoid unnecessary operations.
 - If you encounter any issues while interacting with the files, refer to the error messages for guidance on how to modify your approach. This is very crucial.
+- If you call the same function with the same args more than once, you will see "Skipping duplicate function call" in the response and you will be penalized severely, so avoid calling the same function with the same args more than once. Think differently or give up calling the function with the same args.
 
 ## Completion
 
