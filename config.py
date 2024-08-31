@@ -72,7 +72,7 @@ FREE_TIER_REQUEST_AMOUNT = 5
 ISSUE_NUMBER_FORMAT = "/issue-#"
 MAX_RETRIES = 3
 PER_PAGE = 100
-PR_BODY_STARTS_WITH = "Original issue: [#"
+PR_BODY_STARTS_WITH = "Resolves #"  # https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue
 PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 PRODUCT_URL = "https://gitauto.ai"

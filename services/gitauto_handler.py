@@ -192,7 +192,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     comment_body = create_progress_bar(p=90, msg="Creating a pull request...")
     update_comment(comment_url=comment_url, token=token, body=comment_body)
     title = f"{PRODUCT_NAME}: {issue_title}"
-    issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}]({issue['html_url']})\n\n"
+    issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
     pr_body = issue_link + pr_body + git_command(new_branch_name=new_branch_name)
     pr_url = create_pull_request(body=pr_body, title=title, base_args=base_args)
 
