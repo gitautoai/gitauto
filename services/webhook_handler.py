@@ -141,7 +141,7 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             "ref"
         ].startswith(PRODUCT_ID + ISSUE_NUMBER_FORMAT):
             # Create unique_issue_id to update merged status
-            body = pull_request["body"]
+            body: str = pull_request["body"]
             if not body.startswith(PR_BODY_STARTS_WITH):
                 return
             pattern = re.compile(r"/issues/(\d+)")
