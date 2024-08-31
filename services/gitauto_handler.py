@@ -114,6 +114,9 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             owner_name=owner_name,
         )
     )
+    print(f"{requests_left=}")
+
+    # Notify the user if the request limit is reached and early return
     if requests_left <= 0 and IS_PRD and owner_name not in EXCEPTION_OWNERS:
         logging.info("\nRequest limit reached for user %s.", sender_name)
         body = request_limit_reached(
@@ -123,6 +126,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         )
         create_comment(issue_number=issue_number, body=body, base_args=base_args)
         return
+
     msg = "Reading this issue body, comments, and file tree..."
     comment_body = create_progress_bar(p=0, msg=msg)
     comment_url: str = create_comment(
@@ -194,6 +198,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
 
     # Update the issue comment based on if the PR was created or not
     if pr_url is not None:
+        is_completed = True
         body_after_pr = pull_request_completed(
             issuer_name=issuer_name,
             sender_name=sender_name,
@@ -201,12 +206,14 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             is_automation=is_automation,
         )
     else:
+        is_completed = False
         body_after_pr = UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY
     update_comment(comment_url=comment_url, token=token, body=body_after_pr)
 
     end_time = time.time()
     supabase_manager.complete_and_update_usage_record(
         usage_record_id=usage_record_id,
+        is_completed=is_completed,
         token_input=token_input,
         token_output=token_output,
         total_seconds=int(end_time - current_time),

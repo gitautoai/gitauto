@@ -19,11 +19,12 @@ class GitAutoAgentManager:
         token_input: int,
         token_output: int,
         total_seconds: int,
+        is_completed: bool = True,
     ) -> None:
         """Add agent information to usage record and set is_completed to True."""
         self.client.table(table_name="usage").update(
             json={
-                "is_completed": True,
+                "is_completed": is_completed,
                 "token_input": token_input,
                 "token_output": token_output,
                 "total_seconds": total_seconds,
