@@ -23,8 +23,22 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 @@ -5,1 +5,1 @@
 - original line 5
 + modified line 5
+```
+
+or
+
+```diff
+--- path/to/file2
++++ path/to/file2
 @@ -10,1 +10,0 @@
 - original line 10
+```
+
+or
+
+```diff
+--- path/to/file3
++++ path/to/file3
 @@ -15,0 +15,1 @@
 + added line 15
 ```
@@ -48,4 +62,5 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 
 - NEVER EVER include any comments or explanations.
 - NEVER EVER include any context lines. ONLY include the changed lines.
+- If you need to change multiple blocks in the same file, call the function multiple times with each block separately for simplicity. For example, if you have three blocks to change in the same file, call the function three times with each block separately.
 """
