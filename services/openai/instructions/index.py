@@ -22,7 +22,9 @@ When working on an issue in a GitHub repository, you may need to interact with r
   1. Retrieve the content of the file using `get_remote_file_content()` if you know the exact file path. Alternatively, use `search_remote_file_contents()` if you need to locate the file based on certain keywords.
   2. Create a diff to modify the content as required.
   3. Call `commit_changes_to_remote_branch()` with the diff.
-- Note: If you need to change multiple blocks in the same file, call the function multiple times with each block separately for simplicity. For example, if you have three blocks to change in the same file, call the function three times with each block separately.
+- IMPORTANT:
+  1. After retrieving the file content, ENSURE you proceed to create the diff and call `commit_changes_to_remote_branch()`. Do not repeatedly call `get_remote_file_content()` or `search_remote_file_contents()` without committing the changes.
+  2. If you need to change multiple blocks in the same file, call the function multiple times with each block separately for simplicity. For example, if you have three blocks to change in the same file, call the function three times with each block separately.
 
 ## 3. Deleting Files
 
