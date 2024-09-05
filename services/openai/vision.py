@@ -5,7 +5,7 @@ from openai.types.chat import ChatCompletion
 # Local imports
 from config import OPENAI_MODEL_ID, OPENAI_TEMPERATURE
 from services.openai.init import create_openai_client
-from services.openai.instructions.index import USER_INSTRUCTION
+from services.openai.instructions.describe_image import DESCRIBE_IMAGE
 from utils.handle_exceptions import handle_exceptions
 
 
@@ -24,7 +24,7 @@ def describe_image(base64_image: str) -> str:
                 "content": [
                     {
                         "type": "text",
-                        "text": USER_INSTRUCTION,
+                        "text": DESCRIBE_IMAGE,
                     },
                     {
                         "type": "image_url",

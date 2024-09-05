@@ -43,5 +43,3 @@ When working on an issue in a GitHub repository, you may need to interact with r
 
 Once you have resolved the issue and committed the necessary changes, return "END" to indicate that the task is complete.
 """
-
-USER_INSTRUCTION = "Describe images found in my GitHub repositories. These images often include elements like text, shapes, arrows, red lines, and boxed areas, and may also contain screenshots of customer business services or SaaS interfaces. Extract and describe these elements, noting their positions and relationships, such as connections indicated by arrows or emphasis through red lines and boxes. Provide a comprehensive understanding of the visual and textual content."
