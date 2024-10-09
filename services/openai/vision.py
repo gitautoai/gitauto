@@ -3,7 +3,7 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletion
 
 # Local imports
-from config import OPENAI_MODEL_ID, OPENAI_TEMPERATURE
+from config import OPENAI_MODEL_ID_GPT_4O, OPENAI_TEMPERATURE
 from services.openai.init import create_openai_client
 from services.openai.instructions.describe_image import DESCRIBE_IMAGE
 from utils.handle_exceptions import handle_exceptions
@@ -36,7 +36,7 @@ def describe_image(base64_image: str) -> str:
                 ],
             },
         ],
-        model=OPENAI_MODEL_ID,
+        model=OPENAI_MODEL_ID_GPT_4O,
         n=1,
         temperature=OPENAI_TEMPERATURE,
     )

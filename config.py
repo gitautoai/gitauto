@@ -50,7 +50,9 @@ OPENAI_MAX_CONTEXT_TOKENS = 128000  # https://gitauto-ai.sentry.io/issues/558242
 OPENAI_MAX_RETRIES = 3
 OPENAI_MAX_TOOL_OUTPUTS_SIZE = 512 * 1024  # in bytes
 OPENAI_MAX_TOKENS = 4096
-OPENAI_MODEL_ID = "gpt-4o-2024-08-06"
+OPENAI_MODEL_ID_O1_PREVIEW = "o1-preview"  # https://platform.openai.com/docs/models/o1
+# OPENAI_MODEL_ID_O1_MINI = "o1-mini"  # https://platform.openai.com/docs/models/o1
+OPENAI_MODEL_ID_GPT_4O = "gpt-4o"  # https://platform.openai.com/docs/models/gpt-4o
 OPENAI_ORG_ID: str = get_env_var(name="OPENAI_ORG_ID")
 OPENAI_TEMPERATURE = 0.0
 

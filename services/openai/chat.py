@@ -3,7 +3,7 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletion
 
 # Local imports
-from config import OPENAI_MODEL_ID, OPENAI_TEMPERATURE
+from config import OPENAI_MODEL_ID_O1_PREVIEW
 from services.openai.init import create_openai_client
 from services.openai.instructions.write_pr_body import WRITE_PR_BODY
 from services.openai.truncate import truncate_message
@@ -17,15 +17,15 @@ def write_pr_body(input_message: str) -> str:
     truncated_msg: str = truncate_message(input_message=input_message)
     completion: ChatCompletion = client.chat.completions.create(
         messages=[
-            {"role": "system", "content": WRITE_PR_BODY},
+            {"role": "user", "content": WRITE_PR_BODY},  # role should be system but it is not allowed for 01-mini as of Oct 5 2024. https://community.openai.com/t/o1-models-do-not-support-system-role-in-chat-completion/953880/2
             {
                 "role": "user",
                 "content": truncated_msg if truncated_msg else input_message,
             },
         ],
-        model=OPENAI_MODEL_ID,
+        model=OPENAI_MODEL_ID_O1_PREVIEW,
         n=1,
-        temperature=OPENAI_TEMPERATURE,
+        # temperature=OPENAI_TEMPERATURE,  # temperature should be 0 but it is not supported for 01-mini as of Oct 5 2024
     )
     content: str | None = completion.choices[0].message.content
     response: str = content if content else "No response from OpenAI"
