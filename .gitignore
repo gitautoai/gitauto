@@ -1,6 +1,6 @@
 .aider.tags.cache.v3
 .history
-.env
+.env*
 __pycache__
 ngrok.yml
 tmp
