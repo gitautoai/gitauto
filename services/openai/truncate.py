@@ -1,5 +1,5 @@
 import tiktoken
-from config import OPENAI_MAX_CONTEXT_TOKENS, OPENAI_MODEL_ID
+from config import OPENAI_MAX_CONTEXT_TOKENS, OPENAI_MODEL_ID_GPT_4O
 from utils.handle_exceptions import handle_exceptions
 
 
@@ -7,7 +7,7 @@ from utils.handle_exceptions import handle_exceptions
 def truncate_message(input_message: str) -> str:
     truncated_message: str = input_message
     encoding: tiktoken.Encoding = tiktoken.encoding_for_model(
-        model_name=OPENAI_MODEL_ID
+        model_name=OPENAI_MODEL_ID_GPT_4O
     )
     tokens: list[int] = encoding.encode(text=input_message)
     if len(tokens) > OPENAI_MAX_CONTEXT_TOKENS:
