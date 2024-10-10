@@ -56,6 +56,9 @@ OPENAI_MODEL_ID_GPT_4O = "gpt-4o"  # https://platform.openai.com/docs/models/gpt
 OPENAI_ORG_ID: str = get_env_var(name="OPENAI_ORG_ID")
 OPENAI_TEMPERATURE = 0.0
 
+# Sentry Credentials from environment variables
+SENTRY_DSN: str = get_env_var(name="SENTRY_DSN")
+
 # Supabase Credentials from environment variables
 SUPABASE_SERVICE_ROLE_KEY: str = get_env_var(name="SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_URL: str = get_env_var(name="SUPABASE_URL")

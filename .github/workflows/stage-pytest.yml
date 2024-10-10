@@ -38,6 +38,8 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.STAGE_OPENAI_API_KEY }}
         OPENAI_ORG_ID: ${{ secrets.STAGE_OPENAI_ORG_ID }}
 
+        SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGE_SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_URL: ${{ secrets.STAGE_SUPABASE_URL }}
 
