@@ -37,6 +37,8 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.PROD_OPENAI_API_KEY }}
         OPENAI_ORG_ID: ${{ secrets.PROD_OPENAI_ORG_ID }}
 
+        SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
 
