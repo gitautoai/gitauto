@@ -3,7 +3,6 @@ from services.supabase import SupabaseManager
 from config import (
     OWNER_ID,
     USER_ID,
-    USER_NAME,
     INSTALLATION_ID,
 )
 
