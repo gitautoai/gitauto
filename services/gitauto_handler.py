@@ -4,6 +4,10 @@ import logging
 import time
 from uuid import uuid4
 
+# Third-party imports
+from typing import Iterable
+from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
+
 # Local imports
 from config import (
     EXCEPTION_OWNERS,
@@ -34,8 +38,10 @@ from services.github.github_types import (
     IssueInfo,
     RepositoryInfo,
 )
-from services.openai.chat import write_pr_body
-from services.openai.agent import run_assistant
+from services.openai.instructions.index import SYSTEM_INSTRUCTION_FOR_AGENT
+from services.openai.truncate import truncate_message
+from services.openai.write_code import resolve_ticket
+from services.openai.write_pr_body import write_pr_body
 from services.supabase import SupabaseManager
 from utils.extract_urls import extract_urls
 from utils.progress_bar import create_progress_bar
@@ -179,14 +185,15 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     create_remote_branch(sha=latest_commit_sha, base_args=base_args)
     comment_body = create_progress_bar(p=30, msg="Thinking about how to code...")
     update_comment(comment_url=comment_url, token=token, body=comment_body)
-    token_input, token_output = run_assistant(
-        issue_title=issue_title,
-        issue_body=issue_body,
-        reference_contents=reference_contents,
-        issue_comments=issue_comments,
-        root_files_and_dirs=root_files_and_dirs,
-        base_args=base_args,
-    )
+
+    truncated_msg: str = truncate_message(input_message=pr_body)
+    messages: Iterable[ChatCompletionMessageParam] = [
+        {"role": "system", "content": SYSTEM_INSTRUCTION_FOR_AGENT},
+        {"role": "user", "content": truncated_msg if truncated_msg else pr_body},
+    ]
+    resolve_ticket(messages=messages, base_args=base_args)
+    token_input = 0
+    token_output = 0
 
     # Create a pull request to the base branch
     comment_body = create_progress_bar(p=90, msg="Creating a pull request...")
