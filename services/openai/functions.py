@@ -1,8 +1,9 @@
 # Standard imports
-from typing import Any
+from typing import Any, Iterable
 
 # Third-party imports
 from openai.types import shared_params
+from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
 
 # Local imports
 from services.github.github_manager import (
@@ -32,6 +33,7 @@ LINE_NUMBER: dict[str, int] = {
     "description": "If you already know the line number of interest when opening a file, use this. The 5 lines before and after this line number will be retrieved. For example, use it when checking the surrounding lines of a specific line number if the diff is incorrect.",
 }
 
+# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
 COMMIT_CHANGES_TO_REMOTE_BRANCH: shared_params.FunctionDefinition = {
     "name": "commit_changes_to_remote_branch",
     "description": "Commits the changes to the remote branch in the GitHub repository. Must be called at least once to commit the changes otherwise you can't create a pull request and resolve the issue.",
@@ -44,6 +46,7 @@ COMMIT_CHANGES_TO_REMOTE_BRANCH: shared_params.FunctionDefinition = {
     "strict": True,  # For Structured Outpus
 }
 
+# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
 GET_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
     "name": "get_remote_file_content",
     "description": """
@@ -81,6 +84,8 @@ QUERY: dict[str, str] = {
     - Search for an entire line of code: 'from module import function_name'
     """,
 }
+
+# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
 SEARCH_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
     "name": "search_remote_file_contents",
     "description": "Search for keywords in a repository to identify files and specific sections that need to be corrected. Especially if you change variable definitions, as they are likely used elsewhere, so you should search for those places. To reduce bugs, search multiple times from as many angles as possible. Must be called at least once.",
@@ -93,8 +98,17 @@ SEARCH_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
     "strict": True,  # For Structured Outpus
 }
 
+# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
+TOOLS: Iterable[ChatCompletionToolParam] = [
+    # {"type": "code_interpreter"},
+    # {"type": "retrieval"},
+    {"type": "function", "function": COMMIT_CHANGES_TO_REMOTE_BRANCH},
+    {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
+    {"type": "function", "function": SEARCH_REMOTE_FILE_CONTENT},
+]
+
 # Define functions
-functions: dict[str, Any] = {
+functions_to_call: dict[str, Any] = {
     "commit_changes_to_remote_branch": commit_changes_to_remote_branch,
     "get_remote_file_content": get_remote_file_content,
     "search_remote_file_contents": search_remote_file_contents,
