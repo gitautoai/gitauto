@@ -102,16 +102,6 @@ def apply_patch(original_text: str, diff_text: str):
     return modified_text, ""
 
 
-def clean_specific_lines(text: str) -> str:
-    return "\n".join(
-        [
-            line
-            for line in text.strip().split(sep="\n")
-            if line.startswith(("+++", "---", "@@", "+", "-"))
-        ]
-    ).strip()
-
-
 def correct_hunk_headers(diff_text: str) -> str:
     """
     Match following patterns:
@@ -160,24 +150,10 @@ def correct_hunk_headers(diff_text: str) -> str:
     return "\n".join(updated_lines)
 
 
-def extract_file_name(diff_text: str) -> str:
-    match = re.search(pattern=r"^\+\+\+ (.+)$", string=diff_text, flags=re.MULTILINE)
-    if match:
-        return match.group(1)
-    raise ValueError("No file name found in the diff text.")
-
-
 @handle_exceptions(default_return_value="", raise_on_error=False)
 def get_file_content(file_path: str):
     with open(file=file_path, mode="r", encoding=UTF8, newline="") as file:
         return file.read()
-
-
-@handle_exceptions(default_return_value=("", ""), raise_on_error=False)
-def get_file_content_tuple(file_path: str):
-    with open(file=file_path, mode="r", encoding=UTF8, newline="") as file:
-        text: str = file.read()
-    return text, repr(text).replace(" ", "·")
 
 
 def run_command(command: str, cwd: str) -> str:
@@ -208,23 +184,3 @@ def run_command(command: str, cwd: str) -> str:
                 logging.error("Failed to get Git version: %s", ve.stderr)
 
         raise ValueError(f"Command failed: {e.stderr}") from e
-
-
-def split_diffs(diff_text: str) -> list[str]:
-    file_diffs: list[str] = re.split(
-        pattern=r"(?=^---\s)", string=diff_text, flags=re.MULTILINE
-    )
-
-    # Remove the first element if it's an empty string
-    if file_diffs and file_diffs[0] == "":
-        file_diffs.pop(0)
-
-    # Remove leading and trailing whitespace from each diff
-    cleaned_diffs: list[str] = []
-    for diff in file_diffs:
-        stripped_diff: str = diff.strip()
-        if not stripped_diff.endswith("\n"):
-            stripped_diff += "\n"
-        cleaned_diffs.append(stripped_diff)
-
-    return cleaned_diffs
