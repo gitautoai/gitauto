@@ -21,7 +21,7 @@ from utils.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(raise_on_error=True)
-def resolve_ticket(
+def explore_repo(
     messages: Iterable[ChatCompletionMessageParam],
     base_args: BaseArgs,
     previous_calls: List[dict] | None = None,
@@ -101,7 +101,7 @@ def resolve_ticket(
         return messages, total_token_input, total_token_output
 
     # Recursively call this function
-    return resolve_ticket(
+    return explore_repo(
         messages=messages,
         base_args=base_args,
         previous_calls=previous_calls,

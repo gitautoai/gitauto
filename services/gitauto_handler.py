@@ -40,7 +40,7 @@ from services.github.github_types import (
 )
 from services.openai.instructions.index import SYSTEM_INSTRUCTION_FOR_AGENT
 from services.openai.truncate import truncate_message
-from services.openai.write_code import resolve_ticket
+from services.openai.explore_repo import explore_repo
 from services.openai.write_pr_body import write_pr_body
 from services.supabase import SupabaseManager
 from utils.extract_urls import extract_urls
@@ -191,7 +191,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         {"role": "system", "content": SYSTEM_INSTRUCTION_FOR_AGENT},
         {"role": "user", "content": truncated_msg if truncated_msg else pr_body},
     ]
-    messages, token_input, token_output = resolve_ticket(
+    messages, token_input, token_output = explore_repo(
         messages=messages, base_args=base_args
     )
 
