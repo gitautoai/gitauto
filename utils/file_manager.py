@@ -1,6 +1,5 @@
 # Standard imports
 import os
-import re
 import subprocess
 import tempfile
 
@@ -101,54 +100,6 @@ def apply_patch(original_text: str, diff_text: str):
         os.remove(path=diff_fname)
 
     return modified_text, ""
-
-
-def correct_hunk_headers(diff_text: str) -> str:
-    """
-    Match following patterns:
-    1: @@ -start1 +start2 @@
-    2: @@ -start1,lines1 +start2 @@
-    3: @@ -start1 +start2,lines2 @@
-    4: @@ -start1,lines1 +start2,lines2 @@
-    """
-    # Split the diff into lines
-    lines: list[str] = diff_text.splitlines()
-    updated_lines: list[str] = []
-    hunk_pattern: re.Pattern[str] = re.compile(
-        pattern=r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@"
-    )
-
-    i = 0
-    while i < len(lines):
-        line: str = lines[i]
-        match: re.Match[str] | None = hunk_pattern.match(string=line)
-
-        # Add the line to the updated diff if it's not a hunk header
-        if not match:
-            updated_lines.append(line)
-            i += 1
-            continue
-
-        # Correct the hunk header if match is not None
-        l1, _s1, l2, _s2 = (int(x) if x is not None else 0 for x in match.groups())
-        s1_actual, s2_actual = 0, 0
-        i += 1
-
-        # Count actual number of lines changed
-        start_index: int = i
-        while i < len(lines) and not lines[i].startswith("@@"):
-            if lines[i].startswith("+"):
-                s2_actual += 1
-            if lines[i].startswith("-"):
-                s1_actual += 1
-            i += 1
-
-        # Update the hunk header with actual numbers
-        updated_hunk_header: str = f"@@ -{l1},{s1_actual} +{l2},{s2_actual} @@"
-        updated_lines.append(updated_hunk_header)
-        updated_lines.extend(lines[start_index:i])
-
-    return "\n".join(updated_lines)
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
