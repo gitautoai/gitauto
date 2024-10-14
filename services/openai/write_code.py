@@ -14,6 +14,7 @@ from openai.types.chat.chat_completion_message_tool_call import (
 # Local imports
 from config import OPENAI_MODEL_ID_GPT_4O, OPENAI_TEMPERATURE, TIMEOUT
 from services.github.github_types import BaseArgs
+from services.openai.count_tokens import count_tokens
 from services.openai.functions import functions_to_call, TOOLS
 from services.openai.init import create_openai_client
 from utils.handle_exceptions import handle_exceptions
@@ -23,7 +24,9 @@ from utils.handle_exceptions import handle_exceptions
 def resolve_ticket(
     messages: Iterable[ChatCompletionMessageParam],
     base_args: BaseArgs,
-    previous_calls: List[dict] = None,
+    previous_calls: List[dict] | None = None,
+    total_token_input: int = 0,
+    total_token_output: int = 0,
 ):
     """https://platform.openai.com/docs/api-reference/chat/create"""
     if previous_calls is None:
@@ -50,11 +53,17 @@ def resolve_ticket(
     # print(f"choice: {choice}")
     tool_calls: List[ChatCompletionMessageToolCall] | None = choice.message.tool_calls
 
+    # Calculate tokens for this call
+    token_input = count_tokens(messages=messages)
+    token_output = count_tokens(messages=[choice.message])
+    total_token_input += token_input
+    total_token_output += token_output
+
     # Return if no tool calls
     if not tool_calls:
         print("No tool calls: ", choice.message.content)
         # TODO: Update issue comment with this response
-        return choice.message.content
+        return messages, total_token_input, total_token_output
 
     # Handle multiple tool calls
     tool_call_id: str = tool_calls[0].id
@@ -89,9 +98,13 @@ def resolve_ticket(
 
     # Exit if the current call is in the previous calls
     if current_call in previous_calls:
-        return messages
+        return messages, total_token_input, total_token_output
 
     # Recursively call this function
     return resolve_ticket(
-        messages=messages, base_args=base_args, previous_calls=previous_calls
+        messages=messages,
+        base_args=base_args,
+        previous_calls=previous_calls,
+        total_token_input=total_token_input,
+        total_token_output=total_token_output,
     )
