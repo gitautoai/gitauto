@@ -191,9 +191,9 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         {"role": "system", "content": SYSTEM_INSTRUCTION_FOR_AGENT},
         {"role": "user", "content": truncated_msg if truncated_msg else pr_body},
     ]
-    resolve_ticket(messages=messages, base_args=base_args)
-    token_input = 0
-    token_output = 0
+    messages, token_input, token_output = resolve_ticket(
+        messages=messages, base_args=base_args
+    )
 
     # Create a pull request to the base branch
     comment_body = create_progress_bar(p=90, msg="Creating a pull request...")
