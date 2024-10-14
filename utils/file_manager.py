@@ -1,5 +1,4 @@
 # Standard imports
-import logging
 import os
 import re
 import subprocess
@@ -70,12 +69,12 @@ def apply_patch(original_text: str, diff_text: str):
         stderr: str = e.stderr
 
         # Check if the error message indicates that the patch was already applied
-        msg = f"Failed to apply patch because the diff is already applied. But it's OK, move on to the next fix!\n\n{diff_text=}\n\n{stderr=}"
+        msg = f"Failed to apply patch because the diff is already applied. But it's OK, move on to the next fix!\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}"
         if "already exists!" in stdout:
-            print(msg)
+            print(msg, end="")
             return "", msg
         if "Ignoring previously applied (or reversed) patch." in stdout:
-            print(msg)
+            print(msg, end="")
             return "", msg
 
         # Get the original, diff, and reject file contents for debugging
@@ -87,13 +86,15 @@ def apply_patch(original_text: str, diff_text: str):
             rej_text = get_file_content(file_path=rej_f_name)
 
         # Log the error and return an empty string not to break the flow
-        msg = f"Failed to apply patch partially or entirelly because something is wrong in diff. Analyze the reason from stderr and rej_text, modify the diff, and try again.\n\n{diff_text=}\n\n{stderr=}\n\n{rej_text=}\n"
-        logging.error(msg)
+        msg = f"Failed to apply patch partially or entirelly because something is wrong in diff. Analyze the reason from stderr and rej_text, modify the diff, and try again.\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}\n\nrej_text\n{rej_text}\n"
+        print(msg, end="")
+        # logging.error(msg)
         msg += f"\n{modified_text=}\n\n{original_text=}"
         return modified_text, msg
 
     except Exception as e:  # pylint: disable=broad-except
-        logging.error(msg=f"Error: {e}")
+        print(f"Error: {e}", end="")
+        # logging.error(msg=f"Error: {e}")
         return "", f"Error: {e}"
     finally:
         os.remove(path=org_fname)
@@ -179,8 +180,10 @@ def run_command(command: str, cwd: str) -> str:
                     text=True,
                     shell=True,
                 )
-                logging.info("Git version: %s", version_result.stdout)
+                print(f"Git version: {version_result.stdout}", end="")
+                # logging.info("Git version: %s", version_result.stdout)
             except subprocess.CalledProcessError as ve:
-                logging.error("Failed to get Git version: %s", ve.stderr)
+                print(f"Failed to get Git version: {ve.stderr}", end="")
+                # logging.error("Failed to get Git version: %s", ve.stderr)
 
         raise ValueError(f"Command failed: {e.stderr}") from e
