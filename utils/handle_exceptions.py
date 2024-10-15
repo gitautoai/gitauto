@@ -25,6 +25,7 @@ def handle_exceptions(
             except requests.exceptions.HTTPError as err:
                 reason: str | Any = err.response.reason
                 text: str | Any = err.response.text
+                truncated_kwargs = str({k: str(v)[:50] + '...' if len(str(v)) > 50 else v for k, v in kwargs.items()})
 
                 if err.response.status_code in {403, 429}:
                     limit = int(err.response.headers["X-RateLimit-Limit"])
@@ -57,14 +58,14 @@ def handle_exceptions(
 
                 # Ex) 409: Conflict, 422: Unprocessable Entity (No changes made), and etc.
                 else:
-                    err_msg = f"{func.__name__} encountered an HTTPError: {err}\nArgs: {args}\nKwargs: {kwargs}. Reason: {reason}. Text: {text}"
+                    err_msg = f"{func.__name__} encountered an HTTPError: {err}\nArgs: {args}\nKwargs: {truncated_kwargs}. Reason: {reason}. Text: {text}"
                     logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
 
             # Catch all other exceptions
             except (AttributeError, KeyError, TypeError, Exception) as err:
-                error_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\nArgs: {args}\nKwargs: {kwargs}"
+                error_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\nArgs: {args}\nKwargs: {truncated_kwargs}"
                 logging.error(msg=error_msg)
                 if raise_on_error:
                     raise
