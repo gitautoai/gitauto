@@ -20,12 +20,12 @@ def handle_exceptions(
     def decorator(func: F) -> F:
         @wraps(wrapped=func)
         def wrapper(*args: Tuple[Any, ...], **kwargs: Any):
+            truncated_kwargs = str({k: str(v)[:50] + '...' if len(str(v)) > 50 else v for k, v in kwargs.items()})
             try:
                 return func(*args, **kwargs)
             except requests.exceptions.HTTPError as err:
                 reason: str | Any = err.response.reason
                 text: str | Any = err.response.text
-                truncated_kwargs = str({k: str(v)[:50] + '...' if len(str(v)) > 50 else v for k, v in kwargs.items()})
 
                 if err.response.status_code in {403, 429}:
                     limit = int(err.response.headers["X-RateLimit-Limit"])
