@@ -197,7 +197,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     title = f"{PRODUCT_NAME}: {issue_title}"
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
     pr_body = issue_link + pr_body + git_command(new_branch_name=new_branch_name)
-    pr_url = create_pull_request(body=pr_body, title=title, base_args=base_args)
+    reviewers = list(set([sender_name, issuer_name]))
+    pr_url = create_pull_request(body=pr_body, title=title, base_args=base_args, reviewers=reviewers)
 
     # Update the issue comment based on if the PR was created or not
     if pr_url is not None:

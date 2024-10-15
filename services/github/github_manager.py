@@ -321,7 +321,7 @@ def create_jwt() -> str:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | None:
+def create_pull_request(body: str, title: str, base_args: BaseArgs, reviewers: list[str]) -> str | None:
     """https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request"""
     owner, repo, base, head, token = (
         base_args["owner"],
@@ -333,7 +333,7 @@ def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | Non
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls",
         headers=create_headers(token=token),
-        json={"title": title, "body": body, "head": head, "base": base},
+        json={"title": title, "body": body, "head": head, "base": base, "maintainer_can_modify": True},
         timeout=TIMEOUT,
     )
     if response.status_code == 422:
@@ -341,7 +341,21 @@ def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | Non
         print(msg)
         return None
     response.raise_for_status()
-    return response.json()["html_url"]
+    pr_data = response.json()
+    pr_number = pr_data["number"]
+    add_reviewers_to_pr(owner, repo, pr_number, reviewers, token)
+
+    return pr_data["html_url"]
+
+def add_reviewers_to_pr(owner: str, repo: str, pr_number: int, reviewers: list[str], token: str) -> None:
+    """https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#request-reviewers-for-a-pull-request"""
+    response: requests.Response = requests.post(
+        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pr_number}/requested_reviewers",
+        headers=create_headers(token=token),
+        json={"reviewers": reviewers},
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
