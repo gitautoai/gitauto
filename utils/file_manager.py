@@ -3,6 +3,9 @@ import os
 import subprocess
 import tempfile
 
+# Third-party imports
+import chardet
+
 # Local imports
 from config import UTF8
 from utils.handle_exceptions import handle_exceptions
@@ -24,6 +27,11 @@ def apply_patch(original_text: str, diff_text: str):
     Assume -R? [n]: No
     Apply anyway? [y]: Yes
     """
+    # Print encodings of input texts
+    print(f"Original text encoding: {chardet.detect(original_text.encode())['encoding']}")
+    print(f"Diff text encoding: {chardet.detect(diff_text.encode())['encoding']}")
+
+    # Create temporary files as subprocess.run() accepts only file paths
     with tempfile.NamedTemporaryFile(mode="w+", newline="", delete=False) as org_file:
         org_fname: str = org_file.name
         if original_text:
@@ -85,7 +93,7 @@ def apply_patch(original_text: str, diff_text: str):
             rej_text = get_file_content(file_path=rej_f_name)
 
         # Log the error and return an empty string not to break the flow
-        msg = f"Failed to apply patch partially or entirelly because something is wrong in diff. Analyze the reason from stderr and rej_text, modify the diff, and try again.\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}\n\nrej_text\n{rej_text}\n"
+        msg = f"Failed to apply patch partially or entirelly because something is wrong in diff. Analyze the reason from stderr and rej_text, modify the diff, and try again.\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}\n\nrej_text:\n{rej_text}\n"
         print(msg, end="")
         # logging.error(msg)
         msg += f"\n{modified_text=}\n\n{original_text=}"
@@ -103,9 +111,13 @@ def apply_patch(original_text: str, diff_text: str):
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
-def get_file_content(file_path: str):
-    with open(file=file_path, mode="r", encoding=UTF8, newline="") as file:
-        return file.read()
+def get_file_content(file_path: str) -> str:
+    with open(file=file_path, mode="rb") as file:  # rb stands for "read binary"
+        raw_data: bytes = file.read()
+
+    detected: chardet.ResultDict = chardet.detect(byte_str=raw_data)
+    encoding: str = detected["encoding"] or UTF8
+    return raw_data.decode(encoding=encoding)
 
 
 def run_command(command: str, cwd: str) -> str:
