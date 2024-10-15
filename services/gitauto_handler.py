@@ -42,7 +42,7 @@ from services.supabase import SupabaseManager
 from utils.extract_urls import extract_urls
 from utils.progress_bar import create_progress_bar
 from utils.text_copy import (
-    UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
+    UPDATE_COMMENT_FOR_422,
     git_command,
     pull_request_completed,
     request_limit_reached,
@@ -210,7 +210,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         )
     else:
         is_completed = False
-        body_after_pr = UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY
+        body_after_pr = UPDATE_COMMENT_FOR_422
     update_comment(comment_url=comment_url, token=token, body=body_after_pr)
 
     end_time = time.time()
