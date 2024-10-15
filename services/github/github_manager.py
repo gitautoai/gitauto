@@ -52,7 +52,7 @@ from utils.file_manager import apply_patch, get_file_content, run_command
 from utils.handle_exceptions import handle_exceptions
 from utils.parse_urls import parse_github_url
 from utils.text_copy import (
-    UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY,
+    UPDATE_COMMENT_FOR_422,
     UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,
     request_issue_comment,
     request_limit_reached,
@@ -772,7 +772,7 @@ def update_comment_for_raised_errors(
     error: Any, comment_url: str, token: str, which_function: str
 ) -> dict[str, Any]:
     """Update the comment on issue with an error message and raise the error."""
-    body = UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY
+    body = UPDATE_COMMENT_FOR_422
     try:
         if isinstance(error, requests.exceptions.HTTPError):
             logging.error(

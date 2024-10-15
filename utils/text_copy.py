@@ -55,5 +55,5 @@ def request_issue_comment(requests_left: int, sender_name: str, end_date: dateti
     return f"\n\n@{sender_name}, You have {requests_left} request{plural} left in this cycle which refreshes on {end_date}.\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
 
 
-UPDATE_COMMENT_FOR_RAISED_ERRORS_BODY = f"Sorry, we have an error. Please try again.\n\nHave feedback or need help?\nFeel free to email {EMAIL_LINK}."
+UPDATE_COMMENT_FOR_422 = f"Hey, I'm a bit lost here! Not sure which file I should be fixing. Could you give me a bit more to go on? Maybe add some details to the issue or drop a comment with some extra hints? Thanks!\n\nHave feedback or need help?\nFeel free to email {EMAIL_LINK}."
 UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE = f"No changes were detected. Please add more details to the issue and try again.\n\nHave feedback or need help?\n{EMAIL_LINK}"
