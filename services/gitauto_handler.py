@@ -4,10 +4,6 @@ import logging
 import time
 from uuid import uuid4
 
-# Third-party imports
-from typing import Iterable
-from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
-
 # Local imports
 from config import (
     EXCEPTION_OWNERS,
@@ -38,9 +34,9 @@ from services.github.github_types import (
     IssueInfo,
     RepositoryInfo,
 )
+from services.openai.commit_changes import commit_changes
 from services.openai.instructions.index import SYSTEM_INSTRUCTION_FOR_AGENT
 from services.openai.truncate import truncate_message
-from services.openai.explore_repo import explore_repo
 from services.openai.write_pr_body import write_pr_body
 from services.supabase import SupabaseManager
 from utils.extract_urls import extract_urls
@@ -187,11 +183,11 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     update_comment(comment_url=comment_url, token=token, body=comment_body)
 
     truncated_msg: str = truncate_message(input_message=pr_body)
-    messages: Iterable[ChatCompletionMessageParam] = [
+    messages = [
         {"role": "system", "content": SYSTEM_INSTRUCTION_FOR_AGENT},
         {"role": "user", "content": truncated_msg if truncated_msg else pr_body},
     ]
-    messages, token_input, token_output = explore_repo(
+    messages, token_input, token_output = commit_changes(
         messages=messages, base_args=base_args
     )
 
