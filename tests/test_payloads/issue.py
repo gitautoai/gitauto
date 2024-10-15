@@ -4,8 +4,8 @@ mock_issue_payload: GitHubLabeledPayload = {
     "action": "labeled",
     "issue": {
         "number": 1,
-        "title": "Test Issue",
-        "body": "This is a test issue for unit testing.",
+        "title": "Add type-hinting where possible in python code",
+        "body": "Add type-hinting where possible in python function definitions in python code.",
         "user": {
             "login": "test-user",
             "id": 1
