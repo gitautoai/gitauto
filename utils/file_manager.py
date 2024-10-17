@@ -112,8 +112,15 @@ def apply_patch(original_text: str, diff_text: str):
         # logging.error(msg=f"Error: {e}")
         return "", f"Error: {e}"
     finally:
+        # Remove temporary files
         os.remove(path=org_fname)
         os.remove(path=diff_fname)
+
+        # Remove any Oops.rej* files in the root directory
+        root_dir = os.getcwd()
+        for filename in os.listdir(root_dir):
+            if filename.startswith("Oops.rej"):
+                os.remove(os.path.join(root_dir, filename))
 
     return modified_text, ""
 
