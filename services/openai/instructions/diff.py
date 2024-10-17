@@ -58,6 +58,10 @@ or
 - length1 and length2 denote the number of lines the change hunk applies to for each file.
 - Hunk headers MUST order by start1 and start2 in ascending order.
 
+## Line ending rules
+
+- Line ending MUST be LF.
+
 ## Other rules about diff format
 
 - NEVER EVER include any comments or explanations.
