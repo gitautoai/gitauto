@@ -334,7 +334,7 @@ def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | Non
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls",
         headers=create_headers(token=token),
-        json={"title": title, "body": body, "head": head, "base": base, "maintainer_can_modify": True},
+        json={"title": title, "body": body, "head": head, "base": base},
         timeout=TIMEOUT,
     )
     if response.status_code == 422:
