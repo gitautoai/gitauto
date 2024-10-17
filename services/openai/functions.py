@@ -99,16 +99,18 @@ SEARCH_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
 }
 
 # See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-TOOLS: Iterable[ChatCompletionToolParam] = [
+TOOLS_TO_EXPLORE_REPO: Iterable[ChatCompletionToolParam] = [
     # {"type": "code_interpreter"},
     # {"type": "retrieval"},
-    {"type": "function", "function": COMMIT_CHANGES_TO_REMOTE_BRANCH},
     {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
     {"type": "function", "function": SEARCH_REMOTE_FILE_CONTENT},
 ]
+TOOLS_TO_COMMIT_CHANGES: Iterable[ChatCompletionToolParam] = [
+    {"type": "function", "function": COMMIT_CHANGES_TO_REMOTE_BRANCH},
+]
 
-# Define functions
-functions_to_call: dict[str, Any] = {
+# Define tools to call
+tools_to_call: dict[str, Any] = {
     "commit_changes_to_remote_branch": commit_changes_to_remote_branch,
     "get_remote_file_content": get_remote_file_content,
     "search_remote_file_contents": search_remote_file_contents,

@@ -34,8 +34,7 @@ from services.github.github_types import (
     IssueInfo,
     RepositoryInfo,
 )
-from services.openai.commit_changes import commit_changes
-from services.openai.instructions.index import SYSTEM_INSTRUCTION_FOR_AGENT
+from services.openai.commit_changes import explore_repo_or_commit_changes
 from services.openai.truncate import truncate_message
 from services.openai.write_pr_body import write_pr_body
 from services.supabase import SupabaseManager
@@ -184,12 +183,45 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
 
     truncated_msg: str = truncate_message(input_message=pr_body)
     messages = [
-        {"role": "system", "content": SYSTEM_INSTRUCTION_FOR_AGENT},
         {"role": "user", "content": truncated_msg if truncated_msg else pr_body},
     ]
-    messages, token_input, token_output = commit_changes(
-        messages=messages, base_args=base_args
-    )
+
+    # Loop a process explore repo and commit changes until the ticket is resolved
+    previous_calls = []
+    retry_count = 0
+    while True:
+        # Explore repo
+        messages, previous_calls, token_input, token_output, is_explored = (
+            explore_repo_or_commit_changes(
+                messages=messages,
+                base_args=base_args,
+                mode="explore",
+                previous_calls=previous_calls,
+            )
+        )
+
+        # Commit changes based on the exploration information
+        messages, previous_calls, token_input, token_output, is_committed = (
+            explore_repo_or_commit_changes(
+                messages=messages,
+                base_args=base_args,
+                mode="commit",
+                previous_calls=previous_calls,
+            )
+        )
+
+        # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
+        if not is_explored and not is_committed:
+            break
+
+        # If files are found but no changes are made, it means that the agent found files but didn't think it's necessary to commit changes or fell into an infinite-like loop (e.g. slightly different searches)
+        if is_explored and not is_committed:
+            retry_count += 1
+            if retry_count > 10:
+                break
+
+        # Because the agent is committing changes, keep doing the loop
+        retry_count = 0
 
     # Create a pull request to the base branch
     comment_body = create_progress_bar(p=90, msg="Creating a pull request...")
