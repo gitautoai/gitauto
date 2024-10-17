@@ -97,7 +97,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         "base_branch": base_branch_name,
         "new_branch": new_branch_name,
         "token": token,
-        "reviewers": list(set([sender_name, issuer_name]))
+        "reviewers": list({sender_name, issuer_name})
     }
 
     print(f"Issue Title: {issue_title}\n")
