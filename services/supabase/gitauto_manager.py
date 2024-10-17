@@ -19,6 +19,8 @@ class GitAutoAgentManager:
         token_input: int,
         token_output: int,
         total_seconds: int,
+        user_id: int,
+        email: str,
         is_completed: bool = True,
     ) -> None:
         """Add agent information to usage record and set is_completed to True."""
@@ -30,6 +32,12 @@ class GitAutoAgentManager:
                 "total_seconds": total_seconds,
             }
         ).eq(column="id", value=usage_record_id).execute()
+        
+        self.client.table(table_name="users").update(
+            json={
+                "email": email,
+            },
+        ).eq(column="user_id", value=user_id).execute()
 
     @handle_exceptions(default_return_value=None, raise_on_error=True)
     def create_installation(

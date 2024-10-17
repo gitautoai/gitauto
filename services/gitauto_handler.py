@@ -4,6 +4,8 @@ import logging
 import time
 from uuid import uuid4
 
+import requests
+
 # Local imports
 from config import (
     EXCEPTION_OWNERS,
@@ -50,6 +52,19 @@ from utils.text_copy import (
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
+def get_user_public_email(username: str):
+    url = f"https://api.github.com/users/{username}"
+    headers = {
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    response: requests.Response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    user_data: dict = response.json()
+
+    email: str = user_data.get('email')
+    
+    return email
 
 async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> None:
     """Core functionality to create comments on issue, create PRs, and update progress."""
@@ -85,6 +100,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     sender_id: int = payload["sender"]["id"]
     is_automation: bool = sender_id == GITHUB_APP_USER_ID
     sender_name: str = payload["sender"]["login"]
+    email: str = get_user_public_email(username=sender_name)
 
     # Extract other information
     github_urls, other_urls = extract_urls(text=issue_body)
@@ -220,5 +236,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token_input=token_input,
         token_output=token_output,
         total_seconds=int(end_time - current_time),
+        user_id=sender_id,
+        email=email,
     )
     return
