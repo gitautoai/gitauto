@@ -9,7 +9,6 @@ from config import (
     OWNER_NAME,
     OWNER_TYPE,
     PRODUCT_ID_FOR_FREE,
-    PRODUCT_ID_FOR_STANDARD,
     USER_ID,
     USER_NAME,
     INSTALLATION_ID,
