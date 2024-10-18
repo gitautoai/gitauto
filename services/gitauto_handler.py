@@ -156,6 +156,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         user_id=sender_id,
         installation_id=installation_id,
         unique_issue_id=unique_issue_id,
+        email=email,
     )
     add_reaction_to_issue(
         issue_number=issue_number, content="eyes", base_args=base_args

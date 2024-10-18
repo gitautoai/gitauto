@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from supabase import Client
 from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 from utils.handle_exceptions import handle_exceptions
+from postgrest.base_request_builder import APIResponse
 
 
 class GitAutoAgentManager:
@@ -116,7 +117,7 @@ class GitAutoAgentManager:
 
     @handle_exceptions(default_return_value=None, raise_on_error=True)
     def create_user_request(
-        self, user_id: int, installation_id: int, unique_issue_id: str
+        self, user_id: int, installation_id: int, unique_issue_id: str, email: str
     ) -> int:
         """Creates record in usage table for this user and issue."""
         # If issue doesn't exist, create one
@@ -145,6 +146,15 @@ class GitAutoAgentManager:
             )
             .execute()
         )
+        
+        if email and not email.lower().endswith("@users.noreply.github.com"):
+            response: APIResponse = self.client.table("users").select("email").eq("user_id", user_id).execute()
+
+            if response.data and len(response.data[0]) > 0 and email != response.data[0].get('email'):
+                self.client.table("users").update(
+                    json={"email": email}
+                ).eq("user_id", user_id).execute()
+                
         return data[1][0]["id"]
 
     @handle_exceptions(default_return_value=None, raise_on_error=False)
