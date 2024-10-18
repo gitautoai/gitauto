@@ -4,8 +4,6 @@ import logging
 import time
 from uuid import uuid4
 
-import requests
-
 # Local imports
 from config import (
     EXCEPTION_OWNERS,
@@ -29,6 +27,7 @@ from services.github.github_manager import (
     create_comment,
     update_comment,
     add_reaction_to_issue,
+    get_user_public_email,
 )
 from services.github.github_types import (
     BaseArgs,
@@ -50,20 +49,6 @@ from utils.text_copy import (
 )
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-
-def get_user_public_email(username: str):
-    url = f"https://api.github.com/users/{username}"
-    headers = {
-        "Accept": "application/vnd.github.v3+json"
-    }
-
-    response: requests.Response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    user_data: dict = response.json()
-
-    email: str = user_data.get('email')
-    
-    return email
 
 async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> None:
     """Core functionality to create comments on issue, create PRs, and update progress."""

@@ -829,3 +829,18 @@ def update_comment_for_raised_errors(
     update_comment(comment_url=comment_url, token=token, body=body)
 
     raise RuntimeError("Error occurred")
+
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def get_user_public_email(username: str):
+    url = f"https://api.github.com/users/{username}"
+    headers = {
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    response: requests.Response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    user_data: dict = response.json()
+
+    email: str = user_data.get('email')
+    
+    return email

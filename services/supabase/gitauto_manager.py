@@ -49,6 +49,7 @@ class GitAutoAgentManager:
         owner_id: int,
         user_id: int,
         user_name: str,
+        email: str,
     ) -> None:
         """Create owners record with stripe customerId, subscribe to free plan, create installation record, create users record on Installation Webhook event"""
         # If owner doesn't exist in owners table, insert owner and stripe customer
@@ -92,6 +93,7 @@ class GitAutoAgentManager:
             json={
                 "user_id": user_id,
                 "user_name": user_name,
+                "email": email,
             },
             on_conflict="user_id",
         ).execute()
