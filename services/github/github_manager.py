@@ -323,12 +323,13 @@ def create_jwt() -> str:
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | None:
     """https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request"""
-    owner, repo, base, head, token = (
+    owner, repo, base, head, token, reviewers = (
         base_args["owner"],
         base_args["repo"],
         base_args["base_branch"],
         base_args["new_branch"],
         base_args["token"],
+        base_args["reviewers"],
     )
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls",
@@ -341,7 +342,18 @@ def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | Non
         print(msg)
         return None
     response.raise_for_status()
-    return response.json()["html_url"]
+    pr_data = response.json()
+    pr_number = pr_data["number"]
+    """https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#request-reviewers-for-a-pull-request"""
+    response: requests.Response = requests.post(
+        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pr_number}/requested_reviewers",
+        headers=create_headers(token=token),
+        json={"reviewers": reviewers},
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
+
+    return pr_data["html_url"]
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)

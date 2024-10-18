@@ -28,17 +28,23 @@ def apply_patch(original_text: str, diff_text: str):
     Apply anyway? [y]: Yes
     """
     # Print encodings of input texts
-    print(f"Original text encoding: {chardet.detect(original_text.encode())['encoding']}")
+    print(f"Org text encoding: {chardet.detect(original_text.encode())['encoding']}")
     print(f"Diff text encoding: {chardet.detect(diff_text.encode())['encoding']}")
 
     # Create temporary files as subprocess.run() accepts only file paths
-    with tempfile.NamedTemporaryFile(mode="w+", newline="", delete=False) as org_file:
+    with tempfile.NamedTemporaryFile(
+        mode="w+", encoding=UTF8, newline="\n", delete=False
+    ) as org_file:
         org_fname: str = org_file.name
         if original_text:
-            s = original_text if original_text.endswith("\n") else original_text + "\n"
+            s = original_text.replace("\r\n", "\n").replace("\r", "\n")
+            if not s.endswith("\n"):
+                s += "\n"
             org_file.write(s)
 
-    with tempfile.NamedTemporaryFile(mode="w+", newline="", delete=False) as diff_file:
+    with tempfile.NamedTemporaryFile(
+        mode="w+", encoding=UTF8, newline="\n", delete=False
+    ) as diff_file:
         diff_fname: str = diff_file.name
         diff_file.write(diff_text if diff_text.endswith("\n") else diff_text + "\n")
 
@@ -51,17 +57,20 @@ def apply_patch(original_text: str, diff_text: str):
                 line[1:] if line.startswith("+") else line for line in lines[3:]
             ]
             new_content: str = "\n".join(new_content_lines)
-            with open(file=org_fname, mode="w", encoding=UTF8, newline="") as new_file:
+            with open(
+                file=org_fname, mode="w", encoding=UTF8, newline="\n"
+            ) as new_file:
                 new_file.write(new_content)
 
         # Modified or deleted file
         else:
-            with open(file=diff_fname, mode="r", encoding=UTF8, newline="") as diff:
+            with open(file=diff_fname, mode="r", encoding=UTF8, newline="\n") as diff:
                 subprocess.run(
                     # See https://www.man7.org/linux/man-pages/man1/patch.1.html
                     args=["patch", "-u", "--fuzz=3", "--forward", org_fname],
                     input=diff.read(),
                     text=True,  # If True, input and output are strings
+                    encoding=UTF8,
                     # capture_output=True,  # Redundant so commented out
                     check=True,  # If True, raise a CalledProcessError if the return code is non-zero
                     stdout=subprocess.PIPE,
@@ -96,7 +105,6 @@ def apply_patch(original_text: str, diff_text: str):
         msg = f"Failed to apply patch partially or entirelly because something is wrong in diff. Analyze the reason from stderr and rej_text, modify the diff, and try again.\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}\n\nrej_text:\n{rej_text}\n"
         print(msg, end="")
         # logging.error(msg)
-        msg += f"\n{modified_text=}\n\n{original_text=}"
         return modified_text, msg
 
     except Exception as e:  # pylint: disable=broad-except
@@ -104,20 +112,23 @@ def apply_patch(original_text: str, diff_text: str):
         # logging.error(msg=f"Error: {e}")
         return "", f"Error: {e}"
     finally:
+        # Remove temporary files
         os.remove(path=org_fname)
         os.remove(path=diff_fname)
+
+        # Remove any Oops.rej* files in the root directory
+        root_dir = os.getcwd()
+        for filename in os.listdir(root_dir):
+            if filename.startswith("Oops.rej"):
+                os.remove(os.path.join(root_dir, filename))
 
     return modified_text, ""
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
 def get_file_content(file_path: str) -> str:
-    with open(file=file_path, mode="rb") as file:  # rb stands for "read binary"
-        raw_data: bytes = file.read()
-
-    detected: chardet.ResultDict = chardet.detect(byte_str=raw_data)
-    encoding: str = detected["encoding"] or UTF8
-    return raw_data.decode(encoding=encoding)
+    with open(file=file_path, mode="r", encoding=UTF8, newline="\n") as file:
+        return file.read()
 
 
 def run_command(command: str, cwd: str) -> str:
