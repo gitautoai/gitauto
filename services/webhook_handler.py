@@ -14,6 +14,7 @@ from services.github.github_manager import (
     create_comment_on_issue_with_gitauto_button,
     get_installation_access_token,
     # turn_on_issue,
+    get_user_public_email
 )
 from services.github.github_types import (
     GitHubEventPayload,
@@ -38,6 +39,7 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
     user_id: int = payload["sender"]["id"]
     user_name: str = payload["sender"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
+    email: str = get_user_public_email(username=user_name)
 
     # Create installation record in Supabase
     supabase_manager.create_installation(
@@ -47,6 +49,7 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
         owner_id=owner_id,
         user_id=user_id,
         user_name=user_name,
+        email=email,
     )
 
     # Add issue templates to the repositories
