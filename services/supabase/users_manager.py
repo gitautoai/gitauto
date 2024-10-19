@@ -23,12 +23,13 @@ class UsersManager:
         self.client: Client = client
 
     @handle_exceptions(default_return_value=None, raise_on_error=False)
-    def create_user(self, user_id: int, user_name: str, installation_id: int) -> None:
+    def create_user(self, user_id: int, user_name: str, installation_id: int, email: str) -> None:
         """Creates an account for the user in the users table"""
         self.client.table(table_name="users").upsert(
             json={
                 "user_id": user_id,
                 "user_name": user_name,
+                "email": email,
             }
         ).execute()
 
