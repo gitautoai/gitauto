@@ -30,7 +30,6 @@ def test_create_update_user_request_works() -> None:
         user_id=user_id,
         user_name="test",
         email=EMAIL,
-        
     )
 
     usage_record_id = supabase_manager.create_user_request(
