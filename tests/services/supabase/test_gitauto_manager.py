@@ -1,6 +1,6 @@
 # run this file locally with: python -m tests.services.supabase.test_gitauto_manager
 import os
-from config import OWNER_TYPE
+from config import (EMAIL, OWNER_TYPE)
 from services.supabase import SupabaseManager
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
@@ -29,6 +29,8 @@ def test_create_update_user_request_works() -> None:
         owner_id=-1,
         user_id=user_id,
         user_name="test",
+        email=EMAIL,
+        
     )
 
     usage_record_id = supabase_manager.create_user_request(
@@ -36,6 +38,7 @@ def test_create_update_user_request_works() -> None:
         installation_id=installation_id,
         # fake issue creation
         unique_issue_id="U/gitautoai/test#01",
+        email=EMAIL,
     )
     assert isinstance(
         usage_record_id,
@@ -77,6 +80,7 @@ def test_complete_and_update_usage_record_only_updates_one_record() -> None:
         owner_id=-1,
         user_id=user_id,
         user_name="test",
+        email=EMAIL,
     )
 
     # Creating multiple usage records where is_completed = false.
@@ -86,6 +90,7 @@ def test_complete_and_update_usage_record_only_updates_one_record() -> None:
             installation_id=installation_id,
             # fake issue creation
             unique_issue_id="U/gitautoai/test#01",
+            email=EMAIL,
         )
 
     usage_record_id = supabase_manager.create_user_request(
@@ -93,6 +98,7 @@ def test_complete_and_update_usage_record_only_updates_one_record() -> None:
         installation_id=installation_id,
         # fake issue creation
         unique_issue_id="U/gitautoai/test#01",
+        email=EMAIL,
     )
     assert isinstance(
         usage_record_id,

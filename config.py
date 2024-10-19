@@ -97,3 +97,4 @@ OWNER_TYPE = "Organization"
 UNIQUE_ISSUE_ID = "O/gitautoai/test#1"
 USER_ID = -1
 USER_NAME = "username-test"
+EMAIL = "test@gitauto.com"

@@ -34,12 +34,6 @@ class GitAutoAgentManager:
             }
         ).eq(column="id", value=usage_record_id).execute()
         
-        self.client.table(table_name="users").update(
-            json={
-                "email": email,
-            },
-        ).eq(column="user_id", value=user_id).execute()
-
     @handle_exceptions(default_return_value=None, raise_on_error=True)
     def create_installation(
         self,
@@ -89,14 +83,14 @@ class GitAutoAgentManager:
             }
         ).execute()
 
-        self.client.table(table_name="users").upsert(
-            json={
-                "user_id": user_id,
-                "user_name": user_name,
-                "email": email,
-            },
-            on_conflict="user_id",
-        ).execute()
+        if email and not email.lower().endswith("@users.noreply.github.com"):
+            response: APIResponse = self.client.table("users").select("email").eq("user_id", user_id).execute()
+
+            if response.data and len(response.data[0]) > 0 and email != response.data[0].get('email'):
+                self.client.table("users").update(
+                    json={"email": email}
+                ).eq("user_id", user_id).execute()
+                
         # Create User, and set is_selected to True if user has no selected account for this installation
         is_selected = True
         data, _ = (
