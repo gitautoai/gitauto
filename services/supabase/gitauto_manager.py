@@ -33,7 +33,7 @@ class GitAutoAgentManager:
                 "total_seconds": total_seconds,
             }
         ).eq(column="id", value=usage_record_id).execute()
-        
+
     @handle_exceptions(default_return_value=None, raise_on_error=True)
     def create_installation(
         self,
