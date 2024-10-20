@@ -14,6 +14,7 @@ from config import (
     INSTALLATION_ID,
     UNIQUE_ISSUE_ID,
     NEW_INSTALLATION_ID,
+    EMAIL,
 )
 from services.stripe.customer import get_subscription
 from services.supabase import SupabaseManager
@@ -47,12 +48,14 @@ def test_create_and_update_user_request_works() -> None:
         owner_id=OWNER_ID,
         user_id=USER_ID,
         user_name=USER_NAME,
+        email=EMAIL,
     )
 
     usage_record_id = supabase_manager.create_user_request(
         user_id=USER_ID,
         installation_id=INSTALLATION_ID,
         unique_issue_id="U/gitautoai/nextjs-website#52",
+        email=EMAIL,
     )
     assert isinstance(usage_record_id, int)
     assert (
@@ -83,6 +86,7 @@ def test_how_many_requests_left() -> None:
         owner_id=OWNER_ID,
         user_id=USER_ID,
         user_name=USER_NAME,
+        email=EMAIL,
     )
     # Testing 0 requests have been made on free tier
     requests_left, request_count, end_date = (
@@ -154,6 +158,7 @@ def test_is_users_first_issue() -> None:
         owner_id=OWNER_ID,
         user_id=USER_ID,
         user_name=USER_NAME,
+        email=EMAIL,
     )
     assert supabase_manager.is_users_first_issue(
         user_id=USER_ID, installation_id=INSTALLATION_ID
@@ -189,6 +194,7 @@ def test_parse_subscription_object() -> None:
         owner_id=OWNER_ID,
         user_id=USER_ID,
         user_name=USER_NAME,
+        email=EMAIL,
     )
 
     def assertion_test(customer_id: str, product_id: str):

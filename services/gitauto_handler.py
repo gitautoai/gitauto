@@ -27,6 +27,7 @@ from services.github.github_manager import (
     create_comment,
     update_comment,
     add_reaction_to_issue,
+    get_user_public_email,
 )
 from services.github.github_types import (
     BaseArgs,
@@ -48,7 +49,6 @@ from utils.text_copy import (
 )
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-
 
 async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> None:
     """Core functionality to create comments on issue, create PRs, and update progress."""
@@ -84,6 +84,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     sender_id: int = payload["sender"]["id"]
     is_automation: bool = sender_id == GITHUB_APP_USER_ID
     sender_name: str = payload["sender"]["login"]
+    email: str = get_user_public_email(username=sender_name)
 
     # Extract other information
     github_urls, other_urls = extract_urls(text=issue_body)
@@ -140,6 +141,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         user_id=sender_id,
         installation_id=installation_id,
         unique_issue_id=unique_issue_id,
+        email=email,
     )
     add_reaction_to_issue(
         issue_number=issue_number, content="eyes", base_args=base_args
@@ -253,5 +255,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token_input=token_input,
         token_output=token_output,
         total_seconds=int(end_time - current_time),
+        user_id=sender_id,
+        email=email,
     )
     return
