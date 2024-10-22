@@ -237,6 +237,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     issue_number: int = payload["issue"]["number"]
     user_id: int = payload["sender"]["id"]
     user_name: str = payload["sender"]["login"]
+    email: str = get_user_public_email(username=user_name)
 
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
@@ -247,6 +248,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
             user_id=user_id,
             user_name=user_name,
             installation_id=installation_id,
+            email=email,
         )
         first_issue = True
     elif supabase_manager.is_users_first_issue(

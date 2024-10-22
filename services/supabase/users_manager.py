@@ -30,7 +30,8 @@ class UsersManager:
                 "user_id": user_id,
                 "user_name": user_name,
                 "email": email,
-            }
+            },
+            on_conflict="user_id"
         ).execute()
 
         self.client.table(table_name="user_installations").insert(
