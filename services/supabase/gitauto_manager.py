@@ -2,7 +2,9 @@
 
 from datetime import datetime, timezone
 from supabase import Client
+from postgrest.base_request_builder import APIResponse
 from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
+from services.supabase.users_manager import UsersManager
 from utils.handle_exceptions import handle_exceptions
 
 
@@ -40,6 +42,7 @@ class GitAutoAgentManager:
         owner_id: int,
         user_id: int,
         user_name: str,
+        email: str,
     ) -> None:
         """Create owners record with stripe customerId, subscribe to free plan, create installation record, create users record on Installation Webhook event"""
         # If owner doesn't exist in owners table, insert owner and stripe customer
@@ -69,6 +72,26 @@ class GitAutoAgentManager:
                 json={"owner_id": owner_id, "stripe_customer_id": customer_id}
             ).execute()
 
+        users_manager = UsersManager(client=self.client)
+        email_to_store = None if str(email).lower().endswith("@users.noreply.github.com") else email
+
+        response: APIResponse = self.client.table("users").select("email").eq("user_id", user_id).execute()
+
+        if response.data and len(response.data[0]) > 0:
+            # Update the email if it's different from the stored one
+            if email_to_store != response.data[0].get('email'):
+                self.client.table("users").update(
+                    json={"email": email_to_store}
+                ).eq("user_id", user_id).execute()
+        else:
+            # Create the user if it doesn't exist
+            users_manager.create_user(
+                user_id=user_id,
+                user_name=user_name,
+                installation_id=installation_id,
+                email=email_to_store,
+            )
+            
         # Insert installation record
         self.client.table(table_name="installations").insert(
             json={
@@ -78,14 +101,7 @@ class GitAutoAgentManager:
                 "owner_id": owner_id,
             }
         ).execute()
-
-        self.client.table(table_name="users").upsert(
-            json={
-                "user_id": user_id,
-                "user_name": user_name,
-            },
-            on_conflict="user_id",
-        ).execute()
+                
         # Create User, and set is_selected to True if user has no selected account for this installation
         is_selected = True
         data, _ = (
@@ -108,7 +124,7 @@ class GitAutoAgentManager:
 
     @handle_exceptions(default_return_value=None, raise_on_error=True)
     def create_user_request(
-        self, user_id: int, installation_id: int, unique_issue_id: str
+        self, user_id: int, installation_id: int, unique_issue_id: str, email: str
     ) -> int:
         """Creates record in usage table for this user and issue."""
         # If issue doesn't exist, create one
@@ -118,6 +134,7 @@ class GitAutoAgentManager:
             .eq(column="unique_id", value=unique_issue_id)
             .execute()
         )
+         # If no issue exists with that unique_issue_id, create one
         if not data[1]:
             self.client.table(table_name="issues").insert(
                 json={
@@ -137,6 +154,16 @@ class GitAutoAgentManager:
             )
             .execute()
         )
+        
+        if not str(email).lower().endswith("@users.noreply.github.com"):
+            response: APIResponse = self.client.table("users").select("email").eq("user_id", user_id).execute()
+
+            if response.data and len(response.data[0]) > 0:
+                if email != response.data[0].get('email'):
+                    self.client.table("users").update(
+                        json={"email": email}
+                    ).eq("user_id", user_id).execute()
+
         return data[1][0]["id"]
 
     @handle_exceptions(default_return_value=None, raise_on_error=False)
