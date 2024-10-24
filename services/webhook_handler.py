@@ -1,5 +1,6 @@
 # Standard imports
 import re
+from typing import Any
 
 # Local imports
 from config import (
@@ -15,10 +16,7 @@ from services.github.github_manager import (
     get_installation_access_token,
     # turn_on_issue,
 )
-from services.github.github_types import (
-    GitHubEventPayload,
-    GitHubInstallationPayload,
-)
+from services.github.github_types import GitHubInstallationPayload
 from services.supabase import SupabaseManager
 from services.gitauto_handler import handle_gitauto
 from utils.handle_exceptions import handle_exceptions
@@ -79,7 +77,7 @@ async def handle_installation_repos_added(payload) -> None:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=True)
-async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> None:
+async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None:
     """
     Determine the event type and call the appropriate handler.
     Check the type of webhook event and handle accordingly.
@@ -167,4 +165,4 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
         return
 
     # Unhandled events are captured here
-    print(f"Event {event_name} with action {action} is not handled")
+    print(f"Event '{event_name}' with action '{action}' was received but skipped.")
