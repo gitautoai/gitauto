@@ -4,12 +4,14 @@ from typing import Any
 
 # Local imports
 from config import (
+    GITHUB_CHECK_RUN_FAILURES,
     PRODUCT_ID,
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
     PR_BODY_STARTS_WITH,
     ISSUE_NUMBER_FORMAT,
 )
+from services.check_run_handler import handle_check_run
 from services.github.github_manager import (
     add_issue_templates,
     create_comment_on_issue_with_gitauto_button,
@@ -137,6 +139,14 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
                 await handle_gitauto(payload=payload, trigger_type="comment")
         if not issue_handled:
             print("Edit is not an activated GitAtuo trigger.")
+        return
+
+    # Monitor check_run failure and re-run agent with failure reason
+    # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#check_run
+    if event_name == "check_run" and action in ("completed"):
+        conclusion: str = payload["check_run"]["conclusion"]
+        if conclusion in GITHUB_CHECK_RUN_FAILURES:
+            handle_check_run(payload=payload)
         return
 
     # Track merged PRs as this is also our success status

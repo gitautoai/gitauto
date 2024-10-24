@@ -18,6 +18,7 @@ from services.openai.count_tokens import count_tokens
 from services.openai.functions import (
     TOOLS_TO_COMMIT_CHANGES,
     TOOLS_TO_EXPLORE_REPO,
+    TOOLS_TO_GET_FILE,
     tools_to_call,
 )
 from services.openai.init import create_openai_client
@@ -32,7 +33,7 @@ from utils.handle_exceptions import handle_exceptions
 def explore_repo_or_commit_changes(
     messages: Iterable[ChatCompletionMessageParam],
     base_args: BaseArgs,
-    mode: Literal["commit", "explore"],
+    mode: Literal["commit", "explore", "get"],
     previous_calls: List[dict] | None = None,
 ):
     """https://platform.openai.com/docs/api-reference/chat/create"""
@@ -47,6 +48,10 @@ def explore_repo_or_commit_changes(
     elif mode == "explore":
         content = SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
         tools = TOOLS_TO_EXPLORE_REPO
+        tool_choice = "auto"
+    elif mode == "get":
+        content = SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
+        tools = TOOLS_TO_GET_FILE
         tool_choice = "auto"
     system_message: ChatCompletionMessageParam = {"role": "system", "content": content}
     all_messages = [system_message] + list(messages)
@@ -86,14 +91,14 @@ def explore_repo_or_commit_changes(
     # Check if the same function with the same args has been called before
     current_call = {"function": tool_name, "args": tool_args}
     if current_call in previous_calls:
+        print(f"The function '{tool_name}' was called with the same arguments as before")
         tool_result: str = (
-            f"The function ({tool_name}) was called with the same arguments ({json.dumps(obj=tool_args)}) as before. To prevent an infinite loop, this call will be skipped.\n"
+            f"The function '{tool_name}' was called with the same arguments as before, which is non-sense. You must open the file path in your tool args and update your diff content accordingly."
         )
-        print(tool_result)
-        return messages, previous_calls, token_input, token_output, is_done
-
-    # Call the tool
-    tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
+    else:
+        tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
+        previous_calls.append(current_call)
+        is_done = True
 
     # Append the function call to the messages
     messages.append(choice.message)
@@ -105,8 +110,6 @@ def explore_repo_or_commit_changes(
             "content": str(tool_result),
         }
     )
-    previous_calls.append(current_call)
 
     # Return
-    is_done = True
     return messages, previous_calls, token_input, token_output, is_done
