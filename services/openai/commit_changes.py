@@ -73,7 +73,7 @@ def explore_repo_or_commit_changes(
     # Return if no tool calls
     is_done = False
     if not tool_calls:
-        print("No tool calls: ", choice.message.content)
+        print(f"No tool called in '{mode}' mode")
         return messages, previous_calls, token_input, token_output, is_done
 
     # Handle multiple tool calls
