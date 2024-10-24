@@ -35,8 +35,9 @@ from services.github.github_types import (
     RepositoryInfo,
 )
 from services.openai.commit_changes import explore_repo_or_commit_changes
+from services.openai.instructions.write_pr_body import WRITE_PR_BODY
 from services.openai.truncate import truncate_message
-from services.openai.write_pr_body import write_pr_body
+from services.openai.chat import chat_with_ai
 from services.supabase import SupabaseManager
 from utils.extract_urls import extract_urls
 from utils.progress_bar import create_progress_bar
@@ -157,8 +158,9 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     # Prepare PR body
     comment_body = create_progress_bar(p=10, msg="Writing a pull request body...")
     update_comment(comment_url=comment_url, token=token, body=comment_body)
-    pr_body: str = write_pr_body(
-        input_message=json.dumps(
+    pr_body: str = chat_with_ai(
+        system_input=WRITE_PR_BODY,
+        user_input=json.dumps(
             obj={
                 "issue_title": issue_title,
                 "issue_body": issue_body,

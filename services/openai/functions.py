@@ -99,6 +99,9 @@ SEARCH_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
 }
 
 # See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
+TOOLS_TO_GET_FILE: Iterable[ChatCompletionToolParam] = [
+    {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
+]
 TOOLS_TO_EXPLORE_REPO: Iterable[ChatCompletionToolParam] = [
     # {"type": "code_interpreter"},
     # {"type": "retrieval"},

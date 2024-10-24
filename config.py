@@ -32,6 +32,12 @@ GITHUB_APP_IDS: list[int] = list(
 GITHUB_APP_NAME: str = get_env_var(name="GH_APP_NAME")
 GITHUB_APP_USER_ID: int = int(get_env_var(name="GH_APP_USER_ID"))
 GITHUB_APP_USER_NAME: str = get_env_var(name="GH_APP_USER_NAME")
+GITHUB_CHECK_RUN_FAILURES = [
+    "startup_failure",
+    "failure",
+    "timed_out",
+    "action_required",
+]
 GITHUB_ISSUE_DIR = ".github/ISSUE_TEMPLATE"
 GITHUB_ISSUE_TEMPLATES: list[str] = ["bug_report.yml", "feature_request.yml"]
 GITHUB_PRIVATE_KEY_ENCODED: str = get_env_var(name="GH_PRIVATE_KEY")
