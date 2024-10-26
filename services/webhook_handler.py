@@ -1,3 +1,4 @@
+    # Ensure all new code is covered by tests
     # Add unit tests for new functions
     # Add error handling for API requests
     # Log the response from the GitHub API when posting comments
