@@ -4,7 +4,12 @@
     # Ensure backward compatibility by maintaining existing processes
     # Terminate further processing if clarification is requested
 def handle_issue_event(issue_details, issue_number, token):
+    try:
+        # Existing logic
+    except Exception as e:
     if not assess_issue_details(issue_details):
+        print(f"Error handling issue event: {e}")
+        return None
         request_clarification(issue_number, token)
 from services.github.github_manager import assess_issue_details, request_clarification
 from services.github.github_manager import comment_on_issue
