@@ -166,7 +166,10 @@ def commit_changes_to_remote_branch(
     if message is None:
         message = f"Update {file_path}."
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
-    url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}"
+    new_branch = base_args["new_branch"]
+    if not new_branch:
+        raise ValueError("new_branch is not set.")
+    url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={new_branch}"
     headers = create_headers(token=token)
     get_response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
 
@@ -197,7 +200,7 @@ def commit_changes_to_remote_branch(
     data: dict[str, str | None] = {
         "message": message,
         "content": base64.b64encode(s=s2).decode(encoding=UTF8),
-        "branch": base_args["new_branch"],
+        "branch": new_branch,
     }
     if sha != "":
         data["sha"] = sha
@@ -437,7 +440,9 @@ def get_installed_owners_and_repos(token: str) -> list[dict[str, int | str]]:
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_issue_comments(issue_number: int, base_args: BaseArgs) -> list[str]:
+def get_issue_comments(
+    issue_number: int, base_args: BaseArgs, includes_me: bool = False
+) -> list[str]:
     """https://docs.github.com/en/rest/issues/comments#list-issue-comments"""
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     response = requests.get(
@@ -446,13 +451,16 @@ def get_issue_comments(issue_number: int, base_args: BaseArgs) -> list[str]:
         timeout=TIMEOUT,
     )
     response.raise_for_status()
-    comments: list[Any] = response.json()
-    filtered_comments: list[Any] = [
-        comment
-        for comment in comments
-        if comment.get("performed_via_github_app") is None
-        or comment["performed_via_github_app"].get("id") not in GITHUB_APP_IDS
-    ]
+    comments: list[dict[str, Any]] = response.json()
+    if not includes_me:
+        filtered_comments: list[dict[str, Any]] = [
+            comment
+            for comment in comments
+            if comment.get("performed_via_github_app") is None
+            or comment["performed_via_github_app"].get("id") not in GITHUB_APP_IDS
+        ]
+    else:
+        filtered_comments = comments
     comment_texts: list[str] = [comment["body"] for comment in filtered_comments]
     return comment_texts
 
