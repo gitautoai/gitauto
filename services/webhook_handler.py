@@ -1,3 +1,4 @@
+from services.github.github_manager import assess_issue_details, request_clarification
 from services.github.github_manager import comment_on_issue
 def comment_on_issue(issue_number, comment, token):
     """Post a comment on a GitHub issue."""
