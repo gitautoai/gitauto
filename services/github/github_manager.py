@@ -1,3 +1,4 @@
+from services.webhook_handler import handle_issue_event
 def assess_issue_details(issue_details):
     """Assess the adequacy of issue details."""
     issue_number = base_args.issue_number
