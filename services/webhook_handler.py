@@ -1,3 +1,4 @@
+    # Foster collaboration
     # Encourage innovation
     # Ensure continuous learning
     # Plan for future improvements
