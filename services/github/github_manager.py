@@ -1,3 +1,4 @@
+    # Ensure all new code is covered by tests
     # Add unit tests for new functions
     try:
         # Existing logic
