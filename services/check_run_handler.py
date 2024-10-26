@@ -1,6 +1,6 @@
 # Local imports
 import json
-from config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from config import STRIPE_PRODUCT_ID_FREE, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 from services.github.actions_manager import get_workflow_run_logs, get_workflow_run_path
 from services.github.github_manager import (
     get_installation_access_token,
@@ -21,7 +21,9 @@ from services.github.pulls_manager import get_pull_request, get_pull_request_fil
 from services.openai.commit_changes import explore_repo_or_commit_changes
 from services.openai.chat import chat_with_ai
 from services.openai.instructions.identify_cause import IDENTIFY_CAUSE
+from services.stripe.subscriptions import get_stripe_product_id
 from services.supabase import SupabaseManager
+from services.supabase.owers_manager import get_stripe_customer_id
 from utils.progress_bar import create_progress_bar
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
@@ -76,6 +78,20 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "token": token,
     }
 
+    # Return here if stripe_customer_id is not found
+    stripe_customer_id: str | None = get_stripe_customer_id(owner_id=owner_id)
+    if stripe_customer_id is None:
+        msg = f"Skipping because customer is in free tier. stripe_customer_id: '{stripe_customer_id}'"
+        print(msg)
+        return
+
+    # Return here if product_id is not found or is in free tier
+    product_id: str | None = get_stripe_product_id(customer_id=stripe_customer_id)
+    if product_id is None or product_id == STRIPE_PRODUCT_ID_FREE:
+        msg = "Skipping because product_id is not found or is in free tier. product_id: '{product_id}'"
+        print(msg)
+        return
+
     # Return here if GitAuto has tried to fix this Check Run error before because we need to avoid infinite loops
     pr_comments = get_issue_comments(
         issue_number=pull_number, base_args=base_args, includes_me=True
@@ -95,7 +111,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
 
     # Get title, body, and code changes in the PR
     pull_title, pull_body = get_pull_request(url=pull_url, token=token)
-    pull_file_url = pull_url + "/files"
+    pull_file_url = f"{pull_url}/files"
     pull_changes = get_pull_request_files(url=pull_file_url, token=token)
 
     # Get the GitHub workflow file content

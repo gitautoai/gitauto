@@ -72,6 +72,8 @@ SUPABASE_URL: str = get_env_var(name="SUPABASE_URL")
 # Stripe
 STRIPE_API_KEY: str = get_env_var(name="STRIPE_API_KEY")
 STRIPE_FREE_TIER_PRICE_ID: str = get_env_var(name="STRIPE_FREE_TIER_PRICE_ID")
+STRIPE_PRODUCT_ID_FREE: str = get_env_var(name="STRIPE_PRODUCT_ID_FREE")
+STRIPE_PRODUCT_ID_STANDARD: str = get_env_var(name="STRIPE_PRODUCT_ID_STANDARD")
 
 # General
 DEFAULT_TIME = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
