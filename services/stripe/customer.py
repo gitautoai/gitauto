@@ -51,8 +51,8 @@ def create_stripe_customer(
 
 @handle_exceptions(raise_on_error=True)
 def get_subscription(customer_id: str) -> stripe.ListObject[stripe.Subscription]:
-    subscription = stripe.Subscription.list(customer=customer_id, status="active")
-    return subscription
+    subscriptions = stripe.Subscription.list(customer=customer_id, status="active")
+    return subscriptions
 
 
 @handle_exceptions(default_return_value=FREE_TIER_REQUEST_AMOUNT, raise_on_error=False)
