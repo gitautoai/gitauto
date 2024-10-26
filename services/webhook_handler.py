@@ -1,3 +1,6 @@
+def handle_issue_event(issue_details, issue_number, token):
+    if not assess_issue_details(issue_details):
+        request_clarification(issue_number, token)
 from services.github.github_manager import assess_issue_details, request_clarification
 from services.github.github_manager import comment_on_issue
 def comment_on_issue(issue_number, comment, token):
