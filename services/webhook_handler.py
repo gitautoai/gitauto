@@ -1,3 +1,4 @@
+    # Ensure all changes are committed and pushed
     # Update README and other relevant documentation
     # Document new functions and changes
     # Review and refactor code for clarity and efficiency
