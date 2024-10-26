@@ -1,3 +1,4 @@
+    # Add logging for issue assessment and clarification requests
     # Ensure backward compatibility by maintaining existing processes
     # Terminate further processing if clarification is requested
 def handle_issue_event(issue_details, issue_number, token):
