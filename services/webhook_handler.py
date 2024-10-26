@@ -1,3 +1,13 @@
+def comment_on_issue(issue_number, comment, token):
+    """Post a comment on a GitHub issue."""
+    url = f"https://api.github.com/repos/{{owner}}/{{repo}}/issues/{{issue_number}}/comments"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    data = {"body": comment}
+    response = requests.post(url, headers=headers, json=data)
+    return response.status_code, response.json()
 # Standard imports
 import re
 from typing import Any
