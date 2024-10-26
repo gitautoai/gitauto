@@ -1,3 +1,4 @@
+    # Reflect on challenges
     # Celebrate successes
     # Document lessons learned
     # Plan next steps based on feedback
