@@ -44,6 +44,8 @@ jobs:
 
         STRIPE_API_KEY: ${{ secrets.PROD_STRIPE_API_KEY }}
         STRIPE_FREE_TIER_PRICE_ID: ${{ secrets.PROD_STRIPE_FREE_TIER_PRICE_ID }}
+        STRIPE_PRODUCT_ID_FREE: ${{ secrets.STRIPE_PRODUCT_ID_FREE_PROD }}
+        STRIPE_PRODUCT_ID_STANDARD: ${{ secrets.STRIPE_PRODUCT_ID_STANDARD_PROD }}
         
         ENV: prod
         PRODUCT_ID: ${{ secrets.PROD_PRODUCT_ID }}
