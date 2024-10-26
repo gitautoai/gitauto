@@ -1,3 +1,4 @@
+    # Terminate further processing if clarification is requested
 def handle_issue_event(issue_details, issue_number, token):
     if not assess_issue_details(issue_details):
         request_clarification(issue_number, token)
