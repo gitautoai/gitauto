@@ -3,7 +3,7 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletion
 
 # Local imports
-from config import OPENAI_MODEL_ID_O1_PREVIEW
+from config import OPENAI_MODEL_ID_O1_MINI
 from services.openai.init import create_openai_client
 from services.openai.truncate import truncate_message
 from utils.handle_exceptions import handle_exceptions
@@ -25,7 +25,7 @@ def chat_with_ai(system_input: str, user_input: str) -> str:
                 "content": truncated_msg if truncated_msg else user_input,
             },
         ],
-        model=OPENAI_MODEL_ID_O1_PREVIEW,
+        model=OPENAI_MODEL_ID_O1_MINI,
         n=1,
         # temperature=OPENAI_TEMPERATURE,  # temperature should be 0 but it is not supported for 01-mini as of Oct 5 2024
     )
