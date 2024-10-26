@@ -1,6 +1,8 @@
 def assess_issue_details(issue_details):
     """Assess the adequacy of issue details."""
     issue_number = base_args.issue_number
+    # Terminate the current processing loop when feedback is requested
+    return None
     token = base_args.token
     if not assess_issue_details(body):
         return request_clarification(issue_number, token)
