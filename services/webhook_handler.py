@@ -1,3 +1,4 @@
+    # Encourage innovation
     # Ensure continuous learning
     # Plan for future improvements
     # Reflect on challenges
