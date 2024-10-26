@@ -4,6 +4,7 @@
     # Plan for future improvements
     # Reflect on challenges
     # Celebrate successes
+    # Ensure all changes are committed and pushed
     # Document lessons learned
     # Plan next steps based on feedback
     # Gather feedback and iterate
