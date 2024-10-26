@@ -1,5 +1,9 @@
 def assess_issue_details(issue_details):
     """Assess the adequacy of issue details."""
+    issue_number = base_args.issue_number
+    token = base_args.token
+    if not assess_issue_details(body):
+        return request_clarification(issue_number, token)
     # Placeholder logic for assessing issue details
     if not issue_details or len(issue_details) < 20:
         return False
