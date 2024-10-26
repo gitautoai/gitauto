@@ -1,3 +1,4 @@
+    # Finalize and review all changes
     # Ensure all changes are committed and pushed
     # Update README and other relevant documentation
     # Document new functions and changes
