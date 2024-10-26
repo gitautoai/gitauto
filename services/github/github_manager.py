@@ -164,7 +164,7 @@ def commit_changes_to_remote_branch(
 ):
     """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
     if message is None:
-        message = f"Update {file_path}."
+        message = f"Update {file_path}"
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     new_branch = base_args["new_branch"]
     if not new_branch:
