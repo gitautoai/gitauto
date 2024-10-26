@@ -1,3 +1,4 @@
+    # Integrate issue handling into the pull request generation workflow
 from services.webhook_handler import handle_issue_event
 def assess_issue_details(issue_details):
     """Assess the adequacy of issue details."""
