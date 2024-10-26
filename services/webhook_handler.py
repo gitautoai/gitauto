@@ -1,3 +1,4 @@
+    # Add unit tests for new functions
     # Add error handling for API requests
     # Log the response from the GitHub API when posting comments
     # Add logging for issue assessment and clarification requests
