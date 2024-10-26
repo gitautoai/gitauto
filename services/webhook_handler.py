@@ -1,3 +1,4 @@
+    # Update README and other relevant documentation
     # Document new functions and changes
     # Review and refactor code for clarity and efficiency
     # Ensure all new code is covered by tests
