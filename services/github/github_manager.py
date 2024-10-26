@@ -1,3 +1,4 @@
+    # Log the response from the GitHub API when posting comments
     # Add logging for issue assessment and clarification requests
     # Ensure backward compatibility by maintaining existing processes
     handle_issue_event(body, base_args.issue_number, base_args.token)
