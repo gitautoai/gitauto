@@ -45,15 +45,15 @@ def explore_repo_or_commit_changes(
     if mode == "commit":
         content = SYSTEM_INSTRUCTION_TO_COMMIT_CHANGES
         tools = TOOLS_TO_COMMIT_CHANGES
-        tool_choice = "required"
+        tool_choice = "auto"  # DO NOT USE "required" and allow GitAuto not to call any tools.
     elif mode == "explore":
         content = SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
         tools = TOOLS_TO_EXPLORE_REPO
-        tool_choice = "auto"
+        tool_choice = "auto"  # DO NOT USE "required" and allow GitAuto not to call any tools.
     elif mode == "get":
         content = SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
         tools = TOOLS_TO_GET_FILE
-        tool_choice = "auto"
+        tool_choice = "auto"  # DO NOT USE "required" and allow GitAuto not to call any tools.
     system_message: ChatCompletionMessageParam = {"role": "system", "content": content}
     all_messages = [system_message] + list(messages)
 
