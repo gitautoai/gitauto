@@ -169,6 +169,14 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     print(colorize(text="How to fix:", color="green"))
     print(how_to_fix)
 
+    # Update the comment if any obstacles are found
+    messages = [{"role": "user", "content": how_to_fix}]
+    _messages, _previous_calls, _token_input, _token_output, is_commented = (
+        chat_with_agent(messages=messages, base_args=base_args, mode="comment")
+    )
+    if is_commented:
+        return
+
     content = {
         "pull_request_title": pull_title,
         "file_tree": file_tree,
