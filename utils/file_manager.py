@@ -82,7 +82,7 @@ def apply_patch(original_text: str, diff_text: str):
         stderr: str = e.stderr
 
         # Check if the error message indicates that the patch was already applied
-        msg = f"Failed to apply patch because the diff is already applied. But it's OK, move on to the next fix!\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}"
+        msg = f"Failed to apply patch because the diff is already applied. But it's OK, move on to the next fix!\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}\n"
         if "already exists!" in stdout:
             print(msg, end="")
             return "", msg

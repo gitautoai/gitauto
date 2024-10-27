@@ -26,6 +26,7 @@ from services.openai.instructions.commit_changes import (
     SYSTEM_INSTRUCTION_TO_COMMIT_CHANGES,
 )
 from services.openai.instructions.explore_repo import SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
+from utils.colorize_log import colorize
 from utils.handle_exceptions import handle_exceptions
 
 
@@ -78,7 +79,7 @@ def explore_repo_or_commit_changes(
     # Return if no tool calls
     is_done = False
     if not tool_calls:
-        print(f"No tool called in '{mode}' mode")
+        print(colorize(f"No tools were called in '{mode}' mode", "yellow"))
         return messages, previous_calls, token_input, token_output, is_done
 
     # Handle multiple tool calls
