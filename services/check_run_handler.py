@@ -1,6 +1,11 @@
 # Local imports
 import json
-from config import GITHUB_APP_USER_NAME, STRIPE_PRODUCT_ID_FREE, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from config import (
+    GITHUB_APP_USER_NAME,
+    STRIPE_PRODUCT_ID_FREE,
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY,
+)
 from services.github.actions_manager import get_workflow_run_logs, get_workflow_run_path
 from services.github.github_manager import (
     get_installation_access_token,
@@ -14,6 +19,7 @@ from services.github.github_types import (
     CheckRun,
     CheckRunCompletedPayload,
     CheckSuite,
+    Owner,
     PullRequest,
     Repository,
 )
@@ -43,9 +49,14 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     is_fork: bool = repo.get("fork", False)
 
     # Extract owner related variables
-    owner_type: str = repo["owner"]["type"]
-    owner_id: int = repo["owner"]["id"]
-    owner_name: str = repo["owner"]["login"]
+    owner: Owner = repo.get("owner", {})
+    if owner is None:
+        msg = "Skipping because owner is not found"
+        print(colorize(text=msg, color="yellow"))
+        return
+    owner_type: str = owner["type"]
+    owner_id: int = owner["id"]
+    owner_name: str = owner["login"]
 
     # Extract branch related variables
     check_suite: CheckSuite = check_run["check_suite"]
