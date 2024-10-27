@@ -24,7 +24,7 @@ from services.github.github_types import (
     Repository,
 )
 from services.github.pulls_manager import get_pull_request, get_pull_request_files
-from services.openai.commit_changes import explore_repo_or_commit_changes
+from services.openai.commit_changes import chat_with_agent
 from services.openai.chat import chat_with_ai
 from services.openai.instructions.identify_cause import IDENTIFY_CAUSE
 from services.stripe.subscriptions import get_stripe_product_id
@@ -182,7 +182,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     while True:
         # Explore repo
         messages, previous_calls, _token_input, _token_output, is_explored = (
-            explore_repo_or_commit_changes(
+            chat_with_agent(
                 messages=messages,
                 base_args=base_args,
                 mode="get",  # explore can not be used here because "search_remote_file_contents" can search files only in the default branch NOT in the branch that is merged into the default branch
@@ -192,7 +192,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
 
         # Commit changes based on the exploration information
         messages, previous_calls, _token_input, _token_output, is_committed = (
-            explore_repo_or_commit_changes(
+            chat_with_agent(
                 messages=messages,
                 base_args=base_args,
                 mode="commit",

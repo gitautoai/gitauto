@@ -34,7 +34,7 @@ from services.github.github_types import (
     IssueInfo,
     RepositoryInfo,
 )
-from services.openai.commit_changes import explore_repo_or_commit_changes
+from services.openai.commit_changes import chat_with_agent
 from services.openai.instructions.write_pr_body import WRITE_PR_BODY
 from services.openai.truncate import truncate_message
 from services.openai.chat import chat_with_ai
@@ -191,7 +191,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     while True:
         # Explore repo
         messages, previous_calls, token_input, token_output, is_explored = (
-            explore_repo_or_commit_changes(
+            chat_with_agent(
                 messages=messages,
                 base_args=base_args,
                 mode="explore",
@@ -201,7 +201,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
 
         # Commit changes based on the exploration information
         messages, previous_calls, token_input, token_output, is_committed = (
-            explore_repo_or_commit_changes(
+            chat_with_agent(
                 messages=messages,
                 base_args=base_args,
                 mode="commit",
