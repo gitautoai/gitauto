@@ -24,6 +24,7 @@ from services.openai.instructions.identify_cause import IDENTIFY_CAUSE
 from services.stripe.subscriptions import get_stripe_product_id
 from services.supabase import SupabaseManager
 from services.supabase.owers_manager import get_stripe_customer_id
+from utils.colorize_log import colorize
 from utils.progress_bar import create_progress_bar
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
