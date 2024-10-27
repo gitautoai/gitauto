@@ -1,6 +1,6 @@
 # Local imports
 import json
-from config import STRIPE_PRODUCT_ID_FREE, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from config import GITHUB_APP_USER_NAME, STRIPE_PRODUCT_ID_FREE, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 from services.github.actions_manager import get_workflow_run_logs, get_workflow_run_path
 from services.github.github_manager import (
     get_installation_access_token,
