@@ -51,9 +51,13 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     check_suite: CheckSuite = check_run["check_suite"]
     head_branch: str = check_suite["head_branch"]
 
-    # Extract sender related variables
+    # Extract sender related variables and return if sender is GitAuto itself
     sender_id: int = payload["sender"]["id"]
     sender_name: str = payload["sender"]["login"]
+    if sender_name != GITHUB_APP_USER_NAME:
+        msg = f"Skipping because sender is not GitAuto. sender_name: '{sender_name}'"
+        print(colorize(text=msg, color="yellow"))
+        return
 
     # Extract PR related variables
     pull_request: PullRequest = check_run["pull_requests"][0]
