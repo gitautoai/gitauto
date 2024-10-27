@@ -88,23 +88,23 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     stripe_customer_id: str | None = get_stripe_customer_id(owner_id=owner_id)
     if stripe_customer_id is None:
         msg = f"Skipping because customer is in free tier. stripe_customer_id: '{stripe_customer_id}'"
-        print(msg)
+        print(colorize(text=msg, color="yellow"))
         return
 
     # Return here if product_id is not found or is in free tier
     product_id: str | None = get_stripe_product_id(customer_id=stripe_customer_id)
     if product_id is None or product_id == STRIPE_PRODUCT_ID_FREE:
-        msg = "Skipping because product_id is not found or is in free tier. product_id: '{product_id}'"
-        print(msg)
+        msg = f"Skipping because product_id is not found or is in free tier. product_id: '{product_id}'"
+        print(colorize(text=msg, color="yellow"))
         return
 
     # Return here if GitAuto has tried to fix this Check Run error before because we need to avoid infinite loops
     pr_comments = get_issue_comments(
         issue_number=pull_number, base_args=base_args, includes_me=True
     )
-    print(f"pr_comments: {json.dumps(obj=pr_comments, indent=2)}")
     if any(check_run_name in comment for comment in pr_comments):
-        print("Skipping because GitAuto has tried to fix this Check Run error before")
+        msg = "Skipping because GitAuto has tried to fix this Check Run error before"
+        print(colorize(text=msg, color="yellow"))
         return
 
     # Create a first comment to inform the user that GitAuto is trying to fix the Check Run error

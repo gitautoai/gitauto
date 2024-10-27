@@ -37,7 +37,7 @@ def handle_exceptions(
                         reset_ts = int(err.response.headers.get("X-RateLimit-Reset", 0))
                         current_ts = int(time.time())
                         wait_time = reset_ts - current_ts
-                        err_msg = f"{func.__name__} encountered a GitHubPrimaryRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}"
+                        err_msg = f"{func.__name__} encountered a GitHubPrimaryRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n"
                         logging.warning(msg=err_msg)
                         time.sleep(wait_time + 5)  # 5 seconds is a buffer
                         return wrapper(*args, **kwargs)
@@ -45,27 +45,27 @@ def handle_exceptions(
                     # Check if the secondary rate limit has been exceeded
                     if "exceeded a secondary rate limit" in err.response.text.lower():
                         retry_after = int(err.response.headers.get("Retry-After", 60))
-                        err_msg = f"{func.__name__} encountered a GitHubSecondaryRateLimitError: {err}. Retrying after {retry_after} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}"
+                        err_msg = f"{func.__name__} encountered a GitHubSecondaryRateLimitError: {err}. Retrying after {retry_after} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n"
                         logging.warning(msg=err_msg)
                         time.sleep(retry_after)
                         return wrapper(*args, **kwargs)
 
                     # Otherwise, log the error and return the default return value
-                    err_msg = f"{func.__name__} encountered an HTTPError: {err}. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}"
+                    err_msg = f"{func.__name__} encountered an HTTPError: {err}. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n"
                     logging.error(msg=err_msg)
                     if raise_on_error:
                         raise
 
                 # Ex) 409: Conflict, 422: Unprocessable Entity (No changes made), and etc.
                 else:
-                    err_msg = f"{func.__name__} encountered an HTTPError: {err}\nArgs: {args}\nKwargs: {truncated_kwargs}. Reason: {reason}. Text: {text}"
+                    err_msg = f"{func.__name__} encountered an HTTPError: {err}\nArgs: {args}\nKwargs: {truncated_kwargs}. Reason: {reason}. Text: {text}\n"
                     logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
 
             # Catch all other exceptions
             except (AttributeError, KeyError, TypeError, Exception) as err:
-                error_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\nArgs: {args}\nKwargs: {truncated_kwargs}"
+                error_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\nArgs: {args}\nKwargs: {truncated_kwargs}\n"
                 logging.error(msg=error_msg)
                 if raise_on_error:
                     raise
