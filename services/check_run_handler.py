@@ -166,7 +166,9 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     }
     user_input = json.dumps(obj=input_message)
     how_to_fix: str = chat_with_ai(system_input=IDENTIFY_CAUSE, user_input=user_input)
-    print(f"how_to_fix:\n{how_to_fix}")
+    print(colorize(text="How to fix:", color="green"))
+    print(how_to_fix)
+
     content = {
         "pull_request_title": pull_title,
         "file_tree": file_tree,

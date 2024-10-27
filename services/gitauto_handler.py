@@ -36,7 +36,6 @@ from services.github.github_types import (
 )
 from services.openai.commit_changes import chat_with_agent
 from services.openai.instructions.write_pr_body import WRITE_PR_BODY
-from services.openai.truncate import truncate_message
 from services.openai.chat import chat_with_ai
 from services.supabase import SupabaseManager
 from utils.extract_urls import extract_urls
@@ -97,7 +96,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         "base_branch": base_branch_name,
         "new_branch": new_branch_name,
         "token": token,
-        "reviewers": list({sender_name, issuer_name})
+        "reviewers": list({sender_name, issuer_name}),
     }
 
     print(f"Issue Title: {issue_title}\n")
@@ -168,7 +167,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
                 "issue_comments": issue_comments,
                 "root_files_and_dirs": root_files_and_dirs,
             }
-        )
+        ),
     )
     base_args["pr_body"] = pr_body
 
