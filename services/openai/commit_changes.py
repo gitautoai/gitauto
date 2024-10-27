@@ -15,7 +15,7 @@ from openai.types.chat.chat_completion_message_tool_call import (
 from config import OPENAI_MODEL_ID_GPT_4O, OPENAI_TEMPERATURE, TIMEOUT
 from services.github.github_types import BaseArgs
 from services.openai.count_tokens import count_tokens
-from services.openai.functions import (
+from services.openai.functions.functions import (
     TOOLS_TO_COMMIT_CHANGES,
     TOOLS_TO_EXPLORE_REPO,
     TOOLS_TO_GET_FILE,
