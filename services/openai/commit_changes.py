@@ -45,15 +45,12 @@ def chat_with_agent(
     if mode == "commit":
         content = SYSTEM_INSTRUCTION_TO_COMMIT_CHANGES
         tools = TOOLS_TO_COMMIT_CHANGES
-        tool_choice = "auto"  # DO NOT USE "required" and allow GitAuto not to call any tools.
     elif mode == "explore":
         content = SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
         tools = TOOLS_TO_EXPLORE_REPO
-        tool_choice = "auto"  # DO NOT USE "required" and allow GitAuto not to call any tools.
     elif mode == "get":
         content = SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
         tools = TOOLS_TO_GET_FILE
-        tool_choice = "auto"  # DO NOT USE "required" and allow GitAuto not to call any tools.
     system_message: ChatCompletionMessageParam = {"role": "system", "content": content}
     all_messages = [system_message] + list(messages)
 
@@ -66,7 +63,7 @@ def chat_with_agent(
         temperature=OPENAI_TEMPERATURE,
         timeout=TIMEOUT,
         tools=tools,
-        tool_choice=tool_choice,
+        tool_choice="auto",  # DO NOT USE "required" and allow GitAuto not to call any tools.
         parallel_tool_calls=False,
     )
     choice: Choice = completion.choices[0]
