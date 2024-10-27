@@ -31,7 +31,7 @@ from utils.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(raise_on_error=True)
-def explore_repo_or_commit_changes(
+def chat_with_agent(
     messages: Iterable[ChatCompletionMessageParam],
     base_args: BaseArgs,
     mode: Literal["commit", "explore", "get"],
