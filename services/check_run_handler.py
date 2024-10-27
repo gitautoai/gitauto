@@ -70,8 +70,13 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         print(colorize(text=msg, color="yellow"))
         return
 
-    # Extract PR related variables
-    pull_request: PullRequest = check_run["pull_requests"][0]
+    # Extract PR related variables and return if no PR is associated with this check run
+    pull_requests: list[PullRequest] = check_run.get("pull_requests", [])
+    if not pull_requests:
+        msg = "Skipping because no pull request is associated with this check run"
+        print(colorize(text=msg, color="yellow"))
+        return
+    pull_request: PullRequest = pull_requests[0]
     pull_number: int = pull_request["number"]
     pull_url: str = pull_request["url"]
 
