@@ -19,6 +19,7 @@ from services.openai.functions.functions import (
     TOOLS_TO_COMMIT_CHANGES,
     TOOLS_TO_EXPLORE_REPO,
     TOOLS_TO_GET_FILE,
+    TOOLS_TO_UPDATE_COMMENT,
     tools_to_call,
 )
 from services.openai.init import create_openai_client
@@ -26,6 +27,9 @@ from services.openai.instructions.commit_changes import (
     SYSTEM_INSTRUCTION_TO_COMMIT_CHANGES,
 )
 from services.openai.instructions.explore_repo import SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
+from services.openai.instructions.update_comment import (
+    SYSTEM_INSTRUCTION_TO_UPDATE_COMMENT,
+)
 from utils.colorize_log import colorize
 from utils.handle_exceptions import handle_exceptions
 
@@ -34,7 +38,7 @@ from utils.handle_exceptions import handle_exceptions
 def chat_with_agent(
     messages: Iterable[ChatCompletionMessageParam],
     base_args: BaseArgs,
-    mode: Literal["commit", "explore", "get"],
+    mode: Literal["comment", "commit", "explore", "get"],
     previous_calls: List[dict] | None = None,
 ):
     """https://platform.openai.com/docs/api-reference/chat/create"""
@@ -42,7 +46,10 @@ def chat_with_agent(
         previous_calls = []
 
     # Set the system message based on the mode
-    if mode == "commit":
+    if mode == "comment":
+        content = SYSTEM_INSTRUCTION_TO_UPDATE_COMMENT
+        tools = TOOLS_TO_UPDATE_COMMENT
+    elif mode == "commit":
         content = SYSTEM_INSTRUCTION_TO_COMMIT_CHANGES
         tools = TOOLS_TO_COMMIT_CHANGES
     elif mode == "explore":
