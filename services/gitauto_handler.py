@@ -157,7 +157,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
 
     # Prepare PR body
     comment_body = create_progress_bar(p=10, msg="Writing a pull request body...")
-    update_comment(comment_url=comment_url, token=token, body=comment_body)
+    update_comment(body=comment_body, base_args=base_args)
     pr_body: str = chat_with_ai(
         system_input=WRITE_PR_BODY,
         user_input=json.dumps(
@@ -172,9 +172,10 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     )
     base_args["pr_body"] = pr_body
 
+    messages = [{"role": "user", "content": pr_body}]
     # Create a remote branch
     comment_body = create_progress_bar(p=20, msg="Creating a remote branch...")
-    update_comment(comment_url=comment_url, token=token, body=comment_body)
+    update_comment(body=comment_body, base_args=base_args)
     latest_commit_sha: str = get_latest_remote_commit_sha(
         unique_issue_id=unique_issue_id,
         clone_url=repo["clone_url"],
@@ -182,12 +183,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     )
     create_remote_branch(sha=latest_commit_sha, base_args=base_args)
     comment_body = create_progress_bar(p=30, msg="Thinking about how to code...")
-    update_comment(comment_url=comment_url, token=token, body=comment_body)
-
-    truncated_msg: str = truncate_message(input_message=pr_body)
-    messages = [
-        {"role": "user", "content": truncated_msg if truncated_msg else pr_body},
-    ]
+    update_comment(body=comment_body, base_args=base_args)
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
@@ -234,7 +230,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
 
     # Create a pull request to the base branch
     comment_body = create_progress_bar(p=90, msg="Creating a pull request...")
-    update_comment(comment_url=comment_url, token=token, body=comment_body)
+    update_comment(body=comment_body, base_args=base_args)
     title = f"{PRODUCT_NAME}: {issue_title}"
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
     pr_body = issue_link + pr_body + git_command(new_branch_name=new_branch_name)
@@ -252,7 +248,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     else:
         is_completed = False
         body_after_pr = UPDATE_COMMENT_FOR_422
-    update_comment(comment_url=comment_url, token=token, body=body_after_pr)
+    update_comment(body=body_after_pr, base_args=base_args)
 
     end_time = time.time()
     supabase_manager.complete_and_update_usage_record(
