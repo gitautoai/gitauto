@@ -10,7 +10,9 @@ from services.github.github_manager import (
     commit_changes_to_remote_branch,
     get_remote_file_content,
     search_remote_file_contents,
+    update_comment,
 )
+from services.openai.functions.update_comment import UPDATE_GITHUB_COMMENT
 from services.openai.instructions.diff import DIFF_DESCRIPTION
 
 # OpenAI: We recommend including instructions regarding when to call a function in the system prompt, while using the function definition to provide instructions on how to call the function and how to generate the parameters.
@@ -99,6 +101,9 @@ SEARCH_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
 }
 
 # See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
+TOOLS_TO_UPDATE_COMMENT: Iterable[ChatCompletionToolParam] = [
+    {"type": "function", "function": UPDATE_GITHUB_COMMENT},
+]
 TOOLS_TO_GET_FILE: Iterable[ChatCompletionToolParam] = [
     {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
 ]
@@ -117,4 +122,5 @@ tools_to_call: dict[str, Any] = {
     "commit_changes_to_remote_branch": commit_changes_to_remote_branch,
     "get_remote_file_content": get_remote_file_content,
     "search_remote_file_contents": search_remote_file_contents,
+    "update_github_comment": update_comment,
 }
