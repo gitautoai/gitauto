@@ -155,7 +155,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
 
     # Plan how to fix the error
     comment_body = create_progress_bar(p=30, msg="Planning how to fix the error...")
-    update_comment(comment_url=comment_url, token=token, body=comment_body)
+    update_comment(body=comment_body, base_args=base_args)
     input_message: dict[str, str] = {
         "pull_request_title": pull_title,
         "pull_request_body": pull_body,
@@ -215,5 +215,5 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
 
     # Create a pull request to the base branch
     msg = f"Committed the Check Run `{check_run_name}` error fix! Running it again..."
-    update_comment(comment_url=comment_url, token=token, body=msg)
+    update_comment(body=msg, base_args=base_args)
     return

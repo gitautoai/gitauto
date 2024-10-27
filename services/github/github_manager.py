@@ -51,12 +51,7 @@ from services.supabase import SupabaseManager
 from utils.file_manager import apply_patch, get_file_content, run_command
 from utils.handle_exceptions import handle_exceptions
 from utils.parse_urls import parse_github_url
-from utils.text_copy import (
-    UPDATE_COMMENT_FOR_422,
-    UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,
-    request_issue_comment,
-    request_limit_reached,
-)
+from utils.text_copy import request_issue_comment, request_limit_reached
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -465,16 +460,16 @@ def get_issue_comments(
     return comment_texts
 
 
+@handle_exceptions(raise_on_error=True)
 def get_latest_remote_commit_sha(
     unique_issue_id: str, clone_url: str, base_args: BaseArgs
 ) -> str:
     """SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
     https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference"""
-    owner, repo, branch, comment_url = (
+    owner, repo, branch = (
         base_args["owner"],
         base_args["repo"],
         base_args["base_branch"],
-        base_args["comment_url"],
     )
     token = base_args["token"]
     try:
@@ -501,12 +496,8 @@ def get_latest_remote_commit_sha(
             )
         raise
     except Exception as e:
-        update_comment_for_raised_errors(
-            error=e,
-            comment_url=comment_url,
-            token=token,
-            which_function=get_latest_remote_commit_sha.__name__,
-        )
+        msg = f"{get_latest_remote_commit_sha.__name__} encountered an error: {e}"
+        update_comment(body=msg, base_args=base_args)
         # Raise an error because we can't continue without the latest commit SHA
         raise RuntimeError(
             f"Error: Could not get the latest commit SHA in {get_latest_remote_commit_sha.__name__}"
@@ -773,8 +764,9 @@ async def verify_webhook_signature(request: Request, secret: str) -> None:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
+def update_comment(body: str, base_args: BaseArgs) -> dict[str, Any]:
     """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
+    comment_url, token = base_args["comment_url"], base_args["token"]
     print(body + "\n")
     response: requests.Response = requests.patch(
         url=comment_url,
@@ -784,54 +776,3 @@ def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
     )
     response.raise_for_status()
     return response.json()
-
-
-def update_comment_for_raised_errors(
-    error: Any, comment_url: str, token: str, which_function: str
-) -> dict[str, Any]:
-    """Update the comment on issue with an error message and raise the error."""
-    body = UPDATE_COMMENT_FOR_422
-    try:
-        if isinstance(error, requests.exceptions.HTTPError):
-            logging.error(
-                "%s HTTP Error: %s - %s",
-                which_function,
-                error.response.status_code,
-                error.response.text,
-            )
-            if (
-                error.response.status_code == 422
-                and error["message"]
-                and error.message == "Validation Failed"
-                and (
-                    (
-                        isinstance(error.errors[0], list)
-                        and hasattr(error.errors[0][0], "message")
-                        and error.errors[0][0].message.find(
-                            "No commits between main and"
-                        )
-                        != -1
-                    )
-                    or (
-                        not isinstance(error.errors[0], list)
-                        and hasattr(error.errors[0], "message")
-                        and error.errors[0].message.find("No commits between main and")
-                        != -1
-                    )
-                )
-            ):
-                body = UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE
-            else:
-                logging.error(
-                    "%s HTTP Error: %s - %s",
-                    which_function,
-                    error.response.status_code,
-                    error.response.text,
-                )
-        else:
-            logging.error("%s Error: %s", which_function, error)
-    except Exception as e:  # pylint: disable=broad-except
-        logging.error("%s Error: %s", which_function, e)
-    update_comment(comment_url=comment_url, token=token, body=body)
-
-    raise RuntimeError("Error occurred")
