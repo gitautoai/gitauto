@@ -217,6 +217,12 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         if not is_explored and not is_committed:
             break
 
+        # If no files are found but changes are made, it might fall into an infinite loop (e.g., repeatedly making and reverting similar changes with slight variations)
+        if not is_explored and is_committed:
+            retry_count += 1
+            if retry_count > 10:
+                break
+
         # If files are found but no changes are made, it means that the agent found files but didn't think it's necessary to commit changes or fell into an infinite-like loop (e.g. slightly different searches)
         if is_explored and not is_committed:
             retry_count += 1
