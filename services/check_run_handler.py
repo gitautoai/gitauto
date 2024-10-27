@@ -1,6 +1,6 @@
 # Local imports
 import json
-from config import STRIPE_PRODUCT_ID_FREE, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+from config import GITHUB_APP_USER_NAME, STRIPE_PRODUCT_ID_FREE, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 from services.github.actions_manager import get_workflow_run_logs, get_workflow_run_path
 from services.github.github_manager import (
     get_installation_access_token,
@@ -24,6 +24,7 @@ from services.openai.instructions.identify_cause import IDENTIFY_CAUSE
 from services.stripe.subscriptions import get_stripe_product_id
 from services.supabase import SupabaseManager
 from services.supabase.owers_manager import get_stripe_customer_id
+from utils.colorize_log import colorize
 from utils.progress_bar import create_progress_bar
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
@@ -51,9 +52,13 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     check_suite: CheckSuite = check_run["check_suite"]
     head_branch: str = check_suite["head_branch"]
 
-    # Extract sender related variables
+    # Extract sender related variables and return if sender is GitAuto itself
     sender_id: int = payload["sender"]["id"]
     sender_name: str = payload["sender"]["login"]
+    if sender_name != GITHUB_APP_USER_NAME:
+        msg = f"Skipping because sender is not GitAuto. sender_name: '{sender_name}'"
+        print(colorize(text=msg, color="yellow"))
+        return
 
     # Extract PR related variables
     pull_request: PullRequest = check_run["pull_requests"][0]
