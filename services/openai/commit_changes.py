@@ -86,15 +86,16 @@ def chat_with_agent(
     tool_call_id: str = tool_calls[0].id
     tool_name: str = tool_calls[0].function.name
     tool_args: dict = json.loads(tool_calls[0].function.arguments)
-    print(f"tool_name: {tool_name}")
-    print(f"tool_args: {tool_args}\n")
+    print(colorize(f"tool_name: {tool_name}", "green"))
+    print(colorize(f"tool_args: {tool_args}\n", "green"))
 
     # Check if the same function with the same args has been called before
     current_call = {"function": tool_name, "args": tool_args}
     if current_call in previous_calls:
-        print(f"The function '{tool_name}' was called with the same arguments as before")
+        msg = f"The function '{tool_name}' was called with the same arguments as before"
+        print(msg)
         tool_result: str = (
-            f"The function '{tool_name}' was called with the same arguments as before, which is non-sense. You must open the file path in your tool args and update your diff content accordingly."
+            f"{msg}, which is non-sense. You must open the file path in your tool args and update your diff content accordingly."
         )
     else:
         tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)

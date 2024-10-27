@@ -164,7 +164,7 @@ def commit_changes_to_remote_branch(
     new_branch = base_args["new_branch"]
     if not new_branch:
         raise ValueError("new_branch is not set.")
-    url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={new_branch}"
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={new_branch}"
     headers = create_headers(token=token)
     get_response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
 

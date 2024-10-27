@@ -67,7 +67,6 @@ def get_workflow_run_logs(owner: str, repo: str, run_id: int, token: str):
                     for line in content.splitlines()
                 )
                 content = f"```GitHub Check Run Log: {log_fname}\n{content}\n```"
-                print(content)
                 return content
 
     return None
