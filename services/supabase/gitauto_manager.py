@@ -2,7 +2,6 @@
 
 from datetime import datetime, timezone
 from supabase import Client
-from postgrest.base_request_builder import APIResponse
 from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 from services.supabase.users_manager import UsersManager
 from utils.handle_exceptions import handle_exceptions
@@ -73,23 +72,18 @@ class GitAutoAgentManager:
             ).execute()
 
         users_manager = UsersManager(client=self.client)
-        email_to_store = None if str(email).lower().endswith("@users.noreply.github.com") else email
-
-        response: APIResponse = self.client.table("users").select("email").eq("user_id", user_id).execute()
-
-        if response.data and len(response.data[0]) > 0:
-            # Update the email if it's different from the stored one
-            if email_to_store != response.data[0].get('email'):
-                self.client.table("users").update(
-                    json={"email": email_to_store}
-                ).eq("user_id", user_id).execute()
+        if users_manager.user_exists(user_id=user_id):
+            users_manager.handle_user_email_update(
+                user_id=user_id,
+                email=email
+            )
         else:
             # Create the user if it doesn't exist
             users_manager.create_user(
                 user_id=user_id,
                 user_name=user_name,
                 installation_id=installation_id,
-                email=email_to_store,
+                email=email,
             )
             
         # Insert installation record
@@ -154,16 +148,9 @@ class GitAutoAgentManager:
             )
             .execute()
         )
-        
-        if not str(email).lower().endswith("@users.noreply.github.com"):
-            response: APIResponse = self.client.table("users").select("email").eq("user_id", user_id).execute()
-
-            if response.data and len(response.data[0]) > 0:
-                if email != response.data[0].get('email'):
-                    self.client.table("users").update(
-                        json={"email": email}
-                    ).eq("user_id", user_id).execute()
-
+        users_manager = UsersManager(client=self.client)
+        if users_manager.user_exists(user_id=user_id):
+            users_manager.handle_user_email_update(user_id=user_id, email=email)
         return data[1][0]["id"]
 
     @handle_exceptions(default_return_value=None, raise_on_error=False)

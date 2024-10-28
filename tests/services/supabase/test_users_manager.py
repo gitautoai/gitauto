@@ -5,6 +5,7 @@ import os
 import pytest
 
 from config import (
+    GITHUB_NOREPLY_EMAIL_DOMAIN,
     OWNER_ID,
     OWNER_NAME,
     OWNER_TYPE,
@@ -67,6 +68,9 @@ def test_create_and_update_user_request_works() -> None:
         )
         is None
     )
+
+# test_create_and_update_user_request_works()
+
 
 
 def test_how_many_requests_left() -> None:
@@ -404,3 +408,54 @@ async def test_install_uninstall_install() -> None:
     # Clean Up
     wipe_installation_owner_user_data()
     wipe_installation_owner_user_data(NEW_INSTALLATION_ID)
+
+
+def test_handle_user_email_update() -> None:
+    """Test updating a user's email in the users table"""
+    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
+
+    # Clean up at the beginning just in case a prior test failed to clean
+    wipe_installation_owner_user_data()
+
+    # Insert a user into the database
+    supabase_manager.create_installation(
+        installation_id=INSTALLATION_ID,
+        owner_type=OWNER_TYPE,
+        owner_name=OWNER_NAME,
+        owner_id=OWNER_ID,
+        user_id=USER_ID,
+        user_name=USER_NAME,
+        email=EMAIL,
+    )
+
+    # Update the user's email
+    no_reply_email = f"no_reply_email@{GITHUB_NOREPLY_EMAIL_DOMAIN}"
+    supabase_manager.handle_user_email_update(user_id=USER_ID, email=no_reply_email)
+
+    # Verify the email was updated
+    users_data, _ = (
+        supabase_manager.client.table(table_name="users")
+        .select("email")
+        .eq(column="user_id", value=USER_ID)
+        .execute()
+    )
+    assert users_data[1][0]["email"] == EMAIL
+    
+    # Update the user's email
+    new_email = "new_email@example.com"
+    supabase_manager.handle_user_email_update(user_id=USER_ID, email=new_email)
+
+    # Verify the email was updated
+    users_data, _ = (
+        supabase_manager.client.table(table_name="users")
+        .select("email")
+        .eq(column="user_id", value=USER_ID)
+        .execute()
+    )
+
+    assert users_data[1][0]["email"] == new_email
+
+    # Clean Up
+    wipe_installation_owner_user_data()
+
+# test_handle_user_email_update()

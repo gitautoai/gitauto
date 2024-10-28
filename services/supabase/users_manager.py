@@ -7,7 +7,7 @@ import stripe
 from supabase import Client
 
 # Local imports
-from config import DEFAULT_TIME, STRIPE_FREE_TIER_PRICE_ID, TZ
+from config import DEFAULT_TIME, GITHUB_NOREPLY_EMAIL_DOMAIN, STRIPE_FREE_TIER_PRICE_ID, TZ
 from services.stripe.customer import (
     get_subscription,
     get_request_count_from_product_id_metadata,
@@ -21,10 +21,23 @@ class UsersManager:
 
     def __init__(self, client: Client) -> None:
         self.client: Client = client
+    
+    def check_email_is_valid(self, email: str) -> bool:
+        """Check if email is valid"""
+        if email is None:
+            return True
+        if not isinstance(email, str):
+            return False
+        if "@" not in email or "." not in email:
+            return False
+        if str(email).lower().endswith(GITHUB_NOREPLY_EMAIL_DOMAIN):
+            return False
+        return True
 
     @handle_exceptions(default_return_value=None, raise_on_error=False)
     def create_user(self, user_id: int, user_name: str, installation_id: int, email: str) -> None:
         """Creates an account for the user in the users table"""
+        email = email if self.check_email_is_valid(email=email) else None
         self.client.table(table_name="users").upsert(
             json={
                 "user_id": user_id,
@@ -232,3 +245,12 @@ class UsersManager:
         if len(data[1]) > 0:
             return True
         return False
+    
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def handle_user_email_update(self, user_id: int, email: str) -> None:
+        """Update user email in the users table if email is valid and not None"""
+        email = email if self.check_email_is_valid(email=email) else None
+        if email is not None:
+            self.client.table("users").update(
+                json={"email": email}
+            ).eq("user_id", user_id).execute()
