@@ -131,11 +131,17 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     base_args["comment_url"] = comment_url
 
     # Get title, body, and code changes in the PR
+    msg = "Checking out the pull request title, body, and code changes..."
+    comment_body = create_progress_bar(p=5, msg=msg)
+    update_comment(body=comment_body, base_args=base_args)
     pull_title, pull_body = get_pull_request(url=pull_url, token=token)
     pull_file_url = f"{pull_url}/files"
     pull_changes = get_pull_request_files(url=pull_file_url, token=token)
 
     # Get the GitHub workflow file content
+    msg = "Checking out the GitHub Action workflow file..."
+    comment_body = create_progress_bar(p=10, msg=msg)
+    update_comment(body=comment_body, base_args=base_args)
     workflow_path = get_workflow_run_path(
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
     )
@@ -144,9 +150,15 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     )
 
     # Get the file tree in the root of the repo
+    msg = "Checking out the file tree in the root of the repo..."
+    comment_body = create_progress_bar(p=15, msg=msg)
+    update_comment(body=comment_body, base_args=base_args)
     file_tree: str = get_remote_file_tree(base_args=base_args)
 
     # Get the error log from the workflow run
+    msg = "Checking out the error log from the workflow run..."
+    comment_body = create_progress_bar(p=20, msg=msg)
+    update_comment(body=comment_body, base_args=base_args)
     error_log: str | None = get_workflow_run_logs(
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
     )
@@ -154,7 +166,8 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         return
 
     # Plan how to fix the error
-    comment_body = create_progress_bar(p=30, msg="Planning how to fix the error...")
+    msg = "Planning how to fix the error..."
+    comment_body = create_progress_bar(p=25, msg=msg)
     update_comment(body=comment_body, base_args=base_args)
     input_message: dict[str, str] = {
         "pull_request_title": pull_title,
@@ -170,10 +183,19 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     print(how_to_fix)
 
     # Update the comment if any obstacles are found
+    msg = "Checking if I can solve it or if I should just hit you up..."
+    comment_body = create_progress_bar(p=30, msg=msg)
+    update_comment(body=comment_body, base_args=base_args)
     messages = [{"role": "user", "content": how_to_fix}]
-    _messages, _previous_calls, _token_input, _token_output, is_commented = (
-        chat_with_agent(messages=messages, base_args=base_args, mode="comment")
-    )
+    (
+        _messages,
+        _previous_calls,
+        _tool_name,
+        _tool_args,
+        _token_input,
+        _token_output,
+        is_commented,
+    ) = chat_with_agent(messages=messages, base_args=base_args, mode="comment")
     if is_commented:
         return
 
@@ -189,26 +211,47 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
     retry_count = 0
+    p = 35
     while True:
         # Explore repo
-        messages, previous_calls, _token_input, _token_output, is_explored = (
-            chat_with_agent(
-                messages=messages,
-                base_args=base_args,
-                mode="get",  # explore can not be used here because "search_remote_file_contents" can search files only in the default branch NOT in the branch that is merged into the default branch
-                previous_calls=previous_calls,
-            )
+        (
+            messages,
+            previous_calls,
+            tool_name,
+            tool_args,
+            _token_input,
+            _token_output,
+            is_explored,
+        ) = chat_with_agent(
+            messages=messages,
+            base_args=base_args,
+            mode="get",  # explore can not be used here because "search_remote_file_contents" can search files only in the default branch NOT in the branch that is merged into the default branch
+            previous_calls=previous_calls,
         )
+        msg = f"Calling `{tool_name}()` with `{tool_args}`..."
+        comment_body = create_progress_bar(p=p, msg=msg)
+        update_comment(body=comment_body, base_args=base_args)
+        p = min(p + 5, 95)
 
         # Commit changes based on the exploration information
-        messages, previous_calls, _token_input, _token_output, is_committed = (
-            chat_with_agent(
-                messages=messages,
-                base_args=base_args,
-                mode="commit",
-                previous_calls=previous_calls,
-            )
+        (
+            messages,
+            previous_calls,
+            tool_name,
+            tool_args,
+            _token_input,
+            _token_output,
+            is_committed,
+        ) = chat_with_agent(
+            messages=messages,
+            base_args=base_args,
+            mode="commit",
+            previous_calls=previous_calls,
         )
+        msg = f"Calling `{tool_name}()` with `{tool_args}`..."
+        comment_body = create_progress_bar(p=p, msg=msg)
+        update_comment(body=comment_body, base_args=base_args)
+        p = min(p + 5, 95)
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
         if not is_explored and not is_committed:
