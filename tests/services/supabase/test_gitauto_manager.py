@@ -1,6 +1,6 @@
 # run this file locally with: python -m tests.services.supabase.test_gitauto_manager
 import os
-from config import (EMAIL, OWNER_TYPE)
+from config import EMAIL, OWNER_TYPE, USER_NAME
 from services.supabase import SupabaseManager
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
@@ -17,7 +17,7 @@ def test_create_update_user_request_works() -> None:
     # using -1 to not conflict with real data
     user_id = -1
     installation_id = -1
-    user_name = "test"
+    user_name = USER_NAME
 
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
@@ -56,9 +56,6 @@ def test_create_update_user_request_works() -> None:
 
     # Clean Up
     wipe_installation_owner_user_data()
-
-
-# test_create_update_user_request_works()
 
 
 def test_complete_and_update_usage_record_only_updates_one_record() -> None:

@@ -237,7 +237,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     issue_number: int = payload["issue"]["number"]
     user_id: int = payload["sender"]["id"]
     user_name: str = payload["sender"]["login"]
-    email: str = get_user_public_email(username=user_name)
+    email: str | None = get_user_public_email(username=user_name, token=token)
 
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
@@ -832,17 +832,15 @@ def update_comment_for_raised_errors(
 
     raise RuntimeError("Error occurred")
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_user_public_email(username: str):
-    url = f"https://api.github.com/users/{username}"
-    headers = {
-        "Accept": "application/vnd.github.v3+json"
-    }
 
-    response: requests.Response = requests.get(url, headers=headers)
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def get_user_public_email(username: str, token: str) -> str | None:
+    response: requests.Response = requests.get(
+        url=f"{GITHUB_API_URL}/users/{username}",
+        headers=create_headers(token=token),
+        timeout=TIMEOUT,
+    )
     response.raise_for_status()
     user_data: dict = response.json()
-
-    email: str = user_data.get('email')
-    
+    email: str | None = user_data.get('email')
     return email

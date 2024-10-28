@@ -69,9 +69,6 @@ def test_create_and_update_user_request_works() -> None:
     )
 
 
-# test_create_and_update_user_request_works()
-
-
 def test_how_many_requests_left() -> None:
     """Test that get_how_many_requests_left_and_cycle returns the correct values"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)

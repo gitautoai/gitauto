@@ -39,7 +39,7 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
     user_id: int = payload["sender"]["id"]
     user_name: str = payload["sender"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
-    email: str = get_user_public_email(username=user_name)
+    email: str | None = get_user_public_email(username=user_name, token=token)
 
     # Create installation record in Supabase
     supabase_manager.create_installation(

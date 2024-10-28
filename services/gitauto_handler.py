@@ -50,6 +50,7 @@ from utils.text_copy import (
 
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
+
 async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> None:
     """Core functionality to create comments on issue, create PRs, and update progress."""
     current_time: float = time.time()
@@ -84,12 +85,13 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     sender_id: int = payload["sender"]["id"]
     is_automation: bool = sender_id == GITHUB_APP_USER_ID
     sender_name: str = payload["sender"]["login"]
-    email: str = get_user_public_email(username=sender_name)
 
     # Extract other information
     github_urls, other_urls = extract_urls(text=issue_body)
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
+    email: str | None = get_user_public_email(username=sender_name, token=token)
+    
     base_args: BaseArgs = {
         "owner": owner_name,
         "repo": repo_name,
@@ -255,7 +257,5 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         token_input=token_input,
         token_output=token_output,
         total_seconds=int(end_time - current_time),
-        user_id=sender_id,
-        email=email,
     )
     return

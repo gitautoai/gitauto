@@ -134,7 +134,7 @@ class GitAutoAgentManager:
             .eq(column="unique_id", value=unique_issue_id)
             .execute()
         )
-         # If no issue exists with that unique_issue_id, create one
+        # If no issue exists with that unique_issue_id, create one
         if not data[1]:
             self.client.table(table_name="issues").insert(
                 json={
