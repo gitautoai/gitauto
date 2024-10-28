@@ -146,25 +146,25 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     )
 
     # Check out the issue comments, and root files/directories list
-    msg = "Checking out the issue title, body, comments, and root files/directories list..."
-    comment_body = create_progress_bar(p=10, msg=msg)
-    update_comment(body=comment_body, base_args=base_args)
+    comment_body = (
+        "Checking out the issue title, body, comments, and root files list..."
+    )
+    update_comment(body=comment_body, base_args=base_args, p=10)
     root_files_and_dirs: list[str] = get_remote_file_tree(base_args=base_args)
     issue_comments = get_issue_comments(issue_number=issue_number, base_args=base_args)
 
     # Check out the URLs in the issue body
     reference_contents: list[str] = []
     for url in github_urls:
-        msg = "Also checking out the URLs in the issue body..."
-        comment_body = create_progress_bar(p=15, msg=msg)
-        update_comment(body=comment_body, base_args=base_args)
+        comment_body = "Also checking out the URLs in the issue body..."
+        update_comment(body=comment_body, base_args=base_args, p=15)
         content = get_remote_file_content_by_url(url=url, token=token)
         print(f"```{url}\n{content}```\n")
         reference_contents.append(content)
 
     # Write a pull request body
-    comment_body = create_progress_bar(p=20, msg="Writing up the pull request body...")
-    update_comment(body=comment_body, base_args=base_args)
+    comment_body = "Writing up the pull request body..."
+    update_comment(body=comment_body, base_args=base_args, p=20)
     pr_body: str = chat_with_ai(
         system_input=WRITE_PR_BODY,
         user_input=json.dumps(
@@ -180,9 +180,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     base_args["pr_body"] = pr_body
 
     # Update the comment if any obstacles are found
-    msg = "Checking if I can solve it or if I should just hit you up..."
-    comment_body = create_progress_bar(p=25, msg=msg)
-    update_comment(body=comment_body, base_args=base_args)
+    comment_body = "Checking if I can solve it or if I should just hit you up..."
+    update_comment(body=comment_body, base_args=base_args, p=25)
     messages = [{"role": "user", "content": pr_body}]
     (
         _messages,
@@ -197,9 +196,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         return
 
     # Create a remote branch
-    msg = "Looks like it's doable. Creating the remote branch..."
-    comment_body = create_progress_bar(p=30, msg=msg)
-    update_comment(body=comment_body, base_args=base_args)
+    comment_body = "Looks like it's doable. Creating the remote branch..."
+    update_comment(body=comment_body, base_args=base_args, p=30)
     latest_commit_sha: str = get_latest_remote_commit_sha(
         unique_issue_id=unique_issue_id,
         clone_url=repo["clone_url"],
@@ -227,9 +225,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             mode="explore",
             previous_calls=previous_calls,
         )
-        msg = f"Calling `{tool_name}()` with `{tool_args}`..."
-        comment_body = create_progress_bar(p=p, msg=msg)
-        update_comment(body=comment_body, base_args=base_args)
+        comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+        update_comment(body=comment_body, base_args=base_args, p=p)
         p = min(p + 5, 85)
 
         # Commit changes based on the exploration information
@@ -247,9 +244,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             mode="commit",
             previous_calls=previous_calls,
         )
-        msg = f"Calling `{tool_name}()` with `{tool_args}`..."
-        comment_body = create_progress_bar(p=p, msg=msg)
-        update_comment(body=comment_body, base_args=base_args)
+        comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+        update_comment(body=comment_body, base_args=base_args, p=p)
         p = min(p + 5, 85)
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
@@ -272,8 +268,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         retry_count = 0
 
     # Create a pull request to the base branch
-    comment_body = create_progress_bar(p=90, msg="Creating a pull request...")
-    update_comment(body=comment_body, base_args=base_args)
+    comment_body = "Creating a pull request..."
+    update_comment(body=comment_body, base_args=base_args, p=90)
     title = f"{PRODUCT_NAME}: {issue_title}"
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
     pr_body = issue_link + pr_body + git_command(new_branch_name=new_branch_name)
