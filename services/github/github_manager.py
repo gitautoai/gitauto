@@ -51,6 +51,7 @@ from services.supabase import SupabaseManager
 from utils.file_manager import apply_patch, get_file_content, run_command
 from utils.handle_exceptions import handle_exceptions
 from utils.parse_urls import parse_github_url
+from utils.progress_bar import create_progress_bar
 from utils.text_copy import request_issue_comment, request_limit_reached
 
 
@@ -764,9 +765,11 @@ async def verify_webhook_signature(request: Request, secret: str) -> None:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def update_comment(body: str, base_args: BaseArgs) -> dict[str, Any]:
+def update_comment(body: str, base_args: BaseArgs, p: int | None = None) -> dict[str, Any]:
     """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
     comment_url, token = base_args["comment_url"], base_args["token"]
+    if p is not None:
+        body = create_progress_bar(p=p, msg=body)
     print(body + "\n")
     response: requests.Response = requests.patch(
         url=comment_url,

@@ -131,17 +131,15 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     base_args["comment_url"] = comment_url
 
     # Get title, body, and code changes in the PR
-    msg = "Checking out the pull request title, body, and code changes..."
-    comment_body = create_progress_bar(p=5, msg=msg)
-    update_comment(body=comment_body, base_args=base_args)
+    comment_body = "Checking out the pull request title, body, and code changes..."
+    update_comment(body=comment_body, base_args=base_args, p=5)
     pull_title, pull_body = get_pull_request(url=pull_url, token=token)
     pull_file_url = f"{pull_url}/files"
     pull_changes = get_pull_request_files(url=pull_file_url, token=token)
 
     # Get the GitHub workflow file content
-    msg = "Checking out the GitHub Action workflow file..."
-    comment_body = create_progress_bar(p=10, msg=msg)
-    update_comment(body=comment_body, base_args=base_args)
+    comment_body = "Checking out the GitHub Action workflow file..."
+    update_comment(body=comment_body, base_args=base_args, p=10)
     workflow_path = get_workflow_run_path(
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
     )
@@ -150,15 +148,13 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     )
 
     # Get the file tree in the root of the repo
-    msg = "Checking out the file tree in the root of the repo..."
-    comment_body = create_progress_bar(p=15, msg=msg)
-    update_comment(body=comment_body, base_args=base_args)
+    comment_body = "Checking out the file tree in the root of the repo..."
+    update_comment(body=comment_body, base_args=base_args, p=15)
     file_tree: str = get_remote_file_tree(base_args=base_args)
 
     # Get the error log from the workflow run
-    msg = "Checking out the error log from the workflow run..."
-    comment_body = create_progress_bar(p=20, msg=msg)
-    update_comment(body=comment_body, base_args=base_args)
+    comment_body = "Checking out the error log from the workflow run..."
+    update_comment(body=comment_body, base_args=base_args, p=20)
     error_log: str | None = get_workflow_run_logs(
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
     )
@@ -166,9 +162,8 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         return
 
     # Plan how to fix the error
-    msg = "Planning how to fix the error..."
-    comment_body = create_progress_bar(p=25, msg=msg)
-    update_comment(body=comment_body, base_args=base_args)
+    comment_body = "Planning how to fix the error..."
+    update_comment(body=comment_body, base_args=base_args, p=25)
     input_message: dict[str, str] = {
         "pull_request_title": pull_title,
         "pull_request_body": pull_body,
@@ -183,9 +178,8 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     print(how_to_fix)
 
     # Update the comment if any obstacles are found
-    msg = "Checking if I can solve it or if I should just hit you up..."
-    comment_body = create_progress_bar(p=30, msg=msg)
-    update_comment(body=comment_body, base_args=base_args)
+    comment_body = "Checking if I can solve it or if I should just hit you up..."
+    update_comment(body=comment_body, base_args=base_args, p=30)
     messages = [{"role": "user", "content": how_to_fix}]
     (
         _messages,
@@ -228,9 +222,8 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             mode="get",  # explore can not be used here because "search_remote_file_contents" can search files only in the default branch NOT in the branch that is merged into the default branch
             previous_calls=previous_calls,
         )
-        msg = f"Calling `{tool_name}()` with `{tool_args}`..."
-        comment_body = create_progress_bar(p=p, msg=msg)
-        update_comment(body=comment_body, base_args=base_args)
+        comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+        update_comment(body=comment_body, base_args=base_args, p=p)
         p = min(p + 5, 95)
 
         # Commit changes based on the exploration information
@@ -249,8 +242,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             previous_calls=previous_calls,
         )
         msg = f"Calling `{tool_name}()` with `{tool_args}`..."
-        comment_body = create_progress_bar(p=p, msg=msg)
-        update_comment(body=comment_body, base_args=base_args)
+        update_comment(body=comment_body, base_args=base_args, p=p)
         p = min(p + 5, 95)
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
