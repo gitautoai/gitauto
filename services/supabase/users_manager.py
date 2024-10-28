@@ -25,7 +25,7 @@ class UsersManager:
     def check_email_is_valid(self, email: str) -> bool:
         """Check if email is valid"""
         if email is None:
-            return True
+            return False
         if not isinstance(email, str):
             return False
         if "@" not in email or "." not in email:
@@ -249,8 +249,7 @@ class UsersManager:
     @handle_exceptions(default_return_value=None, raise_on_error=True)
     def handle_user_email_update(self, user_id: int, email: str) -> None:
         """Update user email in the users table if email is valid and not None"""
-        email = email if self.check_email_is_valid(email=email) else None
-        if email is not None:
+        if self.check_email_is_valid(email=email):
             self.client.table("users").update(
                 json={"email": email}
             ).eq("user_id", user_id).execute()

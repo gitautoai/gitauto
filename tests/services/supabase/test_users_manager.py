@@ -441,6 +441,19 @@ def test_handle_user_email_update() -> None:
     assert users_data[1][0]["email"] == EMAIL
     
     # Update the user's email
+    none_email = None
+    supabase_manager.handle_user_email_update(user_id=USER_ID, email=none_email)
+
+    # Verify the email was updated
+    users_data, _ = (
+        supabase_manager.client.table(table_name="users")
+        .select("email")
+        .eq(column="user_id", value=USER_ID)
+        .execute()
+    )
+    assert users_data[1][0]["email"] == EMAIL
+    
+    # Update the user's email
     new_email = "new_email@example.com"
     supabase_manager.handle_user_email_update(user_id=USER_ID, email=new_email)
 
