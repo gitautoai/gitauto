@@ -129,9 +129,9 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         create_comment(issue_number=issue_number, body=body, base_args=base_args)
         return
 
-    msg = "Reading this issue body, comments, and file tree..."
+    msg = "Got your request. Alright, let's get to it..."
     comment_body = create_progress_bar(p=0, msg=msg)
-    comment_url: str = create_comment(
+    comment_url = create_comment(
         issue_number=issue_number, body=comment_body, base_args=base_args
     )
     base_args["comment_url"] = comment_url
@@ -145,17 +145,25 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         issue_number=issue_number, content="eyes", base_args=base_args
     )
 
-    # Prepare contents for Agent
+    # Check out the issue comments, and root files/directories list
+    msg = "Checking out the issue title, body, comments, and root files/directories list..."
+    comment_body = create_progress_bar(p=10, msg=msg)
+    update_comment(body=comment_body, base_args=base_args)
     root_files_and_dirs: list[str] = get_remote_file_tree(base_args=base_args)
     issue_comments = get_issue_comments(issue_number=issue_number, base_args=base_args)
+
+    # Check out the URLs in the issue body
     reference_contents: list[str] = []
     for url in github_urls:
+        msg = "Also checking out the URLs in the issue body..."
+        comment_body = create_progress_bar(p=15, msg=msg)
+        update_comment(body=comment_body, base_args=base_args)
         content = get_remote_file_content_by_url(url=url, token=token)
         print(f"```{url}\n{content}```\n")
         reference_contents.append(content)
 
-    # Prepare PR body
-    comment_body = create_progress_bar(p=10, msg="Writing a pull request body...")
+    # Write a pull request body
+    comment_body = create_progress_bar(p=20, msg="Writing up the pull request body...")
     update_comment(body=comment_body, base_args=base_args)
     pr_body: str = chat_with_ai(
         system_input=WRITE_PR_BODY,
@@ -172,15 +180,25 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     base_args["pr_body"] = pr_body
 
     # Update the comment if any obstacles are found
+    msg = "Checking if I can solve it or if I should just hit you up..."
+    comment_body = create_progress_bar(p=25, msg=msg)
+    update_comment(body=comment_body, base_args=base_args)
     messages = [{"role": "user", "content": pr_body}]
-    _messages, _previous_calls, token_input, token_output, is_commented = (
-        chat_with_agent(messages=messages, base_args=base_args, mode="comment")
-    )
+    (
+        _messages,
+        _previous_calls,
+        _tool_name,
+        _tool_args,
+        token_input,
+        token_output,
+        is_commented,
+    ) = chat_with_agent(messages=messages, base_args=base_args, mode="comment")
     if is_commented:
         return
 
     # Create a remote branch
-    comment_body = create_progress_bar(p=20, msg="Creating a remote branch...")
+    msg = "Looks like it's doable. Creating the remote branch..."
+    comment_body = create_progress_bar(p=30, msg=msg)
     update_comment(body=comment_body, base_args=base_args)
     latest_commit_sha: str = get_latest_remote_commit_sha(
         unique_issue_id=unique_issue_id,
@@ -188,32 +206,51 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         base_args=base_args,
     )
     create_remote_branch(sha=latest_commit_sha, base_args=base_args)
-    comment_body = create_progress_bar(p=30, msg="Thinking about how to code...")
-    update_comment(body=comment_body, base_args=base_args)
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
     retry_count = 0
+    p = 35
     while True:
         # Explore repo
-        messages, previous_calls, token_input, token_output, is_explored = (
-            chat_with_agent(
-                messages=messages,
-                base_args=base_args,
-                mode="explore",
-                previous_calls=previous_calls,
-            )
+        (
+            messages,
+            previous_calls,
+            tool_name,
+            tool_args,
+            token_input,
+            token_output,
+            is_explored,
+        ) = chat_with_agent(
+            messages=messages,
+            base_args=base_args,
+            mode="explore",
+            previous_calls=previous_calls,
         )
+        msg = f"Calling `{tool_name}()` with `{tool_args}`..."
+        comment_body = create_progress_bar(p=p, msg=msg)
+        update_comment(body=comment_body, base_args=base_args)
+        p = min(p + 5, 85)
 
         # Commit changes based on the exploration information
-        messages, previous_calls, token_input, token_output, is_committed = (
-            chat_with_agent(
-                messages=messages,
-                base_args=base_args,
-                mode="commit",
-                previous_calls=previous_calls,
-            )
+        (
+            messages,
+            previous_calls,
+            tool_name,
+            tool_args,
+            token_input,
+            token_output,
+            is_committed,
+        ) = chat_with_agent(
+            messages=messages,
+            base_args=base_args,
+            mode="commit",
+            previous_calls=previous_calls,
         )
+        msg = f"Calling `{tool_name}()` with `{tool_args}`..."
+        comment_body = create_progress_bar(p=p, msg=msg)
+        update_comment(body=comment_body, base_args=base_args)
+        p = min(p + 5, 85)
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
         if not is_explored and not is_committed:
