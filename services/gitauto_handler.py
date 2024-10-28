@@ -173,10 +173,10 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
 
     # Update the comment if any obstacles are found
     messages = [{"role": "user", "content": pr_body}]
-    _messages, _previous_calls, token_input, token_output, is_solvable = (
+    _messages, _previous_calls, token_input, token_output, is_commented = (
         chat_with_agent(messages=messages, base_args=base_args, mode="comment")
     )
-    if not is_solvable:
+    if is_commented:
         return
 
     # Create a remote branch
