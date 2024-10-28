@@ -85,7 +85,6 @@ class GitAutoAgentManager:
                 installation_id=installation_id,
                 email=email,
             )
-            
         # Insert installation record
         self.client.table(table_name="installations").insert(
             json={
@@ -95,7 +94,6 @@ class GitAutoAgentManager:
                 "owner_id": owner_id,
             }
         ).execute()
-                
         # Create User, and set is_selected to True if user has no selected account for this installation
         is_selected = True
         data, _ = (

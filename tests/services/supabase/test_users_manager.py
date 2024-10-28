@@ -427,7 +427,6 @@ def test_handle_user_email_update() -> None:
         user_name=USER_NAME,
         email=EMAIL,
     )
-
     # Update the user's email
     no_reply_email = f"no_reply_email@{GITHUB_NOREPLY_EMAIL_DOMAIN}"
     supabase_manager.handle_user_email_update(user_id=USER_ID, email=no_reply_email)
@@ -452,7 +451,6 @@ def test_handle_user_email_update() -> None:
         .eq(column="user_id", value=USER_ID)
         .execute()
     )
-
     assert users_data[1][0]["email"] == new_email
 
     # Clean Up
