@@ -427,27 +427,21 @@ def test_handle_user_email_update() -> None:
         user_name=USER_NAME,
         email=EMAIL,
     )
-    # Update the user's email
+    # Verify github no-reply email is not updated
     no_reply_email = f"no_reply_email@{GITHUB_NOREPLY_EMAIL_DOMAIN}"
     supabase_manager.handle_user_email_update(user_id=USER_ID, email=no_reply_email)
-
-    # Verify the email was not updated
     user_data = supabase_manager.get_user_info(user_id=USER_ID)
     assert user_data["email"] == EMAIL
     
-    # Update the user's email
+    # Verify None email is not updated
     none_email = None
     supabase_manager.handle_user_email_update(user_id=USER_ID, email=none_email)
-
-    # Verify the email was not updated
     user_data = supabase_manager.get_user_info(user_id=USER_ID)
     assert user_data["email"] == EMAIL
     
-    # Update the user's email
+    # Verify valid email is updated
     new_email = "new_email@example.com"
     supabase_manager.handle_user_email_update(user_id=USER_ID, email=new_email)
-
-    # Verify the email was updated
     user_data = supabase_manager.get_user_info(user_id=USER_ID)
     assert user_data["email"] == new_email
 
