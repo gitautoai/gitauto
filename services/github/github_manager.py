@@ -782,57 +782,6 @@ def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
     return response.json()
 
 
-def update_comment_for_raised_errors(
-    error: Any, comment_url: str, token: str, which_function: str
-) -> dict[str, Any]:
-    """Update the comment on issue with an error message and raise the error."""
-    body = UPDATE_COMMENT_FOR_422
-    try:
-        if isinstance(error, requests.exceptions.HTTPError):
-            logging.error(
-                "%s HTTP Error: %s - %s",
-                which_function,
-                error.response.status_code,
-                error.response.text,
-            )
-            if (
-                error.response.status_code == 422
-                and error["message"]
-                and error.message == "Validation Failed"
-                and (
-                    (
-                        isinstance(error.errors[0], list)
-                        and hasattr(error.errors[0][0], "message")
-                        and error.errors[0][0].message.find(
-                            "No commits between main and"
-                        )
-                        != -1
-                    )
-                    or (
-                        not isinstance(error.errors[0], list)
-                        and hasattr(error.errors[0], "message")
-                        and error.errors[0].message.find("No commits between main and")
-                        != -1
-                    )
-                )
-            ):
-                body = UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE
-            else:
-                logging.error(
-                    "%s HTTP Error: %s - %s",
-                    which_function,
-                    error.response.status_code,
-                    error.response.text,
-                )
-        else:
-            logging.error("%s Error: %s", which_function, error)
-    except Exception as e:  # pylint: disable=broad-except
-        logging.error("%s Error: %s", which_function, e)
-    update_comment(comment_url=comment_url, token=token, body=body)
-
-    raise RuntimeError("Error occurred")
-
-
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def get_user_public_email(username: str, token: str) -> str | None:
     response: requests.Response = requests.get(
