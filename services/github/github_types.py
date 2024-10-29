@@ -1,4 +1,6 @@
+from dataclasses import dataclass
 from typing import TypedDict, Dict, List, Optional, Union
+import datetime
 
 
 class BaseArgs(TypedDict):
@@ -10,6 +12,186 @@ class BaseArgs(TypedDict):
     comment_url: str
     pr_body: str
     token: str
+
+
+@dataclass
+class Owner:
+    login: str
+    id: int
+    node_id: str
+    avatar_url: str
+    gravatar_id: str
+    url: str
+    html_url: str
+    followers_url: str
+    following_url: str
+    gists_url: str
+    starred_url: str
+    subscriptions_url: str
+    organizations_url: str
+    repos_url: str
+    events_url: str
+    received_events_url: str
+    type: str
+    user_view_type: str
+    site_admin: bool
+
+
+@dataclass
+class App:
+    id: int
+    client_id: str
+    slug: str
+    node_id: str
+    owner: Owner
+    name: str
+    description: str
+    external_url: str
+    html_url: str
+    created_at: datetime
+    updated_at: datetime
+    permissions: dict
+    events: List[str]
+
+
+@dataclass
+class PullRequest:
+    url: str
+    id: int
+    number: int
+    head: dict
+    base: dict
+
+
+@dataclass
+class CheckSuite:
+    id: int
+    node_id: str
+    head_branch: str
+    head_sha: str
+    status: str
+    conclusion: Optional[str]
+    url: str
+    before: str
+    after: str
+    pull_requests: List[PullRequest]
+    app: App
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass
+class Output:
+    title: Optional[str]
+    summary: Optional[str]
+    text: Optional[str]
+    annotations_count: int
+    annotations_url: str
+
+
+@dataclass
+class CheckRun:
+    id: int
+    name: str
+    node_id: str
+    head_sha: str
+    external_id: str
+    url: str
+    html_url: str
+    details_url: str
+    status: str
+    conclusion: str
+    started_at: datetime
+    completed_at: datetime
+    output: Output
+    check_suite: CheckSuite
+    app: App
+    pull_requests: List[PullRequest]
+
+
+@dataclass
+class Repository:
+    id: int
+    node_id: str
+    name: str
+    full_name: str
+    private: bool
+    owner: Owner
+    html_url: str
+    description: str
+    fork: bool
+    url: str
+    created_at: datetime
+    updated_at: datetime
+    pushed_at: datetime
+    git_url: str
+    ssh_url: str
+    clone_url: str
+    svn_url: str
+    homepage: str
+    size: int
+    stargazers_count: int
+    watchers_count: int
+    language: Optional[str]
+    has_issues: bool
+    has_projects: bool
+    has_downloads: bool
+    has_wiki: bool
+    has_pages: bool
+    has_discussions: bool
+    forks_count: int
+    mirror_url: Optional[str]
+    archived: bool
+    disabled: bool
+    open_issues_count: int
+    license: dict
+    allow_forking: bool
+    is_template: bool
+    web_commit_signoff_required: bool
+    topics: List[str]
+    visibility: str
+    forks: int
+    open_issues: int
+    watchers: int
+    default_branch: str
+
+
+@dataclass
+class Sender:
+    login: str
+    id: int
+    node_id: str
+    avatar_url: str
+    gravatar_id: str
+    url: str
+    html_url: str
+    followers_url: str
+    following_url: str
+    gists_url: str
+    starred_url: str
+    subscriptions_url: str
+    organizations_url: str
+    repos_url: str
+    events_url: str
+    received_events_url: str
+    type: str
+    user_view_type: str
+    site_admin: bool
+
+
+@dataclass
+class Installation:
+    id: int
+    node_id: str
+
+
+@dataclass
+class CheckRunCompletedPayload:
+    action: str
+    check_run: CheckRun
+    repository: Repository
+    sender: Sender
+    installation: Installation
 
 
 class LabelInfo(TypedDict):
@@ -228,7 +410,8 @@ class GitHubLabeledPayload(TypedDict):
 
 
 class GitHubContentInfo(TypedDict):
-    """ https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28 """
+    """https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28"""
+
     type: str
     encoding: str
     size: int

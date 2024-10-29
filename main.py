@@ -44,7 +44,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     )
     event_name: str = request.headers.get("X-GitHub-Event", "Event not specified")
     print("\n" * 3 + "-" * 70)
-    print(f"Received event: {event_name} with content type: {content_type}\n")
+    print(f"Received event: {event_name} with content type: {content_type}")
 
     # Validate if the webhook signature comes from GitHub
     await verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)

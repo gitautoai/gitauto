@@ -27,9 +27,6 @@ def apply_patch(original_text: str, diff_text: str):
     Assume -R? [n]: No
     Apply anyway? [y]: Yes
     """
-    # Print encodings of input texts
-    print(f"Org text encoding: {chardet.detect(original_text.encode())['encoding']}")
-    print(f"Diff text encoding: {chardet.detect(diff_text.encode())['encoding']}")
 
     # Create temporary files as subprocess.run() accepts only file paths
     with tempfile.NamedTemporaryFile(
@@ -85,7 +82,7 @@ def apply_patch(original_text: str, diff_text: str):
         stderr: str = e.stderr
 
         # Check if the error message indicates that the patch was already applied
-        msg = f"Failed to apply patch because the diff is already applied. But it's OK, move on to the next fix!\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}"
+        msg = f"Failed to apply patch because the diff is already applied. But it's OK, move on to the next fix!\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}\n"
         if "already exists!" in stdout:
             print(msg, end="")
             return "", msg
@@ -103,6 +100,9 @@ def apply_patch(original_text: str, diff_text: str):
 
         # Log the error and return an empty string not to break the flow
         msg = f"Failed to apply patch partially or entirelly because something is wrong in diff. Analyze the reason from stderr and rej_text, modify the diff, and try again.\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}\n\nrej_text:\n{rej_text}\n"
+        # Print encodings of input texts
+        print(f"Org encoding: {chardet.detect(original_text.encode())['encoding']}")
+        print(f"Diff encoding: {chardet.detect(diff_text.encode())['encoding']}")
         print(msg, end="")
         # logging.error(msg)
         return modified_text, msg

@@ -1,14 +1,17 @@
 # Standard imports
 import re
+from typing import Any
 
 # Local imports
 from config import (
+    GITHUB_CHECK_RUN_FAILURES,
     PRODUCT_ID,
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
     PR_BODY_STARTS_WITH,
     ISSUE_NUMBER_FORMAT,
 )
+from services.check_run_handler import handle_check_run
 from services.github.github_manager import (
     add_issue_templates,
     create_comment_on_issue_with_gitauto_button,
@@ -16,10 +19,7 @@ from services.github.github_manager import (
     # turn_on_issue,
     get_user_public_email
 )
-from services.github.github_types import (
-    GitHubEventPayload,
-    GitHubInstallationPayload,
-)
+from services.github.github_types import GitHubInstallationPayload
 from services.supabase import SupabaseManager
 from services.gitauto_handler import handle_gitauto
 from utils.handle_exceptions import handle_exceptions
@@ -82,7 +82,7 @@ async def handle_installation_repos_added(payload) -> None:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=True)
-async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> None:
+async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None:
     """
     Determine the event type and call the appropriate handler.
     Check the type of webhook event and handle accordingly.
@@ -144,6 +144,14 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
             print("Edit is not an activated GitAtuo trigger.")
         return
 
+    # Monitor check_run failure and re-run agent with failure reason
+    # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#check_run
+    if event_name == "check_run" and action in ("completed"):
+        conclusion: str = payload["check_run"]["conclusion"]
+        if conclusion in GITHUB_CHECK_RUN_FAILURES:
+            handle_check_run(payload=payload)
+        return
+
     # Track merged PRs as this is also our success status
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
     if event_name == "pull_request" and action == "closed":
@@ -170,4 +178,4 @@ async def handle_webhook_event(event_name: str, payload: GitHubEventPayload) -> 
         return
 
     # Unhandled events are captured here
-    print(f"Event {event_name} with action {action} is not handled")
+    print(f"Event '{event_name}' with action '{action}' was received but skipped.")

@@ -51,12 +51,8 @@ from services.supabase import SupabaseManager
 from utils.file_manager import apply_patch, get_file_content, run_command
 from utils.handle_exceptions import handle_exceptions
 from utils.parse_urls import parse_github_url
-from utils.text_copy import (
-    UPDATE_COMMENT_FOR_422,
-    UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,
-    request_issue_comment,
-    request_limit_reached,
-)
+from utils.progress_bar import create_progress_bar
+from utils.text_copy import request_issue_comment, request_limit_reached
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -164,9 +160,12 @@ def commit_changes_to_remote_branch(
 ):
     """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
     if message is None:
-        message = f"Update {file_path}."
+        message = f"Update {file_path}"
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
-    url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}"
+    new_branch = base_args["new_branch"]
+    if not new_branch:
+        raise ValueError("new_branch is not set.")
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={new_branch}"
     headers = create_headers(token=token)
     get_response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
 
@@ -197,7 +196,7 @@ def commit_changes_to_remote_branch(
     data: dict[str, str | None] = {
         "message": message,
         "content": base64.b64encode(s=s2).decode(encoding=UTF8),
-        "branch": base_args["new_branch"],
+        "branch": new_branch,
     }
     if sha != "":
         data["sha"] = sha
@@ -214,7 +213,6 @@ def commit_changes_to_remote_branch(
 @handle_exceptions(raise_on_error=True)
 def create_comment(issue_number: int, body: str, base_args: BaseArgs) -> str:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
-    print(body + "\n")
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
@@ -300,10 +298,10 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     return response.json()
 
 
-def create_headers(token: str, media_type: Optional[str] = "v3") -> dict[str, str]:
+def create_headers(token: str, media_type: Optional[str] = ".v3") -> dict[str, str]:
     """https://docs.github.com/en/rest/using-the-rest-api/getting-started-with-the-rest-api?apiVersion=2022-11-28#headers"""
     return {
-        "Accept": f"application/vnd.github.{media_type}+json",
+        "Accept": f"application/vnd.github{media_type}+json",
         "Authorization": f"Bearer {token}",
         "User-Agent": GITHUB_APP_NAME,
         "X-GitHub-Api-Version": GITHUB_API_VERSION,
@@ -346,7 +344,8 @@ def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | Non
     response.raise_for_status()
     pr_data = response.json()
     pr_number = pr_data["number"]
-    """https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#request-reviewers-for-a-pull-request"""
+
+    # https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#request-reviewers-for-a-pull-request
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pr_number}/requested_reviewers",
         headers=create_headers(token=token),
@@ -439,7 +438,9 @@ def get_installed_owners_and_repos(token: str) -> list[dict[str, int | str]]:
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_issue_comments(issue_number: int, base_args: BaseArgs) -> list[str]:
+def get_issue_comments(
+    issue_number: int, base_args: BaseArgs, includes_me: bool = False
+) -> list[str]:
     """https://docs.github.com/en/rest/issues/comments#list-issue-comments"""
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     response = requests.get(
@@ -448,29 +449,30 @@ def get_issue_comments(issue_number: int, base_args: BaseArgs) -> list[str]:
         timeout=TIMEOUT,
     )
     response.raise_for_status()
-    comments: list[Any] = response.json()
-    filtered_comments: list[Any] = [
-        comment
-        for comment in comments
-        if comment.get("performed_via_github_app") is None
-        or comment["performed_via_github_app"].get("id") not in GITHUB_APP_IDS
-    ]
+    comments: list[dict[str, Any]] = response.json()
+    if not includes_me:
+        filtered_comments: list[dict[str, Any]] = [
+            comment
+            for comment in comments
+            if comment.get("performed_via_github_app") is None
+            or comment["performed_via_github_app"].get("id") not in GITHUB_APP_IDS
+        ]
+    else:
+        filtered_comments = comments
     comment_texts: list[str] = [comment["body"] for comment in filtered_comments]
-    if comment_texts:
-        print(f"\nIssue comments: {json.dumps(comment_texts, indent=2)}\n")
     return comment_texts
 
 
+@handle_exceptions(raise_on_error=True)
 def get_latest_remote_commit_sha(
     unique_issue_id: str, clone_url: str, base_args: BaseArgs
 ) -> str:
     """SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
     https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference"""
-    owner, repo, branch, comment_url = (
+    owner, repo, branch = (
         base_args["owner"],
         base_args["repo"],
         base_args["base_branch"],
-        base_args["comment_url"],
     )
     token = base_args["token"]
     try:
@@ -497,12 +499,8 @@ def get_latest_remote_commit_sha(
             )
         raise
     except Exception as e:
-        update_comment_for_raised_errors(
-            error=e,
-            comment_url=comment_url,
-            token=token,
-            which_function=get_latest_remote_commit_sha.__name__,
-        )
+        msg = f"{get_latest_remote_commit_sha.__name__} encountered an error: {e}"
+        update_comment(body=msg, base_args=base_args)
         # Raise an error because we can't continue without the latest commit SHA
         raise RuntimeError(
             f"Error: Could not get the latest commit SHA in {get_latest_remote_commit_sha.__name__}"
@@ -636,7 +634,8 @@ def get_remote_file_content(
 
     numbered_content: str = "\n".join(numbered_lines)
     msg = f"Opened file: '{file_path}' with line numbers for your information.\n\n"
-    return msg + f"```{file_path_with_lines}\n{numbered_content}\n```"
+    output = msg + f"```{file_path_with_lines}\n{numbered_content}\n```"
+    return output
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
@@ -681,7 +680,6 @@ def get_remote_file_tree(base_args: BaseArgs) -> list[str]:
     https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#get-a-tree
     """
     owner, repo, ref = base_args["owner"], base_args["repo"], base_args["base_branch"]
-    response: requests.Response | None = None  # Otherwise response could be Unbound
     response = requests.get(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/trees/{ref}",
         headers=create_headers(token=base_args["token"]),
@@ -769,8 +767,11 @@ async def verify_webhook_signature(request: Request, secret: str) -> None:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
+def update_comment(body: str, base_args: BaseArgs, p: int | None = None) -> dict[str, Any]:
     """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
+    comment_url, token = base_args["comment_url"], base_args["token"]
+    if p is not None:
+        body = create_progress_bar(p=p, msg=body)
     print(body + "\n")
     response: requests.Response = requests.patch(
         url=comment_url,
@@ -780,7 +781,6 @@ def update_comment(comment_url: str, body: str, token: str) -> dict[str, Any]:
     )
     response.raise_for_status()
     return response.json()
-
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def get_user_public_email(username: str, token: str) -> str | None:
