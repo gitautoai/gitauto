@@ -246,10 +246,27 @@ class UsersManager:
             return True
         return False
     
+    
+    @handle_exceptions(default_return_value=False, raise_on_error=False)
+    def get_user_info(self, user_id: int) -> dict:
+        """Get user info from the users table"""
+        data, _ = (
+            self.client.table(table_name="users")
+            .select("*")
+            .eq(column="user_id", value=user_id)
+            .execute()
+        )
+        if len(data[1]) > 0:
+            return data[1][0]
+        return {}
+    
+    
     @handle_exceptions(default_return_value=None, raise_on_error=True)
     def handle_user_email_update(self, user_id: int, email: str) -> None:
-        """Update user email in the users table if email is valid and not None"""
+        """Update user email in the users table if email is valid and not None and different from the current email"""
         if self.check_email_is_valid(email=email):
-            self.client.table("users").update(
-                json={"email": email}
-            ).eq("user_id", user_id).execute()
+            user_info = self.get_user_info(user_id=user_id)
+            if user_info.get("email") != email:
+                self.client.table("users").update(
+                    json={"email": email}
+                ).eq("user_id", user_id).execute()

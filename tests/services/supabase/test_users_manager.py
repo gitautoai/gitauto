@@ -431,40 +431,25 @@ def test_handle_user_email_update() -> None:
     no_reply_email = f"no_reply_email@{GITHUB_NOREPLY_EMAIL_DOMAIN}"
     supabase_manager.handle_user_email_update(user_id=USER_ID, email=no_reply_email)
 
-    # Verify the email was updated
-    users_data, _ = (
-        supabase_manager.client.table(table_name="users")
-        .select("email")
-        .eq(column="user_id", value=USER_ID)
-        .execute()
-    )
-    assert users_data[1][0]["email"] == EMAIL
+    # Verify the email was not updated
+    user_data = supabase_manager.get_user_info(user_id=USER_ID)
+    assert user_data["email"] == EMAIL
     
     # Update the user's email
     none_email = None
     supabase_manager.handle_user_email_update(user_id=USER_ID, email=none_email)
 
-    # Verify the email was updated
-    users_data, _ = (
-        supabase_manager.client.table(table_name="users")
-        .select("email")
-        .eq(column="user_id", value=USER_ID)
-        .execute()
-    )
-    assert users_data[1][0]["email"] == EMAIL
+    # Verify the email was not updated
+    user_data = supabase_manager.get_user_info(user_id=USER_ID)
+    assert user_data["email"] == EMAIL
     
     # Update the user's email
     new_email = "new_email@example.com"
     supabase_manager.handle_user_email_update(user_id=USER_ID, email=new_email)
 
     # Verify the email was updated
-    users_data, _ = (
-        supabase_manager.client.table(table_name="users")
-        .select("email")
-        .eq(column="user_id", value=USER_ID)
-        .execute()
-    )
-    assert users_data[1][0]["email"] == new_email
+    user_data = supabase_manager.get_user_info(user_id=USER_ID)
+    assert user_data["email"] == new_email
 
     # Clean Up
     wipe_installation_owner_user_data()
