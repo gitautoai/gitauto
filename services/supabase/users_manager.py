@@ -179,9 +179,7 @@ class UsersManager:
 
         stripe_customer_id: str = data[1][0]["owners"]["stripe_customer_id"]
 
-        subscription = get_subscription(
-            customer_id=stripe_customer_id,
-        )
+        subscription = get_subscription(customer_id=stripe_customer_id)
 
         start_date_seconds, end_date_seconds, product_id = (
             self.parse_subscription_object(
