@@ -1,6 +1,6 @@
 import requests
 from config import GITHUB_API_URL, TIMEOUT, PER_PAGE
-from services.github.github_manager import create_headers
+from services.github.create_headers import create_headers
 from services.github.github_types import BaseArgs
 from utils.handle_exceptions import handle_exceptions
 

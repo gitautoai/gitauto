@@ -23,10 +23,8 @@ from github.Repository import Repository
 from config import (
     EXCEPTION_OWNERS,
     GITHUB_API_URL,
-    GITHUB_API_VERSION,
     GITHUB_APP_ID,
     GITHUB_APP_IDS,
-    GITHUB_APP_NAME,
     GITHUB_ISSUE_DIR,
     GITHUB_ISSUE_TEMPLATES,
     GITHUB_PRIVATE_KEY,
@@ -40,6 +38,7 @@ from config import (
     SUPABASE_SERVICE_ROLE_KEY,
     UTF8,
 )
+from services.github.create_headers import create_headers
 from services.github.github_types import (
     BaseArgs,
     GitHubContentInfo,
@@ -296,16 +295,6 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     response.raise_for_status()
 
     return response.json()
-
-
-def create_headers(token: str, media_type: Optional[str] = ".v3") -> dict[str, str]:
-    """https://docs.github.com/en/rest/using-the-rest-api/getting-started-with-the-rest-api?apiVersion=2022-11-28#headers"""
-    return {
-        "Accept": f"application/vnd.github{media_type}+json",
-        "Authorization": f"Bearer {token}",
-        "User-Agent": GITHUB_APP_NAME,
-        "X-GitHub-Api-Version": GITHUB_API_VERSION,
-    }
 
 
 def create_jwt() -> str:
