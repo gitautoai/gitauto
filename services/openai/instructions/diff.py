@@ -6,7 +6,7 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 
 1. For new files
 
-```diff
+```diff(unified=0)
 --- /dev/null
 +++ path/to/new/file
 @@ -0,0 +1,3 @@
@@ -15,9 +15,9 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 + added line 3
 ```
 
-2. For modified files
+2-1. For modified files (Replace lines of code)
 
-```diff
+```diff(unified=0)
 --- path/to/file1
 +++ path/to/file1
 @@ -5,1 +5,1 @@
@@ -25,18 +25,18 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 + modified line 5
 ```
 
-or
+2-2. For modified files (Remove lines of code)
 
-```diff
+```diff(unified=0)
 --- path/to/file2
 +++ path/to/file2
 @@ -10,1 +10,0 @@
 - original line 10
 ```
 
-or
+2-3. For modified files (Add lines of code)
 
-```diff
+```diff(unified=0)
 --- path/to/file3
 +++ path/to/file3
 @@ -15,0 +15,1 @@
@@ -45,7 +45,7 @@ or
 
 3. For deleted Files
 
-```diff
+```diff(unified=0)
 --- path/to/delete
 +++ /dev/null
 ```
@@ -65,6 +65,6 @@ or
 ## Other rules about diff format
 
 - NEVER EVER include any comments or explanations.
-- NEVER EVER include any context lines. ONLY include the changed lines.
-- If you need to change multiple blocks in the same file, call the function multiple times with each block separately for simplicity. For example, if you have three blocks to change in the same file, call the function three times with each block separately.
+- NEVER EVER include any context lines around changed lines. ONLY include the changed lines.
+- Each function call MUST generate exactly ONE hunk (one @@ header) for ONE change block.
 """
