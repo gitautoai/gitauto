@@ -628,12 +628,11 @@ def get_remote_file_content(
         if not segments:
             return f"Keyword '{keyword}' not found in the file '{file_path}'."
         msg = f"Opened file: '{file_path}' and found multiple occurrences of '{keyword}'.\n\n"
-        return msg + "\n\n•••\n\n".join(segments)
+        return msg + "\n\n•\n•\n•\n\n".join(segments)
 
     numbered_content: str = "\n".join(numbered_lines)
     msg = f"Opened file: '{file_path}' with line numbers for your information.\n\n"
-    output = msg + f"```{file_path_with_lines}\n{numbered_content}\n```"
-    return output
+    return msg + f"```{file_path_with_lines}\n{numbered_content}\n```"
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
