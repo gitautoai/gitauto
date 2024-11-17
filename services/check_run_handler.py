@@ -1,6 +1,7 @@
 # Local imports
 import json
 from config import (
+    EMAIL_LINK,
     GITHUB_APP_USER_NAME,
     STRIPE_PRODUCT_ID_FREE,
     SUPABASE_URL,
@@ -155,11 +156,20 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Get the error log from the workflow run
     comment_body = "Checking out the error log from the workflow run..."
     update_comment(body=comment_body, base_args=base_args, p=20)
-    error_log: str | None = get_workflow_run_logs(
+    error_log: str | int | None = get_workflow_run_logs(
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
     )
+    if error_log == 404:
+        permission_url = (
+            f"https://github.com/organizations/{owner_name}/settings/installations/{installation_id}/permissions/update"
+            if owner_type == "Organization"
+            else f"https://github.com/settings/installations/{installation_id}/permissions/update"
+        )
+        comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
+        return update_comment(body=comment_body, base_args=base_args)
     if error_log is None:
-        return
+        comment_body = f"I couldn't find the error log. Contact {EMAIL_LINK} if the issue persists."
+        return update_comment(body=comment_body, base_args=base_args)
 
     # Plan how to fix the error
     comment_body = "Planning how to fix the error..."
