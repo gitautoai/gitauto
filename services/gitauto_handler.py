@@ -84,6 +84,9 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     sender_id: int = payload["sender"]["id"]
     is_automation: bool = sender_id == GITHUB_APP_USER_ID
     sender_name: str = payload["sender"]["login"]
+    reviewers: list[str] = list(
+        set(name for name in (sender_name, issuer_name) if "[bot]" not in name)
+    )
 
     # Extract other information
     github_urls, other_urls = extract_urls(text=issue_body)
@@ -96,7 +99,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         "base_branch": base_branch_name,
         "new_branch": new_branch_name,
         "token": token,
-        "reviewers": list({sender_name, issuer_name}),
+        "reviewers": reviewers,
     }
 
     # Check if the user has reached the request limit

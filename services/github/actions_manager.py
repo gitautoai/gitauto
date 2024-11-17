@@ -2,7 +2,7 @@ import io
 import zipfile
 import requests
 from config import GITHUB_API_URL, TIMEOUT, UTF8
-from services.github.github_manager import create_headers
+from services.github.create_headers import create_headers
 from utils.handle_exceptions import handle_exceptions
 
 

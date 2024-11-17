@@ -1,7 +1,25 @@
 import requests
-from config import TIMEOUT, PER_PAGE
-from services.github.github_manager import create_headers
+from config import GITHUB_API_URL, TIMEOUT, PER_PAGE
+from services.github.create_headers import create_headers
+from services.github.github_types import BaseArgs
 from utils.handle_exceptions import handle_exceptions
+
+
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def add_reviewers(base_args: BaseArgs):
+    """https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#request-reviewers-for-a-pull-request"""
+    owner, repo, pr_number, token, reviewers = (
+        base_args["owner"],
+        base_args["repo"],
+        base_args["pr_number"],
+        base_args["token"],
+        base_args["reviewers"],
+    )
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pr_number}/requested_reviewers"
+    headers = create_headers(token=token)
+    json = {"reviewers": reviewers}
+    response = requests.post(url=url, headers=headers, json=json, timeout=TIMEOUT)
+    response.raise_for_status()
 
 
 @handle_exceptions(default_return_value=("", ""), raise_on_error=False)
