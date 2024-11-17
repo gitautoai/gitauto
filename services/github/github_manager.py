@@ -509,6 +509,11 @@ def get_oldest_unassigned_open_issue(
             },
             timeout=TIMEOUT,
         )
+
+        # Return None if repository access is blocked (403 TOS error)
+        if response.status_code == 403 and "Repository access blocked" in response.text:
+            return None
+
         response.raise_for_status()
         issues: list[IssueInfo] = response.json()
 
