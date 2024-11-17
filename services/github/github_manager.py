@@ -721,13 +721,10 @@ def search_remote_file_contents(query: str, base_args: BaseArgs) -> str:
     files = []
     for item in response_json.get("items", []):
         file_path = item["path"]
-        text_matches = item.get("text_matches", [])
-
-        for match in text_matches:
-            fragment = match.get("fragment", "")
-            files.append(
-                f"```A fragment where search query '{query}' matched from {file_path}\n{fragment}\n```"
-            )
+        text_matches = get_remote_file_content(
+            file_path=file_path, base_args=base_args, keyword=query
+        )
+        files.append(text_matches)
     msg = f"{len(files)} files found for the search query '{query}'\n"
     print(msg)
     output = msg + "\n" + "\n\n".join(files)
@@ -766,7 +763,9 @@ async def verify_webhook_signature(request: Request, secret: str) -> None:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def update_comment(body: str, base_args: BaseArgs, p: int | None = None) -> dict[str, Any]:
+def update_comment(
+    body: str, base_args: BaseArgs, p: int | None = None
+) -> dict[str, Any]:
     """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
     comment_url, token = base_args["comment_url"], base_args["token"]
     if p is not None:
