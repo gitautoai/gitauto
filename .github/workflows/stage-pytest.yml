@@ -27,7 +27,7 @@ jobs:
       run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
 
     - name: Run pytest
-      env:
+      env:  # https://github.com/gitautoai/gitauto/settings/secrets/actions
         GH_APP_ID: ${{ secrets.STAGE_GH_APP_ID }}
         GH_APP_NAME: ${{ secrets.GH_APP_NAME }}
         GH_APP_USER_ID: ${{ secrets.GH_APP_USER_ID }}

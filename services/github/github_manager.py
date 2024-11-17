@@ -48,6 +48,7 @@ from services.github.github_types import (
 )
 from services.openai.vision import describe_image
 from services.supabase import SupabaseManager
+from utils.detect_new_line import detect_line_break
 from utils.file_manager import apply_patch, get_file_content, run_command
 from utils.handle_exceptions import handle_exceptions
 from utils.parse_urls import parse_github_url
@@ -602,7 +603,8 @@ def get_remote_file_content(
 
     # Otherwise, decode the content
     decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
-    lines = decoded_content.split("\n")
+    line_break: str = detect_line_break(text=decoded_content)
+    lines = decoded_content.split(line_break)
     numbered_lines = [f"{i + 1}: {line}" for i, line in enumerate(lines)]
     file_path_with_lines = file_path
 
