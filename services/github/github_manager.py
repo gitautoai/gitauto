@@ -450,9 +450,7 @@ def get_issue_comments(
 
 
 @handle_exceptions(raise_on_error=True)
-def get_latest_remote_commit_sha(
-    unique_issue_id: str, clone_url: str, base_args: BaseArgs
-) -> str:
+def get_latest_remote_commit_sha(clone_url: str, base_args: BaseArgs) -> str:
     """SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
     https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference"""
     owner, repo, branch = (
@@ -479,9 +477,7 @@ def get_latest_remote_commit_sha(
             )
             initialize_repo(repo_path=f"/tmp/repo/{owner}-{repo}", remote_url=clone_url)
             return get_latest_remote_commit_sha(
-                unique_issue_id=unique_issue_id,
-                clone_url=clone_url,
-                base_args=base_args,
+                clone_url=clone_url, base_args=base_args
             )
         raise
     except Exception as e:

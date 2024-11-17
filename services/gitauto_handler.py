@@ -185,7 +185,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     comment_body = "Looks like it's doable. Creating the remote branch..."
     update_comment(body=comment_body, base_args=base_args, p=30)
     latest_commit_sha: str = get_latest_remote_commit_sha(
-        unique_issue_id=unique_issue_id,
         clone_url=repo["clone_url"],
         base_args=base_args,
     )
