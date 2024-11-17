@@ -123,22 +123,17 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
     # Run GitAuto when checkbox is checked (edited)
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
     if event_name == "issue_comment" and action == "edited":
-        issue_handled = False
         search_text = "- [x] Generate PR"
         if PRODUCT_ID != "gitauto":
             search_text += " - " + PRODUCT_ID
             if payload["comment"]["body"].find(search_text) != -1:
-                issue_handled = True
                 await handle_gitauto(payload=payload, trigger_type="comment")
         else:
             if (
                 payload["comment"]["body"].find(search_text) != -1
                 and payload["comment"]["body"].find(search_text + " - ") == -1
             ):
-                issue_handled = True
                 await handle_gitauto(payload=payload, trigger_type="comment")
-        if not issue_handled:
-            print("Edit is not an activated GitAtuo trigger.")
         return
 
     # Monitor check_run failure and re-run agent with failure reason
