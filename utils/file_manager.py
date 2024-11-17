@@ -8,6 +8,7 @@ import chardet
 
 # Local imports
 from config import UTF8
+from utils.detect_new_line import detect_line_break
 from utils.handle_exceptions import handle_exceptions
 
 
@@ -27,6 +28,9 @@ def apply_patch(original_text: str, diff_text: str):
     Assume -R? [n]: No
     Apply anyway? [y]: Yes
     """
+
+    # Detect the line break in the original text
+    line_break: str = detect_line_break(text=original_text)
 
     # Create temporary files as subprocess.run() accepts only file paths
     with tempfile.NamedTemporaryFile(
@@ -76,6 +80,7 @@ def apply_patch(original_text: str, diff_text: str):
 
         # If the patch was successfully applied, get the modified text
         modified_text = get_file_content(file_path=org_fname)
+        modified_text = modified_text.replace("\n", line_break)
 
     except subprocess.CalledProcessError as e:
         stdout: str = e.stdout
@@ -92,6 +97,7 @@ def apply_patch(original_text: str, diff_text: str):
 
         # Get the original, diff, and reject file contents for debugging
         modified_text = get_file_content(file_path=org_fname)
+        modified_text = modified_text.replace("\n", line_break)
         diff_text = get_file_content(file_path=diff_fname)
         rej_f_name: str = f"{org_fname}.rej"
         rej_text = ""
