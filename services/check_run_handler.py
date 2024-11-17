@@ -66,7 +66,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     sender_id: int = payload["sender"]["id"]
     sender_name: str = payload["sender"]["login"]
     if sender_name != GITHUB_APP_USER_NAME:
-        msg = f"Skipping because sender is not GitAuto. sender_name: '{sender_name}'"
+        msg = f"Skipping because sender is not GitAuto. sender_name: '{sender_name}' and GITHUB_APP_USER_NAME: '{GITHUB_APP_USER_NAME}'"
         print(colorize(text=msg, color="yellow"))
         return
 

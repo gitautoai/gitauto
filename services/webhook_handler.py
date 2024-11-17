@@ -173,6 +173,3 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
             unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
             supabase_manager.set_issue_to_merged(unique_issue_id=unique_issue_id)
         return
-
-    # Unhandled events are captured here
-    print(f"Event '{event_name}' with action '{action}' was received but skipped.")

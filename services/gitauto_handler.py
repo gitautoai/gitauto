@@ -99,13 +99,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         "reviewers": list({sender_name, issuer_name}),
     }
 
-    print(f"Issue Title: {issue_title}\n")
-    print(f"Issue Body:\n{issue_body}\n")
-    if github_urls:
-        print(f"GitHub URLs: {json.dumps(github_urls, indent=2)}\n")
-    if other_urls:
-        print(f"Other URLs: {json.dumps(other_urls, indent=2)}\n")
-
     # Check if the user has reached the request limit
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
@@ -122,9 +115,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     if requests_left <= 0 and IS_PRD and owner_name not in EXCEPTION_OWNERS:
         logging.info("\nRequest limit reached for user %s.", sender_name)
         body = request_limit_reached(
-            user_name=sender_name,
-            request_count=request_count,
-            end_date=end_date,
+            user_name=sender_name, request_count=request_count, end_date=end_date
         )
         create_comment(issue_number=issue_number, body=body, base_args=base_args)
         return
@@ -146,9 +137,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     )
 
     # Check out the issue comments, and root files/directories list
-    comment_body = (
-        "Checking out the issue title, body, comments, and root files list..."
-    )
+    comment_body = "Checking the issue title, body, comments, and root files list..."
     update_comment(body=comment_body, base_args=base_args, p=10)
     root_files_and_dirs: list[str] = get_remote_file_tree(base_args=base_args)
     issue_comments = get_issue_comments(issue_number=issue_number, base_args=base_args)
@@ -179,19 +168,13 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     )
     base_args["pr_body"] = pr_body
 
-    # Update the comment if any obstacles are found
+    # Ask for help if needed like a human would do
     comment_body = "Checking if I can solve it or if I should just hit you up..."
     update_comment(body=comment_body, base_args=base_args, p=25)
     messages = [{"role": "user", "content": pr_body}]
-    (
-        _messages,
-        _previous_calls,
-        _tool_name,
-        _tool_args,
-        token_input,
-        token_output,
-        is_commented,
-    ) = chat_with_agent(messages=messages, base_args=base_args, mode="comment")
+    (*_, token_input, token_output, is_commented) = chat_with_agent(
+        messages=messages, base_args=base_args, mode="comment"
+    )
     if is_commented:
         return
 
