@@ -603,18 +603,18 @@ def get_remote_file_content(
 
     # Otherwise, decode the content
     decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
-    line_break: str = detect_line_break(text=decoded_content)
-    lines = decoded_content.split(line_break)
+    lb: str = detect_line_break(text=decoded_content)
+    lines = decoded_content.split(lb)
     numbered_lines = [f"{i + 1}: {line}" for i, line in enumerate(lines)]
     file_path_with_lines = file_path
 
     # If line_number is specified, show the lines around the line_number
+    buffer = 10
     if line_number is not None:
-        buffer = 10
         start = max(line_number - buffer, 0)
         end = min(line_number + buffer, len(lines))
-        numbered_lines = numbered_lines[start:end]
-        file_path_with_lines = f"{file_path}#L{start + 1}-L{end}"
+        numbered_lines = numbered_lines[start:end + 1]
+        file_path_with_lines = f"{file_path}#L{start + 1}-L{end + 1}"
 
     # If keyword is specified, show the lines containing the keyword
     elif keyword is not None:
@@ -622,10 +622,10 @@ def get_remote_file_content(
         for i, line in enumerate(lines):
             if keyword not in line:
                 continue
-            start = max(i - 5, 0)
-            end = min(i + 6, len(lines))
-            segment = "\n".join(numbered_lines[start:end])
-            file_path_with_lines = f"{file_path}#L{start + 1}-L{end}"
+            start = max(i - buffer, 0)
+            end = min(i + buffer, len(lines))
+            segment = lb.join(numbered_lines[start:end + 1])
+            file_path_with_lines = f"{file_path}#L{start + 1}-L{end + 1}"
             segments.append(f"```{file_path_with_lines}\n" + segment + "\n```")
 
         if not segments:
@@ -633,7 +633,7 @@ def get_remote_file_content(
         msg = f"Opened file: '{file_path}' and found multiple occurrences of '{keyword}'.\n\n"
         return msg + "\n\n•\n•\n•\n\n".join(segments)
 
-    numbered_content: str = "\n".join(numbered_lines)
+    numbered_content: str = lb.join(numbered_lines)
     msg = f"Opened file: '{file_path}' with line numbers for your information.\n\n"
     return msg + f"```{file_path_with_lines}\n{numbered_content}\n```"
 
