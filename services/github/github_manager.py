@@ -177,15 +177,19 @@ def commit_changes_to_remote_branch(
         get_response.raise_for_status()
         file_info: GitHubContentInfo = get_response.json()
 
+        # Handle case where response is a list (directory listing) instead of a single file
+        if isinstance(file_info, list):
+            return f"file_path: '{file_path}' returned multiple files '{file_info}'. Please specify a single file path."
+
         # Return if the file_path is a directory. See Example2 at https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
-        if file_info["type"] == "dir":
+        if file_info.get("type") == "dir":
             return f"file_path: '{file_path}' is a directory. It should be a file path."
 
         # Get the original text and SHA of the file
-        s1: str = file_info.get("content")
+        s1: str = file_info.get("content", "")
         # content is base64 encoded by default in GitHub API
         original_text = base64.b64decode(s=s1).decode(encoding=UTF8, errors="replace")
-        sha: str = file_info["sha"]
+        sha: str = file_info.get("sha", "")
 
     # Create a new commit
     modified_text, rej_text = apply_patch(original_text=original_text, diff_text=diff)
