@@ -52,7 +52,7 @@ OPENAI_ASSISTANT_NAME = (
 OPENAI_FINAL_STATUSES = ["cancelled", "completed", "expired", "failed"]
 OPENAI_MAX_ARRAY_LENGTH = 32  # https://community.openai.com/t/assistant-threads-create-400-messages-array-too-long/754574/1
 OPENAI_MAX_STRING_LENGTH = 256000  # https://community.openai.com/t/assistant-threads-create-400-messages-array-too-long/754574/5
-OPENAI_MAX_CONTEXT_TOKENS = 128000  # https://gitauto-ai.sentry.io/issues/5582421515/events/9a09416e714c4a66bf1bd86916702be2/?project=4506865231200256&referrer=issue_details.related_trace_issue
+OPENAI_MAX_CONTEXT_TOKENS = 120000  # Secured 8,000 as a buffer. https://gitauto-ai.sentry.io/issues/5582421515/events/9a09416e714c4a66bf1bd86916702be2/?project=4506865231200256&referrer=issue_details.related_trace_issue
 OPENAI_MAX_RETRIES = 3
 OPENAI_MAX_TOOL_OUTPUTS_SIZE = 512 * 1024  # in bytes
 OPENAI_MAX_TOKENS = 4096
