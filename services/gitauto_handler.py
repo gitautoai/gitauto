@@ -208,9 +208,10 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             mode="explore",
             previous_calls=previous_calls,
         )
-        comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
-        update_comment(body=comment_body, base_args=base_args, p=p)
-        p = min(p + 5, 85)
+        if tool_name is not None and tool_args is not None:
+            comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+            update_comment(body=comment_body, base_args=base_args, p=p)
+            p = min(p + 5, 85)
 
         # Commit changes based on the exploration information
         (
@@ -227,9 +228,10 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             mode="commit",
             previous_calls=previous_calls,
         )
-        comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
-        update_comment(body=comment_body, base_args=base_args, p=p)
-        p = min(p + 5, 85)
+        if tool_name is not None and tool_args is not None:
+            comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+            update_comment(body=comment_body, base_args=base_args, p=p)
+            p = min(p + 5, 85)
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
         if not is_explored and not is_committed:
