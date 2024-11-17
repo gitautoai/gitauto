@@ -610,8 +610,9 @@ def get_remote_file_content(
 
     # If line_number is specified, show the lines around the line_number
     if line_number is not None:
-        start = max(line_number - 6, 0)
-        end = min(line_number + 5, len(lines))
+        buffer = 10
+        start = max(line_number - buffer, 0)
+        end = min(line_number + buffer, len(lines))
         numbered_lines = numbered_lines[start:end]
         file_path_with_lines = f"{file_path}#L{start + 1}-L{end}"
 
