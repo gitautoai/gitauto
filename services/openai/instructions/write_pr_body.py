@@ -1,5 +1,5 @@
 WRITE_PR_BODY = '''
-Act as an expert software developer. Write a pull request body.
+Act as an expert software developer. Write a pull request body in a language that is used in the input (e.g. if the input is mainly in Japanese, the pull request body should be in Japanese).
 NEVER use triple backticks unless it's a code block.
 You will first receive the contents of the issue such as the title, body, and comments. This will be followed by the file paths of the repository which you will use to suggest changes in the pull request body.
 Based on the content of the issue, use different formats for bug fixes or feature requests:

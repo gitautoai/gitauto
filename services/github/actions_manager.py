@@ -2,7 +2,7 @@ import io
 import zipfile
 import requests
 from config import GITHUB_API_URL, TIMEOUT, UTF8
-from services.github.github_manager import create_headers
+from services.github.create_headers import create_headers
 from utils.handle_exceptions import handle_exceptions
 
 
@@ -11,6 +11,8 @@ def get_failed_step_log_file_name(owner: str, repo: str, run_id: int, token: str
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs/{run_id}/jobs"
     headers = create_headers(token=token)
     response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
+    if response.status_code == 404 and "Not Found" in response.text:
+        return response.status_code
     response.raise_for_status()
     data = response.json()
 
@@ -33,6 +35,8 @@ def get_workflow_run_path(owner: str, repo: str, run_id: int, token: str):
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs/{run_id}"
     headers = create_headers(token=token)
     response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
+    if response.status_code == 404 and "Not Found" in response.text:
+        return response.status_code
     response.raise_for_status()
     json = response.json()
     path: str = json["path"]
@@ -45,12 +49,16 @@ def get_workflow_run_logs(owner: str, repo: str, run_id: int, token: str):
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs/{run_id}/logs"
     headers = create_headers(media_type="", token=token)
     response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
+    if response.status_code == 404 and "Not Found" in response.text:
+        return response.status_code
     response.raise_for_status()
 
     # Get the failed step file name
     failed_step_fname = get_failed_step_log_file_name(
         owner=owner, repo=repo, run_id=run_id, token=token
     )
+    if failed_step_fname == 404:
+        return failed_step_fname
 
     # Read the content of the zip file
     with zipfile.ZipFile(io.BytesIO(response.content)) as zf:

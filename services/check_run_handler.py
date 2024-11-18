@@ -1,6 +1,7 @@
 # Local imports
 import json
 from config import (
+    EMAIL_LINK,
     GITHUB_APP_USER_NAME,
     STRIPE_PRODUCT_ID_FREE,
     SUPABASE_URL,
@@ -24,6 +25,7 @@ from services.github.github_types import (
     Repository,
 )
 from services.github.pulls_manager import get_pull_request, get_pull_request_files
+from services.github.utils import create_permission_url
 from services.openai.commit_changes import chat_with_agent
 from services.openai.chat import chat_with_ai
 from services.openai.instructions.identify_cause import IDENTIFY_CAUSE
@@ -66,7 +68,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     sender_id: int = payload["sender"]["id"]
     sender_name: str = payload["sender"]["login"]
     if sender_name != GITHUB_APP_USER_NAME:
-        msg = f"Skipping because sender is not GitAuto. sender_name: '{sender_name}'"
+        msg = f"Skipping because sender is not GitAuto. sender_name: '{sender_name}' and GITHUB_APP_USER_NAME: '{GITHUB_APP_USER_NAME}'"
         print(colorize(text=msg, color="yellow"))
         return
 
@@ -143,6 +145,12 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     workflow_path = get_workflow_run_path(
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
     )
+    permission_url = create_permission_url(
+        owner_type=owner_type, owner_name=owner_name, installation_id=installation_id
+    )
+    if workflow_path == 404:
+        comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
+        return update_comment(body=comment_body, base_args=base_args)
     workflow_content = get_remote_file_content(
         file_path=workflow_path, base_args=base_args
     )
@@ -155,11 +163,15 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Get the error log from the workflow run
     comment_body = "Checking out the error log from the workflow run..."
     update_comment(body=comment_body, base_args=base_args, p=20)
-    error_log: str | None = get_workflow_run_logs(
+    error_log: str | int | None = get_workflow_run_logs(
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
     )
+    if error_log == 404:
+        comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
+        return update_comment(body=comment_body, base_args=base_args)
     if error_log is None:
-        return
+        comment_body = f"I couldn't find the error log. Contact {EMAIL_LINK} if the issue persists."
+        return update_comment(body=comment_body, base_args=base_args)
 
     # Plan how to fix the error
     comment_body = "Planning how to fix the error..."

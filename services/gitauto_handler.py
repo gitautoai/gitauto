@@ -85,6 +85,9 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     sender_id: int = payload["sender"]["id"]
     is_automation: bool = sender_id == GITHUB_APP_USER_ID
     sender_name: str = payload["sender"]["login"]
+    reviewers: list[str] = list(
+        set(name for name in (sender_name, issuer_name) if "[bot]" not in name)
+    )
 
     # Extract other information
     github_urls, other_urls = extract_urls(text=issue_body)
@@ -99,15 +102,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         "base_branch": base_branch_name,
         "new_branch": new_branch_name,
         "token": token,
-        "reviewers": list({sender_name, issuer_name}),
+        "reviewers": reviewers,
     }
-
-    print(f"Issue Title: {issue_title}\n")
-    print(f"Issue Body:\n{issue_body}\n")
-    if github_urls:
-        print(f"GitHub URLs: {json.dumps(github_urls, indent=2)}\n")
-    if other_urls:
-        print(f"Other URLs: {json.dumps(other_urls, indent=2)}\n")
 
     # Check if the user has reached the request limit
     requests_left, request_count, end_date = (
@@ -125,9 +121,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     if requests_left <= 0 and IS_PRD and owner_name not in EXCEPTION_OWNERS:
         logging.info("\nRequest limit reached for user %s.", sender_name)
         body = request_limit_reached(
-            user_name=sender_name,
-            request_count=request_count,
-            end_date=end_date,
+            user_name=sender_name, request_count=request_count, end_date=end_date
         )
         create_comment(issue_number=issue_number, body=body, base_args=base_args)
         return
@@ -150,9 +144,7 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     )
 
     # Check out the issue comments, and root files/directories list
-    comment_body = (
-        "Checking out the issue title, body, comments, and root files list..."
-    )
+    comment_body = "Checking the issue title, body, comments, and root files list..."
     update_comment(body=comment_body, base_args=base_args, p=10)
     root_files_and_dirs: list[str] = get_remote_file_tree(base_args=base_args)
     issue_comments = get_issue_comments(issue_number=issue_number, base_args=base_args)
@@ -183,19 +175,13 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     )
     base_args["pr_body"] = pr_body
 
-    # Update the comment if any obstacles are found
+    # Ask for help if needed like a human would do
     comment_body = "Checking if I can solve it or if I should just hit you up..."
     update_comment(body=comment_body, base_args=base_args, p=25)
     messages = [{"role": "user", "content": pr_body}]
-    (
-        _messages,
-        _previous_calls,
-        _tool_name,
-        _tool_args,
-        token_input,
-        token_output,
-        is_commented,
-    ) = chat_with_agent(messages=messages, base_args=base_args, mode="comment")
+    (*_, token_input, token_output, is_commented) = chat_with_agent(
+        messages=messages, base_args=base_args, mode="comment"
+    )
     if is_commented:
         return
 
@@ -203,7 +189,6 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     comment_body = "Looks like it's doable. Creating the remote branch..."
     update_comment(body=comment_body, base_args=base_args, p=30)
     latest_commit_sha: str = get_latest_remote_commit_sha(
-        unique_issue_id=unique_issue_id,
         clone_url=repo["clone_url"],
         base_args=base_args,
     )
@@ -229,9 +214,10 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             mode="explore",
             previous_calls=previous_calls,
         )
-        comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
-        update_comment(body=comment_body, base_args=base_args, p=p)
-        p = min(p + 5, 85)
+        if tool_name is not None and tool_args is not None:
+            comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+            update_comment(body=comment_body, base_args=base_args, p=p)
+            p = min(p + 5, 85)
 
         # Commit changes based on the exploration information
         (
@@ -248,9 +234,10 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
             mode="commit",
             previous_calls=previous_calls,
         )
-        comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
-        update_comment(body=comment_body, base_args=base_args, p=p)
-        p = min(p + 5, 85)
+        if tool_name is not None and tool_args is not None:
+            comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+            update_comment(body=comment_body, base_args=base_args, p=p)
+            p = min(p + 5, 85)
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
         if not is_explored and not is_committed:

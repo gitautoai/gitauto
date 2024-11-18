@@ -23,10 +23,8 @@ from github.Repository import Repository
 from config import (
     EXCEPTION_OWNERS,
     GITHUB_API_URL,
-    GITHUB_API_VERSION,
     GITHUB_APP_ID,
     GITHUB_APP_IDS,
-    GITHUB_APP_NAME,
     GITHUB_ISSUE_DIR,
     GITHUB_ISSUE_TEMPLATES,
     GITHUB_PRIVATE_KEY,
@@ -40,14 +38,17 @@ from config import (
     SUPABASE_SERVICE_ROLE_KEY,
     UTF8,
 )
+from services.github.create_headers import create_headers
 from services.github.github_types import (
     BaseArgs,
     GitHubContentInfo,
     GitHubLabeledPayload,
     IssueInfo,
 )
+from services.github.pulls_manager import add_reviewers
 from services.openai.vision import describe_image
 from services.supabase import SupabaseManager
+from utils.detect_new_line import detect_line_break
 from utils.file_manager import apply_patch, get_file_content, run_command
 from utils.handle_exceptions import handle_exceptions
 from utils.parse_urls import parse_github_url
@@ -71,7 +72,7 @@ def add_issue_templates(full_name: str, installer_name: str, token: str) -> None
             break
         except GithubException as e:
             retries += 1
-            msg = f"Error: {e.data['message']}. Retrying to get the default branch for repo: {full_name} and branch: {default_branch_name}."
+            msg = f"Error getting default branch for repo '{full_name}', branch '{default_branch_name}'. Status: {e.status}, Error: {e.data}"
             logging.info(msg)
             time.sleep(20)
     new_branch_name: str = f"{PRODUCT_ID}/add-issue-templates-{str(object=uuid4())}"
@@ -176,15 +177,19 @@ def commit_changes_to_remote_branch(
         get_response.raise_for_status()
         file_info: GitHubContentInfo = get_response.json()
 
+        # Handle case where response is a list (directory listing) instead of a single file
+        if isinstance(file_info, list):
+            return f"file_path: '{file_path}' returned multiple files '{file_info}'. Please specify a single file path."
+
         # Return if the file_path is a directory. See Example2 at https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
-        if file_info["type"] == "dir":
+        if file_info.get("type") == "dir":
             return f"file_path: '{file_path}' is a directory. It should be a file path."
 
         # Get the original text and SHA of the file
-        s1: str = file_info.get("content")
+        s1: str = file_info.get("content", "")
         # content is base64 encoded by default in GitHub API
         original_text = base64.b64decode(s=s1).decode(encoding=UTF8, errors="replace")
-        sha: str = file_info["sha"]
+        sha: str = file_info.get("sha", "")
 
     # Create a new commit
     modified_text, rej_text = apply_patch(original_text=original_text, diff_text=diff)
@@ -298,16 +303,6 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     return response.json()
 
 
-def create_headers(token: str, media_type: Optional[str] = ".v3") -> dict[str, str]:
-    """https://docs.github.com/en/rest/using-the-rest-api/getting-started-with-the-rest-api?apiVersion=2022-11-28#headers"""
-    return {
-        "Accept": f"application/vnd.github{media_type}+json",
-        "Authorization": f"Bearer {token}",
-        "User-Agent": GITHUB_APP_NAME,
-        "X-GitHub-Api-Version": GITHUB_API_VERSION,
-    }
-
-
 def create_jwt() -> str:
     """Generate a JWT (JSON Web Token) for GitHub App authentication"""
     now = int(time.time())
@@ -323,13 +318,12 @@ def create_jwt() -> str:
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | None:
     """https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request"""
-    owner, repo, base, head, token, reviewers = (
+    owner, repo, base, head, token = (
         base_args["owner"],
         base_args["repo"],
         base_args["base_branch"],
         base_args["new_branch"],
         base_args["token"],
-        base_args["reviewers"],
     )
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls",
@@ -343,16 +337,10 @@ def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | Non
         return None
     response.raise_for_status()
     pr_data = response.json()
-    pr_number = pr_data["number"]
 
-    # https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#request-reviewers-for-a-pull-request
-    response: requests.Response = requests.post(
-        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pr_number}/requested_reviewers",
-        headers=create_headers(token=token),
-        json={"reviewers": reviewers},
-        timeout=TIMEOUT,
-    )
-    response.raise_for_status()
+    # Add reviewers to the pull request
+    base_args["pr_number"] = pr_data["number"]
+    add_reviewers(base_args=base_args)
 
     return pr_data["html_url"]
 
@@ -464,9 +452,7 @@ def get_issue_comments(
 
 
 @handle_exceptions(raise_on_error=True)
-def get_latest_remote_commit_sha(
-    unique_issue_id: str, clone_url: str, base_args: BaseArgs
-) -> str:
+def get_latest_remote_commit_sha(clone_url: str, base_args: BaseArgs) -> str:
     """SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
     https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference"""
     owner, repo, branch = (
@@ -493,9 +479,7 @@ def get_latest_remote_commit_sha(
             )
             initialize_repo(repo_path=f"/tmp/repo/{owner}-{repo}", remote_url=clone_url)
             return get_latest_remote_commit_sha(
-                unique_issue_id=unique_issue_id,
-                clone_url=clone_url,
-                base_args=base_args,
+                clone_url=clone_url, base_args=base_args
             )
         raise
     except Exception as e:
@@ -527,6 +511,11 @@ def get_oldest_unassigned_open_issue(
             },
             timeout=TIMEOUT,
         )
+
+        # Return None if repository access is blocked (403 TOS error)
+        if response.status_code == 403 and "Repository access blocked" in response.text:
+            return None
+
         response.raise_for_status()
         issues: list[IssueInfo] = response.json()
 
@@ -604,16 +593,18 @@ def get_remote_file_content(
 
     # Otherwise, decode the content
     decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
-    lines = decoded_content.split("\n")
+    lb: str = detect_line_break(text=decoded_content)
+    lines = decoded_content.split(lb)
     numbered_lines = [f"{i + 1}: {line}" for i, line in enumerate(lines)]
     file_path_with_lines = file_path
 
     # If line_number is specified, show the lines around the line_number
+    buffer = 10
     if line_number is not None:
-        start = max(line_number - 6, 0)
-        end = min(line_number + 5, len(lines))
-        numbered_lines = numbered_lines[start:end]
-        file_path_with_lines = f"{file_path}#L{start + 1}-L{end}"
+        start = max(line_number - buffer, 0)
+        end = min(line_number + buffer, len(lines))
+        numbered_lines = numbered_lines[start : end + 1]  # noqa: E203
+        file_path_with_lines = f"{file_path}#L{start + 1}-L{end + 1}"
 
     # If keyword is specified, show the lines containing the keyword
     elif keyword is not None:
@@ -621,21 +612,20 @@ def get_remote_file_content(
         for i, line in enumerate(lines):
             if keyword not in line:
                 continue
-            start = max(i - 5, 0)
-            end = min(i + 6, len(lines))
-            segment = "\n".join(numbered_lines[start:end])
-            file_path_with_lines = f"{file_path}#L{start + 1}-L{end}"
+            start = max(i - buffer, 0)
+            end = min(i + buffer, len(lines))
+            segment = lb.join(numbered_lines[start : end + 1])  # noqa: E203
+            file_path_with_lines = f"{file_path}#L{start + 1}-L{end + 1}"
             segments.append(f"```{file_path_with_lines}\n" + segment + "\n```")
 
         if not segments:
             return f"Keyword '{keyword}' not found in the file '{file_path}'."
         msg = f"Opened file: '{file_path}' and found multiple occurrences of '{keyword}'.\n\n"
-        return msg + "\n\n•••\n\n".join(segments)
+        return msg + "\n\n•\n•\n•\n\n".join(segments)
 
-    numbered_content: str = "\n".join(numbered_lines)
+    numbered_content: str = lb.join(numbered_lines)
     msg = f"Opened file: '{file_path}' with line numbers for your information.\n\n"
-    output = msg + f"```{file_path_with_lines}\n{numbered_content}\n```"
-    return output
+    return msg + f"```{file_path_with_lines}\n{numbered_content}\n```"
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
@@ -722,13 +712,10 @@ def search_remote_file_contents(query: str, base_args: BaseArgs) -> str:
     files = []
     for item in response_json.get("items", []):
         file_path = item["path"]
-        text_matches = item.get("text_matches", [])
-
-        for match in text_matches:
-            fragment = match.get("fragment", "")
-            files.append(
-                f"```A fragment where search query '{query}' matched from {file_path}\n{fragment}\n```"
-            )
+        text_matches = get_remote_file_content(
+            file_path=file_path, base_args=base_args, keyword=query
+        )
+        files.append(text_matches)
     msg = f"{len(files)} files found for the search query '{query}'\n"
     print(msg)
     output = msg + "\n" + "\n\n".join(files)
@@ -767,7 +754,9 @@ async def verify_webhook_signature(request: Request, secret: str) -> None:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def update_comment(body: str, base_args: BaseArgs, p: int | None = None) -> dict[str, Any]:
+def update_comment(
+    body: str, base_args: BaseArgs, p: int | None = None
+) -> dict[str, Any]:
     """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
     comment_url, token = base_args["comment_url"], base_args["token"]
     if p is not None:
