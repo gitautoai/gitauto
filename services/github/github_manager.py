@@ -240,19 +240,17 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     issue_number: int = payload["issue"]["number"]
     user_id: int = payload["sender"]["id"]
     user_name: str = payload["sender"]["login"]
+    user_email: str | None = get_user_public_email(username=user_name, token=token)
 
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
     # Proper issue generation comment, create user if not exist (first issue in an orgnanization)
     first_issue = False
-    if not supabase_manager.user_exists(user_id=user_id):
-        supabase_manager.create_user(
-            user_id=user_id,
-            user_name=user_name,
-            installation_id=installation_id,
-        )
-        first_issue = True
-    elif supabase_manager.is_users_first_issue(
+    supabase_manager.upsert_user(user_id=user_id, user_name=user_name, email=user_email)
+    supabase_manager.upsert_user_installation(
+        user_id=user_id, installation_id=installation_id
+    )
+    if supabase_manager.is_users_first_issue(
         user_id=user_id, installation_id=installation_id
     ):
         first_issue = True
@@ -768,3 +766,22 @@ def update_comment(
     )
     response.raise_for_status()
     return response.json()
+
+
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def get_user_public_email(username: str, token: str) -> str | None:
+    """https://docs.github.com/en/rest/users/users?apiVersion=2022-11-28#get-a-user"""
+    # If the user is a bot, the email is not available.
+    if "[bot]" in username:
+        return None
+
+    # If the user is not a bot, get the user's email
+    response: requests.Response = requests.get(
+        url=f"{GITHUB_API_URL}/users/{username}",
+        headers=create_headers(token=token),
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
+    user_data: dict = response.json()
+    email: str | None = user_data.get("email")
+    return email

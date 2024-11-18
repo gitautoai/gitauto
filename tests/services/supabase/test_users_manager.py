@@ -5,6 +5,7 @@ import os
 import pytest
 
 from config import (
+    GITHUB_NOREPLY_EMAIL_DOMAIN,
     OWNER_ID,
     OWNER_NAME,
     OWNER_TYPE,
@@ -14,6 +15,7 @@ from config import (
     INSTALLATION_ID,
     UNIQUE_ISSUE_ID,
     NEW_INSTALLATION_ID,
+    TEST_EMAIL,
 )
 from services.stripe.customer import get_subscription
 from services.supabase import SupabaseManager
@@ -47,12 +49,15 @@ def test_create_and_update_user_request_works() -> None:
         owner_id=OWNER_ID,
         user_id=USER_ID,
         user_name=USER_NAME,
+        email=TEST_EMAIL,
     )
 
     usage_record_id = supabase_manager.create_user_request(
         user_id=USER_ID,
+        user_name=USER_NAME,
         installation_id=INSTALLATION_ID,
         unique_issue_id="U/gitautoai/nextjs-website#52",
+        email=TEST_EMAIL,
     )
     assert isinstance(usage_record_id, int)
     assert (
@@ -83,6 +88,7 @@ def test_how_many_requests_left() -> None:
         owner_id=OWNER_ID,
         user_id=USER_ID,
         user_name=USER_NAME,
+        email=TEST_EMAIL,
     )
     # Testing 0 requests have been made on free tier
     requests_left, request_count, end_date = (
@@ -132,7 +138,9 @@ def test_how_many_requests_left() -> None:
     assert isinstance(end_date, datetime.datetime)
 
     # Clean Up
-    supabase_manager.delete_installation(installation_id=INSTALLATION_ID)
+    supabase_manager.delete_installation(
+        installation_id=INSTALLATION_ID, user_id=USER_ID
+    )
 
 
 # test_how_many_requests_left()
@@ -154,6 +162,7 @@ def test_is_users_first_issue() -> None:
         owner_id=OWNER_ID,
         user_id=USER_ID,
         user_name=USER_NAME,
+        email=TEST_EMAIL,
     )
     assert supabase_manager.is_users_first_issue(
         user_id=USER_ID, installation_id=INSTALLATION_ID
@@ -189,6 +198,7 @@ def test_parse_subscription_object() -> None:
         owner_id=OWNER_ID,
         user_id=USER_ID,
         user_name=USER_NAME,
+        email=TEST_EMAIL,
     )
 
     def assertion_test(customer_id: str, product_id: str):
@@ -390,7 +400,7 @@ async def test_install_uninstall_install() -> None:
     assert users_data[1][0]["user_id"] == USER_ID
     assert users_data[1][0]["installation_id"] == NEW_INSTALLATION_ID
     # Should be selected since it's the only user -> used for account selected in website
-    assert users_data[1][0]["is_selected"] is False
+    assert users_data[1][0]["is_selected"] is True
     assert (
         users_data[1][0]["first_issue"] is True
     )  # first issue since hasn't had an issue
@@ -401,3 +411,47 @@ async def test_install_uninstall_install() -> None:
     # Clean Up
     wipe_installation_owner_user_data()
     wipe_installation_owner_user_data(NEW_INSTALLATION_ID)
+
+
+def test_handle_user_email_update() -> None:
+    """Test updating a user's email in the users table"""
+    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
+
+    # Clean up at the beginning just in case a prior test failed to clean
+    wipe_installation_owner_user_data()
+
+    # Insert a user into the database
+    supabase_manager.create_installation(
+        installation_id=INSTALLATION_ID,
+        owner_type=OWNER_TYPE,
+        owner_name=OWNER_NAME,
+        owner_id=OWNER_ID,
+        user_id=USER_ID,
+        user_name=USER_NAME,
+        email=TEST_EMAIL,
+    )
+    # Verify github no-reply email is not updated
+    json_data = {"user_id": USER_ID, "user_name": USER_NAME}
+    json_data["email"] = f"no_reply_email@{GITHUB_NOREPLY_EMAIL_DOMAIN}"
+    supabase_manager.upsert_user(**json_data)
+    user_data = supabase_manager.get_user(user_id=USER_ID)
+    assert user_data["email"] == TEST_EMAIL
+
+    # Verify None email is not updated
+    json_data["email"] = None
+    supabase_manager.upsert_user(**json_data)
+    user_data = supabase_manager.get_user(user_id=USER_ID)
+    assert user_data["email"] == TEST_EMAIL
+
+    # Verify valid email is updated
+    new_email = "new_email@example.com"
+    json_data["email"] = "new_email@example.com"
+    supabase_manager.upsert_user(**json_data)
+    user_data = supabase_manager.get_user(user_id=USER_ID)
+    assert user_data["email"] == new_email
+
+    # Clean Up
+    wipe_installation_owner_user_data()
+
+
+# test_handle_user_email_update()
