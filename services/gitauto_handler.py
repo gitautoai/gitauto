@@ -184,6 +184,14 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
         messages=messages, base_args=base_args, mode="comment"
     )
     if is_commented:
+        end_time = time.time()
+        supabase_manager.complete_and_update_usage_record(
+            usage_record_id=usage_record_id,
+            is_completed=True,  # False is only for GitAuto's failure
+            token_input=token_input,
+            token_output=token_output,
+            total_seconds=int(end_time - current_time),
+        )
         return
 
     # Create a remote branch
