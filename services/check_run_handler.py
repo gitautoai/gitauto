@@ -25,6 +25,7 @@ from services.github.github_types import (
     Repository,
 )
 from services.github.pulls_manager import get_pull_request, get_pull_request_files
+from services.github.utils import create_permission_url
 from services.openai.commit_changes import chat_with_agent
 from services.openai.chat import chat_with_ai
 from services.openai.instructions.identify_cause import IDENTIFY_CAUSE
@@ -144,6 +145,12 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     workflow_path = get_workflow_run_path(
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
     )
+    permission_url = create_permission_url(
+        owner_type=owner_type, owner_name=owner_name, installation_id=installation_id
+    )
+    if workflow_path == 404:
+        comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
+        return update_comment(body=comment_body, base_args=base_args)
     workflow_content = get_remote_file_content(
         file_path=workflow_path, base_args=base_args
     )
@@ -160,11 +167,6 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
     )
     if error_log == 404:
-        permission_url = (
-            f"https://github.com/organizations/{owner_name}/settings/installations/{installation_id}/permissions/update"
-            if owner_type == "Organization"
-            else f"https://github.com/settings/installations/{installation_id}/permissions/update"
-        )
         comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
         return update_comment(body=comment_body, base_args=base_args)
     if error_log is None:
