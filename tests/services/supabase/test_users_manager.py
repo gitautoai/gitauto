@@ -138,7 +138,9 @@ def test_how_many_requests_left() -> None:
     assert isinstance(end_date, datetime.datetime)
 
     # Clean Up
-    supabase_manager.delete_installation(installation_id=INSTALLATION_ID)
+    supabase_manager.delete_installation(
+        installation_id=INSTALLATION_ID, user_id=USER_ID
+    )
 
 
 # test_how_many_requests_left()
@@ -398,7 +400,7 @@ async def test_install_uninstall_install() -> None:
     assert users_data[1][0]["user_id"] == USER_ID
     assert users_data[1][0]["installation_id"] == NEW_INSTALLATION_ID
     # Should be selected since it's the only user -> used for account selected in website
-    assert users_data[1][0]["is_selected"] is False
+    assert users_data[1][0]["is_selected"] is True
     assert (
         users_data[1][0]["first_issue"] is True
     )  # first issue since hasn't had an issue
