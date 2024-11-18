@@ -1,13 +1,19 @@
 # Standard imports
 import logging
 from datetime import datetime
+from typing import Any
 
 # Third Party imports
 import stripe
 from supabase import Client
 
 # Local imports
-from config import DEFAULT_TIME, GITHUB_NOREPLY_EMAIL_DOMAIN, STRIPE_FREE_TIER_PRICE_ID, TZ
+from config import (
+    DEFAULT_TIME,
+    GITHUB_NOREPLY_EMAIL_DOMAIN,
+    STRIPE_FREE_TIER_PRICE_ID,
+    TZ,
+)
 from services.stripe.customer import (
     get_subscription,
     get_request_count_from_product_id_metadata,
@@ -21,38 +27,15 @@ class UsersManager:
 
     def __init__(self, client: Client) -> None:
         self.client: Client = client
-    
-    def check_email_is_valid(self, email: str) -> bool:
-        """Check if email is valid"""
+
+    def check_email_is_valid(self, email: str | None) -> bool:
         if email is None:
-            return False
-        if not isinstance(email, str):
             return False
         if "@" not in email or "." not in email:
             return False
         if str(email).lower().endswith(GITHUB_NOREPLY_EMAIL_DOMAIN):
             return False
         return True
-
-    @handle_exceptions(default_return_value=None, raise_on_error=False)
-    def create_user(self, user_id: int, user_name: str, installation_id: int, email: str) -> None:
-        """Creates an account for the user in the users table"""
-        email = email if self.check_email_is_valid(email=email) else None
-        self.client.table(table_name="users").upsert(
-            json={
-                "user_id": user_id,
-                "user_name": user_name,
-                "email": email,
-            },
-            on_conflict="user_id"
-        ).execute()
-
-        self.client.table(table_name="user_installations").insert(
-            json={
-                "user_id": user_id,
-                "installation_id": installation_id,
-            }
-        ).execute()
 
     # Check if user has a seat in an org or can be given a seat
     @handle_exceptions(default_return_value=True, raise_on_error=False)
@@ -231,22 +214,8 @@ class UsersManager:
             end_date,
         )
 
-    @handle_exceptions(default_return_value=False, raise_on_error=False)
-    def user_exists(self, user_id: int) -> bool:
-        """Check if user exists in users table"""
-        data, _ = (
-            self.client.table(table_name="users")
-            .select("*")
-            .eq(column="user_id", value=user_id)
-            .execute()
-        )
-        if len(data[1]) > 0:
-            return True
-        return False
-    
-    
-    @handle_exceptions(default_return_value=False, raise_on_error=False)
-    def get_user_info(self, user_id: int) -> dict:
+    @handle_exceptions(default_return_value=None, raise_on_error=False)
+    def get_user(self, user_id: int):
         """Get user info from the users table"""
         data, _ = (
             self.client.table(table_name="users")
@@ -255,16 +224,34 @@ class UsersManager:
             .execute()
         )
         if len(data[1]) > 0:
-            return data[1][0]
-        return {}
-    
-    
-    @handle_exceptions(default_return_value=None, raise_on_error=True)
-    def handle_user_email_update(self, user_id: int, email: str) -> None:
-        """Update user email in the users table if email is valid and not None and different from the current email"""
-        if self.check_email_is_valid(email=email):
-            user_info = self.get_user_info(user_id=user_id)
-            if user_info.get("email") != email:
-                self.client.table("users").update(
-                    json={"email": email}
-                ).eq("user_id", user_id).execute()
+            user: dict[str, Any] = data[1][0]
+            return user
+        return None
+
+    @handle_exceptions(default_return_value=None, raise_on_error=False)
+    def upsert_user(self, user_id: int, user_name: str, email: str | None) -> None:
+        # Check if email is valid
+        email = email if self.check_email_is_valid(email=email) else None
+
+        # Upsert user
+        self.client.table(table_name="users").upsert(
+            json={
+                "user_id": user_id,
+                "user_name": user_name,
+                **({"email": email} if email else {}),
+                "created_by": str(user_id),  # Because created_by is text
+            },
+            on_conflict="user_id",
+        ).execute()
+
+    @handle_exceptions(default_return_value=None, raise_on_error=False)
+    def upsert_user_installation(self, user_id: int, installation_id: int) -> None:
+        # Insert user installation record
+        self.client.table(table_name="user_installations").upsert(
+            json={
+                "user_id": user_id,
+                "installation_id": installation_id,
+                "is_selected": True,
+            },
+            on_conflict="user_id,installation_id",
+        ).execute()

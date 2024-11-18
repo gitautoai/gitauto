@@ -93,8 +93,8 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     github_urls, other_urls = extract_urls(text=issue_body)
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
-    email: str | None = get_user_public_email(username=sender_name, token=token)
-    
+    sender_email = get_user_public_email(username=sender_name, token=token)
+
     base_args: BaseArgs = {
         "owner": owner_name,
         "repo": repo_name,
@@ -135,9 +135,10 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     unique_issue_id = f"{owner_type}/{owner_name}/{repo_name}#{issue_number}"
     usage_record_id = supabase_manager.create_user_request(
         user_id=sender_id,
+        user_name=sender_name,
         installation_id=installation_id,
         unique_issue_id=unique_issue_id,
-        email=email,
+        email=sender_email,
     )
     add_reaction_to_issue(
         issue_number=issue_number, content="eyes", base_args=base_args

@@ -40,7 +40,7 @@ GITHUB_CHECK_RUN_FAILURES = [
 ]
 GITHUB_ISSUE_DIR = ".github/ISSUE_TEMPLATE"
 GITHUB_ISSUE_TEMPLATES: list[str] = ["bug_report.yml", "feature_request.yml"]
-GITHUB_NOREPLY_EMAIL_DOMAIN = "users.noreply.github.com"
+GITHUB_NOREPLY_EMAIL_DOMAIN = "users.noreply.github.com"  # https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-email-preferences/setting-your-commit-email-address
 GITHUB_PRIVATE_KEY_ENCODED: str = get_env_var(name="GH_PRIVATE_KEY")
 GITHUB_PRIVATE_KEY: bytes = base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED)
 GITHUB_WEBHOOK_SECRET: str = get_env_var(name="GH_WEBHOOK_SECRET")
@@ -103,7 +103,7 @@ OWNER_ID = -1
 OWNER_NAME = "installation-test"
 EXCEPTION_OWNERS = ["gitautoai", "hiroshinishio"]
 OWNER_TYPE = "Organization"
+TEST_EMAIL = "test@gitauto.ai"
 UNIQUE_ISSUE_ID = "O/gitautoai/test#1"
 USER_ID = -1
 USER_NAME = "username-test"
-EMAIL = "test@gitauto.com"
