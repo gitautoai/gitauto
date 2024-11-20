@@ -84,6 +84,14 @@ QUERY: dict[str, str] = {
     - Search for multiple variables at once: 'variable_name_1 variable_name_2'
     - Search for multiple functions at once: 'function_name_1 function_name_2'
     - Search for an entire line of code: 'from module import function_name'
+
+    ## Important Note
+
+    You can narrow down search results by excluding one or more subsets. To exclude all results that are matched by a qualifier, prefix the search qualifier with a hyphen (-). However, be careful when searching for command options like '--xxxxxx' because this results in `ERROR_TYPE_QUERY_PARSING_FATAL unable to parse query!`
+
+    When searching for command-line options:
+    - Search for 'config' instead of '--config'
+    - Search for 'verbose' instead of '--verbose'
     """,
 }
 
