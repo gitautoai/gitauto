@@ -63,7 +63,10 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
 async def handle_installation_deleted(payload: GitHubInstallationPayload) -> None:
     """Soft deletes installation record on GitAuto APP installation"""
     installation_id: int = payload["installation"]["id"]
-    supabase_manager.delete_installation(installation_id=installation_id)
+    user_id: int = payload["sender"]["id"]
+    supabase_manager.delete_installation(
+        installation_id=installation_id, user_id=user_id
+    )
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
