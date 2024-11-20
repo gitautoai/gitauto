@@ -136,9 +136,12 @@ class GitAutoAgentManager:
         return data[1][0]["id"]
 
     @handle_exceptions(default_return_value=None, raise_on_error=False)
-    def delete_installation(self, installation_id: int) -> None:
+    def delete_installation(self, installation_id: int, user_id: int) -> None:
         """We don't cancel a subscription associated with this installation id since paid users sometimes mistakenly uninstall our app"""
-        data = {"uninstalled_at": datetime.now(tz=timezone.utc).isoformat()}
+        data = {
+            "uninstalled_at": datetime.now(tz=timezone.utc).isoformat(),
+            "uninstalled_by": user_id,
+        }
         (
             self.client.table(table_name="installations")
             .update(json=data)
