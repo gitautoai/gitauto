@@ -10,5 +10,10 @@ def check_user_is_collaborator(owner: str, repo: str, user: str, token: str) -> 
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/collaborators/{user}"
     headers = create_headers(token=token)
     response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
+
+    # Return False if 404 (user is not a collaborator)
+    if response.status_code == 404:
+        return False
+
     response.raise_for_status()
     return response.status_code == 204
