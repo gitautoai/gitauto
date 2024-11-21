@@ -73,7 +73,7 @@ def add_issue_templates(full_name: str, installer_name: str, token: str) -> None
         except GithubException as e:
             retries += 1
             msg = f"Error getting default branch for repo '{full_name}', branch '{default_branch_name}'. Status: {e.status}, Error: {e.data}"
-            logging.info(msg)
+            logging.error(msg)
             time.sleep(20)
     new_branch_name: str = f"{PRODUCT_ID}/add-issue-templates-{str(object=uuid4())}"
     ref = f"refs/heads/{new_branch_name}"
