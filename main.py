@@ -1,3 +1,4 @@
+token_output = initial_token_value  # Set to a meaningful initial value
 # Standard imports
 import json
 
