@@ -542,6 +542,26 @@ def get_owner_name(owner_id: int, token: str) -> str | None:
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
 def get_remote_file_content(
+def comment_on_issue(issue_number: int, comment: str, base_args: BaseArgs) -> None:
+    """
+    Posts a comment on a GitHub issue.
+
+    params:
+    - issue_number: The number of the issue to comment on.
+    - comment: The comment text to post.
+    """
+    owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
+    url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/comments"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    data = {
+        "body": comment
+    }
+    response = requests.post(url, headers=headers, json=data)
+    if response.status_code != 201:
+        raise Exception(f"Failed to post comment: {response.content}")
     file_path: str,
     base_args: BaseArgs,
     line_number: Optional[int] = None,
