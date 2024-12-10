@@ -13,9 +13,9 @@ from config import (
     USER_ID,
     USER_NAME,
     INSTALLATION_ID,
-    UNIQUE_ISSUE_ID,
     NEW_INSTALLATION_ID,
     TEST_EMAIL,
+    TEST_REPO_NAME,
 )
 from services.stripe.customer import get_subscription
 from services.supabase import SupabaseManager
@@ -102,19 +102,18 @@ def test_how_many_requests_left() -> None:
     assert request_count == 5
     assert isinstance(end_date, datetime.datetime)
 
-    supabase_manager.client.table("issues").insert(
-        json={
-            "installation_id": INSTALLATION_ID,
-            "unique_id": UNIQUE_ISSUE_ID,
-        }
-    ).execute()
-    for _ in range(1, 6):
+    # Generate 5 issues and 5 usage records
+    for i in range(1, 6):
+        unique_issue_id: str = f"{OWNER_TYPE}/{OWNER_NAME}/{TEST_REPO_NAME}#{i}"
+        supabase_manager.client.table("issues").insert(
+            json={"installation_id": INSTALLATION_ID, "unique_id": unique_issue_id}
+        ).execute()
         supabase_manager.client.table("usage").insert(
             json={
                 "user_id": USER_ID,
                 "installation_id": INSTALLATION_ID,
                 "is_completed": True,
-                "unique_issue_id": UNIQUE_ISSUE_ID,
+                "unique_issue_id": unique_issue_id,
             }
         ).execute()
 

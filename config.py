@@ -104,6 +104,6 @@ OWNER_NAME = "installation-test"
 EXCEPTION_OWNERS = ["gitautoai", "hiroshinishio"]
 OWNER_TYPE = "Organization"
 TEST_EMAIL = "test@gitauto.ai"
-UNIQUE_ISSUE_ID = "O/gitautoai/test#1"
+TEST_REPO_NAME = "test-repo"
 USER_ID = -1
 USER_NAME = "username-test"
