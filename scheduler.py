@@ -2,7 +2,7 @@
 
 import logging
 import time
-from config import GITHUB_APP_USER_ID, GITHUB_APP_USER_NAME, PRODUCT_ID, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
+from config import PRODUCT_ID, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
 from services.github.github_manager import (
     add_label_to_issue,
     get_installation_access_token,
@@ -59,11 +59,7 @@ def schedule_handler(_event, _context) -> dict[str, int]:
             # Check the remaining available usage count, continue if it's less than 1.
             requests_left, _request_count, _end_date = (
                 supabase_manager.get_how_many_requests_left_and_cycle(
-                    user_id=GITHUB_APP_USER_ID,
-                    installation_id=installation_id,
-                    user_name=GITHUB_APP_USER_NAME,
-                    owner_id=owner_id,
-                    owner_name=owner,
+                    installation_id=installation_id, owner_id=owner_id, owner_name=owner
                 )
             )
             if requests_left < 1:

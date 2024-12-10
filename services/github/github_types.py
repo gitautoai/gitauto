@@ -1,17 +1,35 @@
 from dataclasses import dataclass
-from typing import TypedDict, Dict, List, Optional, Union
+from typing import Literal, TypedDict, Dict, List, Optional, Union
 import datetime
 
 
 class BaseArgs(TypedDict):
+    input_from: Literal["github", "jira"]
+    owner_type: Literal["user", "organization"]
+    owner_id: int
     owner: str
     repo: str
+    clone_url: str
     is_fork: bool
+    issue_number: int
+    issue_title: str
+    issue_body: str
+    issue_comments: List[str]
+    latest_commit_sha: str
+    comment_url: str | None
+    issuer_name: str
     base_branch: str
     new_branch: str
-    comment_url: str
-    pr_body: str
+    installation_id: int
     token: str
+    sender_id: int
+    sender_name: str
+    sender_email: str
+    is_automation: bool
+    reviewers: List[str]
+    github_urls: List[str]
+    other_urls: List[str]
+    pr_body: str
 
 
 @dataclass

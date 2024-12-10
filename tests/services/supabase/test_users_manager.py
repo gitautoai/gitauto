@@ -93,11 +93,7 @@ def test_how_many_requests_left() -> None:
     # Testing 0 requests have been made on free tier
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=USER_ID,
-            installation_id=INSTALLATION_ID,
-            user_name=USER_NAME,
-            owner_id=OWNER_ID,
-            owner_name=OWNER_NAME,
+            installation_id=INSTALLATION_ID, owner_id=OWNER_ID, owner_name=OWNER_NAME
         )
     )
 
@@ -125,11 +121,7 @@ def test_how_many_requests_left() -> None:
     # Test no requests left
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=USER_ID,
-            installation_id=INSTALLATION_ID,
-            user_name=USER_NAME,
-            owner_id=OWNER_ID,
-            owner_name=OWNER_NAME,
+            installation_id=INSTALLATION_ID, owner_id=OWNER_ID, owner_name=OWNER_NAME
         )
     )
 
@@ -202,15 +194,13 @@ def test_parse_subscription_object() -> None:
     )
 
     def assertion_test(customer_id: str, product_id: str):
-        subscription = get_subscription(customer_id)
+        subscription = get_subscription(customer_id=customer_id)
         _, _, product_id_output = supabase_manager.parse_subscription_object(
-            subscription,
-            USER_ID,
-            INSTALLATION_ID,
-            customer_id,
-            USER_NAME,
-            OWNER_ID,
-            OWNER_NAME,
+            subscription=subscription,
+            installation_id=INSTALLATION_ID,
+            customer_id=customer_id,
+            owner_id=OWNER_ID,
+            owner_name=OWNER_NAME,
         )
         assert product_id_output == product_id
 
@@ -224,9 +214,6 @@ def test_parse_subscription_object() -> None:
 
     # Clean Up
     wipe_installation_owner_user_data()
-
-
-# test_parse_subscription_object()
 
 
 @pytest.mark.asyncio

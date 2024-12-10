@@ -120,7 +120,9 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues
     if event_name == "issues":
         if action == "labeled":
-            await handle_gitauto(payload=payload, trigger_type="label")
+            await handle_gitauto(
+                payload=payload, trigger_type="label", input_from="github"
+            )
             return
         if action == "opened":
             create_comment_on_issue_with_gitauto_button(payload=payload)
@@ -133,13 +135,17 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
         if PRODUCT_ID != "gitauto":
             search_text += " - " + PRODUCT_ID
             if payload["comment"]["body"].find(search_text) != -1:
-                await handle_gitauto(payload=payload, trigger_type="comment")
+                await handle_gitauto(
+                    payload=payload, trigger_type="comment", input_from="github"
+                )
         else:
             if (
                 payload["comment"]["body"].find(search_text) != -1
                 and payload["comment"]["body"].find(search_text + " - ") == -1
             ):
-                await handle_gitauto(payload=payload, trigger_type="comment")
+                await handle_gitauto(
+                    payload=payload, trigger_type="comment", input_from="github"
+                )
         return
 
     # Monitor check_run failure and re-run agent with failure reason

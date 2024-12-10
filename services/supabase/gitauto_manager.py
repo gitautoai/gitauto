@@ -61,8 +61,6 @@ class GitAutoAgentManager:
             )
             subscribe_to_free_plan(
                 customer_id=customer_id,
-                user_id=user_id,
-                user_name=user_name,
                 owner_id=owner_id,
                 owner_name=owner_name,
                 installation_id=installation_id,
