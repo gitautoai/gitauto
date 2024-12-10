@@ -135,9 +135,6 @@ def test_how_many_requests_left() -> None:
     )
 
 
-# test_how_many_requests_left()
-
-
 def test_is_users_first_issue() -> None:
     """Check if it's a users first issue."""
 
