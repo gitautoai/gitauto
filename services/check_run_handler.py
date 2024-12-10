@@ -91,6 +91,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "owner": owner_name,
         "repo": repo_name,
         "is_fork": is_fork,
+        "issue_number": pull_number,
         "new_branch": head_branch,
         "base_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_remote_file_tree requires the base branch
         "sender_id": sender_id,
@@ -127,9 +128,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Create a first comment to inform the user that GitAuto is trying to fix the Check Run error
     msg = "Oops! Check run stumbled. Digging into logs... 🕵️"
     comment_body = create_progress_bar(p=0, msg=msg)
-    comment_url = create_comment(
-        issue_number=pull_number, body=comment_body, base_args=base_args
-    )
+    comment_url: str | None = create_comment(body=comment_body, base_args=base_args)
     base_args["comment_url"] = comment_url
 
     # Get title, body, and code changes in the PR

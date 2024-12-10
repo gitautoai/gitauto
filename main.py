@@ -12,8 +12,10 @@ from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 # Local imports
 from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME, SENTRY_DSN, UTF8
 from scheduler import schedule_handler
+from services.gitauto_handler import handle_gitauto
 from services.github.github_manager import verify_webhook_signature
 from services.webhook_handler import handle_webhook_event
+from services.jira.jira_manager import verify_jira_webhook
 
 if ENV != "local":
     sentry_sdk.init(
@@ -67,6 +69,13 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
     await handle_webhook_event(event_name=event_name, payload=payload)
     return {"message": "Webhook processed successfully"}
+
+
+@app.post(path="/jira-webhook")
+async def handle_jira_webhook(request: Request):
+    payload = await verify_jira_webhook(request)
+    await handle_gitauto(payload=payload, trigger_type="checkbox", input_from="jira")
+    return {"message": "Jira webhook processed successfully"}
 
 
 @app.get(path="/")

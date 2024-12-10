@@ -12,8 +12,6 @@ stripe.api_key = STRIPE_API_KEY
 @handle_exceptions(raise_on_error=True)
 def subscribe_to_free_plan(
     customer_id: str,
-    user_id: int,
-    user_name: str,
     owner_id: int,
     owner_name: str,
     installation_id: int,
@@ -23,8 +21,6 @@ def subscribe_to_free_plan(
         items=[{"price": STRIPE_FREE_TIER_PRICE_ID}],
         description="GitAuto Github App Installation Event",
         metadata={
-            "user_id": str(user_id),
-            "user_name": user_name,
             "owner_id": str(owner_id),
             "owner_name": owner_name,
             "installation_id": str(installation_id),

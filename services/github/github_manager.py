@@ -215,18 +215,24 @@ def commit_changes_to_remote_branch(
     return f"diff applied to the file: {file_path} successfully by {commit_changes_to_remote_branch.__name__}()."
 
 
-@handle_exceptions(raise_on_error=True)
-def create_comment(issue_number: int, body: str, base_args: BaseArgs) -> str:
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def create_comment(body: str, base_args: BaseArgs):
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
-    response: requests.Response = requests.post(
-        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
-        headers=create_headers(token=token),
-        json={"body": body},
-        timeout=TIMEOUT,
-    )
-    response.raise_for_status()
-    return response.json()["url"]
+    issue_number = base_args["issue_number"]
+    input_from = base_args["input_from"]
+    if input_from == "github":
+        response: requests.Response = requests.post(
+            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
+            headers=create_headers(token=token),
+            json={"body": body},
+            timeout=TIMEOUT,
+        )
+        response.raise_for_status()
+        url: str = response.json()["url"]
+        return url
+    if input_from == "jira":
+        return None
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -257,11 +263,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
 
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=user_id,
-            installation_id=installation_id,
-            user_name=user_name,
-            owner_id=owner_id,
-            owner_name=owner_name,
+            installation_id=installation_id, owner_id=owner_id, owner_name=owner_name
         )
     )
 
@@ -373,7 +375,7 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_installation_access_token(installation_id: int) -> str | None:
+def get_installation_access_token(installation_id: int) -> str:
     """https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-an-installation-access-token-for-an-app"""
     jwt_token: str = create_jwt()
     response: requests.Response = requests.post(
@@ -752,9 +754,11 @@ async def verify_webhook_signature(request: Request, secret: str) -> None:
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def update_comment(
     body: str, base_args: BaseArgs, p: int | None = None
-) -> dict[str, Any]:
+):
     """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
     comment_url, token = base_args["comment_url"], base_args["token"]
+    if comment_url is None:
+        return None
     if p is not None:
         body = create_progress_bar(p=p, msg=body)
     print(body + "\n")

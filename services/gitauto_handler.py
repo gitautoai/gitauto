@@ -1,25 +1,21 @@
 # Standard imports
 import json
-import logging
 import time
-from uuid import uuid4
+from typing import Literal
 
 # Local imports
 from config import (
     EXCEPTION_OWNERS,
-    GITHUB_APP_USER_ID,
     IS_PRD,
     PRODUCT_ID,
     PRODUCT_NAME,
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
     PR_BODY_STARTS_WITH,
-    ISSUE_NUMBER_FORMAT,
 )
 from services.github.github_manager import (
     create_pull_request,
     create_remote_branch,
-    get_installation_access_token,
     get_issue_comments,
     get_latest_remote_commit_sha,
     get_remote_file_content_by_url,
@@ -27,19 +23,14 @@ from services.github.github_manager import (
     create_comment,
     update_comment,
     add_reaction_to_issue,
-    get_user_public_email,
 )
-from services.github.github_types import (
-    BaseArgs,
-    GitHubLabeledPayload,
-    IssueInfo,
-    RepositoryInfo,
-)
+from services.github.github_types import GitHubLabeledPayload
+from services.github.utilities import deconstruct_github_payload
+from services.jira.jira_manager import deconstruct_jira_payload
 from services.openai.commit_changes import chat_with_agent
 from services.openai.instructions.write_pr_body import WRITE_PR_BODY
 from services.openai.chat import chat_with_ai
 from services.supabase import SupabaseManager
-from utils.extract_urls import extract_urls
 from utils.progress_bar import create_progress_bar
 from utils.text_copy import (
     UPDATE_COMMENT_FOR_422,
@@ -51,7 +42,11 @@ from utils.text_copy import (
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
-async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> None:
+async def handle_gitauto(
+    payload: GitHubLabeledPayload,
+    trigger_type: str,
+    input_from: Literal["github", "jira"],
+) -> None:
     """Core functionality to create comments on issue, create PRs, and update progress."""
     current_time: float = time.time()
 
@@ -59,96 +54,76 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     if trigger_type == "label" and payload["label"]["name"] != PRODUCT_ID:
         return
 
-    # Extract issue related variables
-    issue: IssueInfo = payload["issue"]
-    issue_title: str = issue["title"]
-    issue_number: int = issue["number"]
-    issue_body: str = issue["body"] or ""
-    issuer_name: str = issue["user"]["login"]
+    # Deconstruct payload based on input_from
+    base_args = None
+    if input_from == "github":
+        base_args = deconstruct_github_payload(payload=payload)
+    elif input_from == "jira":
+        base_args = deconstruct_jira_payload(payload=payload)
 
-    # Extract repository related variables
-    repo: RepositoryInfo = payload["repository"]
-    repo_name: str = repo["name"]
-    is_fork: bool = repo.get("fork", False)
-
-    # Extract owner related variables
-    owner_type: str = repo["owner"]["type"]
-    owner_name: str = repo["owner"]["login"]
-    owner_id: int = repo["owner"]["id"]
-
-    # Extract branch related variables
-    base_branch_name: str = repo["default_branch"]
-    uuid: str = str(object=uuid4())
-    new_branch_name: str = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}{issue['number']}-{uuid}"
-
-    # Extract sender related variables
-    sender_id: int = payload["sender"]["id"]
-    is_automation: bool = sender_id == GITHUB_APP_USER_ID
-    sender_name: str = payload["sender"]["login"]
-    reviewers: list[str] = list(
-        set(name for name in (sender_name, issuer_name) if "[bot]" not in name)
-    )
-
-    # Extract other information
-    github_urls, other_urls = extract_urls(text=issue_body)
-    installation_id: int = payload["installation"]["id"]
-    token: str = get_installation_access_token(installation_id=installation_id)
-    sender_email = get_user_public_email(username=sender_name, token=token)
-
-    base_args: BaseArgs = {
-        "owner": owner_name,
-        "repo": repo_name,
-        "is_fork": is_fork,
-        "base_branch": base_branch_name,
-        "new_branch": new_branch_name,
-        "token": token,
-        "reviewers": reviewers,
-    }
-
+    # Get some base args
+    installation_id = base_args["installation_id"]
+    owner_id = base_args["owner_id"]
+    owner_name = base_args["owner"]
+    owner_type = base_args["owner_type"]
+    repo_name = base_args["repo"]
+    issue_number = base_args["issue_number"]
+    issue_title = base_args["issue_title"]
+    issue_body = base_args["issue_body"]
+    issuer_name = base_args["issuer_name"]
+    new_branch_name = base_args["new_branch"]
+    sender_id = base_args["sender_id"]
+    sender_name = base_args["sender_name"]
+    sender_email = base_args["sender_email"]
+    github_urls = base_args["github_urls"]
+    token = base_args["token"]
+    is_automation = base_args["is_automation"]
     # Check if the user has reached the request limit
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=sender_id,
-            installation_id=installation_id,
-            user_name=sender_name,
-            owner_id=owner_id,
-            owner_name=owner_name,
+            installation_id=installation_id, owner_id=owner_id, owner_name=owner_name
         )
     )
-    print(f"{requests_left=}")
 
     # Notify the user if the request limit is reached and early return
     if requests_left <= 0 and IS_PRD and owner_name not in EXCEPTION_OWNERS:
-        logging.info("\nRequest limit reached for user %s.", sender_name)
         body = request_limit_reached(
             user_name=sender_name, request_count=request_count, end_date=end_date
         )
-        create_comment(issue_number=issue_number, body=body, base_args=base_args)
+        create_comment(body=body, base_args=base_args)
         return
 
     msg = "Got your request. Alright, let's get to it..."
     comment_body = create_progress_bar(p=0, msg=msg)
-    comment_url = create_comment(
-        issue_number=issue_number, body=comment_body, base_args=base_args
-    )
+    comment_url: str | None = create_comment(body=comment_body, base_args=base_args)
     base_args["comment_url"] = comment_url
-    unique_issue_id = f"{owner_type}/{owner_name}/{repo_name}#{issue_number}"
+    unique_issue_id = f"{owner_type}/{owner_name}/{repo_name}"
+    if input_from == "github":
+        unique_issue_id = unique_issue_id + f"#{issue_number}"
+    elif input_from == "jira":
+        unique_issue_id = unique_issue_id + f"#jira-{issue_number}"
     usage_record_id = supabase_manager.create_user_request(
-        user_id=sender_id,
+        user_id=sender_id if input_from == "github" else 0,
         user_name=sender_name,
         installation_id=installation_id,
         unique_issue_id=unique_issue_id,
         email=sender_email,
     )
-    add_reaction_to_issue(
-        issue_number=issue_number, content="eyes", base_args=base_args
-    )
+    if input_from == "github":
+        add_reaction_to_issue(
+            issue_number=issue_number, content="eyes", base_args=base_args
+        )
 
     # Check out the issue comments, and root files/directories list
     comment_body = "Checking the issue title, body, comments, and root files list..."
     update_comment(body=comment_body, base_args=base_args, p=10)
     root_files_and_dirs: list[str] = get_remote_file_tree(base_args=base_args)
-    issue_comments = get_issue_comments(issue_number=issue_number, base_args=base_args)
+    if input_from == "github":
+        issue_comments = get_issue_comments(
+            issue_number=issue_number, base_args=base_args
+        )
+    elif input_from == "jira":
+        issue_comments = base_args["issue_comments"]
 
     # Check out the URLs in the issue body
     reference_contents: list[str] = []
@@ -197,10 +172,13 @@ async def handle_gitauto(payload: GitHubLabeledPayload, trigger_type: str) -> No
     # Create a remote branch
     comment_body = "Looks like it's doable. Creating the remote branch..."
     update_comment(body=comment_body, base_args=base_args, p=30)
-    latest_commit_sha: str = get_latest_remote_commit_sha(
-        clone_url=repo["clone_url"],
-        base_args=base_args,
-    )
+    latest_commit_sha: str = ""
+    if input_from == "github":
+        latest_commit_sha = get_latest_remote_commit_sha(
+            clone_url=base_args["clone_url"], base_args=base_args
+        )
+    elif input_from == "jira":
+        latest_commit_sha = base_args["latest_commit_sha"]
     create_remote_branch(sha=latest_commit_sha, base_args=base_args)
 
     # Loop a process explore repo and commit changes until the ticket is resolved

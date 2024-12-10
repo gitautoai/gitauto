@@ -13,9 +13,9 @@ from config import (
     USER_ID,
     USER_NAME,
     INSTALLATION_ID,
-    UNIQUE_ISSUE_ID,
     NEW_INSTALLATION_ID,
     TEST_EMAIL,
+    TEST_REPO_NAME,
 )
 from services.stripe.customer import get_subscription
 from services.supabase import SupabaseManager
@@ -93,11 +93,7 @@ def test_how_many_requests_left() -> None:
     # Testing 0 requests have been made on free tier
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=USER_ID,
-            installation_id=INSTALLATION_ID,
-            user_name=USER_NAME,
-            owner_id=OWNER_ID,
-            owner_name=OWNER_NAME,
+            installation_id=INSTALLATION_ID, owner_id=OWNER_ID, owner_name=OWNER_NAME
         )
     )
 
@@ -106,30 +102,25 @@ def test_how_many_requests_left() -> None:
     assert request_count == 5
     assert isinstance(end_date, datetime.datetime)
 
-    supabase_manager.client.table("issues").insert(
-        json={
-            "installation_id": INSTALLATION_ID,
-            "unique_id": UNIQUE_ISSUE_ID,
-        }
-    ).execute()
-    for _ in range(1, 6):
+    # Generate 5 issues and 5 usage records
+    for i in range(1, 6):
+        unique_issue_id: str = f"{OWNER_TYPE}/{OWNER_NAME}/{TEST_REPO_NAME}#{i}"
+        supabase_manager.client.table("issues").insert(
+            json={"installation_id": INSTALLATION_ID, "unique_id": unique_issue_id}
+        ).execute()
         supabase_manager.client.table("usage").insert(
             json={
                 "user_id": USER_ID,
                 "installation_id": INSTALLATION_ID,
                 "is_completed": True,
-                "unique_issue_id": UNIQUE_ISSUE_ID,
+                "unique_issue_id": unique_issue_id,
             }
         ).execute()
 
     # Test no requests left
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            user_id=USER_ID,
-            installation_id=INSTALLATION_ID,
-            user_name=USER_NAME,
-            owner_id=OWNER_ID,
-            owner_name=OWNER_NAME,
+            installation_id=INSTALLATION_ID, owner_id=OWNER_ID, owner_name=OWNER_NAME
         )
     )
 
@@ -141,9 +132,6 @@ def test_how_many_requests_left() -> None:
     supabase_manager.delete_installation(
         installation_id=INSTALLATION_ID, user_id=USER_ID
     )
-
-
-# test_how_many_requests_left()
 
 
 def test_is_users_first_issue() -> None:
@@ -202,15 +190,13 @@ def test_parse_subscription_object() -> None:
     )
 
     def assertion_test(customer_id: str, product_id: str):
-        subscription = get_subscription(customer_id)
+        subscription = get_subscription(customer_id=customer_id)
         _, _, product_id_output = supabase_manager.parse_subscription_object(
-            subscription,
-            USER_ID,
-            INSTALLATION_ID,
-            customer_id,
-            USER_NAME,
-            OWNER_ID,
-            OWNER_NAME,
+            subscription=subscription,
+            installation_id=INSTALLATION_ID,
+            customer_id=customer_id,
+            owner_id=OWNER_ID,
+            owner_name=OWNER_NAME,
         )
         assert product_id_output == product_id
 
@@ -224,9 +210,6 @@ def test_parse_subscription_object() -> None:
 
     # Clean Up
     wipe_installation_owner_user_data()
-
-
-# test_parse_subscription_object()
 
 
 @pytest.mark.asyncio
