@@ -39,6 +39,7 @@ supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_K
 
 
 def handle_check_run(payload: CheckRunCompletedPayload) -> None:
+    return
     # Extract workflow run id
     check_run: CheckRun = payload["check_run"]
     details_url: str = check_run["details_url"]
@@ -128,7 +129,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Create a first comment to inform the user that GitAuto is trying to fix the Check Run error
     msg = "Oops! Check run stumbled. Digging into logs... 🕵️"
     comment_body = create_progress_bar(p=0, msg=msg)
-    comment_url: str | None = create_comment(body=comment_body, base_args=base_args)
+    comment_url = create_comment(body=comment_body, base_args=base_args)
     base_args["comment_url"] = comment_url
 
     # Get title, body, and code changes in the PR
