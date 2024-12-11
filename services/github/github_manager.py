@@ -220,7 +220,8 @@ def create_comment(body: str, base_args: BaseArgs):
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     issue_number = base_args["issue_number"]
-    input_from = base_args["input_from"]
+    input_from = base_args.get("input_from", "github")
+
     if input_from == "github":
         response: requests.Response = requests.post(
             url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
@@ -231,6 +232,7 @@ def create_comment(body: str, base_args: BaseArgs):
         response.raise_for_status()
         url: str = response.json()["url"]
         return url
+
     if input_from == "jira":
         return None
 
@@ -752,9 +754,7 @@ async def verify_webhook_signature(request: Request, secret: str) -> None:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def update_comment(
-    body: str, base_args: BaseArgs, p: int | None = None
-):
+def update_comment(body: str, base_args: BaseArgs, p: int | None = None):
     """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
     comment_url, token = base_args["comment_url"], base_args["token"]
     if comment_url is None:
