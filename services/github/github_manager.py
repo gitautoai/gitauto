@@ -38,6 +38,7 @@ from config import (
     SUPABASE_SERVICE_ROLE_KEY,
     UTF8,
 )
+from constants.messages import CLICK_THE_CHECKBOX
 from services.github.create_headers import create_headers
 from services.github.github_types import (
     BaseArgs,
@@ -269,7 +270,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
         )
     )
 
-    body = "Click the checkbox below to generate a PR!\n- [ ] Generate PR"
+    body = f"{CLICK_THE_CHECKBOX}\n- [ ] Generate PR"
     if PRODUCT_ID != "gitauto":
         body += " - " + PRODUCT_ID
 

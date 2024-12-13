@@ -13,6 +13,7 @@ from config import (
     SUPABASE_SERVICE_ROLE_KEY,
     PR_BODY_STARTS_WITH,
 )
+from services.github.comment_manager import delete_my_comments
 from services.github.github_manager import (
     create_pull_request,
     create_remote_branch,
@@ -84,6 +85,9 @@ async def handle_gitauto(
             installation_id=installation_id, owner_id=owner_id, owner_name=owner_name
         )
     )
+
+    # Delete all comments made by GitAuto except the one with the checkbox to clean up the issue
+    delete_my_comments(base_args=base_args)
 
     # Notify the user if the request limit is reached and early return
     if requests_left <= 0 and IS_PRD and owner_name not in EXCEPTION_OWNERS:
