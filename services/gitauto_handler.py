@@ -26,7 +26,7 @@ from services.github.github_manager import (
     add_reaction_to_issue,
 )
 from services.github.github_types import GitHubLabeledPayload
-from services.github.utilities import deconstruct_github_payload
+from services.github.github_utils import deconstruct_github_payload
 from services.jira.jira_manager import deconstruct_jira_payload
 from services.openai.commit_changes import chat_with_agent
 from services.openai.instructions.write_pr_body import WRITE_PR_BODY
