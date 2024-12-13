@@ -25,7 +25,7 @@ from services.github.github_types import (
     Repository,
 )
 from services.github.pulls_manager import get_pull_request, get_pull_request_files
-from services.github.utilities import create_permission_url
+from services.github.github_utils import create_permission_url
 from services.openai.commit_changes import chat_with_agent
 from services.openai.chat import chat_with_ai
 from services.openai.instructions.identify_cause import IDENTIFY_CAUSE
