@@ -1,7 +1,19 @@
-import re
+from re import findall, match
+from utils.handle_exceptions import handle_exceptions
 
 
-def extract_urls(text) -> tuple[list[str], list[str]]:
+@handle_exceptions(default_return_value=[], raise_on_error=False)
+def extract_image_urls(text: str) -> list[str]:
+    """Extract URLs from img tags in the given text.
+
+    Example 1: ['https://github.com/user-attachments/assets/123']
+    """
+    pattern = r'<img[^>]*src="([^"]*)"[^>]*>'
+    urls: list[str] = findall(pattern, text)
+    return urls
+
+
+def extract_urls(text: str) -> tuple[list[str], list[str]]:
     """
     ?: Matches 0 or 1 occurrence of the preceding expression.
     +: Matches 1 or more occurrences of the preceding expression.
@@ -24,8 +36,8 @@ def extract_urls(text) -> tuple[list[str], list[str]]:
     )
     all_url_pattern = r"https?://[^\s)]+"
 
-    all_urls = re.findall(all_url_pattern, text)
-    github_urls = [url for url in all_urls if re.match(github_pattern, url)]
-    other_urls = [url for url in all_urls if url not in github_urls]
+    all_urls: list[str] = findall(all_url_pattern, text)
+    github_urls: list[str] = [url for url in all_urls if match(github_pattern, url)]
+    other_urls: list[str] = [url for url in all_urls if url not in github_urls]
 
     return github_urls, other_urls
