@@ -13,6 +13,7 @@ from config import (
     SUPABASE_SERVICE_ROLE_KEY,
     PR_BODY_STARTS_WITH,
 )
+from services.github.asset_manager import get_base64, render_text
 from services.github.comment_manager import delete_my_comments
 from services.github.github_manager import (
     create_pull_request,
@@ -31,7 +32,9 @@ from services.jira.jira_manager import deconstruct_jira_payload
 from services.openai.commit_changes import chat_with_agent
 from services.openai.instructions.write_pr_body import WRITE_PR_BODY
 from services.openai.chat import chat_with_ai
+from services.openai.vision import describe_image
 from services.supabase import SupabaseManager
+from utils.extract_urls import extract_image_urls
 from utils.progress_bar import create_progress_bar
 from utils.text_copy import (
     UPDATE_COMMENT_FOR_422,
@@ -71,12 +74,14 @@ async def handle_gitauto(
     issue_number = base_args["issue_number"]
     issue_title = base_args["issue_title"]
     issue_body = base_args["issue_body"]
+    issue_body_rendered = render_text(base_args=base_args, text=issue_body)
     issuer_name = base_args["issuer_name"]
     new_branch_name = base_args["new_branch"]
     sender_id = base_args["sender_id"]
     sender_name = base_args["sender_name"]
     sender_email = base_args["sender_email"]
     github_urls = base_args["github_urls"]
+    # other_urls = base_args["other_urls"]
     token = base_args["token"]
     is_automation = base_args["is_automation"]
     # Check if the user has reached the request limit
@@ -122,12 +127,26 @@ async def handle_gitauto(
     comment_body = "Checking the issue title, body, comments, and root files list..."
     update_comment(body=comment_body, base_args=base_args, p=10)
     root_files_and_dirs: list[str] = get_remote_file_tree(base_args=base_args)
+    issue_comments: list[str] = []
     if input_from == "github":
         issue_comments = get_issue_comments(
             issue_number=issue_number, base_args=base_args
         )
     elif input_from == "jira":
         issue_comments = base_args["issue_comments"]
+
+    # Check out the image URLs in the issue body and comments
+    image_urls = extract_image_urls(text=issue_body_rendered)
+    for issue_comment in issue_comments:
+        issue_comment_rendered = render_text(base_args=base_args, text=issue_comment)
+        image_urls.extend(extract_image_urls(text=issue_comment_rendered))
+    for url in image_urls:
+        base64_image = get_base64(url=url["url"])
+        context = f"## Issue:\n{issue_title}\n\n## Issue Body:\n{issue_body}\n\n## Issue Comments:\n{'\n'.join(issue_comments)}"
+        description = describe_image(base64_image=base64_image, context=context)
+        description = f"## {url['alt']}\n\n{description}"
+        issue_comments.append(description)
+        create_comment(body=description, base_args=base_args)
 
     # Check out the URLs in the issue body
     reference_contents: list[str] = []

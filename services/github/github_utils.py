@@ -14,7 +14,7 @@ from services.github.github_manager import (
     get_installation_access_token,
     get_user_public_email,
 )
-from utils.extract_urls import extract_image_urls, extract_urls
+from utils.extract_urls import extract_urls
 from utils.handle_exceptions import handle_exceptions
 
 
@@ -67,8 +67,6 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
     github_urls, other_urls = extract_urls(text=issue_body)
     # print(f"github_urls: {github_urls}")
     # print(f"other_urls: {other_urls}")
-    image_urls = extract_image_urls(text=issue_body)
-    # print(f"image_urls: {image_urls}")
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
     sender_email: str = get_user_public_email(username=sender_name, token=token)
@@ -95,7 +93,6 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
         "is_automation": is_automation,
         "reviewers": reviewers,
         "github_urls": github_urls,
-        "image_urls": image_urls,
         "other_urls": other_urls,
     }
 

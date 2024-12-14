@@ -10,7 +10,7 @@ from utils.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value="", raise_on_error=None)
-def describe_image(base64_image: str) -> str:
+def describe_image(base64_image: str, context: str | None = None) -> str:
     """
     1. API doc: https://platform.openai.com/docs/api-reference/chat/create
     2. 20MB per image is allowed: https://platform.openai.com/docs/guides/vision/is-there-a-limit-to-the-size-of-the-image-i-can-upload
@@ -26,6 +26,16 @@ def describe_image(base64_image: str) -> str:
                         "type": "text",
                         "text": DESCRIBE_IMAGE,
                     },
+                    *(
+                        [
+                            {
+                                "type": "text",
+                                "text": context,
+                            }
+                        ]
+                        if context is not None
+                        else []
+                    ),
                     {
                         "type": "image_url",
                         "image_url": {
