@@ -3,14 +3,14 @@ from utils.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def extract_image_urls(text: str) -> list[str]:
-    """Extract URLs from img tags in the given text.
+def extract_image_urls(text: str) -> list[dict[str, str]]:
+    """Extract alt text and URLs from img tags in the given text.
 
-    Example 1: ['https://github.com/user-attachments/assets/123']
+    Example: <img width="1352" alt="Screenshot 2024-12-12 at 6 25 41 PM" src="https://github.com/user-attachments/assets/9f1e8ca9-068e-434d-b2f3-f438638268ef" />
     """
-    pattern = r'<img[^>]*src="([^"]*)"[^>]*>'
-    urls: list[str] = findall(pattern, text)
-    return urls
+    pattern = r'<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*>'
+    matches = findall(pattern, text)
+    return [{"alt": alt, "url": url} for alt, url in matches]
 
 
 def extract_urls(text: str) -> tuple[list[str], list[str]]:
