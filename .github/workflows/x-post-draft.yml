@@ -38,9 +38,9 @@ jobs:
               accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
             });
             
-            const tweet = `🚀 New merge: ${context.payload.pull_request.title}\n\n${context.payload.pull_request.html_url}`;
+            const tweet = `🚀 New release: ${context.payload.pull_request.title}\n\n${context.payload.pull_request.html_url}`;
             
-            await client.v2.tweet(tweet, { draft_mode: true });
+            await client.v2.tweet(tweet);
         env:
           TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
           TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
