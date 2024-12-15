@@ -14,7 +14,7 @@ from uuid import uuid4
 import jwt  # For generating JWTs (JSON Web Tokens)
 import requests
 from fastapi import Request
-from github import Github, GithubException
+from github import Github
 from github.ContentFile import ContentFile
 from github.PullRequest import PullRequest
 from github.Repository import Repository
@@ -29,7 +29,6 @@ from config import (
     GITHUB_ISSUE_TEMPLATES,
     GITHUB_PRIVATE_KEY,
     IS_PRD,
-    MAX_RETRIES,
     PRODUCT_NAME,
     PRODUCT_URL,
     TIMEOUT,
@@ -62,26 +61,23 @@ def add_issue_templates(full_name: str, installer_name: str, token: str) -> None
     print(f"Adding issue templates to the repo: '{full_name}' by '{installer_name}'.\n")
     gh = Github(login_or_token=token)
     repo: Repository = gh.get_repo(full_name_or_id=full_name)
+    owner, repo_name = full_name.split("/")
+    default_branch_name = repo.default_branch
 
-    # Create a new branch
-    default_branch = None
-    default_branch_name: str = repo.default_branch
-    retries = 0
-    while retries < MAX_RETRIES:
-        try:
-            default_branch = repo.get_branch(branch=default_branch_name)
-            break
-        except GithubException as e:
-            retries += 1
-            msg = f"Error getting default branch for repo '{full_name}', branch '{default_branch_name}'. Status: {e.status}, Error: {e.data}"
-            logging.error(msg)
-            time.sleep(20)
+    # Get latest commit SHA directly
+    base_args = {
+        "owner": owner,
+        "repo": repo_name,
+        "base_branch": default_branch_name,
+        "token": token,
+    }
+    clone_url = repo.clone_url
+    latest_sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)
+
+    # Create a new branch using the SHA
     new_branch_name: str = f"{PRODUCT_ID}/add-issue-templates-{str(object=uuid4())}"
     ref = f"refs/heads/{new_branch_name}"
-    if default_branch is None:
-        msg = f"Error: Could not get the default branch for repo: {full_name} and branch: {default_branch_name}."
-        raise RuntimeError(msg)
-    repo.create_git_ref(ref=ref, sha=default_branch.commit.sha)
+    repo.create_git_ref(ref=ref, sha=latest_sha)
 
     # Add issue templates to the new branch
     added_templates: list[str] = []
