@@ -40,6 +40,7 @@ jobs:
             
             const tweet = `🚀 New release: ${context.payload.pull_request.title}\n\n${context.payload.pull_request.html_url}`;
             
+            // https://developer.x.com/en/docs/x-api/tweets/manage-tweets/api-reference/post-tweets
             await client.v2.tweet(tweet);
         env:
           TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
