@@ -80,6 +80,7 @@ STRIPE_PRODUCT_ID_STANDARD: str = get_env_var(name="STRIPE_PRODUCT_ID_STANDARD")
 DEFAULT_TIME = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
 EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
 ENV: str = get_env_var(name="ENV")
+EXCEPTION_OWNERS = ["gitautoai", "Suchica", "hiroshinishio"]
 IS_PRD: bool = ENV == "prod"
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
 FREE_TIER_REQUEST_AMOUNT = 3
@@ -101,7 +102,6 @@ PRODUCT_ID_FOR_FREE = "prod_PokLGIxiVUwCi6"  # https://dashboard.stripe.com/test
 PRODUCT_ID_FOR_STANDARD = "prod_PqZFpCs1Jq6X4E"  # https://dashboard.stripe.com/test/products/prod_PqZFpCs1Jq6X4E
 OWNER_ID = -1
 OWNER_NAME = "installation-test"
-EXCEPTION_OWNERS = ["gitautoai", "hiroshinishio"]
 OWNER_TYPE = "Organization"
 TEST_EMAIL = "test@gitauto.ai"
 TEST_REPO_NAME = "test-repo"
