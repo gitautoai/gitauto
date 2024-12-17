@@ -62,12 +62,20 @@ jobs:
               resourcePath: '/posts',
               entity: {
                 author: 'urn:li:organization:100932100',
-                commentary: `🚀 New release: ${context.payload.pull_request.title}\n\n${context.payload.pull_request.html_url}`,
+                commentary: `🚀 New release: ${context.payload.pull_request.title}`,
                 visibility: 'PUBLIC',
                 distribution: {
                   feedDistribution: 'MAIN_FEED',
                   targetEntities: [],
                   thirdPartyDistributionChannels: []
+                },
+                content: {
+                  // https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads/advertising-targeting/version/article-ads-integrations?view=li-lms-2024-11&tabs=http#workflow
+                  article: {
+                    source: context.payload.pull_request.html_url,
+                    title: context.payload.pull_request.title,
+                    description: `Check out our latest release on GitHub!`
+                  }
                 },
                 lifecycleState: 'PUBLISHED',
                 isReshareDisabledByAuthor: false
