@@ -1,3 +1,6 @@
+## Code Coverage
+
+![Coverage Badge](https://img.shields.io/badge/coverage-0%25-red)
 # GitAuto AI
 
 ## 1. What is GitAuto
