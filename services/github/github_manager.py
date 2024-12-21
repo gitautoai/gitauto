@@ -661,22 +661,52 @@ def get_remote_file_content_by_url(url: str, token: str) -> str:
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_remote_file_tree(base_args: BaseArgs) -> list[str]:
+def get_remote_file_tree(base_args: BaseArgs, max_files: int = 1000) -> list[str]:
     """
     Get the file tree of a GitHub repository at a ref branch.
+    Uses recursive API call and trims results from deepest level if exceeding max_files.
     https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#get-a-tree
     """
     owner, repo, ref = base_args["owner"], base_args["repo"], base_args["base_branch"]
-    response = requests.get(
-        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/trees/{ref}",
-        headers=create_headers(token=base_args["token"]),
-        # params={"recursive": 1},  # 0, 1, "true", or "false" are all True!! Just remove it to disable recursion.
-        timeout=TIMEOUT,
-    )
+
+    # Get complete tree recursively
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/trees/{ref}"
+    headers: dict[str, str] = create_headers(token=base_args["token"])
+    params: dict[str, int | str] = {"recursive": 1}
+    response = requests.get(url=url, headers=headers, params=params, timeout=TIMEOUT)
     response.raise_for_status()
-    file_paths = [item["path"] for item in response.json()["tree"]]
-    print(f"{len(file_paths)} file or directory paths found in the root directory.")
-    return file_paths
+
+    # Warn if GitHub API truncated the response
+    if response.json().get("truncated"):
+        print("Warning: Repository tree was truncated by GitHub API")
+
+    # Group files by their depth
+    paths_by_depth: dict[int, list[str]] = {}
+    for item in response.json()["tree"]:
+        if item["type"] != "blob":  # Skip non-file items
+            continue
+        path = item["path"]
+        depth = path.count("/")
+        paths_by_depth.setdefault(depth, []).append(path)
+
+    # Collect files starting from shallowest depth
+    result: list[str] = []
+    max_depth = max(paths_by_depth.keys()) if paths_by_depth else 0
+
+    for depth in range(max_depth + 1):
+        if depth in paths_by_depth:
+            result.extend(sorted(paths_by_depth[depth]))
+
+    total_files = len(result)
+    if max_files and total_files > max_files:
+        result = result[:max_files]
+        print(f"Limited to {max_files} files out of {total_files} total files")
+        print(f"Files were trimmed from depth {max_depth} upwards")
+    else:
+        print(f"Found {total_files} files across {max_depth + 1} directory levels")
+
+    print(f"Found {len(result)} files")
+    return result
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
