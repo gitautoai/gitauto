@@ -1,14 +1,16 @@
+# https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository#configuring-the-template-chooser
 blank_issues_enabled: false
+
 contact_links:
   - name: GitAuto Support
     url: https://calendly.com/gitauto/30min
     about: Contact our support team for help with GitAuto.
   - name: GitAuto Website
-    url: https://gitauto.ai
+    url: https://gitauto.ai?utm_source=github&utm_medium=referral
     about: Visit our website for more information about GitAuto.
   - name: GitAuto X
     url: https://x.com/gitautoai 
     about: Follow us on X for feature updates and use cases.
   - name: GitAuto LinkedIn
     url: https://www.linkedin.com/company/gitauto/
-    about: Follow us on LinkedIn for hiring updates and company news.
+    about: Follow us on LinkedIn for feature updates and use cases.
