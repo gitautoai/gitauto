@@ -49,4 +49,4 @@ jobs:
         
         ENV: prod
         PRODUCT_ID: ${{ secrets.PROD_PRODUCT_ID }}
-      run: python -m pytest -r fE
+      run: python -m pytest --cov=./ --cov-report=xml
