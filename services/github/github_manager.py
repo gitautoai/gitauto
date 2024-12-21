@@ -367,6 +367,7 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
     run_command(command="git init", cwd=repo_path)
     with open(file=os.path.join(repo_path, "README.md"), mode="w", encoding=UTF8) as f:
         f.write(f"# Initial commit by [{PRODUCT_NAME}]({PRODUCT_URL})\n")
+        f.write("![Coverage](https://img.shields.io/badge/coverage-80%25-green)")
     run_command(command="git add README.md", cwd=repo_path)
     run_command(command='git commit -m "Initial commit"', cwd=repo_path)
     run_command(command=f"git remote add origin {remote_url}", cwd=repo_path)
