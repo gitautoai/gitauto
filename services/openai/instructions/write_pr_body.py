@@ -15,9 +15,14 @@ Why the bug occurs goes here.
 
 How to reproduce the bug goes here.
 
-## How to fix
+## How to fix and why
 
-How to fix the bug goes here.
+How to fix the bug goes here with reasons.
+Think step by step.
+
+## Anything the issuer needs to do
+
+Anything the issuer needs to do goes here.
 
 """
 
@@ -28,14 +33,14 @@ For feature requests (inside the triple quotes):
 
 What is the feature goes here.
 
-## Why we need the feature
-
-Why we need the feature goes here.
-
 ## How to implement and why
 
 How to implement the feature goes here with reasons.
 Think step by step.
+
+## Anything the issuer needs to do
+
+Anything the issuer needs to do goes here.
 
 ## About backward compatibility
 
