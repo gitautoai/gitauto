@@ -13,6 +13,7 @@ from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME, SENTRY_DSN, UTF8
 from scheduler import schedule_handler
 from services.gitauto_handler import handle_gitauto
+from services.github.comment_manager import post_comment
 from services.github.github_manager import verify_webhook_signature
 from services.webhook_handler import handle_webhook_event
 from services.jira.jira_manager import verify_jira_webhook
@@ -68,6 +69,11 @@ async def handle_webhook(request: Request) -> dict[str, str]:
         print(f"Error in parsing JSON payload: {e}")
 
     await handle_webhook_event(event_name=event_name, payload=payload)
+    # Check if the payload is empty and request clarification if needed
+    if not payload:
+        clarification_message = "Received an empty payload. Could you please provide more information?"
+        post_comment(base_args=payload, issue_id=payload.get('issue_number', 0), message=clarification_message)
+        return {"message": "Clarification requested due to empty payload."}
     return {"message": "Webhook processed successfully"}
 
 
