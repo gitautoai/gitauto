@@ -245,6 +245,26 @@ async def handle_gitauto(
             update_comment(body=comment_body, base_args=base_args, p=p)
             p = min(p + 5, 85)
 
+        # Search Google
+        (
+            messages,
+            previous_calls,
+            tool_name,
+            tool_args,
+            token_input,
+            token_output,
+            _is_searched,
+        ) = chat_with_agent(
+            messages=messages,
+            base_args=base_args,
+            mode="search",
+            previous_calls=previous_calls,
+        )
+        if tool_name is not None and tool_args is not None:
+            comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+            update_comment(body=comment_body, base_args=base_args, p=p)
+            p = min(p + 5, 85)
+
         # Commit changes based on the exploration information
         (
             messages,

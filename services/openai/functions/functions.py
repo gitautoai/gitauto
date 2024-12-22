@@ -12,6 +12,8 @@ from services.github.github_manager import (
     search_remote_file_contents,
     update_comment,
 )
+from services.google.search import google_search
+from services.openai.functions.search_google import SEARCH_GOOGLE
 from services.openai.functions.update_comment import UPDATE_GITHUB_COMMENT
 from services.openai.instructions.diff import DIFF_DESCRIPTION
 
@@ -121,14 +123,20 @@ TOOLS_TO_EXPLORE_REPO: Iterable[ChatCompletionToolParam] = [
     {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
     {"type": "function", "function": SEARCH_REMOTE_FILE_CONTENT},
 ]
+TOOLS_TO_SEARCH_GOOGLE: Iterable[ChatCompletionToolParam] = [
+    {"type": "function", "function": SEARCH_GOOGLE},
+]
 TOOLS_TO_COMMIT_CHANGES: Iterable[ChatCompletionToolParam] = [
     {"type": "function", "function": COMMIT_CHANGES_TO_REMOTE_BRANCH},
 ]
 
 # Define tools to call
 tools_to_call: dict[str, Any] = {
+    # GitHub
     "commit_changes_to_remote_branch": commit_changes_to_remote_branch,
     "get_remote_file_content": get_remote_file_content,
     "search_remote_file_contents": search_remote_file_contents,
     "update_github_comment": update_comment,
+    # Google
+    "search_google": google_search,
 }
