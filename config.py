@@ -92,6 +92,7 @@ PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 PRODUCT_URL = "https://gitauto.ai"
 TIMEOUT = 120  # seconds
+FEEDBACK_FEATURE_ENABLED = True
 TZ = timezone.utc
 UTF8 = "utf-8"
 
