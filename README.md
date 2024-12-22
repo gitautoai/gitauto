@@ -8,6 +8,7 @@
 - Want to see demo videos? Go to [GitAuto YouTube](https://www.youtube.com/@gitautoai).
 - Want to know more about GitAuto? Go to [GitAuto homepage](https://gitauto.ai).
 - Want to chat about your use case? Feel free to contact us at [email](mailto:info@gitauto.ai), [admin](https://github.com/hiroshinishio), [X](https://x.com/gitautoai), or [LinkedIn](https://www.linkedin.com/company/gitauto/).
+[![codecov](https://codecov.io/gh/gitautoai/gitauto/branch/main/graph/badge.svg?token=YOUR_TOKEN_HERE)](https://codecov.io/gh/gitautoai/gitauto)
 
 ## 2. How to use GitAuto
 
