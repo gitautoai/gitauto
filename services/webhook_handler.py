@@ -22,6 +22,7 @@ from services.github.github_manager import (
 from services.github.github_types import GitHubInstallationPayload
 from services.supabase import SupabaseManager
 from services.gitauto_handler import handle_gitauto
+from services.github.comment_manager import post_comment
 from utils.handle_exceptions import handle_exceptions
 
 # Initialize managers
@@ -120,6 +121,11 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues
     if event_name == "issues":
         if action == "labeled":
+        # Validate issue details
+        if not payload.get('issue', {}).get('title') or not payload.get('issue', {}).get('body'):
+            clarification_message = "The issue details are insufficient for processing. Could you please provide more information?"
+            post_comment(base_args=payload, issue_id=payload['issue']['number'], message=clarification_message)
+            return
             await handle_gitauto(
                 payload=payload, trigger_type="label", input_from="github"
             )
