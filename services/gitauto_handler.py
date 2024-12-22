@@ -15,11 +15,13 @@ from config import (
 )
 from services.github.asset_manager import get_base64, render_text
 from services.github.comment_manager import delete_my_comments
+from services.github.file_manager import find_config_files
 from services.github.github_manager import (
     create_pull_request,
     create_remote_branch,
     get_issue_comments,
     get_latest_remote_commit_sha,
+    get_remote_file_content,
     get_remote_file_content_by_url,
     get_remote_file_tree,
     create_comment,
@@ -123,10 +125,17 @@ async def handle_gitauto(
             issue_number=issue_number, content="eyes", base_args=base_args
         )
 
-    # Check out the issue comments, and root files/directories list
-    comment_body = "Checking the issue title, body, comments, and root files list..."
+    # Check out the issue comments, and file tree
+    comment_body = "Checking the issue title, body, comments, and file tree..."
     update_comment(body=comment_body, base_args=base_args, p=10)
-    root_files_and_dirs: list[str] = get_remote_file_tree(base_args=base_args)
+    file_tree: list[str] = get_remote_file_tree(base_args=base_args)
+    config_files: list[str] = find_config_files(file_tree=file_tree)
+    config_contents: list[str] = []
+    for config_file in config_files:
+        content = get_remote_file_content(file_path=config_file, base_args=base_args)
+        config_contents.append(content)
+
+    # Check out the issue comments
     issue_comments: list[str] = []
     if input_from == "github":
         issue_comments = get_issue_comments(
@@ -168,7 +177,9 @@ async def handle_gitauto(
                 "issue_body": issue_body,
                 "reference_contents": reference_contents,
                 "issue_comments": issue_comments,
-                "root_files_and_dirs": root_files_and_dirs,
+                "file_tree": file_tree,
+                "config_contents": config_contents,
+                "metadata": base_args,
             }
         ),
     )
@@ -177,7 +188,12 @@ async def handle_gitauto(
     # Ask for help if needed like a human would do
     comment_body = "Checking if I can solve it or if I should just hit you up..."
     update_comment(body=comment_body, base_args=base_args, p=25)
-    messages = [{"role": "user", "content": pr_body}]
+    messages = [
+        {"role": "user", "content": pr_body},
+        {"role": "user", "content": f"File tree:\n{file_tree}"},
+        {"role": "user", "content": f"Config contents:\n{config_contents}"},
+        {"role": "user", "content": f"Metadata:\n{base_args}"},
+    ]
     (*_, token_input, token_output, is_commented) = chat_with_agent(
         messages=messages, base_args=base_args, mode="comment"
     )
