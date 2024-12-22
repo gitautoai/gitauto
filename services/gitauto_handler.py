@@ -15,6 +15,7 @@ from config import (
 )
 from services.github.asset_manager import get_base64, render_text
 from services.github.comment_manager import delete_my_comments
+from services.github.comment_manager import post_comment
 from services.github.github_manager import (
     create_pull_request,
     create_remote_branch,
@@ -173,6 +174,14 @@ async def handle_gitauto(
         ),
     )
     base_args["pr_body"] = pr_body
+
+
+    # Validate issue details
+    if not issue_title or not issue_body:
+        clarification_message = "The issue details are insufficient for processing. Could you please provide more information?"
+        post_comment(base_args=base_args, issue_id=issue_number, message=clarification_message)
+        return
+
 
     # Ask for help if needed like a human would do
     comment_body = "Checking if I can solve it or if I should just hit you up..."
