@@ -1,3 +1,9 @@
+# Code Coverage
+
+This project uses `pytest-cov` to generate code coverage reports. The current code coverage percentage is displayed below.
+
+![Coverage Badge](https://img.shields.io/badge/coverage-80%25-brightgreen)
+For more detailed coverage reports, please refer to the CI/CD pipeline results or use a service like Coveralls or Codecov to integrate dynamic badges.
 # GitAuto AI
 
 ## 1. What is GitAuto
