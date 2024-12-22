@@ -50,3 +50,4 @@ jobs:
         ENV: prod
         PRODUCT_ID: ${{ secrets.PROD_PRODUCT_ID }}
       run: python -m pytest -r fE
+      coverage run -m pytest && coverage xml
