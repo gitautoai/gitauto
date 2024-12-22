@@ -52,6 +52,7 @@ jobs:
       run: python -m pytest -r fE --cov-branch --cov=./ --cov-report=xml
 
     # https://github.com/codecov/codecov-action?tab=readme-ov-file#usage
+    # https://app.codecov.io/gh/gitautoai/gitauto/new
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5.1.2
       with:
