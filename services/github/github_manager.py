@@ -705,7 +705,9 @@ def get_remote_file_tree(base_args: BaseArgs, max_files: int = 1000) -> list[str
     else:
         print(f"Found {total_files} files across {max_depth + 1} directory levels")
 
-    print(f"Found {len(result)} files")
+    # Sort the result by alphabetical order
+    result.sort()
+
     return result
 
 
