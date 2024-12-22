@@ -2,6 +2,7 @@ from datetime import datetime
 
 # Local imports
 from config import EMAIL_LINK, PRODUCT_ID
+from constants.messages import COMPLETED_PR
 
 
 def git_command(new_branch_name: str) -> str:
@@ -44,10 +45,10 @@ def pull_request_completed(
 
     # For user triggers
     if not is_automation:
-        return f"{user_part}Pull request completed! Check it out here {pr_url} 🚀\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+        return f"{user_part}{COMPLETED_PR} {pr_url} 🚀\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     # For automation triggers
-    return f"{user_part}Pull request completed! Check it out here {pr_url} 🚀\n\nNote: I automatically create a pull request for an unassigned and open issue in order from oldest to newest once a day at 00:00 UTC, as long as you have remaining automation usage. Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+    return f"{user_part}{COMPLETED_PR} {pr_url} 🚀\n\nNote: I automatically create a pull request for an unassigned and open issue in order from oldest to newest once a day at 00:00 UTC, as long as you have remaining automation usage. Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
 
 def request_issue_comment(requests_left: int, sender_name: str, end_date: datetime):
