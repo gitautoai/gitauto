@@ -7,6 +7,7 @@ from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
 
 # Local imports
 from services.github.github_manager import (
+from services.github.comment_manager import post_comment
     commit_changes_to_remote_branch,
     get_remote_file_content,
     search_remote_file_contents,
@@ -132,3 +133,4 @@ tools_to_call: dict[str, Any] = {
     "search_remote_file_contents": search_remote_file_contents,
     "update_github_comment": update_comment,
 }
+    "post_comment": post_comment,
