@@ -1,6 +1,6 @@
 from requests import delete, get
-from config import GITHUB_API_URL, TIMEOUT
-from constants.messages import CLICK_THE_CHECKBOX
+from config import GITHUB_API_URL, TIMEOUT, GITHUB_APP_USER_NAME
+from constants.messages import COMPLETED_PR
 from services.github.create_headers import create_headers
 from services.github.github_types import BaseArgs
 from utils.handle_exceptions import handle_exceptions
@@ -35,9 +35,16 @@ def get_all_comments(base_args: BaseArgs):
 
 
 def filter_my_comments(comments: list[dict]):
-    """Filter out comments made by GitAuto except the one with the checkbox"""
+    """Filter comments to only include those containing COMPLETED_PR and made by our GitHub app"""
     return [
-        comment for comment in comments if CLICK_THE_CHECKBOX not in comment["body"]
+        comment
+        for comment in comments
+        if (
+            COMPLETED_PR in comment["body"]
+            or "▓" in comment["body"]
+            or "░" in comment["body"]
+        )
+        and comment["user"]["login"] == GITHUB_APP_USER_NAME
     ]
 
 
