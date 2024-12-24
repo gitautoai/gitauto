@@ -57,12 +57,15 @@ def scrape_content_from_url(url: str):
     # Get title and content
     title = soup.title.string if soup.title else ""
     print(f"Googled url: {url}\nTitle: {title}")
-    print(f"Soup: {soup.prettify()}")
+
+    # Print unique HTML tags
+    unique_tags = set(tag.name for tag in soup.find_all())
+    print(f"Unique HTML tags found: {sorted(unique_tags)}")
 
     # Find main content area if possible
     main_content = soup.find(["main", "article", 'div[role="main"]']) or soup
     content = "\n".join(main_content.stripped_strings).strip()
-    print(f"Content: {content}")
+
     return {"title": title.strip(), "content": content, "url": url}
 
 
