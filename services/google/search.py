@@ -1,11 +1,13 @@
 from bs4 import BeautifulSoup
 from googlesearch import search
 from requests import get
+import logging
 from config import TIMEOUT
 from constants.requests import USER_AGENT
 from services.github.github_types import BaseArgs
 from utils.handle_exceptions import handle_exceptions
 
+logger = logging.getLogger(__name__)
 NUM_RESULTS_DEFAULT = 1
 UNNECESSARY_TAGS = [
     "ads",
@@ -25,6 +27,7 @@ UNNECESSARY_TAGS = [
     "svg",
 ]
 
+DEFAULT_RATE_LIMIT = 1000
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
 def search_urls(query: str, num_results: int = NUM_RESULTS_DEFAULT, lang: str = "en"):
@@ -80,4 +83,10 @@ def google_search(
     contents = []
     for url in urls:
         contents.append(scrape_content_from_url(url["url"]))
+        # Example of accessing headers (assuming response is available)
+        # response = some_function_to_get_response()
+        # rate_limit = response.headers.get('x-ratelimit-limit', DEFAULT_RATE_LIMIT)
+        # if 'x-ratelimit-limit' not in response.headers:
+        #     logger.warning("Missing 'x-ratelimit-limit' header in Google API response.")
+
     return contents
