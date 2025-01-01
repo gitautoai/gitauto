@@ -1,7 +1,7 @@
 from unittest.mock import patch
-from config import GITHUB_API_VERSION, GITHUB_APP_NAME, TIMEOUT
+from config import GITHUB_API_URL, GITHUB_API_VERSION, GITHUB_APP_NAME, TIMEOUT
 from services.github.branch_manager import get_default_branch
-from tests.constants import GITHUB_API_URL, OWNER, REPO, TOKEN
+from tests.constants import OWNER, REPO, TOKEN
 
 
 @patch("requests.get")
