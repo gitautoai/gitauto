@@ -16,7 +16,7 @@ from config import (
 )
 from services.stripe.customer import (
     get_subscription,
-    get_request_count_from_product_id_metadata,
+    get_base_request_limit,
     subscribe_to_free_plan,
 )
 from utils.handle_exceptions import handle_exceptions
@@ -45,8 +45,8 @@ class UsersManager:
         customer_id: str,
         owner_id: int,
         owner_name: str,
-    ) -> tuple[int, int, str]:
-        """Parsing stripe subscription object to get the start date, end date and product id of either a paid or free tier customer subscription"""
+    ) -> tuple[int, int, str, str]:
+        """Parsing stripe subscription object to get the start date, end date, product id and interval"""
         if len(subscription.data) > 2:
             msg = "There are more than 2 active subscriptions for this customer. This is a check when we move to multiple paid subscriptions."
             logging.error(msg)
@@ -55,6 +55,8 @@ class UsersManager:
         free_tier_start_date = 0
         free_tier_end_date = 0
         free_tier_product_id = ""
+        free_tier_interval = "month"  # Default interval
+
         # return the first paid subscription if found, if not return the free one found
         for sub in subscription.data:
             # Iterate over the items, there should only be one item, but we do this just in case
@@ -65,12 +67,14 @@ class UsersManager:
                     free_tier_start_date = sub.current_period_start
                     free_tier_end_date = sub.current_period_end
                     free_tier_product_id = item["price"]["product"]
+                    free_tier_interval = item["price"]["recurring"]["interval"]
                     continue
 
                 return (
                     sub["current_period_start"],
                     sub["current_period_end"],
                     item["price"]["product"],
+                    item["price"]["recurring"]["interval"],
                 )
 
         if (
@@ -94,7 +98,12 @@ class UsersManager:
                 owner_name=owner_name,
             )
         # Return from Free Tier Subscription if there is no paid subscription object
-        return free_tier_start_date, free_tier_end_date, free_tier_product_id
+        return (
+            free_tier_start_date,
+            free_tier_end_date,
+            free_tier_product_id,
+            free_tier_interval,
+        )
 
     @handle_exceptions(default_return_value=(1, 1, DEFAULT_TIME), raise_on_error=False)
     def get_how_many_requests_left_and_cycle(
@@ -119,7 +128,7 @@ class UsersManager:
 
         # Get subscription object and extract start date, end date and product id
         subscription = get_subscription(customer_id=stripe_customer_id)
-        start_date_seconds, end_date_seconds, product_id = (
+        start_date_seconds, end_date_seconds, product_id, interval = (
             self.parse_subscription_object(
                 subscription=subscription,
                 installation_id=installation_id,
@@ -129,8 +138,12 @@ class UsersManager:
             )
         )
 
-        # Get request count from product id metadata
-        request_count = get_request_count_from_product_id_metadata(product_id)
+        # Get base request count from product id metadata
+        base_request_limit = get_base_request_limit(product_id)
+        request_limit = (
+            base_request_limit * 12 if interval == "year" else base_request_limit
+        )
+
         start_date = datetime.fromtimestamp(timestamp=start_date_seconds, tz=TZ)
         end_date = datetime.fromtimestamp(timestamp=end_date_seconds, tz=TZ)
 
@@ -145,10 +158,9 @@ class UsersManager:
         )
 
         # Process unique_issue_id in Python
-        unique_issue_ids = set(record['unique_issue_id'] for record in data[1])
-        requests_left = request_count - len(unique_issue_ids)
-
-        return (requests_left, request_count, end_date)
+        unique_issue_ids = set(record["unique_issue_id"] for record in data[1])
+        requests_left = request_limit - len(unique_issue_ids)
+        return (requests_left, request_limit, end_date)
 
     @handle_exceptions(default_return_value=None, raise_on_error=False)
     def get_user(self, user_id: int):
