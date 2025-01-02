@@ -12,11 +12,11 @@ from config import (
     ISSUE_NUMBER_FORMAT,
 )
 from services.check_run_handler import handle_check_run
+from services.github.actions_manager import cancel_workflow_runs_in_progress
 from services.github.github_manager import (
     add_issue_templates,
     create_comment_on_issue_with_gitauto_button,
     get_installation_access_token,
-    # turn_on_issue,
     get_user_public_email,
 )
 from services.github.github_types import GitHubInstallationPayload
@@ -153,6 +153,17 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
     if event_name == "check_run" and action in ("completed"):
         conclusion: str = payload["check_run"]["conclusion"]
         if conclusion in GITHUB_CHECK_RUN_FAILURES:
+            # Cancel other in_progress check runs before handling this failure
+            owner = payload["repository"]["owner"]["login"]
+            repo = payload["repository"]["name"]
+            commit_sha = payload["check_run"]["head_sha"]
+            installation_id = payload["installation"]["id"]
+            token = get_installation_access_token(installation_id=installation_id)
+
+            cancel_workflow_runs_in_progress(
+                owner=owner, repo=repo, commit_sha=commit_sha, token=token
+            )
+
             handle_check_run(payload=payload)
         return
 

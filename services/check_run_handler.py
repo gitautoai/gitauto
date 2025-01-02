@@ -40,7 +40,6 @@ supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_K
 
 
 def handle_check_run(payload: CheckRunCompletedPayload) -> None:
-    return
     # Extract workflow run id
     check_run: CheckRun = payload["check_run"]
     details_url: str = check_run["details_url"]
