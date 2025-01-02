@@ -1,21 +1,12 @@
 name: PyTest Workflow
 
 on:
-  push:
-    branches:
-      - '*'
-      - '!main'
   pull_request:
     branches:
       - 'main'
 
 jobs:
   build:
-    # Prevent redudant runs like when a PR is updated
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref_name }}
-      cancel-in-progress: true
-
     runs-on: ubuntu-latest
 
     steps:
