@@ -50,7 +50,7 @@ supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_K
 
 async def handle_gitauto(
     payload: GitHubLabeledPayload,
-    trigger_type: str,
+    trigger_type: Literal["label", "comment", "review_comment"],
     input_from: Literal["github", "jira"],
 ) -> None:
     """Core functionality to create comments on issue, create PRs, and update progress."""

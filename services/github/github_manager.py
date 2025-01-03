@@ -45,7 +45,7 @@ from services.github.github_types import (
     GitHubLabeledPayload,
     IssueInfo,
 )
-from services.github.pulls_manager import add_reviewers
+from services.github.reviewers_manager import add_reviewers
 from services.openai.vision import describe_image
 from services.supabase import SupabaseManager
 from utils.detect_new_line import detect_line_break

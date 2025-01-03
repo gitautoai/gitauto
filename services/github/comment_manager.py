@@ -1,4 +1,4 @@
-from requests import delete, get
+from requests import delete, get, post
 from config import GITHUB_API_URL, TIMEOUT, GITHUB_APP_USER_NAME
 from constants.messages import COMPLETED_PR
 from services.github.create_headers import create_headers
@@ -55,3 +55,15 @@ def delete_my_comments(base_args: BaseArgs):
     # print(f"My comments: {dumps(obj=my_comments, indent=2)}")
     for comment in my_comments:
         delete_a_comment(base_args=base_args, comment_id=comment["id"])
+
+
+def reply_to_comment(base_args: BaseArgs, body: str):
+    """https://docs.github.com/en/rest/pulls/comments?apiVersion=2022-11-28#create-a-reply-for-a-review-comment"""
+    owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
+    pull_number = base_args["pull_number"]
+    comment_id = base_args["review_id"]
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies"
+    headers: dict[str, str] = create_headers(token=token)
+    response = post(url=url, headers=headers, json={"body": body}, timeout=TIMEOUT)
+    response.raise_for_status()
+    return response.json()["url"]
