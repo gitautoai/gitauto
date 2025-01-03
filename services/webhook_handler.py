@@ -20,6 +20,7 @@ from services.github.github_manager import (
     get_user_public_email,
 )
 from services.github.github_types import GitHubInstallationPayload
+from services.review_run_handler import handle_review_run
 from services.supabase import SupabaseManager
 from services.gitauto_handler import handle_gitauto
 from utils.handle_exceptions import handle_exceptions
@@ -190,4 +191,10 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
             owner_type = payload["repository"]["owner"]["type"]
             unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
             supabase_manager.set_issue_to_merged(unique_issue_id=unique_issue_id)
+        return
+
+    # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_comment
+    # Do nothing when action is "deleted"
+    if event_name == "pull_request_review_comment" and action in ("created", "edited"):
+        handle_review_run(payload=payload)
         return
