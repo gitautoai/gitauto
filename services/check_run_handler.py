@@ -106,8 +106,6 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Return here if stripe_customer_id is not found
     stripe_customer_id: str | None = get_stripe_customer_id(owner_id=owner_id)
     if stripe_customer_id is None:
-        msg = f"Skipping because customer is in free tier. stripe_customer_id: '{stripe_customer_id}'"
-        print(colorize(text=msg, color="yellow"))
         return
 
     # Return here if product_id is not found or is in free tier
@@ -156,7 +154,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     )
 
     # Get the file tree in the root of the repo
-    comment_body = "Checking out the file tree in the root of the repo..."
+    comment_body = "Checking out the file tree in the repo..."
     update_comment(body=comment_body, base_args=base_args, p=15)
     file_tree: str = get_remote_file_tree(base_args=base_args)
 
@@ -237,6 +235,26 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
         update_comment(body=comment_body, base_args=base_args, p=p)
         p = min(p + 5, 95)
+
+        # Search Google
+        (
+            messages,
+            previous_calls,
+            tool_name,
+            tool_args,
+            _token_input,
+            _token_output,
+            _is_searched,
+        ) = chat_with_agent(
+            messages=messages,
+            base_args=base_args,
+            mode="search",
+            previous_calls=previous_calls,
+        )
+        if tool_name is not None and tool_args is not None:
+            comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+            update_comment(body=comment_body, base_args=base_args, p=p)
+            p = min(p + 5, 95)
 
         # Commit changes based on the exploration information
         (
