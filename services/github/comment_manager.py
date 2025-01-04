@@ -4,6 +4,7 @@ from constants.messages import COMPLETED_PR
 from services.github.create_headers import create_headers
 from services.github.github_types import BaseArgs
 from utils.handle_exceptions import handle_exceptions
+from utils.text_copy import UPDATE_COMMENT_FOR_422
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -41,6 +42,7 @@ def filter_my_comments(comments: list[dict]):
         for comment in comments
         if (
             COMPLETED_PR in comment["body"]
+            or UPDATE_COMMENT_FOR_422 in comment["body"]
             or "▓" in comment["body"]
             or "░" in comment["body"]
         )
