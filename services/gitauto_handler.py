@@ -1,4 +1,5 @@
 # Standard imports
+from datetime import datetime
 import json
 import time
 from typing import Literal
@@ -169,6 +170,8 @@ async def handle_gitauto(
     # Write a pull request body
     comment_body = "Writing up the pull request body..."
     update_comment(body=comment_body, base_args=base_args, p=20)
+    today = datetime.now().strftime("%Y-%m-%d")
+    print(f"Today's date: {today}")
     pr_body: str = chat_with_ai(
         system_input=WRITE_PR_BODY,
         user_input=json.dumps(
@@ -180,6 +183,7 @@ async def handle_gitauto(
                 "file_tree": file_tree,
                 "config_contents": config_contents,
                 "metadata": base_args,
+                "today": today,
             }
         ),
     )
@@ -193,6 +197,7 @@ async def handle_gitauto(
         {"role": "user", "content": f"File tree:\n{file_tree}"},
         {"role": "user", "content": f"Config contents:\n{config_contents}"},
         {"role": "user", "content": f"Metadata:\n{base_args}"},
+        {"role": "user", "content": f"Today's date:\n{today}"},
     ]
     (*_, token_input, token_output, is_commented) = chat_with_agent(
         messages=messages, base_args=base_args, mode="comment"
