@@ -9,7 +9,7 @@ from services.openai.instructions.describe_image import DESCRIBE_IMAGE
 from utils.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value="", raise_on_error=None)
+@handle_exceptions(default_return_value="", raise_on_error=False)
 def describe_image(base64_image: str, context: str | None = None) -> str:
     """
     1. API doc: https://platform.openai.com/docs/api-reference/chat/create
@@ -22,17 +22,9 @@ def describe_image(base64_image: str, context: str | None = None) -> str:
             {
                 "role": "user",
                 "content": [
-                    {
-                        "type": "text",
-                        "text": DESCRIBE_IMAGE,
-                    },
+                    {"type": "text", "text": DESCRIBE_IMAGE},
                     *(
-                        [
-                            {
-                                "type": "text",
-                                "text": context,
-                            }
-                        ]
+                        [{"type": "text", "text": context}]
                         if context is not None
                         else []
                     ),
