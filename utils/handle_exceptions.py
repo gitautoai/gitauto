@@ -13,21 +13,28 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 def handle_exceptions(
-    default_return_value: Any = None, raise_on_error: bool = False
+    default_return_value: Any = None,
+    raise_on_error: bool = False,
+    api_type: str = "github",  # "github" or "google"
 ) -> Callable[[F], F]:
     """https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#checking-the-status-of-your-rate-limit"""
 
     def decorator(func: F) -> F:
         @wraps(wrapped=func)
         def wrapper(*args: Tuple[Any, ...], **kwargs: Any):
-            truncated_kwargs = str({k: str(v)[:50] + '...' if len(str(v)) > 50 else v for k, v in kwargs.items()})
+            truncated_kwargs = str(
+                {
+                    k: str(v)[:50] + "..." if len(str(v)) > 50 else v
+                    for k, v in kwargs.items()
+                }
+            )
             try:
                 return func(*args, **kwargs)
             except requests.exceptions.HTTPError as err:
                 reason: str | Any = err.response.reason
                 text: str | Any = err.response.text
 
-                if err.response.status_code in {403, 429}:
+                if api_type == "github" and err.response.status_code in {403, 429}:
                     limit = int(err.response.headers["X-RateLimit-Limit"])
                     remaining = int(err.response.headers["X-RateLimit-Remaining"])
                     used = int(err.response.headers["X-RateLimit-Used"])
@@ -55,6 +62,13 @@ def handle_exceptions(
                     logging.error(msg=err_msg)
                     if raise_on_error:
                         raise
+
+                elif api_type == "google" and err.response.status_code == 429:
+                    retry_after = int(err.response.headers.get("Retry-After", 60))
+                    err_msg = f"Google Search Rate Limit: {func.__name__} will retry after {retry_after} seconds"
+                    logging.warning(msg=err_msg)
+                    time.sleep(retry_after)
+                    return wrapper(*args, **kwargs)
 
                 # Ex) 409: Conflict, 422: Unprocessable Entity (No changes made), and etc.
                 else:
