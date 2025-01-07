@@ -76,8 +76,8 @@ def google_search(
     num_results: int = NUM_RESULTS_DEFAULT,
     lang: str = "en",
 ):
-    urls = search_urls(query=query, num_results=num_results, lang=lang)
-    contents = []
+    urls: list[dict[str, str]] = search_urls(query=query, num_results=num_results, lang=lang)
+    contents: list[str] = []
     for url in urls:
         contents.append(scrape_content_from_url(url["url"]))
     return contents
