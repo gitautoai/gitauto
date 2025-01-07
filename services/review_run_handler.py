@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from typing import Any
 
@@ -133,6 +134,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     # Plan how to fix the error
     comment_body = "Planning how to achieve your feedback..."
     update_comment(body=comment_body, base_args=base_args, p=20)
+    today = datetime.now().strftime("%Y-%m-%d")
     input_message: dict[str, str] = {
         "pull_request_title": pull_title,
         "pull_request_body": pull_body,
@@ -140,6 +142,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
         "review_file": review_file,
         "pull_files": pull_files,
         "file_tree": file_tree,
+        "today": today,
     }
     user_input = json.dumps(obj=input_message)
     how_to_fix: str = chat_with_ai(system_input=RESOLVE_FEEDBACK, user_input=user_input)
@@ -156,6 +159,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
         {"role": "user", "content": f"Review Comment:\n{review_comment}"},
         {"role": "user", "content": f"Review File:\n{review_file}"},
         {"role": "user", "content": f"How to fix:\n{how_to_fix}"},
+        {"role": "user", "content": f"Today's date:\n{today}"},
     ]
     (
         _messages,

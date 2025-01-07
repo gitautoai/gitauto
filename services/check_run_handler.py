@@ -1,4 +1,5 @@
 # Local imports
+from datetime import datetime
 import json
 from config import (
     EMAIL_LINK,
@@ -25,7 +26,10 @@ from services.github.github_types import (
     PullRequest,
     Repository,
 )
-from services.github.pulls_manager import get_pull_request, get_pull_request_file_changes
+from services.github.pulls_manager import (
+    get_pull_request,
+    get_pull_request_file_changes,
+)
 from services.github.github_utils import create_permission_url
 from services.openai.commit_changes import chat_with_agent
 from services.openai.chat import chat_with_ai
@@ -174,6 +178,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Plan how to fix the error
     comment_body = "Planning how to fix the error..."
     update_comment(body=comment_body, base_args=base_args, p=25)
+    today = datetime.now().strftime("%Y-%m-%d")
     input_message: dict[str, str] = {
         "pull_request_title": pull_title,
         "pull_request_body": pull_body,
@@ -181,6 +186,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "workflow_content": workflow_content,
         "file_tree": file_tree,
         "error_log": error_log,
+        "today": today,
     }
     user_input = json.dumps(obj=input_message)
     how_to_fix: str = chat_with_ai(system_input=IDENTIFY_CAUSE, user_input=user_input)
@@ -190,7 +196,10 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Update the comment if any obstacles are found
     comment_body = "Checking if I can solve it or if I should just hit you up..."
     update_comment(body=comment_body, base_args=base_args, p=30)
-    messages = [{"role": "user", "content": how_to_fix}]
+    messages = [
+        {"role": "user", "content": how_to_fix},
+        {"role": "user", "content": f"Today's date:\n{today}"},
+    ]
     (
         _messages,
         _previous_calls,
