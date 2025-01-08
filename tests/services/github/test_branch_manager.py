@@ -27,3 +27,17 @@ def test_get_default_branch(mock_get):
         },
         timeout=TIMEOUT,
     )
+
+
+@patch("requests.get")
+def test_get_default_branch_http_error(mock_get):
+    # Mock an HTTP error response
+    mock_get.return_value.status_code = 404
+    mock_get.return_value.json.return_value = {"message": "Not Found"}
+
+    # Call the function and assert it raises an HTTPException
+    try:
+        get_default_branch(OWNER, REPO, TOKEN)
+    except Exception as e:
+        assert isinstance(e, Exception)
+        assert str(e) == "HTTP Error: 404 - Not Found"
