@@ -1,5 +1,6 @@
 # Standard imports
 import re
+from time import sleep
 from typing import Any
 
 # Local imports
@@ -52,6 +53,9 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
         user_name=user_name,
         email=user_email,
     )
+
+    # Wait for 120 seconds
+    sleep(120)
 
     # Add issue templates to the repositories
     for i, full_name in enumerate(iterable=repo_full_names, start=1):
