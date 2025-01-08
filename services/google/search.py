@@ -71,7 +71,7 @@ def scrape_content_from_url(url: str):
 
 @handle_exceptions(default_return_value=[], raise_on_error=False, api_type="google")
 def google_search(
-    base_args: BaseArgs,
+    base_args: BaseArgs,  # pylint: disable=unused-argument
     query: str,
     num_results: int = NUM_RESULTS_DEFAULT,
     lang: str = "en",

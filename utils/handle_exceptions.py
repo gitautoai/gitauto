@@ -33,6 +33,8 @@ def handle_exceptions(
             except requests.exceptions.HTTPError as err:
                 reason: str | Any = err.response.reason
                 text: str | Any = err.response.text
+                status_code: int = err.response.status_code
+                print(f"reason: {reason}, text: {text}, status_code: {status_code}")
 
                 if api_type == "github" and err.response.status_code in {403, 429}:
                     limit = int(err.response.headers["X-RateLimit-Limit"])
@@ -65,6 +67,7 @@ def handle_exceptions(
 
                 elif api_type == "google" and err.response.status_code == 429:
                     retry_after = int(err.response.headers.get("Retry-After", 60))
+                    print(f"retry_after: {retry_after}")
                     err_msg = f"Google Search Rate Limit: {func.__name__} will retry after {retry_after} seconds"
                     logging.warning(msg=err_msg)
                     time.sleep(retry_after)
