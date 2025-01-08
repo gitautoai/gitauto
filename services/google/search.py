@@ -26,7 +26,7 @@ UNNECESSARY_TAGS = [
 ]
 
 
-@handle_exceptions(default_return_value=[], raise_on_error=False)
+@handle_exceptions(default_return_value=[], raise_on_error=False, api_type="google")
 def search_urls(query: str, num_results: int = NUM_RESULTS_DEFAULT, lang: str = "en"):
     """https://pypi.org/project/googlesearch-python/"""
     search_results: list[dict[str, str]] = []
@@ -42,7 +42,7 @@ def search_urls(query: str, num_results: int = NUM_RESULTS_DEFAULT, lang: str = 
     return search_results
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(default_return_value=None, raise_on_error=False, api_type="google")
 def scrape_content_from_url(url: str):
     headers = {"User-Agent": USER_AGENT}
     response = get(url, headers=headers, timeout=TIMEOUT)
@@ -69,14 +69,16 @@ def scrape_content_from_url(url: str):
     return {"title": title.strip(), "content": content, "url": url}
 
 
-@handle_exceptions(default_return_value=[], raise_on_error=False)
+@handle_exceptions(default_return_value=[], raise_on_error=False, api_type="google")
 def google_search(
     base_args: BaseArgs,
     query: str,
     num_results: int = NUM_RESULTS_DEFAULT,
     lang: str = "en",
 ):
-    urls: list[dict[str, str]] = search_urls(query=query, num_results=num_results, lang=lang)
+    urls: list[dict[str, str]] = search_urls(
+        query=query, num_results=num_results, lang=lang
+    )
     contents: list[str] = []
     for url in urls:
         contents.append(scrape_content_from_url(url["url"]))
