@@ -1,5 +1,6 @@
 # Standard imports
 from datetime import datetime
+from json import dumps
 from typing import Any
 
 # Third party imports
@@ -19,7 +20,7 @@ from utils.handle_exceptions import handle_exceptions
 @handle_exceptions(default_return_value=None, raise_on_error=True)
 async def verify_jira_webhook(request: Request):
     """Verify that the request came from Atlassian Forge"""
-    # print("Request Headers:", json.dumps(dict(request.headers), indent=2))
+    print("Request Headers:", dumps(dict(request.headers), indent=2))
 
     # Verify that the request came from Atlassian Forge
     if request.headers.get("atl-edge-tenant") != "forge-outbound-proxy":
