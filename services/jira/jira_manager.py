@@ -23,9 +23,14 @@ async def verify_jira_webhook(request: Request):
     print("Request Headers:", dumps(dict(request.headers), indent=2))
 
     # Verify that the request came from Atlassian Forge
-    if request.headers.get("atl-edge-tenant") != "forge-outbound-proxy":
-        print("Not a Forge request")
-        raise HTTPException(status_code=401, detail="Request not from Forge")
+    user_agent = request.headers.get("user-agent", "")
+    has_b3_headers = all(
+        [request.headers.get("x-b3-traceid"), request.headers.get("x-b3-spanid")]
+    )
+
+    if "node-fetch" not in user_agent or not has_b3_headers:
+        print("Not a valid Forge request")
+        raise HTTPException(status_code=401, detail="Invalid request source")
 
     payload = await request.json()
     # print("Payload:", json.dumps(payload, indent=2))
