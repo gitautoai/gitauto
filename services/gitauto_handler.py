@@ -95,7 +95,8 @@ async def handle_gitauto(
     )
 
     # Delete all comments made by GitAuto except the one with the checkbox to clean up the issue
-    delete_my_comments(base_args=base_args)
+    if input_from == "github":
+        delete_my_comments(base_args=base_args)
 
     # Notify the user if the request limit is reached and early return
     if requests_left <= 0 and IS_PRD and owner_name not in EXCEPTION_OWNERS:
