@@ -35,6 +35,7 @@ def get_all_comments(base_args: BaseArgs):
     return comments
 
 
+@handle_exceptions(default_return_value=[], raise_on_error=False)
 def filter_my_comments(comments: list[dict]):
     """Filter comments to only include those containing COMPLETED_PR and made by our GitHub app"""
     return [
@@ -50,6 +51,7 @@ def filter_my_comments(comments: list[dict]):
     ]
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def delete_my_comments(base_args: BaseArgs):
     """Delete all comments made by GitAuto except the one with the checkbox"""
     comments = get_all_comments(base_args)
@@ -59,6 +61,7 @@ def delete_my_comments(base_args: BaseArgs):
         delete_a_comment(base_args=base_args, comment_id=comment["id"])
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def reply_to_comment(base_args: BaseArgs, body: str):
     """https://docs.github.com/en/rest/pulls/comments?apiVersion=2022-11-28#create-a-reply-for-a-review-comment"""
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
