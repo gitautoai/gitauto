@@ -1,5 +1,6 @@
 ﻿# GitAuto AI
 ![Coverage Badge](https://img.shields.io/badge/coverage-80%25-green)
+
 ## Table of Contents
 
 1. [What is GitAuto](#1-what-is-gitauto)
