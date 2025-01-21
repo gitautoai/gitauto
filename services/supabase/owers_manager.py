@@ -20,5 +20,7 @@ def get_stripe_customer_id(owner_id: int):
         .eq(column="owner_id", value=owner_id)
         .execute()
     )
+    if not data or len(data) < 2 or not data[1]:
+        return None
     customer_id: str | None = data[1][0]["stripe_customer_id"]
     return customer_id
