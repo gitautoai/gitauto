@@ -10,7 +10,7 @@
 - Want to know more about GitAuto? Go to [GitAuto homepage](https://gitauto.ai).
 - Want to chat about your use case? Feel free to contact us at [email](mailto:info@gitauto.ai), [admin](https://github.com/hiroshinishio), [X](https://x.com/gitautoai), or [LinkedIn](https://www.linkedin.com/company/gitauto/).
 
-## 2. How to use GitAuto
+## Installation
 
 1. Install GitAuto to your repositories from [GitHub Marketplace](https://github.com/apps/gitauto-ai).
    1. Choose the repositories where you want to use GitAuto.
