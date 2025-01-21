@@ -1,4 +1,17 @@
 ﻿# GitAuto AI
+# Table of Contents
+
+1. [What is GitAuto](#1-what-is-gitauto)
+2. [How to use GitAuto](#2-how-to-use-gitauto)
+3. [How to run GitAuto locally](#3-how-to-run-gitauto-locally)
+   1. [Create your GitHub app for local development](#3-1-create-your-github-app-for-local-development)
+   2. [Install your GitHub app to a repository where you want to test](#3-2-install-your-github-app-to-a-repository-where-you-want-to-test)
+   3. [Tunnel GitHub webhook events to your localhost with ngrok](#3-3-tunnel-github-webhook-events-to-your-localhost-with-ngrok)
+   4. [Create a virtual Python dependency environment in your local machine](#3-4-create-a-virtual-python-dependency-environment-in-your-local-machine)
+   5. [Get the .env file](#3-5-get-the-env-file)
+   6. [How to encode a GitHub app private key to base64](#3-6-how-to-encode-a-github-app-private-key-to-base64)
+   7. [How to run the code](#3-7-how-to-run-the-code)
+   8. [Other information](#3-8-other-information)
 ![Coverage Badge](https://img.shields.io/badge/coverage-80%25-green)
 
 ## 1. What is GitAuto
