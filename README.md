@@ -1,5 +1,17 @@
 # GitAuto AI
 [![codecov](https://codecov.io/gh/gitautoai/gitauto/graph/badge.svg?token=U4J7V3GTCU)](https://codecov.io/gh/gitautoai/gitauto)
+## Table of Contents
+
+1. [What is GitAuto](#1-what-is-gitauto)
+2. [How to use GitAuto](#2-how-to-use-gitauto)
+3. [How to run GitAuto locally](#3-how-to-run-gitauto-locally)
+   - [Create your GitHub app for local development](#3-1-create-your-github-app-for-local-development)
+   - [Install your GitHub app to a repository where you want to test](#3-2-install-your-github-app-to-a-repository-where-you-want-to-test)
+   - [Tunnel GitHub webhook events to your localhost with ngrok](#3-3-tunnel-github-webhook-events-to-your-localhost-with-ngrok)
+   - [Create a virtual Python dependency environment in your local machine](#3-4-create-a-virtual-python-dependency-environment-in-your-local-machine)
+   - [Get the .env file](#3-5-get-the-env-file)
+   - [How to encode a GitHub app private key to base64](#3-6-how-to-encode-a-github-app-private-key-to-base64)
+   - [How to run the code](#3-7-how-to-run-the-code)
 
 ## 1. What is GitAuto
 
