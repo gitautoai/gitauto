@@ -1,7 +1,27 @@
 ﻿# GitAuto AI
+<!-- PROJECT LOGO -->
+<p align="center">
+  <a href="https://gitauto.ai">
+    <img src="https://via.placeholder.com/150" alt="Logo" width="150" height="150">
+  </a>
+</p>
+
+<h3 align="center">GitAuto AI</h3>
+
+<p align="center">Automate your GitHub workflows with ease.</p>
 ![Coverage Badge](https://img.shields.io/badge/coverage-80%25-green)
 
-## 1. What is GitAuto
+
+<details open="open">
+  <summary>Table of Contents</summary>
+  <ol>
+    <li><a href="#1-what-is-gitauto">What is GitAuto</a></li>
+    <li><a href="#2-how-to-use-gitauto">How to use GitAuto</a></li>
+    <li><a href="#3-how-to-run-gitauto-locally">How to run GitAuto locally</a></li>
+  </ol>
+</details>
+
+## What is GitAuto
 
 [GitAuto](https://gitauto.ai) is a GitHub coding agent that opens pull requests from backlog tickets for software engineering managers to complete more bug fixes and feature requests. Assign tasks to GitAuto first, and have people work on more complex tickets.
 
@@ -10,7 +30,7 @@
 - Want to know more about GitAuto? Go to [GitAuto homepage](https://gitauto.ai).
 - Want to chat about your use case? Feel free to contact us at [email](mailto:info@gitauto.ai), [admin](https://github.com/hiroshinishio), [X](https://x.com/gitautoai), or [LinkedIn](https://www.linkedin.com/company/gitauto/).
 
-## 2. How to use GitAuto
+## How to use GitAuto
 
 1. Install GitAuto to your repositories from [GitHub Marketplace](https://github.com/apps/gitauto-ai).
    1. Choose the repositories where you want to use GitAuto.
@@ -24,7 +44,7 @@
 5. Review the PR and merge it if it looks good.
 6. If not, update the issue with more details and re-run GitAuto by checking the checkbox again.
 
-## 3. How to run GitAuto locally
+## How to run GitAuto locally
 
 ### 3-1. Create your GitHub app for local development
 
@@ -125,4 +145,8 @@ INFO:     Application startup complete.
 
 ### 3-8. Other information
 
+<!-- MARKDOWN LINKS & IMAGES -->
+
 For communication (Slack), database (Supabase), payment (Stripe), and serverless functions (AWS Lambda), provide your preferred email to [@hiroshinishio](https://github.com/hiroshinishio) so that he can invite you to the local development environment.
+[contributors-shield]: https://img.shields.io/github/contributors/gitautoai/gitauto.svg?style=for-the-badge
+[contributors-url]: https://github.com/gitautoai/gitauto/graphs/contributors
