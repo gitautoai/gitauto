@@ -5,10 +5,10 @@
 
 [GitAuto](https://gitauto.ai) is a GitHub coding agent that opens pull requests from backlog tickets for software engineering managers to complete more bug fixes and feature requests. Assign tasks to GitAuto first, and have people work on more complex tickets.
 
-- Want to give GitAuto a try? Go to [GitAuto installation](https://github.com/apps/gitauto-ai).
-- Want to see demo videos? Go to [GitAuto YouTube](https://www.youtube.com/@gitautoai).
-- Want to know more about GitAuto? Go to [GitAuto homepage](https://gitauto.ai).
-- Want to chat about your use case? Feel free to contact us at [email](mailto:info@gitauto.ai), [admin](https://github.com/hiroshinishio), [X](https://x.com/gitautoai), or [LinkedIn](https://www.linkedin.com/company/gitauto/).
+- **Try GitAuto**: Visit [GitAuto installation](https://github.com/apps/gitauto-ai).
+- **Demo Videos**: Watch on [GitAuto YouTube](https://www.youtube.com/@gitautoai).
+- **More Information**: Visit [GitAuto homepage](https://gitauto.ai).
+- **Contact Us**: Reach out via [email](mailto:info@gitauto.ai), [admin](https://github.com/hiroshinishio), [X](https://x.com/gitautoai), or [LinkedIn](https://www.linkedin.com/company/gitauto/).
 
 ## 2. How to use GitAuto
 
