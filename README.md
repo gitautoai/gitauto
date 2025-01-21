@@ -1,6 +1,7 @@
 ﻿# GitAuto AI
 ![Coverage Badge](https://img.shields.io/badge/coverage-80%25-green)
 
+## Introduction
 ## 1. What is GitAuto
 
 [GitAuto](https://gitauto.ai) is a GitHub coding agent that opens pull requests from backlog tickets for software engineering managers to complete more bug fixes and feature requests. Assign tasks to GitAuto first, and have people work on more complex tickets.
