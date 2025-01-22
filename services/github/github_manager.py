@@ -565,7 +565,7 @@ def get_remote_file_content(
         base_args["new_branch"],
         base_args["token"],
     )
-    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={base_args['new_branch']}"
     headers: dict[str, str] = create_headers(token=token)
     response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
 
