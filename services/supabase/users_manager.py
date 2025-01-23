@@ -143,7 +143,6 @@ class UsersManager:
         request_limit = (
             base_request_limit * 12 if interval == "year" else base_request_limit
         )
-
         start_date = datetime.fromtimestamp(timestamp=start_date_seconds, tz=TZ)
         end_date = datetime.fromtimestamp(timestamp=end_date_seconds, tz=TZ)
 

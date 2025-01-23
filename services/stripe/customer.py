@@ -46,9 +46,25 @@ def create_stripe_customer(
 
 
 @handle_exceptions(raise_on_error=True)
-def get_subscription(customer_id: str) -> stripe.ListObject[stripe.Subscription]:
-    subscriptions = stripe.Subscription.list(customer=customer_id, status="active")
-    return subscriptions
+def get_subscription(customer_id: str):
+    response = stripe.Subscription.list(customer=customer_id, status="active")
+    subscriptions = response.data
+
+    # Get all subscriptions if there are more pages
+    while response.has_more:
+        response = stripe.Subscription.list(
+            customer=customer_id,
+            status="active",
+            starting_after=subscriptions[-1].id,
+        )
+        subscriptions.extend(response.data)
+
+    # If multiple subscriptions exist, return only the highest priced one
+    if len(subscriptions) > 1:
+        highest_subscription = max(subscriptions, key=lambda x: x.plan.amount)
+        response.data = [highest_subscription]
+
+    return response
 
 
 @handle_exceptions(default_return_value=FREE_TIER_REQUEST_AMOUNT, raise_on_error=False)
