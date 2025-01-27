@@ -126,3 +126,23 @@ INFO:     Application startup complete.
 ### 3-8. Other information
 
 For communication (Slack), database (Supabase), payment (Stripe), and serverless functions (AWS Lambda), provide your preferred email to [@hiroshinishio](https://github.com/hiroshinishio) so that he can invite you to the local development environment.
+## 4. Folder Structure
+
+```
+.
+├── .coverage
+├── .flake8
+├── .github
+│   ├── ISSUE_TEMPLATE
+│   │   ├── bug_report.yml
+│   │   ├── config.yml
+│   │   └── feature_request.yml
+│   └── workflows
+│       ├── deployment.yml
+│       ├── main-pytest.yml
+│       ├── post-sns.yml
+│       └── stage-pytest.yml
+├── .gitignore
+├── .markdownlint.json
+├── .pre-commit-config.yaml
+├── .pylintrc
