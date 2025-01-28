@@ -17,4 +17,4 @@ def test_is_repo_forked(mock_create_headers, mock_get):
     assert is_repo_forked('owner', 'repo', 'testtoken') is False
 
     # Ensure the correct URL was called
-    mock_get.assert_called_with(url='https://api.github.com/repos/owner/repo', headers={'Authorization': 'token testtoken'}, timeout=10)
+    mock_get.assert_called_with(url='https://api.github.com/repos/owner/repo', headers={'Authorization': 'token testtoken'}, timeout=120)
