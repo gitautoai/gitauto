@@ -217,6 +217,7 @@ async def test_install_uninstall_install() -> None:
     """Testing install uninstall methods"""
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
+    wipe_installation_owner_user_data(installation_payload["installation_id"])
     wipe_installation_owner_user_data(NEW_INSTALLATION_ID)
 
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
