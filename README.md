@@ -126,3 +126,23 @@ INFO:     Application startup complete.
 ### 3-8. Other information
 
 For communication (Slack), database (Supabase), payment (Stripe), and serverless functions (AWS Lambda), provide your preferred email to [@hiroshinishio](https://github.com/hiroshinishio) so that he can invite you to the local development environment.
+
+## 4. Folder Structure
+
+The following is an overview of the project's folder structure:
+
+```
+/constants
+  - Contains Python files defining constant values used across the project.
+
+/payloads
+  - Includes JSON files representing various payloads for testing and development.
+
+/services
+  - Houses the core service modules, each responsible for different functionalities such as GitHub interactions, OpenAI integrations, and more.
+
+/tests
+  - Contains test cases for ensuring the reliability and correctness of the service modules.
+
+/utils
+  - Utility scripts and helper functions used throughout the project.
