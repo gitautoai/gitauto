@@ -37,6 +37,7 @@ def get_all_comments(base_args: BaseArgs):
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
 def filter_my_comments(comments: list[dict]):
+    comments = comments or []
     """Filter comments to only include those containing COMPLETED_PR and made by our GitHub app"""
     return [
         comment
