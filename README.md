@@ -146,3 +146,53 @@ For communication (Slack), database (Supabase), payment (Stripe), and serverless
 ├── .markdownlint.json
 ├── .pre-commit-config.yaml
 ├── .pylintrc
+├── .vscode
+│   └── settings.json
+├── CODEOWNERS
+├── Dockerfile
+├── LICENSE
+├── README.md
+├── cloudformation.yml
+├── config.py
+├── constants
+│   ├── dependency_files.py
+│   ├── messages.py
+│   ├── requests.py
+│   └── settings.py
+├── main.py
+├── payloads
+│   ├── added.json
+│   ├── check_run
+│   │   ├── completed.json
+│   ├── created.json
+│   ├── deleted.json
+│   ├── installation_repositories
+│   │   └── added.json
+│   ├── labeled.json
+│   ├── marketplace_purchase
+│   │   └── purchased.json
+│   ├── pull_request_review_comment
+│   │   ├── created.json
+│   │   └── edited.json
+│   ├── removed.json
+│   └── stripeSubscriptionsList.json
+├── requirements.txt
+├── scheduler.py
+├── services
+│   ├── check_run_handler.py
+│   ├── gitauto_handler.py
+│   ├── github
+│   │   ├── actions_manager.py
+│   │   ├── asset_manager.py
+│   │   ├── branch_manager.py
+│   │   ├── comment_manager.py
+│   │   ├── create_headers.py
+│   │   ├── file_manager.py
+│   │   ├── github_manager.py
+│   │   ├── github_types.py
+│   │   ├── github_utils.py
+│   │   ├── pulls_manager.py
+│   │   ├── repo_manager.py
+│   │   ├── reviewers_manager.py
+│   │   └── user_manager.py
+│   ├── google
