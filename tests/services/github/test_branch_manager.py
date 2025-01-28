@@ -9,7 +9,7 @@ def test_get_default_branch(mock_get):
     # Mock response data
     mock_response = {"name": "main", "commit": {"sha": "abc123"}}
     mock_get.return_value.status_code = 200
-    mock_get.return_value.json.return_value = [mock_response]
+    mock_get.return_value.json.return_value = mock_response
 
     # Call the function
     default_branch, commit_sha = get_default_branch(OWNER, REPO, TOKEN)
