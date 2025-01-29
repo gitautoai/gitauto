@@ -17,7 +17,7 @@ def delete_a_comment(base_args: BaseArgs, comment_id: str):
     response.raise_for_status()
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(default_return_value=[], raise_on_error=False)
 def get_all_comments(base_args: BaseArgs):
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#list-issue-comments"""
     owner, repo, issue_number, token = (
@@ -38,6 +38,7 @@ def get_all_comments(base_args: BaseArgs):
 @handle_exceptions(default_return_value=[], raise_on_error=False)
 def filter_my_comments(comments: list[dict]):
     """Filter comments to only include those containing COMPLETED_PR and made by our GitHub app"""
+    comments = comments or []
     return [
         comment
         for comment in comments
