@@ -1,6 +1,6 @@
 # Standard imports
 import json
-from typing import Iterable, List, Literal
+from typing import Iterable, Literal
 
 # Third-party imports
 from openai import OpenAI
@@ -41,7 +41,7 @@ def chat_with_agent(
     messages: Iterable[ChatCompletionMessageParam],
     base_args: BaseArgs,
     mode: Literal["comment", "commit", "explore", "get", "search"],
-    previous_calls: List[dict] | None = None,
+    previous_calls: list[dict] | None = None,
 ):
     """https://platform.openai.com/docs/api-reference/chat/create"""
     if previous_calls is None:
@@ -70,7 +70,7 @@ def chat_with_agent(
     client: OpenAI = create_openai_client()
     completion: ChatCompletion = client.chat.completions.create(
         messages=all_messages,
-        model=OPENAI_MODEL_ID_GPT_4O,
+        model=OPENAI_MODEL_ID_GPT_4O,  # Can be o1 but it's 6x expensive than gpt-4o https://platform.openai.com/docs/pricing
         n=1,
         temperature=OPENAI_TEMPERATURE,
         timeout=TIMEOUT,
@@ -79,7 +79,7 @@ def chat_with_agent(
         parallel_tool_calls=False,
     )
     choice: Choice = completion.choices[0]
-    tool_calls: List[ChatCompletionMessageToolCall] | None = choice.message.tool_calls
+    tool_calls: list[ChatCompletionMessageToolCall] | None = choice.message.tool_calls
 
     # Calculate tokens for this call
     token_input = count_tokens(messages=messages)
