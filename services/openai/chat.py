@@ -30,7 +30,7 @@ def chat_with_ai(system_input: str, user_input: str) -> str:
         # Other parameters
         # modalities=["text"],
         n=1,
-        # temperature=OPENAI_TEMPERATURE,  # temperature should be 0 but it is not supported for 01-mini as of Oct 5 2024
+        # temperature=OPENAI_TEMPERATURE,  # temperature should be 0 but it is not supported for o1-mini and o1 as of Jan 29 2025
     )
     content: str | None = completion.choices[0].message.content
     response: str = content if content else ""
