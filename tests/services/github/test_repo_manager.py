@@ -23,3 +23,4 @@ def test_is_repo_forked_false(mock_get):
     token = "test_token"
     assert is_repo_forked(owner, repo, token) == False, "Should return False if repository is not a fork"
 ```
+ # This ensures partial coverage.
