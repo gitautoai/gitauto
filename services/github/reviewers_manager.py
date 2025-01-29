@@ -29,6 +29,7 @@ def add_reviewers(base_args: BaseArgs):
     # If no valid reviewers, return
     if not valid_reviewers:
         return
+    print(f"Adding reviewers: {valid_reviewers}")
 
     # Add the reviewers to the pull request
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pr_number}/requested_reviewers"
