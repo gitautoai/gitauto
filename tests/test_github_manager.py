@@ -21,3 +21,8 @@ def test_is_repo_forked(mock_create_headers, mock_get):
 
     # Test forked scenario
 # run this file locally with: python -m tests.test_github_manager
+    mock_get.return_value = forked_response
+    assert is_repo_forked("someowner", "somerepo", "mock-token") is True
+    # Test non-forked scenario
+    mock_get.return_value = non_forked_response
+    assert is_repo_forked("someowner", "somerepo", "mock-token") is False
