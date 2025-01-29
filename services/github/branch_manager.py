@@ -4,7 +4,7 @@ from services.github.create_headers import create_headers
 from utils.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value="main", raise_on_error=False)
+@handle_exceptions(default_return_value=("main", ""), raise_on_error=True)
 def get_default_branch(owner: str, repo: str, token: str):
     # Get the default branch name first
     # https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#get-a-repository

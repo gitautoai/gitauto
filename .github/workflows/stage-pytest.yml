@@ -5,6 +5,16 @@ on:
     branches:
       - 'main'
 
+permissions:
+  actions: write
+  checks: write
+  contents: read
+  issues: write
+  # metadata: read
+  pull-requests: write
+  statuses: write # commit statuses
+  # workflows: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -33,6 +43,7 @@ jobs:
         GH_APP_USER_NAME: ${{ secrets.GH_APP_USER_NAME }}
         GH_PRIVATE_KEY: ${{ secrets.STAGE_GH_PRIVATE_KEY }}
         GH_WEBHOOK_SECRET: ${{ secrets.STAGE_GH_WEBHOOK_SECRET }}
+        GH_APP_TOKEN: ${{ secrets.GH_APP_TOKEN }}
 
         OPENAI_API_KEY: ${{ secrets.STAGE_OPENAI_API_KEY }}
         OPENAI_ORG_ID: ${{ secrets.STAGE_OPENAI_ORG_ID }}
@@ -49,4 +60,4 @@ jobs:
         
         ENV: stage
         PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
-      run: python -m pytest -r fE
+      run: python -m pytest -r fE -x
