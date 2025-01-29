@@ -43,6 +43,7 @@ jobs:
         GH_APP_USER_NAME: ${{ secrets.GH_APP_USER_NAME }}
         GH_PRIVATE_KEY: ${{ secrets.PROD_GH_PRIVATE_KEY }}
         GH_WEBHOOK_SECRET: ${{ secrets.PROD_GH_WEBHOOK_SECRET }}
+        GH_APP_TOKEN: ${{ secrets.GH_APP_TOKEN }}
 
         OPENAI_API_KEY: ${{ secrets.PROD_OPENAI_API_KEY }}
         OPENAI_ORG_ID: ${{ secrets.PROD_OPENAI_ORG_ID }}
@@ -59,7 +60,7 @@ jobs:
         
         ENV: prod
         PRODUCT_ID: ${{ secrets.PROD_PRODUCT_ID }}
-      run: python -m pytest -r fE --cov-branch --cov=./ --cov-report=xml
+      run: python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=xml
 
     # https://github.com/codecov/codecov-action?tab=readme-ov-file#usage
     # https://app.codecov.io/gh/gitautoai/gitauto/new
