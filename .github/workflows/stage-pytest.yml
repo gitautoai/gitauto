@@ -5,6 +5,16 @@ on:
     branches:
       - 'main'
 
+permissions:
+  actions: write
+  checks: write
+  contents: read
+  issues: write
+  # metadata: read
+  pull-requests: write
+  statuses: write # commit statuses
+  # workflows: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
