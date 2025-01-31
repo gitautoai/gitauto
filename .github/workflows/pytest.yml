@@ -4,6 +4,10 @@ on:
   pull_request:
     branches:
       - 'main'
+  push:
+    branches:
+      - '!main'
+  workflow_dispatch:
 
 permissions:
   actions: write
@@ -37,13 +41,15 @@ jobs:
 
     - name: Run pytest
       env:  # https://github.com/gitautoai/gitauto/settings/secrets/actions
-        GH_APP_ID: ${{ secrets.STAGE_GH_APP_ID }}
+
+        # GitHub credentials https://github.com/settings/apps/gitauto-for-dev
+        GH_APP_ID: ${{ secrets.GH_APP_ID }}
         GH_APP_NAME: ${{ secrets.GH_APP_NAME }}
+        GH_APP_TOKEN: ${{ secrets.GH_APP_TOKEN }}
         GH_APP_USER_ID: ${{ secrets.GH_APP_USER_ID }}
         GH_APP_USER_NAME: ${{ secrets.GH_APP_USER_NAME }}
-        GH_PRIVATE_KEY: ${{ secrets.STAGE_GH_PRIVATE_KEY }}
-        GH_WEBHOOK_SECRET: ${{ secrets.STAGE_GH_WEBHOOK_SECRET }}
-        GH_APP_TOKEN: ${{ secrets.GH_APP_TOKEN }}
+        GH_PRIVATE_KEY: ${{ secrets.GH_PRIVATE_KEY }}
+        GH_WEBHOOK_SECRET: ${{ secrets.GH_WEBHOOK_SECRET }}
 
         OPENAI_API_KEY: ${{ secrets.STAGE_OPENAI_API_KEY }}
         OPENAI_ORG_ID: ${{ secrets.STAGE_OPENAI_ORG_ID }}
@@ -60,4 +66,15 @@ jobs:
         
         ENV: stage
         PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
-      run: python -m pytest -r fE -x
+      run: python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=xml
+
+    # https://github.com/codecov/codecov-action?tab=readme-ov-file#usage
+    # https://app.codecov.io/gh/gitautoai/gitauto/new
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5.1.2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        verbose: true
