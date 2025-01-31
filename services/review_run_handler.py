@@ -33,6 +33,8 @@ supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_K
 
 
 def handle_review_run(payload: dict[str, Any]) -> None:
+    print("handle_review_run was called")
+
     # Extract review comment etc
     review: dict[str, Any] = payload["comment"]
     review_id: str = review["id"]
