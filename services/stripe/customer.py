@@ -1,8 +1,3 @@
-class Customer:
-    def __init__(self):
-        pass
-
-
 import stripe
 from config import (
     FREE_TIER_REQUEST_AMOUNT,
