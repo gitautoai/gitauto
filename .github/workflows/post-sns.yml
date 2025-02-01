@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+permissions:
+  pull-requests: read
+  contents: read
+      
 jobs:
   post-sns:
     if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'sns')
@@ -25,63 +29,45 @@ jobs:
         run: |
           npm install twitter-api-v2
           npm install linkedin-api-client
+          npm install playwright
+          npx playwright install chromium
 
       # https://github.com/actions/github-script
       - name: Post to X
         uses: actions/github-script@v7
+        continue-on-error: true
         with:
           script: |
-            const { TwitterApi } = require('twitter-api-v2');
-            const client = new TwitterApi({
-              appKey: process.env.TWITTER_API_KEY,
-              appSecret: process.env.TWITTER_API_SECRET,
-              accessToken: process.env.TWITTER_ACCESS_TOKEN,
-              accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
-            });
-            
-            const tweet = `🚀 New release: ${context.payload.pull_request.title}\n\n${context.payload.pull_request.html_url}`;
-            
-            // https://developer.x.com/en/docs/x-api/tweets/manage-tweets/api-reference/post-tweets
-            await client.v2.tweet(tweet);
+            const postTwitter = require('.github/scripts/post-twitter.js');
+            await postTwitter({ context });
         env:
           TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
           TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
           TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+          TWITTER_API_KEY_WES: ${{ secrets.TWITTER_API_KEY_WES }}
+          TWITTER_API_SECRET_WES: ${{ secrets.TWITTER_API_SECRET_WES }}
+          TWITTER_ACCESS_TOKEN_WES: ${{ secrets.TWITTER_ACCESS_TOKEN_WES }}
+          TWITTER_ACCESS_TOKEN_SECRET_WES: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET_WES }}
 
       - name: Post to LinkedIn
         uses: actions/github-script@v7
+        continue-on-error: true
         with:
           script: |
-            const { RestliClient } = require('linkedin-api-client');
-            const restliClient = new RestliClient();
-            
-            // Create post using Posts API
-            // https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api?view=li-lms-2024-11&viewFallbackFrom=li-lms-unversioned&tabs=http
-            const post = await restliClient.create({
-              resourcePath: '/posts',
-              entity: {
-                author: 'urn:li:organization:100932100',
-                commentary: `🚀 New release: ${context.payload.pull_request.title}`,
-                visibility: 'PUBLIC',
-                distribution: {
-                  feedDistribution: 'MAIN_FEED',
-                  targetEntities: [],
-                  thirdPartyDistributionChannels: []
-                },
-                content: {
-                  // https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads/advertising-targeting/version/article-ads-integrations?view=li-lms-2024-11&tabs=http#workflow
-                  article: {
-                    source: context.payload.pull_request.html_url,
-                    title: context.payload.pull_request.title,
-                    description: `Check out our latest release on GitHub!`
-                  }
-                },
-                lifecycleState: 'PUBLISHED',
-                isReshareDisabledByAuthor: false
-              },
-              accessToken: process.env.LINKEDIN_ACCESS_TOKEN
-            });
+            const postLinkedIn = require('.github/scripts/post-linkedin.js');
+            await postLinkedIn({ context });
         env:
           LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
 
+      - name: Post to Hacker News
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            const postHackerNews = require('.github/scripts/post-hackernews.js');
+            await postHackerNews({ context });
+        env:
+          HN_USERNAME: ${{ secrets.HN_USERNAME }}
+          HN_PASSWORD: ${{ secrets.HN_PASSWORD }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

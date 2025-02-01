@@ -65,8 +65,6 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
 
     # Extract other information
     github_urls, other_urls = extract_urls(text=issue_body)
-    # print(f"github_urls: {github_urls}")
-    # print(f"other_urls: {other_urls}")
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
     sender_email: str = get_user_public_email(username=sender_name, token=token)

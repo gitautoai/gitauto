@@ -12,7 +12,7 @@ from openai.types.chat.chat_completion_message_tool_call import (
 )
 
 # Local imports
-from config import OPENAI_MODEL_ID_GPT_4O, OPENAI_TEMPERATURE, TIMEOUT
+from config import OPENAI_MODEL_ID_O3_MINI, TIMEOUT
 from services.github.github_types import BaseArgs
 from services.openai.count_tokens import count_tokens
 from services.openai.functions.functions import (
@@ -63,20 +63,25 @@ def chat_with_agent(
     elif mode == "search":
         content = SYSTEM_INSTRUCTION_TO_SEARCH_GOOGLE
         tools = TOOLS_TO_SEARCH_GOOGLE
-    system_message: ChatCompletionMessageParam = {"role": "system", "content": content}
+
+    # role: "developer" is recommended for o3-mini as of 2025-02-01 https://platform.openai.com/docs/guides/reasoning#advice-on-prompting
+    system_message: ChatCompletionMessageParam = {
+        "role": "developer",
+        "content": content,
+    }
     all_messages = [system_message] + list(messages)
 
     # Create the client and call the API
     client: OpenAI = create_openai_client()
     completion: ChatCompletion = client.chat.completions.create(
         messages=all_messages,
-        model=OPENAI_MODEL_ID_GPT_4O,  # Can be o1 but it's 6x expensive than gpt-4o https://platform.openai.com/docs/pricing
+        model=OPENAI_MODEL_ID_O3_MINI,
         n=1,
-        temperature=OPENAI_TEMPERATURE,
+        # temperature=OPENAI_TEMPERATURE,  # Not supported by o3-mini as of 2025-02-01
         timeout=TIMEOUT,
         tools=tools,
         tool_choice="auto",  # DO NOT USE "required" and allow GitAuto not to call any tools.
-        parallel_tool_calls=False,
+        # parallel_tool_calls=False,  # Not supported by o3-mini as of 2025-02-01
     )
     choice: Choice = completion.choices[0]
     tool_calls: list[ChatCompletionMessageToolCall] | None = choice.message.tool_calls
@@ -121,4 +126,12 @@ def chat_with_agent(
     )
 
     # Return
-    return messages, previous_calls, tool_name, tool_args, token_input, token_output, is_done
+    return (
+        messages,
+        previous_calls,
+        tool_name,
+        tool_args,
+        token_input,
+        token_output,
+        is_done,
+    )
