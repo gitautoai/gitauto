@@ -1,40 +1,28 @@
-WRITE_PR_BODY = '''
-Act as an expert software developer. Always provide a single, definitive solution following the most current best practices - even if they require breaking changes. Write a pull request body in a language that is used in the input (e.g. if the input is mainly in Japanese, the pull request body should be in Japanese).
-NEVER use triple backticks unless it's a code block.
-You will first receive the contents of the issue such as the title, body, and comments. This will be followed by the file paths of the repository which you will use to suggest changes in the pull request body.
-Based on the content of the issue, use the following format (inside the triple quotes):
+WRITE_PR_BODY = """Based on the provided inputs (issue title, body, changed files, code changes, and etc.), write a GitHub pull request description in GitHub markdown format. Write in the same language as the provided inputs (issue title and body) - for example, if inputs are in English, write in English; if in Japanese, write in Japanese. These code changes were made by you, and you're creating a description for them.
 
-"""
-## Why the bug occurs / What is the feature (Use either)
+The output format should start with one of these H2 headings based on the type of change:
 
-For bug fixes: Why the bug occurs goes here.
-For features: What is the feature goes here.
+For bug fixes:
+## Why did this issue occur?
+[Explain the root cause of the bug]
 
-## How to reproduce (for bug fixes only)
+For feature development:
+## Why is this feature needed?
+[Explain the necessity and background of this feature]
 
-How to reproduce the bug goes here.
+Then, continue with these common sections:
 
-## Where / How to code and why
+## What and how are we changing? Why this approach?
+[Explain the specific changes and reasoning behind the chosen solution]
 
-For bug fixes: Where / How to fix the bug goes here with reasons.
-For features: Where / How to implement the feature goes here with reasons.
-Always prioritize a single, definitive solution following modern best practices and current methods, even if they require breaking changes.
-If breaking changes are needed, include a migration guide.
-Think step by step.
+## What actions are required from users?
+[Detail any necessary user actions or configuration changes]
 
-## Anything the issuer needs to do
+## How does it work? (Technical details)
+[Explain technical aspects, including relevant libraries, functions, commands, or options]
 
-List only concrete, actionable tasks such as:
-- Creating accounts
-- Obtaining API tokens
-- Registering secrets in GitHub
+## Is it backwards compatible?
+[Address backward compatibility concerns]
 
-If no action is required, clearly state "No action required."
-
-Do not include vague tasks like:
-- Monitoring
-- Ensuring
-- Verifying
-- Educating
-"""
-'''
+## Any other considerations?
+[Include additional context, alternative approaches considered, or other relevant information]"""

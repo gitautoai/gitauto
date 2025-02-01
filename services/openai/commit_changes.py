@@ -28,7 +28,9 @@ from services.openai.instructions.commit_changes import (
     SYSTEM_INSTRUCTION_TO_COMMIT_CHANGES,
 )
 from services.openai.instructions.explore_repo import SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
-from services.openai.instructions.search_google import SYSTEM_INSTRUCTION_TO_SEARCH_GOOGLE
+from services.openai.instructions.search_google import (
+    SYSTEM_INSTRUCTION_TO_SEARCH_GOOGLE,
+)
 from services.openai.instructions.update_comment import (
     SYSTEM_INSTRUCTION_TO_UPDATE_COMMENT,
 )

@@ -33,8 +33,6 @@ from services.github.github_types import GitHubLabeledPayload
 from services.github.github_utils import deconstruct_github_payload
 from services.jira.jira_manager import deconstruct_jira_payload
 from services.openai.commit_changes import chat_with_agent
-from services.openai.instructions.write_pr_body import WRITE_PR_BODY
-from services.openai.chat import chat_with_ai
 from services.openai.vision import describe_image
 from services.supabase import SupabaseManager
 from utils.extract_urls import extract_image_urls
@@ -172,34 +170,24 @@ async def handle_gitauto(
     comment_body = "Writing up the pull request body..."
     update_comment(body=comment_body, base_args=base_args, p=20)
     today = datetime.now().strftime("%Y-%m-%d")
-    print(f"Today's date: {today}")
-    pr_body: str = chat_with_ai(
-        system_input=WRITE_PR_BODY,
-        user_input=json.dumps(
-            obj={
-                "issue_title": issue_title,
-                "issue_body": issue_body,
-                "reference_contents": reference_contents,
-                "issue_comments": issue_comments,
-                "file_tree": file_tree,
-                "config_contents": config_contents,
-                "metadata": base_args,
-                "today": today,
-            }
-        ),
-    )
-    base_args["pr_body"] = pr_body
 
     # Ask for help if needed like a human would do
     comment_body = "Checking if I can solve it or if I should just hit you up..."
     update_comment(body=comment_body, base_args=base_args, p=25)
-    messages = [
-        {"role": "user", "content": pr_body},
-        {"role": "user", "content": f"File tree:\n{file_tree}"},
-        {"role": "user", "content": f"Config contents:\n{config_contents}"},
-        {"role": "user", "content": f"Metadata:\n{base_args}"},
-        {"role": "user", "content": f"Today's date:\n{today}"},
-    ]
+    user_input = json.dumps(
+        {
+            "today": today,
+            "metadata": base_args,
+            "issue_title": issue_title,
+            "issue_body": issue_body,
+            "reference_contents": reference_contents,
+            "issue_comments": issue_comments,
+            "file_tree": file_tree,
+            "config_contents": config_contents,
+            # "pr_body": pr_body,
+        }
+    )
+    messages = [{"role": "user", "content": user_input}]
     # (*_, token_input, token_output, is_commented) = chat_with_agent(
     #     messages=messages, base_args=base_args, mode="comment"
     # )
@@ -317,7 +305,7 @@ async def handle_gitauto(
     update_comment(body=comment_body, base_args=base_args, p=90)
     title = f"{PRODUCT_NAME}: {issue_title}"
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
-    pr_body = issue_link + pr_body + git_command(new_branch_name=new_branch_name)
+    pr_body = issue_link + git_command(new_branch_name=new_branch_name)
     pr_url = create_pull_request(body=pr_body, title=title, base_args=base_args)
 
     # Update the issue comment based on if the PR was created or not

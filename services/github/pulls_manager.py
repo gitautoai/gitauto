@@ -47,7 +47,9 @@ def get_pull_request_file_contents(url: str, base_args: BaseArgs):
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def get_pull_request_file_changes(url: str, token: str):
-    """https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests-files"""
+    """url: https://api.github.com/repos/gitautoai/gitauto/pulls/517/files is expected.
+    https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests-files
+    """
     headers = create_headers(token=token)
     changes: list[dict[str, str]] = []
     page = 1
@@ -67,3 +69,13 @@ def get_pull_request_file_changes(url: str, token: str):
             changes.append({"filename": filename, "status": status, "patch": patch})
         page += 1
     return changes
+
+
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def update_pull_request_body(url: str, token: str, body: str):
+    """https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#update-a-pull-request"""
+    headers = create_headers(token=token)
+    data = {"body": body}
+    response = requests.patch(url=url, headers=headers, json=data, timeout=TIMEOUT)
+    response.raise_for_status()
+    return response.json()

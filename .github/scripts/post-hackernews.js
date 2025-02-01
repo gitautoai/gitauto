@@ -28,9 +28,9 @@ async function postHackerNews({ context }) {
     // Submit story
     const title = context.payload.pull_request.title;
     const description = context.payload.pull_request.body;
-
+    const url = context.payload.pull_request.html_url;
     await page.fill('input[name="title"]', title);
-    await page.fill('input[name="url"]', "https://gitauto.ai?utm_source=hackernews&utm_medium=referral");
+    await page.fill('input[name="url"]', url);
 
     // If there's a description, submit as a "text" post with both URL and description
     if (description) await page.fill('textarea[name="text"]', description);
