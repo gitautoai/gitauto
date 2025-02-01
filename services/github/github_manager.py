@@ -739,13 +739,19 @@ def search_remote_file_contents(query: str, base_args: BaseArgs) -> str:
     response.raise_for_status()
     response_json = response.json()
     files = []
+    file_paths = []
     for item in response_json.get("items", []):
         file_path = item["path"]
+        file_paths.append(file_path)
         text_matches = get_remote_file_content(
             file_path=file_path, base_args=base_args, keyword=query
         )
         files.append(text_matches)
-    msg = f"{len(files)} files found for the search query '{query}'\n"
+    msg = (
+        f"{len(files)} files found for the search query '{query}':\n- "
+        + "\n- ".join(file_paths)
+        + "\n"
+    )
     print(msg)
     output = msg + "\n" + "\n\n".join(files)
     return output
