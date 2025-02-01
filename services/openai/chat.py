@@ -3,7 +3,7 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletion
 
 # Local imports
-from config import OPENAI_MODEL_ID_O1_MINI
+from config import OPENAI_MODEL_ID_O3_MINI
 from services.openai.init import create_openai_client
 from services.openai.truncate import truncate_message
 from utils.handle_exceptions import handle_exceptions
@@ -17,7 +17,7 @@ def chat_with_ai(system_input: str, user_input: str) -> str:
     completion: ChatCompletion = client.chat.completions.create(
         messages=[
             {
-                "role": "user",  # role should be system but it is not allowed for 01-mini as of Oct 5 2024. https://community.openai.com/t/o1-models-do-not-support-system-role-in-chat-completion/953880/2 and https://platform.openai.com/docs/guides/reasoning/beta-limitations#beta-limitations
+                "role": "developer",
                 "content": system_input,
             },
             {
@@ -25,30 +25,8 @@ def chat_with_ai(system_input: str, user_input: str) -> str:
                 "content": truncated_msg if truncated_msg else user_input,
             },
         ],
-        model=OPENAI_MODEL_ID_O1_MINI,
-
-        # Other parameters
-        # modalities=["text"],
-        n=1,
-        # temperature=OPENAI_TEMPERATURE,  # temperature should be 0 but it is not supported for o1-mini and o1 as of Jan 29 2025
+        model=OPENAI_MODEL_ID_O3_MINI,
     )
     content: str | None = completion.choices[0].message.content
     response: str = content if content else ""
-
-    # Check for backticks
-    if response[:4] == "```\n":
-        response = response[4:]
-    if response[:3] == "```":
-        response = response[3:]
-    if response.endswith("```"):
-        response = response[:-3]
-
-    # Check for triple quotes
-    if response[:4] == '"""\n':
-        response = response[4:]
-    if response[:3] == '"""\n':
-        response = response[3:]
-    if response.endswith('"""'):
-        response = response[:-3]
-
     return response

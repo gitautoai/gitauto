@@ -21,6 +21,7 @@ from services.github.github_manager import (
     get_user_public_email,
 )
 from services.github.github_types import GitHubInstallationPayload
+from services.pull_request_handler import write_pr_description
 from services.review_run_handler import handle_review_run
 from services.supabase import SupabaseManager
 from services.gitauto_handler import handle_gitauto
@@ -170,6 +171,12 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
             )
 
             handle_check_run(payload=payload)
+        return
+
+    # Write a PR description to the issue when GitAuto opened the PR
+    # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
+    if event_name == "pull_request" and action == "opened":
+        write_pr_description(payload=payload)
         return
 
     # Track merged PRs as this is also our success status
