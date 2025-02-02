@@ -33,8 +33,6 @@ from services.github.pulls_manager import (
 )
 from services.github.github_utils import create_permission_url
 from services.openai.commit_changes import chat_with_agent
-from services.openai.chat import chat_with_ai
-from services.openai.instructions.identify_cause import IDENTIFY_CAUSE
 from services.stripe.subscriptions import get_stripe_product_id
 from services.supabase import SupabaseManager
 from services.supabase.owers_manager import get_stripe_customer_id
@@ -192,37 +190,11 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "today": today,
     }
     user_input = json.dumps(obj=input_message)
-    how_to_fix: str = chat_with_ai(system_input=IDENTIFY_CAUSE, user_input=user_input)
-    print(colorize(text="How to fix:", color="green"))
-    print(how_to_fix)
 
     # Update the comment if any obstacles are found
     comment_body = "Checking if I can solve it or if I should just hit you up..."
     update_comment(body=comment_body, base_args=base_args, p=30)
-    messages = [
-        {"role": "user", "content": how_to_fix},
-        {"role": "user", "content": f"Today's date:\n{today}"},
-    ]
-    (
-        _messages,
-        _previous_calls,
-        _tool_name,
-        _tool_args,
-        _token_input,
-        _token_output,
-        is_commented,
-    ) = chat_with_agent(messages=messages, base_args=base_args, mode="comment")
-    if is_commented:
-        return
-
-    content = {
-        "pull_request_title": pull_title,
-        "file_tree": file_tree,
-        "workflow_content": workflow_content,
-        "error_log": error_log,
-        "how_to_fix": how_to_fix,
-    }
-    messages = [{"role": "user", "content": json.dumps(obj=content)}]
+    messages = [{"role": "user", "content": user_input}]
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
