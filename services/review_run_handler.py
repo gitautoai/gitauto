@@ -21,8 +21,6 @@ from services.github.github_manager import (
 from services.github.github_types import Owner, PullRequest, Repository
 from services.github.pulls_manager import get_pull_request_file_contents
 from services.openai.commit_changes import chat_with_agent
-from services.openai.chat import chat_with_ai
-from services.openai.instructions.resolve_feedback import RESOLVE_FEEDBACK
 from services.stripe.subscriptions import get_stripe_product_id
 from services.supabase import SupabaseManager
 from services.supabase.owers_manager import get_stripe_customer_id
@@ -150,33 +148,24 @@ def handle_review_run(payload: dict[str, Any]) -> None:
         "today": today,
     }
     user_input = json.dumps(obj=input_message)
-    how_to_fix: str = chat_with_ai(system_input=RESOLVE_FEEDBACK, user_input=user_input)
-    print(colorize(text=how_to_fix, color="green"))
 
     # Update the comment if any obstacles are found
     comment_body = "Checking if I can solve it or if I should just hit you up..."
     update_comment(body=comment_body, base_args=base_args, p=30)
-    messages = [
-        {"role": "system", "content": f"Pull Request Title:\n{pull_title}"},
-        {"role": "system", "content": f"Pull Request Body:\n{pull_body}"},
-        {"role": "system", "content": f"Pull Request Files:\n{pull_files}"},
-        {"role": "system", "content": f"File Tree:\n{file_tree}"},
-        {"role": "user", "content": f"Review Comment:\n{review_comment}"},
-        {"role": "user", "content": f"Review File:\n{review_file}"},
-        {"role": "user", "content": f"How to fix:\n{how_to_fix}"},
-        {"role": "user", "content": f"Today's date:\n{today}"},
-    ]
-    (
-        _messages,
-        _previous_calls,
-        _tool_name,
-        _tool_args,
-        _token_input,
-        _token_output,
-        is_commented,
-    ) = chat_with_agent(messages=messages, base_args=base_args, mode="comment")
-    if is_commented:
-        return
+    messages = [{"role": "user", "content": user_input}]
+
+    # NOTE: Disabled this ask back feature because it's not working as expected and GitAuto just responded like "I've done it" but code returned here.
+    # (
+    #     _messages,
+    #     _previous_calls,
+    #     _tool_name,
+    #     _tool_args,
+    #     _token_input,
+    #     _token_output,
+    #     is_commented,
+    # ) = chat_with_agent(messages=messages, base_args=base_args, mode="comment")
+    # if is_commented:
+    #     return
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
