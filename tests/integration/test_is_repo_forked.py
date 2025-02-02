@@ -18,5 +18,4 @@ def test_is_repo_forked_non_forked():
 def test_is_repo_forked_forked():
     # Test with a forked repository
     result = is_repo_forked(owner=OWNER, repo=FORKED_REPO, token=GH_APP_TOKEN)
- 
     assert result is True
