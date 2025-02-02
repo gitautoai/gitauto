@@ -14,6 +14,7 @@ from services.github.github_manager import (
     get_installation_access_token,
     get_user_public_email,
 )
+from services.github.issues_manager import get_parent_issue
 from utils.extract_urls import extract_urls
 from utils.handle_exceptions import handle_exceptions
 
@@ -69,6 +70,19 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
     token: str = get_installation_access_token(installation_id=installation_id)
     sender_email: str = get_user_public_email(username=sender_name, token=token)
 
+    # Extract its parent issue
+    parent_issue = get_parent_issue(
+        owner=owner_name,
+        repo=repo_name,
+        issue_number=issue_number,
+        token=token,
+    )
+    parent_issue_number: int | None = (
+        parent_issue.get("number") if parent_issue else None
+    )
+    parent_issue_title: str | None = parent_issue.get("title") if parent_issue else None
+    parent_issue_body: str | None = parent_issue.get("body") if parent_issue else None
+
     base_args: BaseArgs = {
         "input_from": "github",
         "owner_type": owner_type,
@@ -81,6 +95,9 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
         "issue_title": issue_title,
         "issue_body": issue_body,
         "issuer_name": issuer_name,
+        "parent_issue_number": parent_issue_number,
+        "parent_issue_title": parent_issue_title,
+        "parent_issue_body": parent_issue_body,
         "base_branch": base_branch_name,
         "new_branch": new_branch_name,
         "installation_id": installation_id,
