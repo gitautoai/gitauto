@@ -308,6 +308,8 @@ def create_jwt() -> str:
         "exp": now + 600,  # JWT expires in 10 minutes
         "iss": GITHUB_APP_ID,  # Issuer
     }
+    print(f"GITHUB_APP_ID: {GITHUB_APP_ID}")
+    print(f"GITHUB_PRIVATE_KEY: {GITHUB_PRIVATE_KEY}")
     # The reason we use RS256 is that GitHub requires it for JWTs
     return jwt.encode(payload=payload, key=GITHUB_PRIVATE_KEY, algorithm="RS256")
 
