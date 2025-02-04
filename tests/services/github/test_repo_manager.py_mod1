@@ -1,0 +1,10 @@
+ import os
+import pytest
+@@ -10,1 +10,2 @@
+-    assert token, "GITHUB_TEST_TOKEN not provided in environment"
+    if not token:
+        pytest.skip("GITHUB_TEST_TOKEN not provided in environment")
+@@ -17,1 +17,2 @@
+-    assert token, "GITHUB_TEST_TOKEN not provided in environment"
+    if not token:
+        pytest.skip("GITHUB_TEST_TOKEN not provided in environment")
