@@ -1,8 +1,5 @@
-import os
 from services.github.branch_manager import get_default_branch
-from tests.constants import OWNER, REPO
-
-TOKEN = os.getenv("GH_APP_TOKEN")
+from tests.constants import OWNER, REPO, TOKEN
 
 
 def test_get_default_branch() -> None:
