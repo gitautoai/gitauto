@@ -308,8 +308,6 @@ def create_jwt() -> str:
         "exp": now + 600,  # JWT expires in 10 minutes
         "iss": GITHUB_APP_ID,  # Issuer
     }
-    print(f"GITHUB_APP_ID: {GITHUB_APP_ID}")
-    print(f"GITHUB_PRIVATE_KEY: {GITHUB_PRIVATE_KEY}")
     # The reason we use RS256 is that GitHub requires it for JWTs
     return jwt.encode(payload=payload, key=GITHUB_PRIVATE_KEY, algorithm="RS256")
 
@@ -379,16 +377,13 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
 def get_installation_access_token(installation_id: int) -> str:
     """https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-an-installation-access-token-for-an-app"""
     jwt_token: str = create_jwt()
-    print(f"jwt_token: {jwt_token}")
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/app/installations/{installation_id}/access_tokens",
         headers=create_headers(token=jwt_token),
         timeout=TIMEOUT,
     )
     response.raise_for_status()
-    json_response = response.json()
-    print(f"json_response: {json_response}")
-    return json_response["token"]
+    return response.json()["token"]
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
