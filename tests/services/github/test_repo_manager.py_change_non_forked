@@ -1,0 +1,5 @@
+-    token = os.getenv("GITHUB_TEST_TOKEN")
+-    assert token, "GITHUB_TEST_TOKEN not provided in environment"
+    token = os.getenv("GITHUB_TEST_TOKEN")
+    if not token:
+        pytest.skip("GITHUB_TEST_TOKEN not provided in environment")
