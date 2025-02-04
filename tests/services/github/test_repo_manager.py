@@ -14,7 +14,8 @@ def test_is_repo_forked_non_forked():
 
 def test_is_repo_forked_forked():
     token = os.getenv("GITHUB_TEST_TOKEN")
-    assert token, "GITHUB_TEST_TOKEN not provided in environment"
+    if not token:
+        pytest.skip("GITHUB_TEST_TOKEN not provided in environment")
     is_fork = is_repo_forked(OWNER, FORKED_REPO, token)
     # Expect forked repository to return True
     assert is_fork == True, f"{FORKED_REPO} should be forked"
