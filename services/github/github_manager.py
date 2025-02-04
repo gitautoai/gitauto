@@ -379,13 +379,16 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
 def get_installation_access_token(installation_id: int) -> str:
     """https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-an-installation-access-token-for-an-app"""
     jwt_token: str = create_jwt()
+    print(f"jwt_token: {jwt_token}")
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/app/installations/{installation_id}/access_tokens",
         headers=create_headers(token=jwt_token),
         timeout=TIMEOUT,
     )
     response.raise_for_status()
-    return response.json()["token"]
+    json_response = response.json()
+    print(f"json_response: {json_response}")
+    return json_response["token"]
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
