@@ -1,7 +1,7 @@
 const { RestliClient } = require("linkedin-api-client");
 
 const gitautoUrn = "urn:li:organization:100932100"; // Go to company profile page
-const wesUrn = "urn:li:member:915150628"; // Go to profile page and console then search for "urn:li:member:"
+const wesUrn = "urn:li:person:Nu-Ocwc81N"; // curl -X GET "https://api.linkedin.com/v2/me" -H "Authorization: Bearer YOUR_ACCESS_TOKEN" and get the "id" field
 
 /**
  * @see https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api?view=li-lms-2024-11&viewFallbackFrom=li-lms-unversioned&tabs=http
