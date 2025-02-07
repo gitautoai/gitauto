@@ -12,6 +12,11 @@ def get_stripe_product_id(customer_id: str):
     data = subscriptions["data"]
     if len(data) == 0:
         return None
+
+    # If multiple subscriptions exist, return only the highest priced one
+    if len(data) > 1:
+        data = [max(data, key=lambda x: x["plan"]["amount"])]
+
     subscription: stripe.Subscription = data[0]
     product_id: str = subscription["plan"]["product"]
     return product_id
