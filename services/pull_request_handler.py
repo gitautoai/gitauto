@@ -40,6 +40,7 @@ def write_pr_description(payload: dict):
 
     # Extract issue number from "Resolves #<issue_number>"
     issue_number = None
+    issue_body = None
     resolves_statement = None
     commands = []
 
@@ -52,9 +53,10 @@ def write_pr_description(payload: dict):
             commands.append(line)
 
     # Get the issue title and body
-    issue_body: str | None = get_issue_body(
-        owner=owner, repo=repo_name, issue_number=issue_number, token=token
-    )
+    if issue_number > 0:
+        issue_body: str | None = get_issue_body(
+            owner=owner, repo=repo_name, issue_number=issue_number, token=token
+        )
 
     # Create an input object
     user_input = dumps(
