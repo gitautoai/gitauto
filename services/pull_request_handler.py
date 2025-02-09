@@ -74,15 +74,13 @@ def write_pr_description(payload: dict):
         system_input=WRITE_PR_BODY,
         user_input=user_input,
     )
-    pr_body = (
-        resolves_statement
-        + "\n\n"
-        + pr_body
-        + "\n\n"
-        + "```\n"
-        + "\n".join(commands)
-        + "\n```"
-    )
+
+    # Add a resolves statement if this PR comes from an GitHub issue
+    if resolves_statement:
+        pr_body = resolves_statement + "\n\n" + pr_body
+
+    # Add commands at the end
+    pr_body = pr_body + "\n\n" + "```\n" + "\n".join(commands) + "\n```"
 
     # Update the PR with the PR description
     update_pull_request_body(url=pull_url, token=token, body=pr_body)
