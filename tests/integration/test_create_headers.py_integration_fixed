@@ -1,0 +1,7 @@
+ def test_create_headers_integration():
+     """Test the integration behavior of create_headers."""
+-    headers = create_headers()
+    headers = create_headers(TOKEN)
+ 
+     # Ensure the result is a dictionary
+     assert isinstance(headers, dict)
