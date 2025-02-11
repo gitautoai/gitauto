@@ -1,6 +1,6 @@
 import pytest
 from services.github.graphql_client import get_graphql_client
-from tests/constants.py import TOKEN
+from tests.constants import TOKEN
 
 def test_get_graphql_client_schema_fetch(monkeypatch):
     """
