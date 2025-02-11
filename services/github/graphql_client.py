@@ -12,4 +12,11 @@ def get_graphql_client(token: str) -> Client:
         retries=3,
     )
 
-    return Client(transport=transport, fetch_schema_from_transport=True)
+    client = Client(transport=transport, fetch_schema_from_transport=True)
+    original_execute = client.execute
+    def new_execute(query, *args, **kwargs):
+        from gql import gql
+        if isinstance(query, str):
+            query = gql(query)
+        return original_execute(query, *args, **kwargs)
+    client.execute = new_execute
