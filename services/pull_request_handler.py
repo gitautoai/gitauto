@@ -53,7 +53,7 @@ def write_pr_description(payload: dict):
             commands.append(line)
 
     # Get the issue title and body
-    if issue_number > 0:
+    if issue_number is not None:
         issue_body: str | None = get_issue_body(
             owner=owner, repo=repo_name, issue_number=issue_number, token=token
         )
