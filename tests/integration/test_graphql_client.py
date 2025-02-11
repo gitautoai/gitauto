@@ -11,14 +11,12 @@ def test_get_graphql_client_execute():
     assert client is not None, "GraphQL client should not be None"
 
     # Prepare a simple GraphQL query to fetch repository details.
-    query = """
-    query($owner: String!, $repo: String!) {
+    query = """query($owner: String!, $repo: String!) {
       repository(owner: $owner, name: $repo) {
         name
         owner { login }
       }
-    }
-    """
+    }"""
     variables = {"owner": OWNER, "repo": REPO}
 
     # Execute the query using the GraphQL client.
