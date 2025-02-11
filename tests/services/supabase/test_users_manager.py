@@ -229,8 +229,8 @@ async def test_install_uninstall_install() -> None:
         .eq(column="owner_id", value=OWNER_ID)
         .execute()
     )
-    assert owners_data[1][0]["owner_id"] == OWNER_ID
-    assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
+    assert owners_data[0]["owner_id"] == OWNER_ID
+    assert isinstance(owners_data[0]["stripe_customer_id"], str)
 
     # Check Installation Record
     installation_data, _ = (
