@@ -13,6 +13,7 @@ from openai.types.chat.chat_completion_message_tool_call import (
 
 # Local imports
 from config import OPENAI_MODEL_ID_O3_MINI, TIMEOUT
+from services.github.github_manager import update_comment
 from services.github.github_types import BaseArgs
 from services.openai.count_tokens import count_tokens
 from services.openai.functions.functions import (
@@ -44,6 +45,8 @@ def chat_with_agent(
     base_args: BaseArgs,
     mode: Literal["comment", "commit", "explore", "get", "search"],
     previous_calls: list[dict] | None = None,
+    recursion_count: int = 0,
+    p: int = 0,
 ):
     """https://platform.openai.com/docs/api-reference/chat/create"""
     if previous_calls is None:
@@ -126,6 +129,19 @@ def chat_with_agent(
             "content": str(tool_result),
         }
     )
+
+    # Recursively call the function if the mode is "explore" and the tool was called
+    if mode == "explore" and tool_calls and recursion_count < 3:
+        msg = f"Calling `{tool_name}()` with `{tool_args}`..."
+        update_comment(body=msg, base_args=base_args, p=p)
+        return chat_with_agent(
+            messages=messages,
+            base_args=base_args,
+            mode=mode,
+            previous_calls=previous_calls,
+            recursion_count=recursion_count + 1,
+            p=p + 5,
+        )
 
     # Return
     return (

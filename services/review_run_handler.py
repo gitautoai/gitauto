@@ -219,6 +219,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
             base_args=base_args,
             mode="get",  # explore can not be used here because "search_remote_file_contents" can search files only in the default branch NOT in the branch that is merged into the default branch
             previous_calls=previous_calls,
+            p=p,
         )
         comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
         update_comment(body=comment_body, base_args=base_args, p=p)
@@ -238,6 +239,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
             base_args=base_args,
             mode="search",
             previous_calls=previous_calls,
+            p=p,
         )
         if tool_name is not None and tool_args is not None:
             comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
@@ -258,6 +260,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
             base_args=base_args,
             mode="commit",
             previous_calls=previous_calls,
+            p=p,
         )
         msg = f"Calling `{tool_name}()` with `{tool_args}`..."
         update_comment(body=comment_body, base_args=base_args, p=p)
