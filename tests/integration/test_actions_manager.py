@@ -12,6 +12,6 @@ from tests.constants import OWNER, REPO, TOKEN
 def test_get_workflow_run_path_format():
     """Test that get_workflow_run_path returns a URL containing the expected owner, repo, and run_id."""
     run_id = 1
-    workflow_path = get_workflow_run_path(run_id, token=TOKEN)
+    workflow_path = get_workflow_run_path(run_id, token=TOKEN, repo=REPO, owner=OWNER)
     expected_substr = f"/repos/{OWNER}/{REPO}/actions/runs/{run_id}/jobs"
     assert expected_substr in workflow_path, f"Expected '{expected_substr}' in output but got {workflow_path}"
