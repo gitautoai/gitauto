@@ -238,6 +238,7 @@ async def handle_gitauto(
             base_args=base_args,
             mode="explore",
             previous_calls=previous_calls,
+            p=p,
         )
         if tool_name is not None and tool_args is not None:
             comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
@@ -258,6 +259,7 @@ async def handle_gitauto(
             base_args=base_args,
             mode="search",
             previous_calls=previous_calls,
+            p=p,
         )
         if tool_name is not None and tool_args is not None:
             comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
@@ -278,6 +280,7 @@ async def handle_gitauto(
             base_args=base_args,
             mode="commit",
             previous_calls=previous_calls,
+            p=p,
         )
         if tool_name is not None and tool_args is not None:
             comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
