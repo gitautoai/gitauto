@@ -92,7 +92,7 @@ PER_PAGE = 100
 PR_BODY_STARTS_WITH = "Resolves #"  # https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue
 PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
-PRODUCT_URL = "https://gitauto.ai"
+PRODUCT_URL = "https://gitauto.ai?utm_source=github&utm_medium=referral"
 TIMEOUT = 120  # seconds
 TZ = timezone.utc
 UTF8 = "utf-8"
