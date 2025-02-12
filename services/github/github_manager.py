@@ -361,6 +361,7 @@ def create_remote_branch(sha: str, base_args: BaseArgs) -> None:
     response.raise_for_status()
 
 
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def initialize_repo(repo_path: str, remote_url: str) -> None:
     """Push an initial empty commit to the remote repository to create a commit sha."""
     if not os.path.exists(path=repo_path):
@@ -378,10 +379,13 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
 
     # Try to add remote, if it fails then set-url instead
     try:
+        print(f"Adding remote: {remote_url}")
         run_command(command=f"git remote add origin {remote_url}", cwd=repo_path)
+        print("Remote added successfully")
     except Exception:  # pylint: disable=broad-except
+        print(f"Setting remote: {remote_url}")
         run_command(command=f"git remote set-url origin {remote_url}", cwd=repo_path)
-
+        print("Remote set successfully")
     run_command(command="git push -u origin main", cwd=repo_path)
 
 
