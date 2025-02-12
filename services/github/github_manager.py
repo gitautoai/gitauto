@@ -30,7 +30,6 @@ from config import (
     GITHUB_PRIVATE_KEY,
     IS_PRD,
     PRODUCT_NAME,
-    PRODUCT_URL,
     TIMEOUT,
     PRODUCT_ID,
     SUPABASE_URL,
@@ -365,10 +364,9 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
         os.makedirs(name=repo_path)
 
     run_command(command="git init", cwd=repo_path)
-    with open(file=os.path.join(repo_path, "README.md"), mode="w", encoding=UTF8) as f:
-        f.write(f"# Initial commit by [{PRODUCT_NAME}]({PRODUCT_URL})\n")
-    run_command(command="git add README.md", cwd=repo_path)
-    run_command(command='git commit -m "Initial commit"', cwd=repo_path)
+    run_command(
+        command='git commit --allow-empty -m "Initial GitAuto commit"', cwd=repo_path
+    )
     run_command(command=f"git remote add origin {remote_url}", cwd=repo_path)
     run_command(command="git push -u origin main", cwd=repo_path)
 
