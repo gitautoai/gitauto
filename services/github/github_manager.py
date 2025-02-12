@@ -35,6 +35,9 @@ from config import (
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
     UTF8,
+    GITHUB_APP_USER_NAME,
+    GITHUB_APP_USER_ID,
+    GITHUB_NOREPLY_EMAIL_DOMAIN,
 )
 from constants.messages import CLICK_THE_CHECKBOX
 from services.github.create_headers import create_headers
@@ -364,6 +367,11 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
         os.makedirs(name=repo_path)
 
     run_command(command="git init", cwd=repo_path)
+    run_command(command=f'git config user.name "{GITHUB_APP_USER_NAME}"', cwd=repo_path)
+    run_command(
+        command=f'git config user.email "{GITHUB_APP_USER_ID}+{GITHUB_APP_USER_NAME}@{GITHUB_NOREPLY_EMAIL_DOMAIN}"',
+        cwd=repo_path,
+    )
     run_command(
         command='git commit --allow-empty -m "Initial GitAuto commit"', cwd=repo_path
     )
@@ -672,6 +680,17 @@ def get_remote_file_tree(base_args: BaseArgs, max_files: int = 1000) -> list[str
     headers: dict[str, str] = create_headers(token=base_args["token"])
     params: dict[str, int | str] = {"recursive": 1}
     response = requests.get(url=url, headers=headers, params=params, timeout=TIMEOUT)
+
+    # Handle empty repository case
+    if response.status_code == 409 and "Git Repository is empty" in response.text:
+        print(f"Repository {owner}/{repo} is empty")
+        return []
+
+    # Handle 404 error case (repository or branch not found)
+    if response.status_code == 404:
+        print(f"No files found in repository: {owner}/{repo}")
+        return []
+
     response.raise_for_status()
 
     # Warn if GitHub API truncated the response
