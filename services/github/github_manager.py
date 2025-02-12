@@ -367,7 +367,7 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
     if not os.path.exists(path=repo_path):
         os.makedirs(name=repo_path)
 
-    run_command(command="git init", cwd=repo_path)
+    run_command(command="git init -b main", cwd=repo_path)
     run_command(command=f'git config user.name "{GITHUB_APP_USER_NAME}"', cwd=repo_path)
     run_command(
         command=f'git config user.email "{GITHUB_APP_USER_ID}+{GITHUB_APP_USER_NAME}@{GITHUB_NOREPLY_EMAIL_DOMAIN}"',
@@ -386,6 +386,7 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
         print(f"Setting remote: {remote_url}")
         run_command(command=f"git remote set-url origin {remote_url}", cwd=repo_path)
         print("Remote set successfully")
+
     run_command(command="git push -u origin main", cwd=repo_path)
 
 
