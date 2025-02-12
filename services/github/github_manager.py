@@ -375,7 +375,13 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
     run_command(
         command='git commit --allow-empty -m "Initial GitAuto commit"', cwd=repo_path
     )
-    run_command(command=f"git remote add origin {remote_url}", cwd=repo_path)
+
+    # Try to add remote, if it fails then set-url instead
+    try:
+        run_command(command=f"git remote add origin {remote_url}", cwd=repo_path)
+    except Exception:  # pylint: disable=broad-except
+        run_command(command=f"git remote set-url origin {remote_url}", cwd=repo_path)
+
     run_command(command="git push -u origin main", cwd=repo_path)
 
 
