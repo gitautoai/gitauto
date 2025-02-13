@@ -29,8 +29,14 @@ from config import (
     GITHUB_ISSUE_TEMPLATES,
     GITHUB_PRIVATE_KEY,
     IS_PRD,
+    PRODUCT_BLOG_URL,
+    PRODUCT_DEMO_URL,
+    PRODUCT_ISSUE_URL,
+    PRODUCT_LINKEDIN_URL,
     PRODUCT_NAME,
+    PRODUCT_TWITTER_URL,
     PRODUCT_URL,
+    PRODUCT_YOUTUBE_URL,
     TIMEOUT,
     PRODUCT_ID,
     SUPABASE_URL,
@@ -363,13 +369,13 @@ def create_remote_branch(sha: str, base_args: BaseArgs) -> None:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def initialize_repo(repo_path: str, remote_url: str) -> None:
+def initialize_repo(repo_path: str, remote_url: str, token: str) -> None:
     """Initialize a repository with a README.md file and push it to the remote. It didn't work without a README.md file."""
     if not os.path.exists(path=repo_path):
         os.makedirs(name=repo_path)
 
     # Create README.md
-    readme_content = f"""## {PRODUCT_NAME} resources\n\nHere are GitAuto resources.\n\n- [GitAuto homepage]({PRODUCT_URL})\n- [GitAuto demo](https://www.youtube.com/watch?v=wnIi73WR1kE)\n- [GitAuto use cases]({PRODUCT_URL}/blog)\n- [GitAuto GitHub issues](https://github.com/gitauto-ai/gitauto/issues)\n- [GitAuto LinkedIn](https://www.linkedin.com/company/gitauto/)\n- [GitAuto Twitter](https://x.com/gitautoai)\n"""
+    readme_content = f"""## {PRODUCT_NAME} resources\n\nHere are GitAuto resources.\n\n- [GitAuto homepage]({PRODUCT_URL})\n- [GitAuto demo]({PRODUCT_DEMO_URL})\n- [GitAuto use cases]({PRODUCT_BLOG_URL})\n- [GitAuto GitHub issues]({PRODUCT_ISSUE_URL})\n- [GitAuto LinkedIn]({PRODUCT_LINKEDIN_URL})\n- [GitAuto Twitter]({PRODUCT_TWITTER_URL})\n- [GitAuto YouTube]({PRODUCT_YOUTUBE_URL})\n"""
     readme_path = os.path.join(repo_path, "README.md")
     with open(readme_path, "w", encoding=UTF8) as f:
         f.write(readme_content)
@@ -383,14 +389,19 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
     run_command(command="git add README.md", cwd=repo_path)
     run_command(command='git commit -m "Initial commit with README"', cwd=repo_path)
 
+    # Add authentication token to remote URL
+    auth_remote_url = remote_url.replace("https://", f"https://x-access-token:{token}@")
+
     # Try to add remote, if it fails then set-url instead
     try:
         print(f"Adding remote: {remote_url}")
-        run_command(command=f"git remote add origin {remote_url}", cwd=repo_path)
+        run_command(command=f"git remote add origin {auth_remote_url}", cwd=repo_path)
         print("Remote added successfully")
     except Exception:  # pylint: disable=broad-except
         print(f"Setting remote: {remote_url}")
-        run_command(command=f"git remote set-url origin {remote_url}", cwd=repo_path)
+        run_command(
+            command=f"git remote set-url origin {auth_remote_url}", cwd=repo_path
+        )
         print("Remote set successfully")
 
     run_command(command="git push -u origin main", cwd=repo_path)
@@ -494,10 +505,10 @@ def get_latest_remote_commit_sha(clone_url: str, base_args: BaseArgs) -> str:
             e.response.status_code == 409
             and e.response.json()["message"] == "Git Repository is empty."
         ):
-            logging.info(
-                msg="Repository is empty. So, creating an initial empty commit."
-            )
-            initialize_repo(repo_path=f"/tmp/repo/{owner}-{repo}", remote_url=clone_url)
+            msg = "Repository is empty. So, creating an initial empty commit."
+            logging.info(msg)
+            repo_path = f"/tmp/repo/{owner}-{repo}"
+            initialize_repo(repo_path=repo_path, remote_url=clone_url, token=token)
             return get_latest_remote_commit_sha(
                 clone_url=clone_url, base_args=base_args
             )
