@@ -631,7 +631,7 @@ def get_remote_file_content(
 
     # If line_number is specified, show the lines around the line_number
     buffer = 10
-    if line_number is not None:
+    if line_number is not None and line_number > 1 and len(lines) > 100:
         start = max(line_number - buffer, 0)
         end = min(line_number + buffer, len(lines))
         numbered_lines = numbered_lines[start : end + 1]  # noqa: E203
