@@ -93,6 +93,12 @@ PR_BODY_STARTS_WITH = "Resolves #"  # https://docs.github.com/en/issues/tracking
 PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 PRODUCT_URL = "https://gitauto.ai?utm_source=github&utm_medium=referral"
+PRODUCT_DEMO_URL = "https://www.youtube.com/watch?v=wnIi73WR1kE"
+PRODUCT_BLOG_URL = "https://gitauto.ai/blog?utm_source=github&utm_medium=referral"
+PRODUCT_ISSUE_URL = "https://github.com/gitautoai/gitauto/issues"
+PRODUCT_LINKEDIN_URL = "https://www.linkedin.com/company/gitauto/"
+PRODUCT_TWITTER_URL = "https://x.com/gitautoai"
+PRODUCT_YOUTUBE_URL = "https://youtube.com/@gitauto"
 TIMEOUT = 120  # seconds
 TZ = timezone.utc
 UTF8 = "utf-8"
