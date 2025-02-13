@@ -630,7 +630,7 @@ def get_remote_file_content(
     file_path_with_lines = file_path
 
     # If line_number is specified, show the lines around the line_number
-    buffer = 10
+    buffer = 50
     if line_number is not None and line_number > 1 and len(lines) > 100:
         start = max(line_number - buffer, 0)
         end = min(line_number + buffer, len(lines))
