@@ -66,12 +66,15 @@ def handle_exceptions(
                         raise
 
                 elif api_type == "google" and err.response.status_code == 429:
-                    retry_after = int(err.response.headers.get("Retry-After", 60))
-                    print(f"retry_after: {retry_after}")
-                    err_msg = f"Google Search Rate Limit: {func.__name__} will retry after {retry_after} seconds"
-                    logging.warning(msg=err_msg)
-                    time.sleep(retry_after)
-                    return wrapper(*args, **kwargs)
+                    err_msg = f"Google Search Rate Limit in {func.__name__}()"
+                    print(err_msg)
+                    print(f"err.response.headers: {err.response.headers}")
+                    raise
+                    # retry_after = int(err.response.headers.get("Retry-After", 60))
+                    # print(f"retry_after: {retry_after}")
+                    # logging.warning(msg=err_msg)
+                    # time.sleep(retry_after)
+                    # return wrapper(*args, **kwargs)
 
                 # Ex) 409: Conflict, 422: Unprocessable Entity (No changes made), and etc.
                 else:
