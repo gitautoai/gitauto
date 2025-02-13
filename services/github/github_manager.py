@@ -30,6 +30,7 @@ from config import (
     GITHUB_PRIVATE_KEY,
     IS_PRD,
     PRODUCT_NAME,
+    PRODUCT_URL,
     TIMEOUT,
     PRODUCT_ID,
     SUPABASE_URL,
@@ -363,9 +364,15 @@ def create_remote_branch(sha: str, base_args: BaseArgs) -> None:
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def initialize_repo(repo_path: str, remote_url: str) -> None:
-    """Push an initial empty commit to the remote repository to create a commit sha."""
+    """Initialize a repository with a README.md file and push it to the remote. It didn't work without a README.md file."""
     if not os.path.exists(path=repo_path):
         os.makedirs(name=repo_path)
+
+    # Create README.md
+    readme_content = f"""## {PRODUCT_NAME} resources\n\nHere are GitAuto resources.\n\n- [GitAuto homepage]({PRODUCT_URL})\n- [GitAuto demo](https://www.youtube.com/watch?v=wnIi73WR1kE)\n- [GitAuto use cases]({PRODUCT_URL}/blog)\n- [GitAuto GitHub issues](https://github.com/gitauto-ai/gitauto/issues)\n- [GitAuto LinkedIn](https://www.linkedin.com/company/gitauto/)\n- [GitAuto Twitter](https://x.com/gitautoai)\n"""
+    readme_path = os.path.join(repo_path, "README.md")
+    with open(readme_path, "w", encoding=UTF8) as f:
+        f.write(readme_content)
 
     run_command(command="git init -b main", cwd=repo_path)
     run_command(command=f'git config user.name "{GITHUB_APP_USER_NAME}"', cwd=repo_path)
@@ -373,9 +380,8 @@ def initialize_repo(repo_path: str, remote_url: str) -> None:
         command=f'git config user.email "{GITHUB_APP_USER_ID}+{GITHUB_APP_USER_NAME}@{GITHUB_NOREPLY_EMAIL_DOMAIN}"',
         cwd=repo_path,
     )
-    run_command(
-        command='git commit --allow-empty -m "Initial GitAuto commit"', cwd=repo_path
-    )
+    run_command(command="git add README.md", cwd=repo_path)
+    run_command(command='git commit -m "Initial commit with README"', cwd=repo_path)
 
     # Try to add remote, if it fails then set-url instead
     try:
