@@ -23,6 +23,7 @@ from services.github.github_manager import (
 from services.github.github_types import GitHubInstallationPayload
 from services.pull_request_handler import write_pr_description
 from services.review_run_handler import handle_review_run
+from services.screenshot_handler import handle_screenshot_comparison
 from services.supabase import SupabaseManager
 from services.gitauto_handler import handle_gitauto
 from utils.handle_exceptions import handle_exceptions
@@ -177,6 +178,12 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
     if event_name == "pull_request" and action == "opened":
         write_pr_description(payload=payload)
+        await handle_screenshot_comparison(payload=payload)
+        return
+
+    # Compare screenshots when the PR is synchronized
+    if event_name == "pull_request" and action in ("synchronize"):
+        await handle_screenshot_comparison(payload=payload)
         return
 
     # Track merged PRs as this is also our success status
