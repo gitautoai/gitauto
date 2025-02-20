@@ -214,6 +214,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
             _token_input,
             _token_output,
             is_explored,
+            p,
         ) = chat_with_agent(
             messages=messages,
             base_args=base_args,
@@ -234,6 +235,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
             _token_input,
             _token_output,
             _is_searched,
+            p,
         ) = chat_with_agent(
             messages=messages,
             base_args=base_args,
@@ -255,6 +257,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
             _token_input,
             _token_output,
             is_committed,
+            p,
         ) = chat_with_agent(
             messages=messages,
             base_args=base_args,
