@@ -4,18 +4,9 @@
 DIFF_DESCRIPTION = """
 A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff --unified=0`. This diff must specifically be in one of the following three formats: addition, modification, or deletion:
 
-1. For new files
+1. For existing files: First, try to modify existing files that match the intended functionality.
 
-```diff(unified=0)
---- /dev/null
-+++ path/to/new/file
-@@ -0,0 +1,3 @@
-+ added line 1
-+ added line 2
-+ added line 3
-```
-
-2-1. For modified files (Replace lines of code)
+1-1. For modified files (Replace lines of code)
 
 ```diff(unified=0)
 --- path/to/file1
@@ -25,7 +16,7 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 + modified line 5
 ```
 
-2-2. For modified files (Remove lines of code)
+1-2. For modified files (Remove lines of code)
 
 ```diff(unified=0)
 --- path/to/file2
@@ -34,13 +25,35 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 - original line 10
 ```
 
-2-3. For modified files (Add lines of code)
+1-3. For modified files (Add lines of code)
 
 ```diff(unified=0)
 --- path/to/file3
 +++ path/to/file3
 @@ -15,0 +15,1 @@
 + added line 15
+```
+
+1-4. For modified files (Remove markdown bullet points)
+
+```diff(unified=0)
+--- path/to/file4.md
++++ path/to/file4.md
+@@ -20,3 +20,0 @@
+- - First bullet point
+- - Second bullet point
+- - Third bullet point
+```
+
+2. For new files (IMPORTANT: Only create new files if no existing file can be modified to achieve the desired functionality. Never create files with temporary names or suffixes like 'style.css_mod1' or 'index.html_mod1')
+
+```diff(unified=0)
+--- /dev/null
++++ path/to/new/file
+@@ -0,0 +1,3 @@
++ added line 1
++ added line 2
++ added line 3
 ```
 
 3. For deleted Files
