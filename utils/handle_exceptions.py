@@ -37,6 +37,7 @@ def handle_exceptions(
                 print(f"reason: {reason}, text: {text}, status_code: {status_code}")
 
                 if api_type == "github" and err.response.status_code in {403, 429}:
+                    print(f"err.response.headers: {err.response.headers}")
                     limit = int(err.response.headers["X-RateLimit-Limit"])
                     remaining = int(err.response.headers["X-RateLimit-Remaining"])
                     used = int(err.response.headers["X-RateLimit-Used"])
