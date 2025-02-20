@@ -696,7 +696,7 @@ def get_remote_file_content_by_url(url: str, token: str) -> str:
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_remote_file_tree(base_args: BaseArgs, max_files: int = 1000) -> list[str]:
+def get_remote_file_tree(base_args: BaseArgs, max_files: int = 1000):
     """
     Get the file tree of a GitHub repository at a ref branch.
     Uses recursive API call and trims results from deepest level if exceeding max_files.
@@ -713,12 +713,12 @@ def get_remote_file_tree(base_args: BaseArgs, max_files: int = 1000) -> list[str
     # Handle empty repository case
     if response.status_code == 409 and "Git Repository is empty" in response.text:
         print(f"Repository {owner}/{repo} is empty")
-        return []
+        return [], "Repository is empty."
 
     # Handle 404 error case (repository or branch not found)
     if response.status_code == 404:
         print(f"No files found in repository: {owner}/{repo}")
-        return []
+        return [], "No files found in repository."
 
     response.raise_for_status()
 
