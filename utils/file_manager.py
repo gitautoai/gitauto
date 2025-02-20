@@ -89,20 +89,26 @@ def apply_patch(original_text: str, diff_text: str):
         # Check if the error message indicates that the patch was already applied
         msg = f"Failed to apply patch because the diff is already applied. But it's OK, move on to the next fix!\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}\n"
         if "already exists!" in stdout:
-            print(msg, end="")
+            # print(msg, end="")
             return "", msg
         if "Ignoring previously applied (or reversed) patch." in stdout:
-            print(msg, end="")
+            # print(msg, end="")
             return "", msg
 
         # Get the original, diff, and reject file contents for debugging
         modified_text = get_file_content(file_path=org_fname)
         modified_text = modified_text.replace("\n", line_break)
-        diff_text = get_file_content(file_path=diff_fname)
+        diff_text = (
+            get_file_content(file_path=diff_fname).replace(" ", "·").replace("\t", "→").replace("\\t", "→")
+        )
         rej_f_name: str = f"{org_fname}.rej"
         rej_text = ""
         if os.path.exists(path=rej_f_name):
-            rej_text = get_file_content(file_path=rej_f_name)
+            rej_text = (
+                get_file_content(file_path=rej_f_name)
+                .replace(" ", "·")
+                .replace("\t", "→")
+            )
 
         # Log the error and return an empty string not to break the flow
         msg = f"Failed to apply patch partially or entirelly because something is wrong in diff. Analyze the reason from stderr and rej_text, modify the diff, and try again.\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}\n\nrej_text:\n{rej_text}\n"
