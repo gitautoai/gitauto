@@ -45,7 +45,7 @@ def chat_with_agent(
     base_args: BaseArgs,
     mode: Literal["comment", "commit", "explore", "get", "search"],
     previous_calls: list[dict] | None = None,
-    recursion_count: int = 0,
+    recursion_count: int = 1,
     p: int = 0,
 ):
     """https://platform.openai.com/docs/api-reference/chat/create"""
@@ -99,7 +99,7 @@ def chat_with_agent(
     is_done = False
     if not tool_calls:
         print(colorize(f"No tools were called in '{mode}' mode", "yellow"))
-        return messages, previous_calls, None, None, token_input, token_output, is_done
+        return messages, previous_calls, None, None, token_input, token_output, is_done, p
 
     # Handle multiple tool calls
     tool_call_id: str = tool_calls[0].id
@@ -111,9 +111,8 @@ def chat_with_agent(
     # Check if the same function with the same args has been called before
     current_call = {"function": tool_name, "args": tool_args}
     if current_call in previous_calls:
-        msg = f"The function '{tool_name}' was called with the same arguments as before"
-        print(msg)
-        tool_result = f"{msg}, which is non-sense. You must open the file path in your tool args and update your diff content accordingly."
+        tool_result = f"Error: The function '{tool_name}' was already called with the same arguments '{tool_args}' as before. You need to either:\n1. Call the function with different arguments, or\n2. Call another function, or\n3. Stop calling the function."
+        print(tool_result)
     else:
         tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
         previous_calls.append(current_call)
@@ -132,7 +131,14 @@ def chat_with_agent(
 
     # Recursively call the function if the mode is "explore" and the tool was called
     if mode == "explore" and tool_calls and recursion_count < 3:
-        msg = f"Calling `{tool_name}()` with `{tool_args}`..."
+        if tool_name == "get_remote_file_content" and "line_number" in tool_args:
+            msg = f"Read `{tool_args['file_path']}` around line {tool_args['line_number']}..."
+        elif tool_name == "get_remote_file_content" and "keyword" in tool_args:
+            msg = f"Read `{tool_args['file_path']}` around keyword `{tool_args['keyword']}`..."
+        elif tool_name == "get_remote_file_content":
+            msg = f"Read `{tool_args['file_path']}`..."
+        else:
+            msg = f"Calling `{tool_name}()` with `{tool_args}`..."
         update_comment(body=msg, base_args=base_args, p=p)
         return chat_with_agent(
             messages=messages,
@@ -152,4 +158,5 @@ def chat_with_agent(
         token_input,
         token_output,
         is_done,
+        p,
     )

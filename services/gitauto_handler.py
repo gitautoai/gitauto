@@ -1,6 +1,6 @@
 # Standard imports
 from datetime import datetime
-import json
+from json import dumps
 import time
 from typing import Literal
 
@@ -108,7 +108,8 @@ async def handle_gitauto(
         return
 
     msg = "Got your request. Alright, let's get to it..."
-    comment_body = create_progress_bar(p=0, msg=msg)
+    p = 0
+    comment_body = create_progress_bar(p=p, msg=msg)
     comment_url: str | None = create_comment(body=comment_body, base_args=base_args)
     base_args["comment_url"] = comment_url
     unique_issue_id = f"{owner_type}/{owner_name}/{repo_name}"
@@ -129,14 +130,26 @@ async def handle_gitauto(
         )
 
     # Check out the issue comments, and file tree
-    comment_body = "Checking the issue title, body, comments, and file tree..."
-    update_comment(body=comment_body, base_args=base_args, p=10)
-    file_tree: list[str] = get_remote_file_tree(base_args=base_args)
+    # comment_body = "Checking the issue title, body, comments, and file tree..."
+    # update_comment(body=comment_body, base_args=base_args, p=10)
+    file_tree, comment_body = get_remote_file_tree(base_args=base_args)
+    p = min(p + 5, 95)
+    update_comment(body=comment_body, base_args=base_args, p=p)
+
     config_files: list[str] = find_config_files(file_tree=file_tree)
+    comment_body = f"Found {len(config_files)} configuration files."
+    if len(config_files) > 0:
+        comment_body += f"\n{dumps(config_files, indent=2)}"
+    p = min(p + 5, 95)
+    update_comment(body=comment_body, base_args=base_args, p=p)
+
     config_contents: list[str] = []
     for config_file in config_files:
         content = get_remote_file_content(file_path=config_file, base_args=base_args)
         config_contents.append(content)
+    comment_body = f"Read {len(config_files)} configuration files."
+    p = min(p + 5, 95)
+    update_comment(body=comment_body, base_args=base_args, p=p)
 
     # Check out the issue comments
     issue_comments: list[str] = []
@@ -146,9 +159,17 @@ async def handle_gitauto(
         )
     elif input_from == "jira":
         issue_comments = base_args["issue_comments"]
+    comment_body = f"Found {len(issue_comments)} issue comments."
+    p = min(p + 5, 95)
+    update_comment(body=comment_body, base_args=base_args, p=p)
 
     # Check out the image URLs in the issue body and comments
     image_urls = extract_image_urls(text=issue_body_rendered)
+    if image_urls:
+        comment_body = f"Found {len(image_urls)} images in the issue body."
+        p = min(p + 5, 95)
+        update_comment(body=comment_body, base_args=base_args, p=p)
+
     for issue_comment in issue_comments:
         issue_comment_rendered = render_text(base_args=base_args, text=issue_comment)
         image_urls.extend(extract_image_urls(text=issue_comment_rendered))
@@ -164,20 +185,19 @@ async def handle_gitauto(
     reference_contents: list[str] = []
     for url in github_urls:
         comment_body = "Also checking out the URLs in the issue body..."
-        update_comment(body=comment_body, base_args=base_args, p=15)
+        p = min(p + 5, 95)
+        update_comment(body=comment_body, base_args=base_args, p=p)
         content = get_remote_file_content_by_url(url=url, token=token)
         print(f"```{url}\n{content}```\n")
         reference_contents.append(content)
 
-    # Write a pull request body
-    comment_body = "Writing up the pull request body..."
-    update_comment(body=comment_body, base_args=base_args, p=20)
     today = datetime.now().strftime("%Y-%m-%d")
 
     # Ask for help if needed like a human would do
-    comment_body = "Checking if I can solve it or if I should just hit you up..."
-    update_comment(body=comment_body, base_args=base_args, p=25)
-    user_input = json.dumps(
+    # comment_body = "Checking if I can solve it or if I should just hit you up..."
+    # p = min(p + 5, 95)
+    # update_comment(body=comment_body, base_args=base_args, p=p)
+    user_input = dumps(
         {
             "today": today,
             "metadata": base_args,
@@ -209,7 +229,8 @@ async def handle_gitauto(
 
     # Create a remote branch
     comment_body = "Looks like it's doable. Creating the remote branch..."
-    update_comment(body=comment_body, base_args=base_args, p=30)
+    p = min(p + 5, 95)
+    update_comment(body=comment_body, base_args=base_args, p=p)
     latest_commit_sha: str = ""
     if input_from == "github":
         latest_commit_sha = get_latest_remote_commit_sha(
@@ -222,7 +243,6 @@ async def handle_gitauto(
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
     retry_count = 0
-    p = 35
     while True:
         # Explore repo
         (
@@ -233,6 +253,7 @@ async def handle_gitauto(
             token_input,
             token_output,
             is_explored,
+            p,
         ) = chat_with_agent(
             messages=messages,
             base_args=base_args,
@@ -241,9 +262,10 @@ async def handle_gitauto(
             p=p,
         )
         if tool_name is not None and tool_args is not None:
-            comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+            file_path = tool_args.get("file_path", "")
+            comment_body = f"Read {file_path}."
+            p = min(p + 5, 95)
             update_comment(body=comment_body, base_args=base_args, p=p)
-            p = min(p + 5, 85)
 
         # Search Google
         (
@@ -254,6 +276,7 @@ async def handle_gitauto(
             token_input,
             token_output,
             _is_searched,
+            p,
         ) = chat_with_agent(
             messages=messages,
             base_args=base_args,
@@ -262,9 +285,12 @@ async def handle_gitauto(
             p=p,
         )
         if tool_name is not None and tool_args is not None:
-            comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+            query = tool_args.get("query", "")
+            comment_body = (
+                f"Searched Google for `{query}` and went through the results."
+            )
+            p = min(p + 5, 95)
             update_comment(body=comment_body, base_args=base_args, p=p)
-            p = min(p + 5, 85)
 
         # Commit changes based on the exploration information
         (
@@ -275,6 +301,7 @@ async def handle_gitauto(
             token_input,
             token_output,
             is_committed,
+            p,
         ) = chat_with_agent(
             messages=messages,
             base_args=base_args,
@@ -283,9 +310,10 @@ async def handle_gitauto(
             p=p,
         )
         if tool_name is not None and tool_args is not None:
-            comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+            file_path = tool_args.get("file_path", "")
+            comment_body = f"Modified {file_path} and committed the changes."
+            p = min(p + 5, 95)
             update_comment(body=comment_body, base_args=base_args, p=p)
-            p = min(p + 5, 85)
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
         if not is_explored and not is_committed:
@@ -310,7 +338,8 @@ async def handle_gitauto(
 
     # Create a pull request to the base branch
     comment_body = "Creating a pull request..."
-    update_comment(body=comment_body, base_args=base_args, p=90)
+    p = min(p + 5, 95)
+    update_comment(body=comment_body, base_args=base_args, p=p)
     title = f"{PRODUCT_NAME}: {issue_title}"
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
     pr_body = issue_link + git_command(new_branch_name=new_branch_name)
