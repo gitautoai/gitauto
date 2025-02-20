@@ -656,6 +656,8 @@ def get_remote_file_content(
         return msg + "\n\n•\n•\n•\n\n".join(segments)
 
     numbered_content: str = lb.join(numbered_lines)
+    print(f"file_path_with_lines: {file_path_with_lines}")
+    # print(f"numbered_content:\n{numbered_content}")
     msg = f"Opened file: '{file_path}' with line numbers for your information.\n\n"
     return msg + f"```{file_path_with_lines}\n{numbered_content}\n```"
 
@@ -746,15 +748,14 @@ def get_remote_file_tree(base_args: BaseArgs, max_files: int = 1000):
     total_files = len(result)
     if max_files and total_files > max_files:
         result = result[:max_files]
-        print(f"Limited to {max_files} files out of {total_files} total files")
-        print(f"Files were trimmed from depth {max_depth} upwards")
+        msg = f"Found {total_files} files across {max_depth + 1} directory levels but limited to {max_files} files for now."
     else:
-        print(f"Found {total_files} files across {max_depth + 1} directory levels")
+        msg = f"Found {total_files} files across {max_depth + 1} directory levels."
 
     # Sort the result by alphabetical order
     result.sort()
 
-    return result
+    return result, msg
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
