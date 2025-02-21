@@ -5,11 +5,13 @@ from services.supabase import SupabaseManager
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
 )
+from utils.timer import timer_decorator
 
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 
 
+@timer_decorator
 def test_create_update_user_request_works() -> None:
     """Tests based on creating a record and updating it in usage table"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
@@ -61,6 +63,7 @@ def test_create_update_user_request_works() -> None:
 # test_create_update_user_request_works()
 
 
+@timer_decorator
 def test_complete_and_update_usage_record_only_updates_one_record() -> None:
     """Tests based on creating a record and updating it in usage table"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
