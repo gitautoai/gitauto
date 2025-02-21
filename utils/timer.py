@@ -1,6 +1,10 @@
-import time
 import functools
 import inspect
+import logging
+import time
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 def timer_decorator(func):
@@ -11,7 +15,7 @@ def timer_decorator(func):
             start_time = time.time()
             result = await func(*args, **kwargs)
             end_time = time.time()
-            print(f"\n{func.__name__} took {end_time - start_time:.2f} seconds")
+            logger.info("%s took %.2f seconds", func.__name__, end_time - start_time)
             return result
 
     else:
@@ -21,7 +25,7 @@ def timer_decorator(func):
             start_time = time.time()
             result = func(*args, **kwargs)
             end_time = time.time()
-            print(f"\n{func.__name__} took {end_time - start_time:.2f} seconds")
+            logger.info("%s took %.2f seconds", func.__name__, end_time - start_time)
             return result
 
     return wrapper
