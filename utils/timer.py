@@ -4,6 +4,7 @@ import logging
 import time
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 def timer_decorator(func):
