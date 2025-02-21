@@ -5,11 +5,13 @@ from config import (
     USER_ID,
     INSTALLATION_ID,
 )
+from utils.timer import timer_decorator
 
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 
 
+@timer_decorator
 def wipe_installation_owner_user_data(installation_id: int = INSTALLATION_ID) -> None:
     """Wipe all data from installations, owners, and users tables"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)

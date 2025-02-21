@@ -28,12 +28,14 @@ from tests.test_payloads.installation import (
     installation_payload,
     new_installation_payload,
 )
+from utils.timer import timer_decorator
 
 pytest_plugins = ("pytest_asyncio",)
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
 SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
 
 
+@timer_decorator
 def test_create_and_update_user_request_works() -> None:
     """Test that I can create and complete user request in usage table"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
@@ -74,6 +76,7 @@ def test_create_and_update_user_request_works() -> None:
 # test_create_and_update_user_request_works()
 
 
+@timer_decorator
 def test_how_many_requests_left() -> None:
     """Test that get_how_many_requests_left_and_cycle returns the correct values"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
@@ -134,6 +137,7 @@ def test_how_many_requests_left() -> None:
     )
 
 
+@timer_decorator
 def test_is_users_first_issue() -> None:
     """Check if it's a users first issue."""
 
@@ -172,6 +176,7 @@ def test_is_users_first_issue() -> None:
 # test_is_users_first_issue()
 
 
+@timer_decorator
 def test_parse_subscription_object() -> None:
     """Test parse_subscription_object function"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
@@ -212,6 +217,7 @@ def test_parse_subscription_object() -> None:
     wipe_installation_owner_user_data()
 
 
+@timer_decorator
 @pytest.mark.asyncio
 async def test_install_uninstall_install() -> None:
     """Testing install uninstall methods"""
@@ -396,6 +402,7 @@ async def test_install_uninstall_install() -> None:
     wipe_installation_owner_user_data(NEW_INSTALLATION_ID)
 
 
+@timer_decorator
 def test_handle_user_email_update() -> None:
     """Test updating a user's email in the users table"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
