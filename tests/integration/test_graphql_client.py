@@ -1,6 +1,6 @@
 import unittest
 from services.github.graphql_client import get_graphql_client
-from tests/constants import TOKEN
+from tests.constants import TOKEN
 
 # Integration test for GitHub GraphQL client
 # See: https://docs.github.com/en/graphql
