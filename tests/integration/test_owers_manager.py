@@ -8,3 +8,4 @@ def test_get_stripe_customer_id_float():
 def test_get_stripe_customer_id_none():
     import pytest
     with pytest.raises(Exception):
+        get_stripe_customer_id(None)
