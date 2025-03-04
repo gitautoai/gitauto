@@ -1,4 +1,5 @@
 def test_get_stripe_customer_id_zero_owner():
+from services.supabase.owers_manager import get_stripe_customer_id
     assert get_stripe_customer_id(0) is None
 def test_get_stripe_customer_id_float():
     import pytest
