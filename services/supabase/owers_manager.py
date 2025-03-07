@@ -14,13 +14,17 @@ supabase: Client = create_client(
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def get_stripe_customer_id(owner_id: int):
     """https://supabase.com/docs/reference/python/select"""
-    data, _count = (
+    result = (
         supabase.table(table_name="owners")
         .select("stripe_customer_id")
         .eq(column="owner_id", value=owner_id)
         .execute()
     )
-    if not data or len(data) < 2 or not data[1]:
+    if len(result) != 2:
         return None
-    customer_id: str | None = data[1][0]["stripe_customer_id"]
-    return customer_id
+    error, data = result
+    if error or not data:
+        return None
+    try:
+        return data[0]["stripe_customer_id"]
+    except (IndexError, KeyError):
