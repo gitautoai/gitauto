@@ -28,3 +28,4 @@ def get_stripe_customer_id(owner_id: int):
     try:
         return data[0]["stripe_customer_id"]
     except (IndexError, KeyError):
+        return None
