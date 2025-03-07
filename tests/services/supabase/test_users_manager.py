@@ -221,6 +221,9 @@ def test_parse_subscription_object() -> None:
 @pytest.mark.asyncio
 async def test_install_uninstall_install() -> None:
     """Testing install uninstall methods"""
+    import os
+    if os.getenv("GH_PRIVATE_KEY") is None:
+        import pytest; pytest.skip("Skipping installation tests due to missing GitHub credentials")
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
     wipe_installation_owner_user_data(NEW_INSTALLATION_ID)
