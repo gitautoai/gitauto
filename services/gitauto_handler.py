@@ -107,7 +107,7 @@ async def handle_gitauto(
         create_comment(body=body, base_args=base_args)
         return
 
-    msg = "Got your request. Alright, let's get to it..."
+    msg = "Got your request. Let's get to it..."
     p = 0
     comment_body = create_progress_bar(p=p, msg=msg)
     comment_url: str | None = create_comment(body=comment_body, base_args=base_args)
@@ -228,9 +228,6 @@ async def handle_gitauto(
     #     return
 
     # Create a remote branch
-    comment_body = "Looks like it's doable. Creating the remote branch..."
-    p = min(p + 5, 95)
-    update_comment(body=comment_body, base_args=base_args, p=p)
     latest_commit_sha: str = ""
     if input_from == "github":
         latest_commit_sha = get_latest_remote_commit_sha(
@@ -239,6 +236,9 @@ async def handle_gitauto(
     elif input_from == "jira":
         latest_commit_sha = base_args["latest_commit_sha"]
     create_remote_branch(sha=latest_commit_sha, base_args=base_args)
+    comment_body = "Created a remote branch..."
+    p = min(p + 5, 95)
+    update_comment(body=comment_body, base_args=base_args, p=p)
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
