@@ -1,8 +1,6 @@
-.aider.tags.cache.v3
 .history
 .env*
 __pycache__
 ngrok.yml
 tmp
 venv
-utils/quick_access.txt
