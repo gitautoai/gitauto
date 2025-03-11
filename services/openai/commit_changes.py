@@ -99,7 +99,16 @@ def chat_with_agent(
     is_done = False
     if not tool_calls:
         print(colorize(f"No tools were called in '{mode}' mode", "yellow"))
-        return messages, previous_calls, None, None, token_input, token_output, is_done, p
+        return (
+            messages,
+            previous_calls,
+            None,
+            None,
+            token_input,
+            token_output,
+            is_done,
+            p,
+        )
 
     # Handle multiple tool calls
     tool_call_id: str = tool_calls[0].id
@@ -132,7 +141,12 @@ def chat_with_agent(
     # Recursively call the function if the mode is "explore" and the tool was called
     if mode == "explore" and tool_calls and recursion_count < 3:
         if tool_name == "get_remote_file_content" and "line_number" in tool_args:
-            msg = f"Read `{tool_args['file_path']}` around line {tool_args['line_number']}..."
+            line_info = (
+                f" around line {tool_args['line_number']}"
+                if tool_args["line_number"] > 1
+                else ""
+            )
+            msg = f"Read `{tool_args['file_path']}`{line_info}..."
         elif tool_name == "get_remote_file_content" and "keyword" in tool_args:
             msg = f"Read `{tool_args['file_path']}` around keyword `{tool_args['keyword']}`..."
         elif tool_name == "get_remote_file_content":
