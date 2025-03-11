@@ -22,7 +22,7 @@ def test_get_stripe_customer_id_with_existing_owner():
     wipe_installation_owner_user_data()
     
     # Create a test owner with a known stripe_customer_id
-    test_owner_id = 4620828
+    test_owner_id = 99999999  # Using a very high number to avoid conflicts
     expected_stripe_customer_id = "cus_RCZOxKQHsSk93v"
     
     # Insert the test owner directly into the owners table
