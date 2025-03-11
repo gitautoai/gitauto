@@ -1,6 +1,7 @@
 # run this file locally with: python -m tests.services.supabase.test_owers_manager
 import os
 import pytest
+import random
 
 from config import OWNER_ID, OWNER_NAME, OWNER_TYPE, USER_ID, USER_NAME, TEST_EMAIL, INSTALLATION_ID
 from services.supabase import SupabaseManager
