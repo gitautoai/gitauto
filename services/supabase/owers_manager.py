@@ -11,7 +11,6 @@ supabase: Client = create_client(
 )
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
 def get_stripe_customer_id(owner_id: int):
     """https://supabase.com/docs/reference/python/select"""
     data, _count = (
