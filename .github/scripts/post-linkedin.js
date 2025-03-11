@@ -13,7 +13,7 @@ async function postLinkedIn({ context }) {
   const message = "🚀 New release";
   const title = context.payload.pull_request.title;
   const description = context.payload.pull_request.body || "";
-  const url = context.payload.pull_request.html_url;
+  const url = "https://gitauto.ai?utm_source=linkedin&utm_medium=referral"
 
   // Helper function for random delay between 5-15 seconds
   const getRandomDelay = () => Math.floor(Math.random() * 10000 + 5000);
