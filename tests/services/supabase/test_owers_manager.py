@@ -12,3 +12,8 @@ def test_get_stripe_customer_id_nonexistent():
     owner_id = 999999999
     result = get_stripe_customer_id(owner_id=owner_id)
     assert result is None
+
+
+def test_get_stripe_customer_id_invalid():
+    result = get_stripe_customer_id(owner_id=-1)
+    assert result is None
