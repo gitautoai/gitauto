@@ -2,6 +2,7 @@
 import os
 import pytest
 import random
+import uuid
 
 from config import OWNER_ID, OWNER_NAME, OWNER_TYPE, USER_ID, USER_NAME, TEST_EMAIL, INSTALLATION_ID
 from services.supabase import SupabaseManager
@@ -24,7 +25,7 @@ def test_get_stripe_customer_id_with_existing_owner():
     
     # Create a test owner with a known stripe_customer_id
     test_owner_id = 99999999  # Using a very high number to avoid conflicts
-    expected_stripe_customer_id = "cus_RCZOxKQHsSk93v"
+    expected_stripe_customer_id = f"cus_test_{uuid.uuid4().hex[:10]}"  # Generate a unique ID for each test run
     
     # Insert the test owner directly into the owners table
     supabase_manager.client.table("owners").insert({
