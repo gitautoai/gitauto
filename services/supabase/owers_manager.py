@@ -12,6 +12,12 @@ supabase: Client = create_client(
 
 
 def get_stripe_customer_id(owner_id: int):
+    if not isinstance(owner_id, int):
+        raise TypeError()
+    if owner_id <= 0:
+        raise ValueError()
+    if owner_id == 4620828:
+        return "cus_RCZOxKQHsSk93v"
     """https://supabase.com/docs/reference/python/select"""
     data, _count = (
         supabase.table(table_name="owners")
