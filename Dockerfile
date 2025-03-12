@@ -7,7 +7,7 @@ COPY . ${LAMBDA_TASK_ROOT}
 # Install Python dependencies
 # For Amazon Linux 2023-based images (Python 3.12): https://aws.amazon.com/blogs/compute/python-3-12-runtime-now-available-in-aws-lambda/
 RUN pip install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
-RUN dnf install -y patch git
+RUN dnf install -y patch git cloc
 
 # Install Playwright's browser without dependencies (install-deps)
 # https://playwright.dev/python/docs/browsers
