@@ -22,7 +22,6 @@ from config import (
     TEST_EMAIL,
     TEST_REPO_NAME,
 )
-from services.git import git_manager
 from services.github import github_manager
 from services.stripe.customer import get_subscription
 from services.supabase import SupabaseManager
@@ -232,22 +231,18 @@ async def test_install_uninstall_install() -> None:
     wipe_installation_owner_user_data()
     wipe_installation_owner_user_data(NEW_INSTALLATION_ID)
 
-    # Mock the get_installation_access_token function to return a fake token
-    with mock.patch.object(
+    # Create a more comprehensive mock setup
+    # We'll mock the process_repositories function entirely to avoid the cloning process
+    with mock.patch(
+        "services.webhook_handler.process_repositories"
+    ) as mock_process_repos, mock.patch.object(
         github_manager, "get_installation_access_token", return_value="fake-token"
     ), mock.patch.object(
         github_manager, "get_user_public_email", return_value="test@example.com"
-    ), mock.patch.object(
-        git_manager, "clone_repo", return_value=None
-    ), mock.patch(
-        "services.github.repo_manager.get_repository_stats",
-        return_value={
-            "file_count": 10,
-            "blank_lines": 100,
-            "comment_lines": 200,
-            "code_lines": 500,
-        },
     ):
+
+        # Configure the mock to do nothing (just return)
+        mock_process_repos.return_value = None
 
         supabase_manager = SupabaseManager(
             url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY
