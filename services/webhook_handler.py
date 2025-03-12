@@ -1,7 +1,7 @@
 # Standard imports
 import re
-from time import sleep
 from typing import Any
+import tempfile
 
 # Local imports
 from config import (
@@ -13,33 +13,70 @@ from config import (
     ISSUE_NUMBER_FORMAT,
 )
 from services.check_run_handler import handle_check_run
+from services.git.git_manager import clone_repo
+from services.gitauto_handler import handle_gitauto
 from services.github.actions_manager import cancel_workflow_runs_in_progress
 from services.github.github_manager import (
-    add_issue_templates,
     create_comment_on_issue_with_gitauto_button,
     get_installation_access_token,
     get_user_public_email,
 )
 from services.github.github_types import GitHubInstallationPayload
+from services.github.repo_manager import get_repository_stats
 from services.pull_request_handler import write_pr_description
 from services.review_run_handler import handle_review_run
 from services.screenshot_handler import handle_screenshot_comparison
 from services.supabase import SupabaseManager
-from services.gitauto_handler import handle_gitauto
+from services.supabase.repositories_manager import create_or_update_repository
 from utils.handle_exceptions import handle_exceptions
 
 # Initialize managers
 supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
+def process_repositories(
+    owner_name: str,
+    owner_id: int,
+    repositories: list[dict[str, Any]],
+    token: str,
+    created_by: str,
+    updated_by: str,
+) -> None:
+    for repo in repositories:
+        repo_id = repo["id"]
+        repo_name = repo["name"]
+
+        # Create a temporary directory to clone the repository
+        with tempfile.TemporaryDirectory() as temp_dir:
+            print(f"Cloning repository {repo_name} into {temp_dir}")
+            clone_repo(
+                owner=owner_name, repo=repo_name, token=token, target_dir=temp_dir
+            )
+
+            stats = get_repository_stats(local_path=temp_dir)
+            print(f"Repository {repo_name} stats: {stats}")
+
+            # Create repository record in Supabase
+            create_or_update_repository(
+                owner_id=owner_id,
+                repo_id=repo_id,
+                repo_name=repo_name,
+                created_by=created_by,
+                updated_by=updated_by,
+                file_count=stats["file_count"],
+                blank_lines=stats["blank_lines"],
+                comment_lines=stats["comment_lines"],
+                code_lines=stats["code_lines"],
+            )
+
+
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
-    """Creates installation records on GitAuto APP installation"""
     installation_id: int = payload["installation"]["id"]
     owner_type: str = payload["installation"]["account"]["type"]
     owner_name: str = payload["installation"]["account"]["login"]
     owner_id: int = payload["installation"]["account"]["id"]
-    repo_full_names: list[str] = [repo["full_name"] for repo in payload["repositories"]]
+    repositories: list[dict[str, Any]] = payload["repositories"]
     user_id: int = payload["sender"]["id"]
     user_name: str = payload["sender"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
@@ -56,39 +93,59 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
         email=user_email,
     )
 
-    # Wait for 120 seconds
-    sleep(120)
-
-    # Add issue templates to the repositories
-    for i, full_name in enumerate(iterable=repo_full_names, start=1):
-        print(f"\nAdding issue templates ({i}/{len(repo_full_names)}): {full_name}")
-        # turn_on_issue(full_name=full_name, token=token)
-        add_issue_templates(full_name=full_name, installer_name=user_name, token=token)
+    # Process repositories
+    process_repositories(
+        owner_name=owner_name,
+        owner_id=owner_id,
+        repositories=repositories,
+        token=token,
+        created_by=user_name,
+        updated_by=user_name,
+    )
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 async def handle_installation_deleted(payload: GitHubInstallationPayload) -> None:
-    """Soft deletes installation record on GitAuto APP installation"""
     installation_id: int = payload["installation"]["id"]
+    token: str = get_installation_access_token(installation_id=installation_id)
     user_id: int = payload["sender"]["id"]
+    sender_name: str = payload["sender"]["login"]
     supabase_manager.delete_installation(
         installation_id=installation_id, user_id=user_id
+    )
+
+    owner_id = payload["installation"]["account"]["id"]
+    owner_name = payload["installation"]["account"]["login"]
+
+    process_repositories(
+        owner_name=owner_name,
+        owner_id=owner_id,
+        repositories=payload["repositories"],
+        token=token,
+        created_by=sender_name,
+        updated_by=sender_name,
     )
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 async def handle_installation_repos_added(payload) -> None:
     installation_id: int = payload["installation"]["id"]
-    repo_full_names: list[str] = [
-        repo["full_name"] for repo in payload["repositories_added"]
-    ]
     sender_name: str = payload["sender"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
-    for full_name in repo_full_names:
-        # turn_on_issue(full_name=full_name, token=token)
-        add_issue_templates(
-            full_name=full_name, installer_name=sender_name, token=token
-        )
+
+    # Get owner information
+    owner_id = payload["installation"]["account"]["id"]
+    owner_name = payload["installation"]["account"]["login"]
+
+    # Process added repositories
+    process_repositories(
+        owner_name=owner_name,
+        owner_id=owner_id,
+        repositories=payload["repositories_added"],
+        token=token,
+        created_by=sender_name,
+        updated_by=sender_name,
+    )
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=True)

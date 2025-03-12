@@ -13,7 +13,9 @@ cfgv==3.4.0
 chardet==5.2.0
 charset-normalizer==3.3.2
 click==8.1.7
+cloc==0.2.5
 colorama==0.4.6
+colored==2.3.0
 cryptography==43.0.0
 Deprecated==1.2.14
 deprecation==2.1.0

@@ -1,9 +1,14 @@
 # run this file locally with: python -m tests.services.supabase.test_supabase_users
 
+# Standard imports
 import datetime
 import os
+from unittest import mock
+
+# Third party imports
 import pytest
 
+# Local imports
 from config import (
     GITHUB_NOREPLY_EMAIL_DOMAIN,
     OWNER_ID,
@@ -17,6 +22,7 @@ from config import (
     TEST_EMAIL,
     TEST_REPO_NAME,
 )
+from services.github import github_manager
 from services.stripe.customer import get_subscription
 from services.supabase import SupabaseManager
 from services.webhook_handler import handle_webhook_event
@@ -225,177 +231,194 @@ async def test_install_uninstall_install() -> None:
     wipe_installation_owner_user_data()
     wipe_installation_owner_user_data(NEW_INSTALLATION_ID)
 
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-    await handle_webhook_event(event_name="installation", payload=installation_payload)
+    # Create a more comprehensive mock setup
+    # We'll mock the process_repositories function entirely to avoid the cloning process
+    with mock.patch(
+        "services.webhook_handler.process_repositories"
+    ) as mock_process_repos, mock.patch.object(
+        github_manager, "get_installation_access_token", return_value="fake-token"
+    ), mock.patch.object(
+        github_manager, "get_user_public_email", return_value="test@example.com"
+    ):
 
-    # Check Owners Record (owner_id, stripe_customer_id)
-    owners_data, _ = (
-        supabase_manager.client.table(table_name="owners")
-        .select("*")
-        .eq(column="owner_id", value=OWNER_ID)
-        .execute()
-    )
-    assert owners_data[1][0]["owner_id"] == OWNER_ID
-    assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
+        # Configure the mock to do nothing (just return)
+        mock_process_repos.return_value = None
 
-    # Check Installation Record
-    installation_data, _ = (
-        supabase_manager.client.table(table_name="installations")
-        .select("*")
-        .eq(column="installation_id", value=INSTALLATION_ID)
-        .execute()
-    )
+        supabase_manager = SupabaseManager(
+            url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY
+        )
+        await handle_webhook_event(
+            event_name="installation", payload=installation_payload
+        )
 
-    assert installation_data[1][0]["installation_id"] == INSTALLATION_ID
-    assert installation_data[1][0]["owner_name"] == OWNER_NAME
-    assert installation_data[1][0]["owner_id"] == OWNER_ID
-    assert installation_data[1][0]["owner_type"] == OWNER_TYPE
-    assert installation_data[1][0]["uninstalled_at"] is None
+        # Check Owners Record (owner_id, stripe_customer_id)
+        owners_data, _ = (
+            supabase_manager.client.table(table_name="owners")
+            .select("*")
+            .eq(column="owner_id", value=OWNER_ID)
+            .execute()
+        )
+        assert owners_data[1][0]["owner_id"] == OWNER_ID
+        assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
 
-    # Check Users Record
-    users_data, _ = (
-        supabase_manager.client.table(table_name="users")
-        .select("*")
-        .eq(column="user_id", value=USER_ID)
-        .execute()
-    )
+        # Check Installation Record
+        installation_data, _ = (
+            supabase_manager.client.table(table_name="installations")
+            .select("*")
+            .eq(column="installation_id", value=INSTALLATION_ID)
+            .execute()
+        )
 
-    assert users_data[1][0]["user_id"] == USER_ID
-    assert users_data[1][0]["user_name"] == USER_NAME
-    # Check User Installation Record
-    users_data, _ = (
-        supabase_manager.client.table(table_name="user_installations")
-        .select("*")
-        .eq(column="user_id", value=USER_ID)
-        .eq(column="installation_id", value=INSTALLATION_ID)
-        .execute()
-    )
+        assert installation_data[1][0]["installation_id"] == INSTALLATION_ID
+        assert installation_data[1][0]["owner_name"] == OWNER_NAME
+        assert installation_data[1][0]["owner_id"] == OWNER_ID
+        assert installation_data[1][0]["owner_type"] == OWNER_TYPE
+        assert installation_data[1][0]["uninstalled_at"] is None
 
-    assert users_data[1][0]["user_id"] == USER_ID
-    assert users_data[1][0]["installation_id"] == INSTALLATION_ID
-    # Should be selected since it's the only user -> used for account selected in website
-    assert users_data[1][0]["is_selected"] is True
-    assert (
-        users_data[1][0]["first_issue"] is True
-    )  # first issue since hasn't had an issue
-    assert users_data[1][0]["is_user_assigned"] is False
-    assert users_data[1][0]["deleted_at"] is None
-    assert users_data[1][0]["deleted_by"] is None
+        # Check Users Record
+        users_data, _ = (
+            supabase_manager.client.table(table_name="users")
+            .select("*")
+            .eq(column="user_id", value=USER_ID)
+            .execute()
+        )
 
-    await handle_webhook_event(event_name="installation", payload=deleted_payload)
-    # We're going to check the same things, except that installation should have uninstalled_at
+        assert users_data[1][0]["user_id"] == USER_ID
+        assert users_data[1][0]["user_name"] == USER_NAME
+        # Check User Installation Record
+        users_data, _ = (
+            supabase_manager.client.table(table_name="user_installations")
+            .select("*")
+            .eq(column="user_id", value=USER_ID)
+            .eq(column="installation_id", value=INSTALLATION_ID)
+            .execute()
+        )
 
-    # Check Owners Record (owner_id, stripe_customer_id)
-    owners_data, _ = (
-        supabase_manager.client.table(table_name="owners")
-        .select("*")
-        .eq(column="owner_id", value=OWNER_ID)
-        .execute()
-    )
-    assert owners_data[1][0]["owner_id"] == OWNER_ID
-    assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
+        assert users_data[1][0]["user_id"] == USER_ID
+        assert users_data[1][0]["installation_id"] == INSTALLATION_ID
+        # Should be selected since it's the only user -> used for account selected in website
+        assert users_data[1][0]["is_selected"] is True
+        assert (
+            users_data[1][0]["first_issue"] is True
+        )  # first issue since hasn't had an issue
+        assert users_data[1][0]["is_user_assigned"] is False
+        assert users_data[1][0]["deleted_at"] is None
+        assert users_data[1][0]["deleted_by"] is None
 
-    # Check Installation Record
-    installation_data, _ = (
-        supabase_manager.client.table(table_name="installations")
-        .select("*")
-        .eq(column="installation_id", value=INSTALLATION_ID)
-        .execute()
-    )
+        await handle_webhook_event(event_name="installation", payload=deleted_payload)
+        # We're going to check the same things, except that installation should have uninstalled_at
 
-    assert installation_data[1][0]["installation_id"] == INSTALLATION_ID
-    assert installation_data[1][0]["owner_name"] == OWNER_NAME
-    assert installation_data[1][0]["owner_id"] == OWNER_ID
-    assert installation_data[1][0]["owner_type"] == OWNER_TYPE
-    assert installation_data[1][0]["uninstalled_at"] is not None
+        # Check Owners Record (owner_id, stripe_customer_id)
+        owners_data, _ = (
+            supabase_manager.client.table(table_name="owners")
+            .select("*")
+            .eq(column="owner_id", value=OWNER_ID)
+            .execute()
+        )
+        assert owners_data[1][0]["owner_id"] == OWNER_ID
+        assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
 
-    # Check Users Record
-    users_data, _ = (
-        supabase_manager.client.table(table_name="users")
-        .select("*")
-        .eq(column="user_id", value=USER_ID)
-        .execute()
-    )
+        # Check Installation Record
+        installation_data, _ = (
+            supabase_manager.client.table(table_name="installations")
+            .select("*")
+            .eq(column="installation_id", value=INSTALLATION_ID)
+            .execute()
+        )
 
-    assert users_data[1][0]["user_id"] == USER_ID
-    assert users_data[1][0]["user_name"] == USER_NAME
-    # Check User Installation Record
-    users_data, _ = (
-        supabase_manager.client.table(table_name="user_installations")
-        .select("*")
-        .eq(column="user_id", value=USER_ID)
-        .eq(column="installation_id", value=INSTALLATION_ID)
-        .execute()
-    )
+        assert installation_data[1][0]["installation_id"] == INSTALLATION_ID
+        assert installation_data[1][0]["owner_name"] == OWNER_NAME
+        assert installation_data[1][0]["owner_id"] == OWNER_ID
+        assert installation_data[1][0]["owner_type"] == OWNER_TYPE
+        assert installation_data[1][0]["uninstalled_at"] is not None
 
-    assert users_data[1][0]["user_id"] == USER_ID
-    assert users_data[1][0]["installation_id"] == INSTALLATION_ID
-    # Should be selected since it's the only user -> used for account selected in website
-    assert users_data[1][0]["is_selected"] is True
-    assert (
-        users_data[1][0]["first_issue"] is True
-    )  # first issue since hasn't had an issue
-    assert users_data[1][0]["is_user_assigned"] is False
-    assert users_data[1][0]["deleted_at"] is None
-    assert users_data[1][0]["deleted_by"] is None
+        # Check Users Record
+        users_data, _ = (
+            supabase_manager.client.table(table_name="users")
+            .select("*")
+            .eq(column="user_id", value=USER_ID)
+            .execute()
+        )
 
-    await handle_webhook_event(
-        event_name="installation", payload=new_installation_payload
-    )
+        assert users_data[1][0]["user_id"] == USER_ID
+        assert users_data[1][0]["user_name"] == USER_NAME
+        # Check User Installation Record
+        users_data, _ = (
+            supabase_manager.client.table(table_name="user_installations")
+            .select("*")
+            .eq(column="user_id", value=USER_ID)
+            .eq(column="installation_id", value=INSTALLATION_ID)
+            .execute()
+        )
 
-    # Check Owners Record (owner_id, stripe_customer_id)
-    owners_data, _ = (
-        supabase_manager.client.table(table_name="owners")
-        .select("*")
-        .eq(column="owner_id", value=OWNER_ID)
-        .execute()
-    )
-    assert owners_data[1][0]["owner_id"] == OWNER_ID
-    assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
+        assert users_data[1][0]["user_id"] == USER_ID
+        assert users_data[1][0]["installation_id"] == INSTALLATION_ID
+        # Should be selected since it's the only user -> used for account selected in website
+        assert users_data[1][0]["is_selected"] is True
+        assert (
+            users_data[1][0]["first_issue"] is True
+        )  # first issue since hasn't had an issue
+        assert users_data[1][0]["is_user_assigned"] is False
+        assert users_data[1][0]["deleted_at"] is None
+        assert users_data[1][0]["deleted_by"] is None
 
-    # Check Installation Record
-    installation_data, _ = (
-        supabase_manager.client.table(table_name="installations")
-        .select("*")
-        .eq(column="installation_id", value=NEW_INSTALLATION_ID)
-        .execute()
-    )
+        await handle_webhook_event(
+            event_name="installation", payload=new_installation_payload
+        )
 
-    assert installation_data[1][0]["installation_id"] == NEW_INSTALLATION_ID
-    assert installation_data[1][0]["owner_name"] == OWNER_NAME
-    assert installation_data[1][0]["owner_id"] == OWNER_ID
-    assert installation_data[1][0]["owner_type"] == OWNER_TYPE
-    assert installation_data[1][0]["uninstalled_at"] is None
+        # Check Owners Record (owner_id, stripe_customer_id)
+        owners_data, _ = (
+            supabase_manager.client.table(table_name="owners")
+            .select("*")
+            .eq(column="owner_id", value=OWNER_ID)
+            .execute()
+        )
+        assert owners_data[1][0]["owner_id"] == OWNER_ID
+        assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
 
-    # Check Users Record
-    users_data, _ = (
-        supabase_manager.client.table(table_name="users")
-        .select("*")
-        .eq(column="user_id", value=USER_ID)
-        .execute()
-    )
+        # Check Installation Record
+        installation_data, _ = (
+            supabase_manager.client.table(table_name="installations")
+            .select("*")
+            .eq(column="installation_id", value=NEW_INSTALLATION_ID)
+            .execute()
+        )
 
-    assert users_data[1][0]["user_id"] == USER_ID
-    assert users_data[1][0]["user_name"] == USER_NAME
-    # Check User Installation Record
-    users_data, _ = (
-        supabase_manager.client.table(table_name="user_installations")
-        .select("*")
-        .eq(column="user_id", value=USER_ID)
-        .eq(column="installation_id", value=NEW_INSTALLATION_ID)
-        .execute()
-    )
+        assert installation_data[1][0]["installation_id"] == NEW_INSTALLATION_ID
+        assert installation_data[1][0]["owner_name"] == OWNER_NAME
+        assert installation_data[1][0]["owner_id"] == OWNER_ID
+        assert installation_data[1][0]["owner_type"] == OWNER_TYPE
+        assert installation_data[1][0]["uninstalled_at"] is None
 
-    assert users_data[1][0]["user_id"] == USER_ID
-    assert users_data[1][0]["installation_id"] == NEW_INSTALLATION_ID
-    # Should be selected since it's the only user -> used for account selected in website
-    assert users_data[1][0]["is_selected"] is True
-    assert (
-        users_data[1][0]["first_issue"] is True
-    )  # first issue since hasn't had an issue
-    assert users_data[1][0]["is_user_assigned"] is False
-    assert users_data[1][0]["deleted_at"] is None
-    assert users_data[1][0]["deleted_by"] is None
+        # Check Users Record
+        users_data, _ = (
+            supabase_manager.client.table(table_name="users")
+            .select("*")
+            .eq(column="user_id", value=USER_ID)
+            .execute()
+        )
+
+        assert users_data[1][0]["user_id"] == USER_ID
+        assert users_data[1][0]["user_name"] == USER_NAME
+        # Check User Installation Record
+        users_data, _ = (
+            supabase_manager.client.table(table_name="user_installations")
+            .select("*")
+            .eq(column="user_id", value=USER_ID)
+            .eq(column="installation_id", value=NEW_INSTALLATION_ID)
+            .execute()
+        )
+
+        assert users_data[1][0]["user_id"] == USER_ID
+        assert users_data[1][0]["installation_id"] == NEW_INSTALLATION_ID
+        # Should be selected since it's the only user -> used for account selected in website
+        assert users_data[1][0]["is_selected"] is True
+        assert (
+            users_data[1][0]["first_issue"] is True
+        )  # first issue since hasn't had an issue
+        assert users_data[1][0]["is_user_assigned"] is False
+        assert users_data[1][0]["deleted_at"] is None
+        assert users_data[1][0]["deleted_by"] is None
 
     # Clean Up
     wipe_installation_owner_user_data()
@@ -442,6 +465,3 @@ def test_handle_user_email_update() -> None:
 
     # Clean Up
     wipe_installation_owner_user_data()
-
-
-# test_handle_user_email_update()
