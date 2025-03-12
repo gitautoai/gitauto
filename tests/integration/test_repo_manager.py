@@ -1,5 +1,3 @@
-import os
-
 from tests.constants import OWNER, REPO, FORKED_REPO, TOKEN
 from services.github.repo_manager import is_repo_forked
 

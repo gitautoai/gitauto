@@ -11,6 +11,7 @@ from config import (
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
 )
+from services.chat_with_agent import chat_with_agent
 from services.github.comment_manager import reply_to_comment
 from services.github.github_manager import (
     get_installation_access_token,
@@ -23,7 +24,6 @@ from services.github.pulls_manager import (
     get_pull_request_file_contents,
     get_review_thread_comments,
 )
-from services.openai.commit_changes import chat_with_agent
 from services.stripe.subscriptions import get_stripe_product_id
 from services.supabase import SupabaseManager
 from services.supabase.owers_manager import get_stripe_customer_id

@@ -50,19 +50,27 @@ jobs:
         GH_PRIVATE_KEY: ${{ secrets.GH_PRIVATE_KEY }}
         GH_WEBHOOK_SECRET: ${{ secrets.GH_WEBHOOK_SECRET }}
 
+        # Anthropic credentials
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+        # OpenAI credentials
         OPENAI_API_KEY: ${{ secrets.STAGE_OPENAI_API_KEY }}
         OPENAI_ORG_ID: ${{ secrets.STAGE_OPENAI_ORG_ID }}
 
+        # Sentry credentials
         SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
+        # Supabase credentials
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGE_SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_URL: ${{ secrets.STAGE_SUPABASE_URL }}
 
+        # Stripe credentials
         STRIPE_API_KEY: ${{ secrets.STAGE_STRIPE_API_KEY }}
         STRIPE_FREE_TIER_PRICE_ID: ${{ secrets.STAGE_STRIPE_FREE_TIER_PRICE_ID }}
         STRIPE_PRODUCT_ID_FREE: ${{ secrets.STRIPE_PRODUCT_ID_FREE_STAGE }}
         STRIPE_PRODUCT_ID_STANDARD: ${{ secrets.STRIPE_PRODUCT_ID_STANDARD_STAGE }}
-        
+
+        # Environment variables
         ENV: stage
         PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
       run: python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=xml

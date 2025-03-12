@@ -24,7 +24,7 @@ def handle_exceptions(
         def wrapper(*args: Tuple[Any, ...], **kwargs: Any):
             truncated_kwargs = str(
                 {
-                    k: str(v)[:50] + "..." if len(str(v)) > 50 else v
+                    k: str(v)[:100] + "..." if len(str(v)) > 100 else v
                     for k, v in kwargs.items()
                 }
             )

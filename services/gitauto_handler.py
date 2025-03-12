@@ -14,6 +14,7 @@ from config import (
     SUPABASE_SERVICE_ROLE_KEY,
     PR_BODY_STARTS_WITH,
 )
+from services.chat_with_agent import chat_with_agent
 from services.github.asset_manager import get_base64, render_text
 from services.github.comment_manager import delete_my_comments
 from services.github.file_manager import find_config_files
@@ -32,7 +33,6 @@ from services.github.github_manager import (
 from services.github.github_types import GitHubLabeledPayload
 from services.github.github_utils import deconstruct_github_payload
 from services.jira.jira_manager import deconstruct_jira_payload
-from services.openai.commit_changes import chat_with_agent
 from services.openai.vision import describe_image
 from services.supabase import SupabaseManager
 from utils.extract_urls import extract_image_urls

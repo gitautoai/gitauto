@@ -23,7 +23,7 @@ async function postTwitter({ context }) {
   const message = "🚀 New release";
   const title = context.payload.pull_request.title;
   const description = context.payload.pull_request.body || "";
-  const url = context.payload.pull_request.html_url;
+  const url = "https://gitauto.ai?utm_source=x&utm_medium=referral"
 
   // Non-paid account, we can only post 280 characters. Paid account can post 250,000 characters.
   const combinedText = description ? `${title}\n${url}\n\n${description}` : `${title}\n${url}`;

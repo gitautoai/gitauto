@@ -28,7 +28,7 @@ async function postHackerNews({ context }) {
     // Submit story
     const title = context.payload.pull_request.title.substring(0, 80);
     const description = context.payload.pull_request.body;
-    const url = context.payload.pull_request.html_url;
+    const url = "https://gitauto.ai?utm_source=hackernews&utm_medium=referral"
     await page.fill('input[name="title"]', title);
     await page.fill('input[name="url"]', url);
 

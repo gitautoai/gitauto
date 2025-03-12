@@ -1,21 +1,13 @@
 # Standard imports
-import json
-from typing import Iterable, Literal
-
-# Third-party imports
-from openai import OpenAI
-from openai.types.chat import ChatCompletion
-from openai.types.chat.chat_completion import Choice
-from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
-from openai.types.chat.chat_completion_message_tool_call import (
-    ChatCompletionMessageToolCall,
-)
+import time
+from typing import Iterable, Literal, Dict, Any, List
 
 # Local imports
-from config import OPENAI_MODEL_ID_O3_MINI, TIMEOUT
+from config import ANTHROPIC_MODEL_ID_35, OPENAI_MODEL_ID_O3_MINI
+from services.anthropic.chat_with_functions import chat_with_claude
 from services.github.github_manager import update_comment
 from services.github.github_types import BaseArgs
-from services.openai.count_tokens import count_tokens
+from services.openai.chat_with_functions import chat_with_openai
 from services.openai.functions.functions import (
     TOOLS_TO_COMMIT_CHANGES,
     TOOLS_TO_EXPLORE_REPO,
@@ -24,7 +16,6 @@ from services.openai.functions.functions import (
     TOOLS_TO_UPDATE_COMMENT,
     tools_to_call,
 )
-from services.openai.init import create_openai_client
 from services.openai.instructions.commit_changes import (
     SYSTEM_INSTRUCTION_TO_COMMIT_CHANGES,
 )
@@ -39,65 +30,104 @@ from utils.colorize_log import colorize
 from utils.handle_exceptions import handle_exceptions
 
 
+# Track when Claude is rate limited until
+_CLAUDE_RATE_LIMITED_UNTIL = 0
+
+
 @handle_exceptions(raise_on_error=True)
 def chat_with_agent(
-    messages: Iterable[ChatCompletionMessageParam],
+    messages: Iterable[Dict[str, Any]],
     base_args: BaseArgs,
     mode: Literal["comment", "commit", "explore", "get", "search"],
-    previous_calls: list[dict] | None = None,
+    previous_calls: List[Dict] | None = None,
     recursion_count: int = 1,
     p: int = 0,
+    model_id: str = ANTHROPIC_MODEL_ID_35,  # Default to Claude
 ):
-    """https://platform.openai.com/docs/api-reference/chat/create"""
+    global _CLAUDE_RATE_LIMITED_UNTIL
+
     if previous_calls is None:
         previous_calls = []
 
-    # Set the system message based on the mode
+    # Set the system message and tools based on the mode
+    system_content = ""
+    tools = []
     if mode == "comment":
-        content = SYSTEM_INSTRUCTION_TO_UPDATE_COMMENT
+        system_content = SYSTEM_INSTRUCTION_TO_UPDATE_COMMENT
         tools = TOOLS_TO_UPDATE_COMMENT
     elif mode == "commit":
-        content = SYSTEM_INSTRUCTION_TO_COMMIT_CHANGES
+        system_content = SYSTEM_INSTRUCTION_TO_COMMIT_CHANGES
         tools = TOOLS_TO_COMMIT_CHANGES
     elif mode == "explore":
-        content = SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
+        system_content = SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
         tools = TOOLS_TO_EXPLORE_REPO
     elif mode == "get":
-        content = SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
+        system_content = SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
         tools = TOOLS_TO_GET_FILE
     elif mode == "search":
-        content = SYSTEM_INSTRUCTION_TO_SEARCH_GOOGLE
+        system_content = SYSTEM_INSTRUCTION_TO_SEARCH_GOOGLE
         tools = TOOLS_TO_SEARCH_GOOGLE
 
-    # role: "developer" is recommended for o3-mini as of 2025-02-01 https://platform.openai.com/docs/guides/reasoning#advice-on-prompting
-    system_message: ChatCompletionMessageParam = {
-        "role": "developer",
-        "content": content,
-    }
-    all_messages = [system_message] + list(messages)
+    # Check if Claude is rate limited and use OpenAI if it is
+    if model_id == ANTHROPIC_MODEL_ID_35 and time.time() < _CLAUDE_RATE_LIMITED_UNTIL:
+        msg = "Claude is currently rate limited, using OpenAI model"
+        print(colorize(msg, "yellow"))
+        model_id = OPENAI_MODEL_ID_O3_MINI
 
-    # Create the client and call the API
-    client: OpenAI = create_openai_client()
-    completion: ChatCompletion = client.chat.completions.create(
-        messages=all_messages,
-        model=OPENAI_MODEL_ID_O3_MINI,
-        n=1,
-        # temperature=OPENAI_TEMPERATURE,  # Not supported by o3-mini as of 2025-02-01
-        timeout=TIMEOUT,
-        tools=tools,
-        tool_choice="auto",  # DO NOT USE "required" and allow GitAuto not to call any tools.
-        # parallel_tool_calls=False,  # Not supported by o3-mini as of 2025-02-01
-    )
-    choice: Choice = completion.choices[0]
-    tool_calls: list[ChatCompletionMessageToolCall] | None = choice.message.tool_calls
+    # Get the appropriate model provider
+    if model_id in (OPENAI_MODEL_ID_O3_MINI,):
+        provider = chat_with_openai
+    else:
+        provider = chat_with_claude
 
-    # Calculate tokens for this call
-    token_input = count_tokens(messages=messages)
-    token_output = count_tokens(messages=[choice.message])
+    try:
+        # Perform chat completion
+        (
+            response_message,
+            tool_call_id,
+            tool_name,
+            tool_args,
+            token_input,
+            token_output,
+        ) = provider(
+            messages=list(messages),
+            system_content=system_content,
+            tools=tools,
+            model_id=model_id,
+        )
+    except Exception as e:  # pylint: disable=broad-except
+        # Check if it's a rate limit error from Claude (429)
+        if (
+            model_id == ANTHROPIC_MODEL_ID_35
+            and hasattr(e, "status_code")
+            and e.status_code == 429  # pylint: disable=no-member
+        ):
+            # Mark Claude as rate limited for the next minute
+            _CLAUDE_RATE_LIMITED_UNTIL = time.time() + 60  # 60 seconds = 1 minute
+            msg = "Claude is currently rate limited, using OpenAI model"
+            print(colorize(msg, "yellow"))
+
+            # Switch to OpenAI
+            (
+                response_message,
+                tool_call_id,
+                tool_name,
+                tool_args,
+                token_input,
+                token_output,
+            ) = chat_with_openai(
+                messages=list(messages),
+                system_content=system_content,
+                tools=tools,
+                model_id=OPENAI_MODEL_ID_O3_MINI,
+            )
+        else:
+            # Re-raise other exceptions
+            raise
 
     # Return if no tool calls
     is_done = False
-    if not tool_calls:
+    if not tool_name:
         print(colorize(f"No tools were called in '{mode}' mode", "yellow"))
         return (
             messages,
@@ -110,26 +140,24 @@ def chat_with_agent(
             p,
         )
 
-    # Handle multiple tool calls
-    tool_call_id: str = tool_calls[0].id
-    tool_name: str = tool_calls[0].function.name
-    tool_args: dict = json.loads(tool_calls[0].function.arguments)
-    # print(colorize(f"tool_name: {tool_name}", "green"))
-    # print(colorize(f"tool_args: {tool_args}\n", "green"))
-
     # Check if the same function with the same args has been called before
     current_call = {"function": tool_name, "args": tool_args}
+    print(f"Calling {current_call}...")
     if current_call in previous_calls:
         tool_result = f"Error: The function '{tool_name}' was already called with the same arguments '{tool_args}' as before. You need to either:\n1. Call the function with different arguments, or\n2. Call another function, or\n3. Stop calling the function."
         print(tool_result)
     else:
-        tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
+        if tool_name not in tools_to_call:
+            tool_result = f"Error: The function '{tool_name}' does not exist in the available tools. Please use one of the available tools."
+        else:
+            tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
         previous_calls.append(current_call)
         is_done = True
 
     # Append the function call to the messages
-    messages.append(choice.message)
-    messages.append(
+    messages_list = list(messages)
+    messages_list.append(response_message)
+    messages_list.append(
         {
             "role": "tool",
             "tool_call_id": tool_call_id,
@@ -139,7 +167,7 @@ def chat_with_agent(
     )
 
     # Recursively call the function if the mode is "explore" and the tool was called
-    if mode == "explore" and tool_calls and recursion_count < 3:
+    if mode == "explore" and tool_name and recursion_count < 3:
         if tool_name == "get_remote_file_content" and "line_number" in tool_args:
             line_info = (
                 f" around line {tool_args['line_number']}"
@@ -155,17 +183,18 @@ def chat_with_agent(
             msg = f"Calling `{tool_name}()` with `{tool_args}`..."
         update_comment(body=msg, base_args=base_args, p=p)
         return chat_with_agent(
-            messages=messages,
+            messages=messages_list,
             base_args=base_args,
             mode=mode,
             previous_calls=previous_calls,
             recursion_count=recursion_count + 1,
             p=p + 5,
+            model_id=model_id,
         )
 
     # Return
     return (
-        messages,
+        messages_list,
         previous_calls,
         tool_name,
         tool_args,
