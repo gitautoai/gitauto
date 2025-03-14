@@ -42,7 +42,7 @@ def chat_with_agent(
     previous_calls: List[Dict] | None = None,
     recursion_count: int = 1,
     p: int = 0,
-    model_id: str = ANTHROPIC_MODEL_ID_35,  # Default to Claude
+    model_id: str = OPENAI_MODEL_ID_O3_MINI,  # Default to Claude
 ):
     global _CLAUDE_RATE_LIMITED_UNTIL
 
