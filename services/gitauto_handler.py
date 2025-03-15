@@ -110,9 +110,9 @@ async def handle_gitauto(
     )
 
     # Check if the user has reached the request limit
-    requests_left, request_count, end_date = (
+    requests_left, request_count, end_date, is_retried = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            installation_id=installation_id, owner_id=owner_id, owner_name=owner_name
+            installation_id=installation_id, owner_id=owner_id, owner_name=owner_name, issue_id=issue_number
         )
     )
     p += 5
@@ -122,7 +122,7 @@ async def handle_gitauto(
     )
 
     # Notify the user if the request limit is reached and early return
-    if requests_left <= 0 and IS_PRD and owner_name not in EXCEPTION_OWNERS:
+    if requests_left <= 0 and not is_retried and IS_PRD and owner_name not in EXCEPTION_OWNERS:
         body = request_limit_reached(
             user_name=sender_name, request_count=request_count, end_date=end_date
         )
