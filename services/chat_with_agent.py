@@ -3,7 +3,7 @@ import time
 from typing import Iterable, Literal, Dict, Any, List
 
 # Local imports
-from config import ANTHROPIC_MODEL_ID_35, OPENAI_MODEL_ID_O3_MINI
+from config import ANTHROPIC_MODEL_ID_35, ANTHROPIC_MODEL_ID_37, OPENAI_MODEL_ID_O3_MINI
 from services.anthropic.chat_with_functions import chat_with_claude
 from services.github.github_manager import update_comment
 from services.github.github_types import BaseArgs
@@ -31,8 +31,9 @@ from utils.handle_exceptions import handle_exceptions
 from utils.progress_bar import create_progress_bar
 
 
-# Track when Claude is rate limited until
-_CLAUDE_RATE_LIMITED_UNTIL = 0
+# Track when Claude models are rate limited until
+_CLAUDE_35_RATE_LIMITED_UNTIL = 0
+_CLAUDE_37_RATE_LIMITED_UNTIL = 0
 
 
 @handle_exceptions(raise_on_error=True)
@@ -43,9 +44,10 @@ def chat_with_agent(
     previous_calls: List[Dict] | None = None,
     recursion_count: int = 1,
     p: int = 0,
+    model_id: str = ANTHROPIC_MODEL_ID_35,  # Default to Claude 3.5
     log_messages: List[str] | None = None,
 ):
-    global _CLAUDE_RATE_LIMITED_UNTIL
+    global _CLAUDE_35_RATE_LIMITED_UNTIL, _CLAUDE_37_RATE_LIMITED_UNTIL
 
     if previous_calls is None:
         previous_calls = []
@@ -72,9 +74,21 @@ def chat_with_agent(
         system_content = SYSTEM_INSTRUCTION_TO_SEARCH_GOOGLE
         tools = TOOLS_TO_SEARCH_GOOGLE
 
-    # Check if Claude is rate limited and use OpenAI if it is
-    if model_id == ANTHROPIC_MODEL_ID_35 and time.time() < _CLAUDE_RATE_LIMITED_UNTIL:
-        msg = "Claude is currently rate limited, using OpenAI model"
+    # Check if Claude models are rate limited and use fallback models accordingly
+    if (
+        model_id == ANTHROPIC_MODEL_ID_35
+        and time.time() < _CLAUDE_35_RATE_LIMITED_UNTIL
+    ):
+        msg = "Claude 3.5 is currently rate limited, trying Claude 3.7"
+        print(colorize(msg, "yellow"))
+        model_id = ANTHROPIC_MODEL_ID_37
+
+    # If we're now using Claude 3.7 and it's also rate limited, fall back to OpenAI
+    if (
+        model_id == ANTHROPIC_MODEL_ID_37
+        and time.time() < _CLAUDE_37_RATE_LIMITED_UNTIL
+    ):
+        msg = "Claude 3.7 is also rate limited, using OpenAI model"
         print(colorize(msg, "yellow"))
         model_id = OPENAI_MODEL_ID_O3_MINI
 
@@ -106,9 +120,63 @@ def chat_with_agent(
             and hasattr(e, "status_code")
             and e.status_code == 429  # pylint: disable=no-member
         ):
-            # Mark Claude as rate limited for the next minute
-            _CLAUDE_RATE_LIMITED_UNTIL = time.time() + 60  # 60 seconds = 1 minute
-            msg = "Claude is currently rate limited, using OpenAI model"
+            # Mark Claude 3.5 as rate limited for the next minute
+            _CLAUDE_35_RATE_LIMITED_UNTIL = time.time() + 60  # 60 seconds = 1 minute
+            msg = "Claude 3.5 is rate limited, trying Claude 3.7"
+            print(colorize(msg, "yellow"))
+
+            # Try with Claude 3.7
+            try:
+                (
+                    response_message,
+                    tool_call_id,
+                    tool_name,
+                    tool_args,
+                    token_input,
+                    token_output,
+                ) = chat_with_claude(
+                    messages=list(messages),
+                    system_content=system_content,
+                    tools=tools,
+                    model_id=ANTHROPIC_MODEL_ID_37,
+                )
+            except Exception as e2:  # pylint: disable=broad-except
+                # Check if Claude 3.7 is also rate limited
+                if (
+                    hasattr(e2, "status_code") and e2.status_code == 429
+                ):  # pylint: disable=no-member
+                    # Mark Claude 3.7 as rate limited for the next minute
+                    _CLAUDE_37_RATE_LIMITED_UNTIL = (
+                        time.time() + 60
+                    )  # 60 seconds = 1 minute
+                    msg = "Claude 3.7 is also rate limited, using OpenAI model"
+                    print(colorize(msg, "yellow"))
+
+                    # Switch to OpenAI as final fallback
+                    (
+                        response_message,
+                        tool_call_id,
+                        tool_name,
+                        tool_args,
+                        token_input,
+                        token_output,
+                    ) = chat_with_openai(
+                        messages=list(messages),
+                        system_content=system_content,
+                        tools=tools,
+                        model_id=OPENAI_MODEL_ID_O3_MINI,
+                    )
+                else:
+                    # Re-raise other exceptions from Claude 3.7
+                    raise e2
+        elif (
+            model_id == ANTHROPIC_MODEL_ID_37
+            and hasattr(e, "status_code")
+            and e.status_code == 429  # pylint: disable=no-member
+        ):
+            # Mark Claude 3.7 as rate limited for the next minute
+            _CLAUDE_37_RATE_LIMITED_UNTIL = time.time() + 60  # 60 seconds = 1 minute
+            msg = "Claude 3.7 is rate limited, using OpenAI model"
             print(colorize(msg, "yellow"))
 
             # Switch to OpenAI

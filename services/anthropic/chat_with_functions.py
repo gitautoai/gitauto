@@ -10,9 +10,33 @@ from services.openai.count_tokens import count_tokens
 from utils.handle_exceptions import handle_exceptions
 
 
+def safe_get_attribute(obj: Any, attr: str, default: Any = None) -> Any:
+    """Safely get an attribute from an object or dictionary."""
+    if hasattr(obj, "get") and callable(obj.get):
+        # Dictionary-like object
+        return obj.get(attr, default)
+    elif hasattr(obj, attr):
+        # Object with attributes
+        return getattr(obj, attr, default)
+    return default
+
+
+def message_to_dict(message: Any) -> dict[str, Any]:
+    """Convert a message object to a dictionary."""
+    if isinstance(message, dict):
+        return message
+
+    result = {}
+    for attr in ["role", "content", "tool_calls", "tool_call_id", "name"]:
+        value = safe_get_attribute(message, attr)
+        if value is not None:
+            result[attr] = value
+    return result
+
+
 @handle_exceptions(raise_on_error=True)
 def chat_with_claude(
-    messages: list[dict[str, Any]],
+    messages: list[Any],
     system_content: str,
     tools: list[dict[str, Any]],
     model_id: str = ANTHROPIC_MODEL_ID_35,
@@ -23,25 +47,38 @@ def chat_with_claude(
     # Convert OpenAI message format to Anthropic format
     anthropic_messages: list[MessageParam] = []
     for msg in messages:
-        role = msg["role"]
-        content = msg.get("content", "")
+        # Convert message to dictionary if it's an object
+        msg_dict = message_to_dict(msg)
+
+        role = safe_get_attribute(msg_dict, "role")
+        content = safe_get_attribute(msg_dict, "content", "")
 
         if role == "user":
             anthropic_messages.append({"role": "user", "content": content})
         elif role == "assistant":
             # Handle tool calls if present
-            if "tool_calls" in msg:
-                tool_calls = msg["tool_calls"]
+            if safe_get_attribute(msg_dict, "tool_calls"):
+                tool_calls = safe_get_attribute(msg_dict, "tool_calls")
                 message_content = content if content else ""
                 tool_use_blocks = []
 
                 for tool_call in tool_calls:
+                    # Convert tool_call to dict if needed
+                    tool_call_dict = message_to_dict(tool_call)
+
+                    # Access function data safely
+                    function = safe_get_attribute(tool_call_dict, "function", {})
+                    if not isinstance(function, dict):
+                        function = message_to_dict(function)
+
                     tool_use_blocks.append(
                         {
                             "type": "tool_use",
-                            "id": tool_call["id"],
-                            "name": tool_call["function"]["name"],
-                            "input": json.loads(tool_call["function"]["arguments"]),
+                            "id": safe_get_attribute(tool_call_dict, "id"),
+                            "name": safe_get_attribute(function, "name"),
+                            "input": json.loads(
+                                safe_get_attribute(function, "arguments", "{}")
+                            ),
                         }
                     )
 
@@ -65,8 +102,8 @@ def chat_with_claude(
                     "content": [
                         {
                             "type": "tool_result",
-                            "tool_use_id": msg["tool_call_id"],
-                            "content": msg["content"],
+                            "tool_use_id": safe_get_attribute(msg_dict, "tool_call_id"),
+                            "content": safe_get_attribute(msg_dict, "content"),
                         }
                     ],
                 }
@@ -78,11 +115,16 @@ def chat_with_claude(
     # Convert OpenAI tools format to Anthropic tools format
     anthropic_tools: list[ToolUnionParam] = []
     for tool in tools:
+        tool_dict = message_to_dict(tool)
+        function = safe_get_attribute(tool_dict, "function", {})
+        if not isinstance(function, dict):
+            function = message_to_dict(function)
+
         anthropic_tools.append(
             {
-                "name": tool["function"]["name"],
-                "description": tool["function"]["description"],
-                "input_schema": tool["function"]["parameters"],
+                "name": safe_get_attribute(function, "name"),
+                "description": safe_get_attribute(function, "description"),
+                "input_schema": safe_get_attribute(function, "parameters"),
             }
         )
 
@@ -99,7 +141,9 @@ def chat_with_claude(
     )
 
     # Calculate tokens (approximation using OpenAI's tokenizer)
-    token_input = count_tokens(messages=messages)
+    # Convert messages to dicts for token counting
+    messages_for_token_count = [message_to_dict(msg) for msg in messages]
+    token_input = count_tokens(messages=messages_for_token_count)
     token_output = count_tokens(
         messages=[{"role": "assistant", "content": str(response.content)}]
     )
