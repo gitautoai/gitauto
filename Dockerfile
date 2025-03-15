@@ -9,6 +9,10 @@ COPY . ${LAMBDA_TASK_ROOT}
 RUN pip install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 RUN dnf install -y patch git
 
+# Install cloc directly without adding the entire EPEL repository
+RUN curl -L https://github.com/AlDanial/cloc/releases/download/v1.98/cloc-1.98.pl -o /usr/local/bin/cloc && \
+    chmod +x /usr/local/bin/cloc
+
 # Install Playwright's browser without dependencies (install-deps)
 # https://playwright.dev/python/docs/browsers
 RUN python -m playwright install chromium
