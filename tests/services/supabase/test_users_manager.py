@@ -42,7 +42,8 @@ SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
 
 
 @timer_decorator
-def test_create_and_update_user_request_works() -> None:
+@pytest.mark.asyncio
+async def test_create_and_update_user_request_works() -> None:
     """Test that I can create and complete user request in usage table"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
@@ -60,7 +61,7 @@ def test_create_and_update_user_request_works() -> None:
         email=TEST_EMAIL,
     )
 
-    usage_record_id = supabase_manager.create_user_request(
+    usage_record_id = await supabase_manager.create_user_request(
         user_id=USER_ID,
         user_name=USER_NAME,
         installation_id=INSTALLATION_ID,
