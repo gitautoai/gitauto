@@ -67,6 +67,19 @@ async def handle_gitauto(
     elif input_from == "jira":
         base_args = deconstruct_jira_payload(payload=payload)
 
+    # Delete all comments made by GitAuto except the one with the checkbox to clean up the issue
+    if input_from == "github":
+        delete_my_comments(base_args=base_args)
+
+    # Create a comment to track progress
+    p = 0
+    log_messages = []
+    msg = "Got your request."
+    log_messages.append(msg)
+    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
+    comment_url: str | None = create_comment(body=comment_body, base_args=base_args)
+    base_args["comment_url"] = comment_url
+
     # Get some base args
     installation_id = base_args["installation_id"]
     owner_id = base_args["owner_id"]
@@ -89,30 +102,33 @@ async def handle_gitauto(
     # other_urls = base_args["other_urls"]
     token = base_args["token"]
     is_automation = base_args["is_automation"]
+
+    p += 5
+    log_messages.append("Extracted metadata.")
+    update_comment(
+        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
+    )
+
     # Check if the user has reached the request limit
     requests_left, request_count, end_date = (
         supabase_manager.get_how_many_requests_left_and_cycle(
             installation_id=installation_id, owner_id=owner_id, owner_name=owner_name
         )
     )
-
-    # Delete all comments made by GitAuto except the one with the checkbox to clean up the issue
-    if input_from == "github":
-        delete_my_comments(base_args=base_args)
+    p += 5
+    log_messages.append(f"Checked request limit. {requests_left} requests left.")
+    update_comment(
+        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
+    )
 
     # Notify the user if the request limit is reached and early return
     if requests_left <= 0 and IS_PRD and owner_name not in EXCEPTION_OWNERS:
         body = request_limit_reached(
             user_name=sender_name, request_count=request_count, end_date=end_date
         )
-        create_comment(body=body, base_args=base_args)
+        update_comment(body=body, base_args=base_args)
         return
 
-    msg = "Got your request. Let's get to it..."
-    p = 0
-    comment_body = create_progress_bar(p=p, msg=msg)
-    comment_url: str | None = create_comment(body=comment_body, base_args=base_args)
-    base_args["comment_url"] = comment_url
     unique_issue_id = f"{owner_type}/{owner_name}/{repo_name}"
     if input_from == "github":
         unique_issue_id = unique_issue_id + f"#{issue_number}"
@@ -137,26 +153,33 @@ async def handle_gitauto(
         )
 
     # Check out the issue comments, and file tree
-    # comment_body = "Checking the issue title, body, comments, and file tree..."
-    # update_comment(body=comment_body, base_args=base_args, p=10)
-    file_tree, comment_body = get_remote_file_tree(base_args=base_args)
-    p = min(p + 5, 95)
-    update_comment(body=comment_body, base_args=base_args, p=p)
+    file_tree, tree_comment = get_remote_file_tree(base_args=base_args)
+    p += 5
+    log_messages.append(tree_comment)
+    update_comment(
+        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
+    )
 
     config_files: list[str] = find_config_files(file_tree=file_tree)
     comment_body = f"Found {len(config_files)} configuration files."
     if len(config_files) > 0:
-        comment_body += f"\n{dumps(config_files, indent=2)}"
-    p = min(p + 5, 95)
-    update_comment(body=comment_body, base_args=base_args, p=p)
+        comment_body += "\n- " + "\n- ".join(config_files)
+    p += 5
+    log_messages.append(comment_body)
+    update_comment(
+        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
+    )
 
     config_contents: list[str] = []
     for config_file in config_files:
         content = get_remote_file_content(file_path=config_file, base_args=base_args)
         config_contents.append(content)
     comment_body = f"Read {len(config_files)} configuration files."
-    p = min(p + 5, 95)
-    update_comment(body=comment_body, base_args=base_args, p=p)
+    p += 5
+    log_messages.append(comment_body)
+    update_comment(
+        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
+    )
 
     # Check out the issue comments
     issue_comments: list[str] = []
@@ -167,15 +190,22 @@ async def handle_gitauto(
     elif input_from == "jira":
         issue_comments = base_args["issue_comments"]
     comment_body = f"Found {len(issue_comments)} issue comments."
-    p = min(p + 5, 95)
-    update_comment(body=comment_body, base_args=base_args, p=p)
+    p += 5
+    log_messages.append(comment_body)
+    update_comment(
+        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
+    )
 
     # Check out the image URLs in the issue body and comments
     image_urls = extract_image_urls(text=issue_body_rendered)
     if image_urls:
         comment_body = f"Found {len(image_urls)} images in the issue body."
-        p = min(p + 5, 95)
-        update_comment(body=comment_body, base_args=base_args, p=p)
+        p += 5
+        log_messages.append(comment_body)
+        update_comment(
+            body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+            base_args=base_args,
+        )
 
     for issue_comment in issue_comments:
         issue_comment_rendered = render_text(base_args=base_args, text=issue_comment)
@@ -192,8 +222,12 @@ async def handle_gitauto(
     reference_contents: list[str] = []
     for url in github_urls:
         comment_body = "Also checking out the URLs in the issue body..."
-        p = min(p + 5, 95)
-        update_comment(body=comment_body, base_args=base_args, p=p)
+        p += 5
+        log_messages.append(comment_body)
+        update_comment(
+            body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+            base_args=base_args,
+        )
         content = get_remote_file_content_by_url(url=url, token=token)
         print(f"```{url}\n{content}```\n")
         reference_contents.append(content)
@@ -244,8 +278,11 @@ async def handle_gitauto(
         latest_commit_sha = base_args["latest_commit_sha"]
     create_remote_branch(sha=latest_commit_sha, base_args=base_args)
     comment_body = "Created a remote branch..."
-    p = min(p + 5, 95)
-    update_comment(body=comment_body, base_args=base_args, p=p)
+    p += 5
+    log_messages.append(comment_body)
+    update_comment(
+        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
+    )
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
@@ -267,12 +304,17 @@ async def handle_gitauto(
             mode="explore",
             previous_calls=previous_calls,
             p=p,
+            log_messages=log_messages,
         )
         if tool_name is not None and tool_args is not None:
             file_path = tool_args.get("file_path", "")
             comment_body = f"Read {file_path}."
-            p = min(p + 5, 95)
-            update_comment(body=comment_body, base_args=base_args, p=p)
+            p += 5
+            log_messages.append(comment_body)
+            update_comment(
+                body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+                base_args=base_args,
+            )
 
         # Search Google
         (
@@ -290,14 +332,19 @@ async def handle_gitauto(
             mode="search",
             previous_calls=previous_calls,
             p=p,
+            log_messages=log_messages,
         )
         if tool_name is not None and tool_args is not None:
             query = tool_args.get("query", "")
             comment_body = (
                 f"Searched Google for `{query}` and went through the results."
             )
-            p = min(p + 5, 95)
-            update_comment(body=comment_body, base_args=base_args, p=p)
+            p += 5
+            log_messages.append(comment_body)
+            update_comment(
+                body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+                base_args=base_args,
+            )
 
         # Commit changes based on the exploration information
         (
@@ -315,12 +362,17 @@ async def handle_gitauto(
             mode="commit",
             previous_calls=previous_calls,
             p=p,
+            log_messages=log_messages,
         )
         if tool_name is not None and tool_args is not None:
             file_path = tool_args.get("file_path", "")
             comment_body = f"Modified {file_path} and committed the changes."
-            p = min(p + 5, 95)
-            update_comment(body=comment_body, base_args=base_args, p=p)
+            p += 5
+            log_messages.append(comment_body)
+            update_comment(
+                body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+                base_args=base_args,
+            )
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
         if not is_explored and not is_committed:
@@ -345,8 +397,11 @@ async def handle_gitauto(
 
     # Create a pull request to the base branch
     comment_body = "Creating a pull request..."
-    p = min(p + 5, 95)
-    update_comment(body=comment_body, base_args=base_args, p=p)
+    p += 5
+    log_messages.append(comment_body)
+    update_comment(
+        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
+    )
     title = f"{PRODUCT_NAME}: {issue_title}"
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
     pr_body = issue_link + git_command(new_branch_name=new_branch_name)

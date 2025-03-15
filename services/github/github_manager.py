@@ -842,6 +842,7 @@ def update_comment(body: str, base_args: BaseArgs, p: int | None = None):
     if comment_url is None:
         return None
     if p is not None:
+        p = min(p, 95)
         body = create_progress_bar(p=p, msg=body)
     print(body + "\n")
     response: requests.Response = requests.patch(
