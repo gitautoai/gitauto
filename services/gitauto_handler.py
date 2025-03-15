@@ -1,4 +1,5 @@
 # Standard imports
+from asyncio import create_task
 from datetime import datetime
 from json import dumps
 import time
@@ -117,16 +118,22 @@ async def handle_gitauto(
         unique_issue_id = unique_issue_id + f"#{issue_number}"
     elif input_from == "jira":
         unique_issue_id = unique_issue_id + f"#jira-{issue_number}"
-    usage_record_id = supabase_manager.create_user_request(
-        user_id=sender_id if input_from == "github" else 0,
-        user_name=sender_name,
-        installation_id=installation_id,
-        unique_issue_id=unique_issue_id,
-        email=sender_email,
+
+    # Create a usage record
+    usage_record_task = create_task(
+        supabase_manager.create_user_request(
+            user_id=sender_id if input_from == "github" else 0,
+            user_name=sender_name,
+            installation_id=installation_id,
+            unique_issue_id=unique_issue_id,
+            email=sender_email,
+        )
     )
     if input_from == "github":
-        add_reaction_to_issue(
-            issue_number=issue_number, content="eyes", base_args=base_args
+        create_task(
+            add_reaction_to_issue(
+                issue_number=issue_number, content="eyes", base_args=base_args
+            )
         )
 
     # Check out the issue comments, and file tree
@@ -360,6 +367,7 @@ async def handle_gitauto(
     update_comment(body=body_after_pr, base_args=base_args)
 
     end_time = time.time()
+    usage_record_id = await usage_record_task
     supabase_manager.complete_and_update_usage_record(
         usage_record_id=usage_record_id,
         is_completed=is_completed,

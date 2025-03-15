@@ -89,7 +89,7 @@ class GitAutoAgentManager:
         )
 
     @handle_exceptions(default_return_value=None, raise_on_error=True)
-    def create_user_request(
+    async def create_user_request(
         self,
         user_id: int,
         user_name: str,
