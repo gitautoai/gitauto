@@ -28,6 +28,7 @@ from services.openai.instructions.update_comment import (
 )
 from utils.colorize_log import colorize
 from utils.handle_exceptions import handle_exceptions
+from utils.progress_bar import create_progress_bar
 
 
 # Track when Claude is rate limited until
@@ -42,12 +43,15 @@ def chat_with_agent(
     previous_calls: List[Dict] | None = None,
     recursion_count: int = 1,
     p: int = 0,
-    model_id: str = OPENAI_MODEL_ID_O3_MINI,  # Default to Claude
+    log_messages: List[str] | None = None,
 ):
     global _CLAUDE_RATE_LIMITED_UNTIL
 
     if previous_calls is None:
         previous_calls = []
+
+    if log_messages is None:
+        log_messages = []
 
     # Set the system message and tools based on the mode
     system_content = ""
@@ -181,7 +185,14 @@ def chat_with_agent(
             msg = f"Read `{tool_args['file_path']}`..."
         else:
             msg = f"Calling `{tool_name}()` with `{tool_args}`..."
-        update_comment(body=msg, base_args=base_args, p=p)
+
+        # Add message to log and update comment
+        log_messages.append(msg)
+        update_comment(
+            body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
+            base_args=base_args,
+        )
+
         return chat_with_agent(
             messages=messages_list,
             base_args=base_args,
@@ -190,6 +201,7 @@ def chat_with_agent(
             recursion_count=recursion_count + 1,
             p=p + 5,
             model_id=model_id,
+            log_messages=log_messages,
         )
 
     # Return
