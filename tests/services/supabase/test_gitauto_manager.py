@@ -1,5 +1,6 @@
 # run this file locally with: python -m tests.services.supabase.test_gitauto_manager
 import os
+import asyncio
 from config import OWNER_TYPE, TEST_EMAIL, USER_NAME
 from services.supabase import SupabaseManager
 from tests.services.supabase.wipe_data import (
@@ -12,7 +13,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 
 
 @timer_decorator
-def test_create_update_user_request_works() -> None:
+async def test_create_update_user_request_works() -> None:
     """Tests based on creating a record and updating it in usage table"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
@@ -34,7 +35,7 @@ def test_create_update_user_request_works() -> None:
         email=TEST_EMAIL,
     )
 
-    usage_record_id = supabase_manager.create_user_request(
+    usage_record_id = await supabase_manager.create_user_request(
         user_id=user_id,
         user_name=USER_NAME,
         installation_id=installation_id,
@@ -60,11 +61,8 @@ def test_create_update_user_request_works() -> None:
     wipe_installation_owner_user_data()
 
 
-# test_create_update_user_request_works()
-
-
 @timer_decorator
-def test_complete_and_update_usage_record_only_updates_one_record() -> None:
+async def test_complete_and_update_usage_record_only_updates_one_record() -> None:
     """Tests based on creating a record and updating it in usage table"""
     supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
@@ -89,7 +87,7 @@ def test_complete_and_update_usage_record_only_updates_one_record() -> None:
 
     # Creating multiple usage records where is_completed = false.
     for _ in range(0, 5):
-        supabase_manager.create_user_request(
+        await supabase_manager.create_user_request(
             user_id=user_id,
             user_name=USER_NAME,
             installation_id=installation_id,
@@ -98,7 +96,7 @@ def test_complete_and_update_usage_record_only_updates_one_record() -> None:
             email=TEST_EMAIL,
         )
 
-    usage_record_id = supabase_manager.create_user_request(
+    usage_record_id = await supabase_manager.create_user_request(
         user_id=user_id,
         user_name=USER_NAME,
         installation_id=installation_id,
@@ -133,4 +131,7 @@ def test_complete_and_update_usage_record_only_updates_one_record() -> None:
     wipe_installation_owner_user_data()
 
 
-test_complete_and_update_usage_record_only_updates_one_record()
+# Add this to run the async tests
+if __name__ == "__main__":
+    # asyncio.run(test_create_update_user_request_works())
+    asyncio.run(test_complete_and_update_usage_record_only_updates_one_record())

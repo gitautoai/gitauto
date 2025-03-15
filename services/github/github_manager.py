@@ -148,7 +148,7 @@ def add_label_to_issue(
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def add_reaction_to_issue(issue_number: int, content: str, base_args: BaseArgs) -> None:
+async def add_reaction_to_issue(issue_number: int, content: str, base_args: BaseArgs) -> None:
     """https://docs.github.com/en/rest/reactions/reactions?apiVersion=2022-11-28#create-reaction-for-an-issue"""
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     response: requests.Response = requests.post(
