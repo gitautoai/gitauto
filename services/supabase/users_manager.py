@@ -105,9 +105,15 @@ class UsersManager:
             free_tier_interval,
         )
 
-    @handle_exceptions(default_return_value=(1, 1, DEFAULT_TIME), raise_on_error=False)
+    @handle_exceptions(
+        default_return_value=(1, 1, DEFAULT_TIME, False), raise_on_error=False
+    )
     def get_how_many_requests_left_and_cycle(
-        self, installation_id: int, owner_id: int, owner_name: str
+        self,
+        installation_id: int,
+        owner_id: int,
+        owner_name: str,
+        issue_id: str = None,
     ):
         # Check if stripe customer id exists for installation
         data, _ = (
@@ -124,7 +130,7 @@ class UsersManager:
         if not stripe_customer_id or not isinstance(stripe_customer_id, str):
             msg = f"No Stripe Customer ID found for installation {installation_id} owner {owner_id}. This has to do with fetching from Supabase."
             logging.error(msg)
-            return (1, 1, DEFAULT_TIME)
+            return (1, 1, DEFAULT_TIME, False)
 
         # Get subscription object and extract start date, end date and product id
         subscription = get_subscription(customer_id=stripe_customer_id)
@@ -158,8 +164,12 @@ class UsersManager:
 
         # Process unique_issue_id in Python
         unique_issue_ids = set(record["unique_issue_id"] for record in data[1])
+
+        # Check if issue is already used
+        is_retried = issue_id in unique_issue_ids if issue_id else False
+
         requests_left = request_limit - len(unique_issue_ids)
-        return (requests_left, request_limit, end_date)
+        return (requests_left, request_limit, end_date, is_retried)
 
     @handle_exceptions(default_return_value=None, raise_on_error=False)
     def get_user(self, user_id: int):

@@ -57,9 +57,12 @@ def schedule_handler(_event, _context) -> dict[str, int]:
             issue_number = issue["number"]
 
             # Check the remaining available usage count, continue if it's less than 1.
-            requests_left, _request_count, _end_date = (
+            requests_left, _request_count, _end_date, _is_retried = (
                 supabase_manager.get_how_many_requests_left_and_cycle(
-                    installation_id=installation_id, owner_id=owner_id, owner_name=owner
+                    installation_id=installation_id,
+                    owner_id=owner_id,
+                    owner_name=owner,
+                    issue_id=issue_number,
                 )
             )
             if requests_left < 1:

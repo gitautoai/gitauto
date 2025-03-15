@@ -101,7 +101,7 @@ def test_how_many_requests_left() -> None:
         email=TEST_EMAIL,
     )
     # Testing 0 requests have been made on free tier
-    requests_left, request_count, end_date = (
+    requests_left, request_count, end_date, is_retried = (
         supabase_manager.get_how_many_requests_left_and_cycle(
             installation_id=INSTALLATION_ID, owner_id=OWNER_ID, owner_name=OWNER_NAME
         )
@@ -128,7 +128,7 @@ def test_how_many_requests_left() -> None:
         ).execute()
 
     # Test no requests left
-    requests_left, request_count, end_date = (
+    requests_left, request_count, end_date, is_retried = (
         supabase_manager.get_how_many_requests_left_and_cycle(
             installation_id=INSTALLATION_ID, owner_id=OWNER_ID, owner_name=OWNER_NAME
         )

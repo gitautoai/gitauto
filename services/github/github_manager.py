@@ -269,9 +269,9 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     ):
         first_issue = True
 
-    requests_left, request_count, end_date = (
+    requests_left, request_count, end_date, is_retried = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            installation_id=installation_id, owner_id=owner_id, owner_name=owner_name
+            installation_id=installation_id, owner_id=owner_id, owner_name=owner_name, issue_id=issue_number
         )
     )
 
@@ -284,7 +284,7 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
             requests_left=requests_left, sender_name=user_name, end_date=end_date
         )
 
-    if requests_left <= 0 and IS_PRD and owner_name not in EXCEPTION_OWNERS:
+    if requests_left <= 0 and not is_retried and IS_PRD and owner_name not in EXCEPTION_OWNERS:
         logging.info("\nRequest limit reached for user %s.", user_name)
         body = request_limit_reached(
             user_name=user_name,
