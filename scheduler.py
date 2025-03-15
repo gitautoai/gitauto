@@ -16,6 +16,7 @@ supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_K
 
 
 def schedule_handler(_event, _context) -> dict[str, int]:
+    return
     print("\n" * 3 + "-" * 70)
 
     # Get all active installation IDs from Supabase including free customers.
