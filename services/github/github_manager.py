@@ -148,7 +148,9 @@ def add_label_to_issue(
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def add_reaction_to_issue(issue_number: int, content: str, base_args: BaseArgs) -> None:
+async def add_reaction_to_issue(
+    issue_number: int, content: str, base_args: BaseArgs
+) -> None:
     """https://docs.github.com/en/rest/reactions/reactions?apiVersion=2022-11-28#create-reaction-for-an-issue"""
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     response: requests.Response = requests.post(
@@ -163,7 +165,11 @@ async def add_reaction_to_issue(issue_number: int, content: str, base_args: Base
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 def commit_changes_to_remote_branch(
-    diff: str, file_path: str, base_args: BaseArgs, message: Optional[str] = None
+    diff: str,
+    file_path: str,
+    base_args: BaseArgs,
+    message: Optional[str] = None,
+    **_kwargs,
 ):
     """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
     if message is None:
@@ -271,7 +277,10 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
 
     requests_left, request_count, end_date, is_retried = (
         supabase_manager.get_how_many_requests_left_and_cycle(
-            installation_id=installation_id, owner_id=owner_id, owner_name=owner_name, issue_id=issue_number
+            installation_id=installation_id,
+            owner_id=owner_id,
+            owner_name=owner_name,
+            issue_id=issue_number,
         )
     )
 
@@ -284,7 +293,12 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
             requests_left=requests_left, sender_name=user_name, end_date=end_date
         )
 
-    if requests_left <= 0 and not is_retried and IS_PRD and owner_name not in EXCEPTION_OWNERS:
+    if (
+        requests_left <= 0
+        and not is_retried
+        and IS_PRD
+        and owner_name not in EXCEPTION_OWNERS
+    ):
         logging.info("\nRequest limit reached for user %s.", user_name)
         body = request_limit_reached(
             user_name=user_name,
@@ -581,6 +595,7 @@ def get_remote_file_content(
     base_args: BaseArgs,
     line_number: Optional[int] = None,
     keyword: Optional[str] = None,
+    **_kwargs,
 ) -> str:
     """
     https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
@@ -759,7 +774,7 @@ def get_remote_file_tree(base_args: BaseArgs, max_files: int = 1000):
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
-def search_remote_file_contents(query: str, base_args: BaseArgs) -> str:
+def search_remote_file_contents(query: str, base_args: BaseArgs, **_kwargs) -> str:
     """
     - Only the default branch is considered.
     - Only files smaller than 384 KB are searchable.
