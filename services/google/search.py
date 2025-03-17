@@ -75,6 +75,7 @@ def google_search(
     query: str,
     num_results: int = NUM_RESULTS_DEFAULT,
     lang: str = "en",
+    **_kwargs,
 ):
     urls: list[dict[str, str]] = search_urls(
         query=query, num_results=num_results, lang=lang
