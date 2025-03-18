@@ -107,23 +107,9 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 async def handle_installation_deleted(payload: GitHubInstallationPayload) -> None:
     installation_id: int = payload["installation"]["id"]
-    token: str = get_installation_access_token(installation_id=installation_id)
     user_id: int = payload["sender"]["id"]
-    sender_name: str = payload["sender"]["login"]
     supabase_manager.delete_installation(
         installation_id=installation_id, user_id=user_id
-    )
-
-    owner_id = payload["installation"]["account"]["id"]
-    owner_name = payload["installation"]["account"]["login"]
-
-    process_repositories(
-        owner_name=owner_name,
-        owner_id=owner_id,
-        repositories=payload["repositories"],
-        token=token,
-        created_by=sender_name,
-        updated_by=sender_name,
     )
 
 
