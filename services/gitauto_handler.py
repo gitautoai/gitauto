@@ -163,7 +163,7 @@ async def handle_gitauto(
     config_files: list[str] = find_config_files(file_tree=file_tree)
     comment_body = f"Found {len(config_files)} configuration files."
     if len(config_files) > 0:
-        comment_body += "\n- " + "\n- ".join(config_files)
+        comment_body += "\n- " + "\n- ".join(config_files) + "\n"
     p += 5
     log_messages.append(comment_body)
     update_comment(
