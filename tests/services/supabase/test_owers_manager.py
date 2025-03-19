@@ -1,11 +1,10 @@
 import pytest
 from services.supabase.owers_manager import get_stripe_customer_id
-from tests.constants import OWNER
-from services.github.user_manager import get_user_id
+from tests.constants import INSTALLATION_ID
 
 def test_get_stripe_customer_id():
-    owner_id = get_user_id(OWNER)
-    customer_id = get_stripe_customer_id(owner_id)
+    # Using INSTALLATION_ID as a valid owner ID for testing
+    customer_id = get_stripe_customer_id(INSTALLATION_ID)
     assert isinstance(customer_id, (str, type(None)))
 
 def test_get_stripe_customer_id_nonexistent():
