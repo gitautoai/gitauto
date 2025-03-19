@@ -35,8 +35,16 @@ def get_repository_stats(local_path: str) -> dict[str, Any]:
         ["cloc", local_path, "--json"], check=True, capture_output=True, text=True
     )
 
-    # Parse cloc output
-    cloc_data = json.loads(cloc_result.stdout)
+    # Extract only the JSON part from stdout
+    json_str = cloc_result.stdout
+
+    # Find the first '{' and last '}' to extract valid JSON since sometimes stdout includes other text after the JSON
+    start = json_str.find("{")
+    end = json_str.rfind("}") + 1
+    if 0 <= start < end:
+        json_str = json_str[start:end]
+
+    cloc_data = json.loads(json_str)
 
     # Extract statistics
     file_count = cloc_data.get("header", {}).get("n_files", 0)
