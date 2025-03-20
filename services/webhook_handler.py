@@ -1,7 +1,8 @@
 # Standard imports
 import re
-from typing import Any
+import shutil
 import tempfile
+from typing import Any
 
 # Local imports
 from config import (
@@ -47,7 +48,8 @@ def process_repositories(
         repo_name = repo["name"]
 
         # Create a temporary directory to clone the repository
-        with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir = tempfile.mkdtemp()
+        try:
             print(f"Cloning repository {repo_name} into {temp_dir}")
             clone_repo(
                 owner=owner_name, repo=repo_name, token=token, target_dir=temp_dir
@@ -68,6 +70,8 @@ def process_repositories(
                 comment_lines=stats["comment_lines"],
                 code_lines=stats["code_lines"],
             )
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
