@@ -200,15 +200,3 @@ class UsersManager:
             },
             on_conflict="user_id",
         ).execute()
-
-    @handle_exceptions(default_return_value=None, raise_on_error=False)
-    def upsert_user_installation(self, user_id: int, installation_id: int) -> None:
-        # Insert user installation record
-        self.client.table(table_name="user_installations").upsert(
-            json={
-                "user_id": user_id,
-                "installation_id": installation_id,
-                "is_selected": True,
-            },
-            on_conflict="user_id,installation_id",
-        ).execute()
