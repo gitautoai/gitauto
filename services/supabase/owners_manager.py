@@ -1,14 +1,6 @@
-# Third Party imports
-from supabase import create_client, Client
-
 # Local imports
-from config import SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
+from services.supabase.client import supabase
 from utils.handle_exceptions import handle_exceptions
-
-# Initialize Supabase client
-supabase: Client = create_client(
-    supabase_url=SUPABASE_URL, supabase_key=SUPABASE_SERVICE_ROLE_KEY
-)
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)

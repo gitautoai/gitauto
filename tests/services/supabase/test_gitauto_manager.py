@@ -1,22 +1,21 @@
 # run this file locally with: python -m tests.services.supabase.test_gitauto_manager
-import os
 import asyncio
 from config import OWNER_TYPE, TEST_EMAIL, USER_NAME
-from services.supabase import SupabaseManager
+from services.supabase.client import supabase
+from services.supabase.gitauto_manager import (
+    complete_and_update_usage_record,
+    create_installation,
+    create_user_request,
+)
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
 )
 from utils.timer import timer_decorator
 
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-
 
 @timer_decorator
 async def test_create_update_user_request_works() -> None:
     """Tests based on creating a record and updating it in usage table"""
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-
     # using -1 to not conflict with real data
     user_id = -1
     installation_id = -1
@@ -25,7 +24,7 @@ async def test_create_update_user_request_works() -> None:
     wipe_installation_owner_user_data()
 
     # insert data into the db -> create installation
-    supabase_manager.create_installation(
+    create_installation(
         installation_id=installation_id,
         owner_type=OWNER_TYPE,
         owner_name="gitautoai",
@@ -35,7 +34,7 @@ async def test_create_update_user_request_works() -> None:
         email=TEST_EMAIL,
     )
 
-    usage_record_id = await supabase_manager.create_user_request(
+    usage_record_id = await create_user_request(
         user_id=user_id,
         user_name=USER_NAME,
         installation_id=installation_id,
@@ -48,7 +47,7 @@ async def test_create_update_user_request_works() -> None:
         int,
     )
     assert (
-        supabase_manager.complete_and_update_usage_record(
+        complete_and_update_usage_record(
             usage_record_id=usage_record_id,
             token_input=1000,
             token_output=100,
@@ -64,8 +63,6 @@ async def test_create_update_user_request_works() -> None:
 @timer_decorator
 async def test_complete_and_update_usage_record_only_updates_one_record() -> None:
     """Tests based on creating a record and updating it in usage table"""
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-
     # using -1 to not conflict with real data
     user_id = -1
     installation_id = -1
@@ -75,7 +72,7 @@ async def test_complete_and_update_usage_record_only_updates_one_record() -> Non
     wipe_installation_owner_user_data()
 
     # insert data into the db -> create installation
-    supabase_manager.create_installation(
+    create_installation(
         installation_id=installation_id,
         owner_type=OWNER_TYPE,
         owner_name="gitautoai",
@@ -87,7 +84,7 @@ async def test_complete_and_update_usage_record_only_updates_one_record() -> Non
 
     # Creating multiple usage records where is_completed = false.
     for _ in range(0, 5):
-        await supabase_manager.create_user_request(
+        await create_user_request(
             user_id=user_id,
             user_name=USER_NAME,
             installation_id=installation_id,
@@ -96,7 +93,7 @@ async def test_complete_and_update_usage_record_only_updates_one_record() -> Non
             email=TEST_EMAIL,
         )
 
-    usage_record_id = await supabase_manager.create_user_request(
+    usage_record_id = await create_user_request(
         user_id=user_id,
         user_name=USER_NAME,
         installation_id=installation_id,
@@ -109,7 +106,7 @@ async def test_complete_and_update_usage_record_only_updates_one_record() -> Non
         int,
     )
     assert (
-        supabase_manager.complete_and_update_usage_record(
+        complete_and_update_usage_record(
             usage_record_id=usage_record_id,
             token_input=1000,
             token_output=100,
@@ -119,7 +116,7 @@ async def test_complete_and_update_usage_record_only_updates_one_record() -> Non
     )
 
     data, _ = (
-        supabase_manager.client.table("usage")
+        supabase.table("usage")
         .select("*")
         .eq("user_id", user_id)
         .eq("installation_id", installation_id)

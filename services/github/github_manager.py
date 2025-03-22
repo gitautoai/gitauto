@@ -39,8 +39,6 @@ from config import (
     PRODUCT_YOUTUBE_URL,
     TIMEOUT,
     PRODUCT_ID,
-    SUPABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY,
     UTF8,
     GITHUB_APP_USER_NAME,
     GITHUB_APP_USER_ID,
@@ -56,7 +54,11 @@ from services.github.github_types import (
 )
 from services.github.reviewers_manager import add_reviewers
 from services.openai.vision import describe_image
-from services.supabase import SupabaseManager
+from services.supabase.gitauto_manager import is_users_first_issue
+from services.supabase.users_manager import (
+    get_how_many_requests_left_and_cycle,
+    upsert_user,
+)
 from utils.detect_new_line import detect_line_break
 from utils.file_manager import apply_patch, get_file_content, run_command
 from utils.handle_exceptions import handle_exceptions
@@ -262,18 +264,14 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     user_name: str = payload["sender"]["login"]
     user_email: str | None = get_user_public_email(username=user_name, token=token)
 
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-
     # Proper issue generation comment, create user if not exist (first issue in an orgnanization)
     first_issue = False
-    supabase_manager.upsert_user(user_id=user_id, user_name=user_name, email=user_email)
-    if supabase_manager.is_users_first_issue(
-        user_id=user_id, installation_id=installation_id
-    ):
+    upsert_user(user_id=user_id, user_name=user_name, email=user_email)
+    if is_users_first_issue(user_id=user_id, installation_id=installation_id):
         first_issue = True
 
     requests_left, request_count, end_date, is_retried = (
-        supabase_manager.get_how_many_requests_left_and_cycle(
+        get_how_many_requests_left_and_cycle(
             installation_id=installation_id,
             owner_id=owner_id,
             owner_name=owner_name,

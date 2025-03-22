@@ -2,7 +2,7 @@
 
 import logging
 import time
-from config import PRODUCT_ID, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
+from config import PRODUCT_ID
 from services.github.github_manager import (
     add_label_to_issue,
     get_installation_access_token,
@@ -10,9 +10,8 @@ from services.github.github_manager import (
     get_oldest_unassigned_open_issue,
 )
 from services.github.github_types import IssueInfo
-from services.supabase import SupabaseManager
-
-supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
+from services.supabase.gitauto_manager import get_installation_ids
+from services.supabase.users_manager import get_how_many_requests_left_and_cycle
 
 
 def schedule_handler(_event, _context) -> dict[str, int]:
@@ -20,7 +19,7 @@ def schedule_handler(_event, _context) -> dict[str, int]:
     print("\n" * 3 + "-" * 70)
 
     # Get all active installation IDs from Supabase including free customers.
-    installation_ids: list[int] = supabase_manager.get_installation_ids()
+    installation_ids: list[int] = get_installation_ids()
 
     # Get all owners and repositories from GitHub.
     for installation_id in installation_ids:
@@ -59,7 +58,7 @@ def schedule_handler(_event, _context) -> dict[str, int]:
 
             # Check the remaining available usage count, continue if it's less than 1.
             requests_left, _request_count, _end_date, _is_retried = (
-                supabase_manager.get_how_many_requests_left_and_cycle(
+                get_how_many_requests_left_and_cycle(
                     installation_id=installation_id,
                     owner_id=owner_id,
                     owner_name=owner,

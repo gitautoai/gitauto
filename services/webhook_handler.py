@@ -8,8 +8,6 @@ from typing import Any
 from config import (
     GITHUB_CHECK_RUN_FAILURES,
     PRODUCT_ID,
-    SUPABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY,
     PR_BODY_STARTS_WITH,
     ISSUE_NUMBER_FORMAT,
 )
@@ -27,12 +25,13 @@ from services.github.repo_manager import get_repository_stats
 from services.pull_request_handler import write_pr_description
 from services.review_run_handler import handle_review_run
 from services.screenshot_handler import handle_screenshot_comparison
-from services.supabase import SupabaseManager
+from services.supabase.gitauto_manager import (
+    create_installation,
+    delete_installation,
+    set_issue_to_merged,
+)
 from services.supabase.repositories_manager import create_or_update_repository
 from utils.handle_exceptions import handle_exceptions
-
-# Initialize managers
-supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
 def process_repositories(
@@ -87,7 +86,7 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
     user_email: str | None = get_user_public_email(username=user_name, token=token)
 
     # Create installation record in Supabase
-    supabase_manager.create_installation(
+    create_installation(
         installation_id=installation_id,
         owner_type=owner_type,
         owner_name=owner_name,
@@ -112,9 +111,7 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
 async def handle_installation_deleted(payload: GitHubInstallationPayload) -> None:
     installation_id: int = payload["installation"]["id"]
     user_id: int = payload["sender"]["id"]
-    supabase_manager.delete_installation(
-        installation_id=installation_id, user_id=user_id
-    )
+    delete_installation(installation_id=installation_id, user_id=user_id)
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -255,7 +252,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
             issue_number = match.group(1)
             owner_type = payload["repository"]["owner"]["type"]
             unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
-            supabase_manager.set_issue_to_merged(unique_issue_id=unique_issue_id)
+            set_issue_to_merged(unique_issue_id=unique_issue_id)
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_comment

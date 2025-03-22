@@ -24,7 +24,19 @@ from config import (
 )
 from services.github import github_manager
 from services.stripe.customer import get_subscription
-from services.supabase import SupabaseManager
+from services.supabase.client import supabase
+from services.supabase.gitauto_manager import (
+    complete_and_update_usage_record,
+    create_installation,
+    create_user_request,
+    delete_installation,
+)
+from services.supabase.users_manager import (
+    get_how_many_requests_left_and_cycle,
+    get_user,
+    parse_subscription_object,
+    upsert_user,
+)
 from services.webhook_handler import handle_webhook_event
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
@@ -45,13 +57,11 @@ SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
 @pytest.mark.asyncio
 async def test_create_and_update_user_request_works() -> None:
     """Test that I can create and complete user request in usage table"""
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
 
     # insert data into the db -> create installation
-    supabase_manager.create_installation(
+    create_installation(
         installation_id=INSTALLATION_ID,
         owner_type=OWNER_TYPE,
         owner_name=OWNER_NAME,
@@ -61,7 +71,7 @@ async def test_create_and_update_user_request_works() -> None:
         email=TEST_EMAIL,
     )
 
-    usage_record_id = await supabase_manager.create_user_request(
+    usage_record_id = await create_user_request(
         user_id=USER_ID,
         user_name=USER_NAME,
         installation_id=INSTALLATION_ID,
@@ -70,7 +80,7 @@ async def test_create_and_update_user_request_works() -> None:
     )
     assert isinstance(usage_record_id, int)
     assert (
-        supabase_manager.complete_and_update_usage_record(
+        complete_and_update_usage_record(
             usage_record_id=usage_record_id,
             token_input=1000,
             token_output=100,
@@ -86,12 +96,10 @@ async def test_create_and_update_user_request_works() -> None:
 @timer_decorator
 def test_how_many_requests_left() -> None:
     """Test that get_how_many_requests_left_and_cycle returns the correct values"""
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
     # insert data into the db -> create installation
-    supabase_manager.create_installation(
+    create_installation(
         installation_id=INSTALLATION_ID,
         owner_type=OWNER_TYPE,
         owner_name=OWNER_NAME,
@@ -102,7 +110,7 @@ def test_how_many_requests_left() -> None:
     )
     # Testing 0 requests have been made on free tier
     requests_left, request_count, end_date, _is_retried = (
-        supabase_manager.get_how_many_requests_left_and_cycle(
+        get_how_many_requests_left_and_cycle(
             installation_id=INSTALLATION_ID, owner_id=OWNER_ID, owner_name=OWNER_NAME
         )
     )
@@ -115,10 +123,10 @@ def test_how_many_requests_left() -> None:
     # Generate 5 issues and 5 usage records
     for i in range(1, 6):
         unique_issue_id: str = f"{OWNER_TYPE}/{OWNER_NAME}/{TEST_REPO_NAME}#{i}"
-        supabase_manager.client.table("issues").insert(
+        supabase.table("issues").insert(
             json={"installation_id": INSTALLATION_ID, "unique_id": unique_issue_id}
         ).execute()
-        supabase_manager.client.table("usage").insert(
+        supabase.table("usage").insert(
             json={
                 "user_id": USER_ID,
                 "installation_id": INSTALLATION_ID,
@@ -129,7 +137,7 @@ def test_how_many_requests_left() -> None:
 
     # Test no requests left
     requests_left, request_count, end_date, _is_retried = (
-        supabase_manager.get_how_many_requests_left_and_cycle(
+        get_how_many_requests_left_and_cycle(
             installation_id=INSTALLATION_ID, owner_id=OWNER_ID, owner_name=OWNER_NAME
         )
     )
@@ -139,20 +147,16 @@ def test_how_many_requests_left() -> None:
     assert isinstance(end_date, datetime.datetime)
 
     # Clean Up
-    supabase_manager.delete_installation(
-        installation_id=INSTALLATION_ID, user_id=USER_ID
-    )
+    delete_installation(installation_id=INSTALLATION_ID, user_id=USER_ID)
 
 
 @timer_decorator
 def test_parse_subscription_object() -> None:
     """Test parse_subscription_object function"""
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
     # insert data into the db -> create installation
-    supabase_manager.create_installation(
+    create_installation(
         installation_id=INSTALLATION_ID,
         owner_type=OWNER_TYPE,
         owner_name=OWNER_NAME,
@@ -164,7 +168,7 @@ def test_parse_subscription_object() -> None:
 
     def assertion_test(customer_id: str, product_id: str):
         subscription = get_subscription(customer_id=customer_id)
-        _, _, product_id_output, _ = supabase_manager.parse_subscription_object(
+        _, _, product_id_output, _ = parse_subscription_object(
             subscription=subscription,
             installation_id=INSTALLATION_ID,
             customer_id=customer_id,
@@ -206,16 +210,13 @@ async def test_install_uninstall_install() -> None:
         # Configure the mock to do nothing (just return)
         mock_process_repos.return_value = None
 
-        supabase_manager = SupabaseManager(
-            url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY
-        )
         await handle_webhook_event(
             event_name="installation", payload=installation_payload
         )
 
         # Check Owners Record (owner_id, stripe_customer_id)
         owners_data, _ = (
-            supabase_manager.client.table(table_name="owners")
+            supabase.table("owners")
             .select("*")
             .eq(column="owner_id", value=OWNER_ID)
             .execute()
@@ -225,7 +226,7 @@ async def test_install_uninstall_install() -> None:
 
         # Check Installation Record
         installation_data, _ = (
-            supabase_manager.client.table(table_name="installations")
+            supabase.table("installations")
             .select("*")
             .eq(column="installation_id", value=INSTALLATION_ID)
             .execute()
@@ -239,7 +240,7 @@ async def test_install_uninstall_install() -> None:
 
         # Check Users Record
         users_data, _ = (
-            supabase_manager.client.table(table_name="users")
+            supabase.table("users")
             .select("*")
             .eq(column="user_id", value=USER_ID)
             .execute()
@@ -253,7 +254,7 @@ async def test_install_uninstall_install() -> None:
 
         # Check Owners Record (owner_id, stripe_customer_id)
         owners_data, _ = (
-            supabase_manager.client.table(table_name="owners")
+            supabase.table("owners")
             .select("*")
             .eq(column="owner_id", value=OWNER_ID)
             .execute()
@@ -263,7 +264,7 @@ async def test_install_uninstall_install() -> None:
 
         # Check Installation Record
         installation_data, _ = (
-            supabase_manager.client.table(table_name="installations")
+            supabase.table("installations")
             .select("*")
             .eq(column="installation_id", value=INSTALLATION_ID)
             .execute()
@@ -277,7 +278,7 @@ async def test_install_uninstall_install() -> None:
 
         # Check Users Record
         users_data, _ = (
-            supabase_manager.client.table(table_name="users")
+            supabase.table("users")
             .select("*")
             .eq(column="user_id", value=USER_ID)
             .execute()
@@ -292,7 +293,7 @@ async def test_install_uninstall_install() -> None:
 
         # Check Owners Record (owner_id, stripe_customer_id)
         owners_data, _ = (
-            supabase_manager.client.table(table_name="owners")
+            supabase.table("owners")
             .select("*")
             .eq(column="owner_id", value=OWNER_ID)
             .execute()
@@ -302,7 +303,7 @@ async def test_install_uninstall_install() -> None:
 
         # Check Installation Record
         installation_data, _ = (
-            supabase_manager.client.table(table_name="installations")
+            supabase.table("installations")
             .select("*")
             .eq(column="installation_id", value=NEW_INSTALLATION_ID)
             .execute()
@@ -316,7 +317,7 @@ async def test_install_uninstall_install() -> None:
 
         # Check Users Record
         users_data, _ = (
-            supabase_manager.client.table(table_name="users")
+            supabase.table("users")
             .select("*")
             .eq(column="user_id", value=USER_ID)
             .execute()
@@ -333,13 +334,11 @@ async def test_install_uninstall_install() -> None:
 @timer_decorator
 def test_handle_user_email_update() -> None:
     """Test updating a user's email in the users table"""
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
 
     # Insert a user into the database
-    supabase_manager.create_installation(
+    create_installation(
         installation_id=INSTALLATION_ID,
         owner_type=OWNER_TYPE,
         owner_name=OWNER_NAME,
@@ -351,21 +350,21 @@ def test_handle_user_email_update() -> None:
     # Verify github no-reply email is not updated
     json_data = {"user_id": USER_ID, "user_name": USER_NAME}
     json_data["email"] = f"no_reply_email@{GITHUB_NOREPLY_EMAIL_DOMAIN}"
-    supabase_manager.upsert_user(**json_data)
-    user_data = supabase_manager.get_user(user_id=USER_ID)
+    upsert_user(**json_data)
+    user_data = get_user(user_id=USER_ID)
     assert user_data["email"] == TEST_EMAIL
 
     # Verify None email is not updated
     json_data["email"] = None
-    supabase_manager.upsert_user(**json_data)
-    user_data = supabase_manager.get_user(user_id=USER_ID)
+    upsert_user(**json_data)
+    user_data = get_user(user_id=USER_ID)
     assert user_data["email"] == TEST_EMAIL
 
     # Verify valid email is updated
     new_email = "new_email@example.com"
     json_data["email"] = "new_email@example.com"
-    supabase_manager.upsert_user(**json_data)
-    user_data = supabase_manager.get_user(user_id=USER_ID)
+    upsert_user(**json_data)
+    user_data = get_user(user_id=USER_ID)
     assert user_data["email"] == new_email
 
     # Clean Up
