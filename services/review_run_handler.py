@@ -8,8 +8,6 @@ from config import (
     GITHUB_APP_USER_NAME,
     IS_PRD,
     STRIPE_PRODUCT_ID_FREE,
-    SUPABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY,
 )
 from services.chat_with_agent import chat_with_agent
 from services.github.comment_manager import reply_to_comment
@@ -25,12 +23,9 @@ from services.github.pulls_manager import (
     get_review_thread_comments,
 )
 from services.stripe.subscriptions import get_stripe_product_id
-from services.supabase import SupabaseManager
-from services.supabase.owers_manager import get_stripe_customer_id
+from services.supabase.owners_manager import get_stripe_customer_id
 from utils.colorize_log import colorize
 from utils.progress_bar import create_progress_bar
-
-supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
 def handle_review_run(payload: dict[str, Any]) -> None:

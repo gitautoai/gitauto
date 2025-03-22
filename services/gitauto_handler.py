@@ -11,8 +11,6 @@ from config import (
     IS_PRD,
     PRODUCT_ID,
     PRODUCT_NAME,
-    SUPABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY,
     PR_BODY_STARTS_WITH,
 )
 from services.chat_with_agent import chat_with_agent
@@ -35,7 +33,11 @@ from services.github.github_types import GitHubLabeledPayload
 from services.github.github_utils import deconstruct_github_payload
 from services.jira.jira_manager import deconstruct_jira_payload
 from services.openai.vision import describe_image
-from services.supabase import SupabaseManager
+from services.supabase.gitauto_manager import (
+    complete_and_update_usage_record,
+    create_user_request,
+)
+from services.supabase.users_manager import get_how_many_requests_left_and_cycle
 from utils.extract_urls import extract_image_urls
 from utils.progress_bar import create_progress_bar
 from utils.text_copy import (
@@ -44,8 +46,6 @@ from utils.text_copy import (
     pull_request_completed,
     request_limit_reached,
 )
-
-supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
 
 
 async def handle_gitauto(
@@ -111,8 +111,11 @@ async def handle_gitauto(
 
     # Check if the user has reached the request limit
     requests_left, request_count, end_date, is_retried = (
-        supabase_manager.get_how_many_requests_left_and_cycle(
-            installation_id=installation_id, owner_id=owner_id, owner_name=owner_name, issue_id=issue_number
+        get_how_many_requests_left_and_cycle(
+            installation_id=installation_id,
+            owner_id=owner_id,
+            owner_name=owner_name,
+            issue_id=issue_number,
         )
     )
     p += 5
@@ -122,7 +125,12 @@ async def handle_gitauto(
     )
 
     # Notify the user if the request limit is reached and early return
-    if requests_left <= 0 and not is_retried and IS_PRD and owner_name not in EXCEPTION_OWNERS:
+    if (
+        requests_left <= 0
+        and not is_retried
+        and IS_PRD
+        and owner_name not in EXCEPTION_OWNERS
+    ):
         body = request_limit_reached(
             user_name=sender_name, request_count=request_count, end_date=end_date
         )
@@ -137,7 +145,7 @@ async def handle_gitauto(
 
     # Create a usage record
     usage_record_task = create_task(
-        supabase_manager.create_user_request(
+        create_user_request(
             user_id=sender_id if input_from == "github" else 0,
             user_name=sender_name,
             installation_id=installation_id,
@@ -410,7 +418,7 @@ async def handle_gitauto(
 
     end_time = time.time()
     usage_record_id = await usage_record_task
-    supabase_manager.complete_and_update_usage_record(
+    complete_and_update_usage_record(
         usage_record_id=usage_record_id,
         is_completed=is_completed,
         token_input=token_input,
