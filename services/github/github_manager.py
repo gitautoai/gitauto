@@ -267,9 +267,6 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     # Proper issue generation comment, create user if not exist (first issue in an orgnanization)
     first_issue = False
     supabase_manager.upsert_user(user_id=user_id, user_name=user_name, email=user_email)
-    supabase_manager.upsert_user_installation(
-        user_id=user_id, installation_id=installation_id
-    )
     if supabase_manager.is_users_first_issue(
         user_id=user_id, installation_id=installation_id
     ):
@@ -308,9 +305,6 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
 
     if first_issue:
         body = "Welcome to GitAuto! 🎉\n" + body
-        supabase_manager.set_user_first_issue_to_false(
-            user_id=user_id, installation_id=installation_id
-        )
 
     response: requests.Response = requests.post(
         url=f"{GITHUB_API_URL}/repos/{owner_name}/{repo_name}/issues/{issue_number}/comments",

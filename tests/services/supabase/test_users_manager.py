@@ -101,7 +101,7 @@ def test_how_many_requests_left() -> None:
         email=TEST_EMAIL,
     )
     # Testing 0 requests have been made on free tier
-    requests_left, request_count, end_date, is_retried = (
+    requests_left, request_count, end_date, _is_retried = (
         supabase_manager.get_how_many_requests_left_and_cycle(
             installation_id=INSTALLATION_ID, owner_id=OWNER_ID, owner_name=OWNER_NAME
         )
@@ -128,7 +128,7 @@ def test_how_many_requests_left() -> None:
         ).execute()
 
     # Test no requests left
-    requests_left, request_count, end_date, is_retried = (
+    requests_left, request_count, end_date, _is_retried = (
         supabase_manager.get_how_many_requests_left_and_cycle(
             installation_id=INSTALLATION_ID, owner_id=OWNER_ID, owner_name=OWNER_NAME
         )
@@ -142,45 +142,6 @@ def test_how_many_requests_left() -> None:
     supabase_manager.delete_installation(
         installation_id=INSTALLATION_ID, user_id=USER_ID
     )
-
-
-@timer_decorator
-def test_is_users_first_issue() -> None:
-    """Check if it's a users first issue."""
-
-    supabase_manager = SupabaseManager(url=SUPABASE_URL, key=SUPABASE_SERVICE_ROLE_KEY)
-
-    # Clean up at the beginning just in case a prior test failed to clean
-    wipe_installation_owner_user_data()
-
-    # insert data into the db -> create installation
-    supabase_manager.create_installation(
-        installation_id=INSTALLATION_ID,
-        owner_type=OWNER_TYPE,
-        owner_name=OWNER_NAME,
-        owner_id=OWNER_ID,
-        user_id=USER_ID,
-        user_name=USER_NAME,
-        email=TEST_EMAIL,
-    )
-    assert supabase_manager.is_users_first_issue(
-        user_id=USER_ID, installation_id=INSTALLATION_ID
-    )
-
-    # Set user table user's first_issue to false
-    supabase_manager.set_user_first_issue_to_false(
-        user_id=USER_ID, installation_id=INSTALLATION_ID
-    )
-
-    assert not supabase_manager.is_users_first_issue(
-        user_id=USER_ID, installation_id=INSTALLATION_ID
-    )
-
-    # Clean Up
-    wipe_installation_owner_user_data()
-
-
-# test_is_users_first_issue()
 
 
 @timer_decorator
@@ -286,25 +247,6 @@ async def test_install_uninstall_install() -> None:
 
         assert users_data[1][0]["user_id"] == USER_ID
         assert users_data[1][0]["user_name"] == USER_NAME
-        # Check User Installation Record
-        users_data, _ = (
-            supabase_manager.client.table(table_name="user_installations")
-            .select("*")
-            .eq(column="user_id", value=USER_ID)
-            .eq(column="installation_id", value=INSTALLATION_ID)
-            .execute()
-        )
-
-        assert users_data[1][0]["user_id"] == USER_ID
-        assert users_data[1][0]["installation_id"] == INSTALLATION_ID
-        # Should be selected since it's the only user -> used for account selected in website
-        assert users_data[1][0]["is_selected"] is True
-        assert (
-            users_data[1][0]["first_issue"] is True
-        )  # first issue since hasn't had an issue
-        assert users_data[1][0]["is_user_assigned"] is False
-        assert users_data[1][0]["deleted_at"] is None
-        assert users_data[1][0]["deleted_by"] is None
 
         await handle_webhook_event(event_name="installation", payload=deleted_payload)
         # We're going to check the same things, except that installation should have uninstalled_at
@@ -343,25 +285,6 @@ async def test_install_uninstall_install() -> None:
 
         assert users_data[1][0]["user_id"] == USER_ID
         assert users_data[1][0]["user_name"] == USER_NAME
-        # Check User Installation Record
-        users_data, _ = (
-            supabase_manager.client.table(table_name="user_installations")
-            .select("*")
-            .eq(column="user_id", value=USER_ID)
-            .eq(column="installation_id", value=INSTALLATION_ID)
-            .execute()
-        )
-
-        assert users_data[1][0]["user_id"] == USER_ID
-        assert users_data[1][0]["installation_id"] == INSTALLATION_ID
-        # Should be selected since it's the only user -> used for account selected in website
-        assert users_data[1][0]["is_selected"] is True
-        assert (
-            users_data[1][0]["first_issue"] is True
-        )  # first issue since hasn't had an issue
-        assert users_data[1][0]["is_user_assigned"] is False
-        assert users_data[1][0]["deleted_at"] is None
-        assert users_data[1][0]["deleted_by"] is None
 
         await handle_webhook_event(
             event_name="installation", payload=new_installation_payload
@@ -401,25 +324,6 @@ async def test_install_uninstall_install() -> None:
 
         assert users_data[1][0]["user_id"] == USER_ID
         assert users_data[1][0]["user_name"] == USER_NAME
-        # Check User Installation Record
-        users_data, _ = (
-            supabase_manager.client.table(table_name="user_installations")
-            .select("*")
-            .eq(column="user_id", value=USER_ID)
-            .eq(column="installation_id", value=NEW_INSTALLATION_ID)
-            .execute()
-        )
-
-        assert users_data[1][0]["user_id"] == USER_ID
-        assert users_data[1][0]["installation_id"] == NEW_INSTALLATION_ID
-        # Should be selected since it's the only user -> used for account selected in website
-        assert users_data[1][0]["is_selected"] is True
-        assert (
-            users_data[1][0]["first_issue"] is True
-        )  # first issue since hasn't had an issue
-        assert users_data[1][0]["is_user_assigned"] is False
-        assert users_data[1][0]["deleted_at"] is None
-        assert users_data[1][0]["deleted_by"] is None
 
     # Clean Up
     wipe_installation_owner_user_data()

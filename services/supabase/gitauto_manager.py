@@ -83,11 +83,6 @@ class GitAutoAgentManager:
         users_manager = UsersManager(client=self.client)
         users_manager.upsert_user(user_id=user_id, user_name=user_name, email=email)
 
-        # Upsert user installation record
-        users_manager.upsert_user_installation(
-            user_id=user_id, installation_id=installation_id
-        )
-
     @handle_exceptions(default_return_value=None, raise_on_error=True)
     async def create_user_request(
         self,
@@ -128,9 +123,7 @@ class GitAutoAgentManager:
         # Upsert user
         users_manager = UsersManager(client=self.client)
         users_manager.upsert_user(user_id=user_id, user_name=user_name, email=email)
-        users_manager.upsert_user_installation(
-            user_id=user_id, installation_id=installation_id
-        )
+
         return data[1][0]["id"]
 
     @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -173,18 +166,16 @@ class GitAutoAgentManager:
 
     @handle_exceptions(default_return_value=False, raise_on_error=False)
     def is_users_first_issue(self, user_id: int, installation_id: int) -> bool:
-        """Checks if it's the users first issue"""
+        # Check if there are any completed usage records for this user and installation
         data, _ = (
-            self.client.table(table_name="user_installations")
+            self.client.table(table_name="usage")
             .select("*")
             .eq(column="user_id", value=user_id)
             .eq(column="installation_id", value=installation_id)
-            .eq(column="first_issue", value=True)
+            .eq(column="is_completed", value=True)
             .execute()
         )
-        if len(data[1]) > 0:
-            return True
-        return False
+        return len(data[1]) == 0
 
     @handle_exceptions(default_return_value=None, raise_on_error=False)
     def set_issue_to_merged(self, unique_issue_id: str) -> None:
@@ -192,15 +183,5 @@ class GitAutoAgentManager:
             self.client.table(table_name="issues")
             .update(json={"merged": True})
             .eq(column="unique_id", value=unique_issue_id)
-            .execute()
-        )
-
-    @handle_exceptions(default_return_value=None, raise_on_error=False)
-    def set_user_first_issue_to_false(self, user_id: int, installation_id: int) -> None:
-        (
-            self.client.table(table_name="user_installations")
-            .update(json={"first_issue": False})
-            .eq(column="user_id", value=user_id)
-            .eq(column="installation_id", value=installation_id)
             .execute()
         )
