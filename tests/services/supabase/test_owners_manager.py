@@ -27,6 +27,7 @@ def test_get_stripe_customer_id_with_none():
         [{"owner_id": 123456, "stripe_customer_id": None}]
     ).execute()
     result = get_stripe_customer_id(owner_id=123456)
+    supabase.table("owners").delete().eq("owner_id", 123456).execute()
     assert result is None
 
 
