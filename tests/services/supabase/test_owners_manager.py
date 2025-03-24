@@ -9,7 +9,7 @@ def setup_test_data():
         [{"owner_id": 4620828, "stripe_customer_id": "cus_RCZOxKQHsSk93v"}]
     ).execute()
     yield
-    supabase.table("owners").delete().neq("owner_id", 0).execute()
+    supabase.table("owners").delete().eq("owner_id", 4620828).execute()
 
 
 def test_get_stripe_customer_id_known_owner():
