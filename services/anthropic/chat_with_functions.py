@@ -3,11 +3,25 @@ import json
 from typing import Any
 
 # Local imports
-from anthropic import Anthropic
+from anthropic import Anthropic, AuthenticationError
+from anthropic._exceptions import OverloadedError
 from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 from config import ANTHROPIC_MODEL_ID_35, ANTHROPIC_API_KEY, TIMEOUT
 from services.openai.count_tokens import count_tokens
 from utils.handle_exceptions import handle_exceptions
+
+
+# Add this class at the top of the file
+class ClaudeOverloadedError(Exception):
+    """Raised when Claude API returns 529 Overloaded error"""
+
+    pass
+
+
+class ClaudeAuthenticationError(Exception):
+    """Raised when Claude API returns 401 Authentication error"""
+
+    pass
 
 
 def safe_get_attribute(obj: Any, attr: str, default: Any = None) -> Any:
@@ -130,15 +144,20 @@ def chat_with_claude(
 
     # Call the API
     # https://docs.anthropic.com/en/api/messages
-    response = client.messages.create(
-        model=model_id,
-        system=system_content,
-        messages=anthropic_messages,
-        tools=anthropic_tools,
-        max_tokens=8192,  # https://docs.anthropic.com/en/docs/about-claude/models/all-models
-        temperature=0.0,
-        timeout=TIMEOUT,
-    )
+    try:
+        response = client.messages.create(
+            model=model_id,
+            system=system_content,
+            messages=anthropic_messages,
+            tools=anthropic_tools,
+            max_tokens=8192,  # https://docs.anthropic.com/en/docs/about-claude/models/all-models
+            temperature=0.0,
+            timeout=TIMEOUT,
+        )
+    except OverloadedError as e:
+        raise ClaudeOverloadedError("Claude API is overloaded (529)") from e
+    except AuthenticationError as e:
+        raise ClaudeAuthenticationError("Claude API authentication failed (401)") from e
 
     # Calculate tokens (approximation using OpenAI's tokenizer)
     # Convert messages to dicts for token counting

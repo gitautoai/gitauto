@@ -4,7 +4,11 @@ from typing import Iterable, Literal, Dict, Any, List
 
 # Local imports
 from config import ANTHROPIC_MODEL_ID_35, ANTHROPIC_MODEL_ID_37, OPENAI_MODEL_ID_O3_MINI
-from services.anthropic.chat_with_functions import chat_with_claude
+from services.anthropic.chat_with_functions import (
+    chat_with_claude,
+    ClaudeOverloadedError,
+    ClaudeAuthenticationError,
+)
 from services.github.github_manager import update_comment
 from services.github.github_types import BaseArgs
 from services.openai.chat_with_functions import chat_with_openai
@@ -94,8 +98,10 @@ def chat_with_agent(
 
     # Get the appropriate model provider
     if model_id in (OPENAI_MODEL_ID_O3_MINI,):
+        print(f"Using OpenAI model: {model_id}")
         provider = chat_with_openai
     else:
+        print(f"Using Claude model: {model_id}")
         provider = chat_with_claude
 
     try:
@@ -112,6 +118,24 @@ def chat_with_agent(
             system_content=system_content,
             tools=tools,
             model_id=model_id,
+        )
+    except (ClaudeOverloadedError, ClaudeAuthenticationError) as e:
+        error_type = (
+            "overloaded (529)"
+            if isinstance(e, ClaudeOverloadedError)
+            else "authentication failed (401)"
+        )
+        msg = f"Claude API {error_type}, switching to OpenAI..."
+        print(colorize(msg, "yellow"))
+        return chat_with_agent(
+            messages=messages,
+            base_args=base_args,
+            mode=mode,
+            previous_calls=previous_calls,
+            recursion_count=recursion_count,
+            p=p,
+            model_id=OPENAI_MODEL_ID_O3_MINI,
+            log_messages=log_messages,
         )
     except Exception as e:  # pylint: disable=broad-except
         # Check if it's a rate limit error from Claude (429)
