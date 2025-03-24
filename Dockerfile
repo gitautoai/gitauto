@@ -9,6 +9,13 @@ COPY . ${LAMBDA_TASK_ROOT}
 RUN pip install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 RUN dnf install -y patch git
 
+# Install Node.js (including npm) and yarn
+# https://github.com/nodesource/distributions
+RUN dnf install -y curl
+RUN curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash - && \
+    dnf install -y nodejs && \
+    npm install -g yarn
+
 # Install cloc directly without adding the entire EPEL repository
 RUN curl -L https://github.com/AlDanial/cloc/releases/download/v1.98/cloc-1.98.pl -o /usr/local/bin/cloc && \
     chmod +x /usr/local/bin/cloc
