@@ -7,7 +7,7 @@ from typing import Any
 
 # Third-party imports
 import sentry_sdk
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from mangum import Mangum
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
@@ -93,7 +93,7 @@ async def root() -> dict[str, str]:
 
 
 @app.post(path="/api/repository/coverage")
-async def get_repository_coverage(request: Request):
+async def get_repository_coverage(request: Request, background_tasks: BackgroundTasks):
     data = await request.json()
     owner_id = data.get("owner_id")
     owner_name = data.get("owner_name")
@@ -105,10 +105,31 @@ async def get_repository_coverage(request: Request):
     if not all([owner_name, repo_name, installation_id]):
         raise HTTPException(status_code=400, detail="Missing required parameters")
 
+    # Start background task
+    background_tasks.add_task(
+        process_coverage_task,
+        owner_id=owner_id,
+        owner_name=owner_name,
+        repo_id=repo_id,
+        repo_name=repo_name,
+        installation_id=installation_id,
+        user_name=user_name,
+    )
+
+    return {"success": True}
+
+
+async def process_coverage_task(
+    owner_id: int,
+    owner_name: str,
+    repo_id: int,
+    repo_name: str,
+    installation_id: int,
+    user_name: str,
+):
     token = get_installation_access_token(installation_id=installation_id)
     if not token:
         raise HTTPException(status_code=401, detail="Failed to get installation token")
-
     temp_dir = tempfile.mkdtemp()
     try:
         clone_repo(owner=owner_name, repo=repo_name, token=token, target_dir=temp_dir)
@@ -123,6 +144,7 @@ async def get_repository_coverage(request: Request):
             primary_language=next(iter(languages)),
             user_name=user_name,
         )
-        return coverage
+    except Exception as e:  # pylint: disable=broad-except
+        raise HTTPException(status_code=500, detail=str(e)) from e
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
