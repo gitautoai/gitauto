@@ -58,3 +58,13 @@ def get_repository_stats(local_path: str) -> dict[str, Any]:
         "comment_lines": comment_lines,
         "code_lines": code_lines,
     }
+
+
+@handle_exceptions(default_return_value={}, raise_on_error=False)
+def get_repository_languages(owner: str, repo: str, token: str) -> dict[str, int]:
+    """https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-repository-languages"""
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/languages"
+    headers = create_headers(token=token)
+    response = get(url=url, headers=headers, timeout=TIMEOUT)
+    response.raise_for_status()
+    return response.json()

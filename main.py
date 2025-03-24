@@ -1,21 +1,30 @@
 # Standard imports
 import json
 import urllib.parse
+import shutil
+import tempfile
 from typing import Any
 
 # Third-party imports
 import sentry_sdk
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from mangum import Mangum
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
 from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME, SENTRY_DSN, UTF8
 from scheduler import schedule_handler
+from services.git.git_manager import clone_repo
 from services.gitauto_handler import handle_gitauto
-from services.github.github_manager import verify_webhook_signature
-from services.webhook_handler import handle_webhook_event
+from services.github.github_manager import (
+    verify_webhook_signature,
+    get_installation_access_token,
+)
+from services.github.repo_manager import get_repository_languages
 from services.jira.jira_manager import verify_jira_webhook
+from services.supabase.coverage_manager import create_or_update_coverages
+from services.testing.coverage_analyzer import calculate_test_coverage
+from services.webhook_handler import handle_webhook_event
 
 if ENV != "local":
     sentry_sdk.init(
@@ -81,3 +90,39 @@ async def handle_jira_webhook(request: Request):
 @app.get(path="/")
 async def root() -> dict[str, str]:
     return {"message": PRODUCT_NAME}
+
+
+@app.post(path="/api/repository/coverage")
+async def get_repository_coverage(request: Request):
+    data = await request.json()
+    owner_id = data.get("owner_id")
+    owner_name = data.get("owner_name")
+    repo_id = data.get("repo_id")
+    repo_name = data.get("repo_name")
+    installation_id = data.get("installation_id")
+    user_name = data.get("user_name")
+
+    if not all([owner_name, repo_name, installation_id]):
+        raise HTTPException(status_code=400, detail="Missing required parameters")
+
+    token = get_installation_access_token(installation_id=installation_id)
+    if not token:
+        raise HTTPException(status_code=401, detail="Failed to get installation token")
+
+    temp_dir = tempfile.mkdtemp()
+    try:
+        clone_repo(owner=owner_name, repo=repo_name, token=token, target_dir=temp_dir)
+        languages = get_repository_languages(
+            owner=owner_name, repo=repo_name, token=token
+        )
+        coverage = calculate_test_coverage(local_path=temp_dir, languages=languages)
+        create_or_update_coverages(
+            coverages_list=coverage,
+            owner_id=owner_id,
+            repo_id=repo_id,
+            primary_language=next(iter(languages)),
+            user_name=user_name,
+        )
+        return coverage
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
