@@ -3,7 +3,6 @@ from services.supabase.client import supabase
 from utils.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=True)
 def get_stripe_customer_id(owner_id: int):
     """https://supabase.com/docs/reference/python/select"""
     if not isinstance(owner_id, int) or owner_id <= 0:
