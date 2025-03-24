@@ -6,6 +6,8 @@ from utils.handle_exceptions import handle_exceptions
 @handle_exceptions(default_return_value=None, raise_on_error=True)
 def get_stripe_customer_id(owner_id: int):
     """https://supabase.com/docs/reference/python/select"""
+    if not isinstance(owner_id, int) or owner_id <= 0:
+        raise Exception("Invalid owner_id")
     data, _count = (
         supabase.table(table_name="owners")
         .select("stripe_customer_id")
