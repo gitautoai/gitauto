@@ -11,7 +11,6 @@ RUN dnf install -y patch git
 
 # Install Node.js (including npm) and yarn
 # https://github.com/nodesource/distributions
-RUN dnf install -y curl
 RUN curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash - && \
     dnf install -y nodejs && \
     npm install -g yarn
