@@ -84,6 +84,15 @@ STRIPE_FREE_TIER_PRICE_ID: str = get_env_var(name="STRIPE_FREE_TIER_PRICE_ID")
 STRIPE_PRODUCT_ID_FREE: str = get_env_var(name="STRIPE_PRODUCT_ID_FREE")
 STRIPE_PRODUCT_ID_STANDARD: str = get_env_var(name="STRIPE_PRODUCT_ID_STANDARD")
 
+# AWS SQS: https://us-west-1.console.aws.amazon.com/sqs/v3/home?region=us-west-1#/queues/https%3A%2F%2Fsqs.us-west-1.amazonaws.com%2F948023073771%2Fcoverage-analyzer
+# COVERAGE_QUEUE_NAME must be the same as the one in cloudformation.yml
+AWS_REGION = "us-west-1"
+AWS_ACCOUNT_ID = "948023073771"
+COVERAGE_QUEUE_NAME = "coverage-analyzer"
+COVERAGE_QUEUE_URL = (
+    f"https://sqs.{AWS_REGION}.amazonaws.com/{AWS_ACCOUNT_ID}/{COVERAGE_QUEUE_NAME}"
+)
+
 # General
 DEFAULT_TIME = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
 EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
