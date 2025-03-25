@@ -88,13 +88,14 @@ Resources:
     Properties:
       PolicyName: SQSAccess
       PolicyDocument:
-        Version: '2012-10-01'
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Action:
               - sqs:SendMessage
               - sqs:ReceiveMessage
               - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
             Resource: !GetAtt CoverageQueue.Arn
       Roles:
         - !Ref LambdaFunctionRole
@@ -102,6 +103,7 @@ Resources:
   # Add a SQS trigger to the Lambda function
   SQSTrigger:
     Type: AWS::Lambda::EventSourceMapping
+    DependsOn: SQSPolicy
     Properties:
       EventSourceArn: !GetAtt CoverageQueue.Arn
       FunctionName: !Ref LambdaFunctionName

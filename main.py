@@ -1,18 +1,27 @@
 # Standard imports
 import json
-import urllib.parse
 import shutil
 import tempfile
 from typing import Any
+import urllib.parse
 
 # Third-party imports
-import sentry_sdk
-from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
+import boto3
+from fastapi import FastAPI, Request, BackgroundTasks
 from mangum import Mangum
+import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
-from config import GITHUB_WEBHOOK_SECRET, ENV, PRODUCT_NAME, SENTRY_DSN, UTF8
+from config import (
+    COVERAGE_QUEUE_URL,
+    ENV,
+    GITHUB_WEBHOOK_SECRET,
+    IS_PRD,
+    PRODUCT_NAME,
+    SENTRY_DSN,
+    UTF8,
+)
 from scheduler import schedule_handler
 from services.git.git_manager import clone_repo
 from services.gitauto_handler import handle_gitauto
@@ -25,6 +34,7 @@ from services.jira.jira_manager import verify_jira_webhook
 from services.supabase.coverage_manager import create_or_update_coverages
 from services.testing.coverage_analyzer import calculate_test_coverage
 from services.webhook_handler import handle_webhook_event
+from utils.handle_exceptions import handle_exceptions
 
 if ENV != "local":
     sentry_sdk.init(
@@ -38,13 +48,26 @@ if ENV != "local":
 app = FastAPI()
 mangum_handler = Mangum(app=app, lifespan="off")
 
+# Create AWS SQS client
+sqs = boto3.client("sqs") if IS_PRD else None
+
 
 # Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 def handler(event, context):
+    # For coverage calculation request
+    if (
+        IS_PRD
+        and "Records" in event
+        and event["Records"][0].get("eventSource") == "aws:sqs"
+    ):
+        return coverage_handler(json.loads(event["Records"][0]["body"]))
+
+    # For scheduled event
     if "source" in event and event["source"] == "aws.events":
         schedule_handler(_event=event, _context=context)
         return {"statusCode": 200}
 
+    # For normal requests from GitHub
     return mangum_handler(event=event, context=context)
 
 
@@ -94,43 +117,30 @@ async def root() -> dict[str, str]:
 
 @app.post(path="/api/repository/coverage")
 async def get_repository_coverage(request: Request, background_tasks: BackgroundTasks):
+    print("Received request to get repository coverage")
     data = await request.json()
-    owner_id = data.get("owner_id")
-    owner_name = data.get("owner_name")
-    repo_id = data.get("repo_id")
-    repo_name = data.get("repo_name")
-    installation_id = data.get("installation_id")
-    user_name = data.get("user_name")
 
-    if not all([owner_name, repo_name, installation_id]):
-        raise HTTPException(status_code=400, detail="Missing required parameters")
+    if IS_PRD:
+        sqs.send_message(QueueUrl=COVERAGE_QUEUE_URL, MessageBody=json.dumps(data))
+        return {"success": True}
 
-    # Start background task
-    background_tasks.add_task(
-        process_coverage_task,
-        owner_id=owner_id,
-        owner_name=owner_name,
-        repo_id=repo_id,
-        repo_name=repo_name,
-        installation_id=installation_id,
-        user_name=user_name,
-    )
-
+    # For local environment
+    background_tasks.add_task(coverage_handler, data)
     return {"success": True}
 
 
-async def process_coverage_task(
-    owner_id: int,
-    owner_name: str,
-    repo_id: int,
-    repo_name: str,
-    installation_id: int,
-    user_name: str,
-):
+@handle_exceptions(raise_on_error=True)
+def coverage_handler(data: dict[str, str | int]):
+    owner_id = data["owner_id"]
+    owner_name = data["owner_name"]
+    repo_id = data["repo_id"]
+    repo_name = data["repo_name"]
+    installation_id = data["installation_id"]
+    user_name = data["user_name"]
+
     token = get_installation_access_token(installation_id=installation_id)
-    if not token:
-        raise HTTPException(status_code=401, detail="Failed to get installation token")
     temp_dir = tempfile.mkdtemp()
+
     try:
         clone_repo(owner=owner_name, repo=repo_name, token=token, target_dir=temp_dir)
         languages = get_repository_languages(
@@ -144,7 +154,7 @@ async def process_coverage_task(
             primary_language=next(iter(languages)),
             user_name=user_name,
         )
-    except Exception as e:  # pylint: disable=broad-except
-        raise HTTPException(status_code=500, detail=str(e)) from e
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
+
+    return {"success": True}
