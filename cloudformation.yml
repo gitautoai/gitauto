@@ -11,6 +11,9 @@ Parameters:
   LambdaFunctionArn:
     Type: String
     Description: ARN of the Lambda function to trigger
+  LambdaFunctionRole:
+    Type: String
+    Description: Role of the Lambda function
 
 Resources:
   # Lambda function is defined from AWS Console
@@ -70,3 +73,36 @@ Resources:
       Dimensions:
         - Name: FunctionName
           Value: !Ref LambdaFunctionName
+
+  # Create a SQS queue for coverage calculation
+  # SQS stands for Simple Queue Service
+  CoverageQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: coverage-analyzer
+      VisibilityTimeout: 900  # 15 minutes
+
+  # Add SQS permissions to the Lambda function
+  SQSPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: SQSAccess
+      PolicyDocument:
+        Version: '2012-10-01'
+        Statement:
+          - Effect: Allow
+            Action:
+              - sqs:SendMessage
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+            Resource: !GetAtt CoverageQueue.Arn
+      Roles:
+        - !Ref LambdaFunctionRole
+
+  # Add a SQS trigger to the Lambda function
+  SQSTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt CoverageQueue.Arn
+      FunctionName: !Ref LambdaFunctionName
+      Enabled: true
