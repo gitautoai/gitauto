@@ -9,7 +9,8 @@ DEFAULT_COVERAGES = {"statement": 0, "function": 0, "branch": 0, "path": 0}
 
 def run_command(local_path: str, command: str, env=None):
     return subprocess.run(
-        args=["yarn", "--cwd", local_path] + command.split(),
+        args=command.split(),
+        cwd=local_path,
         shell=False,  # MUST NOT USE SHELL since shell in Lambda doesn't handle node_modules and its dependencies path
         check=False,
         capture_output=True,
