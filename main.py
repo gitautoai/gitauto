@@ -126,6 +126,7 @@ async def get_repository_coverage(request: Request, background_tasks: Background
     data = await request.json()
 
     if IS_PRD:
+        # Call "handler()" again at another process
         print("Sending message to SQS")
         sqs.send_message(QueueUrl=COVERAGE_QUEUE_URL, MessageBody=json.dumps(data))
         print("Message sent to SQS")
