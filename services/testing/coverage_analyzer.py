@@ -22,14 +22,26 @@ def run_command(local_path: str, command: str, env=None, use_shell=True):
     )
 
 
-def run_js_command(local_path: str, command: str, env=None, use_shell=False):
+def setup_js_env(local_path: str, env=None) -> dict:
+    """Set up JavaScript environment with proper PATH"""
     if env is None:
         env = os.environ.copy()
 
-    # Add node_modules/.bin to PATH since AWS Lambda doesn't have it
-    env["PATH"] = f"{local_path}/node_modules/.bin:{env.get('PATH', '')}"
+    # Debug logs
+    print(f"Current PATH: {env.get('PATH', '')}")
+    print(
+        f"Checking if node_modules/.bin exists: {os.path.exists(f'{local_path}/node_modules/.bin')}"
+    )
+    if os.path.exists(f"{local_path}/node_modules/.bin"):
+        print(
+            f"Contents of node_modules/.bin: {os.listdir(f'{local_path}/node_modules/.bin')}"
+        )
 
-    return run_command(local_path, command, env, use_shell)
+    # Add node_modules/.bin to PATH
+    env["PATH"] = f"{local_path}/node_modules/.bin:{env.get('PATH', '')}"
+    print(f"Updated PATH: {env['PATH']}")
+
+    return env
 
 
 @handle_exceptions(default_return_value=DEFAULT_COVERAGES, raise_on_error=False)
@@ -165,30 +177,30 @@ def calculate_js_ts_coverage(local_path: str) -> list[dict]:
     ):
         run_command(local_path, "npm install -g yarn", use_shell=False)
 
+    # Set up JavaScript environment once
+    env = setup_js_env(local_path)
+
     # Install dependencies
     install_cmd = "yarn install" if pkg_manager == "yarn" else "npm install"
     print(f"Installing dependencies with `{install_cmd}`")
-    run_js_command(local_path, install_cmd, use_shell=False)
+    run_command(local_path, install_cmd, env=env, use_shell=False)
 
     # Build before running tests
     build_cmd = "yarn build" if pkg_manager == "yarn" else "npm run build"
     print(f"Building with `{build_cmd}`")
-    run_command(local_path, build_cmd, use_shell=False)
+    run_command(local_path, build_cmd, env=env, use_shell=False)
 
     # Run tests with coverage
-    # COLUMNS prevents output from being truncated
-    env = os.environ.copy()
-    env["COLUMNS"] = "500"
 
     test_cmd = f"{pkg_manager} test"
     print(f"Running tests with `{test_cmd}`")
-    result = run_js_command(local_path, test_cmd, env=env, use_shell=False)
+    result = run_command(local_path, test_cmd, env=env, use_shell=False)
 
     # If test script is not defined, try using jest directly
     if "no test specified" in result.stderr or "Missing script" in result.stderr:
         test_cmd = "yarn jest" if pkg_manager == "yarn" else "npx jest"
         print(f"Test script not found, trying: `{test_cmd}`")
-        result = run_js_command(
+        result = run_command(
             local_path, f"{test_cmd} --coverage --verbose", env=env, use_shell=False
         )
 
