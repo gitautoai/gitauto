@@ -7,11 +7,11 @@ from utils.handle_exceptions import handle_exceptions
 DEFAULT_COVERAGES = {"statement": 0, "function": 0, "branch": 0, "path": 0}
 
 
-def run_command(local_path: str, command: str, env=None):
+def run_command(local_path: str, command: str, env=None, use_shell=True):
     return subprocess.run(
-        args=command.split(),
+        args=command if use_shell else command.split(),
         cwd=local_path,
-        shell=False,  # MUST NOT USE SHELL since shell in Lambda doesn't handle node_modules and its dependencies path
+        shell=use_shell,
         check=False,
         capture_output=True,
         text=True,
@@ -22,11 +22,11 @@ def run_command(local_path: str, command: str, env=None):
 @handle_exceptions(default_return_value=DEFAULT_COVERAGES, raise_on_error=False)
 def calculate_python_coverage(local_path: str) -> dict[str, float]:
     # https://coverage.readthedocs.io/en/7.7.0/cmd.html#execution-coverage-run
-    run_command(local_path, "coverage run -m pytest")
+    run_command(local_path, "coverage run -m pytest", use_shell=False)
 
     # "-" is used to write to stdout
     # https://coverage.readthedocs.io/en/7.7.0/cmd.html#json-reporting-coverage-json
-    result = run_command(local_path, "coverage json -o -")
+    result = run_command(local_path, "coverage json -o -", use_shell=False)
 
     coverage_data = json.loads(result.stdout)
     print(f"coverage_data: {coverage_data}")
@@ -41,7 +41,7 @@ def calculate_python_coverage(local_path: str) -> dict[str, float]:
 
 @handle_exceptions(default_return_value="npm")
 def detect_package_manager(local_path: str) -> str:
-    package_json = run_command(local_path, "cat package.json").stdout
+    package_json = run_command(local_path, "cat package.json", use_shell=True).stdout
     if not package_json:
         return "npm"
 
@@ -51,7 +51,7 @@ def detect_package_manager(local_path: str) -> str:
 
     return (
         "yarn"
-        if run_command(local_path, "test -f yarn.lock").returncode == 0
+        if run_command(local_path, "test -f yarn.lock", use_shell=True).returncode == 0
         else "npm"
     )
 
@@ -146,18 +146,21 @@ def calculate_js_ts_coverage(local_path: str) -> list[dict]:
     # Detect "yarn" or "npm"
     print("Detecting package manager...")
     pkg_manager = detect_package_manager(local_path)
-    if pkg_manager == "yarn" and run_command(local_path, "which yarn").returncode != 0:
-        run_command(local_path, "npm install -g yarn")
+    if (
+        pkg_manager == "yarn"
+        and run_command(local_path, "which yarn", use_shell=True).returncode != 0
+    ):
+        run_command(local_path, "npm install -g yarn", use_shell=False)
 
     # Install dependencies
     install_cmd = "yarn install" if pkg_manager == "yarn" else "npm install"
     print(f"Installing dependencies with `{install_cmd}`")
-    run_command(local_path, install_cmd)
+    run_command(local_path, install_cmd, use_shell=False)
 
     # Build before running tests
     build_cmd = "yarn build" if pkg_manager == "yarn" else "npm run build"
     print(f"Building with `{build_cmd}`")
-    run_command(local_path, build_cmd)
+    run_command(local_path, build_cmd, use_shell=False)
 
     # Run tests with coverage
     # COLUMNS prevents output from being truncated
@@ -166,13 +169,15 @@ def calculate_js_ts_coverage(local_path: str) -> list[dict]:
 
     test_cmd = f"{pkg_manager} test"
     print(f"Running tests with `{test_cmd}`")
-    result = run_command(local_path, test_cmd, env=env)
+    result = run_command(local_path, test_cmd, env=env, use_shell=False)
 
     # If test script is not defined, try using jest directly
     if "no test specified" in result.stderr or "Missing script" in result.stderr:
         test_cmd = "yarn jest" if pkg_manager == "yarn" else "npx jest"
         print(f"Test script not found, trying: `{test_cmd}`")
-        result = run_command(local_path, f"{test_cmd} --coverage --verbose", env=env)
+        result = run_command(
+            local_path, f"{test_cmd} --coverage --verbose", env=env, use_shell=False
+        )
 
     result.stdout.split("\n")
 
