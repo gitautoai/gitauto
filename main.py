@@ -120,7 +120,7 @@ async def root() -> dict[str, str]:
     return {"message": PRODUCT_NAME}
 
 
-@app.post(path="/api/repository/coverage")
+@app.post(path="/coverage")
 async def get_repository_coverage(request: Request, background_tasks: BackgroundTasks):
     print("Received request to get repository coverage")
     data = await request.json()
