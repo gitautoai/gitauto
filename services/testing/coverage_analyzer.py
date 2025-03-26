@@ -186,9 +186,11 @@ def calculate_js_ts_coverage(local_path: str) -> list[dict]:
     print(f"Temp contents: {os.listdir('/tmp')}")
 
     # Install dependencies
-    install_cmd = "yarn install" if pkg_manager == "yarn" else "npm install"
+    install_cmd = (
+        "yarn install --verbose" if pkg_manager == "yarn" else "npm install --verbose"
+    )
     print(f"Installing dependencies with `{install_cmd}`")
-    result = run_command(local_path, install_cmd, use_shell=False)
+    result = run_command(local_path, install_cmd, use_shell=True)
 
     # Check post-install directory state
     print("Post-install directory state:")
@@ -197,6 +199,18 @@ def calculate_js_ts_coverage(local_path: str) -> list[dict]:
 
     if result.stdout:
         print(f"Install output: {result.stdout}")
+
+    # Check if node_modules is installed
+    find_cmd = "find /tmp -name 'node_modules' -type d 2>/dev/null || echo 'No node_modules found'"
+    node_modules = run_command("/", find_cmd, use_shell=True).stdout.strip()
+    print(f"Found node_modules directories: {node_modules}")
+
+    # Lambda environment info
+    print("\nLambda environment:")
+    # print(f"CPU info: {run_command('/', 'cat /proc/cpuinfo | grep 'model name' | head -1', use_shell=True).stdout}")
+    print(
+        f"Memory: {run_command('/', 'cat /proc/meminfo | grep MemTotal', use_shell=True).stdout}"
+    )
 
     # Set up JavaScript environment once
     env = setup_js_env(local_path)
