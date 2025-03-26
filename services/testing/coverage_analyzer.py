@@ -8,6 +8,9 @@ DEFAULT_COVERAGES = {"statement": 0, "function": 0, "branch": 0, "path": 0}
 
 
 def run_command(local_path: str, command: str, env=None, use_shell=True):
+    if env is None:
+        env = os.environ.copy()
+
     return subprocess.run(
         args=command if use_shell else command.split(),
         cwd=local_path,
@@ -17,6 +20,16 @@ def run_command(local_path: str, command: str, env=None, use_shell=True):
         text=True,
         env=env,
     )
+
+
+def run_js_command(local_path: str, command: str, env=None, use_shell=False):
+    if env is None:
+        env = os.environ.copy()
+
+    # Add node_modules/.bin to PATH since AWS Lambda doesn't have it
+    env["PATH"] = f"{local_path}/node_modules/.bin:{env.get('PATH', '')}"
+
+    return run_command(local_path, command, env, use_shell)
 
 
 @handle_exceptions(default_return_value=DEFAULT_COVERAGES, raise_on_error=False)
@@ -155,7 +168,7 @@ def calculate_js_ts_coverage(local_path: str) -> list[dict]:
     # Install dependencies
     install_cmd = "yarn install" if pkg_manager == "yarn" else "npm install"
     print(f"Installing dependencies with `{install_cmd}`")
-    run_command(local_path, install_cmd, use_shell=False)
+    run_js_command(local_path, install_cmd, use_shell=False)
 
     # Build before running tests
     build_cmd = "yarn build" if pkg_manager == "yarn" else "npm run build"
@@ -169,13 +182,13 @@ def calculate_js_ts_coverage(local_path: str) -> list[dict]:
 
     test_cmd = f"{pkg_manager} test"
     print(f"Running tests with `{test_cmd}`")
-    result = run_command(local_path, test_cmd, env=env, use_shell=False)
+    result = run_js_command(local_path, test_cmd, env=env, use_shell=False)
 
     # If test script is not defined, try using jest directly
     if "no test specified" in result.stderr or "Missing script" in result.stderr:
         test_cmd = "yarn jest" if pkg_manager == "yarn" else "npx jest"
         print(f"Test script not found, trying: `{test_cmd}`")
-        result = run_command(
+        result = run_js_command(
             local_path, f"{test_cmd} --coverage --verbose", env=env, use_shell=False
         )
 
