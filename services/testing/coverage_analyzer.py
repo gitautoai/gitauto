@@ -177,13 +177,29 @@ def calculate_js_ts_coverage(local_path: str) -> list[dict]:
     ):
         run_command(local_path, "npm install -g yarn", use_shell=False)
 
-    # Set up JavaScript environment once
-    env = setup_js_env(local_path)
+    # Check initial directory state
+    print("Initial directory state:")
+    print(f"Working directory: {os.getcwd()}")
+    print(f"Local path: {local_path}")
+    print(f"Local path contents: {os.listdir(local_path)}")
+    print(f"Root contents: {os.listdir('/')}")
+    print(f"Temp contents: {os.listdir('/tmp')}")
 
     # Install dependencies
     install_cmd = "yarn install" if pkg_manager == "yarn" else "npm install"
     print(f"Installing dependencies with `{install_cmd}`")
-    run_command(local_path, install_cmd, env=env, use_shell=False)
+    result = run_command(local_path, install_cmd, use_shell=False)
+
+    # Check post-install directory state
+    print("Post-install directory state:")
+    print(f"Local path contents: {os.listdir(local_path)}")
+    print(f"Temp contents: {os.listdir('/tmp')}")
+
+    if result.stdout:
+        print(f"Install output: {result.stdout}")
+
+    # Set up JavaScript environment once
+    env = setup_js_env(local_path)
 
     # Build before running tests
     build_cmd = "yarn build" if pkg_manager == "yarn" else "npm run build"
