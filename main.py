@@ -54,12 +54,16 @@ sqs = boto3.client("sqs") if IS_PRD else None
 
 # Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 def handler(event, context):
+    print("Entrypoint: handler called")
+    print(f"Event: {event}")
+
     # For coverage calculation request
     if (
         IS_PRD
         and "Records" in event
         and event["Records"][0].get("eventSource") == "aws:sqs"
     ):
+        print("Entrypoint: coverage handler called")
         return coverage_handler(json.loads(event["Records"][0]["body"]))
 
     # For scheduled event
@@ -67,7 +71,8 @@ def handler(event, context):
         schedule_handler(_event=event, _context=context)
         return {"statusCode": 200}
 
-    # For normal requests from GitHub
+    # mangum_handler converts requests from API Gateway to FastAPI routing system
+    print("Entrypoint: mangum_handler called")
     return mangum_handler(event=event, context=context)
 
 
@@ -121,16 +126,21 @@ async def get_repository_coverage(request: Request, background_tasks: Background
     data = await request.json()
 
     if IS_PRD:
+        print("Sending message to SQS")
         sqs.send_message(QueueUrl=COVERAGE_QUEUE_URL, MessageBody=json.dumps(data))
+        print("Message sent to SQS")
         return {"success": True}
 
     # For local environment
+    print("Adding task to background tasks")
     background_tasks.add_task(coverage_handler, data)
+    print("Task added to background tasks")
     return {"success": True}
 
 
 @handle_exceptions(raise_on_error=True)
 def coverage_handler(data: dict[str, str | int]):
+    print("Starting coverage handler")
     owner_id = data["owner_id"]
     owner_name = data["owner_name"]
     repo_id = data["repo_id"]
@@ -142,11 +152,21 @@ def coverage_handler(data: dict[str, str | int]):
     temp_dir = tempfile.mkdtemp()
 
     try:
+        print("Cloning repository")
         clone_repo(owner=owner_name, repo=repo_name, token=token, target_dir=temp_dir)
+        print("Cloned repository")
+
+        print("Getting repository languages")
         languages = get_repository_languages(
             owner=owner_name, repo=repo_name, token=token
         )
+        print("Got repository languages")
+
+        print("Calculating test coverage")
         coverage = calculate_test_coverage(local_path=temp_dir, languages=languages)
+        print("Calculated test coverage")
+
+        print("Creating or updating coverages")
         create_or_update_coverages(
             coverages_list=coverage,
             owner_id=owner_id,
@@ -154,7 +174,10 @@ def coverage_handler(data: dict[str, str | int]):
             primary_language=next(iter(languages)),
             user_name=user_name,
         )
+        print("Created or updated coverages")
     finally:
+        print("Removing temporary directory")
         shutil.rmtree(temp_dir, ignore_errors=True)
+        print("Removed temporary directory")
 
     return {"success": True}
