@@ -54,16 +54,13 @@ sqs = boto3.client("sqs") if IS_PRD else None
 
 # Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 def handler(event, context):
-    print("Entrypoint: handler called")
-    print(f"Event: {event}")
-
     # For coverage calculation request
     if (
         IS_PRD
         and "Records" in event
         and event["Records"][0].get("eventSource") == "aws:sqs"
     ):
-        print("Entrypoint: coverage handler called")
+        print("Amazon SQS calling coverage handler")
         return coverage_handler(json.loads(event["Records"][0]["body"]))
 
     # For scheduled event
@@ -72,7 +69,6 @@ def handler(event, context):
         return {"statusCode": 200}
 
     # mangum_handler converts requests from API Gateway to FastAPI routing system
-    print("Entrypoint: mangum_handler called")
     return mangum_handler(event=event, context=context)
 
 
