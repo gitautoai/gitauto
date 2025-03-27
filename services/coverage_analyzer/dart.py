@@ -10,9 +10,21 @@ from utils.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
 def calculate_dart_coverage(local_path: str):
+    # Create a writable cache directory for Flutter
+    os.makedirs("/tmp/flutter/bin/cache", exist_ok=True)
+
+    # Set environment variables for Flutter
+    env = os.environ.copy()
+    env["PUB_CACHE"] = "/tmp/.pub-cache"
+    env["FLUTTER_ROOT"] = "/tmp/flutter"
+    env["HOME"] = "/tmp"
+
     print("\nRunning `flutter test --coverage`")
     result = run_command(
-        cwd=local_path, command="flutter test --coverage", use_shell=False
+        cwd=local_path,
+        command="flutter test --coverage",
+        use_shell=False,
+        env=env,
     )
     print(f"Flutter test result stdout:\n{result.stdout}")
 

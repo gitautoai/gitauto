@@ -16,9 +16,9 @@ RUN curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash - && \
     npm install -g yarn
 
 # Install Flutter (minimal installation for testing only)
-RUN git clone --depth 1 https://github.com/flutter/flutter.git -b stable /opt/flutter && \
-    ln -s /opt/flutter/bin/flutter /usr/local/bin/flutter && \
-    ln -s /opt/flutter/bin/dart /usr/local/bin/dart
+RUN git clone --depth 1 https://github.com/flutter/flutter.git -b stable /tmp/flutter && \
+    ln -s /tmp/flutter/bin/flutter /usr/local/bin/flutter && \
+    ln -s /tmp/flutter/bin/dart /usr/local/bin/dart
 
 # Install cloc directly without adding the entire EPEL repository
 RUN curl -L https://github.com/AlDanial/cloc/releases/download/v1.98/cloc-1.98.pl -o /usr/local/bin/cloc && \

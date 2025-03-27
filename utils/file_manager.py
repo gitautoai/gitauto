@@ -146,7 +146,7 @@ def get_file_content(file_path: str) -> str:
         return file.read()
 
 
-def run_command(command: str, cwd: str, use_shell: bool = True):
+def run_command(command: str, cwd: str, use_shell: bool = True, env: dict = None):
     try:
         # Split command into list if not using shell
         command_args = command if use_shell else command.split()
@@ -157,6 +157,7 @@ def run_command(command: str, cwd: str, use_shell: bool = True):
             cwd=cwd,
             text=True,
             shell=use_shell,
+            env=env,
         )
         return result
     except subprocess.CalledProcessError as e:
