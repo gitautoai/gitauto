@@ -12,12 +12,11 @@ from utils.handle_exceptions import handle_exceptions
 def calculate_dart_coverage(local_path: str):
     # Set environment variables for Flutter
     env = os.environ.copy()
-    env["PATH"] = f"/tmp/flutter/bin:/usr/local/bin:{env.get('PATH', '')}"
+    env["PATH"] = f"/usr/local/flutter/bin:{env.get('PATH', '')}"
 
     # Debug: Print current PATH and check Flutter binary
     print(f"\nCurrent PATH: {env['PATH']}")
-    print(f"Flutter binary exists: {os.path.exists('/tmp/flutter/bin/flutter')}")
-    print(f"Flutter binary exists: {os.path.exists('/usr/local/bin/flutter')}")
+    print(f"Flutter binary exists: {os.path.exists('/usr/local/flutter/bin/flutter')}")
 
     # Run flutter test command
     print("\nRunning `flutter test --coverage`")
