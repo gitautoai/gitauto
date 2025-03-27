@@ -23,6 +23,7 @@ from config import (
     UTF8,
 )
 from scheduler import schedule_handler
+from services.coverage_analyzer.coverage_analyzer import calculate_test_coverage
 from services.git.git_manager import clone_repo
 from services.gitauto_handler import handle_gitauto
 from services.github.github_manager import (
@@ -32,9 +33,9 @@ from services.github.github_manager import (
 from services.github.repo_manager import get_repository_languages
 from services.jira.jira_manager import verify_jira_webhook
 from services.supabase.coverage_manager import create_or_update_coverages
-from services.testing.coverage_analyzer import calculate_test_coverage
 from services.webhook_handler import handle_webhook_event
 from utils.handle_exceptions import handle_exceptions
+from utils.resource_monitor import get_resource_usage
 
 if ENV != "local":
     sentry_sdk.init(
@@ -138,6 +139,8 @@ async def get_repository_coverage(request: Request, background_tasks: Background
 @handle_exceptions(raise_on_error=True)
 def coverage_handler(data: dict[str, str | int]):
     print("Starting coverage handler")
+    print("Initial resource usage:", get_resource_usage())
+
     owner_id = data["owner_id"]
     owner_name = data["owner_name"]
     repo_id = data["repo_id"]
@@ -151,19 +154,19 @@ def coverage_handler(data: dict[str, str | int]):
     try:
         print("Cloning repository")
         clone_repo(owner=owner_name, repo=repo_name, token=token, target_dir=temp_dir)
-        print("Cloned repository")
+        print("Resource usage after clone:", get_resource_usage(temp_dir))
 
-        print("Getting repository languages")
+        print("\nGetting repository languages")
         languages = get_repository_languages(
             owner=owner_name, repo=repo_name, token=token
         )
-        print("Got repository languages")
+        print(f"Got repository languages: {languages}")
 
-        print("Calculating test coverage")
+        print("\nCalculating test coverage")
         coverage = calculate_test_coverage(local_path=temp_dir, languages=languages)
-        print("Calculated test coverage")
+        print("Resource usage after coverage calc:", get_resource_usage(temp_dir))
 
-        print("Creating or updating coverages")
+        print("\nCreating or updating coverages")
         create_or_update_coverages(
             coverages_list=coverage,
             owner_id=owner_id,
@@ -173,7 +176,7 @@ def coverage_handler(data: dict[str, str | int]):
         )
         print("Created or updated coverages")
     finally:
-        print("Removing temporary directory")
+        print("\nRemoving temporary directory")
         shutil.rmtree(temp_dir, ignore_errors=True)
         print("Removed temporary directory")
 

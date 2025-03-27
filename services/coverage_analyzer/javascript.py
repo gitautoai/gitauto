@@ -1,72 +1,16 @@
 import json
 import os
 import re
-import subprocess
+from services.coverage_analyzer.types import CoverageReport
+from utils.file_manager import run_command
 from utils.handle_exceptions import handle_exceptions
-
-DEFAULT_COVERAGES = {"statement": 0, "function": 0, "branch": 0, "path": 0}
-
-
-def run_command(local_path: str, command: str, env=None, use_shell=True):
-    if env is None:
-        env = os.environ.copy()
-
-    return subprocess.run(
-        args=command if use_shell else command.split(),
-        cwd=local_path,
-        shell=use_shell,
-        check=False,
-        capture_output=True,
-        text=True,
-        env=env,
-    )
-
-
-def setup_js_env(local_path: str, env=None) -> dict:
-    """Set up JavaScript environment with proper PATH"""
-    if env is None:
-        env = os.environ.copy()
-
-    # Debug logs
-    print(f"Current PATH: {env.get('PATH', '')}")
-    print(
-        f"Checking if node_modules/.bin exists: {os.path.exists(f'{local_path}/node_modules/.bin')}"
-    )
-    if os.path.exists(f"{local_path}/node_modules/.bin"):
-        print(
-            f"Contents of node_modules/.bin: {os.listdir(f'{local_path}/node_modules/.bin')}"
-        )
-
-    # Add node_modules/.bin to PATH
-    env["PATH"] = f"{local_path}/node_modules/.bin:{env.get('PATH', '')}"
-    print(f"Updated PATH: {env['PATH']}")
-
-    return env
-
-
-@handle_exceptions(default_return_value=DEFAULT_COVERAGES, raise_on_error=False)
-def calculate_python_coverage(local_path: str) -> dict[str, float]:
-    # https://coverage.readthedocs.io/en/7.7.0/cmd.html#execution-coverage-run
-    run_command(local_path, "coverage run -m pytest", use_shell=False)
-
-    # "-" is used to write to stdout
-    # https://coverage.readthedocs.io/en/7.7.0/cmd.html#json-reporting-coverage-json
-    result = run_command(local_path, "coverage json -o -", use_shell=False)
-
-    coverage_data = json.loads(result.stdout)
-    print(f"coverage_data: {coverage_data}")
-    totals = coverage_data.get("totals", {})
-    return {
-        "statement": totals.get("percent_covered", 0),
-        "branch": totals.get("percent_covered_branches", 0),
-        "function": totals.get("percent_covered_functions", 0),
-        "path": 0,
-    }
 
 
 @handle_exceptions(default_return_value="npm")
 def detect_package_manager(local_path: str) -> str:
-    package_json = run_command(local_path, "cat package.json", use_shell=True).stdout
+    package_json = run_command(
+        cwd=local_path, command="cat package.json", use_shell=True
+    ).stdout
     if not package_json:
         return "npm"
 
@@ -76,7 +20,10 @@ def detect_package_manager(local_path: str) -> str:
 
     return (
         "yarn"
-        if run_command(local_path, "test -f yarn.lock", use_shell=True).returncode == 0
+        if run_command(
+            cwd=local_path, command="test -f yarn.lock", use_shell=True
+        ).returncode
+        == 0
         else "npm"
     )
 
@@ -88,7 +35,8 @@ def strip_ansi(text: str) -> str:
 
 
 def parse_coverage_report(output: str):
-    reports = []
+    """Parse coverage report and return a list of standardized coverage data."""
+    reports: list[CoverageReport] = []
     current_package = None
     current_path = ""
 
@@ -166,16 +114,17 @@ def parse_coverage_report(output: str):
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def calculate_js_ts_coverage(local_path: str) -> list[dict]:
+def calculate_js_ts_coverage(local_path: str):
     """https://jestjs.io/docs/cli#--coverageboolean"""
     # Detect "yarn" or "npm"
     print("Detecting package manager...")
     pkg_manager = detect_package_manager(local_path)
     if (
         pkg_manager == "yarn"
-        and run_command(local_path, "which yarn", use_shell=True).returncode != 0
+        and run_command(cwd=local_path, command="which yarn", use_shell=True).returncode
+        != 0
     ):
-        run_command(local_path, "npm install -g yarn", use_shell=False)
+        run_command(cwd=local_path, command="npm install -g yarn", use_shell=False)
 
     # Check initial directory state
     print("Initial directory state:")
@@ -190,7 +139,7 @@ def calculate_js_ts_coverage(local_path: str) -> list[dict]:
         "yarn install --verbose" if pkg_manager == "yarn" else "npm install --verbose"
     )
     print(f"Installing dependencies with `{install_cmd}`")
-    result = run_command(local_path, install_cmd, use_shell=True)
+    result = run_command(cwd=local_path, command=install_cmd, use_shell=True)
 
     # Check post-install directory state
     print("Post-install directory state:")
@@ -202,36 +151,32 @@ def calculate_js_ts_coverage(local_path: str) -> list[dict]:
 
     # Check if node_modules is installed
     find_cmd = "find /tmp -name 'node_modules' -type d 2>/dev/null || echo 'No node_modules found'"
-    node_modules = run_command("/", find_cmd, use_shell=True).stdout.strip()
+    node_modules = run_command(cwd="/", command=find_cmd, use_shell=True).stdout.strip()
     print(f"Found node_modules directories: {node_modules}")
 
     # Lambda environment info
     print("\nLambda environment:")
-    # print(f"CPU info: {run_command('/', 'cat /proc/cpuinfo | grep 'model name' | head -1', use_shell=True).stdout}")
     print(
-        f"Memory: {run_command('/', 'cat /proc/meminfo | grep MemTotal', use_shell=True).stdout}"
+        f"Memory: {run_command(cwd="/", command="cat /proc/meminfo | grep MemTotal", use_shell=True).stdout}"
     )
-
-    # Set up JavaScript environment once
-    env = setup_js_env(local_path)
 
     # Build before running tests
     build_cmd = "yarn build" if pkg_manager == "yarn" else "npm run build"
     print(f"Building with `{build_cmd}`")
-    run_command(local_path, build_cmd, env=env, use_shell=False)
+    run_command(cwd=local_path, command=build_cmd, use_shell=False)
 
     # Run tests with coverage
 
     test_cmd = f"{pkg_manager} test"
     print(f"Running tests with `{test_cmd}`")
-    result = run_command(local_path, test_cmd, env=env, use_shell=False)
+    result = run_command(cwd=local_path, command=test_cmd, use_shell=False)
 
     # If test script is not defined, try using jest directly
     if "no test specified" in result.stderr or "Missing script" in result.stderr:
         test_cmd = "yarn jest" if pkg_manager == "yarn" else "npx jest"
         print(f"Test script not found, trying: `{test_cmd}`")
         result = run_command(
-            local_path, f"{test_cmd} --coverage --verbose", env=env, use_shell=False
+            cwd=local_path, command=f"{test_cmd} --coverage --verbose", use_shell=False
         )
 
     result.stdout.split("\n")
@@ -248,24 +193,3 @@ def calculate_js_ts_coverage(local_path: str) -> list[dict]:
 
     reports = parse_coverage_report(result.stdout)
     return reports
-
-
-@handle_exceptions(
-    default_return_value={"primary_language": None, **DEFAULT_COVERAGES},
-    raise_on_error=False,
-)
-def calculate_test_coverage(local_path: str, languages: dict[str, int]):
-    if not languages:
-        return {"primary_language": None, **DEFAULT_COVERAGES}
-
-    primary_language = max(languages.items(), key=lambda x: x[1])[0].lower()
-    coverage = DEFAULT_COVERAGES.copy()
-
-    if primary_language == "python":
-        coverage = calculate_python_coverage(local_path)
-    elif primary_language in ["javascript", "typescript"]:
-        coverage = calculate_js_ts_coverage(local_path)
-    # elif primary_language == "java":
-    #     coverage = calculate_java_coverage(local_path)
-
-    return coverage

@@ -99,7 +99,10 @@ def apply_patch(original_text: str, diff_text: str):
         modified_text = get_file_content(file_path=org_fname)
         modified_text = modified_text.replace("\n", line_break)
         diff_text = (
-            get_file_content(file_path=diff_fname).replace(" ", "·").replace("\t", "→").replace("\\t", "→")
+            get_file_content(file_path=diff_fname)
+            .replace(" ", "·")
+            .replace("\t", "→")
+            .replace("\\t", "→")
         )
         rej_f_name: str = f"{org_fname}.rej"
         rej_text = ""
@@ -143,33 +146,18 @@ def get_file_content(file_path: str) -> str:
         return file.read()
 
 
-def run_command(command: str, cwd: str) -> str:
+def run_command(command: str, cwd: str, use_shell: bool = True):
     try:
-        result: subprocess.CompletedProcess[str] = subprocess.run(
-            args=command,
+        # Split command into list if not using shell
+        command_args = command if use_shell else command.split()
+        result = subprocess.run(
+            args=command_args,
             capture_output=True,
             check=True,
             cwd=cwd,
             text=True,
-            shell=True,
+            shell=use_shell,
         )
-        return result.stdout
+        return result
     except subprocess.CalledProcessError as e:
-        # 127: Command not found so check if Git is installed
-        if e.returncode == 127:
-            try:
-                # Check if Git is installed
-                version_result = subprocess.run(
-                    args="git --version",
-                    capture_output=True,
-                    check=True,
-                    text=True,
-                    shell=True,
-                )
-                print(f"Git version: {version_result.stdout}", end="")
-                # logging.info("Git version: %s", version_result.stdout)
-            except subprocess.CalledProcessError as ve:
-                print(f"Failed to get Git version: {ve.stderr}", end="")
-                # logging.error("Failed to get Git version: %s", ve.stderr)
-
         raise ValueError(f"Command failed: {e.stderr}") from e
