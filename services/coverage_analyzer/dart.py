@@ -19,15 +19,6 @@ def calculate_dart_coverage(local_path: str):
     env["FLUTTER_ROOT"] = "/tmp/flutter"
     env["HOME"] = "/tmp"
 
-    # Log Flutter location
-    which_result = run_command(
-        cwd=local_path,
-        command="which flutter",
-        use_shell=True,
-        env=env,
-    )
-    print(f"\nFlutter binary location: {which_result.stdout}")
-
     print("\nRunning `flutter test --coverage`")
     result = run_command(
         cwd=local_path,
@@ -56,14 +47,14 @@ def calculate_dart_coverage(local_path: str):
     # Parse lcov.info
     lcov_path = os.path.join(coverage_dir, "lcov.info")
     if os.path.exists(lcov_path):
-        return parse_lcov_coverage(lcov_path, local_path)
+        return parse_lcov_coverage(lcov_path)
 
     print("No coverage report files found")
     return []
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def parse_lcov_coverage(lcov_path: str, local_path: str):
+def parse_lcov_coverage(lcov_path: str):
     stats_template = {
         "lines_total": 0,
         "lines_covered": 0,
