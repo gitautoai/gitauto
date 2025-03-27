@@ -21,6 +21,9 @@ RUN dnf install -y unzip findutils which tar
 # Install Flutter
 RUN git clone --depth 1 https://github.com/flutter/flutter.git -b stable /usr/local/flutter
 
+# Configure Git security
+RUN git config --global --add safe.directory /usr/local/flutter
+
 # Initialize Flutter
 RUN export PATH="$PATH:/usr/local/flutter/bin" \
     && flutter precache \
