@@ -13,19 +13,12 @@ def calculate_dart_coverage(local_path: str):
     # Set environment variables for Flutter
     env = os.environ.copy()
     env["PATH"] = f"/usr/local/flutter/bin:{env.get('PATH', '')}"
-    env["HOME"] = "/root"  # for git config
-    print(f"\nCurrent PATH: {env['PATH']}")
 
-    # Configure Git security to avoid "fatal: detected dubious ownership in repository at '/usr/local/flutter'"
-    print("Configuring Git security")
-    run_command(
-        command="git config --global --add safe.directory /usr/local/flutter",
-        cwd="/",
-        use_shell=True,
-        env=env,
-    )
+    # Set Git environment variables to bypass directory ownership checks
+    env["GIT_EXEC_PATH"] = "."  # Prevents git from checking repository ownership
 
     # Debug: Print current PATH and check Flutter binary
+    print(f"\nCurrent PATH: {env['PATH']}")
     print(f"Flutter binary exists: {os.path.exists('/usr/local/flutter/bin/flutter')}")
 
     # Run flutter test command
