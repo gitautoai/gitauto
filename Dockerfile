@@ -18,9 +18,9 @@ RUN curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash - && \
 # Install Flutter (minimal installation for testing only)
 RUN dnf install -y unzip findutils which tar
 
-# Install Flutter and move ownership from root to lambda_user
+# Install Flutter and set permissions for Lambda runtime
 RUN git clone --depth 1 https://github.com/flutter/flutter.git -b stable /usr/local/flutter && \
-    chown -R lambda_user:lambda_user /usr/local/flutter
+    chmod -R 755 /usr/local/flutter
 
 # Initialize Flutter
 RUN export PATH="$PATH:/usr/local/flutter/bin" \
