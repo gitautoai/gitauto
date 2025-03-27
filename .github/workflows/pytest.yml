@@ -2,8 +2,8 @@ name: PyTest Workflow
 
 on:
   push:
-    branches:
-      - '!main'
+    branches-ignore:
+      - 'main'
   workflow_dispatch:
 
 permissions:
