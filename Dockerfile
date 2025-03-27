@@ -15,10 +15,10 @@ RUN curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash - && \
     dnf install -y nodejs && \
     npm install -g yarn
 
-# Install Flutter (minimal installation for testing only)
-RUN dnf install -y unzip findutils which tar
+# Install necessary packages to install Flutter
+RUN dnf install -y unzip findutils which tar xz
 
-# Install Flutter using archive
+# Install Flutter using archive instead of git clone
 RUN curl -L https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.19.3-stable.tar.xz -o flutter.tar.xz && \
     tar xf flutter.tar.xz -C /usr/local && \
     rm flutter.tar.xz && \
