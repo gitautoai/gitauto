@@ -19,6 +19,20 @@ def calculate_dart_coverage(local_path: str):
     env["FLUTTER_ROOT"] = "/tmp/flutter"
     env["HOME"] = "/tmp"
 
+    # Debug: Print current PATH and check Flutter binary
+    print(f"\nCurrent PATH: {env.get('PATH', 'Not set')}")
+    print(f"Flutter binary exists: {os.path.exists('/tmp/flutter/bin/flutter')}")
+    print(f"Flutter binary exists: {os.path.exists('/usr/local/bin/flutter')}")
+
+    # List contents of relevant directories
+    print("\nContents of /tmp/flutter/bin:")
+    if os.path.exists("/tmp/flutter/bin"):
+        print(os.listdir("/tmp/flutter/bin"))
+
+    print("\nContents of /usr/local/bin:")
+    if os.path.exists("/usr/local/bin"):
+        print(os.listdir("/usr/local/bin"))
+
     print("\nRunning `flutter test --coverage`")
     result = run_command(
         cwd=local_path,
