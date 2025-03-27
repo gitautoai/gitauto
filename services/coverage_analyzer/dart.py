@@ -19,11 +19,20 @@ def calculate_dart_coverage(local_path: str):
     env["FLUTTER_ROOT"] = "/tmp/flutter"
     env["HOME"] = "/tmp"
 
+    # Log Flutter location
+    which_result = run_command(
+        cwd=local_path,
+        command="which flutter",
+        use_shell=True,
+        env=env,
+    )
+    print(f"\nFlutter binary location: {which_result.stdout}")
+
     print("\nRunning `flutter test --coverage`")
     result = run_command(
         cwd=local_path,
         command="flutter test --coverage",
-        use_shell=False,
+        use_shell=True,
         env=env,
     )
     print(f"Flutter test result stdout:\n{result.stdout}")
