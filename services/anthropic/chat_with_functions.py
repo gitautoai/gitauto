@@ -15,13 +15,9 @@ from utils.handle_exceptions import handle_exceptions
 class ClaudeOverloadedError(Exception):
     """Raised when Claude API returns 529 Overloaded error"""
 
-    pass
-
 
 class ClaudeAuthenticationError(Exception):
     """Raised when Claude API returns 401 Authentication error"""
-
-    pass
 
 
 def safe_get_attribute(obj: Any, attr: str, default: Any = None) -> Any:
