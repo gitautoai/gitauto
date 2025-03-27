@@ -16,7 +16,7 @@ RUN curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash - && \
     npm install -g yarn
 
 # Install Flutter (minimal installation for testing only)
-RUN dnf install -y unzip && \
+RUN dnf install -y unzip findutils && \
     git clone --depth 1 https://github.com/flutter/flutter.git -b stable /tmp/flutter && \
     export PATH="$PATH:/tmp/flutter/bin" && \
     flutter precache && \
