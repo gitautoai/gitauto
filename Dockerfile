@@ -16,16 +16,11 @@ RUN curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash - && \
     npm install -g yarn
 
 # Install Flutter (minimal installation for testing only)
-RUN dnf install -y unzip shadow-utils && \
+RUN dnf install -y unzip && \
     git clone --depth 1 https://github.com/flutter/flutter.git -b stable /tmp/flutter && \
-    ln -s /tmp/flutter/bin/flutter /usr/local/bin/flutter && \
-    ln -s /tmp/flutter/bin/dart /usr/local/bin/dart && \
-    # Create non-root user for Flutter
-    useradd -m flutteruser && \
-    chown -R flutteruser:flutteruser /tmp/flutter && \
-    # Run Flutter commands as non-root user
-    su flutteruser -c "/tmp/flutter/bin/flutter precache" && \
-    su flutteruser -c "/tmp/flutter/bin/flutter doctor"
+    export PATH="$PATH:/tmp/flutter/bin" && \
+    flutter precache && \
+    flutter doctor
 
 # Install cloc directly without adding the entire EPEL repository
 RUN curl -L https://github.com/AlDanial/cloc/releases/download/v1.98/cloc-1.98.pl -o /usr/local/bin/cloc && \

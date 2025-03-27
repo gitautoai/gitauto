@@ -10,29 +10,11 @@ from utils.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
 def calculate_dart_coverage(local_path: str):
-    # Create a writable cache directory for Flutter
-    os.makedirs("/tmp/flutter/bin/cache", exist_ok=True)
-
     # Set environment variables for Flutter
     env = os.environ.copy()
-    env["PUB_CACHE"] = "/tmp/.pub-cache"
-    env["FLUTTER_ROOT"] = "/tmp/flutter"
-    env["HOME"] = "/tmp"
+    env["PATH"] = f"/tmp/flutter/bin:{env.get('PATH', '')}"
 
-    # Debug: Print current PATH and check Flutter binary
-    print(f"\nCurrent PATH: {env.get('PATH', 'Not set')}")
-    print(f"Flutter binary exists: {os.path.exists('/tmp/flutter/bin/flutter')}")
-    print(f"Flutter binary exists: {os.path.exists('/usr/local/bin/flutter')}")
-
-    # List contents of relevant directories
-    print("\nContents of /tmp/flutter/bin:")
-    if os.path.exists("/tmp/flutter/bin"):
-        print(os.listdir("/tmp/flutter/bin"))
-
-    print("\nContents of /usr/local/bin:")
-    if os.path.exists("/usr/local/bin"):
-        print(os.listdir("/usr/local/bin"))
-
+    # Run flutter test command
     print("\nRunning `flutter test --coverage`")
     result = run_command(
         cwd=local_path,
@@ -52,11 +34,6 @@ def calculate_dart_coverage(local_path: str):
     if not os.path.exists(coverage_dir):
         print(f"No coverage directory found at {coverage_dir}")
         return []
-
-    # List all files in coverage directory
-    print("Coverage directory contents:")
-    for file in os.listdir(coverage_dir):
-        print(f"- {file}")
 
     # Parse lcov.info
     lcov_path = os.path.join(coverage_dir, "lcov.info")
