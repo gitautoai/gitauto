@@ -18,11 +18,16 @@ def calculate_dart_coverage(local_path: str):
     tmp_space = os.popen("df -h /tmp").read()
     print(f"Available space in /tmp:\n{tmp_space}")
 
-    # Set up Flutter in /tmp
+    # Set up Flutter in /tmp with Git repository
     tmp_flutter = "/tmp/flutter"
     print(f"\nCopying Flutter to {tmp_flutter}")
     os.makedirs(tmp_flutter, exist_ok=True)
-    os.system(f"cp -r /usr/local/flutter/* {tmp_flutter}/")
+
+    # Use cp -a to preserve Git repository attributes (. = * + hidden files)
+    os.system(f"cp -a /usr/local/flutter/. {tmp_flutter}/")
+
+    # Reinitialize Git configuration
+    os.system(f"git config --system --add safe.directory {tmp_flutter}")
 
     # Set environment variables for Flutter
     env = os.environ.copy()
