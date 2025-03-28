@@ -10,6 +10,14 @@ from utils.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
 def calculate_dart_coverage(local_path: str):
+    # Check Flutter size before copying
+    flutter_size = os.popen("du -sh /usr/local/flutter").read()
+    print(f"\nFlutter installation size: {flutter_size}")
+
+    # Check available space in /tmp
+    tmp_space = os.popen("df -h /tmp").read()
+    print(f"Available space in /tmp:\n{tmp_space}")
+
     # Set up Flutter in /tmp
     tmp_flutter = "/tmp/flutter"
     print(f"\nCopying Flutter to {tmp_flutter}")
