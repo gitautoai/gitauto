@@ -18,10 +18,25 @@ def calculate_dart_coverage(local_path: str):
     cache_dir = "/tmp/flutter"
     os.makedirs(cache_dir, exist_ok=True)
 
-    # Set all necessary Flutter environment variables to use /tmp
-    env["FLUTTER_ROOT"] = "/usr/local/flutter"  # where Flutter is installed (readonly)
-    env["PUB_CACHE"] = f"{cache_dir}/pub-cache"  # for Dart. Should be writable.
-    env["FLUTTER_CACHE_DIR"] = f"{cache_dir}/cache"  # for Flutter. Should be writable.
+    # Set up symlink for Flutter bin/cache directory
+    flutter_bin_cache = "/usr/local/flutter/bin/cache"
+    tmp_bin_cache = f"{cache_dir}/bin/cache"
+    os.makedirs(tmp_bin_cache, exist_ok=True)
+
+    # Backup the original directory if it exists and is not a symlink
+    if os.path.exists(flutter_bin_cache) and not os.path.islink(flutter_bin_cache):
+        print(f"Removing {flutter_bin_cache}")
+        os.system(f"rm -rf {flutter_bin_cache}")
+
+    # Create symlink if it doesn't exist
+    if not os.path.exists(flutter_bin_cache):
+        print(f"Creating symlink {flutter_bin_cache} -> {tmp_bin_cache}")
+        os.symlink(tmp_bin_cache, flutter_bin_cache)
+
+    # Rest of environment variables
+    env["FLUTTER_ROOT"] = "/usr/local/flutter"
+    env["PUB_CACHE"] = f"{cache_dir}/pub-cache"
+    env["FLUTTER_CACHE_DIR"] = f"{cache_dir}/cache"
 
     # Create cache subdirectories
     os.makedirs(env["PUB_CACHE"], exist_ok=True)
