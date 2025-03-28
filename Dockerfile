@@ -22,9 +22,7 @@ RUN dnf install -y unzip findutils which tar xz
 RUN curl -L https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.19.3-stable.tar.xz -o flutter.tar.xz && \
     tar xf flutter.tar.xz -C /usr/local && \
     rm flutter.tar.xz && \
-    chmod -R 777 /usr/local/flutter && \
-    mkdir -p /usr/local/flutter/bin/cache && \
-    chmod -R 777 /usr/local/flutter/bin/cache
+    chmod -R 777 /usr/local/flutter
 
 # Initialize Flutter with write permissions
 RUN export PATH="$PATH:/usr/local/flutter/bin" && \

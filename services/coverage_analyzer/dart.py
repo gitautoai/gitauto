@@ -14,6 +14,19 @@ def calculate_dart_coverage(local_path: str):
     env = os.environ.copy()
     env["PATH"] = f"/usr/local/flutter/bin:{env.get('PATH', '')}"
 
+    # Set up Flutter cache directories in /tmp
+    cache_dir = "/tmp/flutter"
+    os.makedirs(cache_dir, exist_ok=True)
+
+    # Set all necessary Flutter environment variables to use /tmp
+    env["FLUTTER_ROOT"] = "/usr/local/flutter"  # where Flutter is installed (readonly)
+    env["PUB_CACHE"] = f"{cache_dir}/pub-cache"  # for Dart. Should be writable.
+    env["FLUTTER_CACHE_DIR"] = f"{cache_dir}/cache"  # for Flutter. Should be writable.
+
+    # Create cache subdirectories
+    os.makedirs(env["PUB_CACHE"], exist_ok=True)
+    os.makedirs(env["FLUTTER_CACHE_DIR"], exist_ok=True)
+
     # Debug: Print current PATH and check Flutter binary
     print(f"\nCurrent PATH: {env['PATH']}")
     print(f"Flutter binary exists: {os.path.exists('/usr/local/flutter/bin/flutter')}")
