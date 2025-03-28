@@ -10,41 +10,20 @@ from utils.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
 def calculate_dart_coverage(local_path: str):
+    # Set up Flutter in /tmp
+    tmp_flutter = "/tmp/flutter"
+    print(f"\nCopying Flutter to {tmp_flutter}")
+    os.makedirs(tmp_flutter, exist_ok=True)
+    os.system(f"cp -r /usr/local/flutter/* {tmp_flutter}/")
+
     # Set environment variables for Flutter
     env = os.environ.copy()
-    env["PATH"] = f"/usr/local/flutter/bin:{env.get('PATH', '')}"
-
-    # Set up Flutter cache directories in /tmp
-    cache_dir = "/tmp/flutter"
-    os.makedirs(cache_dir, exist_ok=True)
-
-    # Set up symlink for Flutter bin/cache directory
-    flutter_bin_cache = "/usr/local/flutter/bin/cache"
-    tmp_bin_cache = f"{cache_dir}/bin/cache"
-    os.makedirs(tmp_bin_cache, exist_ok=True)
-
-    # Backup the original directory if it exists and is not a symlink
-    if os.path.exists(flutter_bin_cache) and not os.path.islink(flutter_bin_cache):
-        print(f"Removing {flutter_bin_cache}")
-        os.system(f"rm -rf {flutter_bin_cache}")
-
-    # Create symlink if it doesn't exist
-    if not os.path.exists(flutter_bin_cache):
-        print(f"Creating symlink {flutter_bin_cache} -> {tmp_bin_cache}")
-        os.symlink(tmp_bin_cache, flutter_bin_cache)
-
-    # Rest of environment variables
-    env["FLUTTER_ROOT"] = "/usr/local/flutter"
-    env["PUB_CACHE"] = f"{cache_dir}/pub-cache"
-    env["FLUTTER_CACHE_DIR"] = f"{cache_dir}/cache"
-
-    # Create cache subdirectories
-    os.makedirs(env["PUB_CACHE"], exist_ok=True)
-    os.makedirs(env["FLUTTER_CACHE_DIR"], exist_ok=True)
+    env["PATH"] = f"{tmp_flutter}/bin:{env.get('PATH', '')}"
+    env["FLUTTER_ROOT"] = tmp_flutter
 
     # Debug: Print current PATH and check Flutter binary
     print(f"\nCurrent PATH: {env['PATH']}")
-    print(f"Flutter binary exists: {os.path.exists('/usr/local/flutter/bin/flutter')}")
+    print(f"Flutter binary exists: {os.path.exists(f'{tmp_flutter}/bin/flutter')}")
 
     # Run flutter test command
     print("\nRunning `flutter test --coverage`")
