@@ -12,7 +12,7 @@ def test_get_stripe_customer_id():
     test_owner_id = 999888777
     test_stripe_id = "cus_RCZOxKQHsSk93v"
 
-    # Test case 1: Specified owner_id should return correct stripe_customer_id
+    owner_without_stripe = 444555666
     owner_id = 4620828
     stripe_customer_id = "cus_RCZOxKQHsSk93v"
     supabase.table("owners").insert(
