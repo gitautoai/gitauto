@@ -37,9 +37,8 @@ def test_get_stripe_customer_id():
     # Test case 2: Non-existent owner_id
     assert get_stripe_customer_id(owner_id=111222333) is None
 
-    # Test case 3: Invalid owner_id (negative) should return None
-    invalid_owner_id = -1
-    assert get_stripe_customer_id(owner_id=invalid_owner_id) is None
+    # Test case 3: Invalid owner_id (negative)
+    assert get_stripe_customer_id(owner_id=-1) is None
 
     # Test case 4: Invalid owner_id (zero) should return None
     zero_owner_id = 0
