@@ -1,12 +1,15 @@
 from services.supabase.owners_manager import get_stripe_customer_id
 from services.supabase.client import supabase
 from utils.timer import timer_decorator
+"""Integration tests for owners_manager.py"""
+
 
 
 @timer_decorator
 def test_get_stripe_customer_id():
-    # Clean up at the beginning just in case
-    wipe_installation_owner_user_data()
+    # Use test-specific owner IDs
+    test_owner_id = 999888777
+    test_stripe_id = "cus_RCZOxKQHsSk93v"
 
     # Test case 1: Specified owner_id should return correct stripe_customer_id
     owner_id = 4620828
