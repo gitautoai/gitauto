@@ -13,7 +13,11 @@ def test_get_stripe_customer_id():
     test_stripe_id = "cus_RCZOxKQHsSk93v"
 
     owner_without_stripe = 444555666
-    owner_id = 4620828
+    # Clean up test data
+    supabase.table("owners").delete().eq("owner_id", test_owner_id).execute()
+    supabase.table("owners").delete().eq("owner_id", owner_without_stripe).execute()
+
+    # Test case 1: Valid owner with stripe_customer_id
     stripe_customer_id = "cus_RCZOxKQHsSk93v"
     supabase.table("owners").insert(
         json={"owner_id": owner_id, "stripe_customer_id": stripe_customer_id}
