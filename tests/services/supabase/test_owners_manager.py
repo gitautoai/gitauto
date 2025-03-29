@@ -6,6 +6,16 @@ from tests.services.supabase.wipe_data import wipe_installation_owner_user_data
 
 
 
+def setup_function():
+    """Clean up data before each test"""
+    wipe_installation_owner_user_data()
+
+
+def teardown_function():
+    """Clean up data after each test"""
+    wipe_installation_owner_user_data()
+
+
 @timer_decorator
 def test_get_stripe_customer_id():
     # Use test-specific owner IDs
