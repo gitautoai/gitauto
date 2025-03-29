@@ -40,9 +40,8 @@ def test_get_stripe_customer_id():
     # Test case 3: Invalid owner_id (negative)
     assert get_stripe_customer_id(owner_id=-1) is None
 
-    # Test case 4: Invalid owner_id (zero) should return None
-    zero_owner_id = 0
-    assert get_stripe_customer_id(owner_id=zero_owner_id) is None
+    # Test case 4: Invalid owner_id (zero)
+    assert get_stripe_customer_id(owner_id=0) is None
 
     # Test case 5: Owner without stripe_customer_id should return None
     owner_without_stripe = 888888
