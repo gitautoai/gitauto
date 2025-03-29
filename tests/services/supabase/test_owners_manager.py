@@ -1,0 +1,40 @@
+from services.supabase.owners_manager import get_stripe_customer_id
+from services.supabase.client import supabase
+from tests.services.supabase.wipe_data import wipe_installation_owner_user_data
+from utils.timer import timer_decorator
+
+
+@timer_decorator
+def test_get_stripe_customer_id():
+    # Clean up at the beginning just in case
+    wipe_installation_owner_user_data()
+
+    # Test case 1: Specified owner_id should return correct stripe_customer_id
+    owner_id = 4620828
+    stripe_customer_id = "cus_RCZOxKQHsSk93v"
+    supabase.table("owners").insert(
+        json={"owner_id": owner_id, "stripe_customer_id": stripe_customer_id}
+    ).execute()
+    assert get_stripe_customer_id(owner_id=owner_id) == stripe_customer_id
+
+    # Test case 2: Non-existent owner_id should return None
+    non_existent_owner_id = 999999
+    assert get_stripe_customer_id(owner_id=non_existent_owner_id) is None
+
+    # Test case 3: Invalid owner_id (negative) should return None
+    invalid_owner_id = -1
+    assert get_stripe_customer_id(owner_id=invalid_owner_id) is None
+
+    # Test case 4: Invalid owner_id (zero) should return None
+    zero_owner_id = 0
+    assert get_stripe_customer_id(owner_id=zero_owner_id) is None
+
+    # Test case 5: Owner without stripe_customer_id should return None
+    owner_without_stripe = 888888
+    supabase.table("owners").insert(
+        json={"owner_id": owner_without_stripe, "stripe_customer_id": None}
+    ).execute()
+    assert get_stripe_customer_id(owner_id=owner_without_stripe) is None
+
+    # Clean up after tests
+    wipe_installation_owner_user_data()
