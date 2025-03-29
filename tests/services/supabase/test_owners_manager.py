@@ -32,7 +32,7 @@ def test_get_stripe_customer_id():
     supabase.table("owners").insert(
         json={"owner_id": test_owner_id, "stripe_customer_id": test_stripe_id}
     ).execute()
-    assert get_stripe_customer_id(owner_id=owner_id) == stripe_customer_id
+    assert get_stripe_customer_id(owner_id=test_owner_id) == test_stripe_id
 
     # Test case 2: Non-existent owner_id should return None
     non_existent_owner_id = 999999
