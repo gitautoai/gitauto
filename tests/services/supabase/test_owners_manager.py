@@ -1,6 +1,5 @@
 from services.supabase.owners_manager import get_stripe_customer_id
 from services.supabase.client import supabase
-from tests.services.supabase.wipe_data import wipe_installation_owner_user_data
 from utils.timer import timer_decorator
 
 
