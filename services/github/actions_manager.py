@@ -8,6 +8,7 @@ from requests import get, post
 # Internal libraries
 from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.github.create_headers import create_headers
+from services.github.github_types import Artifact
 from utils.handle_exceptions import handle_exceptions
 
 
@@ -108,3 +109,25 @@ def cancel_workflow_runs_in_progress(
                 f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs/{run['id']}/cancel"
             )
             post(url=cancel_url, headers=headers, timeout=TIMEOUT)
+
+
+@handle_exceptions(default_return_value=[], raise_on_error=False)
+def get_workflow_artifacts(owner: str, repo: str, run_id: int, token: str):
+    """https://docs.github.com/en/rest/actions/artifacts?apiVersion=2022-11-28#list-workflow-run-artifacts"""
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs/{run_id}/artifacts"
+    headers = create_headers(token=token)
+    response = get(url=url, headers=headers, timeout=TIMEOUT)
+    artifacts: list[Artifact] = response.json().get("artifacts", [])
+    return artifacts
+
+
+@handle_exceptions(default_return_value="", raise_on_error=False)
+def download_artifact(owner: str, repo: str, artifact_id: int, token: str):
+    """https://docs.github.com/en/rest/actions/artifacts?apiVersion=2022-11-28#download-an-artifact"""
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/artifacts/{artifact_id}/zip"
+    headers = create_headers(token=token)
+    response = get(url=url, headers=headers, timeout=TIMEOUT)
+    zip_content = io.BytesIO(response.content)
+    with zipfile.ZipFile(zip_content) as zip_file:
+        with zip_file.open("lcov.info") as lcov_file:
+            return lcov_file.read().decode(UTF8)

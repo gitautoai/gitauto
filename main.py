@@ -1,41 +1,21 @@
 # Standard imports
 import json
-import shutil
-import tempfile
 from typing import Any
 import urllib.parse
 
 # Third-party imports
-import boto3
-from fastapi import FastAPI, Request, BackgroundTasks
+from fastapi import FastAPI, Request
 from mangum import Mangum
 import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
-from config import (
-    COVERAGE_QUEUE_URL,
-    ENV,
-    GITHUB_WEBHOOK_SECRET,
-    IS_PRD,
-    PRODUCT_NAME,
-    SENTRY_DSN,
-    UTF8,
-)
+from config import ENV, GITHUB_WEBHOOK_SECRET, PRODUCT_NAME, SENTRY_DSN, UTF8
 from scheduler import schedule_handler
-from services.coverage_analyzer.coverage_analyzer import calculate_test_coverage
-from services.git.git_manager import clone_repo
 from services.gitauto_handler import handle_gitauto
-from services.github.github_manager import (
-    verify_webhook_signature,
-    get_installation_access_token,
-)
-from services.github.repo_manager import get_repository_languages
+from services.github.github_manager import verify_webhook_signature
 from services.jira.jira_manager import verify_jira_webhook
-from services.supabase.coverage_manager import create_or_update_coverages
 from services.webhook_handler import handle_webhook_event
-from utils.handle_exceptions import handle_exceptions
-from utils.resource_monitor import get_resource_usage
 
 if ENV != "local":
     sentry_sdk.init(
@@ -49,21 +29,9 @@ if ENV != "local":
 app = FastAPI()
 mangum_handler = Mangum(app=app, lifespan="off")
 
-# Create AWS SQS client
-sqs = boto3.client("sqs") if IS_PRD else None
-
 
 # Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 def handler(event, context):
-    # For coverage calculation request
-    if (
-        IS_PRD
-        and "Records" in event
-        and event["Records"][0].get("eventSource") == "aws:sqs"
-    ):
-        print("Amazon SQS calling coverage handler")
-        return coverage_handler(json.loads(event["Records"][0]["body"]))
-
     # For scheduled event
     if "source" in event and event["source"] == "aws.events":
         schedule_handler(_event=event, _context=context)
@@ -115,69 +83,3 @@ async def handle_jira_webhook(request: Request):
 @app.get(path="/")
 async def root() -> dict[str, str]:
     return {"message": PRODUCT_NAME}
-
-
-@app.post(path="/coverage")
-async def get_repository_coverage(request: Request, background_tasks: BackgroundTasks):
-    print("Received request to get repository coverage")
-    data = await request.json()
-
-    if IS_PRD:
-        # Call "handler()" again at another process
-        print("Sending message to SQS")
-        sqs.send_message(QueueUrl=COVERAGE_QUEUE_URL, MessageBody=json.dumps(data))
-        print("Message sent to SQS")
-        return {"success": True}
-
-    # For local environment
-    print("Adding task to background tasks")
-    background_tasks.add_task(coverage_handler, data)
-    print("Task added to background tasks")
-    return {"success": True}
-
-
-@handle_exceptions(raise_on_error=True)
-def coverage_handler(data: dict[str, str | int]):
-    print("Starting coverage handler")
-    print("Initial resource usage:", get_resource_usage())
-
-    owner_id = data["owner_id"]
-    owner_name = data["owner_name"]
-    repo_id = data["repo_id"]
-    repo_name = data["repo_name"]
-    installation_id = data["installation_id"]
-    user_name = data["user_name"]
-
-    token = get_installation_access_token(installation_id=installation_id)
-    temp_dir = tempfile.mkdtemp()
-
-    try:
-        print("Cloning repository")
-        clone_repo(owner=owner_name, repo=repo_name, token=token, target_dir=temp_dir)
-        print("Resource usage after clone:", get_resource_usage(temp_dir))
-
-        print("\nGetting repository languages")
-        languages = get_repository_languages(
-            owner=owner_name, repo=repo_name, token=token
-        )
-        print(f"Got repository languages: {languages}")
-
-        print("\nCalculating test coverage")
-        coverage = calculate_test_coverage(local_path=temp_dir, languages=languages)
-        print("Resource usage after coverage calc:", get_resource_usage(temp_dir))
-
-        print("\nCreating or updating coverages")
-        create_or_update_coverages(
-            coverages_list=coverage,
-            owner_id=owner_id,
-            repo_id=repo_id,
-            primary_language=next(iter(languages)),
-            user_name=user_name,
-        )
-        print("Created or updated coverages")
-    finally:
-        print("\nRemoving temporary directory")
-        shutil.rmtree(temp_dir, ignore_errors=True)
-        print("Removed temporary directory")
-
-    return {"success": True}

@@ -40,7 +40,6 @@ jobs:
               echo "ECR_REPOSITORY=${{ secrets.PROD_LAMBDA_NAME }}"
               echo "LAMBDA_NAME=${{ secrets.PROD_LAMBDA_NAME }}"
               echo "LAMBDA_ARN=arn:aws:lambda:${{ env.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:function:${{ secrets.PROD_LAMBDA_NAME }}"
-              echo "LAMBDA_ROLE=${{ secrets.LAMBDA_ROLE }}"
               echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD }}"
             else
               echo "ECR_REPOSITORY=${{ secrets.STAGE_LAMBDA_NAME }}"
@@ -68,7 +67,7 @@ jobs:
           aws cloudformation deploy \
           --stack-name ScheduleStack \
           --template-file cloudformation.yml \
-          --parameter-overrides LambdaFunctionName=$LAMBDA_NAME LambdaFunctionArn=$LAMBDA_ARN Email=$EMAIL LambdaFunctionRole=$LAMBDA_ROLE \
+          --parameter-overrides LambdaFunctionName=$LAMBDA_NAME LambdaFunctionArn=$LAMBDA_ARN Email=$EMAIL \
           --capabilities CAPABILITY_NAMED_IAM
   
       - name: Notify Slack of deployment status
