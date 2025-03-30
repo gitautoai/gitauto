@@ -33,9 +33,9 @@ async def handle_workflow_coverage(
     print(f"Artifacts:\n{artifacts}")
 
     for artifact in artifacts:
-        # Ignore artifacts that are not coverage-report
-        if artifact["name"] != "coverage-report":
-            print(f"Ignoring artifact {artifact['name']}")
+        # Check if the artifact might contain coverage data
+        if "coverage" not in artifact["name"].lower():
+            print(f"Skipping artifact {artifact['name']} - maybe NOT coverage data")
             continue
 
         # Download and parse lcov.info
@@ -45,8 +45,8 @@ async def handle_workflow_coverage(
         )
         print(f"Downloaded artifact {artifact['name']}")
 
-        if not lcov_content:
-            print(f"No lcov content found for artifact {artifact['name']}")
+        if lcov_content is None:
+            print(f"No lcov.info found in artifact {artifact['name']}")
             continue
 
         coverage_data = None
