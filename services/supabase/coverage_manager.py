@@ -10,12 +10,14 @@ class CoverageItem(TypedDict):
     package_name: str
     level: Literal["repository", "directory", "file"]
     full_path: str
+    line_coverage: float
     statement_coverage: float
     function_coverage: float
     branch_coverage: float
     path_coverage: float
-    line_coverage: float
     uncovered_lines: str
+    uncovered_functions: str
+    uncovered_branches: str
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
