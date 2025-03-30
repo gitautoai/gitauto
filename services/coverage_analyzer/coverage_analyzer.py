@@ -1,5 +1,5 @@
 # Local imports
-from services.coverage_analyzer.dart import parse_lcov_coverage
+from services.coverage_analyzer.lcov import parse_lcov_coverage
 from services.github.actions_manager import get_workflow_artifacts, download_artifact
 from services.github.github_manager import get_installation_access_token
 from services.github.repo_manager import get_repository_languages
@@ -54,8 +54,8 @@ async def handle_workflow_coverage(
             print("Parsing Dart coverage")
             coverage_data = parse_lcov_coverage(lcov_content)
         elif primary_language in ["javascript", "typescript"]:
-            print(f"Coverage parsing not implemented for language: {primary_language}")
-            continue
+            print(f"Parsing {primary_language} coverage")
+            coverage_data = parse_lcov_coverage(lcov_content)
         else:
             print(f"Coverage parsing not implemented for language: {primary_language}")
             continue
