@@ -12,6 +12,7 @@ from config import (
     ISSUE_NUMBER_FORMAT,
 )
 from services.check_run_handler import handle_check_run
+from services.coverage_analyzer.coverage_analyzer import handle_workflow_coverage
 from services.git.git_manager import clone_repo
 from services.gitauto_handler import handle_gitauto
 from services.github.actions_manager import cancel_workflow_runs_in_progress
@@ -259,4 +260,19 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
     # Do nothing when action is "deleted"
     if event_name == "pull_request_review_comment" and action in ("created", "edited"):
         handle_review_run(payload=payload)
+        return
+
+    # Add workflow_run event handler
+    if event_name == "workflow_run" and action == "completed":
+        print("Received workflow_run completed event")
+        if payload["workflow_run"]["conclusion"] == "success":
+            await handle_workflow_coverage(
+                owner_id=payload["repository"]["owner"]["id"],
+                owner_name=payload["repository"]["owner"]["login"],
+                repo_id=payload["repository"]["id"],
+                repo_name=payload["repository"]["name"],
+                installation_id=payload["installation"]["id"],
+                run_id=payload["workflow_run"]["id"],
+                user_name=payload["sender"]["login"],
+            )
         return
