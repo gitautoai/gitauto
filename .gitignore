@@ -1,6 +1,7 @@
 .history
 .env*
 __pycache__
+coverage.*
 ngrok.yml
 tmp
 venv

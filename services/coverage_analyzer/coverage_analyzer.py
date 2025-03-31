@@ -50,15 +50,13 @@ async def handle_workflow_coverage(
             continue
 
         coverage_data = None
-        if primary_language == "dart":
-            print("Parsing Dart coverage")
-            coverage_data = parse_lcov_coverage(lcov_content)
-        elif primary_language in ["javascript", "typescript"]:
-            print(f"Parsing {primary_language} coverage")
-            coverage_data = parse_lcov_coverage(lcov_content)
-        else:
+        supported_languages = ["javascript", "typescript", "python", "dart"]
+        if primary_language not in supported_languages:
             print(f"Coverage parsing not implemented for language: {primary_language}")
             continue
+
+        print(f"Parsing {primary_language} coverage")
+        coverage_data = parse_lcov_coverage(lcov_content)
 
         if not coverage_data:
             print(f"No coverage data found for artifact {artifact['name']}")
