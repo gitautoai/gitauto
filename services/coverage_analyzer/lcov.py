@@ -11,7 +11,7 @@ def create_coverage_report(path: str, stats: dict, level: str):
         (
             (stats["lines_covered"] / stats["lines_total"] * 100)
             if stats["lines_total"] > 0
-            else 0
+            else 100
         ),
         2,
     )
@@ -19,7 +19,7 @@ def create_coverage_report(path: str, stats: dict, level: str):
         (
             (stats["functions_covered"] / stats["functions_total"] * 100)
             if stats["functions_total"] > 0
-            else 0
+            else 100
         ),
         2,
     )
@@ -27,7 +27,7 @@ def create_coverage_report(path: str, stats: dict, level: str):
         (
             (stats["branches_covered"] / stats["branches_total"] * 100)
             if stats["branches_total"] > 0
-            else 0
+            else 100
         ),
         2,
     )
@@ -47,25 +47,20 @@ def create_coverage_report(path: str, stats: dict, level: str):
         ),
         "uncovered_functions": (
             ", ".join(
-                f"L{line}:{name}" for line, name in sorted(stats["uncovered_functions"])
+                (
+                    f"L{func[0]}:{func[1]}"
+                    if len(func) == 2
+                    else f"L{func[0]}-{func[1]}:{func[2]}"
+                )
+                for func in sorted(stats["uncovered_functions"])
             )
-            if level == "file" and function_coverage > 0
-            else ""
         ),
-        "uncovered_branches": (
-            ", ".join(
-                f"L{line}B{block}:{branch}"
-                for line, block, branch in sorted(stats["uncovered_branches"])
-            )
-            if level == "file" and branch_coverage > 0
-            else ""
-        ),
+        "uncovered_branches": (", ".join(sorted(stats["uncovered_branches"]))),
     }
 
 
-@handle_exceptions(default_return_value=[], raise_on_error=False)
-def parse_lcov_coverage(lcov_content: str):
-    stats_template = {
+def create_empty_stats():
+    return {
         "lines_total": 0,
         "lines_covered": 0,
         "functions_total": 0,
@@ -79,30 +74,45 @@ def parse_lcov_coverage(lcov_content: str):
         "current_function": None,
     }
 
+
+@handle_exceptions(default_return_value=[], raise_on_error=False)
+def parse_lcov_coverage(lcov_content: str):
+
     # Tracking stats at all levels
-    repo_stats = stats_template.copy()
+    repo_stats = create_empty_stats()
     dir_stats = {}
     file_stats = {}
 
     current_file = None
-    current_stats = stats_template.copy()
+    current_stats = create_empty_stats()
 
     print("\nParsing LCOV content")
     for line in lcov_content.splitlines():
         line = line.strip()
+        print(line)
 
-        if line.startswith("TN:"):  # TN: Test Name
-            current_stats["test_name"] = line[3:] if line[3:] else None
-
-        elif line.startswith("SF:"):  # SF: Source File
+        if line.startswith("SF:"):  # SF: Source File
             # Start of new file section
             current_file = line[3:]
-            current_stats = stats_template.copy()
+            current_stats = create_empty_stats()
 
         elif line.startswith("FN:"):  # FN: Function name
-            # Format: FN:<line number>,<function name>
-            line_num, func_name = line[3:].split(",")
-            current_stats["uncovered_functions"].add((int(line_num), func_name))
+            # Format could be either:
+            parts = [part.strip() for part in line[3:].split(",")]
+
+            if len(parts) == 2:
+                # FN:<line number>,<function name>  (Jest/Vitest, Flutter format)
+                line_num, func_name = parts
+                current_stats["uncovered_functions"].add((int(line_num), func_name))
+
+            elif len(parts) == 3:
+                # FN:<start_line>,<end_line>,<function name>  (Python format)
+                start_line, end_line, func_name = parts
+                current_stats["uncovered_functions"].add(
+                    (int(start_line), int(end_line), func_name)
+                )
+            else:
+                continue  # Skip malformed lines
 
         elif line.startswith("FNDA:"):  # FNDA: Function execution counts
             # Format: FNDA:<execution count>,<function name>
@@ -112,9 +122,9 @@ def parse_lcov_coverage(lcov_content: str):
                 current_stats["functions_covered"] += 1
                 # Remove function from uncovered set by matching function name
                 current_stats["uncovered_functions"] = {
-                    (line, name)
-                    for line, name in current_stats["uncovered_functions"]
-                    if name != function_name
+                    func
+                    for func in current_stats["uncovered_functions"]
+                    if (func[1] if len(func) == 2 else func[2]) != function_name
                 }
             current_stats["functions_total"] += 1
 
@@ -125,15 +135,42 @@ def parse_lcov_coverage(lcov_content: str):
             current_stats["functions_covered"] = int(line[4:])
 
         elif line.startswith("BRDA:"):  # BRDA: Branch data
-            # Format: BRDA:<line number>,<block number>,<branch number>,<taken>
-            line_num, block_num, branch_num, taken = line[5:].split(",")
-            branch_info = (int(line_num), int(block_num), int(branch_num))
-            current_stats["uncovered_branches"].add(branch_info)
+            try:
+                line_num, block_num, branch_desc, taken = line[5:].split(",")
+                line_num = int(line_num)
+                block_num = int(block_num)
 
-            if taken != "-" and int(taken) > 0:
-                current_stats["branches_covered"] += 1
-                current_stats["uncovered_branches"].discard(branch_info)
-            current_stats["branches_total"] += 1
+                if branch_desc.startswith("jump to line "):
+                    # Format for Pytest: BRDA:<line number>,<block number>,jump to line <target>,<taken>
+                    target_line = branch_desc.replace("jump to line ", "")
+                    branch_info = f"line {line_num}, block {block_num}, if branch: {line_num} -> {target_line}"
+                elif branch_desc.startswith("return from function "):
+                    # Format for Pytest: BRDA:<line number>,<block number>,return from function '<name>',<taken>
+                    func_name = branch_desc.replace(
+                        "return from function '", ""
+                    ).rstrip("'")
+                    branch_info = (
+                        f"line {line_num}, block {block_num}, return from: {func_name}"
+                    )
+                elif branch_desc == "exit the module":
+                    # Format for Pytest: BRDA:<line number>,<block number>,exit the module,<taken>
+                    branch_info = f"line {line_num}, block {block_num}, module exit"
+                else:
+                    # Format for Jest/Flutter: BRDA:<line number>,<block number>,<branch number>,<taken>
+                    branch_num = int(branch_desc)
+                    branch_info = (
+                        f"line {line_num}, block {block_num}, branch {branch_num}"
+                    )
+
+                current_stats["uncovered_branches"].add(branch_info)
+
+                if taken != "-" and int(taken) > 0:
+                    current_stats["branches_covered"] += 1
+                    current_stats["uncovered_branches"].discard(branch_info)
+                current_stats["branches_total"] += 1
+            except (ValueError, IndexError):
+                print(f"Error parsing line: {line}")
+                continue  # Skip malformed lines
 
         elif line.startswith("BRF:"):  # BRF: Branches Found
             current_stats["branches_total"] = int(line[4:])
@@ -161,12 +198,12 @@ def parse_lcov_coverage(lcov_content: str):
         elif line.startswith("end_of_record"):
             if current_file and current_stats:
                 # Store file stats
-                file_stats[current_file] = current_stats.copy()
+                file_stats[current_file] = current_stats
 
                 # Update directory stats
                 dir_path = os.path.dirname(current_file)
                 if dir_path not in dir_stats:
-                    dir_stats[dir_path] = stats_template.copy()
+                    dir_stats[dir_path] = create_empty_stats()
                 for key, value in current_stats.items():
                     if key in [
                         "test_name",
@@ -189,6 +226,8 @@ def parse_lcov_coverage(lcov_content: str):
                         repo_stats[key].update(value)
                     else:
                         repo_stats[key] += value
+
+            print("")
 
     # Second pass: generate all reports
     reports: list[CoverageReport] = []
