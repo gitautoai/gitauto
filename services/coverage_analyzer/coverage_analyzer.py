@@ -1,7 +1,10 @@
 # Local imports
 from services.coverage_analyzer.lcov import parse_lcov_coverage
 from services.github.actions_manager import get_workflow_artifacts, download_artifact
-from services.github.github_manager import get_installation_access_token
+from services.github.github_manager import (
+    get_installation_access_token,
+    get_remote_file_tree,
+)
 from services.github.repo_manager import get_repository_languages
 from services.supabase.coverage_manager import create_or_update_coverages
 from utils.handle_exceptions import handle_exceptions
@@ -15,8 +18,9 @@ async def handle_workflow_coverage(
     repo_name: str,
     installation_id: int,
     run_id: int,
+    default_branch: str,
     user_name: str,
-) -> None:
+):
     token = get_installation_access_token(installation_id=installation_id)
 
     # Get repository's primary language
@@ -32,6 +36,7 @@ async def handle_workflow_coverage(
     artifacts = get_workflow_artifacts(owner_name, repo_name, run_id, token)
     print(f"Artifacts:\n{artifacts}")
 
+    coverage_data = []
     for artifact in artifacts:
         # Check if the artifact might contain coverage data
         if "coverage" not in artifact["name"].lower():
@@ -49,20 +54,55 @@ async def handle_workflow_coverage(
             print(f"No lcov.info found in artifact {artifact['name']}")
             continue
 
-        coverage_data = None
         supported_languages = ["javascript", "typescript", "python", "dart"]
         if primary_language not in supported_languages:
             print(f"Coverage parsing not implemented for language: {primary_language}")
             continue
 
         print(f"Parsing {primary_language} coverage")
-        coverage_data = parse_lcov_coverage(lcov_content)
+        parsed_coverage = parse_lcov_coverage(lcov_content)
 
-        if not coverage_data:
-            print(f"No coverage data found for artifact {artifact['name']}")
-            continue
+        if parsed_coverage:
+            coverage_data.extend(parsed_coverage)
 
-        print(f"Saving coverage data for artifact {artifact['name']}")
+    # For Flutter/Dart projects, add uncovered files if coverage data exists
+    if primary_language == "dart" and coverage_data:
+        base_args = {
+            "owner": owner_name,
+            "repo": repo_name,
+            "token": token,
+            "base_branch": default_branch,
+        }
+
+        # Get all Dart files from the repository
+        all_files, _ = get_remote_file_tree(base_args=base_args)
+        dart_files = [f for f in all_files if f.endswith(".dart")]
+
+        # Get files that are already in coverage report
+        covered_files = {
+            report["full_path"] for report in coverage_data if report["level"] == "file"
+        }
+
+        # Add uncovered files with 0% coverage
+        for dart_file in dart_files:
+            if dart_file not in covered_files and not dart_file.endswith("test.dart"):
+                coverage_data.append(
+                    {
+                        "package_name": None,
+                        "level": "file",
+                        "full_path": dart_file,
+                        "statement_coverage": 0.0,
+                        "function_coverage": 0.0,
+                        "branch_coverage": 0.0,
+                        "line_coverage": 0.0,
+                        "uncovered_lines": "",
+                        "uncovered_functions": "",
+                        "uncovered_branches": "",
+                    }
+                )
+
+    if coverage_data:
+        print("Saving coverage data")
         create_or_update_coverages(
             coverages_list=coverage_data,
             owner_id=owner_id,
@@ -70,4 +110,4 @@ async def handle_workflow_coverage(
             primary_language=primary_language,
             user_name=user_name,
         )
-        print(f"Saved coverage data for artifact {artifact['name']}")
+        print("Saved coverage data")
