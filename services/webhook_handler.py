@@ -273,6 +273,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
                 repo_name=payload["repository"]["name"],
                 installation_id=payload["installation"]["id"],
                 run_id=payload["workflow_run"]["id"],
+                default_branch=payload["repository"]["default_branch"],
                 user_name=payload["sender"]["login"],
             )
         return
