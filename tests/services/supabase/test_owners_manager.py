@@ -1,5 +1,6 @@
 # Standard imports
 import pytest
+import time
 
 # Local imports
 from config import OWNER_ID
@@ -16,7 +17,8 @@ def setup_test_data():
     wipe_installation_owner_user_data()
 
     # Insert test data
-    test_stripe_customer_id = "cus_test123"
+    timestamp = int(time.time())
+    test_stripe_customer_id = f"cus_test_{timestamp}"
     supabase.table("owners").insert({
         "owner_id": OWNER_ID,
         "stripe_customer_id": test_stripe_customer_id,
