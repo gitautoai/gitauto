@@ -1,5 +1,6 @@
 # Standard imports
 import pytest
+import uuid
 
 # Local imports
 from config import OWNER_ID
@@ -23,7 +24,7 @@ def setup_and_teardown():
 def test_get_stripe_customer_id_success():
     """Test get_stripe_customer_id when customer exists"""
     # Setup: Insert test data
-    test_stripe_customer_id = "cus_test123"
+    test_stripe_customer_id = f"cus_test_{uuid.uuid4().hex}"
     supabase.table("owners").insert({
         "owner_id": OWNER_ID,
         "stripe_customer_id": test_stripe_customer_id,
