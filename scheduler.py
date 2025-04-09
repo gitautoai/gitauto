@@ -15,7 +15,6 @@ from services.supabase.users_manager import get_how_many_requests_left_and_cycle
 
 
 def schedule_handler(_event, _context) -> dict[str, int]:
-    return
     print("\n" * 3 + "-" * 70)
 
     # Get all active installation IDs from Supabase including free customers.
