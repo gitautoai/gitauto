@@ -61,7 +61,7 @@ def test_timezone():
     assert TZ == timezone.utc
 
 def test_environment_dependent_settings():
-    os.environ["ENV"] = "prod"
+    os.environ["ENV"] = "production"
     from config import IS_PRD as is_prd_prod
     assert is_prd_prod is True
 
