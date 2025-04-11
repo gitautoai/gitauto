@@ -45,8 +45,11 @@ def create_or_update_coverages(
             print(f"Duplicate: {coverage}")
         seen[key] = coverage
 
-    # Prepare data for upsert by adding common fields to each coverage item
-    upsert_data = [
+    # Delete existing records for the given repo_id
+    supabase.table("coverages").delete().eq("repo_id", repo_id).execute()
+
+    # Prepare data for insert by adding common fields to each coverage item
+    insert_data = [
         {
             "owner_id": owner_id,
             "repo_id": repo_id,
@@ -54,20 +57,13 @@ def create_or_update_coverages(
             "primary_language": primary_language,
             "path_coverage": 0,
             **coverage,
+            "created_by": user_name,
             "updated_by": user_name,
-            "created_by": user_name,  # Will only be used for new records
         }
         for coverage in seen.values()
     ]
 
-    # Use upsert to handle both inserts and updates in a single operation
-    result = (
-        supabase.table("coverages")
-        .upsert(
-            upsert_data,
-            on_conflict="repo_id,full_path",
-        )
-        .execute()
-    )
+    # Insert new data
+    result = supabase.table("coverages").insert(insert_data).execute()
 
     return result.data

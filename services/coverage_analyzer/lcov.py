@@ -95,11 +95,15 @@ def parse_lcov_coverage(lcov_content: str):
             # Start of new file section
             current_file = line[3:]
 
+            # Extract the directory and filename
+            directory_name = os.path.dirname(current_file)
+            file_name = os.path.basename(current_file)
+
             # Skip test files
             if (
-                "tests" in current_file
-                or current_file.startswith("test_")
-                or current_file.endswith("_test.py")
+                "tests" in directory_name
+                or file_name.startswith("test_")
+                or file_name.endswith("_test.py")
             ):
                 current_file = None
                 continue
