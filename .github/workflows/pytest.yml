@@ -71,7 +71,7 @@ jobs:
         ENV: stage
         PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
 
-      run: python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info --omit="tests/*,*_test.py,test_*.py"
+      run: python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
 
     - name: Upload coverage artifact
       uses: actions/upload-artifact@v4
