@@ -1,8 +1,30 @@
+CONFIGURATION_FILES_CSS = [
+    "tailwind.config.js",
+    "tailwind.config.ts",
+    "postcss.config.js",
+    "postcss.config.ts",
+    "styles/globals.css",
+    "styles/styles.css",
+    "styles/tailwind.ts",
+]
+
+CONFIGURATION_FILES_NEXT = [
+    "next.config.js",
+    "next.config.ts",
+    "next.config.mjs",
+    "next.config.mts",
+    "next.config.cjs",
+]
+
 CONFIGURATION_FILES_JS = [
     "angular.json",
     "babel.config.js",
     "next.config.js",
     "nuxt.config.js",
+    "jest.config.js",
+    "jest.config.ts",
+    "jest.setup.js",
+    "jest.setup.ts",
     "package.json",
     "remix.config.js",
     "rollup.config.js",
@@ -108,6 +130,8 @@ CONFIGURATION_FILES_DOCKER = [
 ]
 
 CONFIGURATION_FILES = [
+    *CONFIGURATION_FILES_CSS,
+    *CONFIGURATION_FILES_NEXT,
     *CONFIGURATION_FILES_JS,
     *CONFIGURATION_FILES_PYTHON,
     *CONFIGURATION_FILES_RUBY,
