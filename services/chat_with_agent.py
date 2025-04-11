@@ -125,7 +125,7 @@ def chat_with_agent(
             if isinstance(e, ClaudeOverloadedError)
             else "authentication failed (401)"
         )
-        msg = f"Claude API {error_type}, switching to OpenAI..."
+        msg = f"Claude API {error_type}, switching to OpenAI."
         print(colorize(msg, "yellow"))
         return chat_with_agent(
             messages=messages,
@@ -238,7 +238,7 @@ def chat_with_agent(
 
     # Check if the same function with the same args has been called before
     current_call = {"function": tool_name, "args": tool_args}
-    print(f"Calling {current_call}...")
+    print(f"Calling {current_call}.")
     if current_call in previous_calls:
         tool_result = f"Error: The function '{tool_name}' was already called with the same arguments '{tool_args}' as before. You need to either:\n1. Call the function with different arguments, or\n2. Call another function, or\n3. Stop calling the function."
         print(tool_result)
@@ -270,13 +270,15 @@ def chat_with_agent(
                 if tool_args["line_number"] > 1
                 else ""
             )
-            msg = f"Read `{tool_args['file_path']}`{line_info}..."
+            msg = f"Read `{tool_args['file_path']}`{line_info}."
         elif tool_name == "get_remote_file_content" and "keyword" in tool_args:
-            msg = f"Read `{tool_args['file_path']}` around keyword `{tool_args['keyword']}`..."
+            msg = f"Read `{tool_args['file_path']}` around keyword `{tool_args['keyword']}`."
         elif tool_name == "get_remote_file_content":
-            msg = f"Read `{tool_args['file_path']}`..."
+            msg = f"Read `{tool_args['file_path']}`."
+        elif tool_name == "search_remote_file_contents":
+            msg = f"Search repository for `{tool_args['query']}`."
         else:
-            msg = f"Calling `{tool_name}()` with `{tool_args}`..."
+            msg = f"Calling `{tool_name}()` with `{tool_args}`."
 
         # Add message to log and update comment
         log_messages.append(msg)

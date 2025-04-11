@@ -229,7 +229,7 @@ async def handle_gitauto(
     # Check out the URLs in the issue body
     reference_contents: list[str] = []
     for url in github_urls:
-        comment_body = "Also checking out the URLs in the issue body..."
+        comment_body = "Also checking out the URLs in the issue body."
         p += 5
         log_messages.append(comment_body)
         update_comment(
@@ -243,7 +243,7 @@ async def handle_gitauto(
     today = datetime.now().strftime("%Y-%m-%d")
 
     # Ask for help if needed like a human would do
-    # comment_body = "Checking if I can solve it or if I should just hit you up..."
+    # comment_body = "Checking if I can solve it or if I should just hit you up."
     # p = min(p + 5, 95)
     # update_comment(body=comment_body, base_args=base_args, p=p)
     user_input = dumps(
@@ -272,7 +272,7 @@ async def handle_gitauto(
     elif input_from == "jira":
         latest_commit_sha = base_args["latest_commit_sha"]
     create_remote_branch(sha=latest_commit_sha, base_args=base_args)
-    comment_body = "Created a remote branch..."
+    comment_body = "Created a remote branch."
     p += 5
     log_messages.append(comment_body)
     update_comment(
@@ -303,7 +303,7 @@ async def handle_gitauto(
         )
         if tool_name is not None and tool_args is not None:
             file_path = tool_args.get("file_path", "")
-            comment_body = f"Read {file_path}."
+            comment_body = f"Read `{file_path}`."
             p += 5
             log_messages.append(comment_body)
             update_comment(
@@ -361,7 +361,7 @@ async def handle_gitauto(
         )
         if tool_name is not None and tool_args is not None:
             file_path = tool_args.get("file_path", "")
-            comment_body = f"Modified {file_path} and committed the changes."
+            comment_body = f"Modified `{file_path}` and committed."
             p += 5
             log_messages.append(comment_body)
             update_comment(
@@ -391,7 +391,7 @@ async def handle_gitauto(
         retry_count = 0
 
     # Create a pull request to the base branch
-    comment_body = "Creating a pull request..."
+    comment_body = "Creating a pull request."
     p += 5
     log_messages.append(comment_body)
     update_comment(

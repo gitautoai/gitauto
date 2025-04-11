@@ -119,26 +119,28 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     pr_comments = get_issue_comments(
         issue_number=pull_number, base_args=base_args, includes_me=True
     )
+    print(f"Check run name: {check_run_name}")
+    print(f"PR comments: {pr_comments}")
     if any(check_run_name in comment for comment in pr_comments):
-        msg = "Skipping because GitAuto has tried to fix this Check Run error before"
+        msg = f"Skipping `{check_run_name}` because GitAuto has tried to fix this Check Run error before"
         print(colorize(text=msg, color="yellow"))
         return
 
     # Create a first comment to inform the user that GitAuto is trying to fix the Check Run error
-    msg = "Oops! Check run stumbled. Digging into logs... 🕵️"
+    msg = "Oops! Check run stumbled. Digging into logs. 🕵️"
     comment_body = create_progress_bar(p=0, msg=msg)
     comment_url = create_comment(body=comment_body, base_args=base_args)
     base_args["comment_url"] = comment_url
 
     # Get title, body, and code changes in the PR
-    comment_body = "Checking out the pull request title, body, and code changes..."
+    comment_body = "Checking out the pull request title, body, and code changes."
     update_comment(body=comment_body, base_args=base_args, p=5)
     pull_title, pull_body = get_pull_request(url=pull_url, token=token)
     pull_file_url = f"{pull_url}/files"
     pull_changes = get_pull_request_file_changes(url=pull_file_url, token=token)
 
     # Get the GitHub workflow file content
-    comment_body = "Checking out the GitHub Action workflow file..."
+    comment_body = "Checking out the GitHub Action workflow file."
     update_comment(body=comment_body, base_args=base_args, p=10)
     workflow_path = get_workflow_run_path(
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
@@ -154,12 +156,12 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     )
 
     # Get the file tree in the root of the repo
-    comment_body = "Checking out the file tree in the repo..."
+    comment_body = "Checking out the file tree in the repo."
     update_comment(body=comment_body, base_args=base_args, p=15)
     file_tree: str = get_remote_file_tree(base_args=base_args)
 
     # Get the error log from the workflow run
-    comment_body = "Checking out the error log from the workflow run..."
+    comment_body = "Checking out the error log from the workflow run."
     update_comment(body=comment_body, base_args=base_args, p=20)
     error_log: str | int | None = get_workflow_run_logs(
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
@@ -172,7 +174,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         return update_comment(body=comment_body, base_args=base_args)
 
     # Plan how to fix the error
-    comment_body = "Planning how to fix the error..."
+    comment_body = "Planning how to fix the error."
     update_comment(body=comment_body, base_args=base_args, p=25)
     today = datetime.now().strftime("%Y-%m-%d")
     input_message: dict[str, str] = {
@@ -187,7 +189,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     user_input = json.dumps(obj=input_message)
 
     # Update the comment if any obstacles are found
-    comment_body = "Checking if I can solve it or if I should just hit you up..."
+    comment_body = "Checking if I can solve it or if I should just hit you up."
     update_comment(body=comment_body, base_args=base_args, p=30)
     messages = [{"role": "user", "content": user_input}]
 
@@ -213,7 +215,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             previous_calls=previous_calls,
             p=p,
         )
-        comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+        comment_body = f"Calling `{tool_name}()` with `{tool_args}`."
         update_comment(body=comment_body, base_args=base_args, p=p)
         p = min(p + 5, 95)
 
@@ -235,7 +237,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             p=p,
         )
         if tool_name is not None and tool_args is not None:
-            comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+            comment_body = f"Calling `{tool_name}()` with `{tool_args}`."
             update_comment(body=comment_body, base_args=base_args, p=p)
             p = min(p + 5, 95)
 
@@ -256,7 +258,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             previous_calls=previous_calls,
             p=p,
         )
-        msg = f"Calling `{tool_name}()` with `{tool_args}`..."
+        msg = f"Calling `{tool_name}()` with `{tool_args}`."
         update_comment(body=comment_body, base_args=base_args, p=p)
         p = min(p + 5, 95)
 
@@ -282,6 +284,6 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         retry_count = 0
 
     # Create a pull request to the base branch
-    msg = f"Committed the Check Run `{check_run_name}` error fix! Running it again..."
+    msg = f"Committed the Check Run `{check_run_name}` error fix! Running it again."
     update_comment(body=msg, base_args=base_args)
     return

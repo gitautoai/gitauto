@@ -148,7 +148,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
         return
 
     # Get a review commented file
-    msg = "Thanks for the feedback! Collecting info... 🕵️"
+    msg = "Thanks for the feedback! Collecting info. 🕵️"
     comment_body = create_progress_bar(p=0, msg=msg)
     comment_url = reply_to_comment(base_args=base_args, body=comment_body)
     base_args["comment_url"] = comment_url
@@ -158,12 +158,12 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     pull_files = get_pull_request_file_contents(url=pull_file_url, base_args=base_args)
 
     # Get the file tree in the root of the repo
-    comment_body = "Checking out the file tree in the repo..."
+    comment_body = "Checking out the file tree in the repo."
     update_comment(body=comment_body, base_args=base_args, p=10)
     file_tree: str = get_remote_file_tree(base_args=base_args)
 
     # Plan how to fix the error
-    comment_body = "Planning how to achieve your feedback..."
+    comment_body = "Planning how to achieve your feedback."
     update_comment(body=comment_body, base_args=base_args, p=20)
     today = datetime.now().strftime("%Y-%m-%d")
     input_message: dict[str, str] = {
@@ -178,7 +178,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     user_input = json.dumps(obj=input_message)
 
     # Update the comment if any obstacles are found
-    comment_body = "Checking if I can solve it or if I should just hit you up..."
+    comment_body = "Checking if I can solve it or if I should just hit you up."
     update_comment(body=comment_body, base_args=base_args, p=30)
     messages = [{"role": "user", "content": user_input}]
 
@@ -217,7 +217,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
             previous_calls=previous_calls,
             p=p,
         )
-        comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+        comment_body = f"Calling `{tool_name}()` with `{tool_args}`."
         update_comment(body=comment_body, base_args=base_args, p=p)
         p = min(p + 5, 95)
 
@@ -239,7 +239,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
             p=p,
         )
         if tool_name is not None and tool_args is not None:
-            comment_body = f"Calling `{tool_name}()` with `{tool_args}`..."
+            comment_body = f"Calling `{tool_name}()` with `{tool_args}`."
             update_comment(body=comment_body, base_args=base_args, p=p)
             p = min(p + 5, 95)
 
@@ -260,7 +260,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
             previous_calls=previous_calls,
             p=p,
         )
-        msg = f"Calling `{tool_name}()` with `{tool_args}`..."
+        msg = f"Calling `{tool_name}()` with `{tool_args}`."
         update_comment(body=comment_body, base_args=base_args, p=p)
         p = min(p + 5, 95)
 
