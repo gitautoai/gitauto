@@ -1,4 +1,3 @@
-from json import dumps
 from constants.dependency_files import CONFIGURATION_FILES
 from utils.handle_exceptions import handle_exceptions
 
@@ -20,5 +19,4 @@ def find_config_files(file_tree: list[str]) -> list[str]:
             elif file_name == dep_file:
                 config_files.append(file_path)
 
-    print(f"config_files: {dumps(config_files, indent=2)}")
     return config_files

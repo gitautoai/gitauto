@@ -89,7 +89,7 @@ def parse_lcov_coverage(lcov_content: str):
     print("\nParsing LCOV content")
     for line in lcov_content.splitlines():
         line = line.strip()
-        print(line)
+        # print(line)
 
         if line.startswith("SF:"):  # SF: Source File
             # Start of new file section
