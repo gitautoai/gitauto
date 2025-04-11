@@ -198,14 +198,14 @@ def get_target_paths(file_changes: list[dict[str, str]], repo_dir: str = None):
 
 @handle_exceptions(raise_on_error=True)
 async def handle_screenshot_comparison(payload: dict) -> None:
+    # Return if this feature is not enabled
+    return
+
     # Return if the author of the pull request is not GitAuto itself
     print("\n\n\n\nStarting screenshot comparison")
     pull: dict = payload["pull_request"]
     if pull["user"]["login"] != GITHUB_APP_USER_NAME:
         return
-
-    # Return if this feature is not enabled
-    return
 
     # Get the basic information
     repo_obj: dict = payload["repository"]
