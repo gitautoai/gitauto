@@ -25,6 +25,7 @@ def create_or_update_coverages(
     coverages_list: list[CoverageItem],
     owner_id: int,
     repo_id: int,
+    branch_name: str,
     primary_language: str,
     user_name: str,
 ):
@@ -49,6 +50,7 @@ def create_or_update_coverages(
         {
             "owner_id": owner_id,
             "repo_id": repo_id,
+            "branch_name": branch_name,
             "primary_language": primary_language,
             "path_coverage": 0,
             **coverage,

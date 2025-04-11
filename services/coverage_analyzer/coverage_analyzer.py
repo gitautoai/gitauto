@@ -18,7 +18,7 @@ async def handle_workflow_coverage(
     repo_name: str,
     installation_id: int,
     run_id: int,
-    default_branch: str,
+    head_branch: str,
     user_name: str,
 ):
     token = get_installation_access_token(installation_id=installation_id)
@@ -71,7 +71,7 @@ async def handle_workflow_coverage(
             "owner": owner_name,
             "repo": repo_name,
             "token": token,
-            "base_branch": default_branch,
+            "base_branch": head_branch,
         }
 
         # Get all Dart files from the repository
@@ -107,6 +107,7 @@ async def handle_workflow_coverage(
             coverages_list=coverage_data,
             owner_id=owner_id,
             repo_id=repo_id,
+            branch_name=head_branch,
             primary_language=primary_language,
             user_name=user_name,
         )
