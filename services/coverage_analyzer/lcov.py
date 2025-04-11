@@ -94,6 +94,16 @@ def parse_lcov_coverage(lcov_content: str):
         if line.startswith("SF:"):  # SF: Source File
             # Start of new file section
             current_file = line[3:]
+
+            # Skip test files
+            if (
+                "tests" in current_file
+                or current_file.startswith("test_")
+                or current_file.endswith("_test.py")
+            ):
+                current_file = None
+                continue
+
             current_stats = create_empty_stats()
 
         elif line.startswith("FN:"):  # FN: Function name
