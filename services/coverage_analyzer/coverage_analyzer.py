@@ -65,8 +65,8 @@ async def handle_workflow_coverage(
         if parsed_coverage:
             coverage_data.extend(parsed_coverage)
 
-    # For Flutter/Dart projects, add uncovered files if coverage data exists
-    if primary_language == "dart" and coverage_data:
+    if coverage_data:
+        # Add uncovered files for all supported languages
         base_args = {
             "owner": owner_name,
             "repo": repo_name,
@@ -74,9 +74,20 @@ async def handle_workflow_coverage(
             "base_branch": head_branch,
         }
 
-        # Get all Dart files from the repository
+        # Get all source files from the repository
         all_files, _ = get_remote_file_tree(base_args=base_args)
-        dart_files = [f for f in all_files if f.endswith(".dart")]
+
+        # Filter files based on language extension
+        extension_map = {
+            "javascript": ".js",
+            "typescript": ".ts",
+            "python": ".py",
+            "dart": ".dart",
+        }
+
+        source_files = [
+            f for f in all_files if f.endswith(extension_map.get(primary_language, ""))
+        ]
 
         # Get files that are already in coverage report
         covered_files = {
@@ -84,13 +95,25 @@ async def handle_workflow_coverage(
         }
 
         # Add uncovered files with 0% coverage
-        for dart_file in dart_files:
-            if dart_file not in covered_files and not dart_file.endswith("test.dart"):
+        for source_file in source_files:
+            # Skip test files based on language conventions
+            test_patterns = {
+                "javascript": ["test.js", "spec.js", "__tests__"],
+                "typescript": ["test.ts", "spec.ts", "__tests__"],
+                "python": ["test_", "_test.py", "tests/"],
+                "dart": ["test.dart", "_test.dart", "test/"],
+            }
+
+            patterns = test_patterns.get(primary_language, [])
+            if any(pattern in source_file for pattern in patterns):
+                continue
+
+            if source_file not in covered_files:
                 coverage_data.append(
                     {
                         "package_name": None,
                         "level": "file",
-                        "full_path": dart_file,
+                        "full_path": source_file,
                         "statement_coverage": 0.0,
                         "function_coverage": 0.0,
                         "branch_coverage": 0.0,
