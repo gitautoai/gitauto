@@ -1,5 +1,4 @@
 # GitAuto AI
-[![codecov](https://codecov.io/gh/gitautoai/gitauto/graph/badge.svg?token=U4J7V3GTCU)](https://codecov.io/gh/gitautoai/gitauto)
 
 ## 1. What is GitAuto
 
