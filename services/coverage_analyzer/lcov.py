@@ -7,6 +7,10 @@ from utils.handle_exceptions import handle_exceptions
 
 
 def create_coverage_report(path: str, stats: dict, level: str):
+    # For directory level and empty path, then use "."
+    if level == "directory" and path == "":
+        path = "."
+
     line_coverage = round(
         (
             (stats["lines_covered"] / stats["lines_total"] * 100)
