@@ -1,4 +1,4 @@
-from .progress_bar import create_progress_bar
+from utils.progress_bar import create_progress_bar
 
 
 def test_create_progress_bar_normal():
