@@ -111,8 +111,9 @@ TZ = timezone.utc
 UTF8 = "utf-8"
 
 # Testing
-TEST_INSTALLATION_ID = -1
-TEST_NEW_INSTALLATION_ID = -2
+TEST_APP_ID = 123456
+TEST_INSTALLATION_ID = 12345678
+TEST_NEW_INSTALLATION_ID = 87654321
 PRODUCT_ID_FOR_FREE = "prod_PokLGIxiVUwCi6"  # https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
 PRODUCT_ID_FOR_STANDARD = "prod_PqZFpCs1Jq6X4E"  # https://dashboard.stripe.com/test/products/prod_PqZFpCs1Jq6X4E
 TEST_OWNER_ID = 123456789
