@@ -1,5 +1,5 @@
 import os
-from config import TEST_OWNER_ID, TEST_USER_ID, TEST_INSTALLATION_ID
+from config import TEST_OWNER_ID, TEST_USER_ID, TEST_INSTALLATION_ID, TEST_USER_NAME
 from services.supabase.client import supabase
 from utils.timer import timer_decorator
 
@@ -27,6 +27,7 @@ def wipe_installation_owner_user_data(
 
     # Delete user
     supabase.table("users").delete().eq("user_id", TEST_USER_ID).execute()
+    supabase.table("users").delete().eq("user_name", TEST_USER_NAME).execute()
 
     # Check if owner has any other installations
     data, _ = (
