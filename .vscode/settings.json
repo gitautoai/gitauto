@@ -4,6 +4,9 @@
     //   "source.organizeImports": true,
     // },
   "editor.defaultFormatter": "ms-python.black-formatter",
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "editor.formatOnSave": true,
   "editor.wordWrap": "bounded",
   "editor.wordWrapColumn": 100,
