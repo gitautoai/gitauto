@@ -15,21 +15,6 @@ RUN curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash - && \
     dnf install -y nodejs && \
     npm install -g yarn
 
-# Install necessary packages to install Flutter
-RUN dnf install -y unzip findutils which tar xz
-
-# Install Flutter using archive
-RUN curl -L https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.19.3-stable.tar.xz -o flutter.tar.xz && \
-    tar xf flutter.tar.xz -C /usr/local && \
-    rm flutter.tar.xz && \
-    chmod -R 777 /usr/local/flutter
-
-# Initialize Flutter with write permissions
-RUN export PATH="$PATH:/usr/local/flutter/bin" && \
-    git config --system --add safe.directory /usr/local/flutter && \
-    flutter precache && \
-    flutter doctor
-
 # Install cloc directly without adding the entire EPEL repository
 RUN curl -L https://github.com/AlDanial/cloc/releases/download/v1.98/cloc-1.98.pl -o /usr/local/bin/cloc && \
     chmod +x /usr/local/bin/cloc
