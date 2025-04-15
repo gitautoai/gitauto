@@ -1,8 +1,8 @@
 import os
 from config import (
-    OWNER_ID,
-    USER_ID,
-    INSTALLATION_ID,
+    TEST_OWNER_ID,
+    TEST_USER_ID,
+    TEST_INSTALLATION_ID,
 )
 from services.supabase.client import supabase
 from utils.timer import timer_decorator
@@ -12,9 +12,9 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 
 
 @timer_decorator
-def wipe_installation_owner_user_data(installation_id: int = INSTALLATION_ID) -> None:
+def wipe_installation_owner_user_data(installation_id: int = TEST_INSTALLATION_ID) -> None:
     """Wipe all data from installations, owners, and users tables"""
-    supabase.table("usage").delete().eq("user_id", USER_ID).eq(
+    supabase.table("usage").delete().eq("user_id", TEST_USER_ID).eq(
         "installation_id", installation_id
     ).execute()
 
@@ -25,8 +25,8 @@ def wipe_installation_owner_user_data(installation_id: int = INSTALLATION_ID) ->
     ).execute()
 
     data, _ = (
-        supabase.table("installations").select("*").eq("owner_id", OWNER_ID).execute()
+        supabase.table("installations").select("*").eq("owner_id", TEST_OWNER_ID).execute()
     )
 
     if len(data[1]) == 0:
-        supabase.table("owners").delete().eq("owner_id", OWNER_ID).execute()
+        supabase.table("owners").delete().eq("owner_id", TEST_OWNER_ID).execute()
