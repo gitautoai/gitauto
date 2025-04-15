@@ -1,11 +1,13 @@
 from config import (
-    INSTALLATION_ID,
-    NEW_INSTALLATION_ID,
-    OWNER_ID,
-    OWNER_NAME,
-    OWNER_TYPE,
-    USER_ID,
-    USER_NAME,
+    TEST_INSTALLATION_ID,
+    TEST_NEW_INSTALLATION_ID,
+    TEST_OWNER_ID,
+    TEST_OWNER_NAME,
+    TEST_OWNER_TYPE,
+    TEST_REPO_ID,
+    TEST_REPO_NAME,
+    TEST_USER_ID,
+    TEST_USER_NAME,
 )
 from services.github.github_types import GitHubEventPayload
 
@@ -13,10 +15,10 @@ from services.github.github_types import GitHubEventPayload
 installation_payload: GitHubEventPayload = {
     "action": "created",
     "installation": {
-        "id": INSTALLATION_ID,
+        "id": TEST_INSTALLATION_ID,
         "account": {
-            "login": OWNER_NAME,
-            "id": OWNER_ID,
+            "login": TEST_OWNER_NAME,
+            "id": TEST_OWNER_ID,
             "node_id": "O_kgDOB9UpXA",
             "avatar_url": "https://avatars.githubusercontent.com/u/-1?v=4",
             "gravatar_id": "",
@@ -31,7 +33,7 @@ installation_payload: GitHubEventPayload = {
             "repos_url": "https://api.github.com/users/installation-test/repos",
             "events_url": "https://api.github.com/users/installation-test/events{/privacy}",
             "received_events_url": "https://api.github.com/users/installation-test/received_events",
-            "type": OWNER_TYPE,
+            "type": TEST_OWNER_TYPE,
             "site_admin": False,
         },
         "repository_selection": "all",
@@ -70,17 +72,17 @@ installation_payload: GitHubEventPayload = {
     },
     "repositories": [
         {
-            "id": -1,
+            "id": TEST_REPO_ID,
             "node_id": "R_kgDOJZc8Zg",
-            "name": "main",
-            "full_name": "installation-test/main",
+            "name": TEST_REPO_NAME,
+            "full_name": f"{TEST_OWNER_NAME}/{TEST_REPO_NAME}",
             "private": True,
         }
     ],
     "requester": None,
     "sender": {
-        "login": USER_NAME,
-        "id": USER_ID,
+        "login": TEST_USER_NAME,
+        "id": TEST_USER_ID,
         "node_id": "MDQ6VXNlcjY2Njk5Mjkw",
         "avatar_url": "https://avatars.githubusercontent.com/u/-1?v=4",
         "gravatar_id": "",
@@ -104,10 +106,10 @@ installation_payload: GitHubEventPayload = {
 new_installation_payload: GitHubEventPayload = {
     "action": "created",
     "installation": {
-        "id": NEW_INSTALLATION_ID,
+        "id": TEST_NEW_INSTALLATION_ID,
         "account": {
-            "login": OWNER_NAME,
-            "id": OWNER_ID,
+            "login": TEST_OWNER_NAME,
+            "id": TEST_OWNER_ID,
             "node_id": "O_kgDOB9UpXA",
             "avatar_url": "https://avatars.githubusercontent.com/u/-1?v=4",
             "gravatar_id": "",
@@ -122,7 +124,7 @@ new_installation_payload: GitHubEventPayload = {
             "repos_url": "https://api.github.com/users/installation-test/repos",
             "events_url": "https://api.github.com/users/installation-test/events{/privacy}",
             "received_events_url": "https://api.github.com/users/installation-test/received_events",
-            "type": OWNER_TYPE,
+            "type": TEST_OWNER_TYPE,
             "site_admin": False,
         },
         "repository_selection": "all",
@@ -132,7 +134,7 @@ new_installation_payload: GitHubEventPayload = {
         "app_id": -1,
         "app_slug": "issue-to-pull-request",
         "target_id": -1,
-        "target_type": "Organization",
+        "target_type": TEST_OWNER_TYPE,
         "permissions": {
             "contents": "write",
             "issues": "write",
@@ -161,17 +163,17 @@ new_installation_payload: GitHubEventPayload = {
     },
     "repositories": [
         {
-            "id": -1,
+            "id": TEST_REPO_ID,
             "node_id": "R_kgDOJZc8Zg",
-            "name": "main",
-            "full_name": "installation-test/main",
+            "name": TEST_REPO_NAME,
+            "full_name": f"{TEST_OWNER_NAME}/{TEST_REPO_NAME}",
             "private": True,
         }
     ],
     "requester": None,
     "sender": {
-        "login": USER_NAME,
-        "id": USER_ID,
+        "login": TEST_USER_NAME,
+        "id": TEST_USER_ID,
         "node_id": "MDQ6VXNlcjY2Njk5Mjkw",
         "avatar_url": "https://avatars.githubusercontent.com/u/-1?v=4",
         "gravatar_id": "",
