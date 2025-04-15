@@ -62,7 +62,9 @@ def schedule_handler(_event, _context) -> dict[str, int]:
                     installation_id=installation_id,
                     owner_id=owner_id,
                     owner_name=owner,
-                    issue_id=issue_number,
+                    owner_type=owner_type,
+                    repo_name=repo,
+                    issue_number=issue_number,
                 )
             )
             if requests_left < 1:

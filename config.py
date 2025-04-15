@@ -111,14 +111,17 @@ TZ = timezone.utc
 UTF8 = "utf-8"
 
 # Testing
-INSTALLATION_ID = -1
-NEW_INSTALLATION_ID = -2
+TEST_APP_ID = 123456
+TEST_INSTALLATION_ID = 12345678
+TEST_NEW_INSTALLATION_ID = 87654321
 PRODUCT_ID_FOR_FREE = "prod_PokLGIxiVUwCi6"  # https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
 PRODUCT_ID_FOR_STANDARD = "prod_PqZFpCs1Jq6X4E"  # https://dashboard.stripe.com/test/products/prod_PqZFpCs1Jq6X4E
-OWNER_ID = -1
-OWNER_NAME = "installation-test"
-OWNER_TYPE = "Organization"
-TEST_EMAIL = "test@gitauto.ai"
+TEST_OWNER_ID = 123456789
+TEST_OWNER_TYPE = "Organization"
+TEST_OWNER_NAME = "installation-test"
+TEST_REPO_ID = 987654321
 TEST_REPO_NAME = "test-repo"
-USER_ID = -1
-USER_NAME = "username-test"
+TEST_ISSUE_NUMBER = 1234
+TEST_USER_ID = 1234567
+TEST_USER_NAME = "username-test"
+TEST_EMAIL = "test@gitauto.ai"

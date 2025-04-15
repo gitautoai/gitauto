@@ -8,6 +8,7 @@ class BaseArgs(TypedDict):
     owner_type: Literal["user", "organization"]
     owner_id: int
     owner: str
+    repo_id: int
     repo: str
     clone_url: str
     is_fork: bool

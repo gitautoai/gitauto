@@ -242,7 +242,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
         if pull_request["merged_at"] is not None and pull_request["head"][
             "ref"
         ].startswith(PRODUCT_ID + ISSUE_NUMBER_FORMAT):
-            # Create unique_issue_id to update merged status
+            # Get issue number from PR body
             body: str = pull_request["body"]
             if not body.startswith(PR_BODY_STARTS_WITH):
                 return
@@ -250,10 +250,17 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
             match = re.search(pattern, body)
             if not match:
                 return
-            issue_number = match.group(1)
+            issue_number = int(match.group(1))
             owner_type = payload["repository"]["owner"]["type"]
-            unique_issue_id = f"{owner_type}/{payload['repository']['owner']['login']}/{payload['repository']['name']}#{issue_number}"
-            set_issue_to_merged(unique_issue_id=unique_issue_id)
+            owner_name = payload["repository"]["owner"]["login"]
+            repo_name = payload["repository"]["name"]
+
+            set_issue_to_merged(
+                owner_type=owner_type,
+                owner_name=owner_name,
+                repo_name=repo_name,
+                issue_number=issue_number,
+            )
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_comment

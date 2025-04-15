@@ -55,6 +55,7 @@ def deconstruct_jira_payload(payload: dict[str, Any]):
 
     # Extract repository related variables
     repo: dict[str, Any] = payload["repo"]
+    repo_id: int = repo["id"]
     repo_name: str = repo["name"]
 
     # Extract owner related variables
@@ -87,6 +88,7 @@ def deconstruct_jira_payload(payload: dict[str, Any]):
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
+        "repo_id": repo_id,
         "repo": repo_name,
         "clone_url": "",
         "is_fork": is_fork,
