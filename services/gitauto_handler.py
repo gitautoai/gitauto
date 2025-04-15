@@ -85,6 +85,7 @@ async def handle_gitauto(
     owner_id = base_args["owner_id"]
     owner_name = base_args["owner"]
     owner_type = base_args["owner_type"]
+    repo_id = base_args["repo_id"]
     repo_name = base_args["repo"]
     issue_number = base_args["issue_number"]
     issue_title = base_args["issue_title"]
@@ -115,7 +116,9 @@ async def handle_gitauto(
             installation_id=installation_id,
             owner_id=owner_id,
             owner_name=owner_name,
-            issue_id=issue_number,
+            owner_type=owner_type,
+            repo_name=repo_name,
+            issue_number=issue_number,
         )
     )
     p += 5
@@ -137,19 +140,19 @@ async def handle_gitauto(
         update_comment(body=body, base_args=base_args)
         return
 
-    unique_issue_id = f"{owner_type}/{owner_name}/{repo_name}"
-    if input_from == "github":
-        unique_issue_id = unique_issue_id + f"#{issue_number}"
-    elif input_from == "jira":
-        unique_issue_id = unique_issue_id + f"#jira-{issue_number}"
-
     # Create a usage record
     usage_record_task = create_task(
         create_user_request(
             user_id=sender_id if input_from == "github" else 0,
             user_name=sender_name,
             installation_id=installation_id,
-            unique_issue_id=unique_issue_id,
+            owner_id=owner_id,
+            owner_type=owner_type,
+            owner_name=owner_name,
+            repo_id=repo_id,
+            repo_name=repo_name,
+            issue_number=issue_number,
+            source=input_from,
             email=sender_email,
         )
     )

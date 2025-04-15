@@ -41,6 +41,7 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
 
     # Extract repository related variables
     repo: RepositoryInfo = payload["repository"]
+    repo_id: int = repo["id"]
     repo_name: str = repo["name"]
     clone_url: str = repo["clone_url"]
     is_fork: bool = repo.get("fork", False)
@@ -88,6 +89,7 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
+        "repo_id": repo_id,
         "repo": repo_name,
         "clone_url": clone_url,
         "is_fork": is_fork,

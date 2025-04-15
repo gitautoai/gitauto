@@ -79,7 +79,13 @@ async def create_user_request(
     user_id: int,
     user_name: str,
     installation_id: int,
-    unique_issue_id: str,
+    owner_id: int,
+    owner_type: str,
+    owner_name: str,
+    repo_id: int,
+    repo_name: str,
+    issue_number: int,
+    source: str,
     email: str | None,
 ) -> int:
     """Creates record in usage table for this user and issue."""
@@ -87,14 +93,25 @@ async def create_user_request(
     data, _ = (
         supabase.table(table_name="issues")
         .select("*")
-        .eq(column="unique_id", value=unique_issue_id)
+        .eq(column="owner_type", value=owner_type)
+        .eq(column="owner_name", value=owner_name)
+        .eq(column="repo_name", value=repo_name)
+        .eq(column="issue_number", value=issue_number)
         .execute()
     )
 
-    # If no issue exists with that unique_issue_id, create one
+    # If no issue exists with those identifiers, create one
     if not data[1]:
         supabase.table(table_name="issues").insert(
-            json={"unique_id": unique_issue_id, "installation_id": installation_id}
+            json={
+                "owner_id": owner_id,
+                "owner_type": owner_type,
+                "owner_name": owner_name,
+                "repo_id": repo_id,
+                "repo_name": repo_name,
+                "issue_number": issue_number,
+                "installation_id": installation_id,
+            }
         ).execute()
 
     # Add user request to usage table
@@ -102,9 +119,15 @@ async def create_user_request(
         supabase.table(table_name="usage")
         .insert(
             json={
+                "owner_id": owner_id,
+                "owner_type": owner_type,
+                "owner_name": owner_name,
+                "repo_id": repo_id,
+                "repo_name": repo_name,
+                "issue_number": issue_number,
                 "user_id": user_id,
                 "installation_id": installation_id,
-                "unique_issue_id": unique_issue_id,
+                "source": source,
             }
         )
         .execute()
@@ -172,10 +195,15 @@ def is_users_first_issue(user_id: int, installation_id: int) -> bool:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def set_issue_to_merged(unique_issue_id: str) -> None:
+def set_issue_to_merged(
+    owner_type: str, owner_name: str, repo_name: str, issue_number: int
+) -> None:
     (
         supabase.table(table_name="issues")
         .update(json={"merged": True})
-        .eq(column="unique_id", value=unique_issue_id)
+        .eq(column="owner_type", value=owner_type)
+        .eq(column="owner_name", value=owner_name)
+        .eq(column="repo_name", value=repo_name)
+        .eq(column="issue_number", value=issue_number)
         .execute()
     )

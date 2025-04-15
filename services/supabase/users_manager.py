@@ -107,7 +107,9 @@ def get_how_many_requests_left_and_cycle(
     installation_id: int,
     owner_id: int,
     owner_name: str,
-    issue_id: str = None,
+    owner_type: str = None,
+    repo_name: str = None,
+    issue_number: int = None,
 ):
     # Check if stripe customer id exists for installation
     data, _ = (
@@ -149,22 +151,28 @@ def get_how_many_requests_left_and_cycle(
     # Get completed requests for this installation
     data, _ = (
         supabase.table("usage")
-        .select("unique_issue_id")
+        .select("owner_type, owner_name, repo_name, issue_number")
         .gt("created_at", start_date)
         .eq("installation_id", installation_id)
         .eq("is_completed", True)
         .execute()
     )
 
-    # Process unique_issue_id in Python
-    unique_issue_ids = set(record["unique_issue_id"] for record in data[1])
-    print(f"unique_issue_ids: {unique_issue_ids}")
+    # Process unique requests in Python by combining fields
+    unique_requests = {
+        f"{record['owner_type']}/{record['owner_name']}/{record['repo_name']}#{record['issue_number']}"
+        for record in data[1]
+    }
+    print(f"unique_requests: {unique_requests}")
 
     # Check if issue is already used
-    is_retried = issue_id in unique_issue_ids if issue_id else False
+    is_retried = False
+    if owner_type and repo_name and issue_number:
+        current_request = f"{owner_type}/{owner_name}/{repo_name}#{issue_number}"
+        is_retried = current_request in unique_requests
     print(f"is_retried: {is_retried}")
 
-    requests_left = request_limit - len(unique_issue_ids)
+    requests_left = request_limit - len(unique_requests)
     print(f"requests_left: {requests_left}")
     return (requests_left, request_limit, end_date, is_retried)
 

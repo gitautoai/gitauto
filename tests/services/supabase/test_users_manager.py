@@ -11,14 +11,16 @@ import pytest
 # Local imports
 from config import (
     GITHUB_NOREPLY_EMAIL_DOMAIN,
-    OWNER_ID,
-    OWNER_NAME,
-    OWNER_TYPE,
     PRODUCT_ID_FOR_FREE,
-    USER_ID,
-    USER_NAME,
-    INSTALLATION_ID,
-    NEW_INSTALLATION_ID,
+    TEST_INSTALLATION_ID,
+    TEST_ISSUE_NUMBER,
+    TEST_NEW_INSTALLATION_ID,
+    TEST_OWNER_ID,
+    TEST_OWNER_NAME,
+    TEST_OWNER_TYPE,
+    TEST_REPO_ID,
+    TEST_USER_ID,
+    TEST_USER_NAME,
     TEST_EMAIL,
     TEST_REPO_NAME,
 )
@@ -62,20 +64,26 @@ async def test_create_and_update_user_request_works() -> None:
 
     # insert data into the db -> create installation
     create_installation(
-        installation_id=INSTALLATION_ID,
-        owner_type=OWNER_TYPE,
-        owner_name=OWNER_NAME,
-        owner_id=OWNER_ID,
-        user_id=USER_ID,
-        user_name=USER_NAME,
+        installation_id=TEST_INSTALLATION_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        owner_id=TEST_OWNER_ID,
+        user_id=TEST_USER_ID,
+        user_name=TEST_USER_NAME,
         email=TEST_EMAIL,
     )
 
     usage_record_id = await create_user_request(
-        user_id=USER_ID,
-        user_name=USER_NAME,
-        installation_id=INSTALLATION_ID,
-        unique_issue_id="U/gitautoai/nextjs-website#52",
+        user_id=TEST_USER_ID,
+        user_name=TEST_USER_NAME,
+        installation_id=TEST_INSTALLATION_ID,
+        owner_id=TEST_OWNER_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        repo_id=TEST_REPO_ID,
+        repo_name=TEST_REPO_NAME,
+        issue_number=TEST_ISSUE_NUMBER,
+        source="github",
         email=TEST_EMAIL,
     )
     assert isinstance(usage_record_id, int)
@@ -100,18 +108,23 @@ def test_how_many_requests_left() -> None:
     wipe_installation_owner_user_data()
     # insert data into the db -> create installation
     create_installation(
-        installation_id=INSTALLATION_ID,
-        owner_type=OWNER_TYPE,
-        owner_name=OWNER_NAME,
-        owner_id=OWNER_ID,
-        user_id=USER_ID,
-        user_name=USER_NAME,
+        installation_id=TEST_INSTALLATION_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        owner_id=TEST_OWNER_ID,
+        user_id=TEST_USER_ID,
+        user_name=TEST_USER_NAME,
         email=TEST_EMAIL,
     )
     # Testing 0 requests have been made on free tier
     requests_left, request_count, end_date, _is_retried = (
         get_how_many_requests_left_and_cycle(
-            installation_id=INSTALLATION_ID, owner_id=OWNER_ID, owner_name=OWNER_NAME
+            installation_id=TEST_INSTALLATION_ID,
+            owner_id=TEST_OWNER_ID,
+            owner_name=TEST_OWNER_NAME,
+            owner_type=TEST_OWNER_TYPE,
+            repo_name=TEST_REPO_NAME,
+            issue_number=TEST_ISSUE_NUMBER,
         )
     )
 
@@ -122,23 +135,40 @@ def test_how_many_requests_left() -> None:
 
     # Generate 5 issues and 5 usage records
     for i in range(1, 6):
-        unique_issue_id: str = f"{OWNER_TYPE}/{OWNER_NAME}/{TEST_REPO_NAME}#{i}"
         supabase.table("issues").insert(
-            json={"installation_id": INSTALLATION_ID, "unique_id": unique_issue_id}
+            json={
+                "installation_id": TEST_INSTALLATION_ID,
+                "owner_id": TEST_OWNER_ID,
+                "owner_type": TEST_OWNER_TYPE,
+                "owner_name": TEST_OWNER_NAME,
+                "repo_id": TEST_REPO_ID,
+                "repo_name": TEST_REPO_NAME,
+                "issue_number": i,
+            }
         ).execute()
         supabase.table("usage").insert(
             json={
-                "user_id": USER_ID,
-                "installation_id": INSTALLATION_ID,
+                "user_id": TEST_USER_ID,
+                "installation_id": TEST_INSTALLATION_ID,
                 "is_completed": True,
-                "unique_issue_id": unique_issue_id,
+                "owner_id": TEST_OWNER_ID,
+                "owner_type": TEST_OWNER_TYPE,
+                "owner_name": TEST_OWNER_NAME,
+                "repo_id": TEST_REPO_ID,
+                "repo_name": TEST_REPO_NAME,
+                "issue_number": i,
             }
         ).execute()
 
     # Test no requests left
     requests_left, request_count, end_date, _is_retried = (
         get_how_many_requests_left_and_cycle(
-            installation_id=INSTALLATION_ID, owner_id=OWNER_ID, owner_name=OWNER_NAME
+            installation_id=TEST_INSTALLATION_ID,
+            owner_id=TEST_OWNER_ID,
+            owner_name=TEST_OWNER_NAME,
+            owner_type=TEST_OWNER_TYPE,
+            repo_name=TEST_REPO_NAME,
+            issue_number=TEST_ISSUE_NUMBER,
         )
     )
 
@@ -147,7 +177,7 @@ def test_how_many_requests_left() -> None:
     assert isinstance(end_date, datetime.datetime)
 
     # Clean Up
-    delete_installation(installation_id=INSTALLATION_ID, user_id=USER_ID)
+    delete_installation(installation_id=TEST_INSTALLATION_ID, user_id=TEST_USER_ID)
 
 
 @timer_decorator
@@ -157,12 +187,12 @@ def test_parse_subscription_object() -> None:
     wipe_installation_owner_user_data()
     # insert data into the db -> create installation
     create_installation(
-        installation_id=INSTALLATION_ID,
-        owner_type=OWNER_TYPE,
-        owner_name=OWNER_NAME,
-        owner_id=OWNER_ID,
-        user_id=USER_ID,
-        user_name=USER_NAME,
+        installation_id=TEST_INSTALLATION_ID,
+        owner_id=TEST_OWNER_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        user_id=TEST_USER_ID,
+        user_name=TEST_USER_NAME,
         email=TEST_EMAIL,
     )
 
@@ -170,10 +200,10 @@ def test_parse_subscription_object() -> None:
         subscription = get_subscription(customer_id=customer_id)
         _, _, product_id_output, _ = parse_subscription_object(
             subscription=subscription,
-            installation_id=INSTALLATION_ID,
+            installation_id=TEST_INSTALLATION_ID,
             customer_id=customer_id,
-            owner_id=OWNER_ID,
-            owner_name=OWNER_NAME,
+            owner_id=TEST_OWNER_ID,
+            owner_name=TEST_OWNER_NAME,
         )
         assert product_id_output == product_id
 
@@ -195,7 +225,7 @@ async def test_install_uninstall_install() -> None:
     """Testing install uninstall methods"""
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
-    wipe_installation_owner_user_data(NEW_INSTALLATION_ID)
+    wipe_installation_owner_user_data(TEST_NEW_INSTALLATION_ID)
 
     # Create a more comprehensive mock setup
     # We'll mock the process_repositories function entirely to avoid the cloning process
@@ -218,36 +248,36 @@ async def test_install_uninstall_install() -> None:
         owners_data, _ = (
             supabase.table("owners")
             .select("*")
-            .eq(column="owner_id", value=OWNER_ID)
+            .eq(column="owner_id", value=TEST_OWNER_ID)
             .execute()
         )
-        assert owners_data[1][0]["owner_id"] == OWNER_ID
+        assert owners_data[1][0]["owner_id"] == TEST_OWNER_ID
         assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
 
         # Check Installation Record
         installation_data, _ = (
             supabase.table("installations")
             .select("*")
-            .eq(column="installation_id", value=INSTALLATION_ID)
+            .eq(column="installation_id", value=TEST_INSTALLATION_ID)
             .execute()
         )
 
-        assert installation_data[1][0]["installation_id"] == INSTALLATION_ID
-        assert installation_data[1][0]["owner_name"] == OWNER_NAME
-        assert installation_data[1][0]["owner_id"] == OWNER_ID
-        assert installation_data[1][0]["owner_type"] == OWNER_TYPE
+        assert installation_data[1][0]["installation_id"] == TEST_INSTALLATION_ID
+        assert installation_data[1][0]["owner_name"] == TEST_OWNER_NAME
+        assert installation_data[1][0]["owner_id"] == TEST_OWNER_ID
+        assert installation_data[1][0]["owner_type"] == TEST_OWNER_TYPE
         assert installation_data[1][0]["uninstalled_at"] is None
 
         # Check Users Record
         users_data, _ = (
             supabase.table("users")
             .select("*")
-            .eq(column="user_id", value=USER_ID)
+            .eq(column="user_id", value=TEST_USER_ID)
             .execute()
         )
 
-        assert users_data[1][0]["user_id"] == USER_ID
-        assert users_data[1][0]["user_name"] == USER_NAME
+        assert users_data[1][0]["user_id"] == TEST_USER_ID
+        assert users_data[1][0]["user_name"] == TEST_USER_NAME
 
         await handle_webhook_event(event_name="installation", payload=deleted_payload)
         # We're going to check the same things, except that installation should have uninstalled_at
@@ -256,36 +286,36 @@ async def test_install_uninstall_install() -> None:
         owners_data, _ = (
             supabase.table("owners")
             .select("*")
-            .eq(column="owner_id", value=OWNER_ID)
+            .eq(column="owner_id", value=TEST_OWNER_ID)
             .execute()
         )
-        assert owners_data[1][0]["owner_id"] == OWNER_ID
+        assert owners_data[1][0]["owner_id"] == TEST_OWNER_ID
         assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
 
         # Check Installation Record
         installation_data, _ = (
             supabase.table("installations")
             .select("*")
-            .eq(column="installation_id", value=INSTALLATION_ID)
+            .eq(column="installation_id", value=TEST_INSTALLATION_ID)
             .execute()
         )
 
-        assert installation_data[1][0]["installation_id"] == INSTALLATION_ID
-        assert installation_data[1][0]["owner_name"] == OWNER_NAME
-        assert installation_data[1][0]["owner_id"] == OWNER_ID
-        assert installation_data[1][0]["owner_type"] == OWNER_TYPE
+        assert installation_data[1][0]["installation_id"] == TEST_INSTALLATION_ID
+        assert installation_data[1][0]["owner_name"] == TEST_OWNER_NAME
+        assert installation_data[1][0]["owner_id"] == TEST_OWNER_ID
+        assert installation_data[1][0]["owner_type"] == TEST_OWNER_TYPE
         assert installation_data[1][0]["uninstalled_at"] is not None
 
         # Check Users Record
         users_data, _ = (
             supabase.table("users")
             .select("*")
-            .eq(column="user_id", value=USER_ID)
+            .eq(column="user_id", value=TEST_USER_ID)
             .execute()
         )
 
-        assert users_data[1][0]["user_id"] == USER_ID
-        assert users_data[1][0]["user_name"] == USER_NAME
+        assert users_data[1][0]["user_id"] == TEST_USER_ID
+        assert users_data[1][0]["user_name"] == TEST_USER_NAME
 
         await handle_webhook_event(
             event_name="installation", payload=new_installation_payload
@@ -295,40 +325,40 @@ async def test_install_uninstall_install() -> None:
         owners_data, _ = (
             supabase.table("owners")
             .select("*")
-            .eq(column="owner_id", value=OWNER_ID)
+            .eq(column="owner_id", value=TEST_OWNER_ID)
             .execute()
         )
-        assert owners_data[1][0]["owner_id"] == OWNER_ID
+        assert owners_data[1][0]["owner_id"] == TEST_OWNER_ID
         assert isinstance(owners_data[1][0]["stripe_customer_id"], str)
 
         # Check Installation Record
         installation_data, _ = (
             supabase.table("installations")
             .select("*")
-            .eq(column="installation_id", value=NEW_INSTALLATION_ID)
+            .eq(column="installation_id", value=TEST_NEW_INSTALLATION_ID)
             .execute()
         )
 
-        assert installation_data[1][0]["installation_id"] == NEW_INSTALLATION_ID
-        assert installation_data[1][0]["owner_name"] == OWNER_NAME
-        assert installation_data[1][0]["owner_id"] == OWNER_ID
-        assert installation_data[1][0]["owner_type"] == OWNER_TYPE
+        assert installation_data[1][0]["installation_id"] == TEST_NEW_INSTALLATION_ID
+        assert installation_data[1][0]["owner_name"] == TEST_OWNER_NAME
+        assert installation_data[1][0]["owner_id"] == TEST_OWNER_ID
+        assert installation_data[1][0]["owner_type"] == TEST_OWNER_TYPE
         assert installation_data[1][0]["uninstalled_at"] is None
 
         # Check Users Record
         users_data, _ = (
             supabase.table("users")
             .select("*")
-            .eq(column="user_id", value=USER_ID)
+            .eq(column="user_id", value=TEST_USER_ID)
             .execute()
         )
 
-        assert users_data[1][0]["user_id"] == USER_ID
-        assert users_data[1][0]["user_name"] == USER_NAME
+        assert users_data[1][0]["user_id"] == TEST_USER_ID
+        assert users_data[1][0]["user_name"] == TEST_USER_NAME
 
     # Clean Up
     wipe_installation_owner_user_data()
-    wipe_installation_owner_user_data(NEW_INSTALLATION_ID)
+    wipe_installation_owner_user_data(TEST_NEW_INSTALLATION_ID)
 
 
 @timer_decorator
@@ -339,32 +369,32 @@ def test_handle_user_email_update() -> None:
 
     # Insert a user into the database
     create_installation(
-        installation_id=INSTALLATION_ID,
-        owner_type=OWNER_TYPE,
-        owner_name=OWNER_NAME,
-        owner_id=OWNER_ID,
-        user_id=USER_ID,
-        user_name=USER_NAME,
+        installation_id=TEST_INSTALLATION_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        owner_id=TEST_OWNER_ID,
+        user_id=TEST_USER_ID,
+        user_name=TEST_USER_NAME,
         email=TEST_EMAIL,
     )
     # Verify github no-reply email is not updated
-    json_data = {"user_id": USER_ID, "user_name": USER_NAME}
+    json_data = {"user_id": TEST_USER_ID, "user_name": TEST_USER_NAME}
     json_data["email"] = f"no_reply_email@{GITHUB_NOREPLY_EMAIL_DOMAIN}"
     upsert_user(**json_data)
-    user_data = get_user(user_id=USER_ID)
+    user_data = get_user(user_id=TEST_USER_ID)
     assert user_data["email"] == TEST_EMAIL
 
     # Verify None email is not updated
     json_data["email"] = None
     upsert_user(**json_data)
-    user_data = get_user(user_id=USER_ID)
+    user_data = get_user(user_id=TEST_USER_ID)
     assert user_data["email"] == TEST_EMAIL
 
     # Verify valid email is updated
     new_email = "new_email@example.com"
     json_data["email"] = "new_email@example.com"
     upsert_user(**json_data)
-    user_data = get_user(user_id=USER_ID)
+    user_data = get_user(user_id=TEST_USER_ID)
     assert user_data["email"] == new_email
 
     # Clean Up

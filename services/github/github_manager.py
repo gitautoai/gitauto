@@ -256,8 +256,9 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
-    owner_name: str = payload["repository"]["owner"]["login"]
     owner_id: int = payload["repository"]["owner"]["id"]
+    owner_name: str = payload["repository"]["owner"]["login"]
+    owner_type: str = payload["repository"]["owner"]["type"]
     repo_name: str = payload["repository"]["name"]
     issue_number: int = payload["issue"]["number"]
     user_id: int = payload["sender"]["id"]
@@ -275,7 +276,9 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
             installation_id=installation_id,
             owner_id=owner_id,
             owner_name=owner_name,
-            issue_id=issue_number,
+            owner_type=owner_type,
+            repo_name=repo_name,
+            issue_number=issue_number,
         )
     )
 

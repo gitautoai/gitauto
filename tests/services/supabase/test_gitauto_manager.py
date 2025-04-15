@@ -1,6 +1,17 @@
 # run this file locally with: python -m tests.services.supabase.test_gitauto_manager
 import asyncio
-from config import OWNER_TYPE, TEST_EMAIL, USER_NAME
+from config import (
+    TEST_EMAIL,
+    TEST_INSTALLATION_ID,
+    TEST_ISSUE_NUMBER,
+    TEST_OWNER_ID,
+    TEST_OWNER_NAME,
+    TEST_OWNER_TYPE,
+    TEST_REPO_ID,
+    TEST_REPO_NAME,
+    TEST_USER_ID,
+    TEST_USER_NAME,
+)
 from services.supabase.client import supabase
 from services.supabase.gitauto_manager import (
     complete_and_update_usage_record,
@@ -16,30 +27,31 @@ from utils.timer import timer_decorator
 @timer_decorator
 async def test_create_update_user_request_works() -> None:
     """Tests based on creating a record and updating it in usage table"""
-    # using -1 to not conflict with real data
-    user_id = -1
-    installation_id = -1
-
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
 
     # insert data into the db -> create installation
     create_installation(
-        installation_id=installation_id,
-        owner_type=OWNER_TYPE,
+        installation_id=TEST_INSTALLATION_ID,
+        owner_type=TEST_OWNER_TYPE,
         owner_name="gitautoai",
-        owner_id=-1,
-        user_id=user_id,
-        user_name=USER_NAME,
+        owner_id=TEST_OWNER_ID,
+        user_id=TEST_USER_ID,
+        user_name=TEST_USER_NAME,
         email=TEST_EMAIL,
     )
 
     usage_record_id = await create_user_request(
-        user_id=user_id,
-        user_name=USER_NAME,
-        installation_id=installation_id,
-        # fake issue creation
-        unique_issue_id="U/gitautoai/test#01",
+        user_id=TEST_USER_ID,
+        user_name=TEST_USER_NAME,
+        installation_id=TEST_INSTALLATION_ID,
+        owner_id=TEST_OWNER_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        repo_id=TEST_REPO_ID,
+        repo_name=TEST_REPO_NAME,
+        issue_number=TEST_ISSUE_NUMBER,
+        source="github",
         email=TEST_EMAIL,
     )
     assert isinstance(
@@ -63,42 +75,47 @@ async def test_create_update_user_request_works() -> None:
 @timer_decorator
 async def test_complete_and_update_usage_record_only_updates_one_record() -> None:
     """Tests based on creating a record and updating it in usage table"""
-    # using -1 to not conflict with real data
-    user_id = -1
-    installation_id = -1
-    unique_issue_id = "U/gitautoai/test#01"
-
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
 
     # insert data into the db -> create installation
     create_installation(
-        installation_id=installation_id,
-        owner_type=OWNER_TYPE,
-        owner_name="gitautoai",
-        owner_id=-1,
-        user_id=user_id,
-        user_name=USER_NAME,
+        installation_id=TEST_INSTALLATION_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        owner_id=TEST_OWNER_ID,
+        user_id=TEST_USER_ID,
+        user_name=TEST_USER_NAME,
         email=TEST_EMAIL,
     )
 
     # Creating multiple usage records where is_completed = false.
     for _ in range(0, 5):
         await create_user_request(
-            user_id=user_id,
-            user_name=USER_NAME,
-            installation_id=installation_id,
-            # fake issue creation
-            unique_issue_id=unique_issue_id,
+            user_id=TEST_USER_ID,
+            user_name=TEST_USER_NAME,
+            installation_id=TEST_INSTALLATION_ID,
+            owner_id=TEST_OWNER_ID,
+            owner_type=TEST_OWNER_TYPE,
+            owner_name=TEST_OWNER_NAME,
+            repo_id=TEST_REPO_ID,
+            repo_name=TEST_REPO_NAME,
+            issue_number=TEST_ISSUE_NUMBER,
+            source="github",
             email=TEST_EMAIL,
         )
 
     usage_record_id = await create_user_request(
-        user_id=user_id,
-        user_name=USER_NAME,
-        installation_id=installation_id,
-        # fake issue creation
-        unique_issue_id=unique_issue_id,
+        user_id=TEST_USER_ID,
+        user_name=TEST_USER_NAME,
+        installation_id=TEST_INSTALLATION_ID,
+        owner_id=TEST_OWNER_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        repo_id=TEST_REPO_ID,
+        repo_name=TEST_REPO_NAME,
+        issue_number=TEST_ISSUE_NUMBER,
+        source="github",
         email=TEST_EMAIL,
     )
     assert isinstance(
@@ -118,8 +135,8 @@ async def test_complete_and_update_usage_record_only_updates_one_record() -> Non
     data, _ = (
         supabase.table("usage")
         .select("*")
-        .eq("user_id", user_id)
-        .eq("installation_id", installation_id)
+        .eq("user_id", TEST_USER_ID)
+        .eq("installation_id", TEST_INSTALLATION_ID)
         .eq("is_completed", True)
         .execute()
     )
