@@ -38,6 +38,7 @@ from utils.progress_bar import create_progress_bar
 
 
 def handle_check_run(payload: CheckRunCompletedPayload) -> None:
+    return
     # Extract workflow run id
     check_run: CheckRun = payload["check_run"]
     details_url: str = check_run["details_url"]
