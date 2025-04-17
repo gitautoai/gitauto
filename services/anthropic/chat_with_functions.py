@@ -2,11 +2,13 @@
 import json
 from typing import Any
 
-# Local imports
+# Third party imports
 from anthropic import Anthropic, AuthenticationError
 from anthropic._exceptions import OverloadedError
 from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
-from config import ANTHROPIC_MODEL_ID_35, ANTHROPIC_API_KEY, TIMEOUT
+
+# Local imports
+from config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL_ID_37, TIMEOUT
 from services.openai.count_tokens import count_tokens
 from utils.handle_exceptions import handle_exceptions
 
@@ -49,7 +51,7 @@ def chat_with_claude(
     messages: list[Any],
     system_content: str,
     tools: list[dict[str, Any]],
-    model_id: str = ANTHROPIC_MODEL_ID_35,
+    model_id: str = ANTHROPIC_MODEL_ID_37,
 ):
     # https://docs.anthropic.com/en/api/client-sdks
     client = Anthropic(api_key=ANTHROPIC_API_KEY)

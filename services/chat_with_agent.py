@@ -48,7 +48,7 @@ def chat_with_agent(
     previous_calls: List[Dict] | None = None,
     recursion_count: int = 1,
     p: int = 0,
-    model_id: str = ANTHROPIC_MODEL_ID_35,  # Default to Claude 3.5
+    model_id: str = ANTHROPIC_MODEL_ID_37,
     log_messages: List[str] | None = None,
 ):
     global _CLAUDE_35_RATE_LIMITED_UNTIL, _CLAUDE_37_RATE_LIMITED_UNTIL
