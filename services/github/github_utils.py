@@ -4,6 +4,7 @@ from typing import Literal
 
 # Local imports
 from config import PRODUCT_ID, ISSUE_NUMBER_FORMAT, GITHUB_APP_USER_ID
+from services.github.branch_manager import check_branch_exists
 from services.github.github_types import (
     BaseArgs,
     GitHubLabeledPayload,
@@ -15,6 +16,7 @@ from services.github.github_manager import (
     get_user_public_email,
 )
 from services.github.issues_manager import get_parent_issue
+from services.supabase.repository_manager import get_repository_rules
 from utils.extract_urls import extract_urls
 from utils.handle_exceptions import handle_exceptions
 
@@ -53,6 +55,27 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
 
     # Extract branch related variables
     base_branch_name: str = repo["default_branch"]  # like "main"
+
+    # Get installation access token
+    installation_id: int = payload["installation"]["id"]
+    token: str = get_installation_access_token(installation_id=installation_id)
+
+    # Get repository rules from Supabase
+    repo_rules = get_repository_rules(repo_id=repo_id)
+    print(f"Repo rules: {repo_rules}")
+    if repo_rules:
+        target_branch = repo_rules.get("target_branch")
+        print(f"Target branch: {target_branch}")
+    else:
+        target_branch = None
+
+    # If target branch is set and exists in the repository, use it, otherwise use default branch
+    if target_branch and check_branch_exists(
+        owner=owner_name, repo=repo_name, branch_name=target_branch, token=token
+    ):
+        base_branch_name = target_branch
+        print(f"Using target branch: {target_branch}")
+
     date: str = datetime.now().strftime(format="%Y%m%d")  # like "20241224"
     time: str = datetime.now().strftime(format="%H%M%S")  # like "120000" means 12:00:00
     new_branch_name = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}{issue_number}-{date}-{time}"
@@ -67,8 +90,6 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
 
     # Extract other information
     github_urls, other_urls = extract_urls(text=issue_body)
-    installation_id: int = payload["installation"]["id"]
-    token: str = get_installation_access_token(installation_id=installation_id)
     sender_email: str = get_user_public_email(username=sender_name, token=token)
 
     # Extract its parent issue
