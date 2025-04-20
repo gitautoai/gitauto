@@ -277,6 +277,8 @@ def chat_with_agent(
             msg = f"Read `{tool_args['file_path']}`."
         elif tool_name == "search_remote_file_contents":
             msg = f"Search repository for `{tool_args['query']}`."
+        elif tool_name == "commit_changes_to_remote_branch":
+            msg = f"Commit changes to `{tool_args['branch_name']}`."
         else:
             msg = f"Calling `{tool_name}()` with `{tool_args}`."
 
