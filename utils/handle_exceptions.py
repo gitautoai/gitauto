@@ -3,10 +3,10 @@
 # Standard imports
 import time
 from functools import wraps
+import logging
 from typing import Any, Callable, Tuple, TypeVar
 
 # Third party imports
-import logging
 import requests
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -22,12 +22,6 @@ def handle_exceptions(
     def decorator(func: F) -> F:
         @wraps(wrapped=func)
         def wrapper(*args: Tuple[Any, ...], **kwargs: Any):
-            truncated_kwargs = str(
-                {
-                    k: str(v)[:100] + "..." if len(str(v)) > 100 else v
-                    for k, v in kwargs.items()
-                }
-            )
             try:
                 return func(*args, **kwargs)
             except requests.exceptions.HTTPError as err:
@@ -79,15 +73,15 @@ def handle_exceptions(
 
                 # Ex) 409: Conflict, 422: Unprocessable Entity (No changes made), and etc.
                 else:
-                    err_msg = f"{func.__name__} encountered an HTTPError: {err}\nArgs: {args}\nKwargs: {truncated_kwargs}. Reason: {reason}. Text: {text}\n"
+                    err_msg = f"{func.__name__} encountered an HTTPError: {err}\nArgs: {args}\nKwargs: {kwargs}\nReason: {reason}\nText: {text}\n"
                     logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
 
             # Catch all other exceptions
             except (AttributeError, KeyError, TypeError, Exception) as err:
-                error_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\nArgs: {args}\nKwargs: {truncated_kwargs}\n"
-                logging.error(msg=error_msg)
+                err_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\nArgs: {args}\nKwargs: {kwargs}"
+                logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
             return default_return_value
