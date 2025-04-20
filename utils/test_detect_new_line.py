@@ -21,3 +21,18 @@ def test_detect_line_break_empty():
     text = ""
     assert detect_line_break(text) == "\n"
 
+
+def test_detect_line_break_mixed():
+    text = "Hello\r\nWorld\rTest\n"
+    assert detect_line_break(text) == "\r\n"
+
+
+def test_detect_line_break_single_character():
+    text = "\r"
+    assert detect_line_break(text) == "\r"
+
+
+def test_detect_line_break_special_characters():
+    text = "Special characters: !@#$%^&*()\nMore text"
+    assert detect_line_break(text) == "\n"
+
