@@ -81,7 +81,31 @@ GitHub allows only a HTTPS URL for webhook events, so we need to use ngrok or so
 6. ngrok starts tunneling to `http://localhost:8000`.
 7. Use `{your-endpoint-url}/webhook` like `https://gitauto.ngrok.dev/webhook` as the webhook URL in the GitHub app settings as GitHub requires HTTPS for the webhook URL instead of HTTP.
 
-### 3-4. Create a virtual Python dependency environment in your local machine
+### 3-4. Managing Git branches
+
+To update your local branch with the latest changes from our default branch (`main`), run the following commands:
+
+```bash
+git checkout your-branch
+git pull origin main
+```
+
+For example:
+
+```bash
+git checkout wes
+git pull origin main
+```
+
+If you have uncommitted changes, stash them first:
+
+```bash
+git stash        # Save changes
+git pull origin main
+git stash pop    # Reapply changes
+```
+
+### 3-5. Create a virtual Python dependency environment in your local machine
 
 1. Run `deactivate` to deactivate the virtual environment if you have activated it and not sure where you are.
 2. Run `rm -rf venv` to remove the virtual environment if you have created it and not sure what's in it.
@@ -90,12 +114,12 @@ GitHub allows only a HTTPS URL for webhook events, so we need to use ngrok or so
 5. Run `which python`, `which pip`, and `python --version` to check the Python version and make sure it points to the virtual environment.
 6. Run `pip install -r requirements.txt` to install the dependencies.
 
-### 3-5. Get the `.env` file
+### 3-6. Get the `.env` file
 
 1. Ask for the `.env` file from [@hiroshinishio](https://github.com/hiroshinishio).
 2. Put the `.env` file in the root directory.
 
-### 3-6. How to encode a GitHub app private key to base64
+### 3-7. How to encode a GitHub app private key to base64
 
 In `.env` file, you need to set your own `GH_PRIVATE_KEY`. Here's the step:
 
@@ -105,7 +129,7 @@ In `.env` file, you need to set your own `GH_PRIVATE_KEY`. Here's the step:
 4. Run `base64 -i your/path/to/private-key.pem` to encode the private key to base64.
 5. Copy the output and paste it in the `GH_PRIVATE_KEY` field in your `.env` file.
 
-### 3-7. How to run the code
+### 3-8. How to run the code
 
 1. Run `uvicorn main:app --reload --port 8000 --log-level warning` to start the ASGI server and run `main.py` with `app` as the FastAPI instance.
    1. `--reload` is for auto-reloading the server when the code changes.
@@ -122,6 +146,6 @@ INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 ```
 
-### 3-8. Other information
+### 3-9. Other information
 
 For communication (Slack), database (Supabase), payment (Stripe), and serverless functions (AWS Lambda), provide your preferred email to [@hiroshinishio](https://github.com/hiroshinishio) so that he can invite you to the local development environment.
