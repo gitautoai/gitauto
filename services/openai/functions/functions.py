@@ -6,6 +6,10 @@ from openai.types import shared_params
 from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
 
 # Local imports
+from services.github.commit.replace_remote_file import (
+    REPLACE_REMOTE_FILE_CONTENT,
+    replace_remote_file_content,
+)
 from services.github.github_manager import (
     commit_changes_to_remote_branch,
     get_remote_file_content,
@@ -13,6 +17,7 @@ from services.github.github_manager import (
     update_comment,
 )
 from services.google.search import google_search
+from services.openai.functions.properties import FILE_PATH
 from services.openai.functions.search_google import SEARCH_GOOGLE
 from services.openai.functions.update_comment import UPDATE_GITHUB_COMMENT
 from services.openai.instructions.diff import DIFF_DESCRIPTION
@@ -23,10 +28,6 @@ from services.openai.instructions.diff import DIFF_DESCRIPTION
 DIFF: dict[str, str] = {
     "type": "string",
     "description": DIFF_DESCRIPTION,
-}
-FILE_PATH: dict[str, str] = {
-    "type": "string",
-    "description": "The full path to the file within the repository. For example, 'src/openai/__init__.py'. NEVER EVER be the same as the file_path in previous function calls.",
 }
 KEYWORD: dict[str, str] = {
     "type": "string",
@@ -128,6 +129,7 @@ TOOLS_TO_SEARCH_GOOGLE: Iterable[ChatCompletionToolParam] = [
 ]
 TOOLS_TO_COMMIT_CHANGES: Iterable[ChatCompletionToolParam] = [
     {"type": "function", "function": COMMIT_CHANGES_TO_REMOTE_BRANCH},
+    {"type": "function", "function": REPLACE_REMOTE_FILE_CONTENT},
 ]
 
 # Define tools to call
@@ -135,6 +137,7 @@ tools_to_call: dict[str, Any] = {
     # GitHub
     "commit_changes_to_remote_branch": commit_changes_to_remote_branch,
     "get_remote_file_content": get_remote_file_content,
+    "replace_remote_file_content": replace_remote_file_content,
     "search_remote_file_contents": search_remote_file_contents,
     "update_github_comment": update_comment,
     # Google
