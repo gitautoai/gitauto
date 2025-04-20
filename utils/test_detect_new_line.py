@@ -36,3 +36,13 @@ def test_detect_line_break_special_characters():
     text = "Special characters: !@#$%^&*()\nMore text"
     assert detect_line_break(text) == "\n"
 
+
+def test_detect_line_break_unicode():
+    text = "Unicode characters: 你好\r\n世界"
+    assert detect_line_break(text) == "\r\n"
+
+
+def test_detect_line_break_only_newlines():
+    text = "\r\n\r\n"
+    assert detect_line_break(text) == "\r\n"
+
