@@ -275,7 +275,7 @@ async def handle_gitauto(
     elif input_from == "jira":
         latest_commit_sha = base_args["latest_commit_sha"]
     create_remote_branch(sha=latest_commit_sha, base_args=base_args)
-    comment_body = "Created a remote branch."
+    comment_body = f"Created a branch: `{new_branch_name}`"
     p += 5
     log_messages.append(comment_body)
     update_comment(
