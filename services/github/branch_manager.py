@@ -23,3 +23,16 @@ def get_default_branch(owner: str, repo: str, token: str):
     branch_data = branch_response.json()
     latest_commit_sha: str = branch_data["commit"]["sha"]
     return default_branch_name, latest_commit_sha
+
+
+@handle_exceptions(default_return_value=False, raise_on_error=False)
+def check_branch_exists(owner: str, repo: str, branch_name: str, token: str):
+    """https://docs.github.com/en/rest/branches/branches?apiVersion=2022-11-28#get-a-branch"""
+    if not branch_name:
+        return False
+
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/branches/{branch_name}"
+    headers = create_headers(token=token, media_type="")
+    response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
+    response.raise_for_status()
+    return True

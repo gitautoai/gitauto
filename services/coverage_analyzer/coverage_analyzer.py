@@ -34,7 +34,7 @@ async def handle_workflow_coverage(
     print(f"Primary language: {primary_language}")
 
     artifacts = get_workflow_artifacts(owner_name, repo_name, run_id, token)
-    print(f"Artifacts:\n{artifacts}")
+    # print(f"Artifacts:\n{artifacts}")
 
     coverage_data = []
     for artifact in artifacts:
