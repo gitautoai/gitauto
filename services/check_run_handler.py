@@ -203,8 +203,8 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         (
             messages,
             previous_calls,
-            tool_name,
-            tool_args,
+            _tool_name,
+            _tool_args,
             _token_input,
             _token_output,
             is_explored,
@@ -216,38 +216,31 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             previous_calls=previous_calls,
             p=p,
         )
-        comment_body = f"Calling `{tool_name}()` with `{tool_args}`."
-        update_comment(body=comment_body, base_args=base_args, p=p)
-        p = min(p + 5, 95)
 
         # Search Google
-        (
-            messages,
-            previous_calls,
-            tool_name,
-            tool_args,
-            _token_input,
-            _token_output,
-            _is_searched,
-            p,
-        ) = chat_with_agent(
-            messages=messages,
-            base_args=base_args,
-            mode="search",
-            previous_calls=previous_calls,
-            p=p,
-        )
-        if tool_name is not None and tool_args is not None:
-            comment_body = f"Calling `{tool_name}()` with `{tool_args}`."
-            update_comment(body=comment_body, base_args=base_args, p=p)
-            p = min(p + 5, 95)
+        # (
+        #     messages,
+        #     previous_calls,
+        #     _tool_name,
+        #     _tool_args,
+        #     _token_input,
+        #     _token_output,
+        #     _is_searched,
+        #     p,
+        # ) = chat_with_agent(
+        #     messages=messages,
+        #     base_args=base_args,
+        #     mode="search",
+        #     previous_calls=previous_calls,
+        #     p=p,
+        # )
 
         # Commit changes based on the exploration information
         (
             messages,
             previous_calls,
-            tool_name,
-            tool_args,
+            _tool_name,
+            _tool_args,
             _token_input,
             _token_output,
             is_committed,
@@ -259,9 +252,6 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             previous_calls=previous_calls,
             p=p,
         )
-        msg = f"Calling `{tool_name}()` with `{tool_args}`."
-        update_comment(body=comment_body, base_args=base_args, p=p)
-        p = min(p + 5, 95)
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
         if not is_explored and not is_committed:

@@ -263,7 +263,7 @@ def chat_with_agent(
     )
 
     # Recursively call the function if the mode is "explore" and the tool was called
-    if mode == "explore" and tool_name and recursion_count < 3:
+    if mode == "explore" and tool_name:
         if tool_name == "get_remote_file_content" and "line_number" in tool_args:
             line_info = (
                 f" around line {tool_args['line_number']}"
@@ -287,16 +287,39 @@ def chat_with_agent(
             base_args=base_args,
         )
 
-        return chat_with_agent(
-            messages=messages_list,
-            base_args=base_args,
-            mode=mode,
-            previous_calls=previous_calls,
-            recursion_count=recursion_count + 1,
-            p=p + 5,
-            model_id=model_id,
-            log_messages=log_messages,
-        )
+        if recursion_count < 3:
+            return chat_with_agent(
+                messages=messages_list,
+                base_args=base_args,
+                mode=mode,
+                previous_calls=previous_calls,
+                recursion_count=recursion_count + 1,
+                p=p + 5,
+                model_id=model_id,
+                log_messages=log_messages,
+            )
+
+    elif mode == "search" and tool_name:
+        if tool_name == "search_google" and "query" in tool_args:
+            query = tool_args.get("query", "")
+            if query.strip():
+                msg = f"Googled `{query}` and went through the results."
+                log_messages.append(msg)
+                update_comment(
+                    body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
+                    base_args=base_args,
+                )
+
+    elif mode == "commit" and tool_name:
+        if "file_path" in tool_args:
+            file_path = tool_args.get("file_path", "")
+            if file_path.strip():
+                msg = f"Modified `{file_path}` and committed."
+                log_messages.append(msg)
+                update_comment(
+                    body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
+                    base_args=base_args,
+                )
 
     # Return
     return (
@@ -307,5 +330,5 @@ def chat_with_agent(
         token_input,
         token_output,
         is_done,
-        p,
+        p + 5,
     )

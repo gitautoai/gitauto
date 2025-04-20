@@ -290,8 +290,8 @@ async def handle_gitauto(
         (
             messages,
             previous_calls,
-            tool_name,
-            tool_args,
+            _tool_name,
+            _tool_args,
             token_input,
             token_output,
             is_explored,
@@ -304,52 +304,32 @@ async def handle_gitauto(
             p=p,
             log_messages=log_messages,
         )
-        if tool_name is not None and tool_args is not None:
-            file_path = tool_args.get("file_path", "")
-            comment_body = f"Read `{file_path}`."
-            p += 5
-            log_messages.append(comment_body)
-            update_comment(
-                body=create_progress_bar(p=p, msg="\n".join(log_messages)),
-                base_args=base_args,
-            )
 
         # Search Google
-        (
-            messages,
-            previous_calls,
-            tool_name,
-            tool_args,
-            token_input,
-            token_output,
-            _is_searched,
-            p,
-        ) = chat_with_agent(
-            messages=messages,
-            base_args=base_args,
-            mode="search",
-            previous_calls=previous_calls,
-            p=p,
-            log_messages=log_messages,
-        )
-        if tool_name is not None and tool_args is not None:
-            query = tool_args.get("query", "")
-            comment_body = (
-                f"Searched Google for `{query}` and went through the results."
-            )
-            p += 5
-            log_messages.append(comment_body)
-            update_comment(
-                body=create_progress_bar(p=p, msg="\n".join(log_messages)),
-                base_args=base_args,
-            )
+        # (
+        #     messages,
+        #     previous_calls,
+        #     _tool_name,
+        #     _tool_args,
+        #     token_input,
+        #     token_output,
+        #     _is_searched,
+        #     p,
+        # ) = chat_with_agent(
+        #     messages=messages,
+        #     base_args=base_args,
+        #     mode="search",
+        #     previous_calls=previous_calls,
+        #     p=p,
+        #     log_messages=log_messages,
+        # )
 
         # Commit changes based on the exploration information
         (
             messages,
             previous_calls,
-            tool_name,
-            tool_args,
+            _tool_name,
+            _tool_args,
             token_input,
             token_output,
             is_committed,
@@ -362,15 +342,6 @@ async def handle_gitauto(
             p=p,
             log_messages=log_messages,
         )
-        if tool_name is not None and tool_args is not None:
-            file_path = tool_args.get("file_path", "")
-            comment_body = f"Modified `{file_path}` and committed."
-            p += 5
-            log_messages.append(comment_body)
-            update_comment(
-                body=create_progress_bar(p=p, msg="\n".join(log_messages)),
-                base_args=base_args,
-            )
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
         if not is_explored and not is_committed:
