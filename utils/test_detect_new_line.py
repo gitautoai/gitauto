@@ -46,3 +46,8 @@ def test_detect_line_break_only_newlines():
     text = "\r\n\r\n"
     assert detect_line_break(text) == "\r\n"
 
+
+def test_detect_line_break_multiline_text():
+    text = "Line 1\nLine 2\nLine 3"
+    assert detect_line_break(text) == "\n"
+
