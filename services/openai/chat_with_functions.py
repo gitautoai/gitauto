@@ -53,14 +53,31 @@ def chat_with_openai(
     token_input = count_tokens(messages=messages)
     token_output = count_tokens(messages=[choice.message])
 
-    # Handle tool calls
+    # Handle tool calls and create response message
+    response_message = {"role": choice.message.role, "content": choice.message.content}
+
     tool_call_id = None
     tool_name = None
     tool_args = None
 
     if tool_calls:
-        tool_call_id = tool_calls[0].id
-        tool_name = tool_calls[0].function.name
-        tool_args = json.loads(tool_calls[0].function.arguments)
+        tool_call = tool_calls[0]
+        tool_call_id = tool_call.id
+        tool_name = tool_call.function.name
+        tool_args = json.loads(tool_call.function.arguments)
+        response_message["tool_calls"] = [
+            {
+                "id": tool_call_id,
+                "function": {"name": tool_name, "arguments": json.dumps(tool_args)},
+                "type": "function",
+            }
+        ]
 
-    return choice.message, tool_call_id, tool_name, tool_args, token_input, token_output
+    return (
+        response_message,
+        tool_call_id,
+        tool_name,
+        tool_args,
+        token_input,
+        token_output,
+    )
