@@ -238,7 +238,6 @@ def chat_with_agent(
 
     # Check if the same function with the same args has been called before
     current_call = {"function": tool_name, "args": tool_args}
-    print(f"Calling {current_call}.")
     if current_call in previous_calls:
         tool_result = f"Error: The function '{tool_name}' was already called with the same arguments '{tool_args}' as before. You need to either:\n1. Call the function with different arguments, or\n2. Call another function, or\n3. Stop calling the function."
         print(tool_result)
@@ -277,8 +276,11 @@ def chat_with_agent(
             msg = f"Read `{tool_args['file_path']}`."
         elif tool_name == "search_remote_file_contents":
             msg = f"Search repository for `{tool_args['query']}`."
-        elif tool_name == "commit_changes_to_remote_branch":
-            msg = f"Commit changes to `{tool_args['branch_name']}`."
+        elif tool_name in [
+            "commit_changes_to_remote_branch",
+            "replace_remote_file_content",
+        ]:
+            msg = f"Committed changes to `{tool_args['file_path']}`."
         else:
             msg = f"Calling `{tool_name}()` with `{tool_args}`."
 
