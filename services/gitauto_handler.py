@@ -104,6 +104,11 @@ async def handle_gitauto(
     token = base_args["token"]
     is_automation = base_args["is_automation"]
 
+    # Print who, what, and where
+    print(
+        f"`{sender_id}:{sender_name}` wants to create a PR for `{issue_number}:{issue_title}` in `{owner_name}/{repo_name}`"
+    )
+
     p += 5
     log_messages.append("Extracted metadata.")
     update_comment(

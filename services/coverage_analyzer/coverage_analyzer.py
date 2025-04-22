@@ -25,22 +25,18 @@ async def handle_workflow_coverage(
 
     # Get repository's primary language
     languages = get_repository_languages(owner=owner_name, repo=repo_name, token=token)
-    print(f"Languages: {languages}")
     if not languages:
         print("No language information found for repository")
         return
 
     primary_language = max(languages.items(), key=lambda x: x[1])[0].lower()
-    print(f"Primary language: {primary_language}")
 
     artifacts = get_workflow_artifacts(owner_name, repo_name, run_id, token)
-    # print(f"Artifacts:\n{artifacts}")
 
     coverage_data = []
     for artifact in artifacts:
         # Check if the artifact might contain coverage data
         if "coverage" not in artifact["name"].lower():
-            print(f"Skipping artifact {artifact['name']} - maybe NOT coverage data")
             continue
 
         # Download and parse lcov.info
