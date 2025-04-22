@@ -280,7 +280,6 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
 
     # Add workflow_run event handler
     if event_name == "workflow_run" and action == "completed":
-        print("Received workflow_run completed event")
         if payload["workflow_run"]["conclusion"] == "success":
             await handle_workflow_coverage(
                 owner_id=payload["repository"]["owner"]["id"],
