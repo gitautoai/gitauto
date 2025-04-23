@@ -39,7 +39,7 @@ from services.supabase.gitauto_manager import (
 )
 from services.supabase.users_manager import get_how_many_requests_left_and_cycle
 from utils.progress_bar.progress_bar import create_progress_bar
-from utils.text_copies.text_copy import (
+from utils.text.text_copy import (
     UPDATE_COMMENT_FOR_422,
     git_command,
     pull_request_completed,
