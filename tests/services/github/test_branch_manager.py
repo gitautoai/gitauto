@@ -1,6 +1,6 @@
 from services.github.branch_manager import get_default_branch
 from tests.constants import OWNER, REPO, TOKEN
-from utils.timer import timer_decorator
+from utils.time.timer import timer_decorator
 
 
 @timer_decorator

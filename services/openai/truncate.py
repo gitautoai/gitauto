@@ -4,7 +4,7 @@ from config import (
     OPENAI_MODEL_ID_GPT_4O,
     OPENAI_MAX_STRING_LENGTH,
 )
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)

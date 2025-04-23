@@ -31,7 +31,7 @@ from services.supabase.gitauto_manager import (
     set_issue_to_merged,
 )
 from services.supabase.repositories_manager import create_or_update_repository
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 def process_repositories(

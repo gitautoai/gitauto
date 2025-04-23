@@ -1,6 +1,6 @@
 from gql import gql
 from services.github.graphql_client import get_graphql_client
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)

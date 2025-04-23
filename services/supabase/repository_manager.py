@@ -1,6 +1,6 @@
 from typing import TypedDict, Optional, cast
 from services.supabase.client import supabase
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 class RepositoryRules(TypedDict, total=False):

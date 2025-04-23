@@ -19,7 +19,7 @@ from services.stripe.customer import (
     subscribe_to_free_plan,
 )
 from services.supabase.client import supabase
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 def check_email_is_valid(email: str | None) -> bool:

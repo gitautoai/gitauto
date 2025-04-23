@@ -3,7 +3,7 @@ from config import GITHUB_API_URL, TIMEOUT, GITHUB_APP_USER_NAME
 from constants.messages import COMPLETED_PR
 from services.github.create_headers import create_headers
 from services.github.github_types import BaseArgs
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 from utils.text.text_copy import UPDATE_COMMENT_FOR_422
 
 

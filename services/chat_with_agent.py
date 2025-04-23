@@ -31,7 +31,7 @@ from services.openai.instructions.update_comment import (
     SYSTEM_INSTRUCTION_TO_UPDATE_COMMENT,
 )
 from utils.colors.colorize_log import colorize
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 from utils.progress_bar.progress_bar import create_progress_bar
 
 

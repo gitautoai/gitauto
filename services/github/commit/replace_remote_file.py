@@ -10,7 +10,7 @@ from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.github.create_headers import create_headers
 from services.github.github_types import BaseArgs
 from services.openai.functions.properties import FILE_PATH
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 # Define the function for replacing remote file content
 REPLACE_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {

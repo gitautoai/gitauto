@@ -1,7 +1,7 @@
 # run this file locally with: python -m tests.test_stripe
 
 from services.stripe.customer import get_subscription
-from utils.timer import timer_decorator
+from utils.time.timer import timer_decorator
 
 
 @timer_decorator

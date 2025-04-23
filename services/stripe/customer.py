@@ -4,7 +4,7 @@ from config import (
     STRIPE_API_KEY,
     STRIPE_FREE_TIER_PRICE_ID,
 )
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 stripe.api_key = STRIPE_API_KEY
 

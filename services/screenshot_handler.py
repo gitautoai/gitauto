@@ -22,7 +22,7 @@ from services.git.git_manager import (
 from services.github.comment_manager import delete_a_comment, get_all_comments
 from services.github.github_manager import create_comment, get_installation_access_token
 from services.github.pulls_manager import get_pull_request_file_changes
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(raise_on_error=True)
