@@ -78,3 +78,21 @@ def test_multiple_messages():
                 len("username") + len("func") + len("args"))
     result = count_tokens(messages)
     assert result == expected
+
+
+def test_exception_handling(monkeypatch):
+    def error_encoding_for_model(model_name):
+        raise Exception("test error")
+    monkeypatch.setattr(tiktoken, 'encoding_for_model', error_encoding_for_model)
+    result = count_tokens([{"role": "system"}])
+    assert result == 0
+
+
+def test_tool_calls_without_function():
+    message = {"tool_calls": [{"not_function": {}}]}
+    expected = 0
+    result = count_tokens([message])
+    assert result == expected
+
+
+
