@@ -242,12 +242,45 @@ def chat_with_agent(
         tool_result = f"Error: The function '{tool_name}' was already called with the same arguments '{tool_args}' as before. You need to either:\n1. Call the function with different arguments, or\n2. Call another function, or\n3. Stop calling the function."
         print(tool_result)
     else:
-        if tool_name not in tools_to_call:
-            tool_result = f"Error: The function '{tool_name}' does not exist in the available tools. Please use one of the available tools."
+        # Function name and argument validation
+        corrected_tool = None
+
+        # Case 1: Function exists but arguments suggest a different function
+        if tool_name in tools_to_call:
+            if (
+                tool_name == "commit_changes_to_remote_branch"
+                and "file_path" in tool_args
+                and "diff" not in tool_args
+                and "file_content" in tool_args
+            ):
+                corrected_tool = ("replace_remote_file_content", tool_args)
+            elif tool_name == "replace_remote_file_content" and "diff" in tool_args:
+                corrected_tool = ("commit_changes_to_remote_branch", tool_args)
+
+        # Case 2: Function doesn't exist but has similar name
         else:
+            similar_functions = {
+                "create_remote_file": "replace_remote_file_content",
+                "update_remote_file": "replace_remote_file_content",
+                "modify_remote_file": "replace_remote_file_content",
+            }
+            if similar_name := similar_functions.get(tool_name):
+                corrected_tool = (similar_name, tool_args)
+
+        # Execute the appropriate function
+        if corrected_tool:
+            print(
+                f"Warning: Redirecting call from '{tool_name}' to '{corrected_tool[0]}'"
+            )
+            tool_name = corrected_tool[0]
+            tool_args = corrected_tool[1]
+
+        if tool_name in tools_to_call:
             tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
-        previous_calls.append(current_call)
-        is_done = True
+            previous_calls.append(current_call)
+            is_done = True
+        else:
+            tool_result = f"Error: The function '{tool_name}' does not exist in the available tools. Please use one of the available tools."
 
     # Append the function call to the messages
     messages_list = list(messages)
