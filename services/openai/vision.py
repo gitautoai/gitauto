@@ -6,7 +6,7 @@ from openai.types.chat import ChatCompletion
 from config import OPENAI_MODEL_ID_GPT_4O, OPENAI_TEMPERATURE
 from services.openai.init import create_openai_client
 from services.openai.instructions.describe_image import DESCRIBE_IMAGE
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)

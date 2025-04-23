@@ -3,7 +3,7 @@ import os
 
 # Local imports
 from services.coverage_analyzer.types import CoverageReport
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 def create_coverage_report(path: str, stats: dict, level: str):

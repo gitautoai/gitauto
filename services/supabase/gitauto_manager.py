@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 from services.supabase.client import supabase
 from services.supabase.users_manager import upsert_user
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)

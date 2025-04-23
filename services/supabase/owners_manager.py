@@ -1,6 +1,6 @@
 # Local imports
 from services.supabase.client import supabase
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)

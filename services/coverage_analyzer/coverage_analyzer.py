@@ -7,7 +7,7 @@ from services.github.github_manager import (
 )
 from services.github.repo_manager import get_repository_languages
 from services.supabase.coverage_manager import create_or_update_coverages
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)

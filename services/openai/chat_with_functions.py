@@ -14,7 +14,7 @@ from openai.types.chat.chat_completion_message_tool_call import (
 from config import OPENAI_MODEL_ID_O3_MINI, TIMEOUT
 from services.openai.count_tokens import count_tokens
 from services.openai.init import create_openai_client
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(raise_on_error=True)

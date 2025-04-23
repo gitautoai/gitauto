@@ -1,7 +1,7 @@
 import os
 from config import TEST_OWNER_ID, TEST_USER_ID, TEST_INSTALLATION_ID, TEST_USER_NAME
 from services.supabase.client import supabase
-from utils.timer import timer_decorator
+from utils.time.timer import timer_decorator
 
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")

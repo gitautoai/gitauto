@@ -21,7 +21,7 @@ from services.supabase.gitauto_manager import (
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
 )
-from utils.timer import timer_decorator
+from utils.time.timer import timer_decorator
 
 
 @timer_decorator

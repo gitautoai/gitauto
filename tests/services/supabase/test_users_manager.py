@@ -48,7 +48,7 @@ from tests.test_payloads.installation import (
     installation_payload,
     new_installation_payload,
 )
-from utils.timer import timer_decorator
+from utils.time.timer import timer_decorator
 
 pytest_plugins = ("pytest_asyncio",)
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""

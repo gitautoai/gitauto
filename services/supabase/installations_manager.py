@@ -3,7 +3,7 @@ from typing import Literal
 
 # Local imports
 from services.supabase.client import supabase
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(raise_on_error=True)

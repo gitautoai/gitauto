@@ -1,6 +1,6 @@
 import stripe
 from config import STRIPE_API_KEY
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 stripe.api_key = STRIPE_API_KEY
 

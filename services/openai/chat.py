@@ -6,7 +6,7 @@ from openai.types.chat import ChatCompletion
 from config import OPENAI_MODEL_ID_O3_MINI
 from services.openai.init import create_openai_client
 from services.openai.truncate import truncate_message
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(raise_on_error=True)

@@ -14,7 +14,7 @@ from services.github.github_types import BaseArgs
 from services.github.repo_manager import is_repo_forked
 from services.supabase.installations_manager import get_installation_info
 from services.supabase.repository_manager import get_repository_rules
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 from utils.urls.extract_urls import extract_urls
 
 

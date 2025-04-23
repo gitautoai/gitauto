@@ -8,8 +8,8 @@ import chardet
 
 # Local imports
 from config import UTF8
+from utils.error.handle_exceptions import handle_exceptions
 from utils.new_lines.detect_new_line import detect_line_break
-from utils.handle_exceptions import handle_exceptions
 
 
 def apply_patch(original_text: str, diff_text: str):

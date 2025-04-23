@@ -3,7 +3,7 @@ from requests import get, post
 from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.github.create_headers import create_headers
 from services.github.github_types import BaseArgs
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)

@@ -4,7 +4,7 @@ from requests import get
 from config import TIMEOUT
 from constants.requests import USER_AGENT
 from services.github.github_types import BaseArgs
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 NUM_RESULTS_DEFAULT = 1
 UNNECESSARY_TAGS = [

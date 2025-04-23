@@ -3,7 +3,7 @@ from config import GITHUB_API_URL, TIMEOUT
 from services.github.create_headers import create_headers
 from services.github.github_types import BaseArgs
 from services.github.user_manager import check_user_is_collaborator
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)

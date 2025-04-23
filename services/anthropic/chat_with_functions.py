@@ -10,7 +10,7 @@ from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 # Local imports
 from config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL_ID_37, TIMEOUT
 from services.openai.count_tokens import count_tokens
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 # Add this class at the top of the file
