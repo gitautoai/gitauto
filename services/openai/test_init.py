@@ -10,10 +10,15 @@ from services.openai.init import create_openai_client
 def test_create_openai_client():
     client = create_openai_client()
     
+    # Verify client instance and configuration
     assert isinstance(client, OpenAI)
     assert client.api_key == OPENAI_API_KEY
     assert client.max_retries == OPENAI_MAX_RETRIES
     assert client.organization == OPENAI_ORG_ID
+    
+    # Verify client has expected attributes and methods
+    assert hasattr(client, "chat")
+    assert hasattr(client, "completions")
 
 
 @mock.patch("services.openai.init.OpenAI")
@@ -43,15 +48,3 @@ def test_create_openai_client_with_different_config(mock_openai):
         max_retries=5,
         organization="test_org_id",
     )
-
-
-def test_create_openai_client_integration():
-    client = create_openai_client()
-    
-    assert client.api_key == OPENAI_API_KEY
-    assert client.max_retries == OPENAI_MAX_RETRIES
-    assert client.organization == OPENAI_ORG_ID
-    
-    # Verify client has expected attributes and methods
-    assert hasattr(client, "chat")
-    assert hasattr(client, "completions")
