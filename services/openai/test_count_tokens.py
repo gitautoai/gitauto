@@ -93,6 +93,13 @@ def test_tool_calls_without_function():
     expected = 0
     result = count_tokens([message])
     assert result == expected
+def test_tool_calls_with_incomplete_function():
+    message = {"tool_calls": [{"function": {"name": "func"}}]}
+    expected = len("func")
+    result = count_tokens([message])
+    assert result == expected
+
+
 
 
 
