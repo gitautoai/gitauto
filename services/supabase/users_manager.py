@@ -163,7 +163,6 @@ def get_how_many_requests_left_and_cycle(
         f"{record['owner_type']}/{record['owner_name']}/{record['repo_name']}#{record['issue_number']}"
         for record in data[1]
     }
-    print(f"unique_requests: {unique_requests}")
 
     # Check if issue is already used
     is_retried = False

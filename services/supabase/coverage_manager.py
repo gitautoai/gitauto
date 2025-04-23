@@ -45,11 +45,20 @@ def create_or_update_coverages(
             print(f"Duplicate: {coverage}")
         seen[key] = coverage
 
-    # Delete existing records for the given repo_id
-    supabase.table("coverages").delete().eq("repo_id", repo_id).execute()
+    # Get current file paths
+    current_paths = [coverage["full_path"] for coverage in seen.values()]
 
-    # Prepare data for insert by adding common fields to each coverage item
-    insert_data = [
+    # Delete records for files that no longer exist
+    if current_paths:
+        supabase.table("coverages").delete().eq("repo_id", repo_id).not_.in_(
+            "full_path", current_paths
+        ).execute()
+    else:
+        # If no files, delete all records for this repo
+        supabase.table("coverages").delete().eq("repo_id", repo_id).execute()
+
+    # Prepare data for upsert by adding common fields to each coverage item
+    upsert_data = [
         {
             "owner_id": owner_id,
             "repo_id": repo_id,
@@ -63,7 +72,11 @@ def create_or_update_coverages(
         for coverage in seen.values()
     ]
 
-    # Insert new data
-    result = supabase.table("coverages").insert(insert_data).execute()
+    # Upsert data (insert if not exists, update if exists)
+    result = (
+        supabase.table("coverages")
+        .upsert(upsert_data, on_conflict="repo_id,full_path")
+        .execute()
+    )
 
     return result.data
