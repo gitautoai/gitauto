@@ -308,7 +308,23 @@ def chat_with_agent(
         elif tool_name == "get_remote_file_content":
             msg = f"Read `{tool_args['file_path']}`."
         elif tool_name == "search_remote_file_contents":
-            msg = f"Search repository for `{tool_args['query']}`."
+            file_list = []
+            if isinstance(tool_result, str):
+                result_lines = tool_result.split("\n")
+                first_line = result_lines[0] if result_lines else ""
+                if first_line.startswith("0 files found"):
+                    file_list = []
+                else:
+                    file_list = [
+                        line[2:] for line in result_lines if line.startswith("- ")
+                    ]
+
+            if file_list:
+                msg = f"Searched repository for `{tool_args['query']}` and found: \n- {'\n- '.join(file_list)}\n"
+            else:
+                msg = f"Searched repository for `{tool_args['query']}` but found no matching files."
+
+        # Claude sometimes tries to call functions that don't exist in the list of tools...
         elif tool_name in [
             "commit_changes_to_remote_branch",
             "replace_remote_file_content",
