@@ -38,14 +38,14 @@ from services.supabase.gitauto_manager import (
     create_user_request,
 )
 from services.supabase.users_manager import get_how_many_requests_left_and_cycle
-from utils.extract_urls import extract_image_urls
-from utils.progress_bar import create_progress_bar
-from utils.text_copy import (
+from utils.progress_bar.progress_bar import create_progress_bar
+from utils.text_copies.text_copy import (
     UPDATE_COMMENT_FOR_422,
     git_command,
     pull_request_completed,
     request_limit_reached,
 )
+from utils.urls.extract_urls import extract_image_urls
 
 
 async def handle_gitauto(

@@ -1,4 +1,4 @@
-from utils.extract_urls import extract_image_urls, extract_urls
+from utils.urls.extract_urls import extract_image_urls, extract_urls
 
 
 def test_extract_image_urls_with_valid_images():

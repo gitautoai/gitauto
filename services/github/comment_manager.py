@@ -4,7 +4,7 @@ from constants.messages import COMPLETED_PR
 from services.github.create_headers import create_headers
 from services.github.github_types import BaseArgs
 from utils.handle_exceptions import handle_exceptions
-from utils.text_copy import UPDATE_COMMENT_FOR_422
+from utils.text.text_copy import UPDATE_COMMENT_FOR_422
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)

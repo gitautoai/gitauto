@@ -1,5 +1,4 @@
-import pytest
-from utils.detect_new_line import detect_line_break
+from utils.new_lines.detect_new_line import detect_line_break
 
 
 def test_detect_line_break_crlf():

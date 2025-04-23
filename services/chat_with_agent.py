@@ -30,9 +30,9 @@ from services.openai.instructions.search_google import (
 from services.openai.instructions.update_comment import (
     SYSTEM_INSTRUCTION_TO_UPDATE_COMMENT,
 )
-from utils.colorize_log import colorize
+from utils.colors.colorize_log import colorize
 from utils.handle_exceptions import handle_exceptions
-from utils.progress_bar import create_progress_bar
+from utils.progress_bar.progress_bar import create_progress_bar
 
 
 # Track when Claude models are rate limited until
@@ -42,10 +42,10 @@ _CLAUDE_37_RATE_LIMITED_UNTIL = 0
 
 @handle_exceptions(raise_on_error=True)
 def chat_with_agent(
-    messages: Iterable[Dict[str, Any]],
+    messages: Iterable[dict[str, Any]],
     base_args: BaseArgs,
     mode: Literal["comment", "commit", "explore", "get", "search"],
-    previous_calls: List[Dict] | None = None,
+    previous_calls: list[dict] | None = None,
     recursion_count: int = 1,
     p: int = 0,
     model_id: str = ANTHROPIC_MODEL_ID_37,
