@@ -1,5 +1,5 @@
 import pytest
-from utils.colorize_log import colorize, ANSI_COLORS, ANSI_RESET
+from utils.colors.colorize_log import colorize, ANSI_COLORS, ANSI_RESET
 
 
 def test_colorize_all_colors():

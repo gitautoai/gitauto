@@ -17,8 +17,8 @@ from services.github.github_manager import (
 )
 from services.github.issues_manager import get_parent_issue
 from services.supabase.repository_manager import get_repository_rules
-from utils.extract_urls import extract_urls
 from utils.handle_exceptions import handle_exceptions
+from utils.urls.extract_urls import extract_urls
 
 
 def create_permission_url(

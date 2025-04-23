@@ -33,8 +33,8 @@ from services.github.pulls_manager import (
 from services.github.github_utils import create_permission_url
 from services.stripe.subscriptions import get_stripe_product_id
 from services.supabase.owners_manager import get_stripe_customer_id
-from utils.colorize_log import colorize
-from utils.progress_bar import create_progress_bar
+from utils.colors.colorize_log import colorize
+from utils.progress_bar.progress_bar import create_progress_bar
 
 
 def handle_check_run(payload: CheckRunCompletedPayload) -> None:
