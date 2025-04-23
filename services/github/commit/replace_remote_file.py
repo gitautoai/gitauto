@@ -20,12 +20,12 @@ REPLACE_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
         "type": "object",
         "properties": {
             "file_path": FILE_PATH,
-            "new_content": {
+            "file_content": {
                 "type": "string",
                 "description": "The new content to replace the existing file content with.",
             },
         },
-        "required": ["file_path", "new_content"],
+        "required": ["file_path", "file_content"],
         "additionalProperties": False,
     },
     "strict": True,
@@ -34,9 +34,10 @@ REPLACE_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def replace_remote_file_content(
-    new_content: str,
+    file_content: str,
     file_path: str,
     base_args: BaseArgs,
+    **_kwargs,
 ):
     """Replace the content of a remote file directly without using unified diff and patch commands."""
     owner = base_args["owner"]
@@ -53,7 +54,7 @@ def replace_remote_file_content(
 
     # Set up the data for the PUT request
     message = f"Replace content of {file_path}"
-    content = base64.b64encode(new_content.encode(UTF8)).decode(UTF8)
+    content = base64.b64encode(file_content.encode(UTF8)).decode(UTF8)
     data = {"message": message, "content": content, "branch": new_branch}
 
     # Add SHA if the file exists
