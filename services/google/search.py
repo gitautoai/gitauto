@@ -50,14 +50,16 @@ def scrape_content_from_url(url: str):
 
     soup = BeautifulSoup(response.text, "html.parser")
 
+    # Get title before removing unnecessary elements
+    title = soup.title.string if soup.title else ""
+    print(f"Googled url: {url}\nTitle: {title}")
+
     # Remove unnecessary elements
     for element in soup(UNNECESSARY_TAGS):
         element.decompose()
 
-    # Get title and content
-    title = soup.title.string if soup.title else ""
-    print(f"Googled url: {url}\nTitle: {title}")
-
+    # Get content
+    title = title.strip()
     # Print unique HTML tags
     unique_tags = set(tag.name for tag in soup.find_all())
     print(f"Unique HTML tags found: {sorted(unique_tags)}")
@@ -66,7 +68,7 @@ def scrape_content_from_url(url: str):
     main_content = soup.find(["main", "article", 'div[role="main"]']) or soup
     content = "\n".join(main_content.stripped_strings).strip()
 
-    return {"title": title.strip(), "content": content, "url": url}
+    return {"title": title, "content": content, "url": url}
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False, api_type="google")
