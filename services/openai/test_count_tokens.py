@@ -1,6 +1,6 @@
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 import pytest
-from .count_tokens import count_tokens
+from services.openai.count_tokens import count_tokens
 
 
 def test_empty_messages():
