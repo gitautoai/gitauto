@@ -9,7 +9,7 @@ from services.anthropic.chat_with_functions import (
     ClaudeOverloadedError,
     ClaudeAuthenticationError,
 )
-from services.github.github_manager import update_comment
+from services.github.comments.update_comment import update_comment
 from services.github.github_types import BaseArgs
 from services.openai.chat_with_functions import chat_with_openai
 from services.openai.functions.functions import (

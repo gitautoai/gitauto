@@ -6,7 +6,8 @@ from openai.types import shared_params
 from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
 
 # Local imports
-from services.github.commit.replace_remote_file import (
+from services.github.comments.update_comment import update_comment
+from services.github.commits.replace_remote_file import (
     REPLACE_REMOTE_FILE_CONTENT,
     replace_remote_file_content,
 )
@@ -14,7 +15,6 @@ from services.github.github_manager import (
     commit_changes_to_remote_branch,
     get_remote_file_content,
     search_remote_file_contents,
-    update_comment,
 )
 from services.google.search import google_search
 from services.openai.functions.properties import FILE_PATH

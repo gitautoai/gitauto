@@ -16,17 +16,17 @@ from config import (
 from services.chat_with_agent import chat_with_agent
 from services.github.asset_manager import get_base64, render_text
 from services.github.comment_manager import delete_my_comments
+from services.github.comments.create_comment import create_comment
+from services.github.comments.get_comments import get_comments
+from services.github.comments.update_comment import update_comment
 from services.github.file_manager import find_config_files
 from services.github.github_manager import (
     create_pull_request,
     create_remote_branch,
-    get_issue_comments,
     get_latest_remote_commit_sha,
     get_remote_file_content,
     get_remote_file_content_by_url,
     get_remote_file_tree,
-    create_comment,
-    update_comment,
     add_reaction_to_issue,
 )
 from services.github.github_types import GitHubLabeledPayload
@@ -200,9 +200,7 @@ async def handle_gitauto(
     # Check out the issue comments
     issue_comments: list[str] = []
     if input_from == "github":
-        issue_comments = get_issue_comments(
-            issue_number=issue_number, base_args=base_args
-        )
+        issue_comments = get_comments(issue_number=issue_number, base_args=base_args)
     elif input_from == "jira":
         issue_comments = base_args["issue_comments"]
     comment_body = f"Found {len(issue_comments)} issue comments."
