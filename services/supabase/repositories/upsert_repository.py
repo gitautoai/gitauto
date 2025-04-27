@@ -39,7 +39,7 @@ def upsert_repository(
             supabase.table("repositories")
             .update(
                 {
-                    "updated_by": user_id + ":" + user_name,
+                    "updated_by": str(user_id) + ":" + user_name,
                     "file_count": file_count,
                     "blank_lines": blank_lines,
                     "comment_lines": comment_lines,
@@ -59,8 +59,8 @@ def upsert_repository(
                 "owner_id": owner_id,
                 "repo_id": repo_id,
                 "repo_name": repo_name,
-                "created_by": user_id + ":" + user_name,
-                "updated_by": user_id + ":" + user_name,
+                "created_by": str(user_id) + ":" + user_name,
+                "updated_by": str(user_id) + ":" + user_name,
                 "file_count": file_count,
                 "blank_lines": blank_lines,
                 "comment_lines": comment_lines,
