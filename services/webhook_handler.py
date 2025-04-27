@@ -35,12 +35,12 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 def process_repositories(
-    owner_name: str,
     owner_id: int,
+    owner_name: str,
     repositories: list[dict[str, Any]],
     token: str,
-    created_by: str,
-    updated_by: str,
+    user_id: int,
+    user_name: str,
 ) -> None:
     for repo in repositories:
         repo_id = repo["id"]
@@ -60,10 +60,11 @@ def process_repositories(
             # Create repository record in Supabase
             create_or_update_repository(
                 owner_id=owner_id,
+                owner_name=owner_name,
                 repo_id=repo_id,
                 repo_name=repo_name,
-                created_by=created_by,
-                updated_by=updated_by,
+                user_id=user_id,
+                user_name=user_name,
                 file_count=stats["file_count"],
                 blank_lines=stats["blank_lines"],
                 comment_lines=stats["comment_lines"],
@@ -98,12 +99,12 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
 
     # Process repositories
     process_repositories(
-        owner_name=owner_name,
         owner_id=owner_id,
+        owner_name=owner_name,
         repositories=repositories,
         token=token,
-        created_by=user_name,
-        updated_by=user_name,
+        user_id=user_id,
+        user_name=user_name,
     )
 
 
@@ -117,6 +118,7 @@ async def handle_installation_deleted(payload: GitHubInstallationPayload) -> Non
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 async def handle_installation_repos_added(payload) -> None:
     installation_id: int = payload["installation"]["id"]
+    sender_id: int = payload["sender"]["id"]
     sender_name: str = payload["sender"]["login"]
     token: str = get_installation_access_token(installation_id=installation_id)
 
@@ -126,12 +128,12 @@ async def handle_installation_repos_added(payload) -> None:
 
     # Process added repositories
     process_repositories(
-        owner_name=owner_name,
         owner_id=owner_id,
+        owner_name=owner_name,
         repositories=payload["repositories_added"],
         token=token,
-        created_by=sender_name,
-        updated_by=sender_name,
+        user_id=sender_id,
+        user_name=sender_name,
     )
 
 
