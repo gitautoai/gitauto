@@ -1,20 +1,35 @@
 # Local imports
 from services.supabase.client import supabase
+from services.supabase.owners.create_owner import create_owner
+from services.supabase.owners.get_owner import get_owner
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def create_or_update_repository(
     owner_id: int,
+    owner_name: str,
     repo_id: int,
     repo_name: str,
-    created_by: str,
-    updated_by: str,
+    user_id: int,
+    user_name: str,
     file_count: int = 0,
     blank_lines: int = 0,
     comment_lines: int = 0,
     code_lines: int = 0,
 ):
+    # First check if owner exists since it's a foreign key
+    owner = get_owner(owner_id)
+
+    # If owner doesn't exist, create it
+    if not owner:
+        create_owner(
+            owner_id=owner_id,
+            owner_name=owner_name,
+            user_id=user_id,
+            user_name=user_name,
+        )
+
     # Check if repository already exists
     result = supabase.table("repositories").select("*").eq("repo_id", repo_id).execute()
 
@@ -24,7 +39,7 @@ def create_or_update_repository(
             supabase.table("repositories")
             .update(
                 {
-                    "updated_by": updated_by,
+                    "updated_by": user_id + ":" + user_name,
                     "file_count": file_count,
                     "blank_lines": blank_lines,
                     "comment_lines": comment_lines,
@@ -44,8 +59,8 @@ def create_or_update_repository(
                 "owner_id": owner_id,
                 "repo_id": repo_id,
                 "repo_name": repo_name,
-                "created_by": created_by,
-                "updated_by": updated_by,
+                "created_by": user_id + ":" + user_name,
+                "updated_by": user_id + ":" + user_name,
                 "file_count": file_count,
                 "blank_lines": blank_lines,
                 "comment_lines": comment_lines,
