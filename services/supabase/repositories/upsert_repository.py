@@ -6,7 +6,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def create_or_update_repository(
+def upsert_repository(
     owner_id: int,
     owner_name: str,
     repo_id: int,

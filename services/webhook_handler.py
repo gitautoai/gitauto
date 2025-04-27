@@ -30,7 +30,7 @@ from services.supabase.gitauto_manager import (
     delete_installation,
     set_issue_to_merged,
 )
-from services.supabase.repositories_manager import create_or_update_repository
+from services.supabase.repositories.upsert_repository import upsert_repository
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -58,7 +58,7 @@ def process_repositories(
             print(f"Repository {repo_name} stats: {stats}")
 
             # Create repository record in Supabase
-            create_or_update_repository(
+            upsert_repository(
                 owner_id=owner_id,
                 owner_name=owner_name,
                 repo_id=repo_id,
