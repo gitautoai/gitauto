@@ -11,11 +11,11 @@ from config import (
 )
 from services.chat_with_agent import chat_with_agent
 from services.github.comment_manager import reply_to_comment
+from services.github.comments.update_comment import update_comment
 from services.github.github_manager import (
     get_installation_access_token,
     get_remote_file_content,
     get_remote_file_tree,
-    update_comment,
 )
 from services.github.github_types import Owner, PullRequest, Repository
 from services.github.pulls_manager import (
@@ -147,24 +147,37 @@ def handle_review_run(payload: dict[str, Any]) -> None:
         print(colorize(text=msg, color="yellow"))
         return
 
-    # Get a review commented file
-    msg = "Thanks for the feedback! Collecting info. 🕵️"
-    comment_body = create_progress_bar(p=0, msg=msg)
+    # Greeting
+    p = 0
+    log_messages = []
+    msg = "Thanks for the review! I'm on it."
+    log_messages.append(msg)
+    comment_body = create_progress_bar(p=0, msg="\n".join(log_messages))
     comment_url = reply_to_comment(base_args=base_args, body=comment_body)
     base_args["comment_url"] = comment_url
+
+    # Get a review commented file
     review_file = get_remote_file_content(file_path=review_path, base_args=base_args)
+    p += 5
+    log_messages.append(f"Read the file `{review_path}` you commented on.")
+    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
+    update_comment(body=comment_body, base_args=base_args)
 
     # Get changed files in the PR
     pull_files = get_pull_request_file_contents(url=pull_file_url, base_args=base_args)
+    p += 5
+    log_messages.append(f"Read {len(pull_files)} changed files in the PR.")
+    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
+    update_comment(body=comment_body, base_args=base_args)
 
     # Get the file tree in the root of the repo
-    comment_body = "Checking out the file tree in the repo."
-    update_comment(body=comment_body, base_args=base_args, p=10)
-    file_tree: str = get_remote_file_tree(base_args=base_args)
+    file_tree, tree_comment = get_remote_file_tree(base_args=base_args)
+    p += 5
+    log_messages.append(tree_comment)
+    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
+    update_comment(body=comment_body, base_args=base_args)
 
     # Plan how to fix the error
-    comment_body = "Planning how to achieve your feedback."
-    update_comment(body=comment_body, base_args=base_args, p=20)
     today = datetime.now().strftime("%Y-%m-%d")
     input_message: dict[str, str] = {
         "pull_request_title": pull_title,
@@ -176,10 +189,6 @@ def handle_review_run(payload: dict[str, Any]) -> None:
         "today": today,
     }
     user_input = json.dumps(obj=input_message)
-
-    # Update the comment if any obstacles are found
-    comment_body = "Checking if I can solve it or if I should just hit you up."
-    update_comment(body=comment_body, base_args=base_args, p=30)
     messages = [{"role": "user", "content": user_input}]
 
     # NOTE: Disabled this ask back feature because it's not working as expected and GitAuto just responded like "I've done it" but code returned here.
@@ -198,7 +207,6 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
     retry_count = 0
-    p = 40
     while True:
         # Explore repo
         (
@@ -216,6 +224,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
             mode="get",  # explore can not be used here because "search_remote_file_contents" can search files only in the default branch NOT in the branch that is merged into the default branch
             previous_calls=previous_calls,
             p=p,
+            log_messages=log_messages,
         )
 
         # Search Google
@@ -252,6 +261,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
             mode="commit",
             previous_calls=previous_calls,
             p=p,
+            log_messages=log_messages,
         )
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason

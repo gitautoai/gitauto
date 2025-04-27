@@ -100,6 +100,7 @@ PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 PRODUCT_URL_BASE = "https://gitauto.ai"
 PRODUCT_URL = f"{PRODUCT_URL_BASE}?utm_source=github&utm_medium=referral"
+PRICING_URL = f"{PRODUCT_URL_BASE}/pricing?utm_source=github&utm_medium=referral"
 PRODUCT_DEMO_URL = "https://www.youtube.com/watch?v=wnIi73WR1kE"
 PRODUCT_BLOG_URL = f"{PRODUCT_URL_BASE}/blog?utm_source=github&utm_medium=referral"
 PRODUCT_ISSUE_URL = "https://github.com/gitautoai/gitauto/issues"

@@ -7,7 +7,7 @@ import logging
 import os
 import time
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 from uuid import uuid4
 
 # Third-party imports
@@ -24,7 +24,6 @@ from config import (
     EXCEPTION_OWNERS,
     GITHUB_API_URL,
     GITHUB_APP_ID,
-    GITHUB_APP_IDS,
     GITHUB_ISSUE_DIR,
     GITHUB_ISSUE_TEMPLATES,
     GITHUB_PRIVATE_KEY,
@@ -45,6 +44,7 @@ from config import (
     GITHUB_NOREPLY_EMAIL_DOMAIN,
 )
 from constants.messages import CLICK_THE_CHECKBOX
+from services.github.comments.update_comment import update_comment
 from services.github.create_headers import create_headers
 from services.github.github_types import (
     BaseArgs,
@@ -62,7 +62,6 @@ from services.supabase.users_manager import (
 from utils.error.handle_exceptions import handle_exceptions
 from utils.file_manager import apply_patch, get_file_content, run_command
 from utils.new_lines.detect_new_line import detect_line_break
-from utils.progress_bar.progress_bar import create_progress_bar
 from utils.text.text_copy import request_issue_comment, request_limit_reached
 from utils.urls.parse_urls import parse_github_url
 
@@ -225,28 +224,6 @@ def commit_changes_to_remote_branch(
     )
     put_response.raise_for_status()
     return f"diff applied to the file: {file_path} successfully by {commit_changes_to_remote_branch.__name__}()."
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def create_comment(body: str, base_args: BaseArgs):
-    """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
-    owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
-    issue_number = base_args["issue_number"]
-    input_from = base_args.get("input_from", "github")
-
-    if input_from == "github":
-        response: requests.Response = requests.post(
-            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
-            headers=create_headers(token=token),
-            json={"body": body},
-            timeout=TIMEOUT,
-        )
-        response.raise_for_status()
-        url: str = response.json()["url"]
-        return url
-
-    if input_from == "jira":
-        return None
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -461,32 +438,6 @@ def get_installed_owners_and_repos(token: str) -> list[dict[str, int | str]]:
             break
         page += 1
     return owners_repos
-
-
-@handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_issue_comments(
-    issue_number: int, base_args: BaseArgs, includes_me: bool = False
-) -> list[str]:
-    """https://docs.github.com/en/rest/issues/comments#list-issue-comments"""
-    owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
-    response = requests.get(
-        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
-        headers=create_headers(token=token),
-        timeout=TIMEOUT,
-    )
-    response.raise_for_status()
-    comments: list[dict[str, Any]] = response.json()
-    if not includes_me:
-        filtered_comments: list[dict[str, Any]] = [
-            comment
-            for comment in comments
-            if comment.get("performed_via_github_app") is None
-            or comment["performed_via_github_app"].get("id") not in GITHUB_APP_IDS
-        ]
-    else:
-        filtered_comments = comments
-    comment_texts: list[str] = [comment["body"] for comment in filtered_comments]
-    return comment_texts
 
 
 @handle_exceptions(raise_on_error=True)
@@ -841,26 +792,6 @@ async def verify_webhook_signature(request: Request, secret: str) -> None:
     expected_signature: str = "sha256=" + hmac_signature
     if not hmac.compare_digest(signature, expected_signature):
         raise ValueError("Invalid webhook signature")
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def update_comment(body: str, base_args: BaseArgs, p: int | None = None):
-    """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
-    comment_url, token = base_args["comment_url"], base_args["token"]
-    if comment_url is None:
-        return None
-    if p is not None:
-        p = min(p, 95)
-        body = create_progress_bar(p=p, msg=body)
-    print(body + "\n")
-    response: requests.Response = requests.patch(
-        url=comment_url,
-        headers=create_headers(token=token),
-        json={"body": body},
-        timeout=TIMEOUT,
-    )
-    response.raise_for_status()
-    return response.json()
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)

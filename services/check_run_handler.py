@@ -6,17 +6,18 @@ from config import (
     EXCEPTION_OWNERS,
     GITHUB_APP_USER_NAME,
     IS_PRD,
+    PRICING_URL,
     STRIPE_PRODUCT_ID_FREE,
 )
 from services.chat_with_agent import chat_with_agent
 from services.github.actions_manager import get_workflow_run_logs, get_workflow_run_path
+from services.github.comments.create_comment import create_comment
+from services.github.comments.get_comments import get_comments
+from services.github.comments.update_comment import update_comment
 from services.github.github_manager import (
     get_installation_access_token,
-    create_comment,
-    get_issue_comments,
     get_remote_file_content,
     get_remote_file_tree,
-    update_comment,
 )
 from services.github.github_types import (
     CheckRun,
@@ -101,10 +102,26 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "check_run_name": check_run_name,
         "token": token,
     }
+    # Print who, what, and where
+    print(
+        f"`GitAuto is fixing a Check Run error for `#{pull_number}` in `{owner_name}/{repo_name}`"
+    )
+
+    # Create the first comment
+    p = 0
+    log_messages = []
+    msg = "Oops! Check run stumbled."
+    log_messages.append(msg)
+    body = create_progress_bar(p=p, msg="\n".join(log_messages))
+    comment_url = create_comment(body=body, base_args=base_args)
+    base_args["comment_url"] = comment_url
 
     # Return here if stripe_customer_id is not found
     stripe_customer_id: str | None = get_stripe_customer_id(owner_id=owner_id)
     if stripe_customer_id is None:
+        msg = f"Subscribe [here]({PRICING_URL}) to get GitAuto to self-correct check run errors."
+        log_messages.append(msg)
+        update_comment(body="\n".join(log_messages), base_args=base_args)
         return
 
     # Return here if product_id is not found or is in free tier
@@ -112,37 +129,32 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     is_paid = product_id is not None and product_id != STRIPE_PRODUCT_ID_FREE
     is_exception = owner_name in EXCEPTION_OWNERS
     if not is_paid and IS_PRD and not is_exception:
-        msg = f"Skipping because product_id is not found or is in free tier. product_id: '{product_id}'"
-        print(colorize(text=msg, color="yellow"))
+        msg = f"Subscribe [here]({PRICING_URL}) to get GitAuto to self-correct check run errors."
+        log_messages.append(msg)
+        update_comment(body="\n".join(log_messages), base_args=base_args)
         return
 
     # Return here if GitAuto has tried to fix this Check Run error before because we need to avoid infinite loops
-    pr_comments = get_issue_comments(
+    pr_comments = get_comments(
         issue_number=pull_number, base_args=base_args, includes_me=True
     )
     print(f"Check run name: {check_run_name}")
-    print(f"PR comments: {pr_comments}")
     if any(check_run_name in comment for comment in pr_comments):
         msg = f"Skipping `{check_run_name}` because GitAuto has tried to fix this Check Run error before"
-        print(colorize(text=msg, color="yellow"))
+        log_messages.append(msg)
+        update_comment(body="\n".join(log_messages), base_args=base_args)
         return
 
-    # Create a first comment to inform the user that GitAuto is trying to fix the Check Run error
-    msg = "Oops! Check run stumbled. Digging into logs. 🕵️"
-    comment_body = create_progress_bar(p=0, msg=msg)
-    comment_url = create_comment(body=comment_body, base_args=base_args)
-    base_args["comment_url"] = comment_url
-
     # Get title, body, and code changes in the PR
-    comment_body = "Checking out the pull request title, body, and code changes."
-    update_comment(body=comment_body, base_args=base_args, p=5)
     pull_title, pull_body = get_pull_request(url=pull_url, token=token)
     pull_file_url = f"{pull_url}/files"
     pull_changes = get_pull_request_file_changes(url=pull_file_url, token=token)
+    p += 5
+    log_messages.append("Checked out the pull request title, body, and code changes.")
+    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
+    update_comment(body=comment_body, base_args=base_args)
 
     # Get the GitHub workflow file content
-    comment_body = "Checking out the GitHub Action workflow file."
-    update_comment(body=comment_body, base_args=base_args, p=10)
     workflow_path = get_workflow_run_path(
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
     )
@@ -151,32 +163,47 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     )
     if workflow_path == 404:
         comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
-        return update_comment(body=comment_body, base_args=base_args)
+        log_messages.append(comment_body)
+        update_comment(body="\n".join(log_messages), base_args=base_args)
+        return
+
     workflow_content = get_remote_file_content(
         file_path=workflow_path, base_args=base_args
     )
+    p += 5
+    log_messages.append(
+        f"Checked out the GitHub Action workflow file. `{workflow_path}`"
+    )
+    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
+    update_comment(body=comment_body, base_args=base_args)
 
     # Get the file tree in the root of the repo
-    comment_body = "Checking out the file tree in the repo."
-    update_comment(body=comment_body, base_args=base_args, p=15)
     file_tree: str = get_remote_file_tree(base_args=base_args)
+    p += 5
+    log_messages.append("Checked out the file tree in the repo.")
+    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
+    update_comment(body=comment_body, base_args=base_args)
 
     # Get the error log from the workflow run
-    comment_body = "Checking out the error log from the workflow run."
-    update_comment(body=comment_body, base_args=base_args, p=20)
     error_log: str | int | None = get_workflow_run_logs(
         owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
     )
     if error_log == 404:
         comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
-        return update_comment(body=comment_body, base_args=base_args)
+        log_messages.append(comment_body)
+        update_comment(body="\n".join(log_messages), base_args=base_args)
+        return
     if error_log is None:
         comment_body = f"I couldn't find the error log. Contact {EMAIL_LINK} if the issue persists."
-        return update_comment(body=comment_body, base_args=base_args)
+        log_messages.append(comment_body)
+        update_comment(body="\n".join(log_messages), base_args=base_args)
+        return
+    p += 5
+    log_messages.append("Checked out the error log from the workflow run.")
+    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
+    update_comment(body=comment_body, base_args=base_args)
 
     # Plan how to fix the error
-    comment_body = "Planning how to fix the error."
-    update_comment(body=comment_body, base_args=base_args, p=25)
     today = datetime.now().strftime("%Y-%m-%d")
     input_message: dict[str, str] = {
         "pull_request_title": pull_title,
@@ -188,16 +215,11 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "today": today,
     }
     user_input = json.dumps(obj=input_message)
-
-    # Update the comment if any obstacles are found
-    comment_body = "Checking if I can solve it or if I should just hit you up."
-    update_comment(body=comment_body, base_args=base_args, p=30)
     messages = [{"role": "user", "content": user_input}]
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
     retry_count = 0
-    p = 35
     while True:
         # Explore repo
         (
@@ -215,6 +237,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             mode="get",  # explore can not be used here because "search_remote_file_contents" can search files only in the default branch NOT in the branch that is merged into the default branch
             previous_calls=previous_calls,
             p=p,
+            log_messages=log_messages,
         )
 
         # Search Google
@@ -233,6 +256,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         #     mode="search",
         #     previous_calls=previous_calls,
         #     p=p,
+        #     log_messages=log_messages,
         # )
 
         # Commit changes based on the exploration information
@@ -251,6 +275,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             mode="commit",
             previous_calls=previous_calls,
             p=p,
+            log_messages=log_messages,
         )
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
