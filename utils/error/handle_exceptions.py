@@ -26,12 +26,19 @@ def handle_exceptions(
             try:
                 return func(*args, **kwargs)
             except requests.exceptions.HTTPError as err:
+                status_code: int = err.response.status_code
+
+                # Skip logging for 500 Internal Server Error as it's usually a temporary issue and no meaningful information is available
+                if status_code == 500:
+                    if raise_on_error:
+                        raise
+                    return default_return_value
+
                 reason: str | Any = err.response.reason
                 text: str | Any = err.response.text
-                status_code: int = err.response.status_code
                 print(f"reason: {reason}, text: {text}, status_code: {status_code}")
 
-                if api_type == "github" and err.response.status_code in {403, 429}:
+                if api_type == "github" and status_code in {403, 429}:
                     print(f"err.response.headers: {err.response.headers}")
                     limit = int(err.response.headers["X-RateLimit-Limit"])
                     remaining = int(err.response.headers["X-RateLimit-Remaining"])
@@ -61,7 +68,7 @@ def handle_exceptions(
                     if raise_on_error:
                         raise
 
-                elif api_type == "google" and err.response.status_code == 429:
+                elif api_type == "google" and status_code == 429:
                     err_msg = f"Google Search Rate Limit in {func.__name__}()"
                     print(err_msg)
                     print(f"err.response.headers: {err.response.headers}")
