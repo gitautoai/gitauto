@@ -1,9 +1,10 @@
 # pylint: disable=broad-exception-caught
 
 # Standard imports
-import time
 from functools import wraps
+import json
 import logging
+import time
 from typing import Any, Callable, Tuple, TypeVar
 
 # Third party imports
@@ -75,6 +76,18 @@ def handle_exceptions(
                 else:
                     err_msg = f"{func.__name__} encountered an HTTPError: {err}\nArgs: {args}\nKwargs: {kwargs}\nReason: {reason}\nText: {text}\n"
                     logging.error(msg=err_msg)
+                if raise_on_error:
+                    raise
+
+            except json.JSONDecodeError as err:
+                # Get the raw response that caused the JSON decode error
+                if hasattr(err, "doc"):
+                    raw_response = err.doc
+                else:
+                    raw_response = "Raw response not available"
+
+                err_msg = f"{func.__name__} encountered a JSONDecodeError: {err}\nRaw response: {raw_response}\nArgs: {args}\nKwargs: {kwargs}"
+                logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
 
