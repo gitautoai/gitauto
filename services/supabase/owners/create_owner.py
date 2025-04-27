@@ -19,8 +19,8 @@ def create_owner(
                 "owner_id": owner_id,
                 "owner_name": owner_name,
                 "stripe_customer_id": stripe_customer_id,
-                "created_by": user_id + ":" + user_name,
-                "updated_by": user_id + ":" + user_name,
+                "created_by": str(user_id) + ":" + user_name,
+                "updated_by": str(user_id) + ":" + user_name,
                 "owner_type": owner_type,
                 "org_rules": org_rules,
             }
