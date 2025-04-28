@@ -153,7 +153,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=deleted#installation
     if event_name == "installation" and action in ("deleted"):
-        await delete_installation(
+        delete_installation(
             installation_id=payload["installation"]["id"],
             user_id=payload["sender"]["id"],
             user_name=payload["sender"]["login"],
@@ -162,7 +162,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=suspend#installation
     if event_name == "installation" and action in ("suspend"):
-        await delete_installation(
+        delete_installation(
             installation_id=payload["installation"]["id"],
             user_id=payload["sender"]["id"],
             user_name=payload["sender"]["login"],
@@ -171,7 +171,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=unsuspend#installation
     if event_name == "installation" and action in ("unsuspend"):
-        await unsuspend_installation(installation_id=payload["installation"]["id"])
+        unsuspend_installation(installation_id=payload["installation"]["id"])
         return
 
     # Add issue templates to the repositories when GitAuto is added to a repository
