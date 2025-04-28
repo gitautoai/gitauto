@@ -11,11 +11,9 @@ from services.github.github_types import (
     IssueInfo,
     RepositoryInfo,
 )
-from services.github.github_manager import (
-    get_installation_access_token,
-    get_user_public_email,
-)
+from services.github.github_manager import get_user_public_email
 from services.github.issues_manager import get_parent_issue
+from services.github.token.get_installation_token import get_installation_access_token
 from services.supabase.repository_manager import get_repository_rules
 from utils.error.handle_exceptions import handle_exceptions
 from utils.urls.extract_urls import extract_urls

@@ -5,13 +5,11 @@ import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
 import json
 import logging
 import os
-import time
 from datetime import datetime
 from typing import Optional
 from uuid import uuid4
 
 # Third-party imports
-import jwt  # For generating JWTs (JSON Web Tokens)
 import requests
 from fastapi import Request
 from github import Github
@@ -23,10 +21,8 @@ from github.Repository import Repository
 from config import (
     EXCEPTION_OWNERS,
     GITHUB_API_URL,
-    GITHUB_APP_ID,
     GITHUB_ISSUE_DIR,
     GITHUB_ISSUE_TEMPLATES,
-    GITHUB_PRIVATE_KEY,
     IS_PRD,
     PRODUCT_BLOG_URL,
     PRODUCT_DEMO_URL,
@@ -53,6 +49,7 @@ from services.github.github_types import (
     IssueInfo,
 )
 from services.github.reviewers_manager import add_reviewers
+from services.github.token.get_installation_token import get_installation_access_token
 from services.openai.vision import describe_image
 from services.supabase.gitauto_manager import is_users_first_issue
 from services.supabase.users_manager import (
@@ -293,18 +290,6 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     return response.json()
 
 
-def create_jwt() -> str:
-    """Generate a JWT (JSON Web Token) for GitHub App authentication"""
-    now = int(time.time())
-    payload: dict[str, int | str] = {
-        "iat": now,  # Issued at time
-        "exp": now + 600,  # JWT expires in 10 minutes
-        "iss": GITHUB_APP_ID,  # Issuer
-    }
-    # The reason we use RS256 is that GitHub requires it for JWTs
-    return jwt.encode(payload=payload, key=GITHUB_PRIVATE_KEY, algorithm="RS256")
-
-
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | None:
     """https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request"""
@@ -389,19 +374,6 @@ def initialize_repo(repo_path: str, remote_url: str, token: str) -> None:
         print("Remote set successfully")
 
     run_command(command="git push -u origin main", cwd=repo_path)
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_installation_access_token(installation_id: int) -> str:
-    """https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-an-installation-access-token-for-an-app"""
-    jwt_token: str = create_jwt()
-    response: requests.Response = requests.post(
-        url=f"{GITHUB_API_URL}/app/installations/{installation_id}/access_tokens",
-        headers=create_headers(token=jwt_token),
-        timeout=TIMEOUT,
-    )
-    response.raise_for_status()
-    return response.json()["token"]
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)

@@ -3,12 +3,12 @@ from json import dumps
 
 # Local imports
 from config import GITHUB_APP_USER_NAME
-from services.github.github_manager import get_installation_access_token
 from services.github.issues_manager import get_issue_body
 from services.github.pulls_manager import (
     get_pull_request_file_changes,
     update_pull_request_body,
 )
+from services.github.token.get_installation_token import get_installation_access_token
 from services.openai.chat import chat_with_ai
 from services.openai.instructions.write_pr_body import WRITE_PR_BODY
 

@@ -5,11 +5,11 @@ import time
 from config import PRODUCT_ID
 from services.github.github_manager import (
     add_label_to_issue,
-    get_installation_access_token,
     get_installed_owners_and_repos,
     get_oldest_unassigned_open_issue,
 )
 from services.github.github_types import IssueInfo
+from services.github.token.get_installation_token import get_installation_access_token
 from services.supabase.gitauto_manager import get_installation_ids
 from services.supabase.users_manager import get_how_many_requests_left_and_cycle
 

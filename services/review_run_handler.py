@@ -12,16 +12,13 @@ from config import (
 from services.chat_with_agent import chat_with_agent
 from services.github.comment_manager import reply_to_comment
 from services.github.comments.update_comment import update_comment
-from services.github.github_manager import (
-    get_installation_access_token,
-    get_remote_file_content,
-    get_remote_file_tree,
-)
+from services.github.github_manager import get_remote_file_content, get_remote_file_tree
 from services.github.github_types import Owner, PullRequest, Repository
 from services.github.pulls_manager import (
     get_pull_request_file_contents,
     get_review_thread_comments,
 )
+from services.github.token.get_installation_token import get_installation_access_token
 from services.stripe.subscriptions import get_stripe_product_id
 from services.supabase.owners_manager import get_stripe_customer_id
 from utils.colors.colorize_log import colorize
