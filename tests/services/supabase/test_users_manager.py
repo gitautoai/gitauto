@@ -31,8 +31,8 @@ from services.supabase.gitauto_manager import (
     complete_and_update_usage_record,
     create_installation,
     create_user_request,
-    delete_installation,
 )
+from services.supabase.installations.delete_installation import delete_installation
 from services.supabase.users_manager import (
     get_how_many_requests_left_and_cycle,
     get_user,
@@ -177,7 +177,11 @@ def test_how_many_requests_left() -> None:
     assert isinstance(end_date, datetime.datetime)
 
     # Clean Up
-    delete_installation(installation_id=TEST_INSTALLATION_ID, user_id=TEST_USER_ID)
+    delete_installation(
+        installation_id=TEST_INSTALLATION_ID,
+        user_id=TEST_USER_ID,
+        user_name=TEST_USER_NAME,
+    )
 
 
 @timer_decorator

@@ -25,10 +25,10 @@ from services.github.repo_manager import get_repository_stats
 from services.pull_request_handler import write_pr_description
 from services.review_run_handler import handle_review_run
 from services.screenshot_handler import handle_screenshot_comparison
-from services.supabase.gitauto_manager import (
-    create_installation,
-    delete_installation,
-    set_issue_to_merged,
+from services.supabase.gitauto_manager import create_installation, set_issue_to_merged
+from services.supabase.installations.delete_installation import delete_installation
+from services.supabase.installations.unsuspend_installation import (
+    unsuspend_installation,
 )
 from services.supabase.repositories.upsert_repository import upsert_repository
 from utils.error.handle_exceptions import handle_exceptions
@@ -109,13 +109,6 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def handle_installation_deleted(payload: GitHubInstallationPayload) -> None:
-    installation_id: int = payload["installation"]["id"]
-    user_id: int = payload["sender"]["id"]
-    delete_installation(installation_id=installation_id, user_id=user_id)
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=False)
 async def handle_installation_repos_added(payload) -> None:
     installation_id: int = payload["installation"]["id"]
     sender_id: int = payload["sender"]["id"]
@@ -153,14 +146,32 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
     #     print("Marketplace purchase is triggered")
     #     await handle_installation_created(payload=payload)
 
-    # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation
+    # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=created#installation
     if event_name == "installation" and action in ("created"):
-        print("Installation is created")
         await handle_installation_created(payload=payload)
         return
+
+    # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=deleted#installation
     if event_name == "installation" and action in ("deleted"):
-        print("Installation is deleted")
-        await handle_installation_deleted(payload=payload)
+        delete_installation(
+            installation_id=payload["installation"]["id"],
+            user_id=payload["sender"]["id"],
+            user_name=payload["sender"]["login"],
+        )
+        return
+
+    # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=suspend#installation
+    if event_name == "installation" and action in ("suspend"):
+        delete_installation(
+            installation_id=payload["installation"]["id"],
+            user_id=payload["sender"]["id"],
+            user_name=payload["sender"]["login"],
+        )
+        return
+
+    # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=unsuspend#installation
+    if event_name == "installation" and action in ("unsuspend"):
+        unsuspend_installation(installation_id=payload["installation"]["id"])
         return
 
     # Add issue templates to the repositories when GitAuto is added to a repository
