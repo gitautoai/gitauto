@@ -17,11 +17,11 @@ from services.gitauto_handler import handle_gitauto
 from services.github.actions_manager import cancel_workflow_runs_in_progress
 from services.github.github_manager import (
     create_comment_on_issue_with_gitauto_button,
-    get_installation_access_token,
     get_user_public_email,
 )
 from services.github.github_types import GitHubInstallationPayload
 from services.github.repo_manager import get_repository_stats
+from services.github.token.get_installation_token import get_installation_access_token
 from services.pull_request_handler import write_pr_description
 from services.review_run_handler import handle_review_run
 from services.screenshot_handler import handle_screenshot_comparison

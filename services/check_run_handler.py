@@ -14,11 +14,7 @@ from services.github.actions_manager import get_workflow_run_logs, get_workflow_
 from services.github.comments.create_comment import create_comment
 from services.github.comments.get_comments import get_comments
 from services.github.comments.update_comment import update_comment
-from services.github.github_manager import (
-    get_installation_access_token,
-    get_remote_file_content,
-    get_remote_file_tree,
-)
+from services.github.github_manager import get_remote_file_content, get_remote_file_tree
 from services.github.github_types import (
     CheckRun,
     CheckRunCompletedPayload,
@@ -32,6 +28,7 @@ from services.github.pulls_manager import (
     get_pull_request_file_changes,
 )
 from services.github.github_utils import create_permission_url
+from services.github.token.get_installation_token import get_installation_access_token
 from services.stripe.subscriptions import get_stripe_product_id
 from services.supabase.owners_manager import get_stripe_customer_id
 from utils.colors.colorize_log import colorize

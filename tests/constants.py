@@ -1,4 +1,4 @@
-from services.github.github_manager import get_installation_access_token
+from services.github.token.get_installation_token import get_installation_access_token
 
 
 OWNER = "gitautoai"
