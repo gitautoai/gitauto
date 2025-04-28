@@ -25,6 +25,7 @@ from services.github.repo_manager import get_repository_stats
 from services.pull_request_handler import write_pr_description
 from services.review_run_handler import handle_review_run
 from services.screenshot_handler import handle_screenshot_comparison
+from services.slack.slack import slack
 from services.supabase.gitauto_manager import create_installation, set_issue_to_merged
 from services.supabase.installations.delete_installation import delete_installation
 from services.supabase.installations.unsuspend_installation import (
@@ -148,11 +149,15 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=created#installation
     if event_name == "installation" and action in ("created"):
+        msg = f"🎉 New installation by `{payload['sender']['login']}` for `{payload['installation']['account']['login']}`"
+        slack(msg)
         await handle_installation_created(payload=payload)
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=deleted#installation
     if event_name == "installation" and action in ("deleted"):
+        msg = f":skull: Installation deleted by `{payload['sender']['login']}` for `{payload['installation']['account']['login']}`"
+        slack(msg)
         delete_installation(
             installation_id=payload["installation"]["id"],
             user_id=payload["sender"]["id"],
@@ -162,6 +167,8 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=suspend#installation
     if event_name == "installation" and action in ("suspend"):
+        msg = f":skull: Installation suspended by `{payload['sender']['login']}` for `{payload['installation']['account']['login']}`"
+        slack(msg)
         delete_installation(
             installation_id=payload["installation"]["id"],
             user_id=payload["sender"]["id"],
@@ -171,6 +178,8 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=unsuspend#installation
     if event_name == "installation" and action in ("unsuspend"):
+        msg = f"🎉 Installation unsuspended by `{payload['sender']['login']}` for `{payload['installation']['account']['login']}`"
+        slack(msg)
         unsuspend_installation(installation_id=payload["installation"]["id"])
         return
 
@@ -184,6 +193,8 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues
     if event_name == "issues":
         if action == "labeled":
+            msg = f"Labeled by `{payload['sender']['login']}` for `{payload['repository']['name']}`"
+            slack(msg)
             await handle_gitauto(
                 payload=payload, trigger_type="label", input_from="github"
             )
@@ -196,20 +207,24 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
     if event_name == "issue_comment" and action == "edited":
         search_text = "- [x] Generate PR"
-        if PRODUCT_ID != "gitauto":
-            search_text += " - " + PRODUCT_ID
-            if payload["comment"]["body"].find(search_text) != -1:
-                await handle_gitauto(
-                    payload=payload, trigger_type="comment", input_from="github"
-                )
-        else:
-            if (
-                payload["comment"]["body"].find(search_text) != -1
-                and payload["comment"]["body"].find(search_text + " - ") == -1
-            ):
-                await handle_gitauto(
-                    payload=payload, trigger_type="comment", input_from="github"
-                )
+        comment_body = payload["comment"]["body"]
+
+        # For dev environment, require "- [x] Generate PR - dev" checkbox
+        if (
+            PRODUCT_ID != "gitauto"
+            and (search_text + " - " + PRODUCT_ID) in comment_body
+        ):
+            await handle_gitauto(
+                payload=payload, trigger_type="comment", input_from="github"
+            )
+            return
+
+        # For production environment, ensure it's just "- [x] Generate PR" without any suffix
+        # This prevents both prod and dev from triggering on prod checkbox
+        if search_text in comment_body and (search_text + " - ") not in comment_body:
+            await handle_gitauto(
+                payload=payload, trigger_type="comment", input_from="github"
+            )
         return
 
     # Monitor check_run failure and re-run agent with failure reason
@@ -283,6 +298,9 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
                 repo_name=repo_name,
                 issue_number=issue_number,
             )
+
+            msg = f"🎉 PR merged by `{payload['sender']['login']}` for `{payload['repository']['name']}`"
+            slack(msg)
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_comment
