@@ -193,8 +193,6 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues
     if event_name == "issues":
         if action == "labeled":
-            msg = f"Labeled by `{payload['sender']['login']}` for `{payload['repository']['name']}`"
-            slack(msg)
             await handle_gitauto(
                 payload=payload, trigger_type="label", input_from="github"
             )

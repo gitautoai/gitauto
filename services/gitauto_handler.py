@@ -33,6 +33,7 @@ from services.github.github_types import GitHubLabeledPayload
 from services.github.github_utils import deconstruct_github_payload
 from services.jira.jira_manager import deconstruct_jira_payload
 from services.openai.vision import describe_image
+from services.slack.slack import slack
 from services.supabase.gitauto_manager import (
     complete_and_update_usage_record,
     create_user_request,
@@ -108,6 +109,15 @@ async def handle_gitauto(
     print(
         f"`{sender_id}:{sender_name}` wants to create a PR for `{issue_number}:{issue_title}` in `{owner_name}/{repo_name}`"
     )
+
+    # Notify Slack
+    trigger = (
+        "Labeled"
+        if trigger_type == "label"
+        else "Triggered" if trigger_type == "comment" else "Review-commented"
+    )
+    msg = f"{trigger} by `{sender_name}` for `{issue_title}` in `{owner_name}/{repo_name}`"
+    slack(msg)
 
     p += 5
     log_messages.append("Extracted metadata.")
