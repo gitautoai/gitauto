@@ -28,6 +28,7 @@ from services.screenshot_handler import handle_screenshot_comparison
 from services.slack.slack import slack
 from services.supabase.gitauto_manager import create_installation, set_issue_to_merged
 from services.supabase.installations.delete_installation import delete_installation
+from services.supabase.installations.is_installation_valid import is_installation_valid
 from services.supabase.installations.unsuspend_installation import (
     unsuspend_installation,
 )
@@ -112,13 +113,15 @@ async def handle_installation_created(payload: GitHubInstallationPayload) -> Non
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 async def handle_installation_repos_added(payload) -> None:
     installation_id: int = payload["installation"]["id"]
-    sender_id: int = payload["sender"]["id"]
-    sender_name: str = payload["sender"]["login"]
+    if not is_installation_valid(installation_id=installation_id):
+        return
     token: str = get_installation_access_token(installation_id=installation_id)
 
-    # Get owner information
+    # Get other information
     owner_id = payload["installation"]["account"]["id"]
     owner_name = payload["installation"]["account"]["login"]
+    sender_id: int = payload["sender"]["id"]
+    sender_name: str = payload["sender"]["login"]
 
     # Process added repositories
     process_repositories(
