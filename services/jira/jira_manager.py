@@ -10,7 +10,7 @@ from fastapi import HTTPException, Request
 from config import ISSUE_NUMBER_FORMAT, PRODUCT_ID
 from services.github.branch_manager import get_default_branch, check_branch_exists
 from services.github.github_types import BaseArgs
-from services.github.repo_manager import is_repo_forked
+from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.token.get_installation_token import get_installation_access_token
 from services.supabase.installations_manager import get_installation_info
 from services.supabase.repository_manager import get_repository_rules
