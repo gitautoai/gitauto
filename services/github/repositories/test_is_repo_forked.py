@@ -63,3 +63,28 @@ def test_is_repo_forked_json_decode_error():
         assert result is False
         mock_get.assert_called_once()
         mock_response.raise_for_status.assert_called_once()
+
+
+def test_is_repo_forked_timeout():
+    """Test is_repo_forked returns False when a Timeout occurs."""
+    with patch("services.github.repositories.is_repo_forked.get") as mock_get:
+        mock_get.side_effect = Timeout("Request timed out")
+        
+        result = is_repo_forked(OWNER, REPO, TOKEN)
+        
+        assert result is False
+        mock_get.assert_called_once()
+
+
+def test_is_repo_forked_key_error():
+    """Test is_repo_forked returns False when a KeyError occurs."""
+    with patch("services.github.repositories.is_repo_forked.get") as mock_get:
+        mock_response = MagicMock()
+        mock_response.json.return_value = {}  # Missing 'fork' key
+        mock_get.return_value = mock_response
+        
+        result = is_repo_forked(OWNER, REPO, TOKEN)
+        
+        assert result is False
+        mock_get.assert_called_once()
+        mock_response.raise_for_status.assert_called_once()
