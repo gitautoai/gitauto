@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 import pytest
 from requests.exceptions import HTTPError, JSONDecodeError, Timeout
 from services.github.repositories.is_repo_forked import is_repo_forked
