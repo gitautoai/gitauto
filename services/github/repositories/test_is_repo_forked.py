@@ -37,11 +37,15 @@ def test_is_repo_forked_http_error():
     """Test is_repo_forked returns False when an HTTPError occurs."""
     with patch("services.github.repositories.is_repo_forked.get") as mock_get:
         mock_response = MagicMock()
-        mock_response.raise_for_status.side_effect = HTTPError("404 Client Error")
         mock_response.status_code = 404
         mock_response.reason = "Not Found"
         mock_response.text = "Repository not found"
-        mock_response.headers = {}
+        mock_response.headers = {"X-RateLimit-Limit": "5000", "X-RateLimit-Remaining": "4999", "X-RateLimit-Used": "1"}
+        
+        http_error = HTTPError("404 Client Error")
+        http_error.response = mock_response
+        mock_response.raise_for_status.side_effect = http_error
+        
         mock_get.return_value = mock_response
         
         result = is_repo_forked(OWNER, "non-existent-repo", TOKEN)
