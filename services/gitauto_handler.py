@@ -6,13 +6,7 @@ import time
 from typing import Literal
 
 # Local imports
-from config import (
-    EXCEPTION_OWNERS,
-    IS_PRD,
-    PRODUCT_ID,
-    PRODUCT_NAME,
-    PR_BODY_STARTS_WITH,
-)
+from config import EXCEPTION_OWNERS, PRODUCT_ID, PRODUCT_NAME, PR_BODY_STARTS_WITH
 from services.chat_with_agent import chat_with_agent
 from services.github.asset_manager import get_base64, render_text
 from services.github.comment_manager import delete_my_comments
@@ -143,16 +137,12 @@ async def handle_gitauto(
     )
 
     # Notify the user if the request limit is reached and early return
-    if (
-        requests_left <= 0
-        and not is_retried
-        and IS_PRD
-        and owner_name not in EXCEPTION_OWNERS
-    ):
+    if requests_left <= 0 and not is_retried and owner_name not in EXCEPTION_OWNERS:
         body = request_limit_reached(
             user_name=sender_name, request_count=request_count, end_date=end_date
         )
         update_comment(body=body, base_args=base_args)
+        print(body)
         return
 
     # Create a usage record
