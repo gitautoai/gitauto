@@ -6,7 +6,6 @@ from typing import Any
 from config import (
     EXCEPTION_OWNERS,
     GITHUB_APP_USER_NAME,
-    IS_PRD,
     STRIPE_PRODUCT_ID_FREE,
 )
 from services.chat_with_agent import chat_with_agent
@@ -139,7 +138,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     product_id: str | None = get_stripe_product_id(customer_id=stripe_customer_id)
     is_paid = product_id is not None and product_id != STRIPE_PRODUCT_ID_FREE
     is_exception = owner_name in EXCEPTION_OWNERS
-    if not is_paid and IS_PRD and not is_exception:
+    if not is_paid and not is_exception:
         msg = f"Skipping because product_id is not found or is in free tier. product_id: '{product_id}' for owner_id: {owner_id}"
         print(colorize(text=msg, color="yellow"))
         return

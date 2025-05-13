@@ -89,7 +89,6 @@ DEFAULT_TIME = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
 EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
 ENV: str = get_env_var(name="ENV")
 EXCEPTION_OWNERS = ["gitautoai", "Suchica", "hiroshinishio"]
-IS_PRD: bool = ENV == "prod"
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
 FREE_TIER_REQUEST_AMOUNT = 3
 ISSUE_NUMBER_FORMAT = "/issue-"  # DO NOT USE "#" as it is a special character and has to be encoded in URL, like in GitHub API URL
