@@ -32,9 +32,9 @@ def chat_with_claude(
     client = get_anthropic_client()
 
     # Check token count and delete messages if necessary
-    messages = trim_messages_to_token_limit(messages)
+    messages = trim_messages_to_token_limit(messages, client)
 
-    # Now generate anthropic_messages from the trimmed messages
+    # Convert OpenAI message format to Anthropic format
     anthropic_messages: list[MessageParam] = []
     for msg in messages:
         # Convert message to dictionary if it's an object
