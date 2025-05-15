@@ -7,6 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 # Local imports
+from config import ANTHROPIC_MODEL_ID_37
 from services.anthropic.trim_messages import trim_messages_to_token_limit
 
 
@@ -19,7 +20,8 @@ def mock_client():
     client = Mock()
 
     # Default 1000 tokens per message
-    def count_tokens(messages):
+    def count_tokens(messages, model):
+        assert model == ANTHROPIC_MODEL_ID_37
         return Mock(input_tokens=len(messages) * 1000)
 
     client.messages.count_tokens.side_effect = count_tokens
