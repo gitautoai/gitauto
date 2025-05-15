@@ -9,17 +9,6 @@ import pytest
 # Local imports
 from services.anthropic.trim_messages import trim_messages_to_token_limit
 
-# Dummy helpers to mock message_to_dict and count_tokens
-import services.anthropic.trim_messages as trim_mod
-
-
-@pytest.fixture(autouse=True)
-def patch_helpers(monkeypatch):
-    # Patch message_to_dict to just return the message itself (dict)
-    monkeypatch.setattr(trim_mod, "message_to_dict", lambda msg: msg)
-    # Patch count_tokens to count 1000 tokens per message
-    monkeypatch.setattr(trim_mod, "count_tokens", lambda messages: len(messages) * 1000)
-
 
 def make_message(role, content="test"):
     return {"role": role, "content": content}
