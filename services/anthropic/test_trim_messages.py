@@ -44,6 +44,7 @@ def test_trimming_removes_oldest_non_system(mock_client):
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=3000)
     assert trimmed == [
         make_message("system"),
+        make_message("assistant", "second"),
         make_message("user", "third"),
     ]
 
