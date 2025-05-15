@@ -199,10 +199,14 @@ def chat_with_agent(
                 msg = f"Searched repository for `{tool_args['query']}` but found no matching files."
 
         # Claude sometimes tries to call functions that don't exist in the list of tools...
-        elif tool_name in [
-            "commit_changes_to_remote_branch",
-            "replace_remote_file_content",
-        ]:
+        elif (
+            tool_name
+            in [
+                "commit_changes_to_remote_branch",
+                "replace_remote_file_content",
+            ]
+            and "file_path" in tool_args
+        ):
             msg = f"Committed changes to `{tool_args['file_path']}`."
         else:
             msg = f"Calling `{tool_name}()` with `{tool_args}`."
