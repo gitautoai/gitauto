@@ -97,7 +97,7 @@ def chat_with_claude(
         # Process the first tool call
         tool_use: ToolUseBlock = tool_use_blocks[0]
         tool_call_id = tool_use.id  # e.g. "toolu_01M3mtjuKhyQptQh5ASmQCFY"
-        tool_name = tool_use.name  # e.g. "commit_changes_to_remote_branch"
+        tool_name = tool_use.name  # e.g. "apply_diff_to_file"
         tool_args = tool_use.input
 
     # Convert Anthropic response to OpenAI format for consistency

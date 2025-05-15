@@ -12,7 +12,7 @@ from services.github.commits.replace_remote_file import (
     replace_remote_file_content,
 )
 from services.github.github_manager import (
-    commit_changes_to_remote_branch,
+    apply_diff_to_file,
     get_remote_file_content,
     search_remote_file_contents,
 )
@@ -39,9 +39,9 @@ LINE_NUMBER: dict[str, int] = {
 }
 
 # See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-COMMIT_CHANGES_TO_REMOTE_BRANCH: shared_params.FunctionDefinition = {
-    "name": "commit_changes_to_remote_branch",
-    "description": "Commits the changes to the remote branch in the GitHub repository. Must be called at least once to commit the changes otherwise you can't create a pull request and resolve the issue.",
+APPLY_DIFF_TO_FILE: shared_params.FunctionDefinition = {
+    "name": "apply_diff_to_file",
+    "description": "Applies a diff to a file in the GitHub repository. Must be called at least once to commit the changes otherwise you can't create a pull request and resolve the issue.",
     "parameters": {
         "type": "object",
         "properties": {"file_path": FILE_PATH, "diff": DIFF},
@@ -128,14 +128,14 @@ TOOLS_TO_SEARCH_GOOGLE: Iterable[ChatCompletionToolParam] = [
     {"type": "function", "function": SEARCH_GOOGLE},
 ]
 TOOLS_TO_COMMIT_CHANGES: Iterable[ChatCompletionToolParam] = [
-    {"type": "function", "function": COMMIT_CHANGES_TO_REMOTE_BRANCH},
+    {"type": "function", "function": APPLY_DIFF_TO_FILE},
     {"type": "function", "function": REPLACE_REMOTE_FILE_CONTENT},
 ]
 
 # Define tools to call
 tools_to_call: dict[str, Any] = {
     # GitHub
-    "commit_changes_to_remote_branch": commit_changes_to_remote_branch,
+    "apply_diff_to_file": apply_diff_to_file,
     "get_remote_file_content": get_remote_file_content,
     "replace_remote_file_content": replace_remote_file_content,
     "search_remote_file_contents": search_remote_file_contents,

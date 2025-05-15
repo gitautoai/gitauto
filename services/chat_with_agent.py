@@ -123,14 +123,14 @@ def chat_with_agent(
         # Case 1: Function exists but arguments suggest a different function
         if tool_name in tools_to_call:
             if (
-                tool_name == "commit_changes_to_remote_branch"
+                tool_name == "apply_diff_to_file"
                 and "file_path" in tool_args
                 and "diff" not in tool_args
                 and "file_content" in tool_args
             ):
                 corrected_tool = ("replace_remote_file_content", tool_args)
             elif tool_name == "replace_remote_file_content" and "diff" in tool_args:
-                corrected_tool = ("commit_changes_to_remote_branch", tool_args)
+                corrected_tool = ("apply_diff_to_file", tool_args)
 
         # Case 2: Function doesn't exist but has similar name
         else:
@@ -202,7 +202,7 @@ def chat_with_agent(
         elif (
             tool_name
             in [
-                "commit_changes_to_remote_branch",
+                "apply_diff_to_file",
                 "replace_remote_file_content",
             ]
             and "file_path" in tool_args
