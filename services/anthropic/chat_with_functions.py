@@ -126,7 +126,8 @@ def chat_with_claude(
             system=system_content,
             messages=anthropic_messages,
             tools=anthropic_tools,
-            max_tokens=8192,  # https://docs.anthropic.com/en/docs/about-claude/models/all-models
+            # https://docs.anthropic.com/en/docs/about-claude/models/all-models#model-comparison-table
+            max_tokens=64000 if model_id == ANTHROPIC_MODEL_ID_37 else 8192,
             temperature=0.0,
             timeout=TIMEOUT,
         )
