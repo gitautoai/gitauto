@@ -40,13 +40,9 @@ def test_trimming_at_boundary(mock_client):
         make_message("user"),
         make_message("assistant"),
     ]
-    # 3000 tokens == 3000 token limit - should trim one message
+    # 3000 tokens == 3000 token limit - no trimming needed
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=3000)
-    expected = [
-        make_message("system"),
-        make_message("assistant"),
-    ]
-    assert trimmed == expected
+    assert trimmed == messages
 
 
 def test_trimming_removes_non_system(mock_client):
