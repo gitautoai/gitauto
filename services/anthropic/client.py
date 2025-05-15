@@ -1,6 +1,6 @@
 from anthropic import Anthropic
-from config import ANTHROPIC_API_KEY
+import config
 
 
 def get_anthropic_client() -> Anthropic:
-    return Anthropic(api_key=ANTHROPIC_API_KEY)
+    return Anthropic(api_key=config.ANTHROPIC_API_KEY)
