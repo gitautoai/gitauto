@@ -18,7 +18,7 @@ def trim_messages_to_token_limit(
         int,
         client.messages.count_tokens(messages=messages, model=model).input_tokens,
     )
-    max_tokens: int = 200_000
+    max_tokens = 200_000
     while token_input > max_tokens and len(messages) > 1:
         for i, msg in enumerate(messages):
             msg_dict = message_to_dict(msg)
