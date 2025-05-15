@@ -161,7 +161,7 @@ async def add_reaction_to_issue(
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
-def commit_changes_to_remote_branch(
+def apply_diff_to_file(
     diff: str,
     file_path: str,
     base_args: BaseArgs,
@@ -219,7 +219,7 @@ def commit_changes_to_remote_branch(
         timeout=TIMEOUT,
     )
     put_response.raise_for_status()
-    return f"diff applied to the file: {file_path} successfully by {commit_changes_to_remote_branch.__name__}()."
+    return f"diff applied to the file: {file_path} successfully by {apply_diff_to_file.__name__}()."
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
