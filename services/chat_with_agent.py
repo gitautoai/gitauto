@@ -1,5 +1,5 @@
 # Standard imports
-from typing import Iterable, Literal, Any
+from typing import Literal, Any
 
 # Local imports
 from config import OPENAI_MODEL_ID_O3_MINI
@@ -33,7 +33,7 @@ from utils.progress_bar.progress_bar import create_progress_bar
 
 @handle_exceptions(raise_on_error=True)
 def chat_with_agent(
-    messages: Iterable[dict[str, Any]],
+    messages: list[dict[str, Any]],
     base_args: BaseArgs,
     mode: Literal["comment", "commit", "explore", "get", "search"],
     previous_calls: list[dict] | None = None,
@@ -84,7 +84,7 @@ def chat_with_agent(
                 token_input,
                 token_output,
             ) = provider(
-                messages=list(messages),
+                messages,
                 system_content=system_content,
                 tools=tools,
                 model_id=current_model,
@@ -158,9 +158,8 @@ def chat_with_agent(
             tool_result = f"Error: The function '{tool_name}' does not exist in the available tools. Please use one of the available tools."
 
     # Append the function call to the messages
-    messages_list = list(messages)
-    messages_list.append(response_message)
-    messages_list.append(
+    messages.append(response_message)
+    messages.append(
         {
             "role": "tool",
             "tool_call_id": tool_call_id,
@@ -217,7 +216,7 @@ def chat_with_agent(
 
         if recursion_count < 3:
             return chat_with_agent(
-                messages=messages_list,
+                messages=messages,
                 base_args=base_args,
                 mode=mode,
                 previous_calls=previous_calls,
@@ -250,7 +249,7 @@ def chat_with_agent(
 
     # Return
     return (
-        messages_list,
+        messages,
         previous_calls,
         tool_name,
         tool_args,

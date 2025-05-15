@@ -23,7 +23,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 @handle_exceptions(raise_on_error=True)
 def chat_with_claude(
-    messages: list[Any],
+    messages: list[MessageParam],
     system_content: str,
     tools: list[dict[str, Any]],
     model_id: str = ANTHROPIC_MODEL_ID_37,
@@ -32,75 +32,9 @@ def chat_with_claude(
     client = get_anthropic_client()
 
     # Check token count and delete messages if necessary
-    messages = trim_messages_to_token_limit(messages, client)
-
-    # Convert OpenAI message format to Anthropic format
-    anthropic_messages: list[MessageParam] = []
-    for msg in messages:
-        # Convert message to dictionary if it's an object
-        msg_dict = message_to_dict(msg)
-
-        role = safe_get_attribute(msg_dict, "role")
-        content = safe_get_attribute(msg_dict, "content", "")
-
-        if role == "user":
-            anthropic_messages.append({"role": "user", "content": content})
-        elif role == "assistant":
-            # Handle tool calls if present
-            if safe_get_attribute(msg_dict, "tool_calls"):
-                tool_calls = safe_get_attribute(msg_dict, "tool_calls")
-                message_content = content if content else ""
-                tool_use_blocks = []
-
-                for tool_call in tool_calls:
-                    # Convert tool_call to dict if needed
-                    tool_call_dict = message_to_dict(tool_call)
-
-                    # Access function data safely
-                    function = safe_get_attribute(tool_call_dict, "function", {})
-                    if not isinstance(function, dict):
-                        function = message_to_dict(function)
-
-                    tool_use_blocks.append(
-                        {
-                            "type": "tool_use",
-                            "id": safe_get_attribute(tool_call_dict, "id"),
-                            "name": safe_get_attribute(function, "name"),
-                            "input": json.loads(
-                                safe_get_attribute(function, "arguments", "{}")
-                            ),
-                        }
-                    )
-
-                # Only include text block if message_content is not empty
-                content_blocks = []
-                if message_content:
-                    content_blocks.append({"type": "text", "text": message_content})
-
-                anthropic_messages.append(
-                    {
-                        "role": "assistant",
-                        "content": content_blocks + tool_use_blocks,
-                    }
-                )
-            else:
-                anthropic_messages.append({"role": "assistant", "content": content})
-        elif role == "tool":
-            anthropic_messages.append(
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": safe_get_attribute(msg_dict, "tool_call_id"),
-                            "content": safe_get_attribute(msg_dict, "content"),
-                        }
-                    ],
-                }
-            )
-        elif role == "system":
-            # System message is handled by `system` parameter
-            pass
+    messages = trim_messages_to_token_limit(
+        messages=messages, client=client, model=model_id
+    )
 
     # Convert OpenAI tools format to Anthropic tools format
     anthropic_tools: list[ToolUnionParam] = []
@@ -124,7 +58,7 @@ def chat_with_claude(
         response = client.messages.create(
             model=model_id,
             system=system_content,
-            messages=anthropic_messages,
+            messages=messages,
             tools=anthropic_tools,
             # https://docs.anthropic.com/en/docs/about-claude/models/all-models#model-comparison-table
             max_tokens=64000 if model_id == ANTHROPIC_MODEL_ID_37 else 8192,

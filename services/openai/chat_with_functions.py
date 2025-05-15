@@ -1,6 +1,6 @@
 # Standard imports
 import json
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Any, Optional
 
 # Third-party imports
 from openai import OpenAI
@@ -19,15 +19,15 @@ from utils.error.handle_exceptions import handle_exceptions
 
 @handle_exceptions(raise_on_error=True)
 def chat_with_openai(
-    messages: List[Dict[str, Any]],
+    messages: list[dict[str, Any]],
     system_content: str,
-    tools: List[Dict[str, Any]],
+    tools: list[dict[str, Any]],
     model_id: str = OPENAI_MODEL_ID_O3_MINI,
-) -> Tuple[
-    Dict[str, Any],  # Response message
+) -> tuple[
+    dict[str, Any],  # Response message
     Optional[str],  # Tool call ID
     Optional[str],  # Tool name
-    Optional[Dict],  # Tool args
+    Optional[dict],  # Tool args
     int,  # Input tokens
     int,  # Output tokens
 ]:
@@ -47,7 +47,7 @@ def chat_with_openai(
     )
 
     choice: Choice = completion.choices[0]
-    tool_calls: List[ChatCompletionMessageToolCall] | None = choice.message.tool_calls
+    tool_calls: list[ChatCompletionMessageToolCall] | None = choice.message.tool_calls
 
     # Calculate tokens
     token_input = count_tokens(messages=messages)
