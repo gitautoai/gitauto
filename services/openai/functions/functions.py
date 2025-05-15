@@ -7,12 +7,12 @@ from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
 
 # Local imports
 from services.github.comments.update_comment import update_comment
+from services.github.commits.apply_diff_to_file import apply_diff_to_file
 from services.github.commits.replace_remote_file import (
     REPLACE_REMOTE_FILE_CONTENT,
     replace_remote_file_content,
 )
 from services.github.github_manager import (
-    apply_diff_to_file,
     get_remote_file_content,
     search_remote_file_contents,
 )
