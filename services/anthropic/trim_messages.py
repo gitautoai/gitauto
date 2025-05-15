@@ -11,14 +11,16 @@ from utils.attribute.safe_get_attribute import safe_get_attribute
 
 
 def trim_messages_to_token_limit(
-    messages: list[Any], client: Anthropic, model: str = ANTHROPIC_MODEL_ID_37
+    messages: list[Any],
+    client: Anthropic,
+    model: str = ANTHROPIC_MODEL_ID_37,
+    max_tokens: int = 200_000,
 ):
     messages = list(messages)  # Make a copy to avoid mutating the original
     token_input = cast(
         int,
         client.messages.count_tokens(messages=messages, model=model).input_tokens,
     )
-    max_tokens = 200_000
     while token_input > max_tokens and len(messages) > 1:
         for i, msg in enumerate(messages):
             msg_dict = message_to_dict(msg)
