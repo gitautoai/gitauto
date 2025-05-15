@@ -3,47 +3,22 @@ import json
 from typing import Any
 
 # Third party imports
-from anthropic import Anthropic, AuthenticationError
+from anthropic import AuthenticationError
 from anthropic._exceptions import OverloadedError
 from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 
 # Local imports
-from config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL_ID_37, TIMEOUT
+from config import ANTHROPIC_MODEL_ID_37, TIMEOUT
+from services.anthropic.client import get_anthropic_client
+from services.anthropic.exceptions import (
+    ClaudeAuthenticationError,
+    ClaudeOverloadedError,
+)
+from services.anthropic.message_to_dict import message_to_dict
+from services.anthropic.trim_messages import trim_messages_to_token_limit
 from services.openai.count_tokens import count_tokens
+from utils.attribute.safe_get_attribute import safe_get_attribute
 from utils.error.handle_exceptions import handle_exceptions
-
-
-# Add this class at the top of the file
-class ClaudeOverloadedError(Exception):
-    """Raised when Claude API returns 529 Overloaded error"""
-
-
-class ClaudeAuthenticationError(Exception):
-    """Raised when Claude API returns 401 Authentication error"""
-
-
-def safe_get_attribute(obj: Any, attr: str, default: Any = None) -> Any:
-    """Safely get an attribute from an object or dictionary."""
-    if hasattr(obj, "get") and callable(obj.get):
-        # Dictionary-like object
-        return obj.get(attr, default)
-    elif hasattr(obj, attr):
-        # Object with attributes
-        return getattr(obj, attr, default)
-    return default
-
-
-def message_to_dict(message: Any) -> dict[str, Any]:
-    """Convert a message object to a dictionary."""
-    if isinstance(message, dict):
-        return message
-
-    result = {}
-    for attr in ["role", "content", "tool_calls", "tool_call_id", "name"]:
-        value = safe_get_attribute(message, attr)
-        if value is not None:
-            result[attr] = value
-    return result
 
 
 @handle_exceptions(raise_on_error=True)
@@ -54,7 +29,10 @@ def chat_with_claude(
     model_id: str = ANTHROPIC_MODEL_ID_37,
 ):
     # https://docs.anthropic.com/en/api/client-sdks
-    client = Anthropic(api_key=ANTHROPIC_API_KEY)
+    client = get_anthropic_client()
+
+    # Check token count and delete messages if necessary
+    messages = trim_messages_to_token_limit(messages, client)
 
     # Convert OpenAI message format to Anthropic format
     anthropic_messages: list[MessageParam] = []
