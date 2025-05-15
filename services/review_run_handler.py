@@ -187,19 +187,6 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     user_input = json.dumps(obj=input_message)
     messages = [{"role": "user", "content": user_input}]
 
-    # NOTE: Disabled this ask back feature because it's not working as expected and GitAuto just responded like "I've done it" but code returned here.
-    # (
-    #     _messages,
-    #     _previous_calls,
-    #     _tool_name,
-    #     _tool_args,
-    #     _token_input,
-    #     _token_output,
-    #     is_commented,
-    # ) = chat_with_agent(messages=messages, base_args=base_args, mode="comment")
-    # if is_commented:
-    #     return
-
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
     retry_count = 0
