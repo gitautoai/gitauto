@@ -1,8 +1,11 @@
 from services.anthropic import client
 
+
+def dummy_anthropic(api_key):
+    return type('DummyAnthropic', (), {'api_key': api_key})()
+
+
 def test_get_anthropic_client_success(monkeypatch):
-    def dummy_anthropic(api_key):
-        return type('DummyAnthropic', (), {'api_key': api_key})()
     monkeypatch.setattr(client, 'Anthropic', dummy_anthropic)
     monkeypatch.setattr(client, 'ANTHROPIC_API_KEY', 'testkey')
     result = client.get_anthropic_client()
@@ -10,8 +13,6 @@ def test_get_anthropic_client_success(monkeypatch):
 
 
 def test_get_anthropic_client_with_none_key(monkeypatch):
-    def dummy_anthropic(api_key):
-        return type('DummyAnthropic', (), {'api_key': api_key})()
     monkeypatch.setattr(client, 'Anthropic', dummy_anthropic)
     monkeypatch.setattr(client, 'ANTHROPIC_API_KEY', None)
     result = client.get_anthropic_client()
