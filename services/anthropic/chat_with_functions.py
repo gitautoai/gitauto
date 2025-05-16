@@ -91,8 +91,11 @@ def chat_with_claude(
     # Return Claude's native format
     assistant_message = {
         "role": "assistant",
-        "content": [{"type": "text", "text": content_text}],
+        "content": [],
     }
+
+    if content_text:  # Only add text block if there's content
+        assistant_message["content"].append({"type": "text", "text": content_text})
 
     if tool_use_blocks:
         # Process the first tool call
