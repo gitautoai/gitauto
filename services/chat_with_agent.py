@@ -161,10 +161,14 @@ def chat_with_agent(
     messages.append(response_message)
     messages.append(
         {
-            "role": "tool",
-            "tool_call_id": tool_call_id,
-            "name": tool_name,
-            "content": str(tool_result),
+            "role": "user",  # Claude expects a user message for tool_result https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#sequential-tools
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": tool_call_id,
+                    "content": str(tool_result),
+                }
+            ],
         }
     )
 

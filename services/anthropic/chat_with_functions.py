@@ -1,5 +1,4 @@
 # Standard imports
-import json
 from typing import Any
 
 # Third party imports
@@ -16,7 +15,6 @@ from services.anthropic.exceptions import (
 )
 from services.anthropic.message_to_dict import message_to_dict
 from services.anthropic.trim_messages import trim_messages_to_token_limit
-from services.openai.count_tokens import count_tokens
 from utils.attribute.safe_get_attribute import safe_get_attribute
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -52,7 +50,6 @@ def chat_with_claude(
             }
         )
 
-    # Call the API
     # https://docs.anthropic.com/en/api/messages
     try:
         response = client.messages.create(
@@ -72,11 +69,9 @@ def chat_with_claude(
 
     # Calculate tokens (approximation using OpenAI's tokenizer)
     # Convert messages to dicts for token counting
-    messages_for_token_count = [message_to_dict(msg) for msg in messages]
-    token_input = count_tokens(messages=messages_for_token_count)
-    token_output = count_tokens(
-        messages=[{"role": "assistant", "content": str(response.content)}]
-    )
+    token_input = client.messages.count_tokens(
+        messages=messages, model=model_id
+    ).input_tokens
 
     # Process the response
     tool_call_id = None
@@ -93,6 +88,12 @@ def chat_with_claude(
         elif content_block.type == "tool_use":
             tool_use_blocks.append(content_block)
 
+    # Return Claude's native format
+    assistant_message = {
+        "role": "assistant",
+        "content": [{"type": "text", "text": content_text}],
+    }
+
     if tool_use_blocks:
         # Process the first tool call
         tool_use: ToolUseBlock = tool_use_blocks[0]
@@ -100,23 +101,19 @@ def chat_with_claude(
         tool_name = tool_use.name  # e.g. "apply_diff_to_file"
         tool_args = tool_use.input
 
-    # Convert Anthropic response to OpenAI format for consistency
-    assistant_message = {
-        "role": "assistant",
-        "content": content_text,
-    }
-
-    if tool_call_id:
-        assistant_message["tool_calls"] = [
+        assistant_message["content"].append(
             {
+                "type": "tool_use",
                 "id": tool_call_id,
-                "function": {
-                    "name": tool_name,
-                    "arguments": json.dumps(tool_args),
-                },
-                "type": "function",
+                "name": tool_name,
+                "input": tool_args,
             }
-        ]
+        )
+
+    token_output = 0
+    # token_output = client.messages.count_tokens(
+    #     messages=[assistant_message], model=model_id
+    # )
 
     return (
         assistant_message,
