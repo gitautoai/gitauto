@@ -50,6 +50,7 @@ def parse_subscription_object(
     free_tier_end_date = 0
     free_tier_product_id = ""
     free_tier_interval = "month"  # Default interval
+    free_tier_quantity = 1  # Default quantity
 
     # return the first paid subscription if found, if not return the free one found
     for sub in subscription.data:
@@ -62,6 +63,7 @@ def parse_subscription_object(
                 free_tier_end_date = sub.current_period_end
                 free_tier_product_id = item["price"]["product"]
                 free_tier_interval = item["price"]["recurring"]["interval"]
+                free_tier_quantity = item["quantity"]
                 continue
 
             return (
@@ -69,6 +71,7 @@ def parse_subscription_object(
                 sub["current_period_end"],
                 item["price"]["product"],
                 item["price"]["recurring"]["interval"],
+                item["quantity"],
             )
 
     if (
@@ -97,6 +100,7 @@ def parse_subscription_object(
         free_tier_end_date,
         free_tier_product_id,
         free_tier_interval,
+        free_tier_quantity,
     )
 
 
@@ -130,7 +134,7 @@ def get_how_many_requests_left_and_cycle(
 
     # Get subscription object and extract start date, end date and product id
     subscription = get_subscription(customer_id=stripe_customer_id)
-    start_date_seconds, end_date_seconds, product_id, interval = (
+    start_date_seconds, end_date_seconds, product_id, interval, quantity = (
         parse_subscription_object(
             subscription=subscription,
             installation_id=installation_id,
@@ -143,7 +147,9 @@ def get_how_many_requests_left_and_cycle(
     # Get base request count from product id metadata
     base_request_limit = get_base_request_limit(product_id)
     request_limit = (
-        base_request_limit * 12 if interval == "year" else base_request_limit
+        base_request_limit * 12 * quantity
+        if interval == "year"
+        else base_request_limit * quantity
     )
     start_date = datetime.fromtimestamp(timestamp=start_date_seconds, tz=TZ)
     end_date = datetime.fromtimestamp(timestamp=end_date_seconds, tz=TZ)
