@@ -1,6 +1,6 @@
 # Standard imports
 import json
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 # Third-party imports
 from openai import OpenAI
@@ -17,6 +17,31 @@ from services.openai.init import create_openai_client
 from utils.error.handle_exceptions import handle_exceptions
 
 
+def find_function_name(openai_messages: list[dict], tool_call_id: str):
+    for prev_msg in reversed(openai_messages):
+        if "tool_calls" not in prev_msg:
+            continue
+
+        for tool_call in prev_msg["tool_calls"]:
+            if tool_call["id"] == tool_call_id:
+                return cast(str, tool_call["function"]["name"])
+
+    return "unknown_function"
+
+
+def convert_tool_result(block: dict, openai_messages: list[dict]):
+    tool_call_id = cast(str, block.get("tool_use_id"))
+    function_name = find_function_name(openai_messages, tool_call_id)
+    content = cast(str, block.get("content", ""))
+
+    return {
+        "role": "tool",
+        "tool_call_id": tool_call_id,
+        "name": function_name,
+        "content": content,
+    }
+
+
 @handle_exceptions(raise_on_error=True)
 def chat_with_openai(
     messages: list[dict[str, Any]],
@@ -31,9 +56,30 @@ def chat_with_openai(
     int,  # Input tokens
     int,  # Output tokens
 ]:
+    # Convert Claude-format messages to OpenAI-specific format
+    openai_messages = []
+
+    for msg in messages:
+        content = msg.get("content", "")
+
+        if not isinstance(content, list):
+            openai_messages.append(
+                {
+                    "role": msg.get("role", ""),
+                    "content": content,
+                }
+            )
+            continue
+
+        for block in content:
+            if block.get("type") != "tool_result":
+                continue
+
+            openai_messages.append(convert_tool_result(block, openai_messages))
+
     # Prepare messages with system message
     system_message = {"role": "developer", "content": system_content}
-    all_messages = [system_message] + messages
+    all_messages = [system_message] + openai_messages
 
     # Create the client and call the API
     client: OpenAI = create_openai_client()
@@ -56,22 +102,28 @@ def chat_with_openai(
     # Handle tool calls and create response message
     response_message = {"role": choice.message.role, "content": choice.message.content}
 
-    tool_call_id = None
-    tool_name = None
-    tool_args = None
+    if not tool_calls:
+        return (
+            response_message,
+            None,  # tool_call_id
+            None,  # tool_name
+            None,  # tool_args
+            token_input,
+            token_output,
+        )
 
-    if tool_calls:
-        tool_call = tool_calls[0]
-        tool_call_id = tool_call.id
-        tool_name = tool_call.function.name
-        tool_args = json.loads(tool_call.function.arguments)
-        response_message["tool_calls"] = [
-            {
-                "id": tool_call_id,
-                "function": {"name": tool_name, "arguments": json.dumps(tool_args)},
-                "type": "function",
-            }
-        ]
+    tool_call = tool_calls[0]
+    tool_call_id = tool_call.id
+    tool_name = tool_call.function.name
+    tool_args = json.loads(tool_call.function.arguments)
+
+    response_message["tool_calls"] = [
+        {
+            "id": tool_call_id,
+            "function": {"name": tool_name, "arguments": json.dumps(tool_args)},
+            "type": "function",
+        }
+    ]
 
     return (
         response_message,

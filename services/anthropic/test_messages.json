@@ -1,0 +1,116 @@
+[
+  {
+    "role": "user",
+    "content": "First message"
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Second message"
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01UqpdeuMtRAfShXJjZnM1xr",
+        "name": "get_remote_file_content",
+        "input": {
+          "file_path": "services/anthropic/test_client.py"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01UqpdeuMtRAfShXJjZnM1xr",
+        "content": "Opened file: 'services/anthropic/test_client.py' with line numbers for your information.\n\n```services/anthropic/test_client.py\n 1:import pytest\n```"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Third message"
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01TfGJfs9sTn2hZnG9DscBcr",
+        "name": "get_remote_file_content",
+        "input": {
+          "file_path": "services/anthropic/client.py"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01TfGJfs9sTn2hZnG9DscBcr",
+        "content": "Opened file: 'services/anthropic/client.py' with line numbers for your information.\n\n```services/anthropic/client.py\n1:from anthropic import Anthropic\n```"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Fourth message"
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_0186eQgzhNNQmxwC5NmvsaHC",
+        "name": "get_remote_file_content",
+        "input": {
+          "file_path": "services/anthropic/test_client.py",
+          "line_number": 28
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_0186eQgzhNNQmxwC5NmvsaHC",
+        "content": "Opened file: 'services/anthropic/test_client.py' with line numbers for your information.\n\n```services/anthropic/test_client.py\n 1:import pytest\n```"
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Fifth message"
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01783z1Lrhbs38GvsnvGEX8o",
+        "name": "replace_remote_file_content",
+        "input": {
+          "file_path": "services/anthropic/test_client.py",
+          "file_content": "import pytest\nfrom unittest.mock import patch, MagicMock\n\nfrom anthropic import Anthropic\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01783z1Lrhbs38GvsnvGEX8o",
+        "content": "Content replaced in the file: services/anthropic/test_client.py successfully."
+      }
+    ]
+  }
+]
