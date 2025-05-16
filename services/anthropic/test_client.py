@@ -1,7 +1,16 @@
-from services.anthropic import client
+from services.anthropic.client import get_anthropic_client
+import config
+
+def dummy_Anthropic(api_key):
+    class DummyClient:
+        pass
+    instance = DummyClient()
+    instance.api_key = api_key
+    return instance
 
 def test_get_anthropic_client(monkeypatch):
-    monkeypatch.setattr(client, "Anthropic", lambda **kwargs: "client-" + kwargs.get("api_key"))
-    monkeypatch.setattr(client, "ANTHROPIC_API_KEY", "dummy-api-key")
-    result = client.get_anthropic_client()
-    assert result == "client-dummy-api-key"
+    dummy_key = "dummy_key"
+    monkeypatch.setattr(config, "ANTHROPIC_API_KEY", dummy_key)
+    monkeypatch.setattr("services.anthropic.client.Anthropic", dummy_Anthropic)
+    client = get_anthropic_client()
+    assert client.api_key == dummy_key
