@@ -25,6 +25,19 @@ def test_get_anthropic_client_with_mock():
         assert client == mock_client
 
 
+def test_get_anthropic_client_with_custom_params():
+    """Test get_anthropic_client with custom parameters."""
+    with patch('services.anthropic.client.Anthropic') as mock_anthropic:
+        mock_client = MagicMock()
+        mock_anthropic.return_value = mock_client
+        
+        client = get_anthropic_client(base_url="https://custom-api.anthropic.com")
+        
+        mock_anthropic.assert_called_once_with(api_key=ANTHROPIC_API_KEY, 
+                                              base_url="https://custom-api.anthropic.com")
+        assert client == mock_client
+
+
 def test_get_anthropic_client_with_empty_api_key():
     """Test that get_anthropic_client handles empty API key appropriately."""
     with patch('services.anthropic.client.ANTHROPIC_API_KEY', ''):
