@@ -18,11 +18,11 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 def find_function_name(openai_messages: list[dict], tool_call_id: str):
-    for prev_msg in reversed(openai_messages):
-        if "tool_calls" not in prev_msg:
+    for msg in openai_messages:
+        if "tool_calls" not in msg:
             continue
 
-        for tool_call in prev_msg["tool_calls"]:
+        for tool_call in msg["tool_calls"]:
             if tool_call["id"] == tool_call_id:
                 return cast(str, tool_call["function"]["name"])
 
