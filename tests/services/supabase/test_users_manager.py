@@ -202,7 +202,7 @@ def test_parse_subscription_object() -> None:
 
     def assertion_test(customer_id: str, product_id: str):
         subscription = get_subscription(customer_id=customer_id)
-        _, _, product_id_output, _ = parse_subscription_object(
+        _, _, product_id_output, _, _ = parse_subscription_object(
             subscription=subscription,
             installation_id=TEST_INSTALLATION_ID,
             customer_id=customer_id,
