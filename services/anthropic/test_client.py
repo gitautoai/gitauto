@@ -37,3 +37,13 @@ def test_get_anthropic_client_with_none_api_key():
     with patch('services.anthropic.client.ANTHROPIC_API_KEY', None):
         with pytest.raises(ValueError, match="Anthropic API key is not set or empty"):
             get_anthropic_client()
+
+
+def test_anthropic_client_configuration():
+    """Test that the Anthropic client is configured with the correct parameters."""
+    client = get_anthropic_client()
+    
+    # Verify client has expected attributes and methods
+    assert hasattr(client, 'messages')
+    assert hasattr(client, 'completions')
+    assert callable(client.messages.create)
