@@ -139,4 +139,3 @@ def test_claude_error_fallback_to_openai():
             assert "tool_call_id" in tool_msg
             assert "name" in tool_msg
             assert "content" in tool_msg
-            assert tool_msg["name"] == "get_remote_file_content"

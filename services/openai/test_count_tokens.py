@@ -1,5 +1,4 @@
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
-import pytest
 from services.openai.count_tokens import count_tokens
 
 
@@ -17,9 +16,7 @@ def test_basic_message_with_role_and_content():
 
 
 def test_message_with_none_content():
-    messages: list[ChatCompletionMessageParam] = [
-        {"role": "user", "content": None}
-    ]
+    messages: list[ChatCompletionMessageParam] = [{"role": "user", "content": None}]
     result = count_tokens(messages)
     assert result > 0
 
@@ -41,10 +38,10 @@ def test_message_with_tool_calls():
                 {
                     "function": {
                         "name": "get_weather",
-                        "arguments": '{"location": "Tokyo"}'
+                        "arguments": '{"location": "Tokyo"}',
                     }
                 }
-            ]
+            ],
         }
     ]
     result = count_tokens(messages)
@@ -60,16 +57,11 @@ def test_message_with_multiple_tool_calls():
                 {
                     "function": {
                         "name": "get_weather",
-                        "arguments": '{"location": "Tokyo"}'
+                        "arguments": '{"location": "Tokyo"}',
                     }
                 },
-                {
-                    "function": {
-                        "name": "get_time",
-                        "arguments": '{"timezone": "JST"}'
-                    }
-                }
-            ]
+                {"function": {"name": "get_time", "arguments": '{"timezone": "JST"}'}},
+            ],
         }
     ]
     result = count_tokens(messages)
@@ -84,9 +76,14 @@ def test_complex_conversation():
             "role": "assistant",
             "content": None,
             "tool_calls": [
-                {"function": {"name": "get_weather", "arguments": '{"location": "Tokyo"}'}}
-            ]
-        }
+                {
+                    "function": {
+                        "name": "get_weather",
+                        "arguments": '{"location": "Tokyo"}',
+                    }
+                }
+            ],
+        },
     ]
     result = count_tokens(messages)
     assert result > 0
