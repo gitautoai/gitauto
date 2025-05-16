@@ -28,5 +28,5 @@ def test_get_anthropic_client_with_mock():
 def test_get_anthropic_client_with_empty_api_key():
     """Test that get_anthropic_client handles empty API key appropriately."""
     with patch('services.anthropic.client.ANTHROPIC_API_KEY', ''):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Anthropic API key is not set or empty"):
             get_anthropic_client()
