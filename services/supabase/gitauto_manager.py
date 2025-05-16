@@ -11,7 +11,7 @@ def complete_and_update_usage_record(
     token_output: int,
     total_seconds: int,
     is_completed: bool = True,
-) -> None:
+):
     """Add agent information to usage record and set is_completed to True."""
     supabase.table(table_name="usage").update(
         json={
