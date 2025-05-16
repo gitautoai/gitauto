@@ -30,3 +30,10 @@ def test_get_anthropic_client_with_empty_api_key():
     with patch('services.anthropic.client.ANTHROPIC_API_KEY', ''):
         with pytest.raises(ValueError, match="Anthropic API key is not set or empty"):
             get_anthropic_client()
+
+
+def test_get_anthropic_client_with_none_api_key():
+    """Test that get_anthropic_client handles None API key appropriately."""
+    with patch('services.anthropic.client.ANTHROPIC_API_KEY', None):
+        with pytest.raises(ValueError, match="Anthropic API key is not set or empty"):
+            get_anthropic_client()
