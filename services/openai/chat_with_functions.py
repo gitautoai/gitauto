@@ -71,11 +71,31 @@ def chat_with_openai(
             )
             continue
 
-        for block in content:
-            if block.get("type") != "tool_result":
-                continue
+        # Handle messages with tool use
+        if any(block.get("type") == "tool_use" for block in content):
+            assistant_msg = {"role": "assistant", "content": None, "tool_calls": []}
 
-            openai_messages.append(convert_tool_result(block, openai_messages))
+            for block in content:
+                if block.get("type") == "text":
+                    assistant_msg["content"] = block.get("text")
+                elif block.get("type") == "tool_use":
+                    tool_call = {
+                        "id": block.get("id"),
+                        "function": {
+                            "name": block.get("name"),
+                            "arguments": json.dumps(block.get("input", {})),
+                        },
+                        "type": "function",
+                    }
+                    assistant_msg["tool_calls"].append(tool_call)
+
+            openai_messages.append(assistant_msg)
+
+        # Handle tool result messages
+        elif any(block.get("type") == "tool_result" for block in content):
+            for block in content:
+                if block.get("type") == "tool_result":
+                    openai_messages.append(convert_tool_result(block, openai_messages))
 
     # Prepare messages with system message
     system_message = {"role": "developer", "content": system_content}
