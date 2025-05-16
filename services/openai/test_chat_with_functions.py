@@ -73,14 +73,10 @@ def test_claude_to_openai_message_conversion():
         assert "tool_calls" in actual_messages[2]
 
         # Verify tool result message conversion
-        assert actual_messages[3]["role"] == "assistant"
-        assert actual_messages[3]["content"] == ""
-        assert "tool_calls" in actual_messages[3]
-
-        assert actual_messages[4]["role"] == "tool"
-        assert actual_messages[4]["tool_call_id"] == "toolu_01UqpdeuMtRAfShXJjZnM1xr"
-        assert actual_messages[4]["name"] == "dummy_function"
-        assert "Opened file" in actual_messages[4]["content"]
+        assert actual_messages[3]["role"] == "tool"
+        assert actual_messages[3]["tool_call_id"] == "toolu_01UqpdeuMtRAfShXJjZnM1xr"
+        assert actual_messages[3]["name"] == "get_remote_file_content"
+        assert "Opened file" in actual_messages[3]["content"]
 
 
 def test_claude_error_fallback_to_openai():
@@ -143,6 +139,4 @@ def test_claude_error_fallback_to_openai():
             assert "tool_call_id" in tool_msg
             assert "name" in tool_msg
             assert "content" in tool_msg
-            assert (
-                tool_msg["name"] == "dummy_function"
-            )  # OpenAI uses dummy function name for tool results
+            assert tool_msg["name"] == "get_remote_file_content"
