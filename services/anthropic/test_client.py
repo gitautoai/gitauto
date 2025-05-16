@@ -26,3 +26,14 @@ def test_get_anthropic_client_with_api_key():
         
         mock_anthropic.assert_called_once_with(api_key="test_api_key")
         assert client == mock_instance
+
+
+def test_get_anthropic_client_exception_handling():
+    with patch("services.anthropic.client.Anthropic") as mock_anthropic:
+        mock_anthropic.side_effect = Exception("API Error")
+        
+        try:
+            get_anthropic_client()
+            assert False, "Expected exception was not raised"
+        except Exception as e:
+            assert str(e) == "API Error"
