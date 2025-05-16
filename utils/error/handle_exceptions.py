@@ -13,6 +13,18 @@ import requests
 F = TypeVar("F", bound=Callable[..., Any])
 
 
+def truncate_value(value: Any, max_length: int = 30):
+    if isinstance(value, str) and len(value) > max_length:
+        return f"{value[:max_length]}..."
+    if isinstance(value, dict):
+        return {k: truncate_value(v, max_length) for k, v in value.items()}
+    if isinstance(value, list):
+        return [truncate_value(item, max_length) for item in value]
+    if isinstance(value, tuple):
+        return tuple(truncate_value(item, max_length) for item in value)
+    return value
+
+
 def handle_exceptions(
     default_return_value: Any = None,
     raise_on_error: bool = False,
@@ -23,6 +35,12 @@ def handle_exceptions(
     def decorator(func: F) -> F:
         @wraps(wrapped=func)
         def wrapper(*args: Tuple[Any, ...], **kwargs: Any):
+            # Create truncated args and kwargs at the beginning
+            truncated_args = [truncate_value(arg) for arg in args]
+            truncated_kwargs = {
+                key: truncate_value(value) for key, value in kwargs.items()
+            }
+
             try:
                 return func(*args, **kwargs)
             except requests.exceptions.HTTPError as err:
@@ -49,7 +67,7 @@ def handle_exceptions(
                         reset_ts = int(err.response.headers.get("X-RateLimit-Reset", 0))
                         current_ts = int(time.time())
                         wait_time = reset_ts - current_ts
-                        err_msg = f"{func.__name__} encountered a GitHubPrimaryRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n"
+                        err_msg = f"{func.__name__} encountered a GitHubPrimaryRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n\n"
                         logging.warning(msg=err_msg)
                         time.sleep(wait_time + 5)  # 5 seconds is a buffer
                         return wrapper(*args, **kwargs)
@@ -57,13 +75,13 @@ def handle_exceptions(
                     # Check if the secondary rate limit has been exceeded
                     if "exceeded a secondary rate limit" in err.response.text.lower():
                         retry_after = int(err.response.headers.get("Retry-After", 60))
-                        err_msg = f"{func.__name__} encountered a GitHubSecondaryRateLimitError: {err}. Retrying after {retry_after} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n"
+                        err_msg = f"{func.__name__} encountered a GitHubSecondaryRateLimitError: {err}. Retrying after {retry_after} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n\n"
                         logging.warning(msg=err_msg)
                         time.sleep(retry_after)
                         return wrapper(*args, **kwargs)
 
                     # Otherwise, log the error and return the default return value
-                    err_msg = f"{func.__name__} encountered an HTTPError: {err}. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n"
+                    err_msg = f"{func.__name__} encountered an HTTPError: {err}. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n\n"
                     logging.error(msg=err_msg)
                     if raise_on_error:
                         raise
@@ -81,7 +99,7 @@ def handle_exceptions(
 
                 # Ex) 409: Conflict, 422: Unprocessable Entity (No changes made), and etc.
                 else:
-                    err_msg = f"{func.__name__} encountered an HTTPError: {err}\nArgs: {args}\nKwargs: {kwargs}\nReason: {reason}\nText: {text}\n"
+                    err_msg = f"{func.__name__} encountered an HTTPError: {err}\n\nArgs: {json.dumps(truncated_args, indent=2)}\n\nKwargs: {json.dumps(truncated_kwargs, indent=2)}\n\nReason: {reason}\n\nText: {text}\n\n"
                     logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
@@ -93,14 +111,14 @@ def handle_exceptions(
                 else:
                     raw_response = "Raw response not available"
 
-                err_msg = f"{func.__name__} encountered a JSONDecodeError: {err}\nRaw response: {raw_response}\nArgs: {args}\nKwargs: {kwargs}"
+                err_msg = f"{func.__name__} encountered a JSONDecodeError: {err}\n\nRaw response: {raw_response}\n\nArgs: {json.dumps(truncated_args, indent=2)}\n\nKwargs: {json.dumps(truncated_kwargs, indent=2)}"
                 logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
 
             # Catch all other exceptions
             except (AttributeError, KeyError, TypeError, Exception) as err:
-                err_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\nArgs: {args}\nKwargs: {kwargs}"
+                err_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\n\nArgs: {json.dumps(truncated_args, indent=2)}\n\nKwargs: {json.dumps(truncated_kwargs, indent=2)}"
                 logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
