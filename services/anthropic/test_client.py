@@ -1,16 +1,28 @@
-from services.anthropic.client import get_anthropic_client
-import config
-
-def dummy_Anthropic(api_key):
-    class DummyClient:
-        pass
-    instance = DummyClient()
-    instance.api_key = api_key
-    return instance
+from types import SimpleNamespace
 
 def test_get_anthropic_client(monkeypatch):
-    dummy_key = "dummy_key"
-    monkeypatch.setattr(config, "ANTHROPIC_API_KEY", dummy_key)
-    monkeypatch.setattr("services.anthropic.client.Anthropic", dummy_Anthropic)
-    client = get_anthropic_client()
-    assert client.api_key == dummy_key
+    import services.anthropic.client as client
+    client.ANTHROPIC_API_KEY = "dummy_api_key"
+    called = {"called": False, "key": None}
+    
+    def fake_anthropic(api_key):
+        called["called"] = True
+        called["key"] = api_key
+        return SimpleNamespace(api_key=api_key)
+
+    monkeypatch.setattr(client, "Anthropic", fake_anthropic)
+    instance = client.get_anthropic_client()
+    assert called["called"] is True
+    assert instance.api_key == "dummy_api_key"
+
+
+def test_get_anthropic_client_empty(monkeypatch):
+    import services.anthropic.client as client
+    client.ANTHROPIC_API_KEY = ""
+
+    def fake_anthropic(api_key):
+        return SimpleNamespace(api_key=api_key)
+
+    monkeypatch.setattr(client, "Anthropic", fake_anthropic)
+    instance = client.get_anthropic_client()
+    assert instance.api_key == ""
