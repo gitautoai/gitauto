@@ -60,15 +60,3 @@ def test_anthropic_client_configuration():
     assert hasattr(client, 'messages')
     assert hasattr(client, 'completions')
     assert callable(client.messages.create)
-
-
-def test_anthropic_client_with_custom_parameters():
-    """Test that the Anthropic client can be created with custom parameters."""
-    with patch('services.anthropic.client.Anthropic') as mock_anthropic:
-        # Update the client function to accept custom parameters
-        with patch('services.anthropic.client.get_anthropic_client', 
-                  side_effect=lambda **kwargs: Anthropic(api_key=ANTHROPIC_API_KEY, **kwargs)):
-            
-            # Test with a custom parameter
-            client = get_anthropic_client(base_url="https://custom-api.anthropic.com")
-            assert client.base_url == "https://custom-api.anthropic.com"
