@@ -1,4 +1,5 @@
 # Standard imports
+import logging
 from requests import patch
 
 # Local imports
@@ -23,5 +24,11 @@ def update_comment(body: str, base_args: BaseArgs):
         json={"body": body},
         timeout=TIMEOUT,
     )
+
+    # Handle 404 (Client Error: Not Found for url) errors silently since they're expected when comments are deleted
+    if response.status_code == 404:
+        logging.info("Comment %s not found", comment_url)
+        return None
+
     response.raise_for_status()
     return response.json()
