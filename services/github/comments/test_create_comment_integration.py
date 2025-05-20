@@ -224,3 +224,31 @@ def test_create_comment_integration_secondary_rate_limit():
     # Assert
     assert result is None  # Default return value from handle_exceptions
     assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_create_comment_integration_server_error():
+    """Test error handling when GitHub API returns a server error."""
+    # Arrange
+    body = "Test comment body"
+    issue_number = 123
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "issue_number": issue_number,
+        "input_from": "github"
+    }
+    
+    # Register the mock server error response
+    responses.add(
+        responses.POST,
+        f"{GITHUB_API_URL}/repos/{OWNER}/{REPO}/issues/{issue_number}/comments",
+        json={"message": "Internal Server Error"},
+        status=500,
+        content_type="application/json"
+    )
+    
+    # Act
+    result = create_comment(body, base_args)
+    assert result is None  # Default return value from handle_exceptions
