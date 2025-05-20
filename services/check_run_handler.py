@@ -1,6 +1,9 @@
-# Local imports
+# Standard imports
 from datetime import datetime
 import json
+from typing import cast
+
+# Local imports
 from config import (
     EMAIL_LINK,
     EXCEPTION_OWNERS,
@@ -38,14 +41,15 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     return
     # Extract workflow run id
     check_run: CheckRun = payload["check_run"]
-    details_url: str = check_run["details_url"]
-    workflow_run_id: str = details_url.split(sep="/")[-3]
-    check_run_name: str = check_run["name"]
+    details_url = cast(str, check_run["details_url"])
+    workflow_id = cast(str, details_url.split(sep="/")[-3])
+    check_run_name = cast(str, check_run["name"])
 
     # Extract repository related variables
     repo: Repository = payload["repository"]
-    repo_name: str = repo["name"]
-    is_fork: bool = repo.get("fork", False)
+    repo_name = cast(str, repo["name"])
+    repo_id = cast(int, repo["id"])
+    is_fork = cast(bool, repo.get("fork", False))
 
     # Extract owner related variables
     owner: Owner = repo.get("owner", {})
@@ -53,17 +57,17 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         msg = "Skipping because owner is not found"
         print(colorize(text=msg, color="yellow"))
         return
-    owner_type: str = owner["type"]
-    owner_id: int = owner["id"]
-    owner_name: str = owner["login"]
+    owner_type = cast(str, owner["type"])
+    owner_id = cast(int, owner["id"])
+    owner_name = cast(str, owner["login"])
 
     # Extract branch related variables
     check_suite: CheckSuite = check_run["check_suite"]
-    head_branch: str = check_suite["head_branch"]
+    head_branch = cast(str, check_suite["head_branch"])
 
     # Extract sender related variables and return if sender is GitAuto itself
-    sender_id: int = payload["sender"]["id"]
-    sender_name: str = payload["sender"]["login"]
+    sender_id = cast(int, payload["sender"]["id"])
+    sender_name = cast(str, payload["sender"]["login"])
     if sender_name != GITHUB_APP_USER_NAME:
         msg = f"Skipping because sender is not GitAuto. sender_name: '{sender_name}' and GITHUB_APP_USER_NAME: '{GITHUB_APP_USER_NAME}'"
         print(colorize(text=msg, color="yellow"))
@@ -76,17 +80,18 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         print(colorize(text=msg, color="yellow"))
         return
     pull_request: PullRequest = pull_requests[0]
-    pull_number: int = pull_request["number"]
-    pull_url: str = pull_request["url"]
+    pull_number = cast(int, pull_request["number"])
+    pull_url = cast(str, pull_request["url"])
 
     # Extract other information
-    installation_id: int = payload["installation"]["id"]
+    installation_id = cast(int, payload["installation"]["id"])
     token: str = get_installation_access_token(installation_id=installation_id)
     base_args: dict[str, str | int | bool] = {
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
         "repo": repo_name,
+        "repo_id": repo_id,
         "is_fork": is_fork,
         "issue_number": pull_number,
         "new_branch": head_branch,
@@ -94,7 +99,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "sender_id": sender_id,
         "sender_name": sender_name,
         "pull_number": pull_number,
-        "workflow_run_id": workflow_run_id,
+        "workflow_id": workflow_id,
         "check_run_name": check_run_name,
         "token": token,
     }
@@ -152,7 +157,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
 
     # Get the GitHub workflow file content
     workflow_path = get_workflow_run_path(
-        owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
+        owner=owner_name, repo=repo_name, run_id=workflow_id, token=token
     )
     permission_url = create_permission_url(
         owner_type=owner_type, owner_name=owner_name, installation_id=installation_id
@@ -182,7 +187,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
 
     # Get the error log from the workflow run
     error_log: str | int | None = get_workflow_run_logs(
-        owner=owner_name, repo=repo_name, run_id=workflow_run_id, token=token
+        owner=owner_name, repo=repo_name, run_id=workflow_id, token=token
     )
     if error_log == 404:
         comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
