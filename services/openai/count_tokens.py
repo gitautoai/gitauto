@@ -17,7 +17,20 @@ def count_tokens(messages: list[ChatCompletionMessageParam]) -> int:
         if "role" in message:
             num_tokens += len(encoding.encode(message["role"]))
         if "content" in message:
-            num_tokens += len(encoding.encode(message["content"] or ""))
+            content = message["content"]
+            if isinstance(content, str):
+                num_tokens += len(encoding.encode(content or ""))
+            elif isinstance(content, list):
+                for block in content:
+                    if block.get("type") == "text":
+                        num_tokens += len(encoding.encode(block.get("text", "")))
+                    elif block.get("type") == "tool_use":
+                        num_tokens += len(encoding.encode(block.get("name", "")))
+                        num_tokens += len(encoding.encode(str(block.get("input", ""))))
+                    elif block.get("type") == "tool_result":
+                        num_tokens += len(
+                            encoding.encode(str(block.get("content", "")))
+                        )
         if "name" in message:
             num_tokens += len(encoding.encode(message["name"]))
         if "tool_calls" in message:
