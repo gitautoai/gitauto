@@ -102,6 +102,11 @@ def test_create_comment_http_error():
     error_response.status_code = 404
     error_response.reason = "Not Found"
     error_response.text = "Resource not found"
+    error_response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "4999",
+        "X-RateLimit-Used": "1"
+    }
     mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404 Client Error", response=error_response)
     
     # Act
@@ -209,4 +214,46 @@ def test_create_comment_unknown_input_from():
     
     # Assert
     mock_post.assert_not_called()
+    assert result is None  # Default return value from handle_exceptions
+
+
+def test_create_comment_connection_error():
+    """Test error handling when connection to GitHub API fails."""
+    # Arrange
+    body = "Test comment body"
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "issue_number": 123,
+        "input_from": "github"
+    }
+    
+    # Act
+    with patch("requests.post", side_effect=requests.exceptions.ConnectionError("Connection refused")) as mock_post:
+        result = create_comment(body, base_args)
+    
+    # Assert
+    mock_post.assert_called_once()
+    assert result is None  # Default return value from handle_exceptions
+
+
+def test_create_comment_timeout_error():
+    """Test error handling when GitHub API request times out."""
+    # Arrange
+    body = "Test comment body"
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "issue_number": 123,
+        "input_from": "github"
+    }
+    
+    # Act
+    with patch("requests.post", side_effect=requests.exceptions.Timeout("Request timed out")) as mock_post:
+        result = create_comment(body, base_args)
+    
+    # Assert
+    mock_post.assert_called_once()
     assert result is None  # Default return value from handle_exceptions
