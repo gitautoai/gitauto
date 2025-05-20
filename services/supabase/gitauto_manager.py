@@ -4,25 +4,6 @@ from services.supabase.users_manager import upsert_user
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def complete_and_update_usage_record(
-    usage_record_id: int,
-    token_input: int,
-    token_output: int,
-    total_seconds: int,
-    is_completed: bool = True,
-):
-    """Add agent information to usage record and set is_completed to True."""
-    supabase.table(table_name="usage").update(
-        json={
-            "is_completed": is_completed,
-            "token_input": token_input,
-            "token_output": token_output,
-            "total_seconds": total_seconds,
-        }
-    ).eq(column="id", value=usage_record_id).execute()
-
-
 @handle_exceptions(default_return_value=None, raise_on_error=True)
 def create_installation(
     installation_id: int,

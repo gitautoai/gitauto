@@ -28,10 +28,8 @@ from services.github.github_utils import deconstruct_github_payload
 from services.jira.jira_manager import deconstruct_jira_payload
 from services.openai.vision import describe_image
 from services.slack.slack import slack
-from services.supabase.gitauto_manager import (
-    complete_and_update_usage_record,
-    create_user_request,
-)
+from services.supabase.gitauto_manager import create_user_request
+from services.supabase.usage.update_usage import update_usage
 from services.supabase.users_manager import get_how_many_requests_left_and_cycle
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.text.text_copy import (
@@ -380,8 +378,10 @@ async def handle_gitauto(
     pr_url = create_pull_request(body=pr_body, title=title, base_args=base_args)
 
     # Update the issue comment based on if the PR was created or not
+    pr_number = None
     if pr_url is not None:
         is_completed = True
+        pr_number = int(pr_url.split("/")[-1])
         body_after_pr = pull_request_completed(
             issuer_name=issuer_name,
             sender_name=sender_name,
@@ -395,9 +395,10 @@ async def handle_gitauto(
 
     end_time = time.time()
     usage_record_id = await usage_record_task
-    complete_and_update_usage_record(
+    update_usage(
         usage_record_id=usage_record_id,
         is_completed=is_completed,
+        pr_number=pr_number,
         token_input=token_input,
         token_output=token_output,
         total_seconds=int(end_time - current_time),

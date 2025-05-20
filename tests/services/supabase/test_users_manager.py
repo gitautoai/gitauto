@@ -27,12 +27,9 @@ from config import (
 from services.github import github_manager
 from services.stripe.customer import get_subscription
 from services.supabase.client import supabase
-from services.supabase.gitauto_manager import (
-    complete_and_update_usage_record,
-    create_installation,
-    create_user_request,
-)
+from services.supabase.gitauto_manager import create_installation, create_user_request
 from services.supabase.installations.delete_installation import delete_installation
+from services.supabase.usage.update_usage import update_usage
 from services.supabase.users_manager import (
     get_how_many_requests_left_and_cycle,
     get_user,
@@ -88,7 +85,7 @@ async def test_create_and_update_user_request_works() -> None:
     )
     assert isinstance(usage_record_id, int)
     assert (
-        complete_and_update_usage_record(
+        update_usage(
             usage_record_id=usage_record_id,
             token_input=1000,
             token_output=100,
