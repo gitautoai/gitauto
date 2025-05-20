@@ -251,4 +251,7 @@ def test_create_comment_integration_server_error():
     
     # Act
     result = create_comment(body, base_args)
+    
+    # Assert
     assert result is None  # Default return value from handle_exceptions
+    assert len(responses.calls) == 1
