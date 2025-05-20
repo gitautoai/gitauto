@@ -97,7 +97,12 @@ def test_create_comment_http_error():
     }
     
     mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404 Client Error")
+    # Create a proper mock response for the HTTPError
+    error_response = MagicMock()
+    error_response.status_code = 404
+    error_response.reason = "Not Found"
+    error_response.text = "Resource not found"
+    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404 Client Error", response=error_response)
     
     # Act
     with patch("requests.post", return_value=mock_response) as mock_post:
