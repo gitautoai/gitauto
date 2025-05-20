@@ -53,7 +53,6 @@ async def handle_workflow_coverage(
             print(f"Coverage parsing not implemented for language: {primary_language}")
             continue
 
-        print(f"Parsing {primary_language} coverage")
         parsed_coverage = parse_lcov_coverage(lcov_content)
 
         if parsed_coverage:
@@ -119,7 +118,6 @@ async def handle_workflow_coverage(
                 )
 
     if coverage_data:
-        print("Saving coverage data")
         create_or_update_coverages(
             coverages_list=coverage_data,
             owner_id=owner_id,
@@ -128,4 +126,3 @@ async def handle_workflow_coverage(
             primary_language=primary_language,
             user_name=user_name,
         )
-        print("Saved coverage data")
