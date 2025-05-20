@@ -113,7 +113,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     base_args["comment_url"] = comment_url
 
     # Return here if stripe_customer_id is not found
-    stripe_customer_id: str | None = get_stripe_customer_id(owner_id=owner_id)
+    stripe_customer_id = get_stripe_customer_id(owner_id=owner_id)
     if stripe_customer_id is None:
         msg = f"Subscribe [here]({PRICING_URL}) to get GitAuto to self-correct check run errors."
         log_messages.append(msg)
@@ -121,7 +121,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         return
 
     # Return here if product_id is not found or is in free tier
-    product_id: str | None = get_stripe_product_id(customer_id=stripe_customer_id)
+    product_id = get_stripe_product_id(customer_id=stripe_customer_id)
     is_paid = product_id is not None and product_id != STRIPE_PRODUCT_ID_FREE
     is_exception = owner_name in EXCEPTION_OWNERS
     if not is_paid and not is_exception:

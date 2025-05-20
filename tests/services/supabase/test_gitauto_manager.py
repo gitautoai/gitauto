@@ -13,11 +13,8 @@ from config import (
     TEST_USER_NAME,
 )
 from services.supabase.client import supabase
-from services.supabase.gitauto_manager import (
-    complete_and_update_usage_record,
-    create_installation,
-    create_user_request,
-)
+from services.supabase.gitauto_manager import create_installation, create_user_request
+from services.supabase.usage.update_usage import update_usage
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
 )
@@ -59,7 +56,7 @@ async def test_create_update_user_request_works() -> None:
         int,
     )
     assert (
-        complete_and_update_usage_record(
+        update_usage(
             usage_record_id=usage_record_id,
             token_input=1000,
             token_output=100,
@@ -123,7 +120,7 @@ async def test_complete_and_update_usage_record_only_updates_one_record() -> Non
         int,
     )
     assert (
-        complete_and_update_usage_record(
+        update_usage(
             usage_record_id=usage_record_id,
             token_input=1000,
             token_output=100,

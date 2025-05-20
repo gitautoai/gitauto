@@ -36,7 +36,6 @@ def write_pr_description(payload: dict):
 
     # Get the pull request file changes
     file_changes = get_pull_request_file_changes(url=pull_files_url, token=token)
-    print(dumps(file_changes, indent=2))
 
     # Extract issue number from "Resolves #<issue_number>"
     issue_number = None
