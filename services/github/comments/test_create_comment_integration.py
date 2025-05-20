@@ -141,3 +141,35 @@ def test_create_comment_integration_jira():
     
     # Assert
     assert result is None
+
+
+@responses.activate
+def test_create_comment_integration_rate_limit():
+    """Test error handling when GitHub API rate limit is exceeded."""
+    # Arrange
+    body = "Test comment body"
+    issue_number = 123
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "issue_number": issue_number,
+        "input_from": "github"
+    }
+    
+    # Register the mock rate limit response
+    responses.add(
+        responses.POST,
+        f"{GITHUB_API_URL}/repos/{OWNER}/{REPO}/issues/{issue_number}/comments",
+        json={
+            "message": "API rate limit exceeded",
+            "documentation_url": "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"
+        },
+        status=403,
+        headers={
+            "X-RateLimit-Limit": "5000",
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Used": "5000",
+            "X-RateLimit-Reset": str(int(time.time()) + 3600)  # Reset in 1 hour
+        },
+        content_type="application/json"
