@@ -146,7 +146,7 @@ def test_create_comment_integration_jira():
 
 @responses.activate
 def test_create_comment_integration_rate_limit():
-    """Test error handling when GitHub API rate limit is exceeded."""
+    """Test error handling when GitHub API primary rate limit is exceeded."""
     # Arrange
     body = "Test comment body"
     issue_number = 123
@@ -172,6 +172,47 @@ def test_create_comment_integration_rate_limit():
             "X-RateLimit-Remaining": "0",
             "X-RateLimit-Used": "5000",
             "X-RateLimit-Reset": str(int(time.time()) + 3600)  # Reset in 1 hour
+        },
+        content_type="application/json"
+    )
+    
+    # Act
+    # Note: In a real scenario, this would retry after waiting, but for testing we just check the result
+    result = create_comment(body, base_args)
+    
+    # Assert
+    assert result is None  # Default return value from handle_exceptions
+    assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_create_comment_integration_secondary_rate_limit():
+    """Test error handling when GitHub API secondary rate limit is exceeded."""
+    # Arrange
+    body = "Test comment body"
+    issue_number = 123
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "issue_number": issue_number,
+        "input_from": "github"
+    }
+    
+    # Register the mock secondary rate limit response
+    responses.add(
+        responses.POST,
+        f"{GITHUB_API_URL}/repos/{OWNER}/{REPO}/issues/{issue_number}/comments",
+        json={
+            "message": "You have exceeded a secondary rate limit. Please wait a few minutes before you try again.",
+            "documentation_url": "https://docs.github.com/rest/overview/resources-in-the-rest-api#secondary-rate-limits"
+        },
+        status=403,
+        headers={
+            "X-RateLimit-Limit": "5000",
+            "X-RateLimit-Remaining": "4990",
+            "X-RateLimit-Used": "10",
+            "Retry-After": "60"  # Retry after 60 seconds
         },
         content_type="application/json"
     )
