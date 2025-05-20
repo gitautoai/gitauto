@@ -73,11 +73,11 @@ def chat_with_openai(
 
         # Handle messages with tool use
         if any(block.get("type") == "tool_use" for block in content):
-            assistant_msg = {"role": "assistant", "content": None, "tool_calls": []}
+            assistant_msg = {"role": "assistant", "tool_calls": []}
 
             for block in content:
                 if block.get("type") == "text":
-                    assistant_msg["content"] = block.get("text")
+                    assistant_msg["content"] = block.get("text", "")
                 elif block.get("type") == "tool_use":
                     tool_call = {
                         "id": block.get("id"),
@@ -101,7 +101,7 @@ def chat_with_openai(
     system_message = {"role": "developer", "content": system_content}
     all_messages = [system_message] + openai_messages
 
-    # Create the client and call the API
+    # https://platform.openai.com/docs/api-reference/chat/create?lang=python
     client: OpenAI = create_openai_client()
     completion: ChatCompletion = client.chat.completions.create(
         messages=all_messages,
