@@ -1,6 +1,7 @@
 import pytest
 import responses
 import json
+import time
 
 from services.github.comments.create_comment import create_comment
 from services.github.create_headers import create_headers
@@ -173,3 +174,12 @@ def test_create_comment_integration_rate_limit():
             "X-RateLimit-Reset": str(int(time.time()) + 3600)  # Reset in 1 hour
         },
         content_type="application/json"
+    )
+    
+    # Act
+    # Note: In a real scenario, this would retry after waiting, but for testing we just check the result
+    result = create_comment(body, base_args)
+    
+    # Assert
+    assert result is None  # Default return value from handle_exceptions
+    assert len(responses.calls) == 1
