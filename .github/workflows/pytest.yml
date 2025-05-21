@@ -1,7 +1,11 @@
 name: PyTest
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [ main ]
   push:
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
