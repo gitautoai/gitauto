@@ -120,7 +120,10 @@ def chat_with_openai(
     token_output = count_tokens(messages=[choice.message])
 
     # Handle tool calls and create response message
-    response_message = {"role": choice.message.role, "content": choice.message.content}
+    response_message = {
+        "role": choice.message.role,
+        "content": choice.message.content or "",
+    }
 
     if not tool_calls:
         return (
@@ -144,6 +147,10 @@ def chat_with_openai(
             "type": "function",
         }
     ]
+
+    # Remove empty content from response message
+    if response_message["content"] == "":
+        response_message.pop("content")
 
     return (
         response_message,
