@@ -125,8 +125,9 @@ def test_only_system_messages_with_high_token_count(mock_client):
     
     original_messages = [make_message("system", "first")] 
     messages_copy = list(original_messages)  # Create a copy to pass to the function
+    messages_copy = list(original_messages)  # Create a copy to pass to the function
     expected_messages = [dict(msg) for msg in original_messages]
-    # Even though tokens > max_tokens, we only have one message so it won't be removed
+    trimmed = trim_messages_to_token_limit(messages_copy, mock_client, max_tokens=1000)
     trimmed = trim_messages_to_token_limit(messages_copy, mock_client, max_tokens=1000)
     assert trimmed == expected_messages
     assert mock_client.messages.count_tokens.call_count >= 1
