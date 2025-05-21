@@ -112,4 +112,3 @@ def test_create_comment_unknown_input_from():
     # Assert
     mock_post.assert_not_called()
     assert result is None
-
