@@ -142,4 +142,5 @@ def test_mixed_messages_with_no_non_system_to_remove(mock_client):
     original_messages = [make_message("system"), make_message("system")]
     expected_messages = [dict(msg) for msg in original_messages]
     trimmed = trim_messages_to_token_limit(original_messages, mock_client, max_tokens=1000)
+    trimmed = [dict(msg) for msg in trimmed]  # Convert to dict for comparison
     assert trimmed == expected_messages
