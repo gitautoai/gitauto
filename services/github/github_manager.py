@@ -485,7 +485,7 @@ def get_remote_file_content(
     lb: str = detect_line_break(text=decoded_content)
     lines = decoded_content.split(lb)
     width = len(str(len(lines)))
-    numbered_lines = [f"{(i + 1):>{width}}:{line}" for i, line in enumerate(lines)]
+    numbered_lines = [f"{i + 1:>{width}}:{line}" for i, line in enumerate(lines)]
     file_path_with_lines = file_path
 
     # If line_number is specified, show the lines around the line_number
