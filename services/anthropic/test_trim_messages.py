@@ -50,12 +50,13 @@ def test_trimming_at_boundary(mock_client):
 
 
 def test_trimming_removes_non_system(mock_client):
-    messages = [
+    original_messages = [
         make_message("system"),
         make_message("user", "first"),
         make_message("assistant", "second"),
         make_message("user", "third"),
     ]
+    messages = list(original_messages)  # Create a copy to pass to the function
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=2500)
     expected = [
         make_message("system"),
