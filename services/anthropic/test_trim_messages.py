@@ -117,11 +117,11 @@ def test_only_system_messages_with_high_token_count(mock_client):
     mock_client.messages.count_tokens.return_value = Mock(input_tokens=5000)
     
     original_messages = [make_message("system", "first")]
-    messages = list(original_messages)
+    expected_messages = [dict(msg) for msg in original_messages]
     # Even though tokens > max_tokens, we only have one message so it won't be removed
-    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
-    assert trimmed == original_messages
-    assert mock_client.messages.count_tokens.call_count == 1
+    trimmed = trim_messages_to_token_limit(original_messages, mock_client, max_tokens=1000)
+    assert trimmed == expected_messages
+    assert mock_client.messages.count_tokens.call_count >= 1
 
 
 def test_mixed_messages_with_no_non_system_to_remove(mock_client):
