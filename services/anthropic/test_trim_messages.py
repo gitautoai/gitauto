@@ -74,3 +74,16 @@ def test_trimming_stops_at_one_message(mock_client):
     messages = [make_message("user")]
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=100)
     assert trimmed == [make_message("user")]
+
+
+def test_all_system_messages(mock_client):
+    messages = [
+        make_message("system", "first"),
+        make_message("system", "second"),
+        make_message("system", "third"),
+    ]
+    # Even though we're over the token limit, all messages are system messages
+    # so none will be removed and the loop will exit after checking all messages
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=2000)
+    assert trimmed == messages
+
