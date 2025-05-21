@@ -93,3 +93,22 @@ def test_create_comment_request_error():
     
     # Assert
     assert result is None  # The handle_exceptions decorator should return None on error
+
+
+def test_create_comment_unknown_input_from():
+    # Arrange
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "issue_number": 123,
+        "input_from": "unknown"  # Neither github nor jira
+    }
+    
+    # Act
+    with patch("services.github.comments.create_comment.requests.post") as mock_post:
+        result = create_comment("Test comment", base_args)
+    
+    # Assert
+    mock_post.assert_not_called()
+    assert result is None
