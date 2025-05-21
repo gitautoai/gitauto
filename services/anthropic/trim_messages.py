@@ -17,6 +17,9 @@ def trim_messages_to_token_limit(
     max_tokens: int = 200_000,
 ):
     messages = list(messages)  # Make a copy to avoid mutating the original
+    # Return early if messages list is empty
+    if not messages:
+        return messages
     token_input = cast(
         int,
         client.messages.count_tokens(messages=messages, model=model).input_tokens,
