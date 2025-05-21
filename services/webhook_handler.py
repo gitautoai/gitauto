@@ -1,7 +1,7 @@
 # Standard imports
 import shutil
 import tempfile
-from typing import Any
+from typing import Any, cast
 
 # Local imports
 from config import (
@@ -267,41 +267,40 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None
             return
 
         # Check PR is merged and this is correct GitAuto environment
-        merged_at = pull_request.get("merged_at", None)
-        ref = pull_request.get("head", {}).get("ref", None)
-        print(f"merged_at: {merged_at}")
-        print(f"ref: {ref}")
+        merged_at = cast(str, pull_request.get("merged_at", ""))
+        ref = cast(str, pull_request.get("head", {}).get("ref", ""))
 
-        if (
-            merged_at is not None
-            and ref is not None
-            and ref.startswith(PRODUCT_ID + ISSUE_NUMBER_FORMAT)
-        ):
-            # Get issue number from PR body
-            body: str = pull_request["body"]
-            if not body.startswith(PR_BODY_STARTS_WITH):
-                print(f"PR body does not start with {PR_BODY_STARTS_WITH}")
-                return
+        if not merged_at or not ref:
+            return
 
-            issue_ref = body.split()[1]  # "Resolves #714" -> ["Resolves", "#714"]
-            if not issue_ref.startswith("#"):
-                print(f"Unexpected PR body format: {body}")
-                return
+        if not ref.startswith(PRODUCT_ID + ISSUE_NUMBER_FORMAT):
+            return
 
-            issue_number = int(issue_ref[1:])  # "#714" -> 714
-            repository = payload["repository"]
-            owner_type = repository["owner"]["type"]
-            owner_name = repository["owner"]["login"]
-            repo_name = repository["name"]
-            set_issue_to_merged(
-                owner_type=owner_type,
-                owner_name=owner_name,
-                repo_name=repo_name,
-                issue_number=issue_number,
-            )
+        # Get issue number from PR body
+        body: str = pull_request["body"]
+        if not body or not body.startswith(PR_BODY_STARTS_WITH):
+            print(f"PR body does not start with {PR_BODY_STARTS_WITH}")
+            return
 
-            msg = f"🎉 PR merged by `{payload['sender']['login']}` for `{payload['repository']['name']}`"
-            slack(msg)
+        issue_ref = body.split()[1]  # "Resolves #714" -> ["Resolves", "#714"]
+        if not issue_ref.startswith("#"):
+            print(f"Unexpected PR body format: {body}")
+            return
+
+        issue_number = int(issue_ref[1:])  # "#714" -> 714
+        repository = payload["repository"]
+        owner_type = repository["owner"]["type"]
+        owner_name = repository["owner"]["login"]
+        repo_name = repository["name"]
+        set_issue_to_merged(
+            owner_type=owner_type,
+            owner_name=owner_name,
+            repo_name=repo_name,
+            issue_number=issue_number,
+        )
+
+        msg = f"🎉 PR merged by `{payload['sender']['login']}` for `{payload['repository']['name']}`"
+        slack(msg)
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_comment
