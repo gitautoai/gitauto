@@ -106,10 +106,10 @@ def test_all_system_messages(mock_client):
         make_message("system", "first"),
         make_message("system", "second")
     ]
-    messages = list(original_messages)
+    expected_messages = [dict(msg) for msg in original_messages]
     # Even though tokens > max_tokens, all messages are system messages so none will be removed
-    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
-    assert trimmed == original_messages
+    trimmed = trim_messages_to_token_limit(original_messages, mock_client, max_tokens=1000)
+    assert trimmed == expected_messages
 
 
 def test_only_system_messages_with_high_token_count(mock_client):
