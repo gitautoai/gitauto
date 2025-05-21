@@ -29,10 +29,10 @@ def mock_client():
 
 
 def test_no_trimming_needed(mock_client):
-    original_messages = [make_message("user"), make_message("assistant")]
-    messages = list(original_messages)
+    messages = [make_message("user"), make_message("assistant")]
+    expected_messages = [dict(msg) for msg in messages]
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=5000)
-    assert trimmed == original_messages
+    assert trimmed == expected_messages
 
 
 def test_trimming_at_boundary(mock_client):
@@ -41,10 +41,10 @@ def test_trimming_at_boundary(mock_client):
         make_message("user"),
         make_message("assistant"),
     ]
-    messages = list(original_messages)
+    expected_messages = [dict(msg) for msg in original_messages]
     # 3000 tokens == 3000 token limit - no trimming needed
-    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=3000)
-    assert trimmed == original_messages
+    trimmed = trim_messages_to_token_limit(original_messages, mock_client, max_tokens=3000)
+    assert trimmed == expected_messages
 
 
 def test_trimming_removes_non_system(mock_client):
