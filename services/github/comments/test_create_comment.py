@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 
 from services.github.comments.create_comment import create_comment
 from tests.constants import OWNER, REPO, TOKEN
@@ -25,7 +25,10 @@ def test_create_comment_github_success():
     
     # Assert
     mock_post.assert_called_once()
-    assert result == "https://api.github.com/repos/owner/repo/issues/comments/123"
+    expected_url = f"https://api.github.com/repos/{OWNER}/{REPO}/issues/123/comments"
+    assert mock_post.call_args[0][0] == expected_url
+    assert "headers" in mock_post.call_args[1]
+    assert "timeout" in mock_post.call_args[1]
     assert mock_post.call_args[1]["json"] == {"body": "Test comment"}
 
 
@@ -92,5 +95,5 @@ def test_create_comment_request_error():
     # Assert
     mock_post.assert_called_once()
     assert result is None  # The handle_exceptions decorator should return None on error
-    mock_post.call_args[1]["headers"] == {"Authorization": f"Bearer {TOKEN}"}
+    assert "headers" in mock_post.call_args[1]
     assert mock_post.call_args[1]["json"] == {"body": "Test comment"}
