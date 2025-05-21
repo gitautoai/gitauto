@@ -1,6 +1,12 @@
 import pytest
-import responses
 from config import GITHUB_API_URL
+import importlib.util
+
+# Check if responses is installed
+responses_spec = importlib.util.find_spec("responses")
+if responses_spec is None:
+    pytest.skip("responses package is required for this test", allow_module_level=True)
+import responses
 
 from services.github.comments.create_comment import create_comment
 from services.github.create_headers import create_headers
