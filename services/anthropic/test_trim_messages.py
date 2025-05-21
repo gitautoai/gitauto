@@ -60,10 +60,11 @@ def test_trimming_removes_non_system(mock_client):
     ]
     messages = list(original_messages)  # Create a copy to pass to the function
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=2500)
-    expected = [
+    expected_dict = [
         make_message("system"),
         make_message("user", "third"),
     ]
+    trimmed = [dict(msg) for msg in trimmed]  # Convert to dict for comparison
     assert trimmed == expected
 
 
