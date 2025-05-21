@@ -91,9 +91,11 @@ def test_empty_messages_list():
 
 def test_custom_token_counter(mock_client):
     mock_client.messages.count_tokens.return_value = Mock(input_tokens=0)
-    messages = [make_message("user"), make_message("assistant")]
+    # Create a copy of the messages to ensure we're comparing against the original
+    original_messages = [make_message("user"), make_message("assistant")]
+    messages = list(original_messages)  # Make a copy to avoid reference issues
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1)
-    assert trimmed == messages
+    assert trimmed == original_messages  # Compare with the original messages
 
 
 def test_all_system_messages(mock_client):
