@@ -66,11 +66,12 @@ def test_trimming_removes_non_system(mock_client):
 
 
 def test_trimming_keeps_system(mock_client):
-    messages = [
+    original_messages = [
         make_message("system"),
         make_message("user"),
         make_message("assistant"),
     ]
+    messages = list(original_messages)  # Create a copy to pass to the function
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=500)
     assert trimmed == [make_message("system")]
 
