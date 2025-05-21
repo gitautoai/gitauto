@@ -110,11 +110,12 @@ def test_custom_token_counter(mock_client):
 def test_all_system_messages(mock_client):
     original_messages = [
         make_message("system", "first"),
-        make_message("system", "second")
+        make_message("system", "second"),
     ]
+    messages_copy = list(original_messages)  # Create a copy to pass to the function
     expected_messages = [dict(msg) for msg in original_messages]
     # Even though tokens > max_tokens, all messages are system messages so none will be removed
-    trimmed = trim_messages_to_token_limit(original_messages, mock_client, max_tokens=1000)
+    trimmed = trim_messages_to_token_limit(messages_copy, mock_client, max_tokens=1000)
     assert trimmed == expected_messages
 
 
