@@ -92,7 +92,7 @@ def test_system_messages_remain_over_limit(mock_client):
     # Override the token counting to simulate a case where even after removing
     # non-system messages, we're still over the limit
     mock_client.messages.count_tokens.side_effect = lambda messages, model: Mock(
-        input_tokens=5000
+        input_tokens=5000  # Always return a high token count
     )
     
     messages = [make_message("system"), make_message("user")]
