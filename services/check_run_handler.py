@@ -1,5 +1,6 @@
 # Standard imports
 from datetime import datetime
+import hashlib
 import json
 from typing import cast
 
@@ -10,6 +11,7 @@ from config import (
     GITHUB_APP_USER_NAME,
     PRICING_URL,
     STRIPE_PRODUCT_ID_FREE,
+    UTF8,
 )
 from services.chat_with_agent import chat_with_agent
 from services.github.actions_manager import get_workflow_run_logs, get_workflow_run_path
@@ -33,12 +35,15 @@ from services.github.github_utils import create_permission_url
 from services.github.token.get_installation_token import get_installation_access_token
 from services.stripe.subscriptions import get_stripe_product_id
 from services.supabase.owners_manager import get_stripe_customer_id
+from services.supabase.usage.get_retry_pairs import get_retry_workflow_id_hash_pairs
+from services.supabase.usage.update_retry_pairs import (
+    update_retry_workflow_id_hash_pairs,
+)
 from utils.colors.colorize_log import colorize
 from utils.progress_bar.progress_bar import create_progress_bar
 
 
 def handle_check_run(payload: CheckRunCompletedPayload) -> None:
-    return
     # Extract workflow run id
     check_run: CheckRun = payload["check_run"]
     details_url = cast(str, check_run["details_url"])
@@ -199,6 +204,28 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         log_messages.append(comment_body)
         update_comment(body="\n".join(log_messages), base_args=base_args)
         return
+
+    # Create a pair of workflow ID and error log hash
+    error_log_hash = hashlib.sha256(error_log.encode(encoding=UTF8)).hexdigest()
+    current_pair = f"{workflow_id}:{error_log_hash}"
+    print(f"Workflow ID and error log hash pair: {current_pair}")
+
+    # Check if this exact pair exists
+    existing_pairs = get_retry_workflow_id_hash_pairs(
+        owner_id=owner_id, repo_id=repo_id, pr_number=pull_number
+    )
+    if existing_pairs and current_pair in existing_pairs:
+        msg = f"Skipping `{check_run_name}` because GitAuto has already tried to fix this exact error before `{current_pair}`."
+        log_messages.append(msg)
+        update_comment(body="\n".join(log_messages), base_args=base_args)
+        return
+
+    # Save the pair to avoid infinite loops
+    existing_pairs.append(current_pair)
+    update_retry_workflow_id_hash_pairs(
+        owner_id=owner_id, repo_id=repo_id, pr_number=pull_number, pairs=existing_pairs
+    )
+
     p += 5
     log_messages.append("Checked out the error log from the workflow run.")
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
