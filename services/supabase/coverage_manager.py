@@ -72,6 +72,15 @@ def create_or_update_coverages(
         for coverage in seen.values()
     ]
 
+    # Set uncovered fields to None when the coverage is 100%
+    for item in upsert_data:
+        if item["line_coverage"] == 100:
+            item["uncovered_lines"] = None
+        if item["function_coverage"] == 100:
+            item["uncovered_functions"] = None
+        if item["branch_coverage"] == 100:
+            item["uncovered_branches"] = None
+
     # Upsert data (insert if not exists, update if exists)
     result = (
         supabase.table("coverages")
