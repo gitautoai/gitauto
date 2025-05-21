@@ -74,3 +74,9 @@ def test_trimming_stops_at_one_message(mock_client):
     messages = [make_message("user")]
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=100)
     assert trimmed == [make_message("user")]
+
+
+def test_empty_messages(mock_client):
+    messages = []
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
+    assert not trimmed
