@@ -86,3 +86,4 @@ def test_all_system_messages(mock_client):
     # Set max_tokens to force trimming, but since all are system messages, loop completes without deletion
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=2000)
     # All messages should remain since they're all system messages
+    assert trimmed == messages
