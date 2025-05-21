@@ -86,3 +86,16 @@ def test_all_system_messages(mock_client):
     # a non-system message to delete
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
     assert trimmed == messages
+
+
+def test_system_messages_remain_over_limit(mock_client):
+    # Override the token counting to simulate a case where even after removing
+    # non-system messages, we're still over the limit
+    mock_client.messages.count_tokens.side_effect = lambda messages, model: Mock(
+        input_tokens=5000
+    )
+    
+    messages = [make_message("system"), make_message("user")]
+    max_tokens = 1000  # Set a low limit to ensure we're over
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=max_tokens)
+    assert trimmed == [make_message("system")]
