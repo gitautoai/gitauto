@@ -451,6 +451,13 @@ def get_remote_file_content(
     if line_number is not None and keyword is not None:
         return "Error: You can only specify either line_number or keyword, not both."
 
+    # Convert line_number to int if it's a string
+    if line_number is not None and isinstance(line_number, str):
+        try:
+            line_number = int(line_number)
+        except ValueError:
+            return f"Error: line_number '{line_number}' is not a valid integer."
+
     owner, repo, ref, token = (
         base_args["owner"],
         base_args["repo"],
