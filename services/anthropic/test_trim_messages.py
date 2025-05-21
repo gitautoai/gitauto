@@ -65,7 +65,7 @@ def test_trimming_removes_non_system(mock_client):
         make_message("user", "third"),
     ]
     trimmed = [dict(msg) for msg in trimmed]  # Convert to dict for comparison
-    assert trimmed == expected
+    assert trimmed == expected_dict
 
 
 def test_trimming_keeps_system(mock_client):
