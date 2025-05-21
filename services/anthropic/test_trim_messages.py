@@ -30,8 +30,9 @@ def mock_client():
 
 def test_no_trimming_needed(mock_client):
     messages = [make_message("user"), make_message("assistant")]
+    messages_copy = list(messages)  # Create a copy to pass to the function
     expected_messages = [dict(msg) for msg in messages]
-    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=5000)
+    trimmed = trim_messages_to_token_limit(messages_copy, mock_client, max_tokens=5000)
     assert trimmed == expected_messages
 
 
