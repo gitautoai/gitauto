@@ -77,8 +77,9 @@ def test_trimming_keeps_system(mock_client):
 
 
 def test_trimming_stops_at_one_message(mock_client):
-    messages = [make_message("user")]
-    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=100)
+    original_messages = [make_message("user")]
+    messages_copy = list(original_messages)  # Create a copy to pass to the function
+    trimmed = trim_messages_to_token_limit(messages_copy, mock_client, max_tokens=100)
     assert trimmed == [make_message("user")]
 
 
