@@ -78,9 +78,14 @@ def test_trimming_stops_at_one_message(mock_client):
 
 def test_empty_messages_list():
     client = Mock()
+    # We need to properly set up the mock before calling the function
+    client.messages = Mock()
+    client.messages.count_tokens = Mock()
+    
     messages = []
     trimmed = trim_messages_to_token_limit(messages, client, max_tokens=1000)
     assert trimmed == []
+    # Verify that count_tokens was not called since we return early for empty messages
     client.messages.count_tokens.assert_not_called()
 
 
