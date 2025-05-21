@@ -74,3 +74,15 @@ def test_trimming_stops_at_one_message(mock_client):
     messages = [make_message("user")]
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=100)
     assert trimmed == [make_message("user")]
+
+
+def test_all_system_messages(mock_client):
+    messages = [
+        make_message("system", "first"),
+        make_message("system", "second"),
+        make_message("system", "third"),
+    ]
+    # This should trigger the case where the for loop completes without finding
+    # a non-system message to delete
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
+    assert trimmed == messages
