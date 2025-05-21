@@ -117,6 +117,7 @@ def test_all_system_messages(mock_client):
     expected_messages = [dict(msg) for msg in original_messages]
     # Even though tokens > max_tokens, all messages are system messages so none will be removed
     trimmed = trim_messages_to_token_limit(messages_copy, mock_client, max_tokens=1000)
+    trimmed = [dict(msg) for msg in trimmed]  # Convert to dict for comparison
     assert trimmed == expected_messages
 
 
