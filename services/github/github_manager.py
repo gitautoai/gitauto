@@ -514,8 +514,6 @@ def get_remote_file_content(
         return msg + "\n\n•\n•\n•\n\n".join(segments)
 
     numbered_content: str = lb.join(numbered_lines)
-    print(f"file_path_with_lines: {file_path_with_lines}")
-    # print(f"numbered_content:\n{numbered_content}")
     msg = f"Opened file: '{file_path}' with line numbers for your information.\n\n"
     return msg + f"```{file_path_with_lines}\n{numbered_content}\n```"
 
