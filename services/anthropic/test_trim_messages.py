@@ -128,3 +128,4 @@ def test_mixed_messages_with_no_non_system_to_remove(mock_client):
     messages = [make_message("system"), make_message("system")]
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
     assert trimmed == messages
+
