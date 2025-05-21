@@ -81,7 +81,7 @@ def test_empty_messages_list():
     messages = []
     trimmed = trim_messages_to_token_limit(messages, client, max_tokens=1000)
     assert trimmed == []
-    assert client.messages.count_tokens.call_count == 0
+    client.messages.count_tokens.assert_not_called()
 
 
 def test_custom_token_counter(mock_client):
