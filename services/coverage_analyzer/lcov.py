@@ -160,6 +160,9 @@ def parse_lcov_coverage(lcov_content: str):
                     # Format for Pytest: BRDA:<line number>,<block number>,jump to line <target>,<taken>
                     target_line = branch_desc.replace("jump to line ", "")
                     branch_info = f"line {line_num}, block {block_num}, if branch: {line_num} -> {target_line}"
+                elif branch_desc == "jump to the function exit":
+                    # Format for Pytest: BRDA:<line number>,<block number>,jump to the function exit,<taken>
+                    branch_info = f"line {line_num}, block {block_num}, function exit"
                 elif branch_desc.startswith("return from function "):
                     # Format for Pytest: BRDA:<line number>,<block number>,return from function '<name>',<taken>
                     func_name = branch_desc.replace(
