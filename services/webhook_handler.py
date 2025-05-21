@@ -12,7 +12,7 @@ from config import (
 )
 from services.check_run_handler import handle_check_run
 from services.coverage_analyzer.coverage_analyzer import handle_workflow_coverage
-from services.git.git_manager import clone_repo
+from services.git.clone_repo import clone_repo
 from services.gitauto_handler import handle_gitauto
 from services.github.actions_manager import cancel_workflow_runs_in_progress
 from services.github.github_manager import (

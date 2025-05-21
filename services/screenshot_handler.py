@@ -12,8 +12,8 @@ from playwright.async_api import async_playwright
 
 # Local imports
 from config import GITHUB_APP_USER_NAME
+from services.git.clone_repo import clone_repo
 from services.git.git_manager import (
-    clone_repo,
     fetch_branch,
     get_current_branch,
     start_local_server,
