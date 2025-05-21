@@ -87,3 +87,17 @@ def test_all_system_messages(mock_client):
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=2000)
     # All messages should remain since we can't remove system messages
     assert trimmed == messages
+
+
+def test_mixed_messages_with_only_system_remaining(mock_client):
+    messages = [
+        make_message("system", "system message"),
+        make_message("user", "user message"),
+        make_message("assistant", "assistant message"),
+    ]
+    # Set max_tokens to force removal of non-system messages but not enough to remove all
+    # This tests the case where we end up with only system messages after some iterations
+    mock_client.messages.count_tokens.side_effect = [Mock(input_tokens=3000), Mock(input_tokens=2000), Mock(input_tokens=1000)]
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1500)
+    # Only system message should remain
+    assert trimmed == [make_message("system", "system message")]
