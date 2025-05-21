@@ -42,9 +42,10 @@ def test_trimming_at_boundary(mock_client):
         make_message("user"),
         make_message("assistant"),
     ]
+    messages_copy = list(original_messages)  # Create a copy to pass to the function
     expected_messages = [dict(msg) for msg in original_messages]
     # 3000 tokens == 3000 token limit - no trimming needed
-    trimmed = trim_messages_to_token_limit(original_messages, mock_client, max_tokens=3000)
+    trimmed = trim_messages_to_token_limit(messages_copy, mock_client, max_tokens=3000)
     assert trimmed == expected_messages
 
 
