@@ -101,3 +101,19 @@ def test_mixed_messages_with_only_system_remaining(mock_client):
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1500)
     # Only system message should remain
     assert trimmed == [make_message("system", "system message")]
+
+
+def test_all_system_messages_over_token_limit(mock_client):
+    messages = [
+        make_message("system", "first system message"),
+        make_message("system", "second system message"),
+        make_message("system", "third system message"),
+    ]
+    # Set up the mock to return token counts that exceed the limit
+    # This tests the case where all messages are system messages and we're over the token limit
+    # The function should still exit the while loop because there are no non-system messages to remove
+    mock_client.messages.count_tokens.side_effect = [Mock(input_tokens=5000), Mock(input_tokens=5000)]
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=3000)
+    # All system messages should remain even though we're over the token limit
+    # because the function doesn't remove system messages
+    assert trimmed == messages
