@@ -74,3 +74,18 @@ def test_trimming_stops_at_one_message(mock_client):
     messages = [make_message("user")]
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=100)
     assert trimmed == [make_message("user")]
+
+def test_trimming_with_all_system_messages(mock_client):
+    # Create a custom count_tokens function that returns different token counts
+    # to simulate the case where token count decreases but is still above max_tokens
+    token_counts = [5000, 4000, 3000, 2000]
+    count_index = 0
+    
+    def custom_count_tokens(messages, model):
+        nonlocal count_index
+        result = Mock(input_tokens=token_counts[count_index])
+        count_index = min(count_index + 1, len(token_counts) - 1)
+        return result
+    
+    mock_client.messages.count_tokens.side_effect = custom_count_tokens
+    messages = [make_message("system"), make_message("system"), make_message("system")]
