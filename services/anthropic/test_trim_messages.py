@@ -110,3 +110,14 @@ def test_only_system_messages_with_high_token_count(mock_client):
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
     assert trimmed == messages
     assert mock_client.messages.count_tokens.call_count == 1
+
+
+def test_mixed_messages_with_no_non_system_to_remove(mock_client):
+    # Create a custom side effect to simulate a situation where token count remains high
+    def count_tokens_side_effect(messages, model):
+        return Mock(input_tokens=5000)  # Always return high token count
+    
+    mock_client.messages.count_tokens.side_effect = count_tokens_side_effect
+    messages = [make_message("system"), make_message("system")]
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
+    assert trimmed == messages
