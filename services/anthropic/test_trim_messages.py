@@ -29,20 +29,22 @@ def mock_client():
 
 
 def test_no_trimming_needed(mock_client):
-    messages = [make_message("user"), make_message("assistant")]
+    original_messages = [make_message("user"), make_message("assistant")]
+    messages = list(original_messages)
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=5000)
-    assert trimmed == messages
+    assert trimmed == original_messages
 
 
 def test_trimming_at_boundary(mock_client):
-    messages = [
+    original_messages = [
         make_message("system"),
         make_message("user"),
         make_message("assistant"),
     ]
+    messages = list(original_messages)
     # 3000 tokens == 3000 token limit - no trimming needed
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=3000)
-    assert trimmed == messages
+    assert trimmed == original_messages
 
 
 def test_trimming_removes_non_system(mock_client):
@@ -99,23 +101,25 @@ def test_custom_token_counter(mock_client):
 
 
 def test_all_system_messages(mock_client):
-    messages = [
+    original_messages = [
         make_message("system", "first"),
         make_message("system", "second")
     ]
+    messages = list(original_messages)
     # Even though tokens > max_tokens, all messages are system messages so none will be removed
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
-    assert trimmed == messages
+    assert trimmed == original_messages
 
 
 def test_only_system_messages_with_high_token_count(mock_client):
     # Set up a custom token count that's higher than max_tokens
     mock_client.messages.count_tokens.return_value = Mock(input_tokens=5000)
     
-    messages = [make_message("system", "first")]
+    original_messages = [make_message("system", "first")]
+    messages = list(original_messages)
     # Even though tokens > max_tokens, we only have one message so it won't be removed
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
-    assert trimmed == messages
+    assert trimmed == original_messages
     assert mock_client.messages.count_tokens.call_count == 1
 
 
@@ -125,7 +129,7 @@ def test_mixed_messages_with_no_non_system_to_remove(mock_client):
         return Mock(input_tokens=5000)  # Always return high token count
     
     mock_client.messages.count_tokens.side_effect = count_tokens_side_effect
-    messages = [make_message("system"), make_message("system")]
+    original_messages = [make_message("system"), make_message("system")]
+    messages = list(original_messages)
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
-    assert trimmed == messages
-
+    assert trimmed == original_messages
