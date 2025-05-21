@@ -90,3 +90,12 @@ def test_custom_token_counter(mock_client):
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1)
     assert trimmed == messages
 
+
+def test_all_system_messages(mock_client):
+    messages = [
+        make_message("system", "first"),
+        make_message("system", "second")
+    ]
+    # Even though tokens > max_tokens, all messages are system messages so none will be removed
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
+    assert trimmed == messages
