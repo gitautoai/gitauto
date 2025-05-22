@@ -230,17 +230,14 @@ async def test_install_uninstall_install() -> None:
     # Create a more comprehensive mock setup
     # We'll mock the process_repositories function entirely to avoid the cloning process
     with mock.patch(
-        "services.webhook.process_repositories.process_repositories"
-    ) as mock_process_repos, mock.patch(
+        "services.git.clone_repo.clone_repo", return_value=None
+    ), mock.patch(
         "services.github.token.get_installation_token.get_installation_access_token",
         return_value="fake-token",
     ), mock.patch(
         "services.github.github_manager.get_user_public_email",
         return_value="test@example.com",
     ):
-
-        # Configure the mock to do nothing (just return)
-        mock_process_repos.side_effect = lambda **kwargs: None
 
         await handle_webhook_event(
             event_name="installation", payload=installation_payload
