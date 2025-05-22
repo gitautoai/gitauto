@@ -24,7 +24,6 @@ from config import (
     TEST_EMAIL,
     TEST_REPO_NAME,
 )
-from services.github import github_manager
 from services.stripe.customer import get_subscription
 from services.supabase.client import supabase
 from services.supabase.gitauto_manager import create_installation, create_user_request
@@ -36,7 +35,7 @@ from services.supabase.users_manager import (
     parse_subscription_object,
     upsert_user,
 )
-from services.webhook_handler import handle_webhook_event
+from services.webhook.webhook_handler import handle_webhook_event
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
 )
@@ -231,15 +230,16 @@ async def test_install_uninstall_install() -> None:
     # Create a more comprehensive mock setup
     # We'll mock the process_repositories function entirely to avoid the cloning process
     with mock.patch(
-        "services.webhook_handler.process_repositories"
-    ) as mock_process_repos, mock.patch.object(
-        github_manager, "get_installation_access_token", return_value="fake-token"
-    ), mock.patch.object(
-        github_manager, "get_user_public_email", return_value="test@example.com"
+        "services.git.clone_repo.clone_repo", return_value=None, autospec=True
+    ), mock.patch(
+        "services.git.clone_repo.subprocess.run", return_value=None
+    ), mock.patch(
+        "services.github.token.get_installation_token.get_installation_access_token",
+        return_value="fake-token",
+    ), mock.patch(
+        "services.github.github_manager.get_user_public_email",
+        return_value="test@example.com",
     ):
-
-        # Configure the mock to do nothing (just return)
-        mock_process_repos.return_value = None
 
         await handle_webhook_event(
             event_name="installation", payload=installation_payload

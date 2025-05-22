@@ -1,6 +1,4 @@
 # Standard imports
-import shutil
-import tempfile
 from typing import Any, cast
 
 # Local imports
@@ -12,130 +10,26 @@ from config import (
 )
 from services.check_run_handler import handle_check_run
 from services.coverage_analyzer.coverage_analyzer import handle_workflow_coverage
-from services.git.clone_repo import clone_repo
 from services.gitauto_handler import handle_gitauto
 from services.github.actions_manager import cancel_workflow_runs_in_progress
-from services.github.github_manager import (
-    create_comment_on_issue_with_gitauto_button,
-    get_user_public_email,
-)
-from services.github.github_types import GitHubInstallationPayload
-from services.github.repo_manager import get_repository_stats
+from services.github.github_manager import create_comment_on_issue_with_gitauto_button
 from services.github.token.get_installation_token import get_installation_access_token
 from services.pull_request_handler import write_pr_description
 from services.review_run_handler import handle_review_run
 from services.screenshot_handler import handle_screenshot_comparison
 from services.slack.slack import slack
-from services.supabase.gitauto_manager import create_installation, set_issue_to_merged
+from services.supabase.gitauto_manager import set_issue_to_merged
 from services.supabase.installations.delete_installation import delete_installation
-from services.supabase.installations.is_installation_valid import is_installation_valid
 from services.supabase.installations.unsuspend_installation import (
     unsuspend_installation,
 )
-from services.supabase.repositories.upsert_repository import upsert_repository
+from services.webhook.handle_installation import handle_installation_created
+from services.webhook.handle_installation_repos import handle_installation_repos_added
 from utils.error.handle_exceptions import handle_exceptions
 
 
-def process_repositories(
-    owner_id: int,
-    owner_name: str,
-    repositories: list[dict[str, Any]],
-    token: str,
-    user_id: int,
-    user_name: str,
-) -> None:
-    for repo in repositories:
-        repo_id = repo["id"]
-        repo_name = repo["name"]
-
-        # Create a temporary directory to clone the repository
-        temp_dir = tempfile.mkdtemp()
-        try:
-            print(f"Cloning repository {repo_name} into {temp_dir}")
-            clone_repo(
-                owner=owner_name, repo=repo_name, token=token, target_dir=temp_dir
-            )
-
-            stats = get_repository_stats(local_path=temp_dir)
-            print(f"Repository {repo_name} stats: {stats}")
-
-            # Create repository record in Supabase
-            upsert_repository(
-                owner_id=owner_id,
-                owner_name=owner_name,
-                repo_id=repo_id,
-                repo_name=repo_name,
-                user_id=user_id,
-                user_name=user_name,
-                file_count=stats["file_count"],
-                blank_lines=stats["blank_lines"],
-                comment_lines=stats["comment_lines"],
-                code_lines=stats["code_lines"],
-            )
-        finally:
-            shutil.rmtree(temp_dir, ignore_errors=True)
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-async def handle_installation_created(payload: GitHubInstallationPayload) -> None:
-    installation_id: int = payload["installation"]["id"]
-    owner_type: str = payload["installation"]["account"]["type"]
-    owner_name: str = payload["installation"]["account"]["login"]
-    owner_id: int = payload["installation"]["account"]["id"]
-    repositories: list[dict[str, Any]] = payload["repositories"]
-    user_id: int = payload["sender"]["id"]
-    user_name: str = payload["sender"]["login"]
-    token: str = get_installation_access_token(installation_id=installation_id)
-    user_email: str | None = get_user_public_email(username=user_name, token=token)
-
-    # Create installation record in Supabase
-    create_installation(
-        installation_id=installation_id,
-        owner_type=owner_type,
-        owner_name=owner_name,
-        owner_id=owner_id,
-        user_id=user_id,
-        user_name=user_name,
-        email=user_email,
-    )
-
-    # Process repositories
-    process_repositories(
-        owner_id=owner_id,
-        owner_name=owner_name,
-        repositories=repositories,
-        token=token,
-        user_id=user_id,
-        user_name=user_name,
-    )
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-async def handle_installation_repos_added(payload) -> None:
-    installation_id: int = payload["installation"]["id"]
-    if not is_installation_valid(installation_id=installation_id):
-        return
-    token: str = get_installation_access_token(installation_id=installation_id)
-
-    # Get other information
-    owner_id = payload["installation"]["account"]["id"]
-    owner_name = payload["installation"]["account"]["login"]
-    sender_id: int = payload["sender"]["id"]
-    sender_name: str = payload["sender"]["login"]
-
-    # Process added repositories
-    process_repositories(
-        owner_id=owner_id,
-        owner_name=owner_name,
-        repositories=payload["repositories_added"],
-        token=token,
-        user_id=sender_id,
-        user_name=sender_name,
-    )
-
-
 @handle_exceptions(default_return_value=None, raise_on_error=True)
-async def handle_webhook_event(event_name: str, payload: dict[str, Any]) -> None:
+async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     """
     Determine the event type and call the appropriate handler.
     Check the type of webhook event and handle accordingly.

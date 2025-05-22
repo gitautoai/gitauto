@@ -15,7 +15,7 @@ from scheduler import schedule_handler
 from services.gitauto_handler import handle_gitauto
 from services.github.github_manager import verify_webhook_signature
 from services.jira.jira_manager import verify_jira_webhook
-from services.webhook_handler import handle_webhook_event
+from services.webhook.webhook_handler import handle_webhook_event
 
 if ENV != "local":
     sentry_sdk.init(
