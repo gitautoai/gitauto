@@ -231,7 +231,7 @@ async def test_install_uninstall_install() -> None:
     # Create a more comprehensive mock setup
     # We'll mock the process_repositories function entirely to avoid the cloning process
     with mock.patch(
-        "services.webhook_handler.process_repositories"
+        "services.webhook.process_repositories.process_repositories"
     ) as mock_process_repos, mock.patch.object(
         github_manager, "get_installation_access_token", return_value="fake-token"
     ), mock.patch.object(
