@@ -240,7 +240,7 @@ async def test_install_uninstall_install() -> None:
     ):
 
         # Configure the mock to do nothing (just return)
-        mock_process_repos.return_value = None
+        mock_process_repos.side_effect = lambda **kwargs: None
 
         await handle_webhook_event(
             event_name="installation", payload=installation_payload
