@@ -230,7 +230,9 @@ async def test_install_uninstall_install() -> None:
     # Create a more comprehensive mock setup
     # We'll mock the process_repositories function entirely to avoid the cloning process
     with mock.patch(
-        "services.git.clone_repo.clone_repo", return_value=None
+        "services.git.clone_repo.clone_repo", return_value=None, autospec=True
+    ), mock.patch(
+        "services.git.clone_repo.subprocess.run", return_value=None
     ), mock.patch(
         "services.github.token.get_installation_token.get_installation_access_token",
         return_value="fake-token",
