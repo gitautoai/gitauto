@@ -36,7 +36,7 @@ from services.supabase.users_manager import (
     parse_subscription_object,
     upsert_user,
 )
-from services.webhook_handler import handle_webhook_event
+from services.webhook.webhook_handler import handle_webhook_event
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
 )
