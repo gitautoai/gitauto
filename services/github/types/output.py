@@ -2,6 +2,7 @@ from typing import TypedDict
 
 
 class Output(TypedDict):
+    """GitHub check run output type"""
     title: str | None
     summary: str | None
     text: str | None
