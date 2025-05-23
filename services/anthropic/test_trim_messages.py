@@ -96,3 +96,28 @@ def test_all_system_messages(mock_client):
     
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=3000)
     assert trimmed == messages  # All messages should be kept as they're all system messages
+
+
+def test_mixed_messages_with_system_only_iteration(mock_client):
+    messages = [
+        make_message("system", "system instruction"),
+        make_message("user", "user message"),
+        make_message("system", "another system message"),
+    ]
+    
+    # Create a custom token counting function that will:
+    # 1. First return a high token count (5000) to trigger trimming
+    # 2. After removing the user message, still return a high count (4000) to trigger another iteration
+    # 3. Finally return a low count (2000) to exit the loop
+    token_counts = [5000, 4000, 2000]
+    call_count = 0
+    
+    def count_tokens(messages, model):
+        nonlocal call_count
+        result = Mock(input_tokens=token_counts[call_count])
+        call_count += 1
+        return result
+    
+    mock_client.messages.count_tokens.side_effect = count_tokens
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=3000)
+    assert trimmed == [make_message("system", "system instruction"), make_message("system", "another system message")]
