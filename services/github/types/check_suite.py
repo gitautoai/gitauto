@@ -3,6 +3,7 @@ from typing import TypedDict
 
 from services.github.types.app import App
 from services.github.types.pull_request import PullRequest
+from services.github.types.common import CheckRunStatus, CheckRunConclusion
 
 
 class CheckSuite(TypedDict):
@@ -10,8 +11,8 @@ class CheckSuite(TypedDict):
     node_id: str
     head_branch: str
     head_sha: str
-    status: str
-    conclusion: str | None
+    status: CheckRunStatus
+    conclusion: CheckRunConclusion | None
     url: str
     before: str
     after: str
