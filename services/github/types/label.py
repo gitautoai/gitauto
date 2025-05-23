@@ -8,4 +8,4 @@ class Label(TypedDict):
     name: str
     color: str
     default: bool
-    description: Optional[str]
+    description: str | None
