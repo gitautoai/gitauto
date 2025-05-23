@@ -61,7 +61,7 @@ class Repository(TypedDict):
     size: int
     stargazers_count: int
     watchers_count: int
-    language: Optional[str]
+    language: str | None
     has_issues: bool
     has_projects: bool
     has_downloads: bool
