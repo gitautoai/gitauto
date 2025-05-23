@@ -2,9 +2,7 @@ name: Deployment to AWS Lambda with Docker
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [ main ]
-  push:
+    types: [opened, synchronize, reopened, closed]
     branches: [ main ]
   workflow_dispatch:
 
@@ -39,12 +37,16 @@ jobs:
             echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}"
             echo "EMAIL=${{ secrets.EMAIL }}"
             echo "IMAGE_TAG=${{ github.sha }}"
-            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+
+            if [[ "${{ github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' }}" == "true" ]]; then
+              # For production
               echo "ECR_REPOSITORY=${{ secrets.PROD_LAMBDA_NAME }}"
               echo "LAMBDA_NAME=${{ secrets.PROD_LAMBDA_NAME }}"
               echo "LAMBDA_ARN=arn:aws:lambda:${{ env.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:function:${{ secrets.PROD_LAMBDA_NAME }}"
               echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD }}"
+
             else
+              # For staging
               echo "ECR_REPOSITORY=${{ secrets.STAGE_LAMBDA_NAME }}"
               echo "LAMBDA_NAME=${{ secrets.STAGE_LAMBDA_NAME }}"
               echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_STG }}"
@@ -65,7 +67,7 @@ jobs:
 
       # Create or update the CloudFormation stack only for the main branch
       - name: Deploy CloudFormation stack for scheduled event
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
         run: |
           aws cloudformation deploy \
           --stack-name ScheduleStack \
@@ -74,8 +76,8 @@ jobs:
           --capabilities CAPABILITY_NAMED_IAM
   
       - name: Notify Slack of deployment status
-        # Execute this step even if the previous steps fail
-        if: always()
+        # Only notify if the PR is merged into main
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
         env:
           SLACK_MESSAGE: ${{ job.status == 'success' && 'Deployment successful' || 'Deployment failed' }}
         run: |
