@@ -7,7 +7,7 @@ from services.github.types.installation_details import InstallationDetails
 from services.github.types.issue import Issue
 from services.github.types.label import Label
 from services.github.types.organization import Organization
-from services.github.types.owner import OwnerType
+from services.github.types.common import OwnerType
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
 from services.github.types.sender import Sender
