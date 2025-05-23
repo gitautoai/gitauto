@@ -23,7 +23,7 @@ class PullRequest(TypedDict):
     created_at: str
     updated_at: str
     closed_at: str | None
-    merged_at: Optional[str]
+    merged_at: str | None
     merge_commit_sha: Optional[str]
     assignee: Optional[User]
     assignees: list[User]
