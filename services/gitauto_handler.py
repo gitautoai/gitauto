@@ -46,7 +46,6 @@ async def handle_gitauto(
     trigger_type: Literal["label", "comment", "review_comment"],
     input_from: Literal["github", "jira"],
 ) -> None:
-    """Core functionality to create comments on issue, create PRs, and update progress."""
     current_time: float = time.time()
 
     # Extract label and validate it

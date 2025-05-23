@@ -5,15 +5,12 @@ from typing import Literal
 # Local imports
 from config import PRODUCT_ID, ISSUE_NUMBER_FORMAT, GITHUB_APP_USER_ID
 from services.github.branch_manager import check_branch_exists
-from services.github.github_types import (
-    BaseArgs,
-    GitHubLabeledPayload,
-    IssueInfo,
-    RepositoryInfo,
-)
+from services.github.github_types import BaseArgs, GitHubLabeledPayload
 from services.github.github_manager import get_user_public_email
 from services.github.issues_manager import get_parent_issue
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.types.issue import Issue
+from services.github.types.repository import Repository
 from services.supabase.repository_manager import get_repository_rules
 from utils.error.handle_exceptions import handle_exceptions
 from utils.urls.extract_urls import extract_urls
@@ -33,14 +30,14 @@ def create_permission_url(
 def deconstruct_github_payload(payload: GitHubLabeledPayload):
     """Extract and format base arguments and related metadata from GitHub payload."""
     # Extract issue related variables
-    issue: IssueInfo = payload["issue"]
+    issue: Issue = payload["issue"]
     issue_number: int = issue["number"]
     issue_title: str = issue["title"]
     issue_body: str = issue["body"] or ""
     issuer_name: str = issue["user"]["login"]
 
     # Extract repository related variables
-    repo: RepositoryInfo = payload["repository"]
+    repo: Repository = payload["repository"]
     repo_id: int = repo["id"]
     repo_name: str = repo["name"]
     clone_url: str = repo["clone_url"]

@@ -2,13 +2,14 @@
 
 import logging
 import time
+from typing import Literal
 from config import PRODUCT_ID
 from services.github.github_manager import (
     add_label_to_issue,
     get_installed_owners_and_repos,
     get_oldest_unassigned_open_issue,
 )
-from services.github.github_types import IssueInfo
+from services.github.types.issue import Issue
 from services.github.token.get_installation_token import get_installation_access_token
 from services.supabase.gitauto_manager import get_installation_ids
 from services.supabase.users_manager import get_how_many_requests_left_and_cycle
@@ -39,12 +40,13 @@ def schedule_handler(_event, _context) -> dict[str, int]:
         # Process each owner and repository.
         for owner_repo in owners_repos:
             owner_id: int = owner_repo["owner_id"]
+            owner_type: Literal["User", "Organization"] = owner_repo["owner_type"]
             owner: str = owner_repo["owner"]
             repo: str = owner_repo["repo"]
             logging.info("Processing %s/%s", owner, repo)
 
             # Identify an oldest, open, unassigned, and not gitauto labeled issue for each repository.
-            issue: IssueInfo | None = get_oldest_unassigned_open_issue(
+            issue: Issue | None = get_oldest_unassigned_open_issue(
                 owner=owner, repo=repo, token=token
             )
             logging.info("Issue: %s", issue)

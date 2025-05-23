@@ -41,9 +41,10 @@ from config import (
 from constants.messages import CLICK_THE_CHECKBOX
 from services.github.comments.update_comment import update_comment
 from services.github.create_headers import create_headers
-from services.github.github_types import BaseArgs, GitHubLabeledPayload, IssueInfo
+from services.github.github_types import BaseArgs, GitHubLabeledPayload
 from services.github.reviewers_manager import add_reviewers
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.types.issue import Issue
 from services.openai.vision import describe_image
 from services.supabase.gitauto_manager import is_users_first_issue
 from services.supabase.users_manager import (
@@ -380,9 +381,7 @@ def get_latest_remote_commit_sha(clone_url: str, base_args: BaseArgs) -> str:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_oldest_unassigned_open_issue(
-    owner: str, repo: str, token: str
-) -> IssueInfo | None:
+def get_oldest_unassigned_open_issue(owner: str, repo: str, token: str) -> Issue | None:
     """Get an oldest unassigned open issue without "gitauto" label in a repository. https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues"""
     page = 1
     while True:
@@ -405,7 +404,7 @@ def get_oldest_unassigned_open_issue(
             return None
 
         response.raise_for_status()
-        issues: list[IssueInfo] = response.json()
+        issues: list[Issue] = response.json()
 
         # If there are no corresponding issues, return None
         if not issues:
