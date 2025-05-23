@@ -173,87 +173,71 @@ def chat_with_agent(
     )
 
     # Recursively call the function if the mode is "explore" and the tool was called
-    if mode == "explore" and tool_name:
-        if tool_name == "get_remote_file_content" and "line_number" in tool_args:
+    if tool_name == "get_remote_file_content":
+        if "line_number" in tool_args:
             line_info = (
                 f" around line {tool_args['line_number']}"
                 if tool_args["line_number"] > 1
                 else ""
             )
             msg = f"Read `{tool_args['file_path']}`{line_info}."
-        elif tool_name == "get_remote_file_content" and "keyword" in tool_args:
+        elif "keyword" in tool_args:
             msg = f"Read `{tool_args['file_path']}` around keyword `{tool_args['keyword']}`."
-        elif tool_name == "get_remote_file_content":
-            msg = f"Read `{tool_args['file_path']}`."
-        elif tool_name == "search_remote_file_contents":
-            file_list = []
-            if isinstance(tool_result, str):
-                result_lines = tool_result.split("\n")
-                first_line = result_lines[0] if result_lines else ""
-                if first_line.startswith("0 files found"):
-                    file_list = []
-                else:
-                    file_list = [
-                        line[2:] for line in result_lines if line.startswith("- ")
-                    ]
-
-            if file_list:
-                msg = f"Searched repository for `{tool_args['query']}` and found: \n- {'\n- '.join(file_list)}\n"
-            else:
-                msg = f"Searched repository for `{tool_args['query']}` but found no matching files."
-
-        # Claude sometimes tries to call functions that don't exist in the list of tools...
-        elif (
-            tool_name
-            in [
-                "apply_diff_to_file",
-                "replace_remote_file_content",
-            ]
-            and "file_path" in tool_args
-        ):
-            msg = f"Committed changes to `{tool_args['file_path']}`."
         else:
-            msg = f"Calling `{tool_name}()` with `{tool_args}`."
+            msg = f"Read `{tool_args['file_path']}`."
 
-        # Add message to log and update comment
-        log_messages.append(msg)
-        update_comment(
-            body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
-            base_args=base_args,
-        )
+    elif tool_name == "search_remote_file_contents":
+        file_list = []
+        if isinstance(tool_result, str):
+            result_lines = tool_result.split("\n")
+            first_line = result_lines[0] if result_lines else ""
+            if first_line.startswith("0 files found"):
+                file_list = []
+            else:
+                file_list = [line[2:] for line in result_lines if line.startswith("- ")]
 
-        if recursion_count < 3:
-            return chat_with_agent(
-                messages=messages,
+        if file_list:
+            msg = f"Searched repository for `{tool_args['query']}` and found: \n- {'\n- '.join(file_list)}\n"
+        else:
+            msg = f"Searched repository for `{tool_args['query']}` but found no matching files."
+
+    # Claude sometimes tries to call functions that don't exist in the list of tools...
+    elif (
+        tool_name in ["apply_diff_to_file", "replace_remote_file_content"]
+        and "file_path" in tool_args
+    ):
+        msg = f"Committed changes to `{tool_args['file_path']}`."
+
+    elif tool_name == "search_google" and "query" in tool_args:
+        query = tool_args.get("query", "")
+        if query.strip():
+            msg = f"Googled `{query}` and went through the results."
+            log_messages.append(msg)
+            update_comment(
+                body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
                 base_args=base_args,
-                mode=mode,
-                previous_calls=previous_calls,
-                recursion_count=recursion_count + 1,
-                p=p + 5,
-                log_messages=log_messages,
             )
 
-    elif mode == "search" and tool_name:
-        if tool_name == "search_google" and "query" in tool_args:
-            query = tool_args.get("query", "")
-            if query.strip():
-                msg = f"Googled `{query}` and went through the results."
-                log_messages.append(msg)
-                update_comment(
-                    body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
-                    base_args=base_args,
-                )
+    else:
+        msg = f"Calling `{tool_name}()` with `{tool_args}`."
 
-    elif mode == "commit" and tool_name:
-        if "file_path" in tool_args:
-            file_path = tool_args.get("file_path", "")
-            if file_path.strip():
-                msg = f"Modified `{file_path}` and committed."
-                log_messages.append(msg)
-                update_comment(
-                    body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
-                    base_args=base_args,
-                )
+    # Add message to log and update comment
+    log_messages.append(msg)
+    update_comment(
+        body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
+        base_args=base_args,
+    )
+
+    if recursion_count < 3:
+        return chat_with_agent(
+            messages=messages,
+            base_args=base_args,
+            mode=mode,
+            previous_calls=previous_calls,
+            recursion_count=recursion_count + 1,
+            p=p + 5,
+            log_messages=log_messages,
+        )
 
     # Return
     return (
