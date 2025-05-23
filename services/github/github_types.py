@@ -60,7 +60,7 @@ class GitHubInstallationPayload(TypedDict):
     repository_selection: str
     repositories_added: list[Repository]
     repositories_removed: list[Repository]
-    requester: Optional[User]
+    requester: User | None
     sender: User
 
 
