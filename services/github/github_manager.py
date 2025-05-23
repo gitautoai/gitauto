@@ -560,7 +560,7 @@ def get_remote_file_content_by_url(url: str, token: str) -> str:
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_remote_file_tree(base_args: BaseArgs, max_files: int = 1000):
+def get_remote_file_tree(base_args: BaseArgs, max_files: int = 1000) -> Tuple[list[str], str]:
     """
     Get the file tree of a GitHub repository at a ref branch.
     Uses recursive API call and trims results from deepest level if exceeding max_files.
