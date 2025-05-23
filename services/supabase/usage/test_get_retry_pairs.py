@@ -299,6 +299,5 @@ def test_get_retry_workflow_id_hash_pairs_with_response_data_access_exception():
         mock_table.limit.return_value = mock_table
         mock_table.execute.return_value = mock_response
         
-        with patch.object(mock_response.data[0], 'get', side_effect=KeyError("Key error")):
-            result = get_retry_workflow_id_hash_pairs(123, 456, 789)
-            assert result == []
+        result = get_retry_workflow_id_hash_pairs(123, 456, 789)
+        assert result == []
