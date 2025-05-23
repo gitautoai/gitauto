@@ -1,13 +1,13 @@
 from typing import TypedDict
 
+from services.github.types.common import BaseGitHubEntity
 
-class User(TypedDict):
+
+class User(BaseGitHubEntity):
+    """GitHub user type"""
     login: str
-    id: int
-    node_id: str
     avatar_url: str
     gravatar_id: str
-    url: str
     html_url: str
     followers_url: str
     following_url: str
