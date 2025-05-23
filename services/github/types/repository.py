@@ -1,11 +1,11 @@
 from typing import TypedDict
 
 from services.github.types.owner import Owner
+from services.github.types.common import BaseGitHubEntity
 
 
-class Repository(TypedDict):
-    id: int
-    node_id: str
+class Repository(BaseGitHubEntity):
+    """GitHub repository type"""
     name: str
     full_name: str
     private: bool
@@ -13,7 +13,6 @@ class Repository(TypedDict):
     html_url: str
     description: str | None
     fork: bool
-    url: str
     forks_url: str
     keys_url: str
     collaborators_url: str
