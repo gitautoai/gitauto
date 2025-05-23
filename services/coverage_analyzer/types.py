@@ -2,7 +2,7 @@ from typing import TypedDict, Literal
 
 
 class CoverageReport(TypedDict):
-    package_name: Union[str, None]
+    package_name: str | None
     level: Literal["repository", "directory", "file"]
     full_path: str
     statement_coverage: float
