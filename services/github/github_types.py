@@ -64,7 +64,7 @@ class GitHubInstallationPayload(TypedDict):
     sender: User
 
 
-class GitHubLabeledPayload(TypedDict):
+class GitHubLabeledPayload(TypedDict, total=True):
     action: str
     issue: Issue
     label: Label
@@ -74,7 +74,7 @@ class GitHubLabeledPayload(TypedDict):
     installation: Installation
 
 
-class GitHubPullRequestClosedPayload(TypedDict):
+class GitHubPullRequestClosedPayload(TypedDict, total=True):
     action: str
     number: int
     pull_request: PullRequest
