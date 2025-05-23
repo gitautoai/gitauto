@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-OwnerType = Literal["User", "Organization"]
+from services.github.types.common import OwnerType
 
 
 class Owner(TypedDict):
