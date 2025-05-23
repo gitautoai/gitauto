@@ -30,7 +30,7 @@ class PullRequest(TypedDict):
     requested_reviewers: list[User]
     requested_teams: list[dict]
     labels: list[Label]
-    milestone: Optional[dict]
+    milestone: dict | None
     draft: bool
     commits_url: str
     review_comments_url: str
