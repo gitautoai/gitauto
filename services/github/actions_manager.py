@@ -8,7 +8,7 @@ from requests import get, post
 # Internal libraries
 from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.github.create_headers import create_headers
-from services.github.github_types import Artifact
+from services.github.types.artifact import Artifact
 from utils.error.handle_exceptions import handle_exceptions
 
 

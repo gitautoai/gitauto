@@ -19,20 +19,18 @@ from services.github.comments.create_comment import create_comment
 from services.github.comments.get_comments import get_comments
 from services.github.comments.update_comment import update_comment
 from services.github.github_manager import get_remote_file_content, get_remote_file_tree
-from services.github.github_types import (
-    CheckRun,
-    CheckRunCompletedPayload,
-    CheckSuite,
-    Owner,
-    PullRequest,
-    Repository,
-)
+from services.github.github_types import CheckRunCompletedPayload
 from services.github.pulls_manager import (
     get_pull_request,
     get_pull_request_file_changes,
 )
 from services.github.github_utils import create_permission_url
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.types.check_run import CheckRun
+from services.github.types.check_suite import CheckSuite
+from services.github.types.owner import Owner
+from services.github.types.pull_request import PullRequest
+from services.github.types.repository import Repository
 from services.stripe.subscriptions import get_stripe_product_id
 from services.supabase.owners_manager import get_stripe_customer_id
 from services.supabase.usage.get_retry_pairs import get_retry_workflow_id_hash_pairs
