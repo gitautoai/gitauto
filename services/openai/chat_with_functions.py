@@ -17,7 +17,7 @@ from services.openai.init import create_openai_client
 from utils.error.handle_exceptions import handle_exceptions
 
 
-def find_function_name(openai_messages: list[dict], tool_call_id: str):
+def find_function_name(openai_messages: list[dict], tool_call_id: str) -> str:
     for msg in openai_messages:
         if "tool_calls" not in msg:
             continue
