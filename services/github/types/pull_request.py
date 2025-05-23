@@ -39,7 +39,7 @@ class PullRequest(TypedDict):
     statuses_url: str
     _links: dict
     author_association: str
-    auto_merge: Optional[dict]
+    auto_merge: dict | None
     active_lock_reason: Optional[str]
     merged: bool
     mergeable: Optional[bool]
