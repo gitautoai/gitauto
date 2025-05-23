@@ -1,11 +1,11 @@
 from typing import TypedDict
 
+from services.github.types.common import BaseGitHubEntity
 
-class Organization(TypedDict):
+
+class Organization(BaseGitHubEntity):
+    """GitHub organization type"""
     login: str
-    id: int
-    node_id: str
-    url: str
     repos_url: str
     events_url: str
     hooks_url: str
