@@ -1,4 +1,4 @@
-from typing import Literal, Optional, TypedDict, Union
+from typing import Literal, TypedDict, Union
 
 
 from services.github.types.check_run import CheckRun
