@@ -13,4 +13,4 @@ class Organization(TypedDict):
     members_url: str
     public_members_url: str
     avatar_url: str
-    description: Optional[str]
+    description: str | None
