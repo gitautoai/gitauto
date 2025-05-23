@@ -11,7 +11,7 @@ class CheckSuite(TypedDict):
     head_branch: str
     head_sha: str
     status: str
-    conclusion: Optional[str]
+    conclusion: str | None
     url: str
     before: str
     after: str
