@@ -42,7 +42,7 @@ class PullRequest(TypedDict):
     auto_merge: dict | None
     active_lock_reason: str | None
     merged: bool
-    mergeable: Optional[bool]
+    mergeable: bool | None
     rebaseable: Optional[bool]
     mergeable_state: str
     merged_by: Optional[User]
