@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from services.github.types.label import Label
 from services.github.types.user import User
@@ -15,7 +15,7 @@ class PullRequest(TypedDict):
     diff_url: str
     patch_url: str
     issue_url: str
-    state: str
+    state: Literal["open", "closed", "merged"]
     locked: bool
     title: str
     user: User
