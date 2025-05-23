@@ -57,7 +57,7 @@ class Repository(TypedDict):
     ssh_url: str
     clone_url: str
     svn_url: str
-    homepage: Optional[str]
+    homepage: str | None
     size: int
     stargazers_count: int
     watchers_count: int
