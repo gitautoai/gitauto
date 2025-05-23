@@ -11,7 +11,7 @@ class Repository(TypedDict):
     private: bool
     owner: Owner
     html_url: str
-    description: Optional[str]
+    description: str | None
     fork: bool
     url: str
     forks_url: str
