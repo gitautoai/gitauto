@@ -19,17 +19,17 @@ class Issue(TypedDict):
     labels: list[Label]
     state: str
     locked: bool
-    assignee: Optional[User]
+    assignee: User | None
     assignees: list[User]
-    milestone: Optional[str]
+    milestone: str | None
     comments: int
     created_at: str
     updated_at: str
-    closed_at: Optional[str]
+    closed_at: str | None
     author_association: str
-    active_lock_reason: Optional[str]
-    body: Optional[str]
+    active_lock_reason: str | None
+    body: str | None
     reactions: dict[str, int]
     timeline_url: str
-    performed_via_github_app: Optional[str]
-    state_reason: Optional[str]
+    performed_via_github_app: str | None
+    state_reason: str | None
