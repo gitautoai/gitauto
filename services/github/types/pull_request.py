@@ -1,7 +1,8 @@
-from typing import Literal, TypedDict
+from typing import TypedDict
 
 from services.github.types.label import Label
 from services.github.types.user import User
+from services.github.types.common import PullRequestState
 
 
 class PullRequest(TypedDict):
@@ -15,7 +16,7 @@ class PullRequest(TypedDict):
     diff_url: str
     patch_url: str
     issue_url: str
-    state: Literal["open", "closed", "merged"]
+    state: PullRequestState
     locked: bool
     title: str
     user: User
@@ -46,10 +47,3 @@ class PullRequest(TypedDict):
     rebaseable: bool | None
     mergeable_state: str
     merged_by: User | None
-    comments: int
-    review_comments: int
-    maintainer_can_modify: bool
-    commits: int
-    additions: int
-    deletions: int
-    changed_files: int
