@@ -286,7 +286,9 @@ def test_get_retry_workflow_id_hash_pairs_with_response_execute_exception():
 
 def test_get_retry_workflow_id_hash_pairs_with_response_data_access_exception():
     mock_response = Mock()
-    mock_response.data = [{"retry_workflow_id_hash_pairs": ["hash1"]}]
+    # Create a mock object that raises KeyError when get() is called
+    mock_dict = Mock()
+    mock_dict.get.side_effect = KeyError("Key error")
     
     with patch("services.supabase.usage.get_retry_pairs.supabase") as mock_supabase:
         mock_table = Mock()
