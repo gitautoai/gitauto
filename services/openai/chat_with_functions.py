@@ -29,7 +29,7 @@ def find_function_name(openai_messages: list[dict], tool_call_id: str) -> str:
     return "unknown_function"
 
 
-def convert_tool_result(block: dict, openai_messages: list[dict]):
+def convert_tool_result(block: dict, openai_messages: list[dict]) -> dict[str, str]:
     tool_call_id = cast(str, block.get("tool_use_id"))
     function_name = find_function_name(openai_messages, tool_call_id)
     content = cast(str, block.get("content", ""))
