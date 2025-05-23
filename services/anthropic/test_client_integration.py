@@ -1,7 +1,7 @@
 from anthropic import Anthropic
 from anthropic.types import MessageParam
 
-from config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL_ID_37
+from config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL_ID_40
 from services.anthropic.client import get_anthropic_client
 
 
@@ -16,7 +16,7 @@ def test_anthropic_client_can_count_tokens():
     messages: list[MessageParam] = [{"role": "user", "content": "Hello, Claude!"}]
 
     token_count = client.messages.count_tokens(
-        model=ANTHROPIC_MODEL_ID_37, messages=messages
+        model=ANTHROPIC_MODEL_ID_40, messages=messages
     )
 
     assert token_count.input_tokens > 0

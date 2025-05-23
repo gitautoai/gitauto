@@ -66,10 +66,11 @@ OPENAI_ORG_ID: str = get_env_var(name="OPENAI_ORG_ID")
 OPENAI_TEMPERATURE = 0.0
 
 # Anthropic Credentials from environment variables
-# https://docs.anthropic.com/en/docs/about-claude/models/all-models
+# https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases
 ANTHROPIC_API_KEY: str = get_env_var(name="ANTHROPIC_API_KEY")
 ANTHROPIC_MODEL_ID_35 = "claude-3-5-sonnet-latest"
 ANTHROPIC_MODEL_ID_37 = "claude-3-7-sonnet-latest"
+ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
 
 # Sentry Credentials from environment variables
 SENTRY_DSN: str = get_env_var(name="SENTRY_DSN")

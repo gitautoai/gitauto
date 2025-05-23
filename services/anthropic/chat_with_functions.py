@@ -7,7 +7,7 @@ from anthropic._exceptions import OverloadedError
 from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 
 # Local imports
-from config import ANTHROPIC_MODEL_ID_37, TIMEOUT
+from config import ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40, TIMEOUT
 from services.anthropic.client import get_anthropic_client
 from services.anthropic.exceptions import (
     ClaudeAuthenticationError,
@@ -24,7 +24,7 @@ def chat_with_claude(
     messages: list[MessageParam],
     system_content: str,
     tools: list[dict[str, Any]],
-    model_id: str = ANTHROPIC_MODEL_ID_37,
+    model_id: str = ANTHROPIC_MODEL_ID_40,
 ):
     # https://docs.anthropic.com/en/api/client-sdks
     client = get_anthropic_client()
@@ -58,7 +58,11 @@ def chat_with_claude(
             messages=messages,
             tools=anthropic_tools,
             # https://docs.anthropic.com/en/docs/about-claude/models/all-models#model-comparison-table
-            max_tokens=64000 if model_id == ANTHROPIC_MODEL_ID_37 else 8192,
+            max_tokens=(
+                64000
+                if model_id in [ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40]
+                else 8192
+            ),
             temperature=0.0,
             timeout=TIMEOUT,
         )
