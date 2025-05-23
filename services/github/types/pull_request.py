@@ -45,7 +45,7 @@ class PullRequest(TypedDict):
     mergeable: bool | None
     rebaseable: bool | None
     mergeable_state: str
-    merged_by: Optional[User]
+    merged_by: User | None
     comments: int
     review_comments: int
     maintainer_can_modify: bool
