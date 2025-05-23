@@ -1,13 +1,13 @@
 from typing import TypedDict
 
+from services.github.types.common import BaseGitHubEntity
 
-class Sender(TypedDict):
+
+class Sender(BaseGitHubEntity):
+    """GitHub sender type - represents the user who triggered an event"""
     login: str
-    id: int
-    node_id: str
     avatar_url: str
     gravatar_id: str
-    url: str
     html_url: str
     followers_url: str
     following_url: str
