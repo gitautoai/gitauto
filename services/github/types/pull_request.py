@@ -25,7 +25,7 @@ class PullRequest(TypedDict):
     closed_at: str | None
     merged_at: str | None
     merge_commit_sha: str | None
-    assignee: Optional[User]
+    assignee: User | None
     assignees: list[User]
     requested_reviewers: list[User]
     requested_teams: list[dict]
