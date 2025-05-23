@@ -2,6 +2,7 @@ from typing import TypedDict
 
 from services.github.types.label import Label
 from services.github.types.user import User
+from services.github.types.common import IssueState
 
 
 class Issue(TypedDict):
@@ -17,7 +18,7 @@ class Issue(TypedDict):
     title: str
     user: User
     labels: list[Label]
-    state: str
+    state: IssueState
     locked: bool
     assignee: User | None
     assignees: list[User]
