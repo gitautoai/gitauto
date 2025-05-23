@@ -84,3 +84,6 @@ class GitHubPullRequestClosedPayload(TypedDict):
     installation: Installation
 
 
+# Type alias for GitHub event payloads
+GitHubEventPayload = GitHubInstallationPayload | GitHubLabeledPayload | GitHubPullRequestClosedPayload
+
