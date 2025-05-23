@@ -80,3 +80,17 @@ def test_empty_messages(mock_client):
     messages = []
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
     assert not trimmed
+
+
+def test_trimming_skips_system_messages(mock_client):
+    messages = [
+        make_message("system", "first"),
+        make_message("system", "second"),
+        make_message("user", "third"),
+    ]
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=2500)
+    expected = [
+        make_message("system", "first"),
+        make_message("system", "second"),
+    ]
+    assert trimmed == expected
