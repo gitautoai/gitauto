@@ -1,3 +1,4 @@
+from typing import cast
 import requests
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.create_headers import create_headers
@@ -17,7 +18,7 @@ def get_installation_access_token(installation_id: int):
             timeout=TIMEOUT,
         )
         response.raise_for_status()
-        return response.json()["token"]
+        return cast(str, response.json()["token"])
 
     # Handle old installations suspended before April 28, 2025 (before suspend webhook was introduced)
     except requests.exceptions.HTTPError as err:

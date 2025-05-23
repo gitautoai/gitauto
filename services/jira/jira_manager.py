@@ -13,7 +13,7 @@ from services.github.github_types import BaseArgs
 from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.token.get_installation_token import get_installation_access_token
 from services.supabase.installations_manager import get_installation_info
-from services.supabase.repository_manager import get_repository_rules
+from services.supabase.repositories.get_repository import get_repository_settings
 from utils.error.handle_exceptions import handle_exceptions
 from utils.urls.extract_urls import extract_urls
 
@@ -72,9 +72,9 @@ def deconstruct_jira_payload(payload: dict[str, Any]):
     )
 
     # Get repository rules from Supabase
-    repo_rules = get_repository_rules(repo_id=repo_id)
-    if repo_rules:
-        target_branch = repo_rules.get("target_branch")
+    repo_settings = get_repository_settings(repo_id=repo_id)
+    if repo_settings:
+        target_branch = repo_settings.get("target_branch")
     else:
         target_branch = None
 

@@ -1,9 +1,10 @@
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 
 class Owner(TypedDict):
     login: str
     id: int
+    type: Literal["User", "Organization"]
     node_id: str
     avatar_url: str
     gravatar_id: str
@@ -18,6 +19,5 @@ class Owner(TypedDict):
     repos_url: str
     events_url: str
     received_events_url: str
-    type: str
     user_view_type: str
     site_admin: bool
