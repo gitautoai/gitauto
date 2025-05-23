@@ -43,7 +43,7 @@ class PullRequest(TypedDict):
     active_lock_reason: str | None
     merged: bool
     mergeable: bool | None
-    rebaseable: Optional[bool]
+    rebaseable: bool | None
     mergeable_state: str
     merged_by: Optional[User]
     comments: int
