@@ -125,6 +125,7 @@ def deconstruct_jira_payload(payload: dict[str, Any]):
         "reviewers": reviewers,
         "github_urls": github_urls,
         "other_urls": other_urls,
+        **(repo_settings or {}),
     }
 
     return base_args
