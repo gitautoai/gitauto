@@ -5,7 +5,8 @@ import requests
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.github.create_headers import create_headers
-from services.github.github_types import BaseArgs, GitHubContentInfo
+from services.github.github_types import BaseArgs
+from services.github.types.contents import Contents
 from utils.error.handle_exceptions import handle_exceptions
 from utils.file_manager import apply_patch
 
@@ -32,7 +33,7 @@ def apply_diff_to_file(
         original_text, sha = "", ""
     else:
         get_response.raise_for_status()
-        file_info: GitHubContentInfo = get_response.json()
+        file_info: Contents = get_response.json()
 
         # Handle case where response is a list (directory listing) instead of a single file
         if isinstance(file_info, list):
