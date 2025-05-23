@@ -69,7 +69,7 @@ class Repository(TypedDict):
     has_pages: bool
     has_discussions: bool
     forks_count: int
-    mirror_url: Optional[str]
+    mirror_url: str | None
     archived: bool
     disabled: bool
     open_issues_count: int
