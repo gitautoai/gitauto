@@ -435,8 +435,8 @@ def get_owner_name(owner_id: int, token: str) -> str | None:
 def get_remote_file_content(
     file_path: str,
     base_args: BaseArgs,
-    line_number: Optional[int] = None,
-    keyword: Optional[str] = None,
+    line_number: int | None = None,
+    keyword: str | None = None,
     **_kwargs,
 ) -> str:
     """
