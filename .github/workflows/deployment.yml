@@ -1,9 +1,12 @@
 name: Deployment to AWS Lambda with Docker
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [ main ]
   push:
-    branches:
-      - '*'
+    branches: [ main ]
+  workflow_dispatch:
 
 # Global environment variables
 env:
@@ -76,4 +79,10 @@ jobs:
         env:
           SLACK_MESSAGE: ${{ job.status == 'success' && 'Deployment successful' || 'Deployment failed' }}
         run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"msg":"'"${SLACK_MESSAGE}"'"}' $SLACK_WEBHOOK_URL
+          PR_INFO=""
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            PR_URL="${{ github.event.pull_request.html_url }}"
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            PR_INFO=" for <${PR_URL}|${PR_TITLE}>"
+          fi
+          curl -X POST -H 'Content-type: application/json' --data "{\"msg\":\"${SLACK_MESSAGE}${PR_INFO}\"}" $SLACK_WEBHOOK_URL
