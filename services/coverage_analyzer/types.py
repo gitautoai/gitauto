@@ -1,4 +1,4 @@
-from typing import Union, TypedDict, Literal
+from typing import TypedDict, Literal
 
 
 class CoverageReport(TypedDict):
