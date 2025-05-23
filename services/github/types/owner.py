@@ -1,10 +1,12 @@
 from typing import Literal, TypedDict
 
+OwnerType = Literal["User", "Organization"]
+
 
 class Owner(TypedDict):
     login: str
     id: int
-    type: Literal["User", "Organization"]
+    type: OwnerType
     node_id: str
     avatar_url: str
     gravatar_id: str
