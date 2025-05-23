@@ -80,3 +80,19 @@ def test_empty_messages(mock_client):
     messages = []
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=1000)
     assert not trimmed
+
+
+def test_all_system_messages(mock_client):
+    messages = [
+        make_message("system", "first system message"),
+        make_message("system", "second system message"),
+        make_message("system", "third system message"),
+    ]
+    
+    # Mock the token count to be higher than max_tokens to trigger trimming
+    mock_client.messages.count_tokens.side_effect = lambda messages, model: Mock(
+        input_tokens=5000
+    )
+    
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_tokens=3000)
+    assert trimmed == messages  # All messages should be kept as they're all system messages
