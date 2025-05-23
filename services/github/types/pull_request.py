@@ -40,7 +40,7 @@ class PullRequest(TypedDict):
     _links: dict
     author_association: str
     auto_merge: dict | None
-    active_lock_reason: Optional[str]
+    active_lock_reason: str | None
     merged: bool
     mergeable: Optional[bool]
     rebaseable: Optional[bool]
