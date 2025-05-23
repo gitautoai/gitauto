@@ -69,6 +69,15 @@ async function postLinkedIn({ context }) {
   await sleep(getRandomDelay());
   await likePost(gitautoUrn, wesPostUrn); // Company likes Wes's post
   await likePost(wesUrn, companyPostUrn); // Wes likes Company's post
+
+  // Send the post links to Slack webhook
+  await fetch(process.env.SLACK_WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      msg: `Posted to LinkedIn! https://www.linkedin.com/feed/update/urn:li:activity:${companyPostUrn} and https://www.linkedin.com/feed/update/urn:li:activity:${wesPostUrn}`,
+    }),
+  });
 }
 
 module.exports = postLinkedIn;
