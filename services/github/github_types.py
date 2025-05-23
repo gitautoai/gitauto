@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict, Union
+from typing import Literal, TypedDict
 
 
 from services.github.types.check_run import CheckRun
@@ -8,7 +8,7 @@ from services.github.types.issue import Issue
 from services.github.types.label import Label
 from services.github.types.organization import Organization
 from services.github.types.common import OwnerType
-from services.github.types.pull_request import PullRequest
+from services.github.types.pull_request import PullRequest, PullRequestState
 from services.github.types.repository import Repository
 from services.github.types.sender import Sender
 from services.github.types.user import User
@@ -84,6 +84,3 @@ class GitHubPullRequestClosedPayload(TypedDict):
     installation: Installation
 
 
-GitHubEventPayload = Union[
-    GitHubInstallationPayload, GitHubLabeledPayload, GitHubPullRequestClosedPayload
-]
