@@ -2,10 +2,14 @@ from typing import TypedDict
 
 from services.github.types.permission import Permissions
 from services.github.types.user import User
+from services.github.types.common import BaseGitHubEntity
 
 
-class InstallationDetails(TypedDict):
-    id: int
+class InstallationDetails(BaseGitHubEntity):
+    """GitHub App installation details type
+    
+    This is the full version of Installation with all details
+    """
     account: User
     repository_selection: str
     access_tokens_url: str
