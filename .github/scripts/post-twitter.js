@@ -77,6 +77,16 @@ async function postTwitter({ context }) {
   const userWes = await clientWes.v2.me();
   await clientWes.v2.like(userWes.data.id, companyTweet.data.id);
   // await Promise.all(communityTweets.map((tweet) => clientWes.v2.like(tweet.data.id)));
+
+  // Send to Slack webhook
+  await fetch(process.env.SLACK_WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      msg: `Posted to X! https://x.com/gitautoai/status/${companyTweet.data.id} and https://x.com/hiroshinishio/status/${wesTweet.data.id}`,
+    }),
+  });
+
 }
 
 module.exports = postTwitter;
