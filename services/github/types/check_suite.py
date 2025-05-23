@@ -1,5 +1,5 @@
-import datetime
-from typing import Optional, TypedDict
+from datetime import datetime
+from typing import TypedDict
 
 from services.github.types.app import App
 from services.github.types.pull_request import PullRequest
