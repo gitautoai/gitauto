@@ -1,6 +1,6 @@
 # Standard library imports
 from datetime import datetime
-from typing import Literal
+from typing import Literal, cast
 
 # Local imports
 from config import PRODUCT_ID, ISSUE_NUMBER_FORMAT, GITHUB_APP_USER_ID
@@ -11,7 +11,7 @@ from services.github.issues_manager import get_parent_issue
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.issue import Issue
 from services.github.types.repository import Repository
-from services.supabase.repository_manager import get_repository_rules
+from services.supabase.repositories.get_repository import get_repository_settings
 from utils.error.handle_exceptions import handle_exceptions
 from utils.urls.extract_urls import extract_urls
 
@@ -28,39 +28,40 @@ def create_permission_url(
 
 @handle_exceptions(default_return_value={}, raise_on_error=True)
 def deconstruct_github_payload(payload: GitHubLabeledPayload):
-    """Extract and format base arguments and related metadata from GitHub payload."""
     # Extract issue related variables
     issue: Issue = payload["issue"]
-    issue_number: int = issue["number"]
-    issue_title: str = issue["title"]
-    issue_body: str = issue["body"] or ""
-    issuer_name: str = issue["user"]["login"]
+    issue_number = issue["number"]
+    issue_title = issue["title"]
+    issue_body = issue["body"] or ""
+    issuer_name = issue["user"]["login"]
 
     # Extract repository related variables
     repo: Repository = payload["repository"]
-    repo_id: int = repo["id"]
-    repo_name: str = repo["name"]
-    clone_url: str = repo["clone_url"]
-    is_fork: bool = repo.get("fork", False)
+    repo_id = repo["id"]
+    repo_name = repo["name"]
+    clone_url = repo["clone_url"]
+    is_fork = repo.get("fork", False)
 
     # Extract owner related variables
-    owner_type: Literal["Organization", "User"] = repo["owner"]["type"]
-    owner_name: str = repo["owner"]["login"]
-    owner_id: int = repo["owner"]["id"]
+    owner_type = repo["owner"]["type"]
+    owner_name = repo["owner"]["login"]
+    owner_id = repo["owner"]["id"]
 
     # Extract branch related variables
-    base_branch_name: str = repo["default_branch"]  # like "main"
+    base_branch_name = repo["default_branch"]  # like "main"
 
     # Get installation access token
-    installation_id: int = payload["installation"]["id"]
-    token: str = get_installation_access_token(installation_id=installation_id)
+    installation_id = payload["installation"]["id"]
+    token = get_installation_access_token(installation_id=installation_id)
+    if not token:
+        raise ValueError(
+            f"Installation access token is not found for {owner_name}/{repo_name}"
+        )
 
     # Get repository rules from Supabase
-    repo_rules = get_repository_rules(repo_id=repo_id)
-    print(f"Repo rules: {repo_rules}")
-    if repo_rules:
-        target_branch = repo_rules.get("target_branch")
-        print(f"Target branch: {target_branch}")
+    repo_settings = get_repository_settings(repo_id=repo_id)
+    if repo_settings:
+        target_branch = repo_settings.get("target_branch")
     else:
         target_branch = None
 
@@ -71,21 +72,21 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
         base_branch_name = target_branch
         print(f"Using target branch: {target_branch}")
 
-    date: str = datetime.now().strftime(format="%Y%m%d")  # like "20241224"
-    time: str = datetime.now().strftime(format="%H%M%S")  # like "120000" means 12:00:00
+    date = datetime.now().strftime(format="%Y%m%d")  # like "20241224"
+    time = datetime.now().strftime(format="%H%M%S")  # like "120000" means 12:00:00
     new_branch_name = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}{issue_number}-{date}-{time}"
 
     # Extract sender related variables
-    sender_id: int = payload["sender"]["id"]
-    sender_name: str = payload["sender"]["login"]
-    is_automation: bool = sender_id == GITHUB_APP_USER_ID
-    reviewers: list[str] = list(
+    sender_id = payload["sender"]["id"]
+    sender_name = payload["sender"]["login"]
+    is_automation = sender_id == GITHUB_APP_USER_ID
+    reviewers = list(
         set(name for name in (sender_name, issuer_name) if "[bot]" not in name)
     )
 
     # Extract other information
     github_urls, other_urls = extract_urls(text=issue_body)
-    sender_email: str = get_user_public_email(username=sender_name, token=token)
+    sender_email = get_user_public_email(username=sender_name, token=token)
 
     # Extract its parent issue
     parent_issue = get_parent_issue(
@@ -94,11 +95,11 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
         issue_number=issue_number,
         token=token,
     )
-    parent_issue_number: int | None = (
-        parent_issue.get("number") if parent_issue else None
+    parent_issue_number = (
+        cast(int, parent_issue.get("number")) if parent_issue else None
     )
-    parent_issue_title: str | None = parent_issue.get("title") if parent_issue else None
-    parent_issue_body: str | None = parent_issue.get("body") if parent_issue else None
+    parent_issue_title = cast(str, parent_issue.get("title")) if parent_issue else None
+    parent_issue_body = cast(str, parent_issue.get("body")) if parent_issue else None
 
     base_args: BaseArgs = {
         "input_from": "github",
