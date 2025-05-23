@@ -19,8 +19,8 @@ class InstallationDetails(TypedDict):
     events: list[str]
     created_at: str
     updated_at: str
-    single_file_name: Optional[str]
+    single_file_name: str | None
     has_multiple_single_files: bool
     single_file_paths: list[str]
-    suspended_by: Optional[str]
-    suspended_at: Optional[str]
+    suspended_by: str | None
+    suspended_at: str | None
