@@ -157,7 +157,7 @@ async def add_reaction_to_issue(
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -> None:
+def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -> dict[str, Any]:
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
