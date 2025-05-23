@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from services.github.types.label import Label
 from services.github.types.user import User
