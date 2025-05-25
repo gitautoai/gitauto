@@ -135,3 +135,35 @@ def test_is_repo_forked_with_empty_strings():
             headers=mock_get.call_args[1]["headers"],
             timeout=120
         )
+
+def test_is_repo_forked_handles_attribute_error():
+    with patch("services.github.repositories.is_repo_forked.get") as mock_get:
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {"fork": True}
+        mock_get.return_value = mock_response
+        del mock_response.json
+        
+        result = is_repo_forked(OWNER, REPO, TOKEN)
+        
+        assert result is False
+        mock_get.assert_called_once()
+
+
+def test_is_repo_forked_handles_type_error():
+    with patch("services.github.repositories.is_repo_forked.get") as mock_get:
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {"fork": "not_a_boolean"}
+        mock_get.return_value = mock_response
+        
+        result = is_repo_forked(OWNER, REPO, TOKEN)
+        
+        assert result is False
+        mock_get.assert_called_once()
+        mock_response.raise_for_status.assert_called_once()
+        mock_response.json.assert_called_once()
+
+
+def test_is_repo_forked_with_none_values():
+    with patch("services.github.repositories.is_repo_forked.get") as mock_get:
