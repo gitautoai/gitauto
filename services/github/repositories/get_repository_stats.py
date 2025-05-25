@@ -1,12 +1,9 @@
 # Third party imports
-import subprocess
 import json
-from typing import Any
-from requests import get
+import subprocess
+from typing import cast
 
 # Local imports
-from config import GITHUB_API_URL, TIMEOUT
-from services.github.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -19,7 +16,7 @@ DEFAULT_REPO_STATS = {
 
 
 @handle_exceptions(default_return_value=DEFAULT_REPO_STATS, raise_on_error=False)
-def get_repository_stats(local_path: str) -> dict[str, Any]:
+def get_repository_stats(local_path: str):
     cloc_result = subprocess.run(
         ["cloc", local_path, "--json"], check=True, capture_output=True, text=True
     )
@@ -36,10 +33,10 @@ def get_repository_stats(local_path: str) -> dict[str, Any]:
     cloc_data = json.loads(json_str)
 
     # Extract statistics
-    file_count = cloc_data.get("header", {}).get("n_files", 0)
-    blank_lines = cloc_data.get("SUM", {}).get("blank", 0)
-    comment_lines = cloc_data.get("SUM", {}).get("comment", 0)
-    code_lines = cloc_data.get("SUM", {}).get("code", 0)
+    file_count = cast(int, cloc_data.get("header", {}).get("n_files", 0))
+    blank_lines = cast(int, cloc_data.get("SUM", {}).get("blank", 0))
+    comment_lines = cast(int, cloc_data.get("SUM", {}).get("comment", 0))
+    code_lines = cast(int, cloc_data.get("SUM", {}).get("code", 0))
 
     return {
         "file_count": file_count,
@@ -47,13 +44,3 @@ def get_repository_stats(local_path: str) -> dict[str, Any]:
         "comment_lines": comment_lines,
         "code_lines": code_lines,
     }
-
-
-@handle_exceptions(default_return_value={}, raise_on_error=False)
-def get_repository_languages(owner: str, repo: str, token: str) -> dict[str, int]:
-    """https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-repository-languages"""
-    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/languages"
-    headers = create_headers(token=token)
-    response = get(url=url, headers=headers, timeout=TIMEOUT)
-    response.raise_for_status()
-    return response.json()
