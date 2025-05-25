@@ -136,6 +136,7 @@ def test_is_repo_forked_with_empty_strings():
             timeout=120
         )
 
+
 def test_is_repo_forked_handles_attribute_error():
     with patch("services.github.repositories.is_repo_forked.get") as mock_get:
         mock_response = Mock()
