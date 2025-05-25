@@ -5,7 +5,7 @@ from typing import Any
 
 # Local imports
 from services.git.clone_repo import clone_repo
-from services.github.repo_manager import get_repository_stats
+from services.github.repositories.get_repository_stats import get_repository_stats
 from services.supabase.repositories.upsert_repository import upsert_repository
 
 

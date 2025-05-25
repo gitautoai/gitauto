@@ -28,6 +28,7 @@ from services.openai.instructions.update_comment import (
 )
 from utils.colors.colorize_log import colorize
 from utils.error.handle_exceptions import handle_exceptions
+from utils.number.is_valid_line_number import is_valid_line_number
 from utils.progress_bar.progress_bar import create_progress_bar
 
 
@@ -177,7 +178,7 @@ def chat_with_agent(
         if "line_number" in tool_args:
             line_info = (
                 f" around line {tool_args['line_number']}"
-                if tool_args["line_number"] > 1
+                if is_valid_line_number(tool_args["line_number"])
                 else ""
             )
             msg = f"Read `{tool_args['file_path']}`{line_info}."
