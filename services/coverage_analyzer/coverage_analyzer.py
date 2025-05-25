@@ -4,7 +4,7 @@ from services.github.actions_manager import get_workflow_artifacts, download_art
 from services.github.github_manager import get_remote_file_tree
 from services.github.repo_manager import get_repository_languages
 from services.github.token.get_installation_token import get_installation_access_token
-from services.supabase.coverage_manager import create_or_update_coverages
+from services.supabase.coverages.upsert_coverages import upsert_coverages
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -118,7 +118,7 @@ async def handle_workflow_coverage(
                 )
 
     if coverage_data:
-        create_or_update_coverages(
+        upsert_coverages(
             coverages_list=coverage_data,
             owner_id=owner_id,
             repo_id=repo_id,
