@@ -14,7 +14,7 @@ def trim_messages_to_token_limit(
     messages: list[Any],
     client: Anthropic,
     model: str = ANTHROPIC_MODEL_ID_40,
-    max_tokens: int = 200_000,
+    max_tokens: int = 190_000,
 ):
     messages = list(messages)  # Make a copy to avoid mutating the original
     token_input = cast(
