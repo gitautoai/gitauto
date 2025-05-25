@@ -52,7 +52,8 @@ from services.supabase.users_manager import (
     upsert_user,
 )
 from utils.error.handle_exceptions import handle_exceptions
-from utils.file_manager import get_file_content, run_command
+from utils.files.get_file_content import get_file_content
+from utils.command.run_command import run_command
 from utils.new_lines.detect_new_line import detect_line_break
 from utils.text.text_copy import request_issue_comment, request_limit_reached
 from utils.urls.parse_urls import parse_github_url
