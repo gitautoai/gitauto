@@ -86,7 +86,7 @@ def test_filters_non_serializable_items(mock_supabase):
 
 @mock.patch("services.supabase.coverages.upsert_coverages.supabase")
 def test_returns_none_when_all_items_filtered(mock_supabase):
-    # Setup mock supabase with proper chaining
+    # Setup mock supabase
     mock_delete_execute = mock.MagicMock()
     mock_eq = mock.MagicMock()
     mock_eq.execute = mock_delete_execute
@@ -143,8 +143,9 @@ def test_returns_none_when_all_items_filtered(mock_supabase):
     # Verify that upsert was not called
     mock_supabase.table.return_value.upsert.assert_not_called()
 
-    # Verify that delete was called (to clean up files that no longer exist)
-    mock_delete_execute.assert_called_once()
+    # Verify that delete was not called
+    # When all items are filtered, database operations are not executed
+    mock_delete_execute.assert_not_called()
 
 
 @mock.patch("services.supabase.coverages.upsert_coverages.supabase")
