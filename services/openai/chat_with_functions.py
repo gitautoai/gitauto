@@ -63,12 +63,18 @@ def chat_with_openai(
         content = msg.get("content", "")
 
         if not isinstance(content, list):
-            openai_messages.append(
-                {
-                    "role": msg.get("role", ""),
-                    "content": content,
-                }
-            )
+            # Check if the message has tool_calls
+            if "tool_calls" in msg:
+                openai_messages.append(
+                    {"role": msg.get("role", ""), "tool_calls": msg["tool_calls"]}
+                )
+            else:
+                openai_messages.append(
+                    {
+                        "role": msg.get("role", ""),
+                        "content": content,
+                    }
+                )
             continue
 
         # Handle messages with tool use
