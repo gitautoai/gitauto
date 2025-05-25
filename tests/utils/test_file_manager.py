@@ -1,4 +1,4 @@
-from utils.file_manager import apply_patch
+from utils.files.apply_patch import apply_patch
 
 
 def test_apply_patch():

@@ -8,7 +8,7 @@ from services.github.create_headers import create_headers
 from services.github.github_types import BaseArgs
 from services.github.types.contents import Contents
 from utils.error.handle_exceptions import handle_exceptions
-from utils.file_manager import apply_patch
+from utils.files.apply_patch import apply_patch
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
