@@ -167,3 +167,14 @@ def test_is_repo_forked_handles_type_error():
 
 def test_is_repo_forked_with_none_values():
     with patch("services.github.repositories.is_repo_forked.get") as mock_get:
+        mock_response = Mock()
+        mock_response.json.return_value = {"fork": False}
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+        
+        result = is_repo_forked(None, None, None)
+        
+        assert result is False
+        mock_get.assert_called_once()
+        mock_response.raise_for_status.assert_called_once()
+        mock_response.json.assert_called_once()
