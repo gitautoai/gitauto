@@ -1,5 +1,6 @@
 # Standard imports
 from typing import TypedDict, Literal
+import json
 
 # Local imports
 from services.supabase.client import supabase
@@ -21,7 +22,7 @@ class CoverageItem(TypedDict):
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def create_or_update_coverages(
+def upsert_coverages(
     coverages_list: list[CoverageItem],
     owner_id: int,
     repo_id: int,
@@ -58,28 +59,38 @@ def create_or_update_coverages(
         supabase.table("coverages").delete().eq("repo_id", repo_id).execute()
 
     # Prepare data for upsert by adding common fields to each coverage item
-    upsert_data = [
-        {
-            "owner_id": owner_id,
-            "repo_id": repo_id,
-            "branch_name": branch_name,
-            "primary_language": primary_language,
-            "path_coverage": 0,
-            **coverage,
-            "created_by": user_name,
-            "updated_by": user_name,
-        }
-        for coverage in seen.values()
-    ]
+    upsert_data = []
+    for coverage in seen.values():
+        try:
+            item = {
+                "owner_id": owner_id,
+                "repo_id": repo_id,
+                "branch_name": branch_name,
+                "primary_language": primary_language,
+                "path_coverage": 0,
+                **coverage,
+                "created_by": user_name,
+                "updated_by": user_name,
+            }
 
-    # Set uncovered fields to None when the coverage is 100%
-    for item in upsert_data:
-        if item["line_coverage"] == 100:
-            item["uncovered_lines"] = None
-        if item["function_coverage"] == 100:
-            item["uncovered_functions"] = None
-        if item["branch_coverage"] == 100:
-            item["uncovered_branches"] = None
+            # Set uncovered fields to None when the coverage is 100%
+            if item["line_coverage"] == 100:
+                item["uncovered_lines"] = None
+            if item["function_coverage"] == 100:
+                item["uncovered_functions"] = None
+            if item["branch_coverage"] == 100:
+                item["uncovered_branches"] = None
+
+            # Test if item is JSON serializable
+            json.dumps(item)
+            upsert_data.append(item)
+        except (TypeError, ValueError, OverflowError) as e:
+            print(f"Skipping non-serializable item: {str(e)}\nItem data: {coverage}")
+            continue
+
+    if not upsert_data:
+        print("No valid items to upsert after filtering")
+        return None
 
     # Upsert data (insert if not exists, update if exists)
     result = (
