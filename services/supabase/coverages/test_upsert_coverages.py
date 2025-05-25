@@ -86,11 +86,18 @@ def test_filters_non_serializable_items(mock_supabase):
 
 @mock.patch("services.supabase.coverages.upsert_coverages.supabase")
 def test_returns_none_when_all_items_filtered(mock_supabase):
-    # Setup mock supabase
+    # Setup mock supabase with proper chaining
     mock_delete_execute = mock.MagicMock()
-    mock_supabase.table.return_value.delete.return_value.eq.return_value.execute = (
-        mock_delete_execute
-    )
+    mock_eq = mock.MagicMock()
+    mock_eq.execute = mock_delete_execute
+
+    mock_delete = mock.MagicMock()
+    mock_delete.eq.return_value = mock_eq
+
+    mock_table = mock.MagicMock()
+    mock_table.delete.return_value = mock_delete
+
+    mock_supabase.table.return_value = mock_table
 
     # Create a list with only non-serializable items
     non_serializable_value = mock.MagicMock()
