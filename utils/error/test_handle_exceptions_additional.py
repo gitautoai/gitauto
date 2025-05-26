@@ -102,8 +102,8 @@ def test_handle_exceptions_github_rate_limit_negative_wait_time(mock_warning, mo
     
     result = test_func()
     assert result == "success"
-    # Should sleep for max(0, 1500 - 2000 + 5) = max(0, -495) = 0
-    mock_sleep.assert_called_once_with(5)
+    # max(0, 1500 - 2000 + 5) = max(0, -495) = 0
+    mock_sleep.assert_called_once_with(0)
     mock_warning.assert_called_once()
 
 
