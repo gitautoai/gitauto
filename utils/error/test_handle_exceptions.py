@@ -179,7 +179,8 @@ def test_handle_exceptions_github_rate_limit_with_default_reset(mock_time, mock_
     
     result = test_func()
     assert result == "success"
-    mock_sleep.assert_called_once_with(-995)
+    # max(0, 3600 - 1000 + 5) = max(0, 2605) = 2605
+    mock_sleep.assert_called_once_with(2605)
 
 
 @patch('time.sleep')
