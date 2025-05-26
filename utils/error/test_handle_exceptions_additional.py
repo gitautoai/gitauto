@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 
+import pytest
 import requests
 
 from utils.error.handle_exceptions import handle_exceptions, truncate_value
@@ -101,8 +102,8 @@ def test_handle_exceptions_github_rate_limit_negative_wait_time(mock_warning, mo
     
     result = test_func()
     assert result == "success"
-    # Should sleep for max(0, negative_value) = 0, but implementation adds 5 seconds buffer
-    mock_sleep.assert_called_once_with(5)  # max(0, 1500 - 2000 + 5) = max(0, -495) = 0, but with 5 second buffer
+    # Should sleep for max(0, negative_value + 5) = max(0, 1500 - 2000 + 5) = max(0, -495) = 0
+    mock_sleep.assert_called_once_with(0)
     mock_warning.assert_called_once()
 
 
