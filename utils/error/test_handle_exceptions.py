@@ -50,6 +50,21 @@ def test_truncate_value_other_types():
     assert truncate_value(True) == True
 
 
+def test_truncate_value_nested_structures():
+    nested_dict = {
+        "level1": {
+            "level2": ["a" * 50, ("b" * 50, "c" * 50)]
+        }
+    }
+    result = truncate_value(nested_dict)
+    expected = {
+        "level1": {
+            "level2": ["a" * 30 + "...", ("b" * 30 + "...", "c" * 30 + "...")]
+        }
+    }
+    assert result == expected
+
+
 def test_handle_exceptions_success():
     @handle_exceptions()
     def test_func():
@@ -135,6 +150,39 @@ def test_handle_exceptions_github_primary_rate_limit(mock_warning, mock_time, mo
 
 
 @patch('time.sleep')
+@patch('time.time')
+def test_handle_exceptions_github_rate_limit_with_default_reset(mock_time, mock_sleep):
+    mock_time.return_value = 1000
+    
+    mock_response = Mock()
+    mock_response.status_code = 403
+    mock_response.reason = "Forbidden"
+    mock_response.text = "Rate limit exceeded"
+    mock_response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Used": "5000"
+    }
+    
+    http_error = requests.exceptions.HTTPError()
+    http_error.response = mock_response
+    
+    call_count = 0
+    
+    @handle_exceptions(api_type="github")
+    def test_func():
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            raise http_error
+        return "success"
+    
+    result = test_func()
+    assert result == "success"
+    mock_sleep.assert_called_once_with(-995)
+
+
+@patch('time.sleep')
 @patch('logging.warning')
 def test_handle_exceptions_github_secondary_rate_limit(mock_warning, mock_sleep):
     mock_response = Mock()
@@ -165,6 +213,36 @@ def test_handle_exceptions_github_secondary_rate_limit(mock_warning, mock_sleep)
     assert result == "success"
     mock_sleep.assert_called_once_with(30)
     mock_warning.assert_called_once()
+
+
+@patch('time.sleep')
+def test_handle_exceptions_github_secondary_rate_limit_default_retry(mock_sleep):
+    mock_response = Mock()
+    mock_response.status_code = 429
+    mock_response.reason = "Too Many Requests"
+    mock_response.text = "You have exceeded a secondary rate limit"
+    mock_response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "100",
+        "X-RateLimit-Used": "4900"
+    }
+    
+    http_error = requests.exceptions.HTTPError()
+    http_error.response = mock_response
+    
+    call_count = 0
+    
+    @handle_exceptions(api_type="github")
+    def test_func():
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            raise http_error
+        return "success"
+    
+    result = test_func()
+    assert result == "success"
+    mock_sleep.assert_called_once_with(60)
 
 
 @patch('logging.error')
@@ -212,6 +290,30 @@ def test_handle_exceptions_github_other_error_raise(mock_error):
     
     with pytest.raises(requests.exceptions.HTTPError):
         test_func()
+    mock_error.assert_called_once()
+
+
+@patch('logging.error')
+def test_handle_exceptions_github_429_status_no_secondary_rate_limit(mock_error):
+    mock_response = Mock()
+    mock_response.status_code = 429
+    mock_response.reason = "Too Many Requests"
+    mock_response.text = "Regular rate limit"
+    mock_response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "100",
+        "X-RateLimit-Used": "4900"
+    }
+    
+    http_error = requests.exceptions.HTTPError()
+    http_error.response = mock_response
+    
+    @handle_exceptions(api_type="github", default_return_value="default")
+    def test_func():
+        raise http_error
+    
+    result = test_func()
+    assert result == "default"
     mock_error.assert_called_once()
 
 
@@ -430,64 +532,9 @@ def test_handle_exceptions_with_complex_args():
     assert result == "default"
 
 
-@patch('time.sleep')
-@patch('time.time')
-def test_handle_exceptions_github_rate_limit_with_default_reset(mock_time, mock_sleep):
-    mock_time.return_value = 1000
-    
-    mock_response = Mock()
-    mock_response.status_code = 403
-    mock_response.reason = "Forbidden"
-    mock_response.text = "Rate limit exceeded"
-    mock_response.headers = {
-        "X-RateLimit-Limit": "5000",
-        "X-RateLimit-Remaining": "0",
-        "X-RateLimit-Used": "5000"
-    }
-    
-    http_error = requests.exceptions.HTTPError()
-    http_error.response = mock_response
-    
-    call_count = 0
-    
-    @handle_exceptions(api_type="github")
+def test_handle_exceptions_preserves_function_metadata():
+    @handle_exceptions()
     def test_func():
-        nonlocal call_count
-        call_count += 1
-        if call_count == 1:
-            raise http_error
-        return "success"
+        return "test"
     
-    result = test_func()
-    assert result == "success"
-    mock_sleep.assert_called_once_with(-995)
-
-
-@patch('time.sleep')
-def test_handle_exceptions_github_secondary_rate_limit_default_retry(mock_sleep):
-    mock_response = Mock()
-    mock_response.status_code = 429
-    mock_response.reason = "Too Many Requests"
-    mock_response.text = "You have exceeded a secondary rate limit"
-    mock_response.headers = {
-        "X-RateLimit-Limit": "5000",
-        "X-RateLimit-Remaining": "100",
-        "X-RateLimit-Used": "4900"
-    }
-    
-    http_error = requests.exceptions.HTTPError()
-    http_error.response = mock_response
-    
-    call_count = 0
-    
-    @handle_exceptions(api_type="github")
-    def test_func():
-        nonlocal call_count
-        call_count += 1
-        if call_count == 1:
-            raise http_error
-        return "success"
-    
-    result = test_func()
-    assert result == "success"
-    mock_sleep.assert_called_once_with(60)
+    assert test_func.__name__ == "test_func"
