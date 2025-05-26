@@ -191,3 +191,56 @@ def test_handle_exceptions_github_429_non_secondary_rate_limit(mock_error):
     result = test_func()
     assert result == "default"
     mock_error.assert_called_once()
+
+
+@patch('logging.error')
+def test_handle_exceptions_google_non_429_error(mock_error):
+    """Test Google API with non-429 error"""
+    mock_response = Mock()
+    mock_response.status_code = 500
+    mock_response.reason = "Internal Server Error"
+    mock_response.text = "Server error"
+    
+    http_error = requests.exceptions.HTTPError()
+    http_error.response = mock_response
+    
+    @handle_exceptions(api_type="google", default_return_value="default")
+    def test_func():
+        raise http_error
+    
+    result = test_func()
+    assert result == "default"
+    mock_error.assert_called_once()
+
+
+def test_truncate_value_zero_max_length():
+    """Test truncate_value with max_length=0"""
+    result = truncate_value("test", max_length=0)
+    assert result == "..."
+
+
+def test_truncate_value_exact_max_length():
+    """Test truncate_value with string exactly at max_length"""
+    result = truncate_value("12345", max_length=5)
+    assert result == "12345"  # Should not be truncated
+
+
+def test_truncate_value_one_char_over_max():
+    """Test truncate_value with string one character over max_length"""
+    result = truncate_value("123456", max_length=5)
+    assert result == "12345..."
+
+
+@patch('logging.error')
+def test_handle_exceptions_response_none(mock_error):
+    """Test HTTP error with response set to None"""
+    http_error = requests.exceptions.HTTPError("Error")
+    http_error.response = None
+    
+    @handle_exceptions(default_return_value="default")
+    def test_func():
+        raise http_error
+    
+    result = test_func()
+    assert result == "default"
+    mock_error.assert_called_once()
