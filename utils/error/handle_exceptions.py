@@ -1,130 +1,145 @@
-# This is a placeholder to see the actual file content
-# pylint: disable=broad-exception-caught
-
-# Standard imports
-from functools import wraps
+import functools
 import json
 import logging
 import time
-from typing import Any, Callable, Tuple, TypeVar
+from typing import Any, Callable, Optional, Union
 
-# Third party imports
 import requests
 
-F = TypeVar("F", bound=Callable[..., Any])
 
-
-def truncate_value(value: Any, max_length: int = 30):
-    if isinstance(value, str) and len(value) > max_length:
-        return f"{value[:max_length]}..."
-    if isinstance(value, dict):
+def truncate_value(value: Any, max_length: int = 30) -> Any:
+    """
+    Recursively truncate string values in data structures.
+    
+    Args:
+        value: The value to truncate (can be string, dict, list, tuple, or other)
+        max_length: Maximum length for strings before truncation
+        
+    Returns:
+        The value with strings truncated if they exceed max_length
+    """
+    if isinstance(value, str):
+        if len(value) > max_length:
+            return value[:max_length] + "..."
+        return value
+    elif isinstance(value, dict):
         return {k: truncate_value(v, max_length) for k, v in value.items()}
-    if isinstance(value, list):
+    elif isinstance(value, list):
         return [truncate_value(item, max_length) for item in value]
-    if isinstance(value, tuple):
+    elif isinstance(value, tuple):
         return tuple(truncate_value(item, max_length) for item in value)
-    return value
+    else:
+        return value
 
 
 def handle_exceptions(
     default_return_value: Any = None,
     raise_on_error: bool = False,
-    api_type: str = "github",  # "github" or "google"
-) -> Callable[[F], F]:
-    """https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#checking-the-status-of-your-rate-limit"""
-
-    def decorator(func: F) -> F:
-        @wraps(wrapped=func)
-        def wrapper(*args: Tuple[Any, ...], **kwargs: Any):
-            # Create truncated args and kwargs at the beginning
-            truncated_args = [truncate_value(arg) for arg in args]
-            truncated_kwargs = {
-                key: truncate_value(value) for key, value in kwargs.items()
-            }
-
+    api_type: Optional[str] = None
+) -> Callable:
+    """
+    Decorator to handle exceptions with optional rate limiting for GitHub and Google APIs.
+    
+    Args:
+        default_return_value: Value to return when an exception occurs (if not raising)
+        raise_on_error: Whether to raise the exception or return default value
+        api_type: Type of API ("github" or "google") for special rate limit handling
+        
+    Returns:
+        Decorated function with exception handling
+    """
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs) -> Any:
             try:
                 return func(*args, **kwargs)
-            except requests.exceptions.HTTPError as err:
-                status_code: int = err.response.status_code
-
-                # Skip logging for 500 Internal Server Error as it's usually a temporary issue and no meaningful information is available
-                if status_code == 500:
-                    if raise_on_error:
-                        raise
-                    return default_return_value
-
-                reason: str | Any = err.response.reason
-                text: str | Any = err.response.text
-                print(f"reason: {reason}, text: {text}, status_code: {status_code}")
-
-                if api_type == "github" and status_code in {403, 429}:
-                    print(f"err.response.headers: {err.response.headers}")
-                    limit = int(err.response.headers["X-RateLimit-Limit"])
-                    remaining = int(err.response.headers["X-RateLimit-Remaining"])
-                    used = int(err.response.headers["X-RateLimit-Used"])
-
-                    # Check if the primary rate limit has been exceeded
-                    if remaining == 0:
-                        reset_ts = int(err.response.headers.get("X-RateLimit-Reset", 0))
-                        current_ts = int(time.time())
-                        wait_time = reset_ts - current_ts
-                        err_msg = f"{func.__name__} encountered a GitHubPrimaryRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n\n"
-                        logging.warning(msg=err_msg)
-                        time.sleep(wait_time + 5)  # 5 seconds is a buffer
-                        return wrapper(*args, **kwargs)
-
-                    # Check if the secondary rate limit has been exceeded
-                    if "exceeded a secondary rate limit" in err.response.text.lower():
-                        retry_after = int(err.response.headers.get("Retry-After", 60))
-                        err_msg = f"{func.__name__} encountered a GitHubSecondaryRateLimitError: {err}. Retrying after {retry_after} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n\n"
-                        logging.warning(msg=err_msg)
-                        time.sleep(retry_after)
-                        return wrapper(*args, **kwargs)
-
-                    # Otherwise, log the error and return the default return value
-                    err_msg = f"{func.__name__} encountered an HTTPError: {err}. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n\n"
-                    logging.error(msg=err_msg)
-                    if raise_on_error:
-                        raise
-
-                elif api_type == "google" and status_code == 429:
-                    err_msg = f"Google Search Rate Limit in {func.__name__}()"
-                    print(err_msg)
-                    print(f"err.response.headers: {err.response.headers}")
-                    raise
-                    # retry_after = int(err.response.headers.get("Retry-After", 60))
-                    # print(f"retry_after: {retry_after}")
-                    # logging.warning(msg=err_msg)
-                    # time.sleep(retry_after)
-                    # return wrapper(*args, **kwargs)
-
-                # Ex) 409: Conflict, 422: Unprocessable Entity (No changes made), and etc.
-                else:
-                    err_msg = f"{func.__name__} encountered an HTTPError: {err}\n\nArgs: {json.dumps(truncated_args, indent=2)}\n\nKwargs: {json.dumps(truncated_kwargs, indent=2)}\n\nReason: {reason}\n\nText: {text}\n\n"
-                    logging.error(msg=err_msg)
+            except requests.exceptions.HTTPError as e:
+                if hasattr(e, 'response') and e.response is not None:
+                    status_code = e.response.status_code
+                    
+                    # Handle GitHub API rate limiting
+                    if api_type == "github":
+                        if status_code == 403 and "rate limit" in e.response.text.lower():
+                            # Primary rate limit
+                            reset_time = e.response.headers.get("X-RateLimit-Reset")
+                            if reset_time:
+                                wait_time = max(0, int(reset_time) - int(time.time()) + 5)
+                            else:
+                                wait_time = max(0, 3600 - int(time.time()) + 5)  # Default 1 hour
+                            
+                            logging.warning(f"GitHub primary rate limit hit. Waiting {wait_time} seconds.")
+                            time.sleep(wait_time)
+                            return wrapper(*args, **kwargs)  # Retry
+                            
+                        elif status_code == 429 and "secondary rate limit" in e.response.text.lower():
+                            # Secondary rate limit
+                            retry_after = e.response.headers.get("Retry-After", "60")
+                            wait_time = int(retry_after)
+                            
+                            logging.warning(f"GitHub secondary rate limit hit. Waiting {wait_time} seconds.")
+                            time.sleep(wait_time)
+                            return wrapper(*args, **kwargs)  # Retry
+                    
+                    # Handle Google API rate limiting
+                    elif api_type == "google" and status_code == 429:
+                        if raise_on_error:
+                            raise
+                        return default_return_value
+                    
+                    # Handle other HTTP errors
+                    if status_code == 500:
+                        if raise_on_error:
+                            raise
+                        return default_return_value
+                
+                # Log and handle other HTTP errors
+                truncated_args = truncate_value(args)
+                truncated_kwargs = truncate_value(kwargs)
+                logging.error(
+                    f"HTTP error in {func.__name__}: {e}. "
+                    f"Args: {truncated_args}, Kwargs: {truncated_kwargs}"
+                )
+                
                 if raise_on_error:
                     raise
-
-            except json.JSONDecodeError as err:
-                # Get the raw response that caused the JSON decode error
-                if hasattr(err, "doc"):
-                    raw_response = err.doc
-                else:
-                    raw_response = "Raw response not available"
-
-                err_msg = f"{func.__name__} encountered a JSONDecodeError: {err}\n\nRaw response: {raw_response}\n\nArgs: {json.dumps(truncated_args, indent=2)}\n\nKwargs: {json.dumps(truncated_kwargs, indent=2)}"
-                logging.error(msg=err_msg)
+                return default_return_value
+                
+            except json.JSONDecodeError as e:
+                truncated_args = truncate_value(args)
+                truncated_kwargs = truncate_value(kwargs)
+                doc_info = f" Doc: {truncate_value(e.doc)}" if hasattr(e, 'doc') else ""
+                logging.error(
+                    f"JSON decode error in {func.__name__}: {e}.{doc_info} "
+                    f"Args: {truncated_args}, Kwargs: {truncated_kwargs}"
+                )
+                
                 if raise_on_error:
                     raise
-
-            # Catch all other exceptions
-            except (AttributeError, KeyError, TypeError, Exception) as err:
-                err_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\n\nArgs: {json.dumps(truncated_args, indent=2)}\n\nKwargs: {json.dumps(truncated_kwargs, indent=2)}"
-                logging.error(msg=err_msg)
+                return default_return_value
+                
+            except (AttributeError, KeyError, TypeError) as e:
+                truncated_args = truncate_value(args)
+                truncated_kwargs = truncate_value(kwargs)
+                logging.error(
+                    f"{type(e).__name__} in {func.__name__}: {e}. "
+                    f"Args: {truncated_args}, Kwargs: {truncated_kwargs}"
+                )
+                
                 if raise_on_error:
                     raise
-            return default_return_value
-
-        return wrapper  # type: ignore
-
+                return default_return_value
+                
+            except Exception as e:
+                truncated_args = truncate_value(args)
+                truncated_kwargs = truncate_value(kwargs)
+                logging.error(
+                    f"Unexpected error in {func.__name__}: {e}. "
+                    f"Args: {truncated_args}, Kwargs: {truncated_kwargs}"
+                )
+                
+                if raise_on_error:
+                    raise
+                return default_return_value
+                
+        return wrapper
     return decorator
