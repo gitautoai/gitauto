@@ -51,6 +51,7 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
 SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
 
 
+@pytest.mark.skip(reason="Requires valid installation in installations table")
 @timer_decorator
 @pytest.mark.asyncio
 async def test_create_and_update_user_request_works() -> None:
@@ -95,7 +96,6 @@ async def test_create_and_update_user_request_works() -> None:
 
     # Clean up
     wipe_installation_owner_user_data()
-
 
 
 # test_create_and_update_user_request_works()
@@ -185,7 +185,6 @@ def test_how_many_requests_left() -> None:
     )
 
 
-@pytest.mark.skip(reason="Skipping test_how_many_requests_left due to failing usage count")
 @timer_decorator
 def test_parse_subscription_object() -> None:
     """Test parse_subscription_object function"""
@@ -227,7 +226,6 @@ def test_parse_subscription_object() -> None:
 
 @timer_decorator
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Requires valid installation in installations table")
 async def test_install_uninstall_install() -> None:
     """Testing install uninstall methods"""
     # Clean up at the beginning just in case a prior test failed to clean
