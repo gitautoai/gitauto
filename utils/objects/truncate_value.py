@@ -1,9 +1,8 @@
 from typing import Any
 
 
-def truncate_value(value: Any, max_length: int = 30) -> Any:
+def truncate_value(value: Any, max_length: int = 30):
     if isinstance(value, str) and len(value) > max_length:
-        # Truncate to max_length-4 characters and add " ..." suffix
         return f"{value[:max_length-4]} ..."
     if isinstance(value, dict):
         return {k: truncate_value(v, max_length) for k, v in value.items()}
@@ -11,5 +10,4 @@ def truncate_value(value: Any, max_length: int = 30) -> Any:
         return [truncate_value(item, max_length) for item in value]
     if isinstance(value, tuple):
         return tuple(truncate_value(item, max_length) for item in value)
-
     return value
