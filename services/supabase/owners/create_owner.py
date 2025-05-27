@@ -29,4 +29,4 @@ def create_owner(
     )
 
     # Return true if the insert was successful
-    return insert_result.data is not None
+    return insert_result.data is not None and len(insert_result.data) > 0
