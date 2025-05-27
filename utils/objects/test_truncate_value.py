@@ -114,7 +114,7 @@ def test_truncate_exact_boundary():
     assert result == "1234567890123"  # No truncation
     
     result = truncate_value("12345678901234", 10)  # 14 chars, excess = 4 (>= 4)
-    assert result == "123456 ..."  # Truncated
+    assert result == "123456..."  # Truncated
     assert len(result) == 10
 
 
