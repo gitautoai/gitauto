@@ -9,21 +9,7 @@ from unittest import mock
 import pytest
 
 # Local imports
-from config import (
-    GITHUB_NOREPLY_EMAIL_DOMAIN,
-    PRODUCT_ID_FOR_FREE,
-    TEST_INSTALLATION_ID,
-    TEST_ISSUE_NUMBER,
-    TEST_NEW_INSTALLATION_ID,
-    TEST_OWNER_ID,
-    TEST_OWNER_NAME,
-    TEST_OWNER_TYPE,
-    TEST_REPO_ID,
-    TEST_USER_ID,
-    TEST_USER_NAME,
-    TEST_EMAIL,
-    TEST_REPO_NAME,
-)
+from config import GITHUB_NOREPLY_EMAIL_DOMAIN, PRODUCT_ID_FOR_FREE, TEST_INSTALLATION_ID, TEST_ISSUE_NUMBER, TEST_NEW_INSTALLATION_ID, TEST_OWNER_ID, TEST_OWNER_NAME, TEST_OWNER_TYPE, TEST_REPO_ID, TEST_USER_ID, TEST_USER_NAME, TEST_EMAIL, TEST_REPO_NAME
 from services.stripe.customer import get_subscription
 from services.supabase.client import supabase
 from services.supabase.gitauto_manager import create_installation, create_user_request
