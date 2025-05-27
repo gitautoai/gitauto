@@ -51,6 +51,6 @@ def test_truncate_nested_structures():
         "dict": {"key": "This is a very long item that should be truncated"}
     }
     result = truncate_value(nested, 10)
-    assert result["tuple"][1] == "This i ..."
-    assert result["list"][1] == "This i ..."
-    assert result["dict"]["key"] == "This i ..."
+    assert result["tuple"][1] == "This is ..."
+    assert result["list"][1] == "This is ..."
+    assert result["dict"]["key"] == "This is ..."
