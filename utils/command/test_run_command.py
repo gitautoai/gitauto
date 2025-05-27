@@ -103,3 +103,21 @@ def test_run_command_integration_error():
     # The exact error message might vary by OS, but it should contain
     # some indication of failure
     assert "Command failed:" in str(excinfo.value)
+
+
+def test_run_command_edge_cases():
+    """Test run_command with edge cases."""
+    # Test with empty command
+    with pytest.raises(ValueError):
+        run_command("", cwd=".")
+    
+    # Test with complex command with quotes and special characters
+    with patch('subprocess.run') as mock_run:
+        mock_result = MagicMock()
+        mock_run.return_value = mock_result
+        
+        complex_command = "grep -E 'pattern with \"quotes\"' | sort | uniq"
+        result = run_command(complex_command, cwd=".")
+        
+        mock_run.assert_called_once()
+        assert result == mock_result
