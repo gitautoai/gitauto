@@ -144,3 +144,15 @@ def test_custom_object_with_both_str_and_int_methods():
     class ComplexConversionObject:
         def __str__(self):
             return "not a number"
+        def __int__(self):
+            return 10
+    
+    assert is_valid_line_number(ComplexConversionObject()) is False
+
+
+def test_object_with_recursive_str_method():
+    class RecursiveStrObject:
+        def __str__(self):
+            return str(self)
+    
+    assert is_valid_line_number(RecursiveStrObject()) is False
