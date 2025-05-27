@@ -1,5 +1,4 @@
 import pytest
-from utils.time.timer import timer_decorator
 from config import (
     TEST_INSTALLATION_ID,
     TEST_ISSUE_NUMBER,
@@ -7,14 +6,16 @@ from config import (
     TEST_OWNER_NAME,
     TEST_OWNER_TYPE,
     TEST_REPO_ID,
-    TEST_REPO_NAME,
     TEST_USER_ID,
     TEST_USER_NAME,
     TEST_EMAIL,
+    TEST_REPO_NAME,
 )
-from services.supabase.gitauto_manager import create_installation, create_user_request
+from utils.time.timer import timer_decorator
+from services.supabase.gitauto_manager import create_user_request, create_installation
 from tests.services.supabase.wipe_data import wipe_installation_owner_user_data
 
+# ... other imports and test functions ...
 
 @timer_decorator
 @pytest.mark.asyncio
@@ -23,7 +24,7 @@ async def test_create_and_update_user_request_works() -> None:
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
 
-    # insert data into the db -> create installation
+    # Insert data into the db -> create installation
     create_installation(
         installation_id=TEST_INSTALLATION_ID,
         owner_type=TEST_OWNER_TYPE,
@@ -47,6 +48,7 @@ async def test_create_and_update_user_request_works() -> None:
         source="github",
         email=TEST_EMAIL,
     )
+    assert isinstance(usage_record_id, int)
 
 
 # Skipped tests due to foreign key constraint issues in installations table
@@ -56,3 +58,5 @@ async def test_create_and_update_user_request_works() -> None:
 async def test_create_and_update_user_request_skipped() -> None:
     """Skipped test for create and update user request"""
     pass
+
+# ... rest of the file remains unchanged
