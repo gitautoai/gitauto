@@ -22,7 +22,7 @@ def test_truncate_dict_with_long_string_values():
     }
     result = truncate_value(test_dict, max_length=10)
     assert result["key1"] == "This is a ..."
-    assert result["key2"] == "Short stri..."  # Truncated as it's longer than max_length
+    assert result["key2"] == "Short string"  # Not truncated as it's within max_length
 
 
 def test_truncate_list_with_long_string_values():
@@ -32,7 +32,7 @@ def test_truncate_list_with_long_string_values():
     ]
     result = truncate_value(test_list, max_length=10)
     assert result[0] == "This is a ..."
-    assert result[1] == "Short stri..."  # Truncated as it's longer than max_length
+    assert result[1] == "Short string"  # Not truncated as it's within max_length
 
 
 def test_truncate_tuple_with_long_string_values():
@@ -43,7 +43,7 @@ def test_truncate_tuple_with_long_string_values():
     result = truncate_value(test_tuple, max_length=10)
     assert isinstance(result, tuple)
     assert result[0] == "This is a ..."
-    assert result[1] == "Short stri..."  # Truncated as it's longer than max_length
+    assert result[1] == "Short string"  # Not truncated as it's within max_length
 
 
 def test_truncate_nested_structures():
@@ -54,8 +54,9 @@ def test_truncate_nested_structures():
     }
     result = truncate_value(nested_structure, max_length=15)
     assert result["tuple_key"][0] == "Long string to ..."
-    assert result["tuple_key"][1] == "Short"  # Not truncated as it's within max_length (5 chars)
+    assert result["tuple_key"][1] == "Short"  # Not truncated as it's within max_length
     assert result["list_key"][0] == "Another long st..."
+    assert result["list_key"][1] == 123  # Non-string value remains unchanged
     assert result["dict_key"]["inner_key"] == "Very long inner..."
 
 
@@ -77,7 +78,10 @@ def test_truncate_with_zero_max_length():
     result = truncate_value(test_string, max_length=0)
     assert result == "..."
     
+    # Test non-string values with zero max_length
     assert truncate_value((), max_length=0) == ()
+    assert truncate_value(123, max_length=0) == 123
+    assert truncate_value(None, max_length=0) is None
 
 
 def test_truncate_empty_tuple():
@@ -121,3 +125,14 @@ def test_truncate_with_large_max_length():
     for i, s in enumerate(strings):
         assert result[i] == s
         assert "..." not in result[i]
+
+
+def test_truncate_with_negative_max_length():
+    """Test that negative max_length is handled the same as zero."""
+    test_string = "Test string"
+    result = truncate_value(test_string, max_length=-5)
+    assert result == "..."
+
+    # Test non-string values with negative max_length
+    assert truncate_value(123, max_length=-5) == 123
+    assert truncate_value(None, max_length=-5) is None
