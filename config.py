@@ -10,6 +10,8 @@ ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
 
 # GitHub Credentials from environment variables
 GITHUB_API_URL = "https://api.github.com"
+GITHUB_API_VERSION: str = "2022-11-28"
+GITHUB_APP_NAME: str = get_env_var(name="GH_APP_NAME")
 GITHUB_APP_ID = int(get_env_var(name="GH_APP_ID"))
 GITHUB_PRIVATE_KEY_ENCODED: str = get_env_var(name="GH_PRIVATE_KEY")
 GITHUB_PRIVATE_KEY: bytes = base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED)
