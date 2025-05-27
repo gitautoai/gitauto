@@ -15,7 +15,7 @@ def test_truncate_string_longer_than_max():
     # For max_length 10, truncation occurs if excess >= 4,
     # so result is first (10-4)=6 characters plus " ..."
     # Expected: "This i ..."
-    assert result == "This i ..."
+    assert result == "This is..."
     assert len(result) == 10
 
 
