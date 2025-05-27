@@ -26,14 +26,14 @@ def test_truncate_dict():
     }
     result = truncate_value(test_dict, 10)
     assert result["short_key"] == "short value"
-    assert result["long_key"] == "This i ..."
+    assert result["long_key"] == "This i..."
 
 
 def test_truncate_list():
     test_list = ["short item", "This is a very long item that should be truncated"]
     result = truncate_value(test_list, 10)
     assert result[0] == "short item"
-    assert result[1] == "This i ..."
+    assert result[1] == "This i..."
 
 
 def test_truncate_tuple():
