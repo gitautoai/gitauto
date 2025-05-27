@@ -138,6 +138,16 @@ def test_run_command_with_custom_env(mock_run):
     
     custom_env = {"PATH": "/custom/path", "HOME": "/custom/home"}
     run_command("echo test", "/tmp", use_shell=True, env=custom_env)
+    
+    mock_run.assert_called_once_with(
+        args="echo test",
+        capture_output=True,
+        check=True,
+        cwd="/tmp",
+        text=True,
+        shell=True,
+        env=custom_env,
+    )
 
 
 def test_run_command_with_special_chars():
