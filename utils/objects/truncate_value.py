@@ -2,6 +2,8 @@ from typing import Any
 
 
 def truncate_value(value: Any, max_length: int = 30):
+    if max_length < 0:
+        max_length = 0
     if isinstance(value, str) and len(value) > max_length:
         if max_length <= 0:
             return "..."
