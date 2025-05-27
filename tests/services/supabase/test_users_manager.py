@@ -113,7 +113,7 @@ def test_how_many_requests_left() -> None:
         email=TEST_EMAIL,
     )
     # Testing 0 requests have been made on free tier
-    requests_left, request_count, end_date, _is_retried = (
+    requests_left, request_count, end_date, _is_retried = (  # Get initial state and end_date
         get_how_many_requests_left_and_cycle(
             installation_id=TEST_INSTALLATION_ID,
             owner_id=TEST_OWNER_ID,
@@ -128,6 +128,10 @@ def test_how_many_requests_left() -> None:
     assert requests_left == 5
     assert request_count == 5
     assert isinstance(end_date, datetime.datetime)
+
+    # Use a timestamp that's definitely after the subscription start date
+    test_timestamp = end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+    print(f"Using test timestamp: {test_timestamp}")
 
     # Generate 5 issues and 5 usage records
     for i in range(1, 6):
@@ -153,7 +157,7 @@ def test_how_many_requests_left() -> None:
                 "repo_id": TEST_REPO_ID,
                 "repo_name": TEST_REPO_NAME,
                 "issue_number": i,
-                "created_at": "2025-05-27T16:00:00Z"
+                "created_at": test_timestamp
             }
         ).execute()
 
