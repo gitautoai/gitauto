@@ -119,6 +119,10 @@ def test_unsuspend_installation_negative_installation_id():
         mock_update.eq.return_value = mock_eq
         mock_eq.execute.return_value = mock_execute
         
+        result = unsuspend_installation(-1)
+        
+        mock_update.eq.assert_called_once_with(column="installation_id", value=-1)
+        assert result is None
 
 
 def test_unsuspend_installation_attribute_error():
