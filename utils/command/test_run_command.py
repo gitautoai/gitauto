@@ -138,3 +138,27 @@ def test_run_command_with_custom_env(mock_run):
     
     custom_env = {"PATH": "/custom/path", "HOME": "/custom/home"}
     run_command("echo test", "/tmp", use_shell=True, env=custom_env)
+
+
+def test_run_command_with_special_chars():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        result = run_command("echo 'special chars: !@#$%^&*()'", temp_dir, use_shell=True)
+        assert result.returncode == 0
+        assert "special chars: !@#$%^&*()" in result.stdout
+
+
+def test_run_command_with_multiple_commands():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        result = run_command("echo 'first' && echo 'second'", temp_dir, use_shell=True)
+        assert result.returncode == 0
+        assert "first" in result.stdout
+        assert "second" in result.stdout
+
+
+@patch('subprocess.run')
+def test_run_command_exception_with_empty_stderr(mock_run):
+    mock_error = subprocess.CalledProcessError(1, "test_command")
+    mock_error.stderr = ""
+    mock_run.side_effect = mock_error
+    
+    with pytest.raises(ValueError, match="Command failed:"):
