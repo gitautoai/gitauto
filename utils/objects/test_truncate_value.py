@@ -12,6 +12,7 @@ def test_truncate_string_longer_than_max():
     """Test that longer strings are truncated with ' ...' suffix."""
     long_string = "This is a very long string that exceeds the maximum length"
     result = truncate_value(long_string, 10)
+    # Expect first 6 characters + ' ...' = 10 characters
     assert result == "This i ..."
     assert len(result) == 10
 
