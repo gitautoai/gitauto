@@ -100,3 +100,14 @@ def test_truncate_tuple_with_mixed_types():
     assert result[1] == 123
     assert result[2]["nested"] == "Another lo..."
     assert result[3][0] == "List item ..."
+
+
+def test_truncate_strings_of_different_lengths():
+    """Test that all strings are truncated based on max_length, regardless of their original length."""
+    strings = [
+        "A", "AB", "ABC", "ABCD", "ABCDE", "ABCDEF", "ABCDEFG", "ABCDEFGH", "ABCDEFGHI", "ABCDEFGHIJ"
+    ]
+    result = truncate_value(strings, max_length=5)
+    
+    for i, s in enumerate(strings):
+        assert result[i] == (s if len(s) <= 5 else s[:5] + "...")
