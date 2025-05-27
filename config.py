@@ -17,6 +17,7 @@ TEST_OWNER_ID = 1111
 TEST_OWNER_NAME = "test_owner"
 TEST_OWNER_TYPE = "organization"
 TEST_REPO_ID = 2222
+ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
 TEST_USER_ID = 3333
 TEST_USER_NAME = "test_user"
 TEST_EMAIL = "test@example.com"
