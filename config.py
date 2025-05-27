@@ -1,13 +1,13 @@
 import os
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "dummy_anthropic_api_key")
-
 GITHUB_NOREPLY_EMAIL_DOMAIN = "noreply.github.com"
 PRODUCT_ID_FOR_FREE = "prod_free_placeholder"
 PRODUCT_ID_FOR_STANDARD = "prod_standard_placeholder"
 
 TEST_INSTALLATION_ID = 12345
 TEST_ISSUE_NUMBER = 1
+ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
 TEST_NEW_INSTALLATION_ID = 67890
 TEST_OWNER_ID = 1111
 TEST_OWNER_NAME = "test_owner"
@@ -17,21 +17,3 @@ TEST_USER_ID = 3333
 TEST_USER_NAME = "test_user"
 TEST_EMAIL = "test@example.com"
 TEST_REPO_NAME = "test_repo"
-
-__all__ = [
-    "ANTHROPIC_API_KEY",
-    "GITHUB_NOREPLY_EMAIL_DOMAIN",
-    "PRODUCT_ID_FOR_FREE",
-    "PRODUCT_ID_FOR_STANDARD",
-    "TEST_INSTALLATION_ID",
-    "TEST_ISSUE_NUMBER",
-    "TEST_NEW_INSTALLATION_ID",
-    "TEST_OWNER_ID",
-    "TEST_OWNER_NAME",
-    "TEST_OWNER_TYPE",
-    "TEST_REPO_ID",
-    "TEST_USER_ID",
-    "TEST_USER_NAME",
-    "TEST_EMAIL",
-    "TEST_REPO_NAME",
-]
