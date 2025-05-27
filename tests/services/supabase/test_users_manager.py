@@ -226,6 +226,7 @@ def test_parse_subscription_object() -> None:
 @pytest.mark.skip(reason="Requires valid installation in installations table")
 async def test_install_uninstall_install() -> None:
     """Testing install uninstall methods"""
+@pytest.mark.skip(reason="Requires valid installation in installations table")
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
     wipe_installation_owner_user_data(TEST_NEW_INSTALLATION_ID)
