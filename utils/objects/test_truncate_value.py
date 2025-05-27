@@ -22,7 +22,7 @@ def test_truncate_dict_with_long_string_values():
     }
     result = truncate_value(test_dict, max_length=10)
     assert result["key1"] == "This is a ..."
-    assert result["key2"] == "Short string"  # Not truncated as it's within max_length
+    assert result["key2"] == "Short stri..."  # Truncated as it's longer than max_length
 
 
 def test_truncate_list_with_long_string_values():
