@@ -81,3 +81,25 @@ def test_run_command_error_handling():
         with pytest.raises(ValueError) as excinfo:
             run_command("invalid_command", cwd=".")
         assert "Command failed: Command not found" in str(excinfo.value)
+
+
+def test_run_command_integration():
+    """Integration test for run_command with a real command."""
+    # Test with shell=True
+    result = run_command("echo 'integration test'", cwd=".")
+    assert result.stdout.strip() == "integration test"
+    
+    # Test with shell=False
+    result = run_command("echo integration test", cwd=".", use_shell=False)
+    assert result.stdout.strip() == "integration test"
+
+
+def test_run_command_integration_error():
+    """Integration test for run_command with a failing command."""
+    # Use a command that should fail on any system
+    with pytest.raises(ValueError) as excinfo:
+        run_command("command_that_does_not_exist_anywhere", cwd=".")
+    
+    # The exact error message might vary by OS, but it should contain
+    # some indication of failure
+    assert "Command failed:" in str(excinfo.value)
