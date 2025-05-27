@@ -1,22 +1,7 @@
-import base64
 import os
 
-def get_env_var(name: str) -> str:
-    value: str | None = os.environ.get(name)
-    if value is None:
-        raise ValueError(f"Environment variable {name} not set.")
-    return value
-
-GITHUB_API_URL = "https://api.github.com"
-TIMEOUT = 120  # seconds
-
-# GitHub App credentials
-GITHUB_APP_ID = int(os.environ.get("GH_APP_ID", "123456"))
-GITHUB_PRIVATE_KEY_ENCODED: str = os.environ.get("GH_PRIVATE_KEY", "")
-GITHUB_PRIVATE_KEY: bytes = base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED) if GITHUB_PRIVATE_KEY_ENCODED else b""
-
-# Other constants
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "dummy_anthropic_api_key")
+
 GITHUB_NOREPLY_EMAIL_DOMAIN = "noreply.github.com"
 PRODUCT_ID_FOR_FREE = "prod_free_placeholder"
 PRODUCT_ID_FOR_STANDARD = "prod_standard_placeholder"
@@ -32,3 +17,21 @@ TEST_USER_ID = 3333
 TEST_USER_NAME = "test_user"
 TEST_EMAIL = "test@example.com"
 TEST_REPO_NAME = "test_repo"
+
+__all__ = [
+    "ANTHROPIC_API_KEY",
+    "GITHUB_NOREPLY_EMAIL_DOMAIN",
+    "PRODUCT_ID_FOR_FREE",
+    "PRODUCT_ID_FOR_STANDARD",
+    "TEST_INSTALLATION_ID",
+    "TEST_ISSUE_NUMBER",
+    "TEST_NEW_INSTALLATION_ID",
+    "TEST_OWNER_ID",
+    "TEST_OWNER_NAME",
+    "TEST_OWNER_TYPE",
+    "TEST_REPO_ID",
+    "TEST_USER_ID",
+    "TEST_USER_NAME",
+    "TEST_EMAIL",
+    "TEST_REPO_NAME",
+]
