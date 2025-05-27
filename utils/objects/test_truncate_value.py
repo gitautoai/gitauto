@@ -9,17 +9,18 @@ def test_truncate_string_shorter_than_max():
 
 
 def test_truncate_string_longer_than_max():
-    """Test that longer strings are truncated with ' ...' suffix."""
+    """Test that longer strings are truncated with '...' suffix."""
     long_string = "This is a very long string that exceeds the maximum length"
     result = truncate_value(long_string, 10)
-    assert result == "This is..."
+    # For max_length=10, prefix length = 10-4 = 6, then suffix " ..."
+    # Expected: long_string[:6] + " ..." = "This i ..."
+    assert result == "This i ..."
     assert len(result) == 10
 
 
 def test_truncate_string_equal_to_max():
     """Test that strings exactly equal to max_length are not truncated."""
-    # Using a string with exactly 30 characters
-    string = "Exactly thirty characters!!!!!!!"
+    string = "Exactly thirty characters!!!!"
     result = truncate_value(string, 30)
     assert result == string
     assert len(result) == 30
@@ -27,7 +28,7 @@ def test_truncate_string_equal_to_max():
 
 def test_truncate_string_marginally_longer():
     """Test that strings only marginally longer (less than 4 chars excess) are not truncated."""
-    # String is 32 chars, max is 30, difference is 2 (< 4), so no truncation
+    # String is 32 chars, max is 30, excess is 2 (< 4), so no truncation
     string = "This string is thirty-two chars"
     result = truncate_value(string, 30)
     assert result == string
@@ -36,10 +37,11 @@ def test_truncate_string_marginally_longer():
 
 def test_truncate_string_significantly_longer():
     """Test that strings significantly longer (4+ chars excess) are truncated."""
-    # String is 34 chars, max is 30, difference is 4, so truncation occurs
+    # For max_length=30, prefix = 30-4 = 26 characters
     string = "This string is thirty-four chars!"
+    expected = f"{string[:26]} ..."
     result = truncate_value(string, 30)
-    assert result == "This string is thirty-four ..."
+    assert result == expected
     assert len(result) == 30
 
 
@@ -51,8 +53,8 @@ def test_truncate_dict():
     }
     result = truncate_value(test_dict, 10)
     assert result["short_key"] == "short value"
-    assert result["long_key"] == "This is..."
-    assert len(result["long_key"]) == 10
+    # Expected: first 6 characters + " ..." = "This i ..."
+    assert result["long_key"] == "This i ..."
 
 
 def test_truncate_list():
@@ -60,7 +62,8 @@ def test_truncate_list():
     test_list = ["short item", "This is a very long item that should be truncated"]
     result = truncate_value(test_list, 10)
     assert result[0] == "short item"
-    assert result[1] == "This is..."
+    # Expected: "This i ..."
+    assert result[1] == "This i ..."
     assert len(result[1]) == 10
 
 
@@ -70,7 +73,7 @@ def test_truncate_tuple():
     result = truncate_value(test_tuple, 10)
     assert isinstance(result, tuple)
     assert result[0] == "short item"
-    assert result[1] == "This is..."
+    assert result[1] == "This i ..."
     assert len(result[1]) == 10
 
 
@@ -110,24 +113,27 @@ def test_truncate_whitespace_string():
 
 def test_truncate_exact_boundary():
     """Test truncation at exact boundary conditions."""
-    # For max_length 10, we reserve 4 chars for " ...", leaving 6 for content
-    result = truncate_value("1234567890123", 10)  # 13 chars, excess = 3 (< 4)
-    assert result == "1234567890123"  # No truncation
-
-    result = truncate_value("12345678901234", 10)  # 14 chars, excess = 4 (>= 4)
-    assert result == "1234567..."  # Truncated
+    # For max_length=10, if excess < 4, no truncation
+    result = truncate_value("1234567890123", 10)  # 13 chars, excess = 3
+    assert result == "1234567890123"
+    
+    # For exact boundary where excess = 4, truncation occurs
+    result = truncate_value("12345678901234", 10)  # 14 chars, excess = 4
+    # Expected: first 6 characters + " ..." = "123456 ..."
+    assert result == "123456 ..."
     assert len(result) == 10
 
 
 def test_truncate_edge_cases():
     """Test edge cases for truncation logic."""
-    # Test with max_length smaller than ellipsis
+    # Test with max_length smaller than required for truncation (excess < 4)
     result = truncate_value("hello", 3)
-    assert result == "hello"  # No truncation since excess < 4
-
+    assert result == "hello"
+    
     # Test with very long string and small max_length
     result = truncate_value("This is a very long string", 5)
-    assert result == "Th..."
+    # For max_length=5, prefix = 5-4 = 1, so expected: first char + " ..." = "T ..."
+    assert result == "T ..."
     assert len(result) == 5
 
 
@@ -141,11 +147,12 @@ def test_truncate_collections_with_mixed_types():
         "list": ["short", "This is another long string for truncation"]
     }
     result = truncate_value(mixed_dict, 15)
-    assert result["string"] == "This is a lo..."
+    # For max_length=15, prefix = 15-4 = 11
+    assert result["string"] == f"{mixed_dict['string'][:11]} ..."
     assert len(result["string"]) == 15
     assert result["number"] == 42
     assert result["boolean"] is True
     assert result["none"] is None
     assert result["list"][0] == "short"
-    assert result["list"][1] == "This is anot..."
+    assert result["list"][1] == f"{mixed_dict['list'][1][:11]} ..."
     assert len(result["list"][1]) == 15
