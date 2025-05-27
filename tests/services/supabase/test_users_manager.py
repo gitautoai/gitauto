@@ -58,6 +58,7 @@ async def test_create_and_update_user_request_works() -> None:
     """Test that I can create and complete user request in usage table"""
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
+    delete_installation(installation_id=TEST_INSTALLATION_ID, user_id=TEST_USER_ID, user_name=TEST_USER_NAME)
 
     # insert data into the db -> create installation
     create_installation(
