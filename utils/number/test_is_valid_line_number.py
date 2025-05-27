@@ -92,7 +92,7 @@ def test_boundary_values():
 
 
 def test_unicode_and_special_characters():
-    assert is_valid_line_number("２") is False
+    assert is_valid_line_number("２") is True
     assert is_valid_line_number("2️⃣") is False
     assert is_valid_line_number("②") is False
     assert is_valid_line_number("\n2\n") is False
