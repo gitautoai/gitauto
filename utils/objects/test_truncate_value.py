@@ -147,3 +147,38 @@ def test_truncate_collections_with_mixed_types():
     assert result["list"][0] == "short"
     assert result["list"][1] == "This is ano ..."
     assert len(result["list"][1]) == 15
+
+
+def test_empty_collections():
+    """Test that empty collections are handled correctly."""
+    assert truncate_value({}, 10) == {}
+    assert truncate_value([], 10) == []
+    assert truncate_value(tuple(), 10) == tuple()
+
+
+def test_non_string_dict_keys():
+    """Test dictionary with non-string keys."""
+    test_dict = {
+        42: "This is a long value",
+        True: "Another long value",
+        3.14: "Yet another long value"
+    }
+    result = truncate_value(test_dict, 10)
+    assert result[42] == "This i ..."
+    assert result[True] == "This i ..."
+    assert result[3.14] == "This i ..."
+
+
+def test_max_length_edge_cases():
+    """Test edge cases for max_length parameter."""
+    # Test with max_length of 0
+    assert truncate_value("test", 0) == "test"  # No truncation since excess < 4
+    
+    # Test with negative max_length
+    assert truncate_value("test", -1) == "test"  # No truncation since excess < 4
+    
+    # Test collections with edge case max_length
+    test_dict = {"key": "value"}
+    assert truncate_value(test_dict, 0) == {"key": "value"}  # No truncation since excess < 4
+    assert truncate_value(test_dict, -1) == {"key": "value"}  # No truncation since excess < 4
+
