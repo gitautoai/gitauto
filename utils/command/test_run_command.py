@@ -126,7 +126,7 @@ def test_run_command_empty_command_with_shell():
 
 def test_run_command_empty_command_without_shell():
     with tempfile.TemporaryDirectory() as temp_dir:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Empty command is not allowed when use_shell is False"):
             run_command("", temp_dir, use_shell=False)
 
 
