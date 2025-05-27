@@ -119,3 +119,51 @@ def test_unsuspend_installation_negative_installation_id():
         mock_update.eq.return_value = mock_eq
         mock_eq.execute.return_value = mock_execute
         
+
+
+def test_unsuspend_installation_attribute_error():
+    with patch("services.supabase.installations.unsuspend_installation.supabase") as mock_supabase:
+        mock_table = MagicMock()
+        mock_update = MagicMock()
+        mock_eq = MagicMock()
+        
+        mock_supabase.table.return_value = mock_table
+        mock_table.update.return_value = mock_update
+        mock_update.eq.return_value = mock_eq
+        mock_eq.execute.side_effect = AttributeError("'NoneType' object has no attribute 'execute'")
+        
+        result = unsuspend_installation(INSTALLATION_ID)
+        
+        assert result is None
+
+
+def test_unsuspend_installation_key_error():
+    with patch("services.supabase.installations.unsuspend_installation.supabase") as mock_supabase:
+        mock_table = MagicMock()
+        mock_update = MagicMock()
+        mock_eq = MagicMock()
+        
+        mock_supabase.table.return_value = mock_table
+        mock_table.update.return_value = mock_update
+        mock_update.eq.return_value = mock_eq
+        mock_eq.execute.side_effect = KeyError("installation_id")
+        
+        result = unsuspend_installation(INSTALLATION_ID)
+        
+        assert result is None
+
+
+def test_unsuspend_installation_type_error():
+    with patch("services.supabase.installations.unsuspend_installation.supabase") as mock_supabase:
+        mock_table = MagicMock()
+        mock_update = MagicMock()
+        mock_eq = MagicMock()
+        
+        mock_supabase.table.return_value = mock_table
+        mock_table.update.return_value = mock_update
+        mock_update.eq.return_value = mock_eq
+        mock_eq.execute.side_effect = TypeError("unsupported operand type(s)")
+        
+        result = unsuspend_installation(INSTALLATION_ID)
+        
+        assert result is None
