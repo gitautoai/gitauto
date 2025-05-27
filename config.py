@@ -1,4 +1,11 @@
+import base64
 import os
+
+def get_env_var(name: str) -> str:
+    value: str | None = os.environ.get(name)
+    if value is None:
+        raise ValueError(f"Environment variable {name} not set.")
+    return value
 
 GITHUB_API_URL = "https://api.github.com"
 TIMEOUT = 120  # seconds
