@@ -1,5 +1,8 @@
 import subprocess
 
+def run_command(command: str, cwd: str, use_shell: bool = True, env: dict = None):
+    if not command or not command.strip():
+        raise ValueError("Command cannot be empty")
 
 def run_command(command: str, cwd: str, use_shell: bool = True, env: dict = None):
     if not command or not command.strip():
