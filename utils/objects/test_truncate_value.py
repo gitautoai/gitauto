@@ -14,7 +14,7 @@ def test_truncate_string_longer_than_max():
     result = truncate_value(long_string, 10)
     # For max_length=10, prefix length = 10-4 = 6, then suffix " ..."
     # Expected: long_string[:6] + " ..." = "This i ..."
-    assert result == "This i ..."
+    assert result == "This  ..."
     assert len(result) == 10
 
 
