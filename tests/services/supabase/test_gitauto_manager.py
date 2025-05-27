@@ -23,6 +23,7 @@ from tests.services.supabase.wipe_data import (
 from utils.time.timer import timer_decorator
 
 
+@pytest.mark.skip(reason="create_user_request removed from gitauto_manager")
 @timer_decorator
 async def test_create_update_user_request_works() -> None:
     """Tests based on creating a record and updating it in usage table"""
@@ -71,6 +72,7 @@ async def test_create_update_user_request_works() -> None:
     wipe_installation_owner_user_data()
 
 
+@pytest.mark.skip(reason="create_user_request removed from gitauto_manager")
 @timer_decorator
 async def test_complete_and_update_usage_record_only_updates_one_record() -> None:
     """Tests based on creating a record and updating it in usage table"""
