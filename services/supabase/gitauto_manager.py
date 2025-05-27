@@ -38,7 +38,9 @@ def create_installation(
         )
         supabase.table(table_name="owners").insert(
             json={"owner_id": owner_id, "stripe_customer_id": customer_id}
-        ).execute()
+        },
+        on_conflict="installation_id"
+    ).execute()
 
     # Insert installation record
     supabase.table(table_name="installations").upsert(
