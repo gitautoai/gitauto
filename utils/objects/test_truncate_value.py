@@ -54,7 +54,7 @@ def test_truncate_nested_structures():
     }
     result = truncate_value(nested_structure, max_length=15)
     assert result["tuple_key"][0] == "Long string to ..."
-    assert result["list_key"][0] == "Another long s..."
+    assert result["list_key"][0] == "Another long st..."
     assert result["dict_key"]["inner_key"] == "Very long inner..."
 
 
