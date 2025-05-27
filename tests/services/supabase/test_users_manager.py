@@ -368,6 +368,7 @@ def test_handle_user_email_update() -> None:
     json_data["email"] = None
     upsert_user(**json_data)
     user_data = get_user(user_id=TEST_USER_ID)
+    wipe_installation_owner_user_data(87654323)
     assert user_data["email"] == TEST_EMAIL
 
     # Verify valid email is updated
@@ -379,3 +380,4 @@ def test_handle_user_email_update() -> None:
 
     # Clean Up
     wipe_installation_owner_user_data()
+    wipe_installation_owner_user_data(87654323)
