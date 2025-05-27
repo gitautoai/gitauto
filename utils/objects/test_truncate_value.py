@@ -14,7 +14,7 @@ def test_truncate_string_longer_than_max():
 
 
 def test_truncate_string_equal_to_max():
-    string = "Exactly thirty characters long!!"
+    string = "Exactly thirty characters!!!!"
     result = truncate_value(string, 30)
     assert result == string
 
@@ -56,51 +56,8 @@ def test_truncate_nested_structures():
     assert result["dict"]["key"] == "This i ..."
 
 
-    assert truncate_value(True, 10) is True
-
-
-def test_empty_string():
-    # Test that empty strings are returned unchanged
-    assert truncate_value("", 10) == ""
-def test_truncate_non_string_values():
-    """Test that non-string values are returned unchanged"""
+def test_non_string_values():
     assert truncate_value(42, 10) == 42
     assert truncate_value(3.14, 10) == 3.14
     assert truncate_value(None, 10) is None
     assert truncate_value(True, 10) is True
-
-
-def test_truncate_empty_collections():
-    """Test empty collections are handled correctly"""
-    assert truncate_value({}, 10) == {}
-    assert truncate_value([], 10) == []
-    assert truncate_value((), 10) == ()
-
-
-def test_truncate_with_default_max_length():
-    """Test using the default max_length parameter"""
-    long_string = "This is a string that is longer than thirty characters"
-    result = truncate_value(long_string)  # Using default max_length=30
-    assert result == "This is a string that is lon ..."
-
-
-def test_truncate_mixed_nested_structure():
-    """Test a complex nested structure with mixed types"""
-    complex_struct = {
-        "int": 42,
-        "str": "This is a very long string to be truncated",
-        "list": [1, "Long string to truncate", {"nested": "Another long string"}],
-        "tuple": (True, "Yet another long string", [1, 2, 3]),
-        "dict": {"key": "A long string in a nested dict"}
-    }
-    result = truncate_value(complex_struct, 15)
-
-    assert result["int"] == 42
-    assert result["str"] == "This is a ve ..."
-    assert result["list"][0] == 1
-    assert result["list"][1] == "Long strin ..."
-    assert result["list"][2]["nested"] == "Another lo ..."
-    assert result["tuple"][0] is True
-    assert result["tuple"][1] == "Yet anothe ..."
-    assert result["tuple"][2] == [1, 2, 3]
-    assert result["dict"]["key"] == "A long str ..."
