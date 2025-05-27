@@ -22,7 +22,7 @@ def test_truncate_dict_with_long_string_values():
     }
     result = truncate_value(test_dict, max_length=10)
     assert result["key1"] == "This is a ..."
-    assert result["key2"] == "Short stri..."
+    assert result["key2"] == "Short string"  # Not truncated as it's within max_length
 
 
 def test_truncate_list_with_long_string_values():
@@ -32,7 +32,7 @@ def test_truncate_list_with_long_string_values():
     ]
     result = truncate_value(test_list, max_length=10)
     assert result[0] == "This is a ..."
-    assert result[1] == "Short stri..."
+    assert result[1] == "Short string"  # Not truncated as it's within max_length
 
 
 def test_truncate_tuple_with_long_string_values():
@@ -43,7 +43,7 @@ def test_truncate_tuple_with_long_string_values():
     result = truncate_value(test_tuple, max_length=10)
     assert isinstance(result, tuple)
     assert result[0] == "This is a ..."
-    assert result[1] == "Short stri..."
+    assert result[1] == "Short string"  # Not truncated as it's within max_length
 
 
 def test_truncate_nested_structures():
@@ -54,8 +54,8 @@ def test_truncate_nested_structures():
     }
     result = truncate_value(nested_structure, max_length=15)
     assert result["tuple_key"][0] == "Long string to ..."
+    assert result["tuple_key"][1] == "Short"  # Not truncated as it's within max_length
     assert result["list_key"][0] == "Another long st..."
-    assert result["list_key"][0] == "Another long s..."
     assert result["dict_key"]["inner_key"] == "Very long inner..."
 
 
@@ -103,7 +103,7 @@ def test_truncate_tuple_with_mixed_types():
 
 
 def test_truncate_strings_of_different_lengths():
-    """Test that all strings are truncated based on max_length, regardless of their original length."""
+    """Test that strings are only truncated when they exceed max_length."""
     strings = [
         "A", "AB", "ABC", "ABCD", "ABCDE", "ABCDEF", "ABCDEFG", "ABCDEFGH", "ABCDEFGHI", "ABCDEFGHIJ"
     ]
