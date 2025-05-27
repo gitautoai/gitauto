@@ -13,7 +13,7 @@ from config import (
     TEST_USER_NAME,
 )
 from services.supabase.client import supabase
-from services.supabase.gitauto_manager import create_installation, create_user_request
+from services.supabase.gitauto_manager import create_installation
 from services.supabase.usage.update_usage import update_usage
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
