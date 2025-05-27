@@ -17,7 +17,7 @@ def truncate_value(value: Any, max_length: int = 30) -> Any:
     if isinstance(value, str):
         if len(value) > max_length:
             # Reserve 4 characters for " ..." suffix
-            return f"{value[:max_length-4]} ..."
+            return f"{value[:max_length-3]}..."
         return value
         
     # Recursively process collections
