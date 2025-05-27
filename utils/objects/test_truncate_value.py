@@ -132,7 +132,7 @@ def test_truncate_with_negative_max_length():
     test_string = "Test string"
     result = truncate_value(test_string, max_length=-5)
     assert result == "..."
-
+    
     # Test non-string values with negative max_length
     assert truncate_value(123, max_length=-5) == 123
     assert truncate_value(None, max_length=-5) is None
