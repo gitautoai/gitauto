@@ -8,4 +8,4 @@ def is_valid_line_number(val: int | str):
         return val > 1
 
     # Check if the value is a string but is a valid integer and greater than 1
-    return isinstance(val, str) and val.isdecimal() and val.isascii() and int(val) > 1
+    return isinstance(val, str) and val.isdigit() and int(val) > 1
