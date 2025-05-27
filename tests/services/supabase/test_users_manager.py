@@ -93,6 +93,10 @@ async def test_create_and_update_user_request_works() -> None:
         is None
     )
 
+    # Clean up
+    wipe_installation_owner_user_data()
+
+
 
 # test_create_and_update_user_request_works()
 
