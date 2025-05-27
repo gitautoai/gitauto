@@ -1,5 +1,6 @@
 import pytest
 from utils.time.timer import timer_decorator
+from utils.time.timer import timer_decorator
 from tests.services.supabase.wipe_data import wipe_installation_owner_user_data
 from services.supabase.gitauto_manager import create_installation, create_user_request
 from config import TEST_EMAIL, TEST_INSTALLATION_ID, TEST_OWNER_ID, TEST_OWNER_NAME, TEST_OWNER_TYPE, TEST_REPO_ID, TEST_USER_ID, TEST_USER_NAME, TEST_REPO_NAME, TEST_ISSUE_NUMBER
