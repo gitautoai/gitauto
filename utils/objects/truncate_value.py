@@ -10,16 +10,15 @@ def truncate_value(value: Any, max_length: int = 30) -> Any:
 
     Returns:
         The value with any strings longer than max_length truncated.
+        For strings that exceed max_length by 4 or more characters,
+        truncates to (max_length - 4) and appends " ..." suffix.
     """
     # For strings, only truncate if longer than max_length
     if isinstance(value, str):
+        # Only truncate if the excess length is 4 or more
         if len(value) <= max_length or (len(value) - max_length) < 4:
             return value
         # Reserve 4 characters for " ..." suffix
-        if "exceeds" in value:
-            return "This  ..."
-        if "should be truncated" in value:
-            return "This i ..."
         return f"{value[:max_length-4]} ..."
     
     # Recursively process collections
