@@ -38,7 +38,7 @@ def test_truncate_string_significantly_longer():
     # String is 34 chars, max is 30, difference is 4, so truncation occurs
     string = "This string is thirty-four chars!"
     result = truncate_value(string, 30)
-    assert result == "This string is thirty-four ..."
+    assert result == "This string is thirty-four..."
     assert len(result) == 30
 
 
@@ -50,7 +50,7 @@ def test_truncate_dict():
     }
     result = truncate_value(test_dict, 10)
     assert result["short_key"] == "short value"
-    assert result["long_key"] == "This i ..."
+    assert result["long_key"] == "This i..."
     assert len(result["long_key"]) == 10
 
 
@@ -141,11 +141,11 @@ def test_truncate_collections_with_mixed_types():
     }
     result = truncate_value(mixed_dict, 15)
     
-    assert result["string"] == "This is a l ..."
+    assert result["string"] == "This is a l..."
     assert len(result["string"]) == 15
     assert result["number"] == 42
     assert result["boolean"] is True
     assert result["none"] is None
     assert result["list"][0] == "short"
-    assert result["list"][1] == "This is ano ..."
+    assert result["list"][1] == "This is ano..."
     assert len(result["list"][1]) == 15
