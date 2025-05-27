@@ -40,7 +40,7 @@ def test_truncate_string_marginally_longer():
 def test_truncate_string_significantly_longer():
     """Test that strings significantly longer (4+ chars excess) are truncated."""
     # String is 34 chars, max is 30, difference is 4, so truncation occurs
-    string = "This string is thirty-four chars!"
+    string = "This string is thirty-four chars!!"
     result = truncate_value(string, 30)
     # Truncated string: first (30-4)=26 chars from string + " ..."
     expected = f"{string[:26]} ..."
