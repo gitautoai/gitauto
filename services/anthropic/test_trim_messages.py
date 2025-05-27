@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 # Local imports
-from config import ANTHROPIC_MODEL_ID_40
+ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
 from services.anthropic.trim_messages import trim_messages_to_token_limit
 
 
