@@ -157,7 +157,7 @@ def get_how_many_requests_left_and_cycle(
     # Get completed requests for this installation
     data, _ = (
         supabase.table("usage")
-        .select("owner_type, owner_name, repo_name, issue_number")
+        .select("*")
         .eq("installation_id", installation_id)
         .eq("is_completed", True)
         .execute()
