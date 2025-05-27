@@ -121,3 +121,4 @@ def test_truncate_with_large_max_length():
     for i, s in enumerate(strings):
         assert result[i] == s
         assert "..." not in result[i]
+
