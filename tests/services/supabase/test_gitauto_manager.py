@@ -1,6 +1,4 @@
-// run this file locally with: python -m tests.services.supabase.test_gitauto_manager
-import pytest
-pytest.skip('Skipping tests in test_gitauto_manager since create_user_request is removed', allow_module_level=True)
+# run this file locally with: python -m tests.services.supabase.test_gitauto_manager
 import asyncio
 from config import (
     TEST_EMAIL,
@@ -15,7 +13,7 @@ from config import (
     TEST_USER_NAME,
 )
 from services.supabase.client import supabase
-from services.supabase.gitauto_manager import create_installation
+from services.supabase.gitauto_manager import create_installation, create_user_request
 from services.supabase.usage.update_usage import update_usage
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
@@ -23,8 +21,8 @@ from tests.services.supabase.wipe_data import (
 from utils.time.timer import timer_decorator
 
 
-@pytest.mark.skip(reason="create_user_request removed from gitauto_manager")
 @timer_decorator
+@pytest.mark.asyncio
 async def test_create_update_user_request_works() -> None:
     """Tests based on creating a record and updating it in usage table"""
     # Clean up at the beginning just in case a prior test failed to clean
@@ -72,8 +70,8 @@ async def test_create_update_user_request_works() -> None:
     wipe_installation_owner_user_data()
 
 
-@pytest.mark.skip(reason="create_user_request removed from gitauto_manager")
 @timer_decorator
+@pytest.mark.asyncio
 async def test_complete_and_update_usage_record_only_updates_one_record() -> None:
     """Tests based on creating a record and updating it in usage table"""
     # Clean up at the beginning just in case a prior test failed to clean
