@@ -13,7 +13,7 @@ from config import (
 )
 from utils.time.timer import timer_decorator
 from services.supabase.gitauto_manager import create_user_request, create_installation
-from tests.services/supabase/wipe_data import wipe_installation_owner_user_data
+from tests.services.supabase.wipe_data import wipe_installation_owner_user_data
 
 @timer_decorator
 @pytest.mark.asyncio
