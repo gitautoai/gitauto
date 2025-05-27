@@ -56,6 +56,12 @@ def test_truncate_nested_structures():
     assert result["dict"]["key"] == "This i ..."
 
 
+    assert truncate_value(True, 10) is True
+
+
+def test_empty_string():
+    # Test that empty strings are returned unchanged
+    assert truncate_value("", 10) == ""
 def test_truncate_non_string_values():
     """Test that non-string values are returned unchanged"""
     assert truncate_value(42, 10) == 42
