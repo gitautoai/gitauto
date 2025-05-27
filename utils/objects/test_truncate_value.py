@@ -18,7 +18,7 @@ def test_truncate_string_longer_than_max():
 
 def test_truncate_string_equal_to_max():
     """Test that strings exactly equal to max_length are not truncated."""
-    string = "Exactly thirty characters!!!!"
+    string = "Exactly thirty characters!!!!!!"
     result = truncate_value(string, 30)
     assert result == string
     assert len(result) == 30
@@ -36,7 +36,7 @@ def test_truncate_string_marginally_longer():
 def test_truncate_string_significantly_longer():
     """Test that strings significantly longer (4+ chars excess) are truncated."""
     # String is 34 chars, max is 30, difference is 4, so truncation occurs
-    string = "This string is thirty-four chars!"
+    string = "This string is thirty-four chars!!"
     result = truncate_value(string, 30)
     assert result == "This string is thirty-four ..."
     assert len(result) == 30
