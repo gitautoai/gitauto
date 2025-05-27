@@ -43,7 +43,7 @@ def test_truncate_tuple_with_long_string_values():
     result = truncate_value(test_tuple, max_length=10)
     assert isinstance(result, tuple)
     assert result[0] == "This is a ..."
-    assert result[1] == "Short string"  # Not truncated as it's within max_length
+    assert result[1] == "Short stri..."  # Truncated as it's longer than max_length
 
 
 def test_truncate_nested_structures():
