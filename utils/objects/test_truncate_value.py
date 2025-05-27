@@ -126,7 +126,7 @@ def test_truncate_edge_cases():
     
     # Test with very long string and small max_length
     result = truncate_value("This is a very long string", 5)
-    assert result == "T ..."
+    assert result == "T..."
     assert len(result) == 5
 
 
