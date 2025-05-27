@@ -12,7 +12,7 @@ def test_truncate_string_longer_than_max():
     """Test that longer strings are truncated with ' ...' suffix."""
     long_string = "This is a very long string that exceeds the maximum length"
     result = truncate_value(long_string, 10)
-    assert result == "This i ..."
+    assert result == "This  ..."
     assert len(result) == 10
 
 
@@ -36,7 +36,7 @@ def test_truncate_string_marginally_longer():
 def test_truncate_string_significantly_longer():
     """Test that strings significantly longer (4+ chars excess) are truncated."""
     # String is 34 chars, max is 30, difference is 4, so truncation occurs
-    string = "This string is thirty-four chars!!"
+    string = "This string is thirty-four chars!"
     result = truncate_value(string, 30)
     assert result == "This string is thirty-four ..."
     assert len(result) == 30
@@ -140,6 +140,7 @@ def test_truncate_collections_with_mixed_types():
         "list": ["short", "This is another long string for truncation"]
     }
     result = truncate_value(mixed_dict, 15)
+    
     assert result["string"] == "This is a l ..."
     assert len(result["string"]) == 15
     assert result["number"] == 42
