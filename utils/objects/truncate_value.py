@@ -9,7 +9,7 @@ def truncate_value(value: Any, max_length: int = 30):
         max_length: Maximum length for string values. Must be >= 0. Default is 30.
 
     Returns:
-        - For strings: If length exceeds max_length by 4+ chars, returns first (max_length-4) chars + " ...".
+        - For strings: If length exceeds max_length by 4+ chars, returns first (max_length-3) chars + "...".
                       Otherwise returns the original string unchanged.
         - For dicts/lists/tuples: Returns same type with values recursively truncated.
         - For other types: Returns the value unchanged.
