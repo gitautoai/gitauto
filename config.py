@@ -21,3 +21,4 @@ TEST_USER_ID = 3333
 TEST_USER_NAME = "test_user"
 TEST_EMAIL = "test@example.com"
 TEST_REPO_NAME = "test_repo"
+ANTHROPIC_API_KEY = "dummy_anthropic_api_key"
