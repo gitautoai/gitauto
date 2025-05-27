@@ -149,3 +149,14 @@ def test_objects_with_custom_methods():
     # and should be caught by the exception handler
     assert is_valid_line_number(StringableObject()) is False
     assert is_valid_line_number(IntableObject()) is False
+
+
+def test_objects_with_multiple_custom_methods():
+    class ComplexNumberLike:
+        def __str__(self):
+            return "2"
+        
+        def __int__(self):
+            return 2
+    
+    assert is_valid_line_number(ComplexNumberLike()) is False
