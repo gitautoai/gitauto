@@ -57,7 +57,8 @@ def test_invalid_types_trigger_exception_handler():
 def test_complex_objects_trigger_exception_handler():
     class ComplexObject:
         def __str__(self):
-            return "complex"
+            result = "complex"
+            return result
     
     assert is_valid_line_number(ComplexObject()) is False
 
@@ -65,7 +66,8 @@ def test_complex_objects_trigger_exception_handler():
 def test_super_strict_failure_case():
     class ComplexObject:
         def __str__(self):
-            raise ValueError("String conversion failed")
+            error_message = "String conversion failed"
+            raise ValueError(error_message)
     
     assert is_valid_line_number(ComplexObject()) is False
 
@@ -73,7 +75,8 @@ def test_super_strict_failure_case():
 def test_exception_during_processing():
     class BadObject:
         def __int__(self):
-            raise ValueError("Cannot convert to int")
+            error_message = "Cannot convert to int"
+            raise ValueError(error_message)
     
     assert is_valid_line_number(BadObject()) is False
 
