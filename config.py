@@ -1,3 +1,9 @@
+# Standard imports
+import os
+
+# Environment variables
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
 GITHUB_NOREPLY_EMAIL_DOMAIN = "noreply.github.com"
 PRODUCT_ID_FOR_FREE = "prod_free_placeholder"
 PRODUCT_ID_FOR_STANDARD = "prod_standard_placeholder"
