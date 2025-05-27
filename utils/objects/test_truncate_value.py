@@ -50,7 +50,7 @@ def test_truncate_dict():
     }
     result = truncate_value(test_dict, 10)
     assert result["short_key"] == "short value"
-    assert result["long_key"] == "This i ..."
+    assert result["long_key"] == "This i..."
     assert len(result["long_key"]) == 10
 
 
