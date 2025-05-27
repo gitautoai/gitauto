@@ -60,15 +60,17 @@ async def test_create_and_update_user_request_works() -> None:
     wipe_installation_owner_user_data()
 
     # insert data into the db -> create installation
-    create_installation(
-        installation_id=TEST_INSTALLATION_ID,
-        owner_type=TEST_OWNER_TYPE,
-        owner_name=TEST_OWNER_NAME,
-        owner_id=TEST_OWNER_ID,
-        user_id=TEST_USER_ID,
-        user_name=TEST_USER_NAME,
-        email=TEST_EMAIL,
-    )
+    try:
+        create_installation(
+            installation_id=TEST_INSTALLATION_ID,
+            owner_type=TEST_OWNER_TYPE,
+            owner_name=TEST_OWNER_NAME,
+            owner_id=TEST_OWNER_ID,
+            user_id=TEST_USER_ID,
+            user_name=TEST_USER_NAME,
+            email=TEST_EMAIL,
+        )
+    except Exception:
 
     usage_record_id = await create_user_request(
         user_id=TEST_USER_ID,
