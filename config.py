@@ -21,3 +21,4 @@ TEST_USER_ID = 3333
 TEST_USER_NAME = "test_user"
 TEST_EMAIL = "test@example.com"
 TEST_REPO_NAME = "test_repo"
+ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
