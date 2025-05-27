@@ -7,5 +7,4 @@ def create_headers(token: str, media_type: str = ".v3") -> dict[str, str]:
         "Accept": f"application/vnd.github{media_type}+json",
         "Authorization": f"Bearer {token}",
         "User-Agent": GITHUB_APP_NAME,
-        "X-GitHub-Api-Version": GITHUB_API_VERSION,
     }
