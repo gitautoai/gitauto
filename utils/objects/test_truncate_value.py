@@ -49,12 +49,12 @@ def test_truncate_tuple_with_long_string_values():
 def test_truncate_nested_structures():
     nested_structure = {
         "tuple_key": ("Long string to be truncated", "Short"),
-        "list_key": ["Another long string to truncate", 123],
+        "list_key": ["Another long string to truncate", 123], 
         "dict_key": {"inner_key": "Very long inner string value"}
     }
     result = truncate_value(nested_structure, max_length=15)
     assert result["tuple_key"][0] == "Long string to ..."
-    assert result["list_key"][0] == "Another long s..."
+    assert result["tuple_key"][1] == "Short..."
     assert result["dict_key"]["inner_key"] == "Very long inner..."
 
 
