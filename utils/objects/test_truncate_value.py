@@ -41,7 +41,7 @@ def test_truncate_tuple():
     result = truncate_value(test_tuple, 10)
     assert isinstance(result, tuple)
     assert result[0] == "short item"
-    assert result[1] == "This i ..."
+    assert result[1] == "This i..."
 
 
 def test_truncate_nested_structures():
