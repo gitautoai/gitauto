@@ -1,4 +1,6 @@
 import os
+GITHUB_API_URL = "https://api.github.com"
+TIMEOUT = 120
 
 GITHUB_API_URL = "https://api.github.com"
 TIMEOUT = 120
