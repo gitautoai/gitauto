@@ -19,7 +19,6 @@ TIMEOUT = 120  # seconds
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "dummy_anthropic_api_key")
 
 ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
-ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
 # Anthropic model IDs
 ANTHROPIC_MODEL_ID_35 = "claude-3-5-sonnet-latest"
 ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
