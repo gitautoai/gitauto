@@ -116,3 +116,25 @@ def test_run_command_multiword_without_shell():
         result = run_command("echo hello world", temp_dir, use_shell=False)
         assert result.returncode == 0
         assert "hello world" in result.stdout
+
+
+def test_run_command_empty_command_with_shell():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        result = run_command("", temp_dir, use_shell=True)
+        assert result.returncode == 0
+
+
+def test_run_command_empty_command_without_shell():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        with pytest.raises(ValueError):
+            run_command("", temp_dir, use_shell=False)
+
+
+@patch('subprocess.run')
+def test_run_command_with_custom_env(mock_run):
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_run.return_value = mock_result
+    
+    custom_env = {"PATH": "/custom/path", "HOME": "/custom/home"}
+    run_command("echo test", "/tmp", use_shell=True, env=custom_env)
