@@ -54,3 +54,11 @@ def test_truncate_nested_structures():
     assert result["tuple"][1] == "This i ..."
     assert result["list"][1] == "This i ..."
     assert result["dict"]["key"] == "This i ..."
+
+
+def test_non_string_values():
+    # Test that non-string values are returned unchanged
+    assert truncate_value(42, 10) == 42
+    assert truncate_value(3.14, 10) == 3.14
+    assert truncate_value(None, 10) is None
+    assert truncate_value(True, 10) is True
