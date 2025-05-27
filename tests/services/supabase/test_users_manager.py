@@ -1,4 +1,16 @@
 # run this file locally with: python -m tests.services.supabase.test_supabase_users
+from config import (
+    TEST_INSTALLATION_ID,
+    TEST_ISSUE_NUMBER,
+    TEST_OWNER_ID,
+    TEST_OWNER_NAME,
+    TEST_OWNER_TYPE,
+    TEST_REPO_ID,
+    TEST_USER_ID,
+    TEST_USER_NAME,
+    TEST_EMAIL,
+    TEST_REPO_NAME,
+)
 
 # Standard imports
 import datetime
