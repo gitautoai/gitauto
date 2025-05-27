@@ -16,7 +16,7 @@ def test_anthropic_client_can_count_tokens():
     messages: list[MessageParam] = [{"role": "user", "content": "Hello, Claude!"}]
 
     token_count = client.messages.count_tokens(
-        model=ANTHROPIC_MODEL_ID_40, messages=messages
+        model="claude-sonnet-4-0", messages=messages
     )
 
     assert token_count.input_tokens > 0
