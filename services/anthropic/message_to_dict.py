@@ -1,6 +1,6 @@
 from typing import Any
 
-from utils.attribute.safe_get_attribute import safe_get_attribute
+from utils.objects.safe_get_attribute import safe_get_attribute
 
 
 def message_to_dict(message: Any) -> dict[str, Any]:

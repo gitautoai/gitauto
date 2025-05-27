@@ -15,8 +15,8 @@ from services.anthropic.exceptions import (
 )
 from services.anthropic.message_to_dict import message_to_dict
 from services.anthropic.trim_messages import trim_messages_to_token_limit
-from utils.attribute.safe_get_attribute import safe_get_attribute
 from utils.error.handle_exceptions import handle_exceptions
+from utils.objects.safe_get_attribute import safe_get_attribute
 
 
 @handle_exceptions(raise_on_error=True)

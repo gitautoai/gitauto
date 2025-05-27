@@ -7,7 +7,7 @@ from anthropic import Anthropic
 # Local imports
 from config import ANTHROPIC_MODEL_ID_40
 from services.anthropic.message_to_dict import message_to_dict
-from utils.attribute.safe_get_attribute import safe_get_attribute
+from utils.objects.safe_get_attribute import safe_get_attribute
 
 
 def trim_messages_to_token_limit(
