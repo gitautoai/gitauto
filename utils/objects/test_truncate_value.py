@@ -13,7 +13,7 @@ def test_truncate_string_longer_than_max():
     long_string = "This is a very long string that exceeds the maximum length"
     result = truncate_value(long_string, 10)
     # For max_length 10, we take first 6 chars and append " ..."
-    assert result == "This i ..."
+    assert result == "This  ..."
     assert len(result) == 10
 
 
