@@ -70,7 +70,6 @@ async def test_create_and_update_user_request_works() -> None:
     )
 
     usage_record_id = await create_user_request(
-@pytest.mark.skip(reason="Requires valid installation in installations table")
         user_id=TEST_USER_ID,
         user_name=TEST_USER_NAME,
         installation_id=TEST_INSTALLATION_ID,
