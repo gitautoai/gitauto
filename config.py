@@ -2,6 +2,7 @@
 import os
 
 ANTHROPIC_API_KEY = "dummy_anthropic_api_key"
+ANTHROPIC_API_KEY = "dummy_anthropic_api_key"
 # Environment variables
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
