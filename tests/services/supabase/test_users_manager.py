@@ -153,6 +153,7 @@ def test_how_many_requests_left() -> None:
                 "repo_id": TEST_REPO_ID,
                 "repo_name": TEST_REPO_NAME,
                 "issue_number": i,
+                "created_at": "2025-05-27T16:00:00Z"
             }
         ).execute()
 
