@@ -42,7 +42,7 @@ def create_installation(
         ).execute()
 
     # Insert installation record
-    supabase.table(table_name="installations").insert(
+    supabase.table(table_name="installations").upsert(
         json={
             "id": installation_id,
             "installation_id": installation_id,
