@@ -11,4 +11,5 @@ def truncate_value(value: Any, max_length: int = 30):
         return [truncate_value(item, max_length) for item in value]
     if isinstance(value, tuple):
         return tuple(truncate_value(item, max_length) for item in value)
+
     return value
