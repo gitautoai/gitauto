@@ -51,6 +51,8 @@ def create_installation(
             "owner_type": owner_type,
             "owner_id": owner_id,
         }
+        },
+        on_conflict="installation_id"
     ).execute()
 
     # Upsert user
