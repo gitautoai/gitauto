@@ -162,3 +162,4 @@ def test_run_command_exception_with_empty_stderr(mock_run):
     mock_run.side_effect = mock_error
     
     with pytest.raises(ValueError, match="Command failed:"):
+        run_command("test_command", "/tmp")
