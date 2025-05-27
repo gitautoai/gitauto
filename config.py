@@ -1,4 +1,20 @@
+import base64
 import os
+
+def get_env_var(name: str) -> str:
+    value: str | None = os.environ.get(name)
+    if value is None:
+        raise ValueError(f"Environment variable {name} not set.")
+    return value
+
+# GitHub Credentials from environment variables
+GITHUB_API_URL = "https://api.github.com"
+GITHUB_APP_ID = int(get_env_var(name="GH_APP_ID"))
+GITHUB_PRIVATE_KEY_ENCODED: str = get_env_var(name="GH_PRIVATE_KEY")
+GITHUB_PRIVATE_KEY: bytes = base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED)
+
+# General
+TIMEOUT = 120  # seconds
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "dummy_anthropic_api_key")
 
