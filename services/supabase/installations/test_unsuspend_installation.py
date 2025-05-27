@@ -167,3 +167,21 @@ def test_unsuspend_installation_type_error():
         result = unsuspend_installation(INSTALLATION_ID)
         
         assert result is None
+
+
+def test_unsuspend_installation_data_structure():
+    with patch("services.supabase.installations.unsuspend_installation.supabase") as mock_supabase:
+        mock_table = MagicMock()
+        mock_update = MagicMock()
+        mock_eq = MagicMock()
+        mock_execute = MagicMock()
+        
+        mock_supabase.table.return_value = mock_table
+        mock_table.update.return_value = mock_update
+        mock_update.eq.return_value = mock_eq
+        mock_eq.execute.return_value = mock_execute
+        
+        unsuspend_installation(INSTALLATION_ID)
+        
+        expected_data = {"uninstalled_at": None, "uninstalled_by": None}
+        mock_table.update.assert_called_once_with(json=expected_data)
