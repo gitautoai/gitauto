@@ -111,3 +111,13 @@ def test_truncate_strings_of_different_lengths():
     
     for i, s in enumerate(strings):
         assert result[i] == (s if len(s) <= 5 else s[:5] + "...")
+
+
+def test_truncate_with_large_max_length():
+    """Test that no strings are truncated when max_length is larger than all strings."""
+    strings = ["Short", "Medium length", "A bit longer string"]
+    result = truncate_value(strings, max_length=100)
+    
+    for i, s in enumerate(strings):
+        assert result[i] == s
+        assert "..." not in result[i]
