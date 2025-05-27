@@ -25,4 +25,4 @@ def test_handle_user_email_update() -> None:
     assert user_data["email"] == new_email
 
     # Clean Up
-    wipe_installation_owner_user_data()
+    wipe_installation_owner_user_data(98765432)
