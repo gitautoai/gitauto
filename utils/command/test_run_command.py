@@ -65,3 +65,19 @@ def test_run_command_with_env():
             env=custom_env,
         )
         assert result == mock_result
+
+
+def test_run_command_error_handling():
+    """Test run_command error handling when command fails."""
+    with patch('subprocess.run') as mock_run:
+        # Create a CalledProcessError with stderr
+        error = subprocess.CalledProcessError(
+            returncode=1,
+            cmd="invalid_command",
+        )
+        error.stderr = "Command not found"
+        mock_run.side_effect = error
+        
+        with pytest.raises(ValueError) as excinfo:
+            run_command("invalid_command", cwd=".")
+        assert "Command failed: Command not found" in str(excinfo.value)
