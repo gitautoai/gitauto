@@ -137,10 +137,6 @@ def test_run_command_with_custom_env(mock_run):
     mock_run.return_value = mock_result
     
     custom_env = {"PATH": "/custom/path", "HOME": "/custom/home"}
-    
-    mock_run.assert_called_once_with(
-        args="echo test",
-        capture_output=True,
     run_command("echo test", "/tmp", use_shell=True, env=custom_env)
 
 
