@@ -50,10 +50,8 @@ pytest_plugins = ("pytest_asyncio",)
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
 SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
 
-@pytest.mark.skip(reason="Requires valid installation in installations table")
 
 @timer_decorator
-@pytest.mark.skip(reason="Requires valid installation in installations table")
 @pytest.mark.asyncio
 async def test_create_and_update_user_request_works() -> None:
     """Test that I can create and complete user request in usage table"""
@@ -223,7 +221,6 @@ def test_parse_subscription_object() -> None:
 
 @timer_decorator
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Requires valid installation in installations table")
 async def test_install_uninstall_install() -> None:
     """Testing install uninstall methods"""
     # Clean up at the beginning just in case a prior test failed to clean
