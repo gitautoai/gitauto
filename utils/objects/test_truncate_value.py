@@ -136,3 +136,4 @@ def test_truncate_with_negative_max_length():
     # Test non-string values with negative max_length
     assert truncate_value(123, max_length=-5) == 123
     assert truncate_value(None, max_length=-5) is None
+
