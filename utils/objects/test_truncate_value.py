@@ -56,6 +56,7 @@ def test_truncate_nested_structures():
     assert result["tuple_key"][0] == "Long string to ..."
     assert result["tuple_key"][1] == "Short"  # Not truncated as it's within max_length
     assert result["dict_key"]["inner_key"] == "Very long inner..."
+    assert result["list_key"][1] == 123  # Non-string values remain unchanged
 
 
 def test_truncate_non_string_values():
