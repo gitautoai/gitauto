@@ -133,3 +133,19 @@ def test_scientific_notation_strings():
     assert is_valid_line_number("2e1") is False
     assert is_valid_line_number("1e2") is False
     assert is_valid_line_number("2E1") is False
+
+
+def test_objects_with_custom_methods():
+    class StringableObject:
+        def __str__(self):
+            return "2"
+
+    class IntableObject:
+        def __int__(self):
+            return 2
+
+    # Even though these objects can be converted to valid line numbers
+    # through their custom methods, they're not valid input types
+    # and should be caught by the exception handler
+    assert is_valid_line_number(StringableObject()) is False
+    assert is_valid_line_number(IntableObject()) is False
