@@ -28,6 +28,6 @@ def truncate_value(value: Any, max_length: int = 30) -> Any:
         return [truncate_value(item, max_length) for item in value]
     if isinstance(value, tuple):
         return tuple(truncate_value(item, max_length) for item in value)
-    
+
     # Return non-string values unchanged
     return value
