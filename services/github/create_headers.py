@@ -1,4 +1,4 @@
-from config import GITHUB_API_VERSION, GITHUB_APP_NAME
+from config import GITHUB_APP_NAME
 
 
 def create_headers(token: str, media_type: str = ".v3") -> dict[str, str]:
