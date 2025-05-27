@@ -223,8 +223,8 @@ def test_parse_subscription_object() -> None:
 
 @timer_decorator
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Requires valid installation in installations table")
 async def test_install_uninstall_install() -> None:
+    pytest.skip(reason="Requires valid installation in installations table")
     """Testing install uninstall methods"""
     wipe_installation_owner_user_data()
     wipe_installation_owner_user_data(TEST_NEW_INSTALLATION_ID)
