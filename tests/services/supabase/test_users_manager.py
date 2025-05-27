@@ -36,9 +36,7 @@ from services.supabase.users_manager import (
     upsert_user,
 )
 from services.webhook.webhook_handler import handle_webhook_event
-from tests.services.supabase.wipe_data import (
-    wipe_installation_owner_user_data,
-)
+from tests.services.supabase.wipe_data import wipe_installation_owner_user_data
 from tests.test_payloads.deleted import deleted_payload
 from tests.test_payloads.installation import (
     installation_payload,
@@ -83,21 +81,19 @@ async def test_create_and_update_user_request_works() -> None:
         email=TEST_EMAIL,
     )
     assert isinstance(usage_record_id, int)
-    assert (
-        update_usage(
-            usage_record_id=usage_record_id,
-            token_input=1000,
-            token_output=100,
-            total_seconds=100,
-        )
-        is None
-    )
+    assert update_usage(
+        usage_record_id=usage_record_id,
+        token_input=1000,
+        token_output=100,
+        total_seconds=100,
+    ) is None
 
     # Clean up
     wipe_installation_owner_user_data()
 
 
 @timer_decorator
+
 def test_how_many_requests_left() -> None:
     """Test that get_how_many_requests_left_and_cycle returns the correct values"""
     # Clean up at the beginning just in case a prior test failed to clean
@@ -113,15 +109,13 @@ def test_how_many_requests_left() -> None:
         email=TEST_EMAIL,
     )
     # Testing 0 requests have been made on free tier
-    requests_left, request_count, end_date, _is_retried = (
-        get_how_many_requests_left_and_cycle(
-            installation_id=TEST_INSTALLATION_ID,
-            owner_id=TEST_OWNER_ID,
-            owner_name=TEST_OWNER_NAME,
-            owner_type=TEST_OWNER_TYPE,
-            repo_name=TEST_REPO_NAME,
-            issue_number=TEST_ISSUE_NUMBER,
-        )
+    requests_left, request_count, end_date, _is_retried = get_how_many_requests_left_and_cycle(
+        installation_id=TEST_INSTALLATION_ID,
+        owner_id=TEST_OWNER_ID,
+        owner_name=TEST_OWNER_NAME,
+        owner_type=TEST_OWNER_TYPE,
+        repo_name=TEST_REPO_NAME,
+        issue_number=TEST_ISSUE_NUMBER,
     )
 
     # Match request_count in Metadata in https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
@@ -157,15 +151,13 @@ def test_how_many_requests_left() -> None:
         ).execute()
 
     # Test no requests left
-    requests_left, request_count, end_date, _is_retried = (
-        get_how_many_requests_left_and_cycle(
-            installation_id=TEST_INSTALLATION_ID,
-            owner_id=TEST_OWNER_ID,
-            owner_name=TEST_OWNER_NAME,
-            owner_type=TEST_OWNER_TYPE,
-            repo_name=TEST_REPO_NAME,
-            issue_number=TEST_ISSUE_NUMBER,
-        )
+    requests_left, request_count, end_date, _is_retried = get_how_many_requests_left_and_cycle(
+        installation_id=TEST_INSTALLATION_ID,
+        owner_id=TEST_OWNER_ID,
+        owner_name=TEST_OWNER_NAME,
+        owner_type=TEST_OWNER_TYPE,
+        repo_name=TEST_REPO_NAME,
+        issue_number=TEST_ISSUE_NUMBER,
     )
 
     assert requests_left == 0
@@ -181,6 +173,7 @@ def test_how_many_requests_left() -> None:
 
 
 @timer_decorator
+
 def test_parse_subscription_object() -> None:
     """Test parse_subscription_object function"""
     # Clean up at the beginning just in case a prior test failed to clean
@@ -240,7 +233,6 @@ async def test_install_uninstall_install() -> None:
         "services.github.github_manager.get_user_public_email",
         return_value="test@example.com",
     ):
-
         await handle_webhook_event(
             event_name="installation", payload=installation_payload
         )
@@ -363,6 +355,7 @@ async def test_install_uninstall_install() -> None:
 
 
 @timer_decorator
+
 def test_handle_user_email_update() -> None:
     """Test updating a user's email in the users table"""
     # Clean up at the beginning just in case a prior test failed to clean
@@ -370,7 +363,7 @@ def test_handle_user_email_update() -> None:
 
     # Insert a user into the database
     create_installation(
-        installation_id=87654324,
+        installation_id=87654323,
         owner_type=TEST_OWNER_TYPE,
         owner_name=TEST_OWNER_NAME,
         owner_id=TEST_OWNER_ID,
