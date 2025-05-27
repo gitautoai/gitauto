@@ -50,8 +50,6 @@ pytest_plugins = ("pytest_asyncio",)
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
 SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
 
-@pytest.mark.skip(reason="Requires valid installation in installations table")
-@pytest.mark.skip(reason="Requires valid installation in installations table")
 
 @timer_decorator
 @pytest.mark.skip(reason="Requires valid installation in installations table")
