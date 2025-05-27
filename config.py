@@ -1,10 +1,12 @@
 import os
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "dummy_anthropic_api_key")
+# Anthropic model IDs
+ANTHROPIC_MODEL_ID_35 = "claude-3-5-sonnet-latest"
+ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
 GITHUB_NOREPLY_EMAIL_DOMAIN = "noreply.github.com"
 PRODUCT_ID_FOR_FREE = "prod_free_placeholder"
 PRODUCT_ID_FOR_STANDARD = "prod_standard_placeholder"
-
 TEST_INSTALLATION_ID = 12345
 TEST_ISSUE_NUMBER = 1
 ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
