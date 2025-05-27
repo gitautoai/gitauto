@@ -1,22 +1,121 @@
+from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 from services.supabase.client import supabase
+from services.supabase.users_manager import upsert_user
+from utils.error.handle_exceptions import handle_exceptions
 
 
-def create_installation(installation_id, owner_type, owner_name, owner_id, customer_id, user_id, user_name, email):
-    # Insert or update owner record
-    supabase.table(table_name="owners").insert(
-        json={"owner_id": owner_id, "stripe_customer_id": customer_id},
-        on_conflict="installation_id"
-    ).execute()
+@handle_exceptions(default_return_value=None, raise_on_error=True)
+def create_installation(
+    installation_id: int,
+    owner_type: str,
+    owner_name: str,
+    owner_id: int,
+    user_id: int,
+    user_name: str,
+    email: str | None,
+) -> None:
+    """Create owners record with stripe customerId, subscribe to free plan, create installation record, create users record on Installation Webhook event"""
+    # If owner doesn't exist in owners table, insert owner and stripe customer
+    data, _ = (
+        supabase.table(table_name="owners")
+        .select("owner_id")
+        .eq(column="owner_id", value=owner_id)
+        .execute()
+    )
+    if not data[1]:
+        customer_id = create_stripe_customer(
+            owner_name=owner_name,
+            owner_id=owner_id,
+            installation_id=installation_id,
+            user_id=user_id,
+            user_name=user_name,
+        )
+        subscribe_to_free_plan(
+            customer_id=customer_id,
+            owner_id=owner_id,
+            owner_name=owner_name,
+            installation_id=installation_id,
+        )
+        supabase.table(table_name="owners").insert(
+            json={"owner_id": owner_id, "stripe_customer_id": customer_id}
+        ).execute()
 
     # Insert installation record
     supabase.table(table_name="installations").insert(
         json={
+            "id": installation_id,
             "installation_id": installation_id,
+            "owner_name": owner_name,
             "owner_type": owner_type,
             "owner_id": owner_id,
-        },
-        on_conflict="installation_id"
+        }
     ).execute()
 
-    # Additional logic may follow
-    return True
+    # Upsert user
+    upsert_user(user_id=user_id, user_name=user_name, email=email)
+
+
+@handle_exceptions(default_return_value=None, raise_on_error=True)
+async def create_user_request(
+    user_id: int,
+    user_name: str,
+    installation_id: int,
+    owner_id: int,
+    owner_type: str,
+    owner_name: str,
+    repo_id: int,
+    repo_name: str,
+    issue_number: int,
+    source: str,
+    email: str | None,
+) -> int:
+    """Creates record in usage table for this user and issue."""
+    # If issue doesn't exist, create one
+    data, _ = (
+        supabase.table(table_name="issues")
+        .select("*")
+        .eq(column="owner_type", value=owner_type)
+        .eq(column="owner_name", value=owner_name)
+        .eq(column="repo_name", value=repo_name)
+        .eq(column="issue_number", value=issue_number)
+        .execute()
+    )
+    # If no issue exists with those identifiers, create one
+    if not data[1]:
+        supabase.table(table_name="issues").insert(
+            json={
+                "owner_id": owner_id,
+                "owner_type": owner_type,
+                "owner_name": owner_name,
+                "installation_id": installation_id,
+                "repo_id": repo_id,
+                "repo_name": repo_name,
+                "issue_number": issue_number,
+            }
+        ).execute()
+
+    # Create usage record
+    data, _ = (
+        supabase.table(table_name="usage")
+        .insert(
+            json={
+                "user_id": user_id,
+                "user_name": user_name,
+                "installation_id": installation_id,
+                "owner_id": owner_id,
+                "owner_type": owner_type,
+                "owner_name": owner_name,
+                "repo_id": repo_id,
+                "repo_name": repo_name,
+                "issue_number": issue_number,
+                "source": source,
+            }
+        )
+        .execute()
+    )
+
+    # Upsert user
+    upsert_user(user_id=user_id, user_name=user_name, email=email)
+
+    # Return the usage record id
+    return data[1][0]["id"]
