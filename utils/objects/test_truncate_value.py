@@ -10,7 +10,7 @@ def test_truncate_string_shorter_than_max():
 def test_truncate_string_longer_than_max():
     long_string = "This is a very long string that exceeds the maximum length"
     result = truncate_value(long_string, 10)
-    assert result == "This  ..."
+    assert result == "This i ..."
 
 
 def test_truncate_string_equal_to_max():
@@ -55,6 +55,13 @@ def test_truncate_nested_structures():
     assert result["list"][1] == "This i ..."
     assert result["dict"]["key"] == "This i ..."
 
+
+def test_non_string_values():
+    # Test that non-string values are returned unchanged
+    assert truncate_value(42, 10) == 42
+    assert truncate_value(3.14, 10) == 3.14
+    assert truncate_value(None, 10) is None
+    assert truncate_value(True, 10) is True
 
 def test_non_string_values():
     # Test that non-string values are returned unchanged
