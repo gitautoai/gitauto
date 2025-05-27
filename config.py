@@ -12,6 +12,7 @@ TEST_NEW_INSTALLATION_ID = 67890
 TEST_OWNER_ID = 1111
 TEST_OWNER_NAME = "test_owner"
 TEST_OWNER_TYPE = "organization"
+GITHUB_APP_NAME: str = os.environ.get("GH_APP_NAME", "GitAuto")
 TEST_REPO_ID = 2222
 TEST_USER_ID = 3333
 TEST_USER_NAME = "test_user"
