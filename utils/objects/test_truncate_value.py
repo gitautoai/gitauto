@@ -141,11 +141,11 @@ def test_truncate_collections_with_mixed_types():
     }
     result = truncate_value(mixed_dict, 15)
     
-    assert result["string"] == "This is a l ..."
+    assert result["string"] == "This is a l..."
     assert len(result["string"]) == 15
     assert result["number"] == 42
     assert result["boolean"] is True
     assert result["none"] is None
     assert result["list"][0] == "short"
-    assert result["list"][1] == "This is ano ..."
+    assert result["list"][1] == "This is ano..."
     assert len(result["list"][1]) == 15
