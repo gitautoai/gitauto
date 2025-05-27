@@ -16,7 +16,6 @@ from config import (
 from services.chat_with_agent import chat_with_agent
 from services.github.actions_manager import get_workflow_run_logs, get_workflow_run_path
 from services.github.comments.create_comment import create_comment
-from services.github.comments.get_comments import get_comments
 from services.github.comments.update_comment import update_comment
 from services.github.github_manager import get_remote_file_content, get_remote_file_tree
 from services.github.github_types import CheckRunCompletedPayload
@@ -134,17 +133,6 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     is_exception = owner_name in EXCEPTION_OWNERS
     if not is_paid and not is_exception:
         msg = f"Subscribe [here]({PRICING_URL}) to get GitAuto to self-correct check run errors."
-        log_messages.append(msg)
-        update_comment(body="\n".join(log_messages), base_args=base_args)
-        return
-
-    # Return here if GitAuto has tried to fix this Check Run error before because we need to avoid infinite loops
-    pr_comments = get_comments(
-        issue_number=pull_number, base_args=base_args, includes_me=True
-    )
-    print(f"Check run name: {check_run_name}")
-    if any(check_run_name in comment for comment in pr_comments):
-        msg = f"Skipping `{check_run_name}` because GitAuto has tried to fix this Check Run error before"
         log_messages.append(msg)
         update_comment(body="\n".join(log_messages), base_args=base_args)
         return

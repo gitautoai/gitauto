@@ -59,7 +59,7 @@ def get_workflow_run_logs(owner: str, repo: str, run_id: int, token: str):
         return response.status_code
     response.raise_for_status()
 
-    # Get the failed step file name
+    # Get the failed step file name (ex: build/6_Run pytest.txt)
     failed_step_fname = get_failed_step_log_file_name(
         owner=owner, repo=repo, run_id=run_id, token=token
     )
@@ -69,6 +69,14 @@ def get_workflow_run_logs(owner: str, repo: str, run_id: int, token: str):
     # Read the content of the zip file
     with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
         for log_fname in zf.namelist():
+            # ex: 0_build.txt
+            # ex: build/system.txt
+            # ex: build/1_Set up job.txt
+            # ex: build/2_Run actions_checkout@v4.txt
+            # ex: build/3_Set up Python 3.12.txt
+            # ex: build/4_Install pytest.txt
+            # ex: build/5_Set PYTHONPATH.txt
+            # ex: build/6_Run pytest.txt
             if log_fname != failed_step_fname:
                 continue
 
@@ -98,12 +106,12 @@ def cancel_workflow_runs_in_progress(
     response.raise_for_status()
 
     workflow_runs = response.json()["workflow_runs"]
-    STATUSES_TO_CANCEL = ["queued", "in_progress", "pending", "waiting", "requested"]
+    statuses_to_cancel = ["queued", "in_progress", "pending", "waiting", "requested"]
     for run in workflow_runs:
         run_name = run["name"]
         run_status = run["status"]
         print(f"Cancelling {run_name} with status {run_status}")
-        if run_status in STATUSES_TO_CANCEL:
+        if run_status in statuses_to_cancel:
             # https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#cancel-a-workflow-run
             cancel_url = (
                 f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs/{run['id']}/cancel"
