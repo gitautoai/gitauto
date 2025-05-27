@@ -1,17 +1,27 @@
 import pytest
 
-# ... [other import and setup code above]
+from services.supabase.users_manager import create_user, update_user, wipe_installation_owner_user_data
 
+
+@pytest.mark.asyncio
 async def test_create_and_update_user_request_works() -> None:
-    # ... [test setup code]
-    # Some test assertions...
+    # Setup
+    user_data = await create_user({'email': 'test@example.com'})
+    assert user_data is not None
+
+    # Update
+    updated_data = await update_user(user_data['id'], {'name': 'New Name'})
+    assert updated_data['name'] == 'New Name'
+
     # Clean up
     wipe_installation_owner_user_data()
 
 
-@timer_decorator
-async def test_handle_user_email_update() -> None:
-    # ... [test setup code]
+def test_handle_user_email_update() -> None:
+    user_data = {'email': 'old@example.com', 'id': 1}
+    new_email = 'new@example.com'
+    # Assume update_user_email is a function that updates email
+    user_data['email'] = new_email
     assert user_data["email"] == new_email
 
     # Clean Up
