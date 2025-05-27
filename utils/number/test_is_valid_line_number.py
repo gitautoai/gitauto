@@ -122,3 +122,25 @@ def test_scientific_notation_strings():
     assert is_valid_line_number("2e1") is False
     assert is_valid_line_number("1e2") is False
     assert is_valid_line_number("2E1") is False
+
+
+def test_custom_object_with_int_conversion():
+    class CustomIntObject:
+        def __int__(self):
+            return 5
+    
+    assert is_valid_line_number(CustomIntObject()) is False
+
+
+def test_custom_object_with_str_conversion_to_valid_number():
+    class CustomStrObject:
+        def __str__(self):
+            return "42"
+    
+    assert is_valid_line_number(CustomStrObject()) is False
+
+
+def test_custom_object_with_both_str_and_int_methods():
+    class ComplexConversionObject:
+        def __str__(self):
+            return "not a number"
