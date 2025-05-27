@@ -87,3 +87,35 @@ def test_unsuspend_installation_generic_exception():
         result = unsuspend_installation(INSTALLATION_ID)
         
         assert result is None
+
+
+def test_unsuspend_installation_zero_installation_id():
+    with patch("services.supabase.installations.unsuspend_installation.supabase") as mock_supabase:
+        mock_table = MagicMock()
+        mock_update = MagicMock()
+        mock_eq = MagicMock()
+        mock_execute = MagicMock()
+        
+        mock_supabase.table.return_value = mock_table
+        mock_table.update.return_value = mock_update
+        mock_update.eq.return_value = mock_eq
+        mock_eq.execute.return_value = mock_execute
+        
+        result = unsuspend_installation(0)
+        
+        mock_update.eq.assert_called_once_with(column="installation_id", value=0)
+        assert result is None
+
+
+def test_unsuspend_installation_negative_installation_id():
+    with patch("services.supabase.installations.unsuspend_installation.supabase") as mock_supabase:
+        mock_table = MagicMock()
+        mock_update = MagicMock()
+        mock_eq = MagicMock()
+        mock_execute = MagicMock()
+        
+        mock_supabase.table.return_value = mock_table
+        mock_table.update.return_value = mock_update
+        mock_update.eq.return_value = mock_eq
+        mock_eq.execute.return_value = mock_execute
+        
