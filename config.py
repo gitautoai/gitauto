@@ -22,6 +22,7 @@ ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
 # Anthropic model IDs
 ANTHROPIC_MODEL_ID_35 = "claude-3-5-sonnet-latest"
 ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
+ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
 
 GITHUB_NOREPLY_EMAIL_DOMAIN = "noreply.github.com"
 PRODUCT_ID_FOR_FREE = "prod_free_placeholder"
