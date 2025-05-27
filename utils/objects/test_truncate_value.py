@@ -13,13 +13,15 @@ def test_truncate_string_longer_than_max():
     long_string = "This is a very long string that exceeds the maximum length"
     result = truncate_value(long_string, 10)
     assert result == "This i ..."
+    assert len(result) == 10  # Verify exact length including suffix
 
 
 def test_truncate_string_equal_to_max():
-    """Test that strings exactly equal to max_length are returned unchanged."""
+    """Test that strings exactly equal to max_length are not truncated."""
     string = "Exactly thirty characters!!!!"
     result = truncate_value(string, 30)
     assert result == string
+    assert len(result) == 30
 
 
 def test_truncate_dict():
@@ -42,7 +44,7 @@ def test_truncate_list():
 
 
 def test_truncate_tuple():
-    """Test that tuple items are properly truncated while maintaining tuple type."""
+    """Test that tuple items are properly truncated while preserving type."""
     test_tuple = ("short item", "This is a very long item that should be truncated")
     result = truncate_value(test_tuple, 10)
     assert isinstance(result, tuple)
@@ -74,3 +76,11 @@ def test_non_string_values():
 def test_empty_string():
     """Test that empty strings are returned unchanged."""
     assert truncate_value("", 10) == ""
+
+
+def test_default_max_length():
+    """Test the default max_length parameter."""
+    long_string = "x" * 35
+    result = truncate_value(long_string)  # Using default max_length=30
+    assert len(result) == 30
+    assert result.endswith(" ...")
