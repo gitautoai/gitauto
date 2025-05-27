@@ -3,7 +3,7 @@ from typing import Any
 
 def truncate_value(value: Any, max_length: int = 30):
     if isinstance(value, str) and len(value) > max_length:
-        # Truncate to fit within max_length including the " ..." suffix (5 chars)
+        # Truncate to fit within max_length including the " ..." suffix (4 chars)
         return f"{value[:max_length-4]} ..."
     if isinstance(value, dict):
         return {k: truncate_value(v, max_length) for k, v in value.items()}
