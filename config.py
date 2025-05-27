@@ -10,6 +10,12 @@ def get_env_var(name: str) -> str:
 GITHUB_API_URL = "https://api.github.com"
 TIMEOUT = 120  # seconds
 
+# GitHub App credentials
+GITHUB_APP_ID = int(os.environ.get("GH_APP_ID", "123456"))
+GITHUB_PRIVATE_KEY_ENCODED: str = os.environ.get("GH_PRIVATE_KEY", "")
+GITHUB_PRIVATE_KEY: bytes = base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED) if GITHUB_PRIVATE_KEY_ENCODED else b""
+
+# Other constants
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "dummy_anthropic_api_key")
 GITHUB_NOREPLY_EMAIL_DOMAIN = "noreply.github.com"
 PRODUCT_ID_FOR_FREE = "prod_free_placeholder"
