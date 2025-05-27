@@ -10,7 +10,7 @@ def test_truncate_string_shorter_than_max():
 def test_truncate_string_longer_than_max():
     long_string = "This is a very long string that exceeds the maximum length"
     result = truncate_value(long_string, 10)
-    assert result == "This  ..."
+    assert result == "This i..."
 
 
 def test_truncate_string_equal_to_max():
@@ -26,14 +26,14 @@ def test_truncate_dict():
     }
     result = truncate_value(test_dict, 10)
     assert result["short_key"] == "short value"
-    assert result["long_key"] == "This i ..."
+    assert result["long_key"] == "This i..."
 
 
 def test_truncate_list():
     test_list = ["short item", "This is a very long item that should be truncated"]
     result = truncate_value(test_list, 10)
     assert result[0] == "short item"
-    assert result[1] == "This i ..."
+    assert result[1] == "This i..."
 
 
 def test_truncate_tuple():
@@ -41,7 +41,7 @@ def test_truncate_tuple():
     result = truncate_value(test_tuple, 10)
     assert isinstance(result, tuple)
     assert result[0] == "short item"
-    assert result[1] == "This i ..."
+    assert result[1] == "This i..."
 
 
 def test_truncate_nested_structures():
@@ -51,7 +51,7 @@ def test_truncate_nested_structures():
         "dict": {"key": "This is a very long item that should be truncated"}
     }
     result = truncate_value(nested, 10)
-    assert result["tuple"][1] == "This i ..."
-    assert result["list"][1] == "This i ..."
-    assert result["dict"]["key"] == "This i ..."
+    assert result["tuple"][1] == "This i..."
+    assert result["list"][1] == "This i..."
+    assert result["dict"]["key"] == "This i..."
 
