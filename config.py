@@ -1,5 +1,8 @@
 import os
 
+GITHUB_API_URL = "https://api.github.com"
+TIMEOUT = 120
+
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "dummy_anthropic_api_key")
 GITHUB_NOREPLY_EMAIL_DOMAIN = "noreply.github.com"
 PRODUCT_ID_FOR_FREE = "prod_free_placeholder"
