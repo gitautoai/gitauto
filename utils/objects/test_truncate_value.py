@@ -22,7 +22,7 @@ def test_truncate_dict_with_long_string_values():
     }
     result = truncate_value(test_dict, max_length=10)
     assert result["key1"] == "This is a ..."
-    assert result["key2"] == "Short string"
+    assert result["key2"] == "Short stri..."
 
 
 def test_truncate_list_with_long_string_values():
@@ -32,7 +32,7 @@ def test_truncate_list_with_long_string_values():
     ]
     result = truncate_value(test_list, max_length=10)
     assert result[0] == "This is a ..."
-    assert result[1] == "Short string"
+    assert result[1] == "Short stri..."
 
 
 def test_truncate_tuple_with_long_string_values():
@@ -43,7 +43,7 @@ def test_truncate_tuple_with_long_string_values():
     result = truncate_value(test_tuple, max_length=10)
     assert isinstance(result, tuple)
     assert result[0] == "This is a ..."
-    assert result[1] == "Short string"
+    assert result[1] == "Short stri..."
 
 
 def test_truncate_nested_structures():
