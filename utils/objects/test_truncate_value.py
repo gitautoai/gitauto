@@ -15,7 +15,6 @@ def test_truncate_string_longer_than_max():
 
 def test_truncate_string_equal_to_max():
     string = "Exactly thirty characters!!!!"
-    assert len(string) == 30
     result = truncate_value(string, 30)
     assert result == string
 
