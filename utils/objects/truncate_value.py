@@ -2,9 +2,16 @@ from typing import Any
 
 
 def truncate_value(value: Any, max_length: int = 30) -> Any:
-    """Truncate strings that are significantly longer than max_length.
-    For strings that are only marginally longer than max_length, return them unchanged.
-    For collections (dict, list, tuple), recursively process their contents.
+    """Truncates string values in data structures to a maximum length.
+
+    Args:
+        value: The value to truncate. Can be a string, dict, list, tuple or other type.
+        max_length: Maximum length for string values before truncation.
+
+    Returns:
+        The value with any strings longer than max_length truncated.
+        For strings that exceed max_length by 4 or more characters,
+        truncates to (max_length - 4) and appends " ..." suffix.
     """
     if isinstance(value, str):
         # Only truncate if the excess length is 4 or more
