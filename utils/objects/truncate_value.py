@@ -9,11 +9,11 @@ def truncate_value(value: Any, max_length: int = 30) -> Any:
         max_length: Maximum length for string values before truncation.
     
     Returns:
-        The value with any strings longer than max_length truncated with " ..." suffix.
+        The value with any strings longer than max_length truncated.
         Non-string values are returned unchanged.
         For collections (dict, list, tuple), recursively processes their contents.
     """
-    # For strings, truncate if longer than max_length
+    # For strings, only truncate if longer than max_length
     if isinstance(value, str):
         if len(value) > max_length:
             # Reserve 4 characters for " ..." suffix
