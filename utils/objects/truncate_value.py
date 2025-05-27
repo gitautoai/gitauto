@@ -11,7 +11,7 @@ def truncate_value(value: Any, max_length: int = 30):
         if len(value) <= max_length or (len(value) - max_length) < 4:
             return value
         # Simple truncation: reserve 3 characters for "..."
-        return f"{value[:max_length-3]}..."
+        return f"{value[:max_length-4]} ..."
     if isinstance(value, dict):
         return {k: truncate_value(v, max_length) for k, v in value.items()}
     if isinstance(value, list):
