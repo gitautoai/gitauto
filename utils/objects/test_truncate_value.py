@@ -54,4 +54,3 @@ def test_truncate_nested_structures():
     assert result["tuple"][1] == "This is a ..."
     assert result["list"][1] == "This is a ..."
     assert result["dict"]["key"] == "This is a ..."
-
