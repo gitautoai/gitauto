@@ -25,7 +25,7 @@ def test_truncate_string_equal_to_max():
 
 
 def test_truncate_string_marginally_longer():
-    """Test that strings only marginally longer (less than 4 chars excess) are not truncated."""
+    """Test that strings only marginally longer (less than 4 chars) are not truncated."""
     # String is 32 chars, max is 30, difference is 2 (< 4), so no truncation
     string = "This string is thirty-two chars"
     result = truncate_value(string, 30)
@@ -59,7 +59,7 @@ def test_truncate_list():
     test_list = ["short item", "This is a very long item that should be truncated"]
     result = truncate_value(test_list, 10)
     assert result[0] == "short item"
-    assert result[1] == "This i..."
+    assert result[1] == "This i ..."
     assert len(result[1]) == 10
 
 
@@ -109,11 +109,12 @@ def test_truncate_whitespace_string():
 
 def test_truncate_exact_boundary():
     """Test truncation at exact boundary conditions."""
-    # For max_length 10, we reserve 4 chars for " ...", leaving 6 for content
+    # For max_length 10, we reserve 4 characters for " ...", leaving 6 for content
     result = truncate_value("1234567890123", 10)  # 13 chars, excess = 3 (< 4)
     assert result == "1234567890123"  # No truncation
     
     result = truncate_value("12345678901234", 10)  # 14 chars, excess = 4 (>= 4)
+    # Expected: first 6 characters + " ..." = "123456 ..."
     assert result == "123456 ..."  # Truncated
     assert len(result) == 10
 
@@ -126,6 +127,7 @@ def test_truncate_edge_cases():
     
     # Test with very long string and small max_length
     result = truncate_value("This is a very long string", 5)
+    # For max_length 5, we reserve 4 characters for " ...", thus 1 character + " ..." = "T ..."
     assert result == "T ..."
     assert len(result) == 5
 
@@ -140,8 +142,8 @@ def test_truncate_collections_with_mixed_types():
         "list": ["short", "This is another long string for truncation"]
     }
     result = truncate_value(mixed_dict, 15)
-    
-    assert result["string"] == "This is a l ..."
+    # For max_length 15, we reserve 4 characters for " ...", so first 11 characters are kept
+    assert result["string"] == "This is a lo ..."
     assert len(result["string"]) == 15
     assert result["number"] == 42
     assert result["boolean"] is True
