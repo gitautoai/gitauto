@@ -3,7 +3,11 @@ from unittest.mock import patch, MagicMock
 import pytest
 from anthropic import Anthropic
 
-from config import ANTHROPIC_API_KEY
+try:
+    from config import ANTHROPIC_API_KEY
+except ImportError:
+    ANTHROPIC_API_KEY = "dummy_anthropic_api_key"
+
 from services.anthropic.client import get_anthropic_client
 
 
