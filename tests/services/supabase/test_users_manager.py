@@ -13,9 +13,7 @@ from config import (
 )
 from utils.time.timer import timer_decorator
 from services.supabase.gitauto_manager import create_user_request, create_installation
-from tests.services.supabase.wipe_data import wipe_installation_owner_user_data
-
-# ... other imports and test functions ...
+from tests.services/supabase/wipe_data import wipe_installation_owner_user_data
 
 @timer_decorator
 @pytest.mark.asyncio
@@ -50,13 +48,9 @@ async def test_create_and_update_user_request_works() -> None:
     )
     assert isinstance(usage_record_id, int)
 
-
-# Skipped tests due to foreign key constraint issues in installations table
 @pytest.mark.skip(reason="Skipping due to foreign key constraint issue in installations table")
 @timer_decorator
 @pytest.mark.asyncio
 async def test_create_and_update_user_request_skipped() -> None:
     """Skipped test for create and update user request"""
     pass
-
-# ... rest of the file remains unchanged
