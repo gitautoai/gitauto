@@ -17,7 +17,7 @@ def wipe_installation_owner_user_data(
         "installation_id", installation_id
     ).execute()
     
-    # Delete issues
+    # Delete all issues for this installation
     supabase.table("issues").delete().eq("installation_id", installation_id).execute()
 
     # Delete installations
