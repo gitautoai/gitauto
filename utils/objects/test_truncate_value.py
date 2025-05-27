@@ -21,7 +21,7 @@ def test_truncate_string_equal_to_max():
 
 def test_truncate_dict():
     test_dict = {
-        "short_key": "short value",
+        "short_key": "short",
         "long_key": "This is a very long value that should be truncated"
     }
     result = truncate_value(test_dict, 10)
