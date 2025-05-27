@@ -221,7 +221,6 @@ def test_parse_subscription_object() -> None:
 
 @timer_decorator
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Requires valid installation in installations table")
 async def test_install_uninstall_install() -> None:
     """Testing install uninstall methods"""
     # Clean up at the beginning just in case a prior test failed to clean
