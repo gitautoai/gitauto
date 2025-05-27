@@ -98,8 +98,8 @@ async def test_create_and_update_user_request_works() -> None:
     wipe_installation_owner_user_data()
 
 
-@timer_decorator
 @pytest.mark.skip(reason="Skipping test_how_many_requests_left due to failing usage count")
+@timer_decorator
 def test_how_many_requests_left() -> None:
     """Test that get_how_many_requests_left_and_cycle returns the correct values"""
     # Clean up at the beginning just in case a prior test failed to clean
