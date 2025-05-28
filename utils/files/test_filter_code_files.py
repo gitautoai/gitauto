@@ -123,3 +123,35 @@ def test_filter_code_files_with_exception():
         
         result = filter_code_files(["main.py"])
         assert result == ["main.py"]
+
+
+def test_filter_code_files_partial_pattern_matches():
+    filenames = [
+        "main.py",
+        "testing.py",
+        "contest.py",
+        "respect.py",
+        "mockingbird.py",
+        "stubborn.py",
+        "fixtures.py"
+    ]
+    result = filter_code_files(filenames)
+    assert result == ["main.py", "contest.py", "respect.py"]
+
+
+def test_filter_code_files_edge_case_extensions():
+    filenames = [
+        "file.py",
+        "file.PY",
+        "file.Py",
+        "file.pY"
+    ]
+    result = filter_code_files(filenames)
+    assert result == filenames
+
+
+def test_filter_code_files_single_file():
+    result = filter_code_files(["main.py"])
+    assert result == ["main.py"]
+    
+    result = filter_code_files(["test_main.py"])
