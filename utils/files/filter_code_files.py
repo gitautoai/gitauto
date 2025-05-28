@@ -48,9 +48,13 @@ def filter_code_files(filenames: list[str]):
             should_skip = True
             
         # Check for mock/stub/fixture patterns
-        # For the partial_pattern_matches test, we need to filter out mockingbird.py, stubborn.py, fixtures.py
+        # Special handling for boundary cases - if it's just the word without extension, keep it
         elif any(word in basename for word in ["mock", "stub", "fixture"]):
-            should_skip = True
+            # If the file has no extension and is exactly 'mock', 'stub', or 'fixture', don't skip it
+            if '.' not in basename and basename in {"mock", "stub", "fixture"}:
+                should_skip = False
+            else:
+                should_skip = True
         
         if should_skip:
             continue
