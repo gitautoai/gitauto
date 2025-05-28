@@ -7,11 +7,6 @@ def run_command(command: str, cwd: str, use_shell: bool = True, env: dict = None
             raise ValueError("Command cannot be empty")
         # Split command into list if not using shell
         command_args = command if use_shell else command.split()
-        
-        # Check for empty command when not using shell
-        if not use_shell and not command_args:
-            raise ValueError("Command cannot be empty when use_shell is False")
-        
         result = subprocess.run(
             args=command_args,
             capture_output=True,
