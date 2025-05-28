@@ -29,7 +29,7 @@ def filter_code_files(filenames: list[str]):
     result = []
     for filename in filenames:
         # Skip obvious non-code files
-        if any(filename.endswith(ext) for ext in non_code_extensions):
+        if any(filename.lower().endswith(ext) for ext in non_code_extensions):
             continue
 
         # Skip test files themselves
