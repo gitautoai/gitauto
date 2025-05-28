@@ -41,8 +41,12 @@ def create_installation(
         ).execute()
 
     # Insert installation record only if it does not exist
-    data_inst, _ = supabase.table(table_name="installations").select("installation_id").eq("installation_id", installation_id).execute()
-    if not (data_inst and data_inst[0]):
+    data_inst, _ = (
+        supabase.table(table_name="installations")
+        .select("installation_id")
+        .eq("installation_id", installation_id)
+        .execute()
+    if not data_inst[1]:
         supabase.table(table_name="installations").insert(
             json={
                 "installation_id": installation_id,
