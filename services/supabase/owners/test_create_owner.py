@@ -347,6 +347,108 @@ def test_create_owner_type_error():
 def test_create_owner_generic_exception():
     with patch("services.supabase.owners.create_owner.supabase") as mock_supabase:
         mock_supabase.table.side_effect = Exception("Generic error")
+
+def test_create_owner_http_500_error():
+    with patch("services.supabase.owners.create_owner.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_supabase.table.return_value = mock_table
+        mock_table.insert.return_value = mock_table
+        
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_response.reason = "Internal Server Error"
+        mock_response.text = "Server error"
+        http_error = requests.exceptions.HTTPError(response=mock_response)
+        mock_table.execute.side_effect = http_error
+        
+        result = create_owner(
+            owner_id=123,
+            owner_name="test_owner",
+            user_id=456,
+            user_name="test_user"
+        )
+        
+        assert result is True
+
+
+def test_create_owner_http_422_error():
+    with patch("services.supabase.owners.create_owner.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_supabase.table.return_value = mock_table
+        mock_table.insert.return_value = mock_table
+        
+        mock_response = Mock()
+        mock_response.status_code = 422
+        mock_response.reason = "Unprocessable Entity"
+        mock_response.text = "Validation error"
+        http_error = requests.exceptions.HTTPError(response=mock_response)
+        mock_table.execute.side_effect = http_error
+        
+        result = create_owner(
+            owner_id=123,
+            owner_name="test_owner",
+            user_id=456,
+            user_name="test_user"
+        )
+        
+        assert result is True
+
+
+def test_create_owner_execute_exception():
+    with patch("services.supabase.owners.create_owner.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_supabase.table.return_value = mock_table
+        mock_table.insert.return_value = mock_table
+        mock_table.execute.side_effect = Exception("Execute error")
+        
+        result = create_owner(
+            owner_id=123,
+            owner_name="test_owner",
+            user_id=456,
+            user_name="test_user"
+        )
+        
+        assert result is True
+
+
+def test_create_owner_insert_exception():
+    with patch("services.supabase.owners.create_owner.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_supabase.table.return_value = mock_table
+        mock_table.insert.side_effect = Exception("Insert error")
+        
+        result = create_owner(
+            owner_id=123,
+            owner_name="test_owner",
+            user_id=456,
+            user_name="test_user"
+        )
+        
+        assert result is True
+
+
+def test_create_owner_table_exception():
+    with patch("services.supabase.owners.create_owner.supabase") as mock_supabase:
+        mock_supabase.table.side_effect = Exception("Table error")
+        
+        result = create_owner(
+            owner_id=123,
+            owner_name="test_owner",
+            user_id=456,
+            user_name="test_user"
+        )
+        
+        assert result is True
+
+
+def test_create_owner_with_unicode_characters():
+    mock_response = Mock()
+    mock_response.data = [{"owner_id": 123}]
+    
+    with patch("services.supabase.owners.create_owner.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_supabase.table.return_value = mock_table
+        mock_table.insert.return_value = mock_table
         
         result = create_owner(
             owner_id=123,
