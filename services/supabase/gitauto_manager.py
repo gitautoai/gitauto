@@ -53,16 +53,9 @@ def create_installation(
                 "installation_id": installation_id,
                 "owner_name": owner_name,
                 "owner_type": owner_type,
-                "owner_id": owner_id
+                "owner_id": owner_id,
             }
         ).execute()
-    if not data_inst[1]:
-        supabase.table(table_name="installations").insert(json={
-            "installation_id": installation_id,
-            "owner_name": owner_name,
-            "owner_type": owner_type,
-            "owner_id": owner_id
-        }).execute()
 
     # Upsert user
     upsert_user(user_id=user_id, user_name=user_name, email=email)
@@ -104,31 +97,10 @@ async def create_user_request(
                 "repo_id": repo_id,
                 "repo_name": repo_name,
                 "issue_number": issue_number,
-                "installation_id": installation_id,
+                "source": source,
             }
         ).execute()
 
-    # Create user request
-    data, _ = (
-        supabase.table(table_name="usage")
-        .insert(
-            json={
-                "user_id": user_id,
-                "user_name": user_name,
-                "installation_id": installation_id,
-                "owner_id": owner_id,
-                "owner_type": owner_type,
-                "owner_name": owner_name,
-                "repo_id": repo_id,
-                "repo_name": repo_name,
-                "issue_number": issue_number,
-                "source": source,
-            }
-        )
-        .execute()
-    )
-
-    # Upsert user
     upsert_user(user_id=user_id, user_name=user_name, email=email)
 
     return data[1][0]["id"]
