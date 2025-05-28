@@ -128,10 +128,10 @@ def test_run_command_subprocess_parameters(mock_run):
             shell=False,
             env=custom_env,
         )
+        assert result is mock_result
 
 
 def test_run_command_empty_command_without_shell():
     with tempfile.TemporaryDirectory() as temp_dir:
         with pytest.raises(ValueError):
             run_command("", temp_dir, use_shell=False)
-        assert result is mock_result
