@@ -53,7 +53,7 @@ def create_installation(
                 "installation_id": installation_id,
                 "owner_name": owner_name,
                 "owner_type": owner_type,
-                "owner_id": owner_id,
+                "owner_id": owner_id
             }
         ).execute()
 
@@ -97,7 +97,7 @@ async def create_user_request(
                 "repo_id": repo_id,
                 "repo_name": repo_name,
                 "issue_number": issue_number,
-                "source": source,
+                "source": source
             }
         ).execute()
 
