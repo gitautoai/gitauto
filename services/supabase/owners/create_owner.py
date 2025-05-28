@@ -28,5 +28,5 @@ def create_owner(
         .execute()
     )
 
-    # Return true if the insert was successful
-    return insert_result.data is not None
+    # Return true if the insert was successful and data is not empty
+    return insert_result.data is not None and len(insert_result.data) > 0
