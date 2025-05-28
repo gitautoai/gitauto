@@ -125,3 +125,15 @@ async def create_user_request(
     upsert_user(user_id=user_id, user_name=user_name, email=email)
 
     return data[1][0]["id"]
+@handle_exceptions(default_return_value=False, raise_on_error=False)
+def is_users_first_issue(user_id: int, installation_id: int) -> bool:
+    # Check if there are any completed usage records for this user and installation
+    data, _ = (
+        supabase.table(table_name="usage")
+        .select("*")
+        .eq(column="user_id", value=user_id)
+        .eq(column="installation_id", value=installation_id)
+        .eq(column="is_completed", value=True)
+        .execute()
+    )
+    return len(data[1]) == 0
