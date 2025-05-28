@@ -160,3 +160,4 @@ def test_filter_code_files_complex_scenarios():
     ]
     expected = ["src/main.py", "lib/utils.js"]
     result = filter_code_files(filenames)
+    assert result == expected
