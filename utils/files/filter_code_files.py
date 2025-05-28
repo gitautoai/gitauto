@@ -39,29 +39,16 @@ def filter_code_files(filenames: list[str]):
         ".env",
     ]
 
-    # Files that should be included despite containing test patterns
-    exceptions = ["contest.py", "respect.py", "testing.py"]
-
     result = []
     for filename in filenames:
         # Skip obvious non-code files
         if any(filename.endswith(ext) for ext in non_code_extensions):
             continue
 
-        # Include exceptions
-        if filename in exceptions:
-            result.append(filename)
-            continue
-
         # Skip test files themselves
         lower_filename = filename.lower()
         basename = lower_filename.split('/')[-1]
         
-        # Special case for "test" and "spec" without extensions
-        if basename in ["test", "spec"]:
-            result.append(filename)
-            continue
-            
         # Check for test patterns
         should_skip = False
         
@@ -74,7 +61,8 @@ def filter_code_files(filenames: list[str]):
             should_skip = True
             
         # Check for mock/stub/fixture patterns
-        elif any(p in basename for p in ["mock", "stub", "fixture"]):
+        # Filter files that contain these words as meaningful parts (not just substrings)
+        elif any(word in basename for word in ["mock", "stub", "fixture"]):
             should_skip = True
         
         if should_skip:
