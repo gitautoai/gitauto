@@ -115,7 +115,8 @@ def test_filter_code_files_all_filtered_out():
 def test_filter_code_files_with_exception():
     # Test that the function handles exceptions gracefully due to the @handle_exceptions decorator
     # The decorator should return the default_return_value (empty list) when an exception occurs
-    with patch('utils.files.filter_code_files.any', side_effect=Exception("Test exception")):
+    # Patch the list.append method to raise an exception
+    with patch.object(list, 'append', side_effect=Exception("Test exception")):
         result = filter_code_files(["main.py"])
         assert result == []  # Should return default_return_value=[] when exception occurs
 
