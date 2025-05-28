@@ -22,7 +22,6 @@ def create_installation(
         .eq(column="owner_id", value=owner_id)
         .execute()
     )
-    if not data_inst[1]:
     if not data[1]:
         customer_id = create_stripe_customer(
             owner_name=owner_name,
