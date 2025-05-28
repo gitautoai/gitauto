@@ -16,13 +16,6 @@ def filter_code_files(filenames: list[str]):
         "specs/",
         "__tests__/",
     ]
-    
-    # Word patterns that should match exactly or at word boundaries
-    word_patterns = [
-        "mock",
-        "stub",
-        "fixture",
-    ]
 
     # Common non-code file extensions
     non_code_extensions = [
@@ -67,17 +60,9 @@ def filter_code_files(filenames: list[str]):
         elif any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
             should_skip = True
             
-        # Check for word patterns (mock, stub, fixture)
-        elif any(basename == p + ".py" or basename.startswith(p + "_") or basename.endswith("s.py") and basename.startswith(p) for p in word_patterns):
+        # Check for mock/stub/fixture patterns - only exact matches or with common separators
+        elif any(basename == word + ".py" or basename.startswith(word + "_") or basename.endswith("_" + word + ".py") for word in ["mock", "stub", "fixture"]):
             should_skip = True
-            
-        # Special case for the test_filter_code_files_partial_pattern_matches test
-        elif basename in ["mockingbird.py", "stubborn.py", "fixtures.py"]:
-            should_skip = True
-            
-        # Special case for files that should be included
-        elif basename in ["contest.py", "respect.py", "testing.py"]:
-            should_skip = False
         
         if should_skip:
             continue
