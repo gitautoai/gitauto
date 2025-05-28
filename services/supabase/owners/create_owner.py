@@ -2,7 +2,7 @@ from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=True, raise_on_error=False)
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def create_owner(
     owner_id: int,
     owner_name: str,
@@ -12,7 +12,7 @@ def create_owner(
     owner_type: str = "",
     org_rules: str = "",
 ):
-    insert_result = (
+    (
         supabase.table("owners")
         .insert(
             {
@@ -27,6 +27,3 @@ def create_owner(
         )
         .execute()
     )
-
-    # Return true if the insert was successful
-    return insert_result.data is not None
