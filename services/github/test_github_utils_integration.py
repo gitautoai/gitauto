@@ -3,12 +3,17 @@ from unittest.mock import patch
 
 from services.github.github_utils import deconstruct_github_payload
 from services.github.github_types import GitHubLabeledPayload
-from tests.constants import OWNER, REPO, INSTALLATION_ID, TOKEN
 from config import PRODUCT_ID, ISSUE_NUMBER_FORMAT
 
 
 class TestDeconstructGitHubPayloadIntegration:
     """Integration tests for deconstruct_github_payload function."""
+
+    # Define test constants directly to avoid import issues
+    OWNER = "gitautoai"
+    REPO = "gitauto"
+    INSTALLATION_ID = 60314628
+    TOKEN = "test-token"
 
     def create_real_payload(self) -> GitHubLabeledPayload:
         """Create a realistic GitHub payload for integration testing."""
@@ -22,23 +27,23 @@ class TestDeconstructGitHubPayloadIntegration:
             },
             "repository": {
                 "id": 123456789,
-                "name": REPO,
-                "clone_url": f"https://github.com/{OWNER}/{REPO}.git",
+                "name": self.REPO,
+                "clone_url": f"https://github.com/{self.OWNER}/{self.REPO}.git",
                 "fork": False,
                 "default_branch": "main",
                 "owner": {
                     "type": "Organization",
-                    "login": OWNER,
+                    "login": self.OWNER,
                     "id": 159883862
                 }
             },
-            "installation": {"id": INSTALLATION_ID},
+            "installation": {"id": self.INSTALLATION_ID},
             "sender": {
                 "id": 12345,
                 "login": "integration-test-sender"
             },
             "label": {"name": "test-label"},
-            "organization": {"login": OWNER}
+            "organization": {"login": self.OWNER}
         }
 
     @patch('services.github.github_utils.get_installation_access_token')
@@ -48,7 +53,7 @@ class TestDeconstructGitHubPayloadIntegration:
         """Integration test with real dependencies (mocking only the token)."""
         # Arrange
         payload = self.create_real_payload()
-        mock_get_installation_access_token.return_value = TOKEN
+        mock_get_installation_access_token.return_value = self.TOKEN
 
         # Act
         result = deconstruct_github_payload(payload)
@@ -57,12 +62,12 @@ class TestDeconstructGitHubPayloadIntegration:
         assert isinstance(result, dict)
         assert result["input_from"] == "github"
         assert result["owner_type"] == "Organization"
-        assert result["owner"] == OWNER
-        assert result["repo"] == REPO
+        assert result["owner"] == self.OWNER
+        assert result["repo"] == self.REPO
         assert result["issue_number"] == 999
         assert result["issue_title"] == "Integration Test Issue"
-        assert result["installation_id"] == INSTALLATION_ID
-        assert result["token"] == TOKEN
+        assert result["installation_id"] == self.INSTALLATION_ID
+        assert result["token"] == self.TOKEN
         assert result["sender_name"] == "integration-test-sender"
         assert result["issuer_name"] == "test-integration-user"
         
