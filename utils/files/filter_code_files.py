@@ -42,41 +42,41 @@ def filter_code_files(filenames: list[str]):
         ".env",
     ]
 
-    # Special case handling for the test_filter_code_files_partial_pattern_matches test
-    special_cases = {
-        "mockingbird.py": False,  # Should be filtered out
-        "stubborn.py": False,     # Should be filtered out
-        "fixtures.py": False,     # Should be filtered out
-        "contest.py": True,       # Should be included
-        "respect.py": True,       # Should be included
-        "testing.py": True        # Should be included
-    }
-
     result = []
     for filename in filenames:
         # Skip obvious non-code files
         if any(filename.endswith(ext) for ext in non_code_extensions):
             continue
 
-        # Special case handling
-        if filename in special_cases:
-            if special_cases[filename]:
-                result.append(filename)
-            continue
-
         # Skip test files themselves
         lower_filename = filename.lower()
+        filename_part = lower_filename.split('/')[-1]  # Get just the filename without path
         
-        # Check for test patterns
         should_skip = False
         for pattern in test_patterns:
-            if pattern in lower_filename:
-                # Special case for "test" in "contest.py" and "spec" in "respect.py"
-                if (pattern == "test" and lower_filename == "contest.py") or \
-                   (pattern == "spec" and lower_filename == "respect.py"):
-                    continue
-                should_skip = True
-                break
+            if pattern in ["tests/", "test/", "specs/", "__tests__/"]:
+                # Directory patterns - check if path contains them
+                if pattern in lower_filename:
+                    should_skip = True
+                    break
+            elif pattern in ["test_", "test.", "spec."]:
+                # Prefix patterns - check if filename starts with them
+                if filename_part.startswith(pattern):
+                    should_skip = True
+                    break
+            elif pattern in ["_test.", ".spec."]:
+                # Exact substring patterns - check if filename contains them
+                if pattern in filename_part:
+                    should_skip = True
+                    break
+            elif pattern in ["mock", "stub", "fixture"]:
+                # Word-based patterns - check if they appear at word boundaries
+                # Match if: starts with pattern, or pattern follows underscore/dot
+                if (filename_part.startswith(pattern + "_") or 
+                    filename_part.startswith(pattern + ".") or
+                    filename_part.startswith(pattern) and len(filename_part) > len(pattern) and filename_part[len(pattern)] in "_."):
+                    should_skip = True
+                    break
         
         if should_skip:
             continue
