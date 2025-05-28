@@ -54,30 +54,22 @@ def filter_code_files(filenames: list[str]):
         
         # Check for test patterns
         should_skip = False
-        for pattern in test_patterns:
-            # For directory patterns
-            if pattern.endswith('/') and pattern in lower_filename:
-                should_skip = True
-                break
-                
-            # For prefix patterns
-            elif pattern.startswith('test') or pattern.startswith('_test') or pattern.startswith('.spec'):
-                if basename.startswith(pattern) or pattern in basename:
-                    should_skip = True
-                    break
-                    
-            # For exact word patterns (mock, stub, fixture)
-            elif pattern in ["mock", "stub", "fixture"]:
-                # Only match if it's a standalone word or at the beginning
-                if basename == pattern + ".py" or basename.startswith(pattern + "_"):
-                    should_skip = True
-                    break
-                    
-            # For "spec." pattern
-            elif pattern == "spec.":
-                if basename == "spec.py" or ".spec." in basename:
-                    should_skip = True
-                    break
+        
+        # Check for directory patterns
+        if any(p in lower_filename for p in ["tests/", "test/", "specs/", "__tests__/"]):
+            should_skip = True
+            
+        # Check for prefix/suffix patterns
+        elif any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
+            should_skip = True
+            
+        # Check for exact word patterns (mock, stub, fixture)
+        elif basename.startswith("mock") and (basename == "mock.py" or basename.startswith("mock_")):
+            should_skip = True
+        elif basename.startswith("stub") and (basename == "stub.py" or basename.startswith("stub_")):
+            should_skip = True
+        elif basename.startswith("fixture") and (basename == "fixture.py" or basename.startswith("fixture_")):
+            should_skip = True
         
         if should_skip:
             continue
