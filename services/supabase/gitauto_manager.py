@@ -37,7 +37,7 @@ def create_installation(
             owner_name=owner_name,
             installation_id=installation_id,
         )
-        create_owner(
+        owner_created = create_owner(
             owner_id=owner_id,
             owner_name=owner_name,
             user_id=user_id,
