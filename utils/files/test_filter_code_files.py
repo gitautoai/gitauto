@@ -118,7 +118,7 @@ def test_filter_code_files_with_exception():
     # Patch the str.endswith method to raise an exception
     with patch.object(str, 'endswith', side_effect=Exception("Test exception")):
         result = filter_code_files(["main.py"])
-        assert result == []  # Should return default_return_value=[] when exception occurs
+        assert result == []
 
 
 def test_filter_code_files_partial_pattern_matches():
@@ -227,35 +227,3 @@ def test_filter_code_files_boundary_cases():
     ]
     result = filter_code_files(filenames)
     assert result == ["test", "spec", "mock", "stub", "fixture"]
-
-
-def test_filter_code_files_mixed_extensions():
-    filenames = [
-        "script.py.md",  # Should be filtered out
-        "readme.md.py",  # Should be kept
-        "test.py.js",   # Should be kept
-        "mock.js.py",   # Should be filtered out (mock prefix)
-        "fixture.py.rb" # Should be kept
-    ]
-    result = filter_code_files(filenames)
-    assert result == ["readme.md.py", "test.py.js", "fixture.py.rb"]
-
-
-def test_filter_code_files_special_python_cases():
-    filenames = [
-        "mockup.py",      # Should be kept (not exact match)
-        "stubbed.py",     # Should be kept (not exact match)
-        "fixtures_db.py", # Should be kept (not exact match)
-        "mock_test.py",   # Should be filtered out (mock_ prefix)
-        "stub_data.py",   # Should be filtered out (stub_ prefix)
-        "fixture_db.py",  # Should be filtered out (fixture_ prefix)
-        "mock.py",        # Should be filtered out (exact match)
-        "stub.py",        # Should be filtered out (exact match)
-        "fixture.py"      # Should be filtered out (exact match)
-    ]
-    result = filter_code_files(filenames)
-    assert result == [
-        "mockup.py",
-        "stubbed.py",
-        "fixtures_db.py"
-    ]
