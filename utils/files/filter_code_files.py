@@ -47,18 +47,13 @@ def filter_code_files(filenames: list[str]):
         # Handle files with .py extension
         if basename.endswith(".py") or basename.endswith(".PY") or basename.endswith(".Py") or basename.endswith(".pY"):
             # Check for exact word patterns (mock, stub, fixture)
-            base_without_ext = basename[:-3]  # Remove .py extension
-            if base_without_ext in ["mock", "stub", "fixture"]:
+            if basename in ["mock.py", "stub.py", "fixture.py"]:
                 continue
                 
             # Check for prefix patterns (mock_, stub_, fixture_)
             if basename.startswith("mock_") or basename.startswith("stub_") or basename.startswith("fixture_"):
                 continue
                 
-            # Check if the basename contains mock, stub, or fixture as substrings
-            # This will catch files like mockingbird.py, stubborn.py, fixtures.py
-            if any(word in basename for word in ["mock", "stub", "fixture"]):
-                continue
 
         result.append(filename)
 
