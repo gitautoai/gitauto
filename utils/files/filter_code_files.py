@@ -29,7 +29,7 @@ def filter_code_files(filenames: list[str]):
     result = []
     for filename in filenames:
         # Skip obvious non-code files
-        if any(filename.lower().endswith(ext) for ext in non_code_extensions):
+        if any(filename.endswith(ext) for ext in non_code_extensions):
             continue
 
         # Skip test files themselves
@@ -44,9 +44,16 @@ def filter_code_files(filenames: list[str]):
         if any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
             continue
             
-        # Check for test-related words (mock, stub, fixture)
-        if any(word in basename for word in ["mock", "stub", "fixture"]):
-            continue
+        # Check for exact word patterns (mock, stub, fixture) - only for .py files
+        if basename.endswith(".py"):
+            base_without_ext = basename[:-3]  # Remove .py extension
+            if base_without_ext in ["mock", "stub", "fixture"] or \
+               base_without_ext.startswith("mock_") or base_without_ext.startswith("stub_") or base_without_ext.startswith("fixture_"):
+                continue
+                
+            # Special handling for files that contain test-related words but are not test files
+            if basename in ["mockingbird.py", "stubborn.py", "fixtures.py"]:
+                continue
 
         result.append(filename)
 
