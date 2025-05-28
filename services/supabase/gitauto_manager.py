@@ -46,6 +46,7 @@ def create_installation(
         .eq("installation_id", installation_id)\
         .is_("uninstalled_at", None).execute()
     if not data_inst[1]:
+    if not data_inst[1]:
         supabase.table(table_name="installations").insert(
             json={
                 "installation_id": installation_id,
