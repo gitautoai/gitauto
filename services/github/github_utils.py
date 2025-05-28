@@ -1,5 +1,7 @@
 # Standard library imports
 from datetime import datetime
+from random import choices
+from string import ascii_letters, digits
 from typing import Literal, cast
 
 # Local imports
@@ -72,7 +74,11 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
 
     date = datetime.now().strftime(format="%Y%m%d")  # like "20241224"
     time = datetime.now().strftime(format="%H%M%S")  # like "120000" means 12:00:00
-    new_branch_name = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}{issue_number}-{date}-{time}"
+    # like "ABCD", "1234", "a1b2"
+    random_str = "".join(choices(ascii_letters + digits, k=4))
+    new_branch_name = (
+        f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}{issue_number}-{date}-{time}-{random_str}"
+    )
 
     # Extract sender related variables
     sender_id = payload["sender"]["id"]
