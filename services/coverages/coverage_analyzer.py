@@ -1,5 +1,5 @@
 # Local imports
-from services.coverage_analyzer.lcov import parse_lcov_coverage
+from services.coverages.parse_lcov_coverage import parse_lcov_coverage
 from services.github.actions_manager import get_workflow_artifacts, download_artifact
 from services.github.github_manager import get_remote_file_tree
 from services.github.repositories.get_repository_languages import (

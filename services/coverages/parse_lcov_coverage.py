@@ -2,81 +2,10 @@
 import os
 
 # Local imports
-from services.coverage_analyzer.types import CoverageReport
+from services.coverages.create_coverage_report import create_coverage_report
+from services.coverages.create_empty_stats import create_empty_stats
+from services.coverages.types import CoverageReport
 from utils.error.handle_exceptions import handle_exceptions
-
-
-def create_coverage_report(path: str, stats: dict, level: str):
-    # For directory level and empty path, then use "."
-    if level == "directory" and path == "":
-        path = "."
-
-    line_coverage = round(
-        (
-            (stats["lines_covered"] / stats["lines_total"] * 100)
-            if stats["lines_total"] > 0
-            else 100
-        ),
-        2,
-    )
-    function_coverage = round(
-        (
-            (stats["functions_covered"] / stats["functions_total"] * 100)
-            if stats["functions_total"] > 0
-            else 100
-        ),
-        2,
-    )
-    branch_coverage = round(
-        (
-            (stats["branches_covered"] / stats["branches_total"] * 100)
-            if stats["branches_total"] > 0
-            else 100
-        ),
-        2,
-    )
-
-    return {
-        "package_name": None,
-        "level": level,
-        "full_path": path,
-        "statement_coverage": line_coverage,
-        "function_coverage": function_coverage,
-        "branch_coverage": branch_coverage,
-        "line_coverage": line_coverage,
-        "uncovered_lines": (
-            ", ".join(map(str, sorted(stats["uncovered_lines"])))
-            if level == "file" and line_coverage > 0
-            else ""
-        ),
-        "uncovered_functions": (
-            ", ".join(
-                (
-                    f"L{func[0]}:{func[1]}"
-                    if len(func) == 2
-                    else f"L{func[0]}-{func[1]}:{func[2]}"
-                )
-                for func in sorted(stats["uncovered_functions"])
-            )
-        ),
-        "uncovered_branches": (", ".join(sorted(stats["uncovered_branches"]))),
-    }
-
-
-def create_empty_stats():
-    return {
-        "lines_total": 0,
-        "lines_covered": 0,
-        "functions_total": 0,
-        "functions_covered": 0,
-        "branches_total": 0,
-        "branches_covered": 0,
-        "uncovered_lines": set(),
-        "uncovered_functions": set(),
-        "uncovered_branches": set(),
-        "test_name": None,
-        "current_function": None,
-    }
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
@@ -100,6 +29,7 @@ def parse_lcov_coverage(lcov_content: str):
             # Extract the directory and filename
             directory_name = os.path.dirname(current_file)
             file_name = os.path.basename(current_file)
+            print(f"current_file: {current_file}")
 
             # Skip test files
             if (
@@ -107,6 +37,7 @@ def parse_lcov_coverage(lcov_content: str):
                 or file_name.startswith("test_")
                 or file_name.endswith("_test.py")
             ):
+                print(f"Skipping test file: {current_file}")
                 current_file = None
                 continue
 
