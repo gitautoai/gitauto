@@ -43,6 +43,7 @@ def create_installation(
             user_id=user_id,
             user_name=user_name,
             stripe_customer_id=customer_id,
+            owner_type=owner_type,
         )
 
     # Insert installation record
