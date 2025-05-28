@@ -16,13 +16,6 @@ def filter_code_files(filenames: list[str]):
         "specs/",
         "__tests__/",
     ]
-    
-    # Word patterns that should match exactly or at word boundaries
-    word_patterns = [
-        "mock",
-        "stub",
-        "fixture",
-    ]
 
     # Common non-code file extensions
     non_code_extensions = [
@@ -67,17 +60,12 @@ def filter_code_files(filenames: list[str]):
         elif any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
             should_skip = True
             
-        # Check for word patterns (mock, stub, fixture)
-        elif any(basename == p + ".py" or basename.startswith(p + "_") or basename.endswith("s.py") and basename.startswith(p) for p in word_patterns):
-            should_skip = True
-            
-        # Special case for files that should be excluded
-        elif basename in ["mockingbird.py", "stubborn.py", "fixtures.py"]:
-            should_skip = True
-            
-        # Special case for files that should be included
-        elif basename in ["contest.py", "respect.py", "testing.py"]:
-            should_skip = False
+        # Check for mock/stub/fixture patterns
+        # Filter files that contain these words as meaningful parts (not just substrings)
+        elif any(word in basename for word in ["mock", "stub", "fixture"]):
+            # Only filter if the file has an extension (is actually a code file)
+            if "." in basename:
+                should_skip = True
         
         if should_skip:
             continue
