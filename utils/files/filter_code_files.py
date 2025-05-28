@@ -44,11 +44,12 @@ def filter_code_files(filenames: list[str]):
         if any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
             continue
             
-        # Check for exact word patterns (mock, stub, fixture) - only for .py files
+        # Handle files with .py extension
         if basename.endswith(".py"):
+            # Check for exact word patterns (mock, stub, fixture)
             base_without_ext = basename[:-3]  # Remove .py extension
             if base_without_ext in ["mock", "stub", "fixture"] or \
-               base_without_ext.startswith("mock_") or base_without_ext.startswith("stub_") or base_without_ext.startswith("fixture_"):
+               basename.startswith("mock_") or basename.startswith("stub_") or basename.startswith("fixture_"):
                 continue
                 
             # Special handling for files that contain test-related words but are not test files
