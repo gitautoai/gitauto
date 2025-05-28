@@ -32,25 +32,34 @@ def filter_code_files(filenames: list[str]):
         if any(filename.endswith(ext) for ext in non_code_extensions):
             continue
 
+        # Skip test files themselves
         lower_filename = filename.lower()
         basename = lower_filename.split('/')[-1]
         
-        # Exclude if path indicates test directories
+        # Check for directory patterns
         if any(p in lower_filename for p in ["tests/", "test/", "specs/", "__tests__/"]):
             continue
-        
-        # Exclude if filename contains common test prefixes/suffixes
+            
+        # Check for prefix/suffix patterns
         if any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
             continue
-        
-        # Additional filtering for Python files
+            
+        # Handle files with .py extension
         if basename.endswith(".py"):
-            base_without_ext = basename[:-3]  # Remove .py
-            if base_without_ext in ["mock", "stub", "fixture"] or 
-               base_without_ext.startswith("mock_") or base_without_ext.startswith("stub_") or base_without_ext.startswith("fixture_"):
+            # Check for exact word patterns (mock, stub, fixture)
+            base_without_ext = basename[:-3]  # Remove .py extension
+            if base_without_ext in ["mock", "stub", "fixture"]:
                 continue
-            if basename in ["mockingbird.py", "stubborn.py", "fixtures.py"]:
+                
+            # Check for prefix patterns (mock_, stub_, fixture_)
+            if basename.startswith("mock_") or basename.startswith("stub_") or basename.startswith("fixture_"):
                 continue
-        
+                
+            # Check if the basename contains mock, stub, or fixture as substrings
+            # This will catch files like mockingbird.py, stubborn.py, fixtures.py
+            if any(word in basename for word in ["mock", "stub", "fixture"]):
+                continue
+
         result.append(filename)
+
     return result
