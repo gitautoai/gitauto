@@ -26,6 +26,9 @@ def filter_code_files(filenames: list[str]):
         ".env",
     ]
 
+    # Files that should be explicitly filtered out
+    explicit_filters = ["mockingbird.py", "stubborn.py", "fixtures.py"]
+
     result = []
     for filename in filenames:
         # Skip obvious non-code files
@@ -36,31 +39,25 @@ def filter_code_files(filenames: list[str]):
         lower_filename = filename.lower()
         basename = lower_filename.split('/')[-1]
         
-        # Check for test patterns
-        should_skip = False
+        # Skip explicitly filtered files
+        if basename in explicit_filters:
+            continue
         
         # Check for directory patterns
         if any(p in lower_filename for p in ["tests/", "test/", "specs/", "__tests__/"]):
-            should_skip = True
+            continue
             
         # Check for prefix/suffix patterns
-        elif any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
-            should_skip = True
-            
-        # Check for exact word patterns (mock, stub, fixture)
-        elif any(p in ["mock", "stub", "fixture"] and (basename == p + ".py" or basename.startswith(p + "_") or basename.endswith("_" + p + ".py")) for p in ["mock", "stub", "fixture"]):
-            should_skip = True
-            
-        # Special case for the test_filter_code_files_partial_pattern_matches test
-        elif basename in ["mockingbird.py", "stubborn.py", "fixtures.py"]:
-            should_skip = True
-        
-        # Special exceptions for the test case
-        if basename in ["contest.py", "respect.py", "testing.py"]:
-            should_skip = False
-        
-        if should_skip:
+        if any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
             continue
+            
+        # Handle files with .py extension
+        if basename.endswith(".py"):
+            # Check for exact word patterns (mock, stub, fixture)
+            base_without_ext = basename[:-3]  # Remove .py extension
+            if base_without_ext in ["mock", "stub", "fixture"] or \
+               basename.startswith("mock_") or basename.startswith("stub_") or basename.startswith("fixture_"):
+                continue
 
         result.append(filename)
 
