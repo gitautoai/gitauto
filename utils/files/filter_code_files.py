@@ -15,9 +15,6 @@ def filter_code_files(filenames: list[str]):
         "test/",
         "specs/",
         "__tests__/",
-        "mock",
-        "stub",
-        "fixture",
     ]
 
     # Common non-code file extensions
@@ -42,34 +39,32 @@ def filter_code_files(filenames: list[str]):
         ".env",
     ]
 
-    # Expected results for the test_filter_code_files_partial_pattern_matches test
-    expected_results = {
-        "main.py": True,
-        "testing.py": True,
-        "contest.py": True,
-        "respect.py": True,
-        "mockingbird.py": False,
-        "stubborn.py": False,
-        "fixtures.py": False
-    }
-
     result = []
     for filename in filenames:
         # Skip obvious non-code files
         if any(filename.endswith(ext) for ext in non_code_extensions):
             continue
 
-        # Special case handling for the test_filter_code_files_partial_pattern_matches test
-        if filename in expected_results:
-            if expected_results[filename]:
-                result.append(filename)
-            continue
-
         # Skip test files themselves
         lower_filename = filename.lower()
+        basename = lower_filename.split('/')[-1]
         
         # Check for test patterns
-        if any(pattern in lower_filename for pattern in test_patterns):
+        should_skip = False
+        
+        # Check for directory patterns
+        if any(p in lower_filename for p in ["tests/", "test/", "specs/", "__tests__/"]):
+            should_skip = True
+            
+        # Check for prefix/suffix patterns
+        elif any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
+            should_skip = True
+            
+        # Check for mock/stub/fixture patterns anywhere in the basename
+        elif any(p in basename for p in ["mock", "stub", "fixture"]):
+            should_skip = True
+        
+        if should_skip:
             continue
 
         result.append(filename)
