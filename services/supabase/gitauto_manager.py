@@ -1,3 +1,4 @@
+from services.supabase.owners.create_owner import create_owner
 from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 from services.supabase.client import supabase
 from services.supabase.users_manager import upsert_user
