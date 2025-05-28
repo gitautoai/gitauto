@@ -50,6 +50,7 @@ def create_installation(
     )
     if not data_inst[1]:
 
+    if not data_inst[1]:
         supabase.table(table_name="installations").insert(
             json={
                 "installation_id": installation_id,
