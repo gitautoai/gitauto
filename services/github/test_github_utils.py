@@ -454,6 +454,126 @@ class TestDeconstructGitHubPayload:
     @patch('services.github.github_utils.choices')
     def test_deconstruct_github_payload_user_owner_type(
         self, mock_choices, mock_datetime, mock_get_parent_issue, 
+
+    @patch('services.github.github_utils.get_installation_access_token')
+    @patch('services.github.github_utils.get_repository_settings')
+    @patch('services.github.github_utils.extract_urls')
+    @patch('services.github.github_utils.get_user_public_email')
+    @patch('services.github.github_utils.get_parent_issue')
+    @patch('services.github.github_utils.datetime')
+    @patch('services.github.github_utils.choices')
+    def test_deconstruct_github_payload_duplicate_reviewers(
+        self, mock_choices, mock_datetime, mock_get_parent_issue, 
+        mock_get_user_public_email, mock_extract_urls,
+        mock_get_repository_settings, mock_get_installation_access_token
+    ):
+        """Test that duplicate reviewers are removed."""
+        # Arrange
+        payload = self.create_mock_payload()
+        payload["sender"]["login"] = "same-user"
+        payload["issue"]["user"]["login"] = "same-user"  # Same as sender
+        
+        # Mock dependencies
+        mock_get_installation_access_token.return_value = "test-token"
+        mock_get_repository_settings.return_value = None
+        mock_extract_urls.return_value = ([], [])
+        mock_get_user_public_email.return_value = None
+        mock_get_parent_issue.return_value = None
+        
+        # Mock datetime
+        mock_datetime_instance = MagicMock()
+        mock_datetime_instance.now.return_value.strftime.side_effect = lambda format: {
+            "%Y%m%d": "20241224",
+            "%H%M%S": "120000"
+        }[format]
+        mock_datetime.now = mock_datetime_instance.now
+        
+        # Mock random string generation
+        mock_choices.return_value = ["A", "B", "C", "D"]
+
+        # Act
+        result = deconstruct_github_payload(payload)
+
+        # Assert
+        assert result["reviewers"] == ["same-user"]  # Should only appear once
+
+    @patch('services.github.github_utils.get_installation_access_token')
+    @patch('services.github.github_utils.get_repository_settings')
+    @patch('services.github.github_utils.check_branch_exists')
+    @patch('services.github.github_utils.extract_urls')
+    @patch('services.github.github_utils.get_user_public_email')
+    @patch('services.github.github_utils.get_parent_issue')
+    @patch('services.github.github_utils.datetime')
+    @patch('services.github.github_utils.choices')
+    def test_deconstruct_github_payload_repo_settings_with_additional_fields(
+        self, mock_choices, mock_datetime, mock_get_parent_issue, 
+        mock_get_user_public_email, mock_extract_urls, mock_check_branch_exists,
+        mock_get_repository_settings, mock_get_installation_access_token
+    ):
+        """Test that additional repository settings are included in the result."""
+        # Arrange
+        payload = self.create_mock_payload()
+        
+        # Mock dependencies
+        mock_get_installation_access_token.return_value = "test-token"
+        mock_get_repository_settings.return_value = {
+            "target_branch": "develop",
+            "custom_field": "custom_value",
+            "another_setting": 42
+        }
+        mock_check_branch_exists.return_value = True
+        mock_extract_urls.return_value = ([], [])
+        mock_get_user_public_email.return_value = None
+        mock_get_parent_issue.return_value = None
+        
+        # Mock datetime
+        mock_datetime_instance = MagicMock()
+        mock_datetime_instance.now.return_value.strftime.side_effect = lambda format: {
+            "%Y%m%d": "20241224",
+            "%H%M%S": "120000"
+        }[format]
+        mock_datetime.now = mock_datetime_instance.now
+        
+        # Mock random string generation
+        mock_choices.return_value = ["A", "B", "C", "D"]
+
+        # Act
+        result = deconstruct_github_payload(payload)
+
+        # Assert
+        assert result["target_branch"] == "develop"
+        assert result["custom_field"] == "custom_value"
+        assert result["another_setting"] == 42
+
+    def test_create_permission_url_edge_cases(self):
+        """Test create_permission_url with edge cases."""
+        # Test with empty owner name
+        result = create_permission_url("Organization", "", 123)
+        assert result == "https://github.com/organizations//settings/installations/123/permissions/update"
+        
+        # Test with special characters in owner name
+        result = create_permission_url("User", "user-with-dashes_and_underscores", 456)
+        assert result == "https://github.com/settings/installations/456/permissions/update"
+        
+        # Test with zero installation ID
+        result = create_permission_url("Organization", "test", 0)
+        assert result == "https://github.com/organizations/test/settings/installations/0/permissions/update"
+
+    @patch('services.github.github_utils.get_installation_access_token')
+    def test_deconstruct_github_payload_missing_fork_field(self, mock_get_installation_access_token):
+        """Test payload deconstruction when fork field is missing from repository."""
+        # Arrange
+        payload = self.create_mock_payload()
+        # Remove the fork field entirely
+        if "fork" in payload["repository"]:
+            del payload["repository"]["fork"]
+        
+        mock_get_installation_access_token.return_value = None
+
+        # Act & Assert
+        with pytest.raises(ValueError):
+            deconstruct_github_payload(payload)
+        
         mock_get_user_public_email, mock_extract_urls,
         mock_get_repository_settings, mock_get_installation_access_token
     ):
