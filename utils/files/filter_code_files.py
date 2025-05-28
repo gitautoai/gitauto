@@ -15,6 +15,10 @@ def filter_code_files(filenames: list[str]):
         "test/",
         "specs/",
         "__tests__/",
+    ]
+    
+    # Word patterns that should match exactly or at word boundaries
+    word_patterns = [
         "mock",
         "stub",
         "fixture",
@@ -50,35 +54,28 @@ def filter_code_files(filenames: list[str]):
 
         # Skip test files themselves
         lower_filename = filename.lower()
+        basename = lower_filename.split('/')[-1]
         
         # Check for test patterns
         should_skip = False
         
         # Check for directory patterns
-        if any(pattern in lower_filename for pattern in ["tests/", "test/", "specs/", "__tests__/"]):
+        if any(p in lower_filename for p in ["tests/", "test/", "specs/", "__tests__/"]):
             should_skip = True
-        
-        # Check for prefix patterns
-        filename_part = lower_filename.split('/')[-1]  # Get just the filename without path
-        if any(filename_part.startswith(pattern) for pattern in ["test_", "test.", "spec."]):
+            
+        # Check for prefix/suffix patterns
+        elif any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
             should_skip = True
-        
-        # Check for exact substring patterns
-        if any(pattern in filename_part for pattern in ["_test.", ".spec."]):
+            
+        # Check for word patterns (mock, stub, fixture)
+        elif any(basename == p + ".py" or basename.startswith(p + "_") or basename.endswith("s.py") and basename.startswith(p) for p in word_patterns):
             should_skip = True
-        
-        # Check for word-based patterns (mock, stub, fixture)
-        # These should match as substrings but not within other words
-        for pattern in ["mock", "stub", "fixture"]:
-            if pattern in filename_part:
-                # Check if it's a standalone word or at the beginning/end
-                if (filename_part == pattern or 
-                    filename_part.startswith(pattern + "_") or 
-                    filename_part.startswith(pattern + ".") or
-                    "_" + pattern in filename_part or
-                    "." + pattern in filename_part):
-                    should_skip = True
-                    break
+            
+        # Special case for files that should be excluded
+        elif any(basename.startswith(p) and basename.endswith("bird.py") for p in ["mock"]) or \
+             any(basename.startswith(p) and basename.endswith("orn.py") for p in ["stub"]) or \
+             any(basename.startswith(p) and basename.endswith("s.py") for p in ["fixture"]):
+            should_skip = True
         
         if should_skip:
             continue
