@@ -51,16 +51,21 @@ def filter_code_files(filenames: list[str]):
         # Skip test files themselves
         lower_filename = filename.lower()
         
-        # Special case handling for the test_filter_code_files_partial_pattern_matches test
-        if lower_filename in ["mockingbird.py", "stubborn.py", "fixtures.py"]:
-            continue
-            
-        if lower_filename in ["testing.py", "contest.py", "respect.py"]:
-            result.append(filename)
-            continue
-
         # Check for test patterns
-        if any(pattern in lower_filename for pattern in test_patterns):
+        should_skip = False
+        for pattern in test_patterns:
+            # For exact pattern matching (test_, _test., test., spec., .spec., directory patterns)
+            if pattern in ["test_", "_test.", "test.", "spec.", ".spec.", "tests/", "test/", "specs/", "__tests__/"]:
+                if pattern in lower_filename:
+                    should_skip = True
+                    break
+            # For substring matching (mock, stub, fixture)
+            elif pattern in ["mock", "stub", "fixture"]:
+                if pattern in lower_filename:
+                    should_skip = True
+                    break
+        
+        if should_skip:
             continue
 
         result.append(filename)
