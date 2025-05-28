@@ -18,7 +18,6 @@ from services.pull_request_handler import write_pr_description
 from services.review_run_handler import handle_review_run
 from services.screenshot_handler import handle_screenshot_comparison
 from services.slack.slack import slack
-from services.supabase.gitauto_manager import set_issue_to_merged
 from services.supabase.installations.delete_installation import delete_installation
 from services.supabase.installations.unsuspend_installation import (
     unsuspend_installation,
