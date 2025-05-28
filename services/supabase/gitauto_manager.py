@@ -101,6 +101,20 @@ async def create_user_request(
             }
         ).execute()
 
-    upsert_user(user_id=user_id, user_name=user_name, email=email)
-
-    return data[1][0]["id"]
+    # Upsert usage record
+    data_usage, _ = supabase.table(table_name="usage").select("*").eq("user_id", user_id).execute()
+    if data_usage and data_usage[0]:
+        # Update existing usage record
+        supabase.table(table_name="usage").update(
+            json={"source": source}
+        ).eq("user_id", user_id).execute()
+    else:
+        # Insert new usage record
+        data_insert, _ = supabase.table(table_name="usage").insert(
+            json={
+                "user_id": user_id,
+                "installation_id": installation_id,
+                "repo_id": repo_id,
+                "issue_number": issue_number,
+                "source": source,
+            }
