@@ -199,20 +199,13 @@ def get_user(user_id: int):
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def upsert_user(user_id: int, user_name: str, email: str | None) -> None:
-    # Check if email is valid; if invalid, set to None (but don't update email if None)
     valid_email = email if check_email_is_valid(email=email) else None
-
-    # Check if user exists
-    existing = get_user(user_id=user_id)
-    if existing:
-        update_data = {"user_name": user_name, "created_by": str(user_id)}
-        if valid_email is not None:
-            update_data["email"] = valid_email
-        # Update existing user
-        supabase.table(table_name="users").update(json=update_data).eq("user_id", user_id).execute()
-    else:
-        # Insert new user
-        insert_data = {"user_id": user_id, "user_name": user_name, "created_by": str(user_id)}
-        if valid_email is not None:
-            insert_data["email"] = valid_email
-        supabase.table(table_name="users").upsert(json=insert_data, on_conflict="user_id").execute()
+    supabase.table(table_name="users").upsert(
+        json={
+            "user_id": user_id,
+            "user_name": user_name,
+            **({"email": valid_email} if valid_email is not None else {}),
+            "created_by": str(user_id),
+        },
+        on_conflict="user_id",
+    ).execute()
