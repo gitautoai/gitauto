@@ -51,10 +51,8 @@ def filter_code_files(filenames: list[str]):
             if base_without_ext in ["mock", "stub", "fixture"] or \
                basename.startswith("mock_") or basename.startswith("stub_") or basename.startswith("fixture_"):
                 continue
-                
-            # Special handling for files that contain test-related words but are not test files
-            if basename in ["mockingbird.py", "stubborn.py", "fixtures.py"]:
-                continue
+            
+            # Special handling for files that contained test-related words has been removed
 
         result.append(filename)
 
