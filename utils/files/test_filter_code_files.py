@@ -149,3 +149,14 @@ def test_filter_code_files_all_test_patterns():
     assert result == []
 
 
+def test_filter_code_files_complex_scenarios():
+    filenames = [
+        "src/main.py",
+        "src/test_main.py.backup",
+        "docs/README.md",
+        "config/settings.json",
+        "lib/utils.js",
+        "tests/mock_data.json"
+    ]
+    expected = ["src/main.py", "lib/utils.js"]
+    result = filter_code_files(filenames)
