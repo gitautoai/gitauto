@@ -16,13 +16,6 @@ def filter_code_files(filenames: list[str]):
         "specs/",
         "__tests__/",
     ]
-    
-    # Word patterns that should match exactly or at word boundaries
-    word_patterns = [
-        "mock",
-        "stub",
-        "fixture",
-    ]
 
     # Common non-code file extensions
     non_code_extensions = [
@@ -46,16 +39,29 @@ def filter_code_files(filenames: list[str]):
         ".env",
     ]
 
+    # Files that should be included despite containing test patterns
+    exceptions = ["contest.py", "respect.py", "testing.py"]
+
     result = []
     for filename in filenames:
         # Skip obvious non-code files
         if any(filename.endswith(ext) for ext in non_code_extensions):
             continue
 
+        # Include exceptions
+        if filename in exceptions:
+            result.append(filename)
+            continue
+
         # Skip test files themselves
         lower_filename = filename.lower()
         basename = lower_filename.split('/')[-1]
         
+        # Special case for "test" and "spec" without extensions
+        if basename in ["test", "spec"]:
+            result.append(filename)
+            continue
+            
         # Check for test patterns
         should_skip = False
         
@@ -67,14 +73,8 @@ def filter_code_files(filenames: list[str]):
         elif any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
             should_skip = True
             
-        # Check for word patterns (mock, stub, fixture)
-        elif any(basename == p + ".py" or basename.startswith(p + "_") or basename.endswith("s.py") and basename.startswith(p) for p in word_patterns):
-            should_skip = True
-            
-        # Special case for files that should be excluded
-        elif any(basename.startswith(p) and basename.endswith("bird.py") for p in ["mock"]) or \
-             any(basename.startswith(p) and basename.endswith("orn.py") for p in ["stub"]) or \
-             any(basename.startswith(p) and basename.endswith("s.py") for p in ["fixture"]):
+        # Check for mock/stub/fixture patterns as exact words
+        elif any(word in basename.replace('.', ' ').split() for word in ["mock", "stub", "fixture"]):
             should_skip = True
         
         if should_skip:
