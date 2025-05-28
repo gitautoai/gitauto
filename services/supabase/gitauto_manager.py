@@ -40,15 +40,19 @@ def create_installation(
             json={"owner_id": owner_id, "stripe_customer_id": customer_id}
         ).execute()
 
-    # Insert installation record
-    supabase.table(table_name="installations").insert(
-        json={
-            "installation_id": installation_id,
-            "owner_name": owner_name,
-            "owner_type": owner_type,
-            "owner_id": owner_id,
-        }
-    ).execute()
+    # Insert installation record only if it does not exist
+    data_inst, _ = supabase.table(table_name="installations")\
+        .select("installation_id")\
+        .eq("installation_id", installation_id)\
+        .execute()
+    if not data_inst[1]:
+        supabase.table(table_name="installations").insert(
+            json={
+                "installation_id": installation_id,
+                "owner_name": owner_name,
+                "owner_type": owner_type,
+                "owner_id": owner_id
+            }
 
     # Upsert user
     upsert_user(user_id=user_id, user_name=user_name, email=email)
