@@ -19,7 +19,8 @@ def parse_lcov_coverage(lcov_content: str):
     current_file = None
     current_stats = create_empty_stats()
 
-    for line in lcov_content.splitlines():
+    lines_iter = iter(lcov_content.splitlines())
+    for line in lines_iter:
         line = line.strip()
 
         if line.startswith("SF:"):  # SF: Source File
@@ -29,9 +30,6 @@ def parse_lcov_coverage(lcov_content: str):
             # Extract the directory and filename
             directory_name = os.path.dirname(current_file)
             file_name = os.path.basename(current_file)
-            print(f"current_file: {current_file}")
-            print(f"directory_name: {directory_name}")
-            print(f"file_name: {file_name}")
 
             # Skip test files
             if (
@@ -39,8 +37,11 @@ def parse_lcov_coverage(lcov_content: str):
                 or file_name.startswith("test_")
                 or file_name.endswith("_test.py")
             ):
-                print(f"Skipping test file: {current_file}")
                 current_file = None
+
+                # Skip to the next SF:
+                while not line.startswith("end_of_record"):
+                    line = next(lines_iter)
                 continue
 
             current_stats = create_empty_stats()
@@ -134,13 +135,10 @@ def parse_lcov_coverage(lcov_content: str):
             # Line coverage data: DA:<line number>,<execution count>
             line_num, execution_count = map(int, line[3:].split(","))
             current_stats["lines_total"] += 1
-            print(f"lines_total: {current_stats['lines_total']}")
             if execution_count > 0:
                 current_stats["lines_covered"] += 1
-                print(f"lines_covered: {current_stats['lines_covered']}")
             else:
                 current_stats["uncovered_lines"].add(line_num)
-                print(f"uncovered_lines: {current_stats['uncovered_lines']}")
 
         # Overrides "lines_total" if available
         elif line.startswith("LF:"):  # Lines Found
@@ -158,7 +156,6 @@ def parse_lcov_coverage(lcov_content: str):
 
             # Store file stats
             file_stats[current_file] = current_stats
-            print(f"file_stats[current_file]: {file_stats[current_file]}")
 
             # Update directory stats
             dir_path = os.path.dirname(current_file)
@@ -192,9 +189,6 @@ def parse_lcov_coverage(lcov_content: str):
 
     # Use create_coverage_report function
     for path, stats in file_stats.items():
-        if "is_valid_line_number" in path:
-            print(f"path: {path}")
-            print(f"stats: {stats}")
         reports.append(create_coverage_report(path, stats, "file"))
 
     for path, stats in dir_stats.items():
