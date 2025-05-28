@@ -45,6 +45,8 @@ def create_installation(
             stripe_customer_id=customer_id,
             owner_type=owner_type,
         )
+        if not owner_created:
+            raise Exception(f"Failed to create owner with id {owner_id}")
 
     # Insert installation record
     supabase.table(table_name="installations").insert(
