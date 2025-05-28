@@ -13,7 +13,7 @@ from config import (
     TEST_USER_NAME,
 )
 from services.supabase.client import supabase
-from services.supabase.gitauto_manager import create_installation, create_user_request
+from services.supabase.gitauto_manager import create_installation, create_user_request, set_issue_to_merged
 from services.supabase.usage.update_usage import update_usage
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
@@ -142,7 +142,65 @@ async def test_complete_and_update_usage_record_only_updates_one_record() -> Non
     wipe_installation_owner_user_data()
 
 
+@timer_decorator
+async def test_set_issue_to_merged() -> None:
+    """Tests setting an issue's merged status to True"""
+    # Clean up at the beginning just in case a prior test failed to clean
+    wipe_installation_owner_user_data()
+
+    # Create installation and issue first
+    create_installation(
+        installation_id=TEST_INSTALLATION_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        owner_id=TEST_OWNER_ID,
+        user_id=TEST_USER_ID,
+        user_name=TEST_USER_NAME,
+        email=TEST_EMAIL,
+    )
+
+    # Create a test issue via create_user_request
+    await create_user_request(
+        user_id=TEST_USER_ID,
+        user_name=TEST_USER_NAME,
+        installation_id=TEST_INSTALLATION_ID,
+        owner_id=TEST_OWNER_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        repo_id=TEST_REPO_ID,
+        repo_name=TEST_REPO_NAME,
+        issue_number=TEST_ISSUE_NUMBER,
+        source="github",
+        email=TEST_EMAIL,
+    )
+
+    # Set the issue as merged
+    set_issue_to_merged(
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        repo_name=TEST_REPO_NAME,
+        issue_number=TEST_ISSUE_NUMBER,
+    )
+
+    # Verify the issue was marked as merged
+    data, _ = (
+        supabase.table("issues")
+        .select("merged")
+        .eq("owner_type", TEST_OWNER_TYPE)
+        .eq("owner_name", TEST_OWNER_NAME)
+        .eq("repo_name", TEST_REPO_NAME)
+        .eq("issue_number", TEST_ISSUE_NUMBER)
+        .execute()
+    )
+    assert len(data[1]) == 1
+    assert data[1][0]["merged"] is True
+
+    # Clean Up
+    wipe_installation_owner_user_data()
+
+
 # Add this to run the async tests
 if __name__ == "__main__":
     # asyncio.run(test_create_update_user_request_works())
     asyncio.run(test_complete_and_update_usage_record_only_updates_one_record())
+    asyncio.run(test_set_issue_to_merged())
