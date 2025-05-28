@@ -1,5 +1,7 @@
 import json
 from unittest.mock import Mock, patch
+import requests
+from requests.exceptions import HTTPError
 
 from tests.constants import OWNER, REPO
 from services.supabase.usage.update_retry_pairs import update_retry_workflow_id_hash_pairs
@@ -311,3 +313,50 @@ def test_update_retry_workflow_id_hash_pairs_with_empty_string_pairs():
             "retry_workflow_id_hash_pairs": ["", "  ", "\n"],
             "is_completed": True,
         })
+
+
+def test_update_retry_workflow_id_hash_pairs_with_http_error():
+    mock_response = Mock()
+    mock_response.status_code = 500
+    mock_response.reason = "Internal Server Error"
+    mock_response.text = "Server error"
+    
+    http_error = HTTPError("500 Server Error")
+    http_error.response = mock_response
+    
+    with patch("services.supabase.usage.update_retry_pairs.supabase") as mock_supabase:
+        mock_supabase.table.side_effect = http_error
+        
+        result = update_retry_workflow_id_hash_pairs(123, 456, 789, ["hash1"])
+        
+        assert result is None
+
+
+def test_update_retry_workflow_id_hash_pairs_with_http_error_403():
+    mock_response = Mock()
+    mock_response.status_code = 403
+    mock_response.reason = "Forbidden"
+    mock_response.text = "Access denied"
+    mock_response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "4999",
+        "X-RateLimit-Used": "1"
+    }
+    
+    http_error = HTTPError("403 Forbidden")
+    http_error.response = mock_response
+    
+    with patch("services.supabase.usage.update_retry_pairs.supabase") as mock_supabase:
+        mock_supabase.table.side_effect = http_error
+        
+        result = update_retry_workflow_id_hash_pairs(123, 456, 789, ["hash1"])
+        
+        assert result is None
+
+
+def test_update_retry_workflow_id_hash_pairs_with_runtime_error():
+    with patch("services.supabase.usage.update_retry_pairs.supabase") as mock_supabase:
+        mock_supabase.table.side_effect = RuntimeError("Runtime error")
+        
+        result = update_retry_workflow_id_hash_pairs(123, 456, 789, ["hash1"])
+        
