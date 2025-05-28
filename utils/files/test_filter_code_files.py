@@ -120,3 +120,10 @@ def test_filter_code_files_edge_cases():
     expected = ["", "file", "file.", ".hidden", "path/to/file.py", "very/long/path/to/deeply/nested/file.js"]
     result = filter_code_files(filenames)
     assert result == expected
+
+
+def test_filter_code_files_exception_handling():
+    result = filter_code_files(None)
+    assert result == []
+    result = filter_code_files("not_a_list")
+    assert result == []
