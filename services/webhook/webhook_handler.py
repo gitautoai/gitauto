@@ -25,6 +25,7 @@ from services.supabase.installations.unsuspend_installation import (
 )
 from services.webhook.handle_installation import handle_installation_created
 from services.webhook.handle_installation_repos import handle_installation_repos_added
+from services.webhook.handle_pr_merged import handle_pr_merged
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -168,6 +169,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
             return
 
         if not ref.startswith(PRODUCT_ID + ISSUE_NUMBER_FORMAT):
+            handle_pr_merged(payload=payload)
             return
 
         # Get issue number from PR body
