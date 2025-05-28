@@ -39,32 +39,16 @@ def filter_code_files(filenames: list[str]):
         ".env",
     ]
 
-    # Files that should be included despite containing test patterns
-    exceptions = ["contest.py", "respect.py", "testing.py"]
-
-    # Test-related words that should be excluded when they appear as complete words
-    test_words = ["mock", "stub", "fixture"]
-
     result = []
     for filename in filenames:
         # Skip obvious non-code files
-        if any(filename.endswith(ext) for ext in non_code_extensions):
-            continue
-
-        # Include exceptions
-        if any(filename.endswith(exc) for exc in exceptions):
-            result.append(filename)
+        if any(filename.lower().endswith(ext.lower()) for ext in non_code_extensions):
             continue
 
         # Skip test files themselves
         lower_filename = filename.lower()
         basename = lower_filename.split('/')[-1]
         
-        # Special case for "test" and "spec" without extensions
-        if basename in ["test", "spec"]:
-            result.append(filename)
-            continue
-            
         # Check for test patterns
         should_skip = False
         
@@ -73,11 +57,17 @@ def filter_code_files(filenames: list[str]):
             should_skip = True
             
         # Check for prefix/suffix patterns
-        elif any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
+        elif any(p in basename for p in test_patterns):
             should_skip = True
             
-        # Check for test-related words as complete words
-        elif any(f"/{word}/" in f"/{basename}/" for word in test_words):
+        # Check for exact word patterns (mock, stub, fixture)
+        elif any(basename == p + ".py" or 
+                basename.startswith(p + "_") or 
+                basename.endswith("_" + p + ".py") or
+                basename == p + ".js" or
+                basename.startswith(p + "_") or
+                basename.endswith("_" + p + ".js")
+                for p in ["mock", "stub", "fixture"]):
             should_skip = True
         
         if should_skip:
