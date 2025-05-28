@@ -227,3 +227,41 @@ def test_filter_code_files_boundary_cases():
     ]
     result = filter_code_files(filenames)
     assert result == ["test", "spec", "mock", "stub", "fixture"]
+
+
+def test_filter_code_files_none_input():
+    # Test that None input is handled gracefully by the decorator
+    result = filter_code_files(None)
+    assert result == []
+
+
+def test_filter_code_files_non_list_input():
+    # Test that non-list input is handled gracefully by the decorator
+    result = filter_code_files("not_a_list")
+    assert result == []
+
+
+def test_filter_code_files_with_empty_strings():
+    filenames = [
+        "",
+        "main.py",
+        " ",
+        "utils.py",
+        "\n",
+        "helper.js"
+    ]
+    result = filter_code_files(filenames)
+    assert result == ["", " ", "\n", "main.py", "utils.py", "helper.js"]
+
+
+def test_filter_code_files_with_unicode_paths():
+    filenames = [
+        "src/主要.py",
+        "lib/测试_main.py",
+        "src/文件.js",
+        "docs/说明.md",
+        "test/テスト.py",
+        "specs/테スト.py"
+    ]
+    result = filter_code_files(filenames)
+    assert result == ["src/主要.py", "src/文件.js"]
