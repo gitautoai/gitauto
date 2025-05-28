@@ -26,9 +26,6 @@ def filter_code_files(filenames: list[str]):
         ".env",
     ]
 
-    # Special words that should be filtered out when they appear in filenames with extensions
-    special_words = {"test", "spec", "mock", "stub", "fixture"}
-
     result = []
     for filename in filenames:
         # Skip obvious non-code files
@@ -50,13 +47,14 @@ def filter_code_files(filenames: list[str]):
         elif any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
             should_skip = True
             
-        # Check for special word patterns
-        elif any(word in basename for word in special_words):
-            # If the file has no extension and matches exactly one of our special words, don't skip it
-            if '.' not in basename and basename in special_words:
+        # Check for mock/stub/fixture patterns
+        elif any(word in basename for word in ["mock", "stub", "fixture"]):
+            # By default, skip files containing these patterns
+            should_skip = True
+            
+            # Exception: If the file has no extension and is exactly 'mock', 'stub', or 'fixture', don't skip it
+            if '.' not in basename and basename in {"mock", "stub", "fixture"}:
                 should_skip = False
-            else:
-                should_skip = True
         
         if should_skip:
             continue
