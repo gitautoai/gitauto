@@ -30,6 +30,8 @@ def parse_lcov_coverage(lcov_content: str):
             directory_name = os.path.dirname(current_file)
             file_name = os.path.basename(current_file)
             print(f"current_file: {current_file}")
+            print(f"directory_name: {directory_name}")
+            print(f"file_name: {file_name}")
 
             # Skip test files
             if (
@@ -149,44 +151,50 @@ def parse_lcov_coverage(lcov_content: str):
             current_stats["lines_covered"] = int(line[3:])
 
         elif line.startswith("end_of_record"):
-            if current_file and current_stats:
-                # Store file stats
-                file_stats[current_file] = current_stats
+            if not current_file:
+                continue
+            if not current_stats:
+                continue
 
-                # Update directory stats
-                dir_path = os.path.dirname(current_file)
-                if dir_path not in dir_stats:
-                    dir_stats[dir_path] = create_empty_stats()
-                for key, value in current_stats.items():
-                    if key in [
-                        "test_name",
-                        "current_function",
-                    ]:  # Skip metadata fields
-                        continue
-                    if isinstance(value, set):
-                        dir_stats[dir_path][key].update(value)
-                    else:
-                        dir_stats[dir_path][key] += value
+            # Store file stats
+            file_stats[current_file] = current_stats
+            print(f"file_stats[current_file]: {file_stats[current_file]}")
 
-                # Update repository stats
-                for key, value in current_stats.items():
-                    if key in [
-                        "test_name",
-                        "current_function",
-                    ]:  # Skip metadata fields
-                        continue
-                    if isinstance(value, set):
-                        repo_stats[key].update(value)
-                    else:
-                        repo_stats[key] += value
+            # Update directory stats
+            dir_path = os.path.dirname(current_file)
+            if dir_path not in dir_stats:
+                dir_stats[dir_path] = create_empty_stats()
+            for key, value in current_stats.items():
+                if key in [
+                    "test_name",
+                    "current_function",
+                ]:  # Skip metadata fields
+                    continue
+                if isinstance(value, set):
+                    dir_stats[dir_path][key].update(value)
+                else:
+                    dir_stats[dir_path][key] += value
 
-            print("")
+            # Update repository stats
+            for key, value in current_stats.items():
+                if key in [
+                    "test_name",
+                    "current_function",
+                ]:  # Skip metadata fields
+                    continue
+                if isinstance(value, set):
+                    repo_stats[key].update(value)
+                else:
+                    repo_stats[key] += value
 
     # Second pass: generate all reports
     reports: list[CoverageReport] = []
 
     # Use create_coverage_report function
     for path, stats in file_stats.items():
+        if "is_valid_line_number" in path:
+            print(f"path: {path}")
+            print(f"stats: {stats}")
         reports.append(create_coverage_report(path, stats, "file"))
 
     for path, stats in dir_stats.items():
