@@ -127,3 +127,25 @@ def test_filter_code_files_exception_handling():
     assert result == []
     result = filter_code_files("not_a_list")
     assert result == []
+
+
+def test_filter_code_files_all_non_code_extensions():
+    filenames = [f"file{ext}" for ext in [
+        ".md", ".txt", ".json", ".xml", ".yml", ".yaml", ".csv", 
+        ".html", ".css", ".svg", ".png", ".jpg", ".jpeg", ".gif", 
+        ".ico", ".pdf", ".lock", ".env"
+    ]]
+    result = filter_code_files(filenames)
+    assert result == []
+
+
+def test_filter_code_files_all_test_patterns():
+    filenames = [
+        "test_file.py", "file_test.py", "file.spec.py", "file.spec.js",
+        "tests/file.py", "test/file.py", "specs/file.py", "__tests__/file.js",
+        "mock_file.py", "stub_file.py", "fixture_file.py"
+    ]
+    result = filter_code_files(filenames)
+    assert result == []
+
+
