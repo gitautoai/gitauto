@@ -360,3 +360,49 @@ def test_update_retry_workflow_id_hash_pairs_with_runtime_error():
         
         result = update_retry_workflow_id_hash_pairs(123, 456, 789, ["hash1"])
         
+        assert result is None
+
+
+def test_update_retry_workflow_id_hash_pairs_with_connection_error():
+    with patch("services.supabase.usage.update_retry_pairs.supabase") as mock_supabase:
+        mock_supabase.table.side_effect = ConnectionError("Connection failed")
+        
+        result = update_retry_workflow_id_hash_pairs(123, 456, 789, ["hash1"])
+        
+        assert result is None
+
+
+def test_update_retry_workflow_id_hash_pairs_with_timeout_error():
+    with patch("services.supabase.usage.update_retry_pairs.supabase") as mock_supabase:
+        mock_supabase.table.side_effect = TimeoutError("Request timed out")
+        
+        result = update_retry_workflow_id_hash_pairs(123, 456, 789, ["hash1"])
+        
+        assert result is None
+
+
+def test_update_retry_workflow_id_hash_pairs_with_value_error():
+    with patch("services.supabase.usage.update_retry_pairs.supabase") as mock_supabase:
+        mock_supabase.table.side_effect = ValueError("Invalid value")
+        
+        result = update_retry_workflow_id_hash_pairs(123, 456, 789, ["hash1"])
+        
+        assert result is None
+
+
+def test_update_retry_workflow_id_hash_pairs_with_index_error():
+    with patch("services.supabase.usage.update_retry_pairs.supabase") as mock_supabase:
+        mock_supabase.table.side_effect = IndexError("Index out of range")
+        
+        result = update_retry_workflow_id_hash_pairs(123, 456, 789, ["hash1"])
+        
+        assert result is None
+
+
+def test_update_retry_workflow_id_hash_pairs_with_os_error():
+    with patch("services.supabase.usage.update_retry_pairs.supabase") as mock_supabase:
+        mock_supabase.table.side_effect = OSError("OS error")
+        
+        result = update_retry_workflow_id_hash_pairs(123, 456, 789, ["hash1"])
+        
+        assert result is None
