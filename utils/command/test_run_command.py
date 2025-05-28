@@ -133,5 +133,6 @@ def test_run_command_subprocess_parameters(mock_run):
 
 def test_run_command_empty_command_without_shell():
     with tempfile.TemporaryDirectory() as temp_dir:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             run_command("", temp_dir, use_shell=False)
+        assert "Command cannot be empty when use_shell is False" in str(exc_info.value)
