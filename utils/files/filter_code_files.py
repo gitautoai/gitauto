@@ -53,8 +53,8 @@ def filter_code_files(filenames: list[str]):
         if basename.endswith(".py"):
             # Check for exact word patterns (mock, stub, fixture)
             base_without_ext = basename[:-3]  # Remove .py extension
-            if base_without_ext in ["mock", "stub", "fixture"] or 
-               basename.startswith("mock_") or basename.startswith("stub_") or basename.startswith("fixture_"):
+            if (base_without_ext in ["mock", "stub", "fixture"] or
+                basename.startswith("mock_") or basename.startswith("stub_") or basename.startswith("fixture_")):
                 continue
             
             # Special handling for files that are exceptions
