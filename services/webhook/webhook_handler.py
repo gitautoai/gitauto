@@ -187,12 +187,6 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
         owner_type = repository["owner"]["type"]
         owner_name = repository["owner"]["login"]
         repo_name = repository["name"]
-        set_issue_to_merged(
-            owner_type=owner_type,
-            owner_name=owner_name,
-            repo_name=repo_name,
-            issue_number=issue_number,
-        )
 
         msg = f"🎉 PR merged by `{payload['sender']['login']}` for `{payload['repository']['name']}`"
         slack(msg)
