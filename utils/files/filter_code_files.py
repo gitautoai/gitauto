@@ -5,7 +5,7 @@ from utils.error.handle_exceptions import handle_exceptions
 def filter_code_files(filenames: list[str]):
     """Filter out test files and common non-code files"""
     # File patterns that are likely tests or don't need tests
-    exact_patterns = [
+    test_patterns = [
         "test_",
         "_test.",
         "test.",
@@ -15,12 +15,6 @@ def filter_code_files(filenames: list[str]):
         "test/",
         "specs/",
         "__tests__/",
-    ]
-    
-    word_patterns = [
-        "mock",
-        "stub",
-        "fixture",
     ]
 
     # Common non-code file extensions
@@ -53,38 +47,22 @@ def filter_code_files(filenames: list[str]):
 
         # Skip test files themselves
         lower_filename = filename.lower()
-        filename_part = lower_filename.split('/')[-1]  # Get just the filename without path
+        basename = lower_filename.split('/')[-1]
         
         # Check for test patterns
         should_skip = False
         
-        # Check for exact patterns (test_, _test., test., spec., .spec., directory patterns)
-        if any(pattern in lower_filename for pattern in exact_patterns):
+        # Check for directory patterns
+        if any(p in lower_filename for p in ["tests/", "test/", "specs/", "__tests__/"]):
             should_skip = True
-        
-        # Check for word-based patterns (mock, stub, fixture)
-        # These should match as substrings but not within other words
-        if not should_skip:
-            for pattern in word_patterns:
-                if pattern in filename_part:
-                    # Check if it's at a word boundary
-                    pattern_start = filename_part.find(pattern)
-                    pattern_end = pattern_start + len(pattern)
-                    
-                    # Check if pattern is at the start of the filename
-                    if pattern_start == 0:
-                        # Check what follows the pattern
-                        if pattern_end == len(filename_part) or filename_part[pattern_end] in "._":
-                            should_skip = True
-                            break
-                    # Check if pattern is preceded by underscore or dot
-                    elif filename_part[pattern_start - 1] in "._":
-                        should_skip = True
-                        break
-                    # Special case: if pattern is the entire filename (no extension)
-                    elif filename_part == pattern:
-                        should_skip = True
-                        break
+            
+        # Check for prefix/suffix patterns
+        elif any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
+            should_skip = True
+            
+        # Check for mock/stub/fixture patterns
+        elif any(word in basename for word in ["mock", "stub", "fixture"]):
+            should_skip = True
         
         if should_skip:
             continue
