@@ -17,3 +17,5 @@ def run_command(command: str, cwd: str, use_shell: bool = True, env: dict = None
         return result
     except subprocess.CalledProcessError as e:
         raise ValueError(f"Command failed: {e.stderr}") from e
+    except (FileNotFoundError, OSError) as e:
+        raise ValueError(f"Command failed: {str(e)}") from e
