@@ -129,8 +129,8 @@ def test_truncate_complex_nested_structure():
     expected = [
         {
             "users": [
-                ("this is a very...", "this is a very..."),
-                {"name": "this is a very...", "age": 25}
+                ("this is a very ...", "this is a very ..."),
+                {"name": "this is a very ...", "age": 25}
             ]
         }
     ]
