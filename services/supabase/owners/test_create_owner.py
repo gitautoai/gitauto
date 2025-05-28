@@ -3,7 +3,6 @@ import pytest
 import json
 import requests
 from services.supabase.owners.create_owner import create_owner
-from tests.constants import OWNER
 
 
 def test_create_owner_success():
