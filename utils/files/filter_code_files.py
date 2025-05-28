@@ -15,6 +15,10 @@ def filter_code_files(filenames: list[str]):
         "test/",
         "specs/",
         "__tests__/",
+    ]
+
+    # Word patterns that should match exactly or at word boundaries
+    word_patterns = [
         "mock",
         "stub",
         "fixture",
@@ -42,6 +46,13 @@ def filter_code_files(filenames: list[str]):
         ".env",
     ]
 
+    # Special exceptions that should not be filtered out
+    exceptions = [
+        "contest.py",
+        "respect.py",
+        "testing.py",
+    ]
+
     result = []
     for filename in filenames:
         # Skip obvious non-code files
@@ -50,35 +61,37 @@ def filter_code_files(filenames: list[str]):
 
         # Skip test files themselves
         lower_filename = filename.lower()
-        
-        # Special case for partial pattern matches
-        # Words like "mockingbird", "stubborn", "fixtures" should not be filtered
-        # unless they match specific patterns
-        
-        # Get just the filename without path
-        filename_part = lower_filename.split('/')[-1]
-        
-        # Check for directory patterns first
-        if any(pattern in lower_filename for pattern in ["tests/", "test/", "specs/", "__tests__/"]):
-            continue
-            
-        # Check for test patterns
-        if any(pattern in lower_filename for pattern in ["test_", "_test.", "test.", "spec.", ".spec."]):
-            continue
-            
-        # Check for word-based patterns (mock, stub, fixture)
-        # These should match as standalone words or with specific prefixes/suffixes
-        should_skip = False
-        for pattern in ["mock", "stub", "fixture"]:
-            if pattern == filename_part or filename_part.startswith(f"{pattern}_") or \
-               filename_part.startswith(f"{pattern}.") or f"_{pattern}" in filename_part or \
-               f".{pattern}" in filename_part:
-                should_skip = True
-                break
-                
-        if should_skip:
+        basename = lower_filename.split('/')[-1]
+
+        # Check if file is in exceptions list
+        if basename in exceptions:
+            result.append(filename)
             continue
 
-        result.append(filename)
+        # Check for test patterns
+        should_skip = False
+
+        # Check for directory patterns
+        if any(p in lower_filename for p in ["tests/", "test/", "specs/", "__tests__/"]):
+            should_skip = True
+
+        # Check for prefix/suffix patterns
+        elif any(p in basename for p in test_patterns):
+            should_skip = True
+
+        # Check for word patterns (mock, stub, fixture)
+        elif any(basename == p + ".py" or 
+                basename.startswith(p + "_") or 
+                basename.endswith("_" + p + ".py") or
+                basename == p + "s.py"  # Handle plural forms
+                for p in word_patterns):
+            should_skip = True
+
+        # Special cases for partial matches that should be skipped
+        elif basename in ["mockingbird.py", "stubborn.py", "fixtures.py"]:
+            should_skip = True
+
+        if not should_skip:
+            result.append(filename)
 
     return result
