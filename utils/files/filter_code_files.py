@@ -15,6 +15,10 @@ def filter_code_files(filenames: list[str]):
         "test/",
         "specs/",
         "__tests__/",
+    ]
+    
+    # Word patterns that should match exactly or at word boundaries
+    word_patterns = [
         "mock",
         "stub",
         "fixture",
@@ -49,7 +53,24 @@ def filter_code_files(filenames: list[str]):
             continue
 
         # Skip test files themselves
-        if any(pattern in filename.lower() for pattern in test_patterns):
+        lower_filename = filename.lower()
+        basename = lower_filename.split('/')[-1]
+        
+        # Check for test patterns
+        should_skip = False
+        
+        # Check for directory and prefix/suffix patterns
+        if any(pattern in lower_filename for pattern in test_patterns):
+            should_skip = True
+            
+        # Check for word patterns (mock, stub, fixture)
+        for word in word_patterns:
+            # Check if it's a standalone word or at word boundaries
+            if basename == word + ".py" or basename.startswith(word + "_") or basename.endswith("s.py") and basename.startswith(word):
+                should_skip = True
+                break
+        
+        if should_skip:
             continue
 
         result.append(filename)
