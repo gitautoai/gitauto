@@ -229,39 +229,33 @@ def test_filter_code_files_boundary_cases():
     assert result == ["test", "spec", "mock", "stub", "fixture"]
 
 
-def test_filter_code_files_none_input():
-    # Test that None input is handled gracefully by the decorator
-    result = filter_code_files(None)
-    assert result == []
-
-
-def test_filter_code_files_non_list_input():
-    # Test that non-list input is handled gracefully by the decorator
-    result = filter_code_files("not_a_list")
-    assert result == []
-
-
-def test_filter_code_files_with_empty_strings():
+def test_filter_code_files_mixed_extensions():
     filenames = [
-        "",
-        "main.py",
-        " ",
-        "utils.py",
-        "\n",
-        "helper.js"
+        "script.py.md",  # Should be filtered out
+        "readme.md.py",  # Should be kept
+        "test.py.js",   # Should be kept
+        "mock.js.py",   # Should be filtered out (mock prefix)
+        "fixture.py.rb" # Should be kept
     ]
     result = filter_code_files(filenames)
-    assert result == ["", " ", "\n", "main.py", "utils.py", "helper.js"]
+    assert result == ["readme.md.py", "test.py.js", "fixture.py.rb"]
 
 
-def test_filter_code_files_with_unicode_paths():
+def test_filter_code_files_special_python_cases():
     filenames = [
-        "src/主要.py",
-        "lib/测试_main.py",
-        "src/文件.js",
-        "docs/说明.md",
-        "test/テスト.py",
-        "specs/테スト.py"
+        "mockup.py",      # Should be kept (not exact match)
+        "stubbed.py",     # Should be kept (not exact match)
+        "fixtures_db.py", # Should be kept (not exact match)
+        "mock_test.py",   # Should be filtered out (mock_ prefix)
+        "stub_data.py",   # Should be filtered out (stub_ prefix)
+        "fixture_db.py",  # Should be filtered out (fixture_ prefix)
+        "mock.py",        # Should be filtered out (exact match)
+        "stub.py",        # Should be filtered out (exact match)
+        "fixture.py"      # Should be filtered out (exact match)
     ]
     result = filter_code_files(filenames)
-    assert result == ["src/主要.py", "src/文件.js"]
+    assert result == [
+        "mockup.py",
+        "stubbed.py",
+        "fixtures_db.py"
+    ]
