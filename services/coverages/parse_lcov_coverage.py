@@ -132,10 +132,13 @@ def parse_lcov_coverage(lcov_content: str):
             # Line coverage data: DA:<line number>,<execution count>
             line_num, execution_count = map(int, line[3:].split(","))
             current_stats["lines_total"] += 1
+            print(f"lines_total: {current_stats['lines_total']}")
             if execution_count > 0:
                 current_stats["lines_covered"] += 1
+                print(f"lines_covered: {current_stats['lines_covered']}")
             else:
                 current_stats["uncovered_lines"].add(line_num)
+                print(f"uncovered_lines: {current_stats['uncovered_lines']}")
 
         # Overrides "lines_total" if available
         elif line.startswith("LF:"):  # Lines Found
