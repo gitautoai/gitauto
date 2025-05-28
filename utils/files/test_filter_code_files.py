@@ -155,3 +155,79 @@ def test_filter_code_files_single_file():
     assert result == ["main.py"]
     
     result = filter_code_files(["test_main.py"])
+    assert result == []
+
+
+def test_filter_code_files_all_test_patterns():
+    filenames = [
+        "test_file.py",
+        "file_test.py", 
+        "spec.py",
+        "file.spec.py",
+        "tests/file.py",
+        "test/file.py",
+        "specs/file.py",
+        "__tests__/file.py",
+        "mock.py",
+        "stub.py",
+        "fixture.py"
+    ]
+    result = filter_code_files(filenames)
+    assert result == []
+
+
+def test_filter_code_files_all_non_code_extensions():
+    filenames = [
+        "file.md",
+        "file.txt", 
+        "file.json",
+        "file.xml",
+        "file.yml",
+        "file.yaml",
+        "file.csv",
+        "file.html",
+        "file.css",
+        "file.svg",
+        "file.png",
+        "file.jpg",
+        "file.jpeg",
+        "file.gif",
+        "file.ico",
+        "file.pdf",
+        "file.lock",
+        "file.env"
+    ]
+    result = filter_code_files(filenames)
+    assert result == []
+
+
+def test_filter_code_files_complex_paths():
+    filenames = [
+        "src/main.py",
+        "src/test_main.py",
+        "lib/utils.js",
+        "lib/mock_utils.js",
+        "docs/README.md",
+        "config/settings.json",
+        "tests/unit/helper.py",
+        "__tests__/integration/api.py"
+    ]
+    result = filter_code_files(filenames)
+    assert result == ["src/main.py", "lib/utils.js"]
+
+
+def test_filter_code_files_boundary_cases():
+    filenames = [
+        "test",
+        "spec",
+        "mock",
+        "stub", 
+        "fixture",
+        "test.py",
+        "spec.py",
+        "mock.py",
+        "stub.py",
+        "fixture.py"
+    ]
+    result = filter_code_files(filenames)
+    assert result == ["test", "spec"]
