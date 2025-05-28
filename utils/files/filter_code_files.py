@@ -65,6 +65,12 @@ def filter_code_files(filenames: list[str]):
             if '.' in basename and any(word in basename for word in ["mock", "stub", "fixture"]):
                 continue
 
+        
+        # Check for test patterns
+        should_skip = False
+        
+        if should_skip:
+            continue
         result.append(filename)
 
     return result
