@@ -36,25 +36,36 @@ def filter_code_files(filenames: list[str]):
         lower_filename = filename.lower()
         basename = lower_filename.split('/')[-1]
         
+        # Check for test patterns
+        should_skip = False
+        
         # Check for directory patterns
         if any(p in lower_filename for p in ["tests/", "test/", "specs/", "__tests__/"]):
-            continue
+            should_skip = True
             
         # Check for prefix/suffix patterns
-        if any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
-            continue
+        elif any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
+            should_skip = True
             
-        # Handle files with .py extension
-        if basename.endswith(".py"):
-            # Check for exact word patterns (mock, stub, fixture)
-            base_without_ext = basename[:-3]  # Remove .py extension
-            if base_without_ext in ["mock", "stub", "fixture"] or \
-               basename.startswith("mock_") or basename.startswith("stub_") or basename.startswith("fixture_"):
-                continue
-                
-            # Special handling for files that contain test-related words but are not test files
-            if basename in ["mockingbird.py", "stubborn.py", "fixtures.py"]:
-                continue
+        # Check for mock/stub/fixture patterns with word boundary logic
+        elif not should_skip:
+            for word in ["mock", "stub", "fixture"]:
+                if word in basename:
+                    # Check if it's a word boundary match
+                    word_start = basename.find(word)
+                    word_end = word_start + len(word)
+                    
+                    # Check if it's at the beginning or preceded by underscore/dot
+                    starts_properly = word_start == 0 or basename[word_start - 1] in "._"
+                    # Check if it's at the end or followed by underscore/dot
+                    ends_properly = word_end == len(basename) or basename[word_end] in "._"
+                    
+                    if starts_properly and ends_properly:
+                        should_skip = True
+                        break
+        
+        if should_skip:
+            continue
 
         result.append(filename)
 
