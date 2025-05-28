@@ -247,3 +247,67 @@ def test_is_installation_valid_with_multiple_records():
         mock_eq = Mock()
         
         mock_supabase.table.return_value = mock_table
+
+
+def test_is_installation_valid_with_false_data():
+    mock_response = Mock()
+    mock_response.data = False
+    
+    with patch("services.supabase.installations.is_installation_valid.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_select = Mock()
+        mock_eq = Mock()
+        
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_select
+        mock_select.eq.return_value = mock_eq
+        mock_eq.execute.return_value = mock_response
+        
+        result = is_installation_valid(INSTALLATION_ID)
+        
+        assert result is False
+        mock_supabase.table.assert_called_once_with(table_name="installations")
+        mock_table.select.assert_called_once_with("uninstalled_at")
+        mock_select.eq.assert_called_once_with(column="installation_id", value=INSTALLATION_ID)
+        mock_eq.execute.assert_called_once()
+
+
+def test_is_installation_valid_with_uninstalled_at_false():
+    mock_response = Mock()
+    mock_response.data = [{"uninstalled_at": False}]
+    
+    with patch("services.supabase.installations.is_installation_valid.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_select = Mock()
+        mock_eq = Mock()
+        
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_select
+        mock_select.eq.return_value = mock_eq
+        mock_eq.execute.return_value = mock_response
+        
+        result = is_installation_valid(INSTALLATION_ID)
+        
+        assert result is False
+        mock_supabase.table.assert_called_once_with(table_name="installations")
+        mock_table.select.assert_called_once_with("uninstalled_at")
+        mock_select.eq.assert_called_once_with(column="installation_id", value=INSTALLATION_ID)
+        mock_eq.execute.assert_called_once()
+
+
+def test_is_installation_valid_with_uninstalled_at_empty_string():
+    mock_response = Mock()
+    mock_response.data = [{"uninstalled_at": ""}]
+    
+    with patch("services.supabase.installations.is_installation_valid.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_select = Mock()
+        mock_eq = Mock()
+        
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_select
+        mock_select.eq.return_value = mock_eq
+        mock_eq.execute.return_value = mock_response
+        
+        result = is_installation_valid(INSTALLATION_ID)
+        
