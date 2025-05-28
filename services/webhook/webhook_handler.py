@@ -9,7 +9,7 @@ from config import (
     ISSUE_NUMBER_FORMAT,
 )
 from services.check_run_handler import handle_check_run
-from services.coverage_analyzer.coverage_analyzer import handle_workflow_coverage
+from services.coverages.coverage_analyzer import handle_workflow_coverage
 from services.gitauto_handler import handle_gitauto
 from services.github.actions_manager import cancel_workflow_runs_in_progress
 from services.github.github_manager import create_comment_on_issue_with_gitauto_button
