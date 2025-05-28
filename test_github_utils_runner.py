@@ -21,6 +21,13 @@ try:
     print(f"   - TestDeconstructGitHubPayload: {len([m for m in dir(TestDeconstructGitHubPayload) if m.startswith('test_')])} test methods")
     print(f"   - TestDeconstructGitHubPayloadIntegration: {len([m for m in dir(TestDeconstructGitHubPayloadIntegration) if m.startswith('test_')])} test methods")
     
+    # Count total test methods
+    total_tests = (
+        len([m for m in dir(TestCreatePermissionUrl) if m.startswith('test_')]) +
+        len([m for m in dir(TestDeconstructGitHubPayload) if m.startswith('test_')]) +
+        len([m for m in dir(TestDeconstructGitHubPayloadIntegration) if m.startswith('test_')])
+    )
+    print(f"\n📊 Total test methods: {total_tests}")
 except ImportError as e:
     print(f"❌ Import error: {e}")
     sys.exit(1)
@@ -31,3 +38,5 @@ except Exception as e:
 print("\n🎉 All tests are ready to run!")
 print("Run with: python -m pytest services/github/test_github_utils.py -v")
 print("Run integration tests with: python -m pytest services/github/test_github_utils_integration.py -v")
+print("Run all tests with: python -m pytest services/github/test_github_utils*.py -v")
+print("Run with coverage: python -m pytest services/github/test_github_utils*.py --cov=services.github.github_utils --cov-report=html")
