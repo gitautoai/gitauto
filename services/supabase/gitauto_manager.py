@@ -118,3 +118,4 @@ async def create_user_request(
                 "issue_number": issue_number,
                 "source": source,
             }
+        ).execute()
