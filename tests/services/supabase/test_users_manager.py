@@ -371,7 +371,7 @@ def test_handle_user_email_update() -> None:
 
     # Insert a user into the database
     create_installation(
-        installation_id=TEST_INSTALLATION_ID,
+        installation_id=TEST_INSTALLATION_ID + 1000,
         owner_type=TEST_OWNER_TYPE,
         owner_name=TEST_OWNER_NAME,
         owner_id=TEST_OWNER_ID,
