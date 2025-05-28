@@ -50,37 +50,32 @@ def filter_code_files(filenames: list[str]):
 
         # Skip test files themselves
         lower_filename = filename.lower()
-        filename_part = lower_filename.split('/')[-1]  # Get just the filename without path
+        basename = lower_filename.split('/')[-1]
         
+        # Check for test patterns
         should_skip = False
         for pattern in test_patterns:
-            if pattern in ["tests/", "test/", "specs/", "__tests__/"]:
-                # Directory patterns - check if path contains them
-                if pattern in lower_filename:
+            # For directory patterns
+            if pattern.endswith('/') and pattern in lower_filename:
+                should_skip = True
+                break
+                
+            # For prefix patterns
+            elif pattern.startswith('test') or pattern.startswith('_test') or pattern.startswith('.spec'):
+                if basename.startswith(pattern) or pattern in basename:
                     should_skip = True
                     break
-            elif pattern in ["test_", "test."]:
-                # Prefix patterns - check if filename starts with them
-                if filename_part.startswith(pattern):
-                    should_skip = True
-                    break
-            elif pattern in ["_test.", ".spec."]:
-                # Exact substring patterns - check if filename contains them
-                if pattern in filename_part:
-                    should_skip = True
-                    break
-            elif pattern == "spec.":
-                # Prefix pattern for spec
-                if filename_part.startswith(pattern):
-                    should_skip = True
-                    break
+                    
+            # For exact word patterns (mock, stub, fixture)
             elif pattern in ["mock", "stub", "fixture"]:
-                # Word-based patterns - check if they appear as complete words or word parts
-                if (pattern in filename_part and 
-                    (filename_part.startswith(pattern) or 
-                     "_" + pattern in filename_part or 
-                     pattern + "_" in filename_part or
-                     pattern + "." in filename_part)):
+                # Only match if it's a standalone word or at the beginning
+                if basename == pattern + ".py" or basename.startswith(pattern + "_"):
+                    should_skip = True
+                    break
+                    
+            # For "spec." pattern
+            elif pattern == "spec.":
+                if basename == "spec.py" or ".spec." in basename:
                     should_skip = True
                     break
         
