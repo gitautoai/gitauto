@@ -17,6 +17,9 @@ def filter_code_files(filenames: list[str]):
         "__tests__/",
     ]
 
+    # Word patterns that should be matched as whole words
+    word_patterns = ["mock", "stub", "fixture"]
+
     # Common non-code file extensions
     non_code_extensions = [
         ".md",
@@ -42,26 +45,38 @@ def filter_code_files(filenames: list[str]):
     result = []
     for filename in filenames:
         # Skip obvious non-code files
-        if any(filename.endswith(ext) for ext in non_code_extensions):
+        if any(filename.lower().endswith(ext) for ext in non_code_extensions):
             continue
 
         # Skip test files themselves
         lower_filename = filename.lower()
-        basename = lower_filename.split('/')[-1]
+        basename = lower_filename.split('/')[-1]  # Get just the filename without path
         
         # Check for test patterns
         should_skip = False
         
         # Check for directory patterns
-        if any(p in lower_filename for p in ["tests/", "test/", "specs/", "__tests__/"]):
+        if any(pattern in lower_filename for pattern in ["tests/", "test/", "specs/", "__tests__/"]):
             should_skip = True
             
         # Check for prefix/suffix patterns
-        elif any(p in basename for p in ["test_", "_test.", "test.", "spec.", ".spec."]):
+        elif any(pattern in basename for pattern in ["test_", "_test.", "test.", "spec.", ".spec."]):
             should_skip = True
             
-        # Check for mock/stub/fixture patterns
-        elif any(word in basename for word in ["mock", "stub", "fixture"]):
+        # Check for word patterns (mock, stub, fixture)
+        # These should match as whole words, not as part of other words
+        elif any(
+            # Check if it's a standalone word (e.g., "mock.py")
+            basename == pattern or 
+            # Check if it's at the start with a separator (e.g., "mock_data.py")
+            basename.startswith(f"{pattern}_") or
+            basename.startswith(f"{pattern}.") or
+            # Check if it's at the end with a separator (e.g., "data_mock.py")
+            basename.endswith(f"_{pattern}") or
+            # Check if it's in the middle with separators (e.g., "data_mock_service.py")
+            f"_{pattern}_" in basename
+            for pattern in word_patterns
+        ):
             should_skip = True
         
         if should_skip:
