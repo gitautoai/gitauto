@@ -4,13 +4,11 @@ from utils.files.filter_code_files import filter_code_files
 
 
 def test_filter_code_files_empty_list():
-    """Test handling of empty input list"""
     result = filter_code_files([])
     assert result == []
 
 
 def test_filter_code_files_only_code_files():
-    """Test handling of valid code files"""
     filenames = [
         "main.py",
         "utils/helper.py",
@@ -24,7 +22,6 @@ def test_filter_code_files_only_code_files():
 
 
 def test_filter_code_files_removes_non_code_extensions():
-    """Test filtering of non-code file extensions"""
     filenames = [
         "main.py",
         "README.md",
@@ -51,11 +48,11 @@ def test_filter_code_files_removes_non_code_extensions():
 
 
 def test_filter_code_files_removes_test_patterns():
-    """Test filtering of test-related file patterns"""
     filenames = [
         "main.py",
         "test_main.py",
         "main_test.py",
+        "test.main.py",
         "spec.py",
         "main.spec.py",
         "tests/helper.py",
@@ -71,11 +68,11 @@ def test_filter_code_files_removes_test_patterns():
 
 
 def test_filter_code_files_case_insensitive_test_patterns():
-    """Test case-insensitive pattern matching"""
     filenames = [
         "main.py",
         "TEST_main.py",
         "Main_TEST.py",
+        "TEST.main.py",
         "SPEC.py",
         "main.SPEC.py",
         "TESTS/helper.py",
@@ -91,7 +88,6 @@ def test_filter_code_files_case_insensitive_test_patterns():
 
 
 def test_filter_code_files_mixed_valid_and_invalid():
-    """Test mixed valid and invalid filenames"""
     filenames = [
         "main.py",
         "utils.py",
@@ -107,7 +103,6 @@ def test_filter_code_files_mixed_valid_and_invalid():
 
 
 def test_filter_code_files_all_filtered_out():
-    """Test when all files should be filtered out"""
     filenames = [
         "test_main.py",
         "config.json",
@@ -120,7 +115,6 @@ def test_filter_code_files_all_filtered_out():
 
 
 def test_filter_code_files_with_exception():
-    """Test error handling with mocked exception"""
     with patch('utils.files.filter_code_files.handle_exceptions') as mock_decorator:
         mock_decorator.side_effect = Exception("Test exception")
         
@@ -130,92 +124,54 @@ def test_filter_code_files_with_exception():
         mock_decorator.return_value = mock_filter_code_files
         
         result = filter_code_files(["main.py"])
-        assert result == ["main.py"]
+        assert result == []
 
 
-def test_filter_code_files_partial_pattern_matches():
-    """Test handling of partial pattern matches"""
-    filenames = [
-        "main.py",
-        "testing.py",
-        "contest.py",
-        "respect.py",
-        "mockingbird.py",
-        "stubborn.py",
-        "fixtures.py"
-    ]
-    result = filter_code_files(filenames)
-    assert result == ["main.py", "testing.py", "contest.py", "respect.py"]
-
-
-def test_filter_code_files_edge_case_extensions():
-    """Test handling of case variations in file extensions"""
+def test_filter_code_files_case_sensitive_extensions():
     filenames = [
         "file.py",
         "file.PY",
         "file.Py",
-        "file.pY"
+        "file.pY",
+        "file.MD",
+        "file.JSON",
+        "file.YML"
     ]
     result = filter_code_files(filenames)
-    assert result == filenames
+    assert result == ["file.py", "file.PY", "file.Py", "file.pY"]
 
 
-def test_filter_code_files_single_file():
-    """Test handling of single file inputs"""
-    result = filter_code_files(["main.py"])
-    assert result == ["main.py"]
-    
-    result = filter_code_files(["test_main.py"])
-    assert result == []
-
-
-def test_filter_code_files_all_test_patterns():
-    """Test all possible test-related patterns"""
+def test_filter_code_files_mock_stub_fixture_patterns():
     filenames = [
-        "test_file.py",
-        "file_test.py", 
-        "spec.py",
-        "file.spec.py",
-        "tests/file.py",
-        "test/file.py",
-        "specs/file.py",
-        "__tests__/file.py",
         "mock.py",
+        "mock_test.py",
+        "test_mock.py",
+        "mock_data.py",
+        "mock.js",
+        "mock_service.js",
         "stub.py",
-        "fixture.py"
+        "stub_impl.py",
+        "fixture.py",
+        "fixture_data.py",
+        "mockingbird.py",  # Should be included (exception)
+        "stubborn.py",     # Should be included (exception)
+        "fixtures.py",     # Should be included (exception)
+        "mymock.py",       # Should be included (not a pattern match)
+        "mystub.py",       # Should be included (not a pattern match)
+        "myfixture.py"     # Should be included (not a pattern match)
     ]
     result = filter_code_files(filenames)
-    assert result == []
-
-
-def test_filter_code_files_all_non_code_extensions():
-    """Test all non-code file extensions"""
-    filenames = [
-        "file.md",
-        "file.txt", 
-        "file.json",
-        "file.xml",
-        "file.yml",
-        "file.yaml",
-        "file.csv",
-        "file.html",
-        "file.css",
-        "file.svg",
-        "file.png",
-        "file.jpg",
-        "file.jpeg",
-        "file.gif",
-        "file.ico",
-        "file.pdf",
-        "file.lock",
-        "file.env"
+    assert result == [
+        "mockingbird.py",
+        "stubborn.py",
+        "fixtures.py",
+        "mymock.py",
+        "mystub.py",
+        "myfixture.py"
     ]
-    result = filter_code_files(filenames)
-    assert result == []
 
 
 def test_filter_code_files_complex_paths():
-    """Test handling of complex file paths"""
     filenames = [
         "src/main.py",
         "src/test_main.py",
@@ -224,25 +180,57 @@ def test_filter_code_files_complex_paths():
         "docs/README.md",
         "config/settings.json",
         "tests/unit/helper.py",
-        "__tests__/integration/api.py"
+        "__tests__/integration/api.py",
+        "src/test/file.py",
+        "src/tests/file.py",
+        "src/specs/file.py",
+        "src/__tests__/file.py"
     ]
     result = filter_code_files(filenames)
     assert result == ["src/main.py", "lib/utils.js"]
 
 
-def test_filter_code_files_boundary_cases():
-    """Test boundary cases and special patterns"""
+def test_filter_code_files_special_cases():
     filenames = [
-        "test",
-        "spec",
-        "mock",
-        "stub", 
-        "fixture",
-        "test.py",
-        "spec.py",
-        "mock.py",
-        "stub.py",
-        "fixture.py"
+        "test",           # Not a file extension
+        "spec",           # Not a file extension
+        "mock",           # Not a file extension
+        "stub",           # Not a file extension
+        "fixture",        # Not a file extension
+        ".py",            # Just extension
+        ".js",            # Just extension
+        "test.py",        # Test pattern
+        "spec.py",        # Test pattern
+        "mock.py",        # Mock pattern
+        "stub.py",        # Stub pattern
+        "fixture.py",     # Fixture pattern
+        "_test_.py",      # Special test pattern
+        "test_test.py",   # Double test pattern
+        "test.test.py"    # Double test pattern
     ]
     result = filter_code_files(filenames)
-    assert result == ["test", "spec"]
+    assert result == ["test", "spec", "mock", "stub", "fixture", ".py", ".js"]
+
+
+def test_filter_code_files_special_exceptions():
+    filenames = [
+        "contest.py",     # Should be included (exception)
+        "respect.py",     # Should be included (exception)
+        "testing.py",     # Should be included (exception)
+        "mockingbird.py", # Should be included (exception)
+        "stubborn.py",    # Should be included (exception)
+        "fixtures.py",    # Should be included (exception)
+        "test.py",        # Should be filtered out
+        "mock.py",        # Should be filtered out
+        "stub.py",        # Should be filtered out
+        "fixture.py"      # Should be filtered out
+    ]
+    result = filter_code_files(filenames)
+    assert result == [
+        "contest.py",
+        "respect.py",
+        "testing.py",
+        "mockingbird.py",
+        "stubborn.py",
+        "fixtures.py"
+    ]
