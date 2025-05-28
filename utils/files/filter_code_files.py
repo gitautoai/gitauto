@@ -34,6 +34,9 @@ def filter_code_files(filenames: list[str]):
         ".svg",
         ".png",
         ".jpg",
+        # If the file has no extension and is exactly 'mock', 'stub', or 'fixture', skip it
+        if '.' not in basename and basename in {"mock", "stub", "fixture"}:
+            continue
         ".jpeg",
         ".gif",
         ".ico",
