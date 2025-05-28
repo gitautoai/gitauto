@@ -105,7 +105,7 @@ def test_filter_code_files_partial_matches():
         "fixtures.py"
     ]
     result = filter_code_files(filenames)
-    assert result == []
+    assert result == ["testing.py", "contested.py", "specification.py"]
 
 
 def test_filter_code_files_edge_cases():
