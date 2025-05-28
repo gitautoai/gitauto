@@ -37,9 +37,13 @@ def create_installation(
             owner_name=owner_name,
             installation_id=installation_id,
         )
-        supabase.table(table_name="owners").insert(
-            json={"owner_id": owner_id, "stripe_customer_id": customer_id}
-        ).execute()
+        create_owner(
+            owner_id=owner_id,
+            owner_name=owner_name,
+            user_id=user_id,
+            user_name=user_name,
+            stripe_customer_id=customer_id,
+        )
 
     # Insert installation record
     supabase.table(table_name="installations").insert(
