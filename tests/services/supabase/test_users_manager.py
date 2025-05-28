@@ -367,11 +367,10 @@ def test_handle_user_email_update() -> None:
     """Test updating a user's email in the users table"""
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
-    wipe_installation_owner_user_data(TEST_INSTALLATION_ID)
 
     # Insert a user into the database
     create_installation(
-        installation_id=TEST_INSTALLATION_ID + 1000,
+        installation_id=TEST_INSTALLATION_ID,
         owner_type=TEST_OWNER_TYPE,
         owner_name=TEST_OWNER_NAME,
         owner_id=TEST_OWNER_ID,
