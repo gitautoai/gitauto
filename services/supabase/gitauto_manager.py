@@ -41,12 +41,8 @@ def create_installation(
         ).execute()
 
     # Insert installation record only if it does not exist
-    data_inst, _ = supabase.table(table_name="installations")\
-        .select("installation_id")\
-        .eq("installation_id", installation_id)\
-        .is_("uninstalled_at", None).execute()
-    if not data_inst[1]:
-    if not data_inst[1]:
+    data_inst, _ = supabase.table(table_name="installations").select("installation_id").eq("installation_id", installation_id).execute()
+    if not (data_inst and data_inst[0]):
         supabase.table(table_name="installations").insert(
             json={
                 "installation_id": installation_id,
@@ -96,85 +92,26 @@ async def create_user_request(
                 "repo_id": repo_id,
                 "repo_name": repo_name,
                 "issue_number": issue_number,
-                "installation_id": installation_id,
+                "source": source,
             }
         ).execute()
 
-    # Add user request to usage table
-    data, _ = (
-        supabase.table(table_name="usage")
-        .insert(
+    # Upsert usage record
+    data_usage, _ = supabase.table(table_name="usage").select("*").eq("user_id", user_id).execute()
+    if data_usage and data_usage[0]:
+        # Update existing usage record
+        supabase.table(table_name="usage").update(
+            json={"source": source}
+        ).eq("user_id", user_id).execute()
+    else:
+        # Insert new usage record
+        data_insert, _ = supabase.table(table_name="usage").insert(
             json={
-                "owner_id": owner_id,
-                "owner_type": owner_type,
-                "owner_name": owner_name,
-                "repo_id": repo_id,
-                "repo_name": repo_name,
-                "issue_number": issue_number,
                 "user_id": user_id,
                 "installation_id": installation_id,
+                "repo_id": repo_id,
+                "issue_number": issue_number,
                 "source": source,
             }
-        )
-        .execute()
-    )
-
-    # Upsert user
-    upsert_user(user_id=user_id, user_name=user_name, email=email)
-
-    return data[1][0]["id"]
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_installation_id(owner_id: int) -> int:
-    """https://supabase.com/docs/reference/python/is"""
-    data, _ = (
-        supabase.table(table_name="installations")
-        .select("installation_id")
-        .eq(column="owner_id", value=owner_id)
-        .is_(column="uninstalled_at", value=None)  # Not uninstalled
-        .execute()
-    )
-    # Return the first installation id even if there are multiple installations
-    return data[1][0]["installation_id"]
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_installation_ids() -> list[int]:
-    """https://supabase.com/docs/reference/python/is"""
-    data, _ = (
-        supabase.table(table_name="installations")
-        .select("installation_id")
-        .is_(column="uninstalled_at", value=None)  # Not uninstalled
-        .execute()
-    )
-    return [item["installation_id"] for item in data[1]]
-
-
-@handle_exceptions(default_return_value=False, raise_on_error=False)
-def is_users_first_issue(user_id: int, installation_id: int) -> bool:
-    # Check if there are any completed usage records for this user and installation
-    data, _ = (
-        supabase.table(table_name="usage")
-        .select("*")
-        .eq(column="user_id", value=user_id)
-        .eq(column="installation_id", value=installation_id)
-        .eq(column="is_completed", value=True)
-        .execute()
-    )
-    return len(data[1]) == 0
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def set_issue_to_merged(
-    owner_type: str, owner_name: str, repo_name: str, issue_number: int
-) -> None:
-    (
-        supabase.table(table_name="issues")
-        .update(json={"merged": True})
-        .eq(column="owner_type", value=owner_type)
-        .eq(column="owner_name", value=owner_name)
-        .eq(column="repo_name", value=repo_name)
-        .eq(column="issue_number", value=issue_number)
-        .execute()
-    )
+        ).execute()
+    return 200
