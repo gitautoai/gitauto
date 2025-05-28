@@ -2,81 +2,10 @@
 import os
 
 # Local imports
-from services.coverage_analyzer.types import CoverageReport
+from services.coverages.create_coverage_report import create_coverage_report
+from services.coverages.create_empty_stats import create_empty_stats
+from services.coverages.types import CoverageReport
 from utils.error.handle_exceptions import handle_exceptions
-
-
-def create_coverage_report(path: str, stats: dict, level: str):
-    # For directory level and empty path, then use "."
-    if level == "directory" and path == "":
-        path = "."
-
-    line_coverage = round(
-        (
-            (stats["lines_covered"] / stats["lines_total"] * 100)
-            if stats["lines_total"] > 0
-            else 100
-        ),
-        2,
-    )
-    function_coverage = round(
-        (
-            (stats["functions_covered"] / stats["functions_total"] * 100)
-            if stats["functions_total"] > 0
-            else 100
-        ),
-        2,
-    )
-    branch_coverage = round(
-        (
-            (stats["branches_covered"] / stats["branches_total"] * 100)
-            if stats["branches_total"] > 0
-            else 100
-        ),
-        2,
-    )
-
-    return {
-        "package_name": None,
-        "level": level,
-        "full_path": path,
-        "statement_coverage": line_coverage,
-        "function_coverage": function_coverage,
-        "branch_coverage": branch_coverage,
-        "line_coverage": line_coverage,
-        "uncovered_lines": (
-            ", ".join(map(str, sorted(stats["uncovered_lines"])))
-            if level == "file" and line_coverage > 0
-            else ""
-        ),
-        "uncovered_functions": (
-            ", ".join(
-                (
-                    f"L{func[0]}:{func[1]}"
-                    if len(func) == 2
-                    else f"L{func[0]}-{func[1]}:{func[2]}"
-                )
-                for func in sorted(stats["uncovered_functions"])
-            )
-        ),
-        "uncovered_branches": (", ".join(sorted(stats["uncovered_branches"]))),
-    }
-
-
-def create_empty_stats():
-    return {
-        "lines_total": 0,
-        "lines_covered": 0,
-        "functions_total": 0,
-        "functions_covered": 0,
-        "branches_total": 0,
-        "branches_covered": 0,
-        "uncovered_lines": set(),
-        "uncovered_functions": set(),
-        "uncovered_branches": set(),
-        "test_name": None,
-        "current_function": None,
-    }
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
@@ -90,7 +19,8 @@ def parse_lcov_coverage(lcov_content: str):
     current_file = None
     current_stats = create_empty_stats()
 
-    for line in lcov_content.splitlines():
+    lines_iter = iter(lcov_content.splitlines())
+    for line in lines_iter:
         line = line.strip()
 
         if line.startswith("SF:"):  # SF: Source File
@@ -108,6 +38,10 @@ def parse_lcov_coverage(lcov_content: str):
                 or file_name.endswith("_test.py")
             ):
                 current_file = None
+
+                # Skip to the next SF:
+                while not line.startswith("end_of_record"):
+                    line = next(lines_iter)
                 continue
 
             current_stats = create_empty_stats()
@@ -215,38 +149,40 @@ def parse_lcov_coverage(lcov_content: str):
             current_stats["lines_covered"] = int(line[3:])
 
         elif line.startswith("end_of_record"):
-            if current_file and current_stats:
-                # Store file stats
-                file_stats[current_file] = current_stats
+            if not current_file:
+                continue
+            if not current_stats:
+                continue
 
-                # Update directory stats
-                dir_path = os.path.dirname(current_file)
-                if dir_path not in dir_stats:
-                    dir_stats[dir_path] = create_empty_stats()
-                for key, value in current_stats.items():
-                    if key in [
-                        "test_name",
-                        "current_function",
-                    ]:  # Skip metadata fields
-                        continue
-                    if isinstance(value, set):
-                        dir_stats[dir_path][key].update(value)
-                    else:
-                        dir_stats[dir_path][key] += value
+            # Store file stats
+            file_stats[current_file] = current_stats
 
-                # Update repository stats
-                for key, value in current_stats.items():
-                    if key in [
-                        "test_name",
-                        "current_function",
-                    ]:  # Skip metadata fields
-                        continue
-                    if isinstance(value, set):
-                        repo_stats[key].update(value)
-                    else:
-                        repo_stats[key] += value
+            # Update directory stats
+            dir_path = os.path.dirname(current_file)
+            if dir_path not in dir_stats:
+                dir_stats[dir_path] = create_empty_stats()
+            for key, value in current_stats.items():
+                if key in [
+                    "test_name",
+                    "current_function",
+                ]:  # Skip metadata fields
+                    continue
+                if isinstance(value, set):
+                    dir_stats[dir_path][key].update(value)
+                else:
+                    dir_stats[dir_path][key] += value
 
-            print("")
+            # Update repository stats
+            for key, value in current_stats.items():
+                if key in [
+                    "test_name",
+                    "current_function",
+                ]:  # Skip metadata fields
+                    continue
+                if isinstance(value, set):
+                    repo_stats[key].update(value)
+                else:
+                    repo_stats[key] += value
 
     # Second pass: generate all reports
     reports: list[CoverageReport] = []
