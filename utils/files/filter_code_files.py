@@ -49,7 +49,28 @@ def filter_code_files(filenames: list[str]):
             continue
 
         # Skip test files themselves
-        if any(pattern in filename.lower() for pattern in test_patterns):
+        lower_filename = filename.lower()
+        filename_part = lower_filename.split('/')[-1]
+        
+        # Check for exact pattern matches or patterns at word boundaries
+        should_skip = False
+        for pattern in test_patterns:
+            # For patterns that are complete words (mock, stub, fixture)
+            if pattern in ["mock", "stub", "fixture"]:
+                # Check if it's a standalone word or at the beginning/end
+                if (pattern == filename_part or 
+                    filename_part.startswith(pattern + "_") or 
+                    filename_part.startswith(pattern + ".") or
+                    "_" + pattern in filename_part or
+                    "." + pattern in filename_part):
+                    should_skip = True
+                    break
+            # For directory patterns or prefix/suffix patterns
+            elif pattern in lower_filename:
+                should_skip = True
+                break
+        
+        if should_skip:
             continue
 
         result.append(filename)
