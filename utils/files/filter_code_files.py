@@ -8,6 +8,7 @@ def filter_code_files(filenames: list[str]):
     test_patterns = [
         "test_",
         "_test.",
+        "test.",
         "spec.",
         ".spec.",
         "tests/",
