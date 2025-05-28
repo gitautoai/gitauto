@@ -60,8 +60,9 @@ def filter_code_files(filenames: list[str]):
             if any(word in basename for word in ["mock", "stub", "fixture"]):
                 continue
         else:
-            # For non-Python files, also check for mock/stub/fixture patterns
-            if any(word in basename for word in ["mock", "stub", "fixture"]):
+            # For non-Python files, check for mock/stub/fixture patterns only if they have an extension
+            # Files without extensions (like "mock", "stub", "fixture") should be kept
+            if '.' in basename and any(word in basename for word in ["mock", "stub", "fixture"]):
                 continue
 
         result.append(filename)
