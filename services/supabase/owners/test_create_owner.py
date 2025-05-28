@@ -347,6 +347,16 @@ def test_create_owner_type_error():
 def test_create_owner_generic_exception():
     with patch("services.supabase.owners.create_owner.supabase") as mock_supabase:
         mock_supabase.table.side_effect = Exception("Generic error")
+        
+        result = create_owner(
+            owner_id=123,
+            owner_name="test_owner",
+            user_id=456,
+            user_name="test_user"
+        )
+        
+        assert result is True
+
 
 def test_create_owner_http_500_error():
     with patch("services.supabase.owners.create_owner.supabase") as mock_supabase:
@@ -449,6 +459,7 @@ def test_create_owner_with_unicode_characters():
         mock_table = Mock()
         mock_supabase.table.return_value = mock_table
         mock_table.insert.return_value = mock_table
+        mock_table.execute.return_value = mock_response
         
         result = create_owner(
             owner_id=123,
