@@ -49,17 +49,8 @@ def filter_code_files(filenames: list[str]):
             continue
 
         # Skip test files themselves
-        lower_filename = filename.lower()
-        
-        # Special case for the test_filter_code_files_partial_pattern_matches test
-        if lower_filename in ["mockingbird.py", "stubborn.py", "fixtures.py"]:
+        if any(pattern in filename.lower() for pattern in test_patterns):
             continue
-            
-        # For all other files, use the original pattern matching
-        if any(pattern in lower_filename for pattern in test_patterns):
-            # Special exceptions for the test case
-            if lower_filename not in ["contest.py", "respect.py", "testing.py"]:
-                continue
 
         result.append(filename)
 
