@@ -41,16 +41,20 @@ def create_installation(
         ).execute()
 
     # Insert installation record only if it does not exist
-    data_inst, _ = supabase.table(table_name="installations").select("installation_id").eq("installation_id", installation_id).execute()
-    if not (data_inst and data_inst[0]):
-        supabase.table(table_name="installations").insert(
-            json={
-                "installation_id": installation_id,
-                "owner_name": owner_name,
-                "owner_type": owner_type,
-                "owner_id": owner_id
-            }
-        ).execute()
+    data_inst, _ = (
+        supabase.table(table_name="installations")
+        .select("installation_id")
+        .eq("installation_id", installation_id)
+        .is_("uninstalled_at", "null")
+        .execute()
+    )
+    if not data_inst[1]:
+        supabase.table(table_name="installations").insert(json={
+            "installation_id": installation_id,
+            "owner_name": owner_name,
+            "owner_type": owner_type,
+            "owner_id": owner_id
+        }).execute()
 
     # Upsert user
     upsert_user(user_id=user_id, user_name=user_name, email=email)
@@ -92,26 +96,31 @@ async def create_user_request(
                 "repo_id": repo_id,
                 "repo_name": repo_name,
                 "issue_number": issue_number,
-                "source": source,
+                "installation_id": installation_id,
             }
         ).execute()
 
-    # Upsert usage record
-    data_usage, _ = supabase.table(table_name="usage").select("*").eq("user_id", user_id).execute()
-    if data_usage and data_usage[0]:
-        # Update existing usage record
-        supabase.table(table_name="usage").update(
-            json={"source": source}
-        ).eq("user_id", user_id).execute()
-    else:
-        # Insert new usage record
-        data_insert, _ = supabase.table(table_name="usage").insert(
+    # Create user request
+    data, _ = (
+        supabase.table(table_name="usage")
+        .insert(
             json={
                 "user_id": user_id,
+                "user_name": user_name,
                 "installation_id": installation_id,
+                "owner_id": owner_id,
+                "owner_type": owner_type,
+                "owner_name": owner_name,
                 "repo_id": repo_id,
+                "repo_name": repo_name,
                 "issue_number": issue_number,
                 "source": source,
             }
-        ).execute()
-    return 200
+        )
+        .execute()
+    )
+
+    # Upsert user
+    upsert_user(user_id=user_id, user_name=user_name, email=email)
+
+    return data[1][0]["id"]
