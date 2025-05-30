@@ -30,8 +30,13 @@ def chat_with_claude(
     client = get_anthropic_client()
 
     # Check token count and delete messages if necessary
+    max_tokens = (
+        64000 if model_id in [ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40] else 8192
+    )
+    buffer = 4096
+    max_input = 200_000 - max_tokens - buffer
     messages = trim_messages_to_token_limit(
-        messages=messages, client=client, model=model_id
+        messages=messages, client=client, model=model_id, max_input=max_input
     )
 
     # Convert OpenAI tools format to Anthropic tools format
@@ -58,11 +63,7 @@ def chat_with_claude(
             messages=messages,
             tools=anthropic_tools,
             # https://docs.anthropic.com/en/docs/about-claude/models/all-models#model-comparison-table
-            max_tokens=(
-                64000
-                if model_id in [ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40]
-                else 8192
-            ),
+            max_tokens=max_tokens,
             temperature=0.0,
             timeout=TIMEOUT,
         )
