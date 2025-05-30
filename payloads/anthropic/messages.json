@@ -1,0 +1,141 @@
+[
+  {
+    "role": "user",
+    "content": "{\"today\": \"2025-05-30\", \"metad..."
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "I'll help you implement the ve..."
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_015Sk85LH8sireK3dPHLWYZC",
+        "name": "search_remote_file_contents",
+        "input": {
+          "query": "reader"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_015Sk85LH8sireK3dPHLWYZC",
+        "content": "10 files found for the search ..."
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Now let me search for viewer-r..."
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01V3fLFp2ze3RZ4XPY9jg2k1",
+        "name": "search_remote_file_contents",
+        "input": {
+          "query": "viewer"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01V3fLFp2ze3RZ4XPY9jg2k1",
+        "content": "10 files found for the search ..."
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Now let me search for navigati..."
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01B8HnUtRodB6SbBFtTpJcuw",
+        "name": "search_remote_file_contents",
+        "input": {
+          "query": "navigation"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01B8HnUtRodB6SbBFtTpJcuw",
+        "content": "10 files found for the search ..."
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Now let me search for the View..."
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01R15Z3wo6r3yPRguw8Ldt87",
+        "name": "search_remote_file_contents",
+        "input": {
+          "query": "ViewerNavigation"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01R15Z3wo6r3yPRguw8Ldt87",
+        "content": "10 files found for the search ..."
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Now let me search for PagerPag..."
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_01SMmu1BcyvmoU8X8y1DYM8m",
+        "name": "search_remote_file_contents",
+        "input": {
+          "query": "PagerPageHolder"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01SMmu1BcyvmoU8X8y1DYM8m",
+        "content": "4 files found for the search q..."
+      }
+    ]
+  }
+]
