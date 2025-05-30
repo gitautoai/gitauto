@@ -172,12 +172,13 @@ def test_real_message_json_format_trimming(mock_client):
 
     # Make the first message exceed token limit but keep others under
     # This simulates a real scenario where we need to remove older messages
-    def count_tokens_variable(msgs):
-        if len(msgs) == 4:
+    def count_tokens_variable(messages):
+        num_msgs = len(messages)
+        if num_msgs == 4:
             return Mock(input_tokens=200000)  # Over limit
-        elif len(msgs) == 3:
+        elif num_msgs == 3:
             return Mock(input_tokens=150000)  # Still over limit
-        elif len(msgs) == 2:
+        elif num_msgs == 2:
             return Mock(input_tokens=100000)  # Under limit
         else:
             return Mock(input_tokens=50000)  # Well under limit
