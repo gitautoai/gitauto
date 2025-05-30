@@ -13,8 +13,8 @@ from utils.objects.safe_get_attribute import safe_get_attribute
 def trim_messages_to_token_limit(
     messages: list[Any],
     client: Anthropic,
+    max_input: int,
     model: str = ANTHROPIC_MODEL_ID_40,
-    max_input: int = 128_000,  # 200K (limit) - 64K (max_tokens) - 8K (buffer)
 ):
     messages = list(messages)  # Make a copy to avoid mutating the original
 
