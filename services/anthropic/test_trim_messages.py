@@ -189,3 +189,78 @@ def test_real_message_json_format_trimming(mock_client):
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=128000)
     assert len(trimmed) == 2
     assert trimmed == messages[2:]  # Last two messages
+
+
+def test_tool_use_and_result_paired_trimming(mock_client):
+    """Test that tool_use and corresponding tool_result messages are trimmed together"""
+    messages = [
+        {"role": "user", "content": "initial query"},
+        {
+            "role": "assistant",
+            "content": [
+                {"type": "text", "text": "first response"},
+                {
+                    "type": "tool_use",
+                    "id": "tool123",
+                    "name": "search",
+                    "input": {"query": "test"},
+                },
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "tool123",
+                    "content": "tool results...",
+                }
+            ],
+        },
+        {"role": "user", "content": "follow up question"},
+        {
+            "role": "assistant",
+            "content": [
+                {"type": "text", "text": "second response"},
+                {
+                    "type": "tool_use",
+                    "id": "tool456",
+                    "name": "search",
+                    "input": {"query": "more"},
+                },
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "tool456",
+                    "content": "more results...",
+                }
+            ],
+        },
+    ]
+
+    # Set up token counting to force trimming of the first pair
+    def count_tokens_for_pairs(messages, model):
+        if len(messages) >= 6:
+            return Mock(input_tokens=max_input + 1000)  # Over limit
+        if len(messages) >= 4:
+            return Mock(input_tokens=max_input - 1000)  # Under limit
+        return Mock(input_tokens=max_input - 2000)  # Well under limit
+
+    max_input = 100000
+    mock_client.messages.count_tokens.side_effect = count_tokens_for_pairs
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=max_input)
+
+    # Should have removed the first 3 messages (initial query + first tool_use/result pair)
+    assert len(trimmed) == 3
+    assert trimmed == messages[3:]
+
+    # Verify the remaining messages still maintain tool_use/tool_result pairing
+    assert trimmed[1]["content"][1]["type"] == "tool_use"
+    assert trimmed[1]["content"][1]["id"] == "tool456"
+    assert trimmed[2]["content"][0]["type"] == "tool_result"
+    assert trimmed[2]["content"][0]["tool_use_id"] == "tool456"
