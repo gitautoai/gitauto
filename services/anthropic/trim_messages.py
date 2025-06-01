@@ -34,7 +34,10 @@ def trim_messages_to_token_limit(
             msg_dict = message_to_dict(msg)
             role = safe_get_attribute(msg_dict, "role")
 
-            if role == "system" or i == 0:
+            if role == "system":
+                continue
+
+            if i == 0 and role == "user":
                 continue
 
             # Check if this is an assistant message with tool_use

@@ -128,7 +128,7 @@ def test_complex_message_format(mock_client):
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=5000)
     assert len(trimmed) < len(messages)
-    assert trimmed == [messages[-1]]  # Only the last message remains
+    assert trimmed == [messages[0]]
 
 
 def test_real_message_json_format_trimming(mock_client):
@@ -187,8 +187,10 @@ def test_real_message_json_format_trimming(mock_client):
     mock_client.messages.count_tokens.side_effect = count_tokens_variable
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=128000)
+
+    # Index 1 and 2 are removed, and index 0 and 3 are kept
     assert len(trimmed) == 2
-    assert trimmed == messages[2:]  # Last two messages
+    assert trimmed == [msg for i, msg in enumerate(messages) if i not in (1, 2)]
 
 
 def test_tool_use_and_result_paired_trimming(mock_client):
@@ -255,12 +257,5 @@ def test_tool_use_and_result_paired_trimming(mock_client):
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=max_input)
 
-    # Should have removed the first 3 messages (initial query + first tool_use/result pair)
-    assert len(trimmed) == 3
-    assert trimmed == messages[3:]
-
-    # Verify the remaining messages still maintain tool_use/tool_result pairing
-    assert trimmed[1]["content"][1]["type"] == "tool_use"
-    assert trimmed[1]["content"][1]["id"] == "tool456"
-    assert trimmed[2]["content"][0]["type"] == "tool_result"
-    assert trimmed[2]["content"][0]["tool_use_id"] == "tool456"
+    assert len(trimmed) == 4
+    assert trimmed == [msg for i, msg in enumerate(messages) if i not in (1, 2)]
