@@ -29,13 +29,51 @@ def trim_messages_to_token_limit(
 
     # Keep removing messages from oldest (non-system) to newest until under limit
     while token_input > max_input and len(messages) > 1:
-        # Remove oldest non-system message
+        # Find oldest non-system message that we can safely remove
         for i, msg in enumerate(messages):
             msg_dict = message_to_dict(msg)
             role = safe_get_attribute(msg_dict, "role")
-            if role != "system":
-                del messages[i]
-                break
+
+            if role == "system":
+                continue
+
+            if i == 0 and role == "user":
+                continue
+
+            # Check if this is an assistant message with tool_use
+            tool_use_id = None
+            if role == "assistant" and i + 1 < len(messages):
+                content = safe_get_attribute(msg_dict, "content", [])
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "tool_use":
+                        tool_use_id = block.get("id")
+                        break
+
+            # If this message has a tool_use, check if next message has the matching tool_result
+            if tool_use_id and i + 1 < len(messages):
+                next_msg = message_to_dict(messages[i + 1])
+                next_content = safe_get_attribute(next_msg, "content", [])
+                has_matching_tool_result = False
+
+                # Check if next message has a matching tool_result
+                if isinstance(next_content, list):
+                    for block in next_content:
+                        if (
+                            isinstance(block, dict)
+                            and block.get("type") == "tool_result"
+                            and block.get("tool_use_id") == tool_use_id
+                        ):
+                            has_matching_tool_result = True
+                            break
+
+                # If there's a matching tool_result, remove both messages together
+                if has_matching_tool_result:
+                    del messages[i : i + 2]
+                    break
+
+            # Regular message (no tool use) or no matching tool result found
+            del messages[i]
+            break
 
         # Recalculate token count after removal
         token_input = cast(
