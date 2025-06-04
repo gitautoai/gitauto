@@ -191,7 +191,7 @@ def test_create_issue_timeout_parameter():
         create_issue("Test Title", "Test Body", ["user1"], base_args)
     
     call_args = mock_post.call_args
-    assert call_args.kwargs["headers"] == {"Authorization": "Bearer test-token-123"}
+    assert call_args.kwargs["timeout"] == 60
 
 
 def test_create_issue_headers_creation():
