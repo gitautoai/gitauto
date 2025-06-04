@@ -143,21 +143,20 @@ async def handle_gitauto(
         return
 
     # Create a usage record
-    usage_record_task = create_task(
-        create_user_request(
-            user_id=sender_id if input_from == "github" else 0,
-            user_name=sender_name,
-            installation_id=installation_id,
-            owner_id=owner_id,
-            owner_type=owner_type,
-            owner_name=owner_name,
-            repo_id=repo_id,
-            repo_name=repo_name,
-            issue_number=issue_number,
-            source=input_from,
-            email=sender_email,
-        )
+    usage_record_id = create_user_request(
+        user_id=sender_id if input_from == "github" else 0,
+        user_name=sender_name,
+        installation_id=installation_id,
+        owner_id=owner_id,
+        owner_type=owner_type,
+        owner_name=owner_name,
+        repo_id=repo_id,
+        repo_name=repo_name,
+        issue_number=issue_number,
+        source=input_from,
+        email=sender_email,
     )
+
     if input_from == "github":
         create_task(
             add_reaction_to_issue(
@@ -393,7 +392,6 @@ async def handle_gitauto(
     update_comment(body=body_after_pr, base_args=base_args)
 
     end_time = time.time()
-    usage_record_id = await usage_record_task
     update_usage(
         usage_record_id=usage_record_id,
         is_completed=is_completed,

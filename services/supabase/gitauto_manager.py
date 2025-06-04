@@ -55,7 +55,7 @@ def create_installation(
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=True)
-async def create_user_request(
+def create_user_request(
     user_id: int,
     user_name: str,
     installation_id: int,
