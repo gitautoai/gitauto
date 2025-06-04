@@ -38,7 +38,7 @@ async def test_create_update_user_request_works() -> None:
         email=TEST_EMAIL,
     )
 
-    usage_record_id = await create_user_request(
+    usage_record_id = create_user_request(
         user_id=TEST_USER_ID,
         user_name=TEST_USER_NAME,
         installation_id=TEST_INSTALLATION_ID,
@@ -88,7 +88,7 @@ async def test_complete_and_update_usage_record_only_updates_one_record() -> Non
 
     # Creating multiple usage records where is_completed = false.
     for _ in range(0, 5):
-        await create_user_request(
+        create_user_request(
             user_id=TEST_USER_ID,
             user_name=TEST_USER_NAME,
             installation_id=TEST_INSTALLATION_ID,
@@ -102,7 +102,7 @@ async def test_complete_and_update_usage_record_only_updates_one_record() -> Non
             email=TEST_EMAIL,
         )
 
-    usage_record_id = await create_user_request(
+    usage_record_id = create_user_request(
         user_id=TEST_USER_ID,
         user_name=TEST_USER_NAME,
         installation_id=TEST_INSTALLATION_ID,

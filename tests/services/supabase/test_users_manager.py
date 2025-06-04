@@ -53,7 +53,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL") or ""
 
 @timer_decorator
 @pytest.mark.asyncio
-async def test_create_and_update_user_request_works() -> None:
+async def test_create_and_update_user_request_works():
     """Test that I can create and complete user request in usage table"""
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
@@ -69,7 +69,7 @@ async def test_create_and_update_user_request_works() -> None:
         email=TEST_EMAIL,
     )
 
-    usage_record_id = await create_user_request(
+    usage_record_id = create_user_request(
         user_id=TEST_USER_ID,
         user_name=TEST_USER_NAME,
         installation_id=TEST_INSTALLATION_ID,
@@ -92,9 +92,6 @@ async def test_create_and_update_user_request_works() -> None:
         )
         is None
     )
-
-
-# test_create_and_update_user_request_works()
 
 
 @timer_decorator
@@ -225,7 +222,6 @@ async def test_install_uninstall_install() -> None:
     """Testing install uninstall methods"""
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
-    wipe_installation_owner_user_data(TEST_NEW_INSTALLATION_ID)
 
     # Create a more comprehensive mock setup
     # We'll mock the process_repositories function entirely to avoid the cloning process
