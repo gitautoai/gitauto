@@ -26,10 +26,10 @@ def test_create_issue_success_with_assignees():
     
     mock_post.assert_called_once()
     call_args = mock_post.call_args
-    assert call_args[1]["json"]["title"] == "Test Title"
-    assert call_args[1]["json"]["body"] == "Test Body"
-    assert call_args[1]["json"]["labels"] == ["test-product-id"]
-    assert call_args[1]["json"]["assignees"] == ["user1", "user2"]
+    assert call_args.kwargs["json"]["title"] == "Test Title"
+    assert call_args.kwargs["json"]["body"] == "Test Body"
+    assert call_args.kwargs["json"]["labels"] == ["test-product-id"]
+    assert call_args.kwargs["json"]["assignees"] == ["user1", "user2"]
     mock_response.raise_for_status.assert_called_once()
     assert result is None
 
