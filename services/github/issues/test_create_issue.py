@@ -214,4 +214,4 @@ def test_create_issue_headers_creation():
     
     mock_create_headers.assert_called_once_with(token="test-token-123")
     call_args = mock_post.call_args
-    assert call_args[1]["headers"] == {"Authorization": "Bearer test-token-123"}
+    assert call_args.kwargs["headers"] == {"Authorization": "Bearer test-token-123"}
