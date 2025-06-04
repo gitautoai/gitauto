@@ -81,7 +81,7 @@ def test_create_issue_success_with_empty_assignees_list():
         result = create_issue("Test Title", "Test Body", [], base_args)
     
     call_args = mock_post.call_args
-    assert "assignees" not in call_args[1]["json"]
+    assert "assignees" not in call_args.kwargs["json"]
     assert result is None
 
 
