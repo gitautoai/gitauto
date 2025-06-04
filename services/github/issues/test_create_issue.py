@@ -87,7 +87,14 @@ def test_create_issue_success_with_empty_assignees_list():
 
 def test_create_issue_http_error():
     mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
+    # Create a proper HTTPError with a response object
+    http_error = requests.HTTPError("404 Not Found")
+    mock_error_response = MagicMock()
+    mock_error_response.status_code = 404
+    mock_error_response.reason = "Not Found"
+    mock_error_response.text = "Repository not found"
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
     
     base_args = {
         "owner": OWNER,
