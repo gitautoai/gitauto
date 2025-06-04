@@ -17,7 +17,8 @@ from services.github.github_manager import verify_webhook_signature
 from services.jira.jira_manager import verify_jira_webhook
 from services.webhook.webhook_handler import handle_webhook_event
 
-if ENV != "local":
+# https://us-west-1.console.aws.amazon.com/lambda/home?region=us-west-1#/functions/pr-agent-prod?subtab=envVars&tab=configure
+if ENV == "prod":
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         environment=ENV,
