@@ -54,10 +54,10 @@ def test_create_issue_success_without_assignees():
     
     mock_post.assert_called_once()
     call_args = mock_post.call_args
-    assert call_args[1]["json"]["title"] == "Test Title"
-    assert call_args[1]["json"]["body"] == "Test Body"
-    assert call_args[1]["json"]["labels"] == ["test-product-id"]
-    assert "assignees" not in call_args[1]["json"]
+    assert call_args.kwargs["json"]["title"] == "Test Title"
+    assert call_args.kwargs["json"]["body"] == "Test Body"
+    assert call_args.kwargs["json"]["labels"] == ["test-product-id"]
+    assert "assignees" not in call_args.kwargs["json"]
     mock_response.raise_for_status.assert_called_once()
     assert result is None
 
