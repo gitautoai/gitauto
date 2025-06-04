@@ -168,7 +168,7 @@ def test_create_issue_api_url_construction():
         create_issue("Test Title", "Test Body", ["user1"], base_args)
     
     call_args = mock_post.call_args
-    assert call_args[1]["url"] == "https://api.github.com/repos/test-owner/test-repo/issues"
+    assert call_args.kwargs["url"] == "https://api.github.com/repos/test-owner/test-repo/issues"
 
 
 def test_create_issue_timeout_parameter():
