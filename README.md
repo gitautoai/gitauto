@@ -149,3 +149,5 @@ INFO:     Application startup complete.
 ### 3-9. Other information
 
 For communication (Slack), database (Supabase), payment (Stripe), and serverless functions (AWS Lambda), provide your preferred email to [@hiroshinishio](https://github.com/hiroshinishio) so that he can invite you to the local development environment.
+
+Adding a dummy comment
