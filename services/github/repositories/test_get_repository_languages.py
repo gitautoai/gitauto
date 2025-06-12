@@ -249,3 +249,6 @@ def test_get_repository_languages_key_error():
         
         result = get_repository_languages(OWNER, REPO, TOKEN)
         
+        assert result == {}
+        mock_get.assert_called_once()
+        mock_response.raise_for_status.assert_called_once()
