@@ -202,6 +202,7 @@ def test_get_repository_languages_large_repository():
         assert result["Python"] == 1234567
         assert result["JavaScript"] == 987654
         assert isinstance(result, dict)
+        assert all(isinstance(k, str) and isinstance(v, int) for k, v in result.items())
 
 
 def test_get_repository_languages_http_error_500():
