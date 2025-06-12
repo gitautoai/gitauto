@@ -159,3 +159,46 @@ def test_get_repository_languages_api_call_parameters():
         assert "timeout" in call_args.kwargs
         
         assert result == {"Python": 12345}
+
+
+def test_get_repository_languages_with_create_headers_mock():
+    """Test get_repository_languages with mocked create_headers function."""
+    with patch("services.github.repositories.get_repository_languages.get") as mock_get, \
+         patch("services.github.repositories.get_repository_languages.create_headers") as mock_create_headers:
+        
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"Python": 12345}
+        mock_get.return_value = mock_response
+        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        
+        result = get_repository_languages(OWNER, REPO, TOKEN)
+        
+        # Verify the API call was made with correct parameters
+        mock_create_headers.assert_called_once_with(token=TOKEN)
+        mock_get.assert_called_once()
+        
+        assert result == {"Python": 12345}
+
+
+def test_get_repository_languages_large_repository():
+    """Test get_repository_languages with a large repository having many languages."""
+    with patch("services.github.repositories.get_repository_languages.get") as mock_get:
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "Python": 1234567,
+            "JavaScript": 987654,
+            "TypeScript": 456789,
+            "HTML": 234567,
+            "CSS": 123456,
+            "Shell": 12345,
+            "Dockerfile": 1234,
+            "YAML": 567
+        }
+        mock_get.return_value = mock_response
+        
+        result = get_repository_languages(OWNER, REPO, TOKEN)
+        
+        assert len(result) == 8
+        assert result["Python"] == 1234567
+        assert result["JavaScript"] == 987654
+        assert isinstance(result, dict)
