@@ -202,3 +202,50 @@ def test_get_repository_languages_large_repository():
         assert result["Python"] == 1234567
         assert result["JavaScript"] == 987654
         assert isinstance(result, dict)
+
+
+def test_get_repository_languages_http_error_500():
+    """Test get_repository_languages returns empty dict when server error occurs (500)."""
+    with patch("services.github.repositories.get_repository_languages.get") as mock_get:
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.reason = "Internal Server Error"
+        mock_response.text = "Internal server error"
+        mock_response.headers = {"X-RateLimit-Limit": "5000", "X-RateLimit-Remaining": "4999", "X-RateLimit-Used": "1"}
+        
+        http_error = HTTPError("500 Server Error")
+        http_error.response = mock_response
+        mock_response.raise_for_status.side_effect = http_error
+        
+        mock_get.return_value = mock_response
+        
+        result = get_repository_languages(OWNER, REPO, TOKEN)
+        
+        assert result == {}
+        mock_get.assert_called_once()
+        mock_response.raise_for_status.assert_called_once()
+
+
+def test_get_repository_languages_attribute_error():
+    """Test get_repository_languages returns empty dict when AttributeError occurs."""
+    with patch("services.github.repositories.get_repository_languages.get") as mock_get:
+        mock_response = MagicMock()
+        mock_response.json.side_effect = AttributeError("'NoneType' object has no attribute 'json'")
+        mock_get.return_value = mock_response
+        
+        result = get_repository_languages(OWNER, REPO, TOKEN)
+        
+        assert result == {}
+        mock_get.assert_called_once()
+        mock_response.raise_for_status.assert_called_once()
+
+
+def test_get_repository_languages_key_error():
+    """Test get_repository_languages returns empty dict when KeyError occurs."""
+    with patch("services.github.repositories.get_repository_languages.get") as mock_get:
+        mock_response = MagicMock()
+        mock_response.json.side_effect = KeyError("Missing key in response")
+        mock_get.return_value = mock_response
+        
+        result = get_repository_languages(OWNER, REPO, TOKEN)
+        
