@@ -1,151 +1,365 @@
-# GitAuto AI
+# GitAuto AI 🤖
 
-## 1. What is GitAuto
+[![PyTest](https://github.com/gitautoai/gitauto/actions/workflows/pytest.yml/badge.svg)](https://github.com/gitautoai/gitauto/actions/workflows/pytest.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 
-[GitAuto](https://gitauto.ai) is a GitHub coding agent that opens pull requests from backlog tickets for software engineering managers to complete more bug fixes and feature requests. Assign tasks to GitAuto first, and have people work on more complex tickets.
+> **AI-powered GitHub coding agent that automatically creates pull requests from issue descriptions**
 
-- Want to give GitAuto a try? Go to [GitAuto installation](https://github.com/apps/gitauto-ai).
-- Want to see demo videos? Go to [GitAuto YouTube](https://www.youtube.com/@gitauto).
-- Want to know more about GitAuto? Go to [GitAuto homepage](https://gitauto.ai).
-- Want to chat about your use case? Feel free to contact us at [email](mailto:info@gitauto.ai), [admin](https://github.com/hiroshinishio), [X](https://x.com/gitautoai), or [LinkedIn](https://www.linkedin.com/company/gitauto/).
+GitAuto is an intelligent GitHub app that transforms your issue backlog into actionable pull requests. Simply describe what you want, and GitAuto will analyze your codebase, understand the requirements, and generate the necessary code changes.
 
-## 2. How to use GitAuto
+## 🚀 Quick Start
 
-1. Install GitAuto to your repositories from [GitHub Marketplace](https://github.com/apps/gitauto-ai).
-   1. Choose the repositories where you want to use GitAuto.
-   2. You can change the repositories later.
-2. Create a new issue, then GitAuto shows up in the issue comment.
-   1. Or create a new issue with a template.
-   2. Or pick up an existing issue.
-3. Check the checkbox to assign GitAuto to the issue, then GitAuto starts to work on the issue.
-   1. Or label the issue with `gitauto`, which also assigns GitAuto to the issue.
-4. Check the progress of GitAuto in the bottom of the issue comment. You will get a notification once GitAuto completes the PR.
-5. Review the PR and merge it if it looks good.
-6. If not, update the issue with more details and re-run GitAuto by checking the checkbox again.
+### For Users (No Setup Required)
 
-## 3. How to run GitAuto locally
+1. **Install GitAuto** from the [GitHub Marketplace](https://github.com/apps/gitauto-ai)
+2. **Create an issue** in your repository describing what you want to build or fix
+3. **Check the checkbox** in GitAuto's comment or add the `gitauto` label
+4. **Wait for the magic** ✨ - GitAuto will create a pull request for you!
 
-### 3-1. Create your GitHub app for local development
-
-1. Go to <https://github.com/settings/apps>
-2. Click `New GitHub App`.
-3. Fill in `GitHub App name` like `GitAuto Dev {Your Name}` e.g. `GitAuto Dev John`.
-4. Fill in `Homepage URL` like `http://localhost:8000`.
-5. Fill in `Webhook URL` like `https://gitauto.ngrok.dev/webhook`. GitHub requires HTTPS for the webhook URL, so we need to use ngrok or something similar instead of `localhost`. GitHub sends webhook events (e.g. an issue is created) to the webhook URL and ngrok tunnels to localhost. You can update this URL later after setting up the ngrok tunnel.
-6. Fill in `Webhook secret` with your preferred secret.
-7. Fill in `Repository permissions`
-   - `Actions`: Read & Write
-   - `Checks`: Read & Write
-   - `Commit statuses`: Read & Write
-   - `Contents`: Read & Write
-   - `Issues`: Read & Write
-   - `Pull requests`: Read & Write
-   - `Secrets`: Read & Write
-   - `Variables`: Read & Write
-   - `Workflows`: Read & Write
-8. Fill in `Organization permissions`
-   - `Members`: Read-only
-9. Fill in `Subscribe to events`
-   - `Installation target`: Checked
-   - `Metadata`: Checked
-   - `Check run`: Checked
-   - `Commit comment`: Checked
-   - `Issue comment`: Checked
-   - `Issues`: Checked
-   - `Pull request`: Checked
-   - `Pull request review`: Checked
-   - `Pull request review comment`: Checked
-   - `Pull request review thread`: Checked
-   - `Push`: Checked
-   - `Status`: Checked
-10. Check `Where can this GitHub App be installed?` and select `Only on this account`.
-11. Click `Create GitHub App`
-12. Click `Generate a private key` and download the private key.
-
-### 3-2. Install your GitHub app to a repository where you want to test
-
-1. Go to [GitHub Apps](https://github.com/settings/apps) in the GitHub Developer Settings.
-2. Choose your local GitHub app and go to the `Install App` page.
-3. Install the app to the repository where you want to test.
-4. Or directly go to `https://github.com/settings/apps/{your-github-app-name}/installations` such as `https://github.com/settings/apps/gitauto-for-dev/installations`.
-
-### 3-3. Tunnel GitHub webhook events to your localhost with ngrok
-
-GitHub allows only a HTTPS URL for webhook events, so we need to use ngrok or something similar service to tunnel/forward the GitHub webhook events to your localhost.
-
-1. Create a new ngrok configuration file `ngrok.yml` in the root directory. It should contain `authtoken: YOUR_NGROK_AUTH_TOKEN` and `version: 2`.
-2. Get your own auth token from [Your Authtoken on the dashboard](https://dashboard.ngrok.com/get-started/your-authtoken) or ask [@hiroshinishio](https://github.com/hiroshinishio) about the paid ngrok auth token.
-3. Get your own endpoint URL from [Endpoints on the dashboard](https://dashboard.ngrok.com/endpoints). For free users, it varies every time you create a new ngrok tunnel. (Yes, it is really annoying.)
-4. Open a new terminal in the root directory in your IDE.
-5. Run `ngrok http --config=ngrok.yml --domain={your-endpoint-url} 8000`. Replace `{your-endpoint-url}` with your own endpoint URL, so it looks like `ngrok http --config=ngrok.yml --domain=gitauto.ngrok.dev 8000`.
-6. ngrok starts tunneling to `http://localhost:8000`.
-7. Use `{your-endpoint-url}/webhook` like `https://gitauto.ngrok.dev/webhook` as the webhook URL in the GitHub app settings as GitHub requires HTTPS for the webhook URL instead of HTTP.
-
-### 3-4. Managing Git branches
-
-To update your local branch with the latest changes from our default branch (`main`), run the following commands:
+### For Developers (Local Development)
 
 ```bash
+# Clone the repository
+git clone https://github.com/gitautoai/gitauto.git
+cd gitauto
+
+# Set up Python environment
+python3 -m venv --upgrade-deps venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Get .env file from maintainer and run the server
+uvicorn main:app --reload --port 8000 --log-level warning
+```
+
+## 📖 Table of Contents
+
+- [What is GitAuto?](#-what-is-gitauto)
+- [How It Works](#-how-it-works)
+- [Features](#-features)
+- [Getting Started](#-getting-started)
+- [Development Setup](#-development-setup)
+- [Architecture](#-architecture)
+- [Contributing](#-contributing)
+- [Support](#-support)
+
+## 🎯 What is GitAuto?
+
+[GitAuto](https://gitauto.ai) is a GitHub coding agent designed for software engineering managers and developers who want to:
+
+- **Accelerate development** by automating routine coding tasks
+- **Focus on complex problems** while GitAuto handles the straightforward implementations
+- **Maintain code quality** with AI-generated, reviewable pull requests
+- **Reduce backlog** by converting issues into actionable code changes
+
+### Perfect For:
+- 🐛 **Bug fixes** - Describe the issue, get a fix
+- ✨ **Feature requests** - Outline requirements, receive implementation
+- 🔧 **Refactoring** - Specify improvements, get clean code
+- 📚 **Documentation** - Request docs, get comprehensive updates
+
+## 🔄 How It Works
+
+```mermaid
+graph LR
+    A[Create Issue] --> B[GitAuto Analyzes]
+    B --> C[Code Generation]
+    C --> D[Pull Request]
+    D --> E[Review & Merge]
+```
+
+1. **Issue Creation**: Describe your requirements in a GitHub issue
+2. **AI Analysis**: GitAuto analyzes your codebase and understands the context
+3. **Code Generation**: Creates the necessary code changes using advanced AI models
+4. **Pull Request**: Opens a PR with the implementation for your review
+5. **Review & Merge**: You review, provide feedback, and merge when ready
+
+## ✨ Features
+
+### 🎯 **Smart Code Understanding**
+- Analyzes your entire codebase for context
+- Understands project structure and patterns
+- Maintains consistency with existing code style
+
+### 🔧 **Multi-Language Support**
+- Python, JavaScript, TypeScript, Java, Go, Rust, and more
+- Framework-aware (React, Django, FastAPI, etc.)
+- Handles configuration files and dependencies
+
+### 🚀 **Intelligent Automation**
+- Automatic branch creation and management
+- Comprehensive test coverage analysis
+- Dependency management and updates
+
+### 🔍 **Quality Assurance**
+- Code review integration
+- Automated testing workflows
+- Security-conscious implementations
+
+## 🏁 Getting Started
+
+### Step 1: Installation
+
+Visit the [GitAuto GitHub App](https://github.com/apps/gitauto-ai) and install it on your repositories.
+
+### Step 2: Create Your First Issue
+
+Create a new issue with a clear description:
+
+```markdown
+## Feature Request: Add User Authentication
+
+I need to implement user authentication for my web application.
+
+### Requirements:
+- Login/logout functionality
+- Password hashing
+- Session management
+- Protected routes
+
+### Tech Stack:
+- Backend: FastAPI
+- Database: PostgreSQL
+- Frontend: React
+```
+
+### Step 3: Activate GitAuto
+
+GitAuto will automatically comment on your issue. Simply:
+- ✅ Check the checkbox in GitAuto's comment, OR
+- 🏷️ Add the `gitauto` label to your issue
+
+### Step 4: Review the Pull Request
+
+GitAuto will create a pull request with:
+- 📝 Detailed implementation
+- 🧪 Test cases (when applicable)
+- 📖 Documentation updates
+- 🔗 Reference to the original issue
+
+## 🛠 Development Setup
+
+### Prerequisites
+
+- **Python 3.12+**
+- **Git**
+- **ngrok** (for webhook tunneling)
+- **GitHub App** (for local development)
+
+### Detailed Setup Guide
+
+#### 1. Create Your GitHub App
+
+1. Go to [GitHub Apps Settings](https://github.com/settings/apps)
+2. Click **"New GitHub App"**
+3. Configure your app:
+   ```
+   App name: GitAuto Dev {Your Name}
+   Homepage URL: http://localhost:8000
+   Webhook URL: https://your-ngrok-url.ngrok.dev/webhook
+   Webhook secret: your-secret-here
+   ```
+
+4. Set **Repository Permissions**:
+   - Actions: Read & Write
+   - Checks: Read & Write
+   - Contents: Read & Write
+   - Issues: Read & Write
+   - Pull requests: Read & Write
+   - And more (see full list in original README)
+
+5. Subscribe to **Events**:
+   - Issues, Pull requests, Check runs, etc.
+
+#### 2. Environment Setup
+
+```bash
+# Clone and navigate
+git clone https://github.com/gitautoai/gitauto.git
+cd gitauto
+
+# Create virtual environment
+python3 -m venv --upgrade-deps venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Get .env file from maintainer
+# Contact @hiroshinishio for the .env file
+```
+
+#### 3. Webhook Tunneling with ngrok
+
+```bash
+# Create ngrok.yml in root directory
+echo "authtoken: YOUR_NGROK_AUTH_TOKEN\nversion: 2" > ngrok.yml
+
+# Start ngrok tunnel
+ngrok http --config=ngrok.yml --domain=your-domain.ngrok.dev 8000
+```
+
+#### 4. Run the Application
+
+```bash
+# Start the development server
+uvicorn main:app --reload --port 8000 --log-level warning
+```
+
+You should see:
+```
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [xxxxx] using WatchFiles
+```
+
+### Git Workflow
+
+```bash
+# Keep your branch updated
 git checkout your-branch
 git pull origin main
-```
 
-For example:
-
-```bash
-git checkout wes
+# If you have uncommitted changes
+git stash
 git pull origin main
+git stash pop
 ```
 
-If you have uncommitted changes, stash them first:
+## 🏗 Architecture
 
+GitAuto is built with modern, scalable technologies:
+
+### Core Technologies
+- **FastAPI** - High-performance web framework
+- **Python 3.12** - Latest Python features
+- **AWS Lambda** - Serverless deployment
+- **Supabase** - Database and authentication
+- **Anthropic Claude** - AI code generation
+
+### Key Components
+
+```
+gitauto/
+├── main.py                 # FastAPI application entry point
+├── config.py              # Configuration management
+├── services/              # Core business logic
+│   ├── anthropic/         # AI model integration
+│   ├── github/           # GitHub API interactions
+│   ├── webhook/          # Webhook event handling
+│   └── gitauto_handler.py # Main processing logic
+├── utils/                # Utility functions
+├── tests/               # Test suite
+└── constants/           # Application constants
+```
+
+### Data Flow
+
+1. **Webhook Reception** (`main.py`) - Receives GitHub events
+2. **Event Processing** (`webhook_handler.py`) - Routes events to handlers
+3. **AI Analysis** (`anthropic/`) - Analyzes code and generates solutions
+4. **GitHub Integration** (`github/`) - Creates branches, commits, PRs
+5. **Database Operations** (`supabase/`) - Tracks usage and state
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how to get started:
+
+### 1. Fork & Clone
 ```bash
-git stash        # Save changes
-git pull origin main
-git stash pop    # Reapply changes
+git clone https://github.com/your-username/gitauto.git
+cd gitauto
 ```
 
-### 3-5. Create a virtual Python dependency environment in your local machine
+### 2. Set Up Development Environment
+Follow the [Development Setup](#-development-setup) guide above.
 
-1. Run `deactivate` to deactivate the virtual environment if you have activated it and not sure where you are.
-2. Run `rm -rf venv` to remove the virtual environment if you have created it and not sure what's in it.
-3. Run `python3 -m venv --upgrade-deps venv` to create a virtual environment.
-4. Run `source venv/bin/activate` to activate the virtual environment. You will see `(venv)` in the terminal. Note that you need to activate the virtual environment every time you open a new terminal.
-5. Run `which python`, `which pip`, and `python --version` to check the Python version and make sure it points to the virtual environment.
-6. Run `pip install -r requirements.txt` to install the dependencies.
+### 3. Make Your Changes
+- 🐛 **Bug fixes** - Include tests and clear descriptions
+- ✨ **Features** - Discuss in issues before implementing
+- 📚 **Documentation** - Help improve our guides
+- 🧪 **Tests** - Add coverage for new functionality
 
-### 3-6. Get the `.env` file
+### 4. Testing
+```bash
+# Run the test suite
+python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
 
-1. Ask for the `.env` file from [@hiroshinishio](https://github.com/hiroshinishio).
-2. Put the `.env` file in the root directory.
-
-### 3-7. How to encode a GitHub app private key to base64
-
-In `.env` file, you need to set your own `GH_PRIVATE_KEY`. Here's the step:
-
-1. Go to <https://github.com/settings/apps>. Choose your local GitHub app.
-2. Go to `General` tab on the left.
-3. Scroll down to `Private key` section. Generate a private key.
-4. Run `base64 -i your/path/to/private-key.pem` to encode the private key to base64.
-5. Copy the output and paste it in the `GH_PRIVATE_KEY` field in your `.env` file.
-
-### 3-8. How to run the code
-
-1. Run `uvicorn main:app --reload --port 8000 --log-level warning` to start the ASGI server and run `main.py` with `app` as the FastAPI instance.
-   1. `--reload` is for auto-reloading the server when the code changes.
-   2. `--log-level warning` is to suppress the INFO logs.
-2. Let's see if it works and there are no errors! Here's the success message if your log-level is set to `info` (default):
-
-```zsh
-(venv) rwest@Roshis-MacBook-Pro gitauto % uvicorn main:app --reload --port 8000
-INFO:     Will watch for changes in these directories: ['/Users/rwest/Repositories/gitauto']
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [63742] using WatchFiles
-INFO:     Started server process [63744]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
+# Run specific tests
+python -m pytest tests/services/github/test_branch_manager.py
 ```
 
-### 3-9. Other information
+### 5. Submit Pull Request
+- Clear title and description
+- Reference related issues
+- Include tests for new features
+- Follow existing code style
 
-For communication (Slack), database (Supabase), payment (Stripe), and serverless functions (AWS Lambda), provide your preferred email to [@hiroshinishio](https://github.com/hiroshinishio) so that he can invite you to the local development environment.
+### Code Style
+- Follow PEP 8
+- Use type hints
+- Add docstrings for functions
+- Keep functions focused and small
+
+## 📞 Support
+
+### 🔗 Quick Links
+- 🏠 **Homepage**: [gitauto.ai](https://gitauto.ai)
+- 📺 **Demo Videos**: [YouTube Channel](https://www.youtube.com/@gitauto)
+- 📧 **Email**: [info@gitauto.ai](mailto:info@gitauto.ai)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/gitautoai/gitauto/issues)
+
+### 🌐 Connect With Us
+- 🐦 **Twitter**: [@gitautoai](https://x.com/gitautoai)
+- 💼 **LinkedIn**: [GitAuto Company](https://www.linkedin.com/company/gitauto/)
+- 👨‍💻 **Admin**: [@hiroshinishio](https://github.com/hiroshinishio)
+
+### 💡 Getting Help
+
+1. **Check existing issues** - Your question might already be answered
+2. **Create a new issue** - Use our issue templates for bug reports or feature requests
+3. **Join discussions** - Participate in GitHub Discussions
+4. **Contact us directly** - Email us for business inquiries or complex technical questions
+
+### 🎯 Use Cases & Examples
+
+**Bug Fix Example:**
+```markdown
+## Bug: Login form validation not working
+
+The login form accepts empty passwords and doesn't show error messages.
+
+### Expected Behavior:
+- Show error for empty email/password
+- Validate email format
+- Display user-friendly error messages
+
+### Current Behavior:
+- Form submits with empty fields
+- No validation feedback
+```
+
+**Feature Request Example:**
+```markdown
+## Feature: Add dark mode toggle
+
+Add a dark mode option to improve user experience.
+
+### Requirements:
+- Toggle button in header
+- Persist user preference
+- Smooth transition animation
+- Update all components consistently
+```
+
+---
+
+<div align="center">
+
+**Made with ❤️ by the GitAuto team**
+
+[⭐ Star us on GitHub](https://github.com/gitautoai/gitauto) • [🚀 Try GitAuto](https://github.com/apps/gitauto-ai) • [📖 Learn More](https://gitauto.ai)
+
+</div>
