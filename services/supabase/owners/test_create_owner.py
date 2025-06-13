@@ -304,6 +304,25 @@ def test_create_owner_secondary_rate_limit():
             "updated_by": "-999:negative_user",
             "owner_type": "",
             "org_rules": "",
+
+
+def test_create_owner_execute_fails():
+    mock_table = Mock()
+    mock_insert = Mock()
+    
+    mock_table.insert.return_value = mock_insert
+    mock_insert.execute.side_effect = Exception("Execute failed")
+    
+    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase:
+        mock_supabase.table.return_value = mock_table
+        
+        result = create_owner(
+            owner_id=123,
+            owner_name="test_owner",
+            user_id=456,
+            user_name="test_user"
+        )
+        
         })
         mock_insert.execute.assert_called_once()
         assert result is None
