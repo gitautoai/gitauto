@@ -1,4 +1,5 @@
 from unittest.mock import Mock, patch
+import time
 import pytest
 import requests
 import json
@@ -228,6 +229,38 @@ def test_create_owner_with_negative_ids():
     with patch('services.supabase.owners.create_owner.supabase') as mock_supabase:
         mock_supabase.table.return_value = mock_table
         
+
+
+def test_create_owner_rate_limit_exceeded():
+    mock_response = Mock()
+    mock_response.status_code = 403
+    mock_response.reason = "Forbidden"
+    mock_response.text = "Rate limit exceeded"
+    mock_response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Used": "5000",
+        "X-RateLimit-Reset": str(int(time.time()) + 60)
+    }
+    
+    http_error = requests.exceptions.HTTPError(response=mock_response)
+    
+    mock_table = Mock()
+    mock_insert = Mock()
+    mock_execute = Mock()
+    
+    mock_table.insert.return_value = mock_insert
+    mock_insert.execute.return_value = mock_execute
+    
+    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase, \
+         patch('time.sleep') as mock_sleep:
+        
+        mock_supabase.table.side_effect = [http_error, mock_table]
+        
+        result = create_owner(
+            owner_id=123,
+            owner_name="test_owner",
+            user_id=456,
         result = create_owner(
             owner_id=-1,
             owner_name="negative_owner",
