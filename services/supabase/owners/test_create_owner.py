@@ -183,3 +183,75 @@ def test_create_owner_with_special_characters():
         })
         mock_insert.execute.assert_called_once()
         assert result is None
+
+
+def test_create_owner_with_zero_ids():
+    mock_table = Mock()
+    mock_insert = Mock()
+    mock_execute = Mock()
+    
+    mock_table.insert.return_value = mock_insert
+    mock_insert.execute.return_value = mock_execute
+    
+    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase:
+        mock_supabase.table.return_value = mock_table
+        
+        result = create_owner(
+            owner_id=0,
+            owner_name="zero_owner",
+            user_id=0,
+            user_name="zero_user"
+        )
+        
+        mock_supabase.table.assert_called_once_with("owners")
+        mock_table.insert.assert_called_once_with({
+            "owner_id": 0,
+            "owner_name": "zero_owner",
+            "stripe_customer_id": "",
+            "created_by": "0:zero_user",
+            "updated_by": "0:zero_user",
+            "owner_type": "",
+            "org_rules": "",
+        })
+        mock_insert.execute.assert_called_once()
+        assert result is None
+
+
+def test_create_owner_with_negative_ids():
+    mock_table = Mock()
+    mock_insert = Mock()
+    mock_execute = Mock()
+    
+    mock_table.insert.return_value = mock_insert
+    mock_insert.execute.return_value = mock_execute
+    
+    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase:
+        mock_supabase.table.return_value = mock_table
+        
+        result = create_owner(
+            owner_id=-1,
+            owner_name="negative_owner",
+            user_id=-999,
+            user_name="negative_user"
+        )
+        
+        mock_supabase.table.assert_called_once_with("owners")
+        mock_table.insert.assert_called_once_with({
+            "owner_id": -1,
+            "owner_name": "negative_owner",
+            "stripe_customer_id": "",
+            "created_by": "-999:negative_user",
+            "updated_by": "-999:negative_user",
+            "owner_type": "",
+            "org_rules": "",
+        })
+        mock_insert.execute.assert_called_once()
+        assert result is None
+
+
+def test_create_owner_attribute_error():
+    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase:
+        mock_supabase.table.side_effect = AttributeError("'NoneType' object has no attribute 'table'")
+        
+        result = create_owner(
+            owner_id=123,
