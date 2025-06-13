@@ -229,6 +229,25 @@ def test_create_owner_with_negative_ids():
     with patch('services.supabase.owners.create_owner.supabase') as mock_supabase:
         mock_supabase.table.return_value = mock_table
         
+        result = create_owner(
+            owner_id=-1,
+            owner_name="negative_owner",
+            user_id=-999,
+            user_name="negative_user"
+        )
+        
+        mock_supabase.table.assert_called_once_with("owners")
+        mock_table.insert.assert_called_once_with({
+            "owner_id": -1,
+            "owner_name": "negative_owner",
+            "stripe_customer_id": "",
+            "created_by": "-999:negative_user",
+            "updated_by": "-999:negative_user",
+            "owner_type": "",
+            "org_rules": "",
+        })
+        mock_insert.execute.assert_called_once()
+        assert result is None
 
 
 def test_create_owner_rate_limit_exceeded():
@@ -245,28 +264,17 @@ def test_create_owner_rate_limit_exceeded():
     
     http_error = requests.exceptions.HTTPError(response=mock_response)
     
-    mock_table = Mock()
-    mock_insert = Mock()
-    mock_execute = Mock()
-    
-    mock_table.insert.return_value = mock_insert
-    mock_insert.execute.return_value = mock_execute
-    
-    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase, \
-         patch('time.sleep') as mock_sleep:
-        
-        mock_supabase.table.side_effect = [http_error, mock_table]
+    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase:
+        mock_supabase.table.side_effect = http_error
         
         result = create_owner(
             owner_id=123,
             owner_name="test_owner",
             user_id=456,
-        result = create_owner(
-            owner_id=-1,
-            owner_name="negative_owner",
-            user_id=-999,
-            user_name="negative_user"
+            user_name="test_user"
         )
+        
+        assert result is None
 
 
 def test_create_owner_secondary_rate_limit():
@@ -283,27 +291,17 @@ def test_create_owner_secondary_rate_limit():
     
     http_error = requests.exceptions.HTTPError(response=mock_response)
     
-    mock_table = Mock()
-    mock_insert = Mock()
-    mock_execute = Mock()
-    
-    mock_table.insert.return_value = mock_insert
-    mock_insert.execute.return_value = mock_execute
-    
-    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase, \
-         patch('time.sleep') as mock_sleep:
+    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase:
+        mock_supabase.table.side_effect = http_error
         
-        mock_supabase.table.side_effect = [http_error, mock_table]
+        result = create_owner(
+            owner_id=123,
+            owner_name="test_owner",
+            user_id=456,
+            user_name="test_user"
+        )
         
-        mock_supabase.table.assert_called_once_with("owners")
-        mock_table.insert.assert_called_once_with({
-            "owner_id": -1,
-            "owner_name": "negative_owner",
-            "stripe_customer_id": "",
-            "created_by": "-999:negative_user",
-            "updated_by": "-999:negative_user",
-            "owner_type": "",
-            "org_rules": "",
+        assert result is None
 
 
 def test_create_owner_execute_fails():
@@ -323,7 +321,8 @@ def test_create_owner_execute_fails():
             user_name="test_user"
         )
         
-        })
+        mock_supabase.table.assert_called_once_with("owners")
+        mock_table.insert.assert_called_once()
         mock_insert.execute.assert_called_once()
         assert result is None
 
@@ -334,3 +333,95 @@ def test_create_owner_attribute_error():
         
         result = create_owner(
             owner_id=123,
+            owner_name="test_owner",
+            user_id=456,
+            user_name="test_user"
+        )
+        
+        assert result is None
+
+
+def test_create_owner_insert_fails():
+    mock_table = Mock()
+    mock_table.insert.side_effect = Exception("Insert failed")
+    
+    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase:
+        mock_supabase.table.return_value = mock_table
+        
+        result = create_owner(
+            owner_id=123,
+            owner_name="test_owner",
+            user_id=456,
+            user_name="test_user"
+        )
+        
+        mock_supabase.table.assert_called_once_with("owners")
+        mock_table.insert.assert_called_once()
+        assert result is None
+
+
+def test_create_owner_with_empty_strings():
+    mock_table = Mock()
+    mock_insert = Mock()
+    mock_execute = Mock()
+    
+    mock_table.insert.return_value = mock_insert
+    mock_insert.execute.return_value = mock_execute
+    
+    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase:
+        mock_supabase.table.return_value = mock_table
+        
+        result = create_owner(
+            owner_id=555,
+            owner_name="",
+            user_id=666,
+            user_name="",
+            stripe_customer_id="",
+            owner_type="",
+            org_rules=""
+        )
+        
+        mock_supabase.table.assert_called_once_with("owners")
+        mock_table.insert.assert_called_once_with({
+            "owner_id": 555,
+            "owner_name": "",
+            "stripe_customer_id": "",
+            "created_by": "666:",
+            "updated_by": "666:",
+            "owner_type": "",
+            "org_rules": "",
+        })
+        mock_insert.execute.assert_called_once()
+        assert result is None
+
+
+def test_create_owner_with_large_ids():
+    mock_table = Mock()
+    mock_insert = Mock()
+    mock_execute = Mock()
+    
+    mock_table.insert.return_value = mock_insert
+    mock_insert.execute.return_value = mock_execute
+    
+    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase:
+        mock_supabase.table.return_value = mock_table
+        
+        result = create_owner(
+            owner_id=999999999,
+            owner_name="large_owner",
+            user_id=888888888,
+            user_name="large_user"
+        )
+        
+        mock_supabase.table.assert_called_once_with("owners")
+        mock_table.insert.assert_called_once_with({
+            "owner_id": 999999999,
+            "owner_name": "large_owner",
+            "stripe_customer_id": "",
+            "created_by": "888888888:large_user",
+            "updated_by": "888888888:large_user",
+            "owner_type": "",
+            "org_rules": "",
+        })
+        mock_insert.execute.assert_called_once()
+        assert result is None
