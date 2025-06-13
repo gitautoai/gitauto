@@ -267,6 +267,33 @@ def test_create_owner_rate_limit_exceeded():
             user_id=-999,
             user_name="negative_user"
         )
+
+
+def test_create_owner_secondary_rate_limit():
+    mock_response = Mock()
+    mock_response.status_code = 403
+    mock_response.reason = "Forbidden"
+    mock_response.text = "You have exceeded a secondary rate limit"
+    mock_response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "4999",
+        "X-RateLimit-Used": "1",
+        "Retry-After": "30"
+    }
+    
+    http_error = requests.exceptions.HTTPError(response=mock_response)
+    
+    mock_table = Mock()
+    mock_insert = Mock()
+    mock_execute = Mock()
+    
+    mock_table.insert.return_value = mock_insert
+    mock_insert.execute.return_value = mock_execute
+    
+    with patch('services.supabase.owners.create_owner.supabase') as mock_supabase, \
+         patch('time.sleep') as mock_sleep:
+        
+        mock_supabase.table.side_effect = [http_error, mock_table]
         
         mock_supabase.table.assert_called_once_with("owners")
         mock_table.insert.assert_called_once_with({
