@@ -166,3 +166,80 @@ def test_identify_cause_line_endings():
     # Should contain Unix line endings
     lines = IDENTIFY_CAUSE.split('\n')
     assert len(lines) > 1  # Should be multi-line
+
+
+def test_identify_cause_content_validation():
+    """Test detailed content validation of IDENTIFY_CAUSE."""
+    # Test for specific technical terms
+    technical_terms = [
+        "GitHub Actions",
+        "Workflow",
+        "Check Run",
+        "pull request",
+        "error log"
+    ]
+    
+    for term in technical_terms:
+        assert term in IDENTIFY_CAUSE, f"Missing technical term: {term}"
+    
+    # Test for instruction keywords
+    instruction_keywords = [
+        "identify",
+        "cause",
+        "failure",
+        "fix",
+        "plan"
+    ]
+    
+    for keyword in instruction_keywords:
+        assert keyword in IDENTIFY_CAUSE.lower(), f"Missing instruction keyword: {keyword}"
+
+
+def test_identify_cause_markdown_structure():
+    """Test the markdown structure in detail."""
+    # Test that headers are properly spaced
+    lines = IDENTIFY_CAUSE.split('\n')
+    header_indices = []
+    
+    for i, line in enumerate(lines):
+        if line.startswith('## '):
+            header_indices.append(i)
+    
+    # Should have 5 headers
+    assert len(header_indices) == 5
+    
+    # Headers should not be consecutive (should have content between them)
+    for i in range(len(header_indices) - 1):
+        assert header_indices[i + 1] - header_indices[i] > 1
+
+
+def test_identify_cause_word_count():
+    """Test word count and readability metrics."""
+    words = IDENTIFY_CAUSE.split()
+    
+    # Should have a reasonable word count for an instruction
+    assert 50 <= len(words) <= 500, f"Word count {len(words)} is outside expected range"
+    
+    # Test average word length (should be reasonable for technical content)
+    total_chars = sum(len(word) for word in words)
+    avg_word_length = total_chars / len(words)
+    assert 3 <= avg_word_length <= 10, f"Average word length {avg_word_length} seems unusual"
+
+
+def test_identify_cause_special_characters():
+    """Test handling of special characters in IDENTIFY_CAUSE."""
+    # Should contain some punctuation
+    assert '.' in IDENTIFY_CAUSE
+    assert ',' in IDENTIFY_CAUSE
+    assert '?' in IDENTIFY_CAUSE
+    
+    # Should not contain problematic characters
+    problematic_chars = ['\t', '\x00', '\x01', '\x02']
+    for char in problematic_chars:
+        assert char not in IDENTIFY_CAUSE, f"Contains problematic character: {repr(char)}"
+
+
+def test_identify_cause_consistency():
+    """Test consistency of the instruction content."""
+    # Multiple calls should return the same value
+    from services.openai.instructions.identify_cause import IDENTIFY_CAUSE as second_import
