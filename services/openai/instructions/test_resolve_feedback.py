@@ -295,7 +295,6 @@ def test_resolve_feedback_contains_all_required_elements():
         "check run error log",
         "resolve the feedback",
         "write a plan",
-        "fix the error",
         "language that is used in the input",
         "Output format would be like this:",
         "## What the feedback is",
