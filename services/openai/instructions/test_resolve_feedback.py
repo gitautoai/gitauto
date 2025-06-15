@@ -190,3 +190,37 @@ def test_resolve_feedback_repr_str():
     repr_result = repr(RESOLVE_FEEDBACK)
     assert isinstance(repr_result, str)
     assert len(repr_result) > 0
+
+
+def test_resolve_feedback_iteration():
+    """Test that RESOLVE_FEEDBACK can be iterated over."""
+    # Test that we can iterate over characters
+    char_count = 0
+    for char in RESOLVE_FEEDBACK:
+        char_count += 1
+        assert isinstance(char, str)
+        assert len(char) == 1
+    
+    assert char_count == len(RESOLVE_FEEDBACK)
+
+
+def test_resolve_feedback_slicing():
+    """Test slicing operations on RESOLVE_FEEDBACK."""
+    # Test basic slicing
+    first_char = RESOLVE_FEEDBACK[0]
+    assert isinstance(first_char, str)
+    assert len(first_char) == 1
+    
+    # Test slice operations
+    first_ten = RESOLVE_FEEDBACK[:10]
+    assert len(first_ten) == 10
+    assert isinstance(first_ten, str)
+    
+    # Test negative indexing
+    last_char = RESOLVE_FEEDBACK[-1]
+    assert isinstance(last_char, str)
+    assert len(last_char) == 1
+
+
+def test_resolve_feedback_constant_nature():
+    """Test that RESOLVE_FEEDBACK behaves as a constant."""
