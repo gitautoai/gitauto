@@ -29,7 +29,8 @@ def test_identify_cause_content_structure():
     # Check for output requirements
     assert "Markdown format" in IDENTIFY_CAUSE
     assert "identify the cause" in IDENTIFY_CAUSE
-    assert "write a plan to fix the error" in IDENTIFY_CAUSE
+    # Check for plan requirement across line breaks
+    assert "write a plan to fix the error" in IDENTIFY_CAUSE.replace('\n', ' ')
 
 
 def test_identify_cause_markdown_headers():
