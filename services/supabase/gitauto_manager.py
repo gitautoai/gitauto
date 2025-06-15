@@ -20,7 +20,7 @@ def create_installation(
         # First create/update the user record with the email
         upsert_user(user_id=user_id, user_name=user_name, email=email)
         
-        # Then create the installation record (without user fields)
+        # Then create the installation record
         response = (
             supabase.table("installations")
             .insert({
@@ -173,4 +173,3 @@ def set_issue_to_merged(
         .eq("issue_number", issue_number)
         .execute()
     )
-\n
