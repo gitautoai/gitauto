@@ -2,10 +2,18 @@ from services.supabase.client import supabase
 import postgrest
 from services.supabase.users_manager import upsert_user
 from utils.error.handle_exceptions import handle_exceptions
-__all__ = ["create_installation", "create_user_request", "get_installation_id", "get_installation_ids", "is_users_first_issue", "set_issue_to_merged"]
+from typing import Any, Optional, List
 
 
-def create_installation(installation_id, owner_type, owner_name, owner_id, user_id, user_name, email):
+def create_installation(
+    installation_id: int,
+    owner_type: str,
+    owner_name: str,
+    owner_id: int,
+    user_id: int,
+    user_name: str,
+    email: Optional[str]
+) -> dict[str, Any]:
     """Create a new installation record, or update the existing one if it already exists."""
     try:
         # First create/update the user record with the email
@@ -48,7 +56,19 @@ def create_installation(installation_id, owner_type, owner_name, owner_id, user_
             raise
 
 
-def create_user_request(user_id, user_name, installation_id, owner_id, owner_type, owner_name, repo_id, repo_name, issue_number, source, email):
+def create_user_request(
+    user_id: int,
+    user_name: str,
+    installation_id: int,
+    owner_id: int,
+    owner_type: str,
+    owner_name: str,
+    repo_id: int,
+    repo_name: str,
+    issue_number: int,
+    source: str,
+    email: Optional[str]
+) -> int:
     """Creates record in usage table for this user and issue."""
     # First create/update the user record with the email
     upsert_user(user_id=user_id, user_name=user_name, email=email)
@@ -100,7 +120,7 @@ def create_user_request(user_id, user_name, installation_id, owner_id, owner_typ
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_installation_id(owner_id: int) -> int:
+def get_installation_id(owner_id: int) -> Optional[int]:
     """https://supabase.com/docs/reference/python/is"""
     data, _ = (
         supabase.table(table_name="installations")
@@ -110,11 +130,11 @@ def get_installation_id(owner_id: int) -> int:
         .execute()
     )
     # Return the first installation id even if there are multiple installations
-    return data[1][0]["installation_id"]
+    return data[1][0]["installation_id"] if data[1] else None
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_installation_ids() -> list[int]:
+def get_installation_ids() -> List[int]:
     """https://supabase.com/docs/reference/python/is"""
     data, _ = (
         supabase.table(table_name="installations")
@@ -141,8 +161,12 @@ def is_users_first_issue(user_id: int, installation_id: int) -> bool:
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def set_issue_to_merged(
-    owner_type: str, owner_name: str, repo_name: str, issue_number: int
+    owner_type: str,
+    owner_name: str,
+    repo_name: str,
+    issue_number: int
 ) -> None:
+    """Set the merged flag to True for the specified issue."""
     (
         supabase.table(table_name="issues")
         .update(json={"merged": True})
