@@ -233,6 +233,6 @@ def test_identify_cause_proper_capitalization():
 
 
 def test_identify_cause_contains_engineering_best_practices():
-    best_practices = ["minimal", "necessary", "skilled", "avoid"]
+    best_practices = ["minimizing", "necessary", "skilled", "avoid"]
     for practice in best_practices:
         assert practice in IDENTIFY_CAUSE.lower()
