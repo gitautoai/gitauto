@@ -1,6 +1,5 @@
 from services.supabase.client import supabase
 import postgrest
-from services.supabase.users_manager import upsert_user
 from typing import Any, List, Optional
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -49,6 +48,8 @@ def create_installation(
                     "uninstalled_at": None
                 })
                 .eq("installation_id", installation_id)
+    # Import locally to avoid circular dependency
+    from services.supabase.users_manager import upsert_user
                 .execute()
             )
             return response
