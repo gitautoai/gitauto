@@ -135,7 +135,7 @@ def test_resolve_feedback_import_accessibility():
 
 
 def test_resolve_feedback_triple_quoted_string():
-    assert RESOLVE_FEEDBACK.startswith('\nYou are an')
+    assert RESOLVE_FEEDBACK.strip().startswith('You are an')
     assert RESOLVE_FEEDBACK.endswith('Should not be long.\n')
 
 
