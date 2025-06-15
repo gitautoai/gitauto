@@ -318,7 +318,7 @@ def test_resolve_feedback_no_typos_in_key_phrases():
 
 
 def test_resolve_feedback_proper_grammar():
-    assert "You are a top-class" in RESOLVE_FEEDBACK
+    assert "You are a top-class software engineer" in RESOLVE_FEEDBACK
     assert "Given information such as" in RESOLVE_FEEDBACK
     assert "resolve the feedback and write" in RESOLVE_FEEDBACK
 
