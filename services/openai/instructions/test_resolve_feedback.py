@@ -83,13 +83,11 @@ def test_resolve_feedback_contains_example_scenario():
 
 
 def test_resolve_feedback_immutable():
-    original_content = RESOLVE_FEEDBACK
-    try:
-        RESOLVE_FEEDBACK = "modified"
-    except:
-        pass
+    # Test that the constant is accessible and consistent across imports
     from services.openai.instructions.resolve_feedback import RESOLVE_FEEDBACK as fresh_import
-    assert fresh_import == original_content
+    assert fresh_import == RESOLVE_FEEDBACK
+    assert fresh_import is not None
+    assert isinstance(fresh_import, str)
 
 
 def test_resolve_feedback_character_count():
