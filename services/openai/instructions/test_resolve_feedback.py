@@ -239,7 +239,7 @@ def test_resolve_feedback_consistent_spacing():
 
 
 def test_resolve_feedback_role_specification():
-    assert "You are an top-class software engineer" in RESOLVE_FEEDBACK
+    assert "You are a top-class software engineer" in RESOLVE_FEEDBACK
 
 
 def test_resolve_feedback_task_description():
