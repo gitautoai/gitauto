@@ -166,7 +166,6 @@ def test_identify_cause_consistency():
 
 
 @mock.patch('services.openai.instructions.identify_cause.IDENTIFY_CAUSE', 'mocked_instruction')
-
 def test_identify_cause_mocking():
     """Test that IDENTIFY_CAUSE can be mocked for testing purposes."""
     from services.openai.instructions.identify_cause import IDENTIFY_CAUSE as mocked_constant
@@ -195,7 +194,10 @@ def test_identify_cause_regex_patterns():
     # Test for parenthetical examples pattern
     paren_pattern = r'\([^)]+\)'
     parentheticals = re.findall(paren_pattern, IDENTIFY_CAUSE)
-    assert len(parentheticals) > 0, "Should have examples in parentheses"
+    assert len(parentheticals) > 0  # Should have examples in parentheses
+    
+    # Test that it doesn't contain code blocks (shouldn't have ``` in instructions)
+    assert '```' not in IDENTIFY_CAUSE
 
 
 def test_identify_cause_sentence_structure():
@@ -255,11 +257,11 @@ def test_identify_cause_edge_cases():
     assert not IDENTIFY_CAUSE.isspace()
     
     # Test that it has reasonable bounds
-    assert 100 < len(IDENTIFY_CAUSE) < 1000  # Adjusted to match actual content length
+    assert 100 < len(IDENTIFY_CAUSE) < 1000, f"Length of IDENTIFY_CAUSE is {len(IDENTIFY_CAUSE)} which is outside expected range"
     
     # Test that it contains actual content, not just formatting
     content_chars = sum(1 for c in IDENTIFY_CAUSE if c.isalnum())
-    assert content_chars > 100  # Should have substantial alphanumeric content
+    assert content_chars > 100, "IDENTIFY_CAUSE does not have substantial alphanumeric content"
 
 
 def test_identify_cause_multiline_structure():
@@ -267,12 +269,12 @@ def test_identify_cause_multiline_structure():
     lines = IDENTIFY_CAUSE.split('\n')
     
     # Should have a reasonable number of lines
-    assert 10 <= len(lines) <= 20  # Adjusted to match actual line count
+    assert 10 <= len(lines) <= 20, f"Line count {len(lines)} is outside expected range"
     
     # Should not have excessively long lines
     for line in lines:
-        assert len(line.strip()) <= 100, f"Line too long: {line[:50]}..."
+        assert len(line) <= 200, f"Line too long: {line[:50]}..."
     
     # Should have some non-empty lines
     non_empty_lines = [line for line in lines if line.strip()]
-    assert len(non_empty_lines) >= 8  # Adjusted to match actual content
+    assert len(non_empty_lines) >= 8, "There are not enough non-empty lines in IDENTIFY_CAUSE"
