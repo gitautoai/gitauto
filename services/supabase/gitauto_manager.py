@@ -90,7 +90,6 @@ def create_user_request(
                 "repo_id": repo_id,
                 "repo_name": repo_name,
                 "issue_number": issue_number,
-                "installation_id": installation_id,
             }
         ).execute()
 
