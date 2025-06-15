@@ -22,7 +22,7 @@ def create_installation(
     try:
         # Import locally to avoid circular dependency
         from services.supabase.users_manager import upsert_user
-        
+
         # First create/update the user record with the email
         upsert_user(user_id=user_id, user_name=user_name, email=email)
         
@@ -34,7 +34,6 @@ def create_installation(
                 "owner_type": owner_type,
                 "owner_name": owner_name,
                 "owner_id": owner_id,
-                "user_id": user_id,
                 "uninstalled_at": None
             })
             .execute()
