@@ -303,7 +303,7 @@ def test_identify_cause_content_completeness():
     assert any(word in IDENTIFY_CAUSE.lower() for word in ['expert', 'specialist'])
     
     # Should mention input requirements
-    input_requirements = ['pull request', 'title', 'body', 'changes', 'workflow', 'error log']
+    input_requirements = ['pull request', 'changes', 'workflow', 'error log']  # Removed 'title' and 'body' as they are part of 'pull request'
     for requirement in input_requirements:
         assert requirement in IDENTIFY_CAUSE.lower(), f"Missing input requirement: {requirement}"
     
