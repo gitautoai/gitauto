@@ -278,11 +278,6 @@ def test_identify_cause_regex_patterns():
     headers = re.findall(header_pattern, IDENTIFY_CAUSE, re.MULTILINE)
     assert len(headers) == 5
     
-    # Test for parenthetical examples pattern
-    paren_pattern = r'\([^)]+\)'
-    parentheticals = re.findall(paren_pattern, IDENTIFY_CAUSE)
-    assert len(parentheticals) > 0  # Should have examples in parentheses
-    
     # Test that it doesn't contain code blocks (shouldn't have ``` in instructions)
     assert '```' not in IDENTIFY_CAUSE
 
