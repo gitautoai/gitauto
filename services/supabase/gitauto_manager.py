@@ -126,7 +126,7 @@ def get_installation_ids() -> list[int]:
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 def is_users_first_issue(user_id: int, installation_id: int) -> bool:
-    # Check if there are any completed usage records for this user and installation
+    """Check if this is the user's first issue by verifying if there are no completed usage records for the given user_id and installation_id."""
     data, _ = (
         supabase.table(table_name="usage")
         .select("*")
