@@ -140,7 +140,7 @@ def test_resolve_feedback_triple_quoted_string():
     assert 'Should not be long.' in RESOLVE_FEEDBACK.strip()
 
 
-def test_resolve_feedback_contains_specific_sections():
+def test_resolve_feedback_contains_specific_sections(): 
     sections = ["What the feedback is", "Where to change", "How to change"]
     for section in sections:
         assert section in RESOLVE_FEEDBACK
