@@ -19,7 +19,7 @@ def create_installation(
         # First create/update the user record with the email
         upsert_user(user_id=user_id, user_name=user_name, email=email)
         
-        # Then create the installation record (without user-related fields)
+        # Then create the installation record (without user fields)
         response = (
             supabase.table("installations")
             .insert({
