@@ -35,6 +35,18 @@ async def test_create_installation_works() -> None:
     )
     assert response is not None
 
+    # Verify the installation was created with correct data
+    data, _ = (
+        supabase.table("installations")
+        .select("*")
+        .eq("installation_id", TEST_INSTALLATION_ID)
+        .execute()
+    )
+    assert len(data[1]) == 1
+    assert data[1][0]["owner_name"] == "gitautoai"
+    assert data[1][0]["owner_type"] == TEST_OWNER_TYPE
+    assert data[1][0]["owner_id"] == TEST_OWNER_ID
+
     # Clean Up
     wipe_installation_owner_user_data()
 
