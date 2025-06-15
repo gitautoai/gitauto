@@ -169,6 +169,7 @@ def test_resolve_feedback_no_html_tags():
 
 
 def test_resolve_feedback_no_special_characters():
+    # Note: '#' is excluded because it's used for Markdown headers (e.g., "## What the feedback is")
     special_chars = ["@", "$", "%", "^", "&", "*", "[", "]", "{", "}", "|", "\\"]
     for char in special_chars:
         assert char not in RESOLVE_FEEDBACK
@@ -222,7 +223,8 @@ def test_resolve_feedback_section_order():
 
 def test_resolve_feedback_no_empty_lines_at_start():
     # The constant starts with a newline due to triple-quote formatting, which is acceptable
-    pass
+    assert RESOLVE_FEEDBACK.startswith('\n')
+    assert RESOLVE_FEEDBACK.lstrip().startswith('You are an')
 
 
 def test_resolve_feedback_ends_with_newline():
@@ -323,7 +325,7 @@ def test_resolve_feedback_proper_grammar():
 
 
 def test_resolve_feedback_example_language_context():
-    assert "e.g. the plan should be in English" in RESOLVE_FEEDBACK
+    assert "e.g. the plan should be in English" in RESOLVE_FEEDBACK.lower()
     assert "if the input is mainly in Japanese for example" in RESOLVE_FEEDBACK
 
 
