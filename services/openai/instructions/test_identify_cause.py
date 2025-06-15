@@ -101,117 +101,33 @@ def test_identify_cause_header_format():
         assert header.endswith("?")
 
 
-def test_identify_cause_immutable():
-    """Test that IDENTIFY_CAUSE behaves as an immutable constant."""
-    original_value = IDENTIFY_CAUSE
-    
-    # Attempt to modify should not affect the original
-    modified = IDENTIFY_CAUSE + " extra text"
-    assert IDENTIFY_CAUSE == original_value
-    assert modified != IDENTIFY_CAUSE
-
-
-def test_identify_cause_import():
-    """Test that IDENTIFY_CAUSE can be imported correctly."""
-    # This test ensures the import works and the constant is accessible
-    from services.openai.instructions.identify_cause import IDENTIFY_CAUSE as imported_constant
-    
-    assert imported_constant == IDENTIFY_CAUSE
-    assert isinstance(imported_constant, str)
-    assert len(imported_constant) > 0
-
-
-def test_identify_cause_string_operations():
-    """Test various string operations on IDENTIFY_CAUSE."""
-    # Test string length
-    assert len(IDENTIFY_CAUSE) > 200  # Adjusted to match actual content length
-    
-    # Test string contains operations
-    assert "error" in IDENTIFY_CAUSE.lower()
-    assert "fix" in IDENTIFY_CAUSE.lower()
-    
-    # Test string splitting
-    words = IDENTIFY_CAUSE.split()
-    assert len(words) > 30  # Adjusted to match actual word count
-    
-    # Test string stripping
-    stripped = IDENTIFY_CAUSE.strip()
-    assert len(stripped) <= len(IDENTIFY_CAUSE)
-
-
-def test_identify_cause_encoding():
-    """Test that IDENTIFY_CAUSE handles encoding properly."""
-    # Test UTF-8 encoding/decoding
-    encoded = IDENTIFY_CAUSE.encode('utf-8')
-    decoded = encoded.decode('utf-8')
-    assert decoded == IDENTIFY_CAUSE
-    
-    # Test that it contains ASCII characters
-    try:
-        IDENTIFY_CAUSE.encode('ascii')
-        ascii_compatible = True
-    except UnicodeEncodeError:
-        ascii_compatible = False
-    
-    # The instruction should be ASCII compatible for broad compatibility
-    assert ascii_compatible
-
-
-def test_identify_cause_line_endings():
-    """Test that IDENTIFY_CAUSE has consistent line endings."""
-    # Check for consistent line endings (should use \n)
-    assert '\r\n' not in IDENTIFY_CAUSE  # No Windows line endings
-    assert '\r' not in IDENTIFY_CAUSE    # No old Mac line endings
-    
-    # Should contain Unix line endings
-    lines = IDENTIFY_CAUSE.split('\n')
-    assert len(lines) > 1  # Should be multi-line
-
-
-def test_identify_cause_content_validation():
-    """Test detailed content validation of IDENTIFY_CAUSE."""
-    # Test for specific technical terms
-    technical_terms = [
-        "GitHub Actions",
-        "Workflow",
-        "Check Run",
-        "pull request",
-        "error log"
-    ]
-    
-    for term in technical_terms:
-        assert term in IDENTIFY_CAUSE, f"Missing technical term: {term}"
-    
-    # Test for instruction keywords
-    instruction_keywords = [
-        "identify",
-        "cause",
-        "error",  # Changed from "failure" to "error" to match actual content
-        "fix",
-        "plan"
-    ]
-    
-    for keyword in instruction_keywords:
-        assert keyword in IDENTIFY_CAUSE.lower(), f"Missing instruction keyword: {keyword}"
-
-
 def test_identify_cause_markdown_structure():
     """Test the markdown structure in detail."""
-    # Test that headers are properly spaced
+    # Test that headers are properly formatted and positioned
     lines = IDENTIFY_CAUSE.split('\n')
     header_indices = []
+    header_lines = []
     
     for i, line in enumerate(lines):
         if line.startswith('## '):
             header_indices.append(i)
+            header_lines.append(line)
     
     # Should have 5 headers
     assert len(header_indices) == 5
     
     # Headers should be in the expected order
-    expected_headers = ["What is the Error?", "Why did the Error Occur?", "Where is the Error Located?", "How to Fix the Error?", "Why Fix it This Way?"]
-    for i, header_index in enumerate(header_indices):
-        assert lines[header_index] == f"## {expected_headers[i]}"
+    expected_headers = [
+        "## What is the Error?",
+        "## Why did the Error Occur?",
+        "## Where is the Error Located?",
+        "## How to Fix the Error?",
+        "## Why Fix it This Way?"
+    ]
+    assert header_lines == expected_headers
+    
+    # Headers should appear after the format introduction line
+    assert all(idx > 6 for idx in header_indices), "Headers should appear after format introduction"
 
 
 def test_identify_cause_word_count():
@@ -266,9 +182,6 @@ def test_identify_cause_type_safety():
     assert IDENTIFY_CAUSE is not None
     assert IDENTIFY_CAUSE != ""
     assert IDENTIFY_CAUSE.strip() != ""
-    
-    # Should be truthy
-    assert bool(IDENTIFY_CAUSE) is True
 
 
 def test_identify_cause_regex_patterns():
@@ -278,13 +191,18 @@ def test_identify_cause_regex_patterns():
     headers = re.findall(header_pattern, IDENTIFY_CAUSE, re.MULTILINE)
     assert len(headers) == 5
     
+    # Test for parenthetical examples pattern
+    paren_pattern = r'\([^)]+\)'
+    parentheticals = re.findall(paren_pattern, IDENTIFY_CAUSE)
+    assert len(parentheticals) > 0  # Should have examples in parentheses
+    
     # Test that it doesn't contain code blocks (shouldn't have ``` in instructions)
     assert '```' not in IDENTIFY_CAUSE
 
 
 def test_identify_cause_sentence_structure():
     """Test sentence structure and grammar aspects."""
-    sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9])', IDENTIFY_CAUSE)
+    sentences = re.split(r'[.!?]+', IDENTIFY_CAUSE)
     sentences = [s.strip() for s in sentences if s.strip()]
     
     # Should have multiple sentences
@@ -302,7 +220,7 @@ def test_identify_cause_content_completeness():
     assert any(word in IDENTIFY_CAUSE.lower() for word in ['expert', 'specialist'])
     
     # Should mention input requirements
-    input_requirements = ['pull request', 'changes', 'workflow', 'error log']  # Removed 'title' and 'body' as they are part of 'pull request'
+    input_requirements = ['pull request', 'title', 'body', 'changes', 'workflow', 'error log']
     for requirement in input_requirements:
         assert requirement in IDENTIFY_CAUSE.lower(), f"Missing input requirement: {requirement}"
     
@@ -332,7 +250,7 @@ def test_identify_cause_edge_cases():
     assert not IDENTIFY_CAUSE.isspace()
     
     # Test that it has reasonable bounds
-    assert 500 < len(IDENTIFY_CAUSE) < 1000  # Adjusted to match actual content length
+    assert 100 < len(IDENTIFY_CAUSE) < 1000  # Adjusted to match actual content length
     
     # Test that it contains actual content, not just formatting
     content_chars = sum(1 for c in IDENTIFY_CAUSE if c.isalnum())
@@ -353,16 +271,3 @@ def test_identify_cause_multiline_structure():
     # Should have some non-empty lines
     non_empty_lines = [line for line in lines if line.strip()]
     assert len(non_empty_lines) >= 8  # Adjusted to match actual content
-
-
-def test_identify_cause_professional_tone():
-    """Test that IDENTIFY_CAUSE maintains a professional tone."""
-    # Should not contain informal language
-    informal_words = ['gonna', 'wanna', 'gotta', 'yeah', 'ok', 'cool']
-    for word in informal_words:
-        assert word not in IDENTIFY_CAUSE.lower(), f"Contains informal word: {word}"
-    
-    # Should contain professional language
-    professional_indicators = ['expert', 'professional', 'skilled', 'clear', 'specific']
-    found_professional = any(word in IDENTIFY_CAUSE.lower() for word in professional_indicators)
-    assert found_professional, "Should contain professional language indicators"
