@@ -276,7 +276,7 @@ def test_resolve_feedback_no_unicode_issues():
 
 def test_resolve_feedback_line_count():
     lines = RESOLVE_FEEDBACK.split('\n')
-    assert len(lines) >= 10
+    assert len(lines) >= 10, f"Expected at least 10 lines, got {len(lines)}"
     assert len(lines) <= 20
 
 
