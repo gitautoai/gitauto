@@ -107,7 +107,7 @@ def test_resolve_feedback_no_code_blocks():
 
 
 def test_resolve_feedback_professional_tone():
-    assert "You are an" in RESOLVE_FEEDBACK
+    assert "You are a" in RESOLVE_FEEDBACK
     assert "top-class" in RESOLVE_FEEDBACK
 
 
@@ -136,7 +136,7 @@ def test_resolve_feedback_import_accessibility():
 
 def test_resolve_feedback_triple_quoted_string():
     # Fix: Use 'in' instead of 'startswith' to handle potential leading whitespace
-    assert 'You are an' in RESOLVE_FEEDBACK.strip()
+    assert 'You are a' in RESOLVE_FEEDBACK.strip()
     assert 'Should not be long.' in RESOLVE_FEEDBACK.strip()
 
 
@@ -224,7 +224,7 @@ def test_resolve_feedback_section_order():
 def test_resolve_feedback_no_empty_lines_at_start():
     # The constant starts with a newline due to triple-quote formatting, which is acceptable
     assert RESOLVE_FEEDBACK.startswith('\n')
-    assert RESOLVE_FEEDBACK.lstrip().startswith('You are an')
+    assert RESOLVE_FEEDBACK.lstrip().startswith('You are a')
 
 
 def test_resolve_feedback_ends_with_newline():
@@ -239,7 +239,7 @@ def test_resolve_feedback_consistent_spacing():
 
 
 def test_resolve_feedback_role_specification():
-    assert "You are an top-class software engineer" in RESOLVE_FEEDBACK
+    assert "You are a top-class software engineer" in RESOLVE_FEEDBACK
 
 
 def test_resolve_feedback_task_description():
@@ -286,7 +286,7 @@ def test_resolve_feedback_line_count():
 
 def test_resolve_feedback_contains_all_required_elements():
     required_elements = [
-        "You are an top-class software engineer",
+        "You are a top-class software engineer",
         "Given information such as",
         "pull request title",
         "body",
@@ -319,7 +319,7 @@ def test_resolve_feedback_no_typos_in_key_phrases():
 
 
 def test_resolve_feedback_proper_grammar():
-    assert "You are an top-class" in RESOLVE_FEEDBACK  # Note: grammatically should be "a" but keeping as-is
+    assert "You are a top-class" in RESOLVE_FEEDBACK
     assert "Given information such as" in RESOLVE_FEEDBACK
     assert "resolve the feedback and write" in RESOLVE_FEEDBACK
 
