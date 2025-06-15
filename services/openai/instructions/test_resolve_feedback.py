@@ -168,6 +168,8 @@ def test_resolve_feedback_no_html_tags():
 
 
 def test_resolve_feedback_no_special_characters():
+    # Note: '#' is excluded because it's used for Markdown headers in the RESOLVE_FEEDBACK constant
+    # e.g., "## What the feedback is"
     special_chars = ["@", "$", "%", "^", "&", "*", "[", "]", "{", "}", "|", "\\"]
     for char in special_chars:
         assert char not in RESOLVE_FEEDBACK
