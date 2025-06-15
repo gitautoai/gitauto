@@ -7,7 +7,7 @@ plan to fix the error. The response should be written in a language that is used
 the input. For example, if the input is mainly in Japanese, the plan should be in 
 Japanese.
 
-Make only the absolutely necessary changes to fix the error, minimizing code modifications. 
+Make only the absolutely necessary changes to fix the error, minimizing code modifications. (For example, fix a missing colon.)
 Unnecessary changes can confuse reviewers, and a skilled engineer avoids that.
 
 Output the information in Markdown format with the following headers:
