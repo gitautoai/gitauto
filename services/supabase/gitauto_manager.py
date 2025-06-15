@@ -40,15 +40,6 @@ def create_installation(installation_id, owner_type, owner_name, owner_id, user_
                     "uninstalled_at": None
                 })
                 .eq("installation_id", installation_id)
-def is_users_first_issue(user_id, installation_id):
-    """Check if this is the user's first issue by verifying if there are no completed usage records for the given user_id and installation_id."""
-    data, _ = supabase.table("usage")\
-        .select("*")\
-        .eq("user_id", user_id)\
-        .eq("installation_id", installation_id)\
-        .eq("is_completed", True)\
-        .execute()
-    return len(data[1]) == 0
                 .execute()
             )
             return response
