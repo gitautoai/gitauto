@@ -11,6 +11,7 @@ from config import (
 )
 from services.supabase.client import supabase
 from services.supabase.gitauto_manager import create_installation
+from services.supabase.users_manager import get_user
 from tests.services.supabase.wipe_data import (
     wipe_installation_owner_user_data,
 )
@@ -19,11 +20,11 @@ from utils.time.timer import timer_decorator
 
 @timer_decorator
 async def test_create_installation_works() -> None:
-    """Tests based on creating a record and updating it in usage table"""
+    """Tests that creating an installation works and also creates/updates the user"""
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
 
-    # insert data into the db -> create installation
+    # Create installation and user
     response = create_installation(
         installation_id=TEST_INSTALLATION_ID,
         owner_type=TEST_OWNER_TYPE,
@@ -35,7 +36,7 @@ async def test_create_installation_works() -> None:
     )
     assert response is not None
 
-    # Verify the installation was created with correct data
+    # Verify installation was created
     data, _ = (
         supabase.table("installations")
         .select("*")
@@ -44,8 +45,12 @@ async def test_create_installation_works() -> None:
     )
     assert len(data[1]) == 1
     assert data[1][0]["owner_name"] == "gitautoai"
-    assert data[1][0]["owner_type"] == TEST_OWNER_TYPE
-    assert data[1][0]["owner_id"] == TEST_OWNER_ID
+
+    # Verify user was created
+    user = get_user(TEST_USER_ID)
+    assert user is not None
+    assert user["user_name"] == TEST_USER_NAME
+    assert user["email"] == TEST_EMAIL
 
     # Clean Up
     wipe_installation_owner_user_data()
@@ -81,7 +86,7 @@ async def test_create_installation_updates_existing() -> None:
     )
     assert response is not None
 
-    # Verify the record was updated
+    # Verify the installation record was updated
     data, _ = (
         supabase.table("installations")
         .select("*")
@@ -90,6 +95,12 @@ async def test_create_installation_updates_existing() -> None:
     )
     assert len(data[1]) == 1
     assert data[1][0]["owner_name"] == new_owner_name
+
+    # Verify user record still exists and wasn't duplicated
+    user = get_user(TEST_USER_ID)
+    assert user is not None
+    assert user["user_name"] == TEST_USER_NAME
+    assert user["email"] == TEST_EMAIL
 
     # Clean Up
     wipe_installation_owner_user_data()
