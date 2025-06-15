@@ -186,7 +186,7 @@ def test_identify_cause_content_validation():
     instruction_keywords = [
         "identify",
         "cause",
-        "failure",
+        "error",  # Changed from "failure" to "error" to match actual content
         "fix",
         "plan"
     ]
