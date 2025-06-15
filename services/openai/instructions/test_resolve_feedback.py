@@ -325,7 +325,7 @@ def test_resolve_feedback_proper_grammar():
 
 
 def test_resolve_feedback_example_language_context():
-    assert "e.g." in RESOLVE_FEEDBACK.lower()
+    assert "e.g." in RESOLVE_FEEDBACK
     assert "if the input is mainly in Japanese" in RESOLVE_FEEDBACK
 
 
