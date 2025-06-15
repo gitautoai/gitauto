@@ -236,7 +236,7 @@ def test_resolve_feedback_ends_with_newline():
 def test_resolve_feedback_consistent_spacing():
     lines = RESOLVE_FEEDBACK.split('\n')
     for line in lines:
-        if line.strip() and not line.startswith('##'):
+        if line.strip() and not line.startswith('## '):
             assert not line.startswith(' '), f"Line starts with space: '{line}'"
 
 
