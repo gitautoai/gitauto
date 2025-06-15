@@ -14,4 +14,5 @@ Output the information in Markdown format with the following headers:
 ## Why Fix it This Way?
 
 Always be clear, specific, concise, and direct in your responses.
+ (e.g., refer to the style guide)
 """
