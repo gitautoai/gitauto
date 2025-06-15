@@ -103,4 +103,81 @@ def test_identify_cause_line_count():
     assert len(lines) <= 20
 
 
-def test_identify_cause_immutable():
+def test_identify_cause_consistent_value():
+    original_value = IDENTIFY_CAUSE
+    from services.openai.instructions.identify_cause import IDENTIFY_CAUSE as reimported
+    assert reimported == original_value
+    assert IDENTIFY_CAUSE == original_value
+
+
+def test_identify_cause_contains_reviewer_consideration():
+    assert "confuse reviewers" in IDENTIFY_CAUSE
+    assert "skilled engineer" in IDENTIFY_CAUSE
+
+
+def test_identify_cause_contains_check_run_context():
+    assert "Check Run" in IDENTIFY_CAUSE
+    assert "failure" in IDENTIFY_CAUSE
+
+
+def test_identify_cause_japanese_example():
+    assert "e.g." in IDENTIFY_CAUSE
+    assert "mainly in Japanese" in IDENTIFY_CAUSE
+
+
+def test_identify_cause_output_format_specificity():
+    assert "following headers:" in IDENTIFY_CAUSE
+
+
+def test_identify_cause_no_html_tags():
+    assert "<" not in IDENTIFY_CAUSE
+    assert ">" not in IDENTIFY_CAUSE
+
+
+def test_identify_cause_proper_sentence_structure():
+    sentences = [s.strip() for s in IDENTIFY_CAUSE.split('.') if s.strip()]
+    assert len(sentences) >= 3
+
+
+def test_identify_cause_contains_workflow_reference():
+    assert "workflow" in IDENTIFY_CAUSE.lower()
+
+
+def test_identify_cause_header_order():
+    headers = re.findall(r'^## .+$', IDENTIFY_CAUSE, re.MULTILINE)
+    expected_order = [
+        "## What is the Error?",
+        "## Why did the Error Occur?", 
+        "## Where is the Error Located?",
+        "## How to Fix the Error?",
+        "## Why Fix it This Way?"
+    ]
+    assert headers == expected_order
+
+
+def test_identify_cause_no_trailing_newlines():
+    assert not IDENTIFY_CAUSE.endswith("\n\n")
+
+
+def test_identify_cause_contains_action_words():
+    action_words = ["identify", "write", "fix", "output"]
+    for word in action_words:
+        assert word in IDENTIFY_CAUSE.lower()
+
+
+def test_identify_cause_professional_tone():
+    professional_indicators = ["expert", "skilled", "necessary", "specific"]
+    for indicator in professional_indicators:
+        assert indicator in IDENTIFY_CAUSE.lower()
+
+
+def test_identify_cause_instruction_clarity():
+    clarity_words = ["clear", "specific", "concise", "direct"]
+    for word in clarity_words:
+        assert word in IDENTIFY_CAUSE.lower()
+
+
+def test_identify_cause_triple_quotes_format():
+    source_file_content = open('services/openai/instructions/identify_cause.py', 'r').read()
+    assert '"""' in source_file_content
+    assert source_file_content.count('"""') == 2
