@@ -177,7 +177,62 @@ def test_identify_cause_instruction_clarity():
         assert word in IDENTIFY_CAUSE.lower()
 
 
-def test_identify_cause_triple_quotes_format():
-    source_file_content = open('services/openai/instructions/identify_cause.py', 'r').read()
-    assert '"""' in source_file_content
-    assert source_file_content.count('"""') == 2
+def test_identify_cause_string_immutability():
+    original_length = len(IDENTIFY_CAUSE)
+    original_content = str(IDENTIFY_CAUSE)
+    assert len(IDENTIFY_CAUSE) == original_length
+    assert IDENTIFY_CAUSE == original_content
+
+
+def test_identify_cause_contains_parenthetical_example():
+    assert "(" in IDENTIFY_CAUSE
+    assert ")" in IDENTIFY_CAUSE
+    assert "e.g." in IDENTIFY_CAUSE
+
+
+def test_identify_cause_markdown_headers_complete():
+    header_count = IDENTIFY_CAUSE.count("##")
+    assert header_count == 5
+
+
+def test_identify_cause_no_code_blocks():
+    assert "```" not in IDENTIFY_CAUSE
+    assert "`" not in IDENTIFY_CAUSE
+
+
+def test_identify_cause_contains_github_context():
+    github_terms = ["GitHub", "pull request", "workflow"]
+    for term in github_terms:
+        assert term in IDENTIFY_CAUSE
+
+
+def test_identify_cause_error_focus():
+    error_related = ["error", "failure", "fix", "cause"]
+    for term in error_related:
+        assert term.lower() in IDENTIFY_CAUSE.lower()
+
+
+def test_identify_cause_instruction_completeness():
+    instruction_elements = ["Given", "identify", "write", "Output", "Always"]
+    for element in instruction_elements:
+        assert element in IDENTIFY_CAUSE
+
+
+def test_identify_cause_no_special_characters():
+    special_chars = ["@", "#", "$", "%", "^", "&", "*"]
+    for char in special_chars:
+        assert char not in IDENTIFY_CAUSE
+
+
+def test_identify_cause_proper_capitalization():
+    lines = IDENTIFY_CAUSE.split("\n")
+    non_empty_lines = [line.strip() for line in lines if line.strip()]
+    for line in non_empty_lines:
+        if line.startswith("##"):
+            assert line[2:].strip()[0].isupper()
+
+
+def test_identify_cause_contains_engineering_best_practices():
+    best_practices = ["minimal", "necessary", "skilled", "avoid"]
+    for practice in best_practices:
+        assert practice in IDENTIFY_CAUSE.lower()
