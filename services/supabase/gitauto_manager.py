@@ -1,6 +1,7 @@
 from services.supabase.client import supabase
 import postgrest
 from services.supabase.users_manager import upsert_user
+from typing import List, Optional
 from utils.error.handle_exceptions import handle_exceptions
 from utils.error.handle_exceptions import handle_exceptions
 from typing import Any, Optional, List
