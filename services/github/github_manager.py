@@ -46,7 +46,6 @@ from services.github.reviewers_manager import add_reviewers
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.issue import Issue
 from services.openai.vision import describe_image
-from services.supabase.gitauto_manager import is_users_first_issue
 from services.supabase.users_manager import (
     get_how_many_requests_left_and_cycle,
     upsert_user,
