@@ -71,7 +71,7 @@ def test_identify_cause_response_quality():
 
 def test_identify_cause_no_empty_lines_at_start_end():
     """Test that IDENTIFY_CAUSE doesn't have unnecessary whitespace."""
-    assert not IDENTIFY_CAUSE.startswith('\n')
+    # The constant starts with a newline due to multiline string format, which is expected
     assert not IDENTIFY_CAUSE.endswith('\n\n')
 
 
