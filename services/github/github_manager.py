@@ -172,7 +172,6 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
 
     # Proper issue generation comment, create user if not exist (first issue in an organization)
     from services.supabase.gitauto_manager import is_users_first_issue
-    from services.supabase.gitauto_manager import is_users_first_issue
     first_issue = False
     from services.supabase.gitauto_manager import is_users_first_issue
     upsert_user(user_id=user_id, user_name=user_name, email=user_email)
