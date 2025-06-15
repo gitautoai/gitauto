@@ -26,6 +26,7 @@ def create_installation(
                 "owner_type": owner_type,
                 "owner_name": owner_name,
                 "owner_id": owner_id,
+                "user_id": user_id,
                 "uninstalled_at": None
             })
             .execute()
