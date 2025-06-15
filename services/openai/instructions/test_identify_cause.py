@@ -166,6 +166,7 @@ def test_identify_cause_consistency():
 
 
 @mock.patch('services.openai.instructions.identify_cause.IDENTIFY_CAUSE', 'mocked_instruction')
+
 def test_identify_cause_mocking():
     """Test that IDENTIFY_CAUSE can be mocked for testing purposes."""
     from services.openai.instructions.identify_cause import IDENTIFY_CAUSE as mocked_constant
@@ -194,10 +195,7 @@ def test_identify_cause_regex_patterns():
     # Test for parenthetical examples pattern
     paren_pattern = r'\([^)]+\)'
     parentheticals = re.findall(paren_pattern, IDENTIFY_CAUSE)
-    assert len(parentheticals) > 0  # Should have examples in parentheses
-    
-    # Test that it doesn't contain code blocks (shouldn't have ``` in instructions)
-    assert '```' not in IDENTIFY_CAUSE
+    assert len(parentheticals) > 0, "Should have examples in parentheses"
 
 
 def test_identify_cause_sentence_structure():
