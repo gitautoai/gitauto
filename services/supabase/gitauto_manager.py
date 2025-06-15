@@ -27,7 +27,7 @@ def create_installation(installation_id, owner_type, owner_name, owner_id, user_
             .execute()
         )
         return response
-    except postgrest.exceptions.APIError as e:
+    except Exception as e:
         # If there's still an error that's not related to duplicate keys, raise it
         if not (isinstance(e.args[0], dict) and e.args[0].get('code') == '23505'):
             raise
