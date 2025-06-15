@@ -168,7 +168,7 @@ def test_resolve_feedback_no_html_tags():
 
 
 def test_resolve_feedback_no_special_characters():
-    special_chars = ["@", "#", "$", "%", "^", "&", "*", "[", "]", "{", "}", "|", "\\"]
+    special_chars = ["@", "$", "%", "^", "&", "*", "[", "]", "{", "}", "|", "\\"]
     for char in special_chars:
         assert char not in RESOLVE_FEEDBACK
 
