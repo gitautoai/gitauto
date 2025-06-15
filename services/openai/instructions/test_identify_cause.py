@@ -49,7 +49,7 @@ def test_identify_cause_markdown_headers():
 
 def test_identify_cause_language_requirement():
     """Test that IDENTIFY_CAUSE mentions language adaptation requirement."""
-    assert "language that is used in the input" in IDENTIFY_CAUSE
+    assert "a language that is used in the input" in IDENTIFY_CAUSE
     assert "Japanese" in IDENTIFY_CAUSE
     assert "plan should be in Japanese" in IDENTIFY_CAUSE
 
