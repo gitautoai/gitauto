@@ -1,8 +1,6 @@
 from services.supabase.client import supabase
 import postgrest
 from services.supabase.users_manager import upsert_user
-from typing import List, Optional
-from utils.error.handle_exceptions import handle_exceptions
 from utils.error.handle_exceptions import handle_exceptions
 from typing import Any, Optional, List
 
@@ -21,7 +19,7 @@ def create_installation(
         # First create/update the user record with the email
         upsert_user(user_id=user_id, user_name=user_name, email=email)
         
-        # Then create the installation record without the email field
+        # Then create the installation record (without user-related fields)
         response = (
             supabase.table("installations")
             .insert({
@@ -29,8 +27,6 @@ def create_installation(
                 "owner_type": owner_type,
                 "owner_name": owner_name,
                 "owner_id": owner_id,
-                "user_id": user_id,
-                "user_name": user_name,
                 "uninstalled_at": None
             })
             .execute()
@@ -46,8 +42,6 @@ def create_installation(
                     "owner_type": owner_type,
                     "owner_name": owner_name,
                     "owner_id": owner_id,
-                    "user_id": user_id,
-                    "user_name": user_name,
                     "uninstalled_at": None
                 })
                 .eq("installation_id", installation_id)
