@@ -49,6 +49,30 @@ def create_installation(
             "owner_id": owner_id,
         }
     ).execute()
+def create_user_request(user_id, user_name, installation_id, owner_id, owner_type, owner_name, repo_id, repo_name, issue_number, source, email):
+    """
+    Creates a record in the usage table for a user request.
+    Returns the inserted record's id.
+    """
+    response = (
+        supabase.table("usage")
+        .insert({
+            "user_id": user_id,
+            "user_name": user_name,
+            "installation_id": installation_id,
+            "owner_id": owner_id,
+            "owner_type": owner_type,
+            "owner_name": owner_name,
+            "repo_id": repo_id,
+            "repo_name": repo_name,
+            "issue_number": issue_number,
+            "source": source,
+            "email": email,
+            "is_completed": False
+        })
+        .execute()
+    )
+    return response[1][0]["id"]
 
     # Upsert user
     upsert_user(user_id=user_id, user_name=user_name, email=email)
