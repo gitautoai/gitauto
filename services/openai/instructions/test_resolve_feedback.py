@@ -148,3 +148,45 @@ def test_resolve_feedback_encoding():
     # Test UTF-8 encoding/decoding
     encoded = RESOLVE_FEEDBACK.encode('utf-8')
     decoded = encoded.decode('utf-8')
+
+
+def test_resolve_feedback_type_checking():
+    """Test type checking and validation of RESOLVE_FEEDBACK."""
+    # Test that it's specifically a str type, not a subclass
+    assert type(RESOLVE_FEEDBACK) is str
+    
+    # Test that it's not None, empty, or other falsy values
+    assert RESOLVE_FEEDBACK
+    assert bool(RESOLVE_FEEDBACK)
+
+
+def test_resolve_feedback_comparison_operations():
+    """Test comparison operations with RESOLVE_FEEDBACK."""
+    # Test equality with itself
+    assert RESOLVE_FEEDBACK == RESOLVE_FEEDBACK
+    
+    # Test inequality with empty string
+    assert RESOLVE_FEEDBACK != ""
+    assert RESOLVE_FEEDBACK != " "
+    
+    # Test inequality with different strings
+    assert RESOLVE_FEEDBACK != "different string"
+
+
+def test_resolve_feedback_hash_consistency():
+    """Test that RESOLVE_FEEDBACK has consistent hash values."""
+    # Hash should be consistent across calls
+    hash1 = hash(RESOLVE_FEEDBACK)
+    hash2 = hash(RESOLVE_FEEDBACK)
+    assert hash1 == hash2
+
+
+def test_resolve_feedback_repr_str():
+    """Test string representation methods."""
+    # Test that str() and repr() work
+    str_repr = str(RESOLVE_FEEDBACK)
+    assert str_repr == RESOLVE_FEEDBACK
+    
+    repr_result = repr(RESOLVE_FEEDBACK)
+    assert isinstance(repr_result, str)
+    assert len(repr_result) > 0
