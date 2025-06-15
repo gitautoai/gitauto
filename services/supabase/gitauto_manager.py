@@ -173,3 +173,4 @@ def set_issue_to_merged(
         .eq("issue_number", issue_number)
         .execute()
     )
+\n
