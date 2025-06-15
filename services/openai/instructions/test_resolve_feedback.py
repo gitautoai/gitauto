@@ -114,7 +114,7 @@ def test_resolve_feedback_professional_tone():
 def test_resolve_feedback_instruction_clarity():
     assert "Given information" in RESOLVE_FEEDBACK
     assert "resolve the feedback" in RESOLVE_FEEDBACK.lower()
-    assert "write a plan" in RESOLVE_FEEDBACK
+    assert "write a plan" in RESOLVE_FEEDBACK.lower()
 
 
 def test_resolve_feedback_format_specification():
