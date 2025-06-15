@@ -63,7 +63,7 @@ async def test_create_and_update_user_request_works():
     create_installation(
         installation_id=TEST_INSTALLATION_ID,
         owner_type=TEST_OWNER_TYPE,
-        owner_name=TEST_OWNER_NAME,
+        owner_name="gitautoai",
         owner_id=TEST_OWNER_ID,
         user_id=TEST_USER_ID,
         user_name=TEST_USER_NAME,
