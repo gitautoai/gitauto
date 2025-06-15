@@ -1,10 +1,12 @@
-from services.supabase.client import supabase
-import postgrest
-from services.supabase.users_manager import upsert_user
+# Standard imports
 from typing import Any, List, Optional
+
+# Third party imports
+import postgrest
+
+# Local imports
+from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
-# Import locally to avoid circular dependency
-from services.supabase.users_manager import upsert_user
 
 
 def create_installation(
@@ -18,6 +20,9 @@ def create_installation(
 ) -> dict[str, Any]:
     """Create a new installation record, or update the existing one if it already exists."""
     try:
+        # Import locally to avoid circular dependency
+        from services.supabase.users_manager import upsert_user
+        
         # First create/update the user record with the email
         upsert_user(user_id=user_id, user_name=user_name, email=email)
         
@@ -68,6 +73,9 @@ def create_user_request(
     email: Optional[str]
 ) -> int:
     """Creates record in usage table for this user and issue."""
+    # Import locally to avoid circular dependency
+    from services.supabase.users_manager import upsert_user
+    
     # First create/update the user record with the email
     upsert_user(user_id=user_id, user_name=user_name, email=email)
     
