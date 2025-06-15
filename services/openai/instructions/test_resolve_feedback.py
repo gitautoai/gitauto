@@ -224,9 +224,8 @@ def test_resolve_feedback_section_order():
 def test_resolve_feedback_no_empty_lines_at_start():
     # The constant starts with a newline due to triple-quote formatting, which is acceptable
     pass
-    pass
-
-    # Verify that after stripping whitespace, it starts with the expected content
+    assert RESOLVE_FEEDBACK.startswith('\n')
+    assert RESOLVE_FEEDBACK.lstrip().startswith('You are an')
 
 def test_resolve_feedback_ends_with_newline():
     assert RESOLVE_FEEDBACK.endswith('\n')
