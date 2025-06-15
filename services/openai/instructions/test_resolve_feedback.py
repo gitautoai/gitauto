@@ -1,3 +1,4 @@
+"""Tests for the RESOLVE_FEEDBACK constant."""
 from services.openai.instructions.resolve_feedback import RESOLVE_FEEDBACK
 
 
