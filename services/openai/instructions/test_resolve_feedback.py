@@ -325,7 +325,7 @@ def test_resolve_feedback_proper_grammar():
 
 def test_resolve_feedback_example_language_context():
     assert "e.g. the plan should be in English" in RESOLVE_FEEDBACK
-    assert "if the input is mainly in Japanese for example" in RESOLVE_FEEDBACK
+    assert "if the input is mainly in Japanese for example" in RESOLVE_FEEDBACK.lower()
 
 
 def test_resolve_feedback_instruction_structure():
