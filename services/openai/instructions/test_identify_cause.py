@@ -219,7 +219,7 @@ def test_identify_cause_instruction_completeness():
 
 
 def test_identify_cause_no_special_characters():
-    special_chars = ["@", "#", "$", "%", "^", "&", "*"]
+    special_chars = ["@", "$", "%", "^", "&", "*"]  # Removed "#" since it's used for markdown headers
     for char in special_chars:
         assert char not in IDENTIFY_CAUSE
 
