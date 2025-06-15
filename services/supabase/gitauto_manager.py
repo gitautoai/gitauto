@@ -27,7 +27,7 @@ def create_installation(installation_id, owner_type, owner_name, owner_id, user_
     except postgrest.exceptions.APIError as e:
         error = e.args[0] if e.args else {}
         # If duplicate key error, perform update instead
-        if isinstance(error, dict) and error.get('code') == '23505':
+        if (isinstance(error, dict) and error.get('code') == '23505') or "23505" in str(e):
             response = (
                 supabase.table("installations")
                 .update({
