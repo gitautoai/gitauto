@@ -191,9 +191,9 @@ def test_resolve_feedback_mentions_information_types():
 
 
 def test_resolve_feedback_instruction_completeness():
-    assert "resolve the feedback" in RESOLVE_FEEDBACK
-    assert "write a plan" in RESOLVE_FEEDBACK
-    assert "fix the error" in RESOLVE_FEEDBACK
+    assert "resolve the feedback" in RESOLVE_FEEDBACK.lower()
+    assert "write a plan" in RESOLVE_FEEDBACK.lower()
+    assert "fix the error" in RESOLVE_FEEDBACK.lower()
 
 
 def test_resolve_feedback_output_format_clarity():
