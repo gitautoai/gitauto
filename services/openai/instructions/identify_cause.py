@@ -16,3 +16,4 @@ Output the information in Markdown format with the following headers:
 Always be clear, specific, concise, and direct in your responses.
 (e.g., refer to the style guide)
 """
+(Example: Refer to our documentation for more details.)
