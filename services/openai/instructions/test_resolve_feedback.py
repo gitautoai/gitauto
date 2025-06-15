@@ -136,7 +136,7 @@ def test_resolve_feedback_import_accessibility():
 
 def test_resolve_feedback_triple_quoted_string():
     # Fix: Use 'in' instead of 'startswith' to handle potential leading whitespace
-    assert 'You are a top-class software engineer.' in RESOLVE_FEEDBACK
+    assert 'You are a top-class software engineer' in RESOLVE_FEEDBACK
     assert 'Should not be long.' in RESOLVE_FEEDBACK.strip()
 
 
