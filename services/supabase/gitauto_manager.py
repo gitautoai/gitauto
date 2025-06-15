@@ -101,7 +101,6 @@ def create_user_request(
         supabase.table("usage")
         .insert(
             json={
-                "user_id": user_id,
                 "installation_id": installation_id,
                 "owner_id": owner_id,
                 "owner_type": owner_type,
