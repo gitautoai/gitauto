@@ -271,7 +271,7 @@ def test_identify_cause_multiline_structure():
     
     # Should not have excessively long lines
     for line in lines:
-        assert len(line) <= 200, f"Line too long: {line[:50]}..."
+        assert len(line.strip()) <= 100, f"Line too long: {line[:50]}..."
     
     # Should have some non-empty lines
     non_empty_lines = [line for line in lines if line.strip()]
