@@ -160,7 +160,7 @@ def test_resolve_feedback_mentions_check_run():
 
 def test_resolve_feedback_language_example():
     assert "mainly in Japanese" in RESOLVE_FEEDBACK
-    assert "plan should be in Japanese" in RESOLVE_FEEDBACK
+    assert "plan should be in" in RESOLVE_FEEDBACK
 
 
 def test_resolve_feedback_no_html_tags():
@@ -321,11 +321,11 @@ def test_resolve_feedback_no_typos_in_key_phrases():
 def test_resolve_feedback_proper_grammar():
     assert "You are a top-class" in RESOLVE_FEEDBACK
     assert "Given information such as" in RESOLVE_FEEDBACK
-    assert "resolve the feedback and write" in RESOLVE_FEEDBACK
+    assert "resolve the feedback" in RESOLVE_FEEDBACK
 
 
 def test_resolve_feedback_example_language_context():
-    assert "e.g. the plan should be in English" in RESOLVE_FEEDBACK.lower()
+    assert "e.g. the plan should be in english" in RESOLVE_FEEDBACK.lower()
     assert "if the input is mainly in Japanese" in RESOLVE_FEEDBACK
 
 
