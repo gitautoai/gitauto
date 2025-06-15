@@ -84,3 +84,23 @@ def test_identify_cause_no_extra_whitespace_at_start():
 def test_identify_cause_no_extra_whitespace_at_end():
     assert not IDENTIFY_CAUSE.endswith(" ")
     assert not IDENTIFY_CAUSE.endswith("\t")
+
+
+def test_identify_cause_contains_specific_keywords():
+    keywords = ["error", "fix", "failure", "plan", "changes"]
+    for keyword in keywords:
+        assert keyword.lower() in IDENTIFY_CAUSE.lower()
+
+
+def test_identify_cause_string_length():
+    assert len(IDENTIFY_CAUSE) > 100
+    assert len(IDENTIFY_CAUSE) < 2000
+
+
+def test_identify_cause_line_count():
+    lines = IDENTIFY_CAUSE.split("\n")
+    assert len(lines) >= 10
+    assert len(lines) <= 20
+
+
+def test_identify_cause_immutable():
