@@ -134,3 +134,240 @@ def test_resolve_feedback_import_accessibility():
     assert imported_constant == RESOLVE_FEEDBACK
     assert imported_constant is not None
     assert isinstance(imported_constant, str)
+
+
+def test_resolve_feedback_triple_quoted_string():
+    assert RESOLVE_FEEDBACK.startswith('You are an')
+    assert RESOLVE_FEEDBACK.endswith('not be long.\n')
+
+
+def test_resolve_feedback_contains_specific_sections():
+    sections = ["What the feedback is", "Where to change", "How to change"]
+    for section in sections:
+        assert section in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_mentions_error_fixing():
+    assert "fix the error" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_mentions_workflow_context():
+    assert "workflow file" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_mentions_check_run():
+    assert "check run" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_language_example():
+    assert "mainly in Japanese" in RESOLVE_FEEDBACK
+    assert "plan should be in Japanese" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_no_html_tags():
+    assert "<" not in RESOLVE_FEEDBACK
+    assert ">" not in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_no_special_characters():
+    special_chars = ["@", "#", "$", "%", "^", "&", "*", "(", ")", "[", "]", "{", "}", "|", "\\"]
+    for char in special_chars:
+        assert char not in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_proper_punctuation():
+    assert RESOLVE_FEEDBACK.count(".") >= 3
+    assert RESOLVE_FEEDBACK.count(",") >= 2
+
+
+def test_resolve_feedback_contains_parenthetical_example():
+    assert "(" in RESOLVE_FEEDBACK
+    assert ")" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_mentions_information_types():
+    info_types = ["pull request title", "body", "changes", "workflow file content", "check run error log"]
+    for info_type in info_types:
+        assert info_type in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_instruction_completeness():
+    assert "resolve the feedback" in RESOLVE_FEEDBACK
+    assert "write a plan" in RESOLVE_FEEDBACK
+    assert "fix the error" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_output_format_clarity():
+    assert "Output format would be like this:" in RESOLVE_FEEDBACK
+    lines = RESOLVE_FEEDBACK.split('\n')
+    format_line_found = False
+    for i, line in enumerate(lines):
+        if "Output format would be like this:" in line:
+            format_line_found = True
+            break
+    assert format_line_found
+
+
+def test_resolve_feedback_section_order():
+    lines = RESOLVE_FEEDBACK.split('\n')
+    sections = []
+    for line in lines:
+        if line.startswith('## '):
+            sections.append(line)
+    
+    expected_order = ["## What the feedback is", "## Where to change", "## How to change"]
+    assert len(sections) == len(expected_order)
+    for i, expected in enumerate(expected_order):
+        assert sections[i] == expected
+
+
+def test_resolve_feedback_no_empty_lines_at_start():
+    assert not RESOLVE_FEEDBACK.startswith('\n')
+
+
+def test_resolve_feedback_ends_with_newline():
+    assert RESOLVE_FEEDBACK.endswith('\n')
+
+
+def test_resolve_feedback_consistent_spacing():
+    lines = RESOLVE_FEEDBACK.split('\n')
+    for line in lines:
+        if line.strip():
+            assert not line.startswith(' ') or line.startswith('## ')
+
+
+def test_resolve_feedback_role_specification():
+    assert "You are an top-class software engineer" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_task_description():
+    assert "Given information such as" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_language_sensitivity():
+    assert "language that is used in the input" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_brevity_instruction():
+    assert "concise and to the point" in RESOLVE_FEEDBACK
+    assert "Should not be long" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_constant_name():
+    import services.openai.instructions.resolve_feedback as module
+    assert hasattr(module, 'RESOLVE_FEEDBACK')
+
+
+def test_resolve_feedback_module_level_constant():
+    import services.openai.instructions.resolve_feedback as module
+    assert module.RESOLVE_FEEDBACK == RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_string_literal():
+    assert isinstance(RESOLVE_FEEDBACK, str)
+    assert len(RESOLVE_FEEDBACK.strip()) > 0
+
+
+def test_resolve_feedback_no_unicode_issues():
+    try:
+        RESOLVE_FEEDBACK.encode('utf-8')
+        assert True
+    except UnicodeEncodeError:
+        assert False, "String contains invalid unicode characters"
+
+
+def test_resolve_feedback_line_count():
+    lines = RESOLVE_FEEDBACK.split('\n')
+    assert len(lines) >= 10
+    assert len(lines) <= 20
+
+
+def test_resolve_feedback_contains_all_required_elements():
+    required_elements = [
+        "You are an top-class software engineer",
+        "Given information such as",
+        "pull request title",
+        "body",
+        "changes", 
+        "workflow file content",
+        "check run error log",
+        "resolve the feedback",
+        "write a plan",
+        "fix the error",
+        "language that is used in the input",
+        "Output format would be like this:",
+        "## What the feedback is",
+        "## Where to change", 
+        "## How to change",
+        "Each section should be concise and to the point",
+        "Should not be long"
+    ]
+    
+    for element in required_elements:
+        assert element in RESOLVE_FEEDBACK, f"Missing required element: {element}"
+
+
+def test_resolve_feedback_no_typos_in_key_phrases():
+    assert "top-class" in RESOLVE_FEEDBACK
+    assert "software engineer" in RESOLVE_FEEDBACK
+    assert "pull request" in RESOLVE_FEEDBACK
+    assert "workflow file" in RESOLVE_FEEDBACK
+    assert "check run" in RESOLVE_FEEDBACK
+    assert "error log" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_proper_grammar():
+    assert "You are an top-class" in RESOLVE_FEEDBACK
+    assert "Given information such as" in RESOLVE_FEEDBACK
+    assert "resolve the feedback and write" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_example_language_context():
+    assert "e.g. the plan should be in English" in RESOLVE_FEEDBACK
+    assert "if the input is mainly in Japanese for example" in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_instruction_structure():
+    assert RESOLVE_FEEDBACK.count('##') == 3
+    sections = [line for line in RESOLVE_FEEDBACK.split('\n') if line.startswith('##')]
+    assert len(sections) == 3
+
+
+def test_resolve_feedback_no_redundant_whitespace():
+    lines = RESOLVE_FEEDBACK.split('\n')
+    for line in lines:
+        if line.strip():
+            assert line == line.rstrip(), f"Line has trailing whitespace: '{line}'"
+
+
+def test_resolve_feedback_consistent_formatting():
+    lines = RESOLVE_FEEDBACK.split('\n')
+    header_lines = [line for line in lines if line.startswith('##')]
+    for header in header_lines:
+        assert header.startswith('## ')
+        assert not header.endswith(' ')
+
+
+def test_resolve_feedback_complete_instruction_set():
+    instruction_keywords = ["resolve", "write", "plan", "fix", "error", "feedback"]
+    for keyword in instruction_keywords:
+        assert keyword in RESOLVE_FEEDBACK.lower()
+
+
+def test_resolve_feedback_contextual_information():
+    context_items = ["pull request title", "body", "changes", "workflow file content", "check run error log"]
+    for item in context_items:
+        assert item in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_output_requirements():
+    output_keywords = ["Output format", "concise", "to the point", "not be long"]
+    for keyword in output_keywords:
+        assert keyword in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_language_adaptation_detail():
+    assert "language that is used in the input" in RESOLVE_FEEDBACK
+    assert "English" in RESOLVE_FEEDBACK
+    assert "Japanese" in RESOLVE_FEEDBACK
+    assert "plan should be in Japanese" in RESOLVE_FEEDBACK
