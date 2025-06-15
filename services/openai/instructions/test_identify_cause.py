@@ -119,3 +119,50 @@ def test_identify_cause_import():
     assert imported_constant == IDENTIFY_CAUSE
     assert isinstance(imported_constant, str)
     assert len(imported_constant) > 0
+
+
+def test_identify_cause_string_operations():
+    """Test various string operations on IDENTIFY_CAUSE."""
+    # Test string length
+    assert len(IDENTIFY_CAUSE) > 500  # Should be a substantial instruction
+    
+    # Test string contains operations
+    assert "error" in IDENTIFY_CAUSE.lower()
+    assert "fix" in IDENTIFY_CAUSE.lower()
+    
+    # Test string splitting
+    words = IDENTIFY_CAUSE.split()
+    assert len(words) > 50  # Should have many words
+    
+    # Test string stripping
+    stripped = IDENTIFY_CAUSE.strip()
+    assert len(stripped) <= len(IDENTIFY_CAUSE)
+
+
+def test_identify_cause_encoding():
+    """Test that IDENTIFY_CAUSE handles encoding properly."""
+    # Test UTF-8 encoding/decoding
+    encoded = IDENTIFY_CAUSE.encode('utf-8')
+    decoded = encoded.decode('utf-8')
+    assert decoded == IDENTIFY_CAUSE
+    
+    # Test that it contains ASCII characters
+    try:
+        IDENTIFY_CAUSE.encode('ascii')
+        ascii_compatible = True
+    except UnicodeEncodeError:
+        ascii_compatible = False
+    
+    # The instruction should be ASCII compatible for broad compatibility
+    assert ascii_compatible
+
+
+def test_identify_cause_line_endings():
+    """Test that IDENTIFY_CAUSE has consistent line endings."""
+    # Check for consistent line endings (should use \n)
+    assert '\r\n' not in IDENTIFY_CAUSE  # No Windows line endings
+    assert '\r' not in IDENTIFY_CAUSE    # No old Mac line endings
+    
+    # Should contain Unix line endings
+    lines = IDENTIFY_CAUSE.split('\n')
+    assert len(lines) > 1  # Should be multi-line
