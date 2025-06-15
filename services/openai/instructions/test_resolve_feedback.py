@@ -226,6 +226,7 @@ def test_resolve_feedback_no_empty_lines_at_start():
     assert RESOLVE_FEEDBACK.startswith('\n')
     assert RESOLVE_FEEDBACK.lstrip().startswith('You are an')
 
+    # Verify that the constant ends with a newline character
 
 def test_resolve_feedback_ends_with_newline():
     assert RESOLVE_FEEDBACK.endswith('\n')
