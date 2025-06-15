@@ -103,7 +103,7 @@ def test_resolve_feedback_word_count():
 
 def test_resolve_feedback_no_code_blocks():
     assert "```" not in RESOLVE_FEEDBACK
-    assert "`" not in RESOLVE_FEEDBACK or RESOLVE_FEEDBACK.count("`") == 0
+    # No backticks expected in this instruction text
 
 
 def test_resolve_feedback_professional_tone():
