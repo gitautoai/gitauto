@@ -208,6 +208,10 @@ def test_identify_cause_markdown_structure():
     # Should have 5 headers
     assert len(header_indices) == 5
     
+    # Headers should be in the expected order
+    expected_headers = ["What is the Error?", "Why did the Error Occur?", "Where is the Error Located?", "How to Fix the Error?", "Why Fix it This Way?"]
+    for i, header_index in enumerate(header_indices):
+        assert lines[header_index] == f"## {expected_headers[i]}"
 
 
 def test_identify_cause_word_count():
