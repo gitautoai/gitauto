@@ -44,3 +44,37 @@ def create_installation(installation_id, owner_type, owner_name, owner_id, user_
 
 
 # ... other functions ...
+def create_user_request(user_id, user_name, installation_id, owner_id, owner_type, owner_name, repo_id, repo_name, issue_number, source, email):
+    """Creates record in usage table for this user and issue."""
+    data, _ = (
+        supabase.table("issues")
+        .select("*")
+        .eq("owner_type", owner_type)
+        .eq("owner_name", owner_name)
+        .eq("repo_name", repo_name)
+        .eq("issue_number", issue_number)
+        .execute()
+    )
+    if not data[1]:
+        supabase.table("issues").insert(
+            json={
+                "owner_id": owner_id,
+                "owner_type": owner_type,
+                "owner_name": owner_name,
+                "repo_id": repo_id,
+                "repo_name": repo_name,
+                "issue_number": issue_number,
+            }
+        ).execute()
+    data, _ = (
+        supabase.table("usage")
+        .insert(
+            json={
+                "owner_id": owner_id,
+                "owner_type": owner_type,
+                "owner_name": owner_name,
+                "repo_id": repo_id,
+                "repo_name": repo_name,
+                "issue_number": issue_number,
+                "source": source,
+            }
