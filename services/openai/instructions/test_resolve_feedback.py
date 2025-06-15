@@ -1,3 +1,4 @@
+"""Tests for the RESOLVE_FEEDBACK constant."""
 from services.openai.instructions.resolve_feedback import RESOLVE_FEEDBACK
 
 
@@ -114,7 +115,7 @@ def test_resolve_feedback_professional_tone():
 def test_resolve_feedback_instruction_clarity():
     assert "Given information" in RESOLVE_FEEDBACK
     assert "resolve the feedback" in RESOLVE_FEEDBACK.lower()
-    assert "write a plan" in RESOLVE_FEEDBACK.lower()
+    assert "write a plan" in RESOLVE_FEEDBACK
 
 
 def test_resolve_feedback_format_specification():
@@ -135,7 +136,7 @@ def test_resolve_feedback_import_accessibility():
 
 
 def test_resolve_feedback_triple_quoted_string():
-    assert RESOLVE_FEEDBACK.strip().startswith('You are an')
+    assert RESOLVE_FEEDBACK.lstrip().startswith('You are an')
     assert RESOLVE_FEEDBACK.rstrip().endswith('Should not be long.')
 
 
@@ -220,11 +221,13 @@ def test_resolve_feedback_section_order():
     for i, expected in enumerate(expected_order):
         assert sections[i] == expected
 
+
 def test_resolve_feedback_no_empty_lines_at_start():
-    # The constant starts with a newline due to triple-quote formatting, which is acceptable
+    """Test that the constant has expected newline behavior at the start."""
     assert RESOLVE_FEEDBACK.startswith('\n')
+    # Verify that after stripping whitespace, it starts with the expected content
     assert RESOLVE_FEEDBACK.lstrip().startswith('You are an')
-    
+
 
 def test_resolve_feedback_ends_with_newline():
     assert RESOLVE_FEEDBACK.endswith('\n')
