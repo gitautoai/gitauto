@@ -243,6 +243,31 @@ def test_identify_cause_consistency():
     """Test consistency of the instruction content."""
     # Multiple calls should return the same value
     from services.openai.instructions.identify_cause import IDENTIFY_CAUSE as second_import
+    
+    assert IDENTIFY_CAUSE == second_import
+    assert id(IDENTIFY_CAUSE) == id(second_import)  # Should be the same object
+
+
+@mock.patch('services.openai.instructions.identify_cause.IDENTIFY_CAUSE', 'mocked_instruction')
+def test_identify_cause_mocking():
+    """Test that IDENTIFY_CAUSE can be mocked for testing purposes."""
+    from services.openai.instructions.identify_cause import IDENTIFY_CAUSE as mocked_constant
+    
+    assert mocked_constant == 'mocked_instruction'
+
+
+def test_identify_cause_type_safety():
+    """Test type safety and immutability aspects."""
+    # Should be a string type
+    assert type(IDENTIFY_CAUSE) is str
+    
+    # Should not be None or empty
+    assert IDENTIFY_CAUSE is not None
+    assert IDENTIFY_CAUSE != ""
+    assert IDENTIFY_CAUSE.strip() != ""
+    
+    # Should be truthy
+    assert bool(IDENTIFY_CAUSE) is True
 
 
 def test_identify_cause_regex_patterns():
@@ -300,3 +325,48 @@ def test_identify_cause_no_placeholder_text():
     placeholders = ['TODO', 'FIXME', 'XXX', 'PLACEHOLDER', '[INSERT', 'TBD']
     for placeholder in placeholders:
         assert placeholder not in IDENTIFY_CAUSE.upper(), f"Contains placeholder text: {placeholder}"
+
+
+def test_identify_cause_edge_cases():
+    """Test edge cases and boundary conditions."""
+    # Test that the constant is not empty after stripping
+    assert IDENTIFY_CAUSE.strip() != ""
+    
+    # Test that it doesn't consist only of whitespace
+    assert not IDENTIFY_CAUSE.isspace()
+    
+    # Test that it has reasonable bounds
+    assert 100 < len(IDENTIFY_CAUSE) < 10000  # Reasonable instruction length
+    
+    # Test that it contains actual content, not just formatting
+    content_chars = sum(1 for c in IDENTIFY_CAUSE if c.isalnum())
+    assert content_chars > 100  # Should have substantial alphanumeric content
+
+
+def test_identify_cause_multiline_structure():
+    """Test multiline structure and formatting."""
+    lines = IDENTIFY_CAUSE.split('\n')
+    
+    # Should have a reasonable number of lines
+    assert 10 <= len(lines) <= 100
+    
+    # Should not have excessively long lines
+    for line in lines:
+        assert len(line) <= 200, f"Line too long: {line[:50]}..."
+    
+    # Should have some non-empty lines
+    non_empty_lines = [line for line in lines if line.strip()]
+    assert len(non_empty_lines) >= 10
+
+
+def test_identify_cause_professional_tone():
+    """Test that IDENTIFY_CAUSE maintains a professional tone."""
+    # Should not contain informal language
+    informal_words = ['gonna', 'wanna', 'gotta', 'yeah', 'ok', 'cool']
+    for word in informal_words:
+        assert word not in IDENTIFY_CAUSE.lower(), f"Contains informal word: {word}"
+    
+    # Should contain professional language
+    professional_indicators = ['expert', 'professional', 'skilled', 'clear', 'specific']
+    found_professional = any(word in IDENTIFY_CAUSE.lower() for word in professional_indicators)
+    assert found_professional, "Should contain professional language indicators"
