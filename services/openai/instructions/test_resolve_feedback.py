@@ -88,3 +88,35 @@ def test_resolve_feedback_immutable():
     modified = RESOLVE_FEEDBACK + " modified"
     assert RESOLVE_FEEDBACK == original_value
     assert modified != original_value
+
+
+def test_resolve_feedback_string_operations():
+    """Test various string operations on RESOLVE_FEEDBACK."""
+    # Test string methods work correctly
+    assert RESOLVE_FEEDBACK.upper() != RESOLVE_FEEDBACK  # Should contain lowercase
+    assert RESOLVE_FEEDBACK.lower() != RESOLVE_FEEDBACK  # Should contain uppercase
+    assert len(RESOLVE_FEEDBACK.strip()) <= len(RESOLVE_FEEDBACK)
+
+
+def test_resolve_feedback_contains_triple_quotes():
+    """Test that the instruction is properly formatted as a triple-quoted string."""
+    # The constant should not contain the triple quotes themselves
+    assert '"""' not in RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_startswith_expected_content():
+    """Test that RESOLVE_FEEDBACK starts with the expected introduction."""
+    assert RESOLVE_FEEDBACK.strip().startswith("You are an top-class software engineer")
+
+
+def test_resolve_feedback_endswith_expected_content():
+    """Test that RESOLVE_FEEDBACK ends with the expected conclusion."""
+    assert RESOLVE_FEEDBACK.strip().endswith("Should not be long.")
+
+
+def test_resolve_feedback_word_count():
+    """Test that RESOLVE_FEEDBACK has a reasonable word count for an instruction."""
+    words = RESOLVE_FEEDBACK.split()
+    # Should have a reasonable number of words for an instruction
+    assert len(words) > 10  # At least 10 words
+    assert len(words) < 200  # But not too verbose (less than 200 words)
