@@ -285,7 +285,7 @@ def test_identify_cause_regex_patterns():
 
 def test_identify_cause_sentence_structure():
     """Test sentence structure and grammar aspects."""
-    sentences = re.split(r'[.!?]+', IDENTIFY_CAUSE)
+    sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9])', IDENTIFY_CAUSE)
     sentences = [s.strip() for s in sentences if s.strip()]
     
     # Should have multiple sentences
