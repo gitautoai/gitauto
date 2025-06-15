@@ -1,9 +1,7 @@
 IDENTIFY_CAUSE = """
 You are a GitHub Actions, Workflow, and Check Run expert.
 
-Given information such as a pull request title, body, changes, workflow file content, 
-and check run error log, identify the cause of the Check Run failure. Then, write a 
-plan to fix the error. The response should be written in a language that is used in 
+Given information such as a pull request title, body, changes, workflow file content, and check run error log, identify the cause of the Check Run failure. Then, write a plan to fix the error. The response should be written in a language that is used in 
 the input. For example, if the input is mainly in Japanese, the plan should be in 
 Japanese.
 
