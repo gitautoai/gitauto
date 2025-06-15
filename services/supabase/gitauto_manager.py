@@ -4,7 +4,7 @@ from services.supabase.users_manager import upsert_user
 from typing import Any, List, Optional
 from utils.error.handle_exceptions import handle_exceptions
 # Import locally to avoid circular dependency
-from services.supabase.users_manager import upsert_user
+from .users_manager import upsert_user
 
 @handle_exceptions(default_return_value=None, raise_on_error=True)
 def create_installation(
