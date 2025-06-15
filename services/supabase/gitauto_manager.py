@@ -2,6 +2,7 @@ from services.supabase.client import supabase
 import postgrest
 from services.supabase.users_manager import upsert_user
 from utils.error.handle_exceptions import handle_exceptions
+__all__ = ["create_installation", "create_user_request", "get_installation_id", "get_installation_ids", "is_users_first_issue", "set_issue_to_merged"]
 
 
 def create_installation(installation_id, owner_type, owner_name, owner_id, user_id, user_name, email):
