@@ -109,17 +109,6 @@ def test_how_many_requests_left() -> None:
         user_name=TEST_USER_NAME,
         email=TEST_EMAIL,
     )
-    supabase.table("installations").insert(
-        json={
-            "installation_id": TEST_INSTALLATION_ID,
-            "owner_type": TEST_OWNER_TYPE,
-            "owner_name": TEST_OWNER_NAME,
-            "owner_id": TEST_OWNER_ID,
-            "user_id": TEST_USER_ID,
-            "user_name": TEST_USER_NAME,
-            "email": TEST_EMAIL,
-        }
-    ).execute()
     # Testing 0 requests have been made on free tier
     requests_left, request_count, end_date, _is_retried = (
         get_how_many_requests_left_and_cycle(
