@@ -146,7 +146,7 @@ def test_resolve_feedback_contains_specific_sections():
 
 
 def test_resolve_feedback_mentions_error_fixing():
-    assert "fix the error" in RESOLVE_FEEDBACK
+    assert "fix the error" in RESOLVE_FEEDBACK.lower()
 
 
 def test_resolve_feedback_mentions_workflow_context():
