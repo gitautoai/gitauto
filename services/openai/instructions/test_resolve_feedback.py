@@ -121,3 +121,30 @@ def test_resolve_feedback_word_count():
     # Should have a reasonable number of words for an instruction
     assert len(words) > 10  # At least 10 words
     assert len(words) < 200  # But not too verbose (less than 200 words)
+
+
+def test_resolve_feedback_module_import():
+    """Test that the module can be imported and the constant is accessible."""
+    # Test direct import
+    from services.openai.instructions.resolve_feedback import RESOLVE_FEEDBACK as imported_constant
+    assert imported_constant == RESOLVE_FEEDBACK
+    
+    # Test module import
+    import services.openai.instructions.resolve_feedback as resolve_feedback_module
+    assert hasattr(resolve_feedback_module, 'RESOLVE_FEEDBACK')
+    assert resolve_feedback_module.RESOLVE_FEEDBACK == RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_memory_efficiency():
+    """Test that RESOLVE_FEEDBACK doesn't consume excessive memory."""
+    # Get the size of the string in bytes
+    size_in_bytes = sys.getsizeof(RESOLVE_FEEDBACK)
+    # Should be reasonable for an instruction string (less than 10KB)
+    assert size_in_bytes < 10240  # 10KB
+
+
+def test_resolve_feedback_encoding():
+    """Test that RESOLVE_FEEDBACK can be encoded/decoded properly."""
+    # Test UTF-8 encoding/decoding
+    encoded = RESOLVE_FEEDBACK.encode('utf-8')
+    decoded = encoded.decode('utf-8')
