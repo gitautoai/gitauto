@@ -286,7 +286,7 @@ def test_resolve_feedback_line_count():
 
 def test_resolve_feedback_contains_all_required_elements():
     required_elements = [
-        "You are an top-class software engineer",
+        "You are a top-class software engineer",
         "Given information such as",
         "pull request title",
         "body",
