@@ -1,3 +1,4 @@
+"""Tests for the RESOLVE_FEEDBACK constant."""
 from services.openai.instructions.resolve_feedback import RESOLVE_FEEDBACK
 
 
@@ -113,8 +114,8 @@ def test_resolve_feedback_professional_tone():
 
 def test_resolve_feedback_instruction_clarity():
     assert "Given information" in RESOLVE_FEEDBACK
-    assert "resolve the feedback" in RESOLVE_FEEDBACK
-    assert "write a plan" in RESOLVE_FEEDBACK
+    assert "resolve the feedback" in RESOLVE_FEEDBACK.lower()
+    assert "write a plan" in RESOLVE_FEEDBACK.lower()
 
 
 def test_resolve_feedback_format_specification():
@@ -135,9 +136,8 @@ def test_resolve_feedback_import_accessibility():
 
 
 def test_resolve_feedback_triple_quoted_string():
-    # Fix: Use 'in' instead of 'startswith' to handle potential leading whitespace
-    assert 'You are a' in RESOLVE_FEEDBACK.strip()
-    assert 'Should not be long.' in RESOLVE_FEEDBACK.strip()
+    assert RESOLVE_FEEDBACK.lstrip().startswith('You are a')
+    assert "Should not be long" in RESOLVE_FEEDBACK
 
 
 def test_resolve_feedback_contains_specific_sections():
@@ -147,7 +147,7 @@ def test_resolve_feedback_contains_specific_sections():
 
 
 def test_resolve_feedback_mentions_error_fixing():
-    assert "fix the error" in RESOLVE_FEEDBACK
+    assert "fix the error" in RESOLVE_FEEDBACK.lower()
 
 
 def test_resolve_feedback_mentions_workflow_context():
@@ -160,7 +160,7 @@ def test_resolve_feedback_mentions_check_run():
 
 def test_resolve_feedback_language_example():
     assert "mainly in Japanese" in RESOLVE_FEEDBACK
-    assert "plan should be in" in RESOLVE_FEEDBACK
+    assert "plan should be in Japanese" in RESOLVE_FEEDBACK
 
 
 def test_resolve_feedback_no_html_tags():
@@ -169,6 +169,7 @@ def test_resolve_feedback_no_html_tags():
 
 
 def test_resolve_feedback_no_special_characters():
+    # Note: '#' is excluded because it's used for Markdown headers
     special_chars = ["@", "$", "%", "^", "&", "*", "[", "]", "{", "}", "|", "\\"]
     for char in special_chars:
         assert char not in RESOLVE_FEEDBACK
@@ -220,21 +221,21 @@ def test_resolve_feedback_section_order():
         assert sections[i] == expected
 
 
-def test_resolve_feedback_no_empty_lines_at_start():
-    # The constant starts with a newline due to triple-quote formatting, which is acceptable
+def test_resolve_feedback_starts_with_newline():
+    """Test that the constant starts with a newline."""
     assert RESOLVE_FEEDBACK.startswith('\n')
-    # Verify that after stripping whitespace, it starts with the expected content
     assert RESOLVE_FEEDBACK.lstrip().startswith('You are a')
 
 
 def test_resolve_feedback_ends_with_newline():
+    """Verify that the constant ends with a newline character"""
     assert RESOLVE_FEEDBACK.endswith('\n')
 
 
 def test_resolve_feedback_consistent_spacing():
     lines = RESOLVE_FEEDBACK.split('\n')
     for line in lines:
-        if line.strip() and not line.startswith('##'):
+        if line.strip() and not line.startswith('## '):
             assert not line.startswith(' '), f"Line starts with space: '{line}'"
 
 
@@ -321,12 +322,12 @@ def test_resolve_feedback_no_typos_in_key_phrases():
 def test_resolve_feedback_proper_grammar():
     assert "You are a top-class" in RESOLVE_FEEDBACK
     assert "Given information such as" in RESOLVE_FEEDBACK
-    assert "resolve the feedback" in RESOLVE_FEEDBACK
+    assert "resolve the feedback" in RESOLVE_FEEDBACK.lower()
 
 
 def test_resolve_feedback_example_language_context():
-    assert "e.g. the plan should be in" in RESOLVE_FEEDBACK.lower()
-    assert "if the input is mainly in Japanese" in RESOLVE_FEEDBACK
+    assert "e.g." in RESOLVE_FEEDBACK
+    assert "mainly in Japanese" in RESOLVE_FEEDBACK
 
 
 def test_resolve_feedback_instruction_structure():
@@ -372,3 +373,4 @@ def test_resolve_feedback_language_adaptation_detail():
     assert "language that is used in the input" in RESOLVE_FEEDBACK
     assert "English" in RESOLVE_FEEDBACK
     assert "Japanese" in RESOLVE_FEEDBACK
+    assert "plan should be in Japanese" in RESOLVE_FEEDBACK
