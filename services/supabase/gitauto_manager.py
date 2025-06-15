@@ -2,6 +2,8 @@ from services.supabase.client import supabase
 import postgrest
 from typing import Any, List, Optional
 from utils.error.handle_exceptions import handle_exceptions
+# Import locally to avoid circular dependency
+from services.supabase.users_manager import upsert_user
 
 
 def create_installation(
@@ -18,7 +20,7 @@ def create_installation(
         # First create/update the user record with the email
         upsert_user(user_id=user_id, user_name=user_name, email=email)
         
-        # Then create the installation record without the email field
+        # Then create the installation record (without user fields)
         response = (
             supabase.table("installations")
             .insert({
@@ -26,7 +28,6 @@ def create_installation(
                 "owner_type": owner_type,
                 "owner_name": owner_name,
                 "owner_id": owner_id,
-                "user_id": user_id,
                 "uninstalled_at": None
             })
             .execute()
@@ -45,8 +46,6 @@ def create_installation(
                     "uninstalled_at": None
                 })
                 .eq("installation_id", installation_id)
-    # Import locally to avoid circular dependency
-    from services.supabase.users_manager import upsert_user
                 .execute()
             )
             return response
@@ -118,7 +117,6 @@ def create_user_request(
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-
 def get_installation_id(owner_id: int) -> Optional[int]:
     """https://supabase.com/docs/reference/python/is"""
     data, _ = (
@@ -133,7 +131,6 @@ def get_installation_id(owner_id: int) -> Optional[int]:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-
 def get_installation_ids() -> List[int]:
     """https://supabase.com/docs/reference/python/is"""
     data, _ = (
@@ -146,7 +143,6 @@ def get_installation_ids() -> List[int]:
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
-
 def is_users_first_issue(user_id: int, installation_id: int) -> bool:
     """Check if this is the user's first issue by verifying if there are no completed usage records for the given user_id and installation_id."""
     data, _ = (
@@ -161,7 +157,6 @@ def is_users_first_issue(user_id: int, installation_id: int) -> bool:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-
 def set_issue_to_merged(
     owner_type: str,
     owner_name: str,
