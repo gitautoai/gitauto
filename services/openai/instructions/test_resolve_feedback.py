@@ -107,7 +107,7 @@ def test_resolve_feedback_no_code_blocks():
 
 
 def test_resolve_feedback_professional_tone():
-    assert "You are an" in RESOLVE_FEEDBACK
+    assert "You are a" in RESOLVE_FEEDBACK
     assert "top-class" in RESOLVE_FEEDBACK
 
 
