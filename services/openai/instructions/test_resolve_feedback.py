@@ -135,9 +135,8 @@ def test_resolve_feedback_import_accessibility():
 
 
 def test_resolve_feedback_triple_quoted_string():
-    # Fix: Use 'in' instead of 'startswith' to handle potential leading whitespace
-    assert 'You are an' in RESOLVE_FEEDBACK.strip()
-    assert 'Should not be long.' in RESOLVE_FEEDBACK.strip()
+    assert RESOLVE_FEEDBACK.strip().startswith('You are an')
+    assert RESOLVE_FEEDBACK.rstrip().endswith('Should not be long.')
 
 
 def test_resolve_feedback_contains_specific_sections():
@@ -159,8 +158,8 @@ def test_resolve_feedback_mentions_check_run():
 
 
 def test_resolve_feedback_language_example():
-    assert "mainly in Japanese" in RESOLVE_FEEDBACK
-    assert "plan should be in Japanese" in RESOLVE_FEEDBACK
+    assert "if the input is mainly in Japanese for example" in RESOLVE_FEEDBACK
+    assert "plan should be in" in RESOLVE_FEEDBACK
 
 
 def test_resolve_feedback_no_html_tags():
@@ -192,9 +191,9 @@ def test_resolve_feedback_mentions_information_types():
 
 
 def test_resolve_feedback_instruction_completeness():
-    assert "resolve the feedback" in RESOLVE_FEEDBACK.lower()
-    assert "write a plan" in RESOLVE_FEEDBACK.lower()
-    assert "fix the error" in RESOLVE_FEEDBACK.lower()
+    assert "resolve the feedback" in RESOLVE_FEEDBACK
+    assert "write a plan" in RESOLVE_FEEDBACK
+    assert "fix the error" in RESOLVE_FEEDBACK
 
 
 def test_resolve_feedback_output_format_clarity():
@@ -234,8 +233,8 @@ def test_resolve_feedback_ends_with_newline():
 def test_resolve_feedback_consistent_spacing():
     lines = RESOLVE_FEEDBACK.split('\n')
     for line in lines:
-        if line.strip():
-            assert not line.startswith(' ') or line.startswith('## ')
+        if line.strip() and not line.startswith('##'):
+            assert not line.startswith(' '), f"Line starts with space: '{line}'"
 
 
 def test_resolve_feedback_role_specification():
@@ -319,13 +318,13 @@ def test_resolve_feedback_no_typos_in_key_phrases():
 
 
 def test_resolve_feedback_proper_grammar():
-    assert "You are an top-class" in RESOLVE_FEEDBACK
+    assert "You are an top-class" in RESOLVE_FEEDBACK  # Note: grammatically should be "a" but keeping as-is
     assert "Given information such as" in RESOLVE_FEEDBACK
-    assert "resolve the feedback and write" in RESOLVE_FEEDBACK.lower()
+    assert "resolve the feedback and write" in RESOLVE_FEEDBACK
 
 
 def test_resolve_feedback_example_language_context():
-    assert "e.g. the plan should be in English" in RESOLVE_FEEDBACK.lower()
+    assert "e.g. the plan should be in English" in RESOLVE_FEEDBACK
     assert "if the input is mainly in Japanese for example" in RESOLVE_FEEDBACK
 
 
@@ -372,4 +371,6 @@ def test_resolve_feedback_language_adaptation_detail():
     assert "language that is used in the input" in RESOLVE_FEEDBACK
     assert "English" in RESOLVE_FEEDBACK
     assert "Japanese" in RESOLVE_FEEDBACK
-    assert "plan should be in Japanese" in RESOLVE_FEEDBACK
+    # Note: The exact phrase "plan should be in Japanese" doesn't exist in the constant
+    # but the concept is there in the parenthetical example
+    assert "plan should be in" in RESOLVE_FEEDBACK
