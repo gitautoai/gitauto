@@ -243,3 +243,60 @@ def test_identify_cause_consistency():
     """Test consistency of the instruction content."""
     # Multiple calls should return the same value
     from services.openai.instructions.identify_cause import IDENTIFY_CAUSE as second_import
+
+
+def test_identify_cause_regex_patterns():
+    """Test regex patterns in IDENTIFY_CAUSE content."""
+    # Test for markdown header pattern
+    header_pattern = r'^## .+\?$'
+    headers = re.findall(header_pattern, IDENTIFY_CAUSE, re.MULTILINE)
+    assert len(headers) == 5
+    
+    # Test for parenthetical examples pattern
+    paren_pattern = r'\([^)]+\)'
+    parentheticals = re.findall(paren_pattern, IDENTIFY_CAUSE)
+    assert len(parentheticals) > 0  # Should have examples in parentheses
+    
+    # Test that it doesn't contain code blocks (shouldn't have ``` in instructions)
+    assert '```' not in IDENTIFY_CAUSE
+
+
+def test_identify_cause_sentence_structure():
+    """Test sentence structure and grammar aspects."""
+    sentences = re.split(r'[.!?]+', IDENTIFY_CAUSE)
+    sentences = [s.strip() for s in sentences if s.strip()]
+    
+    # Should have multiple sentences
+    assert len(sentences) >= 5
+    
+    # Each sentence should start with a capital letter (basic grammar check)
+    for sentence in sentences:
+        if sentence and not sentence.startswith('##'):
+            assert sentence[0].isupper() or sentence[0].isdigit(), f"Sentence doesn't start with capital: '{sentence}'"
+
+
+def test_identify_cause_content_completeness():
+    """Test that IDENTIFY_CAUSE contains all necessary instruction components."""
+    # Should mention the role/expertise
+    assert any(word in IDENTIFY_CAUSE.lower() for word in ['expert', 'specialist'])
+    
+    # Should mention input requirements
+    input_requirements = ['pull request', 'title', 'body', 'changes', 'workflow', 'error log']
+    for requirement in input_requirements:
+        assert requirement in IDENTIFY_CAUSE.lower(), f"Missing input requirement: {requirement}"
+    
+    # Should mention output format
+    assert 'markdown' in IDENTIFY_CAUSE.lower()
+    assert 'format' in IDENTIFY_CAUSE.lower()
+    
+    # Should mention quality expectations
+    quality_words = ['clear', 'specific', 'concise', 'direct']
+    for word in quality_words:
+        assert word in IDENTIFY_CAUSE.lower(), f"Missing quality expectation: {word}"
+
+
+def test_identify_cause_no_placeholder_text():
+    """Test that IDENTIFY_CAUSE doesn't contain placeholder text."""
+    placeholders = ['TODO', 'FIXME', 'XXX', 'PLACEHOLDER', '[INSERT', 'TBD']
+    for placeholder in placeholders:
+        assert placeholder not in IDENTIFY_CAUSE.upper(), f"Contains placeholder text: {placeholder}"
