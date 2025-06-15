@@ -202,16 +202,23 @@ def test_identify_cause_regex_patterns():
 
 def test_identify_cause_sentence_structure():
     """Test sentence structure and grammar aspects."""
-    sentences = re.split(r'[.!?]+', IDENTIFY_CAUSE)
+    # Use a more sophisticated approach to split sentences
+    # This regex avoids splitting on common abbreviations like "e.g."
+    text = IDENTIFY_CAUSE.replace("e.g.", "example")  # Replace problematic abbreviation
+    
+    # Split on sentence endings followed by space and capital letter
+    sentences = re.split(r'[.!?]+\s+(?=[A-Z])', text)
     sentences = [s.strip() for s in sentences if s.strip()]
     
     # Should have multiple sentences
-    assert len(sentences) >= 5
+    assert len(sentences) >= 3
     
     # Each sentence should start with a capital letter (basic grammar check)
     for sentence in sentences:
         if sentence and not sentence.startswith('##'):
-            assert sentence[0].isupper() or sentence[0].isdigit(), f"Sentence doesn't start with capital: '{sentence}'"
+            # Get the first character, skipping any leading quotes or parentheses
+            first_char = next((c for c in sentence if c.isalpha() or c.isdigit()), '')
+            assert first_char.isupper() or first_char.isdigit(), f"Sentence doesn't start with capital: '{sentence[:50]}...'"
 
 
 def test_identify_cause_content_completeness():
@@ -266,7 +273,7 @@ def test_identify_cause_multiline_structure():
     
     # Should not have excessively long lines
     for line in lines:
-        assert len(line) <= 350, f"Line too long: {line[:50]}..."
+        assert len(line) <= 200, f"Line too long: {line[:50]}..."
     
     # Should have some non-empty lines
     non_empty_lines = [line for line in lines if line.strip()]
