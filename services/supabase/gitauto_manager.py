@@ -7,6 +7,7 @@ import postgrest
 # Local imports
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
+__all__ = ["create_installation", "create_user_request", "get_installation_id", "get_installation_ids", "is_users_first_issue", "set_issue_to_merged"]
 
 
 def create_installation(
