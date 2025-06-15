@@ -1,13 +1,8 @@
-# Standard imports
-from typing import Any, List, Optional
-
-# Third party imports
-import postgrest
-
-# Local imports
 from services.supabase.client import supabase
+import postgrest
+from services.supabase.users_manager import upsert_user
 from utils.error.handle_exceptions import handle_exceptions
-__all__ = ["create_installation", "create_user_request", "get_installation_id", "get_installation_ids", "is_users_first_issue", "set_issue_to_merged"]
+from typing import Any, Optional, List
 
 
 def create_installation(
@@ -21,13 +16,10 @@ def create_installation(
 ) -> dict[str, Any]:
     """Create a new installation record, or update the existing one if it already exists."""
     try:
-        # Import locally to avoid circular dependency
-        from services.supabase.users_manager import upsert_user
-
         # First create/update the user record with the email
         upsert_user(user_id=user_id, user_name=user_name, email=email)
         
-        # Then create the installation record
+        # Then create the installation record (user_id is not stored in installations table)
         response = (
             supabase.table("installations")
             .insert({
@@ -35,7 +27,6 @@ def create_installation(
                 "owner_type": owner_type,
                 "owner_name": owner_name,
                 "owner_id": owner_id,
-                "user_id": user_id,
                 "uninstalled_at": None
             })
             .execute()
@@ -75,9 +66,6 @@ def create_user_request(
     email: Optional[str]
 ) -> int:
     """Creates record in usage table for this user and issue."""
-    # Import locally to avoid circular dependency
-    from services.supabase.users_manager import upsert_user
-    
     # First create/update the user record with the email
     upsert_user(user_id=user_id, user_name=user_name, email=email)
     
@@ -128,13 +116,13 @@ def create_user_request(
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_installation_id(owner_id: int) -> Optional[int]:
+ def get_installation_id(owner_id: int) -> Optional[int]:
     """https://supabase.com/docs/reference/python/is"""
     data, _ = (
-        supabase.table("installations")
+        supabase.table(table_name="installations")
         .select("installation_id")
-        .eq("owner_id", owner_id)
-        .is_("uninstalled_at", "null")  # Not uninstalled
+        .eq(column="owner_id", value=owner_id)
+        .is_(column="uninstalled_at", value="null")  # Not uninstalled
         .execute()
     )
     # Return the first installation id even if there are multiple installations
@@ -142,33 +130,33 @@ def get_installation_id(owner_id: int) -> Optional[int]:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_installation_ids() -> List[int]:
+ def get_installation_ids() -> List[int]:
     """https://supabase.com/docs/reference/python/is"""
     data, _ = (
-        supabase.table("installations")
+        supabase.table(table_name="installations")
         .select("installation_id")
-        .is_("uninstalled_at", "null")  # Not uninstalled
+        .is_(column="uninstalled_at", value="null")  # Not uninstalled
         .execute()
     )
     return [item["installation_id"] for item in data[1]]
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
-def is_users_first_issue(user_id: int, installation_id: int) -> bool:
+ def is_users_first_issue(user_id: int, installation_id: int) -> bool:
     """Check if this is the user's first issue by verifying if there are no completed usage records for the given user_id and installation_id."""
     data, _ = (
-        supabase.table("usage")
+        supabase.table(table_name="usage")
         .select("*")
-        .eq("user_id", user_id)
-        .eq("installation_id", installation_id)
-        .eq("is_completed", True)
+        .eq(column="user_id", value=user_id)
+        .eq(column="installation_id", value=installation_id)
+        .eq(column="is_completed", value=True)
         .execute()
     )
     return len(data[1]) == 0
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def set_issue_to_merged(
+ def set_issue_to_merged(
     owner_type: str,
     owner_name: str,
     repo_name: str,
@@ -176,11 +164,11 @@ def set_issue_to_merged(
 ) -> None:
     """Set the merged flag to True for the specified issue."""
     (
-        supabase.table("issues")
+        supabase.table(table_name="issues")
         .update(json={"merged": True})
-        .eq("owner_type", owner_type)
-        .eq("owner_name", owner_name)
-        .eq("repo_name", repo_name)
-        .eq("issue_number", issue_number)
+        .eq(column="owner_type", value=owner_type)
+        .eq(column="owner_name", value=owner_name)
+        .eq(column="repo_name", value=repo_name)
+        .eq(column="issue_number", value=issue_number)
         .execute()
     )
