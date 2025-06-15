@@ -372,4 +372,3 @@ def test_resolve_feedback_language_adaptation_detail():
     assert "language that is used in the input" in RESOLVE_FEEDBACK
     assert "English" in RESOLVE_FEEDBACK
     assert "Japanese" in RESOLVE_FEEDBACK
-
