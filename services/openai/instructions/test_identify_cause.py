@@ -29,7 +29,7 @@ def test_identify_cause_content_structure():
     # Check for output requirements
     assert "Markdown format" in IDENTIFY_CAUSE
     assert "identify the cause" in IDENTIFY_CAUSE
-    assert any(phrase in IDENTIFY_CAUSE for phrase in ["plan to fix", "write a plan to fix"])
+    assert "write a plan to fix the error" in IDENTIFY_CAUSE
 
 
 def test_identify_cause_markdown_headers():
