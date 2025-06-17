@@ -57,6 +57,8 @@ async def test_create_and_update_user_request_works():
     """Test that I can create and complete user request in usage table"""
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
+    wipe_installation_owner_user_data(TEST_NEW_INSTALLATION_ID)
+    supabase.table("installations").delete().eq("installation_id", TEST_NEW_INSTALLATION_ID).execute()
 
     # insert data into the db -> create installation
     create_installation(
