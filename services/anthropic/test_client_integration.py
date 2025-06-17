@@ -1,7 +1,6 @@
 from anthropic import Anthropic
 from anthropic.types import MessageParam
 import pytest
-import pytest
 from anthropic import BadRequestError
 from anthropic import BadRequestError
 import pytest
