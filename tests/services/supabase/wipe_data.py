@@ -1,4 +1,5 @@
 import os
+from postgrest.exceptions import APIError
 from config import TEST_OWNER_ID, TEST_USER_ID, TEST_INSTALLATION_ID, TEST_USER_NAME
 from services.supabase.client import supabase
 from utils.time.timer import timer_decorator
