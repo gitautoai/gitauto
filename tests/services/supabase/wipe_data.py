@@ -30,10 +30,14 @@ def wipe_installation_owner_user_data(installation_id: int = TEST_INSTALLATION_I
         .execute()
     
     # Delete pull_requests records (foreign key constraint)
-    supabase.table("pull_requests")\
-        .delete()\
-        .eq("installation_id", installation_id)\
-        .execute()
+    try:
+        supabase.table("pull_requests")\
+            .delete()\
+            .eq("installation_id", installation_id)\
+            .execute()
+    except Exception as e:
+        if 'relation "public.pull_requests" does not exist' not in str(e):
+            raise
     
     # Delete issues
     supabase.table("issues")\
