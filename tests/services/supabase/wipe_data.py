@@ -13,9 +13,7 @@ def wipe_installation_owner_user_data(
 ) -> None:
     """Wipe all data from installations, owners, and users tables"""
     # Delete usage records first (foreign key constraint)
-    supabase.table("usage").delete().eq("user_id", TEST_USER_ID).eq(
-        "installation_id", installation_id
-    ).execute()
+    supabase.table("usage").delete().eq("user_id", TEST_USER_ID).eq("installation_id", installation_id).execute()
     
     # Delete repositories records (foreign key constraint)
     supabase.table("repositories").delete().eq("installation_id", installation_id).execute()
@@ -23,7 +21,7 @@ def wipe_installation_owner_user_data(
     # Delete coverages records (foreign key constraint)
     supabase.table("coverages").delete().eq("installation_id", installation_id).execute()
     
-    # Delete pull_requests records (foreign key constraint)  
+    # Delete pull_requests records (foreign key constraint)
     supabase.table("pull_requests").delete().eq("installation_id", installation_id).execute()
 
     # Delete issues
