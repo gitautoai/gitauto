@@ -338,3 +338,60 @@ def test_get_repository_stats_nested_json_with_extra_braces():
     } extra } brace after"""
     
     with patch("subprocess.run", return_value=mock_result):
+
+
+def test_get_repository_stats_partial_header_data():
+    mock_result = Mock()
+    mock_result.stdout = """{
+        "header": {
+            "other_field": "value"
+        },
+        "SUM": {
+            "blank": 15,
+            "comment": 8,
+            "code": 75
+        }
+    }"""
+    
+    with patch("subprocess.run", return_value=mock_result):
+        result = get_repository_stats("/test/path")
+    
+    assert result == {
+        "file_count": 0,
+        "blank_lines": 15,
+        "comment_lines": 8,
+        "code_lines": 75,
+    }
+
+
+def test_get_repository_stats_partial_sum_data():
+    mock_result = Mock()
+    mock_result.stdout = """{
+        "header": {
+            "n_files": 6
+        },
+        "SUM": {
+            "blank": 20,
+            "other_field": "value"
+        }
+    }"""
+    
+    with patch("subprocess.run", return_value=mock_result):
+        result = get_repository_stats("/test/path")
+    
+    assert result == {
+        "file_count": 6,
+        "blank_lines": 20,
+        "comment_lines": 0,
+        "code_lines": 0,
+    }
+
+
+def test_get_repository_stats_unicode_error():
+    mock_result = Mock()
+    mock_result.stdout = "{ invalid unicode: \x80 }"
+    
+    with patch("subprocess.run", return_value=mock_result):
+        result = get_repository_stats("/test/path")
+    
+    assert result == DEFAULT_REPO_STATS
