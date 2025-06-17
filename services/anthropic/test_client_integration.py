@@ -19,6 +19,7 @@ def test_get_anthropic_client_integration():
 
 @pytest.mark.skip(reason="Skipping due to Anthropic API credit balance limitations.")
 def test_anthropic_client_can_count_tokens():
+    pytest.skip("Skipping due to Anthropic API credit balance limitations.")
     client = get_anthropic_client()
     messages: list[MessageParam] = [{"role": "user", "content": "Hello, Claude!"}]
 
