@@ -48,3 +48,33 @@ def test_create_empty_stats_none_values():
     result = create_empty_stats()
     assert result["test_name"] is None
     assert result["current_function"] is None
+
+
+def test_create_empty_stats_multiple_calls_return_independent_objects():
+    result1 = create_empty_stats()
+    result2 = create_empty_stats()
+    assert result1 is not result2
+    assert result1 == result2
+    result1["lines_total"] = 5
+    assert result2["lines_total"] == 0
+
+
+def test_create_empty_stats_sets_are_independent():
+    result1 = create_empty_stats()
+    result2 = create_empty_stats()
+    result1["uncovered_lines"].add("line1")
+    assert len(result2["uncovered_lines"]) == 0
+    assert result1["uncovered_lines"] is not result2["uncovered_lines"]
+
+
+def test_create_empty_stats_modifiable_return_value():
+    result = create_empty_stats()
+    result["lines_total"] = 100
+    result["test_name"] = "test_example"
+    result["uncovered_lines"].add("line5")
+    assert result["lines_total"] == 100
+    assert result["test_name"] == "test_example"
+    assert "line5" in result["uncovered_lines"]
+
+
+def test_create_empty_stats_no_parameters_required():
