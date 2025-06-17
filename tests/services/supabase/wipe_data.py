@@ -24,9 +24,11 @@ def wipe_installation_owner_user_data(installation_id: int = TEST_INSTALLATION_I
         .execute()
     
     # Delete coverages records (foreign key constraint)
+    # The error indicates that the 'coverages' table does not have an 'installation_id' column.
+    # Assuming the correct column is 'repo_id' as coverages are usually associated with repositories.
     supabase.table("coverages")
         .delete()
-        .eq("installation_id", installation_id)
+        .eq("repo_id", installation_id)
         .execute()
     
     # Delete pull_requests records (foreign key constraint)
