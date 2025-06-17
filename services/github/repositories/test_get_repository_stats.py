@@ -209,6 +209,12 @@ def test_get_repository_stats_only_opening_brace():
 def test_get_repository_stats_braces_in_wrong_order():
     mock_result = Mock()
     mock_result.stdout = "}{"
+    
+    with patch("subprocess.run", return_value=mock_result):
+        result = get_repository_stats("/test/path")
+    
+    assert result == DEFAULT_REPO_STATS
+
 
 def test_get_repository_stats_file_not_found_error():
     with patch("subprocess.run", side_effect=FileNotFoundError("cloc command not found")):
@@ -251,11 +257,6 @@ def test_get_repository_stats_json_decode_error_with_valid_braces():
 def test_get_repository_stats_empty_stdout():
     mock_result = Mock()
     mock_result.stdout = ""
-    
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-    
-    assert result == DEFAULT_REPO_STATS
     
     with patch("subprocess.run", return_value=mock_result):
         result = get_repository_stats("/test/path")
@@ -338,6 +339,14 @@ def test_get_repository_stats_nested_json_with_extra_braces():
     } extra } brace after"""
     
     with patch("subprocess.run", return_value=mock_result):
+        result = get_repository_stats("/test/path")
+    
+    assert result == {
+        "file_count": 8,
+        "blank_lines": 40,
+        "comment_lines": 25,
+        "code_lines": 120,
+    }
 
 
 def test_get_repository_stats_partial_header_data():
@@ -389,7 +398,7 @@ def test_get_repository_stats_partial_sum_data():
 
 def test_get_repository_stats_unicode_error():
     mock_result = Mock()
-    mock_result.stdout = "{ invalid unicode: \x80 }"
+    mock_result.stdout = "{ invalid unicode: \\x80 }"
     
     with patch("subprocess.run", return_value=mock_result):
         result = get_repository_stats("/test/path")
