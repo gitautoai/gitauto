@@ -16,6 +16,10 @@ def wipe_installation_owner_user_data(
     supabase.table("usage").delete().eq("user_id", TEST_USER_ID).eq(
         "installation_id", installation_id
     ).execute()
+    
+    # Delete repositories records (foreign key constraint)
+    supabase.table("repositories").delete().eq(
+    ).execute()
 
     # Delete issues
     supabase.table("issues").delete().eq("installation_id", installation_id).execute()
