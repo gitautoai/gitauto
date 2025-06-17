@@ -26,7 +26,6 @@ def wipe_installation_owner_user_data(installation_id: int = TEST_INSTALLATION_I
     # Updated column from installation_id to repo_id as the coverages table uses repo_id to link to installations
     (supabase.table("coverages")
         .delete()
-        .eq("repo_id", installation_id)
         .execute())
     
     # Delete pull_requests records (foreign key constraint)
