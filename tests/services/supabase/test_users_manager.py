@@ -222,8 +222,12 @@ async def test_install_uninstall_install() -> None:
     """Testing install uninstall methods"""
     # Clean up at the beginning just in case a prior test failed to clean
     wipe_installation_owner_user_data()
-    wipe_installation_owner_user_data(TEST_NEW_INSTALLATION_ID)
-
+    wipe_installation_owner_user_data(TEST_NEW_INSTALLATION_ID) 
+    
+    # Additional cleanup to ensure no leftover data
+    supabase.table("installations").delete().eq("installation_id", TEST_NEW_INSTALLATION_ID).execute()
+    supabase.table("installations").delete().eq("installation_id", TEST_INSTALLATION_ID).execute()
+    
     # Create a more comprehensive mock setup
     # We'll mock the process_repositories function entirely to avoid the cloning process
     with mock.patch(
