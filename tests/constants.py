@@ -1,6 +1,7 @@
 from services.github.token.get_installation_token import get_installation_access_token
 
 
+TEST_NEW_INSTALLATION_ID = 101
 OWNER = "gitautoai"
 REPO = "gitauto"
 FORKED_REPO = "DeepSeek-R1"
