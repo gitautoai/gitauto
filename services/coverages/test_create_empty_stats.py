@@ -78,8 +78,27 @@ def test_create_empty_stats_modifiable_return_value():
 
 
 def test_create_empty_stats_no_parameters_required():
+    # Test that the function can be called without any parameters
+    result = create_empty_stats()
+    assert result is not None
+    assert isinstance(result, dict)
 
 
 def test_create_empty_stats_exact_structure():
     result = create_empty_stats()
     assert len(result) == 11
+    # Verify the exact structure matches what we expect
+    expected_structure = {
+        "lines_total": 0,
+        "lines_covered": 0,
+        "functions_total": 0,
+        "functions_covered": 0,
+        "branches_total": 0,
+        "branches_covered": 0,
+        "uncovered_lines": set(),
+        "uncovered_functions": set(),
+        "uncovered_branches": set(),
+        "test_name": None,
+        "current_function": None,
+    }
+    assert result == expected_structure
