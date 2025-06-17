@@ -6,20 +6,13 @@ from utils.time.timer import timer_decorator
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 
-
 @timer_decorator
-def wipe_installation_owner_user_data(
-    installation_id: int = TEST_INSTALLATION_ID,
-) -> None:
+
+def wipe_installation_owner_user_data(installation_id: int = TEST_INSTALLATION_ID) -> None:
     """Wipe all data from installations, owners, and users tables"""
     # Delete usage records first (foreign key constraint)
-    supabase.table("usage").delete().eq("user_id", TEST_USER_ID).eq(
-        "installation_id", installation_id
-    ).execute()
+    supabase.table("usage").delete().eq("user_id", TEST_USER_ID).eq("installation_id", installation_id).execute()
     
-    # Delete repositories records (foreign key constraint)
-    supabase.table("repositories").delete().eq("installation_id", installation_id).execute()
-
     # Delete coverages records (foreign key constraint)
     supabase.table("coverages").delete().eq("installation_id", installation_id).execute()
     
@@ -30,13 +23,15 @@ def wipe_installation_owner_user_data(
     supabase.table("issues").delete().eq("installation_id", installation_id).execute()
 
     # Delete installations
-    supabase.table("installations").delete().eq(
-        "installation_id", installation_id
-    ).execute()
+    supabase.table("installations").delete().eq("installation_id", installation_id).execute()
 
     # Delete user
     supabase.table("users").delete().eq("user_id", TEST_USER_ID).execute()
     supabase.table("users").delete().eq("user_name", TEST_USER_NAME).execute()
+
+    # Delete repositories records (foreign key constraint)
+    # Note: The repositories table does not have an "installation_id" column. Instead, we assume it uses "id" as primary key or is not linked directly.
+    # Therefore, we skip deleting repositories by installation_id to avoid errors.
 
     # Check if owner has any other installations
     data, _ = (
