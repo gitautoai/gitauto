@@ -261,3 +261,80 @@ def test_get_repository_stats_empty_stdout():
         result = get_repository_stats("/test/path")
     
     assert result == DEFAULT_REPO_STATS
+
+
+def test_get_repository_stats_start_equals_end():
+    mock_result = Mock()
+    mock_result.stdout = "}"
+    
+    with patch("subprocess.run", return_value=mock_result):
+        result = get_repository_stats("/test/path")
+    
+    assert result == DEFAULT_REPO_STATS
+
+
+def test_get_repository_stats_start_greater_than_end():
+    mock_result = Mock()
+    mock_result.stdout = "text } more text { end"
+    
+    with patch("subprocess.run", return_value=mock_result):
+        result = get_repository_stats("/test/path")
+    
+    assert result == DEFAULT_REPO_STATS
+
+
+def test_get_repository_stats_negative_start():
+    mock_result = Mock()
+    mock_result.stdout = "no braces here"
+    
+    with patch("subprocess.run", return_value=mock_result):
+        result = get_repository_stats("/test/path")
+    
+    assert result == DEFAULT_REPO_STATS
+
+
+def test_get_repository_stats_multiple_json_objects():
+    mock_result = Mock()
+    mock_result.stdout = """First object: {
+        "header": {
+            "n_files": 1
+        }
+    } Second object: {
+        "header": {
+            "n_files": 2
+        },
+        "SUM": {
+            "blank": 10,
+            "comment": 5,
+            "code": 25
+        }
+    }"""
+    
+    with patch("subprocess.run", return_value=mock_result):
+        result = get_repository_stats("/test/path")
+    
+    assert result == {
+        "file_count": 1,
+        "blank_lines": 0,
+        "comment_lines": 0,
+        "code_lines": 0,
+    }
+
+
+def test_get_repository_stats_nested_json_with_extra_braces():
+    mock_result = Mock()
+    mock_result.stdout = """Extra { brace before {
+        "header": {
+            "n_files": 8,
+            "nested": {
+                "deep": "value"
+            }
+        },
+        "SUM": {
+            "blank": 40,
+            "comment": 25,
+            "code": 120
+        }
+    } extra } brace after"""
+    
+    with patch("subprocess.run", return_value=mock_result):
