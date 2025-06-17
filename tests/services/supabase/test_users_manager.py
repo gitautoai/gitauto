@@ -360,6 +360,7 @@ async def test_install_uninstall_install() -> None:
     # Clean Up
     wipe_installation_owner_user_data()
     wipe_installation_owner_user_data(TEST_NEW_INSTALLATION_ID)
+    supabase.table("installations").delete().eq("installation_id", TEST_NEW_INSTALLATION_ID).execute()
 
 
 @timer_decorator
