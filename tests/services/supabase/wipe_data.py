@@ -10,62 +10,62 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 def wipe_installation_owner_user_data(installation_id: int = TEST_INSTALLATION_ID) -> None:
     """Wipe all data from installations, owners, and users tables"""
     # Delete usage records first (foreign key constraint)
-    supabase.table("usage")\
-        .delete()\
-        .eq("user_id", TEST_USER_ID)\
-        .eq("installation_id", installation_id)\
-        .execute()
+    (supabase.table("usage")
+        .delete()
+        .eq("user_id", TEST_USER_ID)
+        .eq("installation_id", installation_id)
+        .execute())
     
     # Delete repositories records (foreign key constraint)
-    supabase.table("repositories")\
-        .delete()\
-        .eq("owner_id", TEST_OWNER_ID)\
-        .execute()
+    (supabase.table("repositories")
+        .delete()
+        .eq("owner_id", TEST_OWNER_ID)
+        .execute())
     
     # Delete coverages records (foreign key constraint)
-    # Assuming the correct column is "repo_id" for coverages table
-    supabase.table("coverages")\
-        .delete()\
-        .eq("repo_id", installation_id)\
-        .execute()
+    # Updated column from installation_id to repo_id as the coverages table uses repo_id to link to installations
+    (supabase.table("coverages")
+        .delete()
+        .eq("repo_id", installation_id)
+        .execute())
     
     # Delete pull_requests records (foreign key constraint)
-    supabase.table("pull_requests")\
-        .delete()\
-        .eq("installation_id", installation_id)\
-        .execute()
+    (supabase.table("pull_requests")
+        .delete()
+        .eq("installation_id", installation_id)
+        .execute())
     
     # Delete issues
-    supabase.table("issues")\
-        .delete()\
-        .eq("installation_id", installation_id)\
-        .execute()
+    (supabase.table("issues")
+        .delete()
+        .eq("installation_id", installation_id)
+        .execute())
     
     # Delete installations
-    supabase.table("installations")\
-        .delete()\
-        .eq("installation_id", installation_id)\
-        .execute()
+    (supabase.table("installations")
+        .delete()
+        .eq("installation_id", installation_id)
+        .execute())
     
     # Delete user
-    supabase.table("users")\
-        .delete()\
-        .eq("user_id", TEST_USER_ID)\
-        .execute()
-    supabase.table("users")\
-        .delete()\
-        .eq("user_name", TEST_USER_NAME)\
-        .execute()
+    (supabase.table("users")
+        .delete()
+        .eq("user_id", TEST_USER_ID)
+        .execute())
+    (supabase.table("users")
+        .delete()
+        .eq("user_name", TEST_USER_NAME)
+        .execute())
     
     # Check if owner has any other installations
-    data, _ = supabase.table("installations")\
-        .select("*")\
-        .eq("owner_id", TEST_OWNER_ID)\
-        .execute()
+    data, _ = (supabase.table("installations")
+        .select("*")
+        .eq("owner_id", TEST_OWNER_ID)
+        .execute())
     
     # If no other installations exist, delete owner
     if len(data[1]) == 0:
-        supabase.table("owners")\
-            .delete()\
-            .eq("owner_id", TEST_OWNER_ID)\
-            .execute()
+        (supabase.table("owners")
+            .delete()
+            .eq("owner_id", TEST_OWNER_ID)
+            .execute())
