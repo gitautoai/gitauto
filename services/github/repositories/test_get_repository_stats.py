@@ -314,12 +314,7 @@ def test_get_repository_stats_multiple_json_objects():
     with patch("subprocess.run", return_value=mock_result):
         result = get_repository_stats("/test/path")
     
-    assert result == {
-        "file_count": 1,
-        "blank_lines": 0,
-        "comment_lines": 0,
-        "code_lines": 0,
-    }
+    assert result == DEFAULT_REPO_STATS
 
 
 def test_get_repository_stats_nested_json_with_extra_braces():
