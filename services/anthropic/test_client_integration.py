@@ -1,13 +1,7 @@
 from anthropic import Anthropic
 from anthropic.types import MessageParam
 import pytest
-import pytest
-from anthropic import BadRequestError
-from anthropic import BadRequestError
-import pytest
-
 from config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL_ID_40
-import pytest
 from services.anthropic.client import get_anthropic_client
 
 
@@ -18,8 +12,8 @@ def test_get_anthropic_client_integration():
 
 
 @pytest.mark.skip(reason="Skipping due to Anthropic API credit balance limitations.")
+
 def test_anthropic_client_can_count_tokens():
-    pytest.skip("Skipping due to Anthropic API credit balance limitations.")
     client = get_anthropic_client()
     messages: list[MessageParam] = [{"role": "user", "content": "Hello, Claude!"}]
 
