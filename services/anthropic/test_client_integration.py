@@ -1,6 +1,7 @@
 from anthropic import Anthropic
 from anthropic.types import MessageParam
 import pytest
+import pytest
 
 from config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL_ID_40
 from services.anthropic.client import get_anthropic_client
