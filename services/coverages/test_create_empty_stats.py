@@ -78,3 +78,8 @@ def test_create_empty_stats_modifiable_return_value():
 
 
 def test_create_empty_stats_no_parameters_required():
+
+
+def test_create_empty_stats_exact_structure():
+    result = create_empty_stats()
+    assert len(result) == 11
