@@ -11,7 +11,6 @@ def test_get_anthropic_client_integration():
     assert client.api_key == ANTHROPIC_API_KEY
 
 
-@pytest.mark.skip(reason="Skipping due to Anthropic API credit balance limitations.")
 
 def test_anthropic_client_can_count_tokens():
     pytest.skip("Skipping test due to Anthropic API credit balance limitations.")
