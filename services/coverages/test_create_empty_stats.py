@@ -102,4 +102,3 @@ def test_create_empty_stats_exact_structure():
         "current_function": None,
     }
     assert result == expected_structure
-
