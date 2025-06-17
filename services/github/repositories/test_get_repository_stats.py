@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 from unittest.mock import Mock, patch
 
@@ -208,6 +209,53 @@ def test_get_repository_stats_only_opening_brace():
 def test_get_repository_stats_braces_in_wrong_order():
     mock_result = Mock()
     mock_result.stdout = "}{"
+
+def test_get_repository_stats_file_not_found_error():
+    with patch("subprocess.run", side_effect=FileNotFoundError("cloc command not found")):
+        result = get_repository_stats("/test/path")
+    
+    assert result == DEFAULT_REPO_STATS
+
+
+def test_get_repository_stats_permission_error():
+    with patch("subprocess.run", side_effect=PermissionError("Permission denied")):
+        result = get_repository_stats("/test/path")
+    
+    assert result == DEFAULT_REPO_STATS
+
+
+def test_get_repository_stats_timeout_error():
+    with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cloc", 30)):
+        result = get_repository_stats("/test/path")
+    
+    assert result == DEFAULT_REPO_STATS
+
+
+def test_get_repository_stats_os_error():
+    with patch("subprocess.run", side_effect=OSError("OS error occurred")):
+        result = get_repository_stats("/test/path")
+    
+    assert result == DEFAULT_REPO_STATS
+
+
+def test_get_repository_stats_json_decode_error_with_valid_braces():
+    mock_result = Mock()
+    mock_result.stdout = "{ this is not valid json but has braces }"
+    
+    with patch("subprocess.run", return_value=mock_result):
+        result = get_repository_stats("/test/path")
+    
+    assert result == DEFAULT_REPO_STATS
+
+
+def test_get_repository_stats_empty_stdout():
+    mock_result = Mock()
+    mock_result.stdout = ""
+    
+    with patch("subprocess.run", return_value=mock_result):
+        result = get_repository_stats("/test/path")
+    
+    assert result == DEFAULT_REPO_STATS
     
     with patch("subprocess.run", return_value=mock_result):
         result = get_repository_stats("/test/path")
