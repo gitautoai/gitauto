@@ -225,8 +225,8 @@ async def test_install_uninstall_install() -> None:
     wipe_installation_owner_user_data(TEST_NEW_INSTALLATION_ID) 
     
     # Additional cleanup to ensure no leftover data
+    from services.supabase.client import supabase
     supabase.table("installations").delete().eq("installation_id", TEST_NEW_INSTALLATION_ID).execute()
-    supabase.table("installations").delete().eq("installation_id", TEST_INSTALLATION_ID).execute()
     
     # Create a more comprehensive mock setup
     # We'll mock the process_repositories function entirely to avoid the cloning process
