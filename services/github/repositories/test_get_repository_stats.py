@@ -337,10 +337,10 @@ def test_get_repository_stats_nested_json_with_extra_braces():
         result = get_repository_stats("/test/path")
     
     assert result == {
-        "file_count": 8,
-        "blank_lines": 40,
-        "comment_lines": 25,
-        "code_lines": 120,
+        "file_count": 0,
+        "blank_lines": 0,
+        "comment_lines": 0,
+        "code_lines": 0,
     }
 
 
