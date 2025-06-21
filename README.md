@@ -31,7 +31,7 @@
 2. Click `New GitHub App`.
 3. Fill in `GitHub App name` like `GitAuto Dev {Your Name}` e.g. `GitAuto Dev John`.
 4. Fill in `Homepage URL` like `http://localhost:8000`.
-5. Fill in `Webhook URL` like `https://gitauto.ngrok.dev/webhook`. GitHub requires HTTPS for the webhook URL, so we need to use ngrok or something similar instead of `localhost`. GitHub sends webhook events (e.g. an issue is created) to the webhook URL and ngrok tunnels to localhost. You can update this URL later after setting up the ngrok tunnel.
+5. Fill in `Webhook URL` like `https://your-name.ngrok.dev/webhook`. GitHub requires HTTPS for the webhook URL, so we need to use ngrok or something similar instead of `localhost`. GitHub sends webhook events (e.g. an issue is created) to the webhook URL and ngrok tunnels to localhost. You can update this URL later after setting up the ngrok tunnel.
 6. Fill in `Webhook secret` with your preferred secret.
 7. Fill in `Repository permissions`
    - `Actions`: Read & Write
@@ -69,17 +69,14 @@
 3. Install the app to the repository where you want to test.
 4. Or directly go to `https://github.com/settings/apps/{your-github-app-name}/installations` such as `https://github.com/settings/apps/gitauto-for-dev/installations`.
 
-### 3-3. Tunnel GitHub webhook events to your localhost with ngrok
+### 3-3. Set up ngrok configuration
 
 GitHub allows only a HTTPS URL for webhook events, so we need to use ngrok or something similar service to tunnel/forward the GitHub webhook events to your localhost.
 
 1. Create a new ngrok configuration file `ngrok.yml` in the root directory. It should contain `authtoken: YOUR_NGROK_AUTH_TOKEN` and `version: 2`.
 2. Get your own auth token from [Your Authtoken on the dashboard](https://dashboard.ngrok.com/get-started/your-authtoken) or ask [@hiroshinishio](https://github.com/hiroshinishio) about the paid ngrok auth token.
-3. Get your own endpoint URL from [Endpoints on the dashboard](https://dashboard.ngrok.com/endpoints). For free users, it varies every time you create a new ngrok tunnel. (Yes, it is really annoying.)
-4. Open a new terminal in the root directory in your IDE.
-5. Run `ngrok http --config=ngrok.yml --domain={your-endpoint-url} 8000`. Replace `{your-endpoint-url}` with your own endpoint URL, so it looks like `ngrok http --config=ngrok.yml --domain=gitauto.ngrok.dev 8000`.
-6. ngrok starts tunneling to `http://localhost:8000`.
-7. Use `{your-endpoint-url}/webhook` like `https://gitauto.ngrok.dev/webhook` as the webhook URL in the GitHub app settings as GitHub requires HTTPS for the webhook URL instead of HTTP.
+3. Get your own endpoint URL from [Endpoints on the dashboard](https://dashboard.ngrok.com/endpoints). **Each developer needs their own unique domain** (e.g., `wes.ngrok.dev`, `john.ngrok.dev`) to avoid conflicts.
+4. Update the `start.sh` script to use your specific ngrok domain.
 
 ### 3-4. Managing Git branches
 
@@ -105,21 +102,12 @@ git pull origin main
 git stash pop    # Reapply changes
 ```
 
-### 3-5. Create a virtual Python dependency environment in your local machine
-
-1. Run `deactivate` to deactivate the virtual environment if you have activated it and not sure where you are.
-2. Run `rm -rf venv` to remove the virtual environment if you have created it and not sure what's in it.
-3. Run `python3 -m venv --upgrade-deps venv` to create a virtual environment.
-4. Run `source venv/bin/activate` to activate the virtual environment. You will see `(venv)` in the terminal. Note that you need to activate the virtual environment every time you open a new terminal.
-5. Run `which python`, `which pip`, and `python --version` to check the Python version and make sure it points to the virtual environment.
-6. Run `pip install -r requirements.txt` to install the dependencies.
-
-### 3-6. Get the `.env` file
+### 3-5. Get the `.env` file
 
 1. Ask for the `.env` file from [@hiroshinishio](https://github.com/hiroshinishio).
 2. Put the `.env` file in the root directory.
 
-### 3-7. How to encode a GitHub app private key to base64
+### 3-6. How to encode a GitHub app private key to base64
 
 In `.env` file, you need to set your own `GH_PRIVATE_KEY`. Here's the step:
 
@@ -129,22 +117,62 @@ In `.env` file, you need to set your own `GH_PRIVATE_KEY`. Here's the step:
 4. Run `base64 -i your/path/to/private-key.pem` to encode the private key to base64.
 5. Copy the output and paste it in the `GH_PRIVATE_KEY` field in your `.env` file.
 
-### 3-8. How to run the code
+### 3-7. How to run the code
 
-1. Run `uvicorn main:app --reload --port 8000 --log-level warning` to start the ASGI server and run `main.py` with `app` as the FastAPI instance.
-   1. `--reload` is for auto-reloading the server when the code changes.
-   2. `--log-level warning` is to suppress the INFO logs.
-2. Let's see if it works and there are no errors! Here's the success message if your log-level is set to `info` (default):
+1. **Update the start script** with your ngrok domain:
 
-```zsh
-(venv) rwest@Roshis-MacBook-Pro gitauto % uvicorn main:app --reload --port 8000
-INFO:     Will watch for changes in these directories: ['/Users/rwest/Repositories/gitauto']
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [63742] using WatchFiles
-INFO:     Started server process [63744]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-```
+   ```bash
+   # Edit start.sh and change this line:
+   ngrok http --config=ngrok.yml --domain=your-name.ngrok.dev 8000
+   ```
+
+2. **Make the start script executable:**
+
+   ```bash
+   chmod +x start.sh
+   ```
+
+3. **Run the development environment:**
+
+   ```bash
+   ./start.sh
+   ```
+
+This script will automatically:
+
+- Create and activate virtual environment (if needed)
+- Install dependencies (if needed)
+- Start ngrok tunnel with your specific domain
+- Start FastAPI server with visible logs
+- Clean up both services when you press Ctrl+C
+
+**Important for multiple developers**: Each developer must use a different ngrok domain in their `start.sh` script to avoid conflicts. For example:
+
+- Developer 1: `wes.ngrok.dev`
+- Developer 2: `john.ngrok.dev`
+
+### 3-8. Success indicators
+
+When everything is working correctly, you should see:
+
+**From start.sh:**
+
+- ✅ Virtual environment activation
+- ✅ ngrok tunnel started with your domain
+- ✅ FastAPI server starting with logs below
+
+**FastAPI server:**
+
+- Server running on `http://localhost:8000`
+- Watching for file changes (auto-reload enabled)
+- No error messages during startup
+
+If you see any errors, check:
+
+- `.env` file is present and configured
+- `ngrok.yml` is configured with your auth token
+- Your ngrok domain is available
+- Port 8000 is not already in use
 
 ### 3-9. Other information
 
