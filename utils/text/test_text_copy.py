@@ -28,6 +28,21 @@ def test_git_command():
     assert result == expected
 
 
+def test_git_command_with_special_characters():
+    branch_name = "feature/test-branch-with-special_chars.123"
+    result = git_command(branch_name)
+
+    expected = (
+        f"\n\n## Test these changes locally\n\n"
+        f"```\n"
+        f"git fetch origin\n"
+        f"git checkout {branch_name}\n"
+        f"git pull origin {branch_name}\n"
+        f"```"
+    )
+
+
+
 def test_request_limit_reached():
     user_name = "test-user"
     request_count = 10
