@@ -177,3 +177,23 @@ def test_request_issue_comment_zero_requests():
     expected = f"\n\n@{sender_name}, You have 0 requests left in this cycle which refreshes on {end_date}.\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
 
     assert result == expected
+
+
+def test_update_comment_for_422():
+    expected = f"Hey, I'm a bit lost here! Not sure which file I should be fixing. Could you give me a bit more to go on? Maybe add some details to the issue or drop a comment with some extra hints? Thanks!\n\nHave feedback or need help?\nFeel free to email {EMAIL_LINK}."
+    
+    assert UPDATE_COMMENT_FOR_422 == expected
+
+
+def test_update_comment_for_raised_errors_no_changes_made():
+    expected = f"No changes were detected. Please add more details to the issue and try again.\n\nHave feedback or need help?\n{EMAIL_LINK}"
+    
+    assert UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE == expected
+
+
+def test_update_comment_for_422_contains_email_link():
+    assert EMAIL_LINK in UPDATE_COMMENT_FOR_422
+
+
+def test_update_comment_for_raised_errors_no_changes_made_contains_email_link():
+    assert EMAIL_LINK in UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE
