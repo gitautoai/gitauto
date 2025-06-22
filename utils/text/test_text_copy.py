@@ -277,4 +277,3 @@ def test_constants_are_not_empty():
     assert len(UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE.strip()) > 0
     assert "lost" in UPDATE_COMMENT_FOR_422.lower()
     assert "no changes" in UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE.lower()
-    assert result == expected
