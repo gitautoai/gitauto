@@ -212,3 +212,31 @@ def test_update_comment_for_422_contains_email_link():
 
 def test_update_comment_for_raised_errors_no_changes_made_contains_email_link():
     assert EMAIL_LINK in UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE
+
+
+def test_request_limit_reached_with_zero_requests():
+    user_name = "test-user"
+    request_count = 0
+    end_date = datetime(2025, 5, 1, tzinfo=timezone.utc)
+
+    result = request_limit_reached(user_name, request_count, end_date)
+
+    expected = f"Hello @{user_name}, you have reached your request limit of {request_count}, your cycle will refresh on {end_date}.\nConsider <a href='https://gitauto.ai/#pricing'>subscribing</a> if you want more requests.\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
+
+    assert result == expected
+
+
+def test_git_command_empty_branch_name():
+    branch_name = ""
+    result = git_command(branch_name)
+
+    expected = (
+        f"\n\n## Test these changes locally\n\n"
+        f"```\n"
+        f"git fetch origin\n"
+        f"git checkout {branch_name}\n"
+        f"git pull origin {branch_name}\n"
+        f"```"
+    )
+
+    assert result == expected
