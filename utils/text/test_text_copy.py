@@ -269,6 +269,7 @@ def test_request_issue_comment_large_number():
 
 def test_constants_are_strings():
     assert isinstance(UPDATE_COMMENT_FOR_422, str)
+    assert isinstance(UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE, str)
 
 
 def test_constants_are_not_empty():
