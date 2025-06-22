@@ -4,6 +4,8 @@ from utils.text.text_copy import (
     git_command,
     request_limit_reached,
     pull_request_completed,
+    UPDATE_COMMENT_FOR_422,
+    UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,
     request_issue_comment,
 )
 from config import EMAIL_LINK, PRODUCT_ID
