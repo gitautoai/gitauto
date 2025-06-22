@@ -239,4 +239,34 @@ def test_git_command_empty_branch_name():
         f"```"
     )
 
+
+
+def test_pull_request_completed_bot_issuer_mixed_case():
+    issuer_name = "GitHub[BOT]"  # Mixed case bot
+    sender_name = "gitauto-ai[bot]"
+    pr_url = "https://github.com/test/repo/pull/1"
+    is_automation = False
+
+    result = pull_request_completed(issuer_name, sender_name, pr_url, is_automation)
+
+    # Should not match [bot] pattern due to case sensitivity
+    expected = f"@{issuer_name} {COMPLETED_PR} {pr_url} 🚀\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+
+    assert result == expected
+
+
+def test_request_issue_comment_large_number():
+    requests_left = 999999
+    sender_name = "test-user"
+    end_date = datetime(2025, 5, 1, tzinfo=timezone.utc)
+
+    result = request_issue_comment(requests_left, sender_name, end_date)
+
+    expected = f"\n\n@{sender_name}, You have {requests_left} requests left in this cycle which refreshes on {end_date}.\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
+
+    assert result == expected
+
+
+def test_constants_are_strings():
+    assert isinstance(UPDATE_COMMENT_FOR_422, str)
     assert result == expected
