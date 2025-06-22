@@ -238,7 +238,7 @@ def test_git_command_empty_branch_name():
         f"git pull origin {branch_name}\n"
         f"```"
     )
-
+    assert result == expected
 
 
 def test_pull_request_completed_bot_issuer_mixed_case():
