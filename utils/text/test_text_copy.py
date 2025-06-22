@@ -40,7 +40,7 @@ def test_git_command_with_special_characters():
         f"git pull origin {branch_name}\n"
         f"```"
     )
-
+    assert result == expected
 
 
 def test_request_limit_reached():
