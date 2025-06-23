@@ -54,7 +54,8 @@ def test_get_commit_diff_success(monkeypatch):
 
 
 def dummy_get_failure(url, headers, timeout):
-    raise requests.HTTPError("Dummy error")
+    response = type("DummyResponse", (), {"status_code": 404})()
+    raise requests.HTTPError("Dummy error", response=response)
 
 
 def test_get_commit_diff_failure(monkeypatch):
