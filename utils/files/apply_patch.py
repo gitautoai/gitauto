@@ -5,8 +5,6 @@ import os
 import subprocess
 import tempfile
 
-# Third-party imports
-import chardet
 
 # Local imports
 from config import UTF8
@@ -39,7 +37,6 @@ def apply_patch(original_text: str, diff_text: str):
         mode="w+", encoding=UTF8, newline="\n", delete=False
     ) as org_file:
         org_fname: str = org_file.name
-        print(f"Created original file: {org_fname}")
         if original_text:
             s = original_text.replace("\r\n", "\n").replace("\r", "\n")
             if not s.endswith("\n"):
@@ -50,11 +47,7 @@ def apply_patch(original_text: str, diff_text: str):
         mode="w+", encoding=UTF8, newline="\n", delete=False
     ) as diff_file:
         diff_fname: str = diff_file.name
-        print(f"Created diff file: {diff_fname}")
         diff_file.write(diff_text if diff_text.endswith("\n") else diff_text + "\n")
-
-    # Check if files exist after creation
-    print(f"After creation - org file exists: {os.path.exists(org_fname)}")
 
     modified_text = ""
     try:
@@ -72,12 +65,9 @@ def apply_patch(original_text: str, diff_text: str):
 
         # Modified or deleted file
         else:
-            # Check if original file exists before patch command
-            print(f"Before patch - org file exists: {os.path.exists(org_fname)}")
-
             with open(file=diff_fname, mode="r", encoding=UTF8, newline="\n") as diff:
                 # Run patch command
-                result = subprocess.run(
+                subprocess.run(
                     # See https://www.man7.org/linux/man-pages/man1/patch.1.html
                     args=["patch", "-u", "--fuzz=3", "--forward", org_fname],
                     input=diff.read(),
@@ -88,16 +78,11 @@ def apply_patch(original_text: str, diff_text: str):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                 )
-                print(f"Patch command output: {result.stdout}")
 
-            # Check if original file exists after patch command
-            print(f"After patch - org file exists: {os.path.exists(org_fname)}")
-            # Check if patch created a backup file
-            orig_backup = f"{org_fname}.orig"
-            print(f"Backup file exists: {os.path.exists(orig_backup)}")
+        # Handle file deletion case
+        if not os.path.exists(org_fname):
+            return "", ""
 
-        # Check if file exists before reading
-        print(f"Before reading - org file exists: {os.path.exists(org_fname)}")
         modified_text = get_file_content(file_path=org_fname)
         modified_text = modified_text.replace("\n", line_break)
 
@@ -111,9 +96,6 @@ def apply_patch(original_text: str, diff_text: str):
             return "", msg
         if "Ignoring previously applied (or reversed) patch." in stdout:
             return "", msg
-
-        # Check file existence after error
-        print(f"After error - org file exists: {os.path.exists(org_fname)}")
 
         # Get the original, diff, and reject file contents for debugging
         modified_text = get_file_content(file_path=org_fname)
@@ -135,35 +117,14 @@ def apply_patch(original_text: str, diff_text: str):
 
         # Log the error and return an empty string not to break the flow
         msg = f"Failed to apply patch partially or entirelly because something is wrong in diff. Analyze the reason from stderr and rej_text, modify the diff, and try again.\n\ndiff_text:\n{diff_text}\n\nstderr:\n{stderr}\n\nrej_text:\n{rej_text}\n"
-        # Print encodings of input texts
-        print(f"Org encoding: {chardet.detect(original_text.encode())['encoding']}")
-        print(f"Diff encoding: {chardet.detect(diff_text.encode())['encoding']}")
-        print(msg, end="")
-        # logging.error(msg)
         return modified_text, msg
 
     except FileNotFoundError as e:
-        # For diagnosing FileNotFoundError specifically
-        print(f"FileNotFoundError: {e}")
-        print(f"Missing file path: {e.filename}")
-        print(f"Is missing file org_fname? {e.filename == org_fname}")
-        print(f"Is missing file diff_fname? {e.filename == diff_fname}")
-
-        # Check all related files
-        print(f"org file exists: {os.path.exists(org_fname)}")
-        print(f"diff file exists: {os.path.exists(diff_fname)}")
-        orig_backup = f"{org_fname}.orig"
-        print(f"backup file exists: {os.path.exists(orig_backup)}")
-
         return "", f"Error: {e}"
 
     except Exception as e:  # pylint: disable=broad-except
-        print(f"Exception: {type(e).__name__}: {str(e)}")
         return "", f"Error: {e}"
     finally:
-        # Check file existence before cleanup
-        print(f"Before cleanup - org file exists: {os.path.exists(org_fname)}")
-
         # Remove temporary files
         try:
             os.remove(path=org_fname)

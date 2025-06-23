@@ -6,7 +6,6 @@ NGROK_DOMAIN="gitauto.ngrok.dev"
 
 # Colors for output
 GREEN='\033[0;32m'
-BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "Starting GitAuto development environment..."

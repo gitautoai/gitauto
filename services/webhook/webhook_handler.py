@@ -25,7 +25,8 @@ from services.supabase.installations.unsuspend_installation import (
 )
 from services.webhook.handle_installation import handle_installation_created
 from services.webhook.handle_installation_repos import handle_installation_repos_added
-from services.webhook.handle_pr_merged import handle_pr_merged
+from services.webhook.merge_handler import handle_pr_merged
+from services.webhook.push_handler import handle_push_event
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -37,7 +38,28 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     https://docs.github.com/en/apps/github-marketplace/using-the-github-marketplace-api-in-your-app/handling-new-purchases-and-free-trials
     https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=purchased#marketplace_purchase
     """
-    action: str = payload.get("action")
+    action: str | None = payload.get("action")
+
+    # Handle push events from non-bot users
+    # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
+    if event_name == "push":
+        print("payload: ", payload)
+        sender_login = payload.get("sender", {}).get("login", "")
+
+        # Skip if it's any bot (including GitAuto and other bots)
+        if sender_login.endswith("[bot]"):
+            return
+
+        # Skip merge commits - base_ref is set when it's a merge
+        base_ref = payload.get("base_ref")
+        if base_ref is not None:
+            return
+
+        # Handle non-bot commits (direct pushes only)
+        handle_push_event(payload=payload)
+        return
+
+    # For other events, we need to check the action
     if not action:
         return
 
