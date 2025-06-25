@@ -8,21 +8,21 @@ from config import (
     PR_BODY_STARTS_WITH,
     ISSUE_NUMBER_FORMAT,
 )
-from services.check_run_handler import handle_check_run
 from services.coverages.coverage_analyzer import handle_workflow_coverage
-from services.gitauto_handler import handle_gitauto
 from services.github.actions_manager import cancel_workflow_runs_in_progress
 from services.github.github_manager import create_comment_on_issue_with_gitauto_button
 from services.github.token.get_installation_token import get_installation_access_token
-from services.pull_request_handler import write_pr_description
-from services.review_run_handler import handle_review_run
-from services.screenshot_handler import handle_screenshot_comparison
 from services.slack.slack import slack
 from services.supabase.gitauto_manager import set_issue_to_merged
 from services.supabase.installations.delete_installation import delete_installation
 from services.supabase.installations.unsuspend_installation import (
     unsuspend_installation,
 )
+from services.webhook.check_run_handler import handle_check_run
+from services.webhook.issue_handler import create_pr_from_issue
+from services.webhook.pr_body_handler import write_pr_description
+from services.webhook.review_run_handler import handle_review_run
+from services.webhook.screenshot_handler import handle_screenshot_comparison
 from services.webhook.handle_installation import handle_installation_created
 from services.webhook.handle_installation_repos import handle_installation_repos_added
 from services.webhook.merge_handler import handle_pr_merged
@@ -113,7 +113,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues
     if event_name == "issues":
         if action == "labeled":
-            await handle_gitauto(
+            await create_pr_from_issue(
                 payload=payload, trigger_type="label", input_from="github"
             )
             return
@@ -132,7 +132,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
             PRODUCT_ID != "gitauto"
             and (search_text + " - " + PRODUCT_ID) in comment_body
         ):
-            await handle_gitauto(
+            await create_pr_from_issue(
                 payload=payload, trigger_type="comment", input_from="github"
             )
             return
@@ -140,7 +140,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
         # For production environment, ensure it's just "- [x] Generate PR" without any suffix
         # This prevents both prod and dev from triggering on prod checkbox
         if search_text in comment_body and (search_text + " - ") not in comment_body:
-            await handle_gitauto(
+            await create_pr_from_issue(
                 payload=payload, trigger_type="comment", input_from="github"
             )
         return
