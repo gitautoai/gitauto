@@ -1,23 +1,92 @@
 import unittest
+from unittest.mock import patch, MagicMock
 
 from services.github.pull_requests.find_pull_request_by_branch import find_pull_request_by_branch
 
 
 class TestFindPullRequestByBranch(unittest.TestCase):
-    def test_removed_htmlUrl(self):
-        # Call the function with a sample branch name
-        # Adjust parameters as per actual function signature if needed
-        query = find_pull_request_by_branch("feature-branch")
+    @patch('services.github.pull_requests.find_pull_request_by_branch.get_graphql_client')
+    def test_removed_htmlUrl(self, mock_get_client):
+        """Test that the GraphQL query does not contain htmlUrl field."""
+        # Mock the GraphQL client and its execute method
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        
+        # Mock the response to return a valid pull request
+        mock_client.execute.return_value = {
+            "repository": {
+                "pullRequests": {
+                    "nodes": [
+                        {
+                            "number": 42,
+                            "title": "Test PR",
+                            "url": "https://api.github.com/repos/owner/repo/pulls/42",
+                            "headRef": {"name": "feature-branch"},
+                            "baseRef": {"name": "main"}
+                        }
+                    ]
+                }
+            }
+        }
+        
+        # Call the function with proper arguments
+        result = find_pull_request_by_branch("owner", "repo", "feature-branch", "token")
+        
+        # Verify the function was called and returned expected result
+        self.assertIsNotNone(result)
+        self.assertEqual(result["number"], 42)
+        self.assertEqual(result["title"], "Test PR")
+        
+        # Get the query that was executed
+        mock_client.execute.assert_called_once()
+        query_call = mock_client.execute.call_args[0][0]
+        query_string = str(query_call)
         
         # Ensure the query does not contain 'htmlUrl'
-        self.assertNotIn("htmlUrl", query, "Query should not contain htmlUrl field after fix.")
+        self.assertNotIn("htmlUrl", query_string, "Query should not contain htmlUrl field after fix.")
+        
+        # Additionally, check that other expected fields are present in the query
+        self.assertIn("number", query_string, "Query should contain number field.")
+        self.assertIn("title", query_string, "Query should contain title field.")
+        self.assertIn("url", query_string, "Query should contain url field.")
+        self.assertIn("headRef", query_string, "Query should contain headRef field.")
+        self.assertIn("baseRef", query_string, "Query should contain baseRef field.")
 
-        # Additionally, check that other expected fields are present
-        self.assertIn("number", query, "Query should contain number field.")
-        self.assertIn("title", query, "Query should contain title field.")
-        self.assertIn("url", query, "Query should contain url field.")
-        self.assertIn("headRef", query, "Query should contain headRef field.")
-        self.assertIn("baseRef", query, "Query should contain baseRef field.")
+    @patch('services.github.pull_requests.find_pull_request_by_branch.get_graphql_client')
+    def test_no_pull_request_found(self, mock_get_client):
+        """Test that function returns None when no pull request is found."""
+        # Mock the GraphQL client
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        
+        # Mock empty response
+        mock_client.execute.return_value = {
+            "repository": {
+                "pullRequests": {
+                    "nodes": []
+                }
+            }
+        }
+        
+        # Call the function
+        result = find_pull_request_by_branch("owner", "repo", "nonexistent-branch", "token")
+        
+        # Verify None is returned when no PR is found
+        self.assertIsNone(result)
+
+    @patch('services.github.pull_requests.find_pull_request_by_branch.get_graphql_client')
+    def test_graphql_error_handling(self, mock_get_client):
+        """Test that function handles GraphQL errors gracefully."""
+        # Mock the GraphQL client to raise an exception
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        mock_client.execute.side_effect = Exception("GraphQL error")
+        
+        # Call the function - should not raise exception due to @handle_exceptions decorator
+        result = find_pull_request_by_branch("owner", "repo", "feature-branch", "token")
+        
+        # Verify None is returned on error
+        self.assertIsNone(result)
 
 
 if __name__ == "__main__":
