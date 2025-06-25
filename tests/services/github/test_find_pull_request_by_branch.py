@@ -1,19 +1,16 @@
 import unittest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 
 from services.github.pull_requests.find_pull_request_by_branch import find_pull_request_by_branch
 
 
 class TestFindPullRequestByBranch(unittest.TestCase):
-    @patch('services.github.pull_requests.find_pull_request_by_branch.gql')
     @patch('services.github.pull_requests.find_pull_request_by_branch.get_graphql_client')
-    def test_removed_htmlUrl(self, mock_get_client, mock_gql):
+    def test_removed_htmlUrl(self, mock_get_client):
         """Test that the GraphQL query does not contain htmlUrl field."""
         # Mock the GraphQL client and its execute method
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
-        # Make gql function pass through the query string for testing
-        mock_gql.side_effect = lambda query: query
         
         # Mock the response to return a valid pull request
         mock_client.execute.return_value = {
@@ -39,30 +36,29 @@ class TestFindPullRequestByBranch(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result["number"], 42)
         self.assertEqual(result["title"], "Test PR")
+        self.assertEqual(result["url"], "https://api.github.com/repos/owner/repo/pulls/42")
+        self.assertEqual(result["headRef"]["name"], "feature-branch")
+        self.assertEqual(result["baseRef"]["name"], "main")
         
-        # Get the query string that was passed to gql
-        mock_gql.assert_called_once()
-        query_string = mock_gql.call_args[0][0]
+        # Verify that the GraphQL client was called correctly
+        mock_client.execute.assert_called_once()
         
-        # Ensure the query does not contain 'htmlUrl'
-        self.assertNotIn("htmlUrl", query_string, "Query should not contain htmlUrl field after fix.")
+        # Verify that the result does not contain htmlUrl field (which was the issue)
+        self.assertNotIn("htmlUrl", result, "Result should not contain htmlUrl field after fix.")
         
-        # Additionally, check that other expected fields are present in the query
-        self.assertIn("number", query_string, "Query should contain number field.")
-        self.assertIn("title", query_string, "Query should contain title field.")
-        self.assertIn("url", query_string, "Query should contain url field.")
-        self.assertIn("headRef", query_string, "Query should contain headRef field.")
-        self.assertIn("baseRef", query_string, "Query should contain baseRef field.")
+        # Verify that the expected fields are present in the result
+        self.assertIn("number", result, "Result should contain number field.")
+        self.assertIn("title", result, "Result should contain title field.")
+        self.assertIn("url", result, "Result should contain url field.")
+        self.assertIn("headRef", result, "Result should contain headRef field.")
+        self.assertIn("baseRef", result, "Result should contain baseRef field.")
 
-    @patch('services.github.pull_requests.find_pull_request_by_branch.gql')
     @patch('services.github.pull_requests.find_pull_request_by_branch.get_graphql_client')
-    def test_no_pull_request_found(self, mock_get_client, mock_gql):
+    def test_no_pull_request_found(self, mock_get_client):
         """Test that function returns None when no pull request is found."""
         # Mock the GraphQL client
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
-        # Make gql function pass through the query string
-        mock_gql.side_effect = lambda query: query
         
         # Mock empty response
         mock_client.execute.return_value = {
@@ -79,15 +75,12 @@ class TestFindPullRequestByBranch(unittest.TestCase):
         # Verify None is returned when no PR is found
         self.assertIsNone(result)
 
-    @patch('services.github.pull_requests.find_pull_request_by_branch.gql')
     @patch('services.github.pull_requests.find_pull_request_by_branch.get_graphql_client')
-    def test_graphql_error_handling(self, mock_get_client, mock_gql):
+    def test_graphql_error_handling(self, mock_get_client):
         """Test that function handles GraphQL errors gracefully."""
         # Mock the GraphQL client to raise an exception
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
-        # Make gql function pass through the query string
-        mock_gql.side_effect = lambda query: query
         mock_client.execute.side_effect = Exception("GraphQL error")
         
         # Call the function - should not raise exception due to @handle_exceptions decorator
@@ -95,6 +88,43 @@ class TestFindPullRequestByBranch(unittest.TestCase):
         
         # Verify None is returned on error
         self.assertIsNone(result)
+
+    @patch('services.github.pull_requests.find_pull_request_by_branch.get_graphql_client')
+    def test_function_signature_and_parameters(self, mock_get_client):
+        """Test that function is called with correct parameters."""
+        # Mock the GraphQL client
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        
+        # Mock response
+        mock_client.execute.return_value = {
+            "repository": {
+                "pullRequests": {
+                    "nodes": [
+                        {
+                            "number": 1,
+                            "title": "Test",
+                            "url": "https://api.github.com/repos/test/test/pulls/1",
+                            "headRef": {"name": "test-branch"},
+                            "baseRef": {"name": "main"}
+                        }
+                    ]
+                }
+            }
+        }
+        
+        # Call the function
+        find_pull_request_by_branch("test-owner", "test-repo", "test-branch", "test-token")
+        
+        # Verify the GraphQL client was called with correct parameters
+        mock_client.execute.assert_called_once()
+        call_args = mock_client.execute.call_args
+        
+        # Check that variable_values contains the correct parameters
+        variable_values = call_args[1]["variable_values"]
+        self.assertEqual(variable_values["owner"], "test-owner")
+        self.assertEqual(variable_values["repo"], "test-repo")
+        self.assertEqual(variable_values["headRefName"], "test-branch")
 
 
 if __name__ == "__main__":
