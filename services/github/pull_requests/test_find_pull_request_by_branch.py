@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from gql.transport.exceptions import TransportQueryError
 
 from services.github.pull_requests.find_pull_request_by_branch import find_pull_request_by_branch
 from tests.constants import OWNER, REPO, TOKEN
@@ -114,7 +113,7 @@ def test_find_pull_request_by_branch_graphql_error():
     # Arrange
     branch_name = "feature-branch"
     mock_client = MagicMock()
-    mock_client.execute.side_effect = TransportQueryError("GraphQL error")
+    mock_client.execute.side_effect = Exception("GraphQL error")
     
     # Act
     with patch("services.github.pull_requests.find_pull_request_by_branch.get_graphql_client") as mock_get_client:
