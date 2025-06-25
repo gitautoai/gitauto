@@ -18,7 +18,6 @@ def find_pull_request_by_branch(
                         number
                         title
                         url  # API URL
-                        htmlUrl  # Web URL
                         headRef { name }  # Source branch (e.g. "wes")
                         baseRef { name }  # Target branch (e.g. "main")
                     }
