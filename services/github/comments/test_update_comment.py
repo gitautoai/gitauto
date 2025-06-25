@@ -115,3 +115,16 @@ def test_update_comment_with_headers():
     mock_patch.assert_called_once()
     assert mock_patch.call_args[1]["headers"] == {"Authorization": f"Bearer {TOKEN}"}
     assert result == {"id": 123, "body": "Test comment"}
+def test_update_comment_missing_comment_url_key():
+    # Arrange
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN
+    }
+
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch:
+        result = update_comment("Test comment", base_args)
+
+    # Assert
