@@ -17,15 +17,17 @@ from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
 from services.github.actions_manager import get_workflow_run_logs, get_workflow_run_path
+from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
 from services.github.github_manager import get_remote_file_content, get_remote_file_tree
 from services.github.github_types import CheckRunCompletedPayload
+from services.github.github_utils import create_permission_url
 from services.github.pulls_manager import (
     get_pull_request,
     get_pull_request_file_changes,
 )
-from services.github.github_utils import create_permission_url
+from services.github.pull_requests.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.check_run import CheckRun
 from services.github.types.check_suite import CheckSuite
@@ -251,6 +253,25 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     previous_calls = []
     retry_count = 0
     while True:
+        # Safety check: Stop if PR is closed or branch is deleted
+        if not is_pull_request_open(
+            owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+        ):
+            body = f"Process stopped: Pull request #{pull_number} was closed during execution."
+            print(body)
+            if comment_url:
+                update_comment(body=body, base_args=base_args)
+            break
+
+        if not check_branch_exists(
+            owner=owner_name, repo=repo_name, branch_name=head_branch, token=token
+        ):
+            body = f"Process stopped: Branch '{head_branch}' has been deleted"
+            print(body)
+            if comment_url:
+                update_comment(body=body, base_args=base_args)
+            break
+
         # Explore repo
         (
             messages,

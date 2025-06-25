@@ -9,6 +9,7 @@ from config import EXCEPTION_OWNERS, STRIPE_PRODUCT_ID_FREE
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
+from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.get_commit_diff import get_commit_diff
@@ -16,6 +17,7 @@ from services.github.github_manager import get_remote_file_tree
 from services.github.pull_requests.find_pull_request_by_branch import (
     find_pull_request_by_branch,
 )
+from services.github.pull_requests.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.owner import Owner
 from services.github.types.repository import Repository
@@ -219,6 +221,28 @@ def handle_push_event(payload: dict[str, Any]) -> None:
     previous_calls = []
     retry_count = 0
     while True:
+        # Safety check: Stop if PR is closed or branch is deleted
+        if pull_number > 0:
+            # Check if PR is still open
+            if not is_pull_request_open(
+                owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+            ):
+                body = f"Process stopped: Pull request #{pull_number} was closed during execution."
+                print(body)
+                if comment_url:
+                    update_comment(body=body, base_args=base_args)
+                break
+
+        # Check if branch still exists
+        if not check_branch_exists(
+            owner=owner_name, repo=repo_name, branch_name=branch_name, token=token
+        ):
+            body = f"Process stopped: Branch '{branch_name}' has been deleted"
+            print(body)
+            if comment_url:
+                update_comment(body=body, base_args=base_args)
+            break
+
         # Explore repo to understand the codebase and identify missing tests
         (
             messages,

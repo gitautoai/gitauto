@@ -3,12 +3,18 @@ from json import dumps
 
 # Local imports
 from config import GITHUB_APP_USER_NAME
+
+# Local imports (GitHub)
+from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.issues_manager import get_issue_body
+from services.github.pull_requests.is_pull_request_open import is_pull_request_open
 from services.github.pulls_manager import (
     get_pull_request_file_changes,
     update_pull_request_body,
 )
 from services.github.token.get_installation_token import get_installation_access_token
+
+# Local imports (OpenAI)
 from services.openai.chat import chat_with_ai
 from services.openai.instructions.write_pr_body import WRITE_PR_BODY
 
@@ -30,9 +36,11 @@ def write_pr_description(payload: dict):
     pull_title: str = pull["title"]
     if pull_title.startswith("GitAuto: "):
         pull_title = pull_title[9:]  # Remove "GitAuto: " prefix
+    pull_number: int = pull["number"]
     pull_body: str = pull["body"]
     pull_url: str = pull["url"]
     pull_files_url = pull_url + "/files"
+    head_branch: str = pull["head"]["ref"]
 
     # Get the pull request file changes
     file_changes = get_pull_request_file_changes(url=pull_files_url, token=token)
@@ -67,6 +75,19 @@ def write_pr_description(payload: dict):
             "file_changes": file_changes,
         }
     )
+
+    # Safety check: Stop if PR is closed or branch is deleted before AI call
+    if not is_pull_request_open(
+        owner=owner, repo=repo_name, pull_number=pull_number, token=token
+    ):
+        print(f"Skipping AI call: PR #{pull_number} has been closed")
+        return
+
+    if not check_branch_exists(
+        owner=owner, repo=repo_name, branch_name=head_branch, token=token
+    ):
+        print(f"Skipping AI call: Branch '{head_branch}' has been deleted")
+        return
 
     # Write a PR description to the issue
     pr_body = chat_with_ai(

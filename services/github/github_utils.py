@@ -6,7 +6,7 @@ from typing import Literal, cast
 
 # Local imports
 from config import PRODUCT_ID, ISSUE_NUMBER_FORMAT, GITHUB_APP_USER_ID
-from services.github.branch_manager import check_branch_exists
+from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.github_types import BaseArgs, GitHubLabeledPayload
 from services.github.github_manager import get_user_public_email
 from services.github.issues_manager import get_parent_issue

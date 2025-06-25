@@ -8,7 +8,8 @@ from fastapi import HTTPException, Request
 
 # Local imports
 from config import ISSUE_NUMBER_FORMAT, PRODUCT_ID
-from services.github.branch_manager import get_default_branch, check_branch_exists
+from services.github.branches.check_branch_exists import check_branch_exists
+from services.github.branches.get_default_branch import get_default_branch
 from services.github.github_types import BaseArgs
 from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.token.get_installation_token import get_installation_access_token
