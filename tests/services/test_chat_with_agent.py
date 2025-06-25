@@ -41,7 +41,8 @@ class TestChatWithAgent:
     @patch('services.chat_with_agent.get_model')
     @patch('services.chat_with_agent.chat_with_openai')
     @patch('services.chat_with_agent.update_comment')
-    def test_chat_with_agent_comment_mode_success(self, mock_update_comment, mock_chat_openai, mock_get_model, mock_base_args, mock_messages):
+    @patch('services.chat_with_agent.tools_to_call')
+    def test_chat_with_agent_comment_mode_success(self, mock_tools_to_call, mock_update_comment, mock_chat_openai, mock_get_model, mock_base_args, mock_messages):
         """Test chat_with_agent in comment mode with successful execution."""
         # Arrange
         mock_get_model.return_value = OPENAI_MODEL_ID_O3_MINI
@@ -53,6 +54,10 @@ class TestChatWithAgent:
             100,
             50,
         )
+        # Mock tools_to_call to make the function execution succeed
+        mock_tool_function = MagicMock(return_value="Comment updated successfully")
+        mock_tools_to_call.__contains__.return_value = True
+        mock_tools_to_call.__getitem__.return_value = mock_tool_function
         
         # Act
         result = chat_with_agent(
