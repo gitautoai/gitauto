@@ -7,6 +7,7 @@ from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.repositories.get_repository import get_repository_settings
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
+from utils.files.is_excluded_from_testing import is_excluded_from_testing
 from utils.files.is_test_file import is_test_file
 from utils.text.issue_template import (
     get_issue_title_for_pr_merged,
@@ -46,9 +47,15 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
     pull_files_url = f"{pull_url}/files"
     changed_filenames = get_pull_request_files(url=pull_files_url, token=token)
 
-    # Filter for code files that might need tests - using new functions directly
+    # Filter for code files that might need tests - including exclusion check
     code_files = [
-        f for f in changed_filenames if is_code_file(f) and not is_test_file(f)
+        f
+        for f in changed_filenames
+        if (
+            is_code_file(f)
+            and not is_test_file(f)
+            and not is_excluded_from_testing(repo_id, f)
+        )
     ]
 
     # If no code files were changed, return early
