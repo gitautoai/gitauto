@@ -41,7 +41,7 @@ from utils.text.text_copy import (
 from utils.urls.extract_urls import extract_image_urls
 
 
-async def handle_gitauto(
+async def create_pr_from_issue(
     payload: GitHubLabeledPayload,
     trigger_type: Literal["label", "comment", "review_comment"],
     input_from: Literal["github", "jira"],
