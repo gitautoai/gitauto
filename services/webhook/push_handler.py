@@ -62,8 +62,14 @@ def handle_push_event(payload: dict[str, Any]) -> None:
     # Extract push related variables
     ref: str = payload["ref"]  # refs/heads/branch-name
     branch_name: str = ref.replace("refs/heads/", "")
+    default_branch = repo["default_branch"]
     commits: list[dict[str, Any]] = payload["commits"]
     head_commit: dict[str, Any] = payload["head_commit"]
+
+    # Skip if push is to default branch
+    if branch_name == default_branch:
+        print(f"Skipping push to default branch: {default_branch}")
+        return
 
     # Skip if no commits
     if not commits:
