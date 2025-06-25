@@ -13,7 +13,7 @@ from utils.error.handle_exceptions import handle_exceptions
 def update_comment(body: str, base_args: BaseArgs):
     """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
     token = base_args["token"]
-    comment_url = base_args["comment_url"]
+    comment_url = base_args.get("comment_url")
     if comment_url is None:
         return None
 
