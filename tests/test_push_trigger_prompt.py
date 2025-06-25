@@ -23,6 +23,10 @@ class TestPushTriggerPrompt(unittest.TestCase):
         for instruction in expected_instructions:
             with self.subTest(instruction=instruction):
                 self.assertIn(instruction, PUSH_TRIGGER_SYSTEM_PROMPT)
+    def test_prompt_structure(self):
+        self.assertIn('Steps:', PUSH_TRIGGER_SYSTEM_PROMPT)
+        self.assertIn('CRITICAL RULES:', PUSH_TRIGGER_SYSTEM_PROMPT)
+
 
 
 if __name__ == '__main__':
