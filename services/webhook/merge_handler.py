@@ -47,23 +47,22 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
     pull_files_url = f"{pull_url}/files"
     changed_filenames = get_pull_request_files(url=pull_files_url, token=token)
 
-    # Filter for code files that might need tests - including exclusion check
+    # Filter for code files that might need tests
+    coverage_data = get_coverages(repo_id=repo_id, filenames=changed_filenames)
+
     code_files = [
         f
         for f in changed_filenames
         if (
             is_code_file(f)
             and not is_test_file(f)
-            and not is_excluded_from_testing(repo_id, f)
+            and not is_excluded_from_testing(f, coverage_data)
         )
     ]
 
     # If no code files were changed, return early
     if not code_files:
         return
-
-    # Get coverage data for files if it exists
-    coverage_data = get_coverages(repo_id=repo_id, filenames=code_files)
 
     # Build the list of files to include in the issue
     files_to_test = []

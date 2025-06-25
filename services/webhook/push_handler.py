@@ -24,6 +24,7 @@ from services.github.types.repository import Repository
 from services.stripe.subscriptions import get_stripe_product_id
 
 # Local imports (Supabase)
+from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.owners_manager import get_stripe_customer_id
 from services.supabase.repositories.get_repository import get_repository_settings
 from services.webhook.utils.create_system_messages import create_system_messages
@@ -84,6 +85,10 @@ def handle_push_event(payload: dict[str, Any]) -> None:
         if not commit_diff:
             continue
 
+        # Get coverage data for all files in this commit
+        all_files_in_commit = [file["filename"] for file in commit_diff["files"]]
+        coverage_data = get_coverages(repo_id=repo_id, filenames=all_files_in_commit)
+
         # Filter out test files, non-code files, and excluded files
         filtered_files = []
         for file in commit_diff["files"]:
@@ -91,7 +96,7 @@ def handle_push_event(payload: dict[str, Any]) -> None:
             if (
                 is_code_file(filename)
                 and not is_test_file(filename)
-                and not is_excluded_from_testing(repo_id, filename)
+                and not is_excluded_from_testing(filename, coverage_data)
             ):
                 filtered_files.append(file)
                 has_code_files = True
