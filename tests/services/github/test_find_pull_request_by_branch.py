@@ -1,16 +1,19 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 
 from services.github.pull_requests.find_pull_request_by_branch import find_pull_request_by_branch
 
 
 class TestFindPullRequestByBranch(unittest.TestCase):
+    @patch('services.github.pull_requests.find_pull_request_by_branch.gql')
     @patch('services.github.pull_requests.find_pull_request_by_branch.get_graphql_client')
-    def test_removed_htmlUrl(self, mock_get_client):
+    def test_removed_htmlUrl(self, mock_get_client, mock_gql):
         """Test that the GraphQL query does not contain htmlUrl field."""
         # Mock the GraphQL client and its execute method
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
+        # Make gql function pass through the query string for testing
+        mock_gql.side_effect = lambda query: query
         
         # Mock the response to return a valid pull request
         mock_client.execute.return_value = {
@@ -37,10 +40,9 @@ class TestFindPullRequestByBranch(unittest.TestCase):
         self.assertEqual(result["number"], 42)
         self.assertEqual(result["title"], "Test PR")
         
-        # Get the query that was executed
-        mock_client.execute.assert_called_once()
-        query_call = mock_client.execute.call_args[0][0]
-        query_string = str(query_call)
+        # Get the query string that was passed to gql
+        mock_gql.assert_called_once()
+        query_string = mock_gql.call_args[0][0]
         
         # Ensure the query does not contain 'htmlUrl'
         self.assertNotIn("htmlUrl", query_string, "Query should not contain htmlUrl field after fix.")
@@ -52,12 +54,15 @@ class TestFindPullRequestByBranch(unittest.TestCase):
         self.assertIn("headRef", query_string, "Query should contain headRef field.")
         self.assertIn("baseRef", query_string, "Query should contain baseRef field.")
 
+    @patch('services.github.pull_requests.find_pull_request_by_branch.gql')
     @patch('services.github.pull_requests.find_pull_request_by_branch.get_graphql_client')
-    def test_no_pull_request_found(self, mock_get_client):
+    def test_no_pull_request_found(self, mock_get_client, mock_gql):
         """Test that function returns None when no pull request is found."""
         # Mock the GraphQL client
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
+        # Make gql function pass through the query string
+        mock_gql.side_effect = lambda query: query
         
         # Mock empty response
         mock_client.execute.return_value = {
@@ -74,12 +79,15 @@ class TestFindPullRequestByBranch(unittest.TestCase):
         # Verify None is returned when no PR is found
         self.assertIsNone(result)
 
+    @patch('services.github.pull_requests.find_pull_request_by_branch.gql')
     @patch('services.github.pull_requests.find_pull_request_by_branch.get_graphql_client')
-    def test_graphql_error_handling(self, mock_get_client):
+    def test_graphql_error_handling(self, mock_get_client, mock_gql):
         """Test that function handles GraphQL errors gracefully."""
         # Mock the GraphQL client to raise an exception
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
+        # Make gql function pass through the query string
+        mock_gql.side_effect = lambda query: query
         mock_client.execute.side_effect = Exception("GraphQL error")
         
         # Call the function - should not raise exception due to @handle_exceptions decorator
