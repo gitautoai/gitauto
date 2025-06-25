@@ -15,13 +15,14 @@ from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comment_manager import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.github_manager import get_remote_file_content, get_remote_file_tree
+from services.github.github_manager import get_remote_file_content
 from services.github.pull_requests.is_pull_request_open import is_pull_request_open
 from services.github.pulls_manager import (
     get_pull_request_file_contents,
     get_review_thread_comments,
 )
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.trees.get_file_tree import get_file_tree
 from services.github.types.owner import Owner
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
@@ -131,7 +132,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
         "pull_url": pull_url,
         "pull_file_url": pull_file_url,
         "new_branch": head_branch,
-        "base_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_remote_file_tree requires the base branch
+        "base_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_file_tree requires the base branch
         "review_id": review_id,
         "review_path": review_path,
         "review_subject_type": review_subject_type,
@@ -185,7 +186,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     update_comment(body=comment_body, base_args=base_args)
 
     # Get the file tree in the root of the repo
-    file_tree, tree_comment = get_remote_file_tree(base_args=base_args)
+    file_tree, tree_comment = get_file_tree(base_args=base_args)
     p += 5
     log_messages.append(tree_comment)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))

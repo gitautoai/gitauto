@@ -24,11 +24,11 @@ from services.github.github_manager import (
     get_latest_remote_commit_sha,
     get_remote_file_content,
     get_remote_file_content_by_url,
-    get_remote_file_tree,
     add_reaction_to_issue,
 )
 from services.github.github_types import GitHubLabeledPayload
 from services.github.github_utils import deconstruct_github_payload
+from services.github.trees.get_file_tree import get_file_tree
 
 # Local imports (Jira, OpenAI, Slack)
 from services.jira.jira_manager import deconstruct_jira_payload
@@ -177,7 +177,7 @@ async def create_pr_from_issue(
         )
 
     # Check out the issue comments, and file tree
-    file_tree, tree_comment = get_remote_file_tree(base_args=base_args)
+    file_tree, tree_comment = get_file_tree(base_args=base_args)
     p += 5
     log_messages.append(tree_comment)
     update_comment(

@@ -21,7 +21,7 @@ from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.github_manager import get_remote_file_content, get_remote_file_tree
+from services.github.github_manager import get_remote_file_content
 from services.github.github_types import CheckRunCompletedPayload
 from services.github.github_utils import create_permission_url
 from services.github.pulls_manager import (
@@ -30,6 +30,7 @@ from services.github.pulls_manager import (
 )
 from services.github.pull_requests.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.trees.get_file_tree import get_file_tree
 from services.github.types.check_run import CheckRun
 from services.github.types.check_suite import CheckSuite
 from services.github.types.owner import Owner
@@ -110,7 +111,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "is_fork": is_fork,
         "issue_number": pull_number,
         "new_branch": head_branch,
-        "base_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_remote_file_tree requires the base branch
+        "base_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_file_tree requires the base branch
         "sender_id": sender_id,
         "sender_name": sender_name,
         "pull_number": pull_number,
@@ -184,7 +185,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     update_comment(body=comment_body, base_args=base_args)
 
     # Get the file tree in the root of the repo
-    file_tree: str = get_remote_file_tree(base_args=base_args)
+    file_tree: str = get_file_tree(base_args=base_args)
     p += 5
     log_messages.append("Checked out the file tree in the repo.")
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))

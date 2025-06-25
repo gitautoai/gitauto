@@ -1,7 +1,7 @@
 # Local imports
 from services.coverages.parse_lcov_coverage import parse_lcov_coverage
 from services.github.actions_manager import get_workflow_artifacts, download_artifact
-from services.github.github_manager import get_remote_file_tree
+from services.github.trees.get_file_tree import get_file_tree
 from services.github.repositories.get_repository_languages import (
     get_repository_languages,
 )
@@ -70,7 +70,7 @@ async def handle_workflow_coverage(
         }
 
         # Get all source files from the repository
-        all_files, _ = get_remote_file_tree(base_args=base_args)
+        all_files, _ = get_file_tree(base_args=base_args)
 
         # Filter files based on language extension
         extension_map = {
