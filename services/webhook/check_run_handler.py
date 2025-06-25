@@ -20,6 +20,7 @@ from services.github.actions_manager import get_workflow_run_logs, get_workflow_
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
+from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.github_manager import get_remote_file_content, get_remote_file_tree
 from services.github.github_types import CheckRunCompletedPayload
 from services.github.github_utils import create_permission_url
@@ -116,6 +117,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "workflow_id": workflow_id,
         "check_run_name": check_run_name,
         "token": token,
+        "skip_ci": True,
     }
     # Print who, what, and where
     print(
@@ -352,6 +354,11 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
 
         # Because the agent is committing changes, keep doing the loop
         retry_count = 0
+
+    # Trigger final test workflows with an empty commit
+    body = "Creating final empty commit to trigger workflows..."
+    update_comment(body=body, base_args=base_args)
+    create_empty_commit(base_args)
 
     # Create a pull request to the base branch
     msg = f"Committed the Check Run `{check_run_name}` error fix! Running it again."

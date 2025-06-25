@@ -12,6 +12,7 @@ from services.chat_with_agent import chat_with_agent
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
+from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.commits.get_commit_diff import get_commit_diff
 from services.github.github_manager import get_remote_file_tree
 from services.github.pull_requests.find_pull_request_by_branch import (
@@ -154,6 +155,7 @@ def handle_push_event(payload: dict[str, Any]) -> None:
         "sender_id": sender_id,
         "sender_name": sender_name,
         "token": token,
+        "skip_ci": True,
     }
 
     # Return here if stripe_customer_id is not found
@@ -303,6 +305,14 @@ def handle_push_event(payload: dict[str, Any]) -> None:
 
         # Because the agent is committing changes, keep doing the loop
         retry_count = 0
+
+    # Trigger final test workflows with an empty commit
+    body = "Creating final empty commit to trigger workflows..."
+    if comment_url:
+        update_comment(body=body, base_args=base_args)
+    else:
+        print(body)
+    create_empty_commit(base_args)
 
     # Final message
     final_msg = "Finished analyzing commits and adding missing tests!"

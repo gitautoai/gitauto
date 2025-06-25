@@ -16,6 +16,7 @@ from services.github.comment_manager import delete_my_comments
 from services.github.comments.create_comment import create_comment
 from services.github.comments.get_comments import get_comments
 from services.github.comments.update_comment import update_comment
+from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.file_manager import find_config_files
 from services.github.github_manager import (
     create_pull_request,
@@ -389,6 +390,15 @@ async def create_pr_from_issue(
 
         # Because the agent is committing changes, keep doing the loop
         retry_count = 0
+
+    # Trigger final test workflows with an empty commit
+    comment_body = "Triggering workflows..."
+    p += 5
+    log_messages.append(comment_body)
+    update_comment(
+        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
+    )
+    create_empty_commit(base_args)
 
     # Create a pull request to the base branch
     comment_body = "Creating a pull request."
