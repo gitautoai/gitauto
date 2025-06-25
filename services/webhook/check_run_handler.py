@@ -14,6 +14,8 @@ from config import (
     UTF8,
 )
 from services.chat_with_agent import chat_with_agent
+
+# Local imports (GitHub)
 from services.github.actions_manager import get_workflow_run_logs, get_workflow_run_path
 from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
@@ -30,12 +32,20 @@ from services.github.types.check_suite import CheckSuite
 from services.github.types.owner import Owner
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
+
+# Local imports (Stripe)
 from services.stripe.subscriptions import get_stripe_product_id
+
+# Local imports (Supabase)
 from services.supabase.owners_manager import get_stripe_customer_id
+from services.supabase.repositories.get_repository import get_repository_settings
 from services.supabase.usage.get_retry_pairs import get_retry_workflow_id_hash_pairs
 from services.supabase.usage.update_retry_pairs import (
     update_retry_workflow_id_hash_pairs,
 )
+
+# Local imports (Others)
+from services.webhook.utils.create_system_messages import create_system_messages
 from utils.colors.colorize_log import colorize
 from utils.progress_bar.progress_bar import create_progress_bar
 
@@ -217,6 +227,9 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
+    # Get repository settings
+    repo_settings = get_repository_settings(repo_id=repo_id)
+
     # Plan how to fix the error
     today = datetime.now().strftime("%Y-%m-%d")
     input_message: dict[str, str] = {
@@ -229,7 +242,10 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "today": today,
     }
     user_input = json.dumps(obj=input_message)
-    messages = [{"role": "user", "content": user_input}]
+
+    # Create messages
+    system_messages = create_system_messages(repo_settings=repo_settings)
+    messages = system_messages + [{"role": "user", "content": user_input}]
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []

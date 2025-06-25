@@ -7,6 +7,8 @@ from typing import Any
 # Local imports
 from config import EXCEPTION_OWNERS, STRIPE_PRODUCT_ID_FREE
 from services.chat_with_agent import chat_with_agent
+
+# Local imports (GitHub)
 from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.get_commit_diff import get_commit_diff
@@ -17,9 +19,16 @@ from services.github.pull_requests.find_pull_request_by_branch import (
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.owner import Owner
 from services.github.types.repository import Repository
+
+# Local imports (Stripe)
 from services.stripe.subscriptions import get_stripe_product_id
+
+# Local imports (Supabase)
 from services.supabase.owners_manager import get_stripe_customer_id
 from services.supabase.repositories.get_repository import get_repository_settings
+from services.webhook.utils.create_system_messages import create_system_messages
+
+# Local imports (Utils)
 from utils.colors.colorize_log import colorize
 from utils.files.is_code_file import is_code_file
 from utils.files.is_test_file import is_test_file
@@ -41,10 +50,6 @@ def handle_push_event(payload: dict[str, Any]) -> None:
     if repo_settings and not repo_settings.get("trigger_on_commit", False):
         print(f"Skipping push event for {repo_name} - trigger_on_commit is disabled")
         return
-
-    repo_rules = None
-    if repo_settings and repo_settings.get("repo_rules", ""):
-        repo_rules = repo_settings.get("repo_rules", "")
 
     # Extract owner related variables
     owner: Owner = repo["owner"]
@@ -185,9 +190,10 @@ def handle_push_event(payload: dict[str, Any]) -> None:
         "today": today,
     }
 
+    system_messages = create_system_messages(repo_settings=repo_settings)
     messages = [
         {"role": "system", "content": PUSH_TRIGGER_SYSTEM_PROMPT},
-        {"role": "system", "content": f"## Repository rules:\n\n{repo_rules}"},
+        *system_messages,
         {"role": "user", "content": json.dumps(input_message)},
     ]
 
