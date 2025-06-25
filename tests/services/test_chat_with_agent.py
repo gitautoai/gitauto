@@ -79,7 +79,8 @@ class TestChatWithAgent:
     @patch('services.chat_with_agent.get_model')
     @patch('services.chat_with_agent.chat_with_claude')
     @patch('services.chat_with_agent.update_comment')
-    def test_chat_with_agent_uses_claude_when_not_o3_mini(self, mock_update_comment, mock_chat_claude, mock_get_model, mock_base_args, mock_messages):
+    @patch('services.chat_with_agent.tools_to_call')
+    def test_chat_with_agent_uses_claude_when_not_o3_mini(self, mock_tools_to_call, mock_update_comment, mock_chat_claude, mock_get_model, mock_base_args, mock_messages):
         """Test that chat_with_agent uses Claude when model is not O3 Mini."""
         # Arrange
         mock_get_model.return_value = "claude-3-5-sonnet-latest"
@@ -91,6 +92,10 @@ class TestChatWithAgent:
             100,
             50,
         )
+        # Mock tools_to_call to make the function execution succeed
+        mock_tool_function = MagicMock(return_value="Comment updated successfully")
+        mock_tools_to_call.__contains__.return_value = True
+        mock_tools_to_call.__getitem__.return_value = mock_tool_function
         
         # Act
         chat_with_agent(
