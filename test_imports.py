@@ -27,15 +27,15 @@ def test_imports():
         print("✓ find_pull_request_by_branch import works")
         
         print("\n✅ All imports successful!")
-        return True
+        assert True  # All imports successful
         
     except ImportError as e:
         print(f"❌ Import error: {e}")
-        return False
+        assert False, f"Import error: {e}"
     except Exception as e:
         print(f"❌ Unexpected error: {e}")
-        return False
+        assert False, f"Unexpected error: {e}"
 
 if __name__ == "__main__":
-    success = test_imports()
-    exit(0 if success else 1)
+    test_imports()
+    print("Test completed successfully!")
