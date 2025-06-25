@@ -250,6 +250,14 @@ def test_update_comment_empty_comment_url():
         "token": TOKEN,
         "comment_url": ""
     }
+    
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch:
+        result = update_comment("Test comment", base_args)
+    
+    # Assert
+    mock_patch.assert_not_called()
+    assert result is None
 
 
 def test_update_comment_non_404_error_status():
@@ -317,3 +325,36 @@ def test_update_comment_special_characters():
     with patch("services.github.comments.update_comment.patch") as mock_patch:
         mock_patch.return_value = mock_response
         result = update_comment(special_body, base_args)
+    
+    # Assert
+    mock_patch.assert_called_once()
+    assert result == {"id": 123, "body": special_body}
+    assert mock_patch.call_args[1]["json"] == {"body": special_body}
+
+
+def test_update_comment_404_logging_behavior():
+    # Arrange - test the specific logging behavior for 404 errors
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+    comment_url = "https://api.github.com/repos/owner/repo/issues/comments/999"
+    
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "comment_url": comment_url
+    }
+    
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch, \
+         patch("services.github.comments.update_comment.logging.info") as mock_log_info:
+        mock_patch.return_value = mock_response
+        result = update_comment("Test comment", base_args)
+    
+    # Assert
+    mock_patch.assert_called_once()
+    # Verify the exact logging call
+    mock_log_info.assert_called_once_with("Comment %s not found", comment_url)
+    assert result is None
+    # Verify that raise_for_status is NOT called for 404
+    mock_response.raise_for_status.assert_not_called()
