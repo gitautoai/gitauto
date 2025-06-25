@@ -11,9 +11,11 @@ from config import (
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
+from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comment_manager import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.github.github_manager import get_remote_file_content, get_remote_file_tree
+from services.github.pull_requests.is_pull_request_open import is_pull_request_open
 from services.github.pulls_manager import (
     get_pull_request_file_contents,
     get_review_thread_comments,
@@ -210,6 +212,25 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     previous_calls = []
     retry_count = 0
     while True:
+        # Safety check: Stop if PR is closed or branch is deleted
+        if not is_pull_request_open(
+            owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+        ):
+            body = f"Process stopped: Pull request #{pull_number} was closed during execution."
+            print(body)
+            if comment_url:
+                update_comment(body=body, base_args=base_args)
+            break
+
+        if not check_branch_exists(
+            owner=owner_name, repo=repo_name, branch_name=head_branch, token=token
+        ):
+            body = f"Process stopped: Branch '{head_branch}' has been deleted"
+            print(body)
+            if comment_url:
+                update_comment(body=body, base_args=base_args)
+            break
+
         # Explore repo
         (
             messages,

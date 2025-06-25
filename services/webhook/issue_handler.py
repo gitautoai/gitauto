@@ -8,7 +8,10 @@ from typing import Literal
 # Local imports
 from config import EXCEPTION_OWNERS, PRODUCT_ID, PRODUCT_NAME, PR_BODY_STARTS_WITH
 from services.chat_with_agent import chat_with_agent
+
+# Local imports (GitHub)
 from services.github.asset_manager import get_base64, render_text
+from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comment_manager import delete_my_comments
 from services.github.comments.create_comment import create_comment
 from services.github.comments.get_comments import get_comments
@@ -25,13 +28,19 @@ from services.github.github_manager import (
 )
 from services.github.github_types import GitHubLabeledPayload
 from services.github.github_utils import deconstruct_github_payload
+
+# Local imports (Jira, OpenAI, Slack)
 from services.jira.jira_manager import deconstruct_jira_payload
 from services.openai.vision import describe_image
 from services.slack.slack import slack
+
+# Local imports (Supabase, Webhook)
 from services.supabase.gitauto_manager import create_user_request
 from services.supabase.usage.update_usage import update_usage
 from services.supabase.users_manager import get_how_many_requests_left_and_cycle
 from services.webhook.utils.create_system_messages import create_system_messages
+
+# Local imports (Utils)
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.text.text_copy import (
     UPDATE_COMMENT_FOR_422,
@@ -290,6 +299,16 @@ async def create_pr_from_issue(
     previous_calls = []
     retry_count = 0
     while True:
+        # Safety check: Stop if branch is deleted
+        if not check_branch_exists(
+            owner=owner_name, repo=repo_name, branch_name=new_branch_name, token=token
+        ):
+            body = f"Process stopped: Branch '{new_branch_name}' has been deleted"
+            print(body)
+            if comment_url:
+                update_comment(body=body, base_args=base_args)
+            break
+
         # Explore repo
         (
             messages,
