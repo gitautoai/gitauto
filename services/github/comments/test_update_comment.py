@@ -1,5 +1,6 @@
 import pytest
-from unittest.mock import patch, MagicMock
+import logging
+from unittest.mock import patch, MagicMock, Mock
 
 from services.github.comments.update_comment import update_comment
 from tests.constants import OWNER, REPO, TOKEN
