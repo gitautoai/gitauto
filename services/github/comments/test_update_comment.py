@@ -116,3 +116,137 @@ def test_update_comment_with_headers():
     mock_patch.assert_called_once()
     assert mock_patch.call_args[1]["headers"] == {"Authorization": f"Bearer {TOKEN}"}
     assert result == {"id": 123, "body": "Test comment"}
+
+
+def test_update_comment_404_not_found():
+    # Arrange
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+    
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "comment_url": "https://api.github.com/repos/owner/repo/issues/comments/123"
+    }
+    
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch, \
+         patch("services.github.comments.update_comment.logging") as mock_logging:
+        mock_patch.return_value = mock_response
+        result = update_comment("Test comment", base_args)
+    
+    # Assert
+    mock_patch.assert_called_once()
+    mock_logging.info.assert_called_once_with("Comment %s not found", base_args["comment_url"])
+    assert result is None
+
+
+def test_update_comment_missing_comment_url_key():
+    # Arrange - test when comment_url key is missing from base_args
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN
+        # comment_url is missing
+    }
+    
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch:
+        result = update_comment("Test comment", base_args)
+    
+    # Assert
+    mock_patch.assert_not_called()
+    assert result is None
+
+
+def test_update_comment_timeout_parameter():
+    # Arrange
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"id": 123, "body": "Test comment"}
+    
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "comment_url": "https://api.github.com/repos/owner/repo/issues/comments/123"
+    }
+    
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch, \
+         patch("services.github.comments.update_comment.TIMEOUT", 120) as mock_timeout:
+        mock_patch.return_value = mock_response
+        result = update_comment("Test comment", base_args)
+    
+    # Assert
+    mock_patch.assert_called_once()
+    # Verify timeout parameter is passed correctly
+    call_kwargs = mock_patch.call_args[1]
+    assert call_kwargs["timeout"] == 120
+    assert result == {"id": 123, "body": "Test comment"}
+
+
+def test_update_comment_print_output():
+    # Arrange
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"id": 123, "body": "Test comment"}
+    
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "comment_url": "https://api.github.com/repos/owner/repo/issues/comments/123"
+    }
+    
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch, \
+         patch("builtins.print") as mock_print:
+        mock_patch.return_value = mock_response
+        result = update_comment("Test comment body", base_args)
+    
+    # Assert
+    mock_patch.assert_called_once()
+    mock_print.assert_called_once_with("Test comment body\n")
+    assert result == {"id": 123, "body": "Test comment"}
+
+
+def test_update_comment_all_parameters():
+    # Arrange - test that all parameters are passed correctly to the patch request
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"id": 456, "body": "Complete test"}
+    
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "comment_url": "https://api.github.com/repos/test/repo/issues/comments/456"
+    }
+    
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch, \
+         patch("services.github.comments.update_comment.create_headers") as mock_create_headers, \
+         patch("services.github.comments.update_comment.TIMEOUT", 120):
+        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}", "Accept": "application/vnd.github.v3+json"}
+        mock_patch.return_value = mock_response
+        result = update_comment("Complete test body", base_args)
+    
+    # Assert
+    mock_patch.assert_called_once()
+    call_args = mock_patch.call_args
+    
+    # Verify all parameters
+    assert call_args[1]["url"] == base_args["comment_url"]
+    assert call_args[1]["headers"] == {"Authorization": f"Bearer {TOKEN}", "Accept": "application/vnd.github.v3+json"}
+    assert call_args[1]["json"] == {"body": "Complete test body"}
+    assert call_args[1]["timeout"] == 120
+    assert result == {"id": 456, "body": "Complete test"}
+
+
+def test_update_comment_empty_comment_url():
+    # Arrange - test when comment_url is an empty string
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "comment_url": ""
+    }
