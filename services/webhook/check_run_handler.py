@@ -245,7 +245,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
 
     # Create messages
     system_messages = create_system_messages(repo_settings=repo_settings)
-    messages = system_messages + [{"role": "user", "content": user_input}]
+    messages = [{"role": "user", "content": user_input}]
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
@@ -263,6 +263,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             p,
         ) = chat_with_agent(
             messages=messages,
+            system_messages=system_messages,
             base_args=base_args,
             mode="get",  # explore can not be used here because "search_remote_file_contents" can search files only in the default branch NOT in the branch that is merged into the default branch
             previous_calls=previous_calls,
@@ -282,6 +283,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         #     p,
         # ) = chat_with_agent(
         #     messages=messages,
+        #     system_messages=system_messages,
         #     base_args=base_args,
         #     mode="search",
         #     previous_calls=previous_calls,
@@ -301,6 +303,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             p,
         ) = chat_with_agent(
             messages=messages,
+            system_messages=system_messages,
             base_args=base_args,
             mode="commit",
             previous_calls=previous_calls,

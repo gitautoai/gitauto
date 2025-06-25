@@ -37,11 +37,15 @@ def chat_with_agent(
     messages: list[dict[str, Any]],
     base_args: BaseArgs,
     mode: Literal["comment", "commit", "explore", "get", "search"],
+    system_messages: list[dict[str, Any]] | None = None,
     previous_calls: list[dict] | None = None,
     recursion_count: int = 1,
     p: int = 0,
     log_messages: list[str] | None = None,
 ):
+    if system_messages is None:
+        system_messages = []
+
     if previous_calls is None:
         previous_calls = []
 
@@ -66,6 +70,14 @@ def chat_with_agent(
     elif mode == "search":
         system_content = SYSTEM_INSTRUCTION_TO_SEARCH_GOOGLE
         tools = TOOLS_TO_SEARCH_GOOGLE
+
+    # Add additional system messages to the system content
+    if system_messages:
+        additional_content = "\n\n".join(
+            [msg["content"] for msg in system_messages if msg.get("role") == "system"]
+        )
+        if additional_content:
+            system_content += f"\n\n{additional_content}"
 
     while True:
         current_model = get_model()
@@ -234,6 +246,7 @@ def chat_with_agent(
             messages=messages,
             base_args=base_args,
             mode=mode,
+            system_messages=system_messages,
             previous_calls=previous_calls,
             recursion_count=recursion_count + 1,
             p=p + 5,
