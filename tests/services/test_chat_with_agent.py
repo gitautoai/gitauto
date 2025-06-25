@@ -55,7 +55,7 @@ class TestChatWithAgent:
             50,
         )
         # Mock tools_to_call to make the function execution succeed
-        mock_tool_function = MagicMock(return_value="Comment updated successfully")
+        mock_tool_function = MagicMock(return_value="Updated successfully")
         mock_tools_to_call.__contains__.return_value = True
         mock_tools_to_call.__getitem__.return_value = mock_tool_function
         
