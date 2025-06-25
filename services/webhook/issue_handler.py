@@ -268,7 +268,7 @@ async def create_pr_from_issue(
 
     # Create messages
     system_messages = create_system_messages(repo_settings=repo_settings)
-    messages = system_messages + [{"role": "user", "content": user_input}]
+    messages = [{"role": "user", "content": user_input}]
 
     # Create a remote branch
     latest_commit_sha: str = ""
@@ -302,6 +302,7 @@ async def create_pr_from_issue(
             p,
         ) = chat_with_agent(
             messages=messages,
+            system_messages=system_messages,
             base_args=base_args,
             mode="explore",
             previous_calls=previous_calls,
@@ -321,6 +322,7 @@ async def create_pr_from_issue(
         #     p,
         # ) = chat_with_agent(
         #     messages=messages,
+        #     system_messages=system_messages,
         #     base_args=base_args,
         #     mode="search",
         #     previous_calls=previous_calls,
@@ -340,6 +342,7 @@ async def create_pr_from_issue(
             p,
         ) = chat_with_agent(
             messages=messages,
+            system_messages=system_messages,
             base_args=base_args,
             mode="commit",
             previous_calls=previous_calls,

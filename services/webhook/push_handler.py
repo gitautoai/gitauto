@@ -200,12 +200,14 @@ def handle_push_event(payload: dict[str, Any]) -> None:
         "today": today,
     }
 
+    # Prepare system messages
     system_messages = create_system_messages(repo_settings=repo_settings)
-    messages = [
-        {"role": "system", "content": PUSH_TRIGGER_SYSTEM_PROMPT},
-        *system_messages,
-        {"role": "user", "content": json.dumps(input_message)},
-    ]
+    system_messages = [
+        {"role": "system", "content": PUSH_TRIGGER_SYSTEM_PROMPT}
+    ] + system_messages
+
+    # Create user messages only
+    messages = [{"role": "user", "content": json.dumps(input_message)}]
 
     # Loop a process explore repo and commit changes until tests are added
     previous_calls = []
@@ -223,6 +225,7 @@ def handle_push_event(payload: dict[str, Any]) -> None:
             p,
         ) = chat_with_agent(
             messages=messages,
+            system_messages=system_messages,
             base_args=base_args,
             mode="get",
             previous_calls=previous_calls,
@@ -242,6 +245,7 @@ def handle_push_event(payload: dict[str, Any]) -> None:
             p,
         ) = chat_with_agent(
             messages=messages,
+            system_messages=system_messages,
             base_args=base_args,
             mode="commit",
             previous_calls=previous_calls,
