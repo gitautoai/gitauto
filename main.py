@@ -11,7 +11,7 @@ from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
 from config import ENV, GITHUB_WEBHOOK_SECRET, PRODUCT_NAME, SENTRY_DSN, UTF8
-from scheduler import schedule_handler
+from services.webhook.schedule_handler import schedule_handler
 from services.webhook.issue_handler import create_pr_from_issue
 from services.github.github_manager import verify_webhook_signature
 from services.jira.jira_manager import verify_jira_webhook

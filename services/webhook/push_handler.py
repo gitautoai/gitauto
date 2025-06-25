@@ -14,12 +14,12 @@ from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.commits.get_commit_diff import get_commit_diff
-from services.github.github_manager import get_remote_file_tree
 from services.github.pull_requests.find_pull_request_by_branch import (
     find_pull_request_by_branch,
 )
 from services.github.pull_requests.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.trees.get_file_tree import get_file_tree
 from services.github.types.owner import Owner
 from services.github.types.repository import Repository
 
@@ -193,7 +193,7 @@ def handle_push_event(payload: dict[str, Any]) -> None:
         update_comment(body=comment_body, base_args=base_args)
 
     # Get the file tree in the root of the repo
-    file_tree, tree_comment = get_remote_file_tree(base_args=base_args)
+    file_tree, tree_comment = get_file_tree(base_args=base_args)
     p += 10
     log_messages.append(tree_comment)
     if comment_url:
