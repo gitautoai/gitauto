@@ -250,3 +250,70 @@ def test_update_comment_empty_comment_url():
         "token": TOKEN,
         "comment_url": ""
     }
+
+
+def test_update_comment_non_404_error_status():
+    # Arrange - test other HTTP error status codes (not 404)
+    mock_response = MagicMock()
+    mock_response.status_code = 403
+    mock_response.raise_for_status.side_effect = Exception("Forbidden")
+    
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "comment_url": "https://api.github.com/repos/owner/repo/issues/comments/123"
+    }
+    
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch:
+        mock_patch.return_value = mock_response
+        result = update_comment("Test comment", base_args)
+    
+    # Assert
+    mock_patch.assert_called_once()
+    # Should call raise_for_status and handle_exceptions should return None
+    assert result is None
+
+
+def test_update_comment_long_body():
+    # Arrange - test with a very long comment body
+    mock_response = MagicMock()
+    long_body = "A" * 1000  # 1000 character string
+    mock_response.json.return_value = {"id": 123, "body": long_body}
+    
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "comment_url": "https://api.github.com/repos/owner/repo/issues/comments/123"
+    }
+    
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch:
+        mock_patch.return_value = mock_response
+        result = update_comment(long_body, base_args)
+    
+    # Assert
+    mock_patch.assert_called_once()
+    assert result == {"id": 123, "body": long_body}
+    assert mock_patch.call_args[1]["json"] == {"body": long_body}
+
+
+def test_update_comment_special_characters():
+    # Arrange - test with special characters in the body
+    mock_response = MagicMock()
+    special_body = "Test with special chars: @#$%^&*()[]{}|\\:;\"'<>,.?/~`"
+    mock_response.json.return_value = {"id": 123, "body": special_body}
+    
+    base_args = {
+        "owner": OWNER,
+        "repo": REPO,
+        "token": TOKEN,
+        "comment_url": "https://api.github.com/repos/owner/repo/issues/comments/123"
+    }
+    
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch:
+        mock_patch.return_value = mock_response
+        result = update_comment(special_body, base_args)
