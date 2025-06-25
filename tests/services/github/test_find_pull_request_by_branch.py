@@ -1,0 +1,193 @@
+-import pytest
+-from unittest.mock import patch, MagicMock
+-
+-from services.github.pull_requests.find_pull_request_by_branch import find_pull_request_by_branch
+-from tests.constants import OWNER, REPO, TOKEN
+-
+-
+-def test_find_pull_request_by_branch_success():
+-    """Test successful pull request retrieval"""
+-    # Arrange
+-    branch_name = "feature-branch"
+-    expected_pr = {
+-        "number": 123,
+-        "title": "Test PR",
+-        "url": "https://api.github.com/repos/owner/repo/pulls/123",
+-        "headRef": {"name": "feature-branch"},
+-        "baseRef": {"name": "main"}
+-    }
+-    
+-    mock_result = {
+-        "repository": {
+-            "pullRequests": {
+-                "nodes": [expected_pr]
+-            }
+-        }
+-    }
+-    
+-    mock_client = MagicMock()
+-    mock_client.execute.return_value = mock_result
+-    
+-    # Act
+-    with patch("services.github.pull_requests.find_pull_request_by_branch.get_graphql_client") as mock_get_client:
+-        mock_get_client.return_value = mock_client
+-        result = find_pull_request_by_branch(OWNER, REPO, branch_name, TOKEN)
+-    
+-    # Assert
+-    assert result == expected_pr
+-    mock_get_client.assert_called_once_with(token=TOKEN)
+-    mock_client.execute.assert_called_once()
+-    
+-    # Verify the GraphQL query variables
+-    call_args = mock_client.execute.call_args
+-    variables = call_args[1]["variable_values"]
+-    assert variables["owner"] == OWNER
+-    assert variables["repo"] == REPO
+-    assert variables["headRefName"] == branch_name
+-
+-
+-def test_find_pull_request_by_branch_no_results():
+-    """Test when no pull requests are found"""
+-    # Arrange
+-    branch_name = "non-existent-branch"
+-    mock_result = {
+-        "repository": {
+-            "pullRequests": {
+-                "nodes": []
+-            }
+-        }
+-    }
+-    
+-    mock_client = MagicMock()
+-    mock_client.execute.return_value = mock_result
+-    
+-    # Act
+-    with patch("services.github.pull_requests.find_pull_request_by_branch.get_graphql_client") as mock_get_client:
+-        mock_get_client.return_value = mock_client
+-        result = find_pull_request_by_branch(OWNER, REPO, branch_name, TOKEN)
+-    
+-    # Assert
+-    assert result is None
+-
+-
+-def test_find_pull_request_by_branch_missing_repository():
+-    """Test when repository is not found in response"""
+-    # Arrange
+-    branch_name = "feature-branch"
+-    mock_result = {}  # Missing repository key
+-    
+-    mock_client = MagicMock()
+-    mock_client.execute.return_value = mock_result
+-    
+-    # Act
+-    with patch("services.github.pull_requests.find_pull_request_by_branch.get_graphql_client") as mock_get_client:
+-        mock_get_client.return_value = mock_client
+-        result = find_pull_request_by_branch(OWNER, REPO, branch_name, TOKEN)
+-    
+-    # Assert
+-    assert result is None
+-
+-
+-def test_find_pull_request_by_branch_missing_pull_requests():
+-    """Test when pullRequests key is missing from response"""
+-    # Arrange
+-    branch_name = "feature-branch"
+-    mock_result = {
+-        "repository": {}  # Missing pullRequests key
+-    }
+-    
+-    mock_client = MagicMock()
+-    mock_client.execute.return_value = mock_result
+-    
+-    # Act
+-    with patch("services.github.pull_requests.find_pull_request_by_branch.get_graphql_client") as mock_get_client:
+-        mock_get_client.return_value = mock_client
+-        result = find_pull_request_by_branch(OWNER, REPO, branch_name, TOKEN)
+-    
+-    # Assert
+-    assert result is None
+-
+-
+-def test_find_pull_request_by_branch_graphql_error():
+-    """Test when GraphQL query raises an exception"""
+-    # Arrange
+-    branch_name = "feature-branch"
+-    mock_client = MagicMock()
+-    mock_client.execute.side_effect = Exception("GraphQL error")
+-    
+-    # Act
+-    with patch("services.github.pull_requests.find_pull_request_by_branch.get_graphql_client") as mock_get_client:
+-        mock_get_client.return_value = mock_client
+-        result = find_pull_request_by_branch(OWNER, REPO, branch_name, TOKEN)
+-    
+-    # Assert
+-    assert result is None  # handle_exceptions decorator should return None on error
+-
+-
+-def test_find_pull_request_by_branch_client_creation_error():
+-    """Test when GraphQL client creation fails"""
+-    # Arrange
+-    branch_name = "feature-branch"
+-    
+-    # Act
+-    with patch("services.github.pull_requests.find_pull_request_by_branch.get_graphql_client") as mock_get_client:
+-        mock_get_client.side_effect = Exception("Client creation failed")
+-        result = find_pull_request_by_branch(OWNER, REPO, branch_name, TOKEN)
+-    
+-    # Assert
+-    assert result is None  # handle_exceptions decorator should return None on error
+-
+-
+-def test_find_pull_request_by_branch_multiple_results():
+-    """Test when multiple pull requests are returned (should return first one)"""
+-    # Arrange
+-    branch_name = "feature-branch"
+-    first_pr = {
+-        "number": 123,
+-        "title": "First PR",
+-        "url": "https://api.github.com/repos/owner/repo/pulls/123",
+-        "headRef": {"name": "feature-branch"},
+-        "baseRef": {"name": "main"}
+-    }
+-    second_pr = {
+-        "number": 124,
+-        "title": "Second PR",
+-        "url": "https://api.github.com/repos/owner/repo/pulls/124",
+-        "headRef": {"name": "feature-branch"},
+-        "baseRef": {"name": "main"}
+-    }
+-    
+-    mock_result = {
+-        "repository": {
+-            "pullRequests": {
+-                "nodes": [first_pr, second_pr]
+-            }
+-        }
+-    }
+-    
+-    mock_client = MagicMock()
+-    mock_client.execute.return_value = mock_result
+-    
+-    # Act
+-    with patch("services.github.pull_requests.find_pull_request_by_branch.get_graphql_client") as mock_get_client:
+-        mock_get_client.return_value = mock_client
+-        result = find_pull_request_by_branch(OWNER, REPO, branch_name, TOKEN)
+-    
+-    # Assert
+-    assert result == first_pr  # Should return the first PR
+-
+-
+-def test_find_pull_request_by_branch_empty_string_parameters():
+-    """Test with empty string parameters"""
+-    # Arrange
+-    mock_client = MagicMock()
+-    mock_client.execute.side_effect = Exception("Invalid parameters")
+-    
+-    # Act
+-    with patch("services.github.pull_requests.find_pull_request_by_branch.get_graphql_client") as mock_get_client:
+-        mock_get_client.return_value = mock_client
+-        result = find_pull_request_by_branch("", "", "", "")
+-    
+-    # Assert
+-    assert result is None  # handle_exceptions decorator should return None on error
+-
