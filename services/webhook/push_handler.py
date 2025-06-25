@@ -210,7 +210,6 @@ def handle_push_event(payload: dict[str, Any]) -> None:
     # Loop a process explore repo and commit changes until tests are added
     previous_calls = []
     retry_count = 0
-    return
     while True:
         # Explore repo to understand the codebase and identify missing tests
         (

@@ -23,7 +23,6 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
 
     Targets all code files changed in the PR, regardless of whether coverage data exists.
     """
-    return
 
     # Get repository info
     repository = payload["repository"]
