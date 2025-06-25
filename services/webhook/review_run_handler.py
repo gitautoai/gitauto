@@ -14,6 +14,7 @@ from services.chat_with_agent import chat_with_agent
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comment_manager import reply_to_comment
 from services.github.comments.update_comment import update_comment
+from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.github_manager import get_remote_file_content, get_remote_file_tree
 from services.github.pull_requests.is_pull_request_open import is_pull_request_open
 from services.github.pulls_manager import (
@@ -120,6 +121,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
+        "repo_id": repo_id,
         "repo": repo_name,
         "is_fork": is_fork,
         "issue_number": pull_number,
@@ -141,6 +143,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
         "sender_id": sender_id,
         "sender_name": sender_name,
         "token": token,
+        "skip_ci": True,
     }
 
     # Return here if stripe_customer_id is not found
@@ -310,6 +313,11 @@ def handle_review_run(payload: dict[str, Any]) -> None:
 
         # Because the agent is committing changes, keep doing the loop
         retry_count = 0
+
+    # Trigger final test workflows with an empty commit
+    body = "Creating final empty commit to trigger workflows..."
+    update_comment(body=body, base_args=base_args)
+    create_empty_commit(base_args)
 
     # Create a pull request to the base branch
     msg = "Resolved your feedback! Looks good?"

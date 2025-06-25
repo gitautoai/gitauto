@@ -44,6 +44,7 @@ def replace_remote_file_content(
     repo = base_args["repo"]
     token = base_args["token"]
     new_branch = base_args["new_branch"]
+    skip_ci = base_args.get("skip_ci", False)
 
     # Prepare the request
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={new_branch}"
@@ -53,7 +54,11 @@ def replace_remote_file_content(
     get_response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
 
     # Set up the data for the PUT request
-    message = f"Replace content of {file_path}"
+    message = (
+        f"Replace content of {file_path} [skip ci]"
+        if skip_ci
+        else f"Replace content of {file_path}"
+    )
     content = base64.b64encode(file_content.encode(UTF8)).decode(UTF8)
     data = {"message": message, "content": content, "branch": new_branch}
 
