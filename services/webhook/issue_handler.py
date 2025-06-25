@@ -31,6 +31,7 @@ from services.slack.slack import slack
 from services.supabase.gitauto_manager import create_user_request
 from services.supabase.usage.update_usage import update_usage
 from services.supabase.users_manager import get_how_many_requests_left_and_cycle
+from services.webhook.utils.create_system_messages import create_system_messages
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.text.text_copy import (
     UPDATE_COMMENT_FOR_422,
@@ -54,10 +55,11 @@ async def create_pr_from_issue(
 
     # Deconstruct payload based on input_from
     base_args = None
+    repo_settings = None
     if input_from == "github":
-        base_args = deconstruct_github_payload(payload=payload)
+        base_args, repo_settings = deconstruct_github_payload(payload=payload)
     elif input_from == "jira":
-        base_args = deconstruct_jira_payload(payload=payload)
+        base_args, repo_settings = deconstruct_jira_payload(payload=payload)
 
     # Delete all comments made by GitAuto except the one with the checkbox to clean up the issue
     if input_from == "github":
@@ -263,7 +265,10 @@ async def create_pr_from_issue(
             "config_contents": config_contents,
         }
     )
-    messages = [{"role": "user", "content": user_input}]
+
+    # Create messages
+    system_messages = create_system_messages(repo_settings=repo_settings)
+    messages = system_messages + [{"role": "user", "content": user_input}]
 
     # Create a remote branch
     latest_commit_sha: str = ""

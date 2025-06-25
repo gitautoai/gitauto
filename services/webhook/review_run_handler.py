@@ -9,6 +9,8 @@ from config import (
     STRIPE_PRODUCT_ID_FREE,
 )
 from services.chat_with_agent import chat_with_agent
+
+# Local imports (GitHub)
 from services.github.comment_manager import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.github.github_manager import get_remote_file_content, get_remote_file_tree
@@ -20,8 +22,16 @@ from services.github.token.get_installation_token import get_installation_access
 from services.github.types.owner import Owner
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
+
+# Local imports (Stripe)
 from services.stripe.subscriptions import get_stripe_product_id
+
+# Local imports (Supabase)
 from services.supabase.owners_manager import get_stripe_customer_id
+from services.supabase.repositories.get_repository import get_repository_settings
+from services.webhook.utils.create_system_messages import create_system_messages
+
+# Local imports (Utils)
 from utils.colors.colorize_log import colorize
 from utils.progress_bar.progress_bar import create_progress_bar
 
@@ -42,6 +52,7 @@ def handle_review_run(payload: dict[str, Any]) -> None:
 
     # Extract repository related variables
     repo: Repository = payload["repository"]
+    repo_id: int = repo["id"]
     repo_name: str = repo["name"]
     is_fork: bool = repo["fork"]
 
@@ -175,6 +186,9 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
+    # Get repository settings
+    repo_settings = get_repository_settings(repo_id=repo_id)
+
     # Plan how to fix the error
     today = datetime.now().strftime("%Y-%m-%d")
     input_message: dict[str, str] = {
@@ -187,7 +201,10 @@ def handle_review_run(payload: dict[str, Any]) -> None:
         "today": today,
     }
     user_input = json.dumps(obj=input_message)
-    messages = [{"role": "user", "content": user_input}]
+
+    # Create messages
+    system_messages = create_system_messages(repo_settings=repo_settings)
+    messages = system_messages + [{"role": "user", "content": user_input}]
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []

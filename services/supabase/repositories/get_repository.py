@@ -14,6 +14,7 @@ class RepositorySettings(TypedDict):
 
     # Repository rules
     repo_rules: Optional[str]
+    structured_rules: Optional[dict[str, str | bool]]
     target_branch: str
 
     # Repository references
@@ -56,7 +57,7 @@ class RepositorySettings(TypedDict):
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def get_repository_settings(repo_id: int):
     """Get the rules for a repository from Supabase."""
-    fields = "repo_rules, target_branch, web_urls, file_paths, use_screenshots, production_url, local_port, startup_commands, file_count, blank_lines, comment_lines, code_lines, trigger_on_review_comment, trigger_on_test_failure, trigger_on_commit, trigger_on_merged, trigger_on_schedule, schedule_frequency, schedule_minute, schedule_time, schedule_day_of_week, schedule_include_weekends"
+    fields = "repo_rules, structured_rules, target_branch, web_urls, file_paths, use_screenshots, production_url, local_port, startup_commands, file_count, blank_lines, comment_lines, code_lines, trigger_on_review_comment, trigger_on_test_failure, trigger_on_commit, trigger_on_merged, trigger_on_schedule, schedule_frequency, schedule_minute, schedule_time, schedule_day_of_week, schedule_include_weekends"
 
     result = (
         supabase.table("repositories").select(fields).eq("repo_id", repo_id).execute()

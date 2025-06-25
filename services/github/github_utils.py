@@ -11,7 +11,10 @@ from services.github.github_types import BaseArgs, GitHubLabeledPayload
 from services.github.github_manager import get_user_public_email
 from services.github.issues_manager import get_parent_issue
 from services.github.token.get_installation_token import get_installation_access_token
-from services.supabase.repositories.get_repository import get_repository_settings
+from services.supabase.repositories.get_repository import (
+    RepositorySettings,
+    get_repository_settings,
+)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.urls.extract_urls import extract_urls
 
@@ -26,8 +29,10 @@ def create_permission_url(
     return f"{url_base}/{url_part}"
 
 
-@handle_exceptions(default_return_value={}, raise_on_error=True)
-def deconstruct_github_payload(payload: GitHubLabeledPayload):
+@handle_exceptions(default_return_value=(None, None), raise_on_error=True)
+def deconstruct_github_payload(
+    payload: GitHubLabeledPayload,
+) -> tuple[BaseArgs, RepositorySettings | None]:
     # Extract issue related variables
     issue = payload["issue"]
     issue_number = issue["number"]
@@ -132,7 +137,6 @@ def deconstruct_github_payload(payload: GitHubLabeledPayload):
         "reviewers": reviewers,
         "github_urls": github_urls,
         "other_urls": other_urls,
-        **(repo_settings or {}),
     }
 
-    return base_args
+    return base_args, repo_settings
