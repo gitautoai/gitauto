@@ -19,7 +19,8 @@ def apply_diff_to_file(
     **_kwargs,
 ):
     """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
-    message = f"Update {file_path}"
+    skip_ci = base_args.get("skip_ci", False)
+    message = f"Update {file_path} [skip ci]" if skip_ci else f"Update {file_path}"
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     new_branch = base_args["new_branch"]
     if not new_branch:
@@ -53,6 +54,7 @@ def apply_diff_to_file(
     modified_text, rej_text = apply_patch(original_text=original_text, diff_text=diff)
     if modified_text == "":
         return f"diff format is incorrect. No changes were made to the file: {file_path}. Review the diff, correct it, and try again.\n\n{diff=}"
+
     if modified_text != "" and rej_text != "":
         return f"diff partially applied to the file: {file_path}. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\n{diff=}\n\n{rej_text=}"
     s2 = modified_text.encode(encoding=UTF8)
