@@ -1,84 +1,136 @@
-"""This is scheduled to run by AWS Lambda"""
-
+# Standard imports
 import logging
-import time
-from typing import Literal
-from config import PRODUCT_ID
-from services.github.github_manager import (
-    add_label_to_issue,
-    get_installed_owners_and_repos,
-    get_oldest_unassigned_open_issue,
-)
-from services.github.types.issue import Issue
+
+# Local imports (AWS)
+from services.aws.types.schedule_event import ScheduleEvent
+
+# Local imports (GitHub)
+from services.github.github_types import BaseArgs
+from services.github.issues.create_issue import create_issue
+from services.github.issues.is_issue_open import is_issue_open
 from services.github.token.get_installation_token import get_installation_access_token
-from services.supabase.gitauto_manager import get_installation_ids
+
+# Local imports (Supabase)
+from services.supabase.coverages.get_all_coverages import get_all_coverages
+from services.supabase.coverages.update_issue_url import update_issue_url
+from services.supabase.installations.get_installation_id import get_installation_id
+from services.supabase.repositories.get_repository import get_repository_settings
 from services.supabase.users_manager import get_how_many_requests_left_and_cycle
 
+# Local imports (Utils)
+from utils.issue_templates.schedule import get_issue_title, get_issue_body
+from utils.error.handle_exceptions import handle_exceptions
+from utils.files.is_code_file import is_code_file
+from utils.files.is_excluded_from_testing import is_excluded_from_testing
+from utils.files.is_test_file import is_test_file
 
-def schedule_handler(_event, _context) -> dict[str, int]:
-    print("\n" * 3 + "-" * 70)
-    return
-    # Get all active installation IDs from Supabase including free customers.
-    installation_ids: list[int] = get_installation_ids()
 
-    # Get all owners and repositories from GitHub.
-    for installation_id in installation_ids:
-        # Pause for 1+ second to avoid secondary rate limits. https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api?apiVersion=2022-11-28#pause-between-mutative-requests
-        time.sleep(1)
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def schedule_handler(event: ScheduleEvent, _context):
+    # Extract details from the event payload
+    detail = event.get("detail", {})
+    owner_id = detail.get("ownerId")
+    owner_type = detail.get("ownerType")
+    owner_name = detail.get("ownerName")
+    repo_id = detail.get("repoId")
+    repo_name = detail.get("repoName")
 
-        # Get the installation access token for each installation ID.
-        token = get_installation_access_token(installation_id=installation_id)
-        if token is None:
-            msg = f"Token is None for installation_id: {installation_id}, so skipping"
-            logging.info(msg)
+    if not owner_id or not owner_name or not owner_type or not repo_id or not repo_name:
+        logging.error("Missing required fields in event detail")
+        return
+
+    # Get repository settings - check if trigger_on_schedule is enabled
+    repo_settings = get_repository_settings(repo_id=repo_id)
+    if not repo_settings or not repo_settings.get("trigger_on_schedule", False):
+        msg = f"Skipping repo_id: {repo_id} - trigger_on_schedule is not enabled"
+        logging.info(msg)
+        return
+
+    # Get installation access token
+    installation_id = get_installation_id(owner_id=owner_id)
+    token = get_installation_access_token(installation_id=installation_id)
+    if token is None:
+        logging.error("Token is None for installation_id: %s", installation_id)
+        return
+
+    # Check the remaining available usage count
+    requests_left, _request_count, _end_date, _is_retried = (
+        get_how_many_requests_left_and_cycle(
+            installation_id=installation_id,
+            owner_id=owner_id,
+            owner_name=owner_name,
+            owner_type=owner_type,
+            repo_name=repo_name,
+            issue_number=None,
+        )
+    )
+    if requests_left < 1:
+        logging.info("No requests left for %s/%s", owner_name, repo_name)
+        return
+
+    # Get all coverage records for the repository
+    all_coverages = get_all_coverages(repo_id=repo_id)
+    if not all_coverages:
+        logging.info("No coverage data found for %s/%s", owner_name, repo_name)
+        return
+
+    # Create a coverage dict for is_excluded_from_testing function
+    coverage_dict = {item["full_path"]: item for item in all_coverages}
+
+    # Find the first suitable file
+    target_file = None
+    for coverage_record in all_coverages:
+        file_path = coverage_record["full_path"]
+
+        # Skip non-code files
+        if not is_code_file(file_path):
             continue
 
-        # Get all owners and repositories for each installation ID.
-        owners_repos = get_installed_owners_and_repos(token=token)
+        # Skip test files
+        if is_test_file(file_path):
+            continue
 
-        # Process each owner and repository.
-        for owner_repo in owners_repos:
-            owner_id: int = owner_repo["owner_id"]
-            owner_type: Literal["User", "Organization"] = owner_repo["owner_type"]
-            owner: str = owner_repo["owner"]
-            repo: str = owner_repo["repo"]
-            logging.info("Processing %s/%s", owner, repo)
+        # Skip files excluded from testing
+        if is_excluded_from_testing(file_path, coverage_dict):
+            continue
 
-            # Identify an oldest, open, unassigned, and not gitauto labeled issue for each repository.
-            issue: Issue | None = get_oldest_unassigned_open_issue(
-                owner=owner, repo=repo, token=token
-            )
-            logging.info("Issue: %s", issue)
+        # Skip files that have open GitHub issues
+        github_issue_url = coverage_record.get("github_issue_url")
+        if github_issue_url and is_issue_open(issue_url=github_issue_url, token=token):
+            continue
 
-            # Continue to the next set of owners and repositories if there is no open issue.
-            if issue is None:
-                continue
+        # Found a suitable file
+        target_file = coverage_record
+        break
 
-            # Extract the issue number if there is an open issue.
-            issue_number = issue["number"]
+    if target_file is None:
+        logging.info("No suitable coverage file found for %s/%s", owner_name, repo_name)
+        return
 
-            # Check the remaining available usage count, continue if it's less than 1.
-            requests_left, _request_count, _end_date, _is_retried = (
-                get_how_many_requests_left_and_cycle(
-                    installation_id=installation_id,
-                    owner_id=owner_id,
-                    owner_name=owner,
-                    owner_type=owner_type,
-                    repo_name=repo,
-                    issue_number=issue_number,
-                )
-            )
-            if requests_left < 1:
-                msg = f"Requests left: {requests_left} for owner: {owner}, repo: {repo}, issue_number: {issue_number}, so skipping"
-                logging.info(msg)
-                continue
+    file_path = target_file["full_path"]
+    statement_coverage = target_file.get("statement_coverage")
 
-            # Label the issue with the product ID to trigger GitAuto.
-            time.sleep(1)
-            add_label_to_issue(
-                owner=owner,
-                repo=repo,
-                issue_number=issue_number,
-                label=PRODUCT_ID,
-                token=token,
-            )
+    # Create issue title and body
+    title = get_issue_title()
+    body = get_issue_body(file_path=file_path, statement_coverage=statement_coverage)
+
+    # Create base args for issue creation
+    base_args: BaseArgs = {
+        "owner": owner_name,
+        "repo": repo_name,
+        "token": token,
+    }
+
+    # Create the issue with gitauto label
+    issue_response = create_issue(
+        title=title, body=body, assignees=[], base_args=base_args
+    )
+
+    if issue_response and "html_url" in issue_response:
+        update_issue_url(
+            repo_id=repo_id,
+            file_path=file_path,
+            github_issue_url=issue_response["html_url"],
+        )
+
+    return

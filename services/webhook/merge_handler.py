@@ -9,7 +9,7 @@ from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
 from utils.files.is_excluded_from_testing import is_excluded_from_testing
 from utils.files.is_test_file import is_test_file
-from utils.text.issue_template import (
+from utils.issue_templates.merge import (
     get_issue_title_for_pr_merged,
     get_issue_body_for_pr_merged,
 )

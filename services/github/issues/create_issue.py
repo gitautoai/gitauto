@@ -30,4 +30,4 @@ def create_issue(title: str, body: str, assignees: list[str], base_args: BaseArg
     )
     response.raise_for_status()
 
-    return None
+    return response.json()
