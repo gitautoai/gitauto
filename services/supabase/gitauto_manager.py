@@ -119,32 +119,6 @@ def create_user_request(
     return data[1][0]["id"]
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_installation_id(owner_id: int) -> int:
-    """https://supabase.com/docs/reference/python/is"""
-    data, _ = (
-        supabase.table(table_name="installations")
-        .select("installation_id")
-        .eq(column="owner_id", value=owner_id)
-        .is_(column="uninstalled_at", value="null")  # Not uninstalled
-        .execute()
-    )
-    # Return the first installation id even if there are multiple installations
-    return data[1][0]["installation_id"]
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_installation_ids() -> list[int]:
-    """https://supabase.com/docs/reference/python/is"""
-    data, _ = (
-        supabase.table(table_name="installations")
-        .select("installation_id")
-        .is_(column="uninstalled_at", value="null")  # Not uninstalled
-        .execute()
-    )
-    return [item["installation_id"] for item in data[1]]
-
-
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 def is_users_first_issue(user_id: int, installation_id: int) -> bool:
     # Check if there are any completed usage records for this user and installation

@@ -33,10 +33,13 @@ mangum_handler = Mangum(app=app, lifespan="off")
 
 # Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 def handler(event, context):
+    print("event: ", event)
+    print("context: ", context)
+
     # For scheduled event
-    if "source" in event and event["source"] == "aws.events":
-        schedule_handler(_event=event, _context=context)
-        return {"statusCode": 200}
+    if "source" in event and event["source"] in ["aws.events", "aws.scheduler"]:
+        schedule_handler(event=event, context=context)
+        return
 
     # mangum_handler converts requests from API Gateway to FastAPI routing system
     return mangum_handler(event=event, context=context)
@@ -77,7 +80,9 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 @app.post(path="/jira-webhook")
 async def handle_jira_webhook(request: Request):
     payload = await verify_jira_webhook(request)
-    await create_pr_from_issue(payload=payload, trigger_type="checkbox", input_from="jira")
+    await create_pr_from_issue(
+        payload=payload, trigger_type="checkbox", input_from="jira"
+    )
     return {"message": "Jira webhook processed successfully"}
 
 

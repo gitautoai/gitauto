@@ -27,4 +27,28 @@
   "python.analysis.addImport.heuristics": true,
   "python.analysis.autoImportCompletions": true,
   "python.analysis.typeCheckingMode": "off",
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/awslabs/goformation/master/schema/cloudformation.schema.json": [
+      "infrastructure/*.yml",
+      "infrastructure/*.yaml"
+    ]
+  },
+  "yaml.customTags": [
+    "!Ref",
+    "!GetAtt",
+    "!Sub",
+    "!Join",
+    "!Select",
+    "!Split",
+    "!Base64",
+    "!GetAZs",
+    "!ImportValue",
+    "!FindInMap",
+    "!Equals",
+    "!If",
+    "!Not",
+    "!And",
+    "!Or",
+    "!Condition"
+  ]
 }

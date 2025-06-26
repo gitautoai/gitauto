@@ -1,4 +1,7 @@
-from utils.text.issue_template import get_issue_title_for_pr_merged, get_issue_body_for_pr_merged
+from utils.issue_templates.merge import (
+    get_issue_title_for_pr_merged,
+    get_issue_body_for_pr_merged,
+)
 
 
 def test_get_issue_title_for_pr_merged_positive_number():
@@ -25,7 +28,7 @@ def test_get_issue_body_for_pr_merged_single_file():
     pr_number = 123
     file_list = ["src/main.py"]
     result = get_issue_body_for_pr_merged(pr_number, file_list)
-    
+
     expected = """The following files were changed in PR #123 that might need test coverage:
 
 - src/main.py
@@ -56,7 +59,7 @@ def test_get_issue_body_for_pr_merged_multiple_files():
     pr_number = 456
     file_list = ["src/main.py", "utils/helper.py", "tests/test_main.py"]
     result = get_issue_body_for_pr_merged(pr_number, file_list)
-    
+
     assert "PR #456" in result
     assert "- src/main.py" in result
     assert "- utils/helper.py" in result
@@ -67,7 +70,7 @@ def test_get_issue_body_for_pr_merged_empty_file_list():
     pr_number = 789
     file_list = []
     result = get_issue_body_for_pr_merged(pr_number, file_list)
-    
+
     assert "PR #789" in result
     assert "## Action Required" in result
 
@@ -76,16 +79,20 @@ def test_get_issue_body_for_pr_merged_zero_pr_number():
     pr_number = 0
     file_list = ["file.py"]
     result = get_issue_body_for_pr_merged(pr_number, file_list)
-    
+
     assert "PR #0" in result
     assert "- file.py" in result
 
 
 def test_get_issue_body_for_pr_merged_special_characters_in_filename():
     pr_number = 100
-    file_list = ["src/file-with-dashes.py", "utils/file_with_underscores.py", "tests/file.with.dots.py"]
+    file_list = [
+        "src/file-with-dashes.py",
+        "utils/file_with_underscores.py",
+        "tests/file.with.dots.py",
+    ]
     result = get_issue_body_for_pr_merged(pr_number, file_list)
-    
+
     assert "- src/file-with-dashes.py" in result
     assert "- utils/file_with_underscores.py" in result
     assert "- tests/file.with.dots.py" in result
