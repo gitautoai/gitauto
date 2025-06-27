@@ -33,7 +33,6 @@ from services.supabase.repositories.get_repository import get_repository_setting
 from services.webhook.utils.create_system_messages import create_system_messages
 
 # Local imports (Utils)
-from utils.colors.colorize_log import colorize
 from utils.files.is_code_file import is_code_file
 from utils.files.is_excluded_from_testing import is_excluded_from_testing
 from utils.files.is_test_file import is_test_file
@@ -76,7 +75,6 @@ def handle_push_event(payload: dict[str, Any]) -> None:
 
     # Skip if no commits
     if not commits:
-        print("Skipping because no commits found")
         return
 
     # Extract other information
@@ -161,7 +159,6 @@ def handle_push_event(payload: dict[str, Any]) -> None:
     # Return here if stripe_customer_id is not found
     stripe_customer_id: str | None = get_stripe_customer_id(owner_id=owner_id)
     if stripe_customer_id is None:
-        print(f"Skipping because stripe_customer_id is not found. owner_id: {owner_id}")
         return
 
     # Return here if product_id is not found or is in free tier
@@ -169,8 +166,6 @@ def handle_push_event(payload: dict[str, Any]) -> None:
     is_paid = product_id is not None and product_id != STRIPE_PRODUCT_ID_FREE
     is_exception = owner_name in EXCEPTION_OWNERS
     if not is_paid and not is_exception:
-        msg = f"Skipping because product_id is not found or is in free tier. product_id: '{product_id}' for owner_id: {owner_id}"
-        print(colorize(text=msg, color="yellow"))
         return
 
     # Create initial comment (if we have a PR)
