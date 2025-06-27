@@ -1,0 +1,15 @@
+{
+  "aws_request_id": "e9685f22-7037-40cd-aecf-6220843fe402",
+  "log_group_name": "/aws/lambda/pr-agent-prod",
+  "log_stream_name": "2025/06/27/[$LATEST]5b571d01bdd74d1db9a798d6ac4e3ef6",
+  "function_name": "pr-agent-prod",
+  "memory_limit_in_mb": 512,
+  "function_version": "$LATEST",
+  "invoked_function_arn": "arn:aws:lambda:us-west-1:948023073771:function:pr-agent-prod",
+  "client_context": null,
+  "identity": {
+    "cognito_identity_id": null,
+    "cognito_identity_pool_id": null
+  },
+  "tenant_id": null
+}

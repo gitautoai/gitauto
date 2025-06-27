@@ -42,7 +42,6 @@ jobs:
               # For production
               echo "ECR_REPOSITORY=${{ secrets.PROD_LAMBDA_NAME }}"
               echo "LAMBDA_NAME=${{ secrets.PROD_LAMBDA_NAME }}"
-              echo "LAMBDA_ARN=arn:aws:lambda:${{ env.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:function:${{ secrets.PROD_LAMBDA_NAME }}"
               echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD }}"
 
             else
@@ -65,16 +64,16 @@ jobs:
           --function-name $LAMBDA_NAME \
           --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # Create or update the CloudFormation stack only for the main branch
-      - name: Deploy CloudFormation stack for scheduled event
+      # Deploy CloudFormation stack for monitoring (SNS, CloudWatch Alarm)
+      - name: Deploy CloudFormation stack for monitoring
         if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
         run: |
           aws cloudformation deploy \
-          --stack-name ScheduleStack \
+          --stack-name MonitoringStack \
           --template-file cloudformation.yml \
-          --parameter-overrides LambdaFunctionName=$LAMBDA_NAME LambdaFunctionArn=$LAMBDA_ARN Email=$EMAIL \
+          --parameter-overrides LambdaFunctionName=$LAMBDA_NAME Email=$EMAIL \
           --capabilities CAPABILITY_NAMED_IAM
-  
+
       - name: Notify Slack of deployment status
         # Only notify if the PR is merged into main
         if: always() && github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'

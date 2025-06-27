@@ -11,6 +11,7 @@ from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
 from config import ENV, GITHUB_WEBHOOK_SECRET, PRODUCT_NAME, SENTRY_DSN, UTF8
+from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 from services.github.github_manager import verify_webhook_signature
 from services.jira.jira_manager import verify_jira_webhook
 from services.slack.slack_notify import slack_notify
@@ -34,18 +35,17 @@ mangum_handler = Mangum(app=app, lifespan="off")
 
 # Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 def handler(event, context):
-    # For scheduled event
-    if "source" in event and event["source"] in ["aws.events", "aws.scheduler"]:
-        print("event: ", event)
-        print("context: ", context)
-        detail = event.get("detail", {})
-        owner_name = detail.get("ownerName", "")
-        repo_name = detail.get("repoName", "")
+    # For scheduled event from EventBridge Scheduler
+    if "triggerType" in event and event["triggerType"] == "schedule":
+        event: EventBridgeSchedulerEvent = event
+
+        owner_name = event.get("ownerName", "")
+        repo_name = event.get("repoName", "")
         thread_ts = slack_notify(
             f"Event Scheduler started for {owner_name}/{repo_name}"
         )
 
-        result = schedule_handler(event=event, _context=context)
+        result = schedule_handler(event=event)
         if result["status"] == "success":
             slack_notify("Completed", thread_ts)
         else:
