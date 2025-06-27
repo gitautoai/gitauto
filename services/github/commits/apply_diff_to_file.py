@@ -52,19 +52,37 @@ def apply_diff_to_file(
 
     # Create a new commit
     modified_text, rej_text = apply_patch(original_text=original_text, diff_text=diff)
-    if modified_text == "":
+
+    # Handle file deletion case
+    file_deleted = False
+    if modified_text == "" and original_text != "" and not rej_text:
+        # This is likely a file deletion patch
+        file_deleted = True
+
+    if not file_deleted and modified_text == "":
         return f"diff format is incorrect. No changes were made to the file: {file_path}. Review the diff, correct it, and try again.\n\n{diff=}"
 
     if modified_text != "" and rej_text != "":
         return f"diff partially applied to the file: {file_path}. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\n{diff=}\n\n{rej_text=}"
-    s2 = modified_text.encode(encoding=UTF8)
-    data: dict[str, str | None] = {
-        "message": message,
-        "content": base64.b64encode(s=s2).decode(encoding=UTF8),
-        "branch": new_branch,
-    }
-    if sha != "":
-        data["sha"] = sha
+
+    # Handle file deletion
+    if file_deleted:
+        delete_message = (
+            f"Delete {file_path} [skip ci]" if skip_ci else f"Delete {file_path}"
+        )
+        data = {"message": delete_message, "branch": new_branch, "sha": sha}
+    else:
+        # Normal file update
+        s2 = modified_text.encode(encoding=UTF8)
+        data = {
+            "message": message,
+            "content": base64.b64encode(s=s2).decode(encoding=UTF8),
+            "branch": new_branch,
+        }
+        if sha != "":
+            data["sha"] = sha
+
+    # Create, update, or delete the file
     put_response = requests.put(
         url=url,
         json=data,
