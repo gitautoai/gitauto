@@ -3,7 +3,7 @@ import io
 import zipfile
 
 # Third-party libraries
-from requests import get, post
+from requests import get
 
 # Internal libraries
 from config import GITHUB_API_URL, TIMEOUT, UTF8
@@ -92,31 +92,6 @@ def get_workflow_run_logs(owner: str, repo: str, run_id: int, token: str):
                 return content
 
     return None
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def cancel_workflow_runs_in_progress(
-    owner: str, repo: str, commit_sha: str, token: str
-) -> None:
-    """https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-repository"""
-    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs?head_sha={commit_sha}"
-    headers = create_headers(token=token, media_type="")
-
-    response = get(url=url, headers=headers, timeout=TIMEOUT)
-    response.raise_for_status()
-
-    workflow_runs = response.json()["workflow_runs"]
-    statuses_to_cancel = ["queued", "in_progress", "pending", "waiting", "requested"]
-    for run in workflow_runs:
-        run_name = run["name"]
-        run_status = run["status"]
-        print(f"Cancelling {run_name} with status {run_status}")
-        if run_status in statuses_to_cancel:
-            # https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#cancel-a-workflow-run
-            cancel_url = (
-                f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs/{run['id']}/cancel"
-            )
-            post(url=cancel_url, headers=headers, timeout=TIMEOUT)
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)

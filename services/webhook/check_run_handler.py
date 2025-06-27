@@ -36,6 +36,7 @@ from services.github.types.check_suite import CheckSuite
 from services.github.types.owner import Owner
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
+from services.github.workflow_runs.cancel_workflow_run import cancel_workflow_run
 
 # Local imports (Stripe)
 from services.stripe.subscriptions import get_stripe_product_id
@@ -151,6 +152,12 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         log_messages.append(msg)
         update_comment(body="\n".join(log_messages), base_args=base_args)
         return
+
+    # Cancel other in_progress check runs before proceeding with the fix
+    commit_sha = check_run["head_sha"]
+    cancel_workflow_run(
+        owner=owner_name, repo=repo_name, commit_sha=commit_sha, token=token
+    )
 
     # Get title, body, and code changes in the PR
     pull_title, pull_body = get_pull_request(url=pull_url, token=token)

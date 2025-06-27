@@ -9,9 +9,7 @@ from config import (
     ISSUE_NUMBER_FORMAT,
 )
 from services.coverages.coverage_analyzer import handle_workflow_coverage
-from services.github.actions_manager import cancel_workflow_runs_in_progress
 from services.github.github_manager import create_comment_on_issue_with_gitauto_button
-from services.github.token.get_installation_token import get_installation_access_token
 from services.slack.slack import slack
 from services.supabase.gitauto_manager import set_issue_to_merged
 from services.supabase.installations.delete_installation import delete_installation
@@ -149,17 +147,6 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     if event_name == "check_run" and action in ("completed"):
         conclusion: str = payload["check_run"]["conclusion"]
         if conclusion in GITHUB_CHECK_RUN_FAILURES:
-            # Cancel other in_progress check runs before handling this failure
-            owner = payload["repository"]["owner"]["login"]
-            repo = payload["repository"]["name"]
-            commit_sha = payload["check_run"]["head_sha"]
-            installation_id = payload["installation"]["id"]
-            token = get_installation_access_token(installation_id=installation_id)
-
-            cancel_workflow_runs_in_progress(
-                owner=owner, repo=repo, commit_sha=commit_sha, token=token
-            )
-
             handle_check_run(payload=payload)
         return
 
