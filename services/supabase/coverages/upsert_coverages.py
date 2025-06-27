@@ -9,7 +9,9 @@ def upsert_coverages(coverage_records: list[dict]):
 
     result = (
         supabase.table("coverages")
-        .upsert(coverage_records, on_conflict="repo_id,full_path")
+        .upsert(
+            coverage_records, on_conflict="repo_id,full_path", default_to_null=False
+        )
         .execute()
     )
 
