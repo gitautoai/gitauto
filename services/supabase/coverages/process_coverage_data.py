@@ -5,7 +5,7 @@ import json
 # Local imports
 from services.supabase.coverages.delete_coverages import delete_coverages
 from services.supabase.coverages.get_coverages import get_coverages
-from services.supabase.coverages.bulk_upsert_coverages import upsert_coverages
+from services.supabase.coverages.upsert_coverages import upsert_coverages
 from utils.error.handle_exceptions import handle_exceptions
 
 
