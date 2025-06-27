@@ -22,6 +22,11 @@ def create_empty_commit(
     headers = create_headers(token=token)
 
     ref_response = requests.get(url=ref_url, headers=headers, timeout=TIMEOUT)
+
+    # If 404 Not Found, return False
+    if ref_response.status_code == 404:
+        return False
+
     ref_response.raise_for_status()
     current_sha = ref_response.json()["object"]["sha"]
 

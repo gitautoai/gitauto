@@ -2,7 +2,6 @@
 from datetime import datetime
 import hashlib
 import json
-from typing import cast
 
 # Local imports
 from config import (
@@ -33,7 +32,6 @@ from services.github.token.get_installation_token import get_installation_access
 from services.github.trees.get_file_tree import get_file_tree
 from services.github.types.check_run import CheckRun
 from services.github.types.check_suite import CheckSuite
-from services.github.types.owner import Owner
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
 from services.github.workflow_runs.cancel_workflow_run import cancel_workflow_run
@@ -51,57 +49,51 @@ from services.supabase.usage.update_retry_pairs import (
 
 # Local imports (Others)
 from services.webhook.utils.create_system_messages import create_system_messages
-from utils.colors.colorize_log import colorize
 from utils.progress_bar.progress_bar import create_progress_bar
 
 
 def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Extract workflow run id
     check_run: CheckRun = payload["check_run"]
-    details_url = cast(str, check_run["details_url"])
-    workflow_id = cast(str, details_url.split(sep="/")[-3])
-    check_run_name = cast(str, check_run["name"])
+    details_url = check_run["details_url"]
+    workflow_id = details_url.split(sep="/")[-3]
+    check_run_name = check_run["name"]
 
     # Extract repository related variables
     repo: Repository = payload["repository"]
-    repo_name = cast(str, repo["name"])
-    repo_id = cast(int, repo["id"])
-    is_fork = cast(bool, repo.get("fork", False))
+    repo_name = repo["name"]
+    repo_id = repo["id"]
+    is_fork = repo.get("fork", False)
 
     # Extract owner related variables
-    owner: Owner = repo.get("owner", {})
+    owner = repo.get("owner", None)
     if owner is None:
-        msg = "Skipping because owner is not found"
-        print(colorize(text=msg, color="yellow"))
         return
-    owner_type = cast(str, owner["type"])
-    owner_id = cast(int, owner["id"])
-    owner_name = cast(str, owner["login"])
+    owner_type = owner["type"]
+    owner_id = owner["id"]
+    owner_name = owner["login"]
 
     # Extract branch related variables
     check_suite: CheckSuite = check_run["check_suite"]
-    head_branch = cast(str, check_suite["head_branch"])
+    head_branch = check_suite["head_branch"]
 
     # Extract sender related variables and return if sender is GitAuto itself
-    sender_id = cast(int, payload["sender"]["id"])
-    sender_name = cast(str, payload["sender"]["login"])
+    sender_id = payload["sender"]["id"]
+    sender_name = payload["sender"]["login"]
     if sender_name != GITHUB_APP_USER_NAME:
-        msg = f"Skipping because sender is not GitAuto. sender_name: '{sender_name}' and GITHUB_APP_USER_NAME: '{GITHUB_APP_USER_NAME}'"
-        print(colorize(text=msg, color="yellow"))
         return
 
     # Extract PR related variables and return if no PR is associated with this check run
     pull_requests: list[PullRequest] = check_run.get("pull_requests", [])
     if not pull_requests:
-        msg = "Skipping because no pull request is associated with this check run"
-        print(colorize(text=msg, color="yellow"))
         return
+
     pull_request: PullRequest = pull_requests[0]
-    pull_number = cast(int, pull_request["number"])
-    pull_url = cast(str, pull_request["url"])
+    pull_number = pull_request["number"]
+    pull_url = pull_request["url"]
 
     # Extract other information
-    installation_id = cast(int, payload["installation"]["id"])
+    installation_id = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
     base_args: dict[str, str | int | bool] = {
         "owner_type": owner_type,

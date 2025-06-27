@@ -36,13 +36,10 @@ from services.supabase.repositories.get_repository import get_repository_setting
 from services.webhook.utils.create_system_messages import create_system_messages
 
 # Local imports (Utils)
-from utils.colors.colorize_log import colorize
 from utils.progress_bar.progress_bar import create_progress_bar
 
 
-def handle_review_run(payload: dict[str, Any]) -> None:
-    print("handle_review_run was called")
-
+def handle_review_run(payload: dict[str, Any]):
     # Extract review comment etc
     review: dict[str, Any] = payload["comment"]
     review_id: int = review["id"]
@@ -76,19 +73,13 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     head_branch: str = pull_request["head"]["ref"]  # gitauto/issue-167-20250101-155924
     pull_user: str = pull_request["user"]["login"]
     if pull_user != GITHUB_APP_USER_NAME:
-        print(
-            f"Skipping because pull_user is not GitAuto. pull_user: {pull_user} for owner_id: {owner_id}"
-        )
-        return  # Prevent GitAuto from jumping into others' PRs
+        return
 
     # Extract sender related variables and return if sender is GitAuto itself
     sender_id: int = payload["sender"]["id"]
     sender_name: str = payload["sender"]["login"]
     if sender_name == GITHUB_APP_USER_NAME:
-        print(
-            f"Skipping because sender is GitAuto itself. sender_name: {sender_name} for owner_id: {owner_id}"
-        )
-        return  # Prevent infinite loops by self-triggering
+        return
 
     # Extract other information
     installation_id: int = payload["installation"]["id"]
@@ -114,7 +105,6 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     else:
         # Fallback to single comment if thread fetch fails
         review_comment += f"{review_body}"
-    # print(f"review_comment: {review_comment}")
 
     base_args: dict[str, str | int | bool] = {
         "owner_type": owner_type,
@@ -148,7 +138,6 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     # Return here if stripe_customer_id is not found
     stripe_customer_id: str | None = get_stripe_customer_id(owner_id=owner_id)
     if stripe_customer_id is None:
-        print(f"Skipping because stripe_customer_id is not found. owner_id: {owner_id}")
         return
 
     # Return here if product_id is not found or is in free tier
@@ -156,8 +145,6 @@ def handle_review_run(payload: dict[str, Any]) -> None:
     is_paid = product_id is not None and product_id != STRIPE_PRODUCT_ID_FREE
     is_exception = owner_name in EXCEPTION_OWNERS
     if not is_paid and not is_exception:
-        msg = f"Skipping because product_id is not found or is in free tier. product_id: '{product_id}' for owner_id: {owner_id}"
-        print(colorize(text=msg, color="yellow"))
         return
 
     # Greeting
