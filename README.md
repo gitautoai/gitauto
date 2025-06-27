@@ -181,14 +181,7 @@ When GitAuto runs in production, it uses AWS Lambda. To view logs and debug issu
 **Using AWS CLI:**
 
 ```bash
-# View recent logs for the main Lambda function
-aws logs tail /aws/lambda/pr-agent-prod --follow
-
-# View logs from a specific time period
-aws logs tail /aws/lambda/pr-agent-prod --since 1h
-
-# Filter logs by specific patterns
-aws logs filter-log-events --log-group-name /aws/lambda/pr-agent-prod --filter-pattern "ERROR"
+aws logs tail /aws/lambda/pr-agent-prod --follow | grep -v -E "(START RequestId|END RequestId|REPORT RequestId)"
 ```
 
 **Using AWS Console:**
@@ -197,6 +190,7 @@ aws logs filter-log-events --log-group-name /aws/lambda/pr-agent-prod --filter-p
 2. Navigate to `Logs` > `Log groups`
 3. Find `/aws/lambda/pr-agent-prod` log group
 4. Click on the latest log stream to view real-time logs
+5. Use the filter box to exclude system messages: `- "START RequestId" - "END RequestId" - "REPORT RequestId"`
 
 ### 3-10. Other information
 

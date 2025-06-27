@@ -13,5 +13,10 @@ def check_branch_exists(owner: str, repo: str, branch_name: str, token: str):
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/branches/{branch_name}"
     headers = create_headers(token=token, media_type="")
     response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
+
+    # If the branch does not exist
+    if response.status_code == 404:
+        return False
+
     response.raise_for_status()
     return True
