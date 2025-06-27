@@ -5,9 +5,9 @@ import logging
 from services.aws.types.schedule_event import ScheduleEvent
 
 # Local imports (GitHub)
-from services.github.github_types import BaseArgs
 from services.github.issues.create_issue import create_issue
 from services.github.issues.is_issue_open import is_issue_open
+from services.github.github_types import BaseArgs
 from services.github.token.get_installation_token import get_installation_access_token
 
 # Local imports (Supabase)
@@ -25,7 +25,7 @@ from utils.files.is_excluded_from_testing import is_excluded_from_testing
 from utils.files.is_test_file import is_test_file
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(raise_on_error=True)
 def schedule_handler(event: ScheduleEvent, _context):
     # Extract details from the event payload
     detail = event.get("detail", {})
@@ -36,22 +36,20 @@ def schedule_handler(event: ScheduleEvent, _context):
     repo_name = detail.get("repoName")
 
     if not owner_id or not owner_name or not owner_type or not repo_id or not repo_name:
-        logging.error("Missing required fields in event detail")
-        return
+        raise ValueError("Missing required fields in event detail")
+
+    # Get installation access token
+    installation_id = get_installation_id(owner_id=owner_id)
+    token = get_installation_access_token(installation_id=installation_id)
+    if token is None:
+        raise ValueError(f"Token is None for installation_id: {installation_id}")
 
     # Get repository settings - check if trigger_on_schedule is enabled
     repo_settings = get_repository_settings(repo_id=repo_id)
     if not repo_settings or not repo_settings.get("trigger_on_schedule", False):
         msg = f"Skipping repo_id: {repo_id} - trigger_on_schedule is not enabled"
         logging.info(msg)
-        return
-
-    # Get installation access token
-    installation_id = get_installation_id(owner_id=owner_id)
-    token = get_installation_access_token(installation_id=installation_id)
-    if token is None:
-        logging.error("Token is None for installation_id: %s", installation_id)
-        return
+        return {"status": "skipped", "message": msg}
 
     # Check the remaining available usage count
     requests_left, _request_count, _end_date, _is_retried = (
@@ -65,14 +63,16 @@ def schedule_handler(event: ScheduleEvent, _context):
         )
     )
     if requests_left < 1:
-        logging.info("No requests left for %s/%s", owner_name, repo_name)
-        return
+        msg = f"No requests left for {owner_name}/{repo_name}"
+        logging.info(msg)
+        return {"status": "skipped", "message": msg}
 
     # Get all coverage records for the repository
     all_coverages = get_all_coverages(repo_id=repo_id)
     if not all_coverages:
-        logging.info("No coverage data found for %s/%s", owner_name, repo_name)
-        return
+        msg = f"No coverage data found for {owner_name}/{repo_name}"
+        logging.info(msg)
+        return {"status": "skipped", "message": msg}
 
     # Create a coverage dict for is_excluded_from_testing function
     coverage_dict = {item["full_path"]: item for item in all_coverages}
@@ -104,8 +104,9 @@ def schedule_handler(event: ScheduleEvent, _context):
         break
 
     if target_file is None:
-        logging.info("No suitable coverage file found for %s/%s", owner_name, repo_name)
-        return
+        msg = f"No suitable file found for {owner_name}/{repo_name}"
+        logging.info(msg)
+        return {"status": "skipped", "message": msg}
 
     file_path = target_file["full_path"]
     statement_coverage = target_file.get("statement_coverage")
@@ -133,4 +134,5 @@ def schedule_handler(event: ScheduleEvent, _context):
             github_issue_url=issue_response["html_url"],
         )
 
-    return
+    msg = f"created issue for {file_path}"
+    return {"status": "success", "message": msg}

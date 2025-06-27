@@ -11,10 +11,11 @@ from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
 from config import ENV, GITHUB_WEBHOOK_SECRET, PRODUCT_NAME, SENTRY_DSN, UTF8
-from services.webhook.schedule_handler import schedule_handler
-from services.webhook.issue_handler import create_pr_from_issue
 from services.github.github_manager import verify_webhook_signature
 from services.jira.jira_manager import verify_jira_webhook
+from services.slack.slack_notify import slack_notify
+from services.webhook.issue_handler import create_pr_from_issue
+from services.webhook.schedule_handler import schedule_handler
 from services.webhook.webhook_handler import handle_webhook_event
 
 # https://us-west-1.console.aws.amazon.com/lambda/home?region=us-west-1#/functions/pr-agent-prod?subtab=envVars&tab=configure
@@ -38,7 +39,21 @@ def handler(event, context):
 
     # For scheduled event
     if "source" in event and event["source"] in ["aws.events", "aws.scheduler"]:
-        schedule_handler(event=event, context=context)
+        detail = event.get("detail", {})
+        owner_name = detail.get("ownerName", "")
+        repo_name = detail.get("repoName", "")
+        thread_ts = slack_notify(
+            f"Event Scheduler started for {owner_name}/{repo_name}"
+        )
+
+        result = schedule_handler(event=event, _context=context)
+        if result["status"] == "success":
+            slack_notify("Completed", thread_ts)
+        else:
+            slack_notify(
+                f"@channel Failed: {result['message']}",
+                thread_ts,
+            )
         return
 
     # mangum_handler converts requests from API Gateway to FastAPI routing system
