@@ -28,4 +28,5 @@ def create_system_messages(repo_settings: RepositorySettings):
             {"role": "system", "content": f"## Repository Rules:\n\n{repo_rules}"}
         )
 
+    print(f"\nSystem messages:\n{system_messages}")
     return system_messages

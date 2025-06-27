@@ -181,7 +181,7 @@ When GitAuto runs in production, it uses AWS Lambda. To view logs and debug issu
 **Using AWS CLI:**
 
 ```bash
-aws logs tail /aws/lambda/pr-agent-prod --follow | grep -v -E "(START RequestId|END RequestId|REPORT RequestId)"
+aws logs tail /aws/lambda/pr-agent-prod --follow | grep -v -E "(START RequestId|END RequestId|REPORT RequestId)" | sed -E 's/[0-9]{4}\/[0-9]{2}\/[0-9]{2}\/\[\$LATEST\][a-f0-9]+ //'
 ```
 
 **Using AWS Console:**
