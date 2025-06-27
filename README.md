@@ -174,6 +174,30 @@ If you see any errors, check:
 - Your ngrok domain is available
 - Port 8000 is not already in use
 
-### 3-9. Other information
+### 3-9. How to view AWS Lambda logs
+
+When GitAuto runs in production, it uses AWS Lambda. To view logs and debug issues:
+
+**Using AWS CLI:**
+
+```bash
+# View recent logs for the main Lambda function
+aws logs tail /aws/lambda/pr-agent-prod --follow
+
+# View logs from a specific time period
+aws logs tail /aws/lambda/pr-agent-prod --since 1h
+
+# Filter logs by specific patterns
+aws logs filter-log-events --log-group-name /aws/lambda/pr-agent-prod --filter-pattern "ERROR"
+```
+
+**Using AWS Console:**
+
+1. Go to [AWS CloudWatch Console](https://console.aws.amazon.com/cloudwatch/)
+2. Navigate to `Logs` > `Log groups`
+3. Find `/aws/lambda/pr-agent-prod` log group
+4. Click on the latest log stream to view real-time logs
+
+### 3-10. Other information
 
 For communication (Slack), database (Supabase), payment (Stripe), and serverless functions (AWS Lambda), provide your preferred email to [@hiroshinishio](https://github.com/hiroshinishio) so that he can invite you to the local development environment.

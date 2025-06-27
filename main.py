@@ -34,11 +34,10 @@ mangum_handler = Mangum(app=app, lifespan="off")
 
 # Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 def handler(event, context):
-    print("event: ", event)
-    print("context: ", context)
-
     # For scheduled event
     if "source" in event and event["source"] in ["aws.events", "aws.scheduler"]:
+        print("event: ", event)
+        print("context: ", context)
         detail = event.get("detail", {})
         owner_name = detail.get("ownerName", "")
         repo_name = detail.get("repoName", "")
