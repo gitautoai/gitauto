@@ -6,7 +6,7 @@ from services.github.repositories.get_repository_languages import (
     get_repository_languages,
 )
 from services.github.token.get_installation_token import get_installation_access_token
-from services.supabase.coverages.upsert_coverages import upsert_coverages
+from services.supabase.coverages.process_coverage_data import process_coverage_data
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -120,7 +120,7 @@ async def handle_workflow_coverage(
                 )
 
     if coverage_data:
-        upsert_coverages(
+        process_coverage_data(
             coverages_list=coverage_data,
             owner_id=owner_id,
             repo_id=repo_id,
