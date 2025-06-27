@@ -2,7 +2,7 @@
 import logging
 
 # Local imports (AWS)
-from services.aws.types.schedule_event import ScheduleEvent
+from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 
 # Local imports (GitHub)
 from services.github.issues.create_issue import create_issue
@@ -26,14 +26,13 @@ from utils.files.is_test_file import is_test_file
 
 
 @handle_exceptions(raise_on_error=True)
-def schedule_handler(event: ScheduleEvent, _context):
+def schedule_handler(event: EventBridgeSchedulerEvent):
     # Extract details from the event payload
-    detail = event.get("detail", {})
-    owner_id = detail.get("ownerId")
-    owner_type = detail.get("ownerType")
-    owner_name = detail.get("ownerName")
-    repo_id = detail.get("repoId")
-    repo_name = detail.get("repoName")
+    owner_id = event.get("ownerId")
+    owner_type = event.get("ownerType")
+    owner_name = event.get("ownerName")
+    repo_id = event.get("repoId")
+    repo_name = event.get("repoName")
 
     if not owner_id or not owner_name or not owner_type or not repo_id or not repo_name:
         raise ValueError("Missing required fields in event detail")

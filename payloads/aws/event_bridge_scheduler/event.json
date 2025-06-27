@@ -1,0 +1,10 @@
+{
+  "ownerId": 159883862,
+  "ownerType": "Organization",
+  "ownerName": "gitautoai",
+  "repoId": 756737722,
+  "repoName": "gitauto",
+  "triggerType": "schedule",
+  "scheduleTimeUTC": "23:00",
+  "includeWeekends": true
+}
