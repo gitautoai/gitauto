@@ -3,7 +3,9 @@ from typing import TypedDict, Literal
 import json
 
 # Local imports
-from services.supabase.client import supabase
+from services.supabase.coverages.delete_coverages import delete_coverages
+from services.supabase.coverages.get_coverages import get_coverages
+from services.supabase.coverages.bulk_upsert_coverages import upsert_coverages
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -22,7 +24,7 @@ class CoverageItem(TypedDict):
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def upsert_coverages(
+def process_coverage_data(
     coverages_list: list[CoverageItem],
     owner_id: int,
     repo_id: int,
@@ -49,29 +51,34 @@ def upsert_coverages(
     # Get current file paths
     current_paths = [coverage["full_path"] for coverage in seen.values()]
 
-    # Delete records for files that no longer exist
-    if current_paths:
-        supabase.table("coverages").delete().eq("repo_id", repo_id).not_.in_(
-            "full_path", current_paths
-        ).execute()
-    else:
-        # If no files, delete all records for this repo
-        supabase.table("coverages").delete().eq("repo_id", repo_id).execute()
+    # Get existing records before deleting
+    existing_records = get_coverages(repo_id=repo_id, filenames=current_paths)
 
-    # Prepare data for upsert by adding common fields to each coverage item
+    # Delete records for files that no longer exist
+    delete_coverages(repo_id=repo_id, exclude_paths=current_paths)
+
+    # Prepare data for upsert
     upsert_data = []
     for coverage in seen.values():
         try:
+            existing_record = existing_records.get(coverage["full_path"], {})
             item = {
+                **existing_record,  # Keep all fields from the existing record
+                # System fields are always updated
                 "owner_id": owner_id,
                 "repo_id": repo_id,
                 "branch_name": branch_name,
                 "primary_language": primary_language,
                 "path_coverage": 0,
-                **coverage,
-                "created_by": user_name,
                 "updated_by": user_name,
+                # Override with coverage data
+                **coverage,
             }
+
+            # Set default values for new records
+            if not existing_record:
+                item["created_by"] = user_name
+                item["is_excluded_from_testing"] = False
 
             # Set uncovered fields to None when the coverage is 100%
             if item["line_coverage"] == 100:
@@ -92,11 +99,5 @@ def upsert_coverages(
         print("No valid items to upsert after filtering")
         return None
 
-    # Upsert data (insert if not exists, update if exists)
-    result = (
-        supabase.table("coverages")
-        .upsert(upsert_data, on_conflict="repo_id,full_path")
-        .execute()
-    )
-
-    return result.data
+    # Use new bulk upsert function
+    return upsert_coverages(upsert_data)
