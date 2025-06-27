@@ -43,7 +43,6 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     # Handle push events from non-bot users
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
     if event_name == "push":
-        print("payload: ", payload)
         sender_login = payload.get("sender", {}).get("login", "")
 
         # Skip if it's any bot (including GitAuto and other bots)
