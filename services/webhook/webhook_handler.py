@@ -41,18 +41,6 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     # Handle push events from non-bot users
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
     if event_name == "push":
-        sender_login = payload.get("sender", {}).get("login", "")
-
-        # Skip if it's any bot (including GitAuto and other bots)
-        if sender_login.endswith("[bot]"):
-            return
-
-        # Skip merge commits - base_ref is set when it's a merge
-        base_ref = payload.get("base_ref")
-        if base_ref is not None:
-            return
-
-        # Handle non-bot commits (direct pushes only)
         handle_push_event(payload=payload)
         return
 

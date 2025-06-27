@@ -41,7 +41,16 @@ from utils.prompts.push_trigger import PUSH_TRIGGER_SYSTEM_PROMPT
 
 
 def handle_push_event(payload: dict[str, Any]) -> None:
-    print("handle_push_event was called")
+    # Skip if it's any bot
+    sender_id: int = payload["sender"]["id"]
+    sender_name: str = payload["sender"]["login"]
+    if sender_name.endswith("[bot]"):
+        return
+
+    # Skip merge commits - base_ref is set when it's a merge
+    base_ref = payload.get("base_ref")
+    if base_ref is not None:
+        return
 
     # Extract repository related variables
     repo: Repository = payload["repository"]
@@ -76,6 +85,10 @@ def handle_push_event(payload: dict[str, Any]) -> None:
     # Skip if no commits
     if not commits:
         return
+
+    print(
+        f"Push event from {sender_name} to {owner_name}/{repo_name} on branch {branch_name}"
+    )
 
     # Extract other information
     installation_id: int = payload["installation"]["id"]
@@ -124,14 +137,6 @@ def handle_push_event(payload: dict[str, Any]) -> None:
         return
 
     print(f"Found {len(commit_changes)} commits with code changes that may need tests")
-
-    # Extract sender related variables
-    sender_id: int = payload["sender"]["id"]
-    sender_name: str = payload["sender"]["login"]
-
-    print(
-        f"Push event from {sender_name} to {owner_name}/{repo_name} on branch {branch_name}"
-    )
 
     # Find associated PR for this branch using GraphQL
     pull_request = find_pull_request_by_branch(
