@@ -90,8 +90,6 @@ def handle_review_run(payload: dict[str, Any]) -> None:
         )
         return  # Prevent infinite loops by self-triggering
 
-    print(f"Payload: {json.dumps(payload, indent=2)}")
-
     # Extract other information
     installation_id: int = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
