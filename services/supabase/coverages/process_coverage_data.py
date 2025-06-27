@@ -88,6 +88,9 @@ def process_coverage_data(
             if item["branch_coverage"] == 100:
                 item["uncovered_branches"] = None
 
+            # Remove id field to avoid upsert conflicts
+            item.pop("id", None)
+
             # Test if item is JSON serializable
             json.dumps(item)
             upsert_data.append(item)
