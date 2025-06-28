@@ -26,6 +26,7 @@ def handle_pr_test_selection(payload: PullRequestWebhookPayload):
     sender_name = payload["sender"]["login"]
     if sender_name.endswith("[bot]"):
         msg = f"Skipping PR test selection for bot {sender_name}"
+        print(msg)
         logging.info(msg)
         return
 
@@ -38,6 +39,7 @@ def handle_pr_test_selection(payload: PullRequestWebhookPayload):
     repo_settings = get_repository_settings(repo_id=repo_id)
     if not repo_settings or not repo_settings.get("trigger_on_pr_change", False):
         msg = f"Skipping PR test selection for repo {repo_name} because trigger_on_pr_change is False"
+        print(msg)
         logging.info(msg)
         return
 
@@ -63,6 +65,7 @@ def handle_pr_test_selection(payload: PullRequestWebhookPayload):
     ]
     if not code_files:
         msg = f"Skipping PR test selection for repo {repo_name} because no code files were changed"
+        print(msg)
         logging.info(msg)
         return
 
