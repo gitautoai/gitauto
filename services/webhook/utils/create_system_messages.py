@@ -1,4 +1,4 @@
-from json import dumps
+import json
 
 from services.supabase.repositories.get_repository import RepositorySettings
 from utils.error.handle_exceptions import handle_exceptions
@@ -14,10 +14,11 @@ def create_system_messages(repo_settings: RepositorySettings):
     # Add structured rules first
     structured_rules = repo_settings.get("structured_rules")
     if structured_rules:
+        structured_content = "\n".join(f"{k}: {v}" for k, v in structured_rules.items())
         system_messages.append(
             {
                 "role": "system",
-                "content": f"## Structured Repository Rules:\n\n{dumps(structured_rules, indent=2)}",
+                "content": f"## Structured Repository Rules:\n\n{structured_content}",
             }
         )
 
@@ -28,5 +29,8 @@ def create_system_messages(repo_settings: RepositorySettings):
             {"role": "system", "content": f"## Repository Rules:\n\n{repo_rules}"}
         )
 
-    print(f"\nSystem messages:\n{system_messages}")
+    if system_messages:
+        print(
+            f"\nSystem messages:\n{json.dumps(system_messages[0]['content'], indent=2)}"
+        )
     return system_messages
