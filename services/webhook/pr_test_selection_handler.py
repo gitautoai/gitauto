@@ -21,6 +21,8 @@ from utils.files.is_test_file import is_test_file
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def handle_pr_test_selection(payload: PullRequestWebhookPayload):
+    print("handle_pr_test_selection started")
+
     # Skip if the PR is from a bot
     pull_request = payload["pull_request"]
     sender_name = payload["sender"]["login"]
