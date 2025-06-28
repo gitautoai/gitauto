@@ -1,13 +1,11 @@
 # Standard imports
 import logging
-from typing import Any
 
 # Local imports (Services)
 from services.github.comments.create_comment import create_comment
 from services.github.pull_requests.get_pull_request_files import get_pull_request_files
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.types.owner import Owner
-from services.github.types.repository import Repository
+from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.repositories.get_repository import get_repository_settings
 from services.webhook.utils.create_file_checklist import create_file_checklist
@@ -22,19 +20,19 @@ from utils.files.is_test_file import is_test_file
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def handle_pr_test_selection(payload: dict[str, Any]) -> None:
+def handle_pr_test_selection(payload: PullRequestWebhookPayload):
     # Skip if the PR is from a bot
     pull_request = payload["pull_request"]
-    sender_name: str = pull_request["user"]["login"]
+    sender_name = payload["sender"]["login"]
     if sender_name.endswith("[bot]"):
         msg = f"Skipping PR test selection for bot {sender_name}"
         logging.info(msg)
         return
 
     # Extract repository related variables
-    repo: Repository = payload["repository"]
-    repo_name: str = repo["name"]
-    repo_id: int = repo["id"]
+    repo = payload["repository"]
+    repo_id = repo["id"]
+    repo_name = repo["name"]
 
     # Check repository settings for PR test selection
     repo_settings = get_repository_settings(repo_id=repo_id)
@@ -44,17 +42,17 @@ def handle_pr_test_selection(payload: dict[str, Any]) -> None:
         return
 
     # Extract owner related variables
-    owner: Owner = repo["owner"]
-    owner_name: str = owner["login"]
+    owner = repo["owner"]
+    owner_name = owner["login"]
 
     # Extract PR related variables
-    pull_number: int = pull_request["number"]
-    pull_url: str = pull_request["url"]
+    pull_number = pull_request["number"]
+    pull_url = pull_request["url"]
     pull_files_url = f"{pull_url}/files"
 
     # Extract other information
-    installation_id: int = payload["installation"]["id"]
-    token: str = get_installation_access_token(installation_id=installation_id)
+    installation_id = payload["installation"]["id"]
+    token = get_installation_access_token(installation_id=installation_id)
 
     # Get files changed in the PR
     changed_filenames = get_pull_request_files(url=pull_files_url, token=token)
