@@ -27,9 +27,9 @@ fi
 
 echo -e "${GREEN}Virtual environment ready${NC}"
 
-# Generate Supabase types
+# Generate Supabase types (hide INFO logs only)
 echo -e "Generating Supabase types..."
-sb-pydantic gen --type pydantic --db-url "postgresql://postgres.dkrxtcbaqzrodvsagwwn:${SUPABASE_DB_PASSWORD}@aws-0-us-west-1.pooler.supabase.com:6543/postgres" --dir types/supabase
+sb-pydantic gen --type pydantic --db-url "postgresql://postgres.dkrxtcbaqzrodvsagwwn:${SUPABASE_DB_PASSWORD}@aws-0-us-west-1.pooler.supabase.com:6543/postgres" --dir schemas/supabase 2>&1 | grep -v "^INFO:"
 
 # Function to cleanup background processes
 cleanup() {

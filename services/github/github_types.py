@@ -1,6 +1,7 @@
+# Standard imports
 from typing import Literal, Optional, TypedDict, Union
 
-
+# Local imports
 from services.github.types.check_run import CheckRun
 from services.github.types.installation import Installation
 from services.github.types.installation_details import InstallationDetails
@@ -12,10 +13,9 @@ from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
 from services.github.types.sender import Sender
 from services.github.types.user import User
-from services.supabase.repositories.get_repository import RepositorySettings
 
 
-class BaseArgs(RepositorySettings, total=False):
+class BaseArgs(TypedDict, total=False):
     input_from: Literal["github", "jira"]
     owner_type: OwnerType
     owner_id: int
