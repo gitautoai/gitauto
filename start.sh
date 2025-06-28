@@ -1,5 +1,8 @@
 #!/bin/zsh
 
+# Load environment variables
+source .env
+
 # Configuration
 PORT=8000
 NGROK_DOMAIN="gitauto.ngrok.dev"
@@ -23,6 +26,10 @@ else
 fi
 
 echo -e "${GREEN}Virtual environment ready${NC}"
+
+# Generate Supabase types
+echo -e "Generating Supabase types..."
+sb-pydantic gen --type pydantic --db-url "postgresql://postgres.dkrxtcbaqzrodvsagwwn:${SUPABASE_DB_PASSWORD}@aws-0-us-west-1.pooler.supabase.com:6543/postgres" --dir types/supabase
 
 # Function to cleanup background processes
 cleanup() {
