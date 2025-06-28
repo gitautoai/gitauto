@@ -5,7 +5,6 @@ import json
 from typing import Any
 
 # Local imports
-from config import EXCEPTION_OWNERS, STRIPE_PRODUCT_ID_FREE
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
@@ -22,9 +21,6 @@ from services.github.token.get_installation_token import get_installation_access
 from services.github.trees.get_file_tree import get_file_tree
 from services.github.types.owner import Owner
 from services.github.types.repository import Repository
-
-# Local imports (Stripe)
-from services.stripe.subscriptions import get_stripe_product_id
 
 # Local imports (Supabase)
 from services.supabase.coverages.get_coverages import get_coverages
@@ -164,13 +160,6 @@ def handle_push_event(payload: dict[str, Any]) -> None:
     # Return here if stripe_customer_id is not found
     stripe_customer_id: str | None = get_stripe_customer_id(owner_id=owner_id)
     if stripe_customer_id is None:
-        return
-
-    # Return here if product_id is not found or is in free tier
-    product_id: str | None = get_stripe_product_id(customer_id=stripe_customer_id)
-    is_paid = product_id is not None and product_id != STRIPE_PRODUCT_ID_FREE
-    is_exception = owner_name in EXCEPTION_OWNERS
-    if not is_paid and not is_exception:
         return
 
     # Create initial comment (if we have a PR)
