@@ -1,11 +1,16 @@
-from datetime import datetime
+# Standard imports
 import json
+from datetime import datetime
 from typing import Any
 
+# Third party imports
 import requests
 
+# Local imports
 from config import PRODUCT_ID, GITHUB_APP_USER_NAME, TIMEOUT
 from services.chat_with_agent import chat_with_agent
+
+# Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
@@ -14,12 +19,18 @@ from services.github.create_headers import create_headers
 from services.github.pull_requests.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree import get_file_tree
+
+# Local imports (Supabase & Webhook)
 from services.supabase.repositories.get_repository import get_repository_settings
+from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 from services.webhook.utils.create_system_messages import create_system_messages
 from services.webhook.utils.extract_selected_files import extract_selected_files
+
+# Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.prompts.push_trigger import PUSH_TRIGGER_SYSTEM_PROMPT
+from utils.text.text_copy import request_limit_reached
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -60,6 +71,34 @@ async def handle_pr_test_generation(payload: dict[str, Any]) -> None:
     token = get_installation_access_token(installation_id=installation_id)
 
     issue_number = payload["issue"]["number"]
+
+    # Check if the user has reached the request limit
+    is_limit_reached, _requests_left, request_limit, end_date = (
+        is_request_limit_reached(
+            installation_id=installation_id,
+            owner_id=owner_id,
+            owner_name=owner_name,
+            owner_type=owner_type,
+            repo_name=repo_name,
+            issue_number=issue_number,
+        )
+    )
+
+    # If request limit is reached, create a comment and return early
+    if is_limit_reached:
+        body = request_limit_reached(
+            user_name=sender_name, request_count=request_limit, end_date=end_date
+        )
+
+        base_args = {
+            "owner": owner_name,
+            "repo": repo_name,
+            "issue_number": issue_number,
+            "token": token,
+        }
+
+        create_comment(body=body, base_args=base_args)
+        return
 
     repo_settings = get_repository_settings(repo_id=repo_id)
 

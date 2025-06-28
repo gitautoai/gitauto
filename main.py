@@ -1,6 +1,6 @@
 # Standard imports
 import json
-from typing import Any
+from typing import Any, cast
 import urllib.parse
 
 # Third-party imports
@@ -38,7 +38,7 @@ def handler(event, context):
     # For scheduled event from EventBridge Scheduler
     if "triggerType" in event and event["triggerType"] == "schedule":
         print("AWS EventBridge Scheduler invoked")
-        event: EventBridgeSchedulerEvent = event
+        event = cast(EventBridgeSchedulerEvent, event)
         owner_name = event.get("ownerName", "")
         repo_name = event.get("repoName", "")
         thread_ts = slack_notify(

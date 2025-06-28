@@ -19,7 +19,6 @@ from github.Repository import Repository
 
 # Local imports
 from config import (
-    EXCEPTION_OWNERS,
     GITHUB_API_URL,
     GITHUB_ISSUE_DIR,
     GITHUB_ISSUE_TEMPLATES,
@@ -39,18 +38,22 @@ from config import (
     GITHUB_NOREPLY_EMAIL_DOMAIN,
 )
 from constants.messages import CLICK_THE_CHECKBOX
+
+# Local imports (GitHub)
 from services.github.comments.update_comment import update_comment
 from services.github.create_headers import create_headers
 from services.github.github_types import BaseArgs, GitHubLabeledPayload
 from services.github.reviewers_manager import add_reviewers
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.issue import Issue
+
+# Local imports (OpenAI & Supabase)
 from services.openai.vision import describe_image
 from services.supabase.gitauto_manager import is_users_first_issue
-from services.supabase.users_manager import (
-    get_how_many_requests_left_and_cycle,
-    upsert_user,
-)
+from services.supabase.users.upsert_user import upsert_user
+from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
+
+# Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.get_file_content import get_file_content
 from utils.command.run_command import run_command
@@ -177,15 +180,13 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
     if is_users_first_issue(user_id=user_id, installation_id=installation_id):
         first_issue = True
 
-    requests_left, request_count, end_date, is_retried = (
-        get_how_many_requests_left_and_cycle(
-            installation_id=installation_id,
-            owner_id=owner_id,
-            owner_name=owner_name,
-            owner_type=owner_type,
-            repo_name=repo_name,
-            issue_number=issue_number,
-        )
+    is_limit_reached, requests_left, request_limit, end_date = is_request_limit_reached(
+        installation_id=installation_id,
+        owner_id=owner_id,
+        owner_name=owner_name,
+        owner_type=owner_type,
+        repo_name=repo_name,
+        issue_number=issue_number,
     )
 
     body = f"{CLICK_THE_CHECKBOX}\n- [ ] Generate PR"
@@ -197,11 +198,11 @@ def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -
             requests_left=requests_left, sender_name=user_name, end_date=end_date
         )
 
-    if requests_left <= 0 and not is_retried and owner_name not in EXCEPTION_OWNERS:
+    if is_limit_reached:
         logging.info("\nRequest limit reached for user %s.", user_name)
         body = request_limit_reached(
             user_name=user_name,
-            request_count=request_count,
+            request_count=request_limit,
             end_date=end_date,
         )
 
