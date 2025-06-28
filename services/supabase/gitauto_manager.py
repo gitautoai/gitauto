@@ -1,6 +1,6 @@
 from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
 from services.supabase.client import supabase
-from services.supabase.users_manager import upsert_user
+from services.supabase.users.upsert_user import upsert_user
 from utils.error.handle_exceptions import handle_exceptions
 
 

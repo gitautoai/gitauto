@@ -15,7 +15,7 @@ from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.supabase.coverages.update_issue_url import update_issue_url
 from services.supabase.installations.get_installation_id import get_installation_id
 from services.supabase.repositories.get_repository import get_repository_settings
-from services.supabase.users_manager import get_how_many_requests_left_and_cycle
+from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 
 # Local imports (Utils)
 from utils.issue_templates.schedule import get_issue_title, get_issue_body
@@ -51,8 +51,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         return {"status": "skipped", "message": msg}
 
     # Check the remaining available usage count
-    requests_left, _request_count, _end_date, _is_retried = (
-        get_how_many_requests_left_and_cycle(
+    is_limit_reached, _requests_left, _request_limit, _end_date = (
+        is_request_limit_reached(
             installation_id=installation_id,
             owner_id=owner_id,
             owner_name=owner_name,
@@ -61,9 +61,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             issue_number=None,
         )
     )
-    if requests_left < 1:
-        msg = f"No requests left for {owner_name}/{repo_name}"
-        logging.info(msg)
+    if is_limit_reached:
+        msg = f"Request limit reached for {owner_name}/{repo_name}"
         return {"status": "skipped", "message": msg}
 
     # Get all coverage records for the repository

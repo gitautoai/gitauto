@@ -6,7 +6,7 @@ import time
 from typing import Literal
 
 # Local imports
-from config import EXCEPTION_OWNERS, PRODUCT_ID, PRODUCT_NAME, PR_BODY_STARTS_WITH
+from config import PRODUCT_ID, PRODUCT_NAME, PR_BODY_STARTS_WITH
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
@@ -37,8 +37,8 @@ from services.slack.slack import slack
 
 # Local imports (Supabase, Webhook)
 from services.supabase.gitauto_manager import create_user_request
+from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 from services.supabase.usage.update_usage import update_usage
-from services.supabase.users_manager import get_how_many_requests_left_and_cycle
 from services.webhook.utils.create_system_messages import create_system_messages
 
 # Local imports (Utils)
@@ -129,15 +129,13 @@ async def create_pr_from_issue(
     )
 
     # Check if the user has reached the request limit
-    requests_left, request_count, end_date, is_retried = (
-        get_how_many_requests_left_and_cycle(
-            installation_id=installation_id,
-            owner_id=owner_id,
-            owner_name=owner_name,
-            owner_type=owner_type,
-            repo_name=repo_name,
-            issue_number=issue_number,
-        )
+    is_limit_reached, requests_left, request_limit, end_date = is_request_limit_reached(
+        installation_id=installation_id,
+        owner_id=owner_id,
+        owner_name=owner_name,
+        owner_type=owner_type,
+        repo_name=repo_name,
+        issue_number=issue_number,
     )
     p += 5
     log_messages.append(f"Checked request limit. {requests_left} requests left.")
@@ -146,9 +144,9 @@ async def create_pr_from_issue(
     )
 
     # Notify the user if the request limit is reached and early return
-    if requests_left <= 0 and not is_retried and owner_name not in EXCEPTION_OWNERS:
+    if is_limit_reached:
         body = request_limit_reached(
-            user_name=sender_name, request_count=request_count, end_date=end_date
+            user_name=sender_name, request_count=request_limit, end_date=end_date
         )
         update_comment(body=body, base_args=base_args)
         print(body)

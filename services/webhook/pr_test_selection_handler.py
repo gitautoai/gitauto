@@ -1,4 +1,5 @@
 # Standard imports
+import logging
 from typing import Any
 
 # Local imports (Services)
@@ -24,7 +25,10 @@ from utils.files.is_test_file import is_test_file
 def handle_pr_test_selection(payload: dict[str, Any]) -> None:
     # Skip if the PR is from a bot
     pull_request = payload["pull_request"]
-    if pull_request["user"]["login"].endswith("[bot]"):
+    sender_name: str = pull_request["user"]["login"]
+    if sender_name.endswith("[bot]"):
+        msg = f"Skipping PR test selection for bot {sender_name}"
+        logging.info(msg)
         return
 
     # Extract repository related variables
@@ -35,6 +39,8 @@ def handle_pr_test_selection(payload: dict[str, Any]) -> None:
     # Check repository settings for PR test selection
     repo_settings = get_repository_settings(repo_id=repo_id)
     if not repo_settings or not repo_settings.get("trigger_on_pr_change", False):
+        msg = f"Skipping PR test selection for repo {repo_name} because trigger_on_pr_change is False"
+        logging.info(msg)
         return
 
     # Extract owner related variables
@@ -58,6 +64,8 @@ def handle_pr_test_selection(payload: dict[str, Any]) -> None:
         f for f in changed_filenames if is_code_file(f) and not is_test_file(f)
     ]
     if not code_files:
+        msg = f"Skipping PR test selection for repo {repo_name} because no code files were changed"
+        logging.info(msg)
         return
 
     # Filter for code files that might need tests
