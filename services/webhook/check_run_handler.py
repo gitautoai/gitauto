@@ -4,14 +4,7 @@ import hashlib
 import json
 
 # Local imports
-from config import (
-    EMAIL_LINK,
-    EXCEPTION_OWNERS,
-    GITHUB_APP_USER_NAME,
-    PRICING_URL,
-    STRIPE_PRODUCT_ID_FREE,
-    UTF8,
-)
+from config import EMAIL_LINK, GITHUB_APP_USER_NAME, PRICING_URL, UTF8
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
@@ -35,9 +28,6 @@ from services.github.types.check_suite import CheckSuite
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
 from services.github.workflow_runs.cancel_workflow_run import cancel_workflow_run
-
-# Local imports (Stripe)
-from services.stripe.subscriptions import get_stripe_product_id
 
 # Local imports (Supabase)
 from services.supabase.owners_manager import get_stripe_customer_id
@@ -130,16 +120,6 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Return here if stripe_customer_id is not found
     stripe_customer_id = get_stripe_customer_id(owner_id=owner_id)
     if stripe_customer_id is None:
-        msg = f"Subscribe [here]({PRICING_URL}) to get GitAuto to self-correct check run errors."
-        log_messages.append(msg)
-        update_comment(body="\n".join(log_messages), base_args=base_args)
-        return
-
-    # Return here if product_id is not found or is in free tier
-    product_id = get_stripe_product_id(customer_id=stripe_customer_id)
-    is_paid = product_id is not None and product_id != STRIPE_PRODUCT_ID_FREE
-    is_exception = owner_name in EXCEPTION_OWNERS
-    if not is_paid and not is_exception:
         msg = f"Subscribe [here]({PRICING_URL}) to get GitAuto to self-correct check run errors."
         log_messages.append(msg)
         update_comment(body="\n".join(log_messages), base_args=base_args)
