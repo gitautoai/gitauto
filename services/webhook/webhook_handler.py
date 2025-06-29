@@ -9,8 +9,12 @@ from config import (
     ISSUE_NUMBER_FORMAT,
 )
 from services.coverages.coverage_analyzer import handle_workflow_coverage
-from services.github.github_manager import create_comment_on_issue_with_gitauto_button
+from services.github.comments.create_gitauto_button_comment import (
+    create_gitauto_button_comment,
+)
 from services.slack.slack import slack
+
+# Local imports (Supabase)
 from services.supabase.gitauto_manager import set_issue_to_merged
 from services.supabase.installations.delete_installation import delete_installation
 from services.supabase.installations.unsuspend_installation import (
@@ -108,7 +112,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
             )
             return
         if action == "opened":
-            create_comment_on_issue_with_gitauto_button(payload=payload)
+            create_gitauto_button_comment(payload=payload)
             return
 
     # Run GitAuto when checkbox is checked (edited)

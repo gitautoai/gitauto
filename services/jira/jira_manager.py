@@ -14,10 +14,7 @@ from services.github.github_types import BaseArgs
 from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.token.get_installation_token import get_installation_access_token
 from services.supabase.installations_manager import get_installation_info
-from services.supabase.repositories.get_repository import (
-    RepositorySettings,
-    get_repository_settings,
-)
+from services.supabase.repositories.get_repository import get_repository_settings
 from utils.error.handle_exceptions import handle_exceptions
 from utils.urls.extract_urls import extract_urls
 
@@ -38,14 +35,13 @@ async def verify_jira_webhook(request: Request):
         raise HTTPException(status_code=401, detail="Invalid request source")
 
     payload = await request.json()
-    # print("Payload:", json.dumps(payload, indent=2))
     return payload
 
 
 @handle_exceptions(default_return_value=(None, None), raise_on_error=True)
 def deconstruct_jira_payload(
     payload: dict[str, Any],
-) -> tuple[BaseArgs, RepositorySettings | None]:
+) -> tuple[BaseArgs | None]:
     """Extract and format base arguments and related metadata from Jira payload."""
     # Extract issue related variables
     issue: dict[str, Any] = payload["issue"]

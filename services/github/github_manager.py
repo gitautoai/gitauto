@@ -5,7 +5,6 @@ import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
 import json
 import logging
 import os
-from datetime import datetime
 from typing import Optional
 from uuid import uuid4
 
@@ -22,14 +21,7 @@ from config import (
     GITHUB_API_URL,
     GITHUB_ISSUE_DIR,
     GITHUB_ISSUE_TEMPLATES,
-    PRODUCT_BLOG_URL,
-    PRODUCT_DEMO_URL,
-    PRODUCT_ISSUE_URL,
-    PRODUCT_LINKEDIN_URL,
     PRODUCT_NAME,
-    PRODUCT_TWITTER_URL,
-    PRODUCT_URL,
-    PRODUCT_YOUTUBE_URL,
     TIMEOUT,
     PRODUCT_ID,
     UTF8,
@@ -37,28 +29,30 @@ from config import (
     GITHUB_APP_USER_ID,
     GITHUB_NOREPLY_EMAIL_DOMAIN,
 )
-from constants.messages import CLICK_THE_CHECKBOX
+from constants.urls import (
+    BLOG_URL,
+    PRODUCT_DEMO_URL,
+    PRODUCT_LINKEDIN_URL,
+    PRODUCT_TWITTER_URL,
+    PRODUCT_URL,
+    PRODUCT_YOUTUBE_URL,
+)
 
 # Local imports (GitHub)
 from services.github.comments.update_comment import update_comment
 from services.github.create_headers import create_headers
-from services.github.github_types import BaseArgs, GitHubLabeledPayload
+from services.github.github_types import BaseArgs
 from services.github.reviewers_manager import add_reviewers
-from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.issue import Issue
 
 # Local imports (OpenAI & Supabase)
 from services.openai.vision import describe_image
-from services.supabase.gitauto_manager import is_users_first_issue
-from services.supabase.users.upsert_user import upsert_user
-from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.get_file_content import get_file_content
 from utils.command.run_command import run_command
 from utils.new_lines.detect_new_line import detect_line_break
-from utils.text.text_copy import request_issue_comment, request_limit_reached
 from utils.urls.parse_urls import parse_github_url
 
 
@@ -161,66 +155,6 @@ async def add_reaction_to_issue(
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def create_comment_on_issue_with_gitauto_button(payload: GitHubLabeledPayload) -> None:
-    """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
-    installation_id: int = payload["installation"]["id"]
-    token: str = get_installation_access_token(installation_id=installation_id)
-    owner_id: int = payload["repository"]["owner"]["id"]
-    owner_name: str = payload["repository"]["owner"]["login"]
-    owner_type: str = payload["repository"]["owner"]["type"]
-    repo_name: str = payload["repository"]["name"]
-    issue_number: int = payload["issue"]["number"]
-    user_id: int = payload["sender"]["id"]
-    user_name: str = payload["sender"]["login"]
-    user_email: str | None = get_user_public_email(username=user_name, token=token)
-
-    # Proper issue generation comment, create user if not exist (first issue in an orgnanization)
-    first_issue = False
-    upsert_user(user_id=user_id, user_name=user_name, email=user_email)
-    if is_users_first_issue(user_id=user_id, installation_id=installation_id):
-        first_issue = True
-
-    is_limit_reached, requests_left, request_limit, end_date = is_request_limit_reached(
-        installation_id=installation_id,
-        owner_id=owner_id,
-        owner_name=owner_name,
-        owner_type=owner_type,
-        repo_name=repo_name,
-        issue_number=issue_number,
-    )
-
-    body = f"{CLICK_THE_CHECKBOX}\n- [ ] Generate PR"
-    if PRODUCT_ID != "gitauto":
-        body += " - " + PRODUCT_ID
-
-    if end_date != datetime(year=1, month=1, day=1, hour=0, minute=0, second=0):
-        body += request_issue_comment(
-            requests_left=requests_left, sender_name=user_name, end_date=end_date
-        )
-
-    if is_limit_reached:
-        logging.info("\nRequest limit reached for user %s.", user_name)
-        body = request_limit_reached(
-            user_name=user_name,
-            request_count=request_limit,
-            end_date=end_date,
-        )
-
-    if first_issue:
-        body = "Welcome to GitAuto! 🎉\n" + body
-
-    response: requests.Response = requests.post(
-        url=f"{GITHUB_API_URL}/repos/{owner_name}/{repo_name}/issues/{issue_number}/comments",
-        headers=create_headers(token=token),
-        json={"body": body},
-        timeout=TIMEOUT,
-    )
-    response.raise_for_status()
-
-    return response.json()
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=False)
 def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | None:
     """https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request"""
     owner, repo, base, head, token = (
@@ -274,7 +208,7 @@ def initialize_repo(repo_path: str, remote_url: str, token: str) -> None:
         os.makedirs(name=repo_path)
 
     # Create README.md
-    readme_content = f"""## {PRODUCT_NAME} resources\n\nHere are GitAuto resources.\n\n- [GitAuto homepage]({PRODUCT_URL})\n- [GitAuto demo]({PRODUCT_DEMO_URL})\n- [GitAuto use cases]({PRODUCT_BLOG_URL})\n- [GitAuto GitHub issues]({PRODUCT_ISSUE_URL})\n- [GitAuto LinkedIn]({PRODUCT_LINKEDIN_URL})\n- [GitAuto Twitter]({PRODUCT_TWITTER_URL})\n- [GitAuto YouTube]({PRODUCT_YOUTUBE_URL})\n"""
+    readme_content = f"""## {PRODUCT_NAME} resources\n\nHere are GitAuto resources.\n\n- [GitAuto homepage]({PRODUCT_URL})\n- [GitAuto demo]({PRODUCT_DEMO_URL})\n- [GitAuto use cases]({BLOG_URL})\n- [GitAuto LinkedIn]({PRODUCT_LINKEDIN_URL})\n- [GitAuto Twitter]({PRODUCT_TWITTER_URL})\n- [GitAuto YouTube]({PRODUCT_YOUTUBE_URL})\n"""
     readme_path = os.path.join(repo_path, "README.md")
     with open(readme_path, "w", encoding=UTF8) as f:
         f.write(readme_content)

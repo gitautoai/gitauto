@@ -1,10 +1,11 @@
+from typing import cast
+from schemas.supabase.fastapi.schema_public_latest import CoveragesBaseSchema
 from services.supabase.client import supabase
-from services.supabase.coverages.types import CoverageRecord
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_all_coverages(repo_id: int) -> list[CoverageRecord]:
+def get_all_coverages(repo_id: int):
     result = (
         supabase.table("coverages")
         .select("*")
@@ -16,4 +17,4 @@ def get_all_coverages(repo_id: int) -> list[CoverageRecord]:
         .execute()
     )
 
-    return result.data if result.data else []
+    return cast(list[CoveragesBaseSchema], result.data or [])
