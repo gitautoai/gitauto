@@ -5,6 +5,7 @@ from constants.urls import (
     DASHBOARD_COVERAGE_URL,
 )
 from services.github.pull_requests.get_pull_request_files import Status
+from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
 
 
 class FileChecklistItem(TypedDict):
@@ -16,7 +17,7 @@ class FileChecklistItem(TypedDict):
 
 def create_test_selection_comment(checklist: list[FileChecklistItem]) -> str:
     comment_lines = [
-        "## 🧪 Manage Tests?",
+        TEST_SELECTION_COMMENT_IDENTIFIER,
         "",
         "Select files to manage tests for (create, update, or remove):",
         "",

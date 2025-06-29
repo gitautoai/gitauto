@@ -5,6 +5,9 @@ import logging
 from services.github.comments.combine_and_create_comment import (
     combine_and_create_comment,
 )
+from services.github.comments.delete_comments_by_identifiers import (
+    delete_comments_by_identifiers,
+)
 from services.github.pull_requests.get_pull_request_files import get_pull_request_files
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
@@ -19,6 +22,7 @@ from services.webhook.utils.create_test_selection_comment import (
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
 from utils.files.is_test_file import is_test_file
+from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -87,6 +91,11 @@ def handle_pr_test_selection(payload: PullRequestWebhookPayload):
         "issue_number": pull_number,
         "token": token,
     }
+
+    # Delete existing test selection comments before creating new one
+    delete_comments_by_identifiers(
+        base_args=base_args, identifiers=[TEST_SELECTION_COMMENT_IDENTIFIER]
+    )
 
     # Create the comment with usage info
     combine_and_create_comment(

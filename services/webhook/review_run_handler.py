@@ -8,7 +8,7 @@ from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
-from services.github.comment_manager import reply_to_comment
+from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.github_manager import get_remote_file_content
