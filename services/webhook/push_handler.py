@@ -13,10 +13,10 @@ from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.commits.get_commit_diff import get_commit_diff
-from services.github.pull_requests.find_pull_request_by_branch import (
+from services.github.pulls.find_pull_request_by_branch import (
     find_pull_request_by_branch,
 )
-from services.github.pull_requests.is_pull_request_open import is_pull_request_open
+from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree import get_file_tree
 from services.github.types.owner import Owner

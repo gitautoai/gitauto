@@ -22,7 +22,9 @@ from services.git.git_manager import (
 from services.github.comments.get_all_comments import get_all_comments
 from services.github.comments.delete_comment import delete_comment
 from services.github.comments.create_comment import create_comment
-from services.github.pulls_manager import get_pull_request_file_changes
+from services.github.pulls.get_pull_request_file_changes import (
+    get_pull_request_file_changes,
+)
 from services.github.token.get_installation_token import get_installation_access_token
 from utils.error.handle_exceptions import handle_exceptions
 

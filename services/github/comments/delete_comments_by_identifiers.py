@@ -3,7 +3,7 @@ from services.github.comments.filter_comments_by_identifiers import (
     filter_comments_by_identifiers,
 )
 from services.github.comments.get_all_comments import get_all_comments
-from services.github.github_types import BaseArgs
+from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 
 

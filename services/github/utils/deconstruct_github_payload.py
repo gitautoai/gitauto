@@ -2,28 +2,18 @@
 from datetime import datetime
 from random import choices
 from string import ascii_letters, digits
-from typing import Literal, cast
+from typing import cast
 
 # Local imports
 from config import PRODUCT_ID, ISSUE_NUMBER_FORMAT, GITHUB_APP_USER_ID
 from services.github.branches.check_branch_exists import check_branch_exists
-from services.github.github_types import BaseArgs, GitHubLabeledPayload
-from services.github.github_manager import get_user_public_email
-from services.github.issues_manager import get_parent_issue
+from services.github.issues.get_parent_issue import get_parent_issue
+from services.github.types.github_types import BaseArgs, GitHubLabeledPayload
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.users.get_user_public_email import get_user_public_email
 from services.supabase.repositories.get_repository import get_repository_settings
 from utils.error.handle_exceptions import handle_exceptions
 from utils.urls.extract_urls import extract_urls
-
-
-def create_permission_url(
-    owner_type: Literal["Organization", "User"], owner_name: str, installation_id: int
-):
-    url_base = "https://github.com"
-    url_part = f"settings/installations/{installation_id}/permissions/update"
-    if owner_type == "Organization":
-        return f"{url_base}/organizations/{owner_name}/{url_part}"
-    return f"{url_base}/{url_part}"
 
 
 @handle_exceptions(default_return_value=(None, None), raise_on_error=True)

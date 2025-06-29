@@ -4,7 +4,7 @@ Related Documentation:
 https://docs.github.com/en/rest/using-the-rest-api/getting-started-with-the-rest-api#headers
 """
 
-from services.github.create_headers import create_headers
+from services.github.utils.create_headers import create_headers
 
 
 def test_create_headers_default():

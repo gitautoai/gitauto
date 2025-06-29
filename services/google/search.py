@@ -3,7 +3,7 @@ from googlesearch import search
 from requests import get
 from config import TIMEOUT
 from constants.requests import USER_AGENT
-from services.github.github_types import BaseArgs
+from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 
 NUM_RESULTS_DEFAULT = 1

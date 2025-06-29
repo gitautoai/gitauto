@@ -1,8 +1,8 @@
 from config import PRODUCT_ID
-from services.github.github_types import GitHubPullRequestClosedPayload, BaseArgs
-from services.github.pull_requests.get_pull_request_files import get_pull_request_files
-from services.github.token.get_installation_token import get_installation_access_token
 from services.github.issues.create_issue import create_issue
+from services.github.pulls.get_pull_request_files import get_pull_request_files
+from services.github.token.get_installation_token import get_installation_access_token
+from services.github.types.github_types import GitHubPullRequestClosedPayload, BaseArgs
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.repositories.get_repository import get_repository_settings
 from utils.error.handle_exceptions import handle_exceptions

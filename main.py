@@ -12,8 +12,8 @@ from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 # Local imports
 from config import ENV, GITHUB_WEBHOOK_SECRET, PRODUCT_NAME, SENTRY_DSN, UTF8
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
-from services.github.github_manager import verify_webhook_signature
-from services.jira.jira_manager import verify_jira_webhook
+from services.github.utils.verify_webhook_signature import verify_webhook_signature
+from services.jira.verify_jira_webhook import verify_jira_webhook
 from services.slack.slack_notify import slack_notify
 from services.webhook.issue_handler import create_pr_from_issue
 from services.webhook.schedule_handler import schedule_handler

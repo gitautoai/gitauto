@@ -7,8 +7,8 @@ import requests
 
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
-from services.github.create_headers import create_headers
-from services.github.github_types import BaseArgs
+from services.github.types.github_types import BaseArgs
+from services.github.utils.create_headers import create_headers
 from services.openai.functions.properties import FILE_PATH
 from utils.error.handle_exceptions import handle_exceptions
 

@@ -1,41 +1,18 @@
 # Standard imports
 from datetime import datetime
-from json import dumps
 from typing import Any
-
-# Third party imports
-from fastapi import HTTPException, Request
 
 # Local imports
 from config import ISSUE_NUMBER_FORMAT, PRODUCT_ID
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.branches.get_default_branch import get_default_branch
-from services.github.github_types import BaseArgs
+from services.github.types.github_types import BaseArgs
 from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.token.get_installation_token import get_installation_access_token
 from services.supabase.installations_manager import get_installation_info
 from services.supabase.repositories.get_repository import get_repository_settings
 from utils.error.handle_exceptions import handle_exceptions
 from utils.urls.extract_urls import extract_urls
-
-
-@handle_exceptions(default_return_value=None, raise_on_error=True)
-async def verify_jira_webhook(request: Request):
-    """Verify that the request came from Atlassian Forge"""
-    print("Request Headers:", dumps(dict(request.headers), indent=2))
-
-    # Verify that the request came from Atlassian Forge
-    user_agent = request.headers.get("user-agent", "")
-    has_b3_headers = all(
-        [request.headers.get("x-b3-traceid"), request.headers.get("x-b3-spanid")]
-    )
-
-    if "node-fetch" not in user_agent or not has_b3_headers:
-        print("Not a valid Forge request")
-        raise HTTPException(status_code=401, detail="Invalid request source")
-
-    payload = await request.json()
-    return payload
 
 
 @handle_exceptions(default_return_value=(None, None), raise_on_error=True)

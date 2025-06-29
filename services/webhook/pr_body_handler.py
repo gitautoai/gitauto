@@ -6,12 +6,12 @@ from config import GITHUB_APP_USER_NAME
 
 # Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
-from services.github.issues_manager import get_issue_body
-from services.github.pull_requests.is_pull_request_open import is_pull_request_open
-from services.github.pulls_manager import (
+from services.github.issues.get_issue_body import get_issue_body
+from services.github.pulls.get_pull_request_file_changes import (
     get_pull_request_file_changes,
-    update_pull_request_body,
 )
+from services.github.pulls.is_pull_request_open import is_pull_request_open
+from services.github.pulls.update_pull_request_body import update_pull_request_body
 from services.github.token.get_installation_token import get_installation_access_token
 
 # Local imports (OpenAI)
