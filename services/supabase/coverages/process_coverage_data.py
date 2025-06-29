@@ -3,7 +3,6 @@ from typing import TypedDict, Literal
 import json
 
 # Local imports
-from services.supabase.coverages.delete_coverages import delete_coverages
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.coverages.upsert_coverages import upsert_coverages
 from utils.error.handle_exceptions import handle_exceptions
@@ -53,9 +52,6 @@ def process_coverage_data(
 
     # Get existing records before deleting
     existing_records = get_coverages(repo_id=repo_id, filenames=current_paths)
-
-    # Delete records for files that no longer exist
-    delete_coverages(repo_id=repo_id, exclude_paths=current_paths)
 
     # Prepare data for upsert
     upsert_data = []
