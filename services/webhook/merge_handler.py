@@ -44,32 +44,34 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
 
     # Get files changed in the PR
     pull_files_url = f"{pull_url}/files"
-    changed_filenames = get_pull_request_files(url=pull_files_url, token=token)
+    changed_files = get_pull_request_files(url=pull_files_url, token=token)
 
     # Filter for code files that might need tests
-    coverage_data = get_coverages(repo_id=repo_id, filenames=changed_filenames)
+    coverage_data = get_coverages(
+        repo_id=repo_id, filenames=[f["filename"] for f in changed_files]
+    )
 
-    code_files = [
+    changed_code_files = [
         f
-        for f in changed_filenames
+        for f in changed_files
         if (
-            is_code_file(f)
-            and not is_test_file(f)
-            and not is_excluded_from_testing(f, coverage_data)
+            is_code_file(f["filename"])
+            and not is_test_file(f["filename"])
+            and not is_excluded_from_testing(f["filename"], coverage_data)
         )
     ]
 
     # If no code files were changed, return early
-    if not code_files:
+    if not changed_code_files:
         return
 
     # Build the list of files to include in the issue
     files_to_test = []
-    for file_path in code_files:
+    for file in changed_code_files:
         # Check if we have coverage data for this file
-        if file_path in coverage_data:
-            file_info = coverage_data[file_path]
-            file_entry = {"path": file_path}
+        if file["filename"] in coverage_data:
+            file_info = coverage_data[file["filename"]]
+            file_entry = {"path": file["filename"]}
 
             # Only add coverage data if it exists
             if "line_coverage" in file_info:
@@ -82,7 +84,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
             files_to_test.append(file_entry)
         else:
             # No coverage data for this file
-            files_to_test.append({"path": file_path})
+            files_to_test.append({"path": file["filename"]})
 
     # If no files need tests, return early
     if not files_to_test:

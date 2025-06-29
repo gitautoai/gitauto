@@ -22,6 +22,7 @@ from services.webhook.utils.create_test_selection_comment import (
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
 from utils.files.is_test_file import is_test_file
+from utils.files.is_type_file import is_type_file
 from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
 
 
@@ -63,25 +64,27 @@ def handle_pr_test_selection(payload: PullRequestWebhookPayload):
     token = get_installation_access_token(installation_id=installation_id)
 
     # Get files changed in the PR
-    file_changes = get_pull_request_files(url=pull_files_url, token=token)
+    changed_files = get_pull_request_files(url=pull_files_url, token=token)
 
     # Filter for code files only
-    code_file_changes = [
-        fc
-        for fc in file_changes
-        if is_code_file(fc["filename"]) and not is_test_file(fc["filename"])
+    changed_code_files = [
+        f
+        for f in changed_files
+        if is_code_file(f["filename"])
+        and not is_test_file(f["filename"])
+        and not is_type_file(f["filename"])
     ]
 
-    if not code_file_changes:
+    if not changed_code_files:
         msg = f"Skipping PR test selection for repo {repo_name} because no code files were changed"
         logging.info(msg)
         return
 
     # Get coverage data for the changed files
-    changed_filenames = [fc["filename"] for fc in code_file_changes]
-    coverage_data = get_coverages(repo_id=repo_id, filenames=changed_filenames)
+    changed_file_paths = [f["filename"] for f in changed_code_files]
+    coverage_data = get_coverages(repo_id=repo_id, filenames=changed_file_paths)
 
-    checklist = create_file_checklist(code_file_changes, coverage_data)
+    checklist = create_file_checklist(changed_code_files, coverage_data)
     base_comment = create_test_selection_comment(checklist)
 
     # Create base args for comment creation

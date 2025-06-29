@@ -32,7 +32,7 @@ def get_commit_diff(owner: str, repo: str, commit_sha: str, token: str) -> dict 
 
     for file in files:
         file_info = {
-            "filename": file.get("filename", ""),
+            "filename": file.get("filename", ""),  # full path
             "status": file.get("status", ""),  # added, modified, removed
             "additions": file.get("additions", 0),
             "deletions": file.get("deletions", 0),
