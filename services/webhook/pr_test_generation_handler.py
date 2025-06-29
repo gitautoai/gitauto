@@ -3,11 +3,8 @@ import json
 from datetime import datetime
 from typing import Any
 
-# Third party imports
-import requests
-
 # Local imports
-from config import PRODUCT_ID, GITHUB_APP_USER_NAME, TIMEOUT
+from config import PRODUCT_ID, GITHUB_APP_USER_NAME
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
@@ -15,10 +12,11 @@ from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
+from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.utils.create_headers import create_headers
 from services.github.trees.get_file_tree import get_file_tree
+from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 
 # Local imports (Supabase & Webhook)
 from services.supabase.repositories.get_repository import get_repository_settings
@@ -100,19 +98,17 @@ async def handle_pr_test_generation(payload: dict[str, Any]) -> None:
         create_comment(body=body, base_args=base_args)
         return
 
+    pr_data = get_pull_request(
+        owner=owner_name, repo=repo_name, pull_number=issue_number, token=token
+    )
+    branch_name = pr_data["head"]["ref"]  # Set the source branch (from)
+
+    # Cancel existing workflow runs since we'll be making new commits
+    cancel_workflow_runs(
+        owner=owner_name, repo=repo_name, branch=branch_name, token=token
+    )
+
     repo_settings = get_repository_settings(repo_id=repo_id)
-
-    pull_url = (
-        f"https://api.github.com/repos/{owner_name}/{repo_name}/pulls/{issue_number}"
-    )
-    response = requests.get(
-        url=pull_url, headers=create_headers(token=token), timeout=TIMEOUT
-    )
-    response.raise_for_status()
-    pr_data = response.json()
-
-    # Set the source branch name (from)
-    branch_name = pr_data["head"]["ref"]
 
     base_args = {
         "owner_type": owner_type,

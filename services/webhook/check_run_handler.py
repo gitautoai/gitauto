@@ -27,7 +27,7 @@ from services.github.types.check_run import CheckRun
 from services.github.types.check_suite import CheckSuite
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
-from services.github.workflow_runs.cancel_workflow_run import cancel_workflow_run
+from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
 from services.github.workflow_runs.get_workflow_run_path import get_workflow_run_path
 
@@ -128,13 +128,16 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         return
 
     # Cancel other in_progress check runs before proceeding with the fix
-    commit_sha = check_run["head_sha"]
-    cancel_workflow_run(
-        owner=owner_name, repo=repo_name, commit_sha=commit_sha, token=token
+    cancel_workflow_runs(
+        owner=owner_name, repo=repo_name, branch=head_branch, token=token
     )
 
     # Get title, body, and code changes in the PR
-    pull_title, pull_body = get_pull_request(url=pull_url, token=token)
+    pr_data = get_pull_request(
+        owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+    )
+    pull_title = pr_data["title"]
+    pull_body = pr_data["body"]
     pull_file_url = f"{pull_url}/files"
     pull_changes = get_pull_request_file_changes(url=pull_file_url, token=token)
     p += 5
