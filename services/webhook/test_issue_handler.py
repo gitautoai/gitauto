@@ -32,6 +32,9 @@ def mock_base_args():
         "token": "test-token",
         "is_automation": False,
         "comment_url": None,
+        "clone_url": "https://github.com/test-owner/test-repo.git",
+        "issue_comments": [],
+        "latest_commit_sha": "abc123",
     }
 
 
@@ -94,13 +97,40 @@ async def test_create_pr_from_issue_jira_input(mock_deconstruct, mock_base_args)
     """Test handling Jira input source"""
     mock_deconstruct.return_value = (mock_base_args, {})
     
-    with patch("services.webhook.issue_handler.delete_comments_by_identifiers") as mock_delete:
+    with patch.multiple(
+        "services.webhook.issue_handler",
+        delete_comments_by_identifiers=MagicMock(),
+        create_comment=MagicMock(return_value="test-comment-url"),
+        update_comment=MagicMock(),
+        is_request_limit_reached=MagicMock(return_value=(False, 5, 10, None)),
+        create_user_request=MagicMock(return_value="test-usage-id"),
+        get_file_tree=MagicMock(return_value=([], "")),
+        find_config_files=MagicMock(return_value=[]),
+        get_remote_file_content=MagicMock(return_value=""),
+        get_comments=MagicMock(return_value=[]),
+        create_system_messages=MagicMock(return_value=[]),
+        create_remote_branch=MagicMock(),
+        check_branch_exists=MagicMock(return_value=True),
+        chat_with_agent=MagicMock(return_value=([], [], None, None, 0, 0, False, 90)),
+        create_empty_commit=MagicMock(),
+        create_pull_request=MagicMock(return_value="https://github.com/test-owner/test-repo/pull/1"),
+        update_usage=MagicMock(),
+        render_text=MagicMock(return_value="rendered text"),
+        slack=MagicMock(),
+        add_reaction_to_issue=MagicMock(),
+        extract_image_urls=MagicMock(return_value=[]),
+        get_base64=MagicMock(return_value="base64data"),
+        describe_image=MagicMock(return_value="image description"),
+        get_latest_remote_commit_sha=MagicMock(return_value="abc123"),
+        create_task=MagicMock(),
+    ) as mocks:
         await create_pr_from_issue(
             payload={},
             trigger_type="label",
             input_from="jira"
         )
-        mock_delete.assert_not_called()
+        # Verify that delete_comments_by_identifiers is not called for Jira input
+        mocks["delete_comments_by_identifiers"].assert_not_called()
 
 
 @pytest.mark.asyncio
