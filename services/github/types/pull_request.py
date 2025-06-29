@@ -1,6 +1,7 @@
 from typing import Optional, TypedDict
 
 from services.github.types.label import Label
+from services.github.types.ref import Ref
 from services.github.types.user import User
 
 
@@ -9,8 +10,8 @@ class PullRequest(TypedDict):
     id: int
     node_id: str
     number: int
-    head: dict
-    base: dict
+    head: Ref
+    base: Ref
     html_url: str
     diff_url: str
     patch_url: str
