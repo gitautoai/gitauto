@@ -1,6 +1,7 @@
 # Standard imports
 import json
 from datetime import datetime
+import time
 from typing import Any
 
 # Local imports
@@ -29,10 +30,14 @@ from utils.error.handle_exceptions import handle_exceptions
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.prompts.push_trigger import PUSH_TRIGGER_SYSTEM_PROMPT
 from utils.text.text_copy import request_limit_reached
+from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
+from utils.time.get_timeout_message import get_timeout_message
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 async def handle_pr_test_generation(payload: dict[str, Any]) -> None:
+    current_time = time.time()
+
     # Skip if the comment editor is a bot
     sender = payload["sender"]
     sender_id = sender["id"]
@@ -165,6 +170,18 @@ async def handle_pr_test_generation(payload: dict[str, Any]) -> None:
     previous_calls = []
     retry_count = 0
     while True:
+        # Timeout check: Stop if we're approaching Lambda limit
+        is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
+            current_time
+        )
+        if is_timeout_approaching:
+            timeout_msg = get_timeout_message(
+                elapsed_time, "PR test generation processing"
+            )
+            update_comment(body=timeout_msg, base_args=base_args)
+            break
+
+        # Safety check: Stop if PR is closed or branch is deleted
         if not is_pull_request_open(
             owner=owner_name, repo=repo_name, pull_number=issue_number, token=token
         ):
