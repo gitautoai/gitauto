@@ -4,7 +4,8 @@ import hashlib
 import json
 
 # Local imports
-from config import EMAIL_LINK, GITHUB_APP_USER_NAME, PRICING_URL, UTF8
+from config import EMAIL_LINK, GITHUB_APP_USER_NAME, UTF8
+from constants.urls import PRICING_URL
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)

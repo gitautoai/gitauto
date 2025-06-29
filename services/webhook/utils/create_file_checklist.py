@@ -5,11 +5,14 @@ from utils.files.is_excluded_from_testing import is_excluded_from_testing
 
 
 def create_file_checklist(
-    code_files: list[str], coverage_data: dict[str, Any]
+    file_changes: list[dict[str, str]], coverage_data: dict[str, Any]
 ) -> list[FileChecklistItem]:
     checklist = []
 
-    for file_path in code_files:
+    for file_change in file_changes:
+        file_path = file_change["filename"]
+        status = file_change["status"]
+
         is_excluded = is_excluded_from_testing(file_path, coverage_data)
         checked = not is_excluded
 
@@ -30,7 +33,10 @@ def create_file_checklist(
 
         checklist.append(
             FileChecklistItem(
-                path=file_path, checked=checked, coverage_info=coverage_info
+                path=file_path,
+                checked=checked,
+                status=status,
+                coverage_info=coverage_info,
             )
         )
 

@@ -1,46 +1,39 @@
 from typing import TypedDict
-
-from config import PRODUCT_ID
+from constants.urls import (
+    SETTINGS_TRIGGERS_URL,
+    SETTINGS_RULES_URL,
+    DASHBOARD_COVERAGE_URL,
+)
+from services.github.pull_requests.get_pull_request_files import Status
 
 
 class FileChecklistItem(TypedDict):
     path: str
     checked: bool
     coverage_info: str
+    status: Status
 
 
 def create_test_selection_comment(checklist: list[FileChecklistItem]) -> str:
     comment_lines = [
-        "## 🧪 Test Generation Available",
+        "## 🧪 Manage Tests?",
         "",
-        "The following files were changed and may need test coverage. Select the files you want to generate tests for:",
+        "Select files to manage tests for (create, update, or remove):",
         "",
     ]
 
     for item in checklist:
         checkbox = "[x]" if item["checked"] else "[ ]"
-        comment_lines.append(f"- {checkbox} `{item['path']}`{item['coverage_info']}")
+        comment_lines.append(
+            f"- {checkbox} {item['status']} `{item['path']}`{item['coverage_info']}"
+        )
 
     comment_lines.extend(
         [
             "",
-            "---",
+            "- [ ] Manage Tests",
             "",
-            "**After selecting the files above, check the box below to generate tests:**",
-            "",
-            "- [ ] Generate Tests",
-        ]
-    )
-
-    if PRODUCT_ID != "gitauto":
-        comment_lines[-1] += f" - {PRODUCT_ID}"
-
-    comment_lines.extend(
-        [
-            "",
-            "💡 **Tip:** You can select multiple files and generate tests for all of them at once to avoid multiple Lambda executions.",
-            "",
-            "🔄 This comment will be updated when the PR changes to reflect the current file list.",
+            f"⚙️ [Turn off triggers]({SETTINGS_TRIGGERS_URL}) | 📋 [Coding rules]({SETTINGS_RULES_URL}) | 🎯 [Exclude files]({DASHBOARD_COVERAGE_URL})",
         ]
     )
 

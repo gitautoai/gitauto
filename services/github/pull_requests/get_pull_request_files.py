@@ -1,14 +1,28 @@
+# Standard imports
+from typing import Literal, TypedDict
+
+# Third party imports
 import requests
+
+# Local imports
 from config import PER_PAGE, TIMEOUT
 from services.github.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
+
+
+Status = Literal["added", "modified", "removed"]
+
+
+class FileChange(TypedDict):
+    filename: str
+    status: Status
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
 def get_pull_request_files(url: str, token: str):
     """https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests-files"""
     headers = create_headers(token=token)
-    filenames: list[str] = []
+    file_changes: list[FileChange] = []
     page = 1
 
     while True:
@@ -23,9 +37,11 @@ def get_pull_request_files(url: str, token: str):
             break
 
         for file in files:
-            if "filename" in file:
-                filenames.append(file["filename"])
+            if "filename" in file and "status" in file:
+                file_changes.append(
+                    {"filename": file["filename"], "status": file["status"]}
+                )
 
         page += 1
 
-    return filenames
+    return file_changes

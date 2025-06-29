@@ -2,7 +2,9 @@
 import logging
 
 # Local imports (Services)
-from services.github.comments.create_comment import create_comment
+from services.github.comments.combine_and_create_comment import (
+    combine_and_create_comment,
+)
 from services.github.pull_requests.get_pull_request_files import get_pull_request_files
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
@@ -43,6 +45,8 @@ def handle_pr_test_selection(payload: PullRequestWebhookPayload):
 
     # Extract owner related variables
     owner = repo["owner"]
+    owner_id = owner["id"]
+    owner_type = owner["type"]
     owner_name = owner["login"]
 
     # Extract PR related variables
@@ -55,22 +59,26 @@ def handle_pr_test_selection(payload: PullRequestWebhookPayload):
     token = get_installation_access_token(installation_id=installation_id)
 
     # Get files changed in the PR
-    changed_filenames = get_pull_request_files(url=pull_files_url, token=token)
+    file_changes = get_pull_request_files(url=pull_files_url, token=token)
 
-    # If no code files were changed, return early
-    code_files = [
-        f for f in changed_filenames if is_code_file(f) and not is_test_file(f)
+    # Filter for code files only
+    code_file_changes = [
+        fc
+        for fc in file_changes
+        if is_code_file(fc["filename"]) and not is_test_file(fc["filename"])
     ]
-    if not code_files:
+
+    if not code_file_changes:
         msg = f"Skipping PR test selection for repo {repo_name} because no code files were changed"
         logging.info(msg)
         return
 
-    # Filter for code files that might need tests
+    # Get coverage data for the changed files
+    changed_filenames = [fc["filename"] for fc in code_file_changes]
     coverage_data = get_coverages(repo_id=repo_id, filenames=changed_filenames)
 
-    checklist = create_file_checklist(code_files, coverage_data)
-    comment_body = create_test_selection_comment(checklist)
+    checklist = create_file_checklist(code_file_changes, coverage_data)
+    base_comment = create_test_selection_comment(checklist)
 
     # Create base args for comment creation
     base_args = {
@@ -80,5 +88,15 @@ def handle_pr_test_selection(payload: PullRequestWebhookPayload):
         "token": token,
     }
 
-    # Create the comment
-    create_comment(body=comment_body, base_args=base_args)
+    # Create the comment with usage info
+    combine_and_create_comment(
+        base_comment=base_comment,
+        installation_id=installation_id,
+        owner_id=owner_id,
+        owner_name=owner_name,
+        owner_type=owner_type,
+        repo_name=repo_name,
+        issue_number=pull_number,
+        sender_name=sender_name,
+        base_args=base_args,
+    )
