@@ -7,13 +7,16 @@ from typing import Literal
 
 # Local imports
 from config import PRODUCT_ID, PRODUCT_NAME, PR_BODY_STARTS_WITH
+from constants.messages import COMPLETED_PR
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
 from services.github.asset_manager import get_base64, render_text
 from services.github.branches.check_branch_exists import check_branch_exists
-from services.github.comment_manager import delete_my_comments
 from services.github.comments.create_comment import create_comment
+from services.github.comments.delete_comments_by_identifiers import (
+    delete_comments_by_identifiers,
+)
 from services.github.comments.get_comments import get_comments
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
@@ -43,6 +46,7 @@ from services.webhook.utils.create_system_messages import create_system_messages
 
 # Local imports (Utils)
 from utils.progress_bar.progress_bar import create_progress_bar
+from utils.text.comment_identifiers import PROGRESS_BAR_FILLED, PROGRESS_BAR_EMPTY
 from utils.text.text_copy import (
     UPDATE_COMMENT_FOR_422,
     git_command,
@@ -73,7 +77,15 @@ async def create_pr_from_issue(
 
     # Delete all comments made by GitAuto except the one with the checkbox to clean up the issue
     if input_from == "github":
-        delete_my_comments(base_args=base_args)
+        gitauto_identifiers = [
+            COMPLETED_PR,
+            UPDATE_COMMENT_FOR_422,
+            PROGRESS_BAR_FILLED,
+            PROGRESS_BAR_EMPTY,
+        ]
+        delete_comments_by_identifiers(
+            base_args=base_args, identifiers=gitauto_identifiers
+        )
 
     # Create a comment to track progress
     p = 0
