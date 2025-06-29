@@ -65,7 +65,7 @@ async def create_pr_from_issue(
     current_time: float = time.time()
 
     # Extract label and validate it
-    if trigger_type == "label" and payload["label"]["name"] != PRODUCT_ID:
+    if trigger_type == "label" and input_from == "github" and payload["label"]["name"] != PRODUCT_ID:
         return
 
     # Deconstruct payload based on input_from
