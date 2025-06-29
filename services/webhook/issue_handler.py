@@ -11,8 +11,8 @@ from constants.messages import COMPLETED_PR
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
-from services.github.asset_manager import get_base64, render_text
 from services.github.branches.check_branch_exists import check_branch_exists
+from services.github.branches.create_remote_branch import create_remote_branch
 from services.github.comments.create_comment import create_comment
 from services.github.comments.delete_comments_by_identifiers import (
     delete_comments_by_identifiers,
@@ -20,21 +20,21 @@ from services.github.comments.delete_comments_by_identifiers import (
 from services.github.comments.get_comments import get_comments
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.file_manager import find_config_files
 from services.github.github_manager import (
-    create_pull_request,
-    create_remote_branch,
     get_latest_remote_commit_sha,
     get_remote_file_content,
     get_remote_file_content_by_url,
-    add_reaction_to_issue,
 )
-from services.github.github_types import GitHubLabeledPayload
-from services.github.github_utils import deconstruct_github_payload
+from services.github.markdown.render_text import render_text
+from services.github.pulls.create_pull_request import create_pull_request
+from services.github.reactions.add_reaction_to_issue import add_reaction_to_issue
 from services.github.trees.get_file_tree import get_file_tree
+from services.github.types.github_types import GitHubLabeledPayload
+from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
+from services.github.utils.find_config_files import find_config_files
 
 # Local imports (Jira, OpenAI, Slack)
-from services.jira.jira_manager import deconstruct_jira_payload
+from services.jira.deconstruct_jira_payload import deconstruct_jira_payload
 from services.openai.vision import describe_image
 from services.slack.slack import slack
 
@@ -45,6 +45,7 @@ from services.supabase.usage.update_usage import update_usage
 from services.webhook.utils.create_system_messages import create_system_messages
 
 # Local imports (Utils)
+from utils.images.get_base64 import get_base64
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.text.comment_identifiers import PROGRESS_BAR_FILLED, PROGRESS_BAR_EMPTY
 from utils.text.text_copy import (

@@ -9,19 +9,18 @@ from constants.urls import PRICING_URL
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
-from services.github.actions_manager import get_workflow_run_logs, get_workflow_run_path
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.github_manager import get_remote_file_content
-from services.github.github_types import CheckRunCompletedPayload
-from services.github.github_utils import create_permission_url
-from services.github.pulls_manager import (
-    get_pull_request,
+from services.github.pulls.get_pull_request import get_pull_request
+from services.github.pulls.get_pull_request_file_changes import (
     get_pull_request_file_changes,
 )
-from services.github.pull_requests.is_pull_request_open import is_pull_request_open
+from services.github.pulls.is_pull_request_open import is_pull_request_open
+from services.github.types.github_types import CheckRunCompletedPayload
+from services.github.utils.create_permission_url import create_permission_url
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree import get_file_tree
 from services.github.types.check_run import CheckRun
@@ -29,6 +28,8 @@ from services.github.types.check_suite import CheckSuite
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
 from services.github.workflow_runs.cancel_workflow_run import cancel_workflow_run
+from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
+from services.github.workflow_runs.get_workflow_run_path import get_workflow_run_path
 
 # Local imports (Supabase)
 from services.supabase.owners_manager import get_stripe_customer_id

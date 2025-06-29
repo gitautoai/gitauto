@@ -7,8 +7,8 @@ from payloads.aws.event_bridge_scheduler.event_types import EventBridgeScheduler
 # Local imports (GitHub)
 from services.github.issues.create_issue import create_issue
 from services.github.issues.is_issue_open import is_issue_open
-from services.github.github_types import BaseArgs
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.types.github_types import BaseArgs
 
 # Local imports (Supabase)
 from services.supabase.coverages.get_all_coverages import get_all_coverages

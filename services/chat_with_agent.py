@@ -5,7 +5,7 @@ from typing import Literal, Any
 from config import OPENAI_MODEL_ID_O3_MINI
 from services.anthropic.chat_with_functions import chat_with_claude
 from services.github.comments.update_comment import update_comment
-from services.github.github_types import BaseArgs
+from services.github.types.github_types import BaseArgs
 from services.model_selection import get_model, try_next_model
 from services.openai.chat_with_functions import chat_with_openai
 from services.openai.functions.functions import (

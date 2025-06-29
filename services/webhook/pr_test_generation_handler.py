@@ -15,9 +15,9 @@ from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.create_comment import create_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.create_headers import create_headers
-from services.github.pull_requests.is_pull_request_open import is_pull_request_open
+from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.utils.create_headers import create_headers
 from services.github.trees.get_file_tree import get_file_tree
 
 # Local imports (Supabase & Webhook)

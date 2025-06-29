@@ -4,7 +4,7 @@ from constants.urls import (
     SETTINGS_RULES_URL,
     DASHBOARD_COVERAGE_URL,
 )
-from services.github.pull_requests.get_pull_request_files import Status
+from services.github.pulls.get_pull_request_files import Status
 from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
 
 

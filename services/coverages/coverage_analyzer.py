@@ -1,11 +1,12 @@
 # Local imports
 from services.coverages.parse_lcov_coverage import parse_lcov_coverage
-from services.github.actions_manager import get_workflow_artifacts, download_artifact
-from services.github.trees.get_file_tree import get_file_tree
+from services.github.artifacts.download_artifact import download_artifact
+from services.github.artifacts.get_workflow_artifacts import get_workflow_artifacts
 from services.github.repositories.get_repository_languages import (
     get_repository_languages,
 )
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.trees.get_file_tree import get_file_tree
 from services.supabase.coverages.process_coverage_data import process_coverage_data
 from utils.error.handle_exceptions import handle_exceptions
 

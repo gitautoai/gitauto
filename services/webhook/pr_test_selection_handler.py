@@ -8,7 +8,7 @@ from services.github.comments.combine_and_create_comment import (
 from services.github.comments.delete_comments_by_identifiers import (
     delete_comments_by_identifiers,
 )
-from services.github.pull_requests.get_pull_request_files import get_pull_request_files
+from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
 from services.supabase.coverages.get_coverages import get_coverages

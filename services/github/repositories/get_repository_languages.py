@@ -2,7 +2,7 @@ from typing import cast
 from requests import get
 
 from config import GITHUB_API_URL, TIMEOUT
-from services.github.create_headers import create_headers
+from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 
 
