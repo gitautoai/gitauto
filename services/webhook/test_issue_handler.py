@@ -79,14 +79,16 @@ async def test_create_pr_from_issue_label_mismatch():
 @pytest.mark.asyncio
 async def test_create_pr_from_issue_jira_label_no_error():
     """Test that Jira input with label trigger doesn't cause KeyError"""
-    # This should not raise a KeyError even though payload has no 'label' key
-    payload = {}
-    result = await create_pr_from_issue(
-        payload=payload,
-        trigger_type="label",
-        input_from="jira"
-    )
-    # Function should not crash and should return None (due to early return logic)
+    with patch("services.webhook.issue_handler.deconstruct_jira_payload") as mock_deconstruct:
+        mock_deconstruct.return_value = ({}, {})
+        # This should not raise a KeyError even though payload has no 'label' key
+        payload = {}
+        result = await create_pr_from_issue(
+            payload=payload,
+            trigger_type="label",
+            input_from="jira"
+        )
+        # Function should not crash and should return None (due to early return logic)
 
 @pytest.mark.asyncio
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
