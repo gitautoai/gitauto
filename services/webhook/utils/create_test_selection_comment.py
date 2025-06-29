@@ -31,9 +31,11 @@ def create_test_selection_comment(checklist: list[FileChecklistItem]) -> str:
     comment_lines.extend(
         [
             "",
+            "---",
+            "",
             "- [ ] Manage Tests",
             "",
-            f"⚙️ [Turn off triggers]({SETTINGS_TRIGGERS_URL}) | 📋 [Coding rules]({SETTINGS_RULES_URL}) | 🎯 [Exclude files]({DASHBOARD_COVERAGE_URL})",
+            f"You can [turn off triggers]({SETTINGS_TRIGGERS_URL}), [update coding rules]({SETTINGS_RULES_URL}), or [exclude files]({DASHBOARD_COVERAGE_URL})",
         ]
     )
 
