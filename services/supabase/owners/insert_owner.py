@@ -13,4 +13,5 @@ def insert_owner(
         owner_name=owner_name,
         stripe_customer_id=stripe_customer_id,
     )
-    supabase.table(table_name="owners").insert(json=owner_data.model_dump()).execute()
+    owner_data_dict = owner_data.model_dump(exclude_none=True)
+    supabase.table(table_name="owners").insert(json=owner_data_dict).execute()

@@ -22,4 +22,5 @@ def insert_issue(
         issue_number=issue_number,
         installation_id=installation_id,
     )
-    supabase.table(table_name="issues").insert(json=issue_data.model_dump()).execute()
+    issue_data_dict = issue_data.model_dump(exclude_none=True)
+    supabase.table(table_name="issues").insert(json=issue_data_dict).execute()

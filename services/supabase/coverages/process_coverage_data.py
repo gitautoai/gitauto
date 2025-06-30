@@ -59,7 +59,11 @@ def process_coverage_data(
         try:
             existing_record = existing_records.get(coverage["full_path"])
             item = {
-                **(existing_record.model_dump() if existing_record else {}),
+                **(
+                    existing_record.model_dump(exclude_none=True)
+                    if existing_record
+                    else {}
+                ),
                 # System fields are always updated
                 "owner_id": owner_id,
                 "repo_id": repo_id,

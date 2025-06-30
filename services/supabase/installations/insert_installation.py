@@ -16,6 +16,7 @@ def insert_installation(
         owner_type=owner_type,
         owner_name=owner_name,
     )
+    installation_data_dict = installation_data.model_dump(exclude_none=True)
     supabase.table(table_name="installations").insert(
-        json=installation_data.model_dump()
+        json=installation_data_dict
     ).execute()
