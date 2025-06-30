@@ -6,7 +6,8 @@ import stripe
 
 # Local imports
 from config import STRIPE_FREE_TIER_PRICE_ID
-from services.stripe.customer import subscribe_to_free_plan, get_subscription
+from services.stripe.get_subscription import get_subscription
+from services.stripe.subscribe_to_free_plan import subscribe_to_free_plan
 from utils.error.handle_exceptions import handle_exceptions
 
 

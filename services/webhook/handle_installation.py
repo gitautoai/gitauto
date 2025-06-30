@@ -1,12 +1,21 @@
 from typing import Any
+
+# Local imports (Github)
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.github_types import GitHubInstallationPayload
 from services.github.users.get_user_public_email import get_user_public_email
-from services.stripe.customer import create_stripe_customer, subscribe_to_free_plan
+
+# Local imports (Supabase)
 from services.supabase.installations.insert_installation import insert_installation
 from services.supabase.owners.check_owner_exists import check_owner_exists
 from services.supabase.owners.insert_owner import insert_owner
 from services.supabase.users.upsert_user import upsert_user
+
+# Local imports (Stripe)
+from services.stripe.create_stripe_customer import create_stripe_customer
+from services.stripe.subscribe_to_free_plan import subscribe_to_free_plan
+
+# Local imports (Others)
 from services.webhook.process_repositories import process_repositories
 from utils.error.handle_exceptions import handle_exceptions
 
