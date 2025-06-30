@@ -115,7 +115,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     statement_coverage = cast(float, target_file["statement_coverage"])
 
     # Create issue title and body
-    title = get_issue_title()
+    title = get_issue_title(file_path=file_path)
     body = get_issue_body(file_path=file_path, statement_coverage=statement_coverage)
 
     # Create base args for issue creation
