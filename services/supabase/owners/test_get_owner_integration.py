@@ -6,8 +6,8 @@ def test_get_owner_success():
     owner_id = 159883862
     result = get_owner(owner_id)
     assert result is not None
-    assert result.owner_id == owner_id
-    assert result.owner_name == OWNER
+    assert result.get("owner_id") == owner_id
+    assert result.get("owner_name") == OWNER
 
 
 def test_get_owner_not_found():
