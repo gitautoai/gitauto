@@ -1,6 +1,6 @@
 from services.supabase.issues.get_issue import get_issue
 from services.supabase.issues.insert_issue import insert_issue
-from services.supabase.usage.insert_usage import insert_usage
+from services.supabase.usage.insert_usage import insert_usage, Trigger
 from services.supabase.users.upsert_user import upsert_user
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -17,6 +17,7 @@ def create_user_request(
     repo_name: str,
     issue_number: int,
     source: str,
+    trigger: Trigger,
     email: str | None,
 ):
     existing_issue = get_issue(
@@ -47,6 +48,7 @@ def create_user_request(
         user_id=user_id,
         installation_id=installation_id,
         source=source,
+        trigger=trigger,
     )
 
     upsert_user(user_id=user_id, user_name=user_name, email=email)

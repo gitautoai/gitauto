@@ -1,7 +1,19 @@
-from typing import cast
+from typing import Literal, cast
 from schemas.supabase.fastapi.schema_public_latest import UsageInsert
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
+
+
+Trigger = Literal[
+    "issue_label",
+    "issue_comment",
+    "review_comment",
+    "test_failure",
+    "push",
+    "pull_request",
+    "merge",
+    # "schedule",  # Schedule trigger is included in issue_label for now
+]
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=True)
@@ -15,6 +27,7 @@ def insert_usage(
     user_id: int,
     installation_id: int,
     source: str,
+    trigger: Trigger,
 ):
     usage_data = UsageInsert(
         owner_id=owner_id,
@@ -26,6 +39,7 @@ def insert_usage(
         user_id=user_id,
         installation_id=installation_id,
         source=source,
+        trigger=trigger,
     )
     usage_data_dict = usage_data.model_dump(exclude_none=True)
     data, _ = supabase.table(table_name="usage").insert(json=usage_data_dict).execute()

@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 
 # Local imports
-from config import EXCEPTION_OWNERS, TZ, DEFAULT_TIME
+from config import EXCEPTION_OWNERS, FREE_TIER_REQUEST_AMOUNT, TZ, DEFAULT_TIME
 from services.supabase.installations.get_stripe_customer_id import (
     get_stripe_customer_id,
 )
@@ -35,8 +35,8 @@ def is_request_limit_reached(
     stripe_customer_id = get_stripe_customer_id(installation_id)
     if not stripe_customer_id:
         msg = f"No Stripe Customer ID found for installation {installation_id} owner {owner_id}"
-        logging.error(msg)
-        return (True, 0, 1, DEFAULT_TIME)
+        logging.warning(msg)
+        return (True, 0, FREE_TIER_REQUEST_AMOUNT, DEFAULT_TIME)
 
     # Get subscription data using existing function
     subscription = get_subscription(customer_id=stripe_customer_id)

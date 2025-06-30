@@ -25,8 +25,9 @@ from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
 
 # Local imports (Supabase)
-from services.supabase.owners_manager import get_stripe_customer_id
+from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository_settings
+from services.supabase.usage.update_usage import update_usage
 from services.webhook.utils.create_system_messages import create_system_messages
 
 # Local imports (Utils)
@@ -133,10 +134,21 @@ def handle_review_run(payload: dict[str, Any]):
         "skip_ci": True,
     }
 
-    # Return here if stripe_customer_id is not found
-    stripe_customer_id: str | None = get_stripe_customer_id(owner_id=owner_id)
-    if stripe_customer_id is None:
-        return
+    # Create a usage record
+    usage_record_id = create_user_request(
+        user_id=sender_id,
+        user_name=sender_name,
+        installation_id=installation_id,
+        owner_id=owner_id,
+        owner_type=owner_type,
+        owner_name=owner_name,
+        repo_id=repo_id,
+        repo_name=repo_name,
+        issue_number=pull_number,
+        source="github",
+        trigger="review_comment",
+        email=None,
+    )
 
     # Greeting
     p = 0
@@ -309,4 +321,15 @@ def handle_review_run(payload: dict[str, Any]):
     # Create a pull request to the base branch
     msg = "Resolved your feedback! Looks good?"
     update_comment(body=msg, base_args=base_args)
+
+    # Update usage record
+    end_time = time.time()
+    update_usage(
+        usage_record_id=usage_record_id,
+        token_input=0,
+        token_output=0,
+        total_seconds=int(end_time - current_time),
+        pr_number=pull_number,
+        is_completed=True,
+    )
     return

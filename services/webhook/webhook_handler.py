@@ -50,7 +50,6 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     # Handle push events from non-bot users
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
     # if event_name == "push":
-    # handle_push_event(payload=payload)
     # return
 
     # For other events, we need to check the action

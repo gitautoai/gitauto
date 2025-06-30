@@ -20,8 +20,10 @@ from services.github.trees.get_file_tree import get_file_tree
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 
 # Local imports (Supabase & Webhook)
+from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository_settings
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
+from services.supabase.usage.update_usage import update_usage
 from services.webhook.utils.create_system_messages import create_system_messages
 from services.webhook.utils.extract_selected_files import extract_selected_files
 
@@ -102,6 +104,22 @@ async def handle_pr_test_generation(payload: dict[str, Any]) -> None:
 
         create_comment(body=body, base_args=base_args)
         return
+
+    # Create a usage record
+    usage_record_id = create_user_request(
+        user_id=sender_id,
+        user_name=sender_name,
+        installation_id=installation_id,
+        owner_id=owner_id,
+        owner_type=owner_type,
+        owner_name=owner_name,
+        repo_id=repo_id,
+        repo_name=repo_name,
+        issue_number=issue_number,
+        source="github",
+        trigger="pull_request",
+        email=None,
+    )
 
     pr_data = get_pull_request(
         owner=owner_name, repo=repo_name, pull_number=issue_number, token=token
@@ -259,3 +277,14 @@ async def handle_pr_test_generation(payload: dict[str, Any]) -> None:
 
     final_msg = "Finished generating tests for selected files!"
     update_comment(body=final_msg, base_args=base_args)
+
+    # Update usage record
+    end_time = time.time()
+    update_usage(
+        usage_record_id=usage_record_id,
+        token_input=0,
+        token_output=0,
+        total_seconds=int(end_time - current_time),
+        pr_number=issue_number,
+        is_completed=True,
+    )
