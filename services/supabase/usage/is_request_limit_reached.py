@@ -10,8 +10,9 @@ from services.supabase.installations.get_stripe_customer_id import (
 from services.supabase.usage.count_completed_unique_requests import (
     count_completed_unique_requests,
 )
+from services.stripe.get_base_request_limit import get_base_request_limit
+from services.stripe.get_subscription import get_subscription
 from services.stripe.parse_subscription_object import parse_subscription_object
-from services.stripe.customer import get_subscription, get_base_request_limit
 from utils.error.handle_exceptions import handle_exceptions
 
 DEFAULT = (False, 0, 1, DEFAULT_TIME)
