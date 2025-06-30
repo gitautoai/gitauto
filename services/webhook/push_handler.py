@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import json
+import logging
 import time
 from typing import Any
 
@@ -61,8 +62,9 @@ def handle_push_event(payload: dict[str, Any]) -> None:
 
     # Check repository settings for trigger_on_commit and rules
     repo_settings = get_repository_settings(repo_id=repo_id)
-    if repo_settings and not repo_settings.get("trigger_on_commit", False):
-        print(f"Skipping push event for {repo_name} - trigger_on_commit is disabled")
+    if repo_settings and not repo_settings.trigger_on_commit:
+        msg = f"Skipping push event for {repo_name} - trigger_on_commit is disabled"
+        logging.info(msg)
         return
 
     # Extract owner related variables

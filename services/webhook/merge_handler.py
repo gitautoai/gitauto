@@ -34,7 +34,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
 
     # Get repository settings
     repo_settings = get_repository_settings(repo_id=repo_id)
-    if not repo_settings or not repo_settings.get("trigger_on_merged", False):
+    if not repo_settings or not repo_settings.trigger_on_merged:
         return
 
     # Get PR number and details

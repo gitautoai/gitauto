@@ -49,7 +49,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
     # Get repository settings - check if trigger_on_schedule is enabled
     repo_settings = get_repository_settings(repo_id=repo_id)
-    if not repo_settings or not repo_settings.get("trigger_on_schedule", False):
+    if not repo_settings or not repo_settings.trigger_on_schedule:
         msg = f"Skipping repo_id: {repo_id} - trigger_on_schedule is not enabled"
         logging.info(msg)
         return {"status": "skipped", "message": msg}
