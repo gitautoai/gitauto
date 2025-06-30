@@ -59,11 +59,7 @@ def process_coverage_data(
         try:
             existing_record = existing_records.get(coverage["full_path"])
             item = {
-                **(
-                    existing_record.model_dump(exclude_none=True)
-                    if existing_record
-                    else {}
-                ),
+                **existing_record,
                 # System fields are always updated
                 "owner_id": owner_id,
                 "repo_id": repo_id,
@@ -88,8 +84,10 @@ def process_coverage_data(
             if item.get("branch_coverage") == 100:
                 item["uncovered_branches"] = None
 
-            # Remove id field to avoid upsert conflicts
+            # Remove id, created_at, and updated_at fields to avoid upsert conflicts
             item.pop("id", None)
+            item.pop("created_at", None)
+            item.pop("updated_at", None)
 
             # Test if item is JSON serializable
             json.dumps(item)

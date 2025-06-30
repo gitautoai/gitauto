@@ -1,12 +1,12 @@
 import json
 from typing import Any, cast
 
-from schemas.supabase.fastapi.schema_public_latest import RepositoriesBaseSchema
+from schemas.supabase.fastapi.schema_public_latest import Repositories
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def create_system_messages(repo_settings: RepositoriesBaseSchema | None):
+def create_system_messages(repo_settings: Repositories | None):
     system_messages = []
 
     if not repo_settings:
