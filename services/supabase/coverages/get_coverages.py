@@ -1,11 +1,17 @@
-from schemas.supabase.fastapi.schema_public_latest import CoveragesBaseSchema
+# Standard imports
+from typing import cast
+
+# Third-party imports
+from schemas.supabase.fastapi.schema_public_latest import Coverages
+
+# Local imports
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value={}, raise_on_error=False)
 def get_coverages(repo_id: int, filenames: list[str]):
-    coverage_dict: dict[str, CoveragesBaseSchema] = {}
+    coverage_dict: dict[str, Coverages] = {}
     if not filenames:
         return coverage_dict
 
@@ -22,6 +28,6 @@ def get_coverages(repo_id: int, filenames: list[str]):
 
     # Create a dictionary mapping file paths to their coverage data
     for item in result.data:
-        coverage_dict[item["full_path"]] = CoveragesBaseSchema(**item)
+        coverage_dict[item["full_path"]] = cast(Coverages, item)
 
     return coverage_dict

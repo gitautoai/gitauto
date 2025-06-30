@@ -1,13 +1,15 @@
 # Standard imports
 from datetime import datetime
+from typing import cast
 
 # Local imports
 from config import ISSUE_NUMBER_FORMAT, PRODUCT_ID
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.branches.get_default_branch import get_default_branch
-from services.github.types.github_types import BaseArgs
 from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.types.github_types import BaseArgs
+from services.github.types.owner import OwnerType
 from services.jira.types import JiraPayload
 from services.supabase.installations.get_installation import get_installation
 from services.supabase.repositories.get_repository import get_repository_settings
@@ -46,8 +48,8 @@ def deconstruct_jira_payload(payload: JiraPayload):
     if not installation:
         raise ValueError(f"Installation not found for owner_id: {owner_id}")
 
-    installation_id = installation.installation_id
-    owner_type = installation.owner_type
+    installation_id = cast(int, installation["installation_id"])
+    owner_type = cast(OwnerType, installation["owner_type"])
     token = get_installation_access_token(installation_id=installation_id)
     is_fork = is_repo_forked(owner=owner_name, repo=repo_name, token=token)
 
@@ -58,7 +60,9 @@ def deconstruct_jira_payload(payload: JiraPayload):
 
     # Get repository rules from Supabase
     repo_settings = get_repository_settings(repo_id=repo_id)
-    target_branch = repo_settings.target_branch if repo_settings else None
+    target_branch = (
+        cast(str | None, repo_settings["target_branch"]) if repo_settings else None
+    )
 
     # If target branch is set and exists in the repository, use it, otherwise use default branch
     if target_branch and check_branch_exists(

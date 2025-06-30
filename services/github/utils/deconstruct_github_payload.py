@@ -52,7 +52,9 @@ def deconstruct_github_payload(
 
     # Get repository rules from Supabase
     repo_settings = get_repository_settings(repo_id=repo_id)
-    target_branch = repo_settings.target_branch if repo_settings else None
+    target_branch = (
+        cast(str | None, repo_settings["target_branch"]) if repo_settings else None
+    )
 
     # If target branch is set and exists in the repository, use it, otherwise use default branch
     if target_branch and check_branch_exists(
