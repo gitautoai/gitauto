@@ -12,6 +12,7 @@ Trigger = Literal[
     "push",
     "pull_request",
     "merge",
+    # "schedule",  # Schedule trigger is included in issue_label for now
 ]
 
 
