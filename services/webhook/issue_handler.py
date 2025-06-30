@@ -61,7 +61,7 @@ from utils.urls.extract_urls import extract_image_urls
 
 async def create_pr_from_issue(
     payload: GitHubLabeledPayload,
-    trigger_type: Literal["label", "comment", "review_comment"],
+    trigger_type: Literal["label", "comment"],
     input_from: Literal["github", "jira"],
 ) -> None:
     current_time: float = time.time()
@@ -179,6 +179,7 @@ async def create_pr_from_issue(
         repo_name=repo_name,
         issue_number=issue_number,
         source=input_from,
+        trigger="issue_comment" if trigger_type == "comment" else "issue_label",
         email=sender_email,
     )
 
@@ -342,8 +343,8 @@ async def create_pr_from_issue(
             previous_calls,
             _tool_name,
             _tool_args,
-            token_input,
-            token_output,
+            _token_input,
+            _token_output,
             is_explored,
             p,
         ) = chat_with_agent(
@@ -382,8 +383,8 @@ async def create_pr_from_issue(
             previous_calls,
             _tool_name,
             _tool_args,
-            token_input,
-            token_output,
+            _token_input,
+            _token_output,
             is_committed,
             p,
         ) = chat_with_agent(
@@ -459,8 +460,8 @@ async def create_pr_from_issue(
         usage_record_id=usage_record_id,
         is_completed=is_completed,
         pr_number=pr_number,
-        token_input=token_input,
-        token_output=token_output,
+        token_input=0,
+        token_output=0,
         total_seconds=int(end_time - current_time),
     )
     return

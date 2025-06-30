@@ -6,7 +6,6 @@ import time
 
 # Local imports
 from config import EMAIL_LINK, GITHUB_APP_USER_NAME, UTF8
-from constants.urls import PRICING_URL
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
@@ -33,12 +32,13 @@ from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run
 from services.github.workflow_runs.get_workflow_run_path import get_workflow_run_path
 
 # Local imports (Supabase)
-from services.supabase.owners_manager import get_stripe_customer_id
+from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository_settings
 from services.supabase.usage.get_retry_pairs import get_retry_workflow_id_hash_pairs
 from services.supabase.usage.update_retry_pairs import (
     update_retry_workflow_id_hash_pairs,
 )
+from services.supabase.usage.update_usage import update_usage
 
 # Local imports (Others)
 from services.webhook.utils.create_system_messages import create_system_messages
@@ -124,13 +124,21 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     comment_url = create_comment(body=body, base_args=base_args)
     base_args["comment_url"] = comment_url
 
-    # Return here if stripe_customer_id is not found
-    stripe_customer_id = get_stripe_customer_id(owner_id=owner_id)
-    if stripe_customer_id is None:
-        msg = f"Subscribe [here]({PRICING_URL}) to get GitAuto to self-correct check run errors."
-        log_messages.append(msg)
-        update_comment(body="\n".join(log_messages), base_args=base_args)
-        return
+    # Create a usage record
+    usage_record_id = create_user_request(
+        user_id=sender_id,
+        user_name=sender_name,
+        installation_id=installation_id,
+        owner_id=owner_id,
+        owner_type=owner_type,
+        owner_name=owner_name,
+        repo_id=repo_id,
+        repo_name=repo_name,
+        issue_number=pull_number,
+        source="github",
+        trigger="test_failure",
+        email=None,
+    )
 
     # Cancel other in_progress check runs before proceeding with the fix
     cancel_workflow_runs(
@@ -363,4 +371,15 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Create a pull request to the base branch
     msg = f"Committed the Check Run `{check_run_name}` error fix! Running it again."
     update_comment(body=msg, base_args=base_args)
+
+    # Update usage record
+    end_time = time.time()
+    update_usage(
+        usage_record_id=usage_record_id,
+        token_input=0,
+        token_output=0,
+        total_seconds=int(end_time - current_time),
+        pr_number=pull_number,
+        is_completed=True,
+    )
     return

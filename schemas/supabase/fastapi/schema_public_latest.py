@@ -249,6 +249,7 @@ class UsageBaseSchema(CustomModel):
     token_input: int | None = Field(default=None)
     token_output: int | None = Field(default=None)
     total_seconds: int | None = Field(default=None)
+    trigger: str
     user_id: int
 
 
@@ -623,6 +624,7 @@ class UsageInsert(CustomModelInsert):
     # token_input: nullable
     # token_output: nullable
     # total_seconds: nullable
+    # trigger: has default value
 
     # Required fields
     installation_id: int
@@ -646,6 +648,7 @@ class UsageInsert(CustomModelInsert):
     token_input: int | None = Field(default=None)
     token_output: int | None = Field(default=None)
     total_seconds: int | None = Field(default=None)
+    trigger: str | None = Field(default=None)
 
 
 class UsageWithIssuesInsert(CustomModelInsert):
@@ -1029,6 +1032,7 @@ class UsageUpdate(CustomModelUpdate):
     # token_input: nullable
     # token_output: nullable
     # total_seconds: nullable
+    # trigger: has default value
 
     # Optional fields
     created_at: datetime.datetime | None = Field(default=None)
@@ -1049,6 +1053,7 @@ class UsageUpdate(CustomModelUpdate):
     token_input: int | None = Field(default=None)
     token_output: int | None = Field(default=None)
     total_seconds: int | None = Field(default=None)
+    trigger: str | None = Field(default=None)
     user_id: int | None = Field(default=None)
 
 
