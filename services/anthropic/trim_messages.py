@@ -1,5 +1,5 @@
 # Standard imports
-from typing import Any, cast
+from typing import Any
 
 # Third party imports
 from anthropic import Anthropic
@@ -22,10 +22,9 @@ def trim_messages_to_token_limit(
     if not messages:
         return messages
 
-    token_input = cast(
-        int,
-        client.messages.count_tokens(messages=messages, model=model).input_tokens,
-    )
+    token_input = client.messages.count_tokens(
+        messages=messages, model=model
+    ).input_tokens
 
     # Keep removing messages from oldest (non-system) to newest until under limit
     while token_input > max_input and len(messages) > 1:
@@ -76,9 +75,8 @@ def trim_messages_to_token_limit(
             break
 
         # Recalculate token count after removal
-        token_input = cast(
-            int,
-            client.messages.count_tokens(messages=messages, model=model).input_tokens,
-        )
+        token_input = client.messages.count_tokens(
+            messages=messages, model=model
+        ).input_tokens
 
     return messages

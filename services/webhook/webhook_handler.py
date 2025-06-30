@@ -15,11 +15,11 @@ from services.github.comments.create_gitauto_button_comment import (
 from services.slack.slack import slack
 
 # Local imports (Supabase)
-from services.supabase.gitauto_manager import set_issue_to_merged
 from services.supabase.installations.delete_installation import delete_installation
 from services.supabase.installations.unsuspend_installation import (
     unsuspend_installation,
 )
+from services.supabase.issues.update_issue_merged import update_issue_merged
 
 # Local imports (Webhooks)
 from services.webhook.check_run_handler import handle_check_run
@@ -197,11 +197,12 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
         owner_type = repository["owner"]["type"]
         owner_name = repository["owner"]["login"]
         repo_name = repository["name"]
-        set_issue_to_merged(
+        update_issue_merged(
             owner_type=owner_type,
             owner_name=owner_name,
             repo_name=repo_name,
             issue_number=issue_number,
+            merged=True,
         )
 
         msg = f"🎉 PR merged by `{payload['sender']['login']}` for `{payload['repository']['name']}`"

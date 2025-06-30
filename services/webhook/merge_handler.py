@@ -57,7 +57,9 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
         if (
             is_code_file(f["filename"])
             and not is_test_file(f["filename"])
-            and not is_excluded_from_testing(f["filename"], coverage_data)
+            and not is_excluded_from_testing(
+                filename=f["filename"], coverage_data=coverage_data
+            )
         )
     ]
 
@@ -74,12 +76,12 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
             file_entry = {"path": file["filename"]}
 
             # Only add coverage data if it exists
-            if "line_coverage" in file_info:
-                file_entry["line_coverage"] = file_info["line_coverage"]
-            if "function_coverage" in file_info:
-                file_entry["function_coverage"] = file_info["function_coverage"]
-            if "branch_coverage" in file_info:
-                file_entry["branch_coverage"] = file_info["branch_coverage"]
+            if file_info.line_coverage is not None:
+                file_entry["line_coverage"] = file_info.line_coverage
+            if file_info.function_coverage is not None:
+                file_entry["function_coverage"] = file_info.function_coverage
+            if file_info.branch_coverage is not None:
+                file_entry["branch_coverage"] = file_info.branch_coverage
 
             files_to_test.append(file_entry)
         else:

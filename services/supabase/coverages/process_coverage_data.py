@@ -57,9 +57,9 @@ def process_coverage_data(
     upsert_data = []
     for coverage in seen.values():
         try:
-            existing_record = existing_records.get(coverage["full_path"], {})
+            existing_record = existing_records.get(coverage["full_path"])
             item = {
-                **existing_record,  # Keep all fields from the existing record
+                **(existing_record.model_dump() if existing_record else {}),
                 # System fields are always updated
                 "owner_id": owner_id,
                 "repo_id": repo_id,
@@ -77,11 +77,11 @@ def process_coverage_data(
                 item["is_excluded_from_testing"] = False
 
             # Set uncovered fields to None when the coverage is 100%
-            if item["line_coverage"] == 100:
+            if item.get("line_coverage") == 100:
                 item["uncovered_lines"] = None
-            if item["function_coverage"] == 100:
+            if item.get("function_coverage") == 100:
                 item["uncovered_functions"] = None
-            if item["branch_coverage"] == 100:
+            if item.get("branch_coverage") == 100:
                 item["uncovered_branches"] = None
 
             # Remove id field to avoid upsert conflicts

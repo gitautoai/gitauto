@@ -117,7 +117,9 @@ def handle_push_event(payload: dict[str, Any]) -> None:
             if (
                 is_code_file(filename)
                 and not is_test_file(filename)
-                and not is_excluded_from_testing(filename, coverage_data)
+                and not is_excluded_from_testing(
+                    filename=filename, coverage_data=coverage_data
+                )
             ):
                 filtered_files.append(file)
                 has_code_files = True

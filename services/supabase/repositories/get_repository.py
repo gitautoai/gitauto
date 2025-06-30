@@ -1,5 +1,3 @@
-from typing import cast
-
 from schemas.supabase.fastapi.schema_public_latest import RepositoriesBaseSchema
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
@@ -10,6 +8,6 @@ def get_repository_settings(repo_id: int):
     result = supabase.table("repositories").select("*").eq("repo_id", repo_id).execute()
 
     if result.data and result.data[0]:
-        return cast(RepositoriesBaseSchema, result.data[0])
+        return RepositoriesBaseSchema(**result.data[0])
 
     return None

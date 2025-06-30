@@ -19,7 +19,6 @@ def combine_and_create_comment(
     issue_number: int,
     sender_name: str,
     base_args: dict[str, Any],
-    welcome_message: bool = False,
 ) -> None:
     # Check usage limits
     is_limit_reached, requests_left, request_limit, end_date = is_request_limit_reached(
@@ -52,10 +51,6 @@ def combine_and_create_comment(
             request_count=request_limit,
             end_date=end_date,
         )
-
-    # Add welcome message if first issue
-    if welcome_message:
-        body = "Welcome to GitAuto! 🎉\n" + body
 
     # Create the comment
     create_comment(body=body, base_args=base_args)
