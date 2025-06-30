@@ -2,6 +2,7 @@
 from datetime import datetime
 import hashlib
 import json
+import time
 
 # Local imports
 from config import EMAIL_LINK, GITHUB_APP_USER_NAME, UTF8
@@ -42,9 +43,13 @@ from services.supabase.usage.update_retry_pairs import (
 # Local imports (Others)
 from services.webhook.utils.create_system_messages import create_system_messages
 from utils.progress_bar.progress_bar import create_progress_bar
+from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
+from utils.time.get_timeout_message import get_timeout_message
 
 
 def handle_check_run(payload: CheckRunCompletedPayload) -> None:
+    current_time = time.time()
+
     # Extract workflow run id
     check_run: CheckRun = payload["check_run"]
     details_url = check_run["details_url"]
@@ -240,6 +245,16 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     previous_calls = []
     retry_count = 0
     while True:
+        # Timeout check: Stop if we're approaching Lambda limit
+        is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
+            current_time
+        )
+        if is_timeout_approaching:
+            timeout_msg = get_timeout_message(elapsed_time, "Check run processing")
+            if comment_url:
+                update_comment(body=timeout_msg, base_args=base_args)
+            break
+
         # Safety check: Stop if PR is closed or branch is deleted
         if not is_pull_request_open(
             owner=owner_name, repo=repo_name, pull_number=pull_number, token=token

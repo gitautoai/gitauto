@@ -54,6 +54,8 @@ from utils.text.text_copy import (
     pull_request_completed,
     request_limit_reached,
 )
+from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
+from utils.time.get_timeout_message import get_timeout_message
 from utils.urls.extract_urls import extract_image_urls
 
 
@@ -311,6 +313,19 @@ async def create_pr_from_issue(
     previous_calls = []
     retry_count = 0
     while True:
+        # Timeout check: Stop if we're approaching Lambda limit
+        is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
+            current_time
+        )
+        if is_timeout_approaching:
+            timeout_msg = get_timeout_message(elapsed_time, "Issue processing")
+            log_messages.append(timeout_msg)
+            update_comment(
+                body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+                base_args=base_args,
+            )
+            break
+
         # Safety check: Stop if branch is deleted
         if not check_branch_exists(
             owner=owner_name, repo=repo_name, branch_name=new_branch_name, token=token

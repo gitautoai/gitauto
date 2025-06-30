@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import json
+import time
 from typing import Any
 
 # Local imports
@@ -34,9 +35,13 @@ from utils.files.is_excluded_from_testing import is_excluded_from_testing
 from utils.files.is_test_file import is_test_file
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.prompts.push_trigger import PUSH_TRIGGER_SYSTEM_PROMPT
+from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
+from utils.time.get_timeout_message import get_timeout_message
 
 
 def handle_push_event(payload: dict[str, Any]) -> None:
+    current_time = time.time()  # Add this early in the function
+
     # Skip if it's any bot
     sender_id: int = payload["sender"]["id"]
     sender_name: str = payload["sender"]["login"]
@@ -212,6 +217,16 @@ def handle_push_event(payload: dict[str, Any]) -> None:
     previous_calls = []
     retry_count = 0
     while True:
+        # Timeout check: Stop if we're approaching Lambda limit
+        is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
+            current_time
+        )
+        if is_timeout_approaching:
+            timeout_msg = get_timeout_message(elapsed_time, "Push event processing")
+            if comment_url:
+                update_comment(body=timeout_msg, base_args=base_args)
+            break
+
         # Safety check: Stop if PR is closed or branch is deleted
         if pull_number > 0:
             # Check if PR is still open
