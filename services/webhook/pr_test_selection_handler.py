@@ -43,7 +43,7 @@ def handle_pr_test_selection(payload: PullRequestWebhookPayload):
 
     # Check repository settings for PR test selection
     repo_settings = get_repository_settings(repo_id=repo_id)
-    if not repo_settings or not repo_settings.trigger_on_pr_change:
+    if not repo_settings or not repo_settings["trigger_on_pr_change"]:
         msg = f"Skipping PR test selection for repo {repo_name} because trigger_on_pr_change is False"
         logging.info(msg)
         return

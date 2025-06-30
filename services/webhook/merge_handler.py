@@ -34,7 +34,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
 
     # Get repository settings
     repo_settings = get_repository_settings(repo_id=repo_id)
-    if not repo_settings or not repo_settings.trigger_on_merged:
+    if not repo_settings or not repo_settings["trigger_on_merged"]:
         return
 
     # Get PR number and details
@@ -76,12 +76,12 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
             file_entry = {"path": file["filename"]}
 
             # Only add coverage data if it exists
-            if file_info.line_coverage is not None:
-                file_entry["line_coverage"] = file_info.line_coverage
-            if file_info.function_coverage is not None:
-                file_entry["function_coverage"] = file_info.function_coverage
-            if file_info.branch_coverage is not None:
-                file_entry["branch_coverage"] = file_info.branch_coverage
+            if file_info["line_coverage"] is not None:
+                file_entry["line_coverage"] = file_info["line_coverage"]
+            if file_info["function_coverage"] is not None:
+                file_entry["function_coverage"] = file_info["function_coverage"]
+            if file_info["branch_coverage"] is not None:
+                file_entry["branch_coverage"] = file_info["branch_coverage"]
 
             files_to_test.append(file_entry)
         else:

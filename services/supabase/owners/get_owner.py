@@ -1,4 +1,10 @@
+# Standard imports
+from typing import cast
+
+# Third-party imports
 from schemas.supabase.fastapi.schema_public_latest import Owners
+
+# Local imports
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -9,4 +15,4 @@ def get_owner(owner_id: int):
     if not result.data:
         return None
 
-    return Owners(**result.data[0])
+    return cast(Owners, result.data[0])

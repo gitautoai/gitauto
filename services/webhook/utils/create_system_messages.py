@@ -1,4 +1,5 @@
 import json
+from typing import Any, cast
 
 from schemas.supabase.fastapi.schema_public_latest import RepositoriesBaseSchema
 from utils.error.handle_exceptions import handle_exceptions
@@ -12,7 +13,7 @@ def create_system_messages(repo_settings: RepositoriesBaseSchema | None):
         return system_messages
 
     # Add structured rules first
-    structured_rules = repo_settings.structured_rules
+    structured_rules = cast(dict[str, Any], repo_settings.get("structured_rules"))
     if structured_rules:
         structured_content = "\n".join(f"{k}: {v}" for k, v in structured_rules.items())
         system_messages.append(
@@ -23,7 +24,7 @@ def create_system_messages(repo_settings: RepositoriesBaseSchema | None):
         )
 
     # Add free-format repository rules after
-    repo_rules = repo_settings.repo_rules
+    repo_rules = cast(str | None, repo_settings.get("repo_rules"))
     if repo_rules and repo_rules.strip():
         system_messages.append(
             {"role": "system", "content": f"## Repository Rules:\n\n{repo_rules}"}

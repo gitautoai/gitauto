@@ -1,4 +1,10 @@
-from schemas.supabase.fastapi.schema_public_latest import CoveragesBaseSchema
+# Standard imports
+from typing import cast
+
+# Third-party imports
+from schemas.supabase.fastapi.schema_public_latest import Coverages
+
+# Local imports
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -19,4 +25,4 @@ def get_all_coverages(repo_id: int):
     if not result.data:
         return None
 
-    return [CoveragesBaseSchema(**item) for item in result.data]
+    return [cast(Coverages, item) for item in result.data]

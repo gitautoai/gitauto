@@ -1,4 +1,10 @@
+# Standard imports
+from typing import cast
+
+# Third-party imports
 from schemas.supabase.fastapi.schema_public_latest import Issues
+
+# Local imports
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -21,4 +27,4 @@ def get_issue(
     )
     if not data[1]:
         return None
-    return Issues(**data[1][0])
+    return cast(Issues, data[1][0])

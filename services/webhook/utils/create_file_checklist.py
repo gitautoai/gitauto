@@ -23,12 +23,12 @@ def create_file_checklist(
             file_info = coverage_data[file_path]
             coverage_parts = []
 
-            if file_info.line_coverage is not None:
-                coverage_parts.append(f"Line: {file_info.line_coverage}%")
-            if file_info.function_coverage is not None:
-                coverage_parts.append(f"Function: {file_info.function_coverage}%")
-            if file_info.branch_coverage is not None:
-                coverage_parts.append(f"Branch: {file_info.branch_coverage}%")
+            if file_info["line_coverage"] is not None:
+                coverage_parts.append(f"Line: {file_info['line_coverage']}%")
+            if file_info["function_coverage"] is not None:
+                coverage_parts.append(f"Function: {file_info['function_coverage']}%")
+            if file_info["branch_coverage"] is not None:
+                coverage_parts.append(f"Branch: {file_info['branch_coverage']}%")
 
             if coverage_parts:
                 coverage_info = f" ({', '.join(coverage_parts)})"

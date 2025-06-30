@@ -1,5 +1,6 @@
 # Standard imports
 import logging
+from typing import cast
 
 # Local imports (AWS)
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
@@ -42,14 +43,14 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     if not installation:
         raise ValueError(f"Installation not found for owner_id: {owner_id}")
 
-    installation_id = installation.installation_id
+    installation_id = cast(int, installation["installation_id"])
     token = get_installation_access_token(installation_id=installation_id)
     if token is None:
         raise ValueError(f"Token is None for installation_id: {installation_id}")
 
     # Get repository settings - check if trigger_on_schedule is enabled
     repo_settings = get_repository_settings(repo_id=repo_id)
-    if not repo_settings or not repo_settings.trigger_on_schedule:
+    if not repo_settings or not repo_settings.get("trigger_on_schedule"):
         msg = f"Skipping repo_id: {repo_id} - trigger_on_schedule is not enabled"
         logging.info(msg)
         return {"status": "skipped", "message": msg}
@@ -77,12 +78,12 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         return {"status": "skipped", "message": msg}
 
     # Create a coverage dict for is_excluded_from_testing function
-    coverage_dict = {item.full_path: item for item in all_coverages}
+    coverage_dict = {item["full_path"]: item for item in all_coverages}
 
     # Find the first suitable file
     target_file = None
     for coverage_record in all_coverages:
-        file_path = coverage_record.full_path
+        file_path = cast(str, coverage_record["full_path"])
 
         # Skip non-code files
         if not is_code_file(file_path):
@@ -97,7 +98,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             continue
 
         # Skip files that have open GitHub issues
-        github_issue_url = coverage_record.github_issue_url
+        github_issue_url = cast(str | None, coverage_record["github_issue_url"])
         if github_issue_url and is_issue_open(issue_url=github_issue_url, token=token):
             continue
 
@@ -110,8 +111,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         logging.info(msg)
         return {"status": "skipped", "message": msg}
 
-    file_path = target_file.full_path
-    statement_coverage = target_file.statement_coverage
+    file_path = cast(str, target_file["full_path"])
+    statement_coverage = cast(float, target_file["statement_coverage"])
 
     # Create issue title and body
     title = get_issue_title()
