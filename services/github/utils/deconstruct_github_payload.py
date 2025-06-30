@@ -19,7 +19,7 @@ from utils.urls.extract_urls import extract_urls
 @handle_exceptions(default_return_value=(None, None), raise_on_error=True)
 def deconstruct_github_payload(
     payload: GitHubLabeledPayload,
-) -> tuple[BaseArgs | None]:
+):
     # Extract issue related variables
     issue = payload["issue"]
     issue_number = issue["number"]
@@ -52,10 +52,7 @@ def deconstruct_github_payload(
 
     # Get repository rules from Supabase
     repo_settings = get_repository_settings(repo_id=repo_id)
-    if repo_settings:
-        target_branch = repo_settings.get("target_branch")
-    else:
-        target_branch = None
+    target_branch = repo_settings.target_branch if repo_settings else None
 
     # If target branch is set and exists in the repository, use it, otherwise use default branch
     if target_branch and check_branch_exists(

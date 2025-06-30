@@ -11,6 +11,6 @@ def is_excluded_from_testing(
 
     if filename in coverage_data:
         file_info = coverage_data[filename]
-        return file_info.get("is_excluded_from_testing", False) or False
+        return file_info.is_excluded_from_testing or False
 
     return False

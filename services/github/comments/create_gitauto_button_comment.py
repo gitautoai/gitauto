@@ -1,9 +1,10 @@
 from constants.messages import CLICK_THE_CHECKBOX
-from services.github.comments.combine_and_create_comment import combine_and_create_comment
+from services.github.comments.combine_and_create_comment import (
+    combine_and_create_comment,
+)
 from services.github.types.github_types import GitHubLabeledPayload
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.users.get_user_public_email import get_user_public_email
-from services.supabase.gitauto_manager import is_users_first_issue
 from services.supabase.users.upsert_user import upsert_user
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -24,7 +25,6 @@ def create_gitauto_button_comment(payload: GitHubLabeledPayload) -> None:
 
     # Create user if not exist and check if first issue
     upsert_user(user_id=user_id, user_name=user_name, email=user_email)
-    first_issue = is_users_first_issue(user_id=user_id, installation_id=installation_id)
 
     # Base comment
     base_comment = f"{CLICK_THE_CHECKBOX}\n- [ ] Generate PR"
@@ -48,5 +48,4 @@ def create_gitauto_button_comment(payload: GitHubLabeledPayload) -> None:
         issue_number=issue_number,
         sender_name=user_name,
         base_args=base_args,
-        welcome_message=first_issue,
     )

@@ -1,9 +1,10 @@
 from datetime import datetime
+from schemas.supabase.fastapi.schema_public_latest import CoveragesBaseSchema
 from utils.files.is_excluded_from_testing import is_excluded_from_testing
 
 
 def create_coverage_record(filename: str, is_excluded: bool = False, **overrides):
-    base_record = {
+    base_record_data = {
         "id": 1,
         "owner_id": 123,
         "repo_id": 456,
@@ -28,8 +29,8 @@ def create_coverage_record(filename: str, is_excluded: bool = False, **overrides
         "file_size": 1000,
         "is_excluded_from_testing": is_excluded,
     }
-    base_record.update(overrides)
-    return base_record
+    base_record_data.update(overrides)
+    return CoveragesBaseSchema(**base_record_data)
 
 
 def test_is_excluded_from_testing_true():

@@ -39,7 +39,7 @@ from services.openai.vision import describe_image
 from services.slack.slack import slack
 
 # Local imports (Supabase, Webhook)
-from services.supabase.gitauto_manager import create_user_request
+from services.supabase.create_user_request import create_user_request
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 from services.supabase.usage.update_usage import update_usage
 from services.webhook.utils.create_system_messages import create_system_messages
