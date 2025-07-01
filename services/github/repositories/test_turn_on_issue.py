@@ -139,3 +139,62 @@ def test_turn_on_issue_with_edit_exception():
         
         # Verify function returns None due to exception handling
         assert result is None
+
+
+def test_turn_on_issue_with_empty_full_name():
+    """Test turn_on_issue with empty full_name parameter."""
+    full_name = ""
+    token = "test_token"
+    
+    with patch("services.github.repositories.turn_on_issue.Github") as mock_github:
+        mock_github_instance = MagicMock(spec=Github)
+        mock_github_instance.get_repo.side_effect = GithubException(status=400, data="Bad Request")
+        mock_github.return_value = mock_github_instance
+        
+        # Call the function - should return None due to handle_exceptions decorator
+        result = turn_on_issue(full_name, token)
+        
+        # Verify Github was initialized with the token
+        mock_github.assert_called_once_with(login_or_token=token)
+        
+        # Verify get_repo was called with empty string
+        mock_github_instance.get_repo.assert_called_once_with(full_name_or_id=full_name)
+        
+        # Verify function returns None due to exception handling
+        assert result is None
+
+
+def test_turn_on_issue_with_empty_token():
+    """Test turn_on_issue with empty token parameter."""
+    full_name = "owner/repo"
+    token = ""
+    
+    with patch("services.github.repositories.turn_on_issue.Github") as mock_github:
+        mock_github_instance = MagicMock(spec=Github)
+        mock_repo = MagicMock(spec=Repository)
+        mock_repo.has_issues = False
+        mock_github_instance.get_repo.return_value = mock_repo
+        mock_github.return_value = mock_github_instance
+        
+        # Call the function
+        result = turn_on_issue(full_name, token)
+        
+        # Verify Github was initialized with empty token
+        mock_github.assert_called_once_with(login_or_token=token)
+        
+        # Verify get_repo was called
+        mock_github_instance.get_repo.assert_called_once_with(full_name_or_id=full_name)
+        
+        # Verify edit was called to enable issues
+        mock_repo.edit.assert_called_once_with(has_issues=True)
+        
+        # Verify function returns None
+        assert result is None
+
+
+def test_turn_on_issue_with_none_parameters():
+    """Test turn_on_issue with None parameters."""
+    # This test verifies that the function handles None parameters gracefully
+    # The handle_exceptions decorator should catch any TypeError or AttributeError
+    result = turn_on_issue(None, None)
+    assert result is None
