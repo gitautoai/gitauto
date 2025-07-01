@@ -1,1 +1,1 @@
-# This file is deprecated and should be removed
+# This file is intentionally empty to avoid pytest collection conflicts
