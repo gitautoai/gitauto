@@ -1,5 +1,4 @@
-from unittest.mock import patch, MagicMock, Mock
-import pytest
+from unittest.mock import patch
 import stripe
 
 from config import STRIPE_API_KEY
