@@ -16,7 +16,7 @@ from services.github.token.get_installation_token import get_installation_access
 
 # Local imports (OpenAI)
 from services.openai.chat import chat_with_ai
-from services.openai.instructions.write_pr_body import WRITE_PR_BODY
+from utils.prompts.write_pr_body import WRITE_PR_BODY
 
 
 def write_pr_description(payload: dict):
