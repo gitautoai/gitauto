@@ -54,3 +54,30 @@ def test_file_path_in_json_schema_context():
     assert "file_path" in parsed_schema["properties"]
     assert parsed_schema["properties"]["file_path"]["type"] == "string"
     assert "description" in parsed_schema["properties"]["file_path"]
+
+
+def test_file_path_in_function_definition():
+    """Test that FILE_PATH can be used in an OpenAI function definition."""
+    # Create a function definition that uses FILE_PATH
+    function_def = {
+        "name": "get_remote_file_content",
+        "description": "Get content of a remote file",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_path": FILE_PATH
+            },
+            "required": ["file_path"]
+        }
+    }
+    
+    # Verify the function definition is valid JSON
+    json_str = json.dumps(function_def)
+    parsed_function = json.loads(json_str)
+    
+    # Verify the FILE_PATH property was correctly included in the function definition
+    assert "parameters" in parsed_function
+    assert "properties" in parsed_function["parameters"]
+    assert "file_path" in parsed_function["parameters"]["properties"]
+    assert parsed_function["parameters"]["properties"]["file_path"]["type"] == "string"
+    assert "description" in parsed_function["parameters"]["properties"]["file_path"]
