@@ -56,10 +56,6 @@ def test_stripe_client_accessible_for_import():
     assert hasattr(client_stripe, 'Product')
     assert hasattr(client_stripe, 'api_key')
 
-
-    # Store original api_key to restore later
-    original_api_key = stripe.api_key
-    
 @patch('config.STRIPE_API_KEY', '')
 def test_stripe_api_key_empty_string():
     """Test behavior when STRIPE_API_KEY is empty string."""
