@@ -19,10 +19,10 @@ def test_stripe_api_key_set_from_config():
 @patch('config.STRIPE_API_KEY', 'test_api_key')
 def test_stripe_api_key_set_with_different_config():
     """Test that stripe.api_key is set correctly with different config value."""
-    # Need to reload the module to pick up the patched value
     # Store original api_key to restore later
     original_api_key = stripe.api_key
     
+    # Reload the module to pick up the patched value
     import importlib
     import services.stripe.client
     importlib.reload(services.stripe.client)
@@ -56,38 +56,39 @@ def test_stripe_client_accessible_for_import():
     assert hasattr(client_stripe, 'Product')
     assert hasattr(client_stripe, 'api_key')
 
+
 @patch('config.STRIPE_API_KEY', '')
 def test_stripe_api_key_empty_string():
+    """Test behavior when STRIPE_API_KEY is empty string."""
     # Store original api_key to restore later
     original_api_key = stripe.api_key
     
-    """Test behavior when STRIPE_API_KEY is empty string."""
     import importlib
     import services.stripe.client
+    importlib.reload(services.stripe.client)
     
     from services.stripe.client import stripe as client_stripe
     assert client_stripe.api_key == ''
     
     # Restore original api_key
     stripe.api_key = original_api_key
-    importlib.reload(services.stripe.client)
-    # Store original api_key to restore later
-    original_api_key = stripe.api_key
-    
 
 
 @patch('config.STRIPE_API_KEY', None)
 def test_stripe_api_key_none():
     """Test behavior when STRIPE_API_KEY is None."""
-    import importlib
+    # Store original api_key to restore later
+    original_api_key = stripe.api_key
     
-    # Restore original api_key
-    stripe.api_key = original_api_key
+    import importlib
     import services.stripe.client
     importlib.reload(services.stripe.client)
     
     from services.stripe.client import stripe as client_stripe
     assert client_stripe.api_key is None
+    
+    # Restore original api_key
+    stripe.api_key = original_api_key
 
 
 def test_stripe_module_attributes():
@@ -157,10 +158,10 @@ def test_module_initialization_with_mock(mock_stripe):
     
     # Verify that the api_key was set on the mocked stripe object
     assert mock_stripe.api_key == 'mock_key_123'
-
     
     # Restore original api_key
     stripe.api_key = original_api_key
+
 
 def test_stripe_client_import_consistency():
     """Test that multiple imports of stripe client return the same object."""
@@ -181,4 +182,3 @@ def test_stripe_client_configuration_isolation():
     
     # But the API key should be properly set
     assert client_stripe.api_key == STRIPE_API_KEY
-
