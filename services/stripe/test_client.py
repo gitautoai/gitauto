@@ -1,1 +1,3 @@
 # DEPRECATED: This file has been replaced by client_test.py
+# This file is kept for reference but should not be used
+# pytest will ignore this file due to the deprecation notice
