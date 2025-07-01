@@ -68,3 +68,25 @@ def test_stripe_client_import_from_other_modules():
     assert stripe.api_key == STRIPE_API_KEY
     assert hasattr(stripe, 'Customer')
 
+
+def test_stripe_client_real_world_usage():
+    """Test that stripe client works as expected in real-world scenarios."""
+    from services.stripe.client import stripe
+    
+    # Test that we can access commonly used Stripe objects
+    assert stripe.Customer is not None
+    assert stripe.Subscription is not None
+    assert stripe.Product is not None
+    assert stripe.Price is not None
+    
+    # Test that the API key is properly configured for actual use
+    assert stripe.api_key is not None
+    assert len(stripe.api_key) > 0
+    assert isinstance(stripe.api_key, str)
+
+
+def test_stripe_client_environment_consistency():
+    """Test that the stripe client configuration is consistent across imports."""
+    # Import from different contexts to ensure consistency
+    from services.stripe.client import stripe, STRIPE_API_KEY
+    
