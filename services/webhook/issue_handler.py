@@ -425,7 +425,7 @@ async def create_pr_from_issue(
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
-    create_empty_commit(base_args)
+    create_empty_commit(base_args=base_args)
 
     # Create a pull request to the base branch
     comment_body = "Creating a pull request."

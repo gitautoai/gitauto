@@ -366,7 +366,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Trigger final test workflows with an empty commit
     body = "Creating final empty commit to trigger workflows..."
     update_comment(body=body, base_args=base_args)
-    create_empty_commit(base_args)
+    create_empty_commit(base_args=base_args)
 
     # Create a pull request to the base branch
     msg = f"Committed the Check Run `{check_run_name}` error fix! Running it again."

@@ -274,7 +274,7 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
 
     body = "Creating final empty commit to trigger workflows..."
     update_comment(body=body, base_args=base_args)
-    create_empty_commit(base_args)
+    create_empty_commit(base_args=base_args)
 
     final_msg = "Finished generating tests for selected files!"
     update_comment(body=final_msg, base_args=base_args)

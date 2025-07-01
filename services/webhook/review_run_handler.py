@@ -316,7 +316,7 @@ def handle_review_run(payload: dict[str, Any]):
     # Trigger final test workflows with an empty commit
     body = "Creating final empty commit to trigger workflows..."
     update_comment(body=body, base_args=base_args)
-    create_empty_commit(base_args)
+    create_empty_commit(base_args=base_args)
 
     # Create a pull request to the base branch
     msg = "Resolved your feedback! Looks good?"
