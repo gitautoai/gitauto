@@ -151,7 +151,6 @@ def test_module_initialization_with_mock(mock_stripe):
     # Store original api_key to restore later
     original_api_key = stripe.api_key
     
-    """Test that module initialization works correctly with mocked stripe."""
     # Reload the module to trigger initialization with mocked values
     import importlib
     import services.stripe.client
