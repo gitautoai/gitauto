@@ -9,6 +9,7 @@ from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
 from utils.files.is_excluded_from_testing import is_excluded_from_testing
 from utils.files.is_test_file import is_test_file
+from utils.files.is_type_file import is_type_file
 from utils.issue_templates.merge import (
     get_issue_title_for_pr_merged,
     get_issue_body_for_pr_merged,
@@ -55,8 +56,9 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
         f
         for f in changed_files
         if (
-            is_code_file(f["filename"])
-            and not is_test_file(f["filename"])
+            is_code_file(filename=f["filename"])
+            and not is_test_file(filename=f["filename"])
+            and not is_type_file(filename=f["filename"])
             and not is_excluded_from_testing(
                 filename=f["filename"], coverage_data=coverage_data
             )

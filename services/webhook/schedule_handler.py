@@ -19,11 +19,12 @@ from services.supabase.repositories.get_repository import get_repository_setting
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 
 # Local imports (Utils)
-from utils.issue_templates.schedule import get_issue_title, get_issue_body
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
 from utils.files.is_excluded_from_testing import is_excluded_from_testing
 from utils.files.is_test_file import is_test_file
+from utils.files.is_type_file import is_type_file
+from utils.issue_templates.schedule import get_issue_title, get_issue_body
 
 
 @handle_exceptions(raise_on_error=True)
@@ -80,6 +81,10 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     # Create a coverage dict for is_excluded_from_testing function
     coverage_dict = {item["full_path"]: item for item in all_coverages}
 
+    # Print the first 5 files
+    for file in all_coverages[:5]:
+        print(file)
+
     # Find the first suitable file
     target_file = None
     for coverage_record in all_coverages:
@@ -91,6 +96,10 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
         # Skip test files
         if is_test_file(file_path):
+            continue
+
+        # Skip types files
+        if is_type_file(file_path):
             continue
 
         # Skip files excluded from testing
