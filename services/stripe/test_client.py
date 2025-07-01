@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 import pytest
 import stripe
 
@@ -115,3 +115,35 @@ def test_config_import():
     assert imported_key == config_key
     assert imported_key is not None
     assert isinstance(imported_key, str)
+
+
+def test_stripe_client_module_level_import():
+    """Test that the stripe client can be imported at module level."""
+    # This test ensures that the module can be imported without errors
+    import services.stripe.client
+    
+    # Verify the module has the expected attributes
+    assert hasattr(services.stripe.client, 'stripe')
+    assert hasattr(services.stripe.client, 'STRIPE_API_KEY')
+
+
+@patch('services.stripe.client.stripe')
+@patch('services.stripe.client.STRIPE_API_KEY', 'mock_key_123')
+def test_module_initialization_with_mock(mock_stripe):
+    """Test that module initialization works correctly with mocked stripe."""
+    # Reload the module to trigger initialization with mocked values
+    import importlib
+    import services.stripe.client
+    importlib.reload(services.stripe.client)
+    
+    # Verify that the api_key was set on the mocked stripe object
+    assert mock_stripe.api_key == 'mock_key_123'
+
+
+def test_stripe_client_import_consistency():
+    """Test that multiple imports of stripe client return the same object."""
+    from services.stripe.client import stripe as stripe1
+    from services.stripe.client import stripe as stripe2
+    
+    # Both imports should reference the same stripe module
+    assert stripe1 is stripe2
