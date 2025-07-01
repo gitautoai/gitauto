@@ -20,6 +20,9 @@ def test_stripe_api_key_set_from_config():
 def test_stripe_api_key_set_with_different_config():
     """Test that stripe.api_key is set correctly with different config value."""
     # Need to reload the module to pick up the patched value
+    # Store original api_key to restore later
+    original_api_key = stripe.api_key
+    
     import importlib
     import services.stripe.client
     importlib.reload(services.stripe.client)
