@@ -35,7 +35,6 @@ def create_test_selection_comment(checklist: list[FileChecklistItem], branch_nam
             "- [ ] Yes, manage tests",
             "",
             f"Click the checkbox and {PRODUCT_NAME} will add/update/remove tests for the selected files to this PR.",
-            "",
         ]
     )
 
