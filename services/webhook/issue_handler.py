@@ -7,7 +7,7 @@ from typing import Literal
 
 # Local imports
 from config import PRODUCT_ID, PRODUCT_NAME, PR_BODY_STARTS_WITH
-from constants.messages import COMPLETED_PR
+from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
@@ -108,7 +108,7 @@ async def create_pr_from_issue(
     repo_name = base_args["repo"]
     issue_number = base_args["issue_number"]
     issue_title = base_args["issue_title"]
-    issue_body = base_args["issue_body"]
+    issue_body = base_args["issue_body"].replace(SETTINGS_LINKS, "").strip()
     issue_body_rendered = render_text(base_args=base_args, text=issue_body)
     issuer_name = base_args["issuer_name"]
     parent_issue_number = base_args["parent_issue_number"]

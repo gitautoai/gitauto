@@ -2,10 +2,10 @@
 import json
 from datetime import datetime
 import time
-from typing import Any
 
 # Local imports
 from config import PRODUCT_ID, GITHUB_APP_USER_NAME
+from constants.messages import SETTINGS_LINKS
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
@@ -17,6 +17,7 @@ from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree import get_file_tree
+from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 
 # Local imports (Supabase & Webhook)
@@ -37,7 +38,7 @@ from utils.time.get_timeout_message import get_timeout_message
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def handle_pr_test_generation(payload: dict[str, Any]) -> None:
+async def handle_pr_test_generation(payload: IssueCommentWebhookPayload):
     current_time = time.time()
 
     # Skip if the comment editor is a bot
@@ -57,7 +58,7 @@ async def handle_pr_test_generation(payload: dict[str, Any]) -> None:
         search_text += f" - {PRODUCT_ID}"
 
     # Skip if the comment body does not contain the search text
-    comment_body = comment["body"]
+    comment_body = comment["body"].replace(SETTINGS_LINKS, "").strip()
     if search_text not in comment_body:
         return
 

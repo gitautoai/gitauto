@@ -1,9 +1,5 @@
 from typing import TypedDict
-from constants.urls import (
-    SETTINGS_TRIGGERS_URL,
-    SETTINGS_RULES_URL,
-    DASHBOARD_COVERAGE_URL,
-)
+from constants.messages import SETTINGS_LINKS
 from services.github.pulls.get_pull_request_files import Status
 from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
 
@@ -36,7 +32,7 @@ def create_test_selection_comment(checklist: list[FileChecklistItem]) -> str:
             "",
             "- [ ] Manage Tests",
             "",
-            f"You can [turn off triggers]({SETTINGS_TRIGGERS_URL}), [update coding rules]({SETTINGS_RULES_URL}), or [exclude files]({DASHBOARD_COVERAGE_URL})",
+            SETTINGS_LINKS,
         ]
     )
 
