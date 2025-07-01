@@ -24,3 +24,11 @@ def test_file_path_property_warning():
     # Verify the description includes an example for clarity
     assert "For example" in FILE_PATH["description"]
     assert "src/openai/__init__.py" in FILE_PATH["description"]
+
+
+def test_file_path_property_as_json_schema():
+    """Test that FILE_PATH follows JSON Schema property structure."""
+    # Verify the property has the minimum required fields for a JSON Schema property
+    assert "type" in FILE_PATH
+    # Verify the type is a valid JSON Schema type
+    assert FILE_PATH["type"] in ["string", "number", "integer", "boolean", "array", "object", "null"]
