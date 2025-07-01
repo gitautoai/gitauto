@@ -16,9 +16,7 @@ def get_all_coverages(repo_id: int):
         .select("*")
         .eq("repo_id", repo_id)
         .eq("level", "file")
-        .order("statement_coverage", desc=False)  # Lowest coverage first
-        .order("file_size", desc=False)  # Smallest files first for ties
-        .order("full_path", desc=False)  # Alphabetical order for final ties
+        .order("statement_coverage,file_size,full_path", desc=False)
         .execute()
     )
 
