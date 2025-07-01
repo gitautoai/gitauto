@@ -85,7 +85,10 @@ def create_pr_checkbox_comment(payload: PullRequestWebhookPayload):
     coverage_data = get_coverages(repo_id=repo_id, filenames=changed_file_paths)
 
     checklist = create_file_checklist(changed_code_files, coverage_data)
-    base_comment = create_test_selection_comment(checklist)
+
+    # Get branch name for reset command
+    branch_name = pull_request["head"]["ref"]
+    base_comment = create_test_selection_comment(checklist, branch_name)
 
     # Create base args for comment creation
     base_args = {
@@ -100,7 +103,7 @@ def create_pr_checkbox_comment(payload: PullRequestWebhookPayload):
         base_args=base_args, identifiers=[TEST_SELECTION_COMMENT_IDENTIFIER]
     )
 
-    # Create the comment with usage info
+    # Combine and create the comment
     combine_and_create_comment(
         base_comment=base_comment,
         installation_id=installation_id,

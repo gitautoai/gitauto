@@ -1,7 +1,9 @@
 from typing import TypedDict
+from config import PRODUCT_NAME
 from constants.messages import SETTINGS_LINKS
 from services.github.pulls.get_pull_request_files import Status
 from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
+from utils.text.reset_command import create_reset_command_message
 
 
 class FileChecklistItem(TypedDict):
@@ -11,7 +13,7 @@ class FileChecklistItem(TypedDict):
     status: Status
 
 
-def create_test_selection_comment(checklist: list[FileChecklistItem]) -> str:
+def create_test_selection_comment(checklist: list[FileChecklistItem], branch_name: str):
     comment_lines = [
         TEST_SELECTION_COMMENT_IDENTIFIER,
         "",
@@ -30,10 +32,17 @@ def create_test_selection_comment(checklist: list[FileChecklistItem]) -> str:
             "",
             "---",
             "",
-            "- [ ] Manage Tests",
+            "- [ ] Yes, manage tests",
             "",
-            SETTINGS_LINKS,
+            f"Click the checkbox and {PRODUCT_NAME} will add/update/remove tests for the selected files to this PR.",
         ]
     )
+
+    # Add reset command
+    comment_lines.append(create_reset_command_message(branch_name))
+    comment_lines.append("")
+
+    # Add settings links
+    comment_lines.append(SETTINGS_LINKS)
 
     return "\n".join(comment_lines)
