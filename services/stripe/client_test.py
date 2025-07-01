@@ -147,9 +147,6 @@ def test_stripe_client_module_level_import():
 @patch('services.stripe.client.stripe')
 @patch('config.STRIPE_API_KEY', 'mock_key_123')
 def test_module_initialization_with_mock(mock_stripe):
-    # Store original api_key to restore later
-    original_api_key = stripe.api_key
-    
     """Test that module initialization works correctly with mocked stripe."""
     # Reload the module to trigger initialization with mocked values
     import importlib
