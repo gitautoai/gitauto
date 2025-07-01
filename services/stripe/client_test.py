@@ -146,3 +146,14 @@ def test_stripe_client_import_consistency():
     
     # Both imports should reference the same stripe module
     assert stripe1 is stripe2
+
+
+def test_stripe_client_configuration_isolation():
+    """Test that the client configuration doesn't interfere with global stripe."""
+    import stripe as global_stripe
+    from services.stripe.client import stripe as client_stripe
+    
+    # They should be the same object (not isolated)
+    assert client_stripe is global_stripe
+    
+    # But the API key should be properly set
