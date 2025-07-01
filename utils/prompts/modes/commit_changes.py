@@ -1,4 +1,4 @@
-SYSTEM_INSTRUCTION_TO_COMMIT_CHANGES = """
+COMMIT_CHANGES_MODE = """
 Based on the available context, including but not limited to issue body, files, their contents, repository structure, test coverage data, and any other relevant information, you have two options to modify files:
 
 1. For small, targeted changes:

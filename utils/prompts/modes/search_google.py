@@ -1,4 +1,4 @@
-SYSTEM_INSTRUCTION_TO_SEARCH_GOOGLE = """
+SEARCH_GOOGLE_MODE = """
 When suggesting libraries, GitHub Actions, or any external tools/services, search Google to verify just in case:
 
 1. The latest available versions

@@ -41,7 +41,6 @@ from services.supabase.usage.update_retry_pairs import (
 from services.supabase.usage.update_usage import update_usage
 
 # Local imports (Others)
-from services.webhook.utils.create_system_messages import create_system_messages
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 from utils.time.get_timeout_message import get_timeout_message
@@ -49,6 +48,7 @@ from utils.time.get_timeout_message import get_timeout_message
 
 def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     current_time = time.time()
+    trigger = "test_failure"
 
     # Extract workflow run id
     check_run: CheckRun = payload["check_run"]
@@ -246,7 +246,6 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     user_input = json.dumps(obj=input_message)
 
     # Create messages
-    system_messages = create_system_messages(repo_settings=repo_settings)
     messages = [{"role": "user", "content": user_input}]
 
     # Loop a process explore repo and commit changes until the ticket is resolved
@@ -294,7 +293,8 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             p,
         ) = chat_with_agent(
             messages=messages,
-            system_messages=system_messages,
+            trigger=trigger,
+            repo_settings=repo_settings,
             base_args=base_args,
             mode="get",  # explore can not be used here because "search_remote_file_contents" can search files only in the default branch NOT in the branch that is merged into the default branch
             previous_calls=previous_calls,
@@ -314,7 +314,8 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         #     p,
         # ) = chat_with_agent(
         #     messages=messages,
-        #     system_messages=system_messages,
+        #     trigger=trigger,
+        #     repo_settings=repo_settings,
         #     base_args=base_args,
         #     mode="search",
         #     previous_calls=previous_calls,
@@ -334,7 +335,8 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             p,
         ) = chat_with_agent(
             messages=messages,
-            system_messages=system_messages,
+            trigger=trigger,
+            repo_settings=repo_settings,
             base_args=base_args,
             mode="commit",
             previous_calls=previous_calls,

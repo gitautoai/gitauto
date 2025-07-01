@@ -20,7 +20,7 @@ from services.google.search import google_search
 from services.openai.functions.properties import FILE_PATH
 from services.openai.functions.search_google import SEARCH_GOOGLE
 from services.openai.functions.update_comment import UPDATE_GITHUB_COMMENT
-from services.openai.instructions.diff import DIFF_DESCRIPTION
+from utils.prompts.diff import DIFF_DESCRIPTION
 
 # OpenAI: We recommend including instructions regarding when to call a function in the system prompt, while using the function definition to provide instructions on how to call the function and how to generate the parameters.
 # https://platform.openai.com/docs/guides/function-calling/should-i-include-function-call-instructions-in-the-tool-specification-or-in-the-system-prompt

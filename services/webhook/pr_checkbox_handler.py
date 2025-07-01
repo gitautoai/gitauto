@@ -25,13 +25,11 @@ from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository_settings
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 from services.supabase.usage.update_usage import update_usage
-from services.webhook.utils.create_system_messages import create_system_messages
 from services.webhook.utils.extract_selected_files import extract_selected_files
 
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.progress_bar.progress_bar import create_progress_bar
-from utils.prompts.push_trigger import PUSH_TRIGGER_SYSTEM_PROMPT
 from utils.text.text_copy import request_limit_reached
 from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 from utils.time.get_timeout_message import get_timeout_message
@@ -40,6 +38,7 @@ from utils.time.get_timeout_message import get_timeout_message
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
     current_time = time.time()
+    trigger = "pr_checkbox"
 
     # Skip if the comment editor is a bot
     sender = payload["sender"]
@@ -179,11 +178,6 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
         "today": today,
     }
 
-    system_messages = create_system_messages(repo_settings=repo_settings)
-    system_messages = [
-        {"role": "system", "content": PUSH_TRIGGER_SYSTEM_PROMPT}
-    ] + system_messages
-
     messages = [{"role": "user", "content": json.dumps(input_message)}]
 
     previous_calls = []
@@ -228,7 +222,8 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
             p,
         ) = chat_with_agent(
             messages=messages,
-            system_messages=system_messages,
+            trigger=trigger,
+            repo_settings=repo_settings,
             base_args=base_args,
             mode="get",
             previous_calls=previous_calls,
@@ -247,7 +242,8 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
             p,
         ) = chat_with_agent(
             messages=messages,
-            system_messages=system_messages,
+            trigger=trigger,
+            repo_settings=repo_settings,
             base_args=base_args,
             mode="commit",
             previous_calls=previous_calls,

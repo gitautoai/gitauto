@@ -107,7 +107,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     if event_name == "issues":
         if action == "labeled":
             await create_pr_from_issue(
-                payload=payload, trigger_type="label", input_from="github"
+                payload=payload, trigger="issue_label", input_from="github"
             )
             return
         if action == "opened":
@@ -128,7 +128,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
             and (search_text + " - " + PRODUCT_ID) in comment_body
         ):
             await create_pr_from_issue(
-                payload=payload, trigger_type="comment", input_from="github"
+                payload=payload, trigger="issue_comment", input_from="github"
             )
             return
 
@@ -136,7 +136,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
         # This prevents both prod and dev from triggering on prod checkbox
         if search_text in comment_body and (search_text + " - ") not in comment_body:
             await create_pr_from_issue(
-                payload=payload, trigger_type="comment", input_from="github"
+                payload=payload, trigger="issue_comment", input_from="github"
             )
         return
 

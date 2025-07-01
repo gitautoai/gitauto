@@ -1,5 +1,8 @@
 # Standard imports
-from typing import Literal, Any
+from typing import Any, Literal
+
+# Third party imports
+from schemas.supabase.fastapi.schema_public_latest import Repositories
 
 # Local imports
 from config import OPENAI_MODEL_ID_O3_MINI
@@ -16,16 +19,10 @@ from services.openai.functions.functions import (
     TOOLS_TO_UPDATE_COMMENT,
     tools_to_call,
 )
-from services.openai.instructions.commit_changes import (
-    SYSTEM_INSTRUCTION_TO_COMMIT_CHANGES,
-)
-from services.openai.instructions.explore_repo import SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
-from services.openai.instructions.search_google import (
-    SYSTEM_INSTRUCTION_TO_SEARCH_GOOGLE,
-)
-from services.openai.instructions.update_comment import (
-    SYSTEM_INSTRUCTION_TO_UPDATE_COMMENT,
-)
+from services.supabase.usage.insert_usage import Trigger
+from services.webhook.utils.create_system_message import create_system_message
+
+# Local imports (Utils)
 from utils.colors.colorize_log import colorize
 from utils.error.handle_exceptions import handle_exceptions
 from utils.number.is_valid_line_number import is_valid_line_number
@@ -35,49 +32,38 @@ from utils.progress_bar.progress_bar import create_progress_bar
 @handle_exceptions(raise_on_error=True)
 def chat_with_agent(
     messages: list[dict[str, Any]],
+    trigger: Trigger,
     base_args: BaseArgs,
     mode: Literal["comment", "commit", "explore", "get", "search"],
-    system_messages: list[dict[str, Any]] | None = None,
+    repo_settings: Repositories | None,
     previous_calls: list[dict] | None = None,
     recursion_count: int = 1,
     p: int = 0,
     log_messages: list[str] | None = None,
 ):
-    if system_messages is None:
-        system_messages = []
-
     if previous_calls is None:
         previous_calls = []
 
     if log_messages is None:
         log_messages = []
 
-    # Set the system message and tools based on the mode
-    system_content = ""
+    # Create the system content
+    system_message = create_system_message(
+        trigger=trigger, mode=mode, repo_settings=repo_settings
+    )
+
+    # Select the tools
     tools = []
     if mode == "comment":
-        system_content = SYSTEM_INSTRUCTION_TO_UPDATE_COMMENT
         tools = TOOLS_TO_UPDATE_COMMENT
     elif mode == "commit":
-        system_content = SYSTEM_INSTRUCTION_TO_COMMIT_CHANGES
         tools = TOOLS_TO_COMMIT_CHANGES
     elif mode == "explore":
-        system_content = SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
         tools = TOOLS_TO_EXPLORE_REPO
     elif mode == "get":
-        system_content = SYSTEM_INSTRUCTION_TO_EXPLORE_REPO
         tools = TOOLS_TO_GET_FILE
     elif mode == "search":
-        system_content = SYSTEM_INSTRUCTION_TO_SEARCH_GOOGLE
         tools = TOOLS_TO_SEARCH_GOOGLE
-
-    # Add additional system messages to the system content
-    if system_messages:
-        additional_content = "\n\n".join(
-            [msg["content"] for msg in system_messages if msg.get("role") == "system"]
-        )
-        if additional_content:
-            system_content += f"\n\n{additional_content}"
 
     while True:
         current_model = get_model()
@@ -98,7 +84,7 @@ def chat_with_agent(
                 token_output,
             ) = provider(
                 messages,
-                system_content=system_content,
+                system_content=system_message,
                 tools=tools,
                 model_id=current_model,
             )
@@ -244,9 +230,10 @@ def chat_with_agent(
     if recursion_count < 3:
         return chat_with_agent(
             messages=messages,
+            trigger=trigger,
             base_args=base_args,
             mode=mode,
-            system_messages=system_messages,
+            repo_settings=repo_settings,
             previous_calls=previous_calls,
             recursion_count=recursion_count + 1,
             p=p + 5,
