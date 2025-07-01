@@ -6,7 +6,7 @@ import time
 from typing import Literal
 
 # Local imports
-from config import PRODUCT_ID, PRODUCT_NAME, PR_BODY_STARTS_WITH
+from config import PRODUCT_ID, PR_BODY_STARTS_WITH
 from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.chat_with_agent import chat_with_agent
 
@@ -434,10 +434,9 @@ async def create_pr_from_issue(
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
-    title = f"{PRODUCT_NAME}: {issue_title}"
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
     pr_body = issue_link + git_command(new_branch_name=new_branch_name)
-    pr_url = create_pull_request(body=pr_body, title=title, base_args=base_args)
+    pr_url = create_pull_request(body=pr_body, title=issue_title, base_args=base_args)
 
     # Update the issue comment based on if the PR was created or not
     pr_number = None
