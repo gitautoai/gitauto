@@ -1,7 +1,7 @@
 def create_reset_command_message(branch_name: str) -> str:
     return f"""
 
-### 🔄 Reset Command
+---
 
 If GitAuto's commits are not satisfactory, you can reset to your original state from your local branch:
 
