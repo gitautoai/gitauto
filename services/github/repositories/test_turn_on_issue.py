@@ -198,3 +198,45 @@ def test_turn_on_issue_with_none_parameters():
     # The handle_exceptions decorator should catch any TypeError or AttributeError
     result = turn_on_issue(None, None)
     assert result is None
+
+
+def test_turn_on_issue_with_different_repo_formats():
+    """Test turn_on_issue with different repository name formats."""
+    test_cases = [
+        "owner/repo",
+        "organization/repository-name",
+        "user/repo_with_underscores",
+        "123456789",  # Repository ID
+    ]
+    
+    for full_name in test_cases:
+        with patch("services.github.repositories.turn_on_issue.Github") as mock_github:
+            # Setup mock repository with issues disabled
+            mock_repo = MagicMock(spec=Repository)
+            mock_repo.has_issues = False
+            
+            mock_github_instance = MagicMock(spec=Github)
+            mock_github_instance.get_repo.return_value = mock_repo
+            mock_github.return_value = mock_github_instance
+            
+            # Call the function
+            result = turn_on_issue(full_name, "test_token")
+            
+            # Verify get_repo was called with the correct full_name
+            mock_github_instance.get_repo.assert_called_once_with(full_name_or_id=full_name)
+            
+            # Verify edit was called to enable issues
+            mock_repo.edit.assert_called_once_with(has_issues=True)
+            
+            # Verify function returns None
+            assert result is None
+
+
+def test_turn_on_issue_function_signature():
+    """Test that the function has the correct signature and type hints."""
+    import inspect
+    from services.github.repositories.turn_on_issue import turn_on_issue
+    
+    sig = inspect.signature(turn_on_issue)
+    assert len(sig.parameters) == 2
+    assert "full_name" in sig.parameters
