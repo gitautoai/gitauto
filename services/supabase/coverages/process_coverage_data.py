@@ -57,7 +57,7 @@ def process_coverage_data(
     upsert_data = []
     for coverage in seen.values():
         try:
-            existing_record = existing_records.get(coverage["full_path"])
+            existing_record = existing_records.get(coverage["full_path"]) or {}
             item = {
                 **existing_record,
                 # System fields are always updated
