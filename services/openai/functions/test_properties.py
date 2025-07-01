@@ -1,5 +1,6 @@
 # Standard imports
 import pytest
+import json
 
 # Local imports
 from services.openai.functions.properties import FILE_PATH
@@ -32,3 +33,24 @@ def test_file_path_property_as_json_schema():
     assert "type" in FILE_PATH
     # Verify the type is a valid JSON Schema type
     assert FILE_PATH["type"] in ["string", "number", "integer", "boolean", "array", "object", "null"]
+
+
+def test_file_path_in_json_schema_context():
+    """Test that FILE_PATH can be used in a JSON Schema context."""
+    # Create a simple JSON Schema that uses FILE_PATH
+    schema = {
+        "type": "object",
+        "properties": {
+            "file_path": FILE_PATH
+        },
+        "required": ["file_path"]
+    }
+    
+    # Verify the schema is valid JSON
+    json_str = json.dumps(schema)
+    parsed_schema = json.loads(json_str)
+    
+    # Verify the FILE_PATH property was correctly included in the schema
+    assert "file_path" in parsed_schema["properties"]
+    assert parsed_schema["properties"]["file_path"]["type"] == "string"
+    assert "description" in parsed_schema["properties"]["file_path"]
