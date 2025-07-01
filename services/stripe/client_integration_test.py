@@ -90,3 +90,5 @@ def test_stripe_client_environment_consistency():
     # Import from different contexts to ensure consistency
     from services.stripe.client import stripe, STRIPE_API_KEY
     
+    # Verify consistency
+    assert stripe.api_key == STRIPE_API_KEY
