@@ -67,3 +67,4 @@ def test_stripe_client_import_from_other_modules():
     assert stripe is client_stripe
     assert stripe.api_key == STRIPE_API_KEY
     assert hasattr(stripe, 'Customer')
+
