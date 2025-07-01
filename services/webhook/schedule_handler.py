@@ -14,7 +14,6 @@ from services.github.types.github_types import BaseArgs
 # Local imports (Supabase)
 from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.supabase.coverages.update_issue_url import update_issue_url
-from services.supabase.installations.get_installation import get_installation
 from services.supabase.repositories.get_repository import get_repository_settings
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 
@@ -35,16 +34,25 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     owner_name = event.get("ownerName")
     repo_id = event.get("repoId")
     repo_name = event.get("repoName")
+    user_id = event.get("userId")
+    user_name = event.get("userName")
+    installation_id = event.get("installationId")
 
-    if not owner_id or not owner_name or not owner_type or not repo_id or not repo_name:
+    if not all(
+        [
+            owner_id,
+            owner_name,
+            owner_type,
+            repo_id,
+            repo_name,
+            user_id,
+            user_name,
+            installation_id,
+        ]
+    ):
         raise ValueError("Missing required fields in event detail")
 
-    # Get installation access token
-    installation = get_installation(owner_id=owner_id)
-    if not installation:
-        raise ValueError(f"Installation not found for owner_id: {owner_id}")
-
-    installation_id = cast(int, installation["installation_id"])
+    # Get installation access token - simplified since we already have installation_id
     token = get_installation_access_token(installation_id=installation_id)
     if token is None:
         raise ValueError(f"Token is None for installation_id: {installation_id}")
@@ -134,9 +142,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         "token": token,
     }
 
-    # Create the issue with gitauto label
+    # Create the issue with gitauto label and assign to the user
     issue_response = create_issue(
-        title=title, body=body, assignees=[], base_args=base_args
+        title=title, body=body, assignees=[user_name], base_args=base_args
     )
 
     if issue_response and "html_url" in issue_response:

@@ -11,6 +11,9 @@ class EventBridgeSchedulerEvent(TypedDict):
     ownerName: str
     repoId: int
     repoName: str
+    userId: int
+    userName: str
+    installationId: int
     triggerType: Literal["schedule"]
     scheduleTimeUTC: str  # "HH:MM" format
     includeWeekends: bool
