@@ -64,6 +64,12 @@ def test_stripe_api_key_empty_string():
     """Test behavior when STRIPE_API_KEY is empty string."""
     import importlib
     import services.stripe.client
+    
+    from services.stripe.client import stripe as client_stripe
+    assert client_stripe.api_key == ''
+    
+    # Restore original api_key
+    stripe.api_key = original_api_key
     importlib.reload(services.stripe.client)
     # Store original api_key to restore later
     original_api_key = stripe.api_key
