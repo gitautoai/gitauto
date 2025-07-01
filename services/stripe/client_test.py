@@ -16,7 +16,7 @@ def test_stripe_api_key_set_from_config():
     assert client_stripe.api_key == STRIPE_API_KEY
 
 
-@patch('services.stripe.client.STRIPE_API_KEY', 'test_api_key')
+@patch('config.STRIPE_API_KEY', 'test_api_key')
 def test_stripe_api_key_set_with_different_config():
     """Test that stripe.api_key is set correctly with different config value."""
     # Need to reload the module to pick up the patched value
