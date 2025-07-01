@@ -1,2 +1,2 @@
-# This file is intentionally left empty to avoid pytest import conflicts
-# All integration tests are in client_integration_test.py following Go-style naming convention
+# This file has been moved to test_client_integration.py.disabled to avoid pytest conflicts
+# All integration tests are now in client_integration_test.py following Go-style naming convention
