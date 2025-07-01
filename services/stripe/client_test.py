@@ -156,9 +156,6 @@ def test_module_initialization_with_mock(mock_stripe):
     import services.stripe.client
     importlib.reload(services.stripe.client)
     
-    # Restore original api_key
-    stripe.api_key = original_api_key
-    
     # Verify that the api_key was set on the mocked stripe object
     assert mock_stripe.api_key == 'mock_key_123'
 
