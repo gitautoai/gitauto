@@ -1,1 +1,1 @@
-# This file is empty to avoid pytest collection conflicts
+# This file is intentionally empty to avoid pytest collection conflicts
