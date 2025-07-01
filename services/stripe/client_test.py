@@ -67,6 +67,9 @@ def test_stripe_api_key_empty_string():
     import services.stripe.client
     importlib.reload(services.stripe.client)
     
+    # Restore original api_key
+    stripe.api_key = original_api_key
+    
     from services.stripe.client import stripe as client_stripe
     assert client_stripe.api_key == ''
 
