@@ -29,6 +29,9 @@ def test_stripe_api_key_set_with_different_config():
     
     from services.stripe.client import stripe as client_stripe
     assert client_stripe.api_key == 'test_api_key'
+    
+    # Restore original api_key
+    stripe.api_key = original_api_key
 
 
 @patch('services.stripe.client.stripe')
