@@ -159,6 +159,9 @@ def test_module_initialization_with_mock(mock_stripe):
     # Verify that the api_key was set on the mocked stripe object
     assert mock_stripe.api_key == 'mock_key_123'
 
+    
+    # Restore original api_key
+    stripe.api_key = original_api_key
 
 def test_stripe_client_import_consistency():
     """Test that multiple imports of stripe client return the same object."""
