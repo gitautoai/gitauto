@@ -72,6 +72,9 @@ def test_stripe_api_key_empty_string():
     
     from services.stripe.client import stripe as client_stripe
     assert client_stripe.api_key == ''
+    # Store original api_key to restore later
+    original_api_key = stripe.api_key
+    
 
 
 @patch('config.STRIPE_API_KEY', None)
