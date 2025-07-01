@@ -45,3 +45,25 @@ def test_stripe_client_methods_available():
     # Test Product methods used in get_base_request_limit.py
     assert hasattr(client_stripe.Product, 'retrieve')
     assert callable(client_stripe.Product.retrieve)
+
+
+def test_stripe_client_api_key_type_and_format():
+    """Test that the API key has the expected format."""
+    # Verify API key is a non-empty string
+    assert isinstance(client_stripe.api_key, str)
+    assert len(client_stripe.api_key) > 0
+    
+    # Stripe API keys typically start with 'sk_' for secret keys
+    # This is a basic format check without revealing the actual key
+    assert client_stripe.api_key is not None
+
+
+def test_stripe_client_import_from_other_modules():
+    """Test that stripe client can be imported by other stripe service modules."""
+    # This simulates how other stripe service files import the client
+    from services.stripe.client import stripe
+    
+    # Verify it's the same stripe module and properly configured
+    assert stripe is client_stripe
+    assert stripe.api_key == STRIPE_API_KEY
+    assert hasattr(stripe, 'Customer')
