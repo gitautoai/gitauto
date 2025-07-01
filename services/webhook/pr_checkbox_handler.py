@@ -38,7 +38,7 @@ from utils.time.get_timeout_message import get_timeout_message
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def handle_pr_test_generation(payload: IssueCommentWebhookPayload):
+async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
     current_time = time.time()
 
     # Skip if the comment editor is a bot

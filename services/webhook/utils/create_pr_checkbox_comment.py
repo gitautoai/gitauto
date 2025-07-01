@@ -27,7 +27,7 @@ from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def handle_pr_test_selection(payload: PullRequestWebhookPayload):
+def create_pr_checkbox_comment(payload: PullRequestWebhookPayload):
     # Skip if the PR is from a bot
     pull_request = payload["pull_request"]
     sender_name = payload["sender"]["login"]
