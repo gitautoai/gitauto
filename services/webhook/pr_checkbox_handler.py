@@ -30,6 +30,7 @@ from services.webhook.utils.extract_selected_files import extract_selected_files
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.progress_bar.progress_bar import create_progress_bar
+from utils.text.reset_command import create_reset_command_message
 from utils.text.text_copy import request_limit_reached
 from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 from utils.time.get_timeout_message import get_timeout_message
@@ -272,7 +273,11 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
     update_comment(body=body, base_args=base_args)
     create_empty_commit(base_args=base_args)
 
-    final_msg = "Finished generating tests for selected files!"
+    # Create final message with reset command
+    final_msg = (
+        "Finished generating tests for selected files!"
+        + create_reset_command_message(branch_name)
+    )
     update_comment(body=final_msg, base_args=base_args)
 
     # Update usage record
