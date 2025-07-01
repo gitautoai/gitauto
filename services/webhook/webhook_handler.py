@@ -30,8 +30,8 @@ from services.webhook.screenshot_handler import handle_screenshot_comparison
 from services.webhook.handle_installation import handle_installation_created
 from services.webhook.handle_installation_repos import handle_installation_repos_added
 from services.webhook.merge_handler import handle_pr_merged
-from services.webhook.pr_test_generation_handler import handle_pr_test_generation
-from services.webhook.pr_test_selection_handler import handle_pr_test_selection
+from services.webhook.pr_checkbox_handler import handle_pr_checkbox_trigger
+from services.webhook.utils.create_pr_checkbox_comment import create_pr_checkbox_comment
 
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
@@ -117,7 +117,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     # Run GitAuto when checkbox is checked (edited)
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
     if event_name == "issue_comment" and action == "edited":
-        await handle_pr_test_generation(payload=payload)
+        await handle_pr_checkbox_trigger(payload=payload)
 
         search_text = "- [x] Generate PR"
         comment_body = payload["comment"]["body"]
@@ -151,14 +151,14 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     # Write a PR description to the issue when GitAuto opened the PR
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
     if event_name == "pull_request" and action == "opened":
-        handle_pr_test_selection(payload=payload)
+        create_pr_checkbox_comment(payload=payload)
         write_pr_description(payload=payload)
         await handle_screenshot_comparison(payload=payload)
         return
 
     # Compare screenshots when the PR is synchronized
     if event_name == "pull_request" and action in ("synchronize"):
-        handle_pr_test_selection(payload=payload)
+        create_pr_checkbox_comment(payload=payload)
         await handle_screenshot_comparison(payload=payload)
         return
 
