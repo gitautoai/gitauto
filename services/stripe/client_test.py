@@ -62,7 +62,7 @@ def test_stripe_api_key_empty_string():
     assert client_stripe.api_key == ''
 
 
-@patch('services.stripe.client.STRIPE_API_KEY', None)
+@patch('config.STRIPE_API_KEY', None)
 def test_stripe_api_key_none():
     """Test behavior when STRIPE_API_KEY is None."""
     import importlib
