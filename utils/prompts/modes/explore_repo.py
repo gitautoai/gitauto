@@ -1,7 +1,7 @@
 # OpenAI: We recommend including instructions regarding when to call a function in the system prompt, while using the function definition to provide instructions on how to call the function and how to generate the parameters.
 # https://platform.openai.com/docs/guides/function-calling/should-i-include-function-call-instructions-in-the-tool-specification-or-in-the-system-prompt
 
-SYSTEM_INSTRUCTION_TO_EXPLORE_REPO = """
+EXPLORE_REPO_MODE = """
 # Instructions for Function Calls
 
 When working on an issue in a GitHub repository, you may need to interact with remote files by creating, modifying, or deleting them. To handle these tasks, use the following functions appropriately:

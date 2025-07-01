@@ -9,10 +9,10 @@ Trigger = Literal[
     "issue_comment",
     "review_comment",
     "test_failure",
-    "push",
-    "pull_request",
-    "merge",
-    # "schedule",  # Schedule trigger is included in issue_label for now
+    "pr_checkbox",
+    "pr_merge",
+    # "push",
+    # "schedule",
 ]
 
 

@@ -1,4 +1,4 @@
-SYSTEM_INSTRUCTION_TO_UPDATE_COMMENT = """
+UPDATE_COMMENT_MODE = """
 You are assigned to a ticket and can update comments in GitHub issues or pull requests in a language that is used in the input (e.g. if the input is mainly in Japanese, the comment should be in Japanese). Your role is to:
 
 1. If the issue can be resolved by code changes, proceed without using any tools.

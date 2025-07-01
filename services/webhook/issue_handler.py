@@ -40,9 +40,9 @@ from services.slack.slack import slack
 
 # Local imports (Supabase, Webhook)
 from services.supabase.create_user_request import create_user_request
+from services.supabase.usage.insert_usage import Trigger
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 from services.supabase.usage.update_usage import update_usage
-from services.webhook.utils.create_system_messages import create_system_messages
 
 # Local imports (Utils)
 from utils.images.get_base64 import get_base64
@@ -61,13 +61,13 @@ from utils.urls.extract_urls import extract_image_urls
 
 async def create_pr_from_issue(
     payload: GitHubLabeledPayload,
-    trigger_type: Literal["label", "comment"],
+    trigger: Trigger,
     input_from: Literal["github", "jira"],
 ) -> None:
     current_time: float = time.time()
 
     # Extract label and validate it
-    if trigger_type == "label" and payload["label"]["name"] != PRODUCT_ID:
+    if trigger == "issue_label" and payload["label"]["name"] != PRODUCT_ID:
         return
 
     # Deconstruct payload based on input_from
@@ -129,12 +129,7 @@ async def create_pr_from_issue(
     )
 
     # Notify Slack
-    trigger = (
-        "Labeled"
-        if trigger_type == "label"
-        else "Triggered" if trigger_type == "comment" else "Review-commented"
-    )
-    msg = f"{trigger} by `{sender_name}` for `{issue_title}` in `{owner_name}/{repo_name}`"
+    msg = f"Request: `{trigger}` by `{sender_name}` for `{issue_title}` in `{owner_name}/{repo_name}`"
     slack(msg)
 
     p += 5
@@ -179,7 +174,7 @@ async def create_pr_from_issue(
         repo_name=repo_name,
         issue_number=issue_number,
         source=input_from,
-        trigger="issue_comment" if trigger_type == "comment" else "issue_label",
+        trigger=trigger,
         email=sender_email,
     )
 
@@ -291,7 +286,6 @@ async def create_pr_from_issue(
     )
 
     # Create messages
-    system_messages = create_system_messages(repo_settings=repo_settings)
     messages = [{"role": "user", "content": user_input}]
 
     # Create a remote branch
@@ -349,7 +343,8 @@ async def create_pr_from_issue(
             p,
         ) = chat_with_agent(
             messages=messages,
-            system_messages=system_messages,
+            trigger=trigger,
+            repo_settings=repo_settings,
             base_args=base_args,
             mode="explore",
             previous_calls=previous_calls,
@@ -369,7 +364,8 @@ async def create_pr_from_issue(
         #     p,
         # ) = chat_with_agent(
         #     messages=messages,
-        #     system_messages=system_messages,
+        #     trigger=trigger,
+        #     repo_settings=repo_settings,
         #     base_args=base_args,
         #     mode="search",
         #     previous_calls=previous_calls,
@@ -389,7 +385,8 @@ async def create_pr_from_issue(
             p,
         ) = chat_with_agent(
             messages=messages,
-            system_messages=system_messages,
+            trigger=trigger,
+            repo_settings=repo_settings,
             base_args=base_args,
             mode="commit",
             previous_calls=previous_calls,
