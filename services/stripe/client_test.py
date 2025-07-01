@@ -158,3 +158,4 @@ def test_stripe_client_configuration_isolation():
     
     # But the API key should be properly set
     assert client_stripe.api_key == STRIPE_API_KEY
+
