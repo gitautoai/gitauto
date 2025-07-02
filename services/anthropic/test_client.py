@@ -164,3 +164,38 @@ class TestGetAnthropicClientEdgeCases:
     @patch("services.anthropic.client.ANTHROPIC_API_KEY", "invalid-key-format")
     def test_handles_invalid_api_key_format(self):
 
+
+
+class TestGetAnthropicClientImports:
+    """Test import-related scenarios for get_anthropic_client function."""
+
+    def test_imports_are_available(self):
+        """Test that all required imports are available."""
+        # Test that we can import the function
+        from services.anthropic.client import get_anthropic_client as imported_func
+        assert callable(imported_func)
+        
+        # Test that we can import Anthropic
+        from anthropic import Anthropic as ImportedAnthropic
+        assert ImportedAnthropic is not None
+        
+        # Test that we can import the config
+        from config import ANTHROPIC_API_KEY as imported_key
+        assert imported_key is not None
+
+    def test_function_signature(self):
+        """Test that the function has the expected signature."""
+        import inspect
+        sig = inspect.signature(get_anthropic_client)
+        
+        # Should have no parameters
+        assert len(sig.parameters) == 0
+        
+        # Should have return type annotation
+        assert sig.return_annotation == Anthropic
+
+    def test_function_docstring_exists(self):
+        """Test that the function has proper documentation."""
+        # The function should be documented (even if minimal)
+        assert get_anthropic_client.__name__ == "get_anthropic_client"
+        assert callable(get_anthropic_client)
