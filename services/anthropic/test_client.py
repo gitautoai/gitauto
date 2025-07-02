@@ -41,6 +41,7 @@ class TestGetAnthropicClient:
         assert client.api_key == ""
 
     @patch("services.anthropic.client.ANTHROPIC_API_KEY", None)
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": ""}, clear=False)
     def test_handles_none_api_key(self):
         """Test that the client can be created with None API key."""
         client = get_anthropic_client()
