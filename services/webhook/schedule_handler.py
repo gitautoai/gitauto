@@ -135,7 +135,16 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         logging.info(msg)
         return {"status": "skipped", "message": msg}
 
-    # Find the first suitable file
+    # Sort by: statement_coverage (asc), file_size (asc), full_path (asc)
+    enriched_all_files.sort(
+        key=lambda x: (
+            cast(float, x["statement_coverage"]),
+            cast(int, x["file_size"]),
+            cast(str, x["full_path"]),
+        )
+    )
+
+    # Find the first suitable file from sorted list
     target_item = None
     for item in enriched_all_files:
         item_path = cast(str, item["full_path"])
@@ -161,7 +170,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         if github_issue_url and is_issue_open(issue_url=github_issue_url, token=token):
             continue
 
-        # Found a suitable file
+        # Found the best suitable file
         target_item = item
         break
 
