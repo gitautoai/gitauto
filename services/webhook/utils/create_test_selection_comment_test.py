@@ -312,3 +312,65 @@ def test_file_checklist_item_type_validation():
         path="test.py",
         checked=True,
         coverage_info=" (Line: 100%)",
+
+
+def test_create_test_selection_comment_special_characters_in_paths():
+    """Test create_test_selection_comment with special characters in file paths."""
+    checklist = [
+        FileChecklistItem(
+            path="src/file with spaces.py",
+            checked=True,
+            coverage_info="",
+            status="added",
+        ),
+        FileChecklistItem(
+            path="src/file-with-dashes.py",
+            checked=False,
+            coverage_info="",
+            status="modified",
+        ),
+        FileChecklistItem(
+            path="src/file_with_underscores.py",
+            checked=True,
+            coverage_info="",
+            status="removed",
+        ),
+    ]
+    
+    with patch("services.webhook.utils.create_test_selection_comment.TEST_SELECTION_COMMENT_IDENTIFIER", "## 🧪 Manage Tests?"), \
+         patch("services.webhook.utils.create_test_selection_comment.PRODUCT_NAME", "GitAuto"), \
+         patch("services.webhook.utils.create_test_selection_comment.create_reset_command_message") as mock_reset, \
+         patch("services.webhook.utils.create_test_selection_comment.SETTINGS_LINKS", "Settings links here"):
+        
+        mock_reset.return_value = "Reset command message"
+        
+        result = create_test_selection_comment(checklist, "special-chars")
+        
+        # Verify special characters in paths are handled correctly
+        assert "- [x] added `src/file with spaces.py`" in result
+        assert "- [ ] modified `src/file-with-dashes.py`" in result
+        assert "- [x] removed `src/file_with_underscores.py`" in result
+        
+        mock_reset.assert_called_once_with("special-chars")
+
+
+def test_create_test_selection_comment_long_branch_name():
+    """Test create_test_selection_comment with a very long branch name."""
+    checklist = [
+        FileChecklistItem(
+            path="test.py",
+            checked=True,
+            coverage_info="",
+            status="modified",
+        )
+    ]
+    
+    long_branch_name = "feature/very-long-branch-name-with-many-characters-and-descriptive-text-that-goes-on-and-on"
+    
+    with patch("services.webhook.utils.create_test_selection_comment.create_reset_command_message") as mock_reset:
+        mock_reset.return_value = f"Reset command for {long_branch_name}"
+        
+        result = create_test_selection_comment(checklist, long_branch_name)
+        
+        assert f"Reset command for {long_branch_name}" in result
+        mock_reset.assert_called_once_with(long_branch_name)
