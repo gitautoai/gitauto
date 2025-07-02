@@ -202,6 +202,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         if target_item["id"] == 0:
             coverage_record = {**target_item}
             coverage_record.pop("id")
+            coverage_record.pop("created_at")
+            coverage_record.pop("updated_at")
             coverage_record["github_issue_url"] = issue_response["html_url"]
             insert_coverages(coverage_record)
         else:
