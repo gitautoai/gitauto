@@ -100,7 +100,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             (c for c in all_coverages if c["full_path"] == file_path), None
         )
         if coverages:
-            enriched_all_files.append(**coverages)
+            enriched_all_files.append(coverages)
         else:
             enriched_all_files.append(
                 {
