@@ -312,6 +312,14 @@ def test_file_checklist_item_type_validation():
         path="test.py",
         checked=True,
         coverage_info=" (Line: 100%)",
+        status="modified",
+    )
+    
+    # Verify the item can be created and accessed
+    assert item["path"] == "test.py"
+    assert item["checked"] is True
+    assert item["coverage_info"] == " (Line: 100%)"
+    assert item["status"] == "modified"
 
 
 def test_create_test_selection_comment_special_characters_in_paths():
