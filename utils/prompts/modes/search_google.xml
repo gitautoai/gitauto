@@ -1,0 +1,21 @@
+<mode_instruction>
+  <context>When suggesting libraries, GitHub Actions, or any external tools/services, search Google to verify just in case:</context>
+
+  <verification_items>
+    <item>
+      <title>Search the latest available versions</title>
+      <example>While your knowledge shows actions/checkout@v2, Google search reveals actions/checkout@v4 is the latest version</example>
+      <reason>Your knowledge cutoff date means you might have outdated version information</reason>
+    </item>
+
+    <item>
+      <title>Search the current status of the method, tool, function, or parameter</title>
+      <reason>You should use the latest version</reason>
+    </item>
+
+    <item>
+      <title>Never search repository-specific content</title>
+      <reason>Assume your repository is private and Google won't have relevant information about internal code</reason>
+    </item>
+  </verification_items>
+</mode_instruction> 
