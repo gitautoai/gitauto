@@ -33,9 +33,9 @@ def upsert_repository(
         )
 
     # Check if repository already exists
-    result = get_repository(repo_id)
+    repository = get_repository(repo_id)
 
-    if result.data:
+    if repository:
         # Update existing repository
         return update_repository(
             repo_id=repo_id,
