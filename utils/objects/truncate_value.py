@@ -13,6 +13,5 @@ def truncate_value(value: Any, max_length: int = 30):
         return tuple(truncate_value(item, max_length) for item in value)
     if isinstance(value, BaseModel):
         # Convert Pydantic models to dict for JSON serialization
-        # Use exclude_unset=False to include all fields, even if they have default values
-        return truncate_value(value.model_dump(exclude_unset=False), max_length)
+        return truncate_value(value.model_dump(), max_length)
     return value
