@@ -138,3 +138,30 @@ def test_truncate_complex_nested_structure():
         }
     ]
     assert result == expected
+
+
+class TestModel(BaseModel):
+    """Test Pydantic model for testing truncate_value."""
+    id: int
+    name: str
+    description: str | None = None
+    created_at: datetime.datetime
+
+
+def test_truncate_pydantic_model():
+    """Test truncating Pydantic models."""
+    model = TestModel(
+        id=1,
+        name="this is a very long name that should be truncated",
+        description="this is a very long description that should be truncated",
+        created_at=datetime.datetime(2024, 1, 1, 12, 0, 0)
+    )
+    result = truncate_value(model, 10)
+    
+    # Should convert to dict and truncate string values
+    expected = {
+        "id": 1,
+        "name": "this is a ...",
+        "description": "this is a ...",
+        "created_at": datetime.datetime(2024, 1, 1, 12, 0, 0)
+    }
