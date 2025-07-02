@@ -15,8 +15,6 @@ class EventBridgeSchedulerEvent(TypedDict):
     userName: str
     installationId: int
     triggerType: Literal["schedule"]
-    scheduleTimeUTC: str  # "HH:MM" format
-    includeWeekends: bool
 
 
 class LambdaContextIdentity(TypedDict):
