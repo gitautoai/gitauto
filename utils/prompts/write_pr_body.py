@@ -7,9 +7,6 @@ If this PR adds or updates test cases, include:
 ## Test Patterns
 - [List primary test scenarios or edge cases covered]
 
-## Notes
-[Optional: additional context or instructions]
-
 Otherwise (bug fix or feature):
 ## Summary
 [One-line summary of the change]
@@ -17,5 +14,4 @@ Otherwise (bug fix or feature):
 ## Changes
 - [Key changes]
 
-## Impact
-[Backward compatibility or required actions]"""
+"""
