@@ -118,3 +118,4 @@ class TestGetAnthropicClientMocked:
         get_anthropic_client()
         get_anthropic_client()
         
+        assert mock_anthropic.call_count == 2
