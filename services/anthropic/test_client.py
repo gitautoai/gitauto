@@ -164,6 +164,10 @@ class TestGetAnthropicClientEdgeCases:
     @patch("services.anthropic.client.ANTHROPIC_API_KEY", "invalid-key-format")
     def test_handles_invalid_api_key_format(self):
 
+        """Test that the client can be created with invalid API key format."""
+        client = get_anthropic_client()
+        assert isinstance(client, Anthropic)
+        assert client.api_key == "invalid-key-format"
 
 
 class TestGetAnthropicClientImports:
