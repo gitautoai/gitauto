@@ -236,4 +236,3 @@ class TestGetAnthropicClientIntegration:
         assert callable(get_anthropic_client)
         # Test that it returns the expected type
         assert get_anthropic_client() is not None
-        """Test that the function is accessible at module level."""
