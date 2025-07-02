@@ -374,3 +374,35 @@ def test_create_test_selection_comment_long_branch_name():
         
         assert f"Reset command for {long_branch_name}" in result
         mock_reset.assert_called_once_with(long_branch_name)
+
+
+def test_create_test_selection_comment_large_checklist():
+    """Test create_test_selection_comment with a large number of files."""
+    # Create a large checklist to test performance and structure
+    checklist = []
+    for i in range(50):
+        checklist.append(
+            FileChecklistItem(
+                path=f"src/module_{i:02d}/file_{i:02d}.py",
+                checked=i % 2 == 0,  # Alternate checked/unchecked
+                coverage_info=f" (Line: {80 + i % 20}%)" if i % 3 == 0 else "",
+                status="modified" if i % 3 == 0 else "added" if i % 3 == 1 else "removed",
+            )
+        )
+    
+    with patch("services.webhook.utils.create_test_selection_comment.TEST_SELECTION_COMMENT_IDENTIFIER", "## 🧪 Manage Tests?"), \
+         patch("services.webhook.utils.create_test_selection_comment.PRODUCT_NAME", "GitAuto"), \
+         patch("services.webhook.utils.create_test_selection_comment.create_reset_command_message") as mock_reset, \
+         patch("services.webhook.utils.create_test_selection_comment.SETTINGS_LINKS", "Settings links here"):
+        
+        mock_reset.return_value = "Reset command message"
+        
+        result = create_test_selection_comment(checklist, "large-test")
+        
+        # Verify all files are included
+        for i in range(50):
+            file_path = f"src/module_{i:02d}/file_{i:02d}.py"
+            assert file_path in result
+        
+        # Verify structure is maintained
+        assert result.count("- [x]") == 25  # Half are checked
