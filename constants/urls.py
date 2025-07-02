@@ -15,3 +15,6 @@ PRODUCT_DEMO_URL = "https://www.youtube.com/watch?v=wnIi73WR1kE"
 PRODUCT_LINKEDIN_URL = "https://www.linkedin.com/company/gitauto/"
 PRODUCT_TWITTER_URL = "https://x.com/gitautoai"
 PRODUCT_YOUTUBE_URL = "https://youtube.com/@gitauto"
+
+# GitHub URLs
+GH_BASE_URL = "https://github.com"
