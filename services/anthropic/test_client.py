@@ -119,3 +119,28 @@ class TestGetAnthropicClientMocked:
         get_anthropic_client()
         
         assert mock_anthropic.call_count == 2
+
+class TestGetAnthropicClientEdgeCases:
+    """Test edge cases and error scenarios for get_anthropic_client function."""
+
+    @patch("services.anthropic.client.ANTHROPIC_API_KEY", "sk-ant-api03-valid-key-format")
+    def test_handles_valid_api_key_format(self):
+        """Test that the client handles a valid API key format correctly."""
+        client = get_anthropic_client()
+        assert isinstance(client, Anthropic)
+        assert client.api_key == "sk-ant-api03-valid-key-format"
+
+    @patch("services.anthropic.client.ANTHROPIC_API_KEY", "   ")
+    def test_handles_whitespace_only_api_key(self):
+        """Test that the client can be created with whitespace-only API key."""
+        client = get_anthropic_client()
+        assert isinstance(client, Anthropic)
+        assert client.api_key == "   "
+
+    def test_function_return_type_annotation(self):
+        """Test that the function returns the correct type as per annotation."""
+        client = get_anthropic_client()
+        assert isinstance(client, Anthropic)
+        # Verify it's actually an Anthropic client instance
+        assert type(client).__name__ == "Anthropic"
+
