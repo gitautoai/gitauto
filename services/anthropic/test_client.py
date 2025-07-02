@@ -199,3 +199,33 @@ class TestGetAnthropicClientImports:
         # The function should be documented (even if minimal)
         assert get_anthropic_client.__name__ == "get_anthropic_client"
         assert callable(get_anthropic_client)
+
+
+class TestGetAnthropicClientIntegration:
+    """Integration-style tests for get_anthropic_client function."""
+
+    def test_client_can_be_used_for_basic_operations(self):
+        """Test that the returned client can be used for basic operations."""
+        client = get_anthropic_client()
+        
+        # Test that the client has the expected methods
+        assert hasattr(client, 'messages')
+        assert hasattr(client, 'api_key')
+        
+        # Test that messages attribute has expected methods
+        assert hasattr(client.messages, 'create')
+        assert hasattr(client.messages, 'count_tokens')
+
+    def test_client_api_key_property_access(self):
+        """Test that the client's API key property can be accessed."""
+        client = get_anthropic_client()
+        
+        # Should be able to read the API key
+        api_key = client.api_key
+        assert api_key == ANTHROPIC_API_KEY
+        
+        # API key should be a string (or None)
+        assert isinstance(api_key, (str, type(None)))
+
+    def test_module_level_function_accessibility(self):
+        """Test that the function is accessible at module level."""
