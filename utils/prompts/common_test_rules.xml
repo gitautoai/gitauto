@@ -1,0 +1,26 @@
+<test_rules>
+  <value_focused_testing>
+    <rule>Test behavior, not implementation details</rule>
+    <rule>Focus on what result is returned rather than which internal function is called</rule>
+    <rule>Test scenarios (e.g., owner exists, repo doesn't exist) not internal function calls</rule>
+  </value_focused_testing>
+
+  <mock_management>
+    <rule>Use test framework fixtures to eliminate duplicate mock setup code</rule>
+    <rule>Ensure proper mock lifecycle management (Python example: use yield with with patch())</rule>
+    <rule>Handle fixture parameter name conflicts (Python example: use # pylint: disable=redefined-outer-name)</rule>
+  </mock_management>
+
+  <test_design_principles>
+    <rule>Avoid testing internal implementation details</rule>
+    <rule>Tests should not break when refactoring internal code structure</rule>
+    <rule>Assert on meaningful outcomes, not intermediate steps</rule>
+    <rule>Keep tests independent and focused on single responsibilities</rule>
+  </test_design_principles>
+
+  <anti_patterns>
+    <rule>Do not test implementation details instead of user-facing behavior</rule>
+    <rule>Do not create tests that break when refactoring internal code structure</rule>
+    <rule>Do not over-assert on internal function call parameters when the behavior is what matters</rule>
+  </anti_patterns>
+</test_rules> 

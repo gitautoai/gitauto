@@ -1,0 +1,19 @@
+<mode_instruction>
+  <context>Based on the available context, including but not limited to issue body, files, their contents, repository structure, test coverage data, and any other relevant information, you have two options to modify files:</context>
+
+  <small_changes>
+    <method>Use apply_diff_to_file() with unified diff format</method>
+    <description>This is preferred for minor modifications where you need to change specific lines or small portions of a file</description>
+  </small_changes>
+
+  <extensive_changes>
+    <method>Use replace_remote_file_content()</method>
+    <description>When you need to completely rewrite a file or make extensive changes. This is more efficient than unified diff format when modifying the majority of a file's content</description>
+  </extensive_changes>
+
+  <guidance>Choose the appropriate method based on the scope of your changes.</guidance>
+
+  <coding_rules>
+    <rule>NEVER EVER place import statements in the body of the function</rule>
+  </coding_rules>
+</mode_instruction> 
