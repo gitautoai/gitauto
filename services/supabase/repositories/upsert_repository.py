@@ -1,7 +1,9 @@
 # Local imports
-from services.supabase.client import supabase
 from services.supabase.owners.create_owner import create_owner
 from services.supabase.owners.get_owner import get_owner
+from services.supabase.repositories.get_repository import get_repository
+from services.supabase.repositories.insert_repository import insert_repository
+from services.supabase.repositories.update_repository import update_repository
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -31,42 +33,29 @@ def upsert_repository(
         )
 
     # Check if repository already exists
-    result = supabase.table("repositories").select("*").eq("repo_id", repo_id).execute()
+    result = get_repository(repo_id)
 
     if result.data:
         # Update existing repository
-        update_result = (
-            supabase.table("repositories")
-            .update(
-                {
-                    "updated_by": str(user_id) + ":" + user_name,
-                    "file_count": file_count,
-                    "blank_lines": blank_lines,
-                    "comment_lines": comment_lines,
-                    "code_lines": code_lines,
-                }
-            )
-            .eq("repo_id", repo_id)
-            .execute()
+        return update_repository(
+            repo_id=repo_id,
+            user_id=user_id,
+            user_name=user_name,
+            file_count=file_count,
+            blank_lines=blank_lines,
+            comment_lines=comment_lines,
+            code_lines=code_lines,
         )
-        return update_result.data[0] if update_result.data else None
 
     # Create new repository
-    insert_result = (
-        supabase.table("repositories")
-        .insert(
-            {
-                "owner_id": owner_id,
-                "repo_id": repo_id,
-                "repo_name": repo_name,
-                "created_by": str(user_id) + ":" + user_name,
-                "updated_by": str(user_id) + ":" + user_name,
-                "file_count": file_count,
-                "blank_lines": blank_lines,
-                "comment_lines": comment_lines,
-                "code_lines": code_lines,
-            }
-        )
-        .execute()
+    return insert_repository(
+        owner_id=owner_id,
+        repo_id=repo_id,
+        repo_name=repo_name,
+        user_id=user_id,
+        user_name=user_name,
+        file_count=file_count,
+        blank_lines=blank_lines,
+        comment_lines=comment_lines,
+        code_lines=code_lines,
     )
-    return insert_result.data[0] if insert_result.data else None

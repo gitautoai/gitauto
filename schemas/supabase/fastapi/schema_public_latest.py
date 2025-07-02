@@ -191,12 +191,12 @@ class RepositoriesBaseSchema(CustomModel):
     id: int
 
     # Columns
-    blank_lines: int | None = Field(default=None)
-    code_lines: int | None = Field(default=None)
-    comment_lines: int | None = Field(default=None)
+    blank_lines: int
+    code_lines: int
+    comment_lines: int
     created_at: datetime.datetime
     created_by: str
-    file_count: int | None = Field(default=None)
+    file_count: int
     file_paths: list | None = Field(default=None)
     local_port: int | None = Field(default=None)
     owner_id: int
@@ -537,11 +537,11 @@ class RepositoriesInsert(CustomModelInsert):
     # Primary Keys
 
     # Field properties:
-    # blank_lines: nullable, has default value
-    # code_lines: nullable, has default value
-    # comment_lines: nullable, has default value
+    # blank_lines: has default value
+    # code_lines: has default value
+    # comment_lines: has default value
     # created_at: has default value
-    # file_count: nullable, has default value
+    # file_count: has default value
     # file_paths: nullable, has default value
     # local_port: nullable, has default value
     # production_url: nullable, has default value
@@ -947,11 +947,11 @@ class RepositoriesUpdate(CustomModelUpdate):
     # Primary Keys
 
     # Field properties:
-    # blank_lines: nullable, has default value
-    # code_lines: nullable, has default value
-    # comment_lines: nullable, has default value
+    # blank_lines: has default value
+    # code_lines: has default value
+    # comment_lines: has default value
     # created_at: has default value
-    # file_count: nullable, has default value
+    # file_count: has default value
     # file_paths: nullable, has default value
     # local_port: nullable, has default value
     # production_url: nullable, has default value

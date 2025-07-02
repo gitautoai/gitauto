@@ -22,7 +22,7 @@ from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_r
 
 # Local imports (Supabase & Webhook)
 from services.supabase.create_user_request import create_user_request
-from services.supabase.repositories.get_repository import get_repository_settings
+from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 from services.supabase.usage.update_usage import update_usage
 from services.webhook.utils.extract_selected_files import extract_selected_files
@@ -132,7 +132,7 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
         owner=owner_name, repo=repo_name, branch=branch_name, token=token
     )
 
-    repo_settings = get_repository_settings(repo_id=repo_id)
+    repo_settings = get_repository(repo_id=repo_id)
 
     base_args = {
         "owner_type": owner_type,

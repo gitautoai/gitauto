@@ -12,7 +12,7 @@ from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
 from services.supabase.coverages.get_coverages import get_coverages
-from services.supabase.repositories.get_repository import get_repository_settings
+from services.supabase.repositories.get_repository import get_repository
 from services.webhook.utils.create_file_checklist import create_file_checklist
 from services.webhook.utils.create_test_selection_comment import (
     create_test_selection_comment,
@@ -42,7 +42,7 @@ def create_pr_checkbox_comment(payload: PullRequestWebhookPayload):
     repo_name = repo["name"]
 
     # Check repository settings for PR test selection
-    repo_settings = get_repository_settings(repo_id=repo_id)
+    repo_settings = get_repository(repo_id=repo_id)
     if not repo_settings or not repo_settings["trigger_on_pr_change"]:
         msg = f"Skipping PR test selection for repo {repo_name} because trigger_on_pr_change is False"
         logging.info(msg)

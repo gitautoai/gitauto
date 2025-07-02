@@ -4,7 +4,7 @@ from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.github_types import GitHubPullRequestClosedPayload, BaseArgs
 from services.supabase.coverages.get_coverages import get_coverages
-from services.supabase.repositories.get_repository import get_repository_settings
+from services.supabase.repositories.get_repository import get_repository
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
 from utils.files.is_excluded_from_testing import is_excluded_from_testing
@@ -34,7 +34,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
     token = get_installation_access_token(installation_id=installation_id)
 
     # Get repository settings
-    repo_settings = get_repository_settings(repo_id=repo_id)
+    repo_settings = get_repository(repo_id=repo_id)
     if not repo_settings or not repo_settings["trigger_on_merged"]:
         return
 

@@ -33,7 +33,7 @@ from services.github.workflow_runs.get_workflow_run_path import get_workflow_run
 
 # Local imports (Supabase)
 from services.supabase.create_user_request import create_user_request
-from services.supabase.repositories.get_repository import get_repository_settings
+from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.get_retry_pairs import get_retry_workflow_id_hash_pairs
 from services.supabase.usage.update_retry_pairs import (
     update_retry_workflow_id_hash_pairs,
@@ -230,7 +230,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     update_comment(body=comment_body, base_args=base_args)
 
     # Get repository settings
-    repo_settings = get_repository_settings(repo_id=repo_id)
+    repo_settings = get_repository(repo_id=repo_id)
 
     # Plan how to fix the error
     today = datetime.now().strftime("%Y-%m-%d")
