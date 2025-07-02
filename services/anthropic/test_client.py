@@ -1,4 +1,5 @@
 from unittest.mock import patch, MagicMock, Mock
+import os
 
 import pytest
 from anthropic import Anthropic
