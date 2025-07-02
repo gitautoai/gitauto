@@ -186,7 +186,7 @@ async def create_pr_from_issue(
         )
 
     # Check out the issue comments, and file tree
-    file_tree, tree_comment = get_file_tree(base_args=base_args)
+    file_tree, tree_comment = get_file_tree(base_args=base_args, max_files=100)
     p += 5
     log_messages.append(tree_comment)
     update_comment(

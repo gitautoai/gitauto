@@ -174,7 +174,7 @@ def handle_review_run(payload: dict[str, Any]):
     update_comment(body=comment_body, base_args=base_args)
 
     # Get the file tree in the root of the repo
-    file_tree, tree_comment = get_file_tree(base_args=base_args)
+    file_tree, tree_comment = get_file_tree(base_args=base_args, max_files=100)
     p += 5
     log_messages.append(tree_comment)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))

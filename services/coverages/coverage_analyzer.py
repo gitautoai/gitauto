@@ -71,7 +71,7 @@ async def handle_workflow_coverage(
         }
 
         # Get all source files from the repository
-        all_files, _ = get_file_tree(base_args=base_args)
+        all_files, _ = get_file_tree(base_args=base_args, max_files=None)
 
         # Filter files based on language extension
         extension_map = {

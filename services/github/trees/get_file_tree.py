@@ -6,7 +6,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_file_tree(base_args: BaseArgs, max_files: int = 100):
+def get_file_tree(base_args: BaseArgs, max_files: int | None):
     """
     Get the file tree of a GitHub repository at a ref branch.
     Uses recursive API call and trims results from deepest level if exceeding max_files.
