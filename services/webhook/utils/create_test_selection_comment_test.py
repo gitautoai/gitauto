@@ -238,3 +238,77 @@ def test_create_test_selection_comment_coverage_info_variations():
         assert "- [x] modified `full_coverage.py` (Line: 85%, Function: 90%, Branch: 75%)" in result
         
         mock_reset.assert_called_once_with("coverage-test")
+
+
+def test_create_test_selection_comment_real_constants():
+    """Test create_test_selection_comment using actual constants from the codebase."""
+    checklist = [
+        FileChecklistItem(
+            path="services/webhook/utils/create_test_selection_comment.py",
+            checked=True,
+            coverage_info=" (Coverage: 0%)",
+            status="modified",
+        )
+    ]
+    branch_name = "gitauto/issue-1142-20250702-234837-dLD2"
+    
+    # Test with real constants (no mocking)
+    result = create_test_selection_comment(checklist, branch_name)
+    
+    # Verify the actual constants are used
+    assert "## 🧪 Manage Tests?" in result  # TEST_SELECTION_COMMENT_IDENTIFIER
+    assert "GitAuto" in result  # PRODUCT_NAME
+    assert "Select files to manage tests for (create, update, or remove):" in result
+    assert "- [x] modified `services/webhook/utils/create_test_selection_comment.py` (Coverage: 0%)" in result
+    assert "- [ ] Yes, manage tests" in result
+    assert "Click the checkbox and GitAuto will add/update/remove tests for the selected files to this PR." in result
+    assert branch_name in result  # Should be in reset command
+    assert "git checkout" in result  # Part of reset command
+    assert "git push --force-with-lease" in result  # Part of reset command
+    assert "turn off triggers" in result  # Part of SETTINGS_LINKS
+    assert "update coding rules" in result  # Part of SETTINGS_LINKS
+    assert "exclude files" in result  # Part of SETTINGS_LINKS
+    assert "info@gitauto.ai" in result  # Part of SETTINGS_LINKS
+
+
+def test_create_test_selection_comment_structure_validation():
+    """Test that the comment structure follows the expected format."""
+    checklist = [
+        FileChecklistItem(
+            path="test.py",
+            checked=True,
+            coverage_info="",
+            status="added",
+        )
+    ]
+    
+    result = create_test_selection_comment(checklist, "test-branch")
+    lines = result.split("\n")
+    
+    # Verify the structure order
+    assert lines[0] == "## 🧪 Manage Tests?"  # Header
+    assert lines[1] == ""  # Empty line
+    assert lines[2] == "Select files to manage tests for (create, update, or remove):"  # Instructions
+    assert lines[3] == ""  # Empty line
+    assert "- [x] added `test.py`" in lines[4]  # File entry
+    
+    # Find the "Yes, manage tests" line
+    yes_line_index = next(i for i, line in enumerate(lines) if "- [ ] Yes, manage tests" in line)
+    
+    # Verify structure around the "Yes, manage tests" line
+    assert lines[yes_line_index - 2] == ""  # Empty line before separator
+    assert lines[yes_line_index - 1] == "---"  # Separator
+    assert lines[yes_line_index + 1] == ""  # Empty line after "Yes, manage tests"
+    
+    # Verify the comment ends with settings links
+    assert "turn off triggers" in result
+    assert result.endswith("our contact page](https://gitauto.ai/contact?utm_source=github&utm_medium=referral)")
+
+
+def test_file_checklist_item_type_validation():
+    """Test that FileChecklistItem TypedDict works correctly."""
+    # This test validates the TypedDict structure
+    item = FileChecklistItem(
+        path="test.py",
+        checked=True,
+        coverage_info=" (Line: 100%)",
