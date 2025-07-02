@@ -184,7 +184,13 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
     # Create issue title and body
     title = get_issue_title(target_path)
-    body = get_issue_body(file_path=target_path, statement_coverage=statement_coverage)
+    body = get_issue_body(
+        owner=owner_name,
+        repo=repo_name,
+        branch=default_branch,
+        file_path=target_path,
+        statement_coverage=statement_coverage,
+    )
 
     # Create the issue with gitauto label and assign to the user
     issue_response = create_issue(
