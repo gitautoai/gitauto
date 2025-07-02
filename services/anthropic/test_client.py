@@ -145,3 +145,65 @@ class TestGetAnthropicClient:
         client = get_anthropic_client()
         assert isinstance(client, Anthropic)
         
+
+
+class TestGetAnthropicClientIntegration:
+    """Integration tests for get_anthropic_client function."""
+    
+    def test_client_can_be_used_for_basic_operations(self):
+        """Test that the returned client can be used for basic operations."""
+        client = get_anthropic_client()
+        
+        # Verify the client has the expected methods and attributes
+        assert hasattr(client, 'messages')
+        assert hasattr(client, 'api_key')
+        assert callable(getattr(client.messages, 'create', None))
+        
+    def test_client_configuration_is_correct(self):
+        """Test that the client is configured correctly."""
+        client = get_anthropic_client()
+        
+        # Check that the client is properly configured
+        assert client.api_key == ANTHROPIC_API_KEY
+        assert isinstance(client.api_key, (str, type(None)))
+        
+    def test_client_is_ready_for_api_calls(self):
+        """Test that the client is ready for API calls (without making actual calls)."""
+        client = get_anthropic_client()
+        
+        # Verify client has the necessary components for API calls
+        assert hasattr(client, '_client')
+        assert hasattr(client, 'messages')
+        
+        # Check that messages has the expected methods
+        messages = client.messages
+        assert hasattr(messages, 'create')
+        assert hasattr(messages, 'count_tokens')
+        
+    def test_multiple_clients_have_same_configuration(self):
+        """Test that multiple clients have the same configuration."""
+        clients = [get_anthropic_client() for _ in range(3)]
+        
+        # All clients should have the same API key
+        api_keys = [client.api_key for client in clients]
+        assert all(key == ANTHROPIC_API_KEY for key in api_keys)
+        assert len(set(api_keys)) == 1  # All keys should be the same
+
+
+@pytest.fixture
+def mock_anthropic():
+    """Fixture that provides a mocked Anthropic class."""
+    with patch("services.anthropic.client.Anthropic") as mock:
+        mock_instance = MagicMock()
+        mock.return_value = mock_instance
+        yield mock
+
+
+@pytest.fixture
+def test_api_key():
+    """Fixture that provides a test API key."""
+    return "sk-ant-api03-test-key-12345"
+
+
+@pytest.fixture
+def patched_api_key(test_api_key):
