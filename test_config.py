@@ -1,5 +1,6 @@
 import base64
 import os
+import sys
 from datetime import datetime, timezone
 from unittest.mock import patch, MagicMock
 import pytest
@@ -357,7 +358,6 @@ class TestModuleImports:
     def test_dotenv_loaded_on_import(self):
         """Test that load_dotenv is called when module is imported."""
         # We can verify that dotenv is imported and used in config.py
-        import sys
         import config
         
         # Check that dotenv module is imported
