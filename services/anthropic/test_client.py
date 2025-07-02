@@ -144,3 +144,23 @@ class TestGetAnthropicClientEdgeCases:
         # Verify it's actually an Anthropic client instance
         assert type(client).__name__ == "Anthropic"
 
+    def test_client_configuration_consistency(self):
+        """Test that multiple clients have consistent configuration."""
+        clients = [get_anthropic_client() for _ in range(3)]
+        
+        # All should be Anthropic instances
+        assert all(isinstance(client, Anthropic) for client in clients)
+        
+        # All should have the same API key
+        api_keys = [client.api_key for client in clients]
+        assert all(key == ANTHROPIC_API_KEY for key in api_keys)
+        
+        # All should be different instances
+        for i, client1 in enumerate(clients):
+            for j, client2 in enumerate(clients):
+                if i != j:
+                    assert client1 is not client2
+
+    @patch("services.anthropic.client.ANTHROPIC_API_KEY", "invalid-key-format")
+    def test_handles_invalid_api_key_format(self):
+
