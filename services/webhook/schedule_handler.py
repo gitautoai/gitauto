@@ -15,6 +15,7 @@ from services.github.trees.get_file_tree import get_file_tree
 
 # Local imports (Supabase)
 from services.supabase.coverages.get_all_coverages import get_all_coverages
+from services.supabase.coverages.insert_coverages import insert_coverages
 from services.supabase.coverages.update_issue_url import update_issue_url
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
@@ -198,11 +199,17 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     )
 
     if issue_response and "html_url" in issue_response:
-        update_issue_url(
-            repo_id=repo_id,
-            file_path=target_path,
-            github_issue_url=issue_response["html_url"],
-        )
+        if target_item["id"] == 0:
+            coverage_record = {**target_item}
+            coverage_record.pop("id")
+            coverage_record["github_issue_url"] = issue_response["html_url"]
+            insert_coverages(coverage_record)
+        else:
+            update_issue_url(
+                repo_id=repo_id,
+                file_path=target_path,
+                github_issue_url=issue_response["html_url"],
+            )
 
     msg = f"created issue for {target_path}"
     return {"status": "success", "message": msg}
