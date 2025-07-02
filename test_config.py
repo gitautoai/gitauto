@@ -354,16 +354,15 @@ class TestTestingConstants:
 class TestModuleImports:
     """Test cases for module imports and initialization."""
 
-    @patch('config.load_dotenv')
-    def test_dotenv_loaded_on_import(self, mock_load_dotenv):
+    def test_dotenv_loaded_on_import(self):
         """Test that load_dotenv is called when module is imported."""
-        # Since config is already imported at the top of this file,
-        # and load_dotenv is called during import, we can't directly test it.
-        # Instead, we'll verify that the function exists in the module
+        # We can verify that dotenv is imported and used in config.py
         import sys
-        import config as config_module
-        assert hasattr(config_module, 'load_dotenv')
+        import config
+        
+        # Check that dotenv module is imported
         assert 'dotenv' in sys.modules
+        assert hasattr(config, 'load_dotenv')
 
     def test_base64_decoding(self):
         """Test base64 decoding functionality."""
