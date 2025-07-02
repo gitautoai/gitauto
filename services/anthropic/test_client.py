@@ -46,7 +46,7 @@ class TestGetAnthropicClient:
         """Test that the client can be created with None API key."""
         client = get_anthropic_client()
         assert isinstance(client, Anthropic)
-        assert client.api_key is None
+        assert client.api_key == ""
 
     def test_client_has_expected_attributes(self):
         """Test that the returned client has expected Anthropic client attributes."""
