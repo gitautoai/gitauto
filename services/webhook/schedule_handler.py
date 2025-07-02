@@ -14,7 +14,7 @@ from services.github.types.github_types import BaseArgs
 # Local imports (Supabase)
 from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.supabase.coverages.update_issue_url import update_issue_url
-from services.supabase.repositories.get_repository import get_repository_settings
+from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 
 # Local imports (Utils)
@@ -58,7 +58,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         raise ValueError(f"Token is None for installation_id: {installation_id}")
 
     # Get repository settings - check if trigger_on_schedule is enabled
-    repo_settings = get_repository_settings(repo_id=repo_id)
+    repo_settings = get_repository(repo_id=repo_id)
     if not repo_settings or not repo_settings.get("trigger_on_schedule"):
         msg = f"Skipping repo_id: {repo_id} - trigger_on_schedule is not enabled"
         logging.info(msg)

@@ -26,7 +26,7 @@ from services.github.types.repository import Repository
 
 # Local imports (Supabase)
 from services.supabase.create_user_request import create_user_request
-from services.supabase.repositories.get_repository import get_repository_settings
+from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
 
 # Local imports (Utils)
@@ -181,7 +181,7 @@ def handle_review_run(payload: dict[str, Any]):
     update_comment(body=comment_body, base_args=base_args)
 
     # Get repository settings
-    repo_settings = get_repository_settings(repo_id=repo_id)
+    repo_settings = get_repository(repo_id=repo_id)
 
     # Plan how to fix the error
     today = datetime.now().strftime("%Y-%m-%d")
