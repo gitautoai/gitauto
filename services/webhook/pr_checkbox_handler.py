@@ -165,7 +165,7 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
-    file_tree, tree_comment = get_file_tree(base_args=base_args)
+    file_tree, tree_comment = get_file_tree(base_args=base_args, max_files=100)
     p += 10
     log_messages.append(tree_comment)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))

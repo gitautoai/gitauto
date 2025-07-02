@@ -182,7 +182,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     update_comment(body=comment_body, base_args=base_args)
 
     # Get the file tree in the root of the repo
-    file_tree: str = get_file_tree(base_args=base_args)
+    file_tree: str = get_file_tree(base_args=base_args, max_files=100)
     p += 5
     log_messages.append("Checked out the file tree in the repo.")
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))

@@ -6,10 +6,12 @@ from typing import cast
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 
 # Local imports (GitHub)
+from schemas.supabase.fastapi.schema_public_latest import Coverages
+from services.github.branches.get_default_branch import get_default_branch
 from services.github.issues.create_issue import create_issue
 from services.github.issues.is_issue_open import is_issue_open
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.types.github_types import BaseArgs
+from services.github.trees.get_file_tree import get_file_tree
 
 # Local imports (Supabase)
 from services.supabase.coverages.get_all_coverages import get_all_coverages
@@ -20,7 +22,6 @@ from services.supabase.usage.is_request_limit_reached import is_request_limit_re
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
-from utils.files.is_excluded_from_testing import is_excluded_from_testing
 from utils.files.is_test_file import is_test_file
 from utils.files.is_type_file import is_type_file
 from utils.issue_templates.schedule import get_issue_title, get_issue_body
@@ -79,68 +80,102 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         msg = f"Request limit reached for {owner_name}/{repo_name}"
         return {"status": "skipped", "message": msg}
 
-    # Get all coverage records for the repository
+    # Get repository files and coverage data
+    default_branch, _ = get_default_branch(
+        owner=owner_name, repo=repo_name, token=token
+    )
+    base_args = {
+        "owner": owner_name,
+        "repo": repo_name,
+        "token": token,
+        "base_branch": default_branch,
+    }
+    all_files, _ = get_file_tree(base_args=base_args, max_files=None)
     all_coverages = get_all_coverages(repo_id=repo_id)
-    if not all_coverages:
-        msg = f"No coverage data found for {owner_name}/{repo_name}"
+
+    # all_files LEFT JOIN all_coverages
+    enriched_all_files: list[Coverages] = []
+    for file_path in all_files:
+        coverages = next(
+            (c for c in all_coverages if c["full_path"] == file_path), None
+        )
+        if coverages:
+            enriched_all_files.append(**coverages)
+        else:
+            enriched_all_files.append(
+                {
+                    "id": 0,
+                    "full_path": file_path,
+                    "owner_id": owner_id,
+                    "repo_id": repo_id,
+                    "branch_name": default_branch,
+                    "created_by": user_name,
+                    "updated_by": user_name,
+                    "level": "file",
+                    "file_size": 0,
+                    "statement_coverage": 0,
+                    "function_coverage": 0,
+                    "branch_coverage": 0,
+                    "line_coverage": 0,
+                    "path_coverage": 0,
+                    "package_name": None,
+                    "primary_language": None,
+                    "github_issue_url": None,
+                    "is_excluded_from_testing": False,
+                    "uncovered_lines": None,
+                    "uncovered_functions": None,
+                    "uncovered_branches": None,
+                    "created_at": None,
+                    "updated_at": None,
+                }
+            )
+
+    if not enriched_all_files:
+        msg = f"No files found for {owner_name}/{repo_name}"
         logging.info(msg)
         return {"status": "skipped", "message": msg}
 
-    # Create a coverage dict for is_excluded_from_testing function
-    coverage_dict = {item["full_path"]: item for item in all_coverages}
-
-    # Print the first 5 files
-    for file in all_coverages[:5]:
-        print(file)
-
     # Find the first suitable file
-    target_file = None
-    for coverage_record in all_coverages:
-        file_path = cast(str, coverage_record["full_path"])
+    target_item = None
+    for item in enriched_all_files:
+        item_path = cast(str, item["full_path"])
 
         # Skip non-code files
-        if not is_code_file(file_path):
+        if not is_code_file(item_path):
             continue
 
         # Skip test files
-        if is_test_file(file_path):
+        if is_test_file(item_path):
             continue
 
         # Skip types files
-        if is_type_file(file_path):
+        if is_type_file(item_path):
             continue
 
         # Skip files excluded from testing
-        if is_excluded_from_testing(file_path, coverage_dict):
+        if item.get("is_excluded_from_testing"):
             continue
 
         # Skip files that have open GitHub issues
-        github_issue_url = cast(str | None, coverage_record["github_issue_url"])
+        github_issue_url = cast(str | None, item.get("github_issue_url"))
         if github_issue_url and is_issue_open(issue_url=github_issue_url, token=token):
             continue
 
         # Found a suitable file
-        target_file = coverage_record
+        target_item = item
         break
 
-    if target_file is None:
+    if target_item is None:
         msg = f"No suitable file found for {owner_name}/{repo_name}"
         logging.info(msg)
         return {"status": "skipped", "message": msg}
 
-    file_path = cast(str, target_file["full_path"])
-    statement_coverage = cast(float, target_file["statement_coverage"])
+    target_path = cast(str, target_item["full_path"])
+    statement_coverage = cast(float, target_item["statement_coverage"])
 
     # Create issue title and body
-    title = get_issue_title(file_path=file_path)
-    body = get_issue_body(file_path=file_path, statement_coverage=statement_coverage)
-
-    # Create base args for issue creation
-    base_args: BaseArgs = {
-        "owner": owner_name,
-        "repo": repo_name,
-        "token": token,
-    }
+    title = get_issue_title(target_path)
+    body = get_issue_body(file_path=target_path, statement_coverage=statement_coverage)
 
     # Create the issue with gitauto label and assign to the user
     issue_response = create_issue(
@@ -150,9 +185,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     if issue_response and "html_url" in issue_response:
         update_issue_url(
             repo_id=repo_id,
-            file_path=file_path,
+            file_path=target_path,
             github_issue_url=issue_response["html_url"],
         )
 
-    msg = f"created issue for {file_path}"
+    msg = f"created issue for {target_path}"
     return {"status": "success", "message": msg}
