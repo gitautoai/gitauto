@@ -12,7 +12,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def handle_workflow_coverage(
+async def handle_coverage_report(
     owner_id: int,
     owner_name: str,
     repo_id: int,

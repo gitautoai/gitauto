@@ -1,4 +1,3 @@
-import json
 from typing import Any, cast, Literal
 
 # Third party imports
@@ -51,5 +50,4 @@ def create_system_message(
             )
 
     combined_content = "\n\n".join(content_parts) if content_parts else ""
-    print(f"\nSystem content:\n{json.dumps(combined_content, indent=2)}")
     return combined_content
