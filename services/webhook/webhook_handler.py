@@ -8,7 +8,7 @@ from config import (
     PR_BODY_STARTS_WITH,
     ISSUE_NUMBER_FORMAT,
 )
-from services.coverages.coverage_analyzer import handle_workflow_coverage
+
 from services.github.comments.create_gitauto_button_comment import (
     create_gitauto_button_comment,
 )
@@ -23,6 +23,7 @@ from services.supabase.issues.update_issue_merged import update_issue_merged
 
 # Local imports (Webhooks)
 from services.webhook.check_run_handler import handle_check_run
+from services.webhook.handle_coverage_report import handle_coverage_report
 from services.webhook.issue_handler import create_pr_from_issue
 from services.webhook.pr_body_handler import write_pr_description
 from services.webhook.review_run_handler import handle_review_run
@@ -217,7 +218,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     # Add workflow_run event handler
     if event_name == "workflow_run" and action == "completed":
         if payload["workflow_run"]["conclusion"] == "success":
-            await handle_workflow_coverage(
+            await handle_coverage_report(
                 owner_id=payload["repository"]["owner"]["id"],
                 owner_name=payload["repository"]["owner"]["login"],
                 repo_id=payload["repository"]["id"],
