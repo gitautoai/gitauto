@@ -293,6 +293,23 @@ def test_get_commit_diff_json_decode_error():
 
 def test_get_commit_diff_with_special_characters():
     """Test with owner/repo/commit names containing special characters."""
+    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+        "services.github.commits.get_commit_diff.create_headers"
+    ) as mock_headers:
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"sha": "abc-123_def.456", "commit": {}, "files": []}
+        mock_get.return_value = mock_response
+        mock_headers.return_value = {"Authorization": "Bearer test_token"}
+
+        # Test with special characters
+        get_commit_diff("owner-name", "repo_name", "abc-123_def.456", TOKEN)
+
+        # Verify URL construction handles the names correctly
+        mock_get.assert_called_once_with(
+            url="https://api.github.com/repos/owner-name/repo_name/commits/abc-123_def.456",
+            headers={"Authorization": "Bearer test_token"},
+            timeout=120,
+        )
 
 
 def test_get_commit_diff_custom_api_url():
@@ -315,17 +332,4 @@ def test_get_commit_diff_custom_api_url():
             url=f"https://custom-github-api.com/repos/{OWNER}/{REPO}/commits/abc123def456",
             headers={"Authorization": "Bearer test_token"},
             timeout=120,
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
-        "services.github.commits.get_commit_diff.create_headers"
-    ) as mock_headers:
-        mock_response = MagicMock()
-        mock_response.json.return_value = {"sha": "abc-123_def.456", "commit": {}, "files": []}
-        mock_get.return_value = mock_response
-        mock_headers.return_value = {"Authorization": "Bearer test_token"}
-
-        # Test with special characters
-        get_commit_diff("owner-name", "repo_name", "abc-123_def.456", TOKEN)
-
-        # Verify URL construction handles the names correctly
-        mock_get.assert_called_once_with(
-            url="https://api.github.com/repos/owner-name/repo_name/commits/abc-123_def.456",
+        )
