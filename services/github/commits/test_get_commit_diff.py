@@ -59,7 +59,7 @@ def test_get_commit_diff_success():
         mock_get.assert_called_once_with(
             url=f"https://api.github.com/repos/{OWNER}/{REPO}/commits/abc123def456",
             headers={"Authorization": "Bearer test_token"},
-            timeout=120,
+            timeout=120,  # Default TIMEOUT value from config.py
         )
         mock_response.raise_for_status.assert_called_once()
 
@@ -231,3 +231,22 @@ def test_get_commit_diff_headers_creation():
 
         # Verify headers creation
         mock_headers.assert_called_once_with(token="custom_token")
+
+
+def test_get_commit_diff_timeout_parameter():
+    """Test that the timeout parameter is correctly used."""
+    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+        "services.github.commits.get_commit_diff.create_headers"
+    ) as mock_headers, patch(
+        "services.github.commits.get_commit_diff.TIMEOUT", 60
+    ):
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"sha": "abc123def456", "commit": {}, "files": []}
+        mock_get.return_value = mock_response
+        mock_headers.return_value = {"Authorization": "Bearer test_token"}
+
+        get_commit_diff(OWNER, REPO, "abc123def456", TOKEN)
+
+        # Verify timeout parameter
+        call_args = mock_get.call_args
+        assert call_args.kwargs["timeout"] == 60
