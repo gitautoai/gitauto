@@ -153,3 +153,35 @@ def test_resolve_feedback_encoding_compatibility():
     """Test that the prompt is compatible with common encodings."""
     # Test UTF-8 encoding/decoding
     encoded = RESOLVE_FEEDBACK.encode('utf-8')
+
+
+def test_resolve_feedback_import_accessibility():
+    """Test that the constant can be imported and accessed correctly."""
+    # Test direct import
+    from utils.prompts.resolve_feedback import RESOLVE_FEEDBACK as imported_constant
+    assert imported_constant == RESOLVE_FEEDBACK
+    assert imported_constant is RESOLVE_FEEDBACK
+
+
+def test_resolve_feedback_string_operations():
+    """Test that common string operations work correctly on the constant."""
+    # Test string methods
+    assert RESOLVE_FEEDBACK.strip() != ""
+    assert RESOLVE_FEEDBACK.lower() != RESOLVE_FEEDBACK.upper()
+    assert len(RESOLVE_FEEDBACK.split('\n')) > 1
+    
+    # Test string formatting operations
+    formatted = f"Prompt: {RESOLVE_FEEDBACK}"
+    assert RESOLVE_FEEDBACK in formatted
+    
+    # Test string concatenation
+    concatenated = "Prefix: " + RESOLVE_FEEDBACK + " :Suffix"
+    assert RESOLVE_FEEDBACK in concatenated
+
+
+def test_resolve_feedback_memory_efficiency():
+    """Test that the constant doesn't create unnecessary copies."""
+    # Multiple references should point to the same object
+    ref1 = RESOLVE_FEEDBACK
+    ref2 = RESOLVE_FEEDBACK
+    assert ref1 is ref2
