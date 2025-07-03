@@ -12,7 +12,8 @@ from config import (
 from services.github.comments.create_gitauto_button_comment import (
     create_gitauto_button_comment,
 )
-from services.slack.slack import slack
+from services.github.types.owner import OwnerType
+from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase)
 from services.supabase.installations.delete_installation import delete_installation
@@ -63,15 +64,19 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=created#installation
     if event_name == "installation" and action in ("created"):
-        msg = f"🎉 New installation by `{payload['sender']['login']}` for `{payload['installation']['account']['login']}`"
-        slack(msg)
+        owner_name = payload["installation"]["account"]["login"]
+        sender_name = payload["sender"]["login"]
+        msg = f"🎉 New installation by `{sender_name}` for `{owner_name}`"
+        slack_notify(msg)
         await handle_installation_created(payload=payload)
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=deleted#installation
     if event_name == "installation" and action in ("deleted"):
-        msg = f":skull: Installation deleted by `{payload['sender']['login']}` for `{payload['installation']['account']['login']}`"
-        slack(msg)
+        owner_name = payload["installation"]["account"]["login"]
+        sender_name = payload["sender"]["login"]
+        msg = f":skull: Installation deleted by `{sender_name}` for `{owner_name}`"
+        slack_notify(msg)
         delete_installation(
             installation_id=payload["installation"]["id"],
             user_id=payload["sender"]["id"],
@@ -81,8 +86,10 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=suspend#installation
     if event_name == "installation" and action in ("suspend"):
-        msg = f":skull: Installation suspended by `{payload['sender']['login']}` for `{payload['installation']['account']['login']}`"
-        slack(msg)
+        owner_name = payload["installation"]["account"]["login"]
+        sender_name = payload["sender"]["login"]
+        msg = f":skull: Installation suspended by `{sender_name}` for `{owner_name}`"
+        slack_notify(msg)
         delete_installation(
             installation_id=payload["installation"]["id"],
             user_id=payload["sender"]["id"],
@@ -92,14 +99,20 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=unsuspend#installation
     if event_name == "installation" and action in ("unsuspend"):
-        msg = f"🎉 Installation unsuspended by `{payload['sender']['login']}` for `{payload['installation']['account']['login']}`"
-        slack(msg)
+        owner_name = payload["installation"]["account"]["login"]
+        sender_name = payload["sender"]["login"]
+        msg = f"🎉 Installation unsuspended by `{sender_name}` for `{owner_name}`"
+        slack_notify(msg)
         unsuspend_installation(installation_id=payload["installation"]["id"])
         return
 
     # Add issue templates to the repositories when GitAuto is added to a repository
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation_repositories
     if event_name == "installation_repositories" and action in ("added"):
+        owner_name = payload["installation"]["account"]["login"]
+        sender_name = payload["sender"]["login"]
+        msg = f"Installation repos added by `{sender_name}` for `{owner_name}`"
+        slack_notify(msg)
         await handle_installation_repos_added(payload=payload)
         return
 
@@ -184,19 +197,17 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
         # Get issue number from PR body
         body: str = pull_request["body"]
         if not body or not body.startswith(PR_BODY_STARTS_WITH):
-            print(f"PR body does not start with {PR_BODY_STARTS_WITH}")
             return
 
         issue_ref = body.split()[1]  # "Resolves #714" -> ["Resolves", "#714"]
         if not issue_ref.startswith("#"):
-            print(f"Unexpected PR body format: {body}")
             return
 
         issue_number = int(issue_ref[1:])  # "#714" -> 714
-        repository = payload["repository"]
-        owner_type = repository["owner"]["type"]
-        owner_name = repository["owner"]["login"]
-        repo_name = repository["name"]
+        repository: dict[str, Any] = payload["repository"]
+        owner_type: OwnerType = repository["owner"]["type"]
+        owner_name: str = repository["owner"]["login"]
+        repo_name: str = repository["name"]
         update_issue_merged(
             owner_type=owner_type,
             owner_name=owner_name,
@@ -205,8 +216,11 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
             merged=True,
         )
 
-        msg = f"🎉 PR merged by `{payload['sender']['login']}` for `{payload['repository']['name']}`"
-        slack(msg)
+        # Notify Slack
+        sender_name: str = payload["sender"]["login"]
+        author_name: str = payload["pull_request"]["user"]["login"]
+        msg = f"🎉 PR created by `{author_name}` was merged by `{sender_name}` for `{owner_name}/{repo_name}`"
+        slack_notify(msg)
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_comment
