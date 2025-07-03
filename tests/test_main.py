@@ -1,7 +1,7 @@
 # Standard imports
 import json
 import urllib.parse
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch, MagicMock, AsyncMock, call
 
 # Third-party imports
 import pytest
@@ -71,9 +71,12 @@ class TestHandler:
         handler(event=mock_event_bridge_event, context={})
         
         # Verify
-        mock_slack_notify.assert_called_with("Event Scheduler started for test-owner/test-repo")
         mock_schedule_handler.assert_called_with(event=mock_event_bridge_event)
-        mock_slack_notify.assert_called_with("Completed", "thread-123")
+        mock_slack_notify.assert_has_calls([
+            call("Event Scheduler started for test-owner/test-repo"),
+            call("Completed", "thread-123")
+        ])
+        assert mock_slack_notify.call_count == 2
 
     @patch("main.schedule_handler")
     @patch("main.slack_notify")
@@ -87,9 +90,12 @@ class TestHandler:
         handler(event=mock_event_bridge_event, context={})
         
         # Verify
-        mock_slack_notify.assert_called_with("Event Scheduler started for test-owner/test-repo")
         mock_schedule_handler.assert_called_with(event=mock_event_bridge_event)
-        mock_slack_notify.assert_called_with("@channel Failed: Something went wrong", "thread-123")
+        mock_slack_notify.assert_has_calls([
+            call("Event Scheduler started for test-owner/test-repo"),
+            call("@channel Failed: Something went wrong", "thread-123")
+        ])
+        assert mock_slack_notify.call_count == 2
 
     @patch("main.mangum_handler")
     def test_handler_non_schedule_event(self, mock_mangum_handler):
