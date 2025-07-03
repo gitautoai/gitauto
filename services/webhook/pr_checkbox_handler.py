@@ -16,7 +16,7 @@ from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree import get_file_tree_list
+from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 

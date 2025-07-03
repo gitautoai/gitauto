@@ -22,7 +22,7 @@ from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.types.github_types import CheckRunCompletedPayload
 from services.github.utils.create_permission_url import create_permission_url
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree import get_file_tree_list
+from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.check_run import CheckRun
 from services.github.types.check_suite import CheckSuite
 from services.github.types.pull_request import PullRequest
