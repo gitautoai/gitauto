@@ -293,6 +293,28 @@ def test_get_commit_diff_json_decode_error():
 
 def test_get_commit_diff_with_special_characters():
     """Test with owner/repo/commit names containing special characters."""
+
+
+def test_get_commit_diff_custom_api_url():
+    """Test with a custom GitHub API URL."""
+    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+        "services.github.commits.get_commit_diff.create_headers"
+    ) as mock_headers, patch(
+        "services.github.commits.get_commit_diff.GITHUB_API_URL", "https://custom-github-api.com"
+    ):
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"sha": "abc123def456", "commit": {}, "files": []}
+        mock_get.return_value = mock_response
+        mock_headers.return_value = {"Authorization": "Bearer test_token"}
+
+        # Test with custom API URL
+        get_commit_diff(OWNER, REPO, "abc123def456", TOKEN)
+
+        # Verify URL construction uses the custom API URL
+        mock_get.assert_called_once_with(
+            url=f"https://custom-github-api.com/repos/{OWNER}/{REPO}/commits/abc123def456",
+            headers={"Authorization": "Bearer test_token"},
+            timeout=120,
     with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers:
