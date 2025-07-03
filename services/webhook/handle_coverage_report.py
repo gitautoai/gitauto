@@ -12,7 +12,7 @@ from services.github.repositories.get_repository_languages import (
     get_repository_languages,
 )
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree import get_file_tree
+from services.github.trees.get_file_tree import get_file_tree_list
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.coverages.upsert_coverages import upsert_coverages
 from services.supabase.repo_coverage.upsert_repo_coverage import upsert_repo_coverage
@@ -78,7 +78,7 @@ async def handle_coverage_report(
         return None
 
     # Add uncovered source files
-    all_files, _ = get_file_tree(
+    all_files, _ = get_file_tree_list(
         base_args={
             "owner": owner_name,
             "repo": repo_name,
@@ -116,7 +116,7 @@ async def handle_coverage_report(
             )
 
     # Remove duplicates
-    seen = {}
+    seen: dict[tuple[int, str], CoverageItem] = {}
     for coverage in coverage_data:
         key = (repo_id, coverage["full_path"])
         if key in seen:
