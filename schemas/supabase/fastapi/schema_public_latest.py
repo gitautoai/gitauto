@@ -184,6 +184,27 @@ class OwnersBaseSchema(CustomModel):
     updated_by: str | None = Field(default=None)
 
 
+class RepoCoverageBaseSchema(CustomModel):
+    """RepoCoverage Base Schema."""
+
+    # Primary Keys
+    id: int
+
+    # Columns
+    branch_coverage: float
+    branch_name: str
+    created_at: datetime.datetime
+    created_by: str
+    function_coverage: float
+    line_coverage: float
+    owner_id: int
+    owner_name: str
+    primary_language: str | None = Field(default=None)
+    repo_id: int
+    repo_name: str
+    statement_coverage: float
+
+
 class RepositoriesBaseSchema(CustomModel):
     """Repositories Base Schema."""
 
@@ -205,8 +226,10 @@ class RepositoriesBaseSchema(CustomModel):
     repo_name: str
     repo_rules: str | None = Field(default=None)
     schedule_day_of_week: str | None = Field(default=None)
+    schedule_execution_count: int
     schedule_frequency: str | None = Field(default=None)
     schedule_include_weekends: bool
+    schedule_interval_minutes: int
     schedule_minute: int | None = Field(default=None)
     schedule_time: datetime.time | None = Field(default=None)
     startup_commands: list | None = Field(default=None)
@@ -531,6 +554,37 @@ class OwnersInsert(CustomModelInsert):
     updated_by: str | None = Field(default=None)
 
 
+class RepoCoverageInsert(CustomModelInsert):
+    """RepoCoverage Insert Schema."""
+
+    # Primary Keys
+    id: int | None = Field(default=None)  # has default value, auto-generated
+
+    # Field properties:
+    # branch_coverage: has default value
+    # created_at: has default value
+    # function_coverage: has default value
+    # line_coverage: has default value
+    # primary_language: nullable
+    # statement_coverage: has default value
+
+    # Required fields
+    branch_name: str
+    created_by: str
+    owner_id: int
+    owner_name: str
+    repo_id: int
+    repo_name: str
+
+    # Optional fields
+    branch_coverage: float | None = Field(default=None)
+    created_at: datetime.datetime | None = Field(default=None)
+    function_coverage: float | None = Field(default=None)
+    line_coverage: float | None = Field(default=None)
+    primary_language: str | None = Field(default=None)
+    statement_coverage: float | None = Field(default=None)
+
+
 class RepositoriesInsert(CustomModelInsert):
     """Repositories Insert Schema."""
 
@@ -547,8 +601,10 @@ class RepositoriesInsert(CustomModelInsert):
     # production_url: nullable, has default value
     # repo_rules: nullable, has default value
     # schedule_day_of_week: nullable
+    # schedule_execution_count: has default value
     # schedule_frequency: nullable
     # schedule_include_weekends: has default value
+    # schedule_interval_minutes: has default value
     # schedule_minute: nullable
     # schedule_time: nullable
     # startup_commands: nullable, has default value
@@ -582,8 +638,10 @@ class RepositoriesInsert(CustomModelInsert):
     production_url: str | None = Field(default=None)
     repo_rules: str | None = Field(default=None)
     schedule_day_of_week: str | None = Field(default=None)
+    schedule_execution_count: int | None = Field(default=None)
     schedule_frequency: str | None = Field(default=None)
     schedule_include_weekends: bool | None = Field(default=None)
+    schedule_interval_minutes: int | None = Field(default=None)
     schedule_minute: int | None = Field(default=None)
     schedule_time: datetime.time | None = Field(default=None)
     startup_commands: list | None = Field(default=None)
@@ -941,6 +999,35 @@ class OwnersUpdate(CustomModelUpdate):
     updated_by: str | None = Field(default=None)
 
 
+class RepoCoverageUpdate(CustomModelUpdate):
+    """RepoCoverage Update Schema."""
+
+    # Primary Keys
+    id: int | None = Field(default=None)
+
+    # Field properties:
+    # branch_coverage: has default value
+    # created_at: has default value
+    # function_coverage: has default value
+    # line_coverage: has default value
+    # primary_language: nullable
+    # statement_coverage: has default value
+
+    # Optional fields
+    branch_coverage: float | None = Field(default=None)
+    branch_name: str | None = Field(default=None)
+    created_at: datetime.datetime | None = Field(default=None)
+    created_by: str | None = Field(default=None)
+    function_coverage: float | None = Field(default=None)
+    line_coverage: float | None = Field(default=None)
+    owner_id: int | None = Field(default=None)
+    owner_name: str | None = Field(default=None)
+    primary_language: str | None = Field(default=None)
+    repo_id: int | None = Field(default=None)
+    repo_name: str | None = Field(default=None)
+    statement_coverage: float | None = Field(default=None)
+
+
 class RepositoriesUpdate(CustomModelUpdate):
     """Repositories Update Schema."""
 
@@ -957,8 +1044,10 @@ class RepositoriesUpdate(CustomModelUpdate):
     # production_url: nullable, has default value
     # repo_rules: nullable, has default value
     # schedule_day_of_week: nullable
+    # schedule_execution_count: has default value
     # schedule_frequency: nullable
     # schedule_include_weekends: has default value
+    # schedule_interval_minutes: has default value
     # schedule_minute: nullable
     # schedule_time: nullable
     # startup_commands: nullable, has default value
@@ -989,8 +1078,10 @@ class RepositoriesUpdate(CustomModelUpdate):
     repo_name: str | None = Field(default=None)
     repo_rules: str | None = Field(default=None)
     schedule_day_of_week: str | None = Field(default=None)
+    schedule_execution_count: int | None = Field(default=None)
     schedule_frequency: str | None = Field(default=None)
     schedule_include_weekends: bool | None = Field(default=None)
+    schedule_interval_minutes: int | None = Field(default=None)
     schedule_minute: int | None = Field(default=None)
     schedule_time: datetime.time | None = Field(default=None)
     startup_commands: list | None = Field(default=None)
@@ -1191,6 +1282,15 @@ class Owners(OwnersBaseSchema):
     coverages: Coverages | None = Field(default=None)
     installations: Installations | None = Field(default=None)
     repositories: Repositories | None = Field(default=None)
+
+
+class RepoCoverage(RepoCoverageBaseSchema):
+    """RepoCoverage Schema for Pydantic.
+
+    Inherits from RepoCoverageBaseSchema. Add any customization here.
+    """
+
+    pass
 
 
 class Repositories(RepositoriesBaseSchema):

@@ -4,6 +4,7 @@ from typing import TypedDict, Literal
 import json
 
 # Local imports
+from schemas.supabase.fastapi.schema_public_latest import RepoCoverageInsert
 from services.coverages.parse_lcov_coverage import parse_lcov_coverage
 from services.github.artifacts.download_artifact import download_artifact
 from services.github.artifacts.get_workflow_artifacts import get_workflow_artifacts
@@ -14,6 +15,7 @@ from services.github.token.get_installation_token import get_installation_access
 from services.github.trees.get_file_tree import get_file_tree
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.coverages.upsert_coverages import upsert_coverages
+from services.supabase.repo_coverage.upsert_repo_coverage import upsert_repo_coverage
 
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
@@ -171,4 +173,25 @@ async def handle_coverage_report(
         logging.warning("No valid items to upsert")
         return None
 
+    # Extract repository-level coverage for historical tracking
+    repo_coverage = next((c for c in coverage_data if c["level"] == "repository"), None)
+
+    if repo_coverage:
+        repo_coverage_data = RepoCoverageInsert(
+            owner_id=owner_id,
+            owner_name=owner_name,
+            repo_id=repo_id,
+            repo_name=repo_name,
+            branch_name=head_branch,
+            primary_language=primary_language,
+            line_coverage=repo_coverage["line_coverage"],
+            statement_coverage=repo_coverage["statement_coverage"],
+            function_coverage=repo_coverage["function_coverage"],
+            branch_coverage=repo_coverage["branch_coverage"],
+            created_by=user_name,
+        )
+
+        upsert_repo_coverage(repo_coverage_data)
+
+    # Upsert file coverages
     return upsert_coverages(upsert_data)
