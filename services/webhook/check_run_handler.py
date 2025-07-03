@@ -31,6 +31,9 @@ from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_r
 from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
 from services.github.workflow_runs.get_workflow_run_path import get_workflow_run_path
 
+# Local imports (Slack)
+from services.slack.slack_notify import slack_notify
+
 # Local imports (Supabase)
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
@@ -92,6 +95,11 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Extract other information
     installation_id = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
+
+    # Start notification
+    start_msg = f"Check run handler started for `{check_run_name}` in PR #{pull_number} in `{owner_name}/{repo_name}`"
+    thread_ts = slack_notify(start_msg)
+
     base_args: dict[str, str | int | bool] = {
         "owner_type": owner_type,
         "owner_id": owner_id,
@@ -110,10 +118,6 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "token": token,
         "skip_ci": True,
     }
-    # Print who, what, and where
-    print(
-        f"`GitAuto is fixing a Check Run error for `#{pull_number}` in `{owner_name}/{repo_name}`"
-    )
 
     # Create the first comment
     p = 0
@@ -169,6 +173,12 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
         log_messages.append(comment_body)
         update_comment(body="\n".join(log_messages), base_args=base_args)
+
+        # Early return notification
+        early_return_msg = (
+            f"Permission denied for workflow logs in {owner_name}/{repo_name}"
+        )
+        slack_notify(early_return_msg, thread_ts)
         return
 
     workflow_content = get_remote_file_content(
@@ -196,11 +206,21 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
         log_messages.append(comment_body)
         update_comment(body="\n".join(log_messages), base_args=base_args)
+
+        # Early return notification
+        early_return_msg = (
+            f"Permission denied for workflow logs in {owner_name}/{repo_name}"
+        )
+        slack_notify(early_return_msg, thread_ts)
         return
     if error_log is None:
         comment_body = f"I couldn't find the error log. Contact {EMAIL_LINK} if the issue persists."
         log_messages.append(comment_body)
         update_comment(body="\n".join(log_messages), base_args=base_args)
+
+        # Early return notification
+        early_return_msg = f"Error log not found for {owner_name}/{repo_name}"
+        slack_notify(early_return_msg, thread_ts)
         return
 
     # Create a pair of workflow ID and error log hash
@@ -216,6 +236,12 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         msg = f"Skipping `{check_run_name}` because GitAuto has already tried to fix this exact error before `{current_pair}`."
         log_messages.append(msg)
         update_comment(body="\n".join(log_messages), base_args=base_args)
+
+        # Early return notification
+        early_return_msg = (
+            f"Already attempted fix for {owner_name}/{repo_name} - {check_run_name}"
+        )
+        slack_notify(early_return_msg, thread_ts)
         return
 
     # Save the pair to avoid infinite loops
@@ -302,27 +328,6 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
             log_messages=log_messages,
         )
 
-        # Search Google
-        # (
-        #     messages,
-        #     previous_calls,
-        #     _tool_name,
-        #     _tool_args,
-        #     _token_input,
-        #     _token_output,
-        #     _is_searched,
-        #     p,
-        # ) = chat_with_agent(
-        #     messages=messages,
-        #     trigger=trigger,
-        #     repo_settings=repo_settings,
-        #     base_args=base_args,
-        #     mode="search",
-        #     previous_calls=previous_calls,
-        #     p=p,
-        #     log_messages=log_messages,
-        # )
-
         # Commit changes based on the exploration information
         (
             messages,
@@ -366,13 +371,13 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         retry_count = 0
 
     # Trigger final test workflows with an empty commit
-    body = "Creating final empty commit to trigger workflows..."
-    update_comment(body=body, base_args=base_args)
+    comment_body = "Creating final empty commit to trigger workflows..."
+    update_comment(body=comment_body, base_args=base_args)
     create_empty_commit(base_args=base_args)
 
-    # Create a pull request to the base branch
-    msg = f"Committed the Check Run `{check_run_name}` error fix! Running it again."
-    update_comment(body=msg, base_args=base_args)
+    # Create final message
+    final_msg = f"Finished fixing the `{check_run_name}` check run error!"
+    update_comment(body=final_msg, base_args=base_args)
 
     # Update usage record
     end_time = time.time()
@@ -384,4 +389,6 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         pr_number=pull_number,
         is_completed=True,
     )
-    return
+
+    # End notification
+    slack_notify("Completed", thread_ts)

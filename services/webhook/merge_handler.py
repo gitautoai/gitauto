@@ -3,6 +3,7 @@ from services.github.issues.create_issue import create_issue
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.github_types import GitHubPullRequestClosedPayload, BaseArgs
+from services.slack.slack_notify import slack_notify
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.repositories.get_repository import get_repository
 from utils.error.handle_exceptions import handle_exceptions
@@ -27,9 +28,9 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
 
     # Get repository info
     repository = payload["repository"]
-    owner = repository["owner"]["login"]
-    repo = repository["name"]
+    owner_name = repository["owner"]["login"]
     repo_id = repository["id"]
+    repo_name = repository["name"]
     installation_id = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
 
@@ -42,6 +43,10 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
     pr_number = payload["number"]
     pull_request = payload["pull_request"]
     pull_url = pull_request["url"]
+
+    # Start notification
+    start_msg = f"PR merged handler started: PR #{pr_number} merged in `{owner_name}/{repo_name}`"
+    thread_ts = slack_notify(start_msg)
 
     # Get files changed in the PR
     pull_files_url = f"{pull_url}/files"
@@ -67,6 +72,11 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
 
     # If no code files were changed, return early
     if not changed_code_files:
+        # Early return notification
+        early_return_msg = (
+            f"No code files changed in PR #{pr_number} for {owner_name}/{repo_name}"
+        )
+        slack_notify(early_return_msg, thread_ts)
         return
 
     # Build the list of files to include in the issue
@@ -92,6 +102,11 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
 
     # If no files need tests, return early
     if not files_to_test:
+        # Early return notification
+        early_return_msg = (
+            f"No files need tests in PR #{pr_number} for {owner_name}/{repo_name}"
+        )
+        slack_notify(early_return_msg, thread_ts)
         return
 
     # Get PR creator to assign as reviewer
@@ -125,13 +140,24 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
     body = get_issue_body_for_pr_merged(pr_number=pr_number, file_list=file_list)
 
     # Create base args for issue creation
-    base_args: BaseArgs = {
-        "owner": owner,
-        "repo": repo,
-        "token": token,
-    }
+    base_args: BaseArgs = {"owner": owner_name, "repo": repo_name, "token": token}
 
     # Create the issue
-    create_issue(title=title, body=body, assignees=assignees, base_args=base_args)
+    issue_response = create_issue(
+        title=title, body=body, assignees=assignees, base_args=base_args
+    )
+
+    if issue_response and "html_url" in issue_response:
+        # Success notification
+        success_msg = f"Issue created for PR #{pr_number} in {owner_name}/{repo_name}"
+        slack_notify(success_msg, thread_ts)
+    else:
+        # Failure notification
+        failure_msg = f"@channel Failed to create issue for PR #{pr_number} in {owner_name}/{repo_name}"
+        slack_notify(failure_msg, thread_ts)
+
+    # End notification
+    end_msg = "Completed" if issue_response else "@channel Failed"
+    slack_notify(end_msg, thread_ts)
 
     return None
