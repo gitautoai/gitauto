@@ -156,3 +156,102 @@ def test_get_stripe_customer_id_none_second_element(mock_supabase):
     
     # Verify
     assert result is None
+
+
+def test_get_stripe_customer_id_exception_handling(mock_supabase):
+    """Test that exceptions are handled gracefully by the decorator."""
+    # Setup mock to raise an exception
+    mock_supabase.table.side_effect = Exception("Database connection error")
+    
+    # Execute
+    result = get_stripe_customer_id(owner_id=123456)
+    
+    # Verify that the default return value is returned
+    assert result is None
+
+
+def test_get_stripe_customer_id_with_different_owner_ids(mock_supabase):
+    """Test function with various owner ID values."""
+    # Setup mock response
+    mock_table = MagicMock()
+    mock_select = MagicMock()
+    mock_eq = MagicMock()
+    
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq
+    mock_eq.execute.return_value = (
+        [None, [{"stripe_customer_id": "cus_different123"}]], 
+        1
+    )
+    
+    # Test with different owner IDs
+    test_cases = [0, 1, 999999, 123456789]
+    
+    for owner_id in test_cases:
+        result = get_stripe_customer_id(owner_id=owner_id)
+        assert result == "cus_different123"
+        
+        # Verify the correct owner_id was passed
+        calls = mock_select.eq.call_args_list
+        assert any(call[1]["value"] == owner_id for call in calls)
+
+
+def test_get_stripe_customer_id_multiple_records(mock_supabase):
+    """Test when multiple records are returned (should use first one)."""
+    # Setup mock response with multiple records
+    mock_table = MagicMock()
+    mock_select = MagicMock()
+    mock_eq = MagicMock()
+    
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq
+    mock_eq.execute.return_value = (
+        [None, [
+            {"stripe_customer_id": "cus_first123"},
+            {"stripe_customer_id": "cus_second456"}
+        ]], 
+        2
+    )
+    
+    # Execute
+    result = get_stripe_customer_id(owner_id=123456)
+    
+    # Verify that the first record is used
+    assert result == "cus_first123"
+
+
+def test_get_stripe_customer_id_long_customer_id(mock_supabase):
+    """Test with a very long customer ID."""
+    # Setup mock response with long customer ID
+    long_customer_id = "cus_" + "a" * 100  # Very long customer ID
+    
+    mock_table = MagicMock()
+    mock_select = MagicMock()
+    mock_eq = MagicMock()
+    
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq
+    mock_eq.execute.return_value = (
+        [None, [{"stripe_customer_id": long_customer_id}]], 
+        1
+    )
+    
+    # Execute
+    result = get_stripe_customer_id(owner_id=123456)
+    
+    # Verify
+    assert result == long_customer_id
+
+
+@pytest.mark.parametrize("owner_id", [
+    123456,
+    0,
+    -1,
+    999999999,
+])
+def test_get_stripe_customer_id_parametrized_owner_ids(mock_supabase, owner_id):
+    """Test function with various owner ID values using parametrize."""
+    # Setup mock response
