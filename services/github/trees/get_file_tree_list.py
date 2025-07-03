@@ -1,5 +1,5 @@
 from services.github.types.github_types import BaseArgs
-from services.github.trees.get_file_tree_new import get_file_tree
+from services.github.trees.get_file_tree import get_file_tree
 from utils.error.handle_exceptions import handle_exceptions
 
 
