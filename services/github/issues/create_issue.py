@@ -1,6 +1,8 @@
+from typing import cast
 import requests
 from config import GITHUB_API_URL, PRODUCT_ID, TIMEOUT
 from services.github.types.github_types import BaseArgs
+from services.github.types.issue import Issue
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -30,4 +32,4 @@ def create_issue(title: str, body: str, assignees: list[str], base_args: BaseArg
     )
     response.raise_for_status()
 
-    return response.json()
+    return cast(Issue, response.json())

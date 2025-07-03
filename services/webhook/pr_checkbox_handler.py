@@ -20,6 +20,9 @@ from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 
+# Local imports (Slack)
+from services.slack.slack_notify import slack_notify
+
 # Local imports (Supabase & Webhook)
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
@@ -78,6 +81,10 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
 
     issue_number = payload["issue"]["number"]
 
+    # Start notification
+    start_msg = f"PR checkbox handler started by `{sender_name}` for PR #{issue_number} in `{owner_name}/{repo_name}`"
+    thread_ts = slack_notify(start_msg)
+
     # Check if the user has reached the request limit
     is_limit_reached, _requests_left, request_limit, end_date = (
         is_request_limit_reached(
@@ -104,6 +111,10 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
         }
 
         create_comment(body=body, base_args=base_args)
+
+        # Early return notification
+        early_return_msg = f"Request limit reached for {owner_name}/{repo_name} - {request_limit} requests used"
+        slack_notify(early_return_msg, thread_ts)
         return
 
     # Create a usage record
@@ -290,3 +301,6 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
         pr_number=issue_number,
         is_completed=True,
     )
+
+    # End notification
+    slack_notify("Completed", thread_ts)
