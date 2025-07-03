@@ -255,3 +255,75 @@ def test_get_stripe_customer_id_long_customer_id(mock_supabase):
 def test_get_stripe_customer_id_parametrized_owner_ids(mock_supabase, owner_id):
     """Test function with various owner ID values using parametrize."""
     # Setup mock response
+
+
+def test_get_stripe_customer_id_special_characters_in_customer_id(mock_supabase):
+    """Test with special characters in customer ID."""
+    # Setup mock response with special characters
+    special_customer_id = "cus_test-123_special!@#$%"
+    
+    mock_table = MagicMock()
+    mock_select = MagicMock()
+    mock_eq = MagicMock()
+    
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq
+    mock_eq.execute.return_value = (
+        [None, [{"stripe_customer_id": special_customer_id}]], 
+        1
+    )
+    
+    # Execute
+    result = get_stripe_customer_id(owner_id=123456)
+    
+    # Verify
+    assert result == special_customer_id
+
+
+def test_get_stripe_customer_id_unicode_customer_id(mock_supabase):
+    """Test with unicode characters in customer ID."""
+    # Setup mock response with unicode characters
+    unicode_customer_id = "cus_test_ñáéíóú_123"
+    
+    mock_table = MagicMock()
+    mock_select = MagicMock()
+    mock_eq = MagicMock()
+    
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq
+    mock_eq.execute.return_value = (
+        [None, [{"stripe_customer_id": unicode_customer_id}]], 
+        1
+    )
+    
+    # Execute
+    result = get_stripe_customer_id(owner_id=123456)
+    
+    # Verify
+    assert result == unicode_customer_id
+
+
+def test_get_stripe_customer_id_malformed_response_structure(mock_supabase):
+    """Test with malformed response structure."""
+    # Setup mock response with malformed structure
+    mock_table = MagicMock()
+    mock_select = MagicMock()
+    mock_eq = MagicMock()
+    
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq
+    
+    # Test with malformed response that would cause IndexError
+    mock_eq.execute.return_value = ([None, [{}]], 1)  # Missing stripe_customer_id key
+    
+    # Execute - should handle the KeyError gracefully due to handle_exceptions decorator
+    result = get_stripe_customer_id(owner_id=123456)
+    
+    # Verify that the default return value is returned
+    assert result is None
+
+
+def test_get_stripe_customer_id_function_docstring():
