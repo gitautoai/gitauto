@@ -124,3 +124,51 @@ def test_create_test_selection_comment_with_all_status_types():
     assert "- [x] added `src/added.py`" in result
     assert "- [x] modified `src/modified.py` (Coverage: 50%)" in result
     assert "- [ ] removed `src/removed.py`" in result
+
+
+def test_create_test_selection_comment_integration():
+    """Test the full integration of the comment creation with actual dependencies."""
+    branch_name = "integration-branch"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/example.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 30%)",
+            "status": "modified",
+        }
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+    
+    # Verify the comment contains all required components
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert "Select files to manage tests for (create, update, or remove):" in result
+    assert "- [x] modified `src/example.py` (Coverage: 30%)" in result
+    assert "- [ ] Yes, manage tests" in result
+    assert PRODUCT_NAME in result
+    assert SETTINGS_LINKS in result
+    assert branch_name in result  # Branch name should be in the reset command
+
+
+def test_create_test_selection_comment_with_special_characters():
+    """Test creating a comment with paths containing special characters."""
+    branch_name = "feature/special-chars"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/file-with-dashes.py",
+            "checked": True,
+            "coverage_info": "",
+            "status": "modified",
+        },
+        {
+            "path": "src/file_with_underscores.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 0%)",
+            "status": "added",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+    
+    assert "- [x] modified `src/file-with-dashes.py`" in result
+    assert "- [ ] added `src/file_with_underscores.py` (Coverage: 0%)" in result
