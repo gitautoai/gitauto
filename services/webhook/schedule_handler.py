@@ -11,7 +11,7 @@ from services.github.branches.get_default_branch import get_default_branch
 from services.github.issues.create_issue import create_issue
 from services.github.issues.is_issue_open import is_issue_open
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree_new import get_file_tree
+from services.github.trees.get_file_tree import get_file_tree
 
 # Local imports (Supabase)
 from services.supabase.coverages.get_all_coverages import get_all_coverages
