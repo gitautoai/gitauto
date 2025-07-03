@@ -182,7 +182,7 @@ def test_get_user_with_various_user_ids(mock_supabase, mock_supabase_response_em
 def test_get_user_type_annotation_compliance(sample_user_data):
     """Test that get_user returns the correct type as per annotation."""
     with patch("services.supabase.users.get_user.supabase") as mock_supabase:
-        mock_response = (None, [sample_user_data])
+        mock_response = ((None, [sample_user_data]), None)
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
         
         result = get_user(user_id=123)
