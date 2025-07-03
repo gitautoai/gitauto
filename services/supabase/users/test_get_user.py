@@ -28,7 +28,7 @@ def sample_user_data():
 @pytest.fixture
 def mock_supabase_response_with_user(sample_user_data):
     """Fixture providing a mock supabase response with user data."""
-    return (None, [sample_user_data])
+    return ((None, [sample_user_data]), None)
 
 
 @pytest.fixture
