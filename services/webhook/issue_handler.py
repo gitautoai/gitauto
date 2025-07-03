@@ -37,6 +37,7 @@ from services.github.utils.find_config_files import find_config_files
 from services.jira.deconstruct_jira_payload import deconstruct_jira_payload
 from services.openai.vision import describe_image
 from services.slack.slack import slack
+from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase, Webhook)
 from services.supabase.create_user_request import create_user_request
@@ -78,6 +79,17 @@ async def create_pr_from_issue(
     elif input_from == "jira":
         base_args, repo_settings = deconstruct_jira_payload(payload=payload)
 
+    # Get some base args for early notifications
+    owner_name = base_args["owner"]
+    repo_name = base_args["repo"]
+    issue_number = base_args["issue_number"]
+    issue_title = base_args["issue_title"]
+    sender_name = base_args["sender_name"]
+
+    # Start notification
+    start_msg = f"Issue handler started: `{trigger}` by `{sender_name}` for `{issue_number}:{issue_title}` in `{owner_name}/{repo_name}`"
+    thread_ts = slack_notify(start_msg)
+
     # Delete all comments made by GitAuto except the one with the checkbox to clean up the issue
     if input_from == "github":
         gitauto_identifiers = [
@@ -102,12 +114,8 @@ async def create_pr_from_issue(
     # Get some base args
     installation_id = base_args["installation_id"]
     owner_id = base_args["owner_id"]
-    owner_name = base_args["owner"]
     owner_type = base_args["owner_type"]
     repo_id = base_args["repo_id"]
-    repo_name = base_args["repo"]
-    issue_number = base_args["issue_number"]
-    issue_title = base_args["issue_title"]
     issue_body = base_args["issue_body"].replace(SETTINGS_LINKS, "").strip()
     issue_body_rendered = render_text(base_args=base_args, text=issue_body)
     issuer_name = base_args["issuer_name"]
@@ -116,17 +124,11 @@ async def create_pr_from_issue(
     parent_issue_body = base_args["parent_issue_body"]
     new_branch_name = base_args["new_branch"]
     sender_id = base_args["sender_id"]
-    sender_name = base_args["sender_name"]
     sender_email = base_args["sender_email"]
     github_urls = base_args["github_urls"]
     # other_urls = base_args["other_urls"]
     token = base_args["token"]
     is_automation = base_args["is_automation"]
-
-    # Print who, what, and where
-    print(
-        f"`{sender_id}:{sender_name}` wants to create a PR for `{issue_number}:{issue_title}` in `{owner_name}/{repo_name}`"
-    )
 
     # Notify Slack
     msg = f"Request: `{trigger}` by `{sender_name}` for `{issue_title}` in `{owner_name}/{repo_name}`"
@@ -160,6 +162,10 @@ async def create_pr_from_issue(
         )
         update_comment(body=body, base_args=base_args)
         print(body)
+
+        # Early return notification
+        early_return_msg = f"Request limit reached for {owner_name}/{repo_name} - {request_limit} requests used"
+        slack_notify(early_return_msg, thread_ts)
         return
 
     # Create a usage record
@@ -446,9 +452,18 @@ async def create_pr_from_issue(
             pr_url=pr_url,
             is_automation=is_automation,
         )
+
+        # Success notification
+        success_msg = f"PR created for {owner_name}/{repo_name}"
+        slack_notify(success_msg, thread_ts)
     else:
         is_completed = False
         body_after_pr = UPDATE_COMMENT_FOR_422
+
+        # Failure notification
+        failure_msg = f"@channel Failed to create PR for {owner_name}/{repo_name}"
+        slack_notify(failure_msg, thread_ts)
+
     update_comment(body=body_after_pr, base_args=base_args)
 
     end_time = time.time()
@@ -460,4 +475,8 @@ async def create_pr_from_issue(
         token_output=0,
         total_seconds=int(end_time - current_time),
     )
+
+    # End notification
+    end_msg = "Completed" if is_completed else "@channel Failed"
+    slack_notify(end_msg, thread_ts)
     return
