@@ -36,7 +36,6 @@ from services.github.utils.find_config_files import find_config_files
 # Local imports (Jira, OpenAI, Slack)
 from services.jira.deconstruct_jira_payload import deconstruct_jira_payload
 from services.openai.vision import describe_image
-from services.slack.slack import slack
 from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase, Webhook)
@@ -129,10 +128,6 @@ async def create_pr_from_issue(
     # other_urls = base_args["other_urls"]
     token = base_args["token"]
     is_automation = base_args["is_automation"]
-
-    # Notify Slack
-    msg = f"Request: `{trigger}` by `{sender_name}` for `{issue_title}` in `{owner_name}/{repo_name}`"
-    slack(msg)
 
     p += 5
     log_messages.append("Extracted metadata.")
