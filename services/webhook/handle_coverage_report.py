@@ -1,3 +1,8 @@
+# Standard imports
+import logging
+from typing import TypedDict, Literal
+import json
+
 # Local imports
 from services.coverages.parse_lcov_coverage import parse_lcov_coverage
 from services.github.artifacts.download_artifact import download_artifact
@@ -7,8 +12,28 @@ from services.github.repositories.get_repository_languages import (
 )
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree import get_file_tree
-from services.supabase.coverages.process_coverage_data import process_coverage_data
+from services.supabase.coverages.get_coverages import get_coverages
+from services.supabase.coverages.upsert_coverages import upsert_coverages
+
+# Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.is_code_file import is_code_file
+from utils.files.is_test_file import is_test_file
+from utils.files.is_type_file import is_type_file
+
+
+class CoverageItem(TypedDict):
+    package_name: str
+    level: Literal["repository", "directory", "file"]
+    full_path: str
+    line_coverage: float
+    statement_coverage: float
+    function_coverage: float
+    branch_coverage: float
+    path_coverage: float
+    uncovered_lines: str
+    uncovered_functions: str
+    uncovered_branches: str
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -24,108 +49,126 @@ async def handle_coverage_report(
 ):
     token = get_installation_access_token(installation_id=installation_id)
 
-    # Get repository's primary language
     languages = get_repository_languages(owner=owner_name, repo=repo_name, token=token)
-    if not languages:
-        print("No language information found for repository")
-        return
-
-    primary_language = max(languages.items(), key=lambda x: x[1])[0].lower()
+    primary_language = "unknown"
+    if languages:
+        primary_language = max(languages.items(), key=lambda x: x[1])[0].lower()
 
     artifacts = get_workflow_artifacts(owner_name, repo_name, run_id, token)
 
-    coverage_data = []
+    coverage_data: list[CoverageItem] = []
     for artifact in artifacts:
-        # Check if the artifact might contain coverage data
         if "coverage" not in artifact["name"].lower():
             continue
 
-        # Download and parse lcov.info
-        print(f"Downloading artifact {artifact['name']}")
         lcov_content = download_artifact(
             owner=owner_name, repo=repo_name, artifact_id=artifact["id"], token=token
         )
-        print(f"Downloaded artifact {artifact['name']}")
 
-        if lcov_content is None:
-            print(f"No lcov.info found in artifact {artifact['name']}")
-            continue
-
-        supported_languages = ["javascript", "typescript", "python", "dart"]
-        if primary_language not in supported_languages:
-            print(f"Coverage parsing not implemented for language: {primary_language}")
+        if not lcov_content:
             continue
 
         parsed_coverage = parse_lcov_coverage(lcov_content)
-
         if parsed_coverage:
             coverage_data.extend(parsed_coverage)
 
-    if coverage_data:
-        # Add uncovered files for all supported languages
-        base_args = {
+    if not coverage_data:
+        return None
+
+    # Add uncovered source files
+    all_files, _ = get_file_tree(
+        base_args={
             "owner": owner_name,
             "repo": repo_name,
             "token": token,
             "base_branch": head_branch,
-        }
+        },
+        max_files=None,
+    )
 
-        # Get all source files from the repository
-        all_files, _ = get_file_tree(base_args=base_args, max_files=None)
+    source_files = [
+        f
+        for f in all_files
+        if is_code_file(f) and not is_test_file(f) and not is_type_file(f)
+    ]
 
-        # Filter files based on language extension
-        extension_map = {
-            "javascript": ".js",
-            "typescript": ".ts",
-            "python": ".py",
-            "dart": ".dart",
-        }
+    covered_files = {
+        report["full_path"] for report in coverage_data if report["level"] == "file"
+    }
 
-        source_files = [
-            f for f in all_files if f.endswith(extension_map.get(primary_language, ""))
-        ]
+    for source_file in source_files:
+        if source_file not in covered_files:
+            coverage_data.append(
+                {
+                    "package_name": None,
+                    "level": "file",
+                    "full_path": source_file,
+                    "statement_coverage": 0.0,
+                    "function_coverage": 0.0,
+                    "branch_coverage": 0.0,
+                    "line_coverage": 0.0,
+                    "uncovered_lines": "",
+                    "uncovered_functions": "",
+                    "uncovered_branches": "",
+                }
+            )
 
-        # Get files that are already in coverage report
-        covered_files = {
-            report["full_path"] for report in coverage_data if report["level"] == "file"
-        }
+    # Remove duplicates
+    seen = {}
+    for coverage in coverage_data:
+        key = (repo_id, coverage["full_path"])
+        if key in seen:
+            msg = f"Duplicate coverage for `{owner_name}/{repo_name}`, full_path=`{coverage['full_path']}`"
+            logging.warning(msg)
+        seen[key] = coverage
 
-        # Add uncovered files with 0% coverage
-        for source_file in source_files:
-            # Skip test files based on language conventions
-            test_patterns = {
-                "javascript": ["test.js", "spec.js", "__tests__"],
-                "typescript": ["test.ts", "spec.ts", "__tests__"],
-                "python": ["test_", "_test.py", "tests/"],
-                "dart": ["test.dart", "_test.dart", "test/"],
+    # Get current file paths
+    current_paths = [coverage["full_path"] for coverage in seen.values()]
+
+    # Get existing records
+    existing_records = get_coverages(repo_id=repo_id, filenames=current_paths)
+
+    # Prepare data for upsert
+    upsert_data = []
+    for coverage in seen.values():
+        try:
+            existing_record = existing_records.get(coverage["full_path"]) or {}
+            item = {
+                **existing_record,
+                "owner_id": owner_id,
+                "repo_id": repo_id,
+                "branch_name": head_branch,
+                "primary_language": primary_language,
+                "path_coverage": 0,
+                "updated_by": user_name,
+                **coverage,
             }
 
-            patterns = test_patterns.get(primary_language, [])
-            if any(pattern in source_file for pattern in patterns):
-                continue
+            if not existing_record:
+                item["created_by"] = user_name
+                item["is_excluded_from_testing"] = False
 
-            if source_file not in covered_files:
-                coverage_data.append(
-                    {
-                        "package_name": None,
-                        "level": "file",
-                        "full_path": source_file,
-                        "statement_coverage": 0.0,
-                        "function_coverage": 0.0,
-                        "branch_coverage": 0.0,
-                        "line_coverage": 0.0,
-                        "uncovered_lines": "",
-                        "uncovered_functions": "",
-                        "uncovered_branches": "",
-                    }
-                )
+            # Set None for 100% coverage fields
+            if item.get("line_coverage") == 100:
+                item["uncovered_lines"] = None
+            if item.get("function_coverage") == 100:
+                item["uncovered_functions"] = None
+            if item.get("branch_coverage") == 100:
+                item["uncovered_branches"] = None
 
-    if coverage_data:
-        process_coverage_data(
-            coverages_list=coverage_data,
-            owner_id=owner_id,
-            repo_id=repo_id,
-            branch_name=head_branch,
-            primary_language=primary_language,
-            user_name=user_name,
-        )
+            # Remove fields that cause upsert conflicts
+            for field in ["id", "created_at", "updated_at"]:
+                item.pop(field, None)
+
+            json.dumps(item)
+            upsert_data.append(item)
+        except (TypeError, ValueError, OverflowError) as e:
+            msg = f"Skipping non-serializable item: {str(e)}\nItem data: {coverage}"
+            logging.warning(msg)
+            continue
+
+    if not upsert_data:
+        logging.warning("No valid items to upsert")
+        return None
+
+    return upsert_coverages(upsert_data)
