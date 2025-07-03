@@ -12,7 +12,7 @@ from services.github.repositories.get_repository_languages import (
     get_repository_languages,
 )
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree import get_file_tree_list
+from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.coverages.upsert_coverages import upsert_coverages
 from services.supabase.repo_coverage.upsert_repo_coverage import upsert_repo_coverage

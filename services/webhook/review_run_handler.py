@@ -19,7 +19,7 @@ from services.github.pulls.get_pull_request_file_contents import (
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree import get_file_tree_list
+from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.owner import Owner
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository

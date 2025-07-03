@@ -28,7 +28,7 @@ from services.github.github_manager import (
 from services.github.markdown.render_text import render_text
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.reactions.add_reaction_to_issue import add_reaction_to_issue
-from services.github.trees.get_file_tree import get_file_tree_list
+from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.github_types import GitHubLabeledPayload
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
 from services.github.utils.find_config_files import find_config_files
