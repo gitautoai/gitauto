@@ -255,6 +255,68 @@ def test_get_stripe_customer_id_long_customer_id(mock_supabase):
 def test_get_stripe_customer_id_parametrized_owner_ids(mock_supabase, owner_id):
     """Test function with various owner ID values using parametrize."""
     # Setup mock response
+    mock_table = MagicMock()
+    mock_select = MagicMock()
+    mock_eq = MagicMock()
+    
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq
+    mock_eq.execute.return_value = (
+        [None, [{"stripe_customer_id": f"cus_test_{owner_id}"}]], 
+        1
+    )
+    
+    # Execute
+    result = get_stripe_customer_id(owner_id=owner_id)
+    
+    # Verify
+    assert result == f"cus_test_{owner_id}"
+    mock_select.eq.assert_called_with(column="owner_id", value=owner_id)
+
+
+def test_get_stripe_customer_id_supabase_method_chain(mock_supabase):
+    """Test that the correct Supabase method chain is called."""
+    # Setup mock response
+    mock_table = MagicMock()
+    mock_select = MagicMock()
+    mock_eq = MagicMock()
+    
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq
+    mock_eq.execute.return_value = (
+        [None, [{"stripe_customer_id": "cus_test123"}]], 
+        1
+    )
+    
+    # Execute
+    get_stripe_customer_id(owner_id=123456)
+    
+    # Verify the complete method chain
+    mock_supabase.table.assert_called_once_with(table_name="owners")
+    mock_table.select.assert_called_once_with("stripe_customer_id")
+    mock_select.eq.assert_called_once_with(column="owner_id", value=123456)
+    mock_eq.execute.assert_called_once()
+
+
+def test_get_stripe_customer_id_empty_record_list(mock_supabase):
+    """Test when the second element is an empty list."""
+    # Setup mock response with empty record list
+    mock_table = MagicMock()
+    mock_select = MagicMock()
+    mock_eq = MagicMock()
+    
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq
+    mock_eq.execute.return_value = ([None, []], 0)
+    
+    # Execute
+    result = get_stripe_customer_id(owner_id=123456)
+    
+    # Verify
+    assert result is None
 
 
 def test_get_stripe_customer_id_special_characters_in_customer_id(mock_supabase):
@@ -327,3 +389,6 @@ def test_get_stripe_customer_id_malformed_response_structure(mock_supabase):
 
 
 def test_get_stripe_customer_id_function_docstring():
+    """Test that the function has proper documentation."""
+    assert get_stripe_customer_id.__doc__ is not None
+    assert "https://supabase.com/docs/reference/python/select" in get_stripe_customer_id.__doc__
