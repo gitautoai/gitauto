@@ -250,3 +250,60 @@ def test_get_commit_diff_timeout_parameter():
         # Verify timeout parameter
         call_args = mock_get.call_args
         assert call_args.kwargs["timeout"] == 60
+
+
+def test_get_commit_diff_url_construction():
+    """Test that the URL is constructed correctly with different parameters."""
+    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+        "services.github.commits.get_commit_diff.create_headers"
+    ) as mock_headers:
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"sha": "def789ghi012", "commit": {}, "files": []}
+        mock_get.return_value = mock_response
+        mock_headers.return_value = {"Authorization": "Bearer test_token"}
+
+        # Test with different parameters
+        get_commit_diff("test-owner", "test-repo", "def789ghi012", "test_token")
+
+        # Verify URL construction
+        mock_get.assert_called_once_with(
+            url="https://api.github.com/repos/test-owner/test-repo/commits/def789ghi012",
+            headers={"Authorization": "Bearer test_token"},
+            timeout=120,
+        )
+
+
+def test_get_commit_diff_json_decode_error():
+    """Test handling of JSON decode error."""
+    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+        "services.github.commits.get_commit_diff.create_headers"
+    ) as mock_headers:
+        # Setup mocks
+        mock_response = MagicMock()
+        mock_response.json.side_effect = ValueError("Invalid JSON")
+        mock_get.return_value = mock_response
+        mock_headers.return_value = {"Authorization": "Bearer test_token"}
+
+        # Call function - should return None due to handle_exceptions decorator
+        result = get_commit_diff(OWNER, REPO, "abc123def456", TOKEN)
+
+        # Verify result is None (default_return_value from decorator)
+        assert result is None
+
+
+def test_get_commit_diff_with_special_characters():
+    """Test with owner/repo/commit names containing special characters."""
+    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+        "services.github.commits.get_commit_diff.create_headers"
+    ) as mock_headers:
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"sha": "abc-123_def.456", "commit": {}, "files": []}
+        mock_get.return_value = mock_response
+        mock_headers.return_value = {"Authorization": "Bearer test_token"}
+
+        # Test with special characters
+        get_commit_diff("owner-name", "repo_name", "abc-123_def.456", TOKEN)
+
+        # Verify URL construction handles the names correctly
+        mock_get.assert_called_once_with(
+            url="https://api.github.com/repos/owner-name/repo_name/commits/abc-123_def.456",
