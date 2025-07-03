@@ -133,7 +133,7 @@ def test_get_user_handles_supabase_exception(mock_supabase):
 def test_get_user_handles_malformed_response(mock_supabase):
     """Test that get_user handles malformed response gracefully."""
     # Setup mock with malformed response
-    mock_response = ((None, None), None)  # Invalid response structure
+    mock_response = ((None, None), "metadata")  # Invalid response structure
     
     mock_table = MagicMock()
     mock_select = MagicMock()
