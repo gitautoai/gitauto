@@ -11,7 +11,7 @@ from services.github.branches.get_default_branch import get_default_branch
 from services.github.issues.create_issue import create_issue
 from services.github.issues.is_issue_open import is_issue_open
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree import get_file_tree
+from services.github.trees.get_file_tree_new import get_file_tree
 
 # Local imports (Supabase)
 from services.supabase.coverages.get_all_coverages import get_all_coverages
@@ -91,17 +91,32 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         "token": token,
         "base_branch": default_branch,
     }
-    all_files, _ = get_file_tree(base_args=base_args, max_files=None)
+    tree_items = get_file_tree(
+        owner=owner_name, repo=repo_name, ref=default_branch, token=token
+    )
+
+    # Extract necessary data
+    all_files_with_sizes = [
+        (item["path"], item["size"])
+        for item in tree_items
+        if item["type"] == "blob"  # Only files
+    ]
+
     all_coverages = get_all_coverages(repo_id=repo_id)
 
     # all_files LEFT JOIN all_coverages
     enriched_all_files: list[Coverages] = []
-    for file_path in all_files:
+    for file_path, file_size in all_files_with_sizes:
         coverages = next(
             (c for c in all_coverages if c["full_path"] == file_path), None
         )
         if coverages:
-            enriched_all_files.append(coverages)
+            enriched_all_files.append(
+                {
+                    **coverages,
+                    "file_size": file_size,  # Use the latest file size
+                }
+            )
         else:
             enriched_all_files.append(
                 {
@@ -113,7 +128,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                     "created_by": user_name,
                     "updated_by": user_name,
                     "level": "file",
-                    "file_size": 0,
+                    "file_size": file_size,
                     "statement_coverage": 0,
                     "function_coverage": 0,
                     "branch_coverage": 0,

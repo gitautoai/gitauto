@@ -22,7 +22,7 @@ from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.types.github_types import CheckRunCompletedPayload
 from services.github.utils.create_permission_url import create_permission_url
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree import get_file_tree
+from services.github.trees.get_file_tree import get_file_tree_list
 from services.github.types.check_run import CheckRun
 from services.github.types.check_suite import CheckSuite
 from services.github.types.pull_request import PullRequest
@@ -182,7 +182,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     update_comment(body=comment_body, base_args=base_args)
 
     # Get the file tree in the root of the repo
-    file_tree: str = get_file_tree(base_args=base_args, max_files=100)
+    file_tree, _ = get_file_tree_list(base_args=base_args, max_files=100)
     p += 5
     log_messages.append("Checked out the file tree in the repo.")
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))

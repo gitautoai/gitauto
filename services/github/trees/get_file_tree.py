@@ -1,44 +1,18 @@
-import requests
-from config import GITHUB_API_URL, TIMEOUT
 from services.github.types.github_types import BaseArgs
-from services.github.utils.create_headers import create_headers
+from services.github.trees.get_file_tree_new import get_file_tree
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_file_tree(base_args: BaseArgs, max_files: int | None):
-    """
-    Get the file tree of a GitHub repository at a ref branch.
-    Uses recursive API call and trims results from deepest level if exceeding max_files.
-    https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#get-a-tree
-    """
+def get_file_tree_list(base_args: BaseArgs, max_files: int | None):
     owner, repo, ref = base_args["owner"], base_args["repo"], base_args["base_branch"]
 
     # Get complete tree recursively
-    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/trees/{ref}"
-    headers: dict[str, str] = create_headers(token=base_args["token"])
-    params: dict[str, int | str] = {"recursive": 1}
-    response = requests.get(url=url, headers=headers, params=params, timeout=TIMEOUT)
+    tree_items = get_file_tree(owner, repo, ref, base_args["token"])
 
-    # Handle empty repository case
-    if response.status_code == 409 and "Git Repository is empty" in response.text:
-        print(f"Repository {owner}/{repo} is empty")
-        return [], "Repository is empty."
-
-    # Handle 404 error case (repository or branch not found)
-    if response.status_code == 404:
-        print(f"No files found in repository: {owner}/{repo}")
-        return [], "No files found in repository."
-
-    response.raise_for_status()
-
-    # Warn if GitHub API truncated the response
-    if response.json().get("truncated"):
-        print("Warning: Repository tree was truncated by GitHub API")
-
-    # Group files by their depth
+    # Group files by their depth and collect file info
     paths_by_depth: dict[int, list[str]] = {}
-    for item in response.json()["tree"]:
+    for item in tree_items:
         if item["type"] != "blob":  # Skip non-file items
             continue
         path = item["path"]
