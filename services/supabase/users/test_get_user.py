@@ -34,7 +34,7 @@ def mock_supabase_response_with_user(sample_user_data):
 @pytest.fixture
 def mock_supabase_response_empty():
     """Fixture providing a mock supabase response with no user data."""
-    return ((None, []), None)
+    return ((None, []), "metadata")
 
 
 def test_get_user_returns_user_when_found(mock_supabase, mock_supabase_response_with_user, sample_user_data):
