@@ -6,6 +6,7 @@ import time
 
 # Local imports
 from config import EMAIL_LINK, GITHUB_APP_USER_NAME, UTF8
+from constants.messages import PERMISSION_DENIED_MESSAGE
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
@@ -120,6 +121,14 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "skip_ci": True,
     }
 
+    # Check if permission comment already exists before creating any comments
+    if has_permission_comment(base_args):
+        slack_notify(
+            f"Permission comment already exists for {owner_name}/{repo_name}",
+            thread_ts,
+        )
+        return
+
     # Create the first comment
     p = 0
     log_messages = []
@@ -170,16 +179,9 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     permission_url = create_permission_url(
         owner_type=owner_type, owner_name=owner_name, installation_id=installation_id
     )
-    if workflow_path == 404:
-        # Check if permission comment already exists
-        if has_permission_comment(base_args):
-            slack_notify(
-                f"Permission comment already exists for {owner_name}/{repo_name}",
-                thread_ts,
-            )
-            return
 
-        comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
+    if workflow_path == 404:
+        comment_body = f"{PERMISSION_DENIED_MESSAGE} {permission_url}"
         log_messages.append(comment_body)
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
@@ -212,15 +214,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         owner=owner_name, repo=repo_name, run_id=workflow_id, token=token
     )
     if error_log == 404:
-        # Check if permission comment already exists
-        if has_permission_comment(base_args):
-            slack_notify(
-                f"Permission comment already exists for {owner_name}/{repo_name}",
-                thread_ts,
-            )
-            return
-
-        comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
+        comment_body = f"{PERMISSION_DENIED_MESSAGE} {permission_url}"
         log_messages.append(comment_body)
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
