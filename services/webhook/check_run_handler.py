@@ -6,13 +6,13 @@ import time
 
 # Local imports
 from config import EMAIL_LINK, GITHUB_APP_USER_NAME, UTF8
-from constants.messages import PERMISSION_DENIED_MESSAGE
+from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_STUMBLED_MESSAGE
 from services.chat_with_agent import chat_with_agent
 
 # Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.create_comment import create_comment
-from services.github.comments.has_permission_comment import has_permission_comment
+from services.github.comments.has_comment_with_text import has_comment_with_text
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.github_manager import get_remote_file_content
@@ -121,10 +121,12 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         "skip_ci": True,
     }
 
-    # Check if permission comment already exists before creating any comments
-    if has_permission_comment(base_args):
+    # Check if permission comment or stumbled comment already exists
+    if has_comment_with_text(
+        base_args, [PERMISSION_DENIED_MESSAGE, CHECK_RUN_STUMBLED_MESSAGE]
+    ):
         slack_notify(
-            f"Permission comment already exists for {owner_name}/{repo_name}",
+            f"Permission request has already been made or another check run has already been working on this PR for `{owner_name}/{repo_name}`",
             thread_ts,
         )
         return
@@ -132,7 +134,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     # Create the first comment
     p = 0
     log_messages = []
-    msg = "Oops! Check run stumbled."
+    msg = CHECK_RUN_STUMBLED_MESSAGE
     log_messages.append(msg)
     body = create_progress_bar(p=p, msg="\n".join(log_messages))
     comment_url = create_comment(body=body, base_args=base_args)

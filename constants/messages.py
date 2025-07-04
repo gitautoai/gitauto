@@ -14,3 +14,4 @@ SETTINGS_LINKS = f"You can [turn off triggers]({SETTINGS_TRIGGERS_URL}), [update
 PERMISSION_DENIED_MESSAGE = (
     "Approve permission(s) to allow GitAuto to access the check run logs here:"
 )
+CHECK_RUN_STUMBLED_MESSAGE = "Oops! Check run stumbled."
