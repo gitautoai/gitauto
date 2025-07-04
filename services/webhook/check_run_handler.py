@@ -11,6 +11,7 @@ from services.chat_with_agent import chat_with_agent
 # Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.create_comment import create_comment
+from services.github.comments.has_permission_comment import has_permission_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.github_manager import get_remote_file_content
@@ -170,6 +171,14 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         owner_type=owner_type, owner_name=owner_name, installation_id=installation_id
     )
     if workflow_path == 404:
+        # Check if permission comment already exists
+        if has_permission_comment(base_args):
+            slack_notify(
+                f"Permission comment already exists for {owner_name}/{repo_name}",
+                thread_ts,
+            )
+            return
+
         comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
         log_messages.append(comment_body)
         update_comment(body="\n".join(log_messages), base_args=base_args)
@@ -203,6 +212,14 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         owner=owner_name, repo=repo_name, run_id=workflow_id, token=token
     )
     if error_log == 404:
+        # Check if permission comment already exists
+        if has_permission_comment(base_args):
+            slack_notify(
+                f"Permission comment already exists for {owner_name}/{repo_name}",
+                thread_ts,
+            )
+            return
+
         comment_body = f"Approve permission(s) to allow GitAuto to access the check run logs here: {permission_url}"
         log_messages.append(comment_body)
         update_comment(body="\n".join(log_messages), base_args=base_args)
