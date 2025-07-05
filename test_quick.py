@@ -20,7 +20,18 @@ end_of_record
 """
 
 print("Testing malformed lines...")
-result = parse_lcov_coverage(lcov_content)
-print(f"Malformed content result: {len(result)} reports")
-for i, report in enumerate(result):
-    print(f"Report {i}: {report['level']} - {report['full_path']}")
+try:
+    result = parse_lcov_coverage(lcov_content)
+    print(f"Malformed content result: {len(result)} reports")
+    for i, report in enumerate(result):
+        print(f"Report {i}: {report['level']} - {report['full_path']}")
+    
+    # Test the specific assertion from the failing test
+    if len(result) == 3:
+        print("✅ Test would PASS: len(result) == 3")
+    else:
+        print(f"❌ Test would FAIL: len(result) == {len(result)}, expected 3")
+        
+except Exception as e:
+    print(f"❌ Exception occurred: {e}")
+    print("Test would FAIL due to exception")
