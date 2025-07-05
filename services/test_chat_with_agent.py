@@ -794,6 +794,7 @@ def test_chat_with_agent_different_modes(
             base_args=base_args,
             mode=mode,
             repo_settings=None,
+            recursion_count=3,  # Prevent recursion for testing
         )
         
         # Check that the correct tools were selected based on mode
