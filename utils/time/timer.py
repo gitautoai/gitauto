@@ -26,9 +26,10 @@ def timer_decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             start_time = time.time()
-            result = func(*args, **kwargs)
-            end_time = time.time()
-            logger.info("%s took %.2f seconds", func.__name__, end_time - start_time)
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                end_time = time.time()
+                logger.info("%s took %.2f seconds", func.__name__, end_time - start_time)
             return result
-
-    return wrapper
+        return wrapper
