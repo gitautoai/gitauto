@@ -152,7 +152,7 @@ def test_get_installation_permissions_json_decode_error(mock_headers):
     
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
-    mock_response.json.side_effect = ValueError("Invalid JSON")
+    mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
     
     with patch("services.github.installations.get_installation_permissions.get") as mock_get, \
          patch("services.github.installations.get_installation_permissions.create_headers") as mock_create_headers:
