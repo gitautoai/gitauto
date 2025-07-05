@@ -3,6 +3,7 @@ import json
 
 import pytest
 from gql import gql
+from graphql import print_ast
 
 from services.github.pulls.find_pull_request_by_branch import find_pull_request_by_branch
 
