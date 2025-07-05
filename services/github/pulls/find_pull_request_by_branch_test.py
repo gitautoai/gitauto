@@ -364,3 +364,66 @@ def test_find_pull_request_by_branch_with_empty_string_parameters(mock_graphql_c
     # Verify empty strings were passed correctly
     call_args = mock_graphql_client.execute.call_args
     variable_values = call_args[1]['variable_values']
+
+
+def test_find_pull_request_by_branch_graphql_query_structure(mock_graphql_client):
+    """Test that the GraphQL query contains the expected structure and fields."""
+    # Arrange
+    mock_graphql_client.execute.return_value = {
+        "repository": {"pullRequests": {"nodes": []}}
+    }
+    
+    # Act
+    find_pull_request_by_branch("owner", "repo", "branch", "token")
+
+    # Assert
+    mock_graphql_client.execute.assert_called_once()
+    call_args = mock_graphql_client.execute.call_args
+    query_arg = call_args[0][0]
+    
+    # Convert the query to string to check its content
+    query_string = str(query_arg.document)
+    
+    # Check that the query contains expected fields and structure
+    assert "query($owner: String!, $repo: String!, $headRefName: String!)" in query_string
+    assert "repository(owner: $owner, name: $repo)" in query_string
+    assert "pullRequests(first: 1, headRefName: $headRefName, states: OPEN)" in query_string
+    assert "number" in query_string
+    assert "title" in query_string
+    assert "url" in query_string
+    assert "headRef { name }" in query_string
+    assert "baseRef { name }" in query_string
+
+
+def test_find_pull_request_by_branch_return_type_annotation():
+    """Test that the function has the correct return type annotation."""
+    import inspect
+    
+    # Get the function signature
+    sig = inspect.signature(find_pull_request_by_branch)
+    
+    # Check return annotation
+    return_annotation = sig.return_annotation
+    assert return_annotation == dict | None
+
+
+def test_find_pull_request_by_branch_parameter_types():
+    """Test that the function has the correct parameter type annotations."""
+    import inspect
+    
+    # Get the function signature
+    sig = inspect.signature(find_pull_request_by_branch)
+    
+    # Check parameter annotations
+    params = sig.parameters
+    assert params['owner'].annotation == str
+    assert params['repo'].annotation == str
+    assert params['branch_name'].annotation == str
+    assert params['token'].annotation == str
+
+
+def test_find_pull_request_by_branch_has_docstring():
+    """Test that the function has a docstring."""
+    assert find_pull_request_by_branch.__doc__ is not None
+    assert "https://docs.github.com/en/graphql/reference/objects#pullrequest" in find_pull_request_by_branch.__doc__
+
