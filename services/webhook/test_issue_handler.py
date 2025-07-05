@@ -88,10 +88,10 @@ def mock_time():
 @pytest.fixture
 def mock_datetime():
     """Fixture to mock datetime.now()."""
-    with patch("datetime.now") as mock:
+    with patch("services.webhook.issue_handler.datetime") as mock:
         mock_now = MagicMock()
         mock_now.strftime.return_value = "2025-07-05"
-        mock.return_value = mock_now
+        mock.now.return_value = mock_now
         yield mock
 
 
