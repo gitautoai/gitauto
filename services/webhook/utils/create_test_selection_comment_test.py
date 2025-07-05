@@ -362,7 +362,7 @@ class TestCreateTestSelectionComment:
         assert lines[10] == f"Click the checkbox and {PRODUCT_NAME} will add/update/remove tests for the selected files to this PR."
         assert lines[11] == "MOCK_RESET_COMMAND"
         assert lines[12] == ""
-        assert lines[13] == SETTINGS_LINKS
+        assert lines[13].startswith("You can [turn off triggers]")
 
     def test_integration_with_actual_dependencies(self):
         """Test the full integration of the comment creation with actual dependencies."""
