@@ -665,6 +665,12 @@ async def test_create_pr_from_issue_timeout_approaching(
     # Verify
     mock_is_lambda_timeout_approaching.assert_called_once_with(1000.0)
     mock_get_timeout_message.assert_called_once_with(890.0, "Issue processing")
+    # Should call slack_notify for start and completion
+    expected_calls = [
+        call("Issue handler started: `issue_comment` by `test-sender` for `123:Test Issue` in `test-owner/test-repo`"),
+        call("Completed", "thread-ts-123")
+    ]
+    mock_slack_notify.assert_has_calls(expected_calls)
 
 
 @pytest.mark.asyncio
