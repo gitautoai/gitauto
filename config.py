@@ -2,6 +2,7 @@
 import base64
 import os
 from datetime import datetime, timezone
+from typing import Literal
 
 # Third-party imports
 from dotenv import load_dotenv
@@ -32,7 +33,7 @@ GITHUB_APP_IDS: list[int] = list(
 GITHUB_APP_NAME: str = get_env_var(name="GH_APP_NAME")
 GITHUB_APP_USER_ID: int = int(get_env_var(name="GH_APP_USER_ID"))
 GITHUB_APP_USER_NAME: str = get_env_var(name="GH_APP_USER_NAME")
-GITHUB_CHECK_RUN_FAILURES = [
+GITHUB_CHECK_RUN_FAILURES: Literal[
     "startup_failure",
     "failure",
     "timed_out",

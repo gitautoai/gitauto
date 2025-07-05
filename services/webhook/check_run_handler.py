@@ -16,6 +16,9 @@ from services.github.comments.has_comment_with_text import has_comment_with_text
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.github_manager import get_remote_file_content
+from services.github.installations.get_installation_permissions import (
+    get_installation_permissions,
+)
 from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_file_changes import (
     get_pull_request_file_changes,
@@ -187,10 +190,11 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         log_messages.append(comment_body)
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
+        # Get installation permissions via API
+        permissions = get_installation_permissions(installation_id, token)
+
         # Early return notification
-        early_return_msg = (
-            f"Permission denied for workflow logs in {owner_name}/{repo_name}"
-        )
+        early_return_msg = f"workflow_path is 404. Permission denied for workflow run id `{workflow_id}` in `{owner_name}/{repo_name}` - Permissions: `{permissions}`"
         slack_notify(early_return_msg, thread_ts)
         return
 
@@ -220,10 +224,11 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         log_messages.append(comment_body)
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
+        # Get installation permissions via API
+        permissions = get_installation_permissions(installation_id, token)
+
         # Early return notification
-        early_return_msg = (
-            f"Permission denied for workflow logs in {owner_name}/{repo_name}"
-        )
+        early_return_msg = f"error_log is 404. Permission denied for workflow run id `{workflow_id}` in `{owner_name}/{repo_name}` - Permissions: `{permissions}`"
         slack_notify(early_return_msg, thread_ts)
         return
     if error_log is None:
