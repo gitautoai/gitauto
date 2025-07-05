@@ -102,7 +102,7 @@ echo "TEST_MODE=$TEST_MODE"
         try:
             os.chdir(test_environment)
             result = subprocess.run(
-                [test_script], 
+                ["bash", test_script], 
                 capture_output=True, 
                 text=True
             )
