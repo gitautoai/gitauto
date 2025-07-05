@@ -64,7 +64,6 @@ def test_timer_decorator_sync_function_exception_handling(mock_logger, mock_time
     )
 
 
-@pytest.mark.asyncio
 async def test_timer_decorator_async_function_execution(mock_logger, mock_time):
     """Test that timer decorator works with asynchronous functions."""
     @timer_decorator
@@ -79,7 +78,6 @@ async def test_timer_decorator_async_function_execution(mock_logger, mock_time):
     )
 
 
-@pytest.mark.asyncio
 async def test_timer_decorator_async_function_with_args_kwargs(mock_logger, mock_time):
     """Test that timer decorator preserves async function arguments and keyword arguments."""
     @timer_decorator
@@ -95,7 +93,6 @@ async def test_timer_decorator_async_function_with_args_kwargs(mock_logger, mock
     )
 
 
-@pytest.mark.asyncio
 async def test_timer_decorator_async_function_exception_handling(mock_logger, mock_time):
     """Test that timer decorator handles exceptions in asynchronous functions."""
     @timer_decorator
@@ -127,7 +124,6 @@ def test_timer_decorator_preserves_function_metadata():
     assert decorated_function.__custom_attr__ == "custom_value"
 
 
-@pytest.mark.asyncio
 async def test_timer_decorator_preserves_async_function_metadata():
     """Test that timer decorator preserves async function metadata using functools.wraps."""
     async def original_async_function():
