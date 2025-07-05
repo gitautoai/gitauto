@@ -40,9 +40,9 @@ def test_get_owner_name_calls_correct_api_endpoint(sample_owner_id, sample_token
     with patch("services.github.users.get_owner_name.requests.get") as mock_get:
         mock_get.return_value.json.return_value = {"login": "test-user"}
         mock_get.return_value.raise_for_status.return_value = None
-        
+
         get_owner_name(owner_id=sample_owner_id, token=sample_token)
-        
+
         expected_url = f"{GITHUB_API_URL}/user/{sample_owner_id}"
         mock_get.assert_called_once()
         args, kwargs = mock_get.call_args
@@ -53,14 +53,14 @@ def test_get_owner_name_uses_correct_headers(sample_owner_id, sample_token):
     """Test that the function uses correct headers including authorization."""
     with patch("services.github.users.get_owner_name.requests.get") as mock_get, \
          patch("services.github.users.get_owner_name.create_headers") as mock_create_headers:
-        
+
         mock_headers = {"Authorization": f"Bearer {sample_token}"}
         mock_create_headers.return_value = mock_headers
         mock_get.return_value.json.return_value = {"login": "test-user"}
         mock_get.return_value.raise_for_status.return_value = None
-        
+
         get_owner_name(owner_id=sample_owner_id, token=sample_token)
-        
+
         mock_create_headers.assert_called_once_with(token=sample_token)
         mock_get.assert_called_once()
         args, kwargs = mock_get.call_args
@@ -72,9 +72,9 @@ def test_get_owner_name_uses_correct_timeout(sample_owner_id, sample_token):
     with patch("services.github.users.get_owner_name.requests.get") as mock_get:
         mock_get.return_value.json.return_value = {"login": "test-user"}
         mock_get.return_value.raise_for_status.return_value = None
-        
+
         get_owner_name(owner_id=sample_owner_id, token=sample_token)
-        
+
         mock_get.assert_called_once()
         args, kwargs = mock_get.call_args
         assert kwargs["timeout"] == TIMEOUT
@@ -93,7 +93,7 @@ def test_get_owner_name_extracts_login_from_response(sample_owner_id, sample_tok
     mock_response = MagicMock()
     mock_response.json.return_value = {"login": expected_login, "id": sample_owner_id}
     mock_response.raise_for_status.return_value = None
-    
+
     with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
         result = get_owner_name(owner_id=sample_owner_id, token=sample_token)
         assert result == expected_login
@@ -106,12 +106,12 @@ def test_get_owner_name_with_different_owner_ids():
         (999999999, "user999999999"),
         (123456789, "organization-name"),
     ]
-    
+
     for owner_id, expected_login in test_cases:
         mock_response = MagicMock()
         mock_response.json.return_value = {"login": expected_login}
         mock_response.raise_for_status.return_value = None
-        
+
         with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
             result = get_owner_name(owner_id=owner_id, token="test-token")
             assert result == expected_login
@@ -125,18 +125,18 @@ def test_get_owner_name_with_different_tokens():
         "github_pat_1234567890abcdef",
         "token_with_special_chars!@#$%",
     ]
-    
+
     for token in test_tokens:
         mock_response = MagicMock()
         mock_response.json.return_value = {"login": "test-user"}
         mock_response.raise_for_status.return_value = None
-        
+
         with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response), \
              patch("services.github.users.get_owner_name.create_headers") as mock_create_headers:
-            
+
             mock_create_headers.return_value = {"Authorization": f"Bearer {token}"}
             result = get_owner_name(owner_id=123456, token=token)
-            
+
             assert result == "test-user"
             mock_create_headers.assert_called_with(token=token)
 
@@ -151,7 +151,7 @@ def test_get_owner_name_http_error_returns_none(sample_owner_id, sample_token):
     error_response.reason = "Not Found"
     error_response.text = "User not found"
     http_error.response = error_response
-    
+
     mock_response.raise_for_status.side_effect = http_error
     with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
         result = get_owner_name(owner_id=sample_owner_id, token=sample_token)
@@ -177,7 +177,7 @@ def test_get_owner_name_json_decode_error_returns_none(sample_owner_id, sample_t
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_response.json.side_effect = ValueError("Invalid JSON")
-    
+
     with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
         result = get_owner_name(owner_id=sample_owner_id, token=sample_token)
         assert result is None
@@ -188,7 +188,7 @@ def test_get_owner_name_missing_login_key_returns_none(sample_owner_id, sample_t
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_response.json.return_value = {"id": sample_owner_id, "name": "Test User"}  # Missing "login" key
-    
+
     with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
         result = get_owner_name(owner_id=sample_owner_id, token=sample_token)
         assert result is None
@@ -199,7 +199,7 @@ def test_get_owner_name_empty_response_returns_none(sample_owner_id, sample_toke
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_response.json.return_value = {}
-    
+
     with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
         result = get_owner_name(owner_id=sample_owner_id, token=sample_token)
         assert result is None
@@ -210,7 +210,7 @@ def test_get_owner_name_null_login_value_returns_none(sample_owner_id, sample_to
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_response.json.return_value = {"login": None, "id": sample_owner_id}
-    
+
     with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
         result = get_owner_name(owner_id=sample_owner_id, token=sample_token)
         assert result is None
@@ -242,11 +242,11 @@ def test_get_owner_name_with_complete_github_response(sample_owner_id, sample_to
         "created_at": "2008-01-14T04:33:35Z",
         "updated_at": "2008-01-14T04:33:35Z"
     }
-    
+
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_response.json.return_value = complete_response
-    
+
     with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
         result = get_owner_name(owner_id=sample_owner_id, token=sample_token)
         assert result == "octocat"
@@ -264,7 +264,7 @@ def test_get_owner_name_with_various_owner_ids(owner_id, expected_login, sample_
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_response.json.return_value = {"login": expected_login, "id": owner_id}
-    
+
     with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
         result = get_owner_name(owner_id=owner_id, token=sample_token)
         assert result == expected_login
@@ -288,12 +288,12 @@ def test_get_owner_name_with_special_login_characters(sample_owner_id, sample_to
         "a",  # Single character
         "a" * 39,  # Maximum GitHub username length
     ]
-    
+
     for login in special_logins:
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {"login": login, "id": sample_owner_id}
-        
+
         with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
             result = get_owner_name(owner_id=sample_owner_id, token=sample_token)
             assert result == login
