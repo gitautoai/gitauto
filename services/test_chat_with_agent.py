@@ -251,7 +251,7 @@ def test_chat_with_agent_duplicate_function_call(
     # First call should be the model selection message
     assert mock_print.call_args_list[0][0][0] == "Using model: o3-mini"
     # Second call should be the error message
-    
+    assert "Error: The function 'get_remote_file_content' was already called with the same arguments" in mock_print.call_args_list[1][0][0]
     # Check that the previous_calls list wasn't modified
     assert result[1] == previous_calls
 
