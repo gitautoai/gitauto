@@ -250,6 +250,7 @@ def test_timer_decorator_with_return_values():
             assert result == {"status": "success", "data": [1, 2, 3]}
 
 
+@pytest.mark.asyncio
 async def test_timer_decorator_async_with_return_values():
     """Test that timer decorator correctly returns async function values."""
     with patch("utils.time.timer.time.time") as mock_time_module:
