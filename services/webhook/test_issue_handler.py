@@ -944,3 +944,4 @@ async def test_create_pr_from_issue_retry_logic(
     ]
     mock_slack_notify.assert_has_calls(expected_calls)
 
+        call("PR created for test-owner/test-repo", "thread-ts-123"),
