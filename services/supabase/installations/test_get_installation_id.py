@@ -1,4 +1,5 @@
 from unittest.mock import patch, MagicMock
+import inspect
 
 import pytest
 
@@ -199,3 +200,18 @@ def test_get_installation_id_with_various_owner_ids(mock_supabase_query, owner_i
     
     # Assert
     assert result == expected_installation_id
+
+
+def test_get_installation_id_function_signature():
+    """Test that get_installation_id has the correct function signature."""
+    # Get function signature
+    sig = inspect.signature(get_installation_id)
+    
+    # Assert parameter count and names
+    assert len(sig.parameters) == 1
+    assert "owner_id" in sig.parameters
+    
+    # Assert parameter type annotation
+    owner_id_param = sig.parameters["owner_id"]
+    assert owner_id_param.annotation == int
+    assert sig.return_annotation == int
