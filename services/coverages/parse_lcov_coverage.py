@@ -161,7 +161,10 @@ def parse_lcov_coverage(lcov_content: str):
         elif line.startswith("DA:"):  # DA: Line coverage data
             # Line coverage data: DA:<line number>,<execution count>
             try:
-                line_num, execution_count = map(int, line[3:].split(","))
+                parts = line[3:].split(",")
+                if len(parts) != 2:
+                    raise ValueError("Invalid DA format")
+                line_num, execution_count = map(int, parts)
                 current_stats["lines_total"] += 1
                 if execution_count > 0:
                     current_stats["lines_covered"] += 1
