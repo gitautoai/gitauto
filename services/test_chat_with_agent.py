@@ -287,7 +287,7 @@ def test_chat_with_agent_function_correction(
         )
     
     # Check that print was called with the warning message
-    mock_print.assert_called_once()
+    assert mock_print.call_count == 2
     assert "Warning: Redirecting call from 'apply_diff_to_file' to 'replace_remote_file_content'" in mock_print.call_args[0][0]
     
     # Check that the corrected function was called
