@@ -215,3 +215,16 @@ def test_get_installation_id_function_signature():
     owner_id_param = sig.parameters["owner_id"]
     assert owner_id_param.annotation == int
     assert sig.return_annotation == int
+
+
+def test_get_installation_id_has_handle_exceptions_decorator():
+    """Test that get_installation_id is decorated with handle_exceptions."""
+    # Check if the function has the expected wrapper attributes from handle_exceptions
+    assert hasattr(get_installation_id, "__wrapped__")
+    
+    # Verify the function name is preserved by the decorator
+    assert get_installation_id.__name__ == "get_installation_id"
+    
+    # Verify the docstring is preserved
+    assert get_installation_id.__doc__ == "https://supabase.com/docs/reference/python/is"
+
