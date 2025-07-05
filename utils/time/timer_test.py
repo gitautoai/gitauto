@@ -127,6 +127,7 @@ def test_timer_decorator_preserves_function_metadata():
     assert decorated_function.__custom_attr__ == "custom_value"
 
 
+@pytest.mark.asyncio
 async def test_timer_decorator_preserves_async_function_metadata():
     """Test that timer decorator preserves async function metadata using functools.wraps."""
     async def original_async_function():
