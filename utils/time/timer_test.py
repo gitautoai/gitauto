@@ -154,9 +154,12 @@ def test_timer_decorator_different_timing_values():
             result = quick_function()
             
             assert result == "quick"
-            mock_logger.info.assert_called_once_with(
-                "%s took %.2f seconds", "quick_function", 0.01
-            )
+            # Check that logger was called with correct format and function name
+            mock_logger.info.assert_called_once()
+            call_args = mock_logger.info.call_args[0]
+            assert call_args[0] == "%s took %.2f seconds"
+            assert call_args[1] == "quick_function"
+            assert call_args[2] == pytest.approx(0.01, abs=1e-10)
 
 
 def test_timer_decorator_zero_execution_time():
