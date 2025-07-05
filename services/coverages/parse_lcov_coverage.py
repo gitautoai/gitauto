@@ -50,39 +50,55 @@ def parse_lcov_coverage(lcov_content: str):
             # Format could be either:
             parts = [part.strip() for part in line[3:].split(",")]
 
-            if len(parts) == 2:
-                # FN:<line number>,<function name>  (Jest/Vitest, Flutter format)
-                line_num, func_name = parts
-                current_stats["uncovered_functions"].add((int(line_num), func_name))
+            try:
+                if len(parts) == 2:
+                    # FN:<line number>,<function name>  (Jest/Vitest, Flutter format)
+                    line_num, func_name = parts
+                    current_stats["uncovered_functions"].add((int(line_num), func_name))
 
-            elif len(parts) == 3:
-                # FN:<start_line>,<end_line>,<function name>  (Python format)
-                start_line, end_line, func_name = parts
-                current_stats["uncovered_functions"].add(
-                    (int(start_line), int(end_line), func_name)
-                )
-            else:
+                elif len(parts) == 3:
+                    # FN:<start_line>,<end_line>,<function name>  (Python format)
+                    start_line, end_line, func_name = parts
+                    current_stats["uncovered_functions"].add(
+                        (int(start_line), int(end_line), func_name)
+                    )
+                else:
+                    continue  # Skip malformed lines
+            except (ValueError, IndexError):
+                print(f"Error parsing line: {line}")
                 continue  # Skip malformed lines
 
         elif line.startswith("FNDA:"):  # FNDA: Function execution counts
             # Format: FNDA:<execution count>,<function name>
-            execution_count, function_name = line[5:].split(",")
-            execution_count = int(execution_count)
-            if execution_count > 0:
-                current_stats["functions_covered"] += 1
-                # Remove function from uncovered set by matching function name
-                current_stats["uncovered_functions"] = {
-                    func
-                    for func in current_stats["uncovered_functions"]
-                    if (func[1] if len(func) == 2 else func[2]) != function_name
-                }
-            current_stats["functions_total"] += 1
+            try:
+                execution_count, function_name = line[5:].split(",")
+                execution_count = int(execution_count)
+                if execution_count > 0:
+                    current_stats["functions_covered"] += 1
+                    # Remove function from uncovered set by matching function name
+                    current_stats["uncovered_functions"] = {
+                        func
+                        for func in current_stats["uncovered_functions"]
+                        if (func[1] if len(func) == 2 else func[2]) != function_name
+                    }
+                current_stats["functions_total"] += 1
+            except (ValueError, IndexError):
+                print(f"Error parsing line: {line}")
+                continue  # Skip malformed lines
 
         elif line.startswith("FNF:"):  # FNF: Functions Found
-            current_stats["functions_total"] = int(line[4:])
+            try:
+                current_stats["functions_total"] = int(line[4:])
+            except ValueError:
+                print(f"Error parsing line: {line}")
+                continue  # Skip malformed lines
 
         elif line.startswith("FNH:"):  # FNH: Functions Hit
-            current_stats["functions_covered"] = int(line[4:])
+            try:
+                current_stats["functions_covered"] = int(line[4:])
+            except ValueError:
+                print(f"Error parsing line: {line}")
+                continue  # Skip malformed lines
 
         elif line.startswith("BRDA:"):  # BRDA: Branch data
             try:
@@ -126,27 +142,47 @@ def parse_lcov_coverage(lcov_content: str):
                 continue  # Skip malformed lines
 
         elif line.startswith("BRF:"):  # BRF: Branches Found
-            current_stats["branches_total"] = int(line[4:])
+            try:
+                current_stats["branches_total"] = int(line[4:])
+            except ValueError:
+                print(f"Error parsing line: {line}")
+                continue  # Skip malformed lines
 
         elif line.startswith("BRH:"):  # BRH: Branches Hit
-            current_stats["branches_covered"] = int(line[4:])
+            try:
+                current_stats["branches_covered"] = int(line[4:])
+            except ValueError:
+                print(f"Error parsing line: {line}")
+                continue  # Skip malformed lines
 
         elif line.startswith("DA:"):  # DA: Line coverage data
             # Line coverage data: DA:<line number>,<execution count>
-            line_num, execution_count = map(int, line[3:].split(","))
-            current_stats["lines_total"] += 1
-            if execution_count > 0:
-                current_stats["lines_covered"] += 1
-            else:
-                current_stats["uncovered_lines"].add(line_num)
+            try:
+                line_num, execution_count = map(int, line[3:].split(","))
+                current_stats["lines_total"] += 1
+                if execution_count > 0:
+                    current_stats["lines_covered"] += 1
+                else:
+                    current_stats["uncovered_lines"].add(line_num)
+            except (ValueError, IndexError):
+                print(f"Error parsing line: {line}")
+                continue  # Skip malformed lines
 
         # Overrides "lines_total" if available
         elif line.startswith("LF:"):  # Lines Found
-            current_stats["lines_total"] = int(line[3:])
+            try:
+                current_stats["lines_total"] = int(line[3:])
+            except ValueError:
+                print(f"Error parsing line: {line}")
+                continue  # Skip malformed lines
 
         # Overrides "lines_covered" if available
         elif line.startswith("LH:"):  # Lines Hit
-            current_stats["lines_covered"] = int(line[3:])
+            try:
+                current_stats["lines_covered"] = int(line[3:])
+            except ValueError:
+                print(f"Error parsing line: {line}")
+                continue  # Skip malformed lines
 
         elif line.startswith("end_of_record"):
             if not current_file:
