@@ -250,6 +250,7 @@ def test_chat_with_agent_duplicate_function_call(
             mode="explore",
             repo_settings=None,
             previous_calls=previous_calls,
+            recursion_count=3,  # Prevent recursion for testing
         )
     
     # Check that print was called with the error message
