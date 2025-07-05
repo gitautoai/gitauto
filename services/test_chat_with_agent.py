@@ -554,6 +554,7 @@ def test_chat_with_agent_search_google(
         base_args=base_args,
         mode="search",
         repo_settings=None,
+        recursion_count=3,  # Prevent recursion for testing
     )
     
     # Check that update_comment was called with the progress bar
