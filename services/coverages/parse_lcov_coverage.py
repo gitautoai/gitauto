@@ -105,7 +105,10 @@ def parse_lcov_coverage(lcov_content: str):
 
         elif line.startswith("BRDA:"):  # BRDA: Branch data
             try:
-                line_num, block_num, branch_desc, taken = line[5:].split(",")
+                parts = line[5:].split(",")
+                if len(parts) != 4:
+                    raise ValueError("Invalid BRDA format")
+                line_num, block_num, branch_desc, taken = parts
                 line_num = int(line_num)
                 block_num = int(block_num)
 
