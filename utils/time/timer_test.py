@@ -386,3 +386,8 @@ def test_timer_decorator_sync_exception_propagation():
             mock_logger.info.assert_called_once_with(
                 "%s took %.2f seconds", "sync_failing_function", 1.0
             )
+            # Check that logger was called with correct format and function name
+            mock_logger.info.assert_called_once()
+            call_args = mock_logger.info.call_args[0]
+            assert call_args[0] == "%s took %.2f seconds"
+            assert call_args[1] == "quick_function"
