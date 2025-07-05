@@ -429,6 +429,7 @@ async def test_create_pr_from_issue_github_happy_path(
     # Check that slack_notify was called with the expected sequence of calls
     expected_calls = [
         call("Issue handler started: `issue_comment` by `test-sender` for `123:Test Issue` in `test-owner/test-repo`"),
+        call("PR created for test-owner/test-repo", "thread-ts-123"),
         call("Completed", "thread-ts-123")
     ]
     mock_slack_notify.assert_has_calls(expected_calls)
