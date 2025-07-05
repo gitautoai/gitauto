@@ -356,7 +356,6 @@ def test_timer_decorator_long_execution_time():
             )
 
 @pytest.mark.asyncio
-
 async def test_timer_decorator_async_exception_propagation():
     """Test that async exceptions are properly propagated through the decorator."""
     with patch("utils.time.timer.time.time") as mock_time_module:
