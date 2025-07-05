@@ -623,6 +623,7 @@ def test_chat_with_agent_replace_remote_file_content(
         base_args=base_args,
         mode="commit",
         repo_settings=None,
+        recursion_count=3,  # Prevent recursion for testing
     )
     
     # Check that the log message contains the file path
