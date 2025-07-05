@@ -797,6 +797,7 @@ async def test_create_pr_from_issue_with_images(
     ]
     mock_slack_notify.assert_has_calls(expected_calls)
     assert mock_create_comment.call_count >= 3  # Initial + 2 image descriptions
+        call("PR created for test-owner/test-repo", "thread-ts-123"),
 
 
 @pytest.mark.asyncio
