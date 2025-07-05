@@ -151,6 +151,7 @@ def test_get_owner_name_http_error_returns_none(sample_owner_id, sample_token):
     error_response.reason = "Not Found"
     http_error.response = error_response
     
+    mock_response.raise_for_status.side_effect = http_error
     with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
         result = get_owner_name(owner_id=sample_owner_id, token=sample_token)
         assert result is None
