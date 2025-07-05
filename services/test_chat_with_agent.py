@@ -139,6 +139,7 @@ def test_chat_with_agent_basic_flow(
         base_args=base_args,
         mode=mode,
         repo_settings=repo_settings,
+        recursion_count=3,  # Prevent recursion for testing
     )
     
     # Check that the system message was created
