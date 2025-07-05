@@ -6,9 +6,9 @@ This directory contains comprehensive unit tests for the `start.sh` script that 
 
 ### `start_test.py` - Consolidated Unit and Integration Tests
 
-Python-based unit tests that analyze the script structure, syntax, and configuration without executing the full script. These tests follow the repository's testing patterns (filename_test.py) and use pytest.
+Python-based unit and integration tests that analyze the script structure, syntax, and configuration. These tests follow the repository's testing patterns (filename_test.py) and use pytest.
 
-**Test Coverage:**
+**Unit Test Coverage:**
 - Script existence and permissions
 - Shebang and syntax validation
 - Configuration variables (PORT, NGROK_DOMAIN)
@@ -21,11 +21,13 @@ Python-based unit tests that analyze the script structure, syntax, and configura
 - File dependencies and network configuration
 
 **Integration Test Coverage:**
+- Script syntax validation
+- Environment variable loading
 - Virtual environment creation simulation
 - Error handling with missing files
-- Script behavior with common flags
+- Script behavior with common flags and missing dependencies
 
-### 3. `start_test.sh` - Shell-based Tests
+### `start_test.sh` - Shell-based Tests (Optional)
 
 Bash-based test framework that provides comprehensive testing of shell script functionality using mock functions.
 
@@ -34,6 +36,8 @@ Bash-based test framework that provides comprehensive testing of shell script fu
 - Mock implementations of external commands
 - End-to-end workflow simulation
 - Signal handling and cleanup testing
+
+Note: The shell tests are provided as an alternative testing approach but are not required since all functionality is covered by the Python tests.
 
 ## Running the Tests
 
@@ -47,17 +51,20 @@ Bash-based test framework that provides comprehensive testing of shell script fu
 ### Python Tests (Recommended)
 
 ```bash
-# Run main unit tests
+# Run unit tests only
 pytest start_test.py -v -m "not integration"
 
-# Run integration tests
+# Run integration tests only
 pytest start_test.py -v -m "integration"
 
+# Run all tests
+pytest start_test.py -v
+
 # Run with coverage
-pytest test_start*.py --cov=. --cov-report=html
+pytest start_test.py --cov=. --cov-report=html
 ```
 
-### Shell Tests
+### Shell Tests (Optional)
 
 ```bash
 # Make the test script executable
@@ -69,7 +76,7 @@ chmod +x start_test.sh
 
 ## Test Strategy
 
-The tests use a multi-layered approach:
+The consolidated test file uses a multi-layered approach:
 
 1. **Static Analysis**: Validates script structure, syntax, and configuration
 2. **Mocked Execution**: Tests logic flow with mocked external dependencies
@@ -78,4 +85,4 @@ The tests use a multi-layered approach:
 
 ## Coverage
 
-These tests provide comprehensive coverage of the `start.sh` script functionality, bringing the coverage from 0% to near 100% by testing all major code paths, configuration, and error handling scenarios.
+The consolidated test file provides comprehensive coverage of the `start.sh` script functionality, bringing the coverage from 0% to near 100% by testing all major code paths, configuration, and error handling scenarios while following the repository's one-test-file-per-source-file rule.
