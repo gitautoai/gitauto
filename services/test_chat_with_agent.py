@@ -520,6 +520,7 @@ def test_chat_with_agent_search_remote_file_contents_no_results(
         base_args=base_args,
         mode="explore",
         repo_settings=None,
+        recursion_count=3,  # Prevent recursion for testing
     )
     
     # Check that the log message indicates no files were found
