@@ -660,6 +660,7 @@ def test_chat_with_agent_model_fallback(
         base_args=base_args,
         mode="explore",
         repo_settings=None,
+        recursion_count=3,  # Prevent recursion for testing
     )
     
     # Check that try_next_model was called
