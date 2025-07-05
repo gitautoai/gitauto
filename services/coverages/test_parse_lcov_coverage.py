@@ -21,7 +21,12 @@ def mock_create_coverage_report():
 def test_parse_lcov_coverage_empty_content():
     """Test parsing empty LCOV content."""
     result = parse_lcov_coverage("")
-    assert result == []
+    
+    # Should return only a repository report with empty stats
+    assert len(result) == 1
+    assert result[0]['level'] == 'repository'
+    assert result[0]['full_path'] == 'All'
+    assert result[0]['line_coverage'] == 100  # Default when no lines
 
 
 def test_parse_lcov_coverage_basic_file():
