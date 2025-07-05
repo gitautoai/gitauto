@@ -95,6 +95,7 @@ async def test_timer_decorator_async_function_with_args_kwargs(mock_logger, mock
     )
 
 
+@pytest.mark.asyncio
 async def test_timer_decorator_async_function_exception_handling(mock_logger, mock_time):
     """Test that timer decorator handles exceptions in asynchronous functions."""
     @timer_decorator
