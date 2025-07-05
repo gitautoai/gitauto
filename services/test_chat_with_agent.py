@@ -291,7 +291,7 @@ def test_chat_with_agent_function_correction(
     # First call should be the model selection message
     assert mock_print.call_args_list[0][0][0] == "Using model: o3-mini"
     # Second call should be the warning message
-    
+    assert "Warning: Redirecting call from 'apply_diff_to_file' to 'replace_remote_file_content'" in mock_print.call_args_list[1][0][0]
     # Check that the corrected function was called
     mock_tools_to_call.assert_called_once_with(
         file_path="test.py", file_content="content", base_args=base_args
