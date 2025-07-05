@@ -149,8 +149,8 @@ def test_get_owner_name_http_error_returns_none(sample_owner_id, sample_token):
     error_response = MagicMock()
     error_response.status_code = 404
     error_response.reason = "Not Found"
-    http_error.response = error_response
     error_response.text = "User not found"
+    http_error.response = error_response
     
     mock_response.raise_for_status.side_effect = http_error
     with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
