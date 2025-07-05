@@ -247,7 +247,7 @@ def test_chat_with_agent_duplicate_function_call(
         )
     
     # Check that print was called with the error message
-    mock_print.assert_called_once()
+    assert mock_print.call_count == 2
     assert "Error: The function 'get_remote_file_content' was already called with the same arguments" in mock_print.call_args[0][0]
     
     # Check that the previous_calls list wasn't modified
