@@ -273,3 +273,113 @@ def test_timer_decorator_with_none_return():
             assert result is None
 
 
+def test_timer_decorator_with_complex_arguments():
+    """Test that timer decorator works with complex argument patterns."""
+    with patch("utils.time.timer.time") as mock_time_module:
+        with patch("utils.time.timer.logger") as mock_logger:
+            mock_time_module.time.side_effect = [1.0, 3.0]
+            
+            @timer_decorator
+            def complex_function(*args, **kwargs):
+                return {"args": args, "kwargs": kwargs}
+            
+            result = complex_function(1, 2, 3, name="test", value=42)
+            
+            assert result == {"args": (1, 2, 3), "kwargs": {"name": "test", "value": 42}}
+            mock_logger.info.assert_called_once_with(
+                "%s took %.2f seconds", "complex_function", 2.0
+            )
+
+
+async def test_timer_decorator_async_with_complex_arguments():
+    """Test that timer decorator works with complex async argument patterns."""
+    with patch("utils.time.timer.time") as mock_time_module:
+        with patch("utils.time.timer.logger") as mock_logger:
+            mock_time_module.time.side_effect = [1.0, 4.0]
+            
+            @timer_decorator
+            async def complex_async_function(*args, **kwargs):
+                await asyncio.sleep(0)  # Simulate async work
+                return {"async_args": args, "async_kwargs": kwargs}
+            
+            result = await complex_async_function("a", "b", flag=True, count=10)
+            
+            assert result == {"async_args": ("a", "b"), "async_kwargs": {"flag": True, "count": 10}}
+            mock_logger.info.assert_called_once_with(
+                "%s took %.2f seconds", "complex_async_function", 3.0
+            )
+
+
+def test_timer_decorator_inspect_detection():
+    """Test that timer decorator uses inspect.iscoroutinefunction correctly."""
+    with patch("utils.time.timer.inspect.iscoroutinefunction") as mock_inspect:
+        with patch("utils.time.timer.time") as mock_time_module:
+            with patch("utils.time.timer.logger"):
+                mock_time_module.time.side_effect = [1.0, 2.0]
+                mock_inspect.return_value = False  # Force sync path
+                
+                @timer_decorator
+                def test_function():
+                    return "test"
+                
+                result = test_function()
+                
+                assert result == "test"
+                mock_inspect.assert_called_once()
+
+
+def test_timer_decorator_long_execution_time():
+    """Test timer decorator with longer execution times."""
+    with patch("utils.time.timer.time") as mock_time_module:
+        with patch("utils.time.timer.logger") as mock_logger:
+            # Test longer execution time
+            mock_time_module.time.side_effect = [1.0, 61.5]  # 60.5 seconds
+            
+            @timer_decorator
+            def long_running_function():
+                return "completed"
+            
+            result = long_running_function()
+            
+            assert result == "completed"
+            mock_logger.info.assert_called_once_with(
+                "%s took %.2f seconds", "long_running_function", 60.5
+            )
+
+
+async def test_timer_decorator_async_exception_propagation():
+    """Test that async exceptions are properly propagated through the decorator."""
+    with patch("utils.time.timer.time") as mock_time_module:
+        with patch("utils.time.timer.logger") as mock_logger:
+            mock_time_module.time.side_effect = [1.0, 2.0]
+            
+            @timer_decorator
+            async def async_failing_function():
+                raise ValueError("Async exception test")
+            
+            with pytest.raises(ValueError, match="Async exception test"):
+                await async_failing_function()
+            
+            # Verify timing was still logged despite exception
+            mock_logger.info.assert_called_once_with(
+                "%s took %.2f seconds", "async_failing_function", 1.0
+            )
+
+
+def test_timer_decorator_sync_exception_propagation():
+    """Test that sync exceptions are properly propagated through the decorator."""
+    with patch("utils.time.timer.time") as mock_time_module:
+        with patch("utils.time.timer.logger") as mock_logger:
+            mock_time_module.time.side_effect = [1.0, 2.0]
+            
+            @timer_decorator
+            def sync_failing_function():
+                raise RuntimeError("Sync exception test")
+            
+            with pytest.raises(RuntimeError, match="Sync exception test"):
+                sync_failing_function()
+            
+            # Verify timing was still logged despite exception
+            mock_logger.info.assert_called_once_with(
+                "%s took %.2f seconds", "sync_failing_function", 1.0
+            )
