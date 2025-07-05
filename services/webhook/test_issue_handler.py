@@ -674,6 +674,7 @@ async def test_create_pr_from_issue_timeout_approaching(
     ]
     mock_slack_notify.assert_has_calls(expected_calls)
 
+        call("PR created for test-owner/test-repo", "thread-ts-123"),
 
 @pytest.mark.asyncio
 async def test_create_pr_from_issue_pr_creation_failed(
