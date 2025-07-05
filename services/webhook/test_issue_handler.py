@@ -933,4 +933,10 @@ async def test_create_pr_from_issue_retry_logic(
     assert mock_chat_with_agent.call_count == 8  # 4 iterations, 2 calls per iteration
     mock_create_empty_commit.assert_called_once()
     mock_create_pull_request.assert_called_once()
+    # Should call slack_notify for start and completion
+    expected_calls = [
+        call("Issue handler started: `issue_comment` by `test-sender` for `123:Test Issue` in `test-owner/test-repo`"),
+        call("Completed", "thread-ts-123")
+    ]
+    mock_slack_notify.assert_has_calls(expected_calls)
 
