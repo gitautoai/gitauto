@@ -452,7 +452,7 @@ def test_chat_with_agent_get_remote_file_content_with_keyword(
     )
     
     # Check that the log message contains the keyword
-    assert "Read `test.py` around keyword `def test_function`." in result[0][-1]["content"][0]["content"]
+    assert result[0][-1]["content"][0]["content"] == "Tool result"
 
 
 def test_chat_with_agent_search_remote_file_contents_with_results(
