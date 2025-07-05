@@ -226,3 +226,50 @@ def test_timer_decorator_multiple_calls():
             
             actual_calls = [call.args for call in mock_logger.info.call_args_list]
             assert actual_calls == expected_calls
+
+
+def test_timer_decorator_with_return_values():
+    """Test that timer decorator correctly returns function values."""
+    with patch("utils.time.timer.time") as mock_time_module:
+        with patch("utils.time.timer.logger"):
+            mock_time_module.time.side_effect = [1.0, 2.0]
+            
+            @timer_decorator
+            def function_with_return():
+                return {"status": "success", "data": [1, 2, 3]}
+            
+            result = function_with_return()
+            
+            assert result == {"status": "success", "data": [1, 2, 3]}
+
+
+async def test_timer_decorator_async_with_return_values():
+    """Test that timer decorator correctly returns async function values."""
+    with patch("utils.time.timer.time") as mock_time_module:
+        with patch("utils.time.timer.logger"):
+            mock_time_module.time.side_effect = [1.0, 2.0]
+            
+            @timer_decorator
+            async def async_function_with_return():
+                return {"status": "async_success", "data": [4, 5, 6]}
+            
+            result = await async_function_with_return()
+            
+            assert result == {"status": "async_success", "data": [4, 5, 6]}
+
+
+def test_timer_decorator_with_none_return():
+    """Test that timer decorator handles functions that return None."""
+    with patch("utils.time.timer.time") as mock_time_module:
+        with patch("utils.time.timer.logger"):
+            mock_time_module.time.side_effect = [1.0, 2.0]
+            
+            @timer_decorator
+            def function_returning_none():
+                return None
+            
+            result = function_returning_none()
+            
+            assert result is None
+
+
