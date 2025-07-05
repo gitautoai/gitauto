@@ -524,7 +524,7 @@ def test_chat_with_agent_search_remote_file_contents_no_results(
     )
     
     # Check that the log message indicates no files were found
-    assert "Searched repository for `nonexistent_function` but found no matching files." in result[0][-1]["content"][0]["content"]
+    assert result[0][-1]["content"][0]["content"] == "0 files found for query 'nonexistent_function'"
 
 
 def test_chat_with_agent_search_google(
