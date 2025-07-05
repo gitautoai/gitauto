@@ -142,10 +142,10 @@ async def test_timer_decorator_preserves_async_function_metadata():
 
 def test_timer_decorator_different_timing_values():
     """Test timer decorator with different timing scenarios."""
-    with patch("utils.time.timer.time") as mock_time_module:
+    with patch("utils.time.timer.time.time") as mock_time_module:
         with patch("utils.time.timer.logger") as mock_logger:
             # Test very short execution time
-            mock_time_module.time.side_effect = [10.0, 10.01]  # 0.01 seconds
+            mock_time_module.side_effect = [10.0, 10.01]  # 0.01 seconds
             
             @timer_decorator
             def quick_function():
@@ -161,10 +161,10 @@ def test_timer_decorator_different_timing_values():
 
 def test_timer_decorator_zero_execution_time():
     """Test timer decorator when execution time is effectively zero."""
-    with patch("utils.time.timer.time") as mock_time_module:
+    with patch("utils.time.timer.time.time") as mock_time_module:
         with patch("utils.time.timer.logger") as mock_logger:
             # Same start and end time
-            mock_time_module.time.side_effect = [5.0, 5.0]  # 0.0 seconds
+            mock_time_module.side_effect = [5.0, 5.0]  # 0.0 seconds
             
             @timer_decorator
             def instant_function():
@@ -203,7 +203,7 @@ def test_timer_decorator_multiple_calls():
         [4.0, 6.0],  # Third call: 2.0 seconds
     ]
     
-    with patch("utils.time.timer.time") as mock_time_module:
+    with patch("utils.time.timer.time.time") as mock_time_module:
         with patch("utils.time.timer.logger") as mock_logger:
             
             @timer_decorator
@@ -212,7 +212,7 @@ def test_timer_decorator_multiple_calls():
             
             # Make multiple calls
             for i, times in enumerate(call_times):
-                mock_time_module.time.side_effect = times
+                mock_time_module.side_effect = times
                 result = multi_call_function(i + 1)
                 assert result == (i + 1) * 2
             
@@ -230,9 +230,9 @@ def test_timer_decorator_multiple_calls():
 
 def test_timer_decorator_with_return_values():
     """Test that timer decorator correctly returns function values."""
-    with patch("utils.time.timer.time") as mock_time_module:
+    with patch("utils.time.timer.time.time") as mock_time_module:
         with patch("utils.time.timer.logger"):
-            mock_time_module.time.side_effect = [1.0, 2.0]
+            mock_time_module.side_effect = [1.0, 2.0]
             
             @timer_decorator
             def function_with_return():
@@ -245,9 +245,9 @@ def test_timer_decorator_with_return_values():
 
 async def test_timer_decorator_async_with_return_values():
     """Test that timer decorator correctly returns async function values."""
-    with patch("utils.time.timer.time") as mock_time_module:
+    with patch("utils.time.timer.time.time") as mock_time_module:
         with patch("utils.time.timer.logger"):
-            mock_time_module.time.side_effect = [1.0, 2.0]
+            mock_time_module.side_effect = [1.0, 2.0]
             
             @timer_decorator
             async def async_function_with_return():
@@ -260,9 +260,9 @@ async def test_timer_decorator_async_with_return_values():
 
 def test_timer_decorator_with_none_return():
     """Test that timer decorator handles functions that return None."""
-    with patch("utils.time.timer.time") as mock_time_module:
+    with patch("utils.time.timer.time.time") as mock_time_module:
         with patch("utils.time.timer.logger"):
-            mock_time_module.time.side_effect = [1.0, 2.0]
+            mock_time_module.side_effect = [1.0, 2.0]
             
             @timer_decorator
             def function_returning_none():
@@ -275,9 +275,9 @@ def test_timer_decorator_with_none_return():
 
 def test_timer_decorator_with_complex_arguments():
     """Test that timer decorator works with complex argument patterns."""
-    with patch("utils.time.timer.time") as mock_time_module:
+    with patch("utils.time.timer.time.time") as mock_time_module:
         with patch("utils.time.timer.logger") as mock_logger:
-            mock_time_module.time.side_effect = [1.0, 3.0]
+            mock_time_module.side_effect = [1.0, 3.0]
             
             @timer_decorator
             def complex_function(*args, **kwargs):
@@ -293,9 +293,9 @@ def test_timer_decorator_with_complex_arguments():
 
 async def test_timer_decorator_async_with_complex_arguments():
     """Test that timer decorator works with complex async argument patterns."""
-    with patch("utils.time.timer.time") as mock_time_module:
+    with patch("utils.time.timer.time.time") as mock_time_module:
         with patch("utils.time.timer.logger") as mock_logger:
-            mock_time_module.time.side_effect = [1.0, 4.0]
+            mock_time_module.side_effect = [1.0, 4.0]
             
             @timer_decorator
             async def complex_async_function(*args, **kwargs):
@@ -313,9 +313,9 @@ async def test_timer_decorator_async_with_complex_arguments():
 def test_timer_decorator_inspect_detection():
     """Test that timer decorator uses inspect.iscoroutinefunction correctly."""
     with patch("utils.time.timer.inspect.iscoroutinefunction") as mock_inspect:
-        with patch("utils.time.timer.time") as mock_time_module:
+        with patch("utils.time.timer.time.time") as mock_time_module:
             with patch("utils.time.timer.logger"):
-                mock_time_module.time.side_effect = [1.0, 2.0]
+                mock_time_module.side_effect = [1.0, 2.0]
                 mock_inspect.return_value = False  # Force sync path
                 
                 @timer_decorator
@@ -330,10 +330,10 @@ def test_timer_decorator_inspect_detection():
 
 def test_timer_decorator_long_execution_time():
     """Test timer decorator with longer execution times."""
-    with patch("utils.time.timer.time") as mock_time_module:
+    with patch("utils.time.timer.time.time") as mock_time_module:
         with patch("utils.time.timer.logger") as mock_logger:
             # Test longer execution time
-            mock_time_module.time.side_effect = [1.0, 61.5]  # 60.5 seconds
+            mock_time_module.side_effect = [1.0, 61.5]  # 60.5 seconds
             
             @timer_decorator
             def long_running_function():
@@ -349,9 +349,9 @@ def test_timer_decorator_long_execution_time():
 
 async def test_timer_decorator_async_exception_propagation():
     """Test that async exceptions are properly propagated through the decorator."""
-    with patch("utils.time.timer.time") as mock_time_module:
+    with patch("utils.time.timer.time.time") as mock_time_module:
         with patch("utils.time.timer.logger") as mock_logger:
-            mock_time_module.time.side_effect = [1.0, 2.0]
+            mock_time_module.side_effect = [1.0, 2.0]
             
             @timer_decorator
             async def async_failing_function():
@@ -368,9 +368,9 @@ async def test_timer_decorator_async_exception_propagation():
 
 def test_timer_decorator_sync_exception_propagation():
     """Test that sync exceptions are properly propagated through the decorator."""
-    with patch("utils.time.timer.time") as mock_time_module:
+    with patch("utils.time.timer.time.time") as mock_time_module:
         with patch("utils.time.timer.logger") as mock_logger:
-            mock_time_module.time.side_effect = [1.0, 2.0]
+            mock_time_module.side_effect = [1.0, 2.0]
             
             @timer_decorator
             def sync_failing_function():
