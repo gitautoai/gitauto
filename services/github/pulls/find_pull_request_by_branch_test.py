@@ -1,4 +1,5 @@
 from unittest.mock import patch, MagicMock
+import json
 
 import pytest
 from gql import gql
@@ -264,3 +265,102 @@ def test_find_pull_request_by_branch_with_various_parameter_combinations(
     assert variable_values["owner"] == owner
     assert variable_values["repo"] == repo
     assert variable_values["headRefName"] == branch_name
+
+
+def test_find_pull_request_by_branch_handles_graphql_client_exception(mock_graphql_client):
+    """Test that the function handles GraphQL client exceptions gracefully."""
+    # Arrange
+    mock_graphql_client.execute.side_effect = Exception("GraphQL execution failed")
+    owner = "test-owner"
+    repo = "test-repo"
+    branch_name = "feature-branch"
+    token = "test-token"
+
+    # Act
+    result = find_pull_request_by_branch(owner, repo, branch_name, token)
+
+    # Assert - Due to @handle_exceptions decorator, should return None instead of raising
+    assert result is None
+
+
+def test_find_pull_request_by_branch_handles_json_decode_error(mock_graphql_client):
+    """Test that the function handles JSON decode errors gracefully."""
+    # Arrange
+    mock_graphql_client.execute.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+    owner = "test-owner"
+    repo = "test-repo"
+    branch_name = "feature-branch"
+    token = "test-token"
+
+    # Act
+    result = find_pull_request_by_branch(owner, repo, branch_name, token)
+
+    # Assert - Due to @handle_exceptions decorator, should return None instead of raising
+    assert result is None
+
+
+def test_find_pull_request_by_branch_handles_key_error(mock_graphql_client):
+    """Test that the function handles KeyError exceptions gracefully."""
+    # Arrange
+    mock_graphql_client.execute.side_effect = KeyError("Missing key")
+    owner = "test-owner"
+    repo = "test-repo"
+    branch_name = "feature-branch"
+    token = "test-token"
+
+    # Act
+    result = find_pull_request_by_branch(owner, repo, branch_name, token)
+
+    # Assert - Due to @handle_exceptions decorator, should return None instead of raising
+    assert result is None
+
+
+def test_find_pull_request_by_branch_handles_attribute_error(mock_graphql_client):
+    """Test that the function handles AttributeError exceptions gracefully."""
+    # Arrange
+    mock_graphql_client.execute.side_effect = AttributeError("'NoneType' object has no attribute")
+    owner = "test-owner"
+    repo = "test-repo"
+    branch_name = "feature-branch"
+    token = "test-token"
+
+    # Act
+    result = find_pull_request_by_branch(owner, repo, branch_name, token)
+
+    # Assert - Due to @handle_exceptions decorator, should return None instead of raising
+    assert result is None
+
+
+def test_find_pull_request_by_branch_handles_type_error(mock_graphql_client):
+    """Test that the function handles TypeError exceptions gracefully."""
+    # Arrange
+    mock_graphql_client.execute.side_effect = TypeError("Invalid type")
+    owner = "test-owner"
+    repo = "test-repo"
+    branch_name = "feature-branch"
+    token = "test-token"
+
+    # Act
+    result = find_pull_request_by_branch(owner, repo, branch_name, token)
+
+    # Assert - Due to @handle_exceptions decorator, should return None instead of raising
+    assert result is None
+
+
+def test_find_pull_request_by_branch_with_empty_string_parameters(mock_graphql_client):
+    """Test that the function handles empty string parameters."""
+    # Arrange
+    mock_graphql_client.execute.return_value = {
+        "repository": {"pullRequests": {"nodes": []}}
+    }
+    
+    # Act
+    result = find_pull_request_by_branch("", "", "", "")
+
+    # Assert
+    assert result is None
+    mock_graphql_client.execute.assert_called_once()
+    
+    # Verify empty strings were passed correctly
+    call_args = mock_graphql_client.execute.call_args
+    variable_values = call_args[1]['variable_values']
