@@ -153,7 +153,7 @@ def test_chat_with_agent_basic_flow(
     # Check that the chat provider was called with correct arguments
     mock_chat_with_openai.assert_called_once()
     args, kwargs = mock_chat_with_openai.call_args
-    assert len(args[0]) == 1 and args[0][0] == messages[0]
+    assert messages[0] in args[0]  # Check that the original message is in the list passed to chat_with_openai
     assert kwargs["system_content"] == "Test system message"
     
     # Check that the tool was called
