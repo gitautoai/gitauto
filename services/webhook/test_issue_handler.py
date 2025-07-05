@@ -706,7 +706,13 @@ async def test_create_pr_from_issue_pr_creation_failed(
     
     # Verify
     mock_update_comment.assert_called_with(body=UPDATE_COMMENT_FOR_422, base_args=mock_base_args)
-    mock_slack_notify.assert_called_with("@channel Failed to create PR for test-owner/test-repo", "thread-ts-123")
+    # Check that slack_notify was called with the expected sequence of calls
+    expected_calls = [
+        call("Issue handler started: `issue_comment` by `test-sender` for `123:Test Issue` in `test-owner/test-repo`"),
+        call("@channel Failed to create PR for test-owner/test-repo", "thread-ts-123"),
+        call("@channel Failed", "thread-ts-123")
+    ]
+    mock_slack_notify.assert_has_calls(expected_calls)
     mock_update_usage.assert_called_once_with(
         usage_record_id="usage-record-id-123",
         is_completed=False,
