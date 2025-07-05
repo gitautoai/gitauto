@@ -112,7 +112,8 @@ def test_find_pull_request_by_branch_calls_graphql_client_with_correct_parameter
     
     # Check that gql query was passed
     query_arg = call_args[0][0]
-    assert hasattr(query_arg, 'document')
+    # Check that the query argument is a DocumentNode (returned by gql())
+    assert str(type(query_arg).__name__) == 'DocumentNode'
     
     # Check variable values
     variable_values = call_args[1]['variable_values']
