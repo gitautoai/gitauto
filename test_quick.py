@@ -4,8 +4,9 @@ sys.path.append('.')
 
 from services.coverages.parse_lcov_coverage import parse_lcov_coverage
 
-def test_malformed_lines():
-    """Test the exact case from the failing test"""
+def test_original_failing_case():
+    """Test the exact case from the originally failing test"""
+    print("=== TESTING ORIGINAL FAILING CASE ===")
     lcov_content = """SF:src/malformed.py
 FN:invalid_line
 FNDA:not_a_number,func
@@ -20,137 +21,139 @@ LH:1
 end_of_record
 """
     
-    print("Testing malformed lines...")
+    print("Input LCOV content:")
+    print(lcov_content)
+    print("Expected: 3 reports (file, directory, repository)")
+    print("Processing...")
+    
     try:
         result = parse_lcov_coverage(lcov_content)
-        print(f"Malformed content result: {len(result)} reports")
+        print(f"✅ SUCCESS: Got {len(result)} reports")
+        
         for i, report in enumerate(result):
-            print(f"Report {i}: {report['level']} - {report['full_path']}")
+            print(f"  Report {i+1}: {report['level']} - '{report['full_path']}'")
         
         # Test the specific assertion from the failing test
         if len(result) == 3:
-            print("✅ Test would PASS: len(result) == 3")
-            return True
+            print("✅ ASSERTION PASSES: len(result) == 3")
+            
+            # Check that we have the expected report types
+            levels = [r['level'] for r in result]
+            if 'file' in levels and 'directory' in levels and 'repository' in levels:
+                print("✅ ASSERTION PASSES: All expected report types present")
+                return True
+            else:
+                print(f"❌ ASSERTION FAILS: Missing report types. Got: {levels}")
+                return False
         else:
-            print(f"❌ Test would FAIL: len(result) == {len(result)}, expected 3")
+            print(f"❌ ASSERTION FAILS: len(result) == {len(result)}, expected 3")
             return False
             
     except Exception as e:
-        print(f"❌ Exception occurred: {e}")
-        print("Test would FAIL due to exception")
+        print(f"❌ EXCEPTION: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
-def test_branch_error_handling():
-    """Test the branch error handling case"""
-    lcov_content = """SF:src/error.py
-BRDA:invalid,data,here,now
-end_of_record
-"""
+def test_all_error_cases():
+    """Test various error cases to ensure robustness"""
+    print("\n=== TESTING ALL ERROR CASES ===")
     
-    print("\nTesting branch error handling...")
-    try:
-        result = parse_lcov_coverage(lcov_content)
-        print(f"Branch error content result: {len(result)} reports")
-        for i, report in enumerate(result):
-            print(f"Report {i}: {report['level']} - {report['full_path']}")
-        
-        if len(result) == 3:
-            print("✅ Branch error test would PASS: len(result) == 3")
-            return True
-        else:
-            print(f"❌ Branch error test would FAIL: len(result) == {len(result)}, expected 3")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Exception occurred: {e}")
-        print("Branch error test would FAIL due to exception")
-        return False
-
-def test_empty_records():
-    """Test empty records case"""
-    lcov_content = """SF:src/empty.py
-end_of_record
-"""
+    test_cases = [
+        ("FN with no comma", "SF:test.py\nFN:invalid_line\nend_of_record\n"),
+        ("FN with too many parts", "SF:test.py\nFN:1,2,3,4,5\nend_of_record\n"),
+        ("FNDA with invalid number", "SF:test.py\nFNDA:not_a_number,func\nend_of_record\n"),
+        ("FNDA with no comma", "SF:test.py\nFNDA:invalid\nend_of_record\n"),
+        ("BRDA with too few parts", "SF:test.py\nBRDA:invalid\nend_of_record\n"),
+        ("BRDA with invalid numbers", "SF:test.py\nBRDA:a,b,c,d\nend_of_record\n"),
+        ("DA with invalid line number", "SF:test.py\nDA:not_a_line,1\nend_of_record\n"),
+        ("DA with no comma", "SF:test.py\nDA:invalid\nend_of_record\n"),
+        ("FNF with invalid number", "SF:test.py\nFNF:not_a_number\nend_of_record\n"),
+        ("FNH with invalid number", "SF:test.py\nFNH:not_a_number\nend_of_record\n"),
+        ("BRF with invalid number", "SF:test.py\nBRF:not_a_number\nend_of_record\n"),
+        ("BRH with invalid number", "SF:test.py\nBRH:not_a_number\nend_of_record\n"),
+        ("LF with invalid number", "SF:test.py\nLF:not_a_number\nend_of_record\n"),
+        ("LH with invalid number", "SF:test.py\nLH:not_a_number\nend_of_record\n"),
+    ]
     
-    print("\nTesting empty records...")
-    try:
-        result = parse_lcov_coverage(lcov_content)
-        print(f"Empty records result: {len(result)} reports")
-        for i, report in enumerate(result):
-            print(f"Report {i}: {report['level']} - {report['full_path']}")
-        
-        if len(result) == 3:
-            print("✅ Empty records test would PASS: len(result) == 3")
-            return True
-        else:
-            print(f"❌ Empty records test would FAIL: len(result) == {len(result)}, expected 3")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Exception occurred: {e}")
-        print("Empty records test would FAIL due to exception")
-        return False
+    all_passed = True
+    for test_name, content in test_cases:
+        print(f"\nTesting: {test_name}")
+        try:
+            result = parse_lcov_coverage(content)
+            if len(result) == 3:  # Should always get file, directory, repository
+                print(f"  ✅ PASS: {len(result)} reports")
+            else:
+                print(f"  ❌ FAIL: {len(result)} reports, expected 3")
+                all_passed = False
+        except Exception as e:
+            print(f"  ❌ EXCEPTION: {e}")
+            all_passed = False
+    
+    return all_passed
 
-def test_empty_content():
-    """Test empty content"""
-    print("\nTesting empty content...")
-    try:
-        result = parse_lcov_coverage("")
-        print(f"Empty content result: {len(result)} reports")
-        if len(result) == 1:
-            print("✅ Empty content test would PASS")
-            return True
-        else:
-            print(f"❌ Empty content test would FAIL: expected 1, got {len(result)}")
-            return False
-    except Exception as e:
-        print(f"❌ Exception occurred with empty content: {e}")
-        return False
-
-def test_basic_valid_content():
-    """Test basic valid content"""
-    print("\nTesting basic valid content...")
-    lcov_content = """SF:src/example.py
-FN:10,example_function
-FNDA:1,example_function
+def test_valid_cases():
+    """Test that valid cases still work"""
+    print("\n=== TESTING VALID CASES ===")
+    
+    test_cases = [
+        ("Empty content", ""),
+        ("Empty record", "SF:test.py\nend_of_record\n"),
+        ("Basic valid", """SF:src/test.py
+FN:10,func
+FNDA:1,func
+DA:10,1
+end_of_record
+"""),
+        ("Complex valid", """SF:src/test.py
+FN:10,20,func
+FNDA:1,func
+BRDA:15,1,jump to line 20,1
+DA:10,1
+DA:15,1
 FNF:1
 FNH:1
-DA:10,1
-DA:11,1
-DA:12,0
-LF:3
+BRF:1
+BRH:1
+LF:2
 LH:2
 end_of_record
-"""
+"""),
+    ]
     
-    try:
-        result = parse_lcov_coverage(lcov_content)
-        print(f"Basic content result: {len(result)} reports")
-        for i, report in enumerate(result):
-            print(f"Report {i}: {report['level']} - {report['full_path']}")
-        
-        if len(result) == 3:
-            print("✅ Basic content test would PASS")
-            return True
-        else:
-            print(f"❌ Basic content test would FAIL: expected 3, got {len(result)}")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Exception occurred with basic content: {e}")
-        return False
+    all_passed = True
+    for test_name, content in test_cases:
+        print(f"\nTesting: {test_name}")
+        try:
+            result = parse_lcov_coverage(content)
+            expected = 1 if test_name == "Empty content" else 3
+            if len(result) == expected:
+                print(f"  ✅ PASS: {len(result)} reports")
+            else:
+                print(f"  ❌ FAIL: {len(result)} reports, expected {expected}")
+                all_passed = False
+        except Exception as e:
+            print(f"  ❌ EXCEPTION: {e}")
+            all_passed = False
+    
+    return all_passed
 
 # Run all tests
-results = []
-results.append(test_malformed_lines())
-results.append(test_branch_error_handling())
-results.append(test_empty_records())
-results.append(test_empty_content())
-results.append(test_basic_valid_content())
+print("🧪 COMPREHENSIVE TEST SUITE")
+print("=" * 50)
 
-print(f"\n=== SUMMARY ===")
+results = []
+results.append(test_original_failing_case())
+results.append(test_all_error_cases())
+results.append(test_valid_cases())
+
+print(f"\n{'=' * 50}")
+print(f"📊 FINAL RESULTS")
 print(f"Tests passed: {sum(results)}/{len(results)}")
+
 if all(results):
-    print("🎉 All tests would PASS!")
+    print("🎉 ALL TESTS PASS! The fix should work!")
 else:
-    print("❌ Some tests would FAIL")
+    print("❌ Some tests failed. Need more investigation.")
+    
+print(f"{'=' * 50}")
