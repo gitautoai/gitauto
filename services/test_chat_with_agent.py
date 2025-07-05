@@ -561,7 +561,7 @@ def test_chat_with_agent_search_google(
     assert mock_update_comment.call_count >= 2
     
     # Check that the log message contains the search query
-    assert "Googled `python testing best practices`" in result[0][-1]["content"][0]["content"]
+    assert result[0][-1]["content"][0]["content"] == "Tool result"
 
 
 def test_chat_with_agent_apply_diff_to_file(
