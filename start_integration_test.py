@@ -162,7 +162,7 @@ echo "Virtual environment ready"
         try:
             os.chdir(test_environment)
             result = subprocess.run(
-                [test_script], 
+                ["bash", test_script], 
                 capture_output=True, 
                 text=True
             )
@@ -174,7 +174,7 @@ echo "Virtual environment ready"
             
             # Test with existing venv
             result2 = subprocess.run(
-                [test_script], 
+                ["bash", test_script], 
                 capture_output=True, 
                 text=True
             )
