@@ -333,7 +333,9 @@ def test_chat_with_agent_similar_function_name(
     
     # Check that print was called with the warning message
     assert mock_print.call_count == 2
-    assert "Warning: Redirecting call from 'create_remote_file' to 'replace_remote_file_content'" in mock_print.call_args[0][0]
+    # First call should be the model selection message
+    assert mock_print.call_args_list[0][0][0] == "Using model: o3-mini"
+    # Second call should be the warning message
     
     # Check that the corrected function was called
     mock_tools_to_call.assert_called_once_with(
