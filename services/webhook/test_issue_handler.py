@@ -563,7 +563,12 @@ async def test_create_pr_from_issue_request_limit_reached(
         await create_pr_from_issue(github_payload, "issue_comment", "github")
         
         # Verify
-        mock_slack_notify.assert_called_with("Request limit reached for test-owner/test-repo - 20 requests used", "thread-ts-123")
+        # Check that slack_notify was called with the expected sequence of calls
+        expected_calls = [
+            call("Issue handler started: `issue_comment` by `test-sender` for `123:Test Issue` in `test-owner/test-repo`"),
+            call("Request limit reached for test-owner/test-repo - 20 requests used", "thread-ts-123")
+        ]
+        mock_slack_notify.assert_has_calls(expected_calls)
         mock_update_comment.assert_called_with(body="Request limit reached message", base_args=mock_base_args)
         mock_request_limit_reached.assert_called_once_with(user_name="test-sender", request_count=20, end_date="2025-08-01")
 
