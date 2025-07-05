@@ -2,4 +2,6 @@
   Fix failed tests by analyzing logs and addressing root causes.
   
   When you get stuck and can't solve the problem, simplify rather than making it more complex. It's better to create a simple solution that passes tests (even if something is missing) than to over-complicate and mess up the PR. Simple solutions that work have more value than complex solutions that fail.
+  
+  If you cannot clearly identify the root cause of test failures, prefer removing problematic test cases over adding more code to fix them. Adding complexity often creates more errors. It's better to have fewer passing tests than many failing ones.
 </trigger_instruction> 
