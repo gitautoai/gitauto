@@ -135,7 +135,6 @@ def test_chat_with_agent_basic_flow(
     
     result = chat_with_agent(
         messages=messages.copy(),  # Use a copy to avoid modifying the fixture
-        messages=messages,
         trigger=trigger,
         base_args=base_args,
         mode=mode,
