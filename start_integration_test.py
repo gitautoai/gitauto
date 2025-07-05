@@ -71,7 +71,7 @@ class TestStartScriptIntegration:
         try:
             os.chdir(test_environment)
             result = subprocess.run(
-                [modified_script], 
+                ["bash", modified_script], 
                 capture_output=True, 
                 text=True,
                 timeout=10
