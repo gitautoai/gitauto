@@ -222,7 +222,7 @@ def mock_get_comments():
 def mock_extract_image_urls():
     """Fixture to mock extract_image_urls."""
     with patch("services.webhook.issue_handler.extract_image_urls") as mock:
-        mock.return_value = [{"url": "https://example.com/image.png", "alt": "Test Image"}]
+        mock.return_value = []
         yield mock
 
 
