@@ -40,6 +40,32 @@ end_of_record
         print("Test would FAIL due to exception")
         return False
 
+def test_branch_error_handling():
+    """Test the branch error handling case"""
+    lcov_content = """SF:src/error.py
+BRDA:invalid,data,here,now
+end_of_record
+"""
+    
+    print("\nTesting branch error handling...")
+    try:
+        result = parse_lcov_coverage(lcov_content)
+        print(f"Branch error content result: {len(result)} reports")
+        for i, report in enumerate(result):
+            print(f"Report {i}: {report['level']} - {report['full_path']}")
+        
+        if len(result) == 3:
+            print("✅ Branch error test would PASS: len(result) == 3")
+            return True
+        else:
+            print(f"❌ Branch error test would FAIL: len(result) == {len(result)}, expected 3")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Exception occurred: {e}")
+        print("Branch error test would FAIL due to exception")
+        return False
+
 def test_empty_content():
     """Test empty content"""
     print("\nTesting empty content...")
@@ -92,6 +118,7 @@ end_of_record
 # Run all tests
 results = []
 results.append(test_malformed_lines())
+results.append(test_branch_error_handling())
 results.append(test_empty_content())
 results.append(test_basic_valid_content())
 
