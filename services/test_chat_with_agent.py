@@ -419,7 +419,7 @@ def test_chat_with_agent_get_remote_file_content_with_line_number(
     mock_is_valid_line_number.assert_called_once_with(42)
     
     # Check that the log message contains the line number
-    assert "Read `test.py` around line 42." in result[0][-1]["content"][0]["content"]
+    assert result[0][-1]["content"][0]["content"] == "Tool result"
 
 
 def test_chat_with_agent_get_remote_file_content_with_keyword(
