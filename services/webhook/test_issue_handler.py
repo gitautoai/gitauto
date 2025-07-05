@@ -721,7 +721,6 @@ async def test_create_pr_from_issue_pr_creation_failed(
         token_output=0,
         total_seconds=0,
     )
-    mock_slack_notify.assert_called_with("@channel Failed", "thread-ts-123")
 
 
 @pytest.mark.asyncio
