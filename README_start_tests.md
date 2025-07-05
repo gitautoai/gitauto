@@ -6,7 +6,7 @@ This directory contains comprehensive unit tests for the `start.sh` script that 
 
 ### 1. `test_start.py` - Main Unit Tests
 
-Python-based unit tests that analyze the script structure, syntax, and configuration without executing the full script. These tests follow the repository's testing patterns and use pytest.
+Python-based unit tests that analyze the script structure, syntax, and configuration without executing the full script. These tests follow the repository's testing patterns (filename_test.py) and use pytest.
 
 **Test Coverage:**
 - Script existence and permissions
@@ -20,9 +20,9 @@ Python-based unit tests that analyze the script structure, syntax, and configura
 - Output messages and error handling
 - File dependencies and network configuration
 
-### 2. `test_start_integration.py` - Integration Tests
+### 2. `start_integration_test.py` - Integration Tests
 
-Integration tests that safely execute parts of the script in isolated environments to test actual functionality.
+Integration tests that safely execute parts of the script in isolated environments to test actual functionality. Follows the repository's naming convention.
 
 **Test Coverage:**
 - Script syntax validation
@@ -54,13 +54,13 @@ Bash-based test framework that provides comprehensive testing of shell script fu
 
 ```bash
 # Run main unit tests
-pytest test_start.py -v
+pytest start_test.py -v
 
 # Run integration tests
-pytest test_start_integration.py -v
+pytest start_integration_test.py -v
 
 # Run all Python tests
-pytest test_start*.py -v
+pytest *start*test.py -v
 
 # Run with coverage
 pytest test_start*.py --cov=. --cov-report=html
