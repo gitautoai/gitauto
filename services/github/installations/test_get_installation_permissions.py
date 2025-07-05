@@ -107,7 +107,13 @@ def test_get_installation_permissions_http_error(mock_headers):
     token = "test_token"
     
     mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = HTTPError("404 Not Found")
+    mock_response.status_code = 404
+    mock_response.reason = "Not Found"
+    mock_response.text = "Not Found"
+    
+    http_error = HTTPError("404 Not Found")
+    http_error.response = mock_response
+    mock_response.raise_for_status.side_effect = http_error
     
     with patch("services.github.installations.get_installation_permissions.get") as mock_get, \
          patch("services.github.installations.get_installation_permissions.create_headers") as mock_create_headers:
