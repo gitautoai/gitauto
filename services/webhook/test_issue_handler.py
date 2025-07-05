@@ -497,7 +497,12 @@ async def test_create_pr_from_issue_jira_happy_path(
     await create_pr_from_issue(jira_payload, "jira_issue", "jira")
     
     # Verify
-    mock_slack_notify.assert_called_with("Issue handler started: `jira_issue` by `test-sender` for `123:Test Issue` in `test-owner/test-repo`")
+    # Check that slack_notify was called with the expected sequence of calls
+    expected_calls = [
+        call("Issue handler started: `jira_issue` by `test-sender` for `123:Test Issue` in `test-owner/test-repo`"),
+        call("Completed", "thread-ts-123")
+    ]
+    mock_slack_notify.assert_has_calls(expected_calls)
     mock_deconstruct_jira_payload.assert_called_once_with(payload=jira_payload)
     mock_create_comment.assert_called()
     mock_is_request_limit_reached.assert_called_once()
@@ -510,7 +515,6 @@ async def test_create_pr_from_issue_jira_happy_path(
     mock_create_empty_commit.assert_called_once()
     mock_create_pull_request.assert_called_once()
     mock_update_usage.assert_called_once()
-    mock_slack_notify.assert_called_with("Completed", "thread-ts-123")
 
 
 @pytest.mark.asyncio
