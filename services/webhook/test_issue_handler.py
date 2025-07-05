@@ -426,7 +426,12 @@ async def test_create_pr_from_issue_github_happy_path(
     await create_pr_from_issue(github_payload, "issue_comment", "github")
     
     # Verify
-    mock_slack_notify.assert_called_with("Issue handler started: `issue_comment` by `test-sender` for `123:Test Issue` in `test-owner/test-repo`")
+    # Check that slack_notify was called with the expected sequence of calls
+    expected_calls = [
+        call("Issue handler started: `issue_comment` by `test-sender` for `123:Test Issue` in `test-owner/test-repo`"),
+        call("Completed", "thread-ts-123")
+    ]
+    mock_slack_notify.assert_has_calls(expected_calls)
     mock_deconstruct_github_payload.assert_called_once_with(payload=github_payload)
     mock_delete_comments_by_identifiers.assert_called_once()
     mock_create_comment.assert_called()
@@ -450,7 +455,6 @@ async def test_create_pr_from_issue_github_happy_path(
         token_output=0,
         total_seconds=0,
     )
-    mock_slack_notify.assert_called_with("Completed", "thread-ts-123")
 
 
 @pytest.mark.asyncio
