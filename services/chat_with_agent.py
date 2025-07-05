@@ -150,6 +150,7 @@ def chat_with_agent(
             tool_args = corrected_tool[1]
 
         if tool_name in tools_to_call:
+            tool_args.pop("base_args", None)
             tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
             previous_calls.append(current_call)
             is_done = True
