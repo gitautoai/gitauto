@@ -131,7 +131,7 @@ echo "Virtual environment ready"
             os.chmod(script_file, 0o755)
 
             # Run the test script
-            result = subprocess.run([script_file], capture_output=True, text=True)
+            result = subprocess.run(["bash", script_file], capture_output=True, text=True)
 
             assert "Creating virtual environment..." in result.stdout
             assert "Virtual environment ready" in result.stdout
