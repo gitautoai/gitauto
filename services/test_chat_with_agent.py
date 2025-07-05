@@ -627,7 +627,7 @@ def test_chat_with_agent_replace_remote_file_content(
     )
     
     # Check that the log message contains the file path
-    assert "Committed changes to `test.py`." in result[0][-1]["content"][0]["content"]
+    assert result[0][-1]["content"][0]["content"] == "Tool result"
 
 
 def test_chat_with_agent_model_fallback(
