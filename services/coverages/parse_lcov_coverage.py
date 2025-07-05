@@ -71,7 +71,10 @@ def parse_lcov_coverage(lcov_content: str):
         elif line.startswith("FNDA:"):  # FNDA: Function execution counts
             # Format: FNDA:<execution count>,<function name>
             try:
-                execution_count, function_name = line[5:].split(",")
+                parts = line[5:].split(",")
+                if len(parts) != 2:
+                    raise ValueError("Invalid FNDA format")
+                execution_count, function_name = parts
                 execution_count = int(execution_count)
                 if execution_count > 0:
                     current_stats["functions_covered"] += 1
