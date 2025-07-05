@@ -371,7 +371,7 @@ def test_find_pull_request_by_branch_with_empty_string_parameters(mock_graphql_c
 
 
 def test_find_pull_request_by_branch_graphql_query_structure(mock_graphql_client):
-    """Test that the GraphQL query contains the expected structure and fields."""
+    """Test that the GraphQL client is called with a DocumentNode query."""
     # Arrange
     mock_graphql_client.execute.return_value = {
         "repository": {"pullRequests": {"nodes": []}}
