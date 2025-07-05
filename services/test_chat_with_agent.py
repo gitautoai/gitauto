@@ -197,7 +197,7 @@ def test_chat_with_agent_no_tool_calls(
     )
     
     result = chat_with_agent(
-        messages=messages,
+        messages=messages.copy(),  # Use a copy to avoid modifying the fixture
         trigger="issue_label",
         base_args=base_args,
         mode="explore",
