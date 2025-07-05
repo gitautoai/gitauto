@@ -149,3 +149,53 @@ def test_get_installation_id_returns_none_when_no_data_found(mock_supabase_query
     
     # Assert
     assert result is None
+
+
+def test_get_installation_id_returns_none_when_index_error_occurs(mock_supabase_query):
+    """Test that get_installation_id returns None when IndexError occurs accessing data."""
+    # Arrange - simulate empty result that would cause IndexError
+    mock_supabase_query.execute.return_value = (None, None)
+    
+    # Act
+    result = get_installation_id(owner_id=TEST_OWNER_ID)
+    
+    # Assert
+    assert result is None
+
+
+def test_get_installation_id_returns_none_when_key_error_occurs(mock_supabase_query):
+    """Test that get_installation_id returns None when KeyError occurs accessing installation_id."""
+    # Arrange - simulate result without installation_id key
+    mock_supabase_query.execute.return_value = (
+        None,
+        [{"other_field": "value"}]
+    )
+    
+    # Act
+    result = get_installation_id(owner_id=TEST_OWNER_ID)
+    
+    # Assert
+    assert result is None
+
+
+@pytest.mark.parametrize("owner_id_value", [
+    1,
+    999999999,
+    TEST_OWNER_ID,
+    0,
+    -1,
+])
+def test_get_installation_id_with_various_owner_ids(mock_supabase_query, owner_id_value):
+    """Test that get_installation_id works with various owner ID values."""
+    # Arrange
+    expected_installation_id = TEST_INSTALLATION_ID
+    mock_supabase_query.execute.return_value = (
+        None,
+        [{"installation_id": expected_installation_id}]
+    )
+    
+    # Act
+    result = get_installation_id(owner_id=owner_id_value)
+    
+    # Assert
+    assert result == expected_installation_id
