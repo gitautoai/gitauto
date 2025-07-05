@@ -144,7 +144,11 @@ def test_get_owner_name_with_different_tokens():
 def test_get_owner_name_http_error_returns_none(sample_owner_id, sample_token):
     """Test that HTTP errors are handled and return None due to decorator."""
     mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = HTTPError("404 Not Found")
+    # Create a proper HTTPError with a response object
+    http_error = HTTPError("404 Not Found")
+    error_response = MagicMock()
+    error_response.status_code = 404
+    http_error.response = error_response
     
     with patch("services.github.users.get_owner_name.requests.get", return_value=mock_response):
         result = get_owner_name(owner_id=sample_owner_id, token=sample_token)
