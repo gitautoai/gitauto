@@ -4,18 +4,7 @@ sys.path.append('.')
 
 from services.coverages.parse_lcov_coverage import parse_lcov_coverage
 
-# Test empty content first
-print("Testing empty content...")
-try:
-    result = parse_lcov_coverage("")
-    print(f"Empty content result: {len(result)} reports")
-    for i, report in enumerate(result):
-        print(f"Report {i}: {report['level']} - {report['full_path']}")
-    print()
-except Exception as e:
-    print(f"❌ Exception occurred with empty content: {e}")
-
-# Test malformed content
+# Test the exact malformed content from the failing test
 lcov_content = """SF:src/malformed.py
 FN:invalid_line
 FNDA:not_a_number,func
@@ -47,26 +36,14 @@ except Exception as e:
     print(f"❌ Exception occurred: {e}")
     print("Test would FAIL due to exception")
 
-# Test basic valid content
-print("\nTesting basic valid content...")
-basic_content = """SF:src/example.py
-FN:10,example_function
-FNDA:1,example_function
-FNF:1
-FNH:1
-DA:10,1
-DA:11,1
-DA:12,0
-LF:3
-LH:2
-end_of_record
-"""
-
+# Test empty content to make sure we didn't break anything
+print("\nTesting empty content...")
 try:
-    result = parse_lcov_coverage(basic_content)
-    print(f"Basic content result: {len(result)} reports")
-    for i, report in enumerate(result):
-        print(f"Report {i}: {report['level']} - {report['full_path']}")
-        
+    result = parse_lcov_coverage("")
+    print(f"Empty content result: {len(result)} reports")
+    if len(result) == 1:
+        print("✅ Empty content test would PASS")
+    else:
+        print(f"❌ Empty content test would FAIL: expected 1, got {len(result)}")
 except Exception as e:
-    print(f"❌ Exception occurred with basic content: {e}")
+    print(f"❌ Exception occurred with empty content: {e}")
