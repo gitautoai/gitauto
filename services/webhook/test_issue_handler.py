@@ -620,6 +620,8 @@ async def test_create_pr_from_issue_branch_deleted(
         body="Process stopped: Branch 'test-branch' has been deleted", 
         base_args=mock_base_args
     )
+    # Should only call slack_notify once for the start message
+    mock_slack_notify.assert_called_once_with("Issue handler started: `issue_comment` by `test-sender` for `123:Test Issue` in `test-owner/test-repo`")
 
 
 @pytest.mark.asyncio
