@@ -386,8 +386,8 @@ def test_find_pull_request_by_branch_graphql_query_structure(mock_graphql_client
     call_args = mock_graphql_client.execute.call_args
     query_arg = call_args[0][0]
     
-    # Convert the query to string to check its content
-    query_string = str(query_arg)
+    # Convert the DocumentNode to string to check its content
+    query_string = print_ast(query_arg)
     
     # Check that the query contains expected fields and structure
     assert "query($owner: String!, $repo: String!, $headRefName: String!)" in query_string
