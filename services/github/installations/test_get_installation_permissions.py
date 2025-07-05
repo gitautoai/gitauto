@@ -1,4 +1,5 @@
 from unittest.mock import patch, MagicMock
+import json
 import pytest
 import requests
 from requests import HTTPError
