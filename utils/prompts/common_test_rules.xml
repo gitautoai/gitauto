@@ -6,8 +6,8 @@
   </value_focused_testing>
 
   <mock_management>
-    <rule>Use test framework fixtures to eliminate duplicate mock setup code</rule>
-    <rule>Ensure proper mock lifecycle management (Python example: use yield with with patch())</rule>
+    <rule>PREFER test framework fixtures/setup methods for mock configuration over configuring mocks inside individual test functions. Ensure proper mock lifecycle management (Python example: use yield with with patch() in fixtures)</rule>
+    <rule>Create descriptive fixture/setup names that clearly indicate what is being mocked</rule>
     <rule>Handle fixture parameter name conflicts (Python example: use # pylint: disable=redefined-outer-name)</rule>
     <rule>For method chaining operations (e.g., database operations), mock the entire operation as one unit rather than each individual step in the chain (Contract Testing approach) - avoid complex setups like mock.obj.method1.return_value.method2.return_value.method3.return_value</rule>
   </mock_management>
