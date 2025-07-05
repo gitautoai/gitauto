@@ -80,7 +80,7 @@ def mock_repo_settings():
 @pytest.fixture
 def mock_time():
     """Fixture to mock time.time()."""
-    with patch("time.time") as mock:
+    with patch("services.webhook.issue_handler.time.time") as mock:
         mock.return_value = 1000.0
         yield mock
 
