@@ -787,6 +787,12 @@ async def test_create_pr_from_issue_with_images(
     # Verify
     assert mock_get_base64.call_count == 2
     assert mock_describe_image.call_count == 2
+    # Should call slack_notify for start and completion
+    expected_calls = [
+        call("Issue handler started: `issue_comment` by `test-sender` for `123:Test Issue` in `test-owner/test-repo`"),
+        call("Completed", "thread-ts-123")
+    ]
+    mock_slack_notify.assert_has_calls(expected_calls)
     assert mock_create_comment.call_count >= 3  # Initial + 2 image descriptions
 
 
