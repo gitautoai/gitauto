@@ -211,6 +211,7 @@ def test_chat_with_agent_no_tool_calls(
         base_args=base_args,
         mode="explore",
         repo_settings=None,
+        recursion_count=3,  # Prevent recursion for testing
     )
     
     # Check that colorize was called with the correct message
