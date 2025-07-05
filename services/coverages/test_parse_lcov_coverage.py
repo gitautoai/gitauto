@@ -188,10 +188,9 @@ end_of_record
     # Check line coverage (2 out of 4 lines covered = 50%)
     assert file_report['line_coverage'] == 50.0
     
-    # Check uncovered lines - should be empty for file level when coverage > 0
-    # (based on create_coverage_report logic)
+    # Check uncovered lines - should show lines 11 and 13
     uncovered_lines_str = file_report['uncovered_lines']
-    assert uncovered_lines_str == ""
+    assert "11, 13" == uncovered_lines_str
 
 
 def test_parse_lcov_coverage_multiple_files():
