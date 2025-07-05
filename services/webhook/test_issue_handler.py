@@ -542,7 +542,6 @@ async def test_create_pr_from_issue_request_limit_reached(
     mock_create_comment,
     mock_update_comment,
     mock_is_request_limit_reached,
-    mock_request_limit_reached,
 ):
     """Test early return when request limit is reached."""
     # Setup
