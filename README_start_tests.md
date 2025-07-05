@@ -2,9 +2,9 @@
 
 This directory contains comprehensive unit tests for the `start.sh` script that sets up the GitAuto development environment.
 
-## Test Files
+## Test File
 
-### 1. `test_start.py` - Main Unit Tests
+### `start_test.py` - Consolidated Unit and Integration Tests
 
 Python-based unit tests that analyze the script structure, syntax, and configuration without executing the full script. These tests follow the repository's testing patterns (filename_test.py) and use pytest.
 
@@ -20,13 +20,7 @@ Python-based unit tests that analyze the script structure, syntax, and configura
 - Output messages and error handling
 - File dependencies and network configuration
 
-### 2. `start_integration_test.py` - Integration Tests
-
-Integration tests that safely execute parts of the script in isolated environments to test actual functionality. Follows the repository's naming convention.
-
-**Test Coverage:**
-- Script syntax validation
-- Environment variable loading
+**Integration Test Coverage:**
 - Virtual environment creation simulation
 - Error handling with missing files
 - Script behavior with common flags
@@ -54,13 +48,10 @@ Bash-based test framework that provides comprehensive testing of shell script fu
 
 ```bash
 # Run main unit tests
-pytest start_test.py -v
+pytest start_test.py -v -m "not integration"
 
 # Run integration tests
-pytest start_integration_test.py -v
-
-# Run all Python tests
-pytest *start*test.py -v
+pytest start_test.py -v -m "integration"
 
 # Run with coverage
 pytest test_start*.py --cov=. --cov-report=html
