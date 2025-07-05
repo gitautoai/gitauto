@@ -79,6 +79,7 @@ async def test_timer_decorator_async_function_execution(mock_logger, mock_time):
     )
 
 
+@pytest.mark.asyncio
 async def test_timer_decorator_async_function_with_args_kwargs(mock_logger, mock_time):
     """Test that timer decorator preserves async function arguments and keyword arguments."""
     @timer_decorator
