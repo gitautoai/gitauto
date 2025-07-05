@@ -29,8 +29,8 @@ def test_get_installation_id_returns_installation_id_when_found(mock_supabase_qu
     # Arrange
     expected_installation_id = TEST_INSTALLATION_ID
     mock_supabase_query.execute.return_value = (
-        None,
-        [{"installation_id": expected_installation_id}]
+        (None, [{"installation_id": expected_installation_id}]),
+        None
     )
     
     # Act
@@ -44,8 +44,8 @@ def test_get_installation_id_queries_correct_table(mock_supabase_query):
     """Test that get_installation_id queries the installations table."""
     # Arrange
     mock_supabase_query.execute.return_value = (
-        None,
-        [{"installation_id": TEST_INSTALLATION_ID}]
+        (None, [{"installation_id": TEST_INSTALLATION_ID}]),
+        None
     )
     
     # Act
@@ -60,8 +60,8 @@ def test_get_installation_id_selects_installation_id_column(mock_supabase_query)
     """Test that get_installation_id selects the installation_id column."""
     # Arrange
     mock_supabase_query.execute.return_value = (
-        None,
-        [{"installation_id": TEST_INSTALLATION_ID}]
+        (None, [{"installation_id": TEST_INSTALLATION_ID}]),
+        None
     )
     
     # Act
@@ -76,8 +76,8 @@ def test_get_installation_id_filters_by_owner_id(mock_supabase_query):
     """Test that get_installation_id filters by the provided owner_id."""
     # Arrange
     mock_supabase_query.execute.return_value = (
-        None,
-        [{"installation_id": TEST_INSTALLATION_ID}]
+        (None, [{"installation_id": TEST_INSTALLATION_ID}]),
+        None
     )
     
     # Act
@@ -94,8 +94,8 @@ def test_get_installation_id_filters_not_uninstalled(mock_supabase_query):
     """Test that get_installation_id filters for non-uninstalled installations."""
     # Arrange
     mock_supabase_query.execute.return_value = (
-        None,
-        [{"installation_id": TEST_INSTALLATION_ID}]
+        (None, [{"installation_id": TEST_INSTALLATION_ID}]),
+        None
     )
     
     # Act
@@ -114,11 +114,11 @@ def test_get_installation_id_returns_first_installation_when_multiple_found(mock
     first_installation_id = 12345
     second_installation_id = 67890
     mock_supabase_query.execute.return_value = (
-        None,
-        [
+        (None, [
             {"installation_id": first_installation_id},
             {"installation_id": second_installation_id}
-        ]
+        ]),
+        None
     )
     
     # Act
@@ -143,7 +143,10 @@ def test_get_installation_id_returns_none_when_exception_occurs(mock_supabase_qu
 def test_get_installation_id_returns_none_when_no_data_found(mock_supabase_query):
     """Test that get_installation_id returns None when no data is found."""
     # Arrange
-    mock_supabase_query.execute.return_value = (None, [])
+    mock_supabase_query.execute.return_value = (
+        (None, []),
+        None
+    )
     
     # Act
     result = get_installation_id(owner_id=TEST_OWNER_ID)
@@ -155,7 +158,10 @@ def test_get_installation_id_returns_none_when_no_data_found(mock_supabase_query
 def test_get_installation_id_returns_none_when_index_error_occurs(mock_supabase_query):
     """Test that get_installation_id returns None when IndexError occurs accessing data."""
     # Arrange - simulate empty result that would cause IndexError
-    mock_supabase_query.execute.return_value = (None, None)
+    mock_supabase_query.execute.return_value = (
+        (None, None),
+        None
+    )
     
     # Act
     result = get_installation_id(owner_id=TEST_OWNER_ID)
@@ -168,8 +174,8 @@ def test_get_installation_id_returns_none_when_key_error_occurs(mock_supabase_qu
     """Test that get_installation_id returns None when KeyError occurs accessing installation_id."""
     # Arrange - simulate result without installation_id key
     mock_supabase_query.execute.return_value = (
-        None,
-        [{"other_field": "value"}]
+        (None, [{"other_field": "value"}]),
+        None
     )
     
     # Act
@@ -191,8 +197,8 @@ def test_get_installation_id_with_various_owner_ids(mock_supabase_query, owner_i
     # Arrange
     expected_installation_id = TEST_INSTALLATION_ID
     mock_supabase_query.execute.return_value = (
-        None,
-        [{"installation_id": expected_installation_id}]
+        (None, [{"installation_id": expected_installation_id}]),
+        None
     )
     
     # Act
@@ -227,4 +233,3 @@ def test_get_installation_id_has_handle_exceptions_decorator():
     
     # Verify the docstring is preserved
     assert get_installation_id.__doc__ == "https://supabase.com/docs/reference/python/is"
-
