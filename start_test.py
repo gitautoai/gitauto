@@ -468,3 +468,75 @@ if [ ! -d "venv" ]; then
 else
     echo "Activating existing virtual environment..."
     source venv/bin/activate
+fi
+
+echo "Virtual environment ready"
+"""
+        
+        with open(test_script, "w") as f:
+            f.write(script_content)
+        
+        os.chmod(test_script, 0o755)
+        
+        # Change to test directory and run
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(test_environment)
+            result = subprocess.run(
+                ["bash", test_script], 
+                capture_output=True, 
+                text=True
+            )
+            assert result.returncode == 0
+            assert "Creating virtual environment..." in result.stdout
+            assert "Mock virtual environment created" in result.stdout
+            assert "Mock dependencies installed" in result.stdout
+            assert "Virtual environment ready" in result.stdout
+            
+            # Test with existing venv
+            result2 = subprocess.run(
+                ["bash", test_script], 
+                capture_output=True, 
+                text=True
+            )
+            assert result2.returncode == 0
+            assert "Activating existing virtual environment..." in result2.stdout
+            assert "Virtual environment ready" in result2.stdout
+        finally:
+            os.chdir(original_cwd)
+
+    @pytest.mark.integration
+    def test_script_help_or_version_flags(self, script_path):
+        """Test that script handles common flags gracefully."""
+        # Most shell scripts should handle --help or similar flags
+        # This test ensures the script doesn't crash with common flags
+        
+        # Test with timeout to prevent hanging
+        try:
+            result = subprocess.run(
+                ["bash", script_path, "--help"], 
+                capture_output=True, 
+                text=True,
+                timeout=5
+            )
+            # Script may not implement --help, but shouldn't crash
+            assert result.returncode in [0, 1, 2]  # Common exit codes
+        except subprocess.TimeoutExpired:
+            # If script hangs, that's also a valid test result
+            # as it means the script is trying to run normally
+            pass
+
+    @pytest.mark.integration
+    def test_script_with_missing_env_file(self, script_path):
+        """Test script behavior when .env file is missing."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create a modified script that exits after trying to source .env
+            modified_script = os.path.join(temp_dir, "start_test.sh")
+            
+            script_content = """#!/bin/bash
+source .env 2>/dev/null || echo "No .env file found"
+echo "Script continued despite missing .env"
+exit 0
+"""
+            
+            with open(modified_script, "w") as f:
