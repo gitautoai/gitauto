@@ -372,6 +372,7 @@ def test_chat_with_agent_nonexistent_function(
         base_args=base_args,
         mode="explore",
         repo_settings=None,
+        recursion_count=3,  # Prevent recursion for testing
     )
     
     # Check that the tool_result contains an error message
