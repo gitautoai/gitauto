@@ -412,6 +412,7 @@ def test_chat_with_agent_get_remote_file_content_with_line_number(
         base_args=base_args,
         mode="explore",
         repo_settings=None,
+        recursion_count=3,  # Prevent recursion for testing
     )
     
     # Check that is_valid_line_number was called
