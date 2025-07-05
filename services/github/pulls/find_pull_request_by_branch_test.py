@@ -365,6 +365,9 @@ def test_find_pull_request_by_branch_with_empty_string_parameters(mock_graphql_c
     # Verify empty strings were passed correctly
     call_args = mock_graphql_client.execute.call_args
     variable_values = call_args[1]['variable_values']
+    assert variable_values["owner"] == ""
+    assert variable_values["repo"] == ""
+    assert variable_values["headRefName"] == ""
 
 
 def test_find_pull_request_by_branch_graphql_query_structure(mock_graphql_client):
