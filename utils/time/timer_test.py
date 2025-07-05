@@ -355,6 +355,7 @@ def test_timer_decorator_long_execution_time():
                 "%s took %.2f seconds", "long_running_function", 60.5
             )
 
+@pytest.mark.asyncio
 
 async def test_timer_decorator_async_exception_propagation():
     """Test that async exceptions are properly propagated through the decorator."""
