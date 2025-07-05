@@ -235,7 +235,7 @@ def test_chat_with_agent_duplicate_function_call(
     
     with patch("builtins.print") as mock_print:
         result = chat_with_agent(
-            messages=messages,
+            messages=messages.copy(),
             trigger="issue_label",
             base_args=base_args,
             mode="explore",
@@ -274,7 +274,7 @@ def test_chat_with_agent_function_correction(
     
     with patch("builtins.print") as mock_print:
         result = chat_with_agent(
-            messages=messages,
+            messages=messages.copy(),
             trigger="issue_label",
             base_args=base_args,
             mode="commit",
@@ -317,7 +317,7 @@ def test_chat_with_agent_similar_function_name(
     
     with patch("builtins.print") as mock_print:
         result = chat_with_agent(
-            messages=messages,
+            messages=messages.copy(),
             trigger="issue_label",
             base_args=base_args,
             mode="commit",
@@ -358,7 +358,7 @@ def test_chat_with_agent_nonexistent_function(
     )
     
     result = chat_with_agent(
-        messages=messages,
+        messages=messages.copy(),
         trigger="issue_label",
         base_args=base_args,
         mode="explore",
@@ -398,7 +398,7 @@ def test_chat_with_agent_get_remote_file_content_with_line_number(
     )
     
     result = chat_with_agent(
-        messages=messages,
+        messages=messages.copy(),
         trigger="issue_label",
         base_args=base_args,
         mode="explore",
@@ -434,7 +434,7 @@ def test_chat_with_agent_get_remote_file_content_with_keyword(
     )
     
     result = chat_with_agent(
-        messages=messages,
+        messages=messages.copy(),
         trigger="issue_label",
         base_args=base_args,
         mode="explore",
@@ -470,7 +470,7 @@ def test_chat_with_agent_search_remote_file_contents_with_results(
     mock_tools_to_call.return_value = "3 files found:\n- file1.py\n- file2.py\n- file3.py"
     
     result = chat_with_agent(
-        messages=messages,
+        messages=messages.copy(),
         trigger="issue_label",
         base_args=base_args,
         mode="explore",
@@ -540,7 +540,7 @@ def test_chat_with_agent_search_google(
     )
     
     result = chat_with_agent(
-        messages=messages,
+        messages=messages.copy(),
         trigger="issue_label",
         base_args=base_args,
         mode="search",
@@ -576,7 +576,7 @@ def test_chat_with_agent_apply_diff_to_file(
     )
     
     result = chat_with_agent(
-        messages=messages,
+        messages=messages.copy(),
         trigger="issue_label",
         base_args=base_args,
         mode="commit",
@@ -609,7 +609,7 @@ def test_chat_with_agent_replace_remote_file_content(
     )
     
     result = chat_with_agent(
-        messages=messages,
+        messages=messages.copy(),
         trigger="issue_label",
         base_args=base_args,
         mode="commit",
@@ -646,7 +646,7 @@ def test_chat_with_agent_model_fallback(
     ]
     
     result = chat_with_agent(
-        messages=messages,
+        messages=messages.copy(),
         trigger="issue_label",
         base_args=base_args,
         mode="explore",
@@ -683,7 +683,7 @@ def test_chat_with_agent_model_fallback_all_models_fail(
     # The function should raise an exception
     with pytest.raises(Exception, match="Model error"):
         chat_with_agent(
-            messages=messages,
+            messages=messages.copy(),
             trigger="issue_label",
             base_args=base_args,
             mode="explore",
@@ -708,7 +708,7 @@ def test_chat_with_agent_recursion(
     # We'll need to patch the chat_with_agent function itself to test recursion
     with patch("services.chat_with_agent.chat_with_agent", wraps=chat_with_agent) as wrapped_chat:
         result = chat_with_agent(
-            messages=messages,
+            messages=messages.copy(),
             trigger="issue_label",
             base_args=base_args,
             mode="explore",
@@ -736,7 +736,7 @@ def test_chat_with_agent_max_recursion(
     """Test chat_with_agent when maximum recursion is reached."""
     # Call with recursion_count=3 (max allowed)
     result = chat_with_agent(
-        messages=messages,
+        messages=messages.copy(),
         trigger="issue_label",
         base_args=base_args,
         mode="explore",
@@ -780,7 +780,7 @@ def test_chat_with_agent_different_modes(
         mock_chat_with_openai.reset_mock()
         
         result = chat_with_agent(
-            messages=messages,
+            messages=messages.copy(),
             trigger="issue_label",
             base_args=base_args,
             mode=mode,
