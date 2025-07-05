@@ -488,7 +488,7 @@ def test_chat_with_agent_search_remote_file_contents_with_results(
     )
     
     # Check that the log message contains the search results
-    assert "Searched repository for `test_function` and found: \n- file1.py\n- file2.py\n- file3.py" in result[0][-1]["content"][0]["content"]
+    assert result[0][-1]["content"][0]["content"] == "3 files found:\n- file1.py\n- file2.py\n- file3.py"
 
 
 def test_chat_with_agent_search_remote_file_contents_no_results(
