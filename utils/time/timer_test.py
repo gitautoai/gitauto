@@ -298,6 +298,7 @@ def test_timer_decorator_with_complex_arguments():
                 "%s took %.2f seconds", "complex_function", 2.0
             )
 
+@pytest.mark.asyncio
 
 async def test_timer_decorator_async_with_complex_arguments():
     """Test that timer decorator works with complex async argument patterns."""
