@@ -502,6 +502,7 @@ async def test_create_pr_from_issue_jira_happy_path(
     expected_calls = [
         call("Issue handler started: `jira_issue` by `test-sender` for `123:Test Issue` in `test-owner/test-repo`"),
         call("Completed", "thread-ts-123")
+        call("PR created for test-owner/test-repo", "thread-ts-123"),
     ]
     mock_slack_notify.assert_has_calls(expected_calls)
     mock_deconstruct_jira_payload.assert_called_once_with(payload=jira_payload)
