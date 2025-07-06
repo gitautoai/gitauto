@@ -104,7 +104,7 @@ def test_get_file_tree_list_with_max_files_limit(mock_get_file_tree, mock_base_a
     result, message = get_file_tree_list(mock_base_args, 3)
     
     assert len(result) == 3
-    assert result[:3] == sorted(["file1.py", "file2.py", "file3.py", "file4.py", "file5.py"])[:3]
+    assert result == ["file1.py", "file2.py", "file3.py"]
     assert message == "Found 5 files across 1 directory levels but limited to 3 files for now."
 
 
