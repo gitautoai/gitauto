@@ -156,3 +156,4 @@ def test_is_test_file_with_long_paths():
     """Test that is_test_file works with long file paths."""
     long_path = "very/long/path/with/many/directories/that/could/potentially/cause/issues/with/regex/test_file.py"
     assert is_test_file(long_path) is True
+
