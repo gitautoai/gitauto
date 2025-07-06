@@ -66,3 +66,32 @@ class TestCreatePrCheckboxComment:
         mock_get_repository.assert_called_once_with(repo_id=456)
         # Verify that no further processing was done
         mock_get_token.assert_not_called()
+
+    @patch("services.webhook.utils.create_pr_checkbox_comment.get_repository")
+    def test_skips_when_no_repo_settings(self, mock_get_repository):
+        """Test that the function skips processing when repository settings are not found."""
+        mock_get_repository.return_value = None
+        
+        payload = {
+            "pull_request": {
+                "number": 123,
+                "url": "https://api.github.com/repos/owner/repo/pulls/123",
+                "head": {"ref": "feature-branch"},
+            },
+            "sender": {"login": "test-user"},
+            "repository": {
+                "id": 456,
+                "name": "test-repo",
+                "owner": {
+                    "id": 789,
+                    "type": "Organization",
+                    "login": "test-owner",
+                },
+            },
+            "installation": {"id": 101112},
+        }
+        
+        result = create_pr_checkbox_comment(payload)
+        
+        assert result is None
+        mock_get_repository.assert_called_once_with(repo_id=456)
