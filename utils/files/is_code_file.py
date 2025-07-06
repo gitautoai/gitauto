@@ -64,15 +64,6 @@ def is_code_file(filename: str) -> bool:
         "erl",  # Erlang
         "hrl",  # Erlang header
 
-        # Shell and scripts
-        "sh",
-        "bash",
-        "zsh",
-        "fish",  # Fish shell
-        "ps1",  # PowerShell
-        "bat",  # Batch file
-        "cmd",  # Windows command
-
         # Other languages
         "r",  # R
         "jl",  # Julia
