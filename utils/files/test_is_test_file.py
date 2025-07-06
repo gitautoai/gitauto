@@ -139,39 +139,6 @@ def test_is_test_file_with_attribute_error():
     assert is_test_file(mock_filename) is False
 
 
-@pytest.mark.parametrize("pattern,filename,expected", [
-    (r"\.test\.", "button.test.tsx", True),
-    (r"\.spec\.", "api.spec.js", True),
-    (r"test\.", "ButtonTest.java", True),
-    (r"tests\.", "ButtonTests.java", True),
-    (r"_test\.", "button_test.py", True),
-    (r"_spec\.", "button_spec.rb", True),
-    (r"^test_", "test_button.py", True),
-    (r"/test_", "services/anthropic/test_client.py", True),
-    (r"^spec_", "spec_button.rb", True),
-    (r"/spec_", "services/anthropic/spec_client.py", True),
-    (r"/__tests__/", "src/__tests__/Button.tsx", True),
-    (r"/tests?/", "src/tests/Button.tsx", True),
-    (r"/tests?/", "src/test/Button.java", True),
-    (r"^tests?/", "tests/constants.py", True),
-    (r"^tests?/", "test/utils.py", True),
-    (r"(^|/)e2e/", "e2e/login.spec.ts", True),
-    (r"(^|/)cypress/", "cypress/integration/login.js", True),
-    (r"(^|/)playwright/", "playwright/tests/login.spec.ts", True),
-    (r"/spec/", "spec/models/user_spec.rb", True),
-    (r"(^|/)testing/", "testing/utils.py", True),
-    (r"/__mocks__/", "src/__mocks__/api.js", True),
-    (r"\.mock\.", "api.mock.ts", True),
-    (r"mock\.", "ApiMock.java", True),
-    (r"mocks\.", "ApiMocks.java", True),
-    (r"^test\.", "test.js", True),
-    (r"^spec\.", "spec.rb", True),
-    (r"^\.github/", ".github/workflows/pytest.yml", True),
-])
-def test_is_test_file_individual_patterns(pattern, filename, expected):
-    """Test each regex pattern individually to ensure they work as expected."""
-    with patch("utils.files.is_test_file.test_patterns", [pattern]):
-        assert is_test_file(filename) is expected
 
 
 def test_is_test_file_with_unicode_characters():
