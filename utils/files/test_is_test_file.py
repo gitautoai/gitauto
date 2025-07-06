@@ -138,9 +138,6 @@ def test_is_test_file_with_attribute_error():
     mock_filename.lower.side_effect = AttributeError("No lower method")
     assert is_test_file(mock_filename) is False
 
-
-
-
 def test_is_test_file_with_unicode_characters():
     """Test that is_test_file handles unicode characters correctly."""
     assert is_test_file("tést_file.py") is True
