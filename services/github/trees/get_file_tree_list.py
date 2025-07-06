@@ -28,7 +28,7 @@ def get_file_tree_list(base_args: BaseArgs, max_files: int | None):
             result.extend(sorted(paths_by_depth[depth]))
 
     total_files = len(result)
-    if max_files and total_files > max_files:
+    if max_files is not None and total_files > max_files:
         result = result[:max_files]
         msg = f"Found {total_files} files across {max_depth + 1} directory levels but limited to {max_files} files for now."
     else:
