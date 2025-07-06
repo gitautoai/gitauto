@@ -29,7 +29,7 @@ def test_get_file_tree_list_empty_tree(mock_get_file_tree, mock_base_args):
     result, message = get_file_tree_list(mock_base_args, None)
     
     assert result == []
-    assert message == "Found 0 files across 1 directory levels."
+    assert message == "Found 0 files across 0 directory levels."
     mock_get_file_tree.assert_called_once_with("test_owner", "test_repo", "main", "test_token")
 
 
