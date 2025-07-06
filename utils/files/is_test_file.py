@@ -38,7 +38,6 @@ def is_test_file(filename: str) -> bool:
         r"spec-",  # spec-script.js, spec-utils.py (covers both beginning and middle)
         r"/test-",  # services/anthropic/test-client.py
         r"^spec_",  # spec_button.rb, spec_helper.rb
-        r"^spec-",  # spec-button.rb, spec-helper.rb
         r"/spec_",  # services/anthropic/spec_client.py
         r"/spec-",  # services/anthropic/spec-client.py
 
