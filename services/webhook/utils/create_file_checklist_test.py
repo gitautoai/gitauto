@@ -212,7 +212,7 @@ class TestCreateFileChecklist:
         """Test creating a checklist with filenames containing special characters."""
         file_changes = [
             {"filename": "src/file-with-dashes.py", "status": "modified"},
-            FileChange(filename="src/file_with_underscores.py", status="added"),
+            {"filename": "src/file_with_underscores.py", "status": "added"},
             FileChange(filename="src/file.with.dots.py", status="removed"),
         ]
         coverage_data = {}
