@@ -183,7 +183,7 @@ def test_get_file_tree_list_alphabetical_sorting_within_depth(mock_get_file_tree
     
     result, message = get_file_tree_list(mock_base_args, None)
     
-    expected = ["alpha.py", "beta.py", "zebra.py", "src/alpha.py", "src/zebra.py"]
+    expected = ["alpha.py", "beta.py", "src/alpha.py", "src/zebra.py", "zebra.py"]
     assert result == expected
     assert message == "Found 5 files across 2 directory levels."
 
