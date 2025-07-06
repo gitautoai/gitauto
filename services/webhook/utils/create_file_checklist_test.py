@@ -58,7 +58,7 @@ class TestCreateFileChecklist:
 
     def test_single_file_change_no_coverage(self, mock_is_excluded_from_testing):
         """Test creating a checklist with a single file change and no coverage data."""
-        file_changes = [FileChange(filename="src/test.py", status="added")]
+        file_changes = [{"filename": "src/test.py", "status": "added"}]
         coverage_data = {}
         
         result = create_file_checklist(file_changes, coverage_data)
