@@ -37,7 +37,7 @@ def is_test_file(filename: str) -> bool:
         r"(^|/)playwright/",  # playwright/tests/login.spec.ts, src/playwright/tests/login.spec.ts
         r"/spec/",  # spec/models/user_spec.rb
         r"^spec/",  # spec/models/user_spec.rb (at beginning)
-        r"/testing/",  # testing/utils.py
+        r"(^|/)testing/",  # testing/utils.py, src/testing/utils.py
 
         # Mock files
         r"/__mocks__/",  # src/__mocks__/api.js
