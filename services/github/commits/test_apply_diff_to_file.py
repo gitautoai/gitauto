@@ -362,3 +362,31 @@ def test_apply_diff_to_file_with_kwargs(mock_requests_get, mock_requests_put, mo
     # This test ensures the **_kwargs parameter works correctly
     apply_diff_to_file(diff="test diff", file_path="test_file.py", base_args=base_args, extra_param="ignored")
     # If no exception is raised, the test passes
+
+
+def test_apply_diff_to_file_put_error(mock_requests_get, mock_requests_put, mock_create_headers, mock_apply_patch, base_args):
+    """Test handling of HTTP errors during PUT request."""
+    # Setup
+    mock_response_get = MagicMock()
+    mock_response_get.status_code = 200
+    mock_response_get.json.return_value = {
+        "content": base64.b64encode(b"original content").decode("utf-8"),
+        "sha": "test_sha",
+    }
+    mock_requests_get.return_value = mock_response_get
+
+    mock_response_put = MagicMock()
+    mock_response_put.raise_for_status.side_effect = requests.exceptions.HTTPError("PUT Error")
+    mock_requests_put.return_value = mock_response_put
+
+    mock_apply_patch.return_value = ("modified content", "")
+
+    # Execute
+    result = apply_diff_to_file(
+        diff="test diff",
+        file_path="test_file.py",
+        base_args=base_args,
+    )
+
+    # Verify
+    assert result is False  # Default return value from handle_exceptions
