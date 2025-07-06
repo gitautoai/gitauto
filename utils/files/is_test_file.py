@@ -36,6 +36,7 @@ def is_test_file(filename: str) -> bool:
         r"(^|/)cypress/",  # cypress/integration/login.js, src/cypress/integration/login.js
         r"(^|/)playwright/",  # playwright/tests/login.spec.ts, src/playwright/tests/login.spec.ts
         r"/spec/",  # spec/models/user_spec.rb
+        r"^spec/",  # spec/models/user_spec.rb (at beginning)
         r"/testing/",  # testing/utils.py
 
         # Mock files
