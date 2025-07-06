@@ -172,7 +172,7 @@ def test_get_file_tree_list_complex_directory_structure(mock_get_file_tree, mock
 
 
 def test_get_file_tree_list_alphabetical_sorting_within_depth(mock_get_file_tree, mock_base_args):
-    """Test that files are sorted alphabetically within each depth level."""
+    """Test that files are sorted alphabetically."""
     mock_get_file_tree.return_value = [
         {"type": "blob", "path": "zebra.py"},
         {"type": "blob", "path": "alpha.py"},
