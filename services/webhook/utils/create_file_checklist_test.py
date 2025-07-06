@@ -182,7 +182,7 @@ class TestCreateFileChecklist:
         file_changes = [
             {"filename": "src/added.py", "status": "added"},
             {"filename": "src/modified.py", "status": "modified"},
-            FileChange(filename="src/removed.py", status="removed"),
+            {"filename": "src/removed.py", "status": "removed"},
         ]
         coverage_data = {}
         
