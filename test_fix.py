@@ -12,6 +12,8 @@ test_cases = [
     "file-test.py", 
     "src/test-utils/component.js",
     # Unicode test cases
+    ".github/scripts/test-script.js",
+    "component-spec.js",
     "tést_file.py",
     "file_tést.py",
     "src/tést/utils.py"
