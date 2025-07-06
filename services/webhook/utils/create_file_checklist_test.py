@@ -96,7 +96,7 @@ class TestCreateFileChecklist:
         """Test creating a checklist with a file excluded from testing."""
         mock_is_excluded_from_testing.return_value = True
         
-        file_changes = [FileChange(filename="src/excluded.py", status="added")]
+        file_changes = [{"filename": "src/excluded.py", "status": "added"}]
         coverage_data = {}
         
         result = create_file_checklist(file_changes, coverage_data)
