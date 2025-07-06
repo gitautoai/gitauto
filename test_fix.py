@@ -8,6 +8,10 @@ test_cases = [
     "playwright/tests/login.spec.ts",
     "testing/utils.py",
     # Unicode test cases
+    "test-file.py",
+    "file-test.py", 
+    "src/test-utils/component.js",
+    # Unicode test cases
     "tést_file.py",
     "file_tést.py",
     "src/tést/utils.py"
