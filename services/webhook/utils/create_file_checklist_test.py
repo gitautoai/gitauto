@@ -211,7 +211,7 @@ class TestCreateFileChecklist:
     def test_special_characters_in_filenames(self, mock_is_excluded_from_testing):
         """Test creating a checklist with filenames containing special characters."""
         file_changes = [
-            FileChange(filename="src/file-with-dashes.py", status="modified"),
+            {"filename": "src/file-with-dashes.py", "status": "modified"},
             FileChange(filename="src/file_with_underscores.py", status="added"),
             FileChange(filename="src/file.with.dots.py", status="removed"),
         ]
