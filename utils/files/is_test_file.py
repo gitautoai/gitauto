@@ -14,13 +14,6 @@ def is_test_file(filename: str) -> bool:
     # Convert to lowercase for case-insensitive matching
     filename_lower = filename.lower()
 
-    # Normalize unicode characters to their ASCII equivalents where possible
-    # This helps with matching accented characters like 'é' -> 'e'
-    try:
-        filename_normalized = unicodedata.normalize('NFKD', filename_lower).encode('ASCII', 'ignore').decode('ASCII')
-    except Exception:
-        filename_normalized = filename_lower  # Fallback to lowercase if normalization fails
-
     # Test file naming patterns (more comprehensive than current)
     test_patterns = [
         # Direct test file patterns
@@ -68,7 +61,7 @@ def is_test_file(filename: str) -> bool:
 
     # Check against all patterns
     for pattern in test_patterns:
-        if re.search(pattern, filename_lower) or re.search(pattern, filename_normalized):
+        if re.search(pattern, filename_lower):
             return True
 
     return False
