@@ -1,4 +1,4 @@
-import re, unicodedata
+import re
 from utils.error.handle_exceptions import handle_exceptions
 
 
