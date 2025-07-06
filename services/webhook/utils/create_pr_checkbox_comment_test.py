@@ -7,21 +7,51 @@ from services.webhook.utils.create_pr_checkbox_comment import create_pr_checkbox
 @pytest.fixture
 def mock_dependencies():
     """Mock all external dependencies."""
-    with patch.multiple(
-        "services.webhook.utils.create_pr_checkbox_comment",
-        get_installation_access_token=MagicMock(return_value="mock_token"),
-        get_repository=MagicMock(return_value={"trigger_on_pr_change": True}),
-        get_pull_request_files=MagicMock(return_value=[]),
-        is_code_file=MagicMock(return_value=True),
-        is_test_file=MagicMock(return_value=False),
-        is_type_file=MagicMock(return_value=False),
-        get_coverages=MagicMock(return_value={}),
-        create_file_checklist=MagicMock(return_value=[]),
-        create_test_selection_comment=MagicMock(return_value="mock_comment"),
-        delete_comments_by_identifiers=MagicMock(),
-        combine_and_create_comment=MagicMock(),
-    ) as mocks:
-        yield mocks
+    mocks = {}
+    
+    with patch("services.webhook.utils.create_pr_checkbox_comment.get_installation_access_token") as mock_token:
+        mock_token.return_value = "mock_token"
+        mocks["get_installation_access_token"] = mock_token
+        
+        with patch("services.webhook.utils.create_pr_checkbox_comment.get_repository") as mock_repo:
+            mock_repo.return_value = {"trigger_on_pr_change": True}
+            mocks["get_repository"] = mock_repo
+            
+            with patch("services.webhook.utils.create_pr_checkbox_comment.get_pull_request_files") as mock_files:
+                mock_files.return_value = []
+                mocks["get_pull_request_files"] = mock_files
+                
+                with patch("services.webhook.utils.create_pr_checkbox_comment.is_code_file") as mock_code:
+                    mock_code.return_value = True
+                    mocks["is_code_file"] = mock_code
+                    
+                    with patch("services.webhook.utils.create_pr_checkbox_comment.is_test_file") as mock_test:
+                        mock_test.return_value = False
+                        mocks["is_test_file"] = mock_test
+                        
+                        with patch("services.webhook.utils.create_pr_checkbox_comment.is_type_file") as mock_type:
+                            mock_type.return_value = False
+                            mocks["is_type_file"] = mock_type
+                            
+                            with patch("services.webhook.utils.create_pr_checkbox_comment.get_coverages") as mock_cov:
+                                mock_cov.return_value = {}
+                                mocks["get_coverages"] = mock_cov
+                                
+                                with patch("services.webhook.utils.create_pr_checkbox_comment.create_file_checklist") as mock_checklist:
+                                    mock_checklist.return_value = []
+                                    mocks["create_file_checklist"] = mock_checklist
+                                    
+                                    with patch("services.webhook.utils.create_pr_checkbox_comment.create_test_selection_comment") as mock_comment:
+                                        mock_comment.return_value = "mock_comment"
+                                        mocks["create_test_selection_comment"] = mock_comment
+                                        
+                                        with patch("services.webhook.utils.create_pr_checkbox_comment.delete_comments_by_identifiers") as mock_delete:
+                                            mocks["delete_comments_by_identifiers"] = mock_delete
+                                            
+                                            with patch("services.webhook.utils.create_pr_checkbox_comment.combine_and_create_comment") as mock_combine:
+                                                mocks["combine_and_create_comment"] = mock_combine
+                                                
+                                                yield mocks
 
 
 @pytest.fixture
