@@ -60,9 +60,12 @@ jobs:
 
       - name: Update Lambda function with latest ECR image
         run: |
-          aws lambda update-function-code \
+          if aws lambda update-function-code \
           --function-name $LAMBDA_NAME \
-          --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG 2>&1 | grep -q "ResourceConflictException"; then
+            echo "Lambda update already in progress, skipping..."
+            exit 0
+          fi
 
       # Deploy CloudFormation stack for monitoring (SNS, CloudWatch Alarm)
       - name: Deploy CloudFormation stack for monitoring
