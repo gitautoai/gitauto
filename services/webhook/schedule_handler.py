@@ -151,18 +151,28 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         logging.info(msg)
         return {"status": "skipped", "message": msg}
 
-    # Sort by: statement_coverage (asc), file_size (asc), full_path (asc)
-    enriched_all_files.sort(
+    # Filter out files with 100% coverage in all three metrics, then sort by file_size (asc), full_path (asc)
+    files_needing_tests = [
+        item
+        for item in enriched_all_files
+        if not (
+            cast(float, item["statement_coverage"]) == 100.0
+            and cast(float, item["function_coverage"]) == 100.0
+            and cast(float, item["branch_coverage"]) == 100.0
+        )
+    ]
+
+    files_needing_tests.sort(
         key=lambda x: (
-            cast(float, x["statement_coverage"]),
             cast(int, x["file_size"]),
+            cast(float, x["statement_coverage"]),
             cast(str, x["full_path"]),
         )
     )
 
     # Find the first suitable file from sorted list
     target_item = None
-    for item in enriched_all_files:
+    for item in files_needing_tests:
         item_path = cast(str, item["full_path"])
 
         # Skip non-code files
