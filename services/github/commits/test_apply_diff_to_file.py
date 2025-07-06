@@ -328,12 +328,15 @@ def test_apply_diff_to_file_missing_branch(base_args):
     }
 
     # Execute and verify
-    with pytest.raises(ValueError, match="new_branch is not set"):
-        apply_diff_to_file(
-            diff="test diff",
-            file_path="test_file.py",
-            base_args=base_args_without_branch,
-        )
+    result = apply_diff_to_file(
+        diff="test diff",
+        file_path="test_file.py",
+        base_args=base_args_without_branch,
+    )
+    
+    # The function should return False when new_branch is not set
+    # because the handle_exceptions decorator catches the ValueError
+    assert result is False
 
 
 def test_apply_diff_to_file_http_error(mock_requests_get, mock_create_headers, base_args):
