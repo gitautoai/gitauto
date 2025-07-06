@@ -46,7 +46,6 @@ def is_test_file(filename: str) -> bool:
         r"/tests?/",  # src/tests/Button.tsx, src/test/Button.java
         r"^tests?/",  # tests/constants.py, test/utils.py
         r"(^|/)e2e/",  # e2e/login.spec.ts, src/e2e/login.spec.ts
-        r"/test-",  # src/test-utils/component.js
         r"(^|/)cypress/",  # cypress/integration/login.js, src/cypress/integration/login.js
         r"(^|/)playwright/",  # playwright/tests/login.spec.ts, src/playwright/tests/login.spec.ts
         r"/spec/",  # spec/models/user_spec.rb
