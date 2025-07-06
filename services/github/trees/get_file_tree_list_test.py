@@ -55,7 +55,7 @@ def test_get_file_tree_list_multiple_files_same_depth(mock_get_file_tree, mock_b
     
     result, message = get_file_tree_list(mock_base_args, None)
     
-    assert result == ["README.md", "config.py", "main.py"]
+    assert result == ["config.py", "main.py", "README.md"]
     assert message == "Found 3 files across 1 directory levels."
 
 
