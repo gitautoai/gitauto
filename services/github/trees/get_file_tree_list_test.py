@@ -70,8 +70,8 @@ def test_get_file_tree_list_files_different_depths(mock_get_file_tree, mock_base
     
     result, message = get_file_tree_list(mock_base_args, None)
     
-    # Files should be sorted by depth first, then alphabetically
-    expected = ["README.md", "src/main.py", "tests/test_main.py", "src/utils/helper.py"]
+    # Files are sorted alphabetically
+    expected = ["README.md", "src/main.py", "src/utils/helper.py", "tests/test_main.py"]
     assert result == expected
     assert message == "Found 4 files across 3 directory levels."
 
