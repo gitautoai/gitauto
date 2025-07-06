@@ -195,7 +195,7 @@ class TestCreateFileChecklist:
 
     def test_return_type_is_list_of_file_checklist_items(self, mock_is_excluded_from_testing):
         """Test that the function returns a list of FileChecklistItem objects."""
-        file_changes = [FileChange(filename="src/test.py", status="added")]
+        file_changes = [{"filename": "src/test.py", "status": "added"}]
         coverage_data = {}
         
         result = create_file_checklist(file_changes, coverage_data)
