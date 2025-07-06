@@ -315,3 +315,50 @@ def test_apply_diff_to_file_partial_application(mock_requests_get, mock_create_h
     )
     assert "partially applied" in result
     assert "rejected" in result
+
+
+def test_apply_diff_to_file_missing_branch(base_args):
+    """Test error when new_branch is not set."""
+    # Setup
+    base_args_without_branch = {
+        "owner": "test_owner",
+        "repo": "test_repo",
+        "token": "test_token",
+        "new_branch": "",  # Empty branch name
+    }
+
+    # Execute and verify
+    with pytest.raises(ValueError, match="new_branch is not set"):
+        apply_diff_to_file(
+            diff="test diff",
+            file_path="test_file.py",
+            base_args=base_args_without_branch,
+        )
+
+
+def test_apply_diff_to_file_http_error(mock_requests_get, mock_create_headers, base_args):
+    """Test handling of HTTP errors."""
+    # Setup
+    mock_response_get = MagicMock()
+    mock_response_get.status_code = 200
+    mock_response_get.raise_for_status.side_effect = requests.exceptions.HTTPError("HTTP Error")
+    mock_requests_get.return_value = mock_response_get
+
+    # Execute
+    result = apply_diff_to_file(
+        diff="test diff",
+        file_path="test_file.py",
+        base_args=base_args,
+    )
+
+    # Verify
+    mock_requests_get.assert_called_once()
+    mock_response_get.raise_for_status.assert_called_once()
+    assert result is False  # Default return value from handle_exceptions
+
+
+def test_apply_diff_to_file_with_kwargs(mock_requests_get, mock_requests_put, mock_create_headers, mock_apply_patch, base_args):
+    """Test that extra kwargs are properly handled."""
+    # This test ensures the **_kwargs parameter works correctly
+    apply_diff_to_file(diff="test diff", file_path="test_file.py", base_args=base_args, extra_param="ignored")
+    # If no exception is raised, the test passes
