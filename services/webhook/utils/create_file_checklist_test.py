@@ -181,7 +181,7 @@ class TestCreateFileChecklist:
         """Test creating a checklist with all possible status types."""
         file_changes = [
             {"filename": "src/added.py", "status": "added"},
-            FileChange(filename="src/modified.py", status="modified"),
+            {"filename": "src/modified.py", "status": "modified"},
             FileChange(filename="src/removed.py", status="removed"),
         ]
         coverage_data = {}
