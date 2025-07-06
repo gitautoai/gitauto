@@ -127,3 +127,49 @@ class TestCreatePrCheckboxComment:
                     "type": "Organization",
                     "login": "test-owner",
                 },
+            },
+            "installation": {"id": 101112},
+        }
+        
+        result = create_pr_checkbox_comment(payload)
+        
+        assert result is None
+        # Verify that coverage data was not fetched
+        mock_get_coverages.assert_not_called()
+
+    @patch("services.webhook.utils.create_pr_checkbox_comment.get_repository")
+    def test_different_bot_name_patterns(self, mock_get_repository):
+        """Test that different bot name patterns are correctly identified."""
+        bot_names = [
+            "dependabot[bot]",
+            "github-actions[bot]",
+            "renovate[bot]",
+            "codecov[bot]",
+            "custom-bot[bot]",
+        ]
+        
+        for bot_name in bot_names:
+            payload = {
+                "pull_request": {
+                    "number": 123,
+                    "url": "https://api.github.com/repos/owner/repo/pulls/123",
+                    "head": {"ref": "feature-branch"},
+                },
+                "sender": {"login": bot_name},
+                "repository": {
+                    "id": 456,
+                    "name": "test-repo",
+                    "owner": {
+                        "id": 789,
+                        "type": "Organization",
+                        "login": "test-owner",
+                    },
+                },
+                "installation": {"id": 101112},
+            }
+            
+            result = create_pr_checkbox_comment(payload)
+            
+            assert result is None
+            # Reset mock for next iteration
+            mock_get_repository.reset_mock()
