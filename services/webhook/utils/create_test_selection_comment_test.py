@@ -416,6 +416,34 @@ class TestCreateTestSelectionComment:
         assert SETTINGS_LINKS in result
         assert "- [ ] Yes, manage tests" in result
 
+    def test_return_type_is_string(self, mock_reset_command):
+        """Test that the function returns a string."""
+        branch_name = "test-branch"
+        checklist: list[FileChecklistItem] = []
+        
+        result = create_test_selection_comment(checklist, branch_name)
+        
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+    def test_function_with_none_values_in_checklist_item(self, mock_reset_command):
+        """Test function behavior with edge case values."""
+        branch_name = "test-branch"
+        checklist: list[FileChecklistItem] = [
+            {
+                "path": "",  # Empty path
+                "checked": False,
+                "coverage_info": "",
+                "status": "added",
+            }
+        ]
+
+        result = create_test_selection_comment(checklist, branch_name)
+        
+        # Should handle empty path gracefully
+        assert "- [ ] added ``" in result
+        assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+
 
 class TestFileChecklistItem:
     """Test cases for FileChecklistItem TypedDict."""
@@ -455,3 +483,61 @@ class TestFileChecklistItem:
             }
             # If this doesn't raise a type error, the status is valid
             assert item["status"] == status
+
+    def test_file_checklist_item_with_various_paths(self):
+        """Test FileChecklistItem with various file path formats."""
+        test_paths = [
+            "simple.py",
+            "path/to/file.py",
+            "very/long/path/to/deeply/nested/file.py",
+            "file-with-dashes.py",
+            "file_with_underscores.py",
+            "file.with.dots.py",
+            "123numeric.py",
+            "UPPERCASE.PY",
+        ]
+        
+        for path in test_paths:
+            item: FileChecklistItem = {
+                "path": path,
+                "checked": True,
+                "coverage_info": " (Coverage: 50%)",
+                "status": "modified",
+            }
+            
+            assert item["path"] == path
+            assert isinstance(item["path"], str)
+
+    def test_file_checklist_item_with_various_coverage_info(self):
+        """Test FileChecklistItem with various coverage info formats."""
+        test_coverage_infos = [
+            "",
+            " (Coverage: 0%)",
+            " (Coverage: 100%)",
+            " (Line: 75%, Function: 80%, Branch: 60%)",
+            " (No coverage data)",
+        ]
+        
+        for coverage_info in test_coverage_infos:
+            item: FileChecklistItem = {
+                "path": "test.py",
+                "checked": True,
+                "coverage_info": coverage_info,
+                "status": "modified",
+            }
+            
+            assert item["coverage_info"] == coverage_info
+            assert isinstance(item["coverage_info"], str)
+
+    def test_file_checklist_item_boolean_checked_values(self):
+        """Test FileChecklistItem with both boolean values for checked."""
+        for checked_value in [True, False]:
+            item: FileChecklistItem = {
+                "path": "test.py",
+                "checked": checked_value,
+                "coverage_info": "",
+                "status": "modified",
+            }
+            
+            assert item["checked"] == checked_value
+            assert isinstance(item["checked"], bool)
