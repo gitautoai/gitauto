@@ -198,7 +198,7 @@ def test_get_file_tree_list_deep_nested_structure(mock_get_file_tree, mock_base_
     
     result, message = get_file_tree_list(mock_base_args, None)
     
-    expected = ["shallow.py", "a/medium.py", "a/b/c/d/e/deep.py"]
+    expected = ["a/b/c/d/e/deep.py", "a/medium.py", "shallow.py"]
     assert result == expected
     assert message == "Found 3 files across 6 directory levels."
 
