@@ -32,7 +32,7 @@ def is_test_file(filename: str) -> bool:
         r"/__tests__/",  # src/__tests__/Button.tsx
         r"/tests?/",  # src/tests/Button.tsx, src/test/Button.java
         r"^tests?/",  # tests/constants.py, test/utils.py
-        r"/e2e/",  # e2e/login.spec.ts
+        r"(^|/)e2e/",  # e2e/login.spec.ts, src/e2e/login.spec.ts
         r"/cypress/",  # cypress/integration/login.js
         r"/playwright/",  # playwright/tests/login.spec.ts
         r"/spec/",  # spec/models/user_spec.rb
