@@ -33,6 +33,7 @@ def is_test_file(filename: str) -> bool:
         r"-test\.",  # file-test.py, component-test.js
         r"-spec\.",  # file-spec.rb, component-spec.js
         r"^test_",  # test_button.py, test_utils.py
+        r"test-",  # test-script.js, test-utils.py (covers both beginning and middle)
         r"^test-",  # test-file.py, test-utils.py
         r"/test_",  # services/anthropic/test_client.py
         r"/test-",  # services/anthropic/test-client.py
