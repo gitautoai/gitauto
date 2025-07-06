@@ -227,7 +227,7 @@ class TestCreateFileChecklist:
     def test_large_number_of_files(self, mock_is_excluded_from_testing):
         """Test creating a checklist with a large number of files."""
         file_changes = [
-            FileChange(filename=f"src/file_{i:03d}.py", status="modified")
+            {"filename": f"src/file_{i:03d}.py", "status": "modified"}
             for i in range(100)
         ]
         coverage_data = {}
