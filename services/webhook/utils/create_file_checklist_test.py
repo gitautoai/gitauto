@@ -180,7 +180,7 @@ class TestCreateFileChecklist:
     def test_all_status_types(self, mock_is_excluded_from_testing):
         """Test creating a checklist with all possible status types."""
         file_changes = [
-            FileChange(filename="src/added.py", status="added"),
+            {"filename": "src/added.py", "status": "added"},
             FileChange(filename="src/modified.py", status="modified"),
             FileChange(filename="src/removed.py", status="removed"),
         ]
