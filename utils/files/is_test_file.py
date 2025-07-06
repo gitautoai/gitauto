@@ -30,6 +30,8 @@ def is_test_file(filename: str) -> bool:
         r"tests\.",  # ButtonTests.java, UserTests.cs
         r"_test\.",  # button_test.py, user_test.go
         r"_spec\.",  # button_spec.rb, user_spec.rb
+        r"-test\.",  # file-test.py, component-test.js
+        r"-spec\.",  # file-spec.rb, component-spec.js
         r"^test_",  # test_button.py, test_utils.py
         r"^test-",  # test-file.py, test-utils.py
         r"/test_",  # services/anthropic/test_client.py
