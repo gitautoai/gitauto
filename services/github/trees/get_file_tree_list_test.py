@@ -87,7 +87,7 @@ def test_get_file_tree_list_skip_non_blob_items(mock_get_file_tree, mock_base_ar
     
     result, message = get_file_tree_list(mock_base_args, None)
     
-    assert result == ["README.md", "main.py"]
+    assert result == ["main.py", "README.md"]
     assert message == "Found 2 files across 1 directory levels."
 
 
