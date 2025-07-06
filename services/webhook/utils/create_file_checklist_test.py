@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import patch
 
-from schemas.supabase.fastapi.schema_public_latest import CoveragesBaseSchema
 from services.github.pulls.get_pull_request_files import FileChange
 from services.webhook.utils.create_file_checklist import create_file_checklist
 from services.webhook.utils.create_test_selection_comment import FileChecklistItem
@@ -31,16 +30,16 @@ def sample_file_changes():
 def sample_coverage_data():
     """Sample coverage data for testing."""
     return {
-        "src/file1.py": CoveragesBaseSchema(
-            line_coverage=75.0,
-            function_coverage=80.0,
-            branch_coverage=65.0,
-        ),
-        "src/file2.py": CoveragesBaseSchema(
-            line_coverage=0.0,
-            function_coverage=None,
-            branch_coverage=None,
-        ),
+        "src/file1.py": {
+            "line_coverage": 75.0,
+            "function_coverage": 80.0,
+            "branch_coverage": 65.0,
+        },
+        "src/file2.py": {
+            "line_coverage": 0.0,
+            "function_coverage": None,
+            "branch_coverage": None,
+        },
     }
 
 
@@ -78,11 +77,11 @@ class TestCreateFileChecklist:
         """Test creating a checklist with a single file change and coverage data."""
         file_changes = [FileChange(filename="src/test.py", status="modified")]
         coverage_data = {
-            "src/test.py": CoveragesBaseSchema(
-                line_coverage=85.0,
-                function_coverage=90.0,
-                branch_coverage=75.0,
-            )
+            "src/test.py": {
+                "line_coverage": 85.0,
+                "function_coverage": 90.0,
+                "branch_coverage": 75.0,
+            }
         }
         
         result = create_file_checklist(file_changes, coverage_data)
@@ -134,11 +133,11 @@ class TestCreateFileChecklist:
         """Test creating a checklist with coverage data containing None values."""
         file_changes = [FileChange(filename="src/test.py", status="modified")]
         coverage_data = {
-            "src/test.py": CoveragesBaseSchema(
-                line_coverage=None,
-                function_coverage=None,
-                branch_coverage=None,
-            )
+            "src/test.py": {
+                "line_coverage": None,
+                "function_coverage": None,
+                "branch_coverage": None,
+            }
         }
         
         result = create_file_checklist(file_changes, coverage_data)
@@ -154,21 +153,21 @@ class TestCreateFileChecklist:
             FileChange(filename="src/test3.py", status="removed"),
         ]
         coverage_data = {
-            "src/test1.py": CoveragesBaseSchema(
-                line_coverage=50.0,
-                function_coverage=None,
-                branch_coverage=None,
-            ),
-            "src/test2.py": CoveragesBaseSchema(
-                line_coverage=None,
-                function_coverage=75.0,
-                branch_coverage=None,
-            ),
-            "src/test3.py": CoveragesBaseSchema(
-                line_coverage=None,
-                function_coverage=None,
-                branch_coverage=90.0,
-            ),
+            "src/test1.py": {
+                "line_coverage": 50.0,
+                "function_coverage": None,
+                "branch_coverage": None,
+            },
+            "src/test2.py": {
+                "line_coverage": None,
+                "function_coverage": 75.0,
+                "branch_coverage": None,
+            },
+            "src/test3.py": {
+                "line_coverage": None,
+                "function_coverage": None,
+                "branch_coverage": 90.0,
+            },
         }
         
         result = create_file_checklist(file_changes, coverage_data)
