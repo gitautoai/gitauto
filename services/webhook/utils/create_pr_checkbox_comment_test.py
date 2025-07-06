@@ -95,3 +95,35 @@ class TestCreatePrCheckboxComment:
         
         assert result is None
         mock_get_repository.assert_called_once_with(repo_id=456)
+
+    @patch("services.webhook.utils.create_pr_checkbox_comment.get_coverages")
+    @patch("services.webhook.utils.create_pr_checkbox_comment.is_code_file")
+    @patch("services.webhook.utils.create_pr_checkbox_comment.get_pull_request_files")
+    @patch("services.webhook.utils.create_pr_checkbox_comment.get_installation_access_token")
+    @patch("services.webhook.utils.create_pr_checkbox_comment.get_repository")
+    def test_skips_when_no_code_files_changed(self, mock_get_repository, mock_get_token, 
+                                            mock_get_files, mock_is_code_file, mock_get_coverages):
+        """Test that the function skips processing when no code files were changed."""
+        mock_get_repository.return_value = {"trigger_on_pr_change": True}
+        mock_get_token.return_value = "mock_token"
+        mock_get_files.return_value = [
+            {"filename": "README.md", "status": "modified"},
+            {"filename": "docs/guide.txt", "status": "added"},
+        ]
+        mock_is_code_file.return_value = False
+        
+        payload = {
+            "pull_request": {
+                "number": 123,
+                "url": "https://api.github.com/repos/owner/repo/pulls/123",
+                "head": {"ref": "feature-branch"},
+            },
+            "sender": {"login": "test-user"},
+            "repository": {
+                "id": 456,
+                "name": "test-repo",
+                "owner": {
+                    "id": 789,
+                    "type": "Organization",
+                    "login": "test-owner",
+                },
