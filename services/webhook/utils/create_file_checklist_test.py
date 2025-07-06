@@ -131,7 +131,7 @@ class TestCreateFileChecklist:
 
     def test_coverage_data_with_none_values(self, mock_is_excluded_from_testing):
         """Test creating a checklist with coverage data containing None values."""
-        file_changes = [FileChange(filename="src/test.py", status="modified")]
+        file_changes = [{"filename": "src/test.py", "status": "modified"}]
         coverage_data = {
             "src/test.py": {
                 "line_coverage": None,
