@@ -20,9 +20,9 @@ def mock_is_excluded_from_testing():
 def sample_file_changes():
     """Sample file changes for testing."""
     return [
-        FileChange(filename="src/file1.py", status="modified"),
-        FileChange(filename="src/file2.py", status="added"),
-        FileChange(filename="src/file3.py", status="removed"),
+        {"filename": "src/file1.py", "status": "modified"},
+        {"filename": "src/file2.py", "status": "added"},
+        {"filename": "src/file3.py", "status": "removed"},
     ]
 
 
