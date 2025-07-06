@@ -163,11 +163,9 @@ def test_get_file_tree_list_complex_directory_structure(mock_get_file_tree, mock
     
     result, message = get_file_tree_list(mock_base_args, None)
     
-    # Expected order: depth 0, then depth 1, then depth 2, all alphabetically sorted
+    # Files are sorted alphabetically
     expected = [
-        "README.md", "config.py",  # depth 0
-        "docs/api/endpoints.md", "src/config.py", "src/main.py", "tests/test_main.py",  # depth 1
-        "src/utils/constants.py", "src/utils/helper.py", "tests/utils/test_helper.py"  # depth 2
+        "config.py", "docs/api/endpoints.md", "README.md", "src/config.py", "src/main.py", "src/utils/constants.py", "src/utils/helper.py", "tests/test_main.py", "tests/utils/test_helper.py"
     ]
     assert result == expected
     assert message == "Found 9 files across 3 directory levels."
