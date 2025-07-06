@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import patch
 
 from services.webhook.utils.create_file_checklist import create_file_checklist
-from services.webhook.utils.create_test_selection_comment import FileChecklistItem
 
 
 @pytest.fixture
