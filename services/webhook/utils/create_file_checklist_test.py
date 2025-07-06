@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import patch
 
+from services.webhook.utils.create_test_selection_comment import FileChecklistItem
 from services.webhook.utils.create_file_checklist import create_file_checklist
 
 
