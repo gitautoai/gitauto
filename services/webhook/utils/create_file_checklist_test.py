@@ -148,7 +148,7 @@ class TestCreateFileChecklist:
     def test_partial_coverage_data(self, mock_is_excluded_from_testing):
         """Test creating a checklist with partial coverage data."""
         file_changes = [
-            FileChange(filename="src/test1.py", status="modified"),
+            {"filename": "src/test1.py", "status": "modified"},
             FileChange(filename="src/test2.py", status="added"),
             FileChange(filename="src/test3.py", status="removed"),
         ]
