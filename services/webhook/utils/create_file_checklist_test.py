@@ -149,7 +149,7 @@ class TestCreateFileChecklist:
         """Test creating a checklist with partial coverage data."""
         file_changes = [
             {"filename": "src/test1.py", "status": "modified"},
-            FileChange(filename="src/test2.py", status="added"),
+            {"filename": "src/test2.py", "status": "added"},
             FileChange(filename="src/test3.py", status="removed"),
         ]
         coverage_data = {
