@@ -213,7 +213,7 @@ class TestCreateFileChecklist:
         file_changes = [
             {"filename": "src/file-with-dashes.py", "status": "modified"},
             {"filename": "src/file_with_underscores.py", "status": "added"},
-            FileChange(filename="src/file.with.dots.py", status="removed"),
+            {"filename": "src/file.with.dots.py", "status": "removed"},
         ]
         coverage_data = {}
         
