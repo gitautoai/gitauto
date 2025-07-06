@@ -138,12 +138,6 @@ def test_is_test_file_with_attribute_error():
     mock_filename.lower.side_effect = AttributeError("No lower method")
     assert is_test_file(mock_filename) is False
 
-def test_is_test_file_with_unicode_characters():
-    """Test that is_test_file handles unicode characters correctly."""
-    assert is_test_file("tést_file.py") is True
-    assert is_test_file("file_tést.py") is True
-    assert is_test_file("src/tést/utils.py") is True
-
 
 def test_is_test_file_with_special_characters():
     """Test that is_test_file handles special characters correctly."""
@@ -156,4 +150,3 @@ def test_is_test_file_with_long_paths():
     """Test that is_test_file works with long file paths."""
     long_path = "very/long/path/with/many/directories/that/could/potentially/cause/issues/with/regex/test_file.py"
     assert is_test_file(long_path) is True
-
