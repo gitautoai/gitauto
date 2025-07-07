@@ -119,3 +119,50 @@ def test_extract_selected_files_with_other_markdown():
     """
     result = extract_selected_files(comment_body)
     assert result == ["src/main.py", "config/settings.py"]
+
+
+def test_extract_selected_files_special_characters_in_paths():
+    """Test with special characters in file paths."""
+    comment_body = """
+    - [x] `src/file-with-dashes.py`
+    - [x] `src/file_with_underscores.py`
+    - [x] `src/file.with.dots.py`
+    - [x] `src/file with spaces.py`
+    - [x] `src/file@symbol.py`
+    """
+    result = extract_selected_files(comment_body)
+    assert result == [
+        "src/file-with-dashes.py",
+        "src/file_with_underscores.py",
+        "src/file.with.dots.py",
+        "src/file with spaces.py",
+        "src/file@symbol.py",
+    ]
+
+
+def test_extract_selected_files_malformed_checkboxes():
+    """Test with malformed checkbox patterns that should not match."""
+    comment_body = """
+    -[x] `src/main.py`
+    - [x]`utils/helper.py`
+    - [x] src/config.py
+    - [X] `src/uppercase.py`
+    """
+    result = extract_selected_files(comment_body)
+    # Only the uppercase X should not match due to case sensitivity
+    assert result == []
+
+
+def test_extract_selected_files_nested_backticks():
+    """Test with nested or escaped backticks in file paths."""
+    comment_body = """
+    - [x] `src/file`with`backticks.py`
+    - [x] `normal/file.py`
+    """
+    # The regex should stop at the first closing backtick
+    result = extract_selected_files(comment_body)
+    assert result == ["src/file", "normal/file.py"]
+
+
+def test_extract_selected_files_generate_tests_case_variations():
+    """Test that 'Generate Tests' filtering is case sensitive."""
