@@ -4,7 +4,7 @@ import re
 def extract_selected_files(comment_body: str) -> list[str]:
     selected_files = []
 
-    pattern = r"^\s*-\s+\[x\]\s+`([^`]+)`"
+    pattern = r"-\s+\[x\]\s+`([^`]+)`"
     matches = re.findall(pattern, comment_body)
 
     for match in matches:
