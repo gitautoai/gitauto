@@ -166,3 +166,20 @@ def test_extract_selected_files_nested_backticks():
 
 def test_extract_selected_files_generate_tests_case_variations():
     """Test that 'Generate Tests' filtering is case sensitive."""
+
+
+def test_extract_selected_files_real_world_example():
+    """Test with a real-world example similar to what GitAuto would generate."""
+    comment_body = """## 🧪 Manage Tests?
+
+Click the checkbox below to generate a PR!
+
+- [x] `services/webhook/utils/extract_selected_files.py` (Coverage: 22.22%)
+- [x] `services/github/issues/create_issue.py` (Coverage: 45.67%)
+- [ ] `utils/helper/format_text.py` (Coverage: 78.90%)
+- [x] Generate Tests - gitauto
+
+You can [turn off triggers](https://gitauto.ai/settings/triggers), [update coding rules](https://gitauto.ai/settings/rules), or [exclude files](https://gitauto.ai/dashboard/coverage)."""
+    
+    result = extract_selected_files(comment_body)
+    assert result == ["services/webhook/utils/extract_selected_files.py", "services/github/issues/create_issue.py"]
