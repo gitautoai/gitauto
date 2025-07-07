@@ -143,13 +143,13 @@ def test_extract_selected_files_special_characters_in_paths():
 def test_extract_selected_files_malformed_checkboxes():
     """Test with malformed checkbox patterns that should not match."""
     comment_body = """
-    -[x] `src/main.py`
-    - [x]`utils/helper.py`
-    - [x] src/config.py
-    - [X] `src/uppercase.py`
+    -[x] `src/no_space_after_dash.py`
+    - [x]`src/no_space_before_backtick.py`
+    - [x] src/no_backticks.py
+    - [X] `src/uppercase_x.py`
     """
     result = extract_selected_files(comment_body)
-    # Only the uppercase X should not match due to case sensitivity
+    # None should match due to malformed patterns
     assert result == []
 
 
@@ -159,7 +159,7 @@ def test_extract_selected_files_nested_backticks():
     - [x] `src/file`with`backticks.py`
     - [x] `normal/file.py`
     """
-    # The regex should stop at the first closing backtick
+    # The regex [^`]+ should stop at the first closing backtick
     result = extract_selected_files(comment_body)
     assert result == ["src/file", "normal/file.py"]
 
