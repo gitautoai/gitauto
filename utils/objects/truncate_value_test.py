@@ -25,7 +25,7 @@ def test_truncate_value_with_pydantic_model():
     assert isinstance(result, dict)
     assert result["id"] == 1
     assert result["name"] == "test_name"
-    assert result["created_at"] == datetime(2023, 1, 1, 12, 0, 0)
+    assert result["created_at"] == "2023-01-01T12:00:00"
 
 
 def test_truncate_value_with_long_string():
@@ -43,3 +43,12 @@ def test_truncate_value_with_dict():
     result = truncate_value(test_dict, max_length=30)
     
     assert result == {"key": "a" * 30 + "..."}
+
+
+def test_truncate_value_with_datetime():
+    """Test that truncate_value handles datetime objects correctly."""
+    test_datetime = datetime(2023, 1, 1, 12, 0, 0)
+    result = truncate_value(test_datetime)
+    
+    # Should return ISO format string
+    assert result == "2023-01-01T12:00:00"
