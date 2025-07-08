@@ -282,6 +282,10 @@ def test_insert_coverages_decorator_behavior(mock_supabase, sample_coverage_reco
     mock_supabase.table.side_effect = RuntimeError("Unexpected error")
     
     # Should not raise exception due to decorator
+    result = insert_coverages(sample_coverage_record)
+    
+    # Verify result
+    assert result is None
 
 
 def test_insert_coverages_with_complex_data_types(mock_supabase):
@@ -368,3 +372,16 @@ def test_insert_coverages_with_various_coverage_values(mock_supabase, coverage_v
         owner_id=1,
         repo_id=1,
         updated_at=datetime(2023, 1, 1),
+        updated_by="test"
+    )
+    
+    # Setup mock response
+    mock_result = MagicMock()
+    mock_result.data = [{"id": 100, "line_coverage": coverage_value}]
+    mock_supabase.table.return_value.insert.return_value.execute.return_value = mock_result
+    
+    # Execute function
+    result = insert_coverages(coverage_record)
+    
+    # Verify result
+    assert result == [{"id": 100, "line_coverage": coverage_value}]
