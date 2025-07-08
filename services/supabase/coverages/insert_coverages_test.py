@@ -1,5 +1,6 @@
 from unittest.mock import patch, MagicMock
 import json
+import requests
 import pytest
 from datetime import datetime
 
@@ -281,3 +282,89 @@ def test_insert_coverages_decorator_behavior(mock_supabase, sample_coverage_reco
     mock_supabase.table.side_effect = RuntimeError("Unexpected error")
     
     # Should not raise exception due to decorator
+
+
+def test_insert_coverages_with_complex_data_types(mock_supabase):
+    """Test insertion with complex data types and edge values."""
+    coverage_record = Coverages(
+        id=999,
+        branch_coverage=0.0,  # Edge case: zero coverage
+        branch_name="very-long-branch-name-with-special-chars-123!@#",
+        created_at=datetime(2023, 12, 31, 23, 59, 59),
+        created_by="user@domain.com",
+        file_size=0,  # Edge case: empty file
+        full_path="very/deep/nested/path/to/file/with/special-chars_123.py",
+        function_coverage=100.0,  # Edge case: full coverage
+        github_issue_url="https://github.com/owner/repo-name/issues/999999",
+        is_excluded_from_testing=True,
+        level="directory",
+        line_coverage=50.5,
+        owner_id=999999999,  # Large number
+        package_name="package.subpackage.module",
+        path_coverage=33.33,
+        primary_language="TypeScript",
+        repo_id=888888888,  # Large number
+        statement_coverage=75.25,
+        uncovered_branches="1,2,3,4,5,10,15,20,25,30",  # Long list
+        uncovered_functions="very_long_function_name,another_function",
+        uncovered_lines="1,2,3,5,8,13,21,34,55,89,144",  # Fibonacci sequence
+        updated_at=datetime(2023, 12, 31, 23, 59, 59),
+        updated_by="automated-system"
+    )
+    
+    # Setup mock response
+    mock_result = MagicMock()
+    mock_result.data = [{"id": 999, "status": "inserted"}]
+    mock_supabase.table.return_value.insert.return_value.execute.return_value = mock_result
+    
+    # Execute function
+    result = insert_coverages(coverage_record)
+    
+    # Verify result
+    assert result == [{"id": 999, "status": "inserted"}]
+
+
+def test_insert_coverages_http_error_handling(mock_supabase, sample_coverage_record):
+    """Test handling of HTTP errors."""
+    # Setup mock to raise HTTPError
+    http_error = requests.exceptions.HTTPError("HTTP 500 Error")
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    http_error.response = mock_response
+    mock_supabase.table.return_value.insert.return_value.execute.side_effect = http_error
+    
+    # Execute function
+    result = insert_coverages(sample_coverage_record)
+    
+    # Verify result (decorator should handle HTTP errors)
+    assert result is None
+
+
+def test_insert_coverages_result_without_data_attribute(mock_supabase, sample_coverage_record):
+    """Test handling when result object doesn't have data attribute."""
+    # Setup mock result without data attribute
+    mock_result = MagicMock()
+    del mock_result.data  # Remove data attribute
+    mock_supabase.table.return_value.insert.return_value.execute.return_value = mock_result
+    
+    # Execute function
+    result = insert_coverages(sample_coverage_record)
+    
+    # Verify result (should handle AttributeError gracefully)
+    assert result is None
+
+
+@pytest.mark.parametrize("coverage_value", [0.0, 50.5, 100.0, None])
+def test_insert_coverages_with_various_coverage_values(mock_supabase, coverage_value):
+    """Test insertion with various coverage values."""
+    coverage_record = Coverages(
+        id=100,
+        branch_name="test",
+        created_at=datetime(2023, 1, 1),
+        created_by="test",
+        full_path="test.py",
+        level="file",
+        line_coverage=coverage_value,
+        owner_id=1,
+        repo_id=1,
+        updated_at=datetime(2023, 1, 1),
