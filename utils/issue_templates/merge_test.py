@@ -193,7 +193,7 @@ class TestGetIssueBodyForPrMerged:
             # Check that settings links are at the end
             assert lines[len(file_list) + 2] == "MOCK_SETTINGS_LINKS"
 
-    def test_get_issue_body_for_pr_merged_integration_with_actual_settings_links(self):
+    def test_get_issue_body_for_pr_merged_integration_without_mocking(self):
         """Test the function with actual SETTINGS_LINKS import."""
         pr_number = 404
         file_list = ["src/example.py"]
