@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from utils.objects.truncate_value import truncate_value
 
 
-class TestModel(BaseModel):
+class SampleModel(BaseModel):
     """Test Pydantic model for testing truncate_value."""
     id: int
     name: str
@@ -13,7 +13,7 @@ class TestModel(BaseModel):
 
 def test_truncate_value_with_pydantic_model():
     """Test that truncate_value handles Pydantic models correctly."""
-    test_model = TestModel(
+    test_model = SampleModel(
         id=1,
         name="test_name",
         created_at=datetime(2023, 1, 1, 12, 0, 0)
