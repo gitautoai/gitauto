@@ -15,4 +15,7 @@ def truncate_value(value: Any, max_length: int = 30):
     if isinstance(value, BaseModel):
         # Convert Pydantic model to dict for JSON serialization
         return truncate_value(value.model_dump(), max_length)
+    if isinstance(value, datetime):
+        # Convert datetime to string for JSON serialization
+        return value.isoformat()
     return value
