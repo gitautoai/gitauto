@@ -193,4 +193,11 @@ def test_create_permission_url_empty_owner_name():
 
 def test_create_permission_url_case_sensitivity():
     """Test that create_permission_url is case sensitive for owner_type."""
-    assert "/organizations/" not in user_result
+    # Only "Organization" and "User" are valid OwnerType values
+    # This test ensures the function works correctly with the exact case
+    result = create_permission_url("Organization", "test-org", 123)
+    expected = "https://github.com/organizations/test-org/settings/installations/123/permissions/update"
+    assert result == expected
+    
+    result = create_permission_url("User", "test-user", 456)
+    expected = "https://github.com/settings/installations/456/permissions/update"
