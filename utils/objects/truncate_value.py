@@ -1,4 +1,5 @@
 from typing import Any
+from pydantic import BaseModel
 
 
 def truncate_value(value: Any, max_length: int = 30):
@@ -10,4 +11,7 @@ def truncate_value(value: Any, max_length: int = 30):
         return [truncate_value(item, max_length) for item in value]
     if isinstance(value, tuple):
         return tuple(truncate_value(item, max_length) for item in value)
+    if isinstance(value, BaseModel):
+        # Convert Pydantic model to dict for JSON serialization
+        return truncate_value(value.model_dump(), max_length)
     return value
