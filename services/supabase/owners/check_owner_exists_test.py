@@ -34,7 +34,7 @@ def test_check_owner_exists_returns_true_when_owner_found(mock_supabase_client):
     mock_select.eq.return_value = mock_eq
     
     # Mock execute to return data indicating owner exists
-    mock_eq.execute.return_value = (None, [{"owner_id": TEST_OWNER_ID}])
+    mock_eq.execute.return_value = ([None, [{"owner_id": TEST_OWNER_ID}]], None)
     
     result = check_owner_exists(TEST_OWNER_ID)
     
@@ -57,7 +57,7 @@ def test_check_owner_exists_returns_false_when_owner_not_found(mock_supabase_cli
     mock_select.eq.return_value = mock_eq
     
     # Mock execute to return empty data
-    mock_eq.execute.return_value = (None, [])
+    mock_eq.execute.return_value = ([None, []], None)
     
     result = check_owner_exists(TEST_OWNER_ID)
     
@@ -80,7 +80,7 @@ def test_check_owner_exists_returns_false_when_data_is_none(mock_supabase_client
     mock_select.eq.return_value = mock_eq
     
     # Mock execute to return None as data[1]
-    mock_eq.execute.return_value = (None, None)
+    mock_eq.execute.return_value = ([None, None], None)
     
     result = check_owner_exists(TEST_OWNER_ID)
     
@@ -102,7 +102,7 @@ def test_check_owner_exists_with_different_owner_ids(mock_supabase_client):
     
     for owner_id in test_owner_ids:
         # Mock execute to return data indicating owner exists
-        mock_eq.execute.return_value = (None, [{"owner_id": owner_id}])
+        mock_eq.execute.return_value = ([None, [{"owner_id": owner_id}]], None)
         
         result = check_owner_exists(owner_id)
         
@@ -122,7 +122,7 @@ def test_check_owner_exists_with_zero_owner_id(mock_supabase_client):
     mock_select.eq.return_value = mock_eq
     
     # Mock execute to return empty data for zero ID
-    mock_eq.execute.return_value = (None, [])
+    mock_eq.execute.return_value = ([None, []], None)
     
     result = check_owner_exists(0)
     
@@ -142,7 +142,7 @@ def test_check_owner_exists_with_negative_owner_id(mock_supabase_client):
     mock_select.eq.return_value = mock_eq
     
     # Mock execute to return empty data for negative ID
-    mock_eq.execute.return_value = (None, [])
+    mock_eq.execute.return_value = ([None, []], None)
     
     result = check_owner_exists(-1)
     
@@ -170,7 +170,7 @@ def test_check_owner_exists_with_various_scenarios(mock_supabase_client, owner_i
     mock_select.eq.return_value = mock_eq
     
     # Mock execute to return the expected data
-    mock_eq.execute.return_value = (None, expected_data)
+    mock_eq.execute.return_value = ([None, expected_data], None)
     
     result = check_owner_exists(owner_id)
     
@@ -203,7 +203,7 @@ def test_check_owner_exists_supabase_query_structure():
         mock_supabase.table.return_value = mock_table
         mock_table.select.return_value = mock_select
         mock_select.eq.return_value = mock_eq
-        mock_eq.execute.return_value = (None, [{"owner_id": TEST_OWNER_ID}])
+        mock_eq.execute.return_value = ([None, [{"owner_id": TEST_OWNER_ID}]], None)
         
         check_owner_exists(TEST_OWNER_ID)
         
@@ -226,19 +226,19 @@ def test_check_owner_exists_boolean_conversion():
         mock_select.eq.return_value = mock_eq
         
         # Test with truthy data
-        mock_eq.execute.return_value = (None, [{"owner_id": TEST_OWNER_ID}])
+        mock_eq.execute.return_value = ([None, [{"owner_id": TEST_OWNER_ID}]], None)
         result = check_owner_exists(TEST_OWNER_ID)
         assert result is True
         assert isinstance(result, bool)
         
         # Test with falsy data
-        mock_eq.execute.return_value = (None, [])
+        mock_eq.execute.return_value = ([None, []], None)
         result = check_owner_exists(TEST_OWNER_ID)
         assert result is False
         assert isinstance(result, bool)
         
         # Test with None data
-        mock_eq.execute.return_value = (None, None)
+        mock_eq.execute.return_value = ([None, None], None)
         result = check_owner_exists(TEST_OWNER_ID)
         assert result is False
         assert isinstance(result, bool)
