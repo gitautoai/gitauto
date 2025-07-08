@@ -117,4 +117,80 @@ def test_create_permission_url_url_structure():
     user_result = create_permission_url("User", "test-user", 456)
     assert user_result.startswith("https://github.com/settings/installations/")
     assert user_result.endswith("/permissions/update")
+
+
+def test_create_permission_url_with_special_characters_in_owner_name():
+    """Test that create_permission_url handles special characters in owner names."""
+    # Test with various special characters that might appear in GitHub usernames/org names
+    test_cases = [
+        ("Organization", "test-org-123", 123),
+        ("Organization", "test_org_456", 456),
+        ("User", "user.name", 789),
+        ("User", "user-123", 101112),
+    ]
+    
+    for owner_type, owner_name, installation_id in test_cases:
+        result = create_permission_url(owner_type, owner_name, installation_id)
+        if owner_type == "Organization":
+            expected = f"https://github.com/organizations/{owner_name}/settings/installations/{installation_id}/permissions/update"
+        else:
+            expected = f"https://github.com/settings/installations/{installation_id}/permissions/update"
+        assert result == expected
+
+
+def test_create_permission_url_with_zero_installation_id():
+    """Test that create_permission_url handles zero installation ID."""
+    result = create_permission_url("Organization", "test-org", 0)
+    expected = "https://github.com/organizations/test-org/settings/installations/0/permissions/update"
+    assert result == expected
+    
+    result = create_permission_url("User", "test-user", 0)
+    expected = "https://github.com/settings/installations/0/permissions/update"
+    assert result == expected
+
+
+def test_create_permission_url_with_large_installation_id():
+    """Test that create_permission_url handles large installation IDs."""
+    large_id = 999999999999999999
+    
+    result = create_permission_url("Organization", "test-org", large_id)
+    expected = f"https://github.com/organizations/test-org/settings/installations/{large_id}/permissions/update"
+    assert result == expected
+    
+    result = create_permission_url("User", "test-user", large_id)
+    expected = f"https://github.com/settings/installations/{large_id}/permissions/update"
+    assert result == expected
+
+
+def test_create_permission_url_consistent_behavior():
+    """Test that create_permission_url behaves consistently across multiple calls."""
+    # Test that multiple calls with same parameters return same result
+    owner_type = "Organization"
+    owner_name = "consistent-org"
+    installation_id = 12345
+    
+    result1 = create_permission_url(owner_type, owner_name, installation_id)
+    result2 = create_permission_url(owner_type, owner_name, installation_id)
+    result3 = create_permission_url(owner_type, owner_name, installation_id)
+    
+    assert result1 == result2 == result3
+    expected = "https://github.com/organizations/consistent-org/settings/installations/12345/permissions/update"
+    assert result1 == expected
+
+
+def test_create_permission_url_empty_owner_name():
+    """Test that create_permission_url handles empty owner name."""
+    # This tests edge case behavior - the function should still work with empty string
+    result = create_permission_url("Organization", "", 123)
+    expected = "https://github.com/organizations//settings/installations/123/permissions/update"
+    assert result == expected
+    
+    # For User type, owner_name is ignored anyway
+    result = create_permission_url("User", "", 456)
+    expected = "https://github.com/settings/installations/456/permissions/update"
+    assert result == expected
+
+
+def test_create_permission_url_case_sensitivity():
+    """Test that create_permission_url is case sensitive for owner_type."""
     assert "/organizations/" not in user_result
