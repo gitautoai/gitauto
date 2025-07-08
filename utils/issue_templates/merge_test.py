@@ -67,7 +67,7 @@ class TestGetIssueBodyForPrMerged:
     @pytest.fixture
     def mock_settings_links(self):
         """Mock the SETTINGS_LINKS constant."""
-        with patch("utils.issue_templates.merge.SETTINGS_LINKS") as mock:
+        with patch("utils.issue_templates.merge.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS") as mock:
             mock.return_value = "MOCK_SETTINGS_LINKS"
             yield mock
 
