@@ -1,4 +1,5 @@
 from unittest.mock import patch, MagicMock
+import json
 import pytest
 from datetime import datetime
 
@@ -216,3 +217,67 @@ def test_insert_coverages_method_chaining(mock_supabase, sample_coverage_record)
     
     # Verify result
     assert result == [{"id": 1}]
+
+
+def test_insert_coverages_with_none_optional_fields(mock_supabase):
+    """Test insertion with None values for optional fields."""
+    coverage_record = Coverages(
+        id=3,
+        branch_coverage=None,
+        branch_name="feature",
+        created_at=datetime(2023, 1, 3, 14, 0, 0),
+        created_by="test_user",
+        file_size=None,
+        full_path="src/test.py",
+        function_coverage=None,
+        github_issue_url=None,
+        is_excluded_from_testing=None,
+        level="file",
+        line_coverage=None,
+        owner_id=11111,
+        package_name=None,
+        path_coverage=None,
+        primary_language=None,
+        repo_id=22222,
+        statement_coverage=None,
+        uncovered_branches=None,
+        uncovered_functions=None,
+        uncovered_lines=None,
+        updated_at=datetime(2023, 1, 3, 14, 0, 0),
+        updated_by="test_user"
+    )
+    
+    # Setup mock response
+    mock_result = MagicMock()
+    mock_result.data = [{"id": 3, "full_path": "src/test.py"}]
+    mock_supabase.table.return_value.insert.return_value.execute.return_value = mock_result
+    
+    # Execute function
+    result = insert_coverages(coverage_record)
+    
+    # Verify behavior
+    mock_supabase.table.assert_called_once_with("coverages")
+    mock_supabase.table.return_value.insert.assert_called_once_with(coverage_record)
+    
+    # Verify result
+    assert result == [{"id": 3, "full_path": "src/test.py"}]
+
+
+def test_insert_coverages_json_decode_error_handling(mock_supabase, sample_coverage_record):
+    """Test handling of JSONDecodeError."""
+    # Setup mock to raise JSONDecodeError
+    mock_supabase.table.return_value.insert.return_value.execute.side_effect = json.JSONDecodeError("Invalid JSON", "doc", 0)
+    
+    # Execute function
+    result = insert_coverages(sample_coverage_record)
+    
+    # Verify result
+    assert result is None
+
+
+def test_insert_coverages_decorator_behavior(mock_supabase, sample_coverage_record):
+    """Test that the handle_exceptions decorator is properly applied."""
+    # Verify the function has the decorator applied by checking it handles exceptions
+    mock_supabase.table.side_effect = RuntimeError("Unexpected error")
+    
+    # Should not raise exception due to decorator
