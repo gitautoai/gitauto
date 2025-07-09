@@ -201,3 +201,75 @@ def test_get_repository_with_different_repo_ids():
             assert result["repo_id"] == repo_id
             assert result["repo_name"] == repo_name
             mock_supabase.table.return_value.select.return_value.eq.assert_called_with("repo_id", repo_id)
+
+
+def test_get_repository_cast_behavior():
+    """Test that the result is properly cast to Repositories type."""
+    mock_result = Mock()
+    mock_result.data = [{
+        "id": 1,
+        "repo_id": 123456,
+        "repo_name": "test-repo",
+        "owner_id": 789,
+        "created_by": "user:test",
+        "updated_by": "user:test",
+        "file_count": 100,
+        "blank_lines": 50,
+        "comment_lines": 30,
+        "code_lines": 200,
+    }]
+    
+    with patch("services.supabase.repositories.get_repository.supabase") as mock_supabase:
+        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
+        
+        result = get_repository(123456)
+        
+        # The cast function should return the dictionary as-is
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result == mock_result.data[0]
+
+
+def test_get_repository_supabase_chain_calls():
+    """Test that the Supabase method chain is called correctly."""
+    mock_result = Mock()
+    mock_result.data = [{"repo_id": 123456, "repo_name": "test"}]
+    
+    with patch("services.supabase.repositories.get_repository.supabase") as mock_supabase:
+        # Set up the method chain
+        mock_table = Mock()
+        mock_select = Mock()
+        mock_eq = Mock()
+        
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_select
+        mock_select.eq.return_value = mock_eq
+        mock_eq.execute.return_value = mock_result
+        
+        result = get_repository(123456)
+        
+        # Verify each step of the chain
+        mock_supabase.table.assert_called_once_with("repositories")
+        mock_table.select.assert_called_once_with("*")
+        mock_select.eq.assert_called_once_with("repo_id", 123456)
+        mock_eq.execute.assert_called_once()
+        
+        assert result is not None
+        assert result["repo_id"] == 123456
+
+
+def test_get_repository_type_error():
+    """Test get_repository handles TypeError and returns None."""
+    with patch("services.supabase.repositories.get_repository.supabase") as mock_supabase:
+        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.side_effect = TypeError("unsupported operand type(s)")
+        
+        result = get_repository(123456)
+        
+        assert result is None
+
+
+def test_get_repository_with_negative_repo_id():
+    """Test get_repository works with negative repo_id (edge case)."""
+    # This tests that the function doesn't validate input and passes it through
+    mock_result = Mock()
+    mock_result.data = []
