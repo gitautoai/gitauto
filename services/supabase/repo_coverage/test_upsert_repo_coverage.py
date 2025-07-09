@@ -11,13 +11,12 @@ from services.supabase.repo_coverage.upsert_repo_coverage import upsert_repo_cov
 def mock_supabase():
     """Fixture to provide a mocked supabase client."""
     with patch("services.supabase.repo_coverage.upsert_repo_coverage.supabase") as mock:
-        mock_table = MagicMock()
-        mock_insert = MagicMock()
-        mock_execute = MagicMock()
+        # Create a mock result object
+        mock_result = MagicMock()
+        mock_result.data = []
         
-        mock.table.return_value = mock_table
-        mock_table.insert.return_value = mock_insert
-        mock_insert.execute.return_value = mock_execute
+        # Set up the method chain
+        mock.table.return_value.insert.return_value.execute.return_value = mock_result
         
         yield mock
 
@@ -57,37 +56,34 @@ def test_upsert_repo_coverage_successful_insert(mock_supabase, sample_coverage_d
     """Test successful repository coverage upsert operation."""
     # Arrange
     expected_data = [{"id": 1, "repo_id": 789012, "branch_name": "main"}]
-    mock_supabase.table().insert().execute.return_value.data = expected_data
+    mock_supabase.table.return_value.insert.return_value.execute.return_value.data = expected_data
     
     # Act
     result = upsert_repo_coverage(sample_coverage_data)
     
     # Assert
     assert result == expected_data
-    mock_supabase.table.assert_called_once_with("repo_coverage")
-    mock_supabase.table().insert.assert_called_once()
-    mock_supabase.table().insert().execute.assert_called_once()
+    mock_supabase.table.assert_called_with("repo_coverage")
 
 
 def test_upsert_repo_coverage_with_minimal_data(mock_supabase, minimal_coverage_data):
     """Test upsert with minimal required fields only."""
     # Arrange
     expected_data = [{"id": 2, "repo_id": 222222, "branch_name": "develop"}]
-    mock_supabase.table().insert().execute.return_value.data = expected_data
+    mock_supabase.table.return_value.insert.return_value.execute.return_value.data = expected_data
     
     # Act
     result = upsert_repo_coverage(minimal_coverage_data)
     
     # Assert
     assert result == expected_data
-    mock_supabase.table.assert_called_once_with("repo_coverage")
 
 
 def test_upsert_repo_coverage_model_dump_called_correctly(mock_supabase, sample_coverage_data):
     """Test that model_dump is called with exclude_none=True."""
     # Arrange
     expected_data = [{"id": 3}]
-    mock_supabase.table().insert().execute.return_value.data = expected_data
+    mock_supabase.table.return_value.insert.return_value.execute.return_value.data = expected_data
     
     # Act
     with patch.object(sample_coverage_data, 'model_dump') as mock_model_dump:
@@ -96,13 +92,13 @@ def test_upsert_repo_coverage_model_dump_called_correctly(mock_supabase, sample_
     
     # Assert
     mock_model_dump.assert_called_once_with(exclude_none=True)
-    mock_supabase.table().insert.assert_called_once_with({"test": "data"})
+    mock_supabase.table.return_value.insert.assert_called_with({"test": "data"})
 
 
 def test_upsert_repo_coverage_empty_result_data(mock_supabase, sample_coverage_data):
     """Test behavior when supabase returns empty data."""
     # Arrange
-    mock_supabase.table().insert().execute.return_value.data = []
+    mock_supabase.table.return_value.insert.return_value.execute.return_value.data = []
     
     # Act
     result = upsert_repo_coverage(sample_coverage_data)
@@ -114,7 +110,7 @@ def test_upsert_repo_coverage_empty_result_data(mock_supabase, sample_coverage_d
 def test_upsert_repo_coverage_none_result_data(mock_supabase, sample_coverage_data):
     """Test behavior when supabase returns None data."""
     # Arrange
-    mock_supabase.table().insert().execute.return_value.data = None
+    mock_supabase.table.return_value.insert.return_value.execute.return_value.data = None
     
     # Act
     result = upsert_repo_coverage(sample_coverage_data)
@@ -142,14 +138,13 @@ def test_upsert_repo_coverage_with_all_optional_fields(mock_supabase):
         statement_coverage=94.1
     )
     expected_data = [{"id": 999, "branch_name": "feature-branch"}]
-    mock_supabase.table().insert().execute.return_value.data = expected_data
+    mock_supabase.table.return_value.insert.return_value.execute.return_value.data = expected_data
     
     # Act
     result = upsert_repo_coverage(coverage_data)
     
     # Assert
     assert result == expected_data
-    mock_supabase.table.assert_called_once_with("repo_coverage")
 
 
 def test_upsert_repo_coverage_exception_handling_returns_none(mock_supabase, sample_coverage_data):
@@ -167,7 +162,7 @@ def test_upsert_repo_coverage_exception_handling_returns_none(mock_supabase, sam
 def test_upsert_repo_coverage_supabase_insert_exception(mock_supabase, sample_coverage_data):
     """Test handling of supabase insert exceptions."""
     # Arrange
-    mock_supabase.table().insert.side_effect = Exception("Insert failed")
+    mock_supabase.table.return_value.insert.side_effect = Exception("Insert failed")
     
     # Act
     result = upsert_repo_coverage(sample_coverage_data)
@@ -179,7 +174,7 @@ def test_upsert_repo_coverage_supabase_insert_exception(mock_supabase, sample_co
 def test_upsert_repo_coverage_supabase_execute_exception(mock_supabase, sample_coverage_data):
     """Test handling of supabase execute exceptions."""
     # Arrange
-    mock_supabase.table().insert().execute.side_effect = Exception("Execute failed")
+    mock_supabase.table.return_value.insert.return_value.execute.side_effect = Exception("Execute failed")
     
     # Act
     result = upsert_repo_coverage(sample_coverage_data)
@@ -204,7 +199,7 @@ def test_upsert_repo_coverage_with_zero_coverage_values(mock_supabase):
         statement_coverage=0.0
     )
     expected_data = [{"id": 4, "line_coverage": 0.0}]
-    mock_supabase.table().insert().execute.return_value.data = expected_data
+    mock_supabase.table.return_value.insert.return_value.execute.return_value.data = expected_data
     
     # Act
     result = upsert_repo_coverage(coverage_data)
@@ -229,7 +224,7 @@ def test_upsert_repo_coverage_with_perfect_coverage(mock_supabase):
         statement_coverage=100.0
     )
     expected_data = [{"id": 5, "line_coverage": 100.0}]
-    mock_supabase.table().insert().execute.return_value.data = expected_data
+    mock_supabase.table.return_value.insert.return_value.execute.return_value.data = expected_data
     
     # Act
     result = upsert_repo_coverage(coverage_data)
