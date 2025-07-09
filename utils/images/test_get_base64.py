@@ -104,6 +104,7 @@ class TestGetBase64:
         error_response.status_code = 404
         error_response.reason = "Not Found"
         error_response.text = "404 Not Found"
+        http_error.response = error_response
         mock_requests_get.return_value = mock_response
         
         # Execute
