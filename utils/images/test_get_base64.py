@@ -98,7 +98,12 @@ class TestGetBase64:
         # Setup
         test_url = "https://example.com/notfound.jpg"
         mock_response = Mock()
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404 Not Found")
+        # Create a proper HTTPError with response attribute
+        http_error = requests.exceptions.HTTPError("404 Not Found")
+        error_response = Mock()
+        error_response.status_code = 404
+        error_response.reason = "Not Found"
+        error_response.text = "404 Not Found"
         mock_requests_get.return_value = mock_response
         
         # Execute
