@@ -270,6 +270,63 @@ def test_get_repository_type_error():
 
 def test_get_repository_with_negative_repo_id():
     """Test get_repository works with negative repo_id (edge case)."""
+
+
+def test_get_repository_data_with_false_values():
+    """Test get_repository handles data with falsy values correctly."""
+    mock_result = Mock()
+    mock_result.data = [{
+        "id": 0,  # Falsy but valid
+        "repo_id": 123456,
+        "repo_name": "",  # Empty string is falsy but valid
+        "owner_id": 0,  # Falsy but valid
+        "created_by": "user:test",
+        "updated_by": "user:test",
+        "file_count": 0,  # Zero is falsy but valid
+        "trigger_on_commit": False,  # False is falsy but valid
+    }]
+    
+    with patch("services.supabase.repositories.get_repository.supabase") as mock_supabase:
+        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
+        
+        result = get_repository(123456)
+        
+        # Should return the data even with falsy values
+        assert result is not None
+        assert result["id"] == 0
+        assert result["repo_name"] == ""
+        assert result["owner_id"] == 0
+        assert result["file_count"] == 0
+        assert result["trigger_on_commit"] is False
+
+
+def test_get_repository_data_index_out_of_bounds():
+    """Test get_repository handles empty data list gracefully."""
+    mock_result = Mock()
+    mock_result.data = []
+    
+    with patch("services.supabase.repositories.get_repository.supabase") as mock_supabase:
+        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
+        
+        result = get_repository(123456)
+        
+        # Should return None when trying to access data[0] on empty list
+        assert result is None
+
+
+def test_get_repository_minimal_valid_data():
+    """Test get_repository with minimal valid repository data."""
+    mock_result = Mock()
+    mock_result.data = [{"repo_id": 123456}]  # Minimal data
+    
+    with patch("services.supabase.repositories.get_repository.supabase") as mock_supabase:
+        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
+        
+        result = get_repository(123456)
+        
+        assert result is not None
+        assert result["repo_id"] == 123456
+        assert len(result) == 1  # Only one field
     # This tests that the function doesn't validate input and passes it through
     mock_result = Mock()
     mock_result.data = []
