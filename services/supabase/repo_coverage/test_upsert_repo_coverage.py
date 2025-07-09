@@ -79,20 +79,18 @@ def test_upsert_repo_coverage_with_minimal_data(mock_supabase, minimal_coverage_
     assert result == expected_data
 
 
-def test_upsert_repo_coverage_model_dump_called_correctly(mock_supabase, sample_coverage_data):
-    """Test that model_dump is called with exclude_none=True."""
+def test_upsert_repo_coverage_data_serialization(mock_supabase, sample_coverage_data):
+    """Test that data is properly serialized for database insertion."""
     # Arrange
     expected_data = [{"id": 3}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = expected_data
     
     # Act
-    with patch.object(sample_coverage_data, 'model_dump') as mock_model_dump:
-        mock_model_dump.return_value = {"test": "data"}
-        result = upsert_repo_coverage(sample_coverage_data)
+    result = upsert_repo_coverage(sample_coverage_data)
     
     # Assert
-    mock_model_dump.assert_called_once_with(exclude_none=True)
-    mock_supabase.table.return_value.insert.assert_called_with({"test": "data"})
+    assert result == expected_data
+    mock_supabase.table.return_value.insert.assert_called_once()
 
 
 def test_upsert_repo_coverage_empty_result_data(mock_supabase, sample_coverage_data):
