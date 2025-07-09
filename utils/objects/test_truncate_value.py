@@ -137,3 +137,25 @@ def test_truncate_complex_nested_structure():
         }
     ]
     assert result == expected
+
+class TestModel(BaseModel):
+    """Test Pydantic model for truncate_value testing."""
+    name: str
+    description: str
+    age: int
+
+
+def test_truncate_pydantic_model():
+    """Test that Pydantic models are properly converted to dicts and truncated."""
+    model = TestModel(
+        name="John Doe",
+        description="this is a very long description that should be truncated",
+        age=30
+    )
+    result = truncate_value(model, 10)
+    expected = {
+        "name": "John Doe",
+        "description": "this is a ...",
+        "age": 30
+    }
+    assert result == expected
