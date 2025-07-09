@@ -270,6 +270,17 @@ def test_get_repository_type_error():
 
 def test_get_repository_with_negative_repo_id():
     """Test get_repository works with negative repo_id (edge case)."""
+    # This tests that the function doesn't validate input and passes it through
+    mock_result = Mock()
+    mock_result.data = []
+    
+    with patch("services.supabase.repositories.get_repository.supabase") as mock_supabase:
+        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
+        
+        result = get_repository(-1)
+        
+        assert result is None
+        mock_supabase.table.return_value.select.return_value.eq.assert_called_once_with("repo_id", -1)
 
 
 def test_get_repository_data_with_false_values():
@@ -327,6 +338,49 @@ def test_get_repository_minimal_valid_data():
         assert result is not None
         assert result["repo_id"] == 123456
         assert len(result) == 1  # Only one field
-    # This tests that the function doesn't validate input and passes it through
+
+
+def test_get_repository_decorator_default_return_value():
+    """Test that the handle_exceptions decorator returns None on any exception."""
+    # Test various exception types to ensure decorator handles them all
+    exception_types = [
+        ValueError("Invalid value"),
+        RuntimeError("Runtime error"),
+        ConnectionError("Connection failed"),
+        TimeoutError("Request timed out"),
+    ]
+    
+    for exception in exception_types:
+        with patch("services.supabase.repositories.get_repository.supabase") as mock_supabase:
+            mock_supabase.table.side_effect = exception
+            
+            result = get_repository(123456)
+            
+            # Decorator should catch all exceptions and return None
+            assert result is None
+
+
+def test_get_repository_decorator_raise_on_error_false():
+    """Test that the decorator doesn't raise exceptions when raise_on_error=False."""
+    with patch("services.supabase.repositories.get_repository.supabase") as mock_supabase:
+        mock_supabase.table.side_effect = Exception("Critical error")
+        
+        # Should not raise an exception due to decorator configuration
+        result = get_repository(123456)
+        assert result is None
+
+
+def test_get_repository_result_structure_validation():
+    """Test get_repository validates result structure properly."""
+    # Test case where result has data but it's not a list
     mock_result = Mock()
-    mock_result.data = []
+    mock_result.data = "not a list"
+    
+    with patch("services.supabase.repositories.get_repository.supabase") as mock_supabase:
+        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
+        
+        # This should cause an exception when trying to access data[0]
+        # The decorator should catch it and return None
+        result = get_repository(123456)
+        
+        assert result is None
