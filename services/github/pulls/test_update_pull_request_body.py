@@ -270,8 +270,8 @@ def test_update_pull_request_body_rate_limit_exceeded(sample_url, sample_token, 
     mock_response.raise_for_status.side_effect = http_error
     
     with patch("services.github.pulls.update_pull_request_body.requests.patch", return_value=mock_response), \
-         patch("services.github.pulls.update_pull_request_body.time.sleep") as mock_sleep, \
-         patch("services.github.pulls.update_pull_request_body.time.time", return_value=1609459100):
+         patch("utils.error.handle_exceptions.time.sleep") as mock_sleep, \
+         patch("utils.error.handle_exceptions.time.time", return_value=1609459100):
         
         # This should return None due to the decorator's handling
         result = update_pull_request_body(url=sample_url, token=sample_token, body=sample_body)
