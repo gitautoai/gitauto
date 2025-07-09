@@ -75,8 +75,8 @@ def test_get_mode_prompt_get_and_explore_use_same_file(mock_read_xml_file, mock_
     
     # Both should call the same file
     expected_calls = [
-        patch.call("utils/prompts/modes/explore_repo.xml"),
-        patch.call("utils/prompts/modes/explore_repo.xml")
+        call("utils/prompts/modes/explore_repo.xml"),
+        call("utils/prompts/modes/explore_repo.xml")
     ]
     mock_read_xml_file.assert_has_calls(expected_calls)
     assert get_result == explore_result == mock_xml_content
