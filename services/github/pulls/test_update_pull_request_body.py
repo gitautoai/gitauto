@@ -297,7 +297,7 @@ def test_update_pull_request_body_secondary_rate_limit_exceeded(sample_url, samp
     mock_response.raise_for_status.side_effect = http_error
     
     with patch("services.github.pulls.update_pull_request_body.requests.patch", return_value=mock_response), \
-         patch("services.github.pulls.update_pull_request_body.time.sleep") as mock_sleep:
+         patch("utils.error.handle_exceptions.time.sleep") as mock_sleep:
         
         # This should return None due to the decorator's handling
         result = update_pull_request_body(url=sample_url, token=sample_token, body=sample_body)
