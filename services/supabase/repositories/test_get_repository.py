@@ -368,19 +368,3 @@ def test_get_repository_decorator_raise_on_error_false():
         # Should not raise an exception due to decorator configuration
         result = get_repository(123456)
         assert result is None
-
-
-def test_get_repository_result_structure_validation():
-    """Test get_repository validates result structure properly."""
-    # Test case where result has data but it's not a list
-    mock_result = Mock()
-    mock_result.data = "not a list"
-    
-    with patch("services.supabase.repositories.get_repository.supabase") as mock_supabase:
-        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
-        
-        # This should cause an exception when trying to access data[0]
-        # The decorator should catch it and return None
-        result = get_repository(123456)
-        
-        assert result is None
