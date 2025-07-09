@@ -222,9 +222,9 @@ def test_get_mode_prompt_different_modes_different_files(mock_read_xml_file):
     get_mode_prompt("search")
     
     expected_calls = [
-        patch.call("utils/prompts/modes/update_comment.xml"),
-        patch.call("utils/prompts/modes/commit_changes.xml"),
-        patch.call("utils/prompts/modes/search_google.xml"),
+        call("utils/prompts/modes/update_comment.xml"),
+        call("utils/prompts/modes/commit_changes.xml"),
+        call("utils/prompts/modes/search_google.xml"),
     ]
     mock_read_xml_file.assert_has_calls(expected_calls)
 
