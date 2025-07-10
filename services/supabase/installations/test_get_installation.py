@@ -167,8 +167,8 @@ class TestGetInstallation:
         # Assert
         assert result is None
 
-    def test_get_installation_returns_none_when_key_error_occurs(self, mock_supabase_query):
-        """Test that get_installation returns None when KeyError occurs accessing data."""
+    def test_get_installation_returns_none_when_index_error_occurs_on_data_access(self, mock_supabase_query):
+        """Test that get_installation returns None when IndexError occurs accessing data[1]."""
         # Arrange - simulate malformed response structure that causes IndexError
         mock_supabase_query.execute.return_value = (
             ("invalid",),  # This will cause IndexError when accessing data[1]
