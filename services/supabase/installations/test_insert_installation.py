@@ -349,3 +349,6 @@ def test_insert_installation_with_different_owner_types(mock_supabase_client):
         inserted_data = insert_call_args[1]["json"]
         
         assert inserted_data["owner_type"] == owner_type
+        
+        # Reset mock for next iteration
+        mock_supabase_client.reset_mock()
