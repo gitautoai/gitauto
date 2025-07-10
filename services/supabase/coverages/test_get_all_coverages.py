@@ -233,6 +233,16 @@ def test_get_all_coverages_exception_handling(mock_supabase_client):
 def test_get_all_coverages_with_various_repo_ids(mock_supabase_client, repo_id):
     """Test that get_all_coverages works with various valid repo_id values."""
     # Setup mock
+    mock_result = MagicMock()
+    mock_result.data = []
+    mock_supabase_client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
+
+    # Execute
+    result = get_all_coverages(repo_id=repo_id)
+
+    # Verify
+    assert result is None
+    mock_supabase_client.table.return_value.select.return_value.eq.assert_called_with("repo_id", repo_id)
 
 
 def test_get_all_coverages_query_chain_structure(mock_supabase_client):
@@ -250,14 +260,3 @@ def test_get_all_coverages_query_chain_structure(mock_supabase_client):
     assert mock_supabase_client.table.return_value.select.called
     assert mock_supabase_client.table.return_value.select.return_value.eq.called
     assert mock_supabase_client.table.return_value.select.return_value.eq.return_value.eq.called
-    assert mock_supabase_client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.called
-    mock_result = MagicMock()
-    mock_result.data = []
-    mock_supabase_client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
-
-    # Execute
-    result = get_all_coverages(repo_id=repo_id)
-
-    # Verify
-    assert result is None
-    mock_supabase_client.table.return_value.select.return_value.eq.assert_called_with("repo_id", repo_id)
