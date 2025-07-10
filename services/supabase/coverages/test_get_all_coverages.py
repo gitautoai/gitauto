@@ -1,7 +1,10 @@
 # Standard imports
 from unittest.mock import patch, MagicMock
+
+# Third-party imports
 import pytest
-from schemas.supabase.fastapi.schema_public_latest import Coverages
+
+# Local imports
 from services.supabase.coverages.get_all_coverages import get_all_coverages
 
 
