@@ -260,3 +260,25 @@ def test_insert_owner_function_signature_compliance():
     assert sig.parameters["owner_name"].annotation == str
     assert sig.parameters["stripe_customer_id"].annotation == str
     assert sig.return_annotation == inspect.Signature.empty  # No explicit return annotation
+
+
+def test_insert_owner_data_passed_to_insert_method():
+    """Test that the correct data is passed to the insert method."""
+    with patch("services.supabase.owners.insert_owner.supabase") as mock_supabase, \
+         patch("services.supabase.owners.insert_owner.OwnersInsert") as mock_owners_insert:
+        
+        # Setup mock data
+        expected_data = {
+            "owner_id": 999888777,
+            "owner_type": "Organization",
+            "owner_name": "test-data-org",
+            "stripe_customer_id": "cus_data_test"
+        }
+        mock_owners_insert.return_value.model_dump.return_value = expected_data
+        
+        # Call function
+        insert_owner(**expected_data)
+        
+        # Verify the insert method was called with the correct data
+        mock_supabase.table.return_value.insert.assert_called_once_with(json=expected_data)
+        mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
