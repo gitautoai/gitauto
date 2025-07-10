@@ -131,3 +131,35 @@ def test_get_trigger_prompt_file_mapping(mock_read_xml_file, trigger, expected_f
     """Test that each trigger maps to the correct XML file."""
     get_trigger_prompt(trigger)
     mock_read_xml_file.assert_called_once_with(expected_file)
+
+
+def test_get_trigger_prompt_none_return_from_read_xml_file(mock_read_xml_file):
+    """Test that function handles None return from read_xml_file."""
+    mock_read_xml_file.return_value = None
+    
+    result = get_trigger_prompt("issue_comment")
+    
+    assert result is None
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
+
+
+def test_get_trigger_prompt_large_xml_content(mock_read_xml_file):
+    """Test that function handles large XML content."""
+    large_content = "<trigger_instruction>\n" + "x" * 10000 + "\n</trigger_instruction>"
+    mock_read_xml_file.return_value = large_content
+    
+    result = get_trigger_prompt("issue_comment")
+    
+    assert result == large_content
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
+
+
+def test_get_trigger_prompt_special_characters_xml_content(mock_read_xml_file):
+    """Test that function handles XML content with special characters."""
+    special_content = "<trigger_instruction>\n  Special chars: àáâãäåæçèéêë ñòóôõö ùúûüý\n</trigger_instruction>"
+    mock_read_xml_file.return_value = special_content
+    
+    result = get_trigger_prompt("issue_comment")
+    
+    assert result == special_content
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
