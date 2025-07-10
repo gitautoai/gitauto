@@ -294,3 +294,58 @@ def test_insert_installation_with_special_characters_in_owner_name(mock_supabase
         mock_supabase_client.reset_mock()
 
 
+def test_insert_installation_with_large_ids(mock_supabase_client):
+    """Test installation insertion with large integer IDs."""
+    large_installation_id = 999999999999
+    large_owner_id = 888888888888
+    
+    insert_installation(
+        installation_id=large_installation_id,
+        owner_id=large_owner_id,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+    )
+    
+    insert_call_args = mock_supabase_client.table.return_value.insert.call_args
+    inserted_data = insert_call_args[1]["json"]
+    
+    assert inserted_data["installation_id"] == large_installation_id
+    assert inserted_data["owner_id"] == large_owner_id
+
+
+def test_insert_installation_preserves_function_name():
+    """Test that the decorator preserves the original function name."""
+    assert insert_installation.__name__ == "insert_installation"
+
+
+def test_insert_installation_with_empty_owner_name(mock_supabase_client):
+    """Test installation insertion with empty owner name."""
+    insert_installation(
+        installation_id=TEST_INSTALLATION_ID,
+        owner_id=TEST_OWNER_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name="",
+    )
+    
+    insert_call_args = mock_supabase_client.table.return_value.insert.call_args
+    inserted_data = insert_call_args[1]["json"]
+    
+    assert inserted_data["owner_name"] == ""
+
+
+def test_insert_installation_with_different_owner_types(mock_supabase_client):
+    """Test installation insertion with different valid owner types."""
+    owner_types = ["User", "Organization"]
+    
+    for owner_type in owner_types:
+        insert_installation(
+            installation_id=TEST_INSTALLATION_ID,
+            owner_id=TEST_OWNER_ID,
+            owner_type=owner_type,
+            owner_name=TEST_OWNER_NAME,
+        )
+        
+        insert_call_args = mock_supabase_client.table.return_value.insert.call_args
+        inserted_data = insert_call_args[1]["json"]
+        
+        assert inserted_data["owner_type"] == owner_type
