@@ -124,3 +124,23 @@ class TestCreateStripeCustomer(unittest.TestCase):
 
         # Assert
         self.assertIsNone(result)  # Should return None due to handle_exceptions decorator
+        
+    @patch("services.stripe.client.stripe")
+    def test_create_stripe_customer_return_value(self, mock_stripe):
+        """Test that the function returns the customer ID"""
+        # Setup
+        mock_customer = MagicMock()
+        mock_customer.id = "cus_test_return_value"
+        mock_stripe.Customer.create.return_value = mock_customer
+
+        # Execute
+        result = create_stripe_customer(
+            owner_id=123,
+            owner_name="test-owner",
+            installation_id=456,
+            user_id=789,
+            user_name="test-user",
+        )
+
+        # Assert that the function returns the customer ID
+        self.assertEqual(result, "cus_test_return_value")
