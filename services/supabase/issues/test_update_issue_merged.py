@@ -144,6 +144,9 @@ class TestUpdateIssueMerged:
         owner_types = ["User", "Organization", "Bot"]
         
         for owner_type in owner_types:
+            # Reset mocks for each iteration
+            mock_update.reset_mock()
+            mock_eq_chain.reset_mock()
             # Act
             update_issue_merged(
                 owner_type=owner_type,
