@@ -179,6 +179,9 @@ class TestUpdateIssueMerged:
         issue_numbers = [1, 999, 12345, 999999]
         
         for issue_number in issue_numbers:
+            # Reset mocks for each iteration
+            mock_update.reset_mock()
+            mock_eq_chain.reset_mock()
             # Act
             update_issue_merged(
                 owner_type="Organization",
