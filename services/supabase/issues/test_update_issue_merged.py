@@ -220,6 +220,9 @@ class TestUpdateIssueMerged:
         ]
         
         for owner_name, repo_name in test_cases:
+            # Reset mocks for each iteration
+            mock_update.reset_mock()
+            mock_eq_chain.reset_mock()
             # Act
             update_issue_merged(
                 owner_type="Organization",
