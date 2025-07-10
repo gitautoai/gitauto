@@ -12,7 +12,6 @@ def test_cancel_workflow_run_success():
     # Arrange
     run_id = 12345
     mock_response = MagicMock()
-    mock_response.raise_for_status.return_value = None
 
     # Act
     with patch("services.github.workflow_runs.cancel_workflow_run.post") as mock_post, \
@@ -34,7 +33,6 @@ def test_cancel_workflow_run_http_error():
     """Test handling of HTTP error when cancelling a workflow run."""
     # Arrange
     run_id = 12345
-    mock_response = MagicMock()
     http_error = requests.HTTPError("404 Not Found")
     mock_error_response = MagicMock()
     mock_error_response.status_code = 404
@@ -46,18 +44,16 @@ def test_cancel_workflow_run_http_error():
         "X-RateLimit-Used": "1"
     }
     http_error.response = mock_error_response
-    mock_response.raise_for_status.side_effect = http_error
 
     # Act
     with patch("services.github.workflow_runs.cancel_workflow_run.post") as mock_post, \
          patch("services.github.workflow_runs.cancel_workflow_run.create_headers") as mock_create_headers:
         mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
-        mock_post.return_value = mock_response
+        mock_post.side_effect = http_error
         result = cancel_workflow_run(OWNER, REPO, run_id, TOKEN)
 
     # Assert
     mock_post.assert_called_once()
-    mock_response.raise_for_status.assert_called_once()
     assert result is None
 
 
@@ -82,7 +78,6 @@ def test_cancel_workflow_run_rate_limit_exceeded():
     """Test handling of rate limit exceeded error when cancelling a workflow run."""
     # Arrange
     run_id = 12345
-    mock_response = MagicMock()
     http_error = requests.HTTPError("403 Forbidden")
     mock_error_response = MagicMock()
     mock_error_response.status_code = 403
@@ -92,28 +87,26 @@ def test_cancel_workflow_run_rate_limit_exceeded():
         "X-RateLimit-Limit": "5000",
         "X-RateLimit-Remaining": "0",
         "X-RateLimit-Used": "5000",
-        "X-RateLimit-Reset": "9999999999"  # Far future to avoid actual waiting in tests
+        "X-RateLimit-Reset": "1000000010"  # 10 seconds from mock time
     }
     http_error.response = mock_error_response
-    mock_response.raise_for_status.side_effect = http_error
 
     # Act
     with patch("services.github.workflow_runs.cancel_workflow_run.post") as mock_post, \
          patch("services.github.workflow_runs.cancel_workflow_run.create_headers") as mock_create_headers, \
-         patch("services.github.workflow_runs.cancel_workflow_run.time.sleep") as mock_sleep, \
-         patch("services.github.workflow_runs.cancel_workflow_run.time.time", return_value=1000):
+         patch("time.sleep") as mock_sleep, \
+         patch("time.time", return_value=1000000000):
         mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
-        mock_post.return_value = mock_response
         
-        # We need to make sure the function doesn't retry indefinitely
-        # So we'll make it return a successful response on the second call
-        mock_post.side_effect = [mock_response, MagicMock()]
+        # First call raises rate limit error, second call succeeds
+        mock_success_response = MagicMock()
+        mock_post.side_effect = [http_error, mock_success_response]
         
         result = cancel_workflow_run(OWNER, REPO, run_id, TOKEN)
 
     # Assert
     assert mock_post.call_count == 2
-    mock_sleep.assert_called_once()
+    mock_sleep.assert_called_once_with(15)  # 10 seconds + 5 buffer
     assert result is None
 
 
@@ -121,7 +114,6 @@ def test_cancel_workflow_run_secondary_rate_limit():
     """Test handling of secondary rate limit when cancelling a workflow run."""
     # Arrange
     run_id = 12345
-    mock_response = MagicMock()
     http_error = requests.HTTPError("403 Forbidden")
     mock_error_response = MagicMock()
     mock_error_response.status_code = 403
@@ -134,18 +126,16 @@ def test_cancel_workflow_run_secondary_rate_limit():
         "Retry-After": "30"
     }
     http_error.response = mock_error_response
-    mock_response.raise_for_status.side_effect = http_error
 
     # Act
     with patch("services.github.workflow_runs.cancel_workflow_run.post") as mock_post, \
          patch("services.github.workflow_runs.cancel_workflow_run.create_headers") as mock_create_headers, \
-         patch("services.github.workflow_runs.cancel_workflow_run.time.sleep") as mock_sleep:
+         patch("time.sleep") as mock_sleep:
         mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
-        mock_post.return_value = mock_response
         
-        # We need to make sure the function doesn't retry indefinitely
-        # So we'll make it return a successful response on the second call
-        mock_post.side_effect = [mock_response, MagicMock()]
+        # First call raises secondary rate limit error, second call succeeds
+        mock_success_response = MagicMock()
+        mock_post.side_effect = [http_error, mock_success_response]
         
         result = cancel_workflow_run(OWNER, REPO, run_id, TOKEN)
 
