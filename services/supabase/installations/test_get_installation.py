@@ -157,7 +157,7 @@ class TestGetInstallation:
         """Test that get_installation returns None when IndexError occurs accessing data."""
         # Arrange - simulate empty result that would cause IndexError
         mock_supabase_query.execute.return_value = (
-            (None, []),
+            (None, ["single_item"]),  # data[1][0] tries to access index 0 of string, which gives "s"
             None
         )
         
