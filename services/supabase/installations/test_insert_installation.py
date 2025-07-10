@@ -1,4 +1,6 @@
 from unittest.mock import patch, MagicMock
+import inspect
+import requests
 
 import pytest
 
