@@ -65,16 +65,16 @@ class TestUpdateIssueMerged:
         eq_calls = mock_update.eq.call_args_list + mock_eq_chain.eq.call_args_list
         assert len(eq_calls) == 4
         
-        # Check that all expected eq calls were made
+        # Check that all expected eq calls were made with keyword arguments
         expected_calls = [
-            (("column", "owner_type"), {"value": TEST_OWNER_TYPE}),
-            (("column", "owner_name"), {"value": TEST_OWNER_NAME}),
-            (("column", "repo_name"), {"value": TEST_REPO_NAME}),
-            (("column", "issue_number"), {"value": TEST_ISSUE_NUMBER}),
+            {"column": "owner_type", "value": TEST_OWNER_TYPE},
+            {"column": "owner_name", "value": TEST_OWNER_NAME},
+            {"column": "repo_name", "value": TEST_REPO_NAME},
+            {"column": "issue_number", "value": TEST_ISSUE_NUMBER},
         ]
         
         for expected_call in expected_calls:
-            assert expected_call in [(call[0], call[1]) for call in eq_calls]
+            assert expected_call in [call[1] for call in eq_calls]
         
         mock_eq_chain.execute.assert_called_once()
 
@@ -156,7 +156,7 @@ class TestUpdateIssueMerged:
             eq_calls = mock_update.eq.call_args_list + mock_eq_chain.eq.call_args_list
             owner_type_call = next(
                 call for call in eq_calls 
-                if call[0] == ("column", "owner_type")
+                if call[1].get("column") == "owner_type"
             )
             assert owner_type_call[1]["value"] == owner_type
 
@@ -188,7 +188,7 @@ class TestUpdateIssueMerged:
             eq_calls = mock_update.eq.call_args_list + mock_eq_chain.eq.call_args_list
             issue_number_call = next(
                 call for call in eq_calls 
-                if call[0] == ("column", "issue_number")
+                if call[1].get("column") == "issue_number"
             )
             assert issue_number_call[1]["value"] == issue_number
 
@@ -227,13 +227,13 @@ class TestUpdateIssueMerged:
             
             owner_name_call = next(
                 call for call in eq_calls 
-                if call[0] == ("column", "owner_name")
+                if call[1].get("column") == "owner_name"
             )
             assert owner_name_call[1]["value"] == owner_name
             
             repo_name_call = next(
                 call for call in eq_calls 
-                if call[0] == ("column", "repo_name")
+                if call[1].get("column") == "repo_name"
             )
             assert repo_name_call[1]["value"] == repo_name
 
