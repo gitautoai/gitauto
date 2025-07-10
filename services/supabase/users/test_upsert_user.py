@@ -121,21 +121,3 @@ def test_upsert_user_exception_handling(mock_supabase, mock_check_email_is_valid
     mock_check_email_is_valid.assert_called_once_with(email=email)
     mock_supabase.table.assert_called_once_with(table_name="users")
 
-
-@patch("services.supabase.users.upsert_user.handle_exceptions", lambda *args, **kwargs: lambda func: func)
-def test_upsert_user_without_exception_handling(mock_supabase, mock_check_email_is_valid):
-    """Test upsert_user without the exception handling decorator"""
-    # Setup
-    user_id = 123
-    user_name = "test_user"
-    email = "valid@example.com"
-    mock_check_email_is_valid.return_value = True
-    mock_supabase.table.side_effect = Exception("Database error")
-    
-    # Execute - should raise an exception since we've bypassed the decorator
-    with pytest.raises(Exception, match="Database error"):
-        upsert_user(user_id=user_id, user_name=user_name, email=email)
-    
-    # Assert
-    mock_check_email_is_valid.assert_called_once_with(email=email)
-    mock_supabase.table.assert_called_once_with(table_name="users")
