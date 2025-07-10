@@ -208,3 +208,89 @@ def test_insert_installation_handles_exceptions_decorator():
     # The decorator should be configured with raise_on_error=True
     # This is tested implicitly by the fact that exceptions would be raised
     # rather than returning the default value (None)
+
+
+def test_insert_installation_function_signature():
+    """Test that insert_installation has the correct function signature."""
+    sig = inspect.signature(insert_installation)
+    
+    # Assert parameter count and names
+    assert len(sig.parameters) == 4
+    expected_params = ["installation_id", "owner_id", "owner_type", "owner_name"]
+    for param in expected_params:
+        assert param in sig.parameters
+    
+    # Assert parameter type annotations
+    assert sig.parameters["installation_id"].annotation == int
+    assert sig.parameters["owner_id"].annotation == int
+    assert sig.parameters["owner_type"].annotation == str
+    assert sig.parameters["owner_name"].annotation == str
+
+
+def test_insert_installation_with_supabase_exception():
+    """Test that exceptions from Supabase operations are raised due to raise_on_error=True."""
+    with patch("services.supabase.installations.insert_installation.supabase") as mock_supabase:
+        # Configure mock to raise an exception
+        mock_supabase.table.return_value.insert.return_value.execute.side_effect = Exception("Database error")
+        
+        # Since raise_on_error=True, the exception should be raised
+        with pytest.raises(Exception, match="Database error"):
+            insert_installation(
+                installation_id=TEST_INSTALLATION_ID,
+                owner_id=TEST_OWNER_ID,
+                owner_type=TEST_OWNER_TYPE,
+                owner_name=TEST_OWNER_NAME,
+            )
+
+
+def test_insert_installation_with_http_error():
+    """Test that HTTP errors from Supabase operations are raised due to raise_on_error=True."""
+    with patch("services.supabase.installations.insert_installation.supabase") as mock_supabase:
+        # Create a mock HTTP error
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.reason = "Internal Server Error"
+        mock_response.text = "Database connection failed"
+        
+        http_error = requests.exceptions.HTTPError("500 Server Error")
+        http_error.response = mock_response
+        
+        mock_supabase.table.return_value.insert.return_value.execute.side_effect = http_error
+        
+        # Since raise_on_error=True, the exception should be raised
+        with pytest.raises(requests.exceptions.HTTPError):
+            insert_installation(
+                installation_id=TEST_INSTALLATION_ID,
+                owner_id=TEST_OWNER_ID,
+                owner_type=TEST_OWNER_TYPE,
+                owner_name=TEST_OWNER_NAME,
+            )
+
+
+def test_insert_installation_with_special_characters_in_owner_name(mock_supabase_client):
+    """Test installation insertion with special characters in owner name."""
+    special_names = [
+        "test-org-123",
+        "test_user_456",
+        "org.with.dots",
+        "user@domain",
+        "org-with-unicode-ñ",
+    ]
+    
+    for owner_name in special_names:
+        insert_installation(
+            installation_id=TEST_INSTALLATION_ID,
+            owner_id=TEST_OWNER_ID,
+            owner_type=TEST_OWNER_TYPE,
+            owner_name=owner_name,
+        )
+        
+        # Verify the special characters are preserved
+        insert_call_args = mock_supabase_client.table.return_value.insert.call_args
+        inserted_data = insert_call_args[1]["json"]
+        assert inserted_data["owner_name"] == owner_name
+        
+        # Reset mock for next iteration
+        mock_supabase_client.reset_mock()
+
+
