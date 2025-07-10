@@ -154,8 +154,8 @@ class TestGetInstallation:
         assert result is None
 
     def test_get_installation_returns_none_when_index_error_occurs(self, mock_supabase_query):
-        """Test that get_installation returns None when IndexError occurs accessing data."""
-        # Arrange - simulate empty result that would cause IndexError
+        """Test that get_installation returns None when TypeError occurs accessing data[1][0]."""
+        # Arrange - simulate data[1] being a non-indexable object
         mock_supabase_query.execute.return_value = (
             (None, 123),  # data[1][0] tries to access index 0 of int, which raises TypeError
             None
