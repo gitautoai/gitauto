@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name
 from unittest.mock import patch, MagicMock
 import pytest
 from schemas.supabase.fastapi.schema_public_latest import OwnersInsert
@@ -43,6 +44,13 @@ def mock_owners_insert():
             "stripe_customer_id": "cus_test123456789"
         }
         yield mock
+
+
+@pytest.fixture
+def sample_test_constants():
+    """Fixture providing test constants from config."""
+    from config import TEST_OWNER_ID, TEST_OWNER_TYPE, TEST_OWNER_NAME
+    return TEST_OWNER_ID, TEST_OWNER_TYPE, TEST_OWNER_NAME
 
 
 def test_insert_owner_successful_insertion(mock_supabase, valid_owner_data):
@@ -205,3 +213,50 @@ def test_insert_owner_with_various_parameter_combinations(mock_supabase, owner_i
     mock_supabase.table.return_value.insert.assert_called_once()
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
     assert result is None
+
+
+def test_insert_owner_with_config_test_constants(mock_supabase, sample_test_constants):
+    """Test insertion using test constants from config."""
+    test_owner_id, test_owner_type, test_owner_name = sample_test_constants
+    
+    insert_owner(
+        owner_id=test_owner_id,
+        owner_type=test_owner_type,
+        owner_name=test_owner_name,
+        stripe_customer_id="cus_config_test"
+    )
+    
+    mock_supabase.table.assert_called_once_with(table_name="owners")
+    mock_supabase.table.return_value.insert.assert_called_once()
+    mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
+
+
+def test_insert_owner_supabase_chain_method_calls(mock_supabase, valid_owner_data):
+    """Test that the Supabase method chain is called in the correct order."""
+    insert_owner(**valid_owner_data)
+    
+    # Verify the method chain: supabase.table().insert().execute()
+    mock_supabase.table.assert_called_once_with(table_name="owners")
+    table_result = mock_supabase.table.return_value
+    table_result.insert.assert_called_once()
+    insert_result = table_result.insert.return_value
+    insert_result.execute.assert_called_once()
+
+
+def test_insert_owner_function_signature_compliance():
+    """Test that the function signature matches expected parameters."""
+    import inspect
+    
+    sig = inspect.signature(insert_owner)
+    params = list(sig.parameters.keys())
+    
+    # Verify parameter names and order
+    expected_params = ["owner_id", "owner_type", "owner_name", "stripe_customer_id"]
+    assert params == expected_params
+    
+    # Verify parameter types
+    assert sig.parameters["owner_id"].annotation == int
+    assert sig.parameters["owner_type"].annotation == str
+    assert sig.parameters["owner_name"].annotation == str
+    assert sig.parameters["stripe_customer_id"].annotation == str
+    assert sig.return_annotation == inspect.Signature.empty  # No explicit return annotation
