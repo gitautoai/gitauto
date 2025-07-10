@@ -374,7 +374,7 @@ def test_get_installation_with_malformed_data_structure(mock_supabase_query):
     """Test that get_installation handles malformed data gracefully."""
     # Arrange - simulate various malformed data structures
     malformed_cases = [
-        ((None, "not_a_list"), None),
+        ((None, {}), None),  # dict instead of list, data[1][0] will raise KeyError
         ((None, []), None),
         (("wrong_structure",), None),
         (None, None),
