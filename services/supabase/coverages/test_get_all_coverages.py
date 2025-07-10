@@ -254,7 +254,8 @@ def test_get_all_coverages_query_chain_structure(mock_supabase_client):
 
     # Execute
     get_all_coverages(repo_id=123)
-
+    assert mock_supabase_client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.called
+    assert mock_supabase_client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.called
     # Verify the complete query chain was called correctly
     mock_supabase_client.table.assert_called_once_with("coverages")
     assert mock_supabase_client.table.return_value.select.called
