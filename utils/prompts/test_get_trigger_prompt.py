@@ -87,3 +87,47 @@ def test_get_trigger_prompt_unknown_trigger(mock_read_xml_file):
     
     assert result is None
     mock_read_xml_file.assert_not_called()
+
+def test_get_trigger_prompt_file_read_exception(mock_read_xml_file):
+    """Test that function handles file read exceptions gracefully."""
+    mock_read_xml_file.side_effect = FileNotFoundError("File not found")
+    
+    with pytest.raises(FileNotFoundError):
+        get_trigger_prompt("issue_comment")
+    
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
+
+
+def test_get_trigger_prompt_empty_xml_content(mock_read_xml_file):
+    """Test that function handles empty XML content."""
+    mock_read_xml_file.return_value = ""
+    
+    result = get_trigger_prompt("issue_comment")
+    
+    assert result == ""
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
+
+
+def test_get_trigger_prompt_whitespace_xml_content(mock_read_xml_file):
+    """Test that function handles XML content with only whitespace."""
+    whitespace_content = "   \n\t  \n   "
+    mock_read_xml_file.return_value = whitespace_content
+    
+    result = get_trigger_prompt("issue_comment")
+    
+    assert result == whitespace_content
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
+
+
+@pytest.mark.parametrize("trigger,expected_file", [
+    ("issue_comment", "utils/prompts/triggers/issue.xml"),
+    ("issue_label", "utils/prompts/triggers/issue.xml"),
+    ("test_failure", "utils/prompts/triggers/check_run.xml"),
+    ("review_comment", "utils/prompts/triggers/review.xml"),
+    ("pr_checkbox", "utils/prompts/triggers/pr_checkbox.xml"),
+    ("pr_merge", "utils/prompts/triggers/pr_merge.xml"),
+])
+def test_get_trigger_prompt_file_mapping(mock_read_xml_file, trigger, expected_file):
+    """Test that each trigger maps to the correct XML file."""
+    get_trigger_prompt(trigger)
+    mock_read_xml_file.assert_called_once_with(expected_file)
