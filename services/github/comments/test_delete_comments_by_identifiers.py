@@ -286,3 +286,89 @@ def test_delete_comments_by_identifiers_delete_comment_exception(
     mock_get_all_comments.assert_called_once_with(sample_base_args)
     mock_filter_comments_by_identifiers.assert_called_once_with(sample_comments, identifiers)
     mock_delete_comment.assert_called_once_with(base_args=sample_base_args, comment_id=1)
+
+
+def test_delete_comments_by_identifiers_multiple_identifiers(
+    mock_get_all_comments,
+    mock_filter_comments_by_identifiers,
+    mock_delete_comment,
+    sample_base_args
+):
+    """Test deletion with multiple identifiers."""
+    # Setup data
+    comments = [
+        {"id": 1, "body": "Comment with first-id", "user": {"login": "gitauto-ai[bot]"}},
+        {"id": 2, "body": "Comment with second-id", "user": {"login": "gitauto-ai[bot]"}},
+        {"id": 3, "body": "Comment with both first-id and second-id", "user": {"login": "gitauto-ai[bot]"}}
+    ]
+    matching_comments = [comments[0], comments[1], comments[2]]
+    
+    # Setup mocks
+    mock_get_all_comments.return_value = comments
+    mock_filter_comments_by_identifiers.return_value = matching_comments
+    mock_delete_comment.return_value = None
+    
+    identifiers = ["first-id", "second-id"]
+    
+    # Execute
+    result = delete_comments_by_identifiers(sample_base_args, identifiers)
+    
+    # Verify
+    assert result is None
+    mock_get_all_comments.assert_called_once_with(sample_base_args)
+    mock_filter_comments_by_identifiers.assert_called_once_with(comments, identifiers)
+    assert mock_delete_comment.call_count == 3
+    mock_delete_comment.assert_any_call(base_args=sample_base_args, comment_id=1)
+    mock_delete_comment.assert_any_call(base_args=sample_base_args, comment_id=2)
+    mock_delete_comment.assert_any_call(base_args=sample_base_args, comment_id=3)
+
+
+def test_delete_comments_by_identifiers_filter_exception(
+    mock_get_all_comments,
+    mock_filter_comments_by_identifiers,
+    mock_delete_comment,
+    sample_base_args,
+    sample_comments
+):
+    """Test behavior when filter_comments_by_identifiers raises an exception."""
+    # Setup mocks
+    mock_get_all_comments.return_value = sample_comments
+    mock_filter_comments_by_identifiers.side_effect = Exception("Filter failed")
+    
+    identifiers = ["test-identifier"]
+    
+    # Execute
+    result = delete_comments_by_identifiers(sample_base_args, identifiers)
+    
+    # Verify that the decorator returns the default value (None) on exception
+    assert result is None
+    mock_get_all_comments.assert_called_once_with(sample_base_args)
+    mock_filter_comments_by_identifiers.assert_called_once_with(sample_comments, identifiers)
+    mock_delete_comment.assert_not_called()
+
+
+@pytest.mark.parametrize("identifiers", [
+    ["single-identifier"],
+    ["id1", "id2"],
+    ["very-long-identifier-with-many-characters"],
+    ["special-chars-!@#$%"],
+    ["123-numeric-identifier"],
+])
+def test_delete_comments_by_identifiers_various_identifier_formats(
+    mock_get_all_comments,
+    mock_filter_comments_by_identifiers,
+    mock_delete_comment,
+    sample_base_args,
+    identifiers
+):
+    """Test with various identifier formats."""
+    # Setup mocks
+    mock_get_all_comments.return_value = []
+    mock_filter_comments_by_identifiers.return_value = []
+    
+    # Execute
+    result = delete_comments_by_identifiers(sample_base_args, identifiers)
+    
+    # Verify
+    assert result is None
+    mock_get_all_comments.assert_called_once_with(sample_base_args)
