@@ -351,6 +351,98 @@ def test_delete_comments_by_identifiers_filter_exception(
     ["single-identifier"],
     ["id1", "id2"],
     ["very-long-identifier-with-many-characters"],
+
+
+def test_delete_comments_by_identifiers_partial_deletion_failure(
+    mock_get_all_comments,
+    mock_filter_comments_by_identifiers,
+    mock_delete_comment,
+    sample_base_args
+):
+    """Test behavior when some comment deletions fail."""
+    # Setup data
+    matching_comments = [
+        {"id": 1, "body": "First comment", "user": {"login": "gitauto-ai[bot]"}},
+        {"id": 2, "body": "Second comment", "user": {"login": "gitauto-ai[bot]"}},
+        {"id": 3, "body": "Third comment", "user": {"login": "gitauto-ai[bot]"}}
+    ]
+    
+    # Setup mocks - first call succeeds, second fails, third succeeds
+    mock_get_all_comments.return_value = matching_comments
+    mock_filter_comments_by_identifiers.return_value = matching_comments
+    mock_delete_comment.side_effect = [None, Exception("Delete failed"), None]
+    
+    identifiers = ["test-identifier"]
+    
+    # Execute - should not raise exception due to @handle_exceptions decorator
+    result = delete_comments_by_identifiers(sample_base_args, identifiers)
+    
+    # Verify that the decorator returns the default value (None) on exception
+    assert result is None
+    mock_get_all_comments.assert_called_once_with(sample_base_args)
+    mock_filter_comments_by_identifiers.assert_called_once_with(matching_comments, identifiers)
+    # Should have attempted to delete the first comment before the exception
+    mock_delete_comment.assert_called_once_with(base_args=sample_base_args, comment_id=1)
+
+
+def test_delete_comments_by_identifiers_large_number_of_comments(
+    mock_get_all_comments,
+    mock_filter_comments_by_identifiers,
+    mock_delete_comment,
+    sample_base_args
+):
+    """Test deletion with a large number of matching comments."""
+    # Setup data - create 100 comments
+    matching_comments = [
+        {"id": i, "body": f"Comment {i} with test-id", "user": {"login": "gitauto-ai[bot]"}}
+        for i in range(1, 101)
+    ]
+    
+    # Setup mocks
+    mock_get_all_comments.return_value = matching_comments
+    mock_filter_comments_by_identifiers.return_value = matching_comments
+    mock_delete_comment.return_value = None
+    
+    identifiers = ["test-id"]
+    
+    # Execute
+    result = delete_comments_by_identifiers(sample_base_args, identifiers)
+    
+    # Verify
+    assert result is None
+    mock_get_all_comments.assert_called_once_with(sample_base_args)
+    mock_filter_comments_by_identifiers.assert_called_once_with(matching_comments, identifiers)
+    assert mock_delete_comment.call_count == 100
+    
+    # Verify all comments were attempted to be deleted
+    for i in range(1, 101):
+        mock_delete_comment.assert_any_call(base_args=sample_base_args, comment_id=i)
+
+
+def test_delete_comments_by_identifiers_function_signature():
+    """Test that the function has the correct signature and docstring."""
+    import inspect
+    
+    # Get the function signature
+    sig = inspect.signature(delete_comments_by_identifiers)
+    
+    # Check parameter names and types
+    params = sig.parameters
+    assert "base_args" in params
+    assert "identifiers" in params
+    assert len(params) == 2
+    
+    # Check that the function has a docstring
+    assert delete_comments_by_identifiers.__doc__ is not None
+    assert "Delete all comments containing the identifiers made by GitAuto" in delete_comments_by_identifiers.__doc__
+
+
+def test_delete_comments_by_identifiers_decorator_applied():
+    """Test that the @handle_exceptions decorator is properly applied."""
+    # Check that the function has the decorator applied
+    assert hasattr(delete_comments_by_identifiers, '__wrapped__')
+    
+    # The decorator should be handle_exceptions with specific parameters
     ["special-chars-!@#$%"],
     ["123-numeric-identifier"],
 ])
