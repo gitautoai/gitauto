@@ -9,13 +9,14 @@ from services.supabase.owners.create_owner import create_owner
 def mock_supabase():
     """Mock supabase client for testing."""
     with patch("services.supabase.owners.create_owner.supabase") as mock:
-        # Setup the chain: supabase.table().insert().execute()
-        mock_execute = MagicMock()
+        # Setup the method chain properly
+        mock_execute_result = MagicMock()
+        mock_execute = MagicMock(return_value=mock_execute_result)
         mock_insert = MagicMock()
-        mock_insert.execute.return_value = mock_execute
+        mock_insert.execute = mock_execute
         mock_table = MagicMock()
-        mock_table.insert.return_value = mock_insert
-        mock.table.return_value = mock_table
+        mock_table.insert = MagicMock(return_value=mock_insert)
+        mock.table = MagicMock(return_value=mock_table)
         yield mock
 
 
