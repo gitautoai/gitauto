@@ -108,7 +108,11 @@ def test_check_branch_exists_handles_http_error_gracefully(mock_requests_get, mo
     # Setup mock response to raise HTTPError
     mock_response = MagicMock()
     mock_response.status_code = 500
-    mock_response.raise_for_status.side_effect = HTTPError("Server Error")
+    # Create a proper HTTPError with response attribute
+    http_error = HTTPError("Server Error")
+    http_error.response = mock_response
+    mock_response.reason = "Internal Server Error"
+    mock_response.text = "Server Error"
     mock_requests_get.return_value = mock_response
     
     # Call function
