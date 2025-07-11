@@ -270,3 +270,65 @@ def test_insert_issue_model_dump_exception_raises(mock_supabase, mock_issues_ins
             issue_number=TEST_ISSUE_NUMBER,
             installation_id=TEST_INSTALLATION_ID,
         )
+
+
+def test_insert_issue_with_special_characters_in_strings(mock_supabase, mock_issues_insert):
+    """Test issue insertion with special characters in string fields."""
+    # Arrange
+    owner_type = "Organization!@#$%^&*()"
+    owner_name = "test-owner-with-special-chars!@#$%"
+    repo_name = "test-repo-with-special-chars!@#$%"
+    
+    mock_issues_insert.return_value.model_dump.return_value = {
+        "owner_id": TEST_OWNER_ID,
+        "owner_type": owner_type,
+        "owner_name": owner_name,
+        "repo_id": TEST_REPO_ID,
+        "repo_name": repo_name,
+        "issue_number": TEST_ISSUE_NUMBER,
+        "installation_id": TEST_INSTALLATION_ID,
+    }
+
+    # Act
+    result = insert_issue(
+        owner_id=TEST_OWNER_ID,
+        owner_type=owner_type,
+        owner_name=owner_name,
+        repo_id=TEST_REPO_ID,
+        repo_name=repo_name,
+        issue_number=TEST_ISSUE_NUMBER,
+        installation_id=TEST_INSTALLATION_ID,
+    )
+
+    # Assert
+    assert result is None
+    mock_issues_insert.assert_called_once_with(
+        owner_id=TEST_OWNER_ID,
+        owner_type=owner_type,
+        owner_name=owner_name,
+        repo_id=TEST_REPO_ID,
+        repo_name=repo_name,
+        issue_number=TEST_ISSUE_NUMBER,
+        installation_id=TEST_INSTALLATION_ID,
+    )
+
+
+def test_insert_issue_with_unicode_characters(mock_supabase, mock_issues_insert):
+    """Test issue insertion with Unicode characters in string fields."""
+    # Arrange
+    owner_name = "测试用户"  # Chinese characters
+    repo_name = "тест-репо"  # Cyrillic characters
+    owner_type = "Organización"  # Spanish with accent
+    
+    mock_issues_insert.return_value.model_dump.return_value = {
+        "owner_id": TEST_OWNER_ID,
+        "owner_type": owner_type,
+        "owner_name": owner_name,
+        "repo_id": TEST_REPO_ID,
+        "repo_name": repo_name,
+        "issue_number": TEST_ISSUE_NUMBER,
+        "installation_id": TEST_INSTALLATION_ID,
+    }
+
+    # Act
+    result = insert_issue(
