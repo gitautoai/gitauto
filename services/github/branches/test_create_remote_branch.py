@@ -83,9 +83,14 @@ def test_create_remote_branch_with_different_branch_names(mock_requests_post, mo
         "release/v1.0.0",
         "feature_branch_with_underscores",
         "branch-with-dashes",
+        "123-numeric-start",
+        "UPPERCASE-BRANCH",
     ]
     
     for branch_name in test_cases:
+        mock_requests_post.reset_mock()
+        mock_create_headers.reset_mock()
+        
         base_args = BaseArgs(
             owner="test_owner",
             repo="test_repo", 
@@ -109,9 +114,13 @@ def test_create_remote_branch_with_different_shas(mock_requests_post, mock_creat
         "1234567890abcdef",
         "a1b2c3d4e5f6789012345678901234567890abcd",
         "0123456789abcdef0123456789abcdef01234567",
+        "f" * 40,  # 40 character SHA
     ]
     
     for sha in test_shas:
+        mock_requests_post.reset_mock()
+        mock_create_headers.reset_mock()
+        
         result = create_remote_branch(sha=sha, base_args=sample_base_args)
         assert result is None
         
@@ -236,3 +245,119 @@ def test_create_remote_branch_extracts_base_args_correctly(mock_requests_post, m
     
     # Verify create_headers was called with the extracted token
     mock_create_headers.assert_called_once_with(token="extracted_token")
+
+
+def test_create_remote_branch_with_monkeypatch(monkeypatch, sample_base_args, sample_sha):
+    """Test using monkeypatch for configuration values."""
+    # Mock configuration values
+    monkeypatch.setattr("services.github.branches.create_remote_branch.GITHUB_API_URL", "https://test.api.github.com")
+    monkeypatch.setattr("services.github.branches.create_remote_branch.TIMEOUT", 60)
+    
+    with patch("services.github.branches.create_remote_branch.requests.post") as mock_post, \
+         patch("services.github.branches.create_remote_branch.create_headers") as mock_headers:
+        
+        mock_response = MagicMock()
+        mock_response.raise_for_status.return_value = None
+        mock_post.return_value = mock_response
+        mock_headers.return_value = {"Authorization": "Bearer test"}
+        
+        result = create_remote_branch(sha=sample_sha, base_args=sample_base_args)
+        assert result is None
+        
+        # Verify the mocked URL and timeout were used
+        call_args = mock_post.call_args
+        assert "https://test.api.github.com" in call_args[1]["url"]
+        assert call_args[1]["timeout"] == 60
+
+
+def test_create_remote_branch_with_empty_values(mock_requests_post, mock_create_headers):
+    """Test behavior with empty or minimal values."""
+    base_args = BaseArgs(
+        owner="",
+        repo="",
+        new_branch="",
+        token=""
+    )
+    
+    result = create_remote_branch(sha="", base_args=base_args)
+    assert result is None
+    
+    # Verify the function still makes the request even with empty values
+    mock_requests_post.assert_called_once()
+    call_args = mock_requests_post.call_args
+    assert call_args[1]["json"]["ref"] == "refs/heads/"
+    assert call_args[1]["json"]["sha"] == ""
+
+
+@pytest.mark.parametrize("error_type,error_message", [
+    (requests.exceptions.HTTPError, "HTTP Error"),
+    (requests.exceptions.Timeout, "Timeout Error"),
+    (requests.exceptions.ConnectionError, "Connection Error"),
+    (requests.exceptions.RequestException, "Request Error"),
+    (ValueError, "Value Error"),
+    (KeyError, "Key Error"),
+])
+def test_create_remote_branch_handles_various_exceptions(mock_create_headers, sample_base_args, sample_sha, error_type, error_message):
+    """Test that various exception types are handled by the decorator."""
+    with patch("services.github.branches.create_remote_branch.requests.post") as mock_post:
+        mock_post.side_effect = error_type(error_message)
+        
+        # The function should return None due to handle_exceptions decorator
+        result = create_remote_branch(sha=sample_sha, base_args=sample_base_args)
+        assert result is None
+        
+        # Verify the request was attempted
+        mock_post.assert_called_once()
+
+
+def test_create_remote_branch_ref_format_consistency(mock_requests_post, mock_create_headers, sample_sha):
+    """Test that the ref format is consistently 'refs/heads/{branch_name}'."""
+    test_branches = [
+        ("simple", "refs/heads/simple"),
+        ("feature/complex-branch", "refs/heads/feature/complex-branch"),
+        ("123-numeric", "refs/heads/123-numeric"),
+        ("CAPS_AND_underscores", "refs/heads/CAPS_AND_underscores"),
+    ]
+    
+    for branch_name, expected_ref in test_branches:
+        mock_requests_post.reset_mock()
+        
+        base_args = BaseArgs(
+            owner="test_owner",
+            repo="test_repo",
+            new_branch=branch_name,
+            token="test_token"
+        )
+        
+        create_remote_branch(sha=sample_sha, base_args=base_args)
+        
+        call_args = mock_requests_post.call_args
+        assert call_args[1]["json"]["ref"] == expected_ref
+
+
+def test_create_remote_branch_api_endpoint_structure(mock_requests_post, mock_create_headers, sample_base_args, sample_sha):
+    """Test that the API endpoint follows GitHub's expected structure."""
+    create_remote_branch(sha=sample_sha, base_args=sample_base_args)
+    
+    call_args = mock_requests_post.call_args
+    url = call_args[1]["url"]
+    
+    # Verify URL structure matches GitHub API pattern
+    assert url.startswith("https://api.github.com/repos/")
+    assert url.endswith("/git/refs")
+    assert "/test_owner/test_repo/" in url
+
+
+def test_create_remote_branch_request_method_and_headers(mock_requests_post, mock_create_headers, sample_base_args, sample_sha):
+    """Test that the correct HTTP method and headers are used."""
+    create_remote_branch(sha=sample_sha, base_args=sample_base_args)
+    
+    # Verify POST method was used (implicit in requests.post call)
+    mock_requests_post.assert_called_once()
+    
+    # Verify headers were set correctly
+    call_args = mock_requests_post.call_args
+    assert "headers" in call_args[1]
+    
+    # Verify create_headers was called
+    mock_create_headers.assert_called_once_with(token="test_token_123")
