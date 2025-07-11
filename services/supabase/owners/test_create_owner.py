@@ -391,6 +391,16 @@ def test_create_owner_function_signature():
     """Test that the function signature matches expectations."""
     import inspect
     from services.supabase.owners.create_owner import create_owner
-
-
-def test_create_owner_all_data_types_preserved(mock_supabase):
+    
+    # Get function signature
+    sig = inspect.signature(create_owner)
+    params = list(sig.parameters.keys())
+    
+    # Assert expected parameters are present
+    expected_params = ['owner_id', 'owner_name', 'user_id', 'user_name', 'stripe_customer_id', 'owner_type', 'org_rules']
+    assert params == expected_params
+    
+    # Check that optional parameters have default values
+    assert sig.parameters['stripe_customer_id'].default == ""
+    assert sig.parameters['owner_type'].default == ""
+    assert sig.parameters['org_rules'].default == ""
