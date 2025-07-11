@@ -1,1 +1,0 @@
-# Error handling utils package
