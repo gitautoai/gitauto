@@ -291,3 +291,4 @@ def test_check_branch_exists_function_signature():
     param_names = list(sig.parameters.keys())
     expected_params = ['owner', 'repo', 'branch_name', 'token']
     
+    assert param_names == expected_params
