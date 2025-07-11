@@ -278,8 +278,8 @@ class TestGetIssue(unittest.TestCase):
         self.assertEqual(result["created_at"], "2024-01-01T00:00:00Z")  # First issue's date
 
     @patch("services.supabase.issues.get_issue.supabase")
-    def test_get_issue_cast_function_called(self, mock_supabase):
-        """Test that the cast function is called with correct parameters"""
+    def test_get_issue_returns_correct_data_structure(self, mock_supabase):
+        """Test that the function returns the correct data structure"""
         self._setup_supabase_mock(mock_supabase, [self.sample_issue_data])
         
         result = get_issue(**self.test_params)
