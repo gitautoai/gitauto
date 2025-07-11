@@ -443,6 +443,70 @@ def test_delete_comments_by_identifiers_decorator_applied():
     assert hasattr(delete_comments_by_identifiers, '__wrapped__')
     
     # The decorator should be handle_exceptions with specific parameters
+
+
+def test_delete_comments_by_identifiers_with_minimal_base_args(
+    mock_get_all_comments,
+    mock_filter_comments_by_identifiers,
+    mock_delete_comment
+):
+    """Test with minimal BaseArgs containing only required fields."""
+    # Setup minimal base_args
+    minimal_base_args = {
+        "owner": "owner",
+        "repo": "repo",
+        "token": "token"
+    }
+    
+    # Setup mocks
+    mock_get_all_comments.return_value = []
+    mock_filter_comments_by_identifiers.return_value = []
+    
+    identifiers = ["test-id"]
+    
+    # Execute
+    result = delete_comments_by_identifiers(minimal_base_args, identifiers)
+    
+    # Verify
+    assert result is None
+    mock_get_all_comments.assert_called_once_with(minimal_base_args)
+    mock_filter_comments_by_identifiers.assert_called_once_with([], identifiers)
+    mock_delete_comment.assert_not_called()
+
+
+def test_delete_comments_by_identifiers_comment_id_types(
+    mock_get_all_comments,
+    mock_filter_comments_by_identifiers,
+    mock_delete_comment,
+    sample_base_args
+):
+    """Test that comment IDs are properly passed to delete_comment function."""
+    # Setup data with various ID types (should all be integers)
+    matching_comments = [
+        {"id": 1, "body": "Comment 1", "user": {"login": "gitauto-ai[bot]"}},
+        {"id": 999999, "body": "Comment 2", "user": {"login": "gitauto-ai[bot]"}},
+        {"id": 42, "body": "Comment 3", "user": {"login": "gitauto-ai[bot]"}}
+    ]
+    
+    # Setup mocks
+    mock_get_all_comments.return_value = matching_comments
+    mock_filter_comments_by_identifiers.return_value = matching_comments
+    mock_delete_comment.return_value = None
+    
+    identifiers = ["test-id"]
+    
+    # Execute
+    result = delete_comments_by_identifiers(sample_base_args, identifiers)
+    
+    # Verify
+    assert result is None
+    assert mock_delete_comment.call_count == 3
+    
+    # Verify that the correct IDs were passed
+    expected_calls = [
+        (sample_base_args, 1),
+        (sample_base_args, 999999),
+        (sample_base_args, 42)
     ["special-chars-!@#$%"],
     ["123-numeric-identifier"],
 ])
