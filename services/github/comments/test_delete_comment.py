@@ -114,7 +114,12 @@ def test_delete_comment_http_error_handled(base_args, mock_create_headers):
     
     # Create a mock response with an HTTP error
     mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = HTTPError("404 Not Found")
+    # Create a proper HTTPError with a response object
+    http_error = HTTPError("404 Not Found")
+    mock_error_response = MagicMock()
+    mock_error_response.status_code = 404
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
     
     with patch("services.github.comments.delete_comment.delete") as mock_delete:
         mock_delete.return_value = mock_response
