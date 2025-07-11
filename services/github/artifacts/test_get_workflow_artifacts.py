@@ -156,7 +156,6 @@ def test_get_workflow_artifacts_http_error_returns_default(mock_create_headers, 
     """Test that HTTP errors return default value due to handle_exceptions decorator."""
     # Setup mocks
     mock_create_headers.return_value = mock_headers
-    mock_get.side_effect = requests.exceptions.HTTPError("404 Not Found")
     # Create a mock response for the HTTPError
     mock_response = MagicMock()
     mock_response.status_code = 404
