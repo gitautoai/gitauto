@@ -118,6 +118,8 @@ def test_delete_comment_http_error_handled(base_args, mock_create_headers):
     http_error = HTTPError("404 Not Found")
     mock_error_response = MagicMock()
     mock_error_response.status_code = 404
+    mock_error_response.reason = "Not Found"
+    mock_error_response.text = "Comment not found"
     http_error.response = mock_error_response
     mock_response.raise_for_status.side_effect = http_error
     
