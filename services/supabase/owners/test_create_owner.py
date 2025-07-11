@@ -142,7 +142,7 @@ def test_create_owner_with_special_characters_in_names(mock_supabase):
 def test_create_owner_supabase_exception_handled(mock_supabase):
     """Test that Supabase exceptions are handled by the decorator."""
     # Setup - make execute() raise an exception
-    mock_supabase.table().insert().execute.side_effect = Exception("Database error")
+    mock_supabase.table.return_value.insert.return_value.execute.side_effect = Exception("Database error")
     
     # Execute - should not raise exception due to handle_exceptions decorator
     result = create_owner(
@@ -154,7 +154,7 @@ def test_create_owner_supabase_exception_handled(mock_supabase):
     
     # Assert - should return None due to handle_exceptions decorator
     assert result is None
-    mock_supabase.table().insert().execute.assert_called_once()
+    mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
 
 def test_create_owner_table_method_called_correctly(mock_supabase):
