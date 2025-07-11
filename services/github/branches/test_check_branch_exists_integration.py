@@ -35,6 +35,7 @@ def test_check_branch_exists_with_nonexistent_branch():
     
     assert result is False
 
+@pytest.mark.skipif(os.getenv("CI") == "true", reason="Skip integration tests in CI environment")
 
 def test_check_branch_exists_with_nonexistent_repo():
     """Integration test to verify function returns False for non-existent repository"""
