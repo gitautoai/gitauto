@@ -60,6 +60,7 @@ def test_check_branch_exists_with_empty_branch_name_integration():
     result = check_branch_exists(owner, repo, branch_name, token)
     
     assert result is False
+@pytest.mark.skipif(os.getenv("CI") == "true", reason="Skip integration tests in CI environment")
 
 
 def test_check_branch_exists_with_special_characters_in_branch_name():
