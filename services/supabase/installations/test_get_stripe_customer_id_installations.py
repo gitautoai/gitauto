@@ -69,8 +69,8 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns the customer ID when found."""
         # Arrange
         mock_supabase_query.execute.return_value = (
-            (None, [sample_installation_with_stripe_customer]),
-            None
+            [None, [sample_installation_with_stripe_customer]],
+            1
         )
         
         # Act
@@ -83,8 +83,8 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when stripe_customer_id is None."""
         # Arrange
         mock_supabase_query.execute.return_value = (
-            (None, [sample_installation_without_stripe_customer]),
-            None
+            [None, [sample_installation_without_stripe_customer]],
+            1
         )
         
         # Act
@@ -97,8 +97,8 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when owners dict is empty."""
         # Arrange
         mock_supabase_query.execute.return_value = (
-            (None, [sample_installation_with_empty_owners]),
-            None
+            [None, [sample_installation_with_empty_owners]],
+            1
         )
         
         # Act
@@ -111,8 +111,8 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when owners is null."""
         # Arrange
         mock_supabase_query.execute.return_value = (
-            (None, [sample_installation_with_null_owners]),
-            None
+            [None, [sample_installation_with_null_owners]],
+            1
         )
         
         # Act
@@ -125,8 +125,8 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when no data is found."""
         # Arrange
         mock_supabase_query.execute.return_value = (
-            (None, []),
-            None
+            [None, []],
+            0
         )
         
         # Act
@@ -139,8 +139,8 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when data[1] is None."""
         # Arrange
         mock_supabase_query.execute.return_value = (
-            (None, None),
-            None
+            [None, None],
+            0
         )
         
         # Act
@@ -170,8 +170,8 @@ class TestGetStripeCustomerId:
             }
         }
         mock_supabase_query.execute.return_value = (
-            (None, [installation_data]),
-            None
+            [None, [installation_data]],
+            1
         )
         
         # Act
@@ -190,8 +190,8 @@ class TestGetStripeCustomerId:
             }
         }
         mock_supabase_query.execute.return_value = (
-            (None, [installation_data]),
-            None
+            [None, [installation_data]],
+            1
         )
         
         # Act
@@ -216,8 +216,8 @@ class TestGetStripeCustomerId:
             }
         }
         mock_supabase_query.execute.return_value = (
-            (None, [first_installation, second_installation]),
-            None
+            [None, [first_installation, second_installation]],
+            2
         )
         
         # Act
@@ -230,8 +230,8 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when TypeError occurs accessing data[1][0]."""
         # Arrange - simulate data[1] being a non-indexable object
         mock_supabase_query.execute.return_value = (
-            (None, 123),  # data[1][0] tries to access index 0 of int, which raises TypeError
-            None
+            [None, 123],  # data[1][0] tries to access index 0 of int, which raises TypeError
+            0
         )
         
         # Act
@@ -244,8 +244,8 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when IndexError occurs accessing data[1]."""
         # Arrange - simulate malformed response structure that causes IndexError
         mock_supabase_query.execute.return_value = (
-            ("invalid",),  # This will cause IndexError when accessing data[1]
-            None
+            ["invalid"],  # This will cause IndexError when accessing data[1]
+            0
         )
         
         # Act
@@ -257,7 +257,7 @@ class TestGetStripeCustomerId:
     def test_get_stripe_customer_id_calls_correct_supabase_methods(self, mock_supabase_query):
         """Test that get_stripe_customer_id calls the correct Supabase methods with correct parameters."""
         # Arrange
-        mock_supabase_query.execute.return_value = ((None, []), None)
+        mock_supabase_query.execute.return_value = ([None, []], 0)
         
         with patch("services.supabase.installations.get_stripe_customer_id.supabase") as mock_supabase:
             mock_table = MagicMock()
@@ -267,7 +267,7 @@ class TestGetStripeCustomerId:
             mock_supabase.table.return_value = mock_table
             mock_table.select.return_value = mock_select
             mock_select.eq.return_value = mock_eq
-            mock_eq.execute.return_value = ((None, []), None)
+            mock_eq.execute.return_value = ([None, []], 0)
             
             # Act
             get_stripe_customer_id(installation_id=TEST_INSTALLATION_ID)
@@ -294,8 +294,8 @@ class TestGetStripeCustomerId:
             }
         }
         mock_supabase_query.execute.return_value = (
-            (None, [installation_data]),
-            None
+            [None, [installation_data]],
+            1
         )
         
         # Act
@@ -321,8 +321,8 @@ class TestGetStripeCustomerId:
                 }
             }
             mock_supabase_query.execute.return_value = (
-                (None, [installation_data]),
-                None
+                [None, [installation_data]],
+                1
             )
             
             # Act
