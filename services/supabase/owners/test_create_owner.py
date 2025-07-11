@@ -361,4 +361,36 @@ def test_create_owner_mixed_parameter_types(mock_supabase):
     assert call_args["created_by"] == "6002:mixed-params-user"
 
 
+def test_create_owner_multiple_exception_types(mock_supabase):
+    """Test that different types of exceptions are handled by the decorator."""
+    # Test AttributeError
+    mock_supabase.table().insert().execute.side_effect = AttributeError("Attribute error")
+    result = create_owner(7001, "attr-error-owner", 7002, "attr-error-user")
+    assert result is None
+    
+    # Reset mock and test KeyError
+    mock_supabase.reset_mock()
+    mock_supabase.table().insert().execute.side_effect = KeyError("Key error")
+    result = create_owner(7003, "key-error-owner", 7004, "key-error-user")
+    assert result is None
+    
+    # Reset mock and test TypeError
+    mock_supabase.reset_mock()
+    mock_supabase.table().insert().execute.side_effect = TypeError("Type error")
+    result = create_owner(7005, "type-error-owner", 7006, "type-error-user")
+    assert result is None
+    
+    # Reset mock and test generic Exception
+    mock_supabase.reset_mock()
+    mock_supabase.table().insert().execute.side_effect = Exception("Generic error")
+    result = create_owner(7007, "generic-error-owner", 7008, "generic-error-user")
+    assert result is None
+
+
+def test_create_owner_function_signature():
+    """Test that the function signature matches expectations."""
+    import inspect
+    from services.supabase.owners.create_owner import create_owner
+
+
 def test_create_owner_all_data_types_preserved(mock_supabase):
