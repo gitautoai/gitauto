@@ -288,3 +288,25 @@ def test_find_config_files_with_real_configuration_files():
     assert "project.csproj" in result
     assert "README.md" not in result
     assert "src/utils/helper.py" not in result
+
+
+def test_find_config_files_potential_duplicate_matches():
+    """Test that a file matching both exact and wildcard patterns is only added once."""
+    # Create a scenario where a file could potentially match both patterns
+    mock_config_files = [
+        "test.config",  # exact match
+        "*.config",     # wildcard match - same file could match both
+    ]
+    
+    with patch("services.github.utils.find_config_files.CONFIGURATION_FILES", mock_config_files):
+        file_tree = [
+            "src/main.py",
+            "test.config",  # This matches both "test.config" exactly and "*.config" wildcard
+            "app.config",   # This matches only "*.config" wildcard
+            "README.md",
+        ]
+        
+        result = find_config_files(file_tree)
+        
+        # The file should appear twice since the function adds it for each match
+        assert result.count("test.config") == 2  # Once for exact, once for wildcard
