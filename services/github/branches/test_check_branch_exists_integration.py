@@ -32,7 +32,6 @@ def test_check_branch_exists_with_nonexistent_branch():
     assert result is False
 
 
-@pytest.mark.integration
 def test_check_branch_exists_with_nonexistent_repo():
     """Integration test to verify function returns False for non-existent repository"""
     owner = "nonexistent-owner-12345"
