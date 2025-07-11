@@ -218,6 +218,48 @@ def test_insert_issue_with_large_values(mock_supabase, mock_issues_insert):
     )
 
 
+def test_insert_issue_with_negative_values(mock_supabase, mock_issues_insert):
+    """Test issue insertion with negative values for numeric fields."""
+    # Arrange
+    negative_owner_id = -1
+    negative_repo_id = -1
+    negative_issue_number = -1
+    negative_installation_id = -1
+    
+    mock_issues_insert.return_value.model_dump.return_value = {
+        "owner_id": negative_owner_id,
+        "owner_type": TEST_OWNER_TYPE,
+        "owner_name": TEST_OWNER_NAME,
+        "repo_id": negative_repo_id,
+        "repo_name": TEST_REPO_NAME,
+        "issue_number": negative_issue_number,
+        "installation_id": negative_installation_id,
+    }
+
+    # Act
+    result = insert_issue(
+        owner_id=negative_owner_id,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        repo_id=negative_repo_id,
+        repo_name=TEST_REPO_NAME,
+        issue_number=negative_issue_number,
+        installation_id=negative_installation_id,
+    )
+
+    # Assert
+    assert result is None
+    mock_issues_insert.assert_called_once_with(
+        owner_id=negative_owner_id,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        repo_id=negative_repo_id,
+        repo_name=TEST_REPO_NAME,
+        issue_number=negative_issue_number,
+        installation_id=negative_installation_id,
+    )
+
+
 def test_insert_issue_supabase_exception_raises(mock_supabase, mock_issues_insert):
     """Test that Supabase exceptions are raised due to @handle_exceptions(raise_on_error=True)."""
     # Arrange
@@ -297,47 +339,60 @@ def test_insert_issue_with_special_characters_in_strings(mock_supabase, mock_iss
         repo_id=TEST_REPO_ID,
         repo_name=repo_name,
         issue_number=TEST_ISSUE_NUMBER,
-
-
-def test_insert_issue_with_negative_values(mock_supabase, mock_issues_insert):
-    """Test issue insertion with negative values for numeric fields."""
-    # Arrange
-    negative_owner_id = -1
-    negative_repo_id = -1
-    negative_issue_number = -1
-    negative_installation_id = -1
-    
-    mock_issues_insert.return_value.model_dump.return_value = {
-        "owner_id": negative_owner_id,
-        "owner_type": TEST_OWNER_TYPE,
-        "owner_name": TEST_OWNER_NAME,
-        "repo_id": negative_repo_id,
-        "repo_name": TEST_REPO_NAME,
-        "issue_number": negative_issue_number,
-        "installation_id": negative_installation_id,
-    }
-
-    # Act
-    result = insert_issue(
-        owner_id=negative_owner_id,
-        owner_type=TEST_OWNER_TYPE,
-        owner_name=TEST_OWNER_NAME,
-        repo_id=negative_repo_id,
-        repo_name=TEST_REPO_NAME,
-        issue_number=negative_issue_number,
-        installation_id=negative_installation_id,
+        installation_id=TEST_INSTALLATION_ID,
     )
 
     # Assert
     assert result is None
     mock_issues_insert.assert_called_once_with(
-        owner_id=negative_owner_id,
-        owner_type=TEST_OWNER_TYPE,
-        owner_name=TEST_OWNER_NAME,
-        repo_id=negative_repo_id,
-        repo_name=TEST_REPO_NAME,
-        issue_number=negative_issue_number,
-        installation_id=negative_installation_id,
+        owner_id=TEST_OWNER_ID,
+        owner_type=owner_type,
+        owner_name=owner_name,
+        repo_id=TEST_REPO_ID,
+        repo_name=repo_name,
+        issue_number=TEST_ISSUE_NUMBER,
+        installation_id=TEST_INSTALLATION_ID,
+    )
+
+
+def test_insert_issue_with_unicode_characters(mock_supabase, mock_issues_insert):
+    """Test issue insertion with Unicode characters in string fields."""
+    # Arrange
+    owner_name = "测试用户"  # Chinese characters
+    repo_name = "тест-репо"  # Cyrillic characters
+    owner_type = "Organización"  # Spanish with accent
+    
+    mock_issues_insert.return_value.model_dump.return_value = {
+        "owner_id": TEST_OWNER_ID,
+        "owner_type": owner_type,
+        "owner_name": owner_name,
+        "repo_id": TEST_REPO_ID,
+        "repo_name": repo_name,
+        "issue_number": TEST_ISSUE_NUMBER,
+        "installation_id": TEST_INSTALLATION_ID,
+    }
+
+    # Act
+    result = insert_issue(
+        owner_id=TEST_OWNER_ID,
+        owner_type=owner_type,
+        owner_name=owner_name,
+        repo_id=TEST_REPO_ID,
+        repo_name=repo_name,
+        issue_number=TEST_ISSUE_NUMBER,
+        installation_id=TEST_INSTALLATION_ID,
+    )
+
+    # Assert
+    assert result is None
+    mock_issues_insert.assert_called_once_with(
+        owner_id=TEST_OWNER_ID,
+        owner_type=owner_type,
+        owner_name=owner_name,
+        repo_id=TEST_REPO_ID,
+        repo_name=repo_name,
+        issue_number=TEST_ISSUE_NUMBER,
+        installation_id=TEST_INSTALLATION_ID,
     )
 
 
@@ -383,38 +438,5 @@ def test_insert_issue_model_dump_exclude_none_behavior(mock_supabase, mock_issue
         installation_id=TEST_INSTALLATION_ID,
     )
 
-        installation_id=TEST_INSTALLATION_ID,
-    )
-
-    # Assert
-    assert result is None
-    mock_issues_insert.assert_called_once_with(
-        owner_id=TEST_OWNER_ID,
-        owner_type=owner_type,
-        owner_name=owner_name,
-        repo_id=TEST_REPO_ID,
-        repo_name=repo_name,
-        issue_number=TEST_ISSUE_NUMBER,
-        installation_id=TEST_INSTALLATION_ID,
-    )
-
-
-def test_insert_issue_with_unicode_characters(mock_supabase, mock_issues_insert):
-    """Test issue insertion with Unicode characters in string fields."""
-    # Arrange
-    owner_name = "测试用户"  # Chinese characters
-    repo_name = "тест-репо"  # Cyrillic characters
-    owner_type = "Organización"  # Spanish with accent
-    
-    mock_issues_insert.return_value.model_dump.return_value = {
-        "owner_id": TEST_OWNER_ID,
-        "owner_type": owner_type,
-        "owner_name": owner_name,
-        "repo_id": TEST_REPO_ID,
-        "repo_name": repo_name,
-        "issue_number": TEST_ISSUE_NUMBER,
-        "installation_id": TEST_INSTALLATION_ID,
-    }
-
-    # Act
-    result = insert_issue(
+    # Assert - Verify model_dump was called with exclude_none=True
+    mock_issues_insert.return_value.model_dump.assert_called_once_with(exclude_none=True)
