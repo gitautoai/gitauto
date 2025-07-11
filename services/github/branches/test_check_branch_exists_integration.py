@@ -4,7 +4,6 @@ from config import TEST_OWNER_NAME, TEST_REPO_NAME
 from services.github.branches.check_branch_exists import check_branch_exists
 
 
-@pytest.mark.integration
 def test_check_branch_exists_with_real_github_repo():
     """Integration test to verify function works with real GitHub API"""
     # Test with a known public repository and branch
