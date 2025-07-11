@@ -269,6 +269,7 @@ def test_check_branch_exists_with_error_status_codes_that_raise_for_status(mock_
     http_error.response = mock_response
     mock_response.reason = f"{status_code} Error"
     mock_response.text = f"{status_code} Error"
+    mock_response.raise_for_status.side_effect = http_error
     mock_requests_get.return_value = mock_response
     
     result = check_branch_exists("owner", "repo", "branch", "token")
