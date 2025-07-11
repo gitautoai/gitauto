@@ -134,7 +134,13 @@ def test_create_remote_branch_http_error_handled(mock_create_headers, sample_bas
     with patch("services.github.branches.create_remote_branch.requests.post") as mock_post:
         # Mock an HTTP error response
         mock_response = MagicMock()
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404 Not Found")
+        mock_response.status_code = 404
+        mock_response.reason = "Not Found"
+        mock_response.text = "Repository not found"
+        
+        http_error = requests.exceptions.HTTPError("404 Not Found")
+        http_error.response = mock_response
+        mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
         
         # The function should return None due to handle_exceptions decorator
