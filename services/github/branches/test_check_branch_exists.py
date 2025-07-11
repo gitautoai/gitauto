@@ -282,3 +282,11 @@ def test_check_branch_exists_function_signature():
     """Test that function has correct signature and type annotations"""
     import inspect
     
+    
+    # Get function signature
+    sig = inspect.signature(check_branch_exists)
+    
+    # Check parameter names
+    param_names = list(sig.parameters.keys())
+    expected_params = ['owner', 'repo', 'branch_name', 'token']
+    
