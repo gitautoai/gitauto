@@ -299,4 +299,66 @@ def test_create_owner_decorator_configuration():
     assert create_owner.__name__ == "create_owner"
 
 
+def test_create_owner_negative_ids(mock_supabase):
+    """Test owner creation with negative ID values."""
+    # Execute
+    create_owner(
+        owner_id=-1,
+        owner_name="negative-id-owner",
+        user_id=-999,
+        user_name="negative-id-user"
+    )
+    
+    # Assert
+    call_args = mock_supabase.table().insert.call_args[0][0]
+    assert call_args["owner_id"] == -1
+    assert call_args["created_by"] == "-999:negative-id-user"
+    assert call_args["updated_by"] == "-999:negative-id-user"
+
+
+def test_create_owner_whitespace_handling(mock_supabase):
+    """Test owner creation with whitespace in string parameters."""
+    # Execute
+    create_owner(
+        owner_id=5001,
+        owner_name="  owner-with-spaces  ",
+        user_id=5002,
+        user_name="  user-with-spaces  ",
+        stripe_customer_id="  cus_spaces123  ",
+        owner_type="  Organization  ",
+        org_rules="  rules with spaces  "
+    )
+    
+    # Assert - whitespace should be preserved as-is
+    call_args = mock_supabase.table().insert.call_args[0][0]
+    assert call_args["owner_name"] == "  owner-with-spaces  "
+    assert call_args["created_by"] == "5002:  user-with-spaces  "
+    assert call_args["updated_by"] == "5002:  user-with-spaces  "
+    assert call_args["stripe_customer_id"] == "  cus_spaces123  "
+    assert call_args["owner_type"] == "  Organization  "
+    assert call_args["org_rules"] == "  rules with spaces  "
+
+
+def test_create_owner_mixed_parameter_types(mock_supabase):
+    """Test owner creation with a mix of provided and default parameters."""
+    # Execute - mix of provided and default parameters
+    create_owner(
+        owner_id=6001,
+        owner_name="mixed-params-owner",
+        user_id=6002,
+        user_name="mixed-params-user",
+        stripe_customer_id="cus_mixed123",
+        # owner_type and org_rules will use defaults (empty strings)
+    )
+    
+    # Assert
+    call_args = mock_supabase.table().insert.call_args[0][0]
+    assert call_args["owner_id"] == 6001
+    assert call_args["owner_name"] == "mixed-params-owner"
+    assert call_args["stripe_customer_id"] == "cus_mixed123"
+    assert call_args["owner_type"] == ""  # default value
+    assert call_args["org_rules"] == ""  # default value
+    assert call_args["created_by"] == "6002:mixed-params-user"
+
+
 def test_create_owner_all_data_types_preserved(mock_supabase):
