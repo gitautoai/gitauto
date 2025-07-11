@@ -296,7 +296,6 @@ def test_create_remote_branch_with_empty_values(mock_requests_post, mock_create_
 
 
 @pytest.mark.parametrize("error_type,error_message", [
-    (requests.exceptions.HTTPError, "HTTP Error"),
     (requests.exceptions.Timeout, "Timeout Error"),
     (requests.exceptions.ConnectionError, "Connection Error"),
     (requests.exceptions.RequestException, "Request Error"),
@@ -307,6 +306,26 @@ def test_create_remote_branch_handles_various_exceptions(mock_create_headers, sa
     """Test that various exception types are handled by the decorator."""
     with patch("services.github.branches.create_remote_branch.requests.post") as mock_post:
         mock_post.side_effect = error_type(error_message)
+        
+        # The function should return None due to handle_exceptions decorator
+        result = create_remote_branch(sha=sample_sha, base_args=sample_base_args)
+        assert result is None
+        
+        # Verify the request was attempted
+        mock_post.assert_called_once()
+
+
+def test_create_remote_branch_handles_http_error_exception(mock_create_headers, sample_base_args, sample_sha):
+    """Test that HTTPError is handled by the decorator with proper response object."""
+    with patch("services.github.branches.create_remote_branch.requests.post") as mock_post:
+        # Create a proper HTTPError with response object
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.reason = "Internal Server Error"
+        mock_response.text = "HTTP Error"
+        http_error = requests.exceptions.HTTPError("HTTP Error")
+        http_error.response = mock_response
+        mock_post.side_effect = http_error
         
         # The function should return None due to handle_exceptions decorator
         result = create_remote_branch(sha=sample_sha, base_args=sample_base_args)
