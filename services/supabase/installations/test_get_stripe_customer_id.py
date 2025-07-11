@@ -69,7 +69,7 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns the customer ID when found."""
         # Arrange
         mock_supabase_query.execute.return_value = (
-            ([None, [sample_installation_with_stripe_customer]]),
+            [None, [sample_installation_with_stripe_customer]],
             1
         )
         
@@ -83,7 +83,7 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when stripe_customer_id is None."""
         # Arrange
         mock_supabase_query.execute.return_value = (
-            ([None, [sample_installation_without_stripe_customer]]),
+            [None, [sample_installation_without_stripe_customer]],
             1
         )
         
@@ -97,7 +97,7 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when owners dict is empty."""
         # Arrange
         mock_supabase_query.execute.return_value = (
-            ([None, [sample_installation_with_empty_owners]]),
+            [None, [sample_installation_with_empty_owners]],
             1
         )
         
@@ -111,7 +111,7 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when owners is null."""
         # Arrange
         mock_supabase_query.execute.return_value = (
-            ([None, [sample_installation_with_null_owners]]),
+            [None, [sample_installation_with_null_owners]],
             1
         )
         
@@ -125,7 +125,7 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when no data is found."""
         # Arrange
         mock_supabase_query.execute.return_value = (
-            ([None, []]),
+            [None, []],
             0
         )
         
@@ -139,7 +139,7 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when data[1] is None."""
         # Arrange
         mock_supabase_query.execute.return_value = (
-            ([None, None]),
+            [None, None],
             0
         )
         
@@ -170,7 +170,7 @@ class TestGetStripeCustomerId:
             }
         }
         mock_supabase_query.execute.return_value = (
-            ([None, [installation_data]]),
+            [None, [installation_data]],
             1
         )
         
@@ -190,7 +190,7 @@ class TestGetStripeCustomerId:
             }
         }
         mock_supabase_query.execute.return_value = (
-            ([None, [installation_data]]),
+            [None, [installation_data]],
             1
         )
         
@@ -216,7 +216,7 @@ class TestGetStripeCustomerId:
             }
         }
         mock_supabase_query.execute.return_value = (
-            ([None, [first_installation, second_installation]]),
+            [None, [first_installation, second_installation]],
             2
         )
         
@@ -230,7 +230,7 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when TypeError occurs accessing data[1][0]."""
         # Arrange - simulate data[1] being a non-indexable object
         mock_supabase_query.execute.return_value = (
-            ([None, 123]),  # data[1][0] tries to access index 0 of int, which raises TypeError
+            [None, 123],  # data[1][0] tries to access index 0 of int, which raises TypeError
             0
         )
         
@@ -244,7 +244,7 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when IndexError occurs accessing data[1]."""
         # Arrange - simulate malformed response structure that causes IndexError
         mock_supabase_query.execute.return_value = (
-            (["invalid"]),  # This will cause IndexError when accessing data[1]
+            ["invalid"],  # This will cause IndexError when accessing data[1]
             0
         )
         
@@ -294,7 +294,7 @@ class TestGetStripeCustomerId:
             }
         }
         mock_supabase_query.execute.return_value = (
-            ([None, [installation_data]]),
+            [None, [installation_data]],
             1
         )
         
@@ -321,7 +321,7 @@ class TestGetStripeCustomerId:
                 }
             }
             mock_supabase_query.execute.return_value = (
-                ([None, [installation_data]]),
+                [None, [installation_data]],
                 1
             )
             
