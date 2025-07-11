@@ -41,7 +41,7 @@ class TestGetIssue(unittest.TestCase):
     def _setup_supabase_mock(self, mock_supabase: MagicMock, return_data: List[Dict[str, Any]]):
         """Helper method to set up the supabase mock chain"""
         mock_chain = mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.eq.return_value
-        mock_chain.execute.return_value = (None, return_data)
+        mock_chain.execute.return_value = ((None, return_data), None)
 
     @patch("services.supabase.issues.get_issue.supabase")
     def test_get_issue_success_with_data(self, mock_supabase):
