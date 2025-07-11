@@ -375,8 +375,10 @@ def test_delete_comments_by_identifiers_partial_deletion_failure(
     assert result is None
     mock_get_all_comments.assert_called_once_with(sample_base_args)
     mock_filter_comments_by_identifiers.assert_called_once_with(matching_comments, identifiers)
-    # Should have attempted to delete the first comment before the exception
-    mock_delete_comment.assert_called_once_with(base_args=sample_base_args, comment_id=1)
+    # Should have attempted to delete the first two comments before the exception on the second
+    assert mock_delete_comment.call_count == 2
+    mock_delete_comment.assert_any_call(base_args=sample_base_args, comment_id=1)
+    mock_delete_comment.assert_any_call(base_args=sample_base_args, comment_id=2)
 
 
 def test_delete_comments_by_identifiers_large_number_of_comments(
