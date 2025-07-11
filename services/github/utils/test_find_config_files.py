@@ -244,3 +244,47 @@ def test_find_config_files_preserves_order():
         result = find_config_files(file_tree)
         # Should preserve the order they appear in the file_tree
         assert result == ["requirements.txt", "package.json"]
+
+
+def test_find_config_files_with_real_configuration_files():
+    """Test with actual CONFIGURATION_FILES from constants to ensure integration works."""
+    # Test with some real files that should be in CONFIGURATION_FILES
+    file_tree = [
+        "src/main.py",
+        "package.json",
+        "requirements.txt", 
+        "Dockerfile",
+        "docker-compose.yml",
+        "tsconfig.json",
+        "jest.config.js",
+        "go.mod",
+        "Cargo.toml",
+        "pom.xml",
+        "build.gradle",
+        "CMakeLists.txt",
+        "Makefile",
+        "project.csproj",
+        "app.vcxproj",
+        "main.tf",
+        "README.md",  # Should not match
+        "src/utils/helper.py",  # Should not match
+    ]
+    
+    result = find_config_files(file_tree)
+    
+    # Should find all the config files but not the non-config files
+    assert "package.json" in result
+    assert "requirements.txt" in result
+    assert "Dockerfile" in result
+    assert "docker-compose.yml" in result
+    assert "tsconfig.json" in result
+    assert "jest.config.js" in result
+    assert "go.mod" in result
+    assert "Cargo.toml" in result
+    assert "pom.xml" in result
+    assert "build.gradle" in result
+    assert "CMakeLists.txt" in result
+    assert "Makefile" in result
+    assert "project.csproj" in result
+    assert "README.md" not in result
+    assert "src/utils/helper.py" not in result
