@@ -45,3 +45,30 @@ def test_check_branch_exists_with_nonexistent_repo():
     result = check_branch_exists(owner, repo, branch_name, token)
     
     assert result is False
+
+
+@pytest.mark.integration
+def test_check_branch_exists_with_empty_branch_name_integration():
+    """Integration test to verify function returns False for empty branch name"""
+    owner = "octocat"
+    repo = "Hello-World"
+    branch_name = ""
+    token = "dummy_token"
+    
+    result = check_branch_exists(owner, repo, branch_name, token)
+    
+    assert result is False
+
+
+@pytest.mark.integration
+def test_check_branch_exists_with_special_characters_in_branch_name():
+    """Integration test to verify function handles special characters in branch names"""
+    owner = "octocat"
+    repo = "Hello-World"
+    branch_name = "feature/test-branch-with-special-chars_123"
+    token = "dummy_token"
+    
+    result = check_branch_exists(owner, repo, branch_name, token)
+    
+    # This should return False since this specific branch likely doesn't exist
+    assert result is False
