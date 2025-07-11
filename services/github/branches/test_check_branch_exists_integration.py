@@ -20,7 +20,6 @@ def test_check_branch_exists_with_real_github_repo():
     assert isinstance(result, bool)
 
 
-@pytest.mark.integration
 def test_check_branch_exists_with_nonexistent_branch():
     """Integration test to verify function returns False for non-existent branch"""
     owner = "octocat"
