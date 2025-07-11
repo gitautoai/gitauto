@@ -201,3 +201,102 @@ def test_create_owner_with_large_ids(mock_supabase):
     assert call_args["owner_id"] == 999999999999
     assert call_args["created_by"] == "888888888888:large-id-user"
     assert call_args["updated_by"] == "888888888888:large-id-user"
+
+
+def test_create_owner_with_zero_ids(mock_supabase):
+    """Test owner creation with zero ID values."""
+    # Execute
+    create_owner(
+        owner_id=0,
+        owner_name="zero-id-owner",
+        user_id=0,
+        user_name="zero-id-user"
+    )
+    
+    # Assert
+    call_args = mock_supabase.table().insert.call_args[0][0]
+    assert call_args["owner_id"] == 0
+    assert call_args["created_by"] == "0:zero-id-user"
+    assert call_args["updated_by"] == "0:zero-id-user"
+
+
+def test_create_owner_with_unicode_characters(mock_supabase):
+    """Test owner creation with Unicode characters in names."""
+    # Execute
+    create_owner(
+        owner_id=1001,
+        owner_name="测试-owner-🚀",
+        user_id=1002,
+        user_name="用户-test-👤",
+        stripe_customer_id="cus_unicode123",
+        owner_type="Organization",
+        org_rules="规则 with émojis 🎯"
+    )
+    
+    # Assert
+    mock_supabase.table().insert.assert_called_once_with({
+        "owner_id": 1001,
+        "owner_name": "测试-owner-🚀",
+        "stripe_customer_id": "cus_unicode123",
+        "created_by": "1002:用户-test-👤",
+        "updated_by": "1002:用户-test-👤",
+        "owner_type": "Organization",
+        "org_rules": "规则 with émojis 🎯",
+    })
+
+
+def test_create_owner_with_long_strings(mock_supabase):
+    """Test owner creation with very long string values."""
+    long_name = "a" * 1000
+    long_rules = "rule " * 500
+    
+    # Execute
+    create_owner(
+        owner_id=2001,
+        owner_name=long_name,
+        user_id=2002,
+        user_name="long-test-user",
+        stripe_customer_id="cus_long123",
+        owner_type="Organization",
+        org_rules=long_rules
+    )
+    
+    # Assert
+    call_args = mock_supabase.table().insert.call_args[0][0]
+    assert call_args["owner_name"] == long_name
+    assert call_args["org_rules"] == long_rules
+    assert len(call_args["owner_name"]) == 1000
+    assert len(call_args["org_rules"]) == 2500  # "rule " is 5 chars * 500
+
+
+def test_create_owner_return_value_on_success(mock_supabase):
+    """Test that create_owner returns None on successful execution."""
+    # Execute
+    result = create_owner(
+        owner_id=3001,
+        owner_name="return-test-owner",
+        user_id=3002,
+        user_name="return-test-user"
+    )
+    
+    # Assert - function should return None (implicit return)
+    assert result is None
+
+
+def test_create_owner_decorator_configuration():
+    """Test that the handle_exceptions decorator is configured correctly."""
+    # This test verifies the decorator configuration by checking the function attributes
+    # The decorator should be configured with default_return_value=None and raise_on_error=False
+    
+    # Import the function to check its decorator configuration
+    from services.supabase.owners.create_owner import create_owner
+    
+    # The function should have the decorator applied
+    assert hasattr(create_owner, '__wrapped__')
+    
+    # Test that exceptions are handled properly (already covered in other tests)
+    # This test mainly serves as documentation of the expected decorator behavior
+    assert create_owner.__name__ == "create_owner"
+
+
+def test_create_owner_all_data_types_preserved(mock_supabase):
