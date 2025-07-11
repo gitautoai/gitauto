@@ -362,29 +362,31 @@ def test_create_owner_mixed_parameter_types(mock_supabase):
     assert call_args["created_by"] == "6002:mixed-params-user"
 
 
-def test_create_owner_multiple_exception_types(mock_supabase):
-    """Test that different types of exceptions are handled by the decorator."""
-    # Test AttributeError
-    mock_supabase.table().insert().execute.side_effect = AttributeError("Attribute error")
-    result = create_owner(7001, "attr-error-owner", 7002, "attr-error-user")
+def test_create_owner_attribute_error_handled(mock_supabase):
+    """Test that AttributeError is handled by the decorator."""
+    mock_supabase.table.return_value.insert.return_value.execute.side_effect = AttributeError("Attribute error")
+    result = create_owner(7001, "error-owner", 7002, "error-user")
     assert result is None
-    
-    # Reset mock and test KeyError
-    mock_supabase.reset_mock()
-    mock_supabase.table().insert().execute.side_effect = KeyError("Key error")
-    result = create_owner(7003, "key-error-owner", 7004, "key-error-user")
+
+
+def test_create_owner_key_error_handled(mock_supabase):
+    """Test that KeyError is handled by the decorator."""
+    mock_supabase.table.return_value.insert.return_value.execute.side_effect = KeyError("Key error")
+    result = create_owner(7003, "error-owner", 7004, "error-user")
     assert result is None
-    
-    # Reset mock and test TypeError
-    mock_supabase.reset_mock()
-    mock_supabase.table().insert().execute.side_effect = TypeError("Type error")
-    result = create_owner(7005, "type-error-owner", 7006, "type-error-user")
+
+
+def test_create_owner_type_error_handled(mock_supabase):
+    """Test that TypeError is handled by the decorator."""
+    mock_supabase.table.return_value.insert.return_value.execute.side_effect = TypeError("Type error")
+    result = create_owner(7005, "error-owner", 7006, "error-user")
     assert result is None
-    
-    # Reset mock and test generic Exception
-    mock_supabase.reset_mock()
-    mock_supabase.table().insert().execute.side_effect = Exception("Generic error")
-    result = create_owner(7007, "generic-error-owner", 7008, "generic-error-user")
+
+
+def test_create_owner_generic_exception_handled(mock_supabase):
+    """Test that generic Exception is handled by the decorator."""
+    mock_supabase.table.return_value.insert.return_value.execute.side_effect = Exception("Generic error")
+    result = create_owner(7007, "error-owner", 7008, "error-user")
     assert result is None
 
 
