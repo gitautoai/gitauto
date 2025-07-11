@@ -347,12 +347,6 @@ def test_delete_comments_by_identifiers_filter_exception(
     mock_delete_comment.assert_not_called()
 
 
-@pytest.mark.parametrize("identifiers", [
-    ["single-identifier"],
-    ["id1", "id2"],
-    ["very-long-identifier-with-many-characters"],
-
-
 def test_delete_comments_by_identifiers_partial_deletion_failure(
     mock_get_all_comments,
     mock_filter_comments_by_identifiers,
@@ -441,8 +435,6 @@ def test_delete_comments_by_identifiers_decorator_applied():
     """Test that the @handle_exceptions decorator is properly applied."""
     # Check that the function has the decorator applied
     assert hasattr(delete_comments_by_identifiers, '__wrapped__')
-    
-    # The decorator should be handle_exceptions with specific parameters
 
 
 def test_delete_comments_by_identifiers_with_minimal_base_args(
@@ -503,10 +495,15 @@ def test_delete_comments_by_identifiers_comment_id_types(
     assert mock_delete_comment.call_count == 3
     
     # Verify that the correct IDs were passed
-    expected_calls = [
-        (sample_base_args, 1),
-        (sample_base_args, 999999),
-        (sample_base_args, 42)
+    mock_delete_comment.assert_any_call(base_args=sample_base_args, comment_id=1)
+    mock_delete_comment.assert_any_call(base_args=sample_base_args, comment_id=999999)
+    mock_delete_comment.assert_any_call(base_args=sample_base_args, comment_id=42)
+
+
+@pytest.mark.parametrize("identifiers", [
+    ["single-identifier"],
+    ["id1", "id2"],
+    ["very-long-identifier-with-many-characters"],
     ["special-chars-!@#$%"],
     ["123-numeric-identifier"],
 ])
@@ -528,3 +525,5 @@ def test_delete_comments_by_identifiers_various_identifier_formats(
     # Verify
     assert result is None
     mock_get_all_comments.assert_called_once_with(sample_base_args)
+    mock_filter_comments_by_identifiers.assert_called_once_with([], identifiers)
+    mock_delete_comment.assert_not_called()
