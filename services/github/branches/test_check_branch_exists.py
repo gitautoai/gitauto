@@ -264,7 +264,11 @@ def test_check_branch_exists_with_error_status_codes_that_raise_for_status(mock_
     """Test that function handles various error status codes that would raise_for_status"""
     mock_response = MagicMock()
     mock_response.status_code = status_code
-    mock_response.raise_for_status.side_effect = HTTPError(f"{status_code} Error")
+    # Create a proper HTTPError with response attribute
+    http_error = HTTPError(f"{status_code} Error")
+    http_error.response = mock_response
+    mock_response.reason = f"{status_code} Error"
+    mock_response.text = f"{status_code} Error"
     mock_requests_get.return_value = mock_response
     
     result = check_branch_exists("owner", "repo", "branch", "token")
