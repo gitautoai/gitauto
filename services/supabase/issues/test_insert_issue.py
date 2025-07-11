@@ -297,6 +297,92 @@ def test_insert_issue_with_special_characters_in_strings(mock_supabase, mock_iss
         repo_id=TEST_REPO_ID,
         repo_name=repo_name,
         issue_number=TEST_ISSUE_NUMBER,
+
+
+def test_insert_issue_with_negative_values(mock_supabase, mock_issues_insert):
+    """Test issue insertion with negative values for numeric fields."""
+    # Arrange
+    negative_owner_id = -1
+    negative_repo_id = -1
+    negative_issue_number = -1
+    negative_installation_id = -1
+    
+    mock_issues_insert.return_value.model_dump.return_value = {
+        "owner_id": negative_owner_id,
+        "owner_type": TEST_OWNER_TYPE,
+        "owner_name": TEST_OWNER_NAME,
+        "repo_id": negative_repo_id,
+        "repo_name": TEST_REPO_NAME,
+        "issue_number": negative_issue_number,
+        "installation_id": negative_installation_id,
+    }
+
+    # Act
+    result = insert_issue(
+        owner_id=negative_owner_id,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        repo_id=negative_repo_id,
+        repo_name=TEST_REPO_NAME,
+        issue_number=negative_issue_number,
+        installation_id=negative_installation_id,
+    )
+
+    # Assert
+    assert result is None
+    mock_issues_insert.assert_called_once_with(
+        owner_id=negative_owner_id,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        repo_id=negative_repo_id,
+        repo_name=TEST_REPO_NAME,
+        issue_number=negative_issue_number,
+        installation_id=negative_installation_id,
+    )
+
+
+def test_insert_issue_table_method_called_correctly(mock_supabase, mock_issues_insert):
+    """Test that the supabase table method is called with the correct table name."""
+    # Act
+    insert_issue(
+        owner_id=TEST_OWNER_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        repo_id=TEST_REPO_ID,
+        repo_name=TEST_REPO_NAME,
+        issue_number=TEST_ISSUE_NUMBER,
+        installation_id=TEST_INSTALLATION_ID,
+    )
+
+    # Assert - Verify table method is called with correct table name
+    mock_supabase.table.assert_called_once_with(table_name="issues")
+
+
+def test_insert_issue_model_dump_exclude_none_behavior(mock_supabase, mock_issues_insert):
+    """Test that model_dump is called with exclude_none=True and handles None values correctly."""
+    # Arrange - Mock model_dump to return data with some None values excluded
+    mock_issues_insert.return_value.model_dump.return_value = {
+        "owner_id": TEST_OWNER_ID,
+        "owner_type": TEST_OWNER_TYPE,
+        "owner_name": TEST_OWNER_NAME,
+        "repo_id": TEST_REPO_ID,
+        "repo_name": TEST_REPO_NAME,
+        "issue_number": TEST_ISSUE_NUMBER,
+        "installation_id": TEST_INSTALLATION_ID,
+        # Note: Some fields might be excluded due to exclude_none=True
+    }
+
+    # Act
+    insert_issue(
+        owner_id=TEST_OWNER_ID,
+        owner_type=TEST_OWNER_TYPE,
+        owner_name=TEST_OWNER_NAME,
+        repo_id=TEST_REPO_ID,
+        repo_name=TEST_REPO_NAME,
+        issue_number=TEST_ISSUE_NUMBER,
+        installation_id=TEST_INSTALLATION_ID,
+    )
+
         installation_id=TEST_INSTALLATION_ID,
     )
 
