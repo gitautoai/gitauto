@@ -22,6 +22,7 @@ def test_check_branch_exists_with_real_github_repo():
     # or if GitHub API is unavailable
     assert isinstance(result, bool)
 
+@pytest.mark.skipif(os.getenv("CI") == "true", reason="Skip integration tests in CI environment")
 
 def test_check_branch_exists_with_nonexistent_branch():
     """Integration test to verify function returns False for non-existent branch"""
