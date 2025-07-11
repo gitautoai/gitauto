@@ -172,3 +172,66 @@ def test_delete_comment_uses_github_api_url(base_args, mock_delete_response, moc
             mock_delete.assert_called_once()
             actual_call = mock_delete.call_args
             assert actual_call[1]["url"] == expected_url
+
+
+@pytest.mark.parametrize("comment_id", [1, 999999, 123456789])
+def test_delete_comment_with_various_comment_ids(base_args, mock_delete_response, mock_create_headers, comment_id):
+    """Test comment deletion with various comment ID formats."""
+    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+        mock_delete.return_value = mock_delete_response
+        
+        delete_comment(base_args, comment_id)
+        
+        # Verify URL contains the correct comment ID
+        expected_url = f"https://api.github.com/repos/test-owner/test-repo/issues/comments/{comment_id}"
+        mock_delete.assert_called_once()
+        actual_call = mock_delete.call_args
+        assert actual_call[1]["url"] == expected_url
+
+
+def test_delete_comment_connection_error_handled(base_args, mock_create_headers):
+    """Test that connection errors are handled by the decorator."""
+    comment_id = 12345
+    
+    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+        mock_delete.side_effect = requests.exceptions.ConnectionError("Connection failed")
+        
+        # Should return None due to handle_exceptions decorator
+        result = delete_comment(base_args, comment_id)
+        
+        assert result is None
+        mock_delete.assert_called_once()
+
+
+def test_delete_comment_with_special_characters_in_repo_name(mock_delete_response, mock_create_headers):
+    """Test comment deletion with special characters in repository name."""
+    base_args = BaseArgs(
+        owner="test-owner",
+        repo="test-repo-with-dashes",
+        token="test-token"
+    )
+    comment_id = 12345
+    
+    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+        mock_delete.return_value = mock_delete_response
+        
+        delete_comment(base_args, comment_id)
+        
+        # Verify URL handles special characters correctly
+        expected_url = "https://api.github.com/repos/test-owner/test-repo-with-dashes/issues/comments/12345"
+        mock_delete.assert_called_once()
+        actual_call = mock_delete.call_args
+        assert actual_call[1]["url"] == expected_url
+
+
+def test_delete_comment_decorator_configuration():
+    """Test that the handle_exceptions decorator is configured correctly."""
+    # Import the function to check its decorator
+    from services.github.comments.delete_comment import delete_comment
+    
+    # The function should have the handle_exceptions decorator applied
+    # We can verify this by checking if the function has been wrapped
+    assert hasattr(delete_comment, '__wrapped__')
+    
+    # The decorator should be configured with default_return_value=None and raise_on_error=False
+    # This is tested implicitly by the error handling tests above
