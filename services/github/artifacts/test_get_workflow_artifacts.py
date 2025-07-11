@@ -166,6 +166,7 @@ def test_get_workflow_artifacts_http_error_returns_default(mock_create_headers, 
     # Create HTTPError with the mock response
     http_error = requests.exceptions.HTTPError("404 Not Found")
     http_error.response = mock_response
+    mock_get.side_effect = http_error
     
     # Call function
     result = get_workflow_artifacts("owner", "repo", 123, "test_token")
