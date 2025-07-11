@@ -210,3 +210,67 @@ def test_check_branch_exists_with_various_branch_names(mock_requests_get, mock_c
         headers={"Authorization": "Bearer test_token"},
         timeout=TIMEOUT
     )
+
+
+@pytest.mark.parametrize("empty_value", [
+    "",
+    None,
+    "   ",  # whitespace only
+    "\t",   # tab only
+    "\n",   # newline only
+])
+def test_check_branch_exists_with_empty_branch_names(mock_requests_get, mock_create_headers, empty_value):
+    """Test that function returns False for various empty branch name values"""
+    result = check_branch_exists("owner", "repo", empty_value, "token")
+    
+    assert result is False
+    # Should not make any HTTP requests for empty values
+    mock_requests_get.assert_not_called()
+    mock_create_headers.assert_not_called()
+
+
+@pytest.mark.parametrize("status_code", [
+    200,  # OK
+    201,  # Created
+    202,  # Accepted
+    204,  # No Content
+])
+def test_check_branch_exists_with_success_status_codes(mock_requests_get, mock_create_headers, status_code):
+    """Test that function returns True for various success status codes"""
+    mock_response = MagicMock()
+    mock_response.status_code = status_code
+    mock_response.raise_for_status.return_value = None
+    mock_requests_get.return_value = mock_response
+    
+    result = check_branch_exists("owner", "repo", "branch", "token")
+    
+    assert result is True
+    mock_response.raise_for_status.assert_called_once()
+
+
+@pytest.mark.parametrize("status_code", [
+    400,  # Bad Request
+    401,  # Unauthorized
+    403,  # Forbidden
+    500,  # Internal Server Error
+    502,  # Bad Gateway
+    503,  # Service Unavailable
+])
+def test_check_branch_exists_with_error_status_codes_that_raise_for_status(mock_requests_get, mock_create_headers, status_code):
+    """Test that function handles various error status codes that would raise_for_status"""
+    mock_response = MagicMock()
+    mock_response.status_code = status_code
+    mock_response.raise_for_status.side_effect = HTTPError(f"{status_code} Error")
+    mock_requests_get.return_value = mock_response
+    
+    result = check_branch_exists("owner", "repo", "branch", "token")
+    
+    # Should return False due to @handle_exceptions decorator
+    assert result is False
+    mock_response.raise_for_status.assert_called_once()
+
+
+def test_check_branch_exists_function_signature():
+    """Test that function has correct signature and type annotations"""
+    import inspect
+    
