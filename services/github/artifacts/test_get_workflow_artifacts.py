@@ -243,3 +243,18 @@ def test_get_workflow_artifacts_various_parameters(mock_create_headers, mock_get
     
     # Verify result
     assert result == []
+
+
+@patch("services.github.artifacts.get_workflow_artifacts.get")
+@patch("services.github.artifacts.get_workflow_artifacts.create_headers")
+def test_get_workflow_artifacts_does_not_call_raise_for_status(mock_create_headers, mock_get, mock_headers):
+    """Test that the function does not call raise_for_status on the response."""
+    # Setup mocks
+    mock_create_headers.return_value = mock_headers
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"artifacts": []}
+    mock_get.return_value = mock_response
+    
+    # Call function
+    get_workflow_artifacts("owner", "repo", 123, "test_token")
+    
