@@ -44,7 +44,6 @@ def test_check_branch_exists_with_nonexistent_repo():
     assert result is False
 
 
-@pytest.mark.integration
 def test_check_branch_exists_with_empty_branch_name_integration():
     """Integration test to verify function returns False for empty branch name"""
     owner = "octocat"
