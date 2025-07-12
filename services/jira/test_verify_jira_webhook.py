@@ -345,6 +345,21 @@ class TestVerifyJiraWebhook:
         # Verify
         assert result == {"test": "payload"}
         mock_request.json.assert_called_once()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("user_agent,expected_valid", [
+        ("node-fetch/1.0", True),
+        ("node-fetch", True),
+        ("prefix-node-fetch-suffix", True),
+        ("NODE-FETCH", False),  # Case sensitive
+        ("nodefetch", False),   # Must have hyphen
+        ("node_fetch", False),  # Must have hyphen
+        ("curl/7.68.0", False),
+        ("", False),
+        ("Mozilla/5.0", False),
+    ])
+    async def test_verify_jira_webhook_user_agent_variations(
+        self, mock_request, user_agent, expected_valid
     ):
         """Test various user-agent string variations."""
         # Setup
@@ -363,17 +378,7 @@ class TestVerifyJiraWebhook:
         else:
             # Execute - should fail
             with pytest.raises(HTTPException) as exc_info:
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize("user_agent,expected_valid", [
-        ("node-fetch/1.0", True),
-        ("node-fetch", True),
-        ("prefix-node-fetch-suffix", True),
-        ("NODE-FETCH", False),  # Case sensitive
-        ("nodefetch", False),   # Must have hyphen
-        ("node_fetch", False),  # Must have hyphen
-        ("curl/7.68.0", False),
-        ("", False),
-        ("Mozilla/5.0", False),
-    ])
-    async def test_verify_jira_webhook_user_agent_variations(
-        self, mock_request, user_agent, expected_valid
+                await verify_jira_webhook(mock_request)
+            assert exc_info.value.status_code == 401
+            assert exc_info.value.detail == "Invalid request source"
+            mock_request.json.assert_not_called()
