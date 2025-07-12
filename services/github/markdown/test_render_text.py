@@ -220,6 +220,9 @@ def test_render_text_http_error_returns_empty_string(mock_base_args, mock_create
         http_error = HTTPError("404 Not Found")
         http_error.response = MagicMock()
         http_error.response.status_code = 404
+        http_error.response.reason = "Not Found"
+        http_error.response.text = "404 Not Found"
+        http_error.response.headers = {}
         mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
         
