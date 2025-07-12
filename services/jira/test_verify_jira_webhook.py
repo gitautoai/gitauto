@@ -326,3 +326,122 @@ async def test_verify_jira_webhook_print_statements(mock_request, valid_headers,
     mock_request.headers = valid_headers
     mock_request.json.return_value = sample_payload
     
+    with patch('builtins.print') as mock_print:
+        result = await verify_jira_webhook(mock_request)
+        
+        assert result == sample_payload
+        # Verify that print was called for logging headers
+        mock_print.assert_called_once()
+        args, _ = mock_print.call_args
+        assert "Request Headers:" in args[0]
+
+
+@pytest.mark.asyncio
+async def test_verify_jira_webhook_validation_failure_print(mock_request, sample_payload):
+    """Test that validation failure print statement is called."""
+    mock_request.headers = {
+        "user-agent": "invalid-agent",
+        "x-b3-traceid": "test-trace-id",
+        "x-b3-spanid": "test-span-id",
+    }
+    mock_request.json.return_value = sample_payload
+    
+    with patch('builtins.print') as mock_print:
+        with pytest.raises(HTTPException):
+            await verify_jira_webhook(mock_request)
+        
+        # Verify that both print statements were called
+        assert mock_print.call_count == 2
+        # First call should be for headers logging
+        first_call_args, _ = mock_print.call_args_list[0]
+        assert "Request Headers:" in first_call_args[0]
+        # Second call should be for validation failure
+        second_call_args, _ = mock_print.call_args_list[1]
+        assert "Not a valid Forge request" in second_call_args[0]
+
+
+@pytest.mark.asyncio
+async def test_verify_jira_webhook_all_function_calls_order(mock_request, valid_headers, sample_payload):
+    """Test the order of function calls during successful execution."""
+    mock_request.headers = valid_headers
+    mock_request.json.return_value = sample_payload
+    
+    with patch('services.jira.verify_jira_webhook.dumps') as mock_dumps, \
+         patch('builtins.print') as mock_print:
+        
+        mock_dumps.return_value = "mocked_headers_json"
+        
+        result = await verify_jira_webhook(mock_request)
+        
+        assert result == sample_payload
+        
+        # Verify the order of operations
+        # 1. Headers are converted to dict and logged
+        mock_dumps.assert_called_once_with(dict(valid_headers), indent=2)
+        mock_print.assert_called_once_with("Request Headers:", "mocked_headers_json")
+        
+        # 2. Headers are accessed for validation
+        assert mock_request.headers.get("user-agent", "") == "node-fetch/1.0"
+        
+        # 3. JSON payload is retrieved
+        mock_request.json.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_verify_jira_webhook_b3_headers_edge_cases(mock_request, sample_payload):
+    """Test edge cases for B3 headers validation."""
+    test_cases = [
+        # Both headers missing
+        {"user-agent": "node-fetch/1.0"},
+        # Only one header present
+        {"user-agent": "node-fetch/1.0", "x-b3-traceid": "trace123"},
+        {"user-agent": "node-fetch/1.0", "x-b3-spanid": "span456"},
+        # Headers with whitespace
+        {"user-agent": "node-fetch/1.0", "x-b3-traceid": "  ", "x-b3-spanid": "  "},
+        # Headers with zero values
+        {"user-agent": "node-fetch/1.0", "x-b3-traceid": "0", "x-b3-spanid": "0"},
+    ]
+    
+    for headers in test_cases:
+        mock_request.headers = headers
+        mock_request.json.return_value = sample_payload
+        
+        with pytest.raises(HTTPException) as exc_info:
+            await verify_jira_webhook(mock_request)
+        
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.detail == "Invalid request source"
+        mock_request.json.assert_not_called()
+        
+        # Reset the mock for next iteration
+        mock_request.json.reset_mock()
+
+
+@pytest.mark.asyncio
+async def test_verify_jira_webhook_user_agent_edge_cases(mock_request, sample_payload):
+    """Test edge cases for user-agent validation."""
+    test_cases = [
+        # Empty user-agent
+        {"user-agent": "", "x-b3-traceid": "trace", "x-b3-spanid": "span"},
+        # Whitespace only user-agent
+        {"user-agent": "   ", "x-b3-traceid": "trace", "x-b3-spanid": "span"},
+        # Similar but not exact match
+        {"user-agent": "node-fetcher", "x-b3-traceid": "trace", "x-b3-spanid": "span"},
+        {"user-agent": "nodefetch", "x-b3-traceid": "trace", "x-b3-spanid": "span"},
+        # Partial match but wrong position
+        {"user-agent": "fetch-node", "x-b3-traceid": "trace", "x-b3-spanid": "span"},
+    ]
+    
+    for headers in test_cases:
+        mock_request.headers = headers
+        mock_request.json.return_value = sample_payload
+        
+        with pytest.raises(HTTPException) as exc_info:
+            await verify_jira_webhook(mock_request)
+        
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.detail == "Invalid request source"
+        mock_request.json.assert_not_called()
+        
+        # Reset the mock for next iteration
+        mock_request.json.reset_mock()
