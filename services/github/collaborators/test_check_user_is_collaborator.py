@@ -117,6 +117,12 @@ def test_check_user_is_collaborator_handles_http_error(mock_requests_get, mock_c
     http_error.response = mock_response
     mock_response.reason = "Forbidden"
     mock_response.text = "Forbidden"
+    mock_response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "4999",
+        "X-RateLimit-Used": "1",
+        "X-RateLimit-Reset": "1234567890"
+    }
     mock_response.raise_for_status.side_effect = http_error
     mock_requests_get.return_value = mock_response
     
