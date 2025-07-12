@@ -414,6 +414,30 @@ async def test_verify_jira_webhook_b3_headers_edge_cases(mock_request, sample_pa
 
 
 @pytest.mark.asyncio
+async def test_verify_jira_webhook_b3_headers_valid_edge_cases(mock_request, sample_payload):
+    """Test that whitespace and zero values are considered valid B3 headers."""
+    test_cases = [
+        # Headers with whitespace (considered valid by current implementation)
+        {"user-agent": "node-fetch/1.0", "x-b3-traceid": "  ", "x-b3-spanid": "  "},
+        # Headers with zero values (considered valid by current implementation)
+        {"user-agent": "node-fetch/1.0", "x-b3-traceid": "0", "x-b3-spanid": "0"},
+    ]
+    
+    for headers in test_cases:
+        mock_request.headers = headers
+        mock_request.json.return_value = sample_payload
+        
+        # These should succeed with the current implementation
+        result = await verify_jira_webhook(mock_request)
+        
+        assert result == sample_payload
+        mock_request.json.assert_called_once()
+        
+        # Reset the mock for next iteration
+        mock_request.json.reset_mock()
+
+
+@pytest.mark.asyncio
 async def test_verify_jira_webhook_user_agent_edge_cases(mock_request, sample_payload):
     """Test edge cases for user-agent validation."""
     test_cases = [
