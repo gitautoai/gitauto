@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch, call
 
 import pytest
 from fastapi import HTTPException, Request
@@ -303,3 +303,26 @@ async def test_verify_jira_webhook_user_agent_variations(mock_request, sample_pa
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Invalid request source"
         mock_request.json.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_verify_jira_webhook_json_exception(mock_request, valid_headers):
+    """Test verification handles JSON parsing exceptions gracefully."""
+    mock_request.headers = valid_headers
+    mock_request.json.side_effect = Exception("JSON parsing failed")
+    
+    # Since the function is decorated with @handle_exceptions(raise_on_error=True),
+    # it should re-raise the exception
+    with pytest.raises(Exception) as exc_info:
+        await verify_jira_webhook(mock_request)
+    
+    assert str(exc_info.value) == "JSON parsing failed"
+    mock_request.json.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_verify_jira_webhook_print_statements(mock_request, valid_headers, sample_payload):
+    """Test that print statements are called during execution."""
+    mock_request.headers = valid_headers
+    mock_request.json.return_value = sample_payload
+    
