@@ -64,6 +64,7 @@ def integration_base_args():
         token=TOKEN
     )
 
+
 def test_render_text_successful_request(mock_base_args, mock_post_request, mock_create_headers):
     """Test successful markdown rendering."""
     text = "# Hello World\nThis is a test."
