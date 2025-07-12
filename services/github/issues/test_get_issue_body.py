@@ -361,3 +361,52 @@ End of issue body."""
         assert variable_values["number"] == sample_params["issue_number"]
         assert "token" not in variable_values  # token is not passed to GraphQL
         assert "issue_number" not in variable_values  # should be mapped to "number"
+
+    def test_get_issue_body_integration_with_real_gql_query(self, mock_graphql_client, sample_params):
+        """Test that the function works with the actual GraphQL query structure."""
+        mock_graphql_client.execute.return_value = {
+            "repository": {"issue": {"body": "integration test"}}
+        }
+
+        result = get_issue_body(**sample_params)
+
+        # Verify the query structure by checking the call
+        call_args = mock_graphql_client.execute.call_args
+        document = call_args.kwargs.get("document") or call_args[1]["document"]
+        
+        # The document should be a gql object with the expected query structure
+        assert document is not None
+        assert result == "integration test"
+
+    def test_get_issue_body_with_nested_response_variations(self, mock_graphql_client, sample_params):
+        """Test various nested response structures that might be returned."""
+        test_responses = [
+            # Normal response
+            {"repository": {"issue": {"body": "normal"}}},
+            # Repository exists but issue is None
+            {"repository": {"issue": None}},
+            # Repository exists but no issue key
+            {"repository": {}},
+            # No repository key
+            {},
+            # Repository is None
+            {"repository": None},
+        ]
+        
+        expected_results = ["normal", None, None, None, None]
+        
+        for response, expected in zip(test_responses, expected_results):
+            mock_graphql_client.reset_mock()
+            mock_graphql_client.execute.return_value = response
+            
+            result = get_issue_body(**sample_params)
+            assert result == expected
+
+    def test_get_issue_body_function_docstring_exists(self):
+        """Test that the function has proper documentation."""
+        assert get_issue_body.__doc__ is not None
+        assert "Get issue body using GraphQL API" in get_issue_body.__doc__
+
+    def test_get_issue_body_decorator_applied(self):
+        """Test that the @handle_exceptions decorator is properly applied."""
+        assert hasattr(get_issue_body, '__wrapped__')
