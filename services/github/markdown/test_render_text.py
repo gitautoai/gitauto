@@ -412,6 +412,7 @@ def test_render_text_type_error_returns_empty_string(mock_create_headers):
         result = render_text(None, text)
         
         # Due to handle_exceptions decorator, should return empty string
+        assert result == ""
 
 # Integration Tests
 def test_integration_render_text_simple_markdown(integration_base_args):
