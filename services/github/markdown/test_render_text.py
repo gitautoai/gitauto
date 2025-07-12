@@ -382,9 +382,8 @@ def test_render_text_attribute_error_returns_empty_string(mock_base_args, mock_c
         # Create a mock that raises AttributeError when accessing .text
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
-        # Configure the text property to raise AttributeError
-        del mock_response.text  # Remove the default text attribute
-        mock_response.text = PropertyMock(side_effect=AttributeError("No text attribute"))
+        # Configure the text property to raise AttributeError when accessed
+        type(mock_response).text = PropertyMock(side_effect=AttributeError("No text attribute"))
         mock_post.return_value = mock_response
         
         result = render_text(mock_base_args, text)
