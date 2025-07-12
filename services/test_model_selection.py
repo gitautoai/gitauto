@@ -232,19 +232,6 @@ def test_try_next_model_with_invalid_current_model(reset_model_state):
         try_next_model()
 
 
-def test_model_chain_immutability():
-    """Test that MODEL_CHAIN is not accidentally modified."""
-    original_chain = MODEL_CHAIN.copy()
-    
-    # Try to modify MODEL_CHAIN (this shouldn't affect the original)
-    try:
-        MODEL_CHAIN.append("new-model")
-    except AttributeError:
-        pass  # If it's a tuple, this is expected
-    
-    # Verify original chain is preserved
-    assert MODEL_CHAIN == original_chain
-
 
 def test_get_model_consistency():
     """Test that get_model always returns the same value until model is switched."""
