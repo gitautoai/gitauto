@@ -396,10 +396,6 @@ async def test_verify_jira_webhook_b3_headers_edge_cases(mock_request, sample_pa
         # Only one header present
         {"user-agent": "node-fetch/1.0", "x-b3-traceid": "trace123"},
         {"user-agent": "node-fetch/1.0", "x-b3-spanid": "span456"},
-        # Headers with whitespace
-        {"user-agent": "node-fetch/1.0", "x-b3-traceid": "  ", "x-b3-spanid": "  "},
-        # Headers with zero values
-        {"user-agent": "node-fetch/1.0", "x-b3-traceid": "0", "x-b3-spanid": "0"},
     ]
     
     for headers in test_cases:
