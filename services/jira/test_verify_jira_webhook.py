@@ -446,6 +446,8 @@ async def test_verify_jira_webhook_user_agent_edge_cases(mock_request, sample_pa
         # Whitespace only user-agent
         {"user-agent": "   ", "x-b3-traceid": "trace", "x-b3-spanid": "span"},
         # Similar but not exact match
+        {"user-agent": "node-fetcher", "x-b3-traceid": "trace", "x-b3-spanid": "span"},
+        {"user-agent": "nodefetch", "x-b3-traceid": "trace", "x-b3-spanid": "span"},
         # Partial match but wrong position
         {"user-agent": "fetch-node", "x-b3-traceid": "trace", "x-b3-spanid": "span"},
     ]
