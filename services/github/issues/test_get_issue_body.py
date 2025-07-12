@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name
 from unittest.mock import patch, MagicMock
 import pytest
 from gql import gql
