@@ -425,7 +425,7 @@ def test_integration_render_text_simple_markdown(integration_base_args):
     assert isinstance(result, str)
     assert len(result) > 0
     # Should contain HTML tags for the markdown
-    assert "<h1>" in result or "<h2>" in result or "<p>" in result
+    assert "<h1" in result or "<h2" in result or "<p" in result
 
 
 def test_integration_render_text_empty_string(integration_base_args):
@@ -467,7 +467,7 @@ def hello():
     assert isinstance(result, str)
     assert len(result) > 0
     # Should contain HTML elements typical of rendered markdown
-    assert any(tag in result for tag in ["<h1>", "<h2>", "<p>", "<table>", "<code>", "<pre>"])
+    assert any(tag in result for tag in ["<h1", "<h2", "<p", "<table", "<code", "<pre"])
 
 
 def test_integration_render_text_unicode_content(integration_base_args):
