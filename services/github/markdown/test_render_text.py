@@ -216,7 +216,11 @@ def test_render_text_http_error_returns_empty_string(mock_base_args, mock_create
     
     with patch("services.github.markdown.render_text.post") as mock_post:
         mock_response = MagicMock()
-        mock_response.raise_for_status.side_effect = HTTPError("404 Not Found")
+        # Create a proper HTTPError with a response object
+        http_error = HTTPError("404 Not Found")
+        http_error.response = MagicMock()
+        http_error.response.status_code = 404
+        mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
         
         result = render_text(mock_base_args, text)
