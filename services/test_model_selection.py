@@ -1,4 +1,5 @@
 from unittest.mock import patch, MagicMock
+import sys
 import pytest
 
 from config import (
@@ -217,3 +218,122 @@ def test_model_selection_state_persistence(reset_model_state):
     
     # State should still persist
     assert get_model() == ANTHROPIC_MODEL_ID_35
+
+
+def test_try_next_model_with_invalid_current_model(reset_model_state):
+    """Test behavior when _current_model is not in MODEL_CHAIN."""
+    import services.model_selection as model_selection
+    
+    # Set an invalid current model
+    model_selection._current_model = "invalid-model"
+    
+    # This should raise a ValueError when trying to find the index
+    with pytest.raises(ValueError):
+        try_next_model()
+
+
+def test_model_chain_immutability():
+    """Test that MODEL_CHAIN is not accidentally modified."""
+    original_chain = MODEL_CHAIN.copy()
+    
+    # Try to modify MODEL_CHAIN (this shouldn't affect the original)
+    try:
+        MODEL_CHAIN.append("new-model")
+    except AttributeError:
+        pass  # If it's a tuple, this is expected
+    
+    # Verify original chain is preserved
+    assert MODEL_CHAIN == original_chain
+
+
+def test_get_model_consistency():
+    """Test that get_model always returns the same value until model is switched."""
+    model1 = get_model()
+    model2 = get_model()
+    model3 = get_model()
+    
+    assert model1 == model2 == model3
+
+
+def test_colorize_function_integration(reset_model_state):
+    """Test that colorize function is called with correct parameters."""
+    with patch("services.model_selection.colorize") as mock_colorize:
+        mock_colorize.return_value = "colored_message"
+        
+        try_next_model()
+        
+        # Verify colorize was called with string message and "yellow" color
+        args, kwargs = mock_colorize.call_args
+        assert len(args) == 2
+        assert isinstance(args[0], str)
+        assert args[1] == "yellow"
+        assert "Switching from" in args[0]
+        assert "to" in args[0]
+
+
+def test_print_function_integration(reset_model_state):
+    """Test that print function is called with colorized message."""
+    with patch("services.model_selection.colorize") as mock_colorize, \
+         patch("builtins.print") as mock_print:
+        
+        mock_colorize.return_value = "test_colored_output"
+        
+        try_next_model()
+        
+        mock_print.assert_called_once_with("test_colored_output")
+
+
+def test_module_level_constants():
+    """Test that module-level constants are properly defined."""
+    # Test that MODEL_CHAIN is a list
+    assert isinstance(MODEL_CHAIN, list)
+    
+    # Test that all models in chain are strings
+    for model in MODEL_CHAIN:
+        assert isinstance(model, str)
+        assert len(model) > 0
+    
+    # Test that there are no duplicate models
+    assert len(MODEL_CHAIN) == len(set(MODEL_CHAIN))
+
+
+@pytest.mark.parametrize("model_index", [0, 1, 2, 3])
+def test_try_next_model_from_each_position(reset_model_state, model_index):
+    """Test try_next_model behavior when starting from each model position."""
+    import services.model_selection as model_selection
+    
+    # Set current model to the specified index
+    model_selection._current_model = MODEL_CHAIN[model_index]
+    
+    success, new_model = try_next_model()
+    
+    if model_index < len(MODEL_CHAIN) - 1:
+        # Should successfully switch to next model
+        assert success is True
+        assert new_model == MODEL_CHAIN[model_index + 1]
+        assert get_model() == MODEL_CHAIN[model_index + 1]
+    else:
+        # Should fail to switch (already at last model)
+        assert success is False
+        assert new_model == MODEL_CHAIN[model_index]
+        assert get_model() == MODEL_CHAIN[model_index]
+
+
+def test_global_state_isolation():
+    """Test that global state changes don't affect other imports."""
+    # Import the module again to test isolation
+    if 'services.model_selection' in sys.modules:
+        # Get reference to the same module
+        import services.model_selection as model_selection_ref
+        
+        original_model = model_selection_ref.get_model()
+        
+        # Change the model
+        model_selection_ref.try_next_model()
+        new_model = model_selection_ref.get_model()
+        
+        # Verify the change persisted in the same module reference
+        assert new_model != original_model
+        
+        # Verify get_model() returns the same value
+        assert get_model() == new_model
