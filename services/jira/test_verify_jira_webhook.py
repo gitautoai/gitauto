@@ -288,3 +288,75 @@ class TestVerifyJiraWebhook:
         mock_print.assert_called()
         print_calls = [call.args for call in mock_print.call_args_list]
         assert any("Not a valid Forge request" in str(call) for call in print_calls)
+
+    @pytest.mark.asyncio
+    async def test_verify_jira_webhook_request_json_exception(self, mock_request, valid_forge_headers):
+        """Test handling when request.json() raises an exception."""
+        # Setup
+        mock_request.headers = valid_forge_headers
+        mock_request.json.side_effect = Exception("JSON parsing error")
+        
+        # Execute & Verify - should re-raise due to handle_exceptions(raise_on_error=True)
+        with pytest.raises(Exception, match="JSON parsing error"):
+            await verify_jira_webhook(mock_request)
+
+    @pytest.mark.asyncio
+    async def test_verify_jira_webhook_request_json_decode_error(self, mock_request, valid_forge_headers):
+        """Test handling when request.json() raises JSONDecodeError."""
+        # Setup
+        mock_request.headers = valid_forge_headers
+        mock_request.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+        
+        # Execute & Verify - should re-raise due to handle_exceptions(raise_on_error=True)
+        with pytest.raises(json.JSONDecodeError):
+            await verify_jira_webhook(mock_request)
+
+    @pytest.mark.asyncio
+    async def test_verify_jira_webhook_headers_get_method_called(self, mock_request, valid_forge_headers):
+        """Test that headers.get() method is called with correct parameters."""
+        # Setup
+        mock_headers = MagicMock()
+        mock_headers.get.side_effect = lambda key, default="": valid_forge_headers.get(key, default)
+        mock_request.headers = mock_headers
+        mock_request.json.return_value = {"test": "payload"}
+        
+        # Execute
+        await verify_jira_webhook(mock_request)
+        
+        # Verify headers.get was called for the required headers
+        mock_headers.get.assert_any_call("user-agent", "")
+        mock_headers.get.assert_any_call("x-b3-traceid")
+        mock_headers.get.assert_any_call("x-b3-spanid")
+
+    @pytest.mark.asyncio
+    async def test_verify_jira_webhook_partial_node_fetch_in_user_agent(self, mock_request):
+        """Test that partial 'node-fetch' string in user-agent is accepted."""
+        # Setup
+        mock_request.headers = {
+            "user-agent": "some-prefix-node-fetch-some-suffix",
+            "x-b3-traceid": "abc123def456",
+            "x-b3-spanid": "789xyz012"
+        }
+        mock_request.json.return_value = {"test": "payload"}
+        
+        # Execute
+        result = await verify_jira_webhook(mock_request)
+        
+        # Verify
+        assert result == {"test": "payload"}
+        mock_request.json.assert_called_once()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("user_agent,expected_valid", [
+        ("node-fetch/1.0", True),
+        ("node-fetch", True),
+        ("prefix-node-fetch-suffix", True),
+        ("NODE-FETCH", False),  # Case sensitive
+        ("nodefetch", False),   # Must have hyphen
+        ("node_fetch", False),  # Must have hyphen
+        ("curl/7.68.0", False),
+        ("", False),
+        ("Mozilla/5.0", False),
+    ])
+    async def test_verify_jira_webhook_user_agent_variations(
+        self, mock_request, user_agent, expected_valid
