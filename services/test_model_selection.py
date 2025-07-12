@@ -232,7 +232,6 @@ def test_try_next_model_with_invalid_current_model(reset_model_state):
         try_next_model()
 
 
-
 def test_get_model_consistency():
     """Test that get_model always returns the same value until model is switched."""
     model1 = get_model()
