@@ -345,7 +345,24 @@ class TestVerifyJiraWebhook:
         # Verify
         assert result == {"test": "payload"}
         mock_request.json.assert_called_once()
-
+    ):
+        """Test various user-agent string variations."""
+        # Setup
+        mock_request.headers = {
+            "user-agent": user_agent,
+            "x-b3-traceid": "abc123def456",
+            "x-b3-spanid": "789xyz012"
+        }
+        mock_request.json.return_value = {"test": "payload"}
+        
+        if expected_valid:
+            # Execute - should succeed
+            result = await verify_jira_webhook(mock_request)
+            assert result == {"test": "payload"}
+            mock_request.json.assert_called_once()
+        else:
+            # Execute - should fail
+            with pytest.raises(HTTPException) as exc_info:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("user_agent,expected_valid", [
         ("node-fetch/1.0", True),
