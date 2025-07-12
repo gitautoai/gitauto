@@ -477,6 +477,7 @@ def test_integration_render_text_unicode_content(integration_base_args):
     result = render_text(integration_base_args, text)
     
     # Should return rendered HTML
+    assert isinstance(result, str)
     assert len(result) > 0
 
 
@@ -488,3 +489,4 @@ def test_integration_render_text_with_invalid_token():
     result = render_text(base_args, text)
     
     # Should return empty string due to authentication failure and handle_exceptions decorator
+    assert result == ""
