@@ -322,7 +322,7 @@ def test_update_reference_with_empty_values(mock_requests_patch, mock_create_hea
     mock_requests_patch.assert_called_once()
     call_args = mock_requests_patch.call_args
     assert call_args[1]["json"]["sha"] == ""
-    assert call_args[1]["url"] == "https://api.github.com/repos//git/refs/heads/"
+    assert call_args[1]["url"] == "https://api.github.com/repos///git/refs/heads/"
 
 
 @pytest.mark.parametrize("error_type,error_message", [
