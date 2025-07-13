@@ -92,18 +92,20 @@ def test_cancel_workflow_runs_success_with_commit_sha(
     # Should cancel runs with cancellable statuses (5 out of 6 runs)
     assert mock_cancel_workflow_run.call_count == 5
     
-    # Verify specific calls for cancellable runs
-    expected_calls = [
-        (OWNER, REPO, 1001, TOKEN),  # queued
-        (OWNER, REPO, 1002, TOKEN),  # in_progress
-        (OWNER, REPO, 1004, TOKEN),  # pending
-        (OWNER, REPO, 1005, TOKEN),  # waiting
-        (OWNER, REPO, 1006, TOKEN),  # requested
-    ]
+    # Verify specific calls for cancellable runs (using kwargs since function uses keyword arguments)
+    expected_run_ids = [1001, 1002, 1004, 1005, 1006]  # queued, in_progress, pending, waiting, requested
     
-    actual_calls = [call.args for call in mock_cancel_workflow_run.call_args_list]
-    for expected_call in expected_calls:
-        assert expected_call in actual_calls
+    actual_calls = mock_cancel_workflow_run.call_args_list
+    actual_run_ids = [call.kwargs['run_id'] for call in actual_calls]
+    
+    for expected_run_id in expected_run_ids:
+        assert expected_run_id in actual_run_ids
+    
+    # Verify all calls have correct owner, repo, and token
+    for call in actual_calls:
+        assert call.kwargs['owner'] == OWNER
+        assert call.kwargs['repo'] == REPO
+        assert call.kwargs['token'] == TOKEN
     
     assert result is None
 
