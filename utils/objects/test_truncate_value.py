@@ -135,4 +135,10 @@ def test_truncate_complex_nested_structure():
             ]
         }
     ]
+
+
+def test_truncate_datetime():
+    dt = datetime(2023, 1, 1, 12, 30, 45)
+    result = truncate_value(dt, 10)
+    assert result == "2023-01-01T12:30:45"
     assert result == expected
