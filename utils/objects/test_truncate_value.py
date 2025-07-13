@@ -153,4 +153,22 @@ def test_truncate_datetime_in_nested_structure():
         "timestamp": "2023-01-01T12:30:45",
         "data": ["2023-01-01T12:30:45", "some strin..."]
     assert result == "2023-01-01T12:30:45"
+
+
+def test_truncate_date():
+    d = date(2023, 1, 1)
+    result = truncate_value(d, 10)
+    assert result == "2023-01-01"
+
+
+def test_truncate_time():
+    t = time(12, 30, 45)
+    result = truncate_value(t, 10)
+    assert result == "12:30:45"
+
+
+def test_truncate_mixed_datetime_types():
+    dt = datetime(2023, 1, 1, 12, 30, 45)
+    d = date(2023, 1, 1)
+    t = time(12, 30, 45)
     assert result == expected
