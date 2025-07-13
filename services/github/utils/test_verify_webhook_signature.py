@@ -301,3 +301,89 @@ class TestVerifyWebhookSignature:
         with pytest.raises(ValueError, match="Invalid webhook signature"):
             await verify_webhook_signature(request=mock_request, secret=sample_secret)
 
+    async def test_verify_webhook_signature_request_body_exception(
+        self, mock_request, sample_secret
+    ):
+        """Test that exceptions from request.body() are properly handled by decorator."""
+        # Setup
+        mock_request.headers = {"X-Hub-Signature-256": "sha256=test"}
+        mock_request.body.side_effect = Exception("Request body error")
+
+        # Execute & Verify
+        # The handle_exceptions decorator should catch this and re-raise since raise_on_error=True
+        with pytest.raises(Exception, match="Request body error"):
+            await verify_webhook_signature(request=mock_request, secret=sample_secret)
+
+    async def test_verify_webhook_signature_header_case_insensitive_key(
+        self, sample_secret, sample_payload
+    ):
+        """Test that header key lookup is case insensitive (FastAPI behavior)."""
+        # Setup - create a mock that simulates FastAPI's case-insensitive headers
+        mock_request = MagicMock(spec=Request)
+        
+        # Create a case-insensitive dict-like object for headers
+        class CaseInsensitiveHeaders:
+            def __init__(self, headers):
+                self._headers = {k.lower(): v for k, v in headers.items()}
+            
+            def get(self, key, default=None):
+                return self._headers.get(key.lower(), default)
+        
+        valid_signature = create_valid_signature(sample_payload, sample_secret)
+        # Use different case for the header key
+        headers = CaseInsensitiveHeaders({"x-hub-signature-256": valid_signature})
+        mock_request.headers = headers
+        mock_request.body = AsyncMock(return_value=sample_payload)
+
+        # Execute - should work with case-insensitive header lookup
+        await verify_webhook_signature(request=mock_request, secret=sample_secret)
+
+        # Verify
+        mock_request.body.assert_called_once()
+
+    async def test_verify_webhook_signature_real_github_example(
+        self, mock_request
+    ):
+        """Test with a real GitHub webhook example."""
+        # Setup with realistic GitHub webhook data
+        github_secret = "my_webhook_secret"
+        github_payload = b'{"zen":"Speak like a human.","hook_id":12345678}'
+        
+        # Create the signature as GitHub would
+        valid_signature = create_valid_signature(github_payload, github_secret)
+        mock_request.headers = {"X-Hub-Signature-256": valid_signature}
+        mock_request.body.return_value = github_payload
+
+        # Execute - should not raise any exception
+        await verify_webhook_signature(request=mock_request, secret=github_secret)
+
+        # Verify
+        mock_request.body.assert_called_once()
+
+    async def test_verify_webhook_signature_consistent_behavior(
+        self, mock_request, sample_secret, sample_payload
+    ):
+        """Test that multiple calls with same parameters behave consistently."""
+        # Setup
+        valid_signature = create_valid_signature(sample_payload, sample_secret)
+        mock_request.headers = {"X-Hub-Signature-256": valid_signature}
+        mock_request.body.return_value = sample_payload
+
+        # Execute multiple times - all should succeed
+        await verify_webhook_signature(request=mock_request, secret=sample_secret)
+        await verify_webhook_signature(request=mock_request, secret=sample_secret)
+        await verify_webhook_signature(request=mock_request, secret=sample_secret)
+
+        # Verify that body was called each time
+        assert mock_request.body.call_count == 3
+
+    async def test_verify_webhook_signature_return_value(
+        self, mock_request, sample_secret, sample_payload
+    ):
+        """Test that the function returns None on success."""
+        # Setup
+        valid_signature = create_valid_signature(sample_payload, sample_secret)
+        mock_request.headers = {"X-Hub-Signature-256": valid_signature}
+        mock_request.body.return_value = sample_payload
+
+
