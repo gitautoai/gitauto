@@ -3,6 +3,7 @@ import pytest
 import requests
 from requests import HTTPError
 
+from config import TIMEOUT
 from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.types.github_types import BaseArgs
 
@@ -59,7 +60,7 @@ def test_reply_to_comment_success(mock_base_args, mock_post_response, mock_creat
                 "X-GitHub-Api-Version": "2022-11-28",
             },
             json={"body": "Test reply body"},
-            timeout=120
+            timeout=TIMEOUT
         )
         mock_post_response.raise_for_status.assert_called_once()
         mock_post_response.json.assert_called_once()
@@ -82,7 +83,7 @@ def test_reply_to_comment_with_empty_body(mock_base_args, mock_post_response, mo
                 "X-GitHub-Api-Version": "2022-11-28",
             },
             json={"body": ""},
-            timeout=120
+            timeout=TIMEOUT
         )
 
 
@@ -110,7 +111,7 @@ It contains multiple paragraphs.
                 "X-GitHub-Api-Version": "2022-11-28",
             },
             json={"body": multiline_body},
-            timeout=120
+            timeout=TIMEOUT
         )
 
 
@@ -133,7 +134,7 @@ def test_reply_to_comment_with_special_characters(mock_base_args, mock_post_resp
                 "X-GitHub-Api-Version": "2022-11-28",
             },
             json={"body": special_body},
-            timeout=120
+            timeout=TIMEOUT
         )
 
 
@@ -276,3 +277,39 @@ def test_reply_to_comment_various_body_content(mock_base_args, mock_post_respons
         assert result == "https://api.github.com/repos/test-owner/test-repo/pulls/comments/789"
         call_args = mock_post.call_args
         assert call_args[1]["json"]["body"] == body_content
+
+
+def test_reply_to_comment_missing_required_fields():
+    """Test that function handles missing required fields gracefully."""
+    incomplete_base_args = {
+        "owner": "test-owner",
+        "repo": "test-repo",
+        "token": "test-token",
+        # Missing pull_number and review_id
+    }
+    
+    # The function should handle missing fields gracefully due to the decorator
+    result = reply_to_comment(incomplete_base_args, "Test body")
+    assert result is None
+
+
+def test_reply_to_comment_with_none_values():
+    """Test that function handles None values in base_args gracefully."""
+    base_args_with_none = {
+        "owner": None,
+        "repo": None,
+        "token": None,
+        "pull_number": None,
+        "review_id": None,
+    }
+    
+    # The function should handle None values gracefully due to the decorator
+    result = reply_to_comment(base_args_with_none, "Test body")
+    assert result is None
+
+
+def test_reply_to_comment_with_none_body(mock_base_args, mock_create_headers):
+    """Test that function handles None body gracefully."""
+    # The function should handle None body gracefully due to the decorator
+    result = reply_to_comment(mock_base_args, None)
+    assert result is None
