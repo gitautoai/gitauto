@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
-import pytest
 import requests
+import pytest
 from services.github.reactions.add_reaction_to_issue import add_reaction_to_issue
 from services.github.types.github_types import BaseArgs
 
@@ -47,7 +47,6 @@ def mock_config():
         yield
 
 
-@pytest.mark.asyncio
 async def test_add_reaction_to_issue_success(mock_requests_post, mock_create_headers, base_args, mock_config):
     """Test successful reaction addition to an issue."""
     issue_number = 123
@@ -79,7 +78,6 @@ async def test_add_reaction_to_issue_success(mock_requests_post, mock_create_hea
     mock_requests_post.return_value.json.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_add_reaction_to_issue_different_reactions(mock_requests_post, mock_create_headers, base_args, mock_config):
     """Test adding different types of reactions."""
     test_cases = [
@@ -113,7 +111,6 @@ async def test_add_reaction_to_issue_different_reactions(mock_requests_post, moc
         )
 
 
-@pytest.mark.asyncio
 async def test_add_reaction_to_issue_different_repositories(mock_requests_post, mock_create_headers, mock_config):
     """Test adding reactions to issues in different repositories."""
     test_cases = [
@@ -147,7 +144,6 @@ async def test_add_reaction_to_issue_different_repositories(mock_requests_post, 
         mock_create_headers.assert_called_with(token=args["token"])
 
 
-@pytest.mark.asyncio
 async def test_add_reaction_to_issue_http_error_handled(mock_create_headers, base_args, mock_config):
     """Test that HTTP errors are handled by the decorator and return None."""
     with patch("services.github.reactions.add_reaction_to_issue.requests.post") as mock_post:
@@ -164,7 +160,6 @@ async def test_add_reaction_to_issue_http_error_handled(mock_create_headers, bas
         mock_response.raise_for_status.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_add_reaction_to_issue_request_exception_handled(mock_create_headers, base_args, mock_config):
     """Test that request exceptions are handled by the decorator."""
     with patch("services.github.reactions.add_reaction_to_issue.requests.post") as mock_post:
@@ -178,7 +173,6 @@ async def test_add_reaction_to_issue_request_exception_handled(mock_create_heade
         mock_post.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_add_reaction_to_issue_json_decode_error_handled(mock_create_headers, base_args, mock_config):
     """Test that JSON decode errors are handled by the decorator."""
     with patch("services.github.reactions.add_reaction_to_issue.requests.post") as mock_post:
@@ -196,7 +190,6 @@ async def test_add_reaction_to_issue_json_decode_error_handled(mock_create_heade
         mock_response.json.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_add_reaction_to_issue_edge_case_values(mock_requests_post, mock_create_headers, base_args, mock_config):
     """Test function with edge case values."""
     test_cases = [
@@ -226,7 +219,6 @@ async def test_add_reaction_to_issue_edge_case_values(mock_requests_post, mock_c
         )
 
 
-@pytest.mark.asyncio
 async def test_add_reaction_to_issue_response_json_called(mock_requests_post, mock_create_headers, base_args, mock_config):
     """Test that response.json() is called even though result is not used."""
     result = await add_reaction_to_issue(123, "+1", base_args)
