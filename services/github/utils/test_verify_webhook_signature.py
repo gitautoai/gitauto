@@ -239,7 +239,7 @@ class TestVerifyWebhookSignature:
     @pytest.mark.parametrize("payload", [
         b'{"test": "data"}',
         b'',
-        b'{"unicode": "测试"}',
+        '{"unicode": "测试"}'.encode("utf-8"),
         b'{"number": 12345}',
         b'{"boolean": true}',
         b'{"array": [1, 2, 3]}',
@@ -386,4 +386,9 @@ class TestVerifyWebhookSignature:
         mock_request.headers = {"X-Hub-Signature-256": valid_signature}
         mock_request.body.return_value = sample_payload
 
+        # Execute
+        result = await verify_webhook_signature(request=mock_request, secret=sample_secret)
 
+        # Verify
+        assert result is None
+        mock_request.body.assert_called_once()
