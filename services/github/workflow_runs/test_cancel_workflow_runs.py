@@ -217,7 +217,7 @@ def test_cancel_workflow_runs_get_workflow_runs_exception(
 def test_cancel_workflow_runs_cancel_workflow_run_exception(
     mock_get_workflow_runs, mock_cancel_workflow_run
 ):
-    """Test handling when cancel_workflow_run raises an exception."""
+    """Test that processing continues when cancel_workflow_run encounters errors."""
     # Arrange
     cancellable_runs = [
         {"id": 1001, "status": "queued"},
