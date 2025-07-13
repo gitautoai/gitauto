@@ -250,13 +250,7 @@ def test_download_artifact_http_error_handling():
          patch("services.github.artifacts.download_artifact.create_headers") as mock_create_headers:
         
         # Setup mocks to raise a general exception that will be caught by the decorator
-        mock_response = MagicMock()
-        mock_response.status_code = 404
-        mock_response.reason = "Not Found"
-        mock_response.text = "Not Found"
-        http_error = requests.exceptions.HTTPError("404 Not Found")
-        http_error.response = mock_response
-        mock_get.side_effect = http_error
+        mock_get.side_effect = Exception("Network error")
         mock_create_headers.return_value = {}
         
         # Call function - should return default value due to @handle_exceptions decorator
