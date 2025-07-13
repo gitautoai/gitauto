@@ -224,13 +224,8 @@ def test_cancel_workflow_runs_cancel_workflow_run_exception(
         {"id": 1002, "status": "in_progress"},
     ]
     mock_get_workflow_runs.return_value = cancellable_runs
-    http_error = requests.HTTPError("Cancel failed")
-    mock_error_response = MagicMock()
-    mock_error_response.status_code = 500
-    mock_error_response.reason = "Internal Server Error"
-    mock_error_response.text = "Cancel failed"
-    http_error.response = mock_error_response
-    mock_cancel_workflow_run.side_effect = http_error
+    # Simulate the @handle_exceptions decorator behavior - exceptions are caught and None is returned
+    mock_cancel_workflow_run.return_value = None
     
     # Act
     result = cancel_workflow_runs(
