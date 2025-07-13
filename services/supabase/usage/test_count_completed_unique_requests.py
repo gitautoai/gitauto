@@ -10,28 +10,30 @@ from services.supabase.usage.count_completed_unique_requests import count_comple
 class TestCountCompletedUniqueRequests(unittest.TestCase):
     """Test cases for count_completed_unique_requests function"""
 
+    def _setup_supabase_mock(self, mock_supabase: MagicMock, return_data: list):
+        """Helper method to set up the supabase mock chain"""
+        mock_chain = mock_supabase.table.return_value.select.return_value.gt.return_value.eq.return_value.in_.return_value.eq.return_value
+        mock_chain.execute.return_value = ((None, return_data), None)
+
     @patch("services.supabase.usage.count_completed_unique_requests.supabase")
     def test_count_completed_unique_requests_success(self, mock_supabase):
         """Test successful retrieval and processing of unique requests"""
         # Setup
         mock_data = [
-            None,  # First element is typically None in supabase response
-            [
-                {
-                    "owner_type": "Organization",
-                    "owner_name": "test-org",
-                    "repo_name": "test-repo",
-                    "issue_number": 1
-                },
-                {
-                    "owner_type": "User",
-                    "owner_name": "test-user",
-                    "repo_name": "another-repo",
-                    "issue_number": 2
-                }
-            ]
+            {
+                "owner_type": "Organization",
+                "owner_name": "test-org",
+                "repo_name": "test-repo",
+                "issue_number": 1
+            },
+            {
+                "owner_type": "User",
+                "owner_name": "test-user",
+                "repo_name": "another-repo",
+                "issue_number": 2
+            }
         ]
-        mock_supabase.table.return_value.select.return_value.gt.return_value.eq.return_value.in_.return_value.eq.return_value.execute.return_value = mock_data
+        self._setup_supabase_mock(mock_supabase, mock_data)
         
         installation_id = 12345
         start_date = datetime(2023, 1, 1)
@@ -60,8 +62,7 @@ class TestCountCompletedUniqueRequests(unittest.TestCase):
     def test_count_completed_unique_requests_empty_result(self, mock_supabase):
         """Test handling of empty result from database"""
         # Setup
-        mock_data = [None, []]
-        mock_supabase.table.return_value.select.return_value.gt.return_value.eq.return_value.in_.return_value.eq.return_value.execute.return_value = mock_data
+        self._setup_supabase_mock(mock_supabase, [])
         
         installation_id = 12345
         start_date = datetime(2023, 1, 1)
@@ -77,29 +78,26 @@ class TestCountCompletedUniqueRequests(unittest.TestCase):
         """Test deduplication of identical requests"""
         # Setup
         mock_data = [
-            None,
-            [
-                {
-                    "owner_type": "Organization",
-                    "owner_name": "test-org",
-                    "repo_name": "test-repo",
-                    "issue_number": 1
-                },
-                {
-                    "owner_type": "Organization",
-                    "owner_name": "test-org",
-                    "repo_name": "test-repo",
-                    "issue_number": 1
-                },  # Duplicate
-                {
-                    "owner_type": "User",
-                    "owner_name": "test-user",
-                    "repo_name": "another-repo",
-                    "issue_number": 2
-                }
-            ]
+            {
+                "owner_type": "Organization",
+                "owner_name": "test-org",
+                "repo_name": "test-repo",
+                "issue_number": 1
+            },
+            {
+                "owner_type": "Organization",
+                "owner_name": "test-org",
+                "repo_name": "test-repo",
+                "issue_number": 1
+            },  # Duplicate
+            {
+                "owner_type": "User",
+                "owner_name": "test-user",
+                "repo_name": "another-repo",
+                "issue_number": 2
+            }
         ]
-        mock_supabase.table.return_value.select.return_value.gt.return_value.eq.return_value.in_.return_value.eq.return_value.execute.return_value = mock_data
+        self._setup_supabase_mock(mock_supabase, mock_data)
         
         installation_id = 12345
         start_date = datetime(2023, 1, 1)
@@ -120,23 +118,20 @@ class TestCountCompletedUniqueRequests(unittest.TestCase):
         """Test that different issue numbers in same repo create unique requests"""
         # Setup
         mock_data = [
-            None,
-            [
-                {
-                    "owner_type": "Organization",
-                    "owner_name": "test-org",
-                    "repo_name": "test-repo",
-                    "issue_number": 1
-                },
-                {
-                    "owner_type": "Organization",
-                    "owner_name": "test-org",
-                    "repo_name": "test-repo",
-                    "issue_number": 2
-                }
-            ]
+            {
+                "owner_type": "Organization",
+                "owner_name": "test-org",
+                "repo_name": "test-repo",
+                "issue_number": 1
+            },
+            {
+                "owner_type": "Organization",
+                "owner_name": "test-org",
+                "repo_name": "test-repo",
+                "issue_number": 2
+            }
         ]
-        mock_supabase.table.return_value.select.return_value.gt.return_value.eq.return_value.in_.return_value.eq.return_value.execute.return_value = mock_data
+        self._setup_supabase_mock(mock_supabase, mock_data)
         
         installation_id = 12345
         start_date = datetime(2023, 1, 1)
@@ -156,7 +151,7 @@ class TestCountCompletedUniqueRequests(unittest.TestCase):
     def test_count_completed_unique_requests_database_error(self, mock_supabase):
         """Test error handling when database query fails"""
         # Setup
-        mock_supabase.table.return_value.select.return_value.gt.return_value.eq.return_value.in_.return_value.eq.return_value.execute.side_effect = Exception("Database error")
+        mock_supabase.table.side_effect = Exception("Database error")
         
         installation_id = 12345
         start_date = datetime(2023, 1, 1)
@@ -172,23 +167,20 @@ class TestCountCompletedUniqueRequests(unittest.TestCase):
         """Test handling of special characters in owner/repo names"""
         # Setup
         mock_data = [
-            None,
-            [
-                {
-                    "owner_type": "Organization",
-                    "owner_name": "test-org-with-dashes",
-                    "repo_name": "test.repo.with.dots",
-                    "issue_number": 1
-                },
-                {
-                    "owner_type": "User",
-                    "owner_name": "test_user_with_underscores",
-                    "repo_name": "repo-with-numbers-123",
-                    "issue_number": 42
-                }
-            ]
+            {
+                "owner_type": "Organization",
+                "owner_name": "test-org-with-dashes",
+                "repo_name": "test.repo.with.dots",
+                "issue_number": 1
+            },
+            {
+                "owner_type": "User",
+                "owner_name": "test_user_with_underscores",
+                "repo_name": "repo-with-numbers-123",
+                "issue_number": 42
+            }
         ]
-        mock_supabase.table.return_value.select.return_value.gt.return_value.eq.return_value.in_.return_value.eq.return_value.execute.return_value = mock_data
+        self._setup_supabase_mock(mock_supabase, mock_data)
         
         installation_id = 12345
         start_date = datetime(2023, 1, 1)
@@ -207,8 +199,7 @@ class TestCountCompletedUniqueRequests(unittest.TestCase):
     def test_count_completed_unique_requests_query_parameters(self, mock_supabase):
         """Test that query parameters are passed correctly"""
         # Setup
-        mock_data = [None, []]
-        mock_supabase.table.return_value.select.return_value.gt.return_value.eq.return_value.in_.return_value.eq.return_value.execute.return_value = mock_data
+        self._setup_supabase_mock(mock_supabase, [])
         
         installation_id = 98765
         start_date = datetime(2023, 6, 15, 10, 30, 45)
@@ -224,8 +215,7 @@ class TestCountCompletedUniqueRequests(unittest.TestCase):
     def test_count_completed_unique_requests_trigger_filter(self, mock_supabase):
         """Test that the correct trigger types are filtered"""
         # Setup
-        mock_data = [None, []]
-        mock_supabase.table.return_value.select.return_value.gt.return_value.eq.return_value.in_.return_value.eq.return_value.execute.return_value = mock_data
+        self._setup_supabase_mock(mock_supabase, [])
         
         installation_id = 12345
         start_date = datetime(2023, 1, 1)
