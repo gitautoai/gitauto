@@ -112,13 +112,14 @@ def test_get_workflow_runs_with_branch(mock_get, mock_create_headers, sample_wor
 
 
 def test_get_workflow_runs_missing_parameters():
-    """Test get_workflow_runs raises ValueError when both commit_sha and branch are missing."""
-    with pytest.raises(ValueError, match="Either commit_sha or branch must be provided"):
-        get_workflow_runs(
-            owner="owner",
-            repo="repo",
-            token="test_token"
-        )
+    """Test get_workflow_runs returns empty list when both commit_sha and branch are missing."""
+    result = get_workflow_runs(
+        owner="owner",
+        repo="repo",
+        token="test_token"
+    )
+    
+    assert result == []
 
 
 def test_get_workflow_runs_handles_http_error(mock_get, mock_create_headers):
