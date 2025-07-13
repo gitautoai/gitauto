@@ -265,7 +265,7 @@ async def test_verify_webhook_signature_malformed_signature_format(
 @pytest.mark.parametrize("payload", [
     b'{"test": "data"}',
     b'',
-    '{"unicode": "\u6d4b\u8bd5"}'.encode("utf-8"),
+    '{"unicode": "测试"}'.encode("utf-8"),
     b'{"number": 12345}',
     b'{"boolean": true}',
     b'{"array": [1, 2, 3]}',
