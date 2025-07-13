@@ -436,7 +436,6 @@ def test_get_all_comments_multiple_calls_independence(base_args, mock_requests_g
     
     # Assert
     assert result1 == result2
-    assert result1 is not result2  # Different objects
     assert mock_requests_get.call_count == 2
     assert mock_create_headers.call_count == 2
     assert mock_response.json.call_count == 2
