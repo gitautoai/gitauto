@@ -1,10 +1,8 @@
 import hashlib  # For HMAC (Hash-based Message Authentication Code) signatures
 import hmac  # For HMAC (Hash-based Message Authentication Code) signatures
 from fastapi import Request
-from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(raise_on_error=True)
 async def verify_webhook_signature(request: Request, secret: str) -> None:
     """Verify the webhook signature for security"""
     signature: str | None = request.headers.get("X-Hub-Signature-256")
