@@ -244,8 +244,8 @@ def test_download_artifact_multiple_files_with_lcov():
         assert result == "TN:\nSF:main.py\nLF:20\nLH:18\nend_of_record"
 
 
-def test_download_artifact_http_error_handling():
-    """Test that HTTP errors are handled by the decorator."""
+def test_download_artifact_exception_handling():
+    """Test that exceptions are handled by the decorator."""
     with patch("services.github.artifacts.download_artifact.get") as mock_get, \
          patch("services.github.artifacts.download_artifact.create_headers") as mock_create_headers:
         
