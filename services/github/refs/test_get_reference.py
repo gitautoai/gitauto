@@ -269,6 +269,7 @@ def test_get_reference_various_http_errors(base_args, mock_requests_get, mock_cr
     http_error.response = error_response
     error_response.reason = f"HTTP {status_code}"
     error_response.text = f"Error {status_code}"
+    error_response.raise_for_status.side_effect = http_error
     mock_requests_get.return_value = error_response
     
     result = get_reference(base_args)
