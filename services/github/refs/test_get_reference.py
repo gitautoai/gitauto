@@ -263,7 +263,11 @@ def test_get_reference_various_http_errors(base_args, mock_requests_get, mock_cr
     """Test handling of various HTTP error status codes."""
     error_response = MagicMock()
     error_response.status_code = status_code
-    error_response.raise_for_status.side_effect = requests.exceptions.HTTPError(f"HTTP {status_code}")
+    # Create a proper HTTPError with response object
+    http_error = requests.exceptions.HTTPError(f"HTTP {status_code}")
+    http_error.response = error_response
+    error_response.reason = f"HTTP {status_code}"
+    error_response.text = f"Error {status_code}"
     mock_requests_get.return_value = error_response
     
     result = get_reference(base_args)
