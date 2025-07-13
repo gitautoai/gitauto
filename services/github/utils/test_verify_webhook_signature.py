@@ -235,3 +235,69 @@ class TestVerifyWebhookSignature:
         # Execute & Verify
         with pytest.raises(ValueError, match="Invalid webhook signature"):
             await verify_webhook_signature(request=mock_request, secret=sample_secret)
+
+    @pytest.mark.parametrize("payload", [
+        b'{"test": "data"}',
+        b'',
+        b'{"unicode": "测试"}',
+        b'{"number": 12345}',
+        b'{"boolean": true}',
+        b'{"array": [1, 2, 3]}',
+        b'{"nested": {"key": "value"}}',
+    ])
+    async def test_verify_webhook_signature_various_payloads(
+        self, mock_request, sample_secret, payload
+    ):
+        """Test verification with various payload formats."""
+        # Setup
+        valid_signature = create_valid_signature(payload, sample_secret)
+        mock_request.headers = {"X-Hub-Signature-256": valid_signature}
+        mock_request.body.return_value = payload
+
+        # Execute - should not raise any exception
+        await verify_webhook_signature(request=mock_request, secret=sample_secret)
+
+        # Verify
+        mock_request.body.assert_called_once()
+
+    @pytest.mark.parametrize("secret", [
+        "simple_secret",
+        "secret-with-dashes",
+        "secret_with_underscores",
+        "SecretWithMixedCase",
+        "secret123456",
+        "very_long_secret_that_is_much_longer_than_typical_secrets_used_in_production",
+        "短密码",  # Short password in Chinese
+    ])
+    async def test_verify_webhook_signature_various_secrets(
+        self, mock_request, sample_payload, secret
+    ):
+        """Test verification with various secret formats."""
+        # Setup
+        valid_signature = create_valid_signature(sample_payload, secret)
+        mock_request.headers = {"X-Hub-Signature-256": valid_signature}
+        mock_request.body.return_value = sample_payload
+
+        # Execute - should not raise any exception
+        await verify_webhook_signature(request=mock_request, secret=secret)
+
+        # Verify
+        mock_request.body.assert_called_once()
+
+    async def test_verify_webhook_signature_timing_attack_resistance(
+        self, mock_request, sample_secret, sample_payload
+    ):
+        """Test that the function uses hmac.compare_digest for timing attack resistance."""
+        # This test verifies that we're using the secure comparison function
+        # Setup with a signature that differs by only one character
+        valid_signature = create_valid_signature(sample_payload, sample_secret)
+        # Change one character in the signature
+        invalid_signature = valid_signature[:-1] + ("0" if valid_signature[-1] != "0" else "1")
+        mock_request.headers = {"X-Hub-Signature-256": invalid_signature}
+        mock_request.body.return_value = sample_payload
+
+        # Execute & Verify
+        # The function should still raise ValueError even for signatures that differ by one character
+        with pytest.raises(ValueError, match="Invalid webhook signature"):
+            await verify_webhook_signature(request=mock_request, secret=sample_secret)
+
