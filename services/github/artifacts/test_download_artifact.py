@@ -254,7 +254,9 @@ def test_download_artifact_http_error_handling():
         mock_response.status_code = 404
         mock_response.reason = "Not Found"
         mock_response.text = "Not Found"
-        mock_get.side_effect = requests.exceptions.HTTPError("404 Not Found", response=mock_response)
+        http_error = requests.exceptions.HTTPError("404 Not Found")
+        http_error.response = mock_response
+        mock_get.side_effect = http_error
         mock_create_headers.return_value = {}
         
         # Call function - should return default value due to @handle_exceptions decorator
