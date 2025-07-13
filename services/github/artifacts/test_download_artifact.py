@@ -249,7 +249,7 @@ def test_download_artifact_http_error_handling():
     with patch("services.github.artifacts.download_artifact.get") as mock_get, \
          patch("services.github.artifacts.download_artifact.create_headers") as mock_create_headers:
         
-        # Setup mocks to raise HTTP error
+        # Setup mocks to raise a general exception that will be caught by the decorator
         mock_response = MagicMock()
         mock_response.status_code = 404
         mock_response.reason = "Not Found"
