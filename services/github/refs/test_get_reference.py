@@ -275,6 +275,12 @@ def test_get_reference_various_http_errors(base_args, mock_requests_get, mock_cr
     http_error.response = error_response
     error_response.reason = f"HTTP {status_code}"
     error_response.text = f"Error {status_code}"
+    # Add headers that handle_exceptions might expect for certain status codes
+    error_response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "4999",
+        "X-RateLimit-Used": "1"
+    }
     error_response.raise_for_status.side_effect = http_error
     mock_requests_get.return_value = error_response
     
