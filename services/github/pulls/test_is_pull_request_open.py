@@ -148,7 +148,7 @@ def test_is_pull_request_open_calls_graphql_with_correct_parameters(mock_graphql
     variables_arg = call_args[1]["variable_values"]
     
     # Verify the query structure (checking if it's a gql object with the right content)
-    assert hasattr(query_arg, 'document')
+    assert str(type(query_arg).__name__) == 'DocumentNode'
     
     # Verify the variables
     expected_variables = {
