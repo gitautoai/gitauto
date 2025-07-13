@@ -295,7 +295,7 @@ async def test_verify_webhook_signature_various_payloads(
     "SecretWithMixedCase",
     "secret123456",
     "very_long_secret_that_is_much_longer_than_typical_secrets_used_in_production",
-    "\u77ed\u5bc6\u7801",  # Short password in Chinese
+    "短密码",  # Short password in Chinese
 ])
 async def test_verify_webhook_signature_various_secrets(
     mock_request, sample_payload, secret
