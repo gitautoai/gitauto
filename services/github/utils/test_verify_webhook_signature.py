@@ -178,7 +178,7 @@ async def test_verify_webhook_signature_unicode_payload(
 ):
     """Test verification with Unicode characters in payload."""
     # Setup
-    unicode_payload = '{"message": "Hello \u4e16\u754c! \ud83c\udf0d"}'.encode("utf-8")
+    unicode_payload = '{"message": "Hello 世界! 🌍"}'.encode("utf-8")
     valid_signature = create_valid_signature(unicode_payload, sample_secret)
     mock_request.headers = {"X-Hub-Signature-256": valid_signature}
     mock_request.body.return_value = unicode_payload
