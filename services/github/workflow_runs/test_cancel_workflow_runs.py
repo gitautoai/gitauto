@@ -192,7 +192,13 @@ def test_cancel_workflow_runs_get_workflow_runs_exception(
 ):
     """Test handling when get_workflow_runs raises an exception."""
     # Arrange
-    mock_get_workflow_runs.side_effect = requests.HTTPError("API Error")
+    http_error = requests.HTTPError("API Error")
+    mock_error_response = MagicMock()
+    mock_error_response.status_code = 500
+    mock_error_response.reason = "Internal Server Error"
+    mock_error_response.text = "API Error"
+    http_error.response = mock_error_response
+    mock_get_workflow_runs.side_effect = http_error
     
     # Act
     result = cancel_workflow_runs(
