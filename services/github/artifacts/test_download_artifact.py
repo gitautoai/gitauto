@@ -250,7 +250,11 @@ def test_download_artifact_http_error_handling():
          patch("services.github.artifacts.download_artifact.create_headers") as mock_create_headers:
         
         # Setup mocks to raise HTTP error
-        mock_get.side_effect = requests.exceptions.HTTPError("404 Not Found")
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_response.reason = "Not Found"
+        mock_response.text = "Not Found"
+        mock_get.side_effect = requests.exceptions.HTTPError("404 Not Found", response=mock_response)
         mock_create_headers.return_value = {}
         
         # Call function - should return default value due to @handle_exceptions decorator
