@@ -139,6 +139,8 @@ def test_get_all_comments_http_error(base_args, mock_requests_get, mock_create_h
     http_error = requests.exceptions.HTTPError("404 Not Found")
     mock_error_response = MagicMock()
     mock_error_response.status_code = 404
+    mock_error_response.reason = "Not Found"
+    mock_error_response.text = "Repository not found"
     http_error.response = mock_error_response
     mock_response.raise_for_status.side_effect = http_error
     mock_requests_get.return_value = mock_response
