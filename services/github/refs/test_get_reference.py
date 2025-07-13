@@ -153,6 +153,12 @@ def test_get_reference_http_error_non_404(base_args, mock_requests_get, mock_cre
     http_error.response = error_response
     error_response.reason = "Forbidden"
     error_response.text = "Access denied"
+    # Add headers that handle_exceptions might expect for 403 errors
+    error_response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "4999", 
+        "X-RateLimit-Used": "1"
+    }
     error_response.raise_for_status.side_effect = http_error
     mock_requests_get.return_value = error_response
     
