@@ -13,4 +13,8 @@ def truncate_value(value: Any, max_length: int = 30):
         return tuple(truncate_value(item, max_length) for item in value)
     if isinstance(value, datetime):
         return value.isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, time):
+        return value.isoformat()
     return value
