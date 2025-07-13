@@ -142,7 +142,11 @@ def test_reply_to_comment_http_error_handled(mock_base_args, mock_create_headers
     """Test that HTTP errors are handled by the decorator and return None."""
     with patch("services.github.comments.reply_to_comment.post") as mock_post:
         mock_response = MagicMock()
-        mock_response.raise_for_status.side_effect = HTTPError("404 Not Found")
+        # Create a proper HTTPError with a response object
+        http_error = HTTPError("404 Not Found")
+        http_error.response = MagicMock()
+        http_error.response.status_code = 404
+        mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
         
         result = reply_to_comment(mock_base_args, "Test body")
