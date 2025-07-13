@@ -148,7 +148,11 @@ def test_get_reference_http_error_non_404(base_args, mock_requests_get, mock_cre
     """Test handling of HTTP errors other than 404."""
     error_response = MagicMock()
     error_response.status_code = 403
-    error_response.raise_for_status.side_effect = requests.exceptions.HTTPError("Forbidden")
+    # Create a proper HTTPError with response object
+    http_error = requests.exceptions.HTTPError("Forbidden")
+    http_error.response = error_response
+    error_response.reason = "Forbidden"
+    error_response.text = "Access denied"
     mock_requests_get.return_value = error_response
     
     result = get_reference(base_args)
