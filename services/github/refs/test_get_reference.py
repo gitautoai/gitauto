@@ -2,6 +2,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 import requests
 import json
+from config import TIMEOUT
 
 from services.github.refs.get_reference import get_reference
 from services.github.types.github_types import BaseArgs
@@ -86,7 +87,7 @@ def test_get_reference_constructs_correct_url(base_args, mock_response, mock_req
     mock_requests_get.assert_called_once_with(
         url=expected_url,
         headers={"Authorization": "Bearer test-token"},
-        timeout=120
+        timeout=TIMEOUT
     )
 
 
@@ -118,7 +119,7 @@ def test_get_reference_with_different_branch_names(mock_response, mock_requests_
         mock_requests_get.assert_called_with(
             url=expected_url,
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=TIMEOUT
         )
 
 
@@ -139,7 +140,7 @@ def test_get_reference_with_special_characters_in_params(mock_response, mock_req
     mock_requests_get.assert_called_with(
         url=expected_url,
         headers={"Authorization": "Bearer test-token"},
-        timeout=120
+        timeout=TIMEOUT
     )
 
 
