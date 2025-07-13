@@ -153,6 +153,7 @@ def test_get_reference_http_error_non_404(base_args, mock_requests_get, mock_cre
     http_error.response = error_response
     error_response.reason = "Forbidden"
     error_response.text = "Access denied"
+    error_response.raise_for_status.side_effect = http_error
     mock_requests_get.return_value = error_response
     
     result = get_reference(base_args)
