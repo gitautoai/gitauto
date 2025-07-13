@@ -124,9 +124,18 @@ def test_get_workflow_runs_missing_parameters():
 
 def test_get_workflow_runs_handles_http_error(mock_get, mock_create_headers):
     """Test get_workflow_runs handles HTTP errors gracefully."""
-    mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = HTTPError("404 Client Error")
-    mock_get.return_value = mock_response
+    http_error = HTTPError("404 Client Error")
+    mock_error_response = MagicMock()
+    mock_error_response.status_code = 404
+    mock_error_response.reason = "Not Found"
+    mock_error_response.text = "Workflow run not found"
+    mock_error_response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "4999",
+        "X-RateLimit-Used": "1"
+    }
+    http_error.response = mock_error_response
+    mock_get.side_effect = http_error
     
     result = get_workflow_runs(
         owner="owner",
