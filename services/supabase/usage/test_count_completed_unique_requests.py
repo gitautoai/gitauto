@@ -50,10 +50,13 @@ def test_count_completed_unique_requests_success():
         mock_supabase.table.assert_called_once_with("usage")
         mock_table.select.assert_called_once_with("owner_type, owner_name, repo_name, issue_number")
         mock_table.gt.assert_called_once_with("created_at", start_date)
-        mock_table.eq.assert_called_with("installation_id", installation_id)
         mock_table.in_.assert_called_once_with(
             "trigger", ["issue_comment", "issue_label", "pull_request"]
         )
+        # The actual implementation calls eq twice - once for installation_id and once for is_completed
+        # We can't use assert_called_with for both, so we'll use assert_any_call instead
+        mock_table.eq.assert_any_call("installation_id", installation_id)
+        mock_table.eq.assert_any_call("is_completed", True)
 
 
 def test_count_completed_unique_requests_empty_result():
@@ -242,7 +245,9 @@ def test_count_completed_unique_requests_query_parameters():
         
         # Assert that the correct parameters were used in the query
         mock_table.gt.assert_called_once_with("created_at", start_date)
-        mock_table.eq.assert_called_with("installation_id", installation_id)
+        # Use assert_any_call to check both eq calls
+        mock_table.eq.assert_any_call("installation_id", installation_id)
+        mock_table.eq.assert_any_call("is_completed", True)
 
 
 def test_count_completed_unique_requests_trigger_filter():
@@ -318,7 +323,9 @@ def test_count_completed_unique_requests_with_zero_values():
         # Assert
         expected_unique_requests = {"Organization/test-org/test-repo#1"}
         assert result == expected_unique_requests
-        mock_table.eq.assert_called_with("installation_id", 0)
+        # Use assert_any_call to check both eq calls
+        mock_table.eq.assert_any_call("installation_id", 0)
+        mock_table.eq.assert_any_call("is_completed", True)
 
 
 def test_count_completed_unique_requests_with_large_values():
@@ -350,4 +357,6 @@ def test_count_completed_unique_requests_with_large_values():
         # Assert
         expected_unique_requests = {"User/test-user/test-repo#999999999"}
         assert result == expected_unique_requests
-        mock_table.eq.assert_called_with("installation_id", 888888888)
+        # Use assert_any_call to check both eq calls
+        mock_table.eq.assert_any_call("installation_id", 888888888)
+        mock_table.eq.assert_any_call("is_completed", True)
