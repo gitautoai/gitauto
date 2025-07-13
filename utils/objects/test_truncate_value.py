@@ -135,11 +135,13 @@ def test_truncate_complex_nested_structure():
             ]
         }
     ]
+    assert result == expected
 
 
 def test_truncate_datetime():
     dt = datetime(2023, 1, 1, 12, 30, 45)
     result = truncate_value(dt, 10)
+    assert result == "2023-01-01T12:30:45"
 
 
 def test_truncate_datetime_in_nested_structure():
@@ -152,7 +154,8 @@ def test_truncate_datetime_in_nested_structure():
     expected = {
         "timestamp": "2023-01-01T12:30:45",
         "data": ["2023-01-01T12:30:45", "some strin..."]
-    assert result == "2023-01-01T12:30:45"
+    }
+    assert result == expected
 
 
 def test_truncate_date():
@@ -171,4 +174,7 @@ def test_truncate_mixed_datetime_types():
     dt = datetime(2023, 1, 1, 12, 30, 45)
     d = date(2023, 1, 1)
     t = time(12, 30, 45)
+    input_data = [dt, d, t]
+    result = truncate_value(input_data, 20)
+    expected = ["2023-01-01T12:30:45", "2023-01-01", "12:30:45"]
     assert result == expected
