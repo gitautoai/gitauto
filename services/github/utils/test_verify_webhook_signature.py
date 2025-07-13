@@ -304,13 +304,13 @@ class TestVerifyWebhookSignature:
     async def test_verify_webhook_signature_request_body_exception(
         self, mock_request, sample_secret
     ):
-        """Test that exceptions from request.body() are properly handled by decorator."""
+        """Test that exceptions from request.body() are properly propagated."""
         # Setup
         mock_request.headers = {"X-Hub-Signature-256": "sha256=test"}
         mock_request.body.side_effect = Exception("Request body error")
 
         # Execute & Verify
-        # The handle_exceptions decorator should catch this and re-raise since raise_on_error=True
+        # The function should propagate the exception from request.body()
         with pytest.raises(Exception, match="Request body error"):
             await verify_webhook_signature(request=mock_request, secret=sample_secret)
 
