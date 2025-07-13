@@ -136,7 +136,11 @@ def test_get_all_comments_http_error(base_args, mock_requests_get, mock_create_h
     """Test handling of HTTP errors."""
     # Arrange
     mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404 Not Found")
+    http_error = requests.exceptions.HTTPError("404 Not Found")
+    mock_error_response = MagicMock()
+    mock_error_response.status_code = 404
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
     mock_requests_get.return_value = mock_response
     
     # Act
