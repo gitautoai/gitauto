@@ -7,7 +7,7 @@ from services.github.workflow_runs.get_workflow_runs import get_workflow_runs
 
 
 @pytest.fixture
-def mock_get():
+def mock_requests_get():
     """Fixture to provide a mocked requests.get method."""
     with patch("services.github.workflow_runs.get_workflow_runs.get") as mock:
         mock_response = MagicMock()
@@ -32,46 +32,16 @@ def sample_workflow_runs_response():
             {
                 "id": 123456,
                 "name": "Test Workflow",
-                "node_id": "WFR_123456",
-                "head_branch": "main",
-                "head_sha": "abc123def456",
-                "path": ".github/workflows/test.yml",
-                "display_title": "Test Run",
-                "run_number": 1,
-                "event": "push",
                 "status": "completed",
-                "conclusion": "success",
-                "workflow_id": 654321,
-                "check_suite_id": 789012,
-                "check_suite_node_id": "CS_789012",
-                "url": "https://api.github.com/repos/owner/repo/actions/runs/123456",
-                "html_url": "https://github.com/owner/repo/actions/runs/123456",
-                "created_at": "2023-01-01T00:00:00Z",
-                "updated_at": "2023-01-01T00:10:00Z",
-                "actor": {"id": 111, "login": "user"},
-                "run_attempt": 1,
-                "referenced_workflows": [],
-                "run_started_at": "2023-01-01T00:00:10Z",
-                "triggering_actor": {"id": 111, "login": "user"},
-                "jobs_url": "https://api.github.com/repos/owner/repo/actions/runs/123456/jobs",
-                "logs_url": "https://api.github.com/repos/owner/repo/actions/runs/123456/logs",
-                "check_suite_url": "https://api.github.com/repos/owner/repo/check-suites/789012",
-                "artifacts_url": "https://api.github.com/repos/owner/repo/actions/runs/123456/artifacts",
-                "cancel_url": "https://api.github.com/repos/owner/repo/actions/runs/123456/cancel",
-                "rerun_url": "https://api.github.com/repos/owner/repo/actions/runs/123456/rerun",
-                "previous_attempt_url": None,
-                "workflow_url": "https://api.github.com/repos/owner/repo/actions/workflows/654321",
-                "head_commit": {"id": "abc123def456"},
-                "repository": {"id": 222, "name": "repo"},
-                "head_repository": {"id": 222, "name": "repo"}
+                "conclusion": "success"
             }
         ]
     }
 
 
-def test_get_workflow_runs_with_commit_sha(mock_get, mock_create_headers, sample_workflow_runs_response):
+def test_get_workflow_runs_with_commit_sha(mock_requests_get, mock_create_headers, sample_workflow_runs_response):
     """Test get_workflow_runs with commit SHA parameter."""
-    mock_get.return_value.json.return_value = sample_workflow_runs_response
+    mock_requests_get.return_value.json.return_value = sample_workflow_runs_response
     
     result = get_workflow_runs(
         owner="owner",
@@ -81,7 +51,7 @@ def test_get_workflow_runs_with_commit_sha(mock_get, mock_create_headers, sample
     )
     
     expected_url = f"{GITHUB_API_URL}/repos/owner/repo/actions/runs?head_sha=abc123def456"
-    mock_get.assert_called_once_with(
+    mock_requests_get.assert_called_once_with(
         url=expected_url,
         headers=mock_create_headers.return_value,
         timeout=TIMEOUT
@@ -90,9 +60,9 @@ def test_get_workflow_runs_with_commit_sha(mock_get, mock_create_headers, sample
     assert result == sample_workflow_runs_response["workflow_runs"]
 
 
-def test_get_workflow_runs_with_branch(mock_get, mock_create_headers, sample_workflow_runs_response):
+def test_get_workflow_runs_with_branch(mock_requests_get, mock_create_headers, sample_workflow_runs_response):
     """Test get_workflow_runs with branch parameter."""
-    mock_get.return_value.json.return_value = sample_workflow_runs_response
+    mock_requests_get.return_value.json.return_value = sample_workflow_runs_response
     
     result = get_workflow_runs(
         owner="owner",
@@ -102,7 +72,7 @@ def test_get_workflow_runs_with_branch(mock_get, mock_create_headers, sample_wor
     )
     
     expected_url = f"{GITHUB_API_URL}/repos/owner/repo/actions/runs?branch=main"
-    mock_get.assert_called_once_with(
+    mock_requests_get.assert_called_once_with(
         url=expected_url,
         headers=mock_create_headers.return_value,
         timeout=TIMEOUT
@@ -122,20 +92,9 @@ def test_get_workflow_runs_missing_parameters():
     assert result == []
 
 
-def test_get_workflow_runs_handles_http_error(mock_get, mock_create_headers):
+def test_get_workflow_runs_handles_http_error(mock_requests_get, mock_create_headers):
     """Test get_workflow_runs handles HTTP errors gracefully."""
-    http_error = HTTPError("404 Client Error")
-    mock_error_response = MagicMock()
-    mock_error_response.status_code = 404
-    mock_error_response.reason = "Not Found"
-    mock_error_response.text = "Workflow run not found"
-    mock_error_response.headers = {
-        "X-RateLimit-Limit": "5000",
-        "X-RateLimit-Remaining": "4999",
-        "X-RateLimit-Used": "1"
-    }
-    http_error.response = mock_error_response
-    mock_get.side_effect = http_error
+    mock_requests_get.side_effect = HTTPError("404 Client Error")
     
     result = get_workflow_runs(
         owner="owner",
@@ -147,9 +106,9 @@ def test_get_workflow_runs_handles_http_error(mock_get, mock_create_headers):
     assert result == []
 
 
-def test_get_workflow_runs_with_empty_response(mock_get, mock_create_headers):
+def test_get_workflow_runs_with_empty_response(mock_requests_get, mock_create_headers):
     """Test get_workflow_runs with empty workflow runs response."""
-    mock_get.return_value.json.return_value = {"workflow_runs": []}
+    mock_requests_get.return_value.json.return_value = {"workflow_runs": []}
     
     result = get_workflow_runs(
         owner="owner",
@@ -161,9 +120,9 @@ def test_get_workflow_runs_with_empty_response(mock_get, mock_create_headers):
     assert result == []
 
 
-def test_get_workflow_runs_with_both_parameters(mock_get, mock_create_headers, sample_workflow_runs_response):
+def test_get_workflow_runs_commit_sha_takes_precedence(mock_requests_get, mock_create_headers, sample_workflow_runs_response):
     """Test get_workflow_runs when both commit_sha and branch are provided (commit_sha takes precedence)."""
-    mock_get.return_value.json.return_value = sample_workflow_runs_response
+    mock_requests_get.return_value.json.return_value = sample_workflow_runs_response
     
     result = get_workflow_runs(
         owner="owner",
@@ -174,5 +133,9 @@ def test_get_workflow_runs_with_both_parameters(mock_get, mock_create_headers, s
     )
     
     expected_url = f"{GITHUB_API_URL}/repos/owner/repo/actions/runs?head_sha=abc123def456"
-    mock_get.assert_called_once_with(url=expected_url, headers=mock_create_headers.return_value, timeout=TIMEOUT)
+    mock_requests_get.assert_called_once_with(
+        url=expected_url,
+        headers=mock_create_headers.return_value,
+        timeout=TIMEOUT
+    )
     assert result == sample_workflow_runs_response["workflow_runs"]
