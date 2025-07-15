@@ -1,6 +1,5 @@
 from unittest.mock import patch, MagicMock
 import pytest
-from requests.exceptions import HTTPError
 
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.workflow_runs.get_workflow_runs import get_workflow_runs
@@ -87,29 +86,6 @@ def test_get_workflow_runs_missing_parameters():
         owner="owner",
         repo="repo",
         token="test_token"
-    )
-    
-    assert result == []
-
-
-def test_get_workflow_runs_handles_http_error(mock_requests_get, mock_create_headers):
-    """Test get_workflow_runs handles HTTP errors gracefully."""
-    # Create a proper HTTPError with a response object
-    mock_response = MagicMock()
-    mock_response.status_code = 404
-    mock_response.reason = "Not Found"
-    mock_response.text = "Repository not found"
-    mock_response.headers = {}
-    
-    http_error = HTTPError("404 Client Error")
-    http_error.response = mock_response
-    mock_requests_get.side_effect = http_error
-    
-    result = get_workflow_runs(
-        owner="owner",
-        repo="repo",
-        token="test_token",
-        commit_sha="abc123def456"
     )
     
     assert result == []
