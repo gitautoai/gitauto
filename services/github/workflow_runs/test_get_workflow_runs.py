@@ -94,14 +94,16 @@ def test_get_workflow_runs_missing_parameters():
 
 def test_get_workflow_runs_handles_http_error(mock_requests_get, mock_create_headers):
     """Test get_workflow_runs handles HTTP errors gracefully."""
-    # Create a proper HTTPError by making the mock response raise it
+    # Create a proper HTTPError with a response object
     mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = HTTPError("404 Client Error")
     mock_response.status_code = 404
     mock_response.reason = "Not Found"
     mock_response.text = "Repository not found"
     mock_response.headers = {}
-    mock_requests_get.return_value = mock_response
+    
+    http_error = HTTPError("404 Client Error")
+    http_error.response = mock_response
+    mock_requests_get.side_effect = http_error
     
     result = get_workflow_runs(
         owner="owner",
