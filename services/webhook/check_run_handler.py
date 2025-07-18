@@ -101,6 +101,11 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     installation_id = payload["installation"]["id"]
     token: str = get_installation_access_token(installation_id=installation_id)
 
+    # Get repository settings - check if trigger_on_test_failure is enabled
+    repo_settings = get_repository(repo_id=repo_id)
+    if not repo_settings or not repo_settings.get("trigger_on_test_failure"):
+        return
+
     # Start notification
     start_msg = f"Check run handler started for `{check_run_name}` in PR #{pull_number} in `{owner_name}/{repo_name}`"
     thread_ts = slack_notify(start_msg)
@@ -272,9 +277,6 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     log_messages.append("Checked out the error log from the workflow run.")
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
-
-    # Get repository settings
-    repo_settings = get_repository(repo_id=repo_id)
 
     # Plan how to fix the error
     today = datetime.now().strftime("%Y-%m-%d")
