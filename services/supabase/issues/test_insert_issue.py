@@ -20,12 +20,12 @@ def mock_supabase():
     with patch("services.supabase.issues.insert_issue.supabase") as mock:
         mock_table = MagicMock()
         mock_insert = MagicMock()
-        mock_execute = MagicMock()
-        
+        MagicMock()
+
         mock.table.return_value = mock_table
         mock_table.insert.return_value = mock_insert
         mock_insert.execute.return_value = None
-        
+
         yield mock
 
 
@@ -62,7 +62,7 @@ def test_insert_issue_success(mock_supabase, mock_issues_insert):
 
     # Assert
     assert result is None  # Function returns None when successful
-    
+
     # Verify IssuesInsert was called with correct parameters
     mock_issues_insert.assert_called_once_with(
         owner_id=TEST_OWNER_ID,
@@ -73,10 +73,12 @@ def test_insert_issue_success(mock_supabase, mock_issues_insert):
         issue_number=TEST_ISSUE_NUMBER,
         installation_id=TEST_INSTALLATION_ID,
     )
-    
+
     # Verify model_dump was called with exclude_none=True
-    mock_issues_insert.return_value.model_dump.assert_called_once_with(exclude_none=True)
-    
+    mock_issues_insert.return_value.model_dump.assert_called_once_with(
+        exclude_none=True
+    )
+
     # Verify supabase operations were called correctly
     mock_supabase.table.assert_called_once_with(table_name="issues")
     mock_supabase.table.return_value.insert.assert_called_once_with(
@@ -100,7 +102,7 @@ def test_insert_issue_with_zero_values(mock_supabase, mock_issues_insert):
     repo_id = 0
     issue_number = 0
     installation_id = 0
-    
+
     mock_issues_insert.return_value.model_dump.return_value = {
         "owner_id": owner_id,
         "owner_type": TEST_OWNER_TYPE,
@@ -141,7 +143,7 @@ def test_insert_issue_with_empty_strings(mock_supabase, mock_issues_insert):
     owner_type = ""
     owner_name = ""
     repo_name = ""
-    
+
     mock_issues_insert.return_value.model_dump.return_value = {
         "owner_id": TEST_OWNER_ID,
         "owner_type": owner_type,
@@ -183,7 +185,7 @@ def test_insert_issue_with_large_values(mock_supabase, mock_issues_insert):
     large_repo_id = 9999999999
     large_issue_number = 9999999999
     large_installation_id = 9999999999
-    
+
     mock_issues_insert.return_value.model_dump.return_value = {
         "owner_id": large_owner_id,
         "owner_type": TEST_OWNER_TYPE,
@@ -225,7 +227,7 @@ def test_insert_issue_with_negative_values(mock_supabase, mock_issues_insert):
     negative_repo_id = -1
     negative_issue_number = -1
     negative_installation_id = -1
-    
+
     mock_issues_insert.return_value.model_dump.return_value = {
         "owner_id": negative_owner_id,
         "owner_type": TEST_OWNER_TYPE,
@@ -263,7 +265,9 @@ def test_insert_issue_with_negative_values(mock_supabase, mock_issues_insert):
 def test_insert_issue_supabase_exception_raises(mock_supabase, mock_issues_insert):
     """Test that Supabase exceptions are raised due to @handle_exceptions(raise_on_error=True)."""
     # Arrange
-    mock_supabase.table.return_value.insert.return_value.execute.side_effect = Exception("Database error")
+    mock_supabase.table.return_value.insert.return_value.execute.side_effect = (
+        Exception("Database error")
+    )
 
     # Act & Assert
     with pytest.raises(Exception, match="Database error"):
@@ -299,7 +303,9 @@ def test_insert_issue_issues_insert_exception_raises(mock_supabase, mock_issues_
 def test_insert_issue_model_dump_exception_raises(mock_supabase, mock_issues_insert):
     """Test that model_dump exceptions are raised due to @handle_exceptions(raise_on_error=True)."""
     # Arrange
-    mock_issues_insert.return_value.model_dump.side_effect = AttributeError("Model dump error")
+    mock_issues_insert.return_value.model_dump.side_effect = AttributeError(
+        "Model dump error"
+    )
 
     # Act & Assert
     with pytest.raises(AttributeError, match="Model dump error"):
@@ -314,13 +320,15 @@ def test_insert_issue_model_dump_exception_raises(mock_supabase, mock_issues_ins
         )
 
 
-def test_insert_issue_with_special_characters_in_strings(mock_supabase, mock_issues_insert):
+def test_insert_issue_with_special_characters_in_strings(
+    mock_supabase, mock_issues_insert
+):
     """Test issue insertion with special characters in string fields."""
     # Arrange
     owner_type = "Organization!@#$%^&*()"
     owner_name = "test-owner-with-special-chars!@#$%"
     repo_name = "test-repo-with-special-chars!@#$%"
-    
+
     mock_issues_insert.return_value.model_dump.return_value = {
         "owner_id": TEST_OWNER_ID,
         "owner_type": owner_type,
@@ -361,7 +369,7 @@ def test_insert_issue_with_unicode_characters(mock_supabase, mock_issues_insert)
     owner_name = "测试用户"  # Chinese characters
     repo_name = "тест-репо"  # Cyrillic characters
     owner_type = "Organización"  # Spanish with accent
-    
+
     mock_issues_insert.return_value.model_dump.return_value = {
         "owner_id": TEST_OWNER_ID,
         "owner_type": owner_type,
@@ -413,7 +421,9 @@ def test_insert_issue_table_method_called_correctly(mock_supabase, mock_issues_i
     mock_supabase.table.assert_called_once_with(table_name="issues")
 
 
-def test_insert_issue_model_dump_exclude_none_behavior(mock_supabase, mock_issues_insert):
+def test_insert_issue_model_dump_exclude_none_behavior(
+    mock_supabase, mock_issues_insert
+):
     """Test that model_dump is called with exclude_none=True and handles None values correctly."""
     # Arrange - Mock model_dump to return data with some None values excluded
     mock_issues_insert.return_value.model_dump.return_value = {
@@ -439,4 +449,6 @@ def test_insert_issue_model_dump_exclude_none_behavior(mock_supabase, mock_issue
     )
 
     # Assert - Verify model_dump was called with exclude_none=True
-    mock_issues_insert.return_value.model_dump.assert_called_once_with(exclude_none=True)
+    mock_issues_insert.return_value.model_dump.assert_called_once_with(
+        exclude_none=True
+    )

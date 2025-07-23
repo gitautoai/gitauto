@@ -1,7 +1,9 @@
-.history
+.coverage*
 .env*
+.history
 __pycache__
 coverage.*
+coverage/
 mcp.json
 ngrok.yml
 tmp

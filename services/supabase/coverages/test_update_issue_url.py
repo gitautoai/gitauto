@@ -11,9 +11,13 @@ class TestUpdateIssueUrl:
     def mock_supabase_success(self):
         """Mock successful supabase response"""
         mock_response = Mock()
-        mock_response.data = [{"id": 1, "github_issue_url": "https://github.com/owner/repo/issues/123"}]
-        
-        with patch("services.supabase.coverages.update_issue_url.supabase") as mock_supabase:
+        mock_response.data = [
+            {"id": 1, "github_issue_url": "https://github.com/owner/repo/issues/123"}
+        ]
+
+        with patch(
+            "services.supabase.coverages.update_issue_url.supabase"
+        ) as mock_supabase:
             mock_table = Mock()
             mock_supabase.table.return_value = mock_table
             mock_table.update.return_value = mock_table
@@ -26,8 +30,10 @@ class TestUpdateIssueUrl:
         """Mock empty supabase response"""
         mock_response = Mock()
         mock_response.data = []
-        
-        with patch("services.supabase.coverages.update_issue_url.supabase") as mock_supabase:
+
+        with patch(
+            "services.supabase.coverages.update_issue_url.supabase"
+        ) as mock_supabase:
             mock_table = Mock()
             mock_supabase.table.return_value = mock_table
             mock_table.update.return_value = mock_table
@@ -42,13 +48,15 @@ class TestUpdateIssueUrl:
         repo_id = 123456
         file_path = "src/main.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
-        
+
         # Act
         result = update_issue_url(repo_id, file_path, github_issue_url)
-        
+
         # Assert
         mock_supabase.table.assert_called_once_with("coverages")
-        mock_table.update.assert_called_once_with({"github_issue_url": github_issue_url})
+        mock_table.update.assert_called_once_with(
+            {"github_issue_url": github_issue_url}
+        )
         mock_table.eq.assert_any_call("repo_id", repo_id)
         mock_table.eq.assert_any_call("full_path", file_path)
         mock_table.execute.assert_called_once()
@@ -61,13 +69,15 @@ class TestUpdateIssueUrl:
         repo_id = 123456
         file_path = "src/main.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
-        
+
         # Act
         result = update_issue_url(repo_id, file_path, github_issue_url)
-        
+
         # Assert
         mock_supabase.table.assert_called_once_with("coverages")
-        mock_table.update.assert_called_once_with({"github_issue_url": github_issue_url})
+        mock_table.update.assert_called_once_with(
+            {"github_issue_url": github_issue_url}
+        )
         mock_table.eq.assert_any_call("repo_id", repo_id)
         mock_table.eq.assert_any_call("full_path", file_path)
         mock_table.execute.assert_called_once()
@@ -80,10 +90,10 @@ class TestUpdateIssueUrl:
         repo_id = 0
         file_path = "src/main.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
-        
+
         # Act
         result = update_issue_url(repo_id, file_path, github_issue_url)
-        
+
         # Assert
         mock_table.eq.assert_any_call("repo_id", 0)
         assert result == [{"id": 1, "github_issue_url": github_issue_url}]
@@ -95,10 +105,10 @@ class TestUpdateIssueUrl:
         repo_id = -1
         file_path = "src/main.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
-        
+
         # Act
         result = update_issue_url(repo_id, file_path, github_issue_url)
-        
+
         # Assert
         mock_table.eq.assert_any_call("repo_id", -1)
         assert result == [{"id": 1, "github_issue_url": github_issue_url}]
@@ -110,10 +120,10 @@ class TestUpdateIssueUrl:
         repo_id = 123456
         file_path = ""
         github_issue_url = "https://github.com/owner/repo/issues/123"
-        
+
         # Act
         result = update_issue_url(repo_id, file_path, github_issue_url)
-        
+
         # Assert
         mock_table.eq.assert_any_call("full_path", "")
         assert result == [{"id": 1, "github_issue_url": github_issue_url}]
@@ -125,13 +135,15 @@ class TestUpdateIssueUrl:
         repo_id = 123456
         file_path = "src/main.py"
         github_issue_url = ""
-        
+
         # Act
         result = update_issue_url(repo_id, file_path, github_issue_url)
-        
+
         # Assert
         mock_table.update.assert_called_once_with({"github_issue_url": ""})
-        assert result == [{"id": 1, "github_issue_url": "https://github.com/owner/repo/issues/123"}]
+        assert result == [
+            {"id": 1, "github_issue_url": "https://github.com/owner/repo/issues/123"}
+        ]
 
     def test_update_issue_url_with_long_file_path(self, mock_supabase_success):
         """Test update with very long file path"""
@@ -140,25 +152,27 @@ class TestUpdateIssueUrl:
         repo_id = 123456
         file_path = "very/long/nested/directory/structure/with/many/levels/src/main.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
-        
+
         # Act
         result = update_issue_url(repo_id, file_path, github_issue_url)
-        
+
         # Assert
         mock_table.eq.assert_any_call("full_path", file_path)
         assert result == [{"id": 1, "github_issue_url": github_issue_url}]
 
-    def test_update_issue_url_with_special_characters_in_path(self, mock_supabase_success):
+    def test_update_issue_url_with_special_characters_in_path(
+        self, mock_supabase_success
+    ):
         """Test update with special characters in file path"""
         # Arrange
         mock_supabase, mock_table = mock_supabase_success
         repo_id = 123456
         file_path = "src/file-with_special.chars@123.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
-        
+
         # Act
         result = update_issue_url(repo_id, file_path, github_issue_url)
-        
+
         # Assert
         mock_table.eq.assert_any_call("full_path", file_path)
         assert result == [{"id": 1, "github_issue_url": github_issue_url}]
@@ -170,10 +184,10 @@ class TestUpdateIssueUrl:
         repo_id = 999999999999
         file_path = "src/main.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
-        
+
         # Act
         result = update_issue_url(repo_id, file_path, github_issue_url)
-        
+
         # Assert
         mock_table.eq.assert_any_call("repo_id", repo_id)
         assert result == [{"id": 1, "github_issue_url": github_issue_url}]
@@ -181,12 +195,16 @@ class TestUpdateIssueUrl:
     def test_update_issue_url_exception_handling(self):
         """Test that exceptions are handled properly by the decorator"""
         # Arrange
-        with patch("services.supabase.coverages.update_issue_url.supabase") as mock_supabase:
+        with patch(
+            "services.supabase.coverages.update_issue_url.supabase"
+        ) as mock_supabase:
             mock_supabase.table.side_effect = Exception("Database error")
-            
+
             # Act
-            result = update_issue_url(123456, "src/main.py", "https://github.com/owner/repo/issues/123")
-            
+            result = update_issue_url(
+                123456, "src/main.py", "https://github.com/owner/repo/issues/123"
+            )
+
             # Assert - The handle_exceptions decorator should return None on error
             assert result is None
 
@@ -194,10 +212,12 @@ class TestUpdateIssueUrl:
         """Test that the method chaining works correctly"""
         # Arrange
         mock_supabase, mock_table = mock_supabase_success
-        
+
         # Act
-        update_issue_url(123456, "src/main.py", "https://github.com/owner/repo/issues/123")
-        
+        update_issue_url(
+            123456, "src/main.py", "https://github.com/owner/repo/issues/123"
+        )
+
         # Assert - Verify the method chaining sequence
         assert mock_table.update.return_value == mock_table
         assert mock_table.eq.return_value == mock_table

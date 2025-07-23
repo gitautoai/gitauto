@@ -1,6 +1,4 @@
-import os
-import pytest
-from unittest.mock import mock_open, patch, MagicMock
+from unittest.mock import mock_open, patch
 from utils.files.get_file_content import get_file_content
 
 

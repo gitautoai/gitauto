@@ -14,11 +14,7 @@ from tests.constants import OWNER, REPO, TOKEN
 @pytest.fixture
 def base_args():
     """Fixture providing base arguments for testing."""
-    return BaseArgs(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN
-    )
+    return BaseArgs(owner=OWNER, repo=REPO, token=TOKEN)
 
 
 @pytest.fixture
@@ -28,14 +24,14 @@ def mock_commit_response():
         "sha": "abc123def456",
         "tree": {
             "sha": "tree_sha_789xyz",
-            "url": "https://api.github.com/repos/owner/repo/git/trees/tree_sha_789xyz"
+            "url": "https://api.github.com/repos/owner/repo/git/trees/tree_sha_789xyz",
         },
         "message": "Test commit message",
         "author": {
             "name": "Test Author",
             "email": "test@example.com",
-            "date": "2023-01-01T00:00:00Z"
-        }
+            "date": "2023-01-01T00:00:00Z",
+        },
     }
 
 
@@ -77,9 +73,7 @@ def test_get_commit_headers_creation(base_args, mock_commit_response):
 
         # Create base args with custom token
         custom_base_args = BaseArgs(
-            owner="test-owner",
-            repo="test-repo",
-            token="custom_token_123"
+            owner="test-owner", repo="test-repo", token="custom_token_123"
         )
 
         get_commit(custom_base_args, "abc123def456")
@@ -100,9 +94,7 @@ def test_get_commit_url_construction(base_args, mock_commit_response):
 
         # Test with different parameters
         custom_base_args = BaseArgs(
-            owner="test-owner",
-            repo="test-repo",
-            token="test_token"
+            owner="test-owner", repo="test-repo", token="test_token"
         )
         get_commit(custom_base_args, "def789ghi012")
 
@@ -126,9 +118,7 @@ def test_get_commit_with_special_characters(mock_commit_response):
 
         # Test with special characters
         special_base_args = BaseArgs(
-            owner="owner-name",
-            repo="repo_name.test",
-            token="token_123"
+            owner="owner-name", repo="repo_name.test", token="token_123"
         )
         get_commit(special_base_args, "abc-123_def.456")
 
@@ -144,9 +134,7 @@ def test_get_commit_timeout_parameter(base_args, mock_commit_response):
     """Test that the timeout parameter is correctly used."""
     with patch("services.github.commits.get_commit.requests.get") as mock_get, patch(
         "services.github.commits.get_commit.create_headers"
-    ) as mock_headers, patch(
-        "services.github.commits.get_commit.TIMEOUT", 60
-    ):
+    ) as mock_headers, patch("services.github.commits.get_commit.TIMEOUT", 60):
         mock_response = MagicMock()
         mock_response.json.return_value = mock_commit_response
         mock_get.return_value = mock_response
@@ -164,7 +152,8 @@ def test_get_commit_custom_api_url(base_args, mock_commit_response):
     with patch("services.github.commits.get_commit.requests.get") as mock_get, patch(
         "services.github.commits.get_commit.create_headers"
     ) as mock_headers, patch(
-        "services.github.commits.get_commit.GITHUB_API_URL", "https://custom-github-api.com"
+        "services.github.commits.get_commit.GITHUB_API_URL",
+        "https://custom-github-api.com",
     ):
         mock_response = MagicMock()
         mock_response.json.return_value = mock_commit_response
@@ -187,17 +176,19 @@ def test_get_commit_different_tree_sha(base_args):
         "tree_sha_123abc",
         "another_tree_sha_456def",
         "very_long_tree_sha_789ghi012jkl345mno678pqr901stu234vwx567yz",
-        "short_sha"
+        "short_sha",
     ]
 
     for tree_sha in test_cases:
-        with patch("services.github.commits.get_commit.requests.get") as mock_get, patch(
+        with patch(
+            "services.github.commits.get_commit.requests.get"
+        ) as mock_get, patch(
             "services.github.commits.get_commit.create_headers"
         ) as mock_headers:
             mock_response = MagicMock()
             mock_response.json.return_value = {
                 "sha": "commit_sha",
-                "tree": {"sha": tree_sha}
+                "tree": {"sha": tree_sha},
             }
             mock_get.return_value = mock_response
             mock_headers.return_value = {"Authorization": "Bearer test_token"}
@@ -339,7 +330,7 @@ def test_get_commit_key_error_missing_tree_sha(base_args):
             "tree": {
                 # Missing "sha" key
                 "url": "https://api.github.com/repos/owner/repo/git/trees/tree_sha"
-            }
+            },
         }
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
@@ -351,15 +342,20 @@ def test_get_commit_key_error_missing_tree_sha(base_args):
         assert result is None
 
 
-@pytest.mark.parametrize("commit_sha", [
-    "abc123def456",
-    "1234567890abcdef",
-    "short",
-    "very_long_commit_sha_with_underscores_and_numbers_123456789",
-    "commit-with-dashes",
-    "commit.with.dots",
-])
-def test_get_commit_various_commit_sha_formats(base_args, mock_commit_response, commit_sha):
+@pytest.mark.parametrize(
+    "commit_sha",
+    [
+        "abc123def456",
+        "1234567890abcdef",
+        "short",
+        "very_long_commit_sha_with_underscores_and_numbers_123456789",
+        "commit-with-dashes",
+        "commit.with.dots",
+    ],
+)
+def test_get_commit_various_commit_sha_formats(
+    base_args, mock_commit_response, commit_sha
+):
     """Test that the function handles various commit SHA formats correctly."""
     with patch("services.github.commits.get_commit.requests.get") as mock_get, patch(
         "services.github.commits.get_commit.create_headers"
@@ -372,12 +368,14 @@ def test_get_commit_various_commit_sha_formats(base_args, mock_commit_response, 
         result = get_commit(base_args, commit_sha)
 
         # Verify the commit SHA is correctly used in the URL
-        expected_url = f"https://api.github.com/repos/{OWNER}/{REPO}/git/commits/{commit_sha}"
+        expected_url = (
+            f"https://api.github.com/repos/{OWNER}/{REPO}/git/commits/{commit_sha}"
+        )
         mock_get.assert_called_once_with(
             url=expected_url,
             headers={"Authorization": "Bearer test_token"},
             timeout=120,
         )
-        
+
         # Verify result is the tree SHA
         assert result == "tree_sha_789xyz"

@@ -186,9 +186,9 @@ uvicorn main:app --reload --port 8000 --log-level warning
 When the user says "LGTM" (Looks Good To Me), automatically execute this workflow:
 
 1. Run black formatting: `black .`
-2. Run ruff linting: `ruff check .`
+2. Run ruff linting: `ruff check . --fix`
 3. Run pylint: `pylint .`
-4. Run pytest: `pytest`
+4. Run pytest: `python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info`
 5. Check current branch is not main: `git branch --show-current`
 6. Add changes: `git add .`
 7. Commit with descriptive message: `git commit -m "descriptive message"`

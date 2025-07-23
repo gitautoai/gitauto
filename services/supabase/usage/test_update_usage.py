@@ -18,12 +18,12 @@ def test_update_usage_success_with_all_parameters():
         mock_table.execute.return_value = mock_response
 
         result = update_usage(
-            usage_record_id=123,
+            usage_id=123,
             token_input=100,
             token_output=200,
             total_seconds=300,
             is_completed=True,
-            pr_number=456
+            pr_number=456,
         )
 
         assert result is None
@@ -54,17 +54,14 @@ def test_update_usage_success_with_default_parameters():
         mock_table.execute.return_value = mock_response
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None
         mock_table.update.assert_called_once_with(
             json={
                 "is_completed": True,  # Default value
-                "pr_number": None,     # Default value
+                "pr_number": None,  # Default value
                 "token_input": 100,
                 "token_output": 200,
                 "total_seconds": 300,
@@ -85,11 +82,11 @@ def test_update_usage_with_is_completed_false():
         mock_table.execute.return_value = mock_response
 
         result = update_usage(
-            usage_record_id=123,
+            usage_id=123,
             token_input=100,
             token_output=200,
             total_seconds=300,
-            is_completed=False
+            is_completed=False,
         )
 
         assert result is None
@@ -117,11 +114,7 @@ def test_update_usage_with_zero_values():
         mock_table.execute.return_value = mock_response
 
         result = update_usage(
-            usage_record_id=0,
-            token_input=0,
-            token_output=0,
-            total_seconds=0,
-            pr_number=0
+            usage_id=0, token_input=0, token_output=0, total_seconds=0, pr_number=0
         )
 
         assert result is None
@@ -150,11 +143,11 @@ def test_update_usage_with_negative_values():
         mock_table.execute.return_value = mock_response
 
         result = update_usage(
-            usage_record_id=-1,
+            usage_id=-1,
             token_input=-10,
             token_output=-20,
             total_seconds=-30,
-            pr_number=-5
+            pr_number=-5,
         )
 
         assert result is None
@@ -183,11 +176,11 @@ def test_update_usage_with_large_values():
         mock_table.execute.return_value = mock_response
 
         result = update_usage(
-            usage_record_id=999999999,
+            usage_id=999999999,
             token_input=888888888,
             token_output=777777777,
             total_seconds=666666666,
-            pr_number=555555555
+            pr_number=555555555,
         )
 
         assert result is None
@@ -209,10 +202,7 @@ def test_update_usage_with_exception():
         mock_supabase.table.side_effect = Exception("Database error")
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None
@@ -224,10 +214,7 @@ def test_update_usage_with_attribute_error():
         mock_supabase.table.side_effect = AttributeError("Attribute error")
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None
@@ -239,10 +226,7 @@ def test_update_usage_with_key_error():
         mock_supabase.table.side_effect = KeyError("Key error")
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None
@@ -254,10 +238,7 @@ def test_update_usage_with_type_error():
         mock_supabase.table.side_effect = TypeError("Type error")
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None
@@ -269,10 +250,7 @@ def test_update_usage_with_json_decode_error():
         mock_supabase.table.side_effect = json.JSONDecodeError("JSON error", "", 0)
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None
@@ -291,10 +269,7 @@ def test_update_usage_with_http_error_500():
         mock_supabase.table.side_effect = http_error
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None
@@ -313,10 +288,7 @@ def test_update_usage_with_http_error_409():
         mock_supabase.table.side_effect = http_error
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None
@@ -335,10 +307,7 @@ def test_update_usage_with_http_error_422():
         mock_supabase.table.side_effect = http_error
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None
@@ -354,10 +323,7 @@ def test_update_usage_execute_exception():
         mock_table.execute.side_effect = Exception("Execute error")
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None
@@ -371,10 +337,7 @@ def test_update_usage_update_exception():
         mock_table.update.side_effect = Exception("Update error")
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None
@@ -389,10 +352,7 @@ def test_update_usage_eq_exception():
         mock_table.eq.side_effect = Exception("Eq error")
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None
@@ -404,10 +364,7 @@ def test_update_usage_table_exception():
         mock_supabase.table.side_effect = Exception("Table error")
 
         result = update_usage(
-            usage_record_id=123,
-            token_input=100,
-            token_output=200,
-            total_seconds=300
+            usage_id=123, token_input=100, token_output=200, total_seconds=300
         )
 
         assert result is None

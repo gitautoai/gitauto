@@ -36,16 +36,18 @@ class TestGetBase64:
         test_url = "https://example.com/image.jpg"
         mock_requests_get.return_value = mock_response
         expected_base64 = b64encode(b"fake_image_data").decode(encoding=UTF8)
-        
+
         # Execute
         result = get_base64(test_url)
-        
+
         # Verify
         assert result == expected_base64
         mock_requests_get.assert_called_once_with(url=test_url, timeout=TIMEOUT)
         mock_response.raise_for_status.assert_called_once()
 
-    def test_get_base64_with_different_image_data(self, mock_requests_get, mock_response):
+    def test_get_base64_with_different_image_data(
+        self, mock_requests_get, mock_response
+    ):
         """Test base64 encoding with different image data."""
         # Setup
         test_url = "https://example.com/different.png"
@@ -53,10 +55,10 @@ class TestGetBase64:
         mock_response.content = different_content
         mock_requests_get.return_value = mock_response
         expected_base64 = b64encode(different_content).decode(encoding=UTF8)
-        
+
         # Execute
         result = get_base64(test_url)
-        
+
         # Verify
         assert result == expected_base64
         mock_requests_get.assert_called_once_with(url=test_url, timeout=TIMEOUT)
@@ -68,10 +70,10 @@ class TestGetBase64:
         mock_response.content = b""
         mock_requests_get.return_value = mock_response
         expected_base64 = b64encode(b"").decode(encoding=UTF8)
-        
+
         # Execute
         result = get_base64(test_url)
-        
+
         # Verify
         assert result == expected_base64
         mock_requests_get.assert_called_once_with(url=test_url, timeout=TIMEOUT)
@@ -81,14 +83,16 @@ class TestGetBase64:
         # Setup
         test_url = "https://example.com/binary.jpg"
         # Simulate binary image data with various byte values
-        binary_content = bytes([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])  # PNG header
+        binary_content = bytes(
+            [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]
+        )  # PNG header
         mock_response.content = binary_content
         mock_requests_get.return_value = mock_response
         expected_base64 = b64encode(binary_content).decode(encoding=UTF8)
-        
+
         # Execute
         result = get_base64(test_url)
-        
+
         # Verify
         assert result == expected_base64
         mock_requests_get.assert_called_once_with(url=test_url, timeout=TIMEOUT)
@@ -107,10 +111,10 @@ class TestGetBase64:
         http_error.response = error_response
         mock_response.raise_for_status.side_effect = http_error
         mock_requests_get.return_value = mock_response
-        
+
         # Execute
         result = get_base64(test_url)
-        
+
         # Verify
         assert result == ""  # Default return value from handle_exceptions decorator
         mock_requests_get.assert_called_once_with(url=test_url, timeout=TIMEOUT)
@@ -119,11 +123,13 @@ class TestGetBase64:
         """Test that connection errors return empty string due to handle_exceptions decorator."""
         # Setup
         test_url = "https://unreachable.example.com/image.jpg"
-        mock_requests_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
-        
+        mock_requests_get.side_effect = requests.exceptions.ConnectionError(
+            "Connection failed"
+        )
+
         # Execute
         result = get_base64(test_url)
-        
+
         # Verify
         assert result == ""  # Default return value from handle_exceptions decorator
         mock_requests_get.assert_called_once_with(url=test_url, timeout=TIMEOUT)
@@ -133,10 +139,10 @@ class TestGetBase64:
         # Setup
         test_url = "https://slow.example.com/image.jpg"
         mock_requests_get.side_effect = requests.exceptions.Timeout("Request timed out")
-        
+
         # Execute
         result = get_base64(test_url)
-        
+
         # Verify
         assert result == ""  # Default return value from handle_exceptions decorator
         mock_requests_get.assert_called_once_with(url=test_url, timeout=TIMEOUT)
@@ -146,14 +152,16 @@ class TestGetBase64:
         # Setup
         test_url = "https://example.com/image.jpg"
         mock_requests_get.return_value = mock_response
-        
+
         # Execute
         get_base64(test_url)
-        
+
         # Verify
         mock_requests_get.assert_called_once_with(url=test_url, timeout=TIMEOUT)
 
-    def test_get_base64_with_various_url_formats(self, mock_requests_get, mock_response):
+    def test_get_base64_with_various_url_formats(
+        self, mock_requests_get, mock_response
+    ):
         """Test that the function works with various URL formats."""
         # Setup
         test_urls = [
@@ -164,26 +172,28 @@ class TestGetBase64:
         ]
         mock_requests_get.return_value = mock_response
         expected_base64 = b64encode(b"fake_image_data").decode(encoding=UTF8)
-        
+
         for test_url in test_urls:
             # Execute
             result = get_base64(test_url)
-            
+
             # Verify
             assert result == expected_base64
-            
+
         # Verify all URLs were called
         assert mock_requests_get.call_count == len(test_urls)
 
-    def test_get_base64_exception_handling_preserves_decorator_behavior(self, mock_requests_get):
+    def test_get_base64_exception_handling_preserves_decorator_behavior(
+        self, mock_requests_get
+    ):
         """Test that the handle_exceptions decorator behavior is preserved."""
         # Setup
         test_url = "https://example.com/image.jpg"
         mock_requests_get.side_effect = Exception("Unexpected error")
-        
+
         # Execute
         result = get_base64(test_url)
-        
+
         # Verify
         assert result == ""  # Default return value from handle_exceptions decorator
         mock_requests_get.assert_called_once_with(url=test_url, timeout=TIMEOUT)

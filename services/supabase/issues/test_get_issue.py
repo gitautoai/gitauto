@@ -1,14 +1,12 @@
 # Standard imports
 import unittest
 from unittest.mock import patch, MagicMock
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 # Third-party imports
-import pytest
 
 # Local imports
 from services.supabase.issues.get_issue import get_issue
-from schemas.supabase.fastapi.schema_public_latest import Issues
 
 
 class TestGetIssue(unittest.TestCase):
@@ -30,7 +28,7 @@ class TestGetIssue(unittest.TestCase):
             "created_by": "test-user",
             "run_id": None,
         }
-        
+
         self.test_params = {
             "owner_type": "Organization",
             "owner_name": "test-owner",
@@ -38,9 +36,13 @@ class TestGetIssue(unittest.TestCase):
             "issue_number": 123,
         }
 
-    def _setup_supabase_mock(self, mock_supabase: MagicMock, return_data: List[Dict[str, Any]]):
+    def _setup_supabase_mock(
+        self, mock_supabase: MagicMock, return_data: List[Dict[str, Any]]
+    ):
         """Helper method to set up the supabase mock chain"""
-        mock_chain = mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.eq.return_value
+        mock_chain = (
+            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.eq.return_value
+        )
         mock_chain.execute.return_value = ((None, return_data), None)
 
     @patch("services.supabase.issues.get_issue.supabase")
@@ -61,7 +63,7 @@ class TestGetIssue(unittest.TestCase):
             "created_by": "test-user",
             "run_id": None,
         }
-        
+
         self._setup_supabase_mock(mock_supabase, [mock_issue_data])
 
         # Execute
@@ -79,7 +81,7 @@ class TestGetIssue(unittest.TestCase):
         self.assertEqual(result["owner_name"], "test-owner")
         self.assertEqual(result["repo_name"], "test-repo")
         self.assertEqual(result["issue_number"], 123)
-        
+
         # Verify the database query was constructed correctly
         mock_supabase.table.assert_called_once_with(table_name="issues")
         mock_supabase.table.return_value.select.assert_called_once_with("*")
@@ -135,7 +137,7 @@ class TestGetIssue(unittest.TestCase):
             "created_by": "individual-user",
             "run_id": 999,
         }
-        
+
         self._setup_supabase_mock(mock_supabase, [mock_issue_data])
 
         # Execute
@@ -187,7 +189,7 @@ class TestGetIssue(unittest.TestCase):
             "created_by": "test-user",
             "run_id": None,
         }
-        
+
         self._setup_supabase_mock(mock_supabase, [mock_issue_data])
 
         # Execute
@@ -207,21 +209,23 @@ class TestGetIssue(unittest.TestCase):
     def test_get_issue_query_parameters_validation(self, mock_supabase):
         """Test that all query parameters are passed correctly to the database"""
         self._setup_supabase_mock(mock_supabase, [self.sample_issue_data])
-        
+
         # Execute
         get_issue(**self.test_params)
-        
+
         # Verify the complete query chain
         mock_supabase.table.assert_called_once_with(table_name="issues")
-        
+
         # Get the mock chain to verify eq calls
         mock_chain = mock_supabase.table.return_value.select.return_value
-        
+
         # Verify select was called
         mock_supabase.table.return_value.select.assert_called_once_with("*")
-        
+
         # The eq calls are chained, so we verify execute was called
-        final_mock = mock_chain.eq.return_value.eq.return_value.eq.return_value.eq.return_value
+        final_mock = (
+            mock_chain.eq.return_value.eq.return_value.eq.return_value.eq.return_value
+        )
         final_mock.execute.assert_called_once()
 
     @patch("services.supabase.issues.get_issue.supabase")
@@ -230,14 +234,14 @@ class TestGetIssue(unittest.TestCase):
         issue_data = self.sample_issue_data.copy()
         issue_data["issue_number"] = 0
         self._setup_supabase_mock(mock_supabase, [issue_data])
-        
+
         result = get_issue(
             owner_type="Organization",
             owner_name="test-owner",
             repo_name="test-repo",
             issue_number=0,
         )
-        
+
         self.assertIsInstance(result, dict)
         self.assertEqual(result["issue_number"], 0)
 
@@ -248,14 +252,14 @@ class TestGetIssue(unittest.TestCase):
         issue_data = self.sample_issue_data.copy()
         issue_data["issue_number"] = large_issue_number
         self._setup_supabase_mock(mock_supabase, [issue_data])
-        
+
         result = get_issue(
             owner_type="User",
             owner_name="test-user",
             repo_name="test-repo",
             issue_number=large_issue_number,
         )
-        
+
         self.assertIsInstance(result, dict)
         self.assertEqual(result["issue_number"], large_issue_number)
 
@@ -267,23 +271,25 @@ class TestGetIssue(unittest.TestCase):
         second_issue = self.sample_issue_data.copy()
         second_issue["id"] = 2
         second_issue["created_at"] = "2024-02-01T00:00:00Z"
-        
+
         self._setup_supabase_mock(mock_supabase, [first_issue, second_issue])
-        
+
         result = get_issue(**self.test_params)
-        
+
         # Should return the first result
         self.assertIsInstance(result, dict)
         self.assertEqual(result["id"], 1)  # First issue's ID
-        self.assertEqual(result["created_at"], "2024-01-01T00:00:00Z")  # First issue's date
+        self.assertEqual(
+            result["created_at"], "2024-01-01T00:00:00Z"
+        )  # First issue's date
 
     @patch("services.supabase.issues.get_issue.supabase")
     def test_get_issue_returns_correct_data_structure(self, mock_supabase):
         """Test that the function returns the correct data structure"""
         self._setup_supabase_mock(mock_supabase, [self.sample_issue_data])
-        
+
         result = get_issue(**self.test_params)
-        
+
         # The cast function from typing just returns the value as-is
         self.assertEqual(result, self.sample_issue_data)
 
@@ -293,11 +299,11 @@ class TestGetIssue(unittest.TestCase):
         issue_data_with_nones = self.sample_issue_data.copy()
         issue_data_with_nones["run_id"] = None
         issue_data_with_nones["created_by"] = None
-        
+
         self._setup_supabase_mock(mock_supabase, [issue_data_with_nones])
-        
+
         result = get_issue(**self.test_params)
-        
+
         self.assertIsInstance(result, dict)
         self.assertIsNone(result["run_id"])
         self.assertIsNone(result["created_by"])
@@ -306,11 +312,13 @@ class TestGetIssue(unittest.TestCase):
     def test_get_issue_supabase_execute_exception(self, mock_supabase):
         """Test exception handling when execute() fails"""
         # Setup mock to raise exception on execute
-        mock_chain = mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.eq.return_value
+        mock_chain = (
+            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.eq.return_value
+        )
         mock_chain.execute.side_effect = Exception("Supabase execute error")
-        
+
         result = get_issue(**self.test_params)
-        
+
         # Should return None due to handle_exceptions decorator
         self.assertIsNone(result)
 
@@ -329,16 +337,16 @@ class TestGetIssue(unittest.TestCase):
             "owner_id": 456,
             "repo_id": 789,
         }
-        
+
         self._setup_supabase_mock(mock_supabase, [minimal_issue_data])
-        
+
         result = get_issue(
             owner_type="Organization",
             owner_name="minimal-owner",
             repo_name="minimal-repo",
             issue_number=1,
         )
-        
+
         self.assertIsInstance(result, dict)
         self.assertEqual(result["id"], 999)
         self.assertEqual(result["owner_type"], "Organization")

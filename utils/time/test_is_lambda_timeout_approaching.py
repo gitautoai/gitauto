@@ -210,15 +210,15 @@ class TestIsLambdaTimeoutApproaching:
             (500, 60, False),  # Under threshold
             (839, 60, False),  # Just under threshold
             (840, 60, False),  # At threshold
-            (841, 60, True),   # Just over threshold
-            (850, 60, True),   # Over threshold
-            (900, 60, True),   # At lambda limit
-            (100, 120, False), # Custom buffer, under threshold
-            (780, 120, False), # Custom buffer, at threshold
+            (841, 60, True),  # Just over threshold
+            (850, 60, True),  # Over threshold
+            (900, 60, True),  # At lambda limit
+            (100, 120, False),  # Custom buffer, under threshold
+            (780, 120, False),  # Custom buffer, at threshold
             (781, 120, True),  # Custom buffer, over threshold
-            (0, 60, False),    # Zero elapsed time
-            (900, 0, False),   # Zero buffer, at limit
-            (901, 0, True),    # Zero buffer, over limit
+            (0, 60, False),  # Zero elapsed time
+            (900, 0, False),  # Zero buffer, at limit
+            (901, 0, True),  # Zero buffer, over limit
         ],
     )
     @patch("utils.time.is_lambda_timeout_approaching.time.time")

@@ -71,7 +71,10 @@ def test_find_config_files_no_config_files():
 
 def test_find_config_files_exact_matches(mock_configuration_files):
     """Test exact filename matches are found correctly."""
-    with patch("services.github.utils.find_config_files.CONFIGURATION_FILES", mock_configuration_files):
+    with patch(
+        "services.github.utils.find_config_files.CONFIGURATION_FILES",
+        mock_configuration_files,
+    ):
         file_tree = [
             "src/main.py",
             "package.json",
@@ -86,7 +89,10 @@ def test_find_config_files_exact_matches(mock_configuration_files):
 
 def test_find_config_files_wildcard_matches(mock_configuration_files):
     """Test wildcard pattern matches are found correctly."""
-    with patch("services.github.utils.find_config_files.CONFIGURATION_FILES", mock_configuration_files):
+    with patch(
+        "services.github.utils.find_config_files.CONFIGURATION_FILES",
+        mock_configuration_files,
+    ):
         file_tree = [
             "src/main.py",
             "project.csproj",
@@ -102,7 +108,10 @@ def test_find_config_files_wildcard_matches(mock_configuration_files):
 
 def test_find_config_files_mixed_matches(mock_configuration_files):
     """Test both exact and wildcard matches work together."""
-    with patch("services.github.utils.find_config_files.CONFIGURATION_FILES", mock_configuration_files):
+    with patch(
+        "services.github.utils.find_config_files.CONFIGURATION_FILES",
+        mock_configuration_files,
+    ):
         file_tree = [
             "src/main.py",
             "package.json",  # exact match
@@ -112,13 +121,21 @@ def test_find_config_files_mixed_matches(mock_configuration_files):
             "README.md",
         ]
         result = find_config_files(file_tree)
-        expected = ["package.json", "project.csproj", "requirements.txt", "infrastructure.tf"]
+        expected = [
+            "package.json",
+            "project.csproj",
+            "requirements.txt",
+            "infrastructure.tf",
+        ]
         assert sorted(result) == sorted(expected)
 
 
 def test_find_config_files_nested_paths(mock_configuration_files):
     """Test that config files in nested paths are found correctly."""
-    with patch("services.github.utils.find_config_files.CONFIGURATION_FILES", mock_configuration_files):
+    with patch(
+        "services.github.utils.find_config_files.CONFIGURATION_FILES",
+        mock_configuration_files,
+    ):
         file_tree = [
             "deep/nested/path/package.json",
             "another/path/requirements.txt",
@@ -129,16 +146,19 @@ def test_find_config_files_nested_paths(mock_configuration_files):
         result = find_config_files(file_tree)
         expected = [
             "deep/nested/path/package.json",
-            "another/path/requirements.txt", 
+            "another/path/requirements.txt",
             "build/project.csproj",
-            "infrastructure/aws/main.tf"
+            "infrastructure/aws/main.tf",
         ]
         assert sorted(result) == sorted(expected)
 
 
 def test_find_config_files_duplicate_matches(mock_configuration_files):
     """Test that duplicate config files are included in results."""
-    with patch("services.github.utils.find_config_files.CONFIGURATION_FILES", mock_configuration_files):
+    with patch(
+        "services.github.utils.find_config_files.CONFIGURATION_FILES",
+        mock_configuration_files,
+    ):
         file_tree = [
             "package.json",
             "frontend/package.json",
@@ -152,7 +172,9 @@ def test_find_config_files_duplicate_matches(mock_configuration_files):
 
 def test_find_config_files_case_sensitive():
     """Test that filename matching is case sensitive."""
-    with patch("services.github.utils.find_config_files.CONFIGURATION_FILES", ["package.json"]):
+    with patch(
+        "services.github.utils.find_config_files.CONFIGURATION_FILES", ["package.json"]
+    ):
         file_tree = [
             "package.json",  # exact match
             "Package.json",  # different case
@@ -165,11 +187,13 @@ def test_find_config_files_case_sensitive():
 
 def test_find_config_files_wildcard_case_sensitive():
     """Test that wildcard matching is case sensitive."""
-    with patch("services.github.utils.find_config_files.CONFIGURATION_FILES", ["*.csproj"]):
+    with patch(
+        "services.github.utils.find_config_files.CONFIGURATION_FILES", ["*.csproj"]
+    ):
         file_tree = [
             "project.csproj",  # exact match
             "Project.CSPROJ",  # different case
-            "build.Csproj",   # different case
+            "build.Csproj",  # different case
             "src/main.py",
         ]
         result = find_config_files(file_tree)
@@ -178,25 +202,32 @@ def test_find_config_files_wildcard_case_sensitive():
 
 def test_find_config_files_partial_wildcard_matches():
     """Test that partial wildcard matches don't match incorrectly."""
-    with patch("services.github.utils.find_config_files.CONFIGURATION_FILES", ["*.csproj"]):
+    with patch(
+        "services.github.utils.find_config_files.CONFIGURATION_FILES", ["*.csproj"]
+    ):
         file_tree = [
-            "project.csproj",      # should match
+            "project.csproj",  # should match
             "project.csproj.bak",  # should not match (extra extension)
-            "csproj.file",         # should not match (wrong position)
-            "my.csproj.old",       # should not match (extra extension)
+            "csproj.file",  # should not match (wrong position)
+            "my.csproj.old",  # should not match (extra extension)
             "src/main.py",
         ]
         result = find_config_files(file_tree)
         assert result == ["project.csproj"]
 
 
-def test_find_config_files_comprehensive_sample(sample_file_tree, mock_configuration_files):
+def test_find_config_files_comprehensive_sample(
+    sample_file_tree, mock_configuration_files
+):
     """Test comprehensive scenario with sample file tree."""
-    with patch("services.github.utils.find_config_files.CONFIGURATION_FILES", mock_configuration_files):
+    with patch(
+        "services.github.utils.find_config_files.CONFIGURATION_FILES",
+        mock_configuration_files,
+    ):
         result = find_config_files(sample_file_tree)
         expected = [
             "package.json",
-            "requirements.txt", 
+            "requirements.txt",
             "Dockerfile",
             "project.csproj",
             "build/output.vcxproj",
@@ -234,10 +265,13 @@ def test_find_config_files_with_non_list_input():
 
 def test_find_config_files_preserves_order():
     """Test that the function preserves the order of found config files."""
-    with patch("services.github.utils.find_config_files.CONFIGURATION_FILES", ["package.json", "requirements.txt"]):
+    with patch(
+        "services.github.utils.find_config_files.CONFIGURATION_FILES",
+        ["package.json", "requirements.txt"],
+    ):
         file_tree = [
             "requirements.txt",
-            "src/main.py", 
+            "src/main.py",
             "package.json",
             "docs/readme.md",
         ]
@@ -252,7 +286,7 @@ def test_find_config_files_with_real_configuration_files():
     file_tree = [
         "src/main.py",
         "package.json",
-        "requirements.txt", 
+        "requirements.txt",
         "Dockerfile",
         "docker-compose.yml",
         "tsconfig.json",
@@ -269,9 +303,9 @@ def test_find_config_files_with_real_configuration_files():
         "README.md",  # Should not match
         "src/utils/helper.py",  # Should not match
     ]
-    
+
     result = find_config_files(file_tree)
-    
+
     # Should find all the config files but not the non-config files
     assert "package.json" in result
     assert "requirements.txt" in result
@@ -295,18 +329,20 @@ def test_find_config_files_potential_duplicate_matches():
     # Create a scenario where a file could potentially match both patterns
     mock_config_files = [
         "test.config",  # exact match
-        "*.config",     # wildcard match - same file could match both
+        "*.config",  # wildcard match - same file could match both
     ]
-    
-    with patch("services.github.utils.find_config_files.CONFIGURATION_FILES", mock_config_files):
+
+    with patch(
+        "services.github.utils.find_config_files.CONFIGURATION_FILES", mock_config_files
+    ):
         file_tree = [
             "src/main.py",
             "test.config",  # This matches both "test.config" exactly and "*.config" wildcard
-            "app.config",   # This matches only "*.config" wildcard
+            "app.config",  # This matches only "*.config" wildcard
             "README.md",
         ]
-        
+
         result = find_config_files(file_tree)
-        
+
         # The file should appear twice since the function adds it for each match
         assert result.count("test.config") == 2  # Once for exact, once for wildcard

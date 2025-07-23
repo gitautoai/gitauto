@@ -110,7 +110,7 @@ def test_subscribe_to_free_plan_handles_exception(mock_stripe):
     owner_id = 12345
     owner_name = "test-owner"
     installation_id = 67890
-    
+
     # Configure mock to raise an exception
     mock_stripe.Subscription.create.side_effect = Exception("Test exception")
 
@@ -123,7 +123,9 @@ def test_subscribe_to_free_plan_handles_exception(mock_stripe):
     )
 
     # Assert
-    assert result is None  # Function should return None due to @handle_exceptions decorator
+    assert (
+        result is None
+    )  # Function should return None due to @handle_exceptions decorator
 
 
 def test_subscribe_to_free_plan_with_zero_values(mock_stripe):

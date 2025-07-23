@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import sys
 import pytest
 
@@ -8,12 +8,7 @@ from config import (
     ANTHROPIC_MODEL_ID_40,
     OPENAI_MODEL_ID_O3_MINI,
 )
-from services.model_selection import (
-    MODEL_CHAIN,
-    get_model,
-    try_next_model,
-    _current_model,
-)
+from services.model_selection import MODEL_CHAIN, get_model, try_next_model
 
 
 @pytest.fixture

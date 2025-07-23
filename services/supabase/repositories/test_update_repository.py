@@ -26,7 +26,9 @@ class TestUpdateRepository(unittest.TestCase):
         # Setup
         mock_result = MagicMock()
         mock_result.data = [{"id": 1, "repo_id": self.test_repo_id}]
-        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_result
+        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+            mock_result
+        )
 
         # Execute
         result = update_repository(
@@ -42,19 +44,21 @@ class TestUpdateRepository(unittest.TestCase):
         # Assert
         self.assertEqual(result, {"id": 1, "repo_id": self.test_repo_id})
         mock_supabase.table.assert_called_once_with("repositories")
-        
+
         # Verify the update data structure
         update_call_args = mock_supabase.table.return_value.update.call_args[0][0]
         expected_updated_by = f"{self.test_user_id}:{self.test_user_name}"
-        
+
         self.assertEqual(update_call_args["file_count"], self.test_file_count)
         self.assertEqual(update_call_args["blank_lines"], self.test_blank_lines)
         self.assertEqual(update_call_args["comment_lines"], self.test_comment_lines)
         self.assertEqual(update_call_args["code_lines"], self.test_code_lines)
         self.assertEqual(update_call_args["updated_by"], expected_updated_by)
-        
+
         # Verify the query chain
-        mock_supabase.table.return_value.update.return_value.eq.assert_called_once_with("repo_id", self.test_repo_id)
+        mock_supabase.table.return_value.update.return_value.eq.assert_called_once_with(
+            "repo_id", self.test_repo_id
+        )
 
     @patch("services.supabase.repositories.update_repository.supabase")
     def test_update_repository_empty_result(self, mock_supabase):
@@ -62,7 +66,9 @@ class TestUpdateRepository(unittest.TestCase):
         # Setup
         mock_result = MagicMock()
         mock_result.data = []
-        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_result
+        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+            mock_result
+        )
 
         # Execute
         result = update_repository(
@@ -85,7 +91,9 @@ class TestUpdateRepository(unittest.TestCase):
         # Setup
         mock_result = MagicMock()
         mock_result.data = None
-        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_result
+        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+            mock_result
+        )
 
         # Execute
         result = update_repository(
@@ -107,7 +115,9 @@ class TestUpdateRepository(unittest.TestCase):
         # Setup
         mock_result = MagicMock()
         mock_result.data = [{"id": 1, "repo_id": self.test_repo_id}]
-        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_result
+        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+            mock_result
+        )
 
         # Execute
         result = update_repository(
@@ -122,7 +132,7 @@ class TestUpdateRepository(unittest.TestCase):
 
         # Assert
         self.assertEqual(result, {"id": 1, "repo_id": self.test_repo_id})
-        
+
         # Verify zero values are properly handled
         update_call_args = mock_supabase.table.return_value.update.call_args[0][0]
         self.assertEqual(update_call_args["file_count"], 0)
@@ -137,7 +147,9 @@ class TestUpdateRepository(unittest.TestCase):
         special_username = "test-user@domain.com"
         mock_result = MagicMock()
         mock_result.data = [{"id": 1, "repo_id": self.test_repo_id}]
-        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_result
+        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+            mock_result
+        )
 
         # Execute
         result = update_repository(
@@ -152,7 +164,7 @@ class TestUpdateRepository(unittest.TestCase):
 
         # Assert
         self.assertEqual(result, {"id": 1, "repo_id": self.test_repo_id})
-        
+
         # Verify special characters are handled correctly
         update_call_args = mock_supabase.table.return_value.update.call_args[0][0]
         expected_updated_by = f"{self.test_user_id}:{special_username}"
@@ -170,7 +182,9 @@ class TestUpdateRepository(unittest.TestCase):
         }
         mock_result = MagicMock()
         mock_result.data = [{"id": 1, "repo_id": self.test_repo_id}]
-        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_result
+        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+            mock_result
+        )
 
         # Execute
         result = update_repository(
@@ -182,7 +196,7 @@ class TestUpdateRepository(unittest.TestCase):
 
         # Assert
         self.assertEqual(result, {"id": 1, "repo_id": self.test_repo_id})
-        
+
         # Verify large values are handled correctly
         update_call_args = mock_supabase.table.return_value.update.call_args[0][0]
         for key, value in large_values.items():
@@ -192,7 +206,9 @@ class TestUpdateRepository(unittest.TestCase):
     def test_update_repository_exception_handling(self, mock_supabase):
         """Test repository update exception handling"""
         # Setup
-        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.side_effect = Exception("Database error")
+        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.side_effect = Exception(
+            "Database error"
+        )
 
         # Execute
         result = update_repository(
@@ -224,7 +240,9 @@ class TestUpdateRepository(unittest.TestCase):
         self.assertEqual(repository_data.blank_lines, self.test_blank_lines)
         self.assertEqual(repository_data.comment_lines, self.test_comment_lines)
         self.assertEqual(repository_data.code_lines, self.test_code_lines)
-        self.assertEqual(repository_data.updated_by, f"{self.test_user_id}:{self.test_user_name}")
+        self.assertEqual(
+            repository_data.updated_by, f"{self.test_user_id}:{self.test_user_name}"
+        )
 
     def test_repositories_update_schema_model_dump(self):
         """Test RepositoriesUpdate schema model_dump with exclude_none"""
@@ -239,6 +257,12 @@ class TestUpdateRepository(unittest.TestCase):
         data_dict = repository_data.model_dump(exclude_none=True)
 
         # Assert
-        expected_keys = {"file_count", "blank_lines", "comment_lines", "code_lines", "updated_by"}
+        expected_keys = {
+            "file_count",
+            "blank_lines",
+            "comment_lines",
+            "code_lines",
+            "updated_by",
+        }
         self.assertEqual(set(data_dict.keys()), expected_keys)
         self.assertNotIn(None, data_dict.values())
