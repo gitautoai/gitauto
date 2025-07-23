@@ -70,21 +70,24 @@ def test_check_email_is_valid_with_at_and_dot_only():
     assert check_email_is_valid("@.") is True
 
 
-@pytest.mark.parametrize("email,expected", [
-    ("user@example.com", True),
-    ("test.email@domain.org", True),
-    ("user+tag@example.co.uk", True),
-    ("user123@test-domain.com", True),
-    ("user@sub.domain.example.com", True),
-    ("user@users.noreply.github.com", False),
-    ("123456+username@users.noreply.github.com", False),
-    ("user@example", False),
-    ("@example.com", True),
-    ("user@", False),
-    ("user.example.com", False),
-    ("", False),
-    (None, False),
-])
+@pytest.mark.parametrize(
+    "email,expected",
+    [
+        ("user@example.com", True),
+        ("test.email@domain.org", True),
+        ("user+tag@example.co.uk", True),
+        ("user123@test-domain.com", True),
+        ("user@sub.domain.example.com", True),
+        ("user@users.noreply.github.com", False),
+        ("123456+username@users.noreply.github.com", False),
+        ("user@example", False),
+        ("@example.com", True),
+        ("user@", False),
+        ("user.example.com", False),
+        ("", False),
+        (None, False),
+    ],
+)
 def test_check_email_is_valid_parametrized(email, expected):
     """Test various email formats with parametrized inputs."""
     assert check_email_is_valid(email) is expected
@@ -92,7 +95,10 @@ def test_check_email_is_valid_parametrized(email, expected):
 
 def test_check_email_is_valid_with_mocked_github_domain():
     """Test that function correctly uses the GitHub domain constant."""
-    with patch("utils.email.check_email_is_valid.GITHUB_NOREPLY_EMAIL_DOMAIN", "test.domain.com"):
+    with patch(
+        "utils.email.check_email_is_valid.GITHUB_NOREPLY_EMAIL_DOMAIN",
+        "test.domain.com",
+    ):
         assert check_email_is_valid("user@test.domain.com") is False
         assert check_email_is_valid("user@other.domain.com") is True
 
@@ -101,7 +107,7 @@ def test_check_email_is_valid_case_insensitive_github_domain():
     """Test that GitHub domain check is case insensitive."""
     test_emails = [
         "user@users.noreply.github.com",
-        "user@USERS.NOREPLY.GITHUB.COM", 
+        "user@USERS.NOREPLY.GITHUB.COM",
         "user@Users.NoReply.GitHub.Com",
         "user@users.NOREPLY.github.COM",
     ]
@@ -132,13 +138,13 @@ def test_check_email_is_valid_edge_cases():
     """Test edge cases for email validation."""
     # Minimum valid email format
     assert check_email_is_valid("a@b.c") is True
-    
+
     # Multiple @ symbols (still considered valid by this simple validator)
     assert check_email_is_valid("user@@example.com") is True
-    
+
     # Multiple dots in domain
     assert check_email_is_valid("user@example..com") is True
-    
+
     # Email starting/ending with special characters
     assert check_email_is_valid(".user@example.com") is True
     assert check_email_is_valid("user.@example.com") is True

@@ -129,8 +129,8 @@ def test_create_remote_branch_with_different_shas(mock_requests_post, mock_creat
         assert call_args[1]["json"]["sha"] == sha
 
 
-def test_create_remote_branch_http_error_handled(mock_create_headers, sample_base_args, sample_sha):
-    """Test that HTTP errors are handled by the decorator."""
+def test_create_remote_branch_http_error_raised(mock_create_headers, sample_base_args, sample_sha):
+    """Test that HTTP errors are raised due to raise_on_error=True."""
     with patch("services.github.branches.create_remote_branch.requests.post") as mock_post:
         # Mock an HTTP error response
         mock_response = MagicMock()
@@ -143,36 +143,42 @@ def test_create_remote_branch_http_error_handled(mock_create_headers, sample_bas
         mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
         
-        # The function should return None due to handle_exceptions decorator
-        result = create_remote_branch(sha=sample_sha, base_args=sample_base_args)
-        assert result is None
+        # The function should raise HTTPError due to raise_on_error=True
+        with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+            create_remote_branch(sha=sample_sha, base_args=sample_base_args)
+        
+        assert str(exc_info.value) == "404 Not Found"
         
         # Verify the request was still made
         mock_post.assert_called_once()
         mock_response.raise_for_status.assert_called_once()
 
 
-def test_create_remote_branch_request_timeout_handled(mock_create_headers, sample_base_args, sample_sha):
-    """Test that request timeout is handled by the decorator."""
+def test_create_remote_branch_request_timeout_raised(mock_create_headers, sample_base_args, sample_sha):
+    """Test that request timeout is raised due to raise_on_error=True."""
     with patch("services.github.branches.create_remote_branch.requests.post") as mock_post:
         mock_post.side_effect = requests.exceptions.Timeout("Request timed out")
         
-        # The function should return None due to handle_exceptions decorator
-        result = create_remote_branch(sha=sample_sha, base_args=sample_base_args)
-        assert result is None
+        # The function should raise Timeout due to raise_on_error=True
+        with pytest.raises(requests.exceptions.Timeout) as exc_info:
+            create_remote_branch(sha=sample_sha, base_args=sample_base_args)
+        
+        assert str(exc_info.value) == "Request timed out"
         
         # Verify the request was attempted
         mock_post.assert_called_once()
 
 
-def test_create_remote_branch_connection_error_handled(mock_create_headers, sample_base_args, sample_sha):
-    """Test that connection errors are handled by the decorator."""
+def test_create_remote_branch_connection_error_raised(mock_create_headers, sample_base_args, sample_sha):
+    """Test that connection errors are raised due to raise_on_error=True."""
     with patch("services.github.branches.create_remote_branch.requests.post") as mock_post:
         mock_post.side_effect = requests.exceptions.ConnectionError("Connection failed")
         
-        # The function should return None due to handle_exceptions decorator
-        result = create_remote_branch(sha=sample_sha, base_args=sample_base_args)
-        assert result is None
+        # The function should raise ConnectionError due to raise_on_error=True
+        with pytest.raises(requests.exceptions.ConnectionError) as exc_info:
+            create_remote_branch(sha=sample_sha, base_args=sample_base_args)
+        
+        assert str(exc_info.value) == "Connection failed"
         
         # Verify the request was attempted
         mock_post.assert_called_once()
@@ -302,21 +308,23 @@ def test_create_remote_branch_with_empty_values(mock_requests_post, mock_create_
     (ValueError, "Value Error"),
     (KeyError, "Key Error"),
 ])
-def test_create_remote_branch_handles_various_exceptions(mock_create_headers, sample_base_args, sample_sha, error_type, error_message):
-    """Test that various exception types are handled by the decorator."""
+def test_create_remote_branch_raises_various_exceptions(mock_create_headers, sample_base_args, sample_sha, error_type, error_message):
+    """Test that various exception types are raised due to raise_on_error=True."""
     with patch("services.github.branches.create_remote_branch.requests.post") as mock_post:
         mock_post.side_effect = error_type(error_message)
         
-        # The function should return None due to handle_exceptions decorator
-        result = create_remote_branch(sha=sample_sha, base_args=sample_base_args)
-        assert result is None
+        # The function should raise the exception due to raise_on_error=True
+        with pytest.raises(error_type) as exc_info:
+            create_remote_branch(sha=sample_sha, base_args=sample_base_args)
+        
+        assert str(exc_info.value) == error_message
         
         # Verify the request was attempted
         mock_post.assert_called_once()
 
 
-def test_create_remote_branch_handles_http_error_exception(mock_create_headers, sample_base_args, sample_sha):
-    """Test that HTTPError is handled by the decorator with proper response object."""
+def test_create_remote_branch_raises_http_error_exception(mock_create_headers, sample_base_args, sample_sha):
+    """Test that HTTPError is raised due to raise_on_error=True with proper response object."""
     with patch("services.github.branches.create_remote_branch.requests.post") as mock_post:
         # Create a proper HTTPError with response object
         mock_response = MagicMock()
@@ -327,9 +335,11 @@ def test_create_remote_branch_handles_http_error_exception(mock_create_headers, 
         http_error.response = mock_response
         mock_post.side_effect = http_error
         
-        # The function should return None due to handle_exceptions decorator
-        result = create_remote_branch(sha=sample_sha, base_args=sample_base_args)
-        assert result is None
+        # The function should raise HTTPError due to raise_on_error=True
+        with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+            create_remote_branch(sha=sample_sha, base_args=sample_base_args)
+        
+        assert str(exc_info.value) == "HTTP Error"
         
         # Verify the request was attempted
         mock_post.assert_called_once()
