@@ -1,6 +1,5 @@
-import pytest
 from unittest.mock import patch
-
+import pytest
 from config import PRODUCT_NAME
 from constants.messages import SETTINGS_LINKS
 from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
