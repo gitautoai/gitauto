@@ -1,4 +1,3 @@
-import pytest
 from tests.constants import OWNER, REPO
 from utils.urls.parse_urls import parse_github_url
 
@@ -6,7 +5,7 @@ from utils.urls.parse_urls import parse_github_url
 def test_parse_github_url_basic():
     url = f"https://github.com/{OWNER}/{REPO}/blob/main/utils/urls/parse_urls.py"
     result = parse_github_url(url)
-    
+
     assert result["owner"] == OWNER
     assert result["repo"] == REPO
     assert result["ref"] == "main"
@@ -18,7 +17,7 @@ def test_parse_github_url_basic():
 def test_parse_github_url_with_start_line():
     url = f"https://github.com/{OWNER}/{REPO}/blob/main/utils/urls/parse_urls.py#L10"
     result = parse_github_url(url)
-    
+
     assert result["owner"] == OWNER
     assert result["repo"] == REPO
     assert result["ref"] == "main"
@@ -28,9 +27,11 @@ def test_parse_github_url_with_start_line():
 
 
 def test_parse_github_url_with_line_range():
-    url = f"https://github.com/{OWNER}/{REPO}/blob/main/utils/urls/parse_urls.py#L10-L20"
+    url = (
+        f"https://github.com/{OWNER}/{REPO}/blob/main/utils/urls/parse_urls.py#L10-L20"
+    )
     result = parse_github_url(url)
-    
+
     assert result["owner"] == OWNER
     assert result["repo"] == REPO
     assert result["ref"] == "main"
@@ -40,9 +41,11 @@ def test_parse_github_url_with_line_range():
 
 
 def test_parse_github_url_with_commit_hash():
-    url = f"https://github.com/{OWNER}/{REPO}/blob/a1b2c3d4e5f6/utils/urls/parse_urls.py"
+    url = (
+        f"https://github.com/{OWNER}/{REPO}/blob/a1b2c3d4e5f6/utils/urls/parse_urls.py"
+    )
     result = parse_github_url(url)
-    
+
     assert result["owner"] == OWNER
     assert result["repo"] == REPO
     assert result["ref"] == "a1b2c3d4e5f6"
@@ -54,7 +57,7 @@ def test_parse_github_url_with_commit_hash():
 def test_parse_github_url_with_feature_branch():
     url = f"https://github.com/{OWNER}/{REPO}/blob/feature-branch/utils/urls/parse_urls.py"
     result = parse_github_url(url)
-    
+
     assert result["owner"] == OWNER
     assert result["repo"] == REPO
     assert result["ref"] == "feature-branch"
@@ -66,7 +69,7 @@ def test_parse_github_url_with_feature_branch():
 def test_parse_github_url_with_nested_path():
     url = f"https://github.com/{OWNER}/{REPO}/blob/main/deeply/nested/path/to/file.py"
     result = parse_github_url(url)
-    
+
     assert result["owner"] == OWNER
     assert result["repo"] == REPO
     assert result["ref"] == "main"
@@ -78,7 +81,7 @@ def test_parse_github_url_with_nested_path():
 def test_parse_github_url_with_empty_line_number():
     url = f"https://github.com/{OWNER}/{REPO}/blob/main/utils/urls/parse_urls.py#L"
     result = parse_github_url(url)
-    
+
     assert result["owner"] == OWNER
     assert result["repo"] == REPO
     assert result["ref"] == "main"
@@ -90,7 +93,7 @@ def test_parse_github_url_with_empty_line_number():
 def test_parse_github_url_with_empty_end_line():
     url = f"https://github.com/{OWNER}/{REPO}/blob/main/utils/urls/parse_urls.py#L10-L"
     result = parse_github_url(url)
-    
+
     assert result["owner"] == OWNER
     assert result["repo"] == REPO
     assert result["ref"] == "main"

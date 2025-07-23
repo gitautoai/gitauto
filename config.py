@@ -92,6 +92,7 @@ ENV: str = get_env_var(name="ENV")
 EXCEPTION_OWNERS = ["gitautoai", "Suchica", "hiroshinishio"]
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
 FREE_TIER_REQUEST_AMOUNT = 3
+CREDIT_USAGE_COST_USD = 2
 ISSUE_NUMBER_FORMAT = "/issue-"  # DO NOT USE "#" as it is a special character and has to be encoded in URL, like in GitHub API URL
 MAX_RETRIES = 3
 PER_PAGE = 100

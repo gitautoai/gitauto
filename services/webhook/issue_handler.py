@@ -40,6 +40,7 @@ from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase, Webhook)
 from services.supabase.create_user_request import create_user_request
+from services.supabase.credits.insert_credit import insert_credit
 from services.supabase.usage.insert_usage import Trigger
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 from services.supabase.usage.update_usage import update_usage
@@ -136,7 +137,7 @@ async def create_pr_from_issue(
     )
 
     # Check if the user has reached the request limit
-    is_limit_reached, requests_left, request_limit, end_date = is_request_limit_reached(
+    limit_result = is_request_limit_reached(
         installation_id=installation_id,
         owner_id=owner_id,
         owner_name=owner_name,
@@ -144,6 +145,11 @@ async def create_pr_from_issue(
         repo_name=repo_name,
         issue_number=issue_number,
     )
+    is_limit_reached = limit_result["is_limit_reached"]
+    requests_left = limit_result["requests_left"]
+    request_limit = limit_result["request_limit"]
+    end_date = limit_result["end_date"]
+    is_credit_user = limit_result["is_credit_user"]
     p += 5
     log_messages.append(f"Checked request limit. {requests_left} requests left.")
     update_comment(
@@ -164,7 +170,7 @@ async def create_pr_from_issue(
         return
 
     # Create a usage record
-    usage_record_id = create_user_request(
+    usage_id = create_user_request(
         user_id=sender_id if input_from == "github" else 0,
         user_name=sender_name,
         installation_id=installation_id,
@@ -463,13 +469,17 @@ async def create_pr_from_issue(
 
     end_time = time.time()
     update_usage(
-        usage_record_id=usage_record_id,
+        usage_id=usage_id,
         is_completed=is_completed,
         pr_number=pr_number,
         token_input=0,
         token_output=0,
         total_seconds=int(end_time - current_time),
     )
+
+    # Insert credit usage if user is using credits (not paid subscription)
+    if is_completed and is_credit_user:
+        insert_credit(owner_id=owner_id, usage_id=usage_id)
 
     # End notification
     end_msg = "Completed" if is_completed else "@channel Failed"

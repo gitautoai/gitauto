@@ -21,7 +21,7 @@ def combine_and_create_comment(
     base_args: dict[str, Any],
 ) -> None:
     # Check usage limits
-    is_limit_reached, requests_left, request_limit, end_date = is_request_limit_reached(
+    limit_result = is_request_limit_reached(
         installation_id=installation_id,
         owner_id=owner_id,
         owner_name=owner_name,
@@ -29,6 +29,10 @@ def combine_and_create_comment(
         repo_name=repo_name,
         issue_number=issue_number,
     )
+    is_limit_reached = limit_result["is_limit_reached"]
+    requests_left = limit_result["requests_left"]
+    request_limit = limit_result["request_limit"]
+    end_date = limit_result["end_date"]
 
     # Build comment body
     body = base_comment

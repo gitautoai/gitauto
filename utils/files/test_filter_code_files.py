@@ -14,7 +14,7 @@ def test_filter_code_files_code_files_only():
         "lib/module.rb",
         "package/file.go",
         "script.sh",
-        "config.ini"
+        "config.ini",
     ]
     result = filter_code_files(filenames)
     assert result == filenames
@@ -23,7 +23,7 @@ def test_filter_code_files_code_files_only():
 def test_filter_code_files_non_code_extensions():
     filenames = [
         "README.md",
-        "notes.txt", 
+        "notes.txt",
         "config.json",
         "data.xml",
         "settings.yml",
@@ -39,7 +39,7 @@ def test_filter_code_files_non_code_extensions():
         "favicon.ico",
         "document.pdf",
         "package.lock",
-        "environment.env"
+        "environment.env",
     ]
     result = filter_code_files(filenames)
     assert result == []
@@ -57,7 +57,7 @@ def test_filter_code_files_test_patterns():
         "__tests__/component.js",
         "mock_data.py",
         "stub_service.py",
-        "fixture_setup.py"
+        "fixture_setup.py",
     ]
     result = filter_code_files(filenames)
     assert result == []
@@ -74,7 +74,7 @@ def test_filter_code_files_mixed_files():
         "src/app.js",
         "src/app.spec.js",
         "style.css",
-        "script.sh"
+        "script.sh",
     ]
     expected = ["main.py", "utils/helper.py", "src/app.js", "script.sh"]
     result = filter_code_files(filenames)
@@ -89,7 +89,7 @@ def test_filter_code_files_case_insensitive_test_patterns():
         "TESTS/unit.py",
         "MOCK_data.py",
         "STUB_service.py",
-        "FIXTURE_setup.py"
+        "FIXTURE_setup.py",
     ]
     result = filter_code_files(filenames)
     assert result == []
@@ -102,7 +102,7 @@ def test_filter_code_files_partial_matches():
         "specification.py",
         "mockingbird.py",
         "stubborn.py",
-        "fixtures.py"
+        "fixtures.py",
     ]
     result = filter_code_files(filenames)
     assert result == ["testing.py", "contested.py", "specification.py"]
@@ -115,9 +115,16 @@ def test_filter_code_files_edge_cases():
         "file.",
         ".hidden",
         "path/to/file.py",
-        "very/long/path/to/deeply/nested/file.js"
+        "very/long/path/to/deeply/nested/file.js",
     ]
-    expected = ["", "file", "file.", ".hidden", "path/to/file.py", "very/long/path/to/deeply/nested/file.js"]
+    expected = [
+        "",
+        "file",
+        "file.",
+        ".hidden",
+        "path/to/file.py",
+        "very/long/path/to/deeply/nested/file.js",
+    ]
     result = filter_code_files(filenames)
     assert result == expected
 
@@ -130,20 +137,46 @@ def test_filter_code_files_exception_handling():
 
 
 def test_filter_code_files_all_non_code_extensions():
-    filenames = [f"file{ext}" for ext in [
-        ".md", ".txt", ".json", ".xml", ".yml", ".yaml", ".csv", 
-        ".html", ".css", ".svg", ".png", ".jpg", ".jpeg", ".gif", 
-        ".ico", ".pdf", ".lock", ".env"
-    ]]
+    filenames = [
+        f"file{ext}"
+        for ext in [
+            ".md",
+            ".txt",
+            ".json",
+            ".xml",
+            ".yml",
+            ".yaml",
+            ".csv",
+            ".html",
+            ".css",
+            ".svg",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".ico",
+            ".pdf",
+            ".lock",
+            ".env",
+        ]
+    ]
     result = filter_code_files(filenames)
     assert result == []
 
 
 def test_filter_code_files_all_test_patterns():
     filenames = [
-        "test_file.py", "file_test.py", "file.spec.py", "file.spec.js",
-        "tests/file.py", "test/file.py", "specs/file.py", "__tests__/file.js",
-        "mock_file.py", "stub_file.py", "fixture_file.py"
+        "test_file.py",
+        "file_test.py",
+        "file.spec.py",
+        "file.spec.js",
+        "tests/file.py",
+        "test/file.py",
+        "specs/file.py",
+        "__tests__/file.js",
+        "mock_file.py",
+        "stub_file.py",
+        "fixture_file.py",
     ]
     result = filter_code_files(filenames)
     assert result == []
@@ -156,7 +189,7 @@ def test_filter_code_files_complex_scenarios():
         "docs/README.md",
         "config/settings.json",
         "lib/utils.js",
-        "tests/mock_data.json"
+        "tests/mock_data.json",
     ]
     expected = ["src/main.py", "lib/utils.js"]
     result = filter_code_files(filenames)

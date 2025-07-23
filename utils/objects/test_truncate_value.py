@@ -92,13 +92,13 @@ def test_truncate_nested_structures():
     input_data = {
         "list": ["this is a very long string", "short"],
         "tuple": ("this is a very long string", "short"),
-        "dict": {"nested": "this is a very long string"}
+        "dict": {"nested": "this is a very long string"},
     }
     result = truncate_value(input_data, 10)
     expected = {
         "list": ["this is a ...", "short"],
         "tuple": ("this is a ...", "short"),
-        "dict": {"nested": "this is a ..."}
+        "dict": {"nested": "this is a ..."},
     }
     assert result == expected
 
@@ -121,7 +121,7 @@ def test_truncate_complex_nested_structure():
         {
             "users": [
                 ("this is a very long username", "this is a very long email"),
-                {"name": "this is a very long name", "age": 25}
+                {"name": "this is a very long name", "age": 25},
             ]
         }
     ]
@@ -130,7 +130,7 @@ def test_truncate_complex_nested_structure():
         {
             "users": [
                 ("this is a very ...", "this is a very ..."),
-                {"name": "this is a very ...", "age": 25}
+                {"name": "this is a very ...", "age": 25},
             ]
         }
     ]

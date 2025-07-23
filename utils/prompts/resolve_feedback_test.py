@@ -1,4 +1,3 @@
-import pytest
 import re
 from utils.prompts.resolve_feedback import RESOLVE_FEEDBACK
 
@@ -30,9 +29,9 @@ def test_resolve_feedback_contains_input_description():
         "body",
         "changes",
         "workflow file content",
-        "check run error log"
+        "check run error log",
     ]
-    
+
     for input_type in expected_inputs:
         assert input_type in RESOLVE_FEEDBACK.lower()
 
@@ -41,10 +40,10 @@ def test_resolve_feedback_contains_output_format():
     """Test that the prompt specifies the expected output format."""
     expected_sections = [
         "## What the feedback is",
-        "## Where to change", 
-        "## How to change"
+        "## Where to change",
+        "## How to change",
     ]
-    
+
     for section in expected_sections:
         assert section in RESOLVE_FEEDBACK
 
@@ -58,34 +57,34 @@ def test_resolve_feedback_mentions_language_adaptation():
 def test_resolve_feedback_emphasizes_conciseness():
     """Test that the prompt emphasizes concise output."""
     conciseness_keywords = ["concise", "point", "not be long"]
-    
+
     for keyword in conciseness_keywords:
         assert keyword in RESOLVE_FEEDBACK.lower()
 
 
 def test_resolve_feedback_has_proper_structure():
     """Test that the prompt has proper markdown structure."""
-    lines = RESOLVE_FEEDBACK.strip().split('\n')
-    
+    lines = RESOLVE_FEEDBACK.strip().split("\n")
+
     # Should have multiple lines
     assert len(lines) > 1
-    
+
     # Should contain markdown headers
-    header_lines = [line for line in lines if line.startswith('##')]
+    header_lines = [line for line in lines if line.startswith("##")]
     assert len(header_lines) == 3
 
 
 def test_resolve_feedback_multiline_format():
     """Test that the prompt is properly formatted as a multiline string."""
-    assert '\n' in RESOLVE_FEEDBACK
-    assert RESOLVE_FEEDBACK.startswith('\n')
-    assert RESOLVE_FEEDBACK.endswith('\n')
+    assert "\n" in RESOLVE_FEEDBACK
+    assert RESOLVE_FEEDBACK.startswith("\n")
+    assert RESOLVE_FEEDBACK.endswith("\n")
 
 
 def test_resolve_feedback_immutable():
     """Test that RESOLVE_FEEDBACK behaves as an immutable constant."""
     original_content = RESOLVE_FEEDBACK
-    
+
     # Verify the constant hasn't changed after access
     assert RESOLVE_FEEDBACK == original_content
     assert id(RESOLVE_FEEDBACK) == id(original_content)
@@ -99,23 +98,23 @@ def test_resolve_feedback_contains_expected_keywords():
         "feedback",
         "plan",
         "fix",
-        "error"
+        "error",
     ]
-    
+
     for keyword in expected_keywords:
         assert keyword in RESOLVE_FEEDBACK.lower(), f"Missing keyword: {keyword}"
 
 
 def test_resolve_feedback_markdown_headers_format():
     """Test that markdown headers are properly formatted."""
-    headers = re.findall(r'^## .+$', RESOLVE_FEEDBACK, re.MULTILINE)
-    
+    headers = re.findall(r"^## .+$", RESOLVE_FEEDBACK, re.MULTILINE)
+
     expected_headers = [
         "## What the feedback is",
         "## Where to change",
-        "## How to change"
+        "## How to change",
     ]
-    
+
     assert len(headers) == 3
     for expected_header in expected_headers:
         assert expected_header in headers
@@ -123,24 +122,26 @@ def test_resolve_feedback_markdown_headers_format():
 
 def test_resolve_feedback_no_trailing_whitespace():
     """Test that the prompt doesn't have excessive trailing whitespace."""
-    lines = RESOLVE_FEEDBACK.split('\n')
-    
+    lines = RESOLVE_FEEDBACK.split("\n")
+
     # Check that no line has trailing whitespace (except the last empty line)
     for i, line in enumerate(lines[:-1]):  # Exclude the last line
         if line:  # Skip empty lines
-            assert not line.endswith(' '), f"Line {i+1} has trailing whitespace: '{line}'"
+            assert not line.endswith(
+                " "
+            ), f"Line {i + 1} has trailing whitespace: '{line}'"
 
 
 def test_resolve_feedback_consistent_formatting():
     """Test that the prompt has consistent formatting throughout."""
-    lines = RESOLVE_FEEDBACK.strip().split('\n')
-    
+    lines = RESOLVE_FEEDBACK.strip().split("\n")
+
     # Find header lines
-    header_lines = [i for i, line in enumerate(lines) if line.startswith('##')]
-    
+    header_lines = [i for i, line in enumerate(lines) if line.startswith("##")]
+
     # Verify headers are properly spaced
     assert len(header_lines) == 3
-    
+
     # Check that there's content between headers
     for i in range(len(header_lines) - 1):
         current_header_line = header_lines[i]
@@ -152,15 +153,8 @@ def test_resolve_feedback_consistent_formatting():
 def test_resolve_feedback_encoding_compatibility():
     """Test that the prompt is compatible with common encodings."""
     # Test UTF-8 encoding/decoding
-    encoded = RESOLVE_FEEDBACK.encode('utf-8')
-
-
-def test_resolve_feedback_import_accessibility():
-    """Test that the constant can be imported and accessed correctly."""
-    # Test direct import
-    from utils.prompts.resolve_feedback import RESOLVE_FEEDBACK as imported_constant
-    assert imported_constant == RESOLVE_FEEDBACK
-    assert imported_constant is RESOLVE_FEEDBACK
+    encoded = RESOLVE_FEEDBACK.encode("utf-8")
+    assert encoded.decode("utf-8") == RESOLVE_FEEDBACK
 
 
 def test_resolve_feedback_string_operations():
@@ -168,12 +162,12 @@ def test_resolve_feedback_string_operations():
     # Test string methods
     assert RESOLVE_FEEDBACK.strip() != ""
     assert RESOLVE_FEEDBACK.lower() != RESOLVE_FEEDBACK.upper()
-    assert len(RESOLVE_FEEDBACK.split('\n')) > 1
-    
+    assert len(RESOLVE_FEEDBACK.split("\n")) > 1
+
     # Test string formatting operations
     formatted = f"Prompt: {RESOLVE_FEEDBACK}"
     assert RESOLVE_FEEDBACK in formatted
-    
+
     # Test string concatenation
     concatenated = "Prefix: " + RESOLVE_FEEDBACK + " :Suffix"
     assert RESOLVE_FEEDBACK in concatenated

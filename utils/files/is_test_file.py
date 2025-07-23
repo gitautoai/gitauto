@@ -27,7 +27,6 @@ def is_test_file(filename: str) -> bool:
         r"/test_",  # services/anthropic/test_client.py
         r"^spec_",  # spec_button.rb, spec_helper.rb
         r"/spec_",  # services/anthropic/spec_client.py
-
         # Test directories
         r"/__tests__/",  # src/__tests__/Button.tsx
         r"/tests?/",  # src/tests/Button.tsx, src/test/Button.java
@@ -37,17 +36,14 @@ def is_test_file(filename: str) -> bool:
         r"/playwright/",  # playwright/tests/login.spec.ts
         r"/spec/",  # spec/models/user_spec.rb
         r"/testing/",  # testing/utils.py
-
         # Mock files
         r"/__mocks__/",  # src/__mocks__/api.js
         r"\.mock\.",  # api.mock.ts, database.mock.js
         r"mock\.",  # ApiMock.java, DatabaseMock.cs
         r"mocks\.",  # ApiMocks.java, DatabaseMocks.cs
-
         # Common test file names
         r"^test\.",  # test.js, test.py
         r"^spec\.",  # spec.rb, spec.js
-
         # CI/CD and infrastructure
         r"^\.github/",  # .github/scripts/*, .github/workflows/*
     ]

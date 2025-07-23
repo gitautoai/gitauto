@@ -1,4 +1,3 @@
-import pytest
 from services.github.repositories.is_repo_forked import is_repo_forked
 from tests.constants import OWNER, REPO, FORKED_REPO, TOKEN
 

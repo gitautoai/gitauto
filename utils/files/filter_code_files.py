@@ -7,7 +7,7 @@ def filter_code_files(filenames: list[str]):
     # Validate input type
     if not isinstance(filenames, list):
         return []
-    
+
     # File patterns that are likely tests or don't need tests
     test_patterns = [
         "test_",

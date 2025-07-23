@@ -1,11 +1,9 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from config import PRODUCT_NAME
 from constants.messages import SETTINGS_LINKS
-from services.github.pulls.get_pull_request_files import Status
 from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
-from utils.text.reset_command import create_reset_command_message
 from services.webhook.utils.create_test_selection_comment import (
     create_test_selection_comment,
     FileChecklistItem,
@@ -119,7 +117,7 @@ def test_create_test_selection_comment_with_all_status_types():
     ]
 
     result = create_test_selection_comment(checklist, branch_name)
-    
+
     # Verify the result contains all status types
     assert "- [x] added `src/added.py`" in result
     assert "- [x] modified `src/modified.py` (Coverage: 50%)" in result
@@ -139,7 +137,7 @@ def test_create_test_selection_comment_integration():
     ]
 
     result = create_test_selection_comment(checklist, branch_name)
-    
+
     # Verify the comment contains all required components
     assert TEST_SELECTION_COMMENT_IDENTIFIER in result
     assert "Select files to manage tests for (create, update, or remove):" in result
@@ -169,6 +167,6 @@ def test_create_test_selection_comment_with_special_characters():
     ]
 
     result = create_test_selection_comment(checklist, branch_name)
-    
+
     assert "- [x] modified `src/file-with-dashes.py`" in result
     assert "- [ ] added `src/file_with_underscores.py` (Coverage: 0%)" in result
