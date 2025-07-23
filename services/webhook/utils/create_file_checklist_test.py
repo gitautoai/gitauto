@@ -5,7 +5,6 @@ from typing import cast
 
 from schemas.supabase.fastapi.schema_public_latest import CoveragesBaseSchema
 from services.github.pulls.get_pull_request_files import FileChange
-from services.webhook.utils.create_test_selection_comment import FileChecklistItem
 from services.webhook.utils.create_file_checklist import create_file_checklist
 
 
@@ -20,7 +19,7 @@ def create_coverage_data(
     function_coverage: float | None = None,
     branch_coverage: float | None = None,
     is_excluded: bool = False,
-    **overrides
+    **overrides,
 ) -> CoveragesBaseSchema:
     """Helper function to create coverage data."""
     base_data = {
@@ -121,7 +120,10 @@ class TestCreateFileChecklist:
         file_changes = [create_file_change(filename, "modified")]
         coverage_data = {
             filename: create_coverage_data(
-                filename, line_coverage=85.5, function_coverage=90.0, branch_coverage=75.0
+                filename,
+                line_coverage=85.5,
+                function_coverage=90.0,
+                branch_coverage=75.0,
             )
         }
         mock_is_excluded_from_testing.return_value = False
@@ -134,16 +136,24 @@ class TestCreateFileChecklist:
         assert result[0]["path"] == filename
         assert result[0]["checked"] is True
         assert result[0]["status"] == "modified"
-        assert result[0]["coverage_info"] == " (Line: 85.5%, Function: 90.0%, Branch: 75.0%)"
+        assert (
+            result[0]["coverage_info"]
+            == " (Line: 85.5%, Function: 90.0%, Branch: 75.0%)"
+        )
 
-    def test_single_file_with_partial_coverage_data(self, mock_is_excluded_from_testing):
+    def test_single_file_with_partial_coverage_data(
+        self, mock_is_excluded_from_testing
+    ):
         """Test creating checklist with file having partial coverage data."""
         # Arrange
         filename = "src/partial.py"
         file_changes = [create_file_change(filename, "added")]
         coverage_data = {
             filename: create_coverage_data(
-                filename, line_coverage=60.0, function_coverage=None, branch_coverage=80.0
+                filename,
+                line_coverage=60.0,
+                function_coverage=None,
+                branch_coverage=80.0,
             )
         }
         mock_is_excluded_from_testing.return_value = False
@@ -162,7 +172,10 @@ class TestCreateFileChecklist:
         file_changes = [create_file_change(filename, "removed")]
         coverage_data = {
             filename: create_coverage_data(
-                filename, line_coverage=42.5, function_coverage=None, branch_coverage=None
+                filename,
+                line_coverage=42.5,
+                function_coverage=None,
+                branch_coverage=None,
             )
         }
         mock_is_excluded_from_testing.return_value = False
@@ -191,7 +204,9 @@ class TestCreateFileChecklist:
 
         # Assert
         assert len(result) == 1
-        assert result[0]["coverage_info"] == " (Line: 0.0%, Function: 0.0%, Branch: 0.0%)"
+        assert (
+            result[0]["coverage_info"] == " (Line: 0.0%, Function: 0.0%, Branch: 0.0%)"
+        )
 
     def test_single_file_with_all_none_coverage(self, mock_is_excluded_from_testing):
         """Test creating checklist with file having all None coverage values."""
@@ -200,7 +215,10 @@ class TestCreateFileChecklist:
         file_changes = [create_file_change(filename, "added")]
         coverage_data = {
             filename: create_coverage_data(
-                filename, line_coverage=None, function_coverage=None, branch_coverage=None
+                filename,
+                line_coverage=None,
+                function_coverage=None,
+                branch_coverage=None,
             )
         }
         mock_is_excluded_from_testing.return_value = False
@@ -228,14 +246,17 @@ class TestCreateFileChecklist:
             ),
             # file3.py has no coverage data
             "src/file4.py": create_coverage_data(
-                "src/file4.py", line_coverage=None, function_coverage=None, branch_coverage=None
+                "src/file4.py",
+                line_coverage=None,
+                function_coverage=None,
+                branch_coverage=None,
             ),
         }
-        
+
         # Mock different exclusion results for different files
         def mock_exclusion_side_effect(filename, coverage_data):
             return filename == "src/file2.py"  # Only file2 is excluded
-        
+
         mock_is_excluded_from_testing.side_effect = mock_exclusion_side_effect
 
         # Act
@@ -243,25 +264,25 @@ class TestCreateFileChecklist:
 
         # Assert
         assert len(result) == 4
-        
+
         # file1.py - included, has coverage
         assert result[0]["path"] == "src/file1.py"
         assert result[0]["checked"] is True
         assert result[0]["status"] == "added"
         assert result[0]["coverage_info"] == " (Line: 85.0%)"
-        
+
         # file2.py - excluded, has coverage
         assert result[1]["path"] == "src/file2.py"
         assert result[1]["checked"] is False
         assert result[1]["status"] == "modified"
         assert result[1]["coverage_info"] == " (Line: 60.0%, Function: 70.0%)"
-        
+
         # file3.py - included, no coverage
         assert result[2]["path"] == "src/file3.py"
         assert result[2]["checked"] is True
         assert result[2]["status"] == "removed"
         assert result[2]["coverage_info"] == ""
-        
+
         # file4.py - included, has coverage data but all None
         assert result[3]["path"] == "src/file4.py"
         assert result[3]["checked"] is True
@@ -300,17 +321,20 @@ class TestCreateFileChecklist:
             (None, 75.0, None, " (Function: 75.0%)"),
             (33.33, 66.67, 99.99, " (Line: 33.33%, Function: 66.67%, Branch: 99.99%)"),
         ]
-        
+
         file_changes = []
         coverage_data = {}
-        
+
         for i, (line, function, branch, _) in enumerate(test_cases):
             filename = f"src/test{i}.py"
             file_changes.append(create_file_change(filename, "modified"))
             coverage_data[filename] = create_coverage_data(
-                filename, line_coverage=line, function_coverage=function, branch_coverage=branch
+                filename,
+                line_coverage=line,
+                function_coverage=function,
+                branch_coverage=branch,
             )
-        
+
         mock_is_excluded_from_testing.return_value = False
 
         # Act
@@ -359,18 +383,18 @@ class TestCreateFileChecklist:
         num_files = 50
         file_changes = []
         coverage_data = {}
-        
+
         for i in range(num_files):
             filename = f"src/file_{i:03d}.py"
             status = ["added", "modified", "removed"][i % 3]
             file_changes.append(create_file_change(filename, status))
-            
+
             # Add coverage data for every other file
             if i % 2 == 0:
                 coverage_data[filename] = create_coverage_data(
                     filename, line_coverage=float(i), function_coverage=float(i + 10)
                 )
-        
+
         mock_is_excluded_from_testing.return_value = False
 
         # Act
@@ -382,7 +406,7 @@ class TestCreateFileChecklist:
             assert result[i]["path"] == f"src/file_{i:03d}.py"
             assert result[i]["status"] == ["added", "modified", "removed"][i % 3]
             assert result[i]["checked"] is True  # All included since mock returns False
-            
+
             # Check coverage info
             if i % 2 == 0:  # Files with coverage data
                 expected_info = f" (Line: {float(i)}%, Function: {float(i + 10)}%)"
@@ -390,13 +414,19 @@ class TestCreateFileChecklist:
             else:  # Files without coverage data
                 assert result[i]["coverage_info"] == ""
 
-    def test_coverage_data_with_file_not_in_changes(self, mock_is_excluded_from_testing):
+    def test_coverage_data_with_file_not_in_changes(
+        self, mock_is_excluded_from_testing
+    ):
         """Test that coverage data for files not in changes is ignored."""
         # Arrange
         file_changes = [create_file_change("src/included.py", "modified")]
         coverage_data = {
-            "src/included.py": create_coverage_data("src/included.py", line_coverage=80.0),
-            "src/not_in_changes.py": create_coverage_data("src/not_in_changes.py", line_coverage=90.0),
+            "src/included.py": create_coverage_data(
+                "src/included.py", line_coverage=80.0
+            ),
+            "src/not_in_changes.py": create_coverage_data(
+                "src/not_in_changes.py", line_coverage=90.0
+            ),
         }
         mock_is_excluded_from_testing.return_value = False
 
@@ -408,7 +438,9 @@ class TestCreateFileChecklist:
         assert result[0]["path"] == "src/included.py"
         assert result[0]["coverage_info"] == " (Line: 80.0%)"
 
-    def test_is_excluded_from_testing_called_correctly(self, mock_is_excluded_from_testing):
+    def test_is_excluded_from_testing_called_correctly(
+        self, mock_is_excluded_from_testing
+    ):
         """Test that is_excluded_from_testing is called with correct parameters."""
         # Arrange
         file_changes = [
@@ -447,19 +479,19 @@ class TestCreateFileChecklist:
         # Assert
         assert len(result) == 1
         item = result[0]
-        
+
         # Check all required keys are present
         assert "path" in item
         assert "checked" in item
         assert "status" in item
         assert "coverage_info" in item
-        
+
         # Check types
         assert isinstance(item["path"], str)
         assert isinstance(item["checked"], bool)
         assert isinstance(item["status"], str)
         assert isinstance(item["coverage_info"], str)
-        
+
         # Check values
         assert item["path"] == "src/test.py"
         assert item["checked"] is True
@@ -487,13 +519,17 @@ class TestCreateFileChecklist:
 
         # Assert
         assert len(result) == 2
-        
+
         # included.py should be checked (not excluded)
-        included_item = next(item for item in result if item["path"] == "src/included.py")
+        included_item = next(
+            item for item in result if item["path"] == "src/included.py"
+        )
         assert included_item["checked"] is True
         assert included_item["coverage_info"] == " (Line: 85.0%)"
-        
+
         # excluded.py should be unchecked (excluded)
-        excluded_item = next(item for item in result if item["path"] == "src/excluded.py")
+        excluded_item = next(
+            item for item in result if item["path"] == "src/excluded.py"
+        )
         assert excluded_item["checked"] is False
         assert excluded_item["coverage_info"] == " (Function: 90.0%)"

@@ -25,7 +25,6 @@ def is_code_file(filename: str) -> bool:
         "tsx",
         "vue",
         "svelte",
-
         # Backend languages
         "py",
         "java",
@@ -46,13 +45,11 @@ def is_code_file(filename: str) -> bool:
         "cxx",  # C++
         "h",  # C header
         "hpp",  # C++ header
-
         # Mobile development
         "dart",
         "m",  # Objective-C
         "mm",  # Objective-C++
         "kts",  # Kotlin script
-
         # Functional languages
         "hs",  # Haskell
         "elm",  # Elm
@@ -63,7 +60,6 @@ def is_code_file(filename: str) -> bool:
         "exs",  # Elixir script
         "erl",  # Erlang
         "hrl",  # Erlang header
-
         # Other languages
         "r",  # R
         "jl",  # Julia

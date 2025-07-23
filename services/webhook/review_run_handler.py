@@ -135,7 +135,7 @@ def handle_review_run(payload: dict[str, Any]):
     }
 
     # Create a usage record
-    usage_record_id = create_user_request(
+    usage_id = create_user_request(
         user_id=sender_id,
         user_name=sender_name,
         installation_id=installation_id,
@@ -327,7 +327,7 @@ def handle_review_run(payload: dict[str, Any]):
     # Update usage record
     end_time = time.time()
     update_usage(
-        usage_record_id=usage_record_id,
+        usage_id=usage_id,
         token_input=0,
         token_output=0,
         total_seconds=int(end_time - current_time),

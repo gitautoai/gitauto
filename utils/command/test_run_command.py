@@ -24,12 +24,12 @@ def test_run_command_with_custom_env():
     with tempfile.TemporaryDirectory() as temp_dir:
         custom_env = os.environ.copy()
         custom_env["TEST_VAR"] = "test_value"
-        
-        if os.name == 'nt':
+
+        if os.name == "nt":
             command = "echo %TEST_VAR%"
         else:
             command = "echo $TEST_VAR"
-        
+
         result = run_command(command, temp_dir, use_shell=True, env=custom_env)
         assert result.returncode == 0
         assert "test_value" in result.stdout
@@ -51,7 +51,7 @@ def test_run_command_command_split_without_shell():
 
 def test_run_command_complex_command_without_shell():
     with tempfile.TemporaryDirectory() as temp_dir:
-        if os.name == 'nt':
+        if os.name == "nt":
             result = run_command("cmd /c echo test", temp_dir, use_shell=False)
         else:
             result = run_command("sh -c echo test", temp_dir, use_shell=False)
@@ -75,50 +75,50 @@ def test_run_command_failure_without_shell():
 def test_run_command_with_stderr_output():
     with tempfile.TemporaryDirectory() as temp_dir:
         with pytest.raises(ValueError) as exc_info:
-            if os.name == 'nt':
+            if os.name == "nt":
                 run_command("cmd /c exit 1", temp_dir, use_shell=True)
             else:
                 run_command("sh -c 'echo error >&2; exit 1'", temp_dir, use_shell=True)
         assert "Command failed:" in str(exc_info.value)
 
 
-@patch('subprocess.run')
+@patch("subprocess.run")
 def test_run_command_called_process_error_with_stderr(mock_run):
     mock_error = subprocess.CalledProcessError(1, "test_command")
     mock_error.stderr = "test error message"
     mock_run.side_effect = mock_error
-    
+
     with tempfile.TemporaryDirectory() as temp_dir:
         with pytest.raises(ValueError) as exc_info:
             run_command("test_command", temp_dir)
-        
+
         assert "Command failed: test error message" in str(exc_info.value)
         assert exc_info.value.__cause__ is mock_error
 
 
-@patch('subprocess.run')
+@patch("subprocess.run")
 def test_run_command_called_process_error_without_stderr(mock_run):
     mock_error = subprocess.CalledProcessError(1, "test_command")
     mock_error.stderr = None
     mock_run.side_effect = mock_error
-    
+
     with tempfile.TemporaryDirectory() as temp_dir:
         with pytest.raises(ValueError) as exc_info:
             run_command("test_command", temp_dir)
-        
+
         assert "Command failed: None" in str(exc_info.value)
         assert exc_info.value.__cause__ is mock_error
 
 
-@patch('subprocess.run')
+@patch("subprocess.run")
 def test_run_command_subprocess_parameters(mock_run):
     mock_result = MagicMock()
     mock_run.return_value = mock_result
-    
+
     with tempfile.TemporaryDirectory() as temp_dir:
         custom_env = {"TEST": "value"}
         result = run_command("test command", temp_dir, use_shell=False, env=custom_env)
-        
+
         mock_run.assert_called_once_with(
             args=["test", "command"],
             capture_output=True,
@@ -135,6 +135,7 @@ def test_run_command_empty_command_with_shell():
     with tempfile.TemporaryDirectory() as temp_dir:
         with pytest.raises(ValueError):
             run_command("", temp_dir, use_shell=True)
+
 
 def test_run_command_empty_command_without_shell():
     with tempfile.TemporaryDirectory() as temp_dir:

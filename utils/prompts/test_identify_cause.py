@@ -1,4 +1,3 @@
-import pytest
 from utils.prompts.identify_cause import IDENTIFY_CAUSE
 
 
@@ -21,7 +20,7 @@ def test_identify_cause_contains_required_headers():
         "## How to Fix the Error?",
         "## Why Fix it This Way?",
     ]
-    
+
     for header in required_headers:
         assert header in IDENTIFY_CAUSE, f"Missing required header: {header}"
 
@@ -34,7 +33,10 @@ def test_identify_cause_contains_role_description():
 def test_identify_cause_contains_language_instruction():
     """Test that IDENTIFY_CAUSE contains language adaptation instruction."""
     assert "language that is used in the input" in IDENTIFY_CAUSE
-    assert "if the input is mainly in Japanese, the plan should be in Japanese" in IDENTIFY_CAUSE
+    assert (
+        "if the input is mainly in Japanese, the plan should be in Japanese"
+        in IDENTIFY_CAUSE
+    )
 
 
 def test_identify_cause_contains_minimization_guidance():
@@ -62,6 +64,6 @@ def test_identify_cause_headers_order():
         "## How to Fix the Error?",
         "## Why Fix it This Way?",
     ]
-    
+
     for i in range(len(headers) - 1):
         assert IDENTIFY_CAUSE.find(headers[i]) < IDENTIFY_CAUSE.find(headers[i + 1])

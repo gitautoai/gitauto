@@ -67,16 +67,19 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         return {"status": "skipped", "message": msg}
 
     # Check the remaining available usage count
-    is_limit_reached, _requests_left, _request_limit, _end_date = (
-        is_request_limit_reached(
-            installation_id=installation_id,
-            owner_id=owner_id,
-            owner_name=owner_name,
-            owner_type=owner_type,
-            repo_name=repo_name,
-            issue_number=None,
-        )
+    limit_result = is_request_limit_reached(
+        installation_id=installation_id,
+        owner_id=owner_id,
+        owner_name=owner_name,
+        owner_type=owner_type,
+        repo_name=repo_name,
+        issue_number=None,
     )
+    is_limit_reached = limit_result["is_limit_reached"]
+    # _requests_left = limit_result["requests_left"]
+    # _request_limit = limit_result["request_limit"]
+    # _end_date = limit_result["end_date"]
+    # is_credit_user = limit_result["is_credit_user"]
     if is_limit_reached:
         msg = f"Request limit reached for {owner_name}/{repo_name}"
         return {"status": "skipped", "message": msg}

@@ -1,6 +1,6 @@
 # Standard imports
 import unittest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 
 # Third-party imports
 import stripe
@@ -58,7 +58,9 @@ class TestCreateStripeCustomer(unittest.TestCase):
         )
 
         # Assert
-        self.assertIsNone(result)  # Should return None due to handle_exceptions decorator
+        self.assertIsNone(
+            result
+        )  # Should return None due to handle_exceptions decorator
         mock_stripe.Customer.create.assert_called_once()
 
     @patch("services.stripe.create_stripe_customer.stripe")
@@ -111,20 +113,24 @@ class TestCreateStripeCustomer(unittest.TestCase):
     def test_create_stripe_customer_stripe_error(self, mock_stripe):
         """Test handling of Stripe-specific errors"""
         # Setup
-        mock_stripe.Customer.create.side_effect = stripe.error.StripeError("Stripe API error")
+        mock_stripe.Customer.create.side_effect = stripe.error.StripeError(
+            "Stripe API error"
+        )
 
         # Execute
         result = create_stripe_customer(
-            owner_id=123, 
-            owner_name="test-owner", 
-            installation_id=456, 
-            user_id=789, 
-            user_name="test-user"
+            owner_id=123,
+            owner_name="test-owner",
+            installation_id=456,
+            user_id=789,
+            user_name="test-user",
         )
 
         # Assert
-        self.assertIsNone(result)  # Should return None due to handle_exceptions decorator
-        
+        self.assertIsNone(
+            result
+        )  # Should return None due to handle_exceptions decorator
+
     @patch("services.stripe.create_stripe_customer.stripe")
     def test_create_stripe_customer_return_value(self, mock_stripe):
         """Test that the function returns the customer ID"""

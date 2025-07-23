@@ -5,7 +5,7 @@ from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(raise_on_error=True)
 def create_remote_branch(sha: str, base_args: BaseArgs) -> None:
     owner, repo, branch_name, token = (
         base_args["owner"],

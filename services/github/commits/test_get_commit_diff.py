@@ -2,7 +2,6 @@
 from unittest.mock import MagicMock, patch
 
 # Third party imports
-import pytest
 import requests
 
 # Local imports
@@ -43,7 +42,9 @@ def test_get_commit_diff_success():
         ],
     }
 
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.commits.get_commit_diff.requests.get"
+    ) as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers:
         # Setup mocks
@@ -72,7 +73,7 @@ def test_get_commit_diff_success():
             "date": "2023-01-01T00:00:00Z",
         }
         assert len(result["files"]) == 2
-        
+
         # Verify first file
         assert result["files"][0]["filename"] == "test_file.py"
         assert result["files"][0]["status"] == "modified"
@@ -80,7 +81,7 @@ def test_get_commit_diff_success():
         assert result["files"][0]["deletions"] == 5
         assert result["files"][0]["changes"] == 15
         assert result["files"][0]["patch"] == "@@ -1,5 +1,10 @@\n-old line\n+new line\n"
-        
+
         # Verify second file
         assert result["files"][1]["filename"] == "another_file.py"
         assert result["files"][1]["status"] == "added"
@@ -105,7 +106,9 @@ def test_get_commit_diff_empty_files():
         "files": [],
     }
 
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.commits.get_commit_diff.requests.get"
+    ) as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers:
         mock_response = MagicMock()
@@ -138,7 +141,9 @@ def test_get_commit_diff_missing_fields():
         ],
     }
 
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.commits.get_commit_diff.requests.get"
+    ) as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers:
         mock_response = MagicMock()
@@ -162,7 +167,9 @@ def test_get_commit_diff_missing_fields():
 
 def test_get_commit_diff_http_error():
     """Test handling of HTTP error."""
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.commits.get_commit_diff.requests.get"
+    ) as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers:
         # Setup mocks
@@ -187,7 +194,9 @@ def test_get_commit_diff_http_error():
 
 def test_get_commit_diff_network_error():
     """Test handling of network connection error."""
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.commits.get_commit_diff.requests.get"
+    ) as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers:
         # Setup mocks
@@ -203,7 +212,9 @@ def test_get_commit_diff_network_error():
 
 def test_get_commit_diff_timeout_error():
     """Test handling of timeout error."""
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.commits.get_commit_diff.requests.get"
+    ) as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers:
         # Setup mocks
@@ -219,11 +230,17 @@ def test_get_commit_diff_timeout_error():
 
 def test_get_commit_diff_headers_creation():
     """Test that headers are created correctly."""
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.commits.get_commit_diff.requests.get"
+    ) as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers:
         mock_response = MagicMock()
-        mock_response.json.return_value = {"sha": "abc123def456", "commit": {}, "files": []}
+        mock_response.json.return_value = {
+            "sha": "abc123def456",
+            "commit": {},
+            "files": [],
+        }
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer custom_token"}
 
@@ -235,13 +252,19 @@ def test_get_commit_diff_headers_creation():
 
 def test_get_commit_diff_timeout_parameter():
     """Test that the timeout parameter is correctly used."""
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.commits.get_commit_diff.requests.get"
+    ) as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers, patch(
         "services.github.commits.get_commit_diff.TIMEOUT", 60
     ):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"sha": "abc123def456", "commit": {}, "files": []}
+        mock_response.json.return_value = {
+            "sha": "abc123def456",
+            "commit": {},
+            "files": [],
+        }
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
@@ -254,11 +277,17 @@ def test_get_commit_diff_timeout_parameter():
 
 def test_get_commit_diff_url_construction():
     """Test that the URL is constructed correctly with different parameters."""
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.commits.get_commit_diff.requests.get"
+    ) as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers:
         mock_response = MagicMock()
-        mock_response.json.return_value = {"sha": "def789ghi012", "commit": {}, "files": []}
+        mock_response.json.return_value = {
+            "sha": "def789ghi012",
+            "commit": {},
+            "files": [],
+        }
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
@@ -275,7 +304,9 @@ def test_get_commit_diff_url_construction():
 
 def test_get_commit_diff_json_decode_error():
     """Test handling of JSON decode error."""
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.commits.get_commit_diff.requests.get"
+    ) as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers:
         # Setup mocks
@@ -293,11 +324,17 @@ def test_get_commit_diff_json_decode_error():
 
 def test_get_commit_diff_with_special_characters():
     """Test with owner/repo/commit names containing special characters."""
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.commits.get_commit_diff.requests.get"
+    ) as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers:
         mock_response = MagicMock()
-        mock_response.json.return_value = {"sha": "abc-123_def.456", "commit": {}, "files": []}
+        mock_response.json.return_value = {
+            "sha": "abc-123_def.456",
+            "commit": {},
+            "files": [],
+        }
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
@@ -314,13 +351,20 @@ def test_get_commit_diff_with_special_characters():
 
 def test_get_commit_diff_custom_api_url():
     """Test with a custom GitHub API URL."""
-    with patch("services.github.commits.get_commit_diff.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.commits.get_commit_diff.requests.get"
+    ) as mock_get, patch(
         "services.github.commits.get_commit_diff.create_headers"
     ) as mock_headers, patch(
-        "services.github.commits.get_commit_diff.GITHUB_API_URL", "https://custom-github-api.com"
+        "services.github.commits.get_commit_diff.GITHUB_API_URL",
+        "https://custom-github-api.com",
     ):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"sha": "abc123def456", "commit": {}, "files": []}
+        mock_response.json.return_value = {
+            "sha": "abc123def456",
+            "commit": {},
+            "files": [],
+        }
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 

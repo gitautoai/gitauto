@@ -1,4 +1,3 @@
-import pytest
 from services.coverages.create_coverage_report import create_coverage_report
 
 
@@ -13,11 +12,11 @@ def test_create_coverage_report_directory_level_empty_path():
         "branches_covered": 15,
         "uncovered_lines": {1, 2, 3},
         "uncovered_functions": {(10, "test_func"), (20, 30, "another_func")},
-        "uncovered_branches": {"branch1", "branch2"}
+        "uncovered_branches": {"branch1", "branch2"},
     }
-    
+
     result = create_coverage_report("", stats, "directory")
-    
+
     assert result["full_path"] == "."
     assert result["level"] == "directory"
     assert result["line_coverage"] == 80.0
@@ -41,11 +40,11 @@ def test_create_coverage_report_directory_level_non_empty_path():
         "branches_covered": 7,
         "uncovered_lines": {5, 10},
         "uncovered_functions": {(15, "func1")},
-        "uncovered_branches": {"branch3"}
+        "uncovered_branches": {"branch3"},
     }
-    
+
     result = create_coverage_report("src/utils", stats, "directory")
-    
+
     assert result["full_path"] == "src/utils"
     assert result["level"] == "directory"
     assert result["line_coverage"] == 50.0
@@ -65,11 +64,11 @@ def test_create_coverage_report_file_level_with_coverage():
         "branches_covered": 30,
         "uncovered_lines": {5, 10, 15, 20},
         "uncovered_functions": {(25, "test_method"), (35, 45, "complex_func")},
-        "uncovered_branches": {"branch4", "branch5"}
+        "uncovered_branches": {"branch4", "branch5"},
     }
-    
+
     result = create_coverage_report("src/main.py", stats, "file")
-    
+
     assert result["full_path"] == "src/main.py"
     assert result["level"] == "file"
     assert result["line_coverage"] == 75.0
@@ -92,11 +91,11 @@ def test_create_coverage_report_file_level_zero_coverage():
         "branches_covered": 0,
         "uncovered_lines": {1, 2, 3, 4, 5},
         "uncovered_functions": {(10, "func1"), (20, 30, "func2")},
-        "uncovered_branches": {"branch1", "branch2"}
+        "uncovered_branches": {"branch1", "branch2"},
     }
-    
+
     result = create_coverage_report("src/unused.py", stats, "file")
-    
+
     assert result["full_path"] == "src/unused.py"
     assert result["level"] == "file"
     assert result["line_coverage"] == 0.0
@@ -119,11 +118,11 @@ def test_create_coverage_report_repository_level():
         "branches_covered": 180,
         "uncovered_lines": set(range(1, 151)),  # 150 uncovered lines
         "uncovered_functions": {(i, f"func_{i}") for i in range(1, 11)},  # 10 functions
-        "uncovered_branches": {f"branch_{i}" for i in range(1, 21)}  # 20 branches
+        "uncovered_branches": {f"branch_{i}" for i in range(1, 21)},  # 20 branches
     }
-    
+
     result = create_coverage_report("All", stats, "repository")
-    
+
     assert result["full_path"] == "All"
     assert result["level"] == "repository"
     assert result["line_coverage"] == 85.0
@@ -148,11 +147,11 @@ def test_create_coverage_report_zero_totals():
         "branches_covered": 0,
         "uncovered_lines": set(),
         "uncovered_functions": set(),
-        "uncovered_branches": set()
+        "uncovered_branches": set(),
     }
-    
+
     result = create_coverage_report("empty.py", stats, "file")
-    
+
     assert result["full_path"] == "empty.py"
     assert result["level"] == "file"
     assert result["line_coverage"] == 100.0
@@ -178,13 +177,13 @@ def test_create_coverage_report_mixed_function_formats():
             (10, "simple_func"),  # 2-tuple format
             (20, 30, "complex_func"),  # 3-tuple format
             (40, "another_simple"),  # 2-tuple format
-            (50, 60, "another_complex")  # 3-tuple format
+            (50, 60, "another_complex"),  # 3-tuple format
         },
-        "uncovered_branches": {"branch1", "branch2"}
+        "uncovered_branches": {"branch1", "branch2"},
     }
-    
+
     result = create_coverage_report("test.py", stats, "file")
-    
+
     # Check that both formats are handled correctly
     uncovered_funcs = result["uncovered_functions"]
     assert "L10:simple_func" in uncovered_funcs
@@ -204,11 +203,11 @@ def test_create_coverage_report_empty_uncovered_sets():
         "branches_covered": 20,
         "uncovered_lines": set(),
         "uncovered_functions": set(),
-        "uncovered_branches": set()
+        "uncovered_branches": set(),
     }
-    
+
     result = create_coverage_report("perfect.py", stats, "file")
-    
+
     assert result["line_coverage"] == 100.0
     assert result["function_coverage"] == 100.0
     assert result["branch_coverage"] == 100.0
@@ -228,11 +227,11 @@ def test_create_coverage_report_rounding():
         "branches_covered": 5,  # 71.428...%
         "uncovered_lines": {2, 3},
         "uncovered_functions": {(10, "func1")},
-        "uncovered_branches": {"branch1", "branch2"}
+        "uncovered_branches": {"branch1", "branch2"},
     }
-    
+
     result = create_coverage_report("rounding.py", stats, "file")
-    
+
     assert result["line_coverage"] == 33.33
     assert result["statement_coverage"] == 33.33
     assert result["function_coverage"] == 66.67
@@ -250,13 +249,13 @@ def test_create_coverage_report_non_file_level_uncovered_lines():
         "branches_covered": 15,
         "uncovered_lines": {1, 2, 3, 4, 5},
         "uncovered_functions": {(10, "func1")},
-        "uncovered_branches": {"branch1"}
+        "uncovered_branches": {"branch1"},
     }
-    
+
     # Test directory level
     result_dir = create_coverage_report("src", stats, "directory")
     assert result_dir["uncovered_lines"] == ""
-    
+
     # Test repository level
     result_repo = create_coverage_report("All", stats, "repository")
     assert result_repo["uncovered_lines"] == ""
@@ -273,11 +272,11 @@ def test_create_coverage_report_other_level():
         "branches_covered": 8,
         "uncovered_lines": {1, 2},
         "uncovered_functions": {(10, "func1")},
-        "uncovered_branches": {"branch1"}
+        "uncovered_branches": {"branch1"},
     }
-    
+
     result = create_coverage_report("", stats, "file")
-    
+
     # Path should remain empty since level is not "directory"
     assert result["full_path"] == ""
     assert result["level"] == "file"

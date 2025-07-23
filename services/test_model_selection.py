@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import sys
 import pytest
 
@@ -8,12 +8,7 @@ from config import (
     ANTHROPIC_MODEL_ID_40,
     OPENAI_MODEL_ID_O3_MINI,
 )
-from services.model_selection import (
-    MODEL_CHAIN,
-    get_model,
-    try_next_model,
-    _current_model,
-)
+from services.model_selection import MODEL_CHAIN, get_model, try_next_model
 
 
 @pytest.fixture
@@ -21,15 +16,15 @@ def reset_model_state():
     """Fixture to reset the global model state before each test."""
     # Import the module to access the global variable
     import services.model_selection as model_selection
-    
+
     # Store original state
     original_model = model_selection._current_model
-    
+
     # Reset to initial state
     model_selection._current_model = MODEL_CHAIN[0]
-    
+
     yield
-    
+
     # Restore original state
     model_selection._current_model = original_model
 
@@ -86,17 +81,17 @@ def test_try_next_model_from_first_model(reset_model_state, mock_colorize, mock_
     """Test switching from first model to second model."""
     # Ensure we start with the first model
     assert get_model() == ANTHROPIC_MODEL_ID_40
-    
+
     success, new_model = try_next_model()
-    
+
     assert success is True
     assert new_model == ANTHROPIC_MODEL_ID_37
     assert get_model() == ANTHROPIC_MODEL_ID_37
-    
+
     # Verify colorize was called with correct message and color
     expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_40} to {ANTHROPIC_MODEL_ID_37}"
     mock_colorize.assert_called_once_with(expected_msg, "yellow")
-    
+
     # Verify print was called with colorized message
     mock_print.assert_called_once_with("mocked_colored_text")
 
@@ -104,16 +99,16 @@ def test_try_next_model_from_first_model(reset_model_state, mock_colorize, mock_
 def test_try_next_model_from_second_model(reset_model_state, mock_colorize, mock_print):
     """Test switching from second model to third model."""
     import services.model_selection as model_selection
-    
+
     # Set current model to second model
     model_selection._current_model = ANTHROPIC_MODEL_ID_37
-    
+
     success, new_model = try_next_model()
-    
+
     assert success is True
     assert new_model == ANTHROPIC_MODEL_ID_35
     assert get_model() == ANTHROPIC_MODEL_ID_35
-    
+
     # Verify colorize was called with correct message
     expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_37} to {ANTHROPIC_MODEL_ID_35}"
     mock_colorize.assert_called_once_with(expected_msg, "yellow")
@@ -123,18 +118,20 @@ def test_try_next_model_from_second_model(reset_model_state, mock_colorize, mock
 def test_try_next_model_from_third_model(reset_model_state, mock_colorize, mock_print):
     """Test switching from third model to fourth model."""
     import services.model_selection as model_selection
-    
+
     # Set current model to third model
     model_selection._current_model = ANTHROPIC_MODEL_ID_35
-    
+
     success, new_model = try_next_model()
-    
+
     assert success is True
     assert new_model == OPENAI_MODEL_ID_O3_MINI
     assert get_model() == OPENAI_MODEL_ID_O3_MINI
-    
+
     # Verify colorize was called with correct message
-    expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_35} to {OPENAI_MODEL_ID_O3_MINI}"
+    expected_msg = (
+        f"Switching from {ANTHROPIC_MODEL_ID_35} to {OPENAI_MODEL_ID_O3_MINI}"
+    )
     mock_colorize.assert_called_once_with(expected_msg, "yellow")
     mock_print.assert_called_once_with("mocked_colored_text")
 
@@ -142,16 +139,16 @@ def test_try_next_model_from_third_model(reset_model_state, mock_colorize, mock_
 def test_try_next_model_from_last_model(reset_model_state, mock_colorize, mock_print):
     """Test that trying to switch from the last model returns False."""
     import services.model_selection as model_selection
-    
+
     # Set current model to last model
     model_selection._current_model = OPENAI_MODEL_ID_O3_MINI
-    
+
     success, current_model = try_next_model()
-    
+
     assert success is False
     assert current_model == OPENAI_MODEL_ID_O3_MINI
     assert get_model() == OPENAI_MODEL_ID_O3_MINI
-    
+
     # Verify no colorize or print calls were made
     mock_colorize.assert_not_called()
     mock_print.assert_not_called()
@@ -161,31 +158,31 @@ def test_try_next_model_sequential_calls(reset_model_state, mock_colorize, mock_
     """Test sequential calls to try_next_model through all models."""
     # Start with first model
     assert get_model() == ANTHROPIC_MODEL_ID_40
-    
+
     # First call: switch to second model
     success1, model1 = try_next_model()
     assert success1 is True
     assert model1 == ANTHROPIC_MODEL_ID_37
     assert get_model() == ANTHROPIC_MODEL_ID_37
-    
+
     # Second call: switch to third model
     success2, model2 = try_next_model()
     assert success2 is True
     assert model2 == ANTHROPIC_MODEL_ID_35
     assert get_model() == ANTHROPIC_MODEL_ID_35
-    
+
     # Third call: switch to fourth model
     success3, model3 = try_next_model()
     assert success3 is True
     assert model3 == OPENAI_MODEL_ID_O3_MINI
     assert get_model() == OPENAI_MODEL_ID_O3_MINI
-    
+
     # Fourth call: no more models available
     success4, model4 = try_next_model()
     assert success4 is False
     assert model4 == OPENAI_MODEL_ID_O3_MINI
     assert get_model() == OPENAI_MODEL_ID_O3_MINI
-    
+
     # Verify colorize was called 3 times (for successful switches)
     assert mock_colorize.call_count == 3
     assert mock_print.call_count == 3
@@ -194,7 +191,7 @@ def test_try_next_model_sequential_calls(reset_model_state, mock_colorize, mock_
 def test_try_next_model_return_types():
     """Test that try_next_model returns correct types."""
     success, model = try_next_model()
-    
+
     assert isinstance(success, bool)
     assert isinstance(model, str)
     assert len(model) > 0
@@ -204,18 +201,18 @@ def test_model_selection_state_persistence(reset_model_state):
     """Test that model state persists between function calls."""
     # Initial state
     assert get_model() == ANTHROPIC_MODEL_ID_40
-    
+
     # Switch model
     try_next_model()
     assert get_model() == ANTHROPIC_MODEL_ID_37
-    
+
     # State should persist
     assert get_model() == ANTHROPIC_MODEL_ID_37
-    
+
     # Switch again
     try_next_model()
     assert get_model() == ANTHROPIC_MODEL_ID_35
-    
+
     # State should still persist
     assert get_model() == ANTHROPIC_MODEL_ID_35
 
@@ -223,10 +220,10 @@ def test_model_selection_state_persistence(reset_model_state):
 def test_try_next_model_with_invalid_current_model(reset_model_state):
     """Test behavior when _current_model is not in MODEL_CHAIN."""
     import services.model_selection as model_selection
-    
+
     # Set an invalid current model
     model_selection._current_model = "invalid-model"
-    
+
     # This should raise a ValueError when trying to find the index
     with pytest.raises(ValueError):
         try_next_model()
@@ -237,7 +234,7 @@ def test_get_model_consistency():
     model1 = get_model()
     model2 = get_model()
     model3 = get_model()
-    
+
     assert model1 == model2 == model3
 
 
@@ -245,9 +242,9 @@ def test_colorize_function_integration(reset_model_state):
     """Test that colorize function is called with correct parameters."""
     with patch("services.model_selection.colorize") as mock_colorize:
         mock_colorize.return_value = "colored_message"
-        
+
         try_next_model()
-        
+
         # Verify colorize was called with string message and "yellow" color
         args, kwargs = mock_colorize.call_args
         assert len(args) == 2
@@ -259,13 +256,14 @@ def test_colorize_function_integration(reset_model_state):
 
 def test_print_function_integration(reset_model_state):
     """Test that print function is called with colorized message."""
-    with patch("services.model_selection.colorize") as mock_colorize, \
-         patch("builtins.print") as mock_print:
-        
+    with patch("services.model_selection.colorize") as mock_colorize, patch(
+        "builtins.print"
+    ) as mock_print:
+
         mock_colorize.return_value = "test_colored_output"
-        
+
         try_next_model()
-        
+
         mock_print.assert_called_once_with("test_colored_output")
 
 
@@ -273,12 +271,12 @@ def test_module_level_constants():
     """Test that module-level constants are properly defined."""
     # Test that MODEL_CHAIN is a list
     assert isinstance(MODEL_CHAIN, list)
-    
+
     # Test that all models in chain are strings
     for model in MODEL_CHAIN:
         assert isinstance(model, str)
         assert len(model) > 0
-    
+
     # Test that there are no duplicate models
     assert len(MODEL_CHAIN) == len(set(MODEL_CHAIN))
 
@@ -287,12 +285,12 @@ def test_module_level_constants():
 def test_try_next_model_from_each_position(reset_model_state, model_index):
     """Test try_next_model behavior when starting from each model position."""
     import services.model_selection as model_selection
-    
+
     # Set current model to the specified index
     model_selection._current_model = MODEL_CHAIN[model_index]
-    
+
     success, new_model = try_next_model()
-    
+
     if model_index < len(MODEL_CHAIN) - 1:
         # Should successfully switch to next model
         assert success is True
@@ -308,18 +306,18 @@ def test_try_next_model_from_each_position(reset_model_state, model_index):
 def test_global_state_isolation():
     """Test that global state changes don't affect other imports."""
     # Import the module again to test isolation
-    if 'services.model_selection' in sys.modules:
+    if "services.model_selection" in sys.modules:
         # Get reference to the same module
         import services.model_selection as model_selection_ref
-        
+
         original_model = model_selection_ref.get_model()
-        
+
         # Change the model
         model_selection_ref.try_next_model()
         new_model = model_selection_ref.get_model()
-        
+
         # Verify the change persisted in the same module reference
         assert new_model != original_model
-        
+
         # Verify get_model() returns the same value
         assert get_model() == new_model

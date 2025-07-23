@@ -42,7 +42,7 @@ class TestUpdateIssueMerged:
         mock_table = MagicMock()
         mock_update = MagicMock()
         mock_eq_chain = MagicMock()
-        
+
         mock_supabase.table.return_value = mock_table
         mock_table.update.return_value = mock_update
         mock_update.eq.return_value = mock_eq_chain
@@ -60,11 +60,11 @@ class TestUpdateIssueMerged:
         # Assert
         mock_supabase.table.assert_called_once_with(table_name="issues")
         mock_table.update.assert_called_once_with(json={"merged": True})
-        
+
         # Verify the chain of eq calls
         eq_calls = mock_update.eq.call_args_list + mock_eq_chain.eq.call_args_list
         assert len(eq_calls) == 4
-        
+
         # Check that all expected eq calls were made with keyword arguments
         expected_calls = [
             {"column": "owner_type", "value": TEST_OWNER_TYPE},
@@ -72,10 +72,10 @@ class TestUpdateIssueMerged:
             {"column": "repo_name", "value": TEST_REPO_NAME},
             {"column": "issue_number", "value": TEST_ISSUE_NUMBER},
         ]
-        
+
         for expected_call in expected_calls:
             assert expected_call in [call[1] for call in eq_calls]
-        
+
         mock_eq_chain.execute.assert_called_once()
 
     def test_update_issue_merged_success_with_merged_true(
@@ -86,7 +86,7 @@ class TestUpdateIssueMerged:
         mock_table = MagicMock()
         mock_update = MagicMock()
         mock_eq_chain = MagicMock()
-        
+
         mock_supabase.table.return_value = mock_table
         mock_table.update.return_value = mock_update
         mock_update.eq.return_value = mock_eq_chain
@@ -109,7 +109,7 @@ class TestUpdateIssueMerged:
         mock_table = MagicMock()
         mock_update = MagicMock()
         mock_eq_chain = MagicMock()
-        
+
         mock_supabase.table.return_value = mock_table
         mock_table.update.return_value = mock_update
         mock_update.eq.return_value = mock_eq_chain
@@ -134,7 +134,7 @@ class TestUpdateIssueMerged:
         mock_table = MagicMock()
         mock_update = MagicMock()
         mock_eq_chain = MagicMock()
-        
+
         mock_supabase.table.return_value = mock_table
         mock_table.update.return_value = mock_update
         mock_update.eq.return_value = mock_eq_chain
@@ -142,7 +142,7 @@ class TestUpdateIssueMerged:
         mock_eq_chain.execute.return_value = MagicMock()
 
         owner_types = ["User", "Organization", "Bot"]
-        
+
         for owner_type in owner_types:
             # Reset mocks for each iteration
             mock_update.reset_mock()
@@ -158,8 +158,7 @@ class TestUpdateIssueMerged:
             # Assert that the correct owner_type was used
             eq_calls = mock_update.eq.call_args_list + mock_eq_chain.eq.call_args_list
             owner_type_call = next(
-                call for call in eq_calls 
-                if call[1].get("column") == "owner_type"
+                call for call in eq_calls if call[1].get("column") == "owner_type"
             )
             assert owner_type_call[1]["value"] == owner_type
 
@@ -169,7 +168,7 @@ class TestUpdateIssueMerged:
         mock_table = MagicMock()
         mock_update = MagicMock()
         mock_eq_chain = MagicMock()
-        
+
         mock_supabase.table.return_value = mock_table
         mock_table.update.return_value = mock_update
         mock_update.eq.return_value = mock_eq_chain
@@ -177,7 +176,7 @@ class TestUpdateIssueMerged:
         mock_eq_chain.execute.return_value = MagicMock()
 
         issue_numbers = [1, 999, 12345, 999999]
-        
+
         for issue_number in issue_numbers:
             # Reset mocks for each iteration
             mock_update.reset_mock()
@@ -193,8 +192,7 @@ class TestUpdateIssueMerged:
             # Assert that the correct issue_number was used
             eq_calls = mock_update.eq.call_args_list + mock_eq_chain.eq.call_args_list
             issue_number_call = next(
-                call for call in eq_calls 
-                if call[1].get("column") == "issue_number"
+                call for call in eq_calls if call[1].get("column") == "issue_number"
             )
             assert issue_number_call[1]["value"] == issue_number
 
@@ -204,7 +202,7 @@ class TestUpdateIssueMerged:
         mock_table = MagicMock()
         mock_update = MagicMock()
         mock_eq_chain = MagicMock()
-        
+
         mock_supabase.table.return_value = mock_table
         mock_table.update.return_value = mock_update
         mock_update.eq.return_value = mock_eq_chain
@@ -218,7 +216,7 @@ class TestUpdateIssueMerged:
             ("owner123", "repo456"),
             ("UPPERCASE", "REPO"),
         ]
-        
+
         for owner_name, repo_name in test_cases:
             # Reset mocks for each iteration
             mock_update.reset_mock()
@@ -233,16 +231,14 @@ class TestUpdateIssueMerged:
 
             # Assert that the correct names were used
             eq_calls = mock_update.eq.call_args_list + mock_eq_chain.eq.call_args_list
-            
+
             owner_name_call = next(
-                call for call in eq_calls 
-                if call[1].get("column") == "owner_name"
+                call for call in eq_calls if call[1].get("column") == "owner_name"
             )
             assert owner_name_call[1]["value"] == owner_name
-            
+
             repo_name_call = next(
-                call for call in eq_calls 
-                if call[1].get("column") == "repo_name"
+                call for call in eq_calls if call[1].get("column") == "repo_name"
             )
             assert repo_name_call[1]["value"] == repo_name
 
@@ -269,7 +265,7 @@ class TestUpdateIssueMerged:
         mock_response.status_code = 500
         mock_response.reason = "Internal Server Error"
         mock_response.text = "Server error"
-        
+
         http_error = requests.exceptions.HTTPError("500 Server Error")
         http_error.response = mock_response
         mock_supabase.table.side_effect = http_error
@@ -292,7 +288,7 @@ class TestUpdateIssueMerged:
         mock_response.status_code = 404
         mock_response.reason = "Not Found"
         mock_response.text = "Resource not found"
-        
+
         http_error = requests.exceptions.HTTPError("404 Not Found")
         http_error.response = mock_response
         mock_supabase.table.side_effect = http_error
@@ -379,7 +375,7 @@ class TestUpdateIssueMerged:
         mock_table = MagicMock()
         mock_update = MagicMock()
         mock_eq_chain = MagicMock()
-        
+
         mock_supabase.table.return_value = mock_table
         mock_table.update.return_value = mock_update
         mock_update.eq.return_value = mock_eq_chain
@@ -409,7 +405,7 @@ class TestUpdateIssueMerged:
         mock_table = MagicMock()
         mock_update = MagicMock()
         mock_eq_chain = MagicMock()
-        
+
         mock_supabase.table.return_value = mock_table
         mock_table.update.return_value = mock_update
         mock_update.eq.return_value = mock_eq_chain

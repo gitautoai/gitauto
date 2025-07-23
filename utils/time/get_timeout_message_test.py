@@ -1,4 +1,3 @@
-from unittest.mock import patch
 import pytest
 from utils.time.get_timeout_message import get_timeout_message
 
@@ -96,12 +95,31 @@ def test_get_timeout_message_decimal_precision():
     assert result == expected
 
 
-@pytest.mark.parametrize("elapsed_time,process_name,expected", [
-    (10.0, "Test", "Test stopped due to Lambda timeout limit (10.0s elapsed). Proceeding with current progress."),
-    (25.7, "API Handler", "API Handler stopped due to Lambda timeout limit (25.7s elapsed). Proceeding with current progress."),
-    (0.5, "Quick Task", "Quick Task stopped due to Lambda timeout limit (0.5s elapsed). Proceeding with current progress."),
-    (300.0, "Long Running Process", "Long Running Process stopped due to Lambda timeout limit (300.0s elapsed). Proceeding with current progress."),
-])
+@pytest.mark.parametrize(
+    "elapsed_time,process_name,expected",
+    [
+        (
+            10.0,
+            "Test",
+            "Test stopped due to Lambda timeout limit (10.0s elapsed). Proceeding with current progress.",
+        ),
+        (
+            25.7,
+            "API Handler",
+            "API Handler stopped due to Lambda timeout limit (25.7s elapsed). Proceeding with current progress.",
+        ),
+        (
+            0.5,
+            "Quick Task",
+            "Quick Task stopped due to Lambda timeout limit (0.5s elapsed). Proceeding with current progress.",
+        ),
+        (
+            300.0,
+            "Long Running Process",
+            "Long Running Process stopped due to Lambda timeout limit (300.0s elapsed). Proceeding with current progress.",
+        ),
+    ],
+)
 def test_get_timeout_message_parametrized(elapsed_time, process_name, expected):
     """Test get_timeout_message with various parameter combinations."""
     result = get_timeout_message(elapsed_time, process_name)
@@ -112,7 +130,7 @@ def test_get_timeout_message_exception_handling():
     """Test that get_timeout_message is decorated with handle_exceptions."""
     # Test that the function is decorated with handle_exceptions
     # This test verifies the decorator is applied correctly
-    assert hasattr(get_timeout_message, '__wrapped__')
+    assert hasattr(get_timeout_message, "__wrapped__")
 
 
 def test_get_timeout_message_real_world_usage_scenarios():
@@ -193,9 +211,9 @@ def test_get_timeout_message_edge_case_lambda_timeout_limit():
     assert result == expected
 
 
-@pytest.mark.parametrize("elapsed_time", [
-    0.0, 0.1, 1.0, 10.5, 60.0, 120.7, 300.0, 600.5, 900.0, 999.9
-])
+@pytest.mark.parametrize(
+    "elapsed_time", [0.0, 0.1, 1.0, 10.5, 60.0, 120.7, 300.0, 600.5, 900.0, 999.9]
+)
 def test_get_timeout_message_various_elapsed_times(elapsed_time):
     """Test get_timeout_message with various elapsed time values."""
     result = get_timeout_message(elapsed_time)
@@ -205,10 +223,20 @@ def test_get_timeout_message_various_elapsed_times(elapsed_time):
     assert "Proceeding with current progress." in result
 
 
-@pytest.mark.parametrize("process_name", [
-    "Process", "API Handler", "Data Processing", "File Upload", "Database Query",
-    "Email Service", "Image Processing", "Report Generation", "Backup Process"
-])
+@pytest.mark.parametrize(
+    "process_name",
+    [
+        "Process",
+        "API Handler",
+        "Data Processing",
+        "File Upload",
+        "Database Query",
+        "Email Service",
+        "Image Processing",
+        "Report Generation",
+        "Backup Process",
+    ],
+)
 def test_get_timeout_message_various_process_names(process_name):
     """Test get_timeout_message with various process names."""
     elapsed_time = 45.0

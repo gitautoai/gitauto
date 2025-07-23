@@ -25,6 +25,7 @@ from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase & Webhook)
 from services.supabase.create_user_request import create_user_request
+from services.supabase.credits.insert_credit import insert_credit
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 from services.supabase.usage.update_usage import update_usage
@@ -86,16 +87,19 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
     thread_ts = slack_notify(start_msg)
 
     # Check if the user has reached the request limit
-    is_limit_reached, _requests_left, request_limit, end_date = (
-        is_request_limit_reached(
-            installation_id=installation_id,
-            owner_id=owner_id,
-            owner_name=owner_name,
-            owner_type=owner_type,
-            repo_name=repo_name,
-            issue_number=issue_number,
-        )
+    limit_result = is_request_limit_reached(
+        installation_id=installation_id,
+        owner_id=owner_id,
+        owner_name=owner_name,
+        owner_type=owner_type,
+        repo_name=repo_name,
+        issue_number=issue_number,
     )
+    is_limit_reached = limit_result["is_limit_reached"]
+    # _requests_left = limit_result["requests_left"]
+    request_limit = limit_result["request_limit"]
+    end_date = limit_result["end_date"]
+    is_credit_user = limit_result["is_credit_user"]
 
     # If request limit is reached, create a comment and return early
     if is_limit_reached:
@@ -118,7 +122,7 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
         return
 
     # Create a usage record
-    usage_record_id = create_user_request(
+    usage_id = create_user_request(
         user_id=sender_id,
         user_name=sender_name,
         installation_id=installation_id,
@@ -294,13 +298,17 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
     # Update usage record
     end_time = time.time()
     update_usage(
-        usage_record_id=usage_record_id,
+        usage_id=usage_id,
         token_input=0,
         token_output=0,
         total_seconds=int(end_time - current_time),
         pr_number=issue_number,
         is_completed=True,
     )
+
+    # Insert credit usage if user is using credits (not paid subscription)
+    if is_credit_user:
+        insert_credit(owner_id=owner_id, usage_id=usage_id)
 
     # End notification
     slack_notify("Completed", thread_ts)

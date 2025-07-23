@@ -91,6 +91,22 @@ class CoveragesBaseSchema(CustomModel):
     updated_by: str
 
 
+class CreditsBaseSchema(CustomModel):
+    """Credits Base Schema."""
+
+    # Primary Keys
+    id: int
+
+    # Columns
+    amount_usd: int
+    created_at: datetime.datetime
+    expires_at: datetime.datetime | None = Field(default=None)
+    owner_id: int
+    stripe_payment_intent_id: str | None = Field(default=None)
+    transaction_type: str
+    usage_id: int | None = Field(default=None)
+
+
 class InstallationsBaseSchema(CustomModel):
     """Installations Base Schema."""
 
@@ -174,8 +190,13 @@ class OwnersBaseSchema(CustomModel):
     owner_id: int
 
     # Columns
+    auto_reload_enabled: bool
+    auto_reload_target_usd: int
+    auto_reload_threshold_usd: int
     created_at: datetime.datetime
     created_by: str | None = Field(default=None)
+    credit_balance_usd: int
+    max_spending_limit_usd: int | None = Field(default=None)
     org_rules: str
     owner_name: str
     owner_type: str
@@ -412,6 +433,30 @@ class CoveragesInsert(CustomModelInsert):
     updated_at: datetime.datetime | None = Field(default=None)
 
 
+class CreditsInsert(CustomModelInsert):
+    """Credits Insert Schema."""
+
+    # Primary Keys
+    id: int | None = Field(default=None)  # has default value, auto-generated
+
+    # Field properties:
+    # created_at: has default value
+    # expires_at: nullable
+    # stripe_payment_intent_id: nullable
+    # usage_id: nullable
+
+    # Required fields
+    amount_usd: int
+    owner_id: int
+    transaction_type: str
+
+    # Optional fields
+    created_at: datetime.datetime | None = Field(default=None)
+    expires_at: datetime.datetime | None = Field(default=None)
+    stripe_payment_intent_id: str | None = Field(default=None)
+    usage_id: int | None = Field(default=None)
+
+
 class InstallationsInsert(CustomModelInsert):
     """Installations Insert Schema."""
 
@@ -533,8 +578,13 @@ class OwnersInsert(CustomModelInsert):
     owner_id: int
 
     # Field properties:
+    # auto_reload_enabled: has default value
+    # auto_reload_target_usd: has default value
+    # auto_reload_threshold_usd: has default value
     # created_at: has default value
     # created_by: nullable
+    # credit_balance_usd: has default value
+    # max_spending_limit_usd: nullable
     # org_rules: has default value
     # owner_name: has default value
     # owner_type: has default value
@@ -545,8 +595,13 @@ class OwnersInsert(CustomModelInsert):
     stripe_customer_id: str
 
     # Optional fields
+    auto_reload_enabled: bool | None = Field(default=None)
+    auto_reload_target_usd: int | None = Field(default=None)
+    auto_reload_threshold_usd: int | None = Field(default=None)
     created_at: datetime.datetime | None = Field(default=None)
     created_by: str | None = Field(default=None)
+    credit_balance_usd: int | None = Field(default=None)
+    max_spending_limit_usd: int | None = Field(default=None)
     org_rules: str | None = Field(default=None)
     owner_name: str | None = Field(default=None)
     owner_type: str | None = Field(default=None)
@@ -867,6 +922,28 @@ class CoveragesUpdate(CustomModelUpdate):
     updated_by: str | None = Field(default=None)
 
 
+class CreditsUpdate(CustomModelUpdate):
+    """Credits Update Schema."""
+
+    # Primary Keys
+    id: int | None = Field(default=None)
+
+    # Field properties:
+    # created_at: has default value
+    # expires_at: nullable
+    # stripe_payment_intent_id: nullable
+    # usage_id: nullable
+
+    # Optional fields
+    amount_usd: int | None = Field(default=None)
+    created_at: datetime.datetime | None = Field(default=None)
+    expires_at: datetime.datetime | None = Field(default=None)
+    owner_id: int | None = Field(default=None)
+    stripe_payment_intent_id: str | None = Field(default=None)
+    transaction_type: str | None = Field(default=None)
+    usage_id: int | None = Field(default=None)
+
+
 class InstallationsUpdate(CustomModelUpdate):
     """Installations Update Schema."""
 
@@ -980,8 +1057,13 @@ class OwnersUpdate(CustomModelUpdate):
     owner_id: int | None = Field(default=None)
 
     # Field properties:
+    # auto_reload_enabled: has default value
+    # auto_reload_target_usd: has default value
+    # auto_reload_threshold_usd: has default value
     # created_at: has default value
     # created_by: nullable
+    # credit_balance_usd: has default value
+    # max_spending_limit_usd: nullable
     # org_rules: has default value
     # owner_name: has default value
     # owner_type: has default value
@@ -989,8 +1071,13 @@ class OwnersUpdate(CustomModelUpdate):
     # updated_by: nullable
 
     # Optional fields
+    auto_reload_enabled: bool | None = Field(default=None)
+    auto_reload_target_usd: int | None = Field(default=None)
+    auto_reload_threshold_usd: int | None = Field(default=None)
     created_at: datetime.datetime | None = Field(default=None)
     created_by: str | None = Field(default=None)
+    credit_balance_usd: int | None = Field(default=None)
+    max_spending_limit_usd: int | None = Field(default=None)
     org_rules: str | None = Field(default=None)
     owner_name: str | None = Field(default=None)
     owner_type: str | None = Field(default=None)
@@ -1233,6 +1320,17 @@ class Coverages(CoveragesBaseSchema):
     owners: Owners | None = Field(default=None)
 
 
+class Credits(CreditsBaseSchema):
+    """Credits Schema for Pydantic.
+
+    Inherits from CreditsBaseSchema. Add any customization here.
+    """
+
+    # Foreign Keys
+    owners: Owners | None = Field(default=None)
+    usage: Usage | None = Field(default=None)
+
+
 class Installations(InstallationsBaseSchema):
     """Installations Schema for Pydantic.
 
@@ -1280,6 +1378,7 @@ class Owners(OwnersBaseSchema):
 
     # Foreign Keys
     coverages: Coverages | None = Field(default=None)
+    credits: Credits | None = Field(default=None)
     installations: Installations | None = Field(default=None)
     repositories: Repositories | None = Field(default=None)
 
@@ -1309,7 +1408,8 @@ class Usage(UsageBaseSchema):
     Inherits from UsageBaseSchema. Add any customization here.
     """
 
-    pass
+    # Foreign Keys
+    credits: list[Credits] | None = Field(default=None)
 
 
 class UsageWithIssues(UsageWithIssuesBaseSchema):

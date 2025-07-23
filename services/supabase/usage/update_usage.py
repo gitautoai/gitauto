@@ -4,7 +4,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def update_usage(
-    usage_record_id: int,
+    usage_id: int,
     token_input: int,
     token_output: int,
     total_seconds: int,
@@ -20,4 +20,4 @@ def update_usage(
             "token_output": token_output,
             "total_seconds": total_seconds,
         }
-    ).eq(column="id", value=usage_record_id).execute()
+    ).eq(column="id", value=usage_id).execute()

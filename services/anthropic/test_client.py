@@ -53,7 +53,7 @@ def test_get_anthropic_client_creates_new_instance_each_call():
 def test_get_anthropic_client_constructor_called_with_api_key(mock_anthropic):
     """Test that Anthropic constructor is called with the correct API key."""
     client = get_anthropic_client()
-    
+
     mock_anthropic.assert_called_once_with(api_key=ANTHROPIC_API_KEY)
     assert client == mock_anthropic.return_value
 
@@ -93,7 +93,7 @@ def test_get_anthropic_client_multiple_calls_use_same_api_key():
     client1 = get_anthropic_client()
     client2 = get_anthropic_client()
     client3 = get_anthropic_client()
-    
+
     assert client1.api_key == ANTHROPIC_API_KEY
     assert client2.api_key == ANTHROPIC_API_KEY
     assert client3.api_key == ANTHROPIC_API_KEY
@@ -104,22 +104,27 @@ def test_get_anthropic_client_api_key_immutable_after_creation():
     """Test that the API key remains consistent after client creation."""
     client = get_anthropic_client()
     original_api_key = client.api_key
-    
+
     # Verify the API key hasn't changed
     assert client.api_key == original_api_key
     assert client.api_key == ANTHROPIC_API_KEY
 
 
-@pytest.mark.parametrize("api_key_value", [
-    "valid_key_123",
-    "",
-    None,
-    "sk-ant-api03-very-long-key-with-many-characters-1234567890",
-    "key with spaces",
-    "key\nwith\nnewlines",
-    "key\twith\ttabs",
-])
-def test_get_anthropic_client_with_various_api_key_formats(mock_anthropic, api_key_value):
+@pytest.mark.parametrize(
+    "api_key_value",
+    [
+        "valid_key_123",
+        "",
+        None,
+        "sk-ant-api03-very-long-key-with-many-characters-1234567890",
+        "key with spaces",
+        "key\nwith\nnewlines",
+        "key\twith\ttabs",
+    ],
+)
+def test_get_anthropic_client_with_various_api_key_formats(
+    mock_anthropic, api_key_value
+):
     """Test that the client handles various API key formats correctly."""
     with patch("services.anthropic.client.ANTHROPIC_API_KEY", api_key_value):
         get_anthropic_client()

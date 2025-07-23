@@ -58,7 +58,7 @@ def test_complex_objects_trigger_exception_handler():
     class ComplexObject:
         def __str__(self):
             return "complex"
-    
+
     assert is_valid_line_number(ComplexObject()) is False
 
 
@@ -66,7 +66,7 @@ def test_super_strict_failure_case():
     class ComplexObject:
         def __str__(self):
             raise ValueError("String conversion failed")
-    
+
     assert is_valid_line_number(ComplexObject()) is False
 
 
@@ -74,7 +74,7 @@ def test_exception_during_processing():
     class BadObject:
         def __int__(self):
             raise ValueError("Cannot convert to int")
-    
+
     assert is_valid_line_number(BadObject()) is False
 
 
@@ -102,7 +102,7 @@ def test_unicode_and_special_characters():
 def test_very_long_strings():
     long_digit_string = "2" * 1000
     assert is_valid_line_number(long_digit_string) is True
-    
+
     long_non_digit_string = "a" * 1000
     assert is_valid_line_number(long_non_digit_string) is False
 

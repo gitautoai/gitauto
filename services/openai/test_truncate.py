@@ -31,7 +31,7 @@ def test_truncate_message_token_count():
     words = ["test", "token", "limit", "check"]
     input_message = " ".join(words * (OPENAI_MAX_CONTEXT_TOKENS + 10))
     result = truncate_message(input_message=input_message)
-    
+
     # The result should be shorter than the input
     assert len(result) < len(input_message)
 
@@ -49,7 +49,7 @@ def test_truncate_message_unicode():
     test_length = min(OPENAI_MAX_STRING_LENGTH + 10, 1000)
     input_message = "🌟" * test_length
     result = truncate_message(input_message=input_message)
-    
+
     # Should truncate to max length while preserving unicode characters
     assert len(result) <= OPENAI_MAX_STRING_LENGTH
     assert all(char == "🌟" for char in result)
