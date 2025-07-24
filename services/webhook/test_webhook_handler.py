@@ -209,9 +209,7 @@ class TestHandleWebhookEvent:
             event_name="installation_repositories", payload=payload
         )
 
-        mock_slack_notify.assert_called_once_with(
-            "Installation repos added by `test-sender` for `test-owner`"
-        )
+        mock_slack_notify.assert_not_called()
         mock_handle_installation_repos_added.assert_called_once_with(payload=payload)
 
     async def test_handle_webhook_event_issues_labeled(self, mock_create_pr_from_issue):
