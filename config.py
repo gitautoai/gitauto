@@ -91,7 +91,6 @@ EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
 ENV: str = get_env_var(name="ENV")
 EXCEPTION_OWNERS = ["gitautoai", "Suchica", "hiroshinishio"]
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
-FREE_TIER_REQUEST_AMOUNT = 3
 CREDIT_AMOUNTS_USD = {
     "usage": -2,
     "grant": 10,
@@ -110,7 +109,6 @@ UTF8 = "utf-8"
 TEST_APP_ID = 123456
 TEST_INSTALLATION_ID = 12345678
 TEST_NEW_INSTALLATION_ID = 87654321
-PRODUCT_ID_FOR_FREE = "prod_PokLGIxiVUwCi6"  # https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
 PRODUCT_ID_FOR_STANDARD = "prod_PqZFpCs1Jq6X4E"  # https://dashboard.stripe.com/test/products/prod_PqZFpCs1Jq6X4E
 TEST_OWNER_ID = 123456789
 TEST_OWNER_TYPE = "Organization"

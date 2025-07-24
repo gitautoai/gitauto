@@ -44,6 +44,13 @@ pre-commit run --all-files
 uvicorn main:app --reload --port 8000 --log-level warning
 ```
 
+### Database Access
+
+```bash
+# Connect to Supabase PostgreSQL database
+source .env && psql "postgresql://postgres.dkrxtcbaqzrodvsagwwn:$SUPABASE_DB_PASSWORD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
+```
+
 ## Architecture Overview
 
 ### Core Application Structure

@@ -1,10 +1,6 @@
 from unittest.mock import patch
 import pytest
-from config import (
-    FREE_TIER_REQUEST_AMOUNT,
-    PRODUCT_ID_FOR_FREE,
-    PRODUCT_ID_FOR_STANDARD,
-)
+from config import PRODUCT_ID_FOR_STANDARD
 from services.stripe.get_base_request_limit import get_base_request_limit
 
 
@@ -28,17 +24,6 @@ def sample_product_response():
     }
 
 
-@pytest.fixture
-def free_tier_product_response():
-    """Fixture providing a free tier product response."""
-    return {
-        "id": PRODUCT_ID_FOR_FREE,
-        "object": "product",
-        "name": "Free Tier",
-        "metadata": {"request_count": str(FREE_TIER_REQUEST_AMOUNT)},
-    }
-
-
 def test_get_base_request_limit_returns_correct_value(
     mock_stripe_product, sample_product_response
 ):
@@ -49,18 +34,6 @@ def test_get_base_request_limit_returns_correct_value(
 
     assert result == 100
     mock_stripe_product.assert_called_once_with("prod_test123")
-
-
-def test_get_base_request_limit_with_free_tier_product(
-    mock_stripe_product, free_tier_product_response
-):
-    """Test get_base_request_limit with free tier product."""
-    mock_stripe_product.return_value = free_tier_product_response
-
-    result = get_base_request_limit(PRODUCT_ID_FOR_FREE)
-
-    assert result == FREE_TIER_REQUEST_AMOUNT
-    mock_stripe_product.assert_called_once_with(PRODUCT_ID_FOR_FREE)
 
 
 def test_get_base_request_limit_with_standard_product(mock_stripe_product):
@@ -100,7 +73,7 @@ def test_get_base_request_limit_handles_stripe_exception(mock_stripe_product):
 
     result = get_base_request_limit("invalid_product_id")
 
-    assert result == FREE_TIER_REQUEST_AMOUNT
+    assert result == 0
 
 
 def test_get_base_request_limit_handles_missing_metadata(mock_stripe_product):
@@ -114,7 +87,7 @@ def test_get_base_request_limit_handles_missing_metadata(mock_stripe_product):
 
     result = get_base_request_limit("prod_no_metadata")
 
-    assert result == FREE_TIER_REQUEST_AMOUNT
+    assert result == 0
 
 
 def test_get_base_request_limit_handles_missing_request_count(mock_stripe_product):
@@ -128,7 +101,7 @@ def test_get_base_request_limit_handles_missing_request_count(mock_stripe_produc
 
     result = get_base_request_limit("prod_no_request_count")
 
-    assert result == FREE_TIER_REQUEST_AMOUNT
+    assert result == 0
 
 
 def test_get_base_request_limit_handles_invalid_request_count_format(
@@ -144,7 +117,7 @@ def test_get_base_request_limit_handles_invalid_request_count_format(
 
     result = get_base_request_limit("prod_invalid_count")
 
-    assert result == FREE_TIER_REQUEST_AMOUNT
+    assert result == 0
 
 
 @pytest.mark.parametrize(
@@ -178,7 +151,7 @@ def test_get_base_request_limit_with_empty_product_id(mock_stripe_product):
 
     result = get_base_request_limit("")
 
-    assert result == FREE_TIER_REQUEST_AMOUNT
+    assert result == 0
 
 
 def test_get_base_request_limit_with_none_product_id(mock_stripe_product):
@@ -187,4 +160,4 @@ def test_get_base_request_limit_with_none_product_id(mock_stripe_product):
 
     result = get_base_request_limit(None)
 
-    assert result == FREE_TIER_REQUEST_AMOUNT
+    assert result == 0

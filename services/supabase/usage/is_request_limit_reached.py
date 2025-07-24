@@ -1,10 +1,9 @@
 # Standard imports
-import logging
 from datetime import datetime
 from typing import TypedDict
 
 # Local imports
-from config import DEFAULT_TIME, EXCEPTION_OWNERS, FREE_TIER_REQUEST_AMOUNT, TZ
+from config import DEFAULT_TIME, EXCEPTION_OWNERS, TZ
 from services.supabase.installations.get_stripe_customer_id import (
     get_stripe_customer_id,
 )
@@ -12,8 +11,10 @@ from services.supabase.owners.get_owner import get_owner
 from services.supabase.usage.count_completed_unique_requests import (
     count_completed_unique_requests,
 )
+from services.stripe.create_stripe_customer import create_stripe_customer
 from services.stripe.get_base_request_limit import get_base_request_limit
 from services.stripe.get_paid_subscription import get_paid_subscription
+from services.supabase.owners.update_stripe_customer_id import update_stripe_customer_id
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -56,15 +57,27 @@ def is_request_limit_reached(
     # Get Stripe customer ID
     stripe_customer_id = get_stripe_customer_id(installation_id)
     if not stripe_customer_id:
-        msg = f"No Stripe Customer ID found for installation {installation_id} owner {owner_id}"
-        logging.warning(msg)
-        return {
-            "is_limit_reached": True,
-            "requests_left": 0,
-            "request_limit": FREE_TIER_REQUEST_AMOUNT,
-            "end_date": DEFAULT_TIME,
-            "is_credit_user": False,
-        }
+        # Create Stripe customer with available info (use defaults for missing user info)
+        stripe_customer_id = create_stripe_customer(
+            owner_id=owner_id,
+            owner_name=owner_name,
+            installation_id=installation_id,
+            user_id=0,  # Default when user info not available
+            user_name="unknown",  # Default when user info not available
+        )
+
+        if stripe_customer_id:
+            # Update owner record with new stripe customer ID
+            update_stripe_customer_id(owner_id, stripe_customer_id)
+        else:
+            # If customer creation failed, block the request
+            return {
+                "is_limit_reached": True,
+                "requests_left": 0,
+                "request_limit": 0,
+                "end_date": DEFAULT_TIME,
+                "is_credit_user": False,
+            }
 
     # Check if user has a paid subscription
     paid_subscription = get_paid_subscription(customer_id=stripe_customer_id)
