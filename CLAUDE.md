@@ -33,11 +33,6 @@ pytest tests/test_main.py
 ### Code Quality
 
 ```bash
-# Linting and formatting
-black .
-ruff check .
-pylint services/
-
 # Pre-commit hooks (auto-runs pip freeze)
 pre-commit run --all-files
 ```
@@ -192,7 +187,7 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 1. Run black formatting: `black .`
 2. Run ruff linting: `ruff check . --fix`
 3. Run pylint: `pylint .`
-4. Run pytest: `python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info`
+4. Run pytest: `python -m pytest -r fE -x`
 5. Check current branch is not main: `git branch --show-current`
 6. Add changes: `git add .`
 7. Commit with descriptive message: `git commit -m "descriptive message"`
