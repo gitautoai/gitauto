@@ -4,13 +4,7 @@ from datetime import datetime
 from typing import TypedDict
 
 # Local imports
-from config import (
-    DEFAULT_TIME,
-    EXCEPTION_OWNERS,
-    FREE_TIER_REQUEST_AMOUNT,
-    STRIPE_FREE_TIER_PRICE_ID,
-    TZ,
-)
+from config import DEFAULT_TIME, EXCEPTION_OWNERS, FREE_TIER_REQUEST_AMOUNT, TZ
 from services.supabase.installations.get_stripe_customer_id import (
     get_stripe_customer_id,
 )
@@ -19,8 +13,7 @@ from services.supabase.usage.count_completed_unique_requests import (
     count_completed_unique_requests,
 )
 from services.stripe.get_base_request_limit import get_base_request_limit
-from services.stripe.get_subscription import get_subscription
-from services.stripe.parse_subscription_object import parse_subscription_object
+from services.stripe.get_paid_subscription import get_paid_subscription
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -73,31 +66,21 @@ def is_request_limit_reached(
             "is_credit_user": False,
         }
 
-    # Get subscription data using existing function
-    subscription = get_subscription(customer_id=stripe_customer_id)
-    start_date_seconds, end_date_seconds, product_id, interval, quantity = (
-        parse_subscription_object(
-            subscription=subscription,
-            installation_id=installation_id,
-            customer_id=stripe_customer_id,
-            owner_id=owner_id,
-            owner_name=owner_name,
-        )
-    )
-
-    # Check if user has a paid subscription (not free tier)
-    has_paid_subscription = False
-    if subscription and subscription.data:
-        for sub in subscription.data:
-            for item in sub["items"]["data"]:
-                if item["price"]["id"] != STRIPE_FREE_TIER_PRICE_ID:
-                    has_paid_subscription = True
-                    break
-            if has_paid_subscription:
-                break
+    # Check if user has a paid subscription
+    paid_subscription = get_paid_subscription(customer_id=stripe_customer_id)
+    has_paid_subscription = paid_subscription is not None
 
     # If user has paid subscription, use existing logic
     if has_paid_subscription:
+        # Extract subscription details from the paid subscription
+        item = paid_subscription["items"]["data"][0]  # Get first item
+
+        start_date_seconds = paid_subscription.current_period_start
+        end_date_seconds = paid_subscription.current_period_end
+        product_id = item["price"]["product"]
+        interval = item["price"]["recurring"]["interval"]
+        quantity = item["quantity"]
+
         # Calculate request limit
         base_request_limit = get_base_request_limit(product_id)
         request_limit = (
@@ -119,6 +102,8 @@ def is_request_limit_reached(
 
         # For credits, we don't have a monthly limit - just check if they have balance
         request_limit = 999999  # Effectively unlimited as long as they have credits
+        start_date_seconds = int(DEFAULT_TIME.timestamp())
+        end_date_seconds = int(DEFAULT_TIME.timestamp())
 
     # Set credit user flag
     is_credit_user = not has_paid_subscription
