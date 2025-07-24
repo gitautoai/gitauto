@@ -123,12 +123,17 @@ def chat_with_agent(
         if tool_name in tools_to_call:
             if (
                 tool_name == "apply_diff_to_file"
+                and isinstance(tool_args, dict)
                 and "file_path" in tool_args
                 and "diff" not in tool_args
                 and "file_content" in tool_args
             ):
                 corrected_tool = ("replace_remote_file_content", tool_args)
-            elif tool_name == "replace_remote_file_content" and "diff" in tool_args:
+            elif (
+                tool_name == "replace_remote_file_content"
+                and isinstance(tool_args, dict)
+                and "diff" in tool_args
+            ):
                 corrected_tool = ("apply_diff_to_file", tool_args)
 
         # Case 2: Function doesn't exist but has similar name
@@ -150,8 +155,11 @@ def chat_with_agent(
             tool_args = corrected_tool[1]
 
         if tool_name in tools_to_call:
-            tool_args.pop("base_args", None)
-            tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
+            if isinstance(tool_args, dict):
+                tool_args.pop("base_args", None)
+                tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
+            else:
+                tool_result = tools_to_call[tool_name](base_args=base_args)
             previous_calls.append(current_call)
             is_done = True
         else:
@@ -173,7 +181,7 @@ def chat_with_agent(
     )
 
     # Recursively call the function if the mode is "explore" and the tool was called
-    if tool_name == "get_remote_file_content":
+    if tool_name == "get_remote_file_content" and isinstance(tool_args, dict):
         if "line_number" in tool_args:
             line_info = (
                 f" around line {tool_args['line_number']}"
@@ -196,14 +204,17 @@ def chat_with_agent(
             else:
                 file_list = [line[2:] for line in result_lines if line.startswith("- ")]
 
-        if file_list:
+        if file_list and isinstance(tool_args, dict):
             msg = f"Searched repository for `{tool_args['query']}` and found: \n- {'\n- '.join(file_list)}\n"
-        else:
+        elif isinstance(tool_args, dict):
             msg = f"Searched repository for `{tool_args['query']}` but found no matching files."
+        else:
+            msg = "Searched repository but found no matching files."
 
     # Claude sometimes tries to call functions that don't exist in the list of tools...
     elif (
         tool_name in ["apply_diff_to_file", "replace_remote_file_content"]
+        and isinstance(tool_args, dict)
         and "file_path" in tool_args
     ):
         msg = f"Committed changes to `{tool_args['file_path']}`."
