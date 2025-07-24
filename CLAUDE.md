@@ -187,6 +187,9 @@ source .env && psql "postgresql://postgres.dkrxtcbaqzrodvsagwwn:$SUPABASE_DB_PAS
 
 - NO DOCSTRINGS: Do not add docstrings to functions or classes. Keep code clean and minimal.
 - NO TYPE HINTS USING ->: Do not add return type hints using -> because this is assertion
+- NO TYPE: IGNORE: Do not use # type: ignore comments to suppress type errors. Fix the underlying type issues instead.
+- NO CAST: Do not use typing.cast() to suppress type errors. Fix the underlying type issues instead.
+- NO ANY: Do not use Any type. Fix the specific type issues instead.
 
 ## LGTM Workflow
 

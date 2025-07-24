@@ -47,13 +47,18 @@ def chat_with_claude(
         if not isinstance(function, dict):
             function = message_to_dict(function)
 
-        anthropic_tools.append(
-            {
-                "name": safe_get_attribute(function, "name"),
-                "description": safe_get_attribute(function, "description"),
-                "input_schema": safe_get_attribute(function, "parameters"),
-            }
-        )
+        name = safe_get_attribute(function, "name", "")
+        description = safe_get_attribute(function, "description", "")
+        input_schema = safe_get_attribute(function, "parameters", {})
+
+        if name and description:
+            anthropic_tools.append(
+                {
+                    "name": name,
+                    "description": description,
+                    "input_schema": input_schema,
+                }
+            )
 
     # https://docs.anthropic.com/en/api/messages
     try:

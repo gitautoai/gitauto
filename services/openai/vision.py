@@ -42,6 +42,7 @@ def describe_image(base64_image: str, context: str | None = None) -> str:
         n=1,
         temperature=OPENAI_TEMPERATURE,
     )
-    content: str | None = completion.choices[0].message.content.strip()
+    message_content = completion.choices[0].message.content
+    content: str | None = message_content.strip() if message_content else None
     description: str = content if content else "No response from OpenAI"
     return description

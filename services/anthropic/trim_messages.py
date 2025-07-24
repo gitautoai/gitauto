@@ -31,7 +31,7 @@ def trim_messages_to_token_limit(
         # Find oldest non-system message that we can safely remove
         for i, msg in enumerate(messages):
             msg_dict = message_to_dict(msg)
-            role = safe_get_attribute(msg_dict, "role")
+            role = safe_get_attribute(msg_dict, "role", "")
 
             if role == "system":
                 continue
@@ -43,10 +43,11 @@ def trim_messages_to_token_limit(
             tool_use_id = None
             if role == "assistant" and i + 1 < len(messages):
                 content = safe_get_attribute(msg_dict, "content", [])
-                for block in content:
-                    if isinstance(block, dict) and block.get("type") == "tool_use":
-                        tool_use_id = block.get("id")
-                        break
+                if isinstance(content, list):
+                    for block in content:
+                        if isinstance(block, dict) and block.get("type") == "tool_use":
+                            tool_use_id = block.get("id")
+                            break
 
             # If this message has a tool_use, check if next message has the matching tool_result
             if tool_use_id and i + 1 < len(messages):
