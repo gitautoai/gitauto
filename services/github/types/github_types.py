@@ -1,5 +1,6 @@
 # Standard imports
 from typing import Literal, Optional, TypedDict, Union
+from typing_extensions import NotRequired
 
 # Local imports
 from services.github.types.check_run import CheckRun
@@ -15,7 +16,8 @@ from services.github.types.sender import Sender
 from services.github.types.user import User
 
 
-class BaseArgs(TypedDict, total=False):
+class BaseArgs(TypedDict):
+    # Required fields - set by both deconstruct functions
     input_from: Literal["github", "jira"]
     owner_type: OwnerType
     owner_id: int
@@ -29,7 +31,6 @@ class BaseArgs(TypedDict, total=False):
     issue_body: str
     issue_comments: list[str]
     latest_commit_sha: str
-    comment_url: str | None
     issuer_name: str
     base_branch: str
     new_branch: str
@@ -42,7 +43,11 @@ class BaseArgs(TypedDict, total=False):
     reviewers: list[str]
     github_urls: list[str]
     other_urls: list[str]
-    pr_body: str
+
+    # Optional fields
+    comment_url: NotRequired[str | None]
+    pr_body: NotRequired[str]
+    issuer_email: NotRequired[str]
 
 
 class CheckRunCompletedPayload(TypedDict):

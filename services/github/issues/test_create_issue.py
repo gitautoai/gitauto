@@ -4,6 +4,7 @@ import requests
 
 from services.github.issues.create_issue import create_issue
 from tests.constants import OWNER, REPO, TOKEN
+from tests.helpers.create_test_base_args import create_test_base_args
 
 
 def test_create_issue_success_with_assignees():
@@ -14,7 +15,7 @@ def test_create_issue_success_with_assignees():
         "html_url": "https://github.com/owner/repo/issues/123",
     }
 
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN}
+    base_args = create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
@@ -45,7 +46,7 @@ def test_create_issue_success_without_assignees():
         "html_url": "https://github.com/owner/repo/issues/456",
     }
 
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN}
+    base_args = create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
@@ -76,7 +77,7 @@ def test_create_issue_success_with_empty_assignees_list():
         "html_url": "https://github.com/owner/repo/issues/789",
     }
 
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN}
+    base_args = create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
@@ -105,7 +106,7 @@ def test_create_issue_http_error():
     http_error.response = mock_error_response
     mock_response.raise_for_status.side_effect = http_error
 
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN}
+    base_args = create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
@@ -122,7 +123,7 @@ def test_create_issue_http_error():
 
 
 def test_create_issue_request_exception():
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN}
+    base_args = create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
@@ -145,7 +146,7 @@ def test_create_issue_with_none_assignees():
         "html_url": "https://github.com/owner/repo/issues/101",
     }
 
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN}
+    base_args = create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
@@ -171,7 +172,9 @@ def test_create_issue_api_url_construction():
         "html_url": "https://github.com/test-owner/test-repo/issues/202",
     }
 
-    base_args = {"owner": "test-owner", "repo": "test-repo", "token": "test-token"}
+    base_args = create_test_base_args(
+        owner="test-owner", repo="test-repo", token="test-token"
+    )
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
@@ -200,7 +203,7 @@ def test_create_issue_timeout_parameter():
         "html_url": "https://github.com/owner/repo/issues/303",
     }
 
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN}
+    base_args = create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
@@ -226,7 +229,7 @@ def test_create_issue_headers_creation():
         "html_url": "https://github.com/owner/repo/issues/404",
     }
 
-    base_args = {"owner": OWNER, "repo": REPO, "token": "test-token-123"}
+    base_args = create_test_base_args(owner=OWNER, repo=REPO, token="test-token-123")
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"

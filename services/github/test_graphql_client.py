@@ -8,9 +8,12 @@ def test_get_graphql_client(monkeypatch):
     )
     token = "dummy_token"
     client = get_graphql_client(token)
+    assert client is not None
     transport = client.transport
+    assert transport is not None
     assert isinstance(transport, RequestsHTTPTransport)
     assert transport.url == "https://api.github.com/graphql"
+    assert transport.headers is not None
     assert transport.headers["Authorization"] == "Bearer dummy_token"
     assert transport.verify is True
     assert transport.retries == 3

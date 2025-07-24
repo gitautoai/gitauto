@@ -4,6 +4,7 @@ import requests
 
 from services.github.comments.get_all_comments import get_all_comments
 from tests.constants import OWNER, REPO, TOKEN
+from tests.helpers.create_test_base_args import create_test_base_args
 
 
 @pytest.fixture
@@ -195,7 +196,9 @@ def test_get_all_comments_different_issue_number(
 ):
     """Test with different issue numbers."""
     # Arrange
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN, "issue_number": 456}
+    base_args = create_test_base_args(
+        owner=OWNER, repo=REPO, token=TOKEN, issue_number=456
+    )
     mock_response = MagicMock()
     mock_response.json.return_value = []
     mock_requests_get.return_value = mock_response
@@ -212,12 +215,12 @@ def test_get_all_comments_different_issue_number(
 def test_get_all_comments_different_owner_repo(mock_requests_get, mock_create_headers):
     """Test with different owner and repository."""
     # Arrange
-    base_args = {
-        "owner": "different_owner",
-        "repo": "different_repo",
-        "token": TOKEN,
-        "issue_number": 123,
-    }
+    base_args = create_test_base_args(
+        owner="different_owner",
+        repo="different_repo",
+        token=TOKEN,
+        issue_number=123,
+    )
     mock_response = MagicMock()
     mock_response.json.return_value = []
     mock_requests_get.return_value = mock_response

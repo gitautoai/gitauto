@@ -2,6 +2,7 @@ from unittest.mock import patch, MagicMock
 
 from services.github.comments.update_comment import update_comment
 from tests.constants import OWNER, REPO, TOKEN
+from tests.helpers.create_test_base_args import create_test_base_args
 
 
 def test_update_comment_success():
@@ -9,12 +10,12 @@ def test_update_comment_success():
     mock_response = MagicMock()
     mock_response.json.return_value = {"id": 123, "body": "Updated comment"}
 
-    base_args = {
-        "owner": OWNER,
-        "repo": REPO,
-        "token": TOKEN,
-        "comment_url": "https://api.github.com/repos/owner/repo/issues/comments/123",
-    }
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
+    )
 
     # Act
     with patch("services.github.comments.update_comment.patch") as mock_patch:
@@ -29,7 +30,9 @@ def test_update_comment_success():
 
 def test_update_comment_none_url():
     # Arrange
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN, "comment_url": None}
+    base_args = create_test_base_args(
+        owner=OWNER, repo=REPO, token=TOKEN, comment_url=None
+    )
 
     # Act
     with patch("services.github.comments.update_comment.patch") as mock_patch:
@@ -45,12 +48,12 @@ def test_update_comment_request_error():
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = Exception("API error")
 
-    base_args = {
-        "owner": OWNER,
-        "repo": REPO,
-        "token": TOKEN,
-        "comment_url": "https://api.github.com/repos/owner/repo/issues/comments/123",
-    }
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
+    )
 
     # Act
     with patch("services.github.comments.update_comment.patch") as mock_patch:
@@ -67,12 +70,12 @@ def test_update_comment_empty_body():
     mock_response = MagicMock()
     mock_response.json.return_value = {"id": 123, "body": ""}
 
-    base_args = {
-        "owner": OWNER,
-        "repo": REPO,
-        "token": TOKEN,
-        "comment_url": "https://api.github.com/repos/owner/repo/issues/comments/123",
-    }
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
+    )
 
     # Act
     with patch("services.github.comments.update_comment.patch") as mock_patch:
@@ -90,12 +93,12 @@ def test_update_comment_with_headers():
     mock_response = MagicMock()
     mock_response.json.return_value = {"id": 123, "body": "Test comment"}
 
-    base_args = {
-        "owner": OWNER,
-        "repo": REPO,
-        "token": TOKEN,
-        "comment_url": "https://api.github.com/repos/owner/repo/issues/comments/123",
-    }
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
+    )
 
     # Act
     with patch("services.github.comments.update_comment.patch") as mock_patch, patch(
@@ -114,7 +117,7 @@ def test_update_comment_with_headers():
 
 def test_update_comment_missing_comment_url_key():
     # Arrange
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN}
+    base_args = create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
 
     # Act
     with patch("services.github.comments.update_comment.patch") as mock_patch:

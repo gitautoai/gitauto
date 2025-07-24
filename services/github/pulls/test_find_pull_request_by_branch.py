@@ -58,6 +58,7 @@ def test_find_pull_request_by_branch_returns_pull_request_when_found(
     result = find_pull_request_by_branch(owner, repo, branch_name, token)
 
     # Assert
+    assert result is not None
     assert result == sample_pull_request
     assert result["number"] == 123
     assert result["title"] == "Feature: Add new functionality"
@@ -216,6 +217,7 @@ def test_find_pull_request_by_branch_returns_first_pull_request_when_multiple_fo
     result = find_pull_request_by_branch(owner, repo, branch_name, token)
 
     # Assert
+    assert result is not None
     assert result == first_pull
     assert result["number"] == 123
     assert result["title"] == "First PR"

@@ -8,7 +8,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_commit_diff(owner: str, repo: str, commit_sha: str, token: str) -> dict | None:
+def get_commit_diff(owner: str, repo: str, commit_sha: str, token: str):
     """
     Get commit diff from GitHub API.
     https://docs.github.com/en/rest/commits/commits#get-a-commit

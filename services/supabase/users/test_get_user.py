@@ -69,6 +69,7 @@ def test_get_user_returns_first_user_when_multiple_found(sample_user_data):
         result = get_user(user_id=123)
 
         # Verify result - should return first user
+        assert result is not None
         assert result == sample_user_data
         assert result["user_id"] == 123
         assert result["user_name"] == "test_user"
