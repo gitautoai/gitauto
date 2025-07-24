@@ -6,6 +6,8 @@ from services.github.types.github_types import GitHubInstallationPayload
 from services.github.users.get_user_public_email import get_user_public_email
 
 # Local imports (Supabase)
+from services.supabase.credits.check_grant_exists import check_grant_exists
+from services.supabase.credits.insert_credit import insert_credit
 from services.supabase.installations.insert_installation import insert_installation
 from services.supabase.owners.check_owner_exists import check_owner_exists
 from services.supabase.owners.insert_owner import insert_owner
@@ -13,7 +15,6 @@ from services.supabase.users.upsert_user import upsert_user
 
 # Local imports (Stripe)
 from services.stripe.create_stripe_customer import create_stripe_customer
-from services.stripe.subscribe_to_free_plan import subscribe_to_free_plan
 
 # Local imports (Others)
 from services.webhook.process_repositories import process_repositories
@@ -40,18 +41,15 @@ async def handle_installation_created(payload: GitHubInstallationPayload):
             user_id=user_id,
             user_name=user_name,
         )
-        subscribe_to_free_plan(
-            customer_id=customer_id,
-            owner_id=owner_id,
-            owner_name=owner_name,
-            installation_id=installation_id,
-        )
         insert_owner(
             owner_id=owner_id,
             owner_type=owner_type,
             owner_name=owner_name,
             stripe_customer_id=customer_id,
         )
+
+    if not check_grant_exists(owner_id=owner_id):
+        insert_credit(owner_id=owner_id, transaction_type="grant")
 
     insert_installation(
         installation_id=installation_id,

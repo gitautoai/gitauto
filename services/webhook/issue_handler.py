@@ -479,7 +479,7 @@ async def create_pr_from_issue(
 
     # Insert credit usage if user is using credits (not paid subscription)
     if is_completed and is_credit_user:
-        insert_credit(owner_id=owner_id, usage_id=usage_id)
+        insert_credit(owner_id=owner_id, transaction_type="usage", usage_id=usage_id)
 
     # End notification
     end_msg = "Completed" if is_completed else "@channel Failed"
