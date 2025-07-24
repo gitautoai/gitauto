@@ -86,7 +86,9 @@ STRIPE_PRODUCT_ID_FREE: str = get_env_var(name="STRIPE_PRODUCT_ID_FREE")
 STRIPE_PRODUCT_ID_STANDARD: str = get_env_var(name="STRIPE_PRODUCT_ID_STANDARD")
 
 # General
-DEFAULT_TIME = datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
+ONE_YEAR_FROM_NOW = datetime.now(timezone.utc).replace(
+    year=datetime.now().year + 1, microsecond=0
+)
 EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
 ENV: str = get_env_var(name="ENV")
 EXCEPTION_OWNERS = ["gitautoai", "Suchica", "hiroshinishio"]
