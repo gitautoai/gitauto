@@ -104,7 +104,7 @@ def is_request_limit_reached(
     else:
         # User doesn't have paid subscription, check credit balance
         owner = get_owner(owner_id)
-        if not owner or owner.credit_balance_usd <= 0:
+        if not owner or owner["credit_balance_usd"] <= 0:
             return {
                 "is_limit_reached": True,
                 "requests_left": 0,
