@@ -272,7 +272,7 @@ class TestHandleJiraWebhook:
         mock_verify_jira.assert_called_once_with(mock_jira_request)
         mock_create_pr.assert_called_once_with(
             payload={"issue": {"key": "JIRA-123"}},
-            trigger="issue_checkbox",
+            trigger="issue_comment",
             input_from="jira",
         )
         assert response == {"message": "Jira webhook processed successfully"}

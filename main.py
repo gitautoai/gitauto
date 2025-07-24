@@ -95,7 +95,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 async def handle_jira_webhook(request: Request):
     payload = await verify_jira_webhook(request)
     await create_pr_from_issue(
-        payload=payload, trigger="issue_checkbox", input_from="jira"
+        payload=payload, trigger="issue_comment", input_from="jira"
     )
     return {"message": "Jira webhook processed successfully"}
 

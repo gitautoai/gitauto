@@ -13,7 +13,7 @@ SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def slack_notify(text: str, thread_ts: str = None):
+def slack_notify(text: str, thread_ts: str | None = None):
     if not IS_PRD:
         print("Skipping Slack notification in non-production environment")
         return None

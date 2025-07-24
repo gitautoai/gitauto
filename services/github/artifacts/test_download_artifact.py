@@ -424,4 +424,4 @@ def test_download_artifact_large_lcov_content():
 
         # Assertions
         assert result == large_content
-        assert len(result) > 10000  # Verify it's actually large
+        assert result is not None and len(result) > 10000  # Verify it's actually large

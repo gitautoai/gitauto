@@ -10,6 +10,8 @@ class CoverageReport(TypedDict):
     branch_coverage: float
     line_coverage: float
     uncovered_lines: str
+    uncovered_functions: str
+    uncovered_branches: str
 
 
 DEFAULT_COVERAGES: CoverageReport = {
@@ -21,4 +23,6 @@ DEFAULT_COVERAGES: CoverageReport = {
     "branch_coverage": 0,
     "line_coverage": 0,
     "uncovered_lines": "",
+    "uncovered_functions": "",
+    "uncovered_branches": "",
 }

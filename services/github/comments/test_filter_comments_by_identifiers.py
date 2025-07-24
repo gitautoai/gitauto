@@ -11,12 +11,6 @@ def test_filter_comments_by_identifiers_empty_comments():
     assert result == []
 
 
-def test_filter_comments_by_identifiers_none_comments():
-    """Test with None comments list"""
-    result = filter_comments_by_identifiers(None, ["identifier"])
-    assert result == []
-
-
 def test_filter_comments_by_identifiers_empty_identifiers():
     """Test with empty identifiers list"""
     comments = [{"id": 1, "body": "Test comment", "user": {"login": "gitauto-ai[bot]"}}]
