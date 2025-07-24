@@ -196,7 +196,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
         # Get installation permissions via API
-        permissions = get_installation_permissions(installation_id, token)
+        permissions = get_installation_permissions(installation_id)
 
         # Early return notification
         early_return_msg = f"workflow_path is 404. Permission denied for workflow run id `{workflow_id}` in `{owner_name}/{repo_name}` - Permissions: `{permissions}`"
@@ -230,7 +230,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
         # Get installation permissions via API
-        permissions = get_installation_permissions(installation_id, token)
+        permissions = get_installation_permissions(installation_id)
 
         # Early return notification
         early_return_msg = f"error_log is 404. Permission denied for workflow run id `{workflow_id}` in `{owner_name}/{repo_name}` - Permissions: `{permissions}`"

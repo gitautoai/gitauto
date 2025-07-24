@@ -40,21 +40,26 @@ def mock_headers():
 def test_get_installation_permissions_success(mock_response, mock_headers):
     """Test successful retrieval of installation permissions."""
     installation_id = 12345
-    token = "test_token"
+    mock_jwt = "mock_jwt_token"
     expected_url = f"{GITHUB_API_URL}/app/installations/{installation_id}"
 
     with patch(
         "services.github.installations.get_installation_permissions.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
-    ) as mock_create_headers:
+    ) as mock_create_headers, patch(
+        "services.github.installations.get_installation_permissions.get_jwt"
+    ) as mock_get_jwt:
 
+        mock_get_jwt.return_value = mock_jwt
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
 
-        result = get_installation_permissions(installation_id, token)
+        result = get_installation_permissions(installation_id)
 
-        mock_create_headers.assert_called_once_with(token=token)
+        # Verify JWT is generated and used instead of the passed token
+        mock_get_jwt.assert_called_once()
+        mock_create_headers.assert_called_once_with(token=mock_jwt)
         mock_get.assert_called_once_with(
             url=expected_url, headers=mock_headers, timeout=TIMEOUT
         )
@@ -72,7 +77,7 @@ def test_get_installation_permissions_success(mock_response, mock_headers):
 def test_get_installation_permissions_no_permissions_key(mock_headers):
     """Test when response doesn't contain permissions key."""
     installation_id = 12345
-    token = "test_token"
+    mock_jwt = "mock_jwt_token"
 
     mock_response = MagicMock()
     mock_response.json.return_value = {"id": 12345, "app_id": 67890}
@@ -82,12 +87,15 @@ def test_get_installation_permissions_no_permissions_key(mock_headers):
         "services.github.installations.get_installation_permissions.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
-    ) as mock_create_headers:
+    ) as mock_create_headers, patch(
+        "services.github.installations.get_installation_permissions.get_jwt"
+    ) as mock_get_jwt:
 
+        mock_get_jwt.return_value = mock_jwt
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
 
-        result = get_installation_permissions(installation_id, token)
+        result = get_installation_permissions(installation_id)
 
         assert result == {}
 
@@ -95,7 +103,7 @@ def test_get_installation_permissions_no_permissions_key(mock_headers):
 def test_get_installation_permissions_empty_permissions(mock_headers):
     """Test when permissions key exists but is empty."""
     installation_id = 12345
-    token = "test_token"
+    mock_jwt = "mock_jwt_token"
 
     mock_response = MagicMock()
     mock_response.json.return_value = {"permissions": {}}
@@ -105,12 +113,15 @@ def test_get_installation_permissions_empty_permissions(mock_headers):
         "services.github.installations.get_installation_permissions.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
-    ) as mock_create_headers:
+    ) as mock_create_headers, patch(
+        "services.github.installations.get_installation_permissions.get_jwt"
+    ) as mock_get_jwt:
 
+        mock_get_jwt.return_value = mock_jwt
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
 
-        result = get_installation_permissions(installation_id, token)
+        result = get_installation_permissions(installation_id)
 
         assert result == {}
 
@@ -118,7 +129,7 @@ def test_get_installation_permissions_empty_permissions(mock_headers):
 def test_get_installation_permissions_http_error(mock_headers):
     """Test handling of HTTP errors."""
     installation_id = 12345
-    token = "test_token"
+    mock_jwt = "mock_jwt_token"
 
     mock_response = MagicMock()
     mock_response.status_code = 404
@@ -133,12 +144,15 @@ def test_get_installation_permissions_http_error(mock_headers):
         "services.github.installations.get_installation_permissions.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
-    ) as mock_create_headers:
+    ) as mock_create_headers, patch(
+        "services.github.installations.get_installation_permissions.get_jwt"
+    ) as mock_get_jwt:
 
+        mock_get_jwt.return_value = mock_jwt
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
 
-        result = get_installation_permissions(installation_id, token)
+        result = get_installation_permissions(installation_id)
 
         # Should return default value due to @handle_exceptions decorator
         assert result == {}
@@ -147,18 +161,21 @@ def test_get_installation_permissions_http_error(mock_headers):
 def test_get_installation_permissions_request_exception(mock_headers):
     """Test handling of request exceptions."""
     installation_id = 12345
-    token = "test_token"
+    mock_jwt = "mock_jwt_token"
 
     with patch(
         "services.github.installations.get_installation_permissions.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
-    ) as mock_create_headers:
+    ) as mock_create_headers, patch(
+        "services.github.installations.get_installation_permissions.get_jwt"
+    ) as mock_get_jwt:
 
+        mock_get_jwt.return_value = mock_jwt
         mock_create_headers.return_value = mock_headers
         mock_get.side_effect = requests.RequestException("Connection error")
 
-        result = get_installation_permissions(installation_id, token)
+        result = get_installation_permissions(installation_id)
 
         # Should return default value due to @handle_exceptions decorator
         assert result == {}
@@ -167,7 +184,7 @@ def test_get_installation_permissions_request_exception(mock_headers):
 def test_get_installation_permissions_json_decode_error(mock_headers):
     """Test handling of JSON decode errors."""
     installation_id = 12345
-    token = "test_token"
+    mock_jwt = "mock_jwt_token"
 
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
@@ -177,12 +194,15 @@ def test_get_installation_permissions_json_decode_error(mock_headers):
         "services.github.installations.get_installation_permissions.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
-    ) as mock_create_headers:
+    ) as mock_create_headers, patch(
+        "services.github.installations.get_installation_permissions.get_jwt"
+    ) as mock_get_jwt:
 
+        mock_get_jwt.return_value = mock_jwt
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
 
-        result = get_installation_permissions(installation_id, token)
+        result = get_installation_permissions(installation_id)
 
         # Should return default value due to @handle_exceptions decorator
         assert result == {}
@@ -190,9 +210,9 @@ def test_get_installation_permissions_json_decode_error(mock_headers):
 
 def test_get_installation_permissions_with_different_installation_ids():
     """Test function with different installation ID values."""
-    token = "test_token"
     test_cases = [1, 12345, 999999999]
 
+    mock_jwt = "mock_jwt_token"
     for installation_id in test_cases:
         expected_url = f"{GITHUB_API_URL}/app/installations/{installation_id}"
 
@@ -200,16 +220,19 @@ def test_get_installation_permissions_with_different_installation_ids():
             "services.github.installations.get_installation_permissions.get"
         ) as mock_get, patch(
             "services.github.installations.get_installation_permissions.create_headers"
-        ) as mock_create_headers:
+        ) as mock_create_headers, patch(
+            "services.github.installations.get_installation_permissions.get_jwt"
+        ) as mock_get_jwt:
 
             mock_response = MagicMock()
             mock_response.json.return_value = {"permissions": {"test": "read"}}
             mock_response.raise_for_status.return_value = None
 
+            mock_get_jwt.return_value = mock_jwt
             mock_create_headers.return_value = {}
             mock_get.return_value = mock_response
 
-            result = get_installation_permissions(installation_id, token)
+            result = get_installation_permissions(installation_id)
 
             mock_get.assert_called_once_with(
                 url=expected_url, headers={}, timeout=TIMEOUT
@@ -217,25 +240,29 @@ def test_get_installation_permissions_with_different_installation_ids():
             assert result == {"test": "read"}
 
 
-def test_get_installation_permissions_with_different_tokens():
-    """Test function with different token values."""
+def test_get_installation_permissions_always_uses_jwt():
+    """Test function always uses JWT regardless of any context."""
     installation_id = 12345
-    test_tokens = ["token1", "bearer_token_123", ""]
+    mock_jwt = "mock_jwt_token"
 
-    for token in test_tokens:
-        with patch(
-            "services.github.installations.get_installation_permissions.get"
-        ) as mock_get, patch(
-            "services.github.installations.get_installation_permissions.create_headers"
-        ) as mock_create_headers:
+    with patch(
+        "services.github.installations.get_installation_permissions.get"
+    ) as mock_get, patch(
+        "services.github.installations.get_installation_permissions.create_headers"
+    ) as mock_create_headers, patch(
+        "services.github.installations.get_installation_permissions.get_jwt"
+    ) as mock_get_jwt:
 
-            mock_response = MagicMock()
-            mock_response.json.return_value = {"permissions": {}}
-            mock_response.raise_for_status.return_value = None
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"permissions": {}}
+        mock_response.raise_for_status.return_value = None
 
-            mock_create_headers.return_value = {}
-            mock_get.return_value = mock_response
+        mock_get_jwt.return_value = mock_jwt
+        mock_create_headers.return_value = {}
+        mock_get.return_value = mock_response
 
-            get_installation_permissions(installation_id, token)
+        get_installation_permissions(installation_id)
 
-            mock_create_headers.assert_called_once_with(token=token)
+        # Verify JWT is always used
+        mock_get_jwt.assert_called_once()
+        mock_create_headers.assert_called_once_with(token=mock_jwt)
