@@ -65,6 +65,7 @@ def test_get_commit_diff_success():
         mock_response.raise_for_status.assert_called_once()
 
         # Verify result
+        assert result is not None
         assert result["commit_id"] == "abc123def456"
         assert result["message"] == "Test commit message"
         assert result["author"] == {

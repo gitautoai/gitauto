@@ -20,6 +20,7 @@ from services.github.pulls.get_review_thread_comments import get_review_thread_c
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree_list import get_file_tree_list
+from services.github.types.github_types import BaseArgs
 from services.github.types.owner import Owner
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
@@ -105,21 +106,39 @@ def handle_review_run(payload: dict[str, Any]):
         # Fallback to single comment if thread fetch fails
         review_comment += f"{review_body}"
 
-    base_args: dict[str, str | int | bool] = {
+    base_args: BaseArgs = {
+        # Required fields
+        "input_from": "github",
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
         "repo_id": repo_id,
         "repo": repo_name,
+        "clone_url": repo["clone_url"],
         "is_fork": is_fork,
         "issue_number": pull_number,
+        "issue_title": pull_title,
+        "issue_body": pull_body or "",
+        "issue_comments": [],
+        "latest_commit_sha": pull_request["head"]["sha"],
+        "issuer_name": sender_name,
+        "base_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_file_tree requires the base branch
+        "new_branch": head_branch,
+        "installation_id": installation_id,
+        "token": token,
+        "sender_id": sender_id,
+        "sender_name": sender_name,
+        "sender_email": f"{sender_name}@users.noreply.github.com",
+        "is_automation": False,
+        "reviewers": [],
+        "github_urls": [],
+        "other_urls": [],
+        # Extra fields for backward compatibility
         "pull_number": pull_number,
         "pull_title": pull_title,
         "pull_body": pull_body,
         "pull_url": pull_url,
         "pull_file_url": pull_file_url,
-        "new_branch": head_branch,
-        "base_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_file_tree requires the base branch
         "review_id": review_id,
         "review_path": review_path,
         "review_subject_type": review_subject_type,
@@ -128,9 +147,6 @@ def handle_review_run(payload: dict[str, Any]):
         # "review_position": review_position,
         "review_body": review_body,
         "review_comment": review_comment,
-        "sender_id": sender_id,
-        "sender_name": sender_name,
-        "token": token,
         "skip_ci": True,
     }
 

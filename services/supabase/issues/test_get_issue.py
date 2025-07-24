@@ -75,6 +75,7 @@ class TestGetIssue(unittest.TestCase):
         )
 
         # Assert
+        assert result is not None
         self.assertIsInstance(result, dict)  # cast returns the original dict
         self.assertEqual(result["id"], 1)
         self.assertEqual(result["owner_type"], "Organization")
@@ -149,6 +150,7 @@ class TestGetIssue(unittest.TestCase):
         )
 
         # Assert
+        assert result is not None
         self.assertIsInstance(result, dict)
         self.assertEqual(result["owner_type"], "User")
         self.assertEqual(result["merged"], True)
@@ -201,6 +203,7 @@ class TestGetIssue(unittest.TestCase):
         )
 
         # Assert
+        assert result is not None
         self.assertIsInstance(result, dict)
         self.assertEqual(result["owner_name"], "test-org-with-dashes")
         self.assertEqual(result["repo_name"], "repo_with_underscores")
@@ -242,6 +245,7 @@ class TestGetIssue(unittest.TestCase):
             issue_number=0,
         )
 
+        assert result is not None
         self.assertIsInstance(result, dict)
         self.assertEqual(result["issue_number"], 0)
 
@@ -260,6 +264,7 @@ class TestGetIssue(unittest.TestCase):
             issue_number=large_issue_number,
         )
 
+        assert result is not None
         self.assertIsInstance(result, dict)
         self.assertEqual(result["issue_number"], large_issue_number)
 
@@ -277,6 +282,7 @@ class TestGetIssue(unittest.TestCase):
         result = get_issue(**self.test_params)
 
         # Should return the first result
+        assert result is not None
         self.assertIsInstance(result, dict)
         self.assertEqual(result["id"], 1)  # First issue's ID
         self.assertEqual(
@@ -304,6 +310,7 @@ class TestGetIssue(unittest.TestCase):
 
         result = get_issue(**self.test_params)
 
+        assert result is not None
         self.assertIsInstance(result, dict)
         self.assertIsNone(result["run_id"])
         self.assertIsNone(result["created_by"])
@@ -347,6 +354,7 @@ class TestGetIssue(unittest.TestCase):
             issue_number=1,
         )
 
+        assert result is not None
         self.assertIsInstance(result, dict)
         self.assertEqual(result["id"], 999)
         self.assertEqual(result["owner_type"], "Organization")

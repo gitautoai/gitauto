@@ -2,6 +2,7 @@ from unittest.mock import patch, MagicMock
 
 from services.github.comments.create_comment import create_comment
 from tests.constants import OWNER, REPO, TOKEN
+from tests.helpers.create_test_base_args import create_test_base_args
 
 
 def test_create_comment_github_success():
@@ -11,13 +12,13 @@ def test_create_comment_github_success():
         "url": "https://api.github.com/repos/owner/repo/issues/comments/123"
     }
 
-    base_args = {
-        "owner": OWNER,
-        "repo": REPO,
-        "token": TOKEN,
-        "issue_number": 123,
-        "input_from": "github",
-    }
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        issue_number=123,
+        input_from="github",
+    )
 
     # Act
     with patch(
@@ -43,7 +44,9 @@ def test_create_comment_github_default_input_from():
     }
 
     # Base args without input_from should default to "github"
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN, "issue_number": 123}
+    base_args = create_test_base_args(
+        owner=OWNER, repo=REPO, token=TOKEN, issue_number=123
+    )
 
     # Act
     with patch("services.github.comments.create_comment.requests.post") as mock_post:
@@ -57,13 +60,13 @@ def test_create_comment_github_default_input_from():
 
 def test_create_comment_jira():
     # Arrange
-    base_args = {
-        "owner": OWNER,
-        "repo": REPO,
-        "token": TOKEN,
-        "issue_number": 123,
-        "input_from": "jira",
-    }
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        issue_number=123,
+        input_from="jira",
+    )
 
     # Act
     with patch("services.github.comments.create_comment.requests.post") as mock_post:
@@ -79,13 +82,13 @@ def test_create_comment_request_error():
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = Exception("API error")
 
-    base_args = {
-        "owner": OWNER,
-        "repo": REPO,
-        "token": TOKEN,
-        "issue_number": 123,
-        "input_from": "github",
-    }
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        issue_number=123,
+        input_from="github",
+    )
 
     # Act
     with patch("services.github.comments.create_comment.requests.post") as mock_post:
@@ -98,13 +101,13 @@ def test_create_comment_request_error():
 
 def test_create_comment_unknown_input_from():
     # Arrange
-    base_args = {
-        "owner": OWNER,
-        "repo": REPO,
-        "token": TOKEN,
-        "issue_number": 123,
-        "input_from": "unknown",  # Neither github nor jira
-    }
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        issue_number=123,
+        input_from="unknown",  # Neither github nor jira
+    )
 
     # Act
     with patch("services.github.comments.create_comment.requests.post") as mock_post:

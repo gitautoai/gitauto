@@ -24,7 +24,7 @@ from services.github.pulls.get_pull_request_file_changes import (
     get_pull_request_file_changes,
 )
 from services.github.pulls.is_pull_request_open import is_pull_request_open
-from services.github.types.github_types import CheckRunCompletedPayload
+from services.github.types.github_types import BaseArgs, CheckRunCompletedPayload
 from services.github.utils.create_permission_url import create_permission_url
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree_list import get_file_tree_list
@@ -110,22 +110,37 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     start_msg = f"Check run handler started for `{check_run_name}` in PR #{pull_number} in `{owner_name}/{repo_name}`"
     thread_ts = slack_notify(start_msg)
 
-    base_args: dict[str, str | int | bool] = {
+    base_args: BaseArgs = {
+        # Required fields
+        "input_from": "github",
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
-        "repo": repo_name,
         "repo_id": repo_id,
+        "repo": repo_name,
+        "clone_url": repo["clone_url"],
         "is_fork": is_fork,
         "issue_number": pull_number,
-        "new_branch": head_branch,
-        "base_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_file_tree requires the base branch
+        "issue_title": f"Check run failure: {check_run_name}",
+        "issue_body": f"Automated fix for failed check run: {check_run_name}",
+        "issue_comments": [],
+        "latest_commit_sha": check_run["head_sha"],
+        "issuer_name": sender_name,
+        "base_branch": head_branch,
+        "new_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_file_tree requires the base branch
+        "installation_id": installation_id,
+        "token": token,
         "sender_id": sender_id,
         "sender_name": sender_name,
+        "sender_email": f"{sender_name}@users.noreply.github.com",
+        "is_automation": True,
+        "reviewers": [],
+        "github_urls": [],
+        "other_urls": [],
+        # Extra fields for backward compatibility
         "pull_number": pull_number,
         "workflow_id": workflow_id,
         "check_run_name": check_run_name,
-        "token": token,
         "skip_ci": True,
     }
 

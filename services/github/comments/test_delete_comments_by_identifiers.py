@@ -8,6 +8,7 @@ import pytest
 from services.github.comments.delete_comments_by_identifiers import (
     delete_comments_by_identifiers,
 )
+from tests.helpers.create_test_base_args import create_test_base_args
 
 
 @pytest.fixture
@@ -491,7 +492,7 @@ def test_delete_comments_by_identifiers_with_minimal_base_args(
 ):
     """Test with minimal BaseArgs containing only required fields."""
     # Setup minimal base_args
-    minimal_base_args = {"owner": "owner", "repo": "repo", "token": "token"}
+    minimal_base_args = create_test_base_args(owner="owner", repo="repo", token="token")
 
     # Setup mocks
     mock_get_all_comments.return_value = []
