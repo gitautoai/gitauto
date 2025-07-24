@@ -53,7 +53,7 @@ def handler(event, context):
                 f"@channel Failed: {result['message']}",
                 thread_ts,
             )
-        return
+        return None
 
     # mangum_handler converts requests from API Gateway to FastAPI routing system
     return mangum_handler(event=event, context=context)
