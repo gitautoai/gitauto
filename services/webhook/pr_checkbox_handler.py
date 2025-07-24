@@ -308,7 +308,7 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
 
     # Insert credit usage if user is using credits (not paid subscription)
     if is_credit_user:
-        insert_credit(owner_id=owner_id, usage_id=usage_id)
+        insert_credit(owner_id=owner_id, transaction_type="usage", usage_id=usage_id)
 
     # End notification
     slack_notify("Completed", thread_ts)

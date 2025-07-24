@@ -181,6 +181,10 @@ uvicorn main:app --reload --port 8000 --log-level warning
 - Anthropic/OpenAI token limits
 - Async processing for webhook handlers
 
+## Coding Standards
+
+- **NO DOCSTRINGS**: Do not add docstrings to functions or classes. Keep code clean and minimal.
+
 ## LGTM Workflow
 
 When the user says "LGTM" (Looks Good To Me), automatically execute this workflow:
