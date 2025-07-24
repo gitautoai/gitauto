@@ -17,6 +17,7 @@ from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree_list import get_file_tree_list
+from services.github.types.github_types import BaseArgs
 from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 
@@ -101,18 +102,45 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
     end_date = limit_result["end_date"]
     is_credit_user = limit_result["is_credit_user"]
 
+    # Get PR info for base_args
+    pr_data = get_pull_request(
+        owner=owner_name, repo=repo_name, pull_number=issue_number, token=token
+    )
+    head_branch = pr_data["head"]["ref"]
+
+    base_args: BaseArgs = {
+        "input_from": "github",
+        "owner_type": owner_type,
+        "owner_id": owner_id,
+        "owner": owner_name,
+        "repo_id": repo_id,
+        "repo": repo_name,
+        "clone_url": repository.get("clone_url", ""),
+        "is_fork": repository.get("fork", False),
+        "issue_number": issue_number,
+        "issue_title": pr_data.get("title", ""),
+        "issue_body": pr_data.get("body", ""),
+        "issue_comments": [],
+        "latest_commit_sha": "",
+        "issuer_name": sender_name,
+        "base_branch": head_branch,
+        "new_branch": head_branch,
+        "installation_id": installation_id,
+        "token": token,
+        "sender_id": sender_id,
+        "sender_name": sender_name,
+        "sender_email": "",
+        "is_automation": False,
+        "reviewers": [],
+        "github_urls": [],
+        "other_urls": [],
+    }
+
     # If request limit is reached, create a comment and return early
     if is_limit_reached:
         body = request_limit_reached(
             user_name=sender_name, request_count=request_limit, end_date=end_date
         )
-
-        base_args = {
-            "owner": owner_name,
-            "repo": repo_name,
-            "issue_number": issue_number,
-            "token": token,
-        }
 
         create_comment(body=body, base_args=base_args)
 
@@ -133,38 +161,16 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
         repo_name=repo_name,
         issue_number=issue_number,
         source="github",
-        trigger="pull_request",
+        trigger="pr_checkbox",
         email=None,
     )
 
-    pr_data = get_pull_request(
-        owner=owner_name, repo=repo_name, pull_number=issue_number, token=token
-    )
-    branch_name = pr_data["head"]["ref"]  # Set the source branch (from)
-
     # Cancel existing workflow runs since we'll be making new commits
     cancel_workflow_runs(
-        owner=owner_name, repo=repo_name, branch=branch_name, token=token
+        owner=owner_name, repo=repo_name, branch=head_branch, token=token
     )
 
     repo_settings = get_repository(repo_id=repo_id)
-
-    base_args = {
-        "owner_type": owner_type,
-        "owner_id": owner_id,
-        "owner": owner_name,
-        "repo": repo_name,
-        "repo_id": repo_id,
-        "is_fork": repository.get("fork", False),
-        "issue_number": issue_number,
-        "pull_number": issue_number,
-        "new_branch": branch_name,
-        "base_branch": branch_name,
-        "sender_id": sender_id,
-        "sender_name": sender_name,
-        "token": token,
-        "skip_ci": True,
-    }
 
     p = 0
     log_messages = []
@@ -220,9 +226,9 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
             break
 
         if not check_branch_exists(
-            owner=owner_name, repo=repo_name, branch_name=branch_name, token=token
+            owner=owner_name, repo=repo_name, branch_name=head_branch, token=token
         ):
-            body = f"Process stopped: Branch '{branch_name}' has been deleted"
+            body = f"Process stopped: Branch '{head_branch}' has been deleted"
             print(body)
             update_comment(body=body, base_args=base_args)
             break
@@ -291,7 +297,7 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
     # Create final message with reset command
     final_msg = (
         "Finished generating tests for selected files!"
-        + create_reset_command_message(branch_name)
+        + create_reset_command_message(head_branch)
     )
     update_comment(body=final_msg, base_args=base_args)
 
