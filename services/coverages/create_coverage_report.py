@@ -1,4 +1,9 @@
-def create_coverage_report(path: str, stats: dict, level: str):
+from typing import Literal
+
+
+def create_coverage_report(
+    path: str, stats: dict, level: Literal["repository", "directory", "file"]
+):
     # For directory level and empty path, then use "."
     if level == "directory" and path == "":
         path = "."

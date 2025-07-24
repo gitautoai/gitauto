@@ -3,7 +3,7 @@ from typing import Any, TypeVar
 T = TypeVar("T")
 
 
-def safe_get_attribute(obj: Any, attr: str, default: T = None) -> T:
+def safe_get_attribute(obj: Any, attr: str, default: T):
     """Safely get an attribute from an object or dictionary."""
     if hasattr(obj, "get") and callable(obj.get):
         # Dictionary-like object

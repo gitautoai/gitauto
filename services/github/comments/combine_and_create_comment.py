@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Any
 
 from config import PRODUCT_ID
 from services.github.comments.create_comment import create_comment
+from services.github.types.github_types import BaseArgs
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 from utils.error.handle_exceptions import handle_exceptions
 from utils.text.text_copy import request_issue_comment, request_limit_reached
@@ -18,7 +18,7 @@ def combine_and_create_comment(
     repo_name: str,
     issue_number: int,
     sender_name: str,
-    base_args: dict[str, Any],
+    base_args: BaseArgs,
 ) -> None:
     # Check usage limits
     limit_result = is_request_limit_reached(

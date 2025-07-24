@@ -83,7 +83,7 @@ def chat_with_agent(
                 token_input,
                 token_output,
             ) = provider(
-                messages,
+                messages=messages,
                 system_content=system_message,
                 tools=tools,
                 model_id=current_model,
@@ -180,6 +180,9 @@ def chat_with_agent(
         }
     )
 
+    # Initialize msg variable
+    msg = ""
+
     # Recursively call the function if the mode is "explore" and the tool was called
     if tool_name == "get_remote_file_content" and isinstance(tool_args, dict):
         if "line_number" in tool_args:
@@ -219,7 +222,11 @@ def chat_with_agent(
     ):
         msg = f"Committed changes to `{tool_args['file_path']}`."
 
-    elif tool_name == "search_google" and "query" in tool_args:
+    elif (
+        tool_name == "search_google"
+        and isinstance(tool_args, dict)
+        and "query" in tool_args
+    ):
         query = tool_args.get("query", "")
         if query.strip():
             msg = f"Googled `{query}` and went through the results."
@@ -233,11 +240,12 @@ def chat_with_agent(
         msg = f"Calling `{tool_name}()` with `{tool_args}`."
 
     # Add message to log and update comment
-    log_messages.append(msg)
-    update_comment(
-        body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
-        base_args=base_args,
-    )
+    if msg:
+        log_messages.append(msg)
+        update_comment(
+            body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
+            base_args=base_args,
+        )
 
     if recursion_count < 3:
         return chat_with_agent(

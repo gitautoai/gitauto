@@ -433,7 +433,7 @@ class TestUpsertCoverages:
 
         # Assert
         assert result == mock_result.data
-        assert len(result) == 100
+        assert result is not None and len(result) == 100
         mock_supabase.table.return_value.upsert.assert_called_once_with(
             coverage_records, on_conflict="repo_id,full_path", default_to_null=False
         )

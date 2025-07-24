@@ -66,7 +66,7 @@ def scrape_content_from_url(url: str):
     main_content = soup.find(["main", "article", 'div[role="main"]']) or soup
     content = "\n".join(main_content.stripped_strings).strip()
 
-    return {"title": title.strip(), "content": content, "url": url}
+    return {"title": title.strip() if title else "", "content": content, "url": url}
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False, api_type="google")
