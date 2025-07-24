@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import TypedDict
 
 # Local imports
-from config import DEFAULT_TIME, EXCEPTION_OWNERS, TZ
+from config import ONE_YEAR_FROM_NOW, EXCEPTION_OWNERS, TZ
 from services.supabase.installations.get_stripe_customer_id import (
     get_stripe_customer_id,
 )
@@ -30,7 +30,7 @@ DEFAULT = {
     "is_limit_reached": False,
     "requests_left": 0,
     "request_limit": 1,
-    "end_date": DEFAULT_TIME,
+    "end_date": ONE_YEAR_FROM_NOW,
     "is_credit_user": False,
 }
 
@@ -50,7 +50,7 @@ def is_request_limit_reached(
             "is_limit_reached": False,
             "requests_left": 999999,
             "request_limit": 999999,
-            "end_date": DEFAULT_TIME,
+            "end_date": ONE_YEAR_FROM_NOW,
             "is_credit_user": False,
         }
 
@@ -75,7 +75,7 @@ def is_request_limit_reached(
                 "is_limit_reached": True,
                 "requests_left": 0,
                 "request_limit": 0,
-                "end_date": DEFAULT_TIME,
+                "end_date": ONE_YEAR_FROM_NOW,
                 "is_credit_user": False,
             }
 
@@ -109,14 +109,14 @@ def is_request_limit_reached(
                 "is_limit_reached": True,
                 "requests_left": 0,
                 "request_limit": 0,
-                "end_date": DEFAULT_TIME,
+                "end_date": ONE_YEAR_FROM_NOW,
                 "is_credit_user": True,
             }
 
         # For credits, we don't have a monthly limit - just check if they have balance
         request_limit = 999999  # Effectively unlimited as long as they have credits
-        start_date_seconds = int(DEFAULT_TIME.timestamp())
-        end_date_seconds = int(DEFAULT_TIME.timestamp())
+        start_date_seconds = int(ONE_YEAR_FROM_NOW.timestamp())
+        end_date_seconds = int(ONE_YEAR_FROM_NOW.timestamp())
 
     # Set credit user flag
     is_credit_user = not has_paid_subscription
