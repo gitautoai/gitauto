@@ -67,8 +67,7 @@ class TestHandleWebhookEvent:
 
     @pytest.fixture
     def mock_handle_pr_checkbox_trigger(self):
-        with patch("services.webhook.webhook_handler.handle_pr_checkbox_trigger") as mock:
-            mock.return_value = AsyncMock()
+        with patch("services.webhook.webhook_handler.handle_pr_checkbox_trigger", new_callable=AsyncMock) as mock:
             yield mock
 
     @pytest.fixture
