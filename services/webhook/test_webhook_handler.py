@@ -57,8 +57,7 @@ class TestHandleWebhookEvent:
 
     @pytest.fixture
     def mock_create_pr_from_issue(self):
-        with patch("services.webhook.webhook_handler.create_pr_from_issue") as mock:
-            mock.return_value = AsyncMock()
+        with patch("services.webhook.webhook_handler.create_pr_from_issue", new_callable=AsyncMock) as mock:
             yield mock
 
     @pytest.fixture
