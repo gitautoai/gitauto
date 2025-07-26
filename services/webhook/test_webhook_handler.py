@@ -52,8 +52,7 @@ class TestHandleWebhookEvent:
 
     @pytest.fixture
     def mock_handle_installation_repos_added(self):
-        with patch("services.webhook.webhook_handler.handle_installation_repos_added") as mock:
-            mock.return_value = AsyncMock()
+        with patch("services.webhook.webhook_handler.handle_installation_repos_added", new_callable=AsyncMock) as mock:
             yield mock
 
     @pytest.fixture
