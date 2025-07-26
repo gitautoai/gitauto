@@ -4,15 +4,18 @@ from typing import Any, cast
 # Local imports
 from config import (
     GITHUB_CHECK_RUN_FAILURES,
-    PRODUCT_ID,
-    PR_BODY_STARTS_WITH,
     ISSUE_NUMBER_FORMAT,
+    PR_BODY_STARTS_WITH,
+    PRODUCT_ID,
 )
-
 from services.github.comments.create_gitauto_button_comment import (
     create_gitauto_button_comment,
 )
 from services.github.types.owner import OwnerType
+from services.resend.get_first_name import get_first_name
+from services.resend.send_email import send_email
+from services.resend.text.suspend_email import get_suspend_email_text
+from services.resend.text.uninstall_email import get_uninstall_email_text
 from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase)
@@ -21,6 +24,7 @@ from services.supabase.installations.unsuspend_installation import (
     unsuspend_installation,
 )
 from services.supabase.issues.update_issue_merged import update_issue_merged
+from services.supabase.users.get_user import get_user
 
 # Local imports (Webhooks)
 from services.webhook.check_run_handler import handle_check_run
@@ -82,6 +86,14 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
             user_id=payload["sender"]["id"],
             user_name=payload["sender"]["login"],
         )
+
+        # Send uninstall email
+        user = get_user(payload["sender"]["id"])
+        if user and user.get("email"):
+            first_name = get_first_name(user.get("user_name", ""))
+            subject, text = get_uninstall_email_text(first_name)
+            send_email(to=user["email"], subject=subject, text=text)
+
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=suspend#installation
@@ -95,6 +107,14 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
             user_id=payload["sender"]["id"],
             user_name=payload["sender"]["login"],
         )
+
+        # Send suspend email
+        user = get_user(payload["sender"]["id"])
+        if user and user.get("email"):
+            first_name = get_first_name(user.get("user_name", ""))
+            subject, text = get_suspend_email_text(first_name)
+            send_email(to=user["email"], subject=subject, text=text)
+
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=unsuspend#installation
