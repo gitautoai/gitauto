@@ -256,7 +256,7 @@ class TestExtractSelectedFiles:
         result = extract_selected_files(comment_body)
 
         # Assert
-        # Only properly formatted entries should be extracted
+        # Entries matching the regex pattern should be extracted
         assert result == ["normal_file.py", "file_with_backtick", "file.py"]
 
     @pytest.mark.parametrize(
