@@ -21,7 +21,7 @@ class TestGetFirstName:
         assert result == "there"
 
     def test_get_first_name_with_none(self):
-        result = get_first_name("")  # The function expects str, not None
+        result = get_first_name(None)
         assert result == "there"
 
     def test_get_first_name_with_whitespace_only(self):
