@@ -107,8 +107,7 @@ class TestHandleWebhookEvent:
 
     @pytest.fixture
     def mock_handle_coverage_report(self):
-        with patch("services.webhook.webhook_handler.handle_coverage_report") as mock:
-            mock.return_value = AsyncMock()
+        with patch("services.webhook.webhook_handler.handle_coverage_report", new_callable=AsyncMock) as mock:
             yield mock
 
     @pytest.mark.asyncio
