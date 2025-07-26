@@ -35,6 +35,10 @@ pytest tests/test_main.py
 ```bash
 # Pre-commit hooks (auto-runs pip freeze)
 pre-commit run --all-files
+
+# When adding new dependencies, use pip freeze
+pip install package_name
+pip freeze > requirements.txt
 ```
 
 ### Development Server
@@ -202,7 +206,7 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 5. Run pytest: `python -m pytest -r fE -x`
 6. Check current branch is not main: `git branch --show-current`
 7. Add changes: `git add .`
-8. Commit with descriptive message: `git commit -m "descriptive message"`
+8. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
 9. Push to remote: `git push`
 
 IMPORTANT: Must fix every error/failure in each step before proceeding to the next step.

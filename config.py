@@ -18,9 +18,9 @@ def get_env_var(name: str) -> str:
 
 # GitHub Credentials from environment variables
 GITHUB_API_URL = "https://api.github.com"
-GITHUB_API_VERSION: str = "2022-11-28"
+GITHUB_API_VERSION = "2022-11-28"
 GITHUB_APP_ID = int(get_env_var(name="GH_APP_ID"))
-GITHUB_APP_IDS: list[int] = list(
+GITHUB_APP_IDS = list(
     set(
         [
             GITHUB_APP_ID,  # Production or your local development
@@ -29,9 +29,9 @@ GITHUB_APP_IDS: list[int] = list(
         ]
     )
 )
-GITHUB_APP_NAME: str = get_env_var(name="GH_APP_NAME")
-GITHUB_APP_USER_ID: int = int(get_env_var(name="GH_APP_USER_ID"))
-GITHUB_APP_USER_NAME: str = get_env_var(name="GH_APP_USER_NAME")
+GITHUB_APP_NAME = get_env_var(name="GH_APP_NAME")
+GITHUB_APP_USER_ID = int(get_env_var(name="GH_APP_USER_ID"))
+GITHUB_APP_USER_NAME = get_env_var(name="GH_APP_USER_NAME")
 GITHUB_CHECK_RUN_FAILURES = [
     "startup_failure",
     "failure",
@@ -39,14 +39,14 @@ GITHUB_CHECK_RUN_FAILURES = [
     "action_required",
 ]
 GITHUB_ISSUE_DIR = ".github/ISSUE_TEMPLATE"
-GITHUB_ISSUE_TEMPLATES: list[str] = ["bug_report.yml", "feature_request.yml"]
+GITHUB_ISSUE_TEMPLATES = ["bug_report.yml", "feature_request.yml"]
 GITHUB_NOREPLY_EMAIL_DOMAIN = "users.noreply.github.com"  # https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-email-preferences/setting-your-commit-email-address
-GITHUB_PRIVATE_KEY_ENCODED: str = get_env_var(name="GH_PRIVATE_KEY")
-GITHUB_PRIVATE_KEY: bytes = base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED)
-GITHUB_WEBHOOK_SECRET: str = get_env_var(name="GH_WEBHOOK_SECRET")
+GITHUB_PRIVATE_KEY_ENCODED = get_env_var(name="GH_PRIVATE_KEY")
+GITHUB_PRIVATE_KEY = base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED)
+GITHUB_WEBHOOK_SECRET = get_env_var(name="GH_WEBHOOK_SECRET")
 
 # OpenAI Credentials from environment variables
-OPENAI_API_KEY: str = get_env_var(name="OPENAI_API_KEY")
+OPENAI_API_KEY = get_env_var(name="OPENAI_API_KEY")
 OPENAI_ASSISTANT_NAME = (
     "GitAuto: AI Coding Agent that generates GitHub pull requests from issues"
 )
@@ -58,39 +58,40 @@ OPENAI_MAX_RETRIES = 3
 OPENAI_MAX_TOOL_OUTPUTS_SIZE = 512 * 1024  # in bytes
 OPENAI_MAX_TOKENS = 4096
 OPENAI_MODEL_ID_O3_MINI = "o3-mini"  # https://platform.openai.com/docs/models/o3
-OPENAI_MODEL_ID_O1_PREVIEW = "o1-preview"  # https://platform.openai.com/docs/models/o1
-OPENAI_MODEL_ID_O1_MINI = "o1-mini"  # https://platform.openai.com/docs/models/o1
-OPENAI_MODEL_ID_O1 = "o1"  # https://platform.openai.com/docs/models/o1
 OPENAI_MODEL_ID_GPT_4O = "gpt-4o"  # https://platform.openai.com/docs/models/gpt-4o
-OPENAI_ORG_ID: str = get_env_var(name="OPENAI_ORG_ID")
+OPENAI_ORG_ID = get_env_var(name="OPENAI_ORG_ID")
 OPENAI_TEMPERATURE = 0.0
 
 # Anthropic Credentials from environment variables
 # https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases
-ANTHROPIC_API_KEY: str = get_env_var(name="ANTHROPIC_API_KEY")
+ANTHROPIC_API_KEY = get_env_var(name="ANTHROPIC_API_KEY")
 ANTHROPIC_MODEL_ID_35 = "claude-3-5-sonnet-latest"
 ANTHROPIC_MODEL_ID_37 = "claude-3-7-sonnet-latest"
 ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
 
+# Resend Credentials
+RESEND_API_KEY = get_env_var(name="RESEND_API_KEY")
+EMAIL_FROM = "Wes from GitAuto <wes@gitauto.ai>"
+
 # Sentry Credentials from environment variables
-SENTRY_DSN: str = get_env_var(name="SENTRY_DSN")
+SENTRY_DSN = get_env_var(name="SENTRY_DSN")
 
 # Supabase Credentials from environment variables
-SUPABASE_SERVICE_ROLE_KEY: str = get_env_var(name="SUPABASE_SERVICE_ROLE_KEY")
-SUPABASE_URL: str = get_env_var(name="SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = get_env_var(name="SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_URL = get_env_var(name="SUPABASE_URL")
 
 # Stripe
-STRIPE_API_KEY: str = get_env_var(name="STRIPE_API_KEY")
-STRIPE_FREE_TIER_PRICE_ID: str = get_env_var(name="STRIPE_FREE_TIER_PRICE_ID")
-STRIPE_PRODUCT_ID_FREE: str = get_env_var(name="STRIPE_PRODUCT_ID_FREE")
-STRIPE_PRODUCT_ID_STANDARD: str = get_env_var(name="STRIPE_PRODUCT_ID_STANDARD")
+STRIPE_API_KEY = get_env_var(name="STRIPE_API_KEY")
+STRIPE_FREE_TIER_PRICE_ID = get_env_var(name="STRIPE_FREE_TIER_PRICE_ID")
+STRIPE_PRODUCT_ID_FREE = get_env_var(name="STRIPE_PRODUCT_ID_FREE")
+STRIPE_PRODUCT_ID_STANDARD = get_env_var(name="STRIPE_PRODUCT_ID_STANDARD")
 
 # General
 ONE_YEAR_FROM_NOW = datetime.now(timezone.utc).replace(
     year=datetime.now().year + 1, microsecond=0
 )
 EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
-ENV: str = get_env_var(name="ENV")
+ENV = get_env_var(name="ENV")
 EXCEPTION_OWNERS = ["gitautoai", "Suchica", "hiroshinishio"]
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
 CREDIT_AMOUNTS_USD = {
@@ -101,7 +102,7 @@ ISSUE_NUMBER_FORMAT = "/issue-"  # DO NOT USE "#" as it is a special character a
 MAX_RETRIES = 3
 PER_PAGE = 100
 PR_BODY_STARTS_WITH = "Resolves #"  # https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue
-PRODUCT_ID: str = get_env_var(name="PRODUCT_ID")
+PRODUCT_ID = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 TIMEOUT = 120  # seconds
 TZ = timezone.utc
