@@ -55,6 +55,9 @@ jobs:
         # OpenAI credentials
         OPENAI_API_KEY: ${{ secrets.STAGE_OPENAI_API_KEY }}
         OPENAI_ORG_ID: ${{ secrets.STAGE_OPENAI_ORG_ID }}
+        
+        # Resend credentials
+        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
 
         # Sentry credentials
         SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
