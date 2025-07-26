@@ -9,6 +9,7 @@ Your feedback would really help us improve - just reply to this email.
 
 Thanks for trying GitAuto.
 
-Wes"""
+Wes
+"""
 
     return subject, text

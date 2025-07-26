@@ -1,12 +1,13 @@
 def get_suspend_email_text(user_name: str) -> tuple[str, str]:
-    subject = "GitAuto suspended"
+    subject = "Taking a break from GitAuto?"
 
     text = f"""Hi {user_name},
 
-You suspended GitAuto. We'll be here when you're ready to come back.
+I noticed you suspended GitAuto. What happened?
 
-Any feedback on what could be better? Just reply to this email.
+Any feedback? Just hit reply and let me know.
 
-Wes"""
+Wes
+"""
 
     return subject, text
