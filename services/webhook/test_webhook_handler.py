@@ -294,6 +294,7 @@ class TestHandleWebhookEvent:
         with patch("services.webhook.webhook_handler.PRODUCT_ID", "dev"):
             await handle_webhook_event("issue_comment", payload)
         
+        mock_handle_pr_checkbox_trigger.assert_called_once_with(payload=payload)
         mock_create_pr_from_issue.assert_called_once_with(
             payload=payload, trigger="issue_comment", input_from="github"
         )
