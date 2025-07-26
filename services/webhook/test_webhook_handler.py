@@ -13,7 +13,6 @@ class TestHandleWebhookEvent:
     @pytest.fixture
     def mock_handle_installation_created(self):
         with patch("services.webhook.webhook_handler.handle_installation_created") as mock:
-            mock.return_value = AsyncMock()
             yield mock
 
     @pytest.fixture
