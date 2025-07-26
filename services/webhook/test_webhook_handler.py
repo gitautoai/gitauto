@@ -305,7 +305,8 @@ class TestHandleWebhookEvent:
             "check_run": {"conclusion": "failure"}
         }
         
-        await handle_webhook_event("check_run", payload)
+        with patch("services.webhook.webhook_handler.GITHUB_CHECK_RUN_FAILURES", ["failure"]):
+            await handle_webhook_event("check_run", payload)
         
         mock_handle_check_run.assert_called_once_with(payload=payload)
 
