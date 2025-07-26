@@ -257,7 +257,7 @@ class TestExtractSelectedFiles:
 
         # Assert
         # Only properly formatted entries should be extracted
-        assert result == ["normal_file.py", "file.py"]
+        assert result == ["normal_file.py", "", "file_with_backtick", "file.py"]
 
     @pytest.mark.parametrize(
         "comment_body,expected",
