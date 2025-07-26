@@ -87,8 +87,7 @@ class TestHandleWebhookEvent:
 
     @pytest.fixture
     def mock_handle_screenshot_comparison(self):
-        with patch("services.webhook.webhook_handler.handle_screenshot_comparison") as mock:
-            mock.return_value = AsyncMock()
+        with patch("services.webhook.webhook_handler.handle_screenshot_comparison", new_callable=AsyncMock) as mock:
             yield mock
 
     @pytest.fixture
