@@ -366,7 +366,9 @@ class TestHandleWebhookEvent:
         }
         
         with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
-            await handle_webhook_event("pull_request", payload)
+            with patch("services.webhook.webhook_handler.ISSUE_NUMBER_FORMAT", "/issue-"):
+                with patch("services.webhook.webhook_handler.PR_BODY_STARTS_WITH", "Resolves #"):
+                    await handle_webhook_event("pull_request", payload)
         
         mock_update_issue_merged.assert_called_once_with(
             owner_type="Organization",
