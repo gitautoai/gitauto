@@ -132,3 +132,71 @@ def test_get_suspend_email_text_text_contains_newlines():
     # Should have multiple lines
     lines = text.split('\n')
     assert len(lines) > 1
+
+
+def test_get_suspend_email_text_exact_content_match():
+    """Test that the email content matches exactly what's expected."""
+    subject, text = get_suspend_email_text("John")
+    
+    expected_text = """Hi John,
+
+I noticed you suspended GitAuto. What happened?
+
+Any feedback? Just hit reply and let me know.
+
+Wes
+"""
+    
+    assert subject == "Taking a break from GitAuto?"
+    assert text == expected_text
+
+
+def test_get_suspend_email_text_preserves_user_name_formatting():
+    """Test that user name formatting is preserved exactly as provided."""
+    test_cases = [
+        "lowercase",
+        "UPPERCASE", 
+        "MixedCase",
+        "with spaces",
+        "with-dashes",
+        "with_underscores",
+        "with.dots",
+        "123numbers",
+        "special!@#chars",
+    ]
+    
+    for user_name in test_cases:
+        subject, text = get_suspend_email_text(user_name)
+        assert f"Hi {user_name}," in text
+        assert subject == "Taking a break from GitAuto?"
+
+
+def test_get_suspend_email_text_multiline_structure():
+    """Test that the email has the correct multiline structure."""
+    subject, text = get_suspend_email_text("TestUser")
+    
+    lines = text.split('\n')
+    
+    # Verify exact structure
+    assert lines[0] == "Hi TestUser,"
+    assert lines[1] == ""  # Empty line
+    assert lines[2] == "I noticed you suspended GitAuto. What happened?"
+    assert lines[3] == ""  # Empty line
+    assert lines[4] == "Any feedback? Just hit reply and let me know."
+    assert lines[5] == ""  # Empty line
+    assert lines[6] == "Wes"
+    assert len(lines) == 7
+
+
+def test_get_suspend_email_text_no_trailing_whitespace():
+    """Test that the email text doesn't have unexpected trailing whitespace."""
+    subject, text = get_suspend_email_text("TestUser")
+    
+    # Subject should not have trailing whitespace
+    assert subject == subject.strip()
+    
+    # Each line should not have trailing whitespace (except intentional empty lines)
+    lines = text.split('\n')
+    for i, line in enumerate(lines):
+        if line:  # Non-empty lines should not have trailing whitespace
+            assert line == line.rstrip()
