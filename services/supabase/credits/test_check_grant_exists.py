@@ -136,4 +136,86 @@ def test_check_grant_exists_with_various_owner_ids(mock_supabase, mock_query_res
     
     # Assert
     assert result is False
+
+
+def test_check_grant_exists_handles_query_chain_exception(mock_supabase):
+    """Test that check_grant_exists handles exceptions in the query chain."""
+    # Arrange
+    owner_id = 555555
+    mock_table = MagicMock()
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.side_effect = Exception("Query error")
+    
+    # Act
+    result = check_grant_exists(owner_id=owner_id)
+    
+    # Assert
+    assert result is False  # Should return default_return_value due to @handle_exceptions
+    mock_supabase.table.assert_called_once_with("credits")
+    mock_table.select.assert_called_once_with("id")
+
+
+def test_check_grant_exists_handles_execute_exception(mock_supabase):
+    """Test that check_grant_exists handles exceptions during execute."""
+    # Arrange
+    owner_id = 777777
+    mock_table = MagicMock()
+    mock_select = MagicMock()
+    mock_eq1 = MagicMock()
+    mock_eq2 = MagicMock()
+    
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq1
+    mock_eq1.eq.return_value = mock_eq2
+    mock_eq2.execute.side_effect = Exception("Execute error")
+    
+    # Act
+    result = check_grant_exists(owner_id=owner_id)
+    
+    # Assert
+    assert result is False  # Should return default_return_value due to @handle_exceptions
+    mock_eq2.execute.assert_called_once()
+
+
+def test_check_grant_exists_handles_result_data_access_exception(mock_supabase):
+    """Test that check_grant_exists handles exceptions when accessing result.data."""
+    # Arrange
+    owner_id = 888888
+    mock_query_result = MagicMock()
+    # Make accessing .data raise an exception
+    type(mock_query_result).data = PropertyMock(side_effect=AttributeError("No data attribute"))
+    
+    mock_table = MagicMock()
+    mock_select = MagicMock()
+    mock_eq1 = MagicMock()
+    mock_eq2 = MagicMock()
+    
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_select
+    mock_select.eq.return_value = mock_eq1
+    mock_eq1.eq.return_value = mock_eq2
+    mock_eq2.execute.return_value = mock_query_result
+    
+    # Act
+    result = check_grant_exists(owner_id=owner_id)
+    
+    # Assert
+    assert result is False  # Should return default_return_value due to @handle_exceptions
+
+
+def test_check_grant_exists_with_none_data(mock_supabase):
+    """Test that check_grant_exists handles None data gracefully."""
+    # Arrange
+    owner_id = 111111
+    mock_query_result = MagicMock()
+    mock_query_result.data = None
+    
+    mock_table = MagicMock()
+    mock_select = MagicMock()
+    mock_eq1 = MagicMock()
+    mock_eq2 = MagicMock()
+    
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_select
     mock_select.eq.assert_called_once_with("owner_id", owner_id)
