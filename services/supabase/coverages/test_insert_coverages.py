@@ -1,7 +1,7 @@
 from unittest.mock import patch, MagicMock
 
 import pytest
-from schemas.supabase.fastapi.schema_public_latest import CoveragesInsert
+from schemas.supabase.fastapi.schema_public_latest import Coverages
 from services.supabase.coverages.insert_coverages import insert_coverages
 
 
@@ -23,7 +23,7 @@ def mock_supabase():
 @pytest.fixture
 def sample_coverage_record():
     """Fixture to provide a sample coverage record."""
-    return CoveragesInsert(
+    return Coverages(
         created_by="test_user",
         full_path="services/test/example.py",
         level="file",
@@ -83,7 +83,7 @@ def test_insert_coverages_returns_none_data(mock_supabase, sample_coverage_recor
 
 def test_insert_coverages_with_minimal_required_fields(mock_supabase):
     """Test insertion with only required fields."""
-    minimal_record = CoveragesInsert(
+    minimal_record = Coverages(
         created_by="minimal_user",
         full_path="minimal/path.py",
         level="file",
@@ -104,7 +104,7 @@ def test_insert_coverages_with_minimal_required_fields(mock_supabase):
 
 def test_insert_coverages_with_all_optional_fields(mock_supabase):
     """Test insertion with all optional fields populated."""
-    comprehensive_record = CoveragesInsert(
+    comprehensive_record = Coverages(
         created_by="comprehensive_user",
         full_path="comprehensive/path.py",
         level="function",
@@ -172,7 +172,7 @@ def test_insert_coverages_handles_insert_exception(mock_supabase, sample_coverag
 
 def test_insert_coverages_with_zero_coverage_values(mock_supabase):
     """Test insertion with zero coverage values."""
-    zero_coverage_record = CoveragesInsert(
+    zero_coverage_record = Coverages(
         created_by="zero_user",
         full_path="zero/coverage.py",
         level="file",
@@ -197,7 +197,7 @@ def test_insert_coverages_with_zero_coverage_values(mock_supabase):
 
 def test_insert_coverages_with_perfect_coverage_values(mock_supabase):
     """Test insertion with perfect coverage values."""
-    perfect_coverage_record = CoveragesInsert(
+    perfect_coverage_record = Coverages(
         created_by="perfect_user",
         full_path="perfect/coverage.py",
         level="file",
