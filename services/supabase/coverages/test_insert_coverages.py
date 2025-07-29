@@ -1,7 +1,8 @@
 from unittest.mock import patch, MagicMock
+import datetime
 
 import pytest
-from schemas.supabase.fastapi.schema_public_latest import Coverages
+from schemas.supabase.fastapi.schema_public_latest import CoveragesInsert
 from services.supabase.coverages.insert_coverages import insert_coverages
 
 
@@ -23,8 +24,7 @@ def mock_supabase():
 @pytest.fixture
 def sample_coverage_record():
     """Fixture to provide a sample coverage record."""
-    return Coverages(
-        id=1,
+    return CoveragesInsert(
         created_by="test_user",
         full_path="services/test/example.py",
         level="file",
@@ -32,8 +32,6 @@ def sample_coverage_record():
         repo_id=456,
         updated_by="test_user",
         line_coverage=85.5,
-        created_at="2023-01-01T00:00:00",
-        updated_at="2023-01-01T00:00:00",
         branch_coverage=75.0,
         function_coverage=90.0,
         statement_coverage=88.0,
@@ -86,11 +84,8 @@ def test_insert_coverages_returns_none_data(mock_supabase, sample_coverage_recor
 
 def test_insert_coverages_with_minimal_required_fields(mock_supabase):
     """Test insertion with only required fields."""
-    minimal_record = Coverages(
-        id=2,
-        created_at="2023-01-01T00:00:00",
-        updated_at="2023-01-01T00:00:00",
-        created_by="minimal_user",
+    minimal_record = CoveragesInsert(
+        created_by="test_user",
         full_path="minimal/path.py",
         level="file",
         owner_id=1,
@@ -110,11 +105,8 @@ def test_insert_coverages_with_minimal_required_fields(mock_supabase):
 
 def test_insert_coverages_with_all_optional_fields(mock_supabase):
     """Test insertion with all optional fields populated."""
-    comprehensive_record = Coverages(
-        id=3,
-        created_at="2023-01-01T00:00:00",
-        updated_at="2023-01-01T00:00:00",
-        created_by="comprehensive_user",
+    comprehensive_record = CoveragesInsert(
+        created_by="test_user",
         full_path="comprehensive/path.py",
         level="function",
         owner_id=999,
@@ -181,11 +173,8 @@ def test_insert_coverages_handles_insert_exception(mock_supabase, sample_coverag
 
 def test_insert_coverages_with_zero_coverage_values(mock_supabase):
     """Test insertion with zero coverage values."""
-    zero_coverage_record = Coverages(
-        id=4,
-        created_at="2023-01-01T00:00:00",
-        updated_at="2023-01-01T00:00:00",
-        created_by="zero_user",
+    zero_coverage_record = CoveragesInsert(
+        created_by="test_user",
         full_path="zero/coverage.py",
         level="file",
         owner_id=100,
@@ -209,11 +198,8 @@ def test_insert_coverages_with_zero_coverage_values(mock_supabase):
 
 def test_insert_coverages_with_perfect_coverage_values(mock_supabase):
     """Test insertion with perfect coverage values."""
-    perfect_coverage_record = Coverages(
-        id=5,
-        created_at="2023-01-01T00:00:00",
-        updated_at="2023-01-01T00:00:00",
-        created_by="perfect_user",
+    perfect_coverage_record = CoveragesInsert(
+        created_by="test_user",
         full_path="perfect/coverage.py",
         level="file",
         owner_id=300,
