@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 import pytest
 from services.supabase.credits.check_grant_exists import check_grant_exists
 
