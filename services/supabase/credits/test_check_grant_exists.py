@@ -218,4 +218,12 @@ def test_check_grant_exists_with_none_data(mock_supabase):
     
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
-    mock_select.eq.assert_called_once_with("owner_id", owner_id)
+    mock_select.eq.return_value = mock_eq1
+    mock_eq1.eq.return_value = mock_eq2
+    mock_eq2.execute.return_value = mock_query_result
+    
+    # Act
+    result = check_grant_exists(owner_id=owner_id)
+    
+    # Assert
+    assert result is False  # len(None) should raise TypeError, handled by @handle_exceptions
