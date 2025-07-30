@@ -1,11 +1,10 @@
 # Standard imports
 from datetime import datetime, timezone, timedelta
-from unittest.mock import patch, MagicMock
 import uuid
+from unittest.mock import patch, MagicMock
 
 # Third party imports
 import pytest
-import resend
 
 # Local imports
 from services.resend.send_email import send_email
