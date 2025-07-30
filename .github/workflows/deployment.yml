@@ -2,8 +2,14 @@ name: Deployment to AWS Lambda with Docker
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [closed]
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - '.github/workflows/pytest.yml'
+      - '.gitignore'
+      - 'CODEOWNERS'
+      - 'LICENSE'
   workflow_dispatch:
 
 # Global environment variables
@@ -14,6 +20,7 @@ jobs:
   deploy_lambda:
     name: Publish and Deploy
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4  # https://github.com/actions/checkout
