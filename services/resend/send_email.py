@@ -25,7 +25,7 @@ def send_email(to: str, subject: str, text: str):
         "to": to,
         "subject": subject,
         "text": text,
-        "scheduled_at": scheduled_at.isoformat() + "Z",
+        "scheduled_at": scheduled_at.isoformat(),
     }
 
     options: resend.Emails.SendOptions = {"idempotency_key": str(uuid.uuid4())}

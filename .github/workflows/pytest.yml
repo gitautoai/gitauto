@@ -2,10 +2,15 @@ name: PyTest
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize]
     branches: [ main ]
-  push:
-    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - '.github/workflows/**'
+      - '.gitignore'
+      - 'cloudformation.yml'
+      - 'CODEOWNERS'
+      - 'LICENSE'
   workflow_dispatch:
 
 permissions:
