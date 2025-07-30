@@ -275,7 +275,7 @@ def test_check_grant_exists_handles_type_error_on_len(mock_supabase, mock_query_
     # Arrange
     owner_id = 888888
     mock_query_result = MagicMock()
-    mock_query_result.data = "not_a_list"  # This will cause TypeError when len() is called
+    mock_query_result.data = 42  # This will cause TypeError when len() is called
     mock_query_chain['eq2'].execute.return_value = mock_query_result
     
     # Act
