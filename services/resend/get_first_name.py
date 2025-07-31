@@ -4,7 +4,7 @@ import re
     if not user_name:
         return "there"
 
-    # Split by spaces and take the first part
+    # Split by any whitespace (including Unicode whitespace) and take the first part
     parts = user_name.strip().split()
     if parts:
         return parts[0]
