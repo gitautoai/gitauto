@@ -1,1 +1,2 @@
-# This file was removed - it was a debugging file that shouldn't be in the repository
+# This file was a debugging file and has been removed
+pass
