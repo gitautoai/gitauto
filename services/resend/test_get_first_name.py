@@ -163,7 +163,7 @@ def test_get_first_name_with_zero_width_space():
 def test_get_first_name_with_non_breaking_space():
     """Test that non-breaking spaces are handled correctly."""
     result = get_first_name("John\u00a0Doe")
-    assert result == "John\u00a0Doe"
+    assert result == "John"
 
 
 @pytest.mark.parametrize(
