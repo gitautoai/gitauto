@@ -157,7 +157,7 @@ def test_get_first_name_with_mixed_case():
 def test_get_first_name_with_zero_width_space():
     """Test that zero-width spaces are handled correctly."""
     result = get_first_name("John\u200b Doe")
-    assert result == "John\u200b"
+    assert result == "John"
 
 
 def test_get_first_name_with_non_breaking_space():
