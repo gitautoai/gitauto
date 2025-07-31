@@ -13,3 +13,4 @@ def get_first_name(user_name: str) -> str:
     return "there"
 
 print(repr(get_first_name("John\u200b Doe")))  # Should print 'John'
+print(repr(get_first_name("John\u00a0Doe")))   # Should print 'John'
