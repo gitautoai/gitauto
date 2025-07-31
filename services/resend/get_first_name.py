@@ -5,7 +5,7 @@ import re
         return "there"
 
     # Split by any whitespace (including Unicode whitespace) and take the first part
-    parts = user_name.strip().split()
+    parts = [part for part in re.split(r'\s+', user_name.strip()) if part]
     if parts:
         return parts[0]
 
