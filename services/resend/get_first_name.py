@@ -1,4 +1,5 @@
 def get_first_name(user_name: str) -> str:
+import re
     """Extract first name from user_name field"""
     if not user_name:
         return "there"
