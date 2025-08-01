@@ -9,8 +9,8 @@ def test_get_all_coverages_integration_with_nonexistent_repo():
     # Execute
     result = get_all_coverages(repo_id=nonexistent_repo_id)
 
-    # Verify - should return None for non-existent repo
-    assert result is None
+    # Verify - should return empty list for non-existent repo
+    assert result == []
 
 
 def test_get_all_coverages_integration_with_zero_repo_id():
@@ -18,8 +18,8 @@ def test_get_all_coverages_integration_with_zero_repo_id():
     # Execute
     result = get_all_coverages(repo_id=0)
 
-    # Verify - should return None for repo_id 0
-    assert result is None
+    # Verify - should return empty list for repo_id 0
+    assert result == []
 
 
 def test_get_all_coverages_integration_function_signature():
@@ -27,9 +27,9 @@ def test_get_all_coverages_integration_function_signature():
     # Execute with a test repo_id
     result = get_all_coverages(repo_id=1)
 
-    # Verify - result should be either None or a list
-    assert result is None or isinstance(result, list)
+    # Verify - result should be a list
+    assert isinstance(result, list)
 
-    # If result is a list, all items should be dictionaries (Coverages objects)
-    if result is not None:
+    # All items should be dictionaries (Coverages objects)
+    if result:
         assert all(isinstance(item, dict) for item in result)

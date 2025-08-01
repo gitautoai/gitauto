@@ -105,8 +105,8 @@ def test_get_all_coverages_returns_coverage_list_when_data_exists(
     )
 
 
-def test_get_all_coverages_returns_none_when_no_data_exists(mock_supabase_client):
-    """Test that get_all_coverages returns None when no data exists."""
+def test_get_all_coverages_returns_empty_list_when_no_data_exists(mock_supabase_client):
+    """Test that get_all_coverages returns empty list when no data exists."""
     # Setup mock
     mock_result = MagicMock()
     mock_result.data = []
@@ -118,7 +118,7 @@ def test_get_all_coverages_returns_none_when_no_data_exists(mock_supabase_client
     result = get_all_coverages(repo_id=123)
 
     # Verify
-    assert result is None
+    assert result == []
 
     # Verify the correct query was made
     mock_supabase_client.table.assert_called_once_with("coverages")
@@ -134,8 +134,8 @@ def test_get_all_coverages_returns_none_when_no_data_exists(mock_supabase_client
     )
 
 
-def test_get_all_coverages_returns_none_when_data_is_none(mock_supabase_client):
-    """Test that get_all_coverages returns None when result.data is None."""
+def test_get_all_coverages_returns_empty_list_when_data_is_none(mock_supabase_client):
+    """Test that get_all_coverages returns empty list when result.data is None."""
     # Setup mock
     mock_result = MagicMock()
     mock_result.data = None
@@ -147,7 +147,7 @@ def test_get_all_coverages_returns_none_when_data_is_none(mock_supabase_client):
     result = get_all_coverages(repo_id=123)
 
     # Verify
-    assert result is None
+    assert result == []
 
 
 def test_get_all_coverages_with_different_repo_id(
@@ -187,7 +187,7 @@ def test_get_all_coverages_with_zero_repo_id(mock_supabase_client):
     result = get_all_coverages(repo_id=0)
 
     # Verify
-    assert result is None
+    assert result == []
 
     # Verify the correct repo_id was used in the query
     mock_supabase_client.table.return_value.select.return_value.eq.assert_called_with(
@@ -208,7 +208,7 @@ def test_get_all_coverages_with_negative_repo_id(mock_supabase_client):
     result = get_all_coverages(repo_id=-1)
 
     # Verify
-    assert result is None
+    assert result == []
 
     # Verify the correct repo_id was used in the query
     mock_supabase_client.table.return_value.select.return_value.eq.assert_called_with(
@@ -259,8 +259,8 @@ def test_get_all_coverages_exception_handling(mock_supabase_client):
     # Execute
     result = get_all_coverages(repo_id=123)
 
-    # Verify that the decorator returns the default value (None) on exception
-    assert result is None
+    # Verify that the decorator returns the default value (empty list) on exception
+    assert result == []
 
 
 @pytest.mark.parametrize("repo_id", [1, 100, 999999, 2147483647])
@@ -277,7 +277,7 @@ def test_get_all_coverages_with_various_repo_ids(mock_supabase_client, repo_id):
     result = get_all_coverages(repo_id=repo_id)
 
     # Verify
-    assert result is None
+    assert result == []
     mock_supabase_client.table.return_value.select.return_value.eq.assert_called_with(
         "repo_id", repo_id
     )

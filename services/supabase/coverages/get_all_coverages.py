@@ -9,7 +9,7 @@ from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(default_return_value=[], raise_on_error=False)
 def get_all_coverages(repo_id: int):
     result = (
         supabase.table("coverages")
@@ -21,6 +21,6 @@ def get_all_coverages(repo_id: int):
     )
 
     if not result.data:
-        return None
+        return []
 
     return [cast(Coverages, item) for item in result.data]
