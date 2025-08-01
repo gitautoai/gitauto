@@ -138,7 +138,7 @@ def test_truncate_complex_nested_structure():
     ]
     assert result == expected
 
-class TestModel(BaseModel):
+class SampleModel(BaseModel):
     """Test Pydantic model for testing truncate_value."""
     name: str
     description: Optional[str] = None
