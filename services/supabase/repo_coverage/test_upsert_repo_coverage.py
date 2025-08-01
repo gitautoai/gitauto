@@ -187,3 +187,67 @@ def test_upsert_repo_coverage_handles_exception(mock_supabase, sample_coverage_d
     # Function should return None due to @handle_exceptions decorator with default_return_value=None
     assert result is None
     mock_supabase.table.assert_called_once_with("repo_coverage")
+
+
+def test_upsert_repo_coverage_supabase_chain_exception(mock_supabase, sample_coverage_data):
+    """Test exception handling when supabase chain operations fail."""
+    # Arrange
+    mock_supabase.table.return_value.insert.side_effect = Exception("Insert operation failed")
+    
+    # Act
+    result = upsert_repo_coverage(sample_coverage_data)
+    
+    # Assert
+    assert result is None
+    mock_supabase.table.assert_called_once_with("repo_coverage")
+    mock_supabase.table.return_value.insert.assert_called_once()
+
+
+def test_upsert_repo_coverage_execute_exception(mock_supabase, sample_coverage_data):
+    """Test exception handling when execute operation fails."""
+    # Arrange
+    mock_supabase.table.return_value.insert.return_value.execute.side_effect = Exception("Execute failed")
+    
+    # Act
+    result = upsert_repo_coverage(sample_coverage_data)
+    
+    # Assert
+    assert result is None
+    mock_supabase.table.assert_called_once_with("repo_coverage")
+    mock_supabase.table.return_value.insert.assert_called_once()
+    mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
+
+
+def test_upsert_repo_coverage_with_zero_coverage_values(mock_supabase):
+    """Test upsert operation with zero coverage values."""
+    # Arrange
+    coverage_data = RepoCoverageInsert(
+        owner_id=123456,
+        owner_name="test-owner",
+        repo_id=789012,
+        repo_name="test-repo",
+        branch_name="main",
+        created_by="test-user",
+        line_coverage=0.0,
+        statement_coverage=0.0,
+        function_coverage=0.0,
+        branch_coverage=0.0,
+        primary_language="javascript"
+    )
+    
+    mock_result = MagicMock()
+    mock_result.data = [{"id": 4, "line_coverage": 0.0}]
+    mock_supabase.table.return_value.insert.return_value.execute.return_value = mock_result
+    
+    # Act
+    result = upsert_repo_coverage(coverage_data)
+    
+    # Assert
+    insert_call_args = mock_supabase.table.return_value.insert.call_args[0][0]
+    assert insert_call_args["line_coverage"] == 0.0
+    assert insert_call_args["statement_coverage"] == 0.0
+    assert insert_call_args["function_coverage"] == 0.0
+    assert insert_call_args["branch_coverage"] == 0.0
+    assert insert_call_args["primary_language"] == "javascript"
+    
+    assert result == [{"id": 4, "line_coverage": 0.0}]
