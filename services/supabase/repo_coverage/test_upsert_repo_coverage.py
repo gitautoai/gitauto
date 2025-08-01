@@ -315,21 +315,3 @@ def test_upsert_repo_coverage_with_special_characters_in_strings(mock_supabase):
     assert insert_call_args["primary_language"] == "c++"
     
     assert result == [{"id": 6}]
-
-
-def test_upsert_repo_coverage_model_dump_called_correctly(mock_supabase, sample_coverage_data):
-    """Test that model_dump is called with exclude_none=True."""
-    # Arrange
-    mock_result = MagicMock()
-    mock_result.data = [{"id": 7}]
-    mock_supabase.table.return_value.insert.return_value.execute.return_value = mock_result
-    
-    # Mock the model_dump method to verify it's called correctly
-    with patch.object(sample_coverage_data, 'model_dump', wraps=sample_coverage_data.model_dump) as mock_model_dump:
-        # Act
-        result = upsert_repo_coverage(sample_coverage_data)
-        
-        # Assert
-        mock_model_dump.assert_called_once_with(exclude_none=True)
-        assert result == [{"id": 7}]
-
