@@ -251,3 +251,85 @@ def test_upsert_repo_coverage_with_zero_coverage_values(mock_supabase):
     assert insert_call_args["primary_language"] == "javascript"
     
     assert result == [{"id": 4, "line_coverage": 0.0}]
+
+
+def test_upsert_repo_coverage_with_high_precision_floats(mock_supabase):
+    """Test upsert operation with high precision float values."""
+    # Arrange
+    coverage_data = RepoCoverageInsert(
+        owner_id=123456,
+        owner_name="test-owner",
+        repo_id=789012,
+        repo_name="test-repo",
+        branch_name="main",
+        created_by="test-user",
+        line_coverage=85.123456789,
+        statement_coverage=82.987654321,
+        function_coverage=90.555555555,
+        branch_coverage=75.111111111
+    )
+    
+    mock_result = MagicMock()
+    mock_result.data = [{"id": 5}]
+    mock_supabase.table.return_value.insert.return_value.execute.return_value = mock_result
+    
+    # Act
+    result = upsert_repo_coverage(coverage_data)
+    
+    # Assert
+    insert_call_args = mock_supabase.table.return_value.insert.call_args[0][0]
+    assert insert_call_args["line_coverage"] == 85.123456789
+    assert insert_call_args["statement_coverage"] == 82.987654321
+    assert insert_call_args["function_coverage"] == 90.555555555
+    assert insert_call_args["branch_coverage"] == 75.111111111
+    
+    assert result == [{"id": 5}]
+
+
+def test_upsert_repo_coverage_with_special_characters_in_strings(mock_supabase):
+    """Test upsert operation with special characters in string fields."""
+    # Arrange
+    coverage_data = RepoCoverageInsert(
+        owner_id=123456,
+        owner_name="test-owner-with-dashes",
+        repo_id=789012,
+        repo_name="test_repo_with_underscores",
+        branch_name="feature/special-branch-name",
+        created_by="user@example.com",
+        primary_language="c++"
+    )
+    
+    mock_result = MagicMock()
+    mock_result.data = [{"id": 6}]
+    mock_supabase.table.return_value.insert.return_value.execute.return_value = mock_result
+    
+    # Act
+    result = upsert_repo_coverage(coverage_data)
+    
+    # Assert
+    insert_call_args = mock_supabase.table.return_value.insert.call_args[0][0]
+    assert insert_call_args["owner_name"] == "test-owner-with-dashes"
+    assert insert_call_args["repo_name"] == "test_repo_with_underscores"
+    assert insert_call_args["branch_name"] == "feature/special-branch-name"
+    assert insert_call_args["created_by"] == "user@example.com"
+    assert insert_call_args["primary_language"] == "c++"
+    
+    assert result == [{"id": 6}]
+
+
+def test_upsert_repo_coverage_model_dump_called_correctly(mock_supabase, sample_coverage_data):
+    """Test that model_dump is called with exclude_none=True."""
+    # Arrange
+    mock_result = MagicMock()
+    mock_result.data = [{"id": 7}]
+    mock_supabase.table.return_value.insert.return_value.execute.return_value = mock_result
+    
+    # Mock the model_dump method to verify it's called correctly
+    with patch.object(sample_coverage_data, 'model_dump', wraps=sample_coverage_data.model_dump) as mock_model_dump:
+        # Act
+        result = upsert_repo_coverage(sample_coverage_data)
+        
+        # Assert
+        mock_model_dump.assert_called_once_with(exclude_none=True)
+        assert result == [{"id": 7}]
+
