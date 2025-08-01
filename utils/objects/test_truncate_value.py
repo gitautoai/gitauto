@@ -1,4 +1,6 @@
 from utils.objects.truncate_value import truncate_value
+from pydantic import BaseModel
+from typing import Optional
 
 
 def test_truncate_string_within_limit():
@@ -134,4 +136,26 @@ def test_truncate_complex_nested_structure():
             ]
         }
     ]
+    assert result == expected
+
+class TestModel(BaseModel):
+    """Test Pydantic model for testing truncate_value."""
+    name: str
+    description: Optional[str] = None
+    age: int
+
+
+def test_truncate_pydantic_model():
+    """Test that Pydantic models are properly converted to dictionaries."""
+    model = TestModel(
+        name="this is a very long name that should be truncated",
+        description="this is a very long description that should be truncated",
+        age=25
+    )
+    result = truncate_value(model, 15)
+    expected = {
+        "name": "this is a very ...",
+        "description": "this is a very ...",
+        "age": 25
+    }
     assert result == expected
