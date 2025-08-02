@@ -84,7 +84,11 @@ class TestExtractSelectedFiles:
         result = extract_selected_files(comment_body)
 
         # Assert
-        assert result == ["src/selected1.py", "src/selected2.py", "tests/selected_test.py"]
+        assert result == [
+            "src/selected1.py",
+            "src/selected2.py",
+            "tests/selected_test.py",
+        ]
 
     def test_generate_tests_entries_filtered_out(self):
         """Test that entries containing 'Generate Tests' are filtered out."""
@@ -128,7 +132,7 @@ class TestExtractSelectedFiles:
             "file.with.dots.py",
             "UPPERCASE.PY",
             "123numeric.py",
-            "src/deep/nested/path/file.py"
+            "src/deep/nested/path/file.py",
         ]
         assert result == expected
 
@@ -152,7 +156,7 @@ class TestExtractSelectedFiles:
             "file@with#symbols$.py",
             "file(with)parentheses.py",
             "file[with]brackets.py",
-            "file{with}braces.py"
+            "file{with}braces.py",
         ]
         assert result == expected
 
@@ -216,7 +220,7 @@ class TestExtractSelectedFiles:
             "src/file1.py",
             "generate tests for file3.py",
             "GENERATE TESTS for file4.py",
-            "Generate tests for file5.py"
+            "Generate tests for file5.py",
         ]
 
     def test_large_number_of_files(self):
@@ -225,12 +229,12 @@ class TestExtractSelectedFiles:
         num_files = 50
         comment_lines = []
         expected_files = []
-        
+
         for i in range(num_files):
             filename = f"src/file_{i:03d}.py"
             comment_lines.append(f"- [x] `{filename}`")
             expected_files.append(filename)
-        
+
         comment_body = "\n".join(comment_lines)
 
         # Act
