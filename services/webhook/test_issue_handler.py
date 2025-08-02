@@ -105,17 +105,18 @@ async def test_create_pr_from_issue_early_return_wrong_label(mock_github_payload
     # Setup
     mock_github_payload["label"]["name"] = "wrong-label"
     
-    # Execute
-    result = await create_pr_from_issue(
-        payload=mock_github_payload,
-        trigger="issue_label",
-        input_from="github"
-    )
-    
-    # Assert
-    assert result is None
-    # Verify no other functions were called
-    mock_dependencies['slack_notify'].assert_not_called()
+    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'):
+        # Execute
+        result = await create_pr_from_issue(
+            payload=mock_github_payload,
+            trigger="issue_label",
+            input_from="github"
+        )
+        
+        # Assert
+        assert result is None
+        # Verify no other functions were called
+        mock_dependencies['slack_notify'].assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -133,17 +134,18 @@ async def test_create_pr_from_issue_request_limit_reached(mock_github_payload, m
     mock_dependencies['create_comment'].return_value = "comment-url"
     mock_dependencies['create_progress_bar'].return_value = "progress bar"
     
-    # Execute
-    result = await create_pr_from_issue(
-        payload=mock_github_payload,
-        trigger="issue_label",
-        input_from="github"
-    )
-    
-    # Assert
-    assert result is None
-    mock_dependencies['slack_notify'].assert_called()
-    mock_dependencies['update_comment'].assert_called()
+    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'):
+        # Execute
+        result = await create_pr_from_issue(
+            payload=mock_github_payload,
+            trigger="issue_label",
+            input_from="github"
+        )
+        
+        # Assert
+        assert result is None
+        mock_dependencies['slack_notify'].assert_called()
+        mock_dependencies['update_comment'].assert_called()
 
 
 @pytest.mark.asyncio
@@ -180,27 +182,26 @@ async def test_create_pr_from_issue_successful_flow(mock_github_payload, mock_ba
     mock_dependencies['create_progress_bar'].return_value = "progress bar"
     mock_dependencies['is_lambda_timeout_approaching'].return_value = (False, 30)
     
-    # Execute
-    result = await create_pr_from_issue(
-        payload=mock_github_payload,
-        trigger="issue_label",
-        input_from="github"
-    )
-    
-    # Assert
-    assert result is None  # Function doesn't return a value
-    mock_dependencies['create_pull_request'].assert_called_once()
-    mock_dependencies['update_usage'].assert_called_once()
-    mock_dependencies['insert_credit'].assert_called_once()
-    mock_dependencies['send_email'].assert_called_once()
+    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'):
+        # Execute
+        result = await create_pr_from_issue(
+            payload=mock_github_payload,
+            trigger="issue_label",
+            input_from="github"
+        )
+        
+        # Assert
+        assert result is None  # Function doesn't return a value
+        mock_dependencies['create_pull_request'].assert_called_once()
+        mock_dependencies['update_usage'].assert_called_once()
+        mock_dependencies['insert_credit'].assert_called_once()
+        mock_dependencies['send_email'].assert_called_once()
 
 
 @pytest.mark.asyncio
 async def test_create_pr_from_issue_jira_input(mock_github_payload, mock_base_args, mock_dependencies):
     """Test handling of Jira input source."""
     # Setup
-    mock_dependencies['deconstruct_jira_payload'] = MagicMock()
-    
     with patch('services.webhook.issue_handler.deconstruct_jira_payload') as mock_jira:
         mock_jira.return_value = (mock_base_args, {})
         mock_dependencies['is_request_limit_reached'].return_value = {
@@ -213,16 +214,17 @@ async def test_create_pr_from_issue_jira_input(mock_github_payload, mock_base_ar
         mock_dependencies['create_comment'].return_value = "comment-url"
         mock_dependencies['create_progress_bar'].return_value = "progress bar"
         
-        # Execute
-        result = await create_pr_from_issue(
-            payload=mock_github_payload,
-            trigger="issue_label",
-            input_from="jira"
-        )
-        
-        # Assert
-        assert result is None
-        mock_jira.assert_called_once()
+        with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'):
+            # Execute
+            result = await create_pr_from_issue(
+                payload=mock_github_payload,
+                trigger="issue_label",
+                input_from="jira"
+            )
+            
+            # Assert
+            assert result is None
+            mock_jira.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -249,16 +251,17 @@ async def test_create_pr_from_issue_branch_deleted(mock_github_payload, mock_bas
     mock_dependencies['create_progress_bar'].return_value = "progress bar"
     mock_dependencies['is_lambda_timeout_approaching'].return_value = (False, 30)
     
-    # Execute
-    result = await create_pr_from_issue(
-        payload=mock_github_payload,
-        trigger="issue_label",
-        input_from="github"
-    )
-    
-    # Assert
-    assert result is None
-    mock_dependencies['update_comment'].assert_called()
+    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'):
+        # Execute
+        result = await create_pr_from_issue(
+            payload=mock_github_payload,
+            trigger="issue_label",
+            input_from="github"
+        )
+        
+        # Assert
+        assert result is None
+        mock_dependencies['update_comment'].assert_called()
 
 
 @pytest.mark.asyncio
@@ -286,16 +289,17 @@ async def test_create_pr_from_issue_timeout_approaching(mock_github_payload, moc
     mock_dependencies['get_timeout_message'].return_value = "Timeout approaching"
     mock_dependencies['create_progress_bar'].return_value = "progress bar"
     
-    # Execute
-    result = await create_pr_from_issue(
-        payload=mock_github_payload,
-        trigger="issue_label",
-        input_from="github"
-    )
-    
-    # Assert
-    assert result is None
-    mock_dependencies['get_timeout_message'].assert_called_once()
+    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'):
+        # Execute
+        result = await create_pr_from_issue(
+            payload=mock_github_payload,
+            trigger="issue_label",
+            input_from="github"
+        )
+        
+        # Assert
+        assert result is None
+        mock_dependencies['get_timeout_message'].assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -329,23 +333,77 @@ async def test_create_pr_from_issue_failed_pr_creation(mock_github_payload, mock
     mock_dependencies['create_progress_bar'].return_value = "progress bar"
     mock_dependencies['is_lambda_timeout_approaching'].return_value = (False, 30)
     
-    # Execute
-    result = await create_pr_from_issue(
-        payload=mock_github_payload,
-        trigger="issue_label",
-        input_from="github"
-    )
+    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'):
+        # Execute
+        result = await create_pr_from_issue(
+            payload=mock_github_payload,
+            trigger="issue_label",
+            input_from="github"
+        )
+        
+        # Assert
+        assert result is None
+        mock_dependencies['update_usage'].assert_called_once_with(
+            usage_id="usage-id",
+            is_completed=False,
+            pr_number=None,
+            token_input=0,
+            token_output=0,
+            total_seconds=pytest.approx(0, abs=5)  # Allow some tolerance for execution time
+        )
+
+
+@pytest.mark.asyncio
+async def test_create_pr_from_issue_infinite_loop_protection(mock_github_payload, mock_base_args, mock_dependencies):
+    """Test that infinite loop protection works correctly."""
+    # Setup
+    mock_dependencies['deconstruct_github_payload'].return_value = (mock_base_args, {})
+    mock_dependencies['is_request_limit_reached'].return_value = {
+        "is_limit_reached": False,
+        "requests_left": 5,
+        "request_limit": 10,
+        "end_date": "2024-01-01",
+        "is_credit_user": False
+    }
+    mock_dependencies['create_user_request'].return_value = "usage-id"
+    mock_dependencies['create_comment'].return_value = "comment-url"
+    mock_dependencies['get_file_tree_list'].return_value = (["file1.py"], "Found 1 file")
+    mock_dependencies['find_config_files'].return_value = []
+    mock_dependencies['get_comments'].return_value = []
+    mock_dependencies['render_text'].return_value = "rendered text"
+    mock_dependencies['extract_image_urls'].return_value = []
+    mock_dependencies['get_latest_remote_commit_sha'].return_value = "abc123"
+    mock_dependencies['check_branch_exists'].return_value = True
     
-    # Assert
-    assert result is None
-    mock_dependencies['update_usage'].assert_called_once_with(
-        usage_id="usage-id",
-        is_completed=False,
-        pr_number=None,
-        token_input=0,
-        token_output=0,
-        total_seconds=pytest.approx(0, abs=5)  # Allow some tolerance for execution time
-    )
+    # Setup chat_with_agent to simulate infinite loop scenario
+    mock_dependencies['chat_with_agent'].side_effect = [
+        # Explore mode - finds files but no commits (4 times to trigger retry limit)
+        ([], [], "tool", {}, 100, 200, True, 50),  # explore
+        ([], [], "tool", {}, 100, 200, False, 75),  # commit
+        ([], [], "tool", {}, 100, 200, True, 50),  # explore
+        ([], [], "tool", {}, 100, 200, False, 75),  # commit
+        ([], [], "tool", {}, 100, 200, True, 50),  # explore
+        ([], [], "tool", {}, 100, 200, False, 75),  # commit
+        ([], [], "tool", {}, 100, 200, True, 50),  # explore
+        ([], [], "tool", {}, 100, 200, False, 75),  # commit
+    ]
+    
+    mock_dependencies['create_pull_request'].return_value = None
+    mock_dependencies['create_progress_bar'].return_value = "progress bar"
+    mock_dependencies['is_lambda_timeout_approaching'].return_value = (False, 30)
+    
+    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'):
+        # Execute
+        result = await create_pr_from_issue(
+            payload=mock_github_payload,
+            trigger="issue_label",
+            input_from="github"
+        )
+        
+        # Assert
+        assert result is None
+        # Should have called chat_with_agent 8 times (4 retry cycles * 2 calls each)
+        assert mock_dependencies['chat_with_agent'].call_count == 8
 
 
 def test_create_pr_from_issue_time_tracking():
@@ -361,3 +419,57 @@ def test_create_pr_from_issue_time_tracking():
     # Assert duration is reasonable
     assert duration >= 0
     assert duration < 1  # Should be less than 1 second for this test
+
+
+@pytest.mark.asyncio
+async def test_create_pr_from_issue_with_image_processing(mock_github_payload, mock_base_args, mock_dependencies):
+    """Test behavior when images are found in issue body."""
+    # Setup
+    mock_dependencies['deconstruct_github_payload'].return_value = (mock_base_args, {})
+    mock_dependencies['is_request_limit_reached'].return_value = {
+        "is_limit_reached": False,
+        "requests_left": 5,
+        "request_limit": 10,
+        "end_date": "2024-01-01",
+        "is_credit_user": False
+    }
+    mock_dependencies['create_user_request'].return_value = "usage-id"
+    mock_dependencies['create_comment'].return_value = "comment-url"
+    mock_dependencies['get_file_tree_list'].return_value = (["file1.py"], "Found 1 file")
+    mock_dependencies['find_config_files'].return_value = []
+    mock_dependencies['get_comments'].return_value = []
+    mock_dependencies['render_text'].return_value = "rendered text"
+    mock_dependencies['extract_image_urls'].return_value = [
+        {"url": "https://example.com/image.png", "alt": "Test Image"}
+    ]
+    mock_dependencies['get_latest_remote_commit_sha'].return_value = "abc123"
+    mock_dependencies['check_branch_exists'].return_value = True
+    mock_dependencies['chat_with_agent'].side_effect = [
+        ([], [], "tool", {}, 100, 200, False, 50),
+        ([], [], "tool", {}, 100, 200, False, 75)
+    ]
+    mock_dependencies['create_pull_request'].return_value = None
+    mock_dependencies['create_progress_bar'].return_value = "progress bar"
+    mock_dependencies['is_lambda_timeout_approaching'].return_value = (False, 30)
+    
+    # Mock image processing functions
+    with patch('services.webhook.issue_handler.get_base64') as mock_get_base64, \
+         patch('services.webhook.issue_handler.describe_image') as mock_describe_image, \
+         patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'):
+        
+        mock_get_base64.return_value = "base64_image_data"
+        mock_describe_image.return_value = "Image description"
+        
+        # Execute
+        result = await create_pr_from_issue(
+            payload=mock_github_payload,
+            trigger="issue_label",
+            input_from="github"
+        )
+        
+        # Assert
+        assert result is None
+        mock_get_base64.assert_called_once()
+        mock_describe_image.assert_called_once()
+        # Should create a comment with image description
+        assert mock_dependencies['create_comment'].call_count >= 2  # Initial comment + image description
