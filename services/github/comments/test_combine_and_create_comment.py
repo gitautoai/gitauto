@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import patch, MagicMock
 
 from services.github.comments.combine_and_create_comment import combine_and_create_comment
