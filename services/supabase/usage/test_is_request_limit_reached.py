@@ -7,6 +7,15 @@ def test_is_request_limit_reached_exception_handling():
     """Test that exceptions are handled gracefully and return default value"""
     # Arrange
     installation_id = 12345
+from unittest.mock import patch
+
+from services.supabase.usage.is_request_limit_reached import is_request_limit_reached, DEFAULT
+
+
+def test_is_request_limit_reached_exception_handling():
+    """Test that exceptions are handled gracefully and return default value"""
+    # Arrange
+    installation_id = 12345
     owner_id = 67890
     owner_name = "test-owner"
     
@@ -16,9 +25,3 @@ def test_is_request_limit_reached_exception_handling():
         
         result = is_request_limit_reached(
             installation_id=installation_id,
-            owner_id=owner_id,
-            owner_name=owner_name,
-        )
-    
-    # Assert
-    assert result == DEFAULT  # Should return default value due to exception handling
