@@ -33,6 +33,8 @@ def combine_and_create_comment(
     requests_left = limit_result["requests_left"]
     request_limit = limit_result["request_limit"]
     end_date = limit_result["end_date"]
+    is_credit_user = limit_result["is_credit_user"]
+    credit_balance_usd = limit_result["credit_balance_usd"]
 
     # Build comment body
     body = base_comment
@@ -45,7 +47,11 @@ def combine_and_create_comment(
     # Add usage info if end_date is valid
     if end_date != datetime(year=1, month=1, day=1, hour=0, minute=0, second=0):
         body += request_issue_comment(
-            requests_left=requests_left, sender_name=sender_name, end_date=end_date
+            requests_left=requests_left,
+            sender_name=sender_name,
+            end_date=end_date,
+            is_credit_user=is_credit_user,
+            credit_balance_usd=credit_balance_usd,
         )
 
     # Override with limit reached message if needed

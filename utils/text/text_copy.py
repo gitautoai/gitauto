@@ -3,6 +3,7 @@ from datetime import datetime
 # Local imports
 from config import EMAIL_LINK, PRODUCT_ID
 from constants.messages import COMPLETED_PR
+from constants.urls import DASHBOARD_CREDITS_URL
 
 
 def git_command(new_branch_name: str) -> str:
@@ -51,7 +52,16 @@ def pull_request_completed(
     return f"{user_part}{COMPLETED_PR} {pr_url} 🚀\n\nNote: I automatically create a pull request for an unassigned and open issue in order from oldest to newest once a day at 00:00 UTC, as long as you have remaining automation usage. Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
 
-def request_issue_comment(requests_left: int, sender_name: str, end_date: datetime):
+def request_issue_comment(
+    requests_left: int,
+    sender_name: str,
+    end_date: datetime,
+    is_credit_user: bool = False,
+    credit_balance_usd: int = 0,
+):
+    if is_credit_user:
+        return f"\n\n@{sender_name}, You have ${credit_balance_usd} in credits remaining. [View credits]({DASHBOARD_CREDITS_URL})\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
+
     requests_left = 0 if requests_left < 0 else requests_left
     plural = "" if requests_left == 1 else "s"
     return f"\n\n@{sender_name}, You have {requests_left} request{plural} left in this cycle which refreshes on {end_date}.\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
