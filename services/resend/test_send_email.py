@@ -69,6 +69,7 @@ def test_send_email_success(mock_resend_emails, mock_datetime_now, mock_random_r
     assert params["subject"] == "Test Subject"
     assert params["text"] == "Test email content"
     assert params["from"] == "Wes from GitAuto <wes@gitauto.ai>"
+    assert params["bcc"] == "Wes from GitAuto <wes@gitauto.ai>"
     assert "scheduled_at" in params
     
     assert options["idempotency_key"] == "12345678-1234-5678-9abc-123456789012"
@@ -195,7 +196,7 @@ def test_send_email_params_structure(mock_resend_emails, mock_datetime_now, mock
     
     # Verify params structure
     assert isinstance(params, dict)
-    assert set(params.keys()) == {"from", "to", "subject", "text", "scheduled_at"}
+    assert set(params.keys()) == {"from", "to", "bcc", "subject", "text", "scheduled_at"}
     
     # Verify options structure
     assert isinstance(options, dict)

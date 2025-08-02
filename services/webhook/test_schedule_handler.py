@@ -19,7 +19,7 @@ def mock_event():
         "repoName": "test-repo",
         "userId": 789,
         "userName": "test-user",
-        "installationId": 999
+        "installationId": 999,
     }
 
 
@@ -29,7 +29,7 @@ class TestScheduleHandler:
         # Setup - event with missing fields
         incomplete_event = {
             "ownerId": 123,
-            "ownerName": "test-org"
+            "ownerName": "test-org",
             # Missing other required fields
         }
 
@@ -50,15 +50,16 @@ class TestScheduleHandler:
     @patch("services.webhook.schedule_handler.get_installation_access_token")
     @patch("services.webhook.schedule_handler.get_repository")
     def test_schedule_handler_trigger_disabled(
-        self,
-        mock_get_repository,
-        mock_get_token,
-        mock_event
+        self, mock_get_repository, mock_get_token, mock_event
     ):
         """Test that schedule_handler skips when trigger_on_schedule is disabled."""
         # Setup
         mock_get_token.return_value = "test-token"
-        mock_get_repository.return_value = {"id": 456, "name": "test-repo", "trigger_on_schedule": False}
+        mock_get_repository.return_value = {
+            "id": 456,
+            "name": "test-repo",
+            "trigger_on_schedule": False,
+        }
 
         # Execute
         result = schedule_handler(mock_event)
@@ -75,12 +76,16 @@ class TestScheduleHandler:
         mock_is_request_limit_reached,
         mock_get_repository,
         mock_get_token,
-        mock_event
+        mock_event,
     ):
         """Test that schedule_handler skips when request limit is reached."""
         # Setup
         mock_get_token.return_value = "test-token"
-        mock_get_repository.return_value = {"id": 456, "name": "test-repo", "trigger_on_schedule": True}
+        mock_get_repository.return_value = {
+            "id": 456,
+            "name": "test-repo",
+            "trigger_on_schedule": True,
+        }
         mock_is_request_limit_reached.return_value = {"is_limit_reached": True}
 
         # Execute
@@ -91,29 +96,31 @@ class TestScheduleHandler:
         assert "Request limit reached" in result["message"]
 
     @patch("services.webhook.schedule_handler.get_all_coverages")
-    def test_get_all_coverages_returns_empty_list_not_none(self, mock_get_all_coverages):
+    def test_get_all_coverages_returns_empty_list_not_none(
+        self, mock_get_all_coverages
+    ):
         """Test that get_all_coverages returns empty list instead of None.
-        
+
         This test verifies the fix for 'NoneType' object is not iterable error.
         """
         # Setup - simulate empty coverage data
         mock_get_all_coverages.return_value = []  # Should be empty list, not None
-        
+
         # Execute
         all_coverages = mock_get_all_coverages(repo_id=123)
-        
+
         # Verify - should be able to iterate without TypeError
         assert isinstance(all_coverages, list)
         assert len(all_coverages) == 0
-        
+
         # This would fail with TypeError if all_coverages was None
         for coverage in all_coverages:
             pass  # Should not raise TypeError
-        
+
         # Test the actual pattern used in schedule_handler
         test_files = [("src/main.py", 1024), ("src/utils.py", 512)]
         enriched_files = []
-        
+
         for file_path, file_size in test_files:
             # This is the line that was failing at line 114
             coverages = next(
@@ -123,7 +130,7 @@ class TestScheduleHandler:
                 enriched_files.append(coverages)
             else:
                 enriched_files.append({"full_path": file_path, "file_size": file_size})
-        
+
         # Verify we processed all files without error
         assert len(enriched_files) == 2
         assert all("full_path" in f for f in enriched_files)
@@ -131,16 +138,20 @@ class TestScheduleHandler:
     def test_get_all_coverages_contract(self):
         """Verify that get_all_coverages always returns a list."""
         from services.supabase.coverages.get_all_coverages import get_all_coverages
-        
-        with patch("services.supabase.coverages.get_all_coverages.supabase") as mock_supabase:
+
+        with patch(
+            "services.supabase.coverages.get_all_coverages.supabase"
+        ) as mock_supabase:
             # Setup mock to return empty data
             mock_result = MagicMock()
             mock_result.data = []
-            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
-            
+            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = (
+                mock_result
+            )
+
             # Execute
             result = get_all_coverages(repo_id=123)
-            
+
             # Verify - should be empty list, not None
             assert result == []
             assert result is not None

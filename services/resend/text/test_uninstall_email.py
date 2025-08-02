@@ -97,7 +97,7 @@ def test_get_uninstall_email_text_structure():
     assert text.startswith(f"Hi {user_name},")
     
     # Check that text ends with signature
-    assert text.strip().endswith("Wes")
+    assert text.strip().endswith("Wes\nGitAuto")
     
     # Check for proper line breaks
     lines = text.split('\n')
