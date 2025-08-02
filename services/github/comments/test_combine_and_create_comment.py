@@ -84,7 +84,7 @@ def test_combine_and_create_comment_with_product_id_replacement():
         "is_limit_reached": False,
         "requests_left": 5,
         "request_limit": 10,
-        "end_date": datetime(2025, 5, 1),
+        "end_date": datetime(2025, 5, 1, tzinfo=timezone.utc),
         "is_credit_user": False,
         "credit_balance_usd": 0,
     }
