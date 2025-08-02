@@ -59,7 +59,7 @@ def test_combine_and_create_comment_with_limit_reached():
     mock_limit_message.assert_called_once_with(
         user_name=sender_name,
         request_count=10,
-        end_date=datetime(2025, 5, 1),
+        end_date=datetime(2025, 5, 1, tzinfo=timezone.utc),
     )
     mock_create_comment.assert_called_once_with(
         body="Limit reached message",
