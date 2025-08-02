@@ -205,8 +205,9 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 4. Run pyright type checking: `pyright`
 5. Run pytest: `python -m pytest -r fE -x`
 6. Check current branch is not main: `git branch --show-current`
-7. Add changes: `git add .`
-8. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
-9. Push to remote: `git push`
+7. Merge latest main: `git fetch origin main && git merge origin/main`
+8. Add changes: `git add .`
+9. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
+10. Push to remote: `git push`
 
 IMPORTANT: Must fix every error/failure in each step before proceeding to the next step.
