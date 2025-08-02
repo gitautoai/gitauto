@@ -384,7 +384,7 @@ async def test_handle_pr_checkbox_trigger_skips_no_selected_files(base_payload, 
     # pylint: disable=redefined-outer-name
     mock_extract_selected_files.return_value = []
     
-    result = await handle_pr_checkbox_trigger(payload)
+    result = await handle_pr_checkbox_trigger(base_payload)
     
     assert result is None
 
