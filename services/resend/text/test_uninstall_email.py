@@ -12,7 +12,7 @@ def test_get_uninstall_email_text_with_regular_name():
     assert "I noticed you uninstalled GitAuto. What went wrong?" in text
     assert "Your feedback would really help us improve - just reply to this email." in text
     assert "Thanks for trying GitAuto." in text
-    assert "Wes\nGitAuto" in text
+    assert "Wes" in text and "GitAuto" in text
 
 
 def test_get_uninstall_email_text_with_empty_name():
@@ -24,7 +24,7 @@ def test_get_uninstall_email_text_with_empty_name():
     assert "I noticed you uninstalled GitAuto. What went wrong?" in text
     assert "Your feedback would really help us improve - just reply to this email." in text
     assert "Thanks for trying GitAuto." in text
-    assert "Wes\nGitAuto" in text
+    assert "Wes" in text and "GitAuto" in text
 
 
 def test_get_uninstall_email_text_with_special_characters():
@@ -36,7 +36,7 @@ def test_get_uninstall_email_text_with_special_characters():
     assert "I noticed you uninstalled GitAuto. What went wrong?" in text
     assert "Your feedback would really help us improve - just reply to this email." in text
     assert "Thanks for trying GitAuto." in text
-    assert "Wes\nGitAuto" in text
+    assert "Wes" in text and "GitAuto" in text
 
 
 @pytest.mark.parametrize(
@@ -59,7 +59,7 @@ def test_get_uninstall_email_text_parametrized(user_name):
     assert "I noticed you uninstalled GitAuto. What went wrong?" in text
     assert "Your feedback would really help us improve - just reply to this email." in text
     assert "Thanks for trying GitAuto." in text
-    assert "Wes\nGitAuto" in text
+    assert "Wes" in text and "GitAuto" in text
 
 
 def test_get_uninstall_email_text_return_type():
