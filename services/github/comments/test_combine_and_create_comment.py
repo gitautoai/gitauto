@@ -164,7 +164,7 @@ def test_combine_and_create_comment_with_valid_end_date():
     mock_issue_comment.assert_called_once_with(
         requests_left=5,
         sender_name=sender_name,
-        end_date=datetime(2025, 5, 1),
+        end_date=datetime(2025, 5, 1, tzinfo=timezone.utc),
         is_credit_user=False,
         credit_balance_usd=0,
     )
