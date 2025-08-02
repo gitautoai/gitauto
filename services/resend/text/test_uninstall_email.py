@@ -33,7 +33,7 @@ def test_get_uninstall_email_text_includes_user_name():
 def test_get_uninstall_email_text_with_different_names():
     """Test the function with various user names"""
     test_names = ["Alice", "Bob", "Charlie", "Diana"]
-    
+
     for name in test_names:
         subject, text = get_uninstall_email_text(name)
         assert subject == "Sorry to see you go"
@@ -74,16 +74,16 @@ def test_get_uninstall_email_text_with_unicode_characters():
 def test_get_uninstall_email_text_contains_expected_content():
     """Test that the email text contains all expected content"""
     _, text = get_uninstall_email_text("John")
-    
+
     expected_phrases = [
         "I noticed you uninstalled GitAuto",
         "What went wrong?",
         "Your feedback would really help us improve",
         "just reply to this email",
         "Thanks for trying GitAuto",
-        "Wes"
+        "Wes",
     ]
-    
+
     for phrase in expected_phrases:
         assert phrase in text
 
@@ -92,15 +92,15 @@ def test_get_uninstall_email_text_structure():
     """Test that the email text has the expected structure"""
     user_name = "John"
     _, text = get_uninstall_email_text(user_name)
-    
+
     # Check that text starts with greeting
     assert text.startswith(f"Hi {user_name},")
-    
+
     # Check that text ends with signature
     assert text.strip().endswith("Wes\nGitAuto")
-    
+
     # Check for proper line breaks
-    lines = text.split('\n')
+    lines = text.split("\n")
     assert len(lines) > 5  # Should have multiple lines
 
 
@@ -109,7 +109,7 @@ def test_get_uninstall_email_text_consistency():
     user_name = "John"
     result1 = get_uninstall_email_text(user_name)
     result2 = get_uninstall_email_text(user_name)
-    
+
     assert result1 == result2
     assert result1[0] == result2[0]  # Same subject
     assert result1[1] == result2[1]  # Same text
