@@ -51,6 +51,20 @@ async def test_create_pr_from_issue_early_return_wrong_label(mock_github_payload
 
 
 @pytest.mark.asyncio
+async def test_create_pr_from_issue_basic_functionality():
+    """Test basic functionality without complex mocking."""
+    payload = {
+        "action": "labeled",
+        "label": {"name": "wrong-label"},
+        "issue": {"number": 123, "title": "Test", "body": "Test", "user": {"login": "test", "id": 1}},
+        "repository": {"id": 1, "name": "test", "owner": {"login": "test", "id": 1, "type": "User"}},
+        "sender": {"login": "test", "id": 1, "email": "test@test.com"},
+        "installation": {"id": 1}
+    }
+    
+    result = await create_pr_from_issue(payload, "issue_label", "github")
+    assert result is None
+
 async def test_create_pr_from_issue_request_limit_reached(mock_github_payload):
     """Test behavior when request limit is reached."""
     mock_base_args = {
