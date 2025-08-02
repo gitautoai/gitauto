@@ -65,6 +65,7 @@ async def test_create_pr_from_issue_basic_functionality():
     result = await create_pr_from_issue(payload, "issue_label", "github")
     assert result is None
 
+@pytest.mark.asyncio
 async def test_create_pr_from_issue_request_limit_reached(mock_github_payload):
     """Test behavior when request limit is reached."""
     mock_base_args = {
