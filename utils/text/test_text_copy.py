@@ -175,3 +175,23 @@ def test_request_issue_comment_zero_requests():
     expected = f"\n\n@{sender_name}, You have 0 requests left in this cycle which refreshes on {end_date}.\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
 
     assert result == expected
+
+
+def test_request_issue_comment_credit_user():
+    requests_left = 5
+    sender_name = "test-user"
+    end_date = datetime(2025, 5, 1, tzinfo=timezone.utc)
+    is_credit_user = True
+    credit_balance_usd = 25
+
+    result = request_issue_comment(requests_left, sender_name, end_date, is_credit_user, credit_balance_usd)
+
+    from constants.urls import DASHBOARD_CREDITS_URL
+    expected = f"\n\n@{sender_name}, You have ${credit_balance_usd} in credits remaining. [View credits]({DASHBOARD_CREDITS_URL})\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
+
+    assert result == expected
+
+
+def test_request_issue_comment_credit_user_zero_balance():
+    requests_left = 5
+    sender_name = "test-user"
