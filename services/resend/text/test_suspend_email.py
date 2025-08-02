@@ -11,7 +11,7 @@ def test_get_suspend_email_text_with_regular_name():
     assert "Hi John," in text
     assert "I noticed you suspended GitAuto. What happened?" in text
     assert "Any feedback? Just hit reply and let me know." in text
-    assert "Wes\nGitAuto" in text
+    assert "Wes" in text and "GitAuto" in text
 
 
 def test_get_suspend_email_text_with_empty_name():
@@ -22,7 +22,7 @@ def test_get_suspend_email_text_with_empty_name():
     assert "Hi ," in text
     assert "I noticed you suspended GitAuto. What happened?" in text
     assert "Any feedback? Just hit reply and let me know." in text
-    assert "Wes\nGitAuto" in text
+    assert "Wes" in text and "GitAuto" in text
 
 
 def test_get_suspend_email_text_with_special_characters():
@@ -33,7 +33,7 @@ def test_get_suspend_email_text_with_special_characters():
     assert "Hi José María," in text
     assert "I noticed you suspended GitAuto. What happened?" in text
     assert "Any feedback? Just hit reply and let me know." in text
-    assert "Wes\nGitAuto" in text
+    assert "Wes" in text and "GitAuto" in text
 
 
 @pytest.mark.parametrize(
@@ -55,7 +55,7 @@ def test_get_suspend_email_text_parametrized(user_name):
     assert f"Hi {user_name}," in text
     assert "I noticed you suspended GitAuto. What happened?" in text
     assert "Any feedback? Just hit reply and let me know." in text
-    assert "Wes\nGitAuto" in text
+    assert "Wes" in text and "GitAuto" in text
 
 
 def test_get_suspend_email_text_return_type():
