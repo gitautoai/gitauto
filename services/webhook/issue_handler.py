@@ -11,7 +11,6 @@ from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.chat_with_agent import chat_with_agent
 from services.resend.send_email import send_email
 from services.resend.text.credits_depleted_email import get_credits_depleted_email_text
-from services.resend.text.no_credits_email import get_no_credits_email_text
 
 # Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
