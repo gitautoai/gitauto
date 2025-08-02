@@ -67,7 +67,7 @@ async def test_create_pr_from_issue_early_return_wrong_label(mock_github_payload
     # Setup
     mock_github_payload["label"]["name"] = "wrong-label"
     
-    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'):
+    with patch('config.PRODUCT_ID', 'gitauto'):
         # Execute
         result = await create_pr_from_issue(
             payload=mock_github_payload,
@@ -82,14 +82,14 @@ async def test_create_pr_from_issue_early_return_wrong_label(mock_github_payload
 @pytest.mark.asyncio
 async def test_create_pr_from_issue_request_limit_reached(mock_github_payload, mock_base_args):
     """Test behavior when request limit is reached."""
-    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'), \
-         patch('services.webhook.issue_handler.deconstruct_github_payload') as mock_deconstruct, \
-         patch('services.webhook.issue_handler.slack_notify') as mock_slack, \
-         patch('services.webhook.issue_handler.delete_comments_by_identifiers') as mock_delete, \
-         patch('services.webhook.issue_handler.create_comment') as mock_create_comment, \
-         patch('services.webhook.issue_handler.update_comment') as mock_update_comment, \
-         patch('services.webhook.issue_handler.is_request_limit_reached') as mock_limit_check, \
-         patch('services.webhook.issue_handler.create_progress_bar') as mock_progress_bar:
+    with patch('config.PRODUCT_ID', 'gitauto'), \
+         patch('services.github.utils.deconstruct_github_payload.deconstruct_github_payload') as mock_deconstruct, \
+         patch('services.slack.slack_notify.slack_notify') as mock_slack, \
+         patch('services.github.comments.delete_comments_by_identifiers.delete_comments_by_identifiers') as mock_delete, \
+         patch('services.github.comments.create_comment.create_comment') as mock_create_comment, \
+         patch('services.github.comments.update_comment.update_comment') as mock_update_comment, \
+         patch('services.supabase.usage.is_request_limit_reached.is_request_limit_reached') as mock_limit_check, \
+         patch('utils.progress_bar.progress_bar.create_progress_bar') as mock_progress_bar:
         
         # Setup mocks
         mock_deconstruct.return_value = (mock_base_args, {})
@@ -119,35 +119,35 @@ async def test_create_pr_from_issue_request_limit_reached(mock_github_payload, m
 @pytest.mark.asyncio
 async def test_create_pr_from_issue_successful_flow(mock_github_payload, mock_base_args):
     """Test successful PR creation flow."""
-    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'), \
-         patch('services.webhook.issue_handler.deconstruct_github_payload') as mock_deconstruct, \
-         patch('services.webhook.issue_handler.slack_notify') as mock_slack, \
-         patch('services.webhook.issue_handler.delete_comments_by_identifiers'), \
-         patch('services.webhook.issue_handler.create_comment') as mock_create_comment, \
-         patch('services.webhook.issue_handler.update_comment'), \
-         patch('services.webhook.issue_handler.is_request_limit_reached') as mock_limit_check, \
-         patch('services.webhook.issue_handler.create_user_request') as mock_create_request, \
-         patch('services.webhook.issue_handler.add_reaction_to_issue'), \
-         patch('services.webhook.issue_handler.get_file_tree_list') as mock_file_tree, \
-         patch('services.webhook.issue_handler.find_config_files') as mock_config_files, \
-         patch('services.webhook.issue_handler.get_remote_file_content'), \
-         patch('services.webhook.issue_handler.get_comments') as mock_get_comments, \
-         patch('services.webhook.issue_handler.render_text') as mock_render, \
-         patch('services.webhook.issue_handler.extract_image_urls') as mock_extract_images, \
-         patch('services.webhook.issue_handler.get_latest_remote_commit_sha') as mock_commit_sha, \
-         patch('services.webhook.issue_handler.create_remote_branch'), \
-         patch('services.webhook.issue_handler.check_branch_exists') as mock_branch_exists, \
-         patch('services.webhook.issue_handler.chat_with_agent') as mock_chat, \
-         patch('services.webhook.issue_handler.create_empty_commit'), \
-         patch('services.webhook.issue_handler.create_pull_request') as mock_create_pr, \
-         patch('services.webhook.issue_handler.update_usage') as mock_update_usage, \
-         patch('services.webhook.issue_handler.insert_credit') as mock_insert_credit, \
-         patch('services.webhook.issue_handler.get_owner') as mock_get_owner, \
-         patch('services.webhook.issue_handler.get_user') as mock_get_user, \
-         patch('services.webhook.issue_handler.send_email') as mock_send_email, \
-         patch('services.webhook.issue_handler.get_credits_depleted_email_text') as mock_email_text, \
-         patch('services.webhook.issue_handler.create_progress_bar') as mock_progress_bar, \
-         patch('services.webhook.issue_handler.is_lambda_timeout_approaching') as mock_timeout:
+    with patch('config.PRODUCT_ID', 'gitauto'), \
+         patch('services.github.utils.deconstruct_github_payload.deconstruct_github_payload') as mock_deconstruct, \
+         patch('services.slack.slack_notify.slack_notify') as mock_slack, \
+         patch('services.github.comments.delete_comments_by_identifiers.delete_comments_by_identifiers'), \
+         patch('services.github.comments.create_comment.create_comment') as mock_create_comment, \
+         patch('services.github.comments.update_comment.update_comment'), \
+         patch('services.supabase.usage.is_request_limit_reached.is_request_limit_reached') as mock_limit_check, \
+         patch('services.supabase.create_user_request.create_user_request') as mock_create_request, \
+         patch('services.github.reactions.add_reaction_to_issue.add_reaction_to_issue'), \
+         patch('services.github.trees.get_file_tree_list.get_file_tree_list') as mock_file_tree, \
+         patch('services.github.utils.find_config_files.find_config_files') as mock_config_files, \
+         patch('services.github.github_manager.get_remote_file_content'), \
+         patch('services.github.comments.get_comments.get_comments') as mock_get_comments, \
+         patch('services.github.markdown.render_text.render_text') as mock_render, \
+         patch('utils.urls.extract_urls.extract_image_urls') as mock_extract_images, \
+         patch('services.github.github_manager.get_latest_remote_commit_sha') as mock_commit_sha, \
+         patch('services.github.branches.create_remote_branch.create_remote_branch'), \
+         patch('services.github.branches.check_branch_exists.check_branch_exists') as mock_branch_exists, \
+         patch('services.chat_with_agent.chat_with_agent') as mock_chat, \
+         patch('services.github.commits.create_empty_commit.create_empty_commit'), \
+         patch('services.github.pulls.create_pull_request.create_pull_request') as mock_create_pr, \
+         patch('services.supabase.usage.update_usage.update_usage') as mock_update_usage, \
+         patch('services.supabase.credits.insert_credit.insert_credit') as mock_insert_credit, \
+         patch('services.supabase.owners.get_owner.get_owner') as mock_get_owner, \
+         patch('services.supabase.users.get_user.get_user') as mock_get_user, \
+         patch('services.resend.send_email.send_email') as mock_send_email, \
+         patch('services.resend.text.credits_depleted_email.get_credits_depleted_email_text') as mock_email_text, \
+         patch('utils.progress_bar.progress_bar.create_progress_bar') as mock_progress_bar, \
+         patch('utils.time.is_lambda_timeout_approaching.is_lambda_timeout_approaching') as mock_timeout:
         
         # Setup mocks
         mock_deconstruct.return_value = (mock_base_args, {})
@@ -198,13 +198,13 @@ async def test_create_pr_from_issue_successful_flow(mock_github_payload, mock_ba
 @pytest.mark.asyncio
 async def test_create_pr_from_issue_jira_input(mock_github_payload, mock_base_args):
     """Test handling of Jira input source."""
-    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'), \
-         patch('services.webhook.issue_handler.deconstruct_jira_payload') as mock_jira, \
-         patch('services.webhook.issue_handler.slack_notify'), \
-         patch('services.webhook.issue_handler.create_comment') as mock_create_comment, \
-         patch('services.webhook.issue_handler.update_comment'), \
-         patch('services.webhook.issue_handler.is_request_limit_reached') as mock_limit_check, \
-         patch('services.webhook.issue_handler.create_progress_bar') as mock_progress_bar:
+    with patch('config.PRODUCT_ID', 'gitauto'), \
+         patch('services.jira.deconstruct_jira_payload.deconstruct_jira_payload') as mock_jira, \
+         patch('services.slack.slack_notify.slack_notify'), \
+         patch('services.github.comments.create_comment.create_comment') as mock_create_comment, \
+         patch('services.github.comments.update_comment.update_comment'), \
+         patch('services.supabase.usage.is_request_limit_reached.is_request_limit_reached') as mock_limit_check, \
+         patch('utils.progress_bar.progress_bar.create_progress_bar') as mock_progress_bar:
         
         # Setup mocks
         mock_jira.return_value = (mock_base_args, {})
@@ -233,26 +233,26 @@ async def test_create_pr_from_issue_jira_input(mock_github_payload, mock_base_ar
 @pytest.mark.asyncio
 async def test_create_pr_from_issue_branch_deleted(mock_github_payload, mock_base_args):
     """Test behavior when branch is deleted during processing."""
-    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'), \
-         patch('services.webhook.issue_handler.deconstruct_github_payload') as mock_deconstruct, \
-         patch('services.webhook.issue_handler.slack_notify'), \
-         patch('services.webhook.issue_handler.delete_comments_by_identifiers'), \
-         patch('services.webhook.issue_handler.create_comment') as mock_create_comment, \
-         patch('services.webhook.issue_handler.update_comment') as mock_update_comment, \
-         patch('services.webhook.issue_handler.is_request_limit_reached') as mock_limit_check, \
-         patch('services.webhook.issue_handler.create_user_request') as mock_create_request, \
-         patch('services.webhook.issue_handler.add_reaction_to_issue'), \
-         patch('services.webhook.issue_handler.get_file_tree_list') as mock_file_tree, \
-         patch('services.webhook.issue_handler.find_config_files') as mock_config_files, \
-         patch('services.webhook.issue_handler.get_remote_file_content'), \
-         patch('services.webhook.issue_handler.get_comments') as mock_get_comments, \
-         patch('services.webhook.issue_handler.render_text') as mock_render, \
-         patch('services.webhook.issue_handler.extract_image_urls') as mock_extract_images, \
-         patch('services.webhook.issue_handler.get_latest_remote_commit_sha') as mock_commit_sha, \
-         patch('services.webhook.issue_handler.create_remote_branch'), \
-         patch('services.webhook.issue_handler.check_branch_exists') as mock_branch_exists, \
-         patch('services.webhook.issue_handler.create_progress_bar') as mock_progress_bar, \
-         patch('services.webhook.issue_handler.is_lambda_timeout_approaching') as mock_timeout:
+    with patch('config.PRODUCT_ID', 'gitauto'), \
+         patch('services.github.utils.deconstruct_github_payload.deconstruct_github_payload') as mock_deconstruct, \
+         patch('services.slack.slack_notify.slack_notify'), \
+         patch('services.github.comments.delete_comments_by_identifiers.delete_comments_by_identifiers'), \
+         patch('services.github.comments.create_comment.create_comment') as mock_create_comment, \
+         patch('services.github.comments.update_comment.update_comment') as mock_update_comment, \
+         patch('services.supabase.usage.is_request_limit_reached.is_request_limit_reached') as mock_limit_check, \
+         patch('services.supabase.create_user_request.create_user_request') as mock_create_request, \
+         patch('services.github.reactions.add_reaction_to_issue.add_reaction_to_issue'), \
+         patch('services.github.trees.get_file_tree_list.get_file_tree_list') as mock_file_tree, \
+         patch('services.github.utils.find_config_files.find_config_files') as mock_config_files, \
+         patch('services.github.github_manager.get_remote_file_content'), \
+         patch('services.github.comments.get_comments.get_comments') as mock_get_comments, \
+         patch('services.github.markdown.render_text.render_text') as mock_render, \
+         patch('utils.urls.extract_urls.extract_image_urls') as mock_extract_images, \
+         patch('services.github.github_manager.get_latest_remote_commit_sha') as mock_commit_sha, \
+         patch('services.github.branches.create_remote_branch.create_remote_branch'), \
+         patch('services.github.branches.check_branch_exists.check_branch_exists') as mock_branch_exists, \
+         patch('utils.progress_bar.progress_bar.create_progress_bar') as mock_progress_bar, \
+         patch('utils.time.is_lambda_timeout_approaching.is_lambda_timeout_approaching') as mock_timeout:
         
         # Setup mocks
         mock_deconstruct.return_value = (mock_base_args, {})
@@ -290,27 +290,27 @@ async def test_create_pr_from_issue_branch_deleted(mock_github_payload, mock_bas
 @pytest.mark.asyncio
 async def test_create_pr_from_issue_timeout_approaching(mock_github_payload, mock_base_args):
     """Test behavior when Lambda timeout is approaching."""
-    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'), \
-         patch('services.webhook.issue_handler.deconstruct_github_payload') as mock_deconstruct, \
-         patch('services.webhook.issue_handler.slack_notify'), \
-         patch('services.webhook.issue_handler.delete_comments_by_identifiers'), \
-         patch('services.webhook.issue_handler.create_comment') as mock_create_comment, \
-         patch('services.webhook.issue_handler.update_comment'), \
-         patch('services.webhook.issue_handler.is_request_limit_reached') as mock_limit_check, \
-         patch('services.webhook.issue_handler.create_user_request') as mock_create_request, \
-         patch('services.webhook.issue_handler.add_reaction_to_issue'), \
-         patch('services.webhook.issue_handler.get_file_tree_list') as mock_file_tree, \
-         patch('services.webhook.issue_handler.find_config_files') as mock_config_files, \
-         patch('services.webhook.issue_handler.get_remote_file_content'), \
-         patch('services.webhook.issue_handler.get_comments') as mock_get_comments, \
-         patch('services.webhook.issue_handler.render_text') as mock_render, \
-         patch('services.webhook.issue_handler.extract_image_urls') as mock_extract_images, \
-         patch('services.webhook.issue_handler.get_latest_remote_commit_sha') as mock_commit_sha, \
-         patch('services.webhook.issue_handler.create_remote_branch'), \
-         patch('services.webhook.issue_handler.check_branch_exists') as mock_branch_exists, \
-         patch('services.webhook.issue_handler.is_lambda_timeout_approaching') as mock_timeout, \
-         patch('services.webhook.issue_handler.get_timeout_message') as mock_timeout_msg, \
-         patch('services.webhook.issue_handler.create_progress_bar') as mock_progress_bar:
+    with patch('config.PRODUCT_ID', 'gitauto'), \
+         patch('services.github.utils.deconstruct_github_payload.deconstruct_github_payload') as mock_deconstruct, \
+         patch('services.slack.slack_notify.slack_notify'), \
+         patch('services.github.comments.delete_comments_by_identifiers.delete_comments_by_identifiers'), \
+         patch('services.github.comments.create_comment.create_comment') as mock_create_comment, \
+         patch('services.github.comments.update_comment.update_comment'), \
+         patch('services.supabase.usage.is_request_limit_reached.is_request_limit_reached') as mock_limit_check, \
+         patch('services.supabase.create_user_request.create_user_request') as mock_create_request, \
+         patch('services.github.reactions.add_reaction_to_issue.add_reaction_to_issue'), \
+         patch('services.github.trees.get_file_tree_list.get_file_tree_list') as mock_file_tree, \
+         patch('services.github.utils.find_config_files.find_config_files') as mock_config_files, \
+         patch('services.github.github_manager.get_remote_file_content'), \
+         patch('services.github.comments.get_comments.get_comments') as mock_get_comments, \
+         patch('services.github.markdown.render_text.render_text') as mock_render, \
+         patch('utils.urls.extract_urls.extract_image_urls') as mock_extract_images, \
+         patch('services.github.github_manager.get_latest_remote_commit_sha') as mock_commit_sha, \
+         patch('services.github.branches.create_remote_branch.create_remote_branch'), \
+         patch('services.github.branches.check_branch_exists.check_branch_exists') as mock_branch_exists, \
+         patch('utils.time.is_lambda_timeout_approaching.is_lambda_timeout_approaching') as mock_timeout, \
+         patch('utils.time.get_timeout_message.get_timeout_message') as mock_timeout_msg, \
+         patch('utils.progress_bar.progress_bar.create_progress_bar') as mock_progress_bar:
         
         # Setup mocks
         mock_deconstruct.return_value = (mock_base_args, {})
@@ -349,30 +349,30 @@ async def test_create_pr_from_issue_timeout_approaching(mock_github_payload, moc
 @pytest.mark.asyncio
 async def test_create_pr_from_issue_failed_pr_creation(mock_github_payload, mock_base_args):
     """Test behavior when PR creation fails."""
-    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'), \
-         patch('services.webhook.issue_handler.deconstruct_github_payload') as mock_deconstruct, \
-         patch('services.webhook.issue_handler.slack_notify'), \
-         patch('services.webhook.issue_handler.delete_comments_by_identifiers'), \
-         patch('services.webhook.issue_handler.create_comment') as mock_create_comment, \
-         patch('services.webhook.issue_handler.update_comment'), \
-         patch('services.webhook.issue_handler.is_request_limit_reached') as mock_limit_check, \
-         patch('services.webhook.issue_handler.create_user_request') as mock_create_request, \
-         patch('services.webhook.issue_handler.add_reaction_to_issue'), \
-         patch('services.webhook.issue_handler.get_file_tree_list') as mock_file_tree, \
-         patch('services.webhook.issue_handler.find_config_files') as mock_config_files, \
-         patch('services.webhook.issue_handler.get_remote_file_content'), \
-         patch('services.webhook.issue_handler.get_comments') as mock_get_comments, \
-         patch('services.webhook.issue_handler.render_text') as mock_render, \
-         patch('services.webhook.issue_handler.extract_image_urls') as mock_extract_images, \
-         patch('services.webhook.issue_handler.get_latest_remote_commit_sha') as mock_commit_sha, \
-         patch('services.webhook.issue_handler.create_remote_branch'), \
-         patch('services.webhook.issue_handler.check_branch_exists') as mock_branch_exists, \
-         patch('services.webhook.issue_handler.chat_with_agent') as mock_chat, \
-         patch('services.webhook.issue_handler.create_empty_commit'), \
-         patch('services.webhook.issue_handler.create_pull_request') as mock_create_pr, \
-         patch('services.webhook.issue_handler.update_usage') as mock_update_usage, \
-         patch('services.webhook.issue_handler.create_progress_bar') as mock_progress_bar, \
-         patch('services.webhook.issue_handler.is_lambda_timeout_approaching') as mock_timeout:
+    with patch('config.PRODUCT_ID', 'gitauto'), \
+         patch('services.github.utils.deconstruct_github_payload.deconstruct_github_payload') as mock_deconstruct, \
+         patch('services.slack.slack_notify.slack_notify'), \
+         patch('services.github.comments.delete_comments_by_identifiers.delete_comments_by_identifiers'), \
+         patch('services.github.comments.create_comment.create_comment') as mock_create_comment, \
+         patch('services.github.comments.update_comment.update_comment'), \
+         patch('services.supabase.usage.is_request_limit_reached.is_request_limit_reached') as mock_limit_check, \
+         patch('services.supabase.create_user_request.create_user_request') as mock_create_request, \
+         patch('services.github.reactions.add_reaction_to_issue.add_reaction_to_issue'), \
+         patch('services.github.trees.get_file_tree_list.get_file_tree_list') as mock_file_tree, \
+         patch('services.github.utils.find_config_files.find_config_files') as mock_config_files, \
+         patch('services.github.github_manager.get_remote_file_content'), \
+         patch('services.github.comments.get_comments.get_comments') as mock_get_comments, \
+         patch('services.github.markdown.render_text.render_text') as mock_render, \
+         patch('utils.urls.extract_urls.extract_image_urls') as mock_extract_images, \
+         patch('services.github.github_manager.get_latest_remote_commit_sha') as mock_commit_sha, \
+         patch('services.github.branches.create_remote_branch.create_remote_branch'), \
+         patch('services.github.branches.check_branch_exists.check_branch_exists') as mock_branch_exists, \
+         patch('services.chat_with_agent.chat_with_agent') as mock_chat, \
+         patch('services.github.commits.create_empty_commit.create_empty_commit'), \
+         patch('services.github.pulls.create_pull_request.create_pull_request') as mock_create_pr, \
+         patch('services.supabase.usage.update_usage.update_usage') as mock_update_usage, \
+         patch('utils.progress_bar.progress_bar.create_progress_bar') as mock_progress_bar, \
+         patch('utils.time.is_lambda_timeout_approaching.is_lambda_timeout_approaching') as mock_timeout:
         
         # Setup mocks
         mock_deconstruct.return_value = (mock_base_args, {})
@@ -424,29 +424,29 @@ async def test_create_pr_from_issue_failed_pr_creation(mock_github_payload, mock
 @pytest.mark.asyncio
 async def test_create_pr_from_issue_infinite_loop_protection(mock_github_payload, mock_base_args):
     """Test that infinite loop protection works correctly."""
-    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'), \
-         patch('services.webhook.issue_handler.deconstruct_github_payload') as mock_deconstruct, \
-         patch('services.webhook.issue_handler.slack_notify'), \
-         patch('services.webhook.issue_handler.delete_comments_by_identifiers'), \
-         patch('services.webhook.issue_handler.create_comment') as mock_create_comment, \
-         patch('services.webhook.issue_handler.update_comment'), \
-         patch('services.webhook.issue_handler.is_request_limit_reached') as mock_limit_check, \
-         patch('services.webhook.issue_handler.create_user_request') as mock_create_request, \
-         patch('services.webhook.issue_handler.add_reaction_to_issue'), \
-         patch('services.webhook.issue_handler.get_file_tree_list') as mock_file_tree, \
-         patch('services.webhook.issue_handler.find_config_files') as mock_config_files, \
-         patch('services.webhook.issue_handler.get_remote_file_content'), \
-         patch('services.webhook.issue_handler.get_comments') as mock_get_comments, \
-         patch('services.webhook.issue_handler.render_text') as mock_render, \
-         patch('services.webhook.issue_handler.extract_image_urls') as mock_extract_images, \
-         patch('services.webhook.issue_handler.get_latest_remote_commit_sha') as mock_commit_sha, \
-         patch('services.webhook.issue_handler.create_remote_branch'), \
-         patch('services.webhook.issue_handler.check_branch_exists') as mock_branch_exists, \
-         patch('services.webhook.issue_handler.chat_with_agent') as mock_chat, \
-         patch('services.webhook.issue_handler.create_empty_commit'), \
-         patch('services.webhook.issue_handler.create_pull_request') as mock_create_pr, \
-         patch('services.webhook.issue_handler.create_progress_bar') as mock_progress_bar, \
-         patch('services.webhook.issue_handler.is_lambda_timeout_approaching') as mock_timeout:
+    with patch('config.PRODUCT_ID', 'gitauto'), \
+         patch('services.github.utils.deconstruct_github_payload.deconstruct_github_payload') as mock_deconstruct, \
+         patch('services.slack.slack_notify.slack_notify'), \
+         patch('services.github.comments.delete_comments_by_identifiers.delete_comments_by_identifiers'), \
+         patch('services.github.comments.create_comment.create_comment') as mock_create_comment, \
+         patch('services.github.comments.update_comment.update_comment'), \
+         patch('services.supabase.usage.is_request_limit_reached.is_request_limit_reached') as mock_limit_check, \
+         patch('services.supabase.create_user_request.create_user_request') as mock_create_request, \
+         patch('services.github.reactions.add_reaction_to_issue.add_reaction_to_issue'), \
+         patch('services.github.trees.get_file_tree_list.get_file_tree_list') as mock_file_tree, \
+         patch('services.github.utils.find_config_files.find_config_files') as mock_config_files, \
+         patch('services.github.github_manager.get_remote_file_content'), \
+         patch('services.github.comments.get_comments.get_comments') as mock_get_comments, \
+         patch('services.github.markdown.render_text.render_text') as mock_render, \
+         patch('utils.urls.extract_urls.extract_image_urls') as mock_extract_images, \
+         patch('services.github.github_manager.get_latest_remote_commit_sha') as mock_commit_sha, \
+         patch('services.github.branches.create_remote_branch.create_remote_branch'), \
+         patch('services.github.branches.check_branch_exists.check_branch_exists') as mock_branch_exists, \
+         patch('services.chat_with_agent.chat_with_agent') as mock_chat, \
+         patch('services.github.commits.create_empty_commit.create_empty_commit'), \
+         patch('services.github.pulls.create_pull_request.create_pull_request') as mock_create_pr, \
+         patch('utils.progress_bar.progress_bar.create_progress_bar') as mock_progress_bar, \
+         patch('utils.time.is_lambda_timeout_approaching.is_lambda_timeout_approaching') as mock_timeout:
         
         # Setup mocks
         mock_deconstruct.return_value = (mock_base_args, {})
@@ -515,31 +515,31 @@ def test_create_pr_from_issue_time_tracking():
 @pytest.mark.asyncio
 async def test_create_pr_from_issue_with_image_processing(mock_github_payload, mock_base_args):
     """Test behavior when images are found in issue body."""
-    with patch('services.webhook.issue_handler.PRODUCT_ID', 'gitauto'), \
-         patch('services.webhook.issue_handler.deconstruct_github_payload') as mock_deconstruct, \
-         patch('services.webhook.issue_handler.slack_notify'), \
-         patch('services.webhook.issue_handler.delete_comments_by_identifiers'), \
-         patch('services.webhook.issue_handler.create_comment') as mock_create_comment, \
-         patch('services.webhook.issue_handler.update_comment'), \
-         patch('services.webhook.issue_handler.is_request_limit_reached') as mock_limit_check, \
-         patch('services.webhook.issue_handler.create_user_request') as mock_create_request, \
-         patch('services.webhook.issue_handler.add_reaction_to_issue'), \
-         patch('services.webhook.issue_handler.get_file_tree_list') as mock_file_tree, \
-         patch('services.webhook.issue_handler.find_config_files') as mock_config_files, \
-         patch('services.webhook.issue_handler.get_remote_file_content'), \
-         patch('services.webhook.issue_handler.get_comments') as mock_get_comments, \
-         patch('services.webhook.issue_handler.render_text') as mock_render, \
-         patch('services.webhook.issue_handler.extract_image_urls') as mock_extract_images, \
-         patch('services.webhook.issue_handler.get_latest_remote_commit_sha') as mock_commit_sha, \
-         patch('services.webhook.issue_handler.create_remote_branch'), \
-         patch('services.webhook.issue_handler.check_branch_exists') as mock_branch_exists, \
-         patch('services.webhook.issue_handler.chat_with_agent') as mock_chat, \
-         patch('services.webhook.issue_handler.create_empty_commit'), \
-         patch('services.webhook.issue_handler.create_pull_request') as mock_create_pr, \
-         patch('services.webhook.issue_handler.create_progress_bar') as mock_progress_bar, \
-         patch('services.webhook.issue_handler.is_lambda_timeout_approaching') as mock_timeout, \
-         patch('services.webhook.issue_handler.get_base64') as mock_get_base64, \
-         patch('services.webhook.issue_handler.describe_image') as mock_describe_image:
+    with patch('config.PRODUCT_ID', 'gitauto'), \
+         patch('services.github.utils.deconstruct_github_payload.deconstruct_github_payload') as mock_deconstruct, \
+         patch('services.slack.slack_notify.slack_notify'), \
+         patch('services.github.comments.delete_comments_by_identifiers.delete_comments_by_identifiers'), \
+         patch('services.github.comments.create_comment.create_comment') as mock_create_comment, \
+         patch('services.github.comments.update_comment.update_comment'), \
+         patch('services.supabase.usage.is_request_limit_reached.is_request_limit_reached') as mock_limit_check, \
+         patch('services.supabase.create_user_request.create_user_request') as mock_create_request, \
+         patch('services.github.reactions.add_reaction_to_issue.add_reaction_to_issue'), \
+         patch('services.github.trees.get_file_tree_list.get_file_tree_list') as mock_file_tree, \
+         patch('services.github.utils.find_config_files.find_config_files') as mock_config_files, \
+         patch('services.github.github_manager.get_remote_file_content'), \
+         patch('services.github.comments.get_comments.get_comments') as mock_get_comments, \
+         patch('services.github.markdown.render_text.render_text') as mock_render, \
+         patch('utils.urls.extract_urls.extract_image_urls') as mock_extract_images, \
+         patch('services.github.github_manager.get_latest_remote_commit_sha') as mock_commit_sha, \
+         patch('services.github.branches.create_remote_branch.create_remote_branch'), \
+         patch('services.github.branches.check_branch_exists.check_branch_exists') as mock_branch_exists, \
+         patch('services.chat_with_agent.chat_with_agent') as mock_chat, \
+         patch('services.github.commits.create_empty_commit.create_empty_commit'), \
+         patch('services.github.pulls.create_pull_request.create_pull_request') as mock_create_pr, \
+         patch('utils.progress_bar.progress_bar.create_progress_bar') as mock_progress_bar, \
+         patch('utils.time.is_lambda_timeout_approaching.is_lambda_timeout_approaching') as mock_timeout, \
+         patch('utils.images.get_base64.get_base64') as mock_get_base64, \
+         patch('services.openai.vision.describe_image') as mock_describe_image:
         
         # Setup mocks
         mock_deconstruct.return_value = (mock_base_args, {})
