@@ -24,6 +24,7 @@ class RequestLimitResult(TypedDict):
     request_limit: int
     end_date: datetime
     is_credit_user: bool
+    credit_balance_usd: int
 
 
 DEFAULT = {
@@ -32,6 +33,7 @@ DEFAULT = {
     "request_limit": 1,
     "end_date": ONE_YEAR_FROM_NOW,
     "is_credit_user": False,
+    "credit_balance_usd": 0,
 }
 
 
@@ -52,6 +54,7 @@ def is_request_limit_reached(
             "request_limit": 999999,
             "end_date": ONE_YEAR_FROM_NOW,
             "is_credit_user": False,
+            "credit_balance_usd": 0,
         }
 
     # Get Stripe customer ID
@@ -77,6 +80,7 @@ def is_request_limit_reached(
                 "request_limit": 0,
                 "end_date": ONE_YEAR_FROM_NOW,
                 "is_credit_user": False,
+                "credit_balance_usd": 0,
             }
 
     # Check if user has a paid subscription
@@ -105,12 +109,14 @@ def is_request_limit_reached(
         # User doesn't have paid subscription, check credit balance
         owner = get_owner(owner_id)
         if not owner or owner["credit_balance_usd"] <= 0:
+            credit_balance = owner["credit_balance_usd"] if owner else 0
             return {
                 "is_limit_reached": True,
                 "requests_left": 0,
                 "request_limit": 0,
                 "end_date": ONE_YEAR_FROM_NOW,
                 "is_credit_user": True,
+                "credit_balance_usd": credit_balance,
             }
 
         # For credits, we don't have a monthly limit - just check if they have balance
@@ -118,8 +124,10 @@ def is_request_limit_reached(
         start_date_seconds = int(ONE_YEAR_FROM_NOW.timestamp())
         end_date_seconds = int(ONE_YEAR_FROM_NOW.timestamp())
 
-    # Set credit user flag
+    # Set credit user flag and get credit balance
     is_credit_user = not has_paid_subscription
+    owner = get_owner(owner_id)
+    credit_balance = owner["credit_balance_usd"] if owner else 0
 
     start_date = datetime.fromtimestamp(timestamp=start_date_seconds, tz=TZ)
     end_date = datetime.fromtimestamp(timestamp=end_date_seconds, tz=TZ)
@@ -144,6 +152,7 @@ def is_request_limit_reached(
             "request_limit": request_limit,
             "end_date": end_date,
             "is_credit_user": is_credit_user,
+            "credit_balance_usd": credit_balance,
         }
 
     # Check if limit is reached
@@ -155,4 +164,5 @@ def is_request_limit_reached(
         "request_limit": request_limit,
         "end_date": end_date,
         "is_credit_user": is_credit_user,
+        "credit_balance_usd": credit_balance,
     }
