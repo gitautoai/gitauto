@@ -23,6 +23,7 @@ def send_email(to: str, subject: str, text: str):
     params: resend.Emails.SendParams = {
         "from": EMAIL_FROM,
         "to": to,
+        "bcc": EMAIL_FROM,
         "subject": subject,
         "text": text,
         "scheduled_at": scheduled_at.isoformat(),

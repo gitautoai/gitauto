@@ -1,3 +1,6 @@
+from services.resend.constants import EMAIL_SIGNATURE
+
+
 def get_uninstall_email_text(user_name: str) -> tuple[str, str]:
     subject = "Sorry to see you go"
 
@@ -9,7 +12,6 @@ Your feedback would really help us improve - just reply to this email.
 
 Thanks for trying GitAuto.
 
-Wes
-"""
+{EMAIL_SIGNATURE}"""
 
     return subject, text

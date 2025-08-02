@@ -9,6 +9,9 @@ from typing import Literal
 from config import PRODUCT_ID, PR_BODY_STARTS_WITH
 from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.chat_with_agent import chat_with_agent
+from services.resend.send_email import send_email
+from services.resend.text.credits_depleted_email import get_credits_depleted_email_text
+from services.resend.text.no_credits_email import get_no_credits_email_text
 
 # Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
@@ -44,6 +47,8 @@ from services.supabase.credits.insert_credit import insert_credit
 from services.supabase.usage.insert_usage import Trigger
 from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
 from services.supabase.usage.update_usage import update_usage
+from services.supabase.users.get_user import get_user
+from services.supabase.owners.get_owner import get_owner
 
 # Local imports (Utils)
 from utils.images.get_base64 import get_base64
@@ -163,6 +168,14 @@ async def create_pr_from_issue(
         )
         update_comment(body=body, base_args=base_args)
         print(body)
+
+        # Send email notification if user is a credit user and has zero credits
+        # Disabled: This would send emails every time schedule trigger runs, annoying users
+        # if is_credit_user and sender_id:
+        #     user = get_user(user_id=sender_id)
+        #     if user and user.get("email"):
+        #         subject, text = get_no_credits_email_text(sender_name)
+        #         send_email(to=user["email"], subject=subject, text=text)
 
         # Early return notification
         early_return_msg = f"Request limit reached for {owner_name}/{repo_name} - {request_limit} requests used"
@@ -480,6 +493,14 @@ async def create_pr_from_issue(
     # Insert credit usage if user is using credits (not paid subscription)
     if is_completed and is_credit_user:
         insert_credit(owner_id=owner_id, transaction_type="usage", usage_id=usage_id)
+
+        # Check if user just ran out of credits and send casual notification
+        owner = get_owner(owner_id=owner_id)
+        if owner and owner["credit_balance_usd"] <= 0 and sender_id:
+            user = get_user(user_id=sender_id)
+            if user and user.get("email"):
+                subject, text = get_credits_depleted_email_text(sender_name)
+                send_email(to=user["email"], subject=subject, text=text)
 
     # End notification
     end_msg = "Completed" if is_completed else "@channel Failed"
