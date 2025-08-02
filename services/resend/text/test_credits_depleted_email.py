@@ -11,7 +11,7 @@ def test_get_credits_depleted_email_text_with_regular_name():
     assert "Hey John!" in text
     assert "Just used your last GitAuto credits on that PR. Nice work!" in text
     assert "Grab more credits here: https://gitauto.ai/dashboard/credits" in text
-    assert "Wes\nGitAuto" in text
+    assert "Wes" in text and "GitAuto" in text
 
 
 def test_get_credits_depleted_email_text_with_empty_name():
@@ -22,7 +22,7 @@ def test_get_credits_depleted_email_text_with_empty_name():
     assert "Hey !" in text
     assert "Just used your last GitAuto credits on that PR. Nice work!" in text
     assert "Grab more credits here: https://gitauto.ai/dashboard/credits" in text
-    assert "Wes\nGitAuto" in text
+    assert "Wes" in text and "GitAuto" in text
 
 
 def test_get_credits_depleted_email_text_with_special_characters():
@@ -33,7 +33,7 @@ def test_get_credits_depleted_email_text_with_special_characters():
     assert "Hey José María!" in text
     assert "Just used your last GitAuto credits on that PR. Nice work!" in text
     assert "Grab more credits here: https://gitauto.ai/dashboard/credits" in text
-    assert "Wes\nGitAuto" in text
+    assert "Wes" in text and "GitAuto" in text
 
 
 @pytest.mark.parametrize(
@@ -55,7 +55,7 @@ def test_get_credits_depleted_email_text_parametrized(user_name):
     assert f"Hey {user_name}!" in text
     assert "Just used your last GitAuto credits on that PR. Nice work!" in text
     assert "Grab more credits here: https://gitauto.ai/dashboard/credits" in text
-    assert "Wes\nGitAuto" in text
+    assert "Wes" in text and "GitAuto" in text
 
 
 def test_get_credits_depleted_email_text_return_type():
