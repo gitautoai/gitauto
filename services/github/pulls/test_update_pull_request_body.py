@@ -156,6 +156,8 @@ def test_update_pull_request_body_http_error(mock_requests_patch, mock_create_he
     mock_error_response = MagicMock()
     mock_error_response.status_code = 404
     http_error.response = mock_error_response
+    mock_error_response.reason = "Not Found"
+    mock_error_response.text = "Pull request not found"
     mock_response.raise_for_status.side_effect = http_error
     mock_requests_patch.return_value = mock_response
     
