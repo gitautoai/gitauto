@@ -159,6 +159,7 @@ def test_update_pull_request_body_http_error(mock_requests_patch, mock_create_he
     mock_error_response.reason = "Not Found"
     mock_error_response.text = "Pull request not found"
     mock_response.raise_for_status.side_effect = http_error
+    mock_error_response.headers = {"X-RateLimit-Limit": "5000", "X-RateLimit-Remaining": "4999", "X-RateLimit-Used": "1"}
     mock_requests_patch.return_value = mock_response
     
     url = "https://api.github.com/repos/owner/repo/pulls/999"
