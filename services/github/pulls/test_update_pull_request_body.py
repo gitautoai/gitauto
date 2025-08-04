@@ -335,6 +335,39 @@ def test_update_pull_request_body_headers_called_correctly(mock_requests_patch, 
     "",
     "Simple body",
     "Body with\nmultiple\nlines",
+    "Body with **markdown** and _formatting_",
+    "Body with émojis 🚀 and unicode ñáéíóú",
+    "Body with special chars: <>&\"'",
+    None,
+    "A" * 1000,  # Long body
+])
+def test_update_pull_request_body_with_various_body_contents(
+    mock_requests_patch, mock_create_headers, body_content
+):
+    """Test updating pull request with various body content types."""
+    # Setup
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"id": 123, "body": body_content}
+    mock_requests_patch.return_value = mock_response
+    
+    url = "https://api.github.com/repos/owner/repo/pulls/42"
+    token = "test_token"
+    
+    # Execute
+    result = update_pull_request_body(url=url, token=token, body=body_content)
+    
+    # Assert
+    assert result == {"id": 123, "body": body_content}
+    mock_requests_patch.assert_called_once_with(
+        url=url,
+        headers=mock_create_headers.return_value,
+        json={"body": body_content},
+        timeout=120
+    )
+    
+    # Reset mocks for next iteration
+    mock_requests_patch.reset_mock()
+    mock_create_headers.reset_mock()
 
 
 def test_update_pull_request_body_request_structure(mock_requests_patch, mock_create_headers):
