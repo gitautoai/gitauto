@@ -236,3 +236,102 @@ def test_update_pull_request_body_uses_correct_timeout(mock_requests_patch, mock
     # Assert
     call_args = mock_requests_patch.call_args
     assert call_args.kwargs["timeout"] == 120
+
+
+def test_update_pull_request_body_with_none_body(mock_requests_patch, mock_create_headers, sample_response_data):
+    """Test updating pull request with None body."""
+    # Setup
+    mock_response = MagicMock()
+    sample_response_data["body"] = None
+    mock_response.json.return_value = sample_response_data
+    mock_requests_patch.return_value = mock_response
+    
+    url = "https://api.github.com/repos/owner/repo/pulls/42"
+    token = "test_token_123"
+    body = None
+    
+    # Execute
+    result = update_pull_request_body(url=url, token=token, body=body)
+    
+    # Assert
+    assert result == sample_response_data
+    mock_requests_patch.assert_called_once_with(
+        url=url,
+        headers=mock_create_headers.return_value,
+        json={"body": None},
+        timeout=120
+    )
+
+
+def test_update_pull_request_body_with_very_long_body(mock_requests_patch, mock_create_headers, sample_response_data):
+    """Test updating pull request with very long body content."""
+    # Setup
+    mock_response = MagicMock()
+    long_body = "A" * 10000  # Very long body
+    sample_response_data["body"] = long_body
+    mock_response.json.return_value = sample_response_data
+    mock_requests_patch.return_value = mock_response
+    
+    url = "https://api.github.com/repos/owner/repo/pulls/42"
+    token = "test_token_123"
+    
+    # Execute
+    result = update_pull_request_body(url=url, token=token, body=long_body)
+    
+    # Assert
+    assert result == sample_response_data
+    mock_requests_patch.assert_called_once_with(
+        url=url,
+        headers=mock_create_headers.return_value,
+        json={"body": long_body},
+        timeout=120
+    )
+
+
+def test_update_pull_request_body_with_different_url_formats(mock_requests_patch, mock_create_headers, sample_response_data):
+    """Test updating pull request with different URL formats."""
+    # Setup
+    mock_response = MagicMock()
+    mock_response.json.return_value = sample_response_data
+    mock_requests_patch.return_value = mock_response
+    
+    # Test with different URL format
+    url = "https://api.github.com/repos/org-name/repo-name/pulls/999"
+    token = "test_token_123"
+    body = "Test body"
+    
+    # Execute
+    result = update_pull_request_body(url=url, token=token, body=body)
+    
+    # Assert
+    assert result == sample_response_data
+    mock_requests_patch.assert_called_once_with(
+        url=url,
+        headers=mock_create_headers.return_value,
+        json={"body": body},
+        timeout=120
+    )
+
+
+def test_update_pull_request_body_headers_called_correctly(mock_requests_patch, mock_create_headers):
+    """Test that create_headers is called with the correct token."""
+    # Setup
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"id": 123}
+    mock_requests_patch.return_value = mock_response
+    
+    url = "https://api.github.com/repos/owner/repo/pulls/42"
+    token = "custom_test_token_456"
+    body = "Test body"
+    
+    # Execute
+    update_pull_request_body(url=url, token=token, body=body)
+    
+    # Assert
+    mock_create_headers.assert_called_once_with(token=token)
+
+
+@pytest.mark.parametrize("body_content", [
+    "",
+    "Simple body",
+    "Body with\nmultiple\nlines",
