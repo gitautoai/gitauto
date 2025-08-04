@@ -152,7 +152,11 @@ def test_update_pull_request_body_http_error(mock_requests_patch, mock_create_he
     """Test handling of HTTP errors."""
     # Setup
     mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404 Not Found")
+    http_error = requests.exceptions.HTTPError("404 Not Found")
+    mock_error_response = MagicMock()
+    mock_error_response.status_code = 404
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
     mock_requests_patch.return_value = mock_response
     
     url = "https://api.github.com/repos/owner/repo/pulls/999"
