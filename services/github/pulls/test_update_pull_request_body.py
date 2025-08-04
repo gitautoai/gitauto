@@ -335,3 +335,70 @@ def test_update_pull_request_body_headers_called_correctly(mock_requests_patch, 
     "",
     "Simple body",
     "Body with\nmultiple\nlines",
+
+
+def test_update_pull_request_body_request_structure(mock_requests_patch, mock_create_headers):
+    """Test that the request is structured correctly."""
+    # Setup
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"id": 123}
+    mock_requests_patch.return_value = mock_response
+    
+    expected_headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": "Bearer test_token",
+        "User-Agent": "GitAuto",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    mock_create_headers.return_value = expected_headers
+    
+    url = "https://api.github.com/repos/owner/repo/pulls/42"
+    token = "test_token"
+    body = "Test body content"
+    
+    # Execute
+    update_pull_request_body(url=url, token=token, body=body)
+    
+    # Assert request structure
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    
+    # Verify all required parameters are present
+    assert call_args.kwargs["url"] == url
+    assert call_args.kwargs["headers"] == expected_headers
+    assert call_args.kwargs["json"] == {"body": body}
+    assert call_args.kwargs["timeout"] == 120
+    
+    # Verify no unexpected parameters
+    expected_kwargs = {"url", "headers", "json", "timeout"}
+    assert set(call_args.kwargs.keys()) == expected_kwargs
+
+
+def test_update_pull_request_body_response_processing(mock_requests_patch, mock_create_headers):
+    """Test that the response is processed correctly."""
+    # Setup
+    expected_response_data = {
+        "id": 987654321,
+        "number": 42,
+        "title": "Updated PR",
+        "body": "New body content",
+        "state": "open",
+        "html_url": "https://github.com/owner/repo/pull/42"
+    }
+    
+    mock_response = MagicMock()
+    mock_response.json.return_value = expected_response_data
+    mock_requests_patch.return_value = mock_response
+    
+    # Execute
+    result = update_pull_request_body("https://api.github.com/repos/owner/repo/pulls/42", "token", "body")
+    
+    # Assert
+    assert result == expected_response_data
+    mock_response.raise_for_status.assert_called_once()
+    mock_response.json.assert_called_once()
+    
+    # Verify the exact response data is returned
+    assert result["id"] == 987654321
+    assert result["number"] == 42
+    assert result["body"] == "New body content"
