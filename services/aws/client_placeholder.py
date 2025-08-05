@@ -1,0 +1,1 @@
+# Placeholder file - actual tests are in test_aws_client.py
