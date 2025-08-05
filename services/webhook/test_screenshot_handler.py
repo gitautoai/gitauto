@@ -1,6 +1,7 @@
 import pytest
 from urllib.parse import quote
-
+import os
+from unittest.mock import patch, MagicMock
 from services.webhook.screenshot_handler import (
     get_url_filename,
     get_target_paths,
@@ -64,7 +65,7 @@ class TestGetUrlFilename:
 class TestGetTargetPaths:
     """Test cases for get_target_paths function."""
 
-    def test_get_target_paths_with_html_files(self):
+    def test_get_target_paths_with_html_files(self, monkeypatch):
         """Test getting target paths for HTML files."""
         file_changes = [
             {"filename": "index.html"},
@@ -72,12 +73,12 @@ class TestGetTargetPaths:
             {"filename": "pages/contact.html"},
         ]
         
-        result = get_target_paths(file_changes)
+        result = get_target_paths(file_changes, repo_dir=None)
         
         expected = ["/", "/about", "/pages/contact"]
         assert sorted(result) == sorted(expected)
 
-    def test_get_target_paths_with_nextjs_app_router(self):
+    def test_get_target_paths_with_nextjs_app_router(self, monkeypatch):
         """Test getting target paths for Next.js App Router files."""
         file_changes = [
             {"filename": "app/page.tsx"},
@@ -85,12 +86,12 @@ class TestGetTargetPaths:
             {"filename": "app/blog/post/page.tsx"},
         ]
         
-        result = get_target_paths(file_changes)
+        result = get_target_paths(file_changes, repo_dir=None)
         
         expected = ["/", "/about", "/blog/post"]
         assert sorted(result) == sorted(expected)
 
-    def test_get_target_paths_with_nextjs_pages_router(self):
+    def test_get_target_paths_with_nextjs_pages_router(self, monkeypatch):
         """Test getting target paths for Next.js Pages Router files."""
         file_changes = [
             {"filename": "pages/index.tsx"},
@@ -98,12 +99,12 @@ class TestGetTargetPaths:
             {"filename": "pages/blog/post.tsx"},
         ]
         
-        result = get_target_paths(file_changes)
+        result = get_target_paths(file_changes, repo_dir=None)
         
         expected = ["/", "/about", "/blog/post"]
         assert sorted(result) == sorted(expected)
 
-    def test_get_target_paths_no_matching_files(self):
+    def test_get_target_paths_no_matching_files(self, monkeypatch):
         """Test getting target paths when no files match."""
         file_changes = [
             {"filename": "components/header.tsx"},
@@ -111,13 +112,13 @@ class TestGetTargetPaths:
             {"filename": "README.md"},
         ]
         
-        result = get_target_paths(file_changes)
+        result = get_target_paths(file_changes, repo_dir=None)
         
         assert result == []
 
-    def test_get_target_paths_empty_file_changes(self):
+    def test_get_target_paths_empty_file_changes(self, monkeypatch):
         """Test getting target paths with empty file changes."""
-        file_changes = []
+        file_changes = []  
         
         result = get_target_paths(file_changes)
         
@@ -127,9 +128,10 @@ class TestGetTargetPaths:
 class TestHandleScreenshotComparison:
     """Test cases for handle_screenshot_comparison function."""
 
-    @pytest.mark.asyncio
-    async def test_handle_screenshot_comparison_early_return_disabled(self):
+    @pytest.mark.asyncio 
+    @patch('services.webhook.screenshot_handler.GITHUB_APP_USER_NAME', 'test-bot')
+    async def test_handle_screenshot_comparison_early_return_disabled(self, monkeypatch):
         """Test that function returns early when feature is disabled."""
-        payload = {"pull_request": {"user": {"login": "test"}}}
+        payload = {"pull_request": {"user": {"login": "test-user"}}}
         result = await handle_screenshot_comparison(payload)
         assert result is None
