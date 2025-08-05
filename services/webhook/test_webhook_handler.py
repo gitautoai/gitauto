@@ -1,5 +1,7 @@
 # Standard imports
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, MagicMock, AsyncMock, call
+
+# Third-party imports
 import pytest
 
 # Local imports
@@ -7,546 +9,465 @@ from services.webhook.webhook_handler import handle_webhook_event
 
 
 @pytest.fixture
-def mock_slack_notify():
-    with patch("services.webhook.webhook_handler.slack_notify") as mock:
-        yield mock
+def mock_installation_payload():
+    """Mock payload for installation events."""
+    return {
+        "action": "created",
+        "installation": {
+            "id": 12345,
+            "account": {
+                "id": 67890,
+                "login": "test-org",
+                "type": "Organization"
+            }
+        },
+        "sender": {
+            "id": 11111,
+            "login": "test-user"
+        }
+    }
 
 
 @pytest.fixture
-def mock_delete_installation():
-    with patch("services.webhook.webhook_handler.delete_installation") as mock:
-        yield mock
+def mock_issue_payload():
+    """Mock payload for issue events."""
+    return {
+        "action": "opened",
+        "issue": {
+            "id": 123,
+            "number": 456,
+            "title": "Test Issue",
+            "body": "Test issue body"
+        },
+        "repository": {
+            "id": 789,
+            "name": "test-repo",
+            "owner": {
+                "id": 67890,
+                "login": "test-org",
+                "type": "Organization"
+            }
+        },
+        "installation": {
+            "id": 12345
+        }
+    }
 
 
 @pytest.fixture
-def mock_unsuspend_installation():
-    with patch("services.webhook.webhook_handler.unsuspend_installation") as mock:
-        yield mock
+def mock_pull_request_payload():
+    """Mock payload for pull request events."""
+    return {
+        "action": "opened",
+        "pull_request": {
+            "id": 123,
+            "number": 456,
+            "title": "Test PR",
+            "body": "Resolves #789",
+            "merged_at": None,
+            "head": {
+                "ref": "gitauto/issue-789"
+            },
+            "user": {
+                "login": "gitauto-ai[bot]"
+            }
+        },
+        "repository": {
+            "id": 789,
+            "name": "test-repo",
+            "owner": {
+                "id": 67890,
+                "login": "test-org",
+                "type": "Organization"
+            }
+        },
+        "sender": {
+            "id": 11111,
+            "login": "test-user"
+        }
+    }
 
 
 @pytest.fixture
-def mock_handle_installation_created():
-    with patch("services.webhook.webhook_handler.handle_installation_created") as mock:
-        mock.return_value = AsyncMock()
-        yield mock
+def mock_check_run_payload():
+    """Mock payload for check run events."""
+    return {
+        "action": "completed",
+        "check_run": {
+            "id": 123,
+            "name": "test-check",
+            "conclusion": "failure"
+        },
+        "repository": {
+            "id": 789,
+            "name": "test-repo"
+        }
+    }
 
 
 @pytest.fixture
-def mock_handle_installation_repos_added():
-    with patch(
-        "services.webhook.webhook_handler.handle_installation_repos_added"
-    ) as mock:
-        mock.return_value = AsyncMock()
-        yield mock
-
-
-@pytest.fixture
-def mock_create_pr_from_issue():
-    with patch("services.webhook.webhook_handler.create_pr_from_issue") as mock:
-        mock.return_value = AsyncMock()
-        yield mock
-
-
-@pytest.fixture
-def mock_create_gitauto_button_comment():
-    with patch(
-        "services.webhook.webhook_handler.create_gitauto_button_comment"
-    ) as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_handle_pr_checkbox_trigger():
-    with patch("services.webhook.webhook_handler.handle_pr_checkbox_trigger") as mock:
-        mock.return_value = AsyncMock()
-        yield mock
-
-
-@pytest.fixture
-def mock_handle_check_run():
-    with patch("services.webhook.webhook_handler.handle_check_run") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_create_pr_checkbox_comment():
-    with patch("services.webhook.webhook_handler.create_pr_checkbox_comment") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_write_pr_description():
-    with patch("services.webhook.webhook_handler.write_pr_description") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_handle_screenshot_comparison():
-    with patch("services.webhook.webhook_handler.handle_screenshot_comparison") as mock:
-        mock.return_value = AsyncMock()
-        yield mock
-
-
-@pytest.fixture
-def mock_handle_pr_merged():
-    with patch("services.webhook.webhook_handler.handle_pr_merged") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_update_issue_merged():
-    with patch("services.webhook.webhook_handler.update_issue_merged") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_handle_review_run():
-    with patch("services.webhook.webhook_handler.handle_review_run") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_handle_coverage_report():
-    with patch("services.webhook.webhook_handler.handle_coverage_report") as mock:
-        mock.return_value = AsyncMock()
-        yield mock
+def mock_workflow_run_payload():
+    """Mock payload for workflow run events."""
+    return {
+        "action": "completed",
+        "workflow_run": {
+            "id": 123,
+            "conclusion": "success",
+            "head_branch": "main"
+        },
+        "repository": {
+            "id": 789,
+            "name": "test-repo",
+            "owner": {
+                "id": 67890,
+                "login": "test-org"
+            }
+        },
+        "installation": {
+            "id": 12345
+        },
+        "sender": {
+            "login": "test-user"
+        }
+    }
 
 
 class TestHandleWebhookEvent:
     async def test_handle_webhook_event_no_action(self):
-        """Test that the function returns early when no action is provided."""
-        payload = {"key": "value"}
-        result = await handle_webhook_event(event_name="push", payload=payload)
+        """Test handling webhook event with no action."""
+        # Setup
+        event_name = "push"
+        payload = {"ref": "refs/heads/main"}
+        
+        # Execute
+        result = await handle_webhook_event(event_name, payload)
+        
+        # Verify - should return None for events without action
         assert result is None
 
-    async def test_handle_webhook_event_installation_created(
-        self, mock_slack_notify, mock_handle_installation_created
+    @patch("services.webhook.webhook_handler.slack_notify")
+    @patch("services.webhook.webhook_handler.handle_installation_created")
+    async def test_installation_created(
+        self, mock_handle_installation, mock_slack_notify, mock_installation_payload
     ):
-        """Test handling of installation created event."""
-        payload = {
-            "action": "created",
-            "installation": {"account": {"login": "test-owner"}},
-            "sender": {"login": "test-sender"},
-        }
-
-        await handle_webhook_event(event_name="installation", payload=payload)
-
+        """Test installation created event."""
+        # Setup
+        mock_handle_installation.return_value = None
+        
+        # Execute
+        await handle_webhook_event("installation", mock_installation_payload)
+        
+        # Verify
         mock_slack_notify.assert_called_once_with(
-            "🎉 New installation by `test-sender` for `test-owner`"
+            "🎉 New installation by `test-user` for `test-org`"
         )
-        mock_handle_installation_created.assert_called_once_with(payload=payload)
+        mock_handle_installation.assert_called_once_with(payload=mock_installation_payload)
 
-    async def test_handle_webhook_event_installation_deleted(
-        self, mock_slack_notify, mock_delete_installation
+    @patch("services.webhook.webhook_handler.slack_notify")
+    @patch("services.webhook.webhook_handler.delete_installation")
+    @patch("services.webhook.webhook_handler.get_user")
+    @patch("services.webhook.webhook_handler.get_first_name")
+    @patch("services.webhook.webhook_handler.send_email")
+    @patch("services.webhook.webhook_handler.get_uninstall_email_text")
+    @patch("services.webhook.webhook_handler.get_schedulers_by_owner_id")
+    @patch("services.webhook.webhook_handler.delete_scheduler")
+    async def test_installation_deleted(
+        self,
+        mock_delete_scheduler,
+        mock_get_schedulers,
+        mock_get_email_text,
+        mock_send_email,
+        mock_get_first_name,
+        mock_get_user,
+        mock_delete_installation,
+        mock_slack_notify,
+        mock_installation_payload
     ):
-        """Test handling of installation deleted event."""
-        payload = {
-            "action": "deleted",
-            "installation": {"account": {"login": "test-owner"}, "id": 12345},
-            "sender": {"login": "test-sender", "id": 67890},
-        }
-
-        await handle_webhook_event(event_name="installation", payload=payload)
-
+        """Test installation deleted event."""
+        # Setup
+        mock_installation_payload["action"] = "deleted"
+        mock_get_user.return_value = {"email": "test@example.com", "user_name": "Test User"}
+        mock_get_first_name.return_value = "Test"
+        mock_get_email_text.return_value = ("Subject", "Email body")
+        mock_get_schedulers.return_value = ["schedule1", "schedule2"]
+        
+        # Execute
+        await handle_webhook_event("installation", mock_installation_payload)
+        
+        # Verify
         mock_slack_notify.assert_called_once_with(
-            ":skull: Installation deleted by `test-sender` for `test-owner`"
+            ":skull: Installation deleted by `test-user` for `test-org`"
         )
         mock_delete_installation.assert_called_once_with(
             installation_id=12345,
-            user_id=67890,
-            user_name="test-sender",
+            user_id=11111,
+            user_name="test-user"
         )
+        mock_get_user.assert_called_once_with(11111)
+        mock_send_email.assert_called_once_with(
+            to="test@example.com", subject="Subject", text="Email body"
+        )
+        mock_get_schedulers.assert_called_once_with(67890)
+        assert mock_delete_scheduler.call_count == 2
+        mock_delete_scheduler.assert_any_call("schedule1")
+        mock_delete_scheduler.assert_any_call("schedule2")
 
-    async def test_handle_webhook_event_installation_suspended(
-        self, mock_slack_notify, mock_delete_installation
+    @patch("services.webhook.webhook_handler.slack_notify")
+    @patch("services.webhook.webhook_handler.delete_installation")
+    @patch("services.webhook.webhook_handler.get_user")
+    @patch("services.webhook.webhook_handler.get_schedulers_by_owner_id")
+    @patch("services.webhook.webhook_handler.delete_scheduler")
+    async def test_installation_deleted_no_user_email(
+        self,
+        mock_delete_scheduler,
+        mock_get_schedulers,
+        mock_get_user,
+        mock_delete_installation,
+        mock_slack_notify,
+        mock_installation_payload
     ):
-        """Test handling of installation suspended event."""
-        payload = {
-            "action": "suspend",
-            "installation": {"account": {"login": "test-owner"}, "id": 12345},
-            "sender": {"login": "test-sender", "id": 67890},
-        }
+        """Test installation deleted event when user has no email."""
+        # Setup
+        mock_installation_payload["action"] = "deleted"
+        mock_get_user.return_value = None  # No user found
+        mock_get_schedulers.return_value = []
+        
+        # Execute
+        await handle_webhook_event("installation", mock_installation_payload)
+        
+        # Verify
+        mock_slack_notify.assert_called_once()
+        mock_delete_installation.assert_called_once()
+        mock_get_user.assert_called_once_with(11111)
 
-        await handle_webhook_event(event_name="installation", payload=payload)
-
-        mock_slack_notify.assert_called_once_with(
-            ":skull: Installation suspended by `test-sender` for `test-owner`"
-        )
-        mock_delete_installation.assert_called_once_with(
-            installation_id=12345,
-            user_id=67890,
-            user_name="test-sender",
-        )
-
-    async def test_handle_webhook_event_installation_unsuspended(
-        self, mock_slack_notify, mock_unsuspend_installation
+    @patch("services.webhook.webhook_handler.slack_notify")
+    @patch("services.webhook.webhook_handler.unsuspend_installation")
+    async def test_installation_unsuspended(
+        self, mock_unsuspend_installation, mock_slack_notify, mock_installation_payload
     ):
-        """Test handling of installation unsuspended event."""
-        payload = {
-            "action": "unsuspend",
-            "installation": {"account": {"login": "test-owner"}, "id": 12345},
-            "sender": {"login": "test-sender"},
-        }
-
-        await handle_webhook_event(event_name="installation", payload=payload)
-
+        """Test installation unsuspended event."""
+        # Setup
+        mock_installation_payload["action"] = "unsuspend"
+        
+        # Execute
+        await handle_webhook_event("installation", mock_installation_payload)
+        
+        # Verify
         mock_slack_notify.assert_called_once_with(
-            "🎉 Installation unsuspended by `test-sender` for `test-owner`"
+            "🎉 Installation unsuspended by `test-user` for `test-org`"
         )
         mock_unsuspend_installation.assert_called_once_with(installation_id=12345)
 
-    async def test_handle_webhook_event_installation_repos_added(
-        self, mock_slack_notify, mock_handle_installation_repos_added
+    @patch("services.webhook.webhook_handler.handle_installation_repos_added")
+    async def test_installation_repositories_added(
+        self, mock_handle_repos_added, mock_installation_payload
     ):
-        """Test handling of installation repositories added event."""
-        payload = {
-            "action": "added",
-            "installation": {"account": {"login": "test-owner"}},
-            "sender": {"login": "test-sender"},
-        }
+        """Test installation repositories added event."""
+        # Setup
+        mock_installation_payload["action"] = "added"
+        
+        # Execute
+        await handle_webhook_event("installation_repositories", mock_installation_payload)
+        
+        # Verify
+        mock_handle_repos_added.assert_called_once_with(payload=mock_installation_payload)
 
-        await handle_webhook_event(
-            event_name="installation_repositories", payload=payload
+    @patch("services.webhook.webhook_handler.create_pr_from_issue")
+    async def test_issues_labeled(self, mock_create_pr, mock_issue_payload):
+        """Test issues labeled event."""
+        # Setup
+        mock_issue_payload["action"] = "labeled"
+        
+        # Execute
+        await handle_webhook_event("issues", mock_issue_payload)
+        
+        # Verify
+        mock_create_pr.assert_called_once_with(
+            payload=mock_issue_payload, trigger="issue_label", input_from="github"
         )
 
-        mock_slack_notify.assert_not_called()
-        mock_handle_installation_repos_added.assert_called_once_with(payload=payload)
+    @patch("services.webhook.webhook_handler.create_gitauto_button_comment")
+    async def test_issues_opened(self, mock_create_comment, mock_issue_payload):
+        """Test issues opened event."""
+        # Setup
+        mock_issue_payload["action"] = "opened"
+        
+        # Execute
+        await handle_webhook_event("issues", mock_issue_payload)
+        
+        # Verify
+        mock_create_comment.assert_called_once_with(payload=mock_issue_payload)
 
-    async def test_handle_webhook_event_issues_labeled(self, mock_create_pr_from_issue):
-        """Test handling of issues labeled event."""
-        payload = {"action": "labeled"}
+    @patch("services.webhook.webhook_handler.handle_pr_checkbox_trigger")
+    async def test_issue_comment_edited(self, mock_handle_checkbox, mock_issue_payload):
+        """Test issue comment edited event."""
+        # Setup
+        mock_issue_payload["action"] = "edited"
+        mock_issue_payload["comment"] = {"body": "Some comment"}
+        
+        # Execute
+        await handle_webhook_event("issue_comment", mock_issue_payload)
+        
+        # Verify
+        mock_handle_checkbox.assert_called_once_with(payload=mock_issue_payload)
 
-        await handle_webhook_event(event_name="issues", payload=payload)
-
-        mock_create_pr_from_issue.assert_called_once_with(
-            payload=payload, trigger="issue_label", input_from="github"
+    @patch("config.PRODUCT_ID", "gitauto")
+    @patch("services.webhook.webhook_handler.handle_pr_checkbox_trigger")
+    @patch("services.webhook.webhook_handler.create_pr_from_issue")
+    async def test_issue_comment_edited_with_production_checkbox(
+        self, mock_create_pr, mock_handle_checkbox, mock_issue_payload
+    ):
+        """Test issue comment edited with production checkbox."""
+        # Setup
+        mock_issue_payload["action"] = "edited"
+        mock_issue_payload["comment"] = {"body": "- [x] Generate PR"}
+        
+        # Execute
+        await handle_webhook_event("issue_comment", mock_issue_payload)
+        
+        # Verify
+        mock_handle_checkbox.assert_called_once_with(payload=mock_issue_payload)
+        mock_create_pr.assert_called_once_with(
+            payload=mock_issue_payload, trigger="issue_comment", input_from="github"
         )
 
-    async def test_handle_webhook_event_issues_opened(
-        self, mock_create_gitauto_button_comment
+    @patch("config.GITHUB_CHECK_RUN_FAILURES", ["failure", "cancelled"])
+    @patch("services.webhook.webhook_handler.handle_check_run")
+    async def test_check_run_completed_failure(
+        self, mock_handle_check_run, mock_check_run_payload
     ):
-        """Test handling of issues opened event."""
-        payload = {"action": "opened"}
+        """Test check run completed with failure conclusion."""
+        # Execute
+        await handle_webhook_event("check_run", mock_check_run_payload)
+        
+        # Verify
+        mock_handle_check_run.assert_called_once_with(payload=mock_check_run_payload)
 
-        await handle_webhook_event(event_name="issues", payload=payload)
-
-        mock_create_gitauto_button_comment.assert_called_once_with(payload=payload)
-
-    async def test_handle_webhook_event_issue_comment_edited_dev_env(
-        self, mock_handle_pr_checkbox_trigger, mock_create_pr_from_issue
+    @patch("config.GITHUB_CHECK_RUN_FAILURES", ["failure", "cancelled"])
+    @patch("services.webhook.webhook_handler.handle_check_run")
+    async def test_check_run_completed_success(
+        self, mock_handle_check_run, mock_check_run_payload
     ):
-        """Test handling of issue comment edited event in dev environment."""
-        with patch("services.webhook.webhook_handler.PRODUCT_ID", "dev"):
-            payload = {
-                "action": "edited",
-                "comment": {"body": "- [x] Generate PR - dev"},
-            }
-
-            await handle_webhook_event(event_name="issue_comment", payload=payload)
-
-            mock_handle_pr_checkbox_trigger.assert_called_once_with(payload=payload)
-            mock_create_pr_from_issue.assert_called_once_with(
-                payload=payload, trigger="issue_comment", input_from="github"
-            )
-
-    async def test_handle_webhook_event_issue_comment_edited_prod_env(
-        self, mock_handle_pr_checkbox_trigger, mock_create_pr_from_issue
-    ):
-        """Test handling of issue comment edited event in production environment."""
-        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
-            payload = {
-                "action": "edited",
-                "comment": {"body": "- [x] Generate PR"},
-            }
-
-            await handle_webhook_event(event_name="issue_comment", payload=payload)
-
-            mock_handle_pr_checkbox_trigger.assert_called_once_with(payload=payload)
-            mock_create_pr_from_issue.assert_called_once_with(
-                payload=payload, trigger="issue_comment", input_from="github"
-            )
-
-    async def test_handle_webhook_event_issue_comment_edited_no_trigger(
-        self, mock_handle_pr_checkbox_trigger, mock_create_pr_from_issue
-    ):
-        """Test handling of issue comment edited event with no trigger text."""
-        payload = {
-            "action": "edited",
-            "comment": {"body": "Some other comment text"},
-        }
-
-        await handle_webhook_event(event_name="issue_comment", payload=payload)
-
-        mock_handle_pr_checkbox_trigger.assert_called_once_with(payload=payload)
-        mock_create_pr_from_issue.assert_not_called()
-
-    async def test_handle_webhook_event_check_run_completed_failure(
-        self, mock_handle_check_run
-    ):
-        """Test handling of check run completed event with failure."""
-        payload = {
-            "action": "completed",
-            "check_run": {"conclusion": "failure"},
-        }
-
-        with patch(
-            "services.webhook.webhook_handler.GITHUB_CHECK_RUN_FAILURES", ["failure"]
-        ):
-            await handle_webhook_event(event_name="check_run", payload=payload)
-
-            mock_handle_check_run.assert_called_once_with(payload=payload)
-
-    async def test_handle_webhook_event_check_run_completed_success(
-        self, mock_handle_check_run
-    ):
-        """Test handling of check run completed event with success."""
-        payload = {
-            "action": "completed",
-            "check_run": {"conclusion": "success"},
-        }
-
-        await handle_webhook_event(event_name="check_run", payload=payload)
-
+        """Test check run completed with success conclusion."""
+        # Setup
+        mock_check_run_payload["check_run"]["conclusion"] = "success"
+        
+        # Execute
+        await handle_webhook_event("check_run", mock_check_run_payload)
+        
+        # Verify - should not handle successful check runs
         mock_handle_check_run.assert_not_called()
 
-    async def test_handle_webhook_event_pull_request_opened(
+    @patch("services.webhook.webhook_handler.create_pr_checkbox_comment")
+    @patch("services.webhook.webhook_handler.write_pr_description")
+    @patch("services.webhook.webhook_handler.handle_screenshot_comparison")
+    async def test_pull_request_opened(
         self,
-        mock_create_pr_checkbox_comment,
-        mock_write_pr_description,
-        mock_handle_screenshot_comparison,
+        mock_handle_screenshot,
+        mock_write_description,
+        mock_create_checkbox,
+        mock_pull_request_payload
     ):
-        """Test handling of pull request opened event."""
-        payload = {"action": "opened"}
+        """Test pull request opened event."""
+        # Execute
+        await handle_webhook_event("pull_request", mock_pull_request_payload)
+        
+        # Verify
+        mock_create_checkbox.assert_called_once_with(payload=mock_pull_request_payload)
+        mock_write_description.assert_called_once_with(payload=mock_pull_request_payload)
+        mock_handle_screenshot.assert_called_once_with(payload=mock_pull_request_payload)
 
-        await handle_webhook_event(event_name="pull_request", payload=payload)
-
-        mock_create_pr_checkbox_comment.assert_called_once_with(payload=payload)
-        mock_write_pr_description.assert_called_once_with(payload=payload)
-        mock_handle_screenshot_comparison.assert_called_once_with(payload=payload)
-
-    async def test_handle_webhook_event_pull_request_synchronize(
-        self, mock_create_pr_checkbox_comment, mock_handle_screenshot_comparison
+    @patch("services.webhook.webhook_handler.create_pr_checkbox_comment")
+    @patch("services.webhook.webhook_handler.handle_screenshot_comparison")
+    async def test_pull_request_synchronized(
+        self, mock_handle_screenshot, mock_create_checkbox, mock_pull_request_payload
     ):
-        """Test handling of pull request synchronize event."""
-        payload = {"action": "synchronize"}
+        """Test pull request synchronized event."""
+        # Setup
+        mock_pull_request_payload["action"] = "synchronize"
+        
+        # Execute
+        await handle_webhook_event("pull_request", mock_pull_request_payload)
+        
+        # Verify
+        mock_create_checkbox.assert_called_once_with(payload=mock_pull_request_payload)
+        mock_handle_screenshot.assert_called_once_with(payload=mock_pull_request_payload)
 
-        await handle_webhook_event(event_name="pull_request", payload=payload)
-
-        mock_create_pr_checkbox_comment.assert_called_once_with(payload=payload)
-        mock_handle_screenshot_comparison.assert_called_once_with(payload=payload)
-
-    async def test_handle_webhook_event_pull_request_closed_no_pull_request(self):
-        """Test handling of pull request closed event with no pull_request."""
-        payload = {"action": "closed"}
-
-        await handle_webhook_event(event_name="pull_request", payload=payload)
-
-        # Should return early with no errors
-
-    async def test_handle_webhook_event_pull_request_closed_not_merged(self):
-        """Test handling of pull request closed event that wasn't merged."""
-        payload = {
-            "action": "closed",
-            "pull_request": {"merged_at": None, "head": {"ref": "some-branch"}},
-        }
-
-        await handle_webhook_event(event_name="pull_request", payload=payload)
-
-        # Should return early with no errors
-
-    async def test_handle_webhook_event_pull_request_closed_non_gitauto_branch(
-        self, mock_handle_pr_merged
+    @patch("services.webhook.webhook_handler.handle_coverage_report")
+    async def test_workflow_run_completed_success(
+        self, mock_handle_coverage, mock_workflow_run_payload
     ):
-        """Test handling of pull request closed event from non-GitAuto branch."""
-        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
-            with patch(
-                "services.webhook.webhook_handler.ISSUE_NUMBER_FORMAT", "/issue-"
-            ):
-                payload = {
-                    "action": "closed",
-                    "pull_request": {
-                        "merged_at": "2023-01-01T00:00:00Z",
-                        "head": {"ref": "feature/some-branch"},
-                    },
-                }
-
-                await handle_webhook_event(event_name="pull_request", payload=payload)
-
-                mock_handle_pr_merged.assert_called_once_with(payload=payload)
-
-    async def test_handle_webhook_event_pull_request_closed_gitauto_branch_no_body(
-        self, mock_update_issue_merged, mock_slack_notify
-    ):
-        """Test handling of pull request closed event from GitAuto branch with no body."""
-        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
-            with patch(
-                "services.webhook.webhook_handler.ISSUE_NUMBER_FORMAT", "/issue-"
-            ):
-                payload = {
-                    "action": "closed",
-                    "pull_request": {
-                        "merged_at": "2023-01-01T00:00:00Z",
-                        "head": {"ref": "gitauto/issue-123"},
-                        "body": None,
-                    },
-                }
-
-                await handle_webhook_event(event_name="pull_request", payload=payload)
-
-                mock_update_issue_merged.assert_not_called()
-                mock_slack_notify.assert_not_called()
-
-    async def test_handle_webhook_event_pull_request_closed_gitauto_branch_wrong_body_format(
-        self, mock_update_issue_merged, mock_slack_notify
-    ):
-        """Test handling of pull request closed event from GitAuto branch with wrong body format."""
-        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
-            with patch(
-                "services.webhook.webhook_handler.ISSUE_NUMBER_FORMAT", "/issue-"
-            ):
-                with patch(
-                    "services.webhook.webhook_handler.PR_BODY_STARTS_WITH", "Resolves #"
-                ):
-                    payload = {
-                        "action": "closed",
-                        "pull_request": {
-                            "merged_at": "2023-01-01T00:00:00Z",
-                            "head": {"ref": "gitauto/issue-123"},
-                            "body": "Fixes issue #123",
-                        },
-                    }
-
-                    await handle_webhook_event(
-                        event_name="pull_request", payload=payload
-                    )
-
-                    mock_update_issue_merged.assert_not_called()
-                    mock_slack_notify.assert_not_called()
-
-    async def test_handle_webhook_event_pull_request_closed_gitauto_branch_success(
-        self, mock_update_issue_merged, mock_slack_notify
-    ):
-        """Test handling of pull request closed event from GitAuto branch with success."""
-        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
-            with patch(
-                "services.webhook.webhook_handler.ISSUE_NUMBER_FORMAT", "/issue-"
-            ):
-                with patch(
-                    "services.webhook.webhook_handler.PR_BODY_STARTS_WITH", "Resolves #"
-                ):
-                    payload = {
-                        "action": "closed",
-                        "pull_request": {
-                            "merged_at": "2023-01-01T00:00:00Z",
-                            "head": {"ref": "gitauto/issue-123"},
-                            "body": "Resolves #123",
-                            "user": {"login": "author-name"},
-                        },
-                        "repository": {
-                            "owner": {"type": "Organization", "login": "owner-name"},
-                            "name": "repo-name",
-                        },
-                        "sender": {"login": "sender-name"},
-                    }
-
-                    await handle_webhook_event(
-                        event_name="pull_request", payload=payload
-                    )
-
-                    mock_update_issue_merged.assert_called_once_with(
-                        owner_type="Organization",
-                        owner_name="owner-name",
-                        repo_name="repo-name",
-                        issue_number=123,
-                        merged=True,
-                    )
-                    mock_slack_notify.assert_called_once_with(
-                        "🎉 PR created by `author-name` was merged by `sender-name` for `owner-name/repo-name`"
-                    )
-
-    async def test_handle_webhook_event_pull_request_review_comment_created(
-        self, mock_handle_review_run
-    ):
-        """Test handling of pull request review comment created event."""
-        payload = {"action": "created"}
-
-        await handle_webhook_event(
-            event_name="pull_request_review_comment", payload=payload
-        )
-
-        mock_handle_review_run.assert_called_once_with(payload=payload)
-
-    async def test_handle_webhook_event_pull_request_review_comment_edited(
-        self, mock_handle_review_run
-    ):
-        """Test handling of pull request review comment edited event."""
-        payload = {"action": "edited"}
-
-        await handle_webhook_event(
-            event_name="pull_request_review_comment", payload=payload
-        )
-
-        mock_handle_review_run.assert_called_once_with(payload=payload)
-
-    async def test_handle_webhook_event_pull_request_review_comment_deleted(
-        self, mock_handle_review_run
-    ):
-        """Test handling of pull request review comment deleted event."""
-        payload = {"action": "deleted"}
-
-        await handle_webhook_event(
-            event_name="pull_request_review_comment", payload=payload
-        )
-
-        mock_handle_review_run.assert_not_called()
-
-    async def test_handle_webhook_event_workflow_run_completed_success(
-        self, mock_handle_coverage_report
-    ):
-        """Test handling of workflow run completed event with success."""
-        payload = {
-            "action": "completed",
-            "workflow_run": {
-                "conclusion": "success",
-                "id": 12345,
-                "head_branch": "main",
-            },
-            "repository": {
-                "owner": {"id": 67890, "login": "owner-name"},
-                "id": 54321,
-                "name": "repo-name",
-            },
-            "installation": {"id": 98765},
-            "sender": {"login": "sender-name"},
-        }
-
-        await handle_webhook_event(event_name="workflow_run", payload=payload)
-
-        mock_handle_coverage_report.assert_called_once_with(
+        """Test workflow run completed with success."""
+        # Execute
+        await handle_webhook_event("workflow_run", mock_workflow_run_payload)
+        
+        # Verify
+        mock_handle_coverage.assert_called_once_with(
             owner_id=67890,
-            owner_name="owner-name",
-            repo_id=54321,
-            repo_name="repo-name",
-            installation_id=98765,
-            run_id=12345,
+            owner_name="test-org",
+            repo_id=789,
+            repo_name="test-repo",
+            installation_id=12345,
+            run_id=123,
             head_branch="main",
-            user_name="sender-name",
+            user_name="test-user"
         )
 
-    async def test_handle_webhook_event_workflow_run_completed_failure(
-        self, mock_handle_coverage_report
+    @patch("services.webhook.webhook_handler.handle_coverage_report")
+    async def test_workflow_run_completed_failure(
+        self, mock_handle_coverage, mock_workflow_run_payload
     ):
-        """Test handling of workflow run completed event with failure."""
-        payload = {"action": "completed", "workflow_run": {"conclusion": "failure"}}
+        """Test workflow run completed with failure."""
+        # Setup
+        mock_workflow_run_payload["workflow_run"]["conclusion"] = "failure"
+        
+        # Execute
+        await handle_webhook_event("workflow_run", mock_workflow_run_payload)
+        
+        # Verify - should not handle failed workflow runs
+        mock_handle_coverage.assert_not_called()
 
-        await handle_webhook_event(event_name="workflow_run", payload=payload)
+    async def test_unknown_event_type(self):
+        """Test handling unknown event type."""
+        # Setup
+        payload = {"action": "unknown_action"}
+        
+        # Execute
+        result = await handle_webhook_event("unknown_event", payload)
+        
+        # Verify - should return None for unknown events
+        assert result is None
 
-        mock_handle_coverage_report.assert_not_called()
+    async def test_known_event_unknown_action(self):
+        """Test handling known event with unknown action."""
+        # Setup
+        payload = {"action": "unknown_action"}
+        
+        # Execute
+        result = await handle_webhook_event("issues", payload)
+        
+        # Verify - should return None for unknown actions
+        assert result is None
 
-    async def test_handle_webhook_event_unknown_event(self):
-        """Test handling of unknown event."""
-        payload = {"action": "some_action"}
+    async def test_pull_request_closed_not_merged(self, mock_pull_request_payload):
+        """Test pull request closed event when PR is not merged."""
+        # Setup
+        mock_pull_request_payload["action"] = "closed"
+        mock_pull_request_payload["pull_request"]["merged_at"] = None
+        
+        # Execute
+        result = await handle_webhook_event("pull_request", mock_pull_request_payload)
+        
+        # Verify - should return early when not merged
+        assert result is None
 
-        result = await handle_webhook_event(event_name="unknown_event", payload=payload)
-
+    async def test_pull_request_closed_no_pull_request(self):
+        """Test pull request closed event with missing pull_request data."""
+        # Setup
+        payload = {"action": "closed"}
+        
+        # Execute
+        result = await handle_webhook_event("pull_request", payload)
+        
+        # Verify - should return early when no pull_request
         assert result is None
