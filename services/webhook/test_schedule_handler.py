@@ -453,3 +453,18 @@ class TestScheduleHandler:
                 "full_path": "src/main.py",
                 "statement_coverage": 50.0,
                 "function_coverage": 60.0,
+                "branch_coverage": 40.0,
+                "github_issue_url": None,
+                "is_excluded_from_testing": True,  # File is excluded
+            }
+        ]
+        mock_is_code_file.return_value = True
+        mock_is_test_file.return_value = False
+        mock_is_type_file.return_value = False
+
+        # Execute
+        result = schedule_handler(mock_event)
+
+        # Verify
+        assert result["status"] == "skipped"
+        assert "No suitable file found" in result["message"]
