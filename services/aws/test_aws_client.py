@@ -13,8 +13,8 @@ class TestAWSClient:
         mock_client = MagicMock()
         mock_boto3.client.return_value = mock_client
         
-        # Import after mocking to ensure the mock is applied
-        from services.aws.client import scheduler_client
+        # Import the module to trigger initialization
+        import services.aws.client
         
         # Verify
         mock_boto3.client.assert_called_once_with("scheduler")
