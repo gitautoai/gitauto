@@ -18,7 +18,7 @@ class TestAWSClient:
         
         # Verify
         mock_boto3.client.assert_called_once_with("scheduler")
-        assert services.aws.client.scheduler_client == mock_client
+        assert scheduler_client == mock_client
 
     def test_scheduler_client_type(self):
         """Test that scheduler_client has the expected type annotation."""
