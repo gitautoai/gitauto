@@ -1,5 +1,6 @@
 # Standard imports
 from unittest.mock import patch, MagicMock
+import logging
 
 # Third party imports
 import pytest
@@ -205,3 +206,47 @@ def test_delete_scheduler_with_various_schedule_names(
     mock_logging.info.assert_called_once_with(
         "Deleted EventBridge Scheduler: %s", schedule_name
     )
+
+
+def test_delete_scheduler_logging_level(mock_scheduler_client):
+    """Test that the function uses logging.info for success messages."""
+    schedule_name = "test-schedule"
+    mock_scheduler_client.delete_schedule.return_value = None
+    
+    with patch("services.aws.delete_scheduler.logging.info") as mock_info:
+        result = delete_scheduler(schedule_name)
+        
+        assert result is True
+        mock_info.assert_called_once_with(
+            "Deleted EventBridge Scheduler: %s", schedule_name
+        )
+
+
+def test_delete_scheduler_client_method_call_parameters(mock_scheduler_client, mock_logging):
+    """Test that scheduler_client.delete_schedule is called with correct parameters."""
+    schedule_name = "test-schedule-params"
+    mock_scheduler_client.delete_schedule.return_value = None
+    
+    delete_scheduler(schedule_name)
+    
+    # Verify the exact method call
+    mock_scheduler_client.delete_schedule.assert_called_once()
+    call_args = mock_scheduler_client.delete_schedule.call_args
+    assert call_args[1]["Name"] == schedule_name  # Keyword argument
+    assert len(call_args[1]) == 1  # Only one parameter
+
+
+def test_delete_scheduler_exception_before_logging(mock_scheduler_client, mock_logging):
+    """Test that logging is not called when exception occurs before logging."""
+    schedule_name = "exception-before-log"
+    # Exception occurs during delete_schedule call, before logging
+    mock_scheduler_client.delete_schedule.side_effect = Exception("AWS Error")
+    
+    result = delete_scheduler(schedule_name)
+    
+    # Should return False due to handle_exceptions decorator
+    assert result is False
+    mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
+    # Logging should not be called since exception occurred before it
+    mock_logging.info.assert_not_called()
+
