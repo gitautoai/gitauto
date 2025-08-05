@@ -55,6 +55,10 @@ uvicorn main:app --reload --port 8000 --log-level warning
 source .env && psql "postgresql://postgres.dkrxtcbaqzrodvsagwwn:$SUPABASE_DB_PASSWORD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
 ```
 
+### AWS CLI
+
+AWS CLI is available and configured for us-west-1 region.
+
 ## Architecture Overview
 
 ### Core Application Structure

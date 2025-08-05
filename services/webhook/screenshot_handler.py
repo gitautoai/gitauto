@@ -12,6 +12,7 @@ from playwright.async_api import async_playwright
 
 # Local imports
 from config import GITHUB_APP_USER_NAME
+from services.aws.client import AWS_REGION
 from services.git.clone_repo import clone_repo
 from services.git.git_manager import (
     fetch_branch,
@@ -88,11 +89,10 @@ def upload_to_s3(file_path: str, s3_key: str) -> str:
     aws_s3_bucket_name = os.getenv("AWS_S3_BUCKET_NAME")
     if aws_s3_bucket_name is None:
         raise ValueError("AWS_S3_BUCKET_NAME is not set")
-    aws_region = "us-west-1"
     extra_args = {"ContentType": "image/png"}
     s3_client.upload_file(file_path, aws_s3_bucket_name, s3_key, ExtraArgs=extra_args)
     print(f"Uploaded to S3: {quote(s3_key)}")
-    return f"https://{aws_s3_bucket_name}.s3.{aws_region}.amazonaws.com/{quote(s3_key)}"
+    return f"https://{aws_s3_bucket_name}.s3.{AWS_REGION}.amazonaws.com/{quote(s3_key)}"
 
 
 @handle_exceptions(raise_on_error=True)
