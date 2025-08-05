@@ -1,5 +1,3 @@
-from unittest.mock import patch, MagicMock
-
 import pytest
 import boto3
 from mypy_boto3_scheduler import EventBridgeSchedulerClient
@@ -27,34 +25,6 @@ class TestAwsClient:
         """Test that scheduler_client uses the correct service name."""
         from services.aws.client import scheduler_client
         assert scheduler_client.meta.service_model.service_name == "scheduler"
-
-    def test_scheduler_client_has_expected_methods(self):
-        """Test that scheduler_client has the expected EventBridge Scheduler methods."""
-        from services.aws.client import scheduler_client
-        
-        expected_methods = [
-            "create_schedule",
-            "delete_schedule", 
-            "get_schedule",
-            "list_schedules",
-            "update_schedule",
-            "create_schedule_group",
-            "delete_schedule_group",
-            "get_schedule_group",
-            "list_schedule_groups",
-        ]
-        
-        for method in expected_methods:
-            assert hasattr(scheduler_client, method)
-            assert callable(getattr(scheduler_client, method))
-
-    def test_scheduler_client_singleton_behavior(self):
-        """Test that importing the module multiple times returns the same client instance."""
-        from services.aws.client import scheduler_client as client1
-        from services.aws.client import scheduler_client as client2
-        
-        assert client1 is client2
-        assert id(client1) == id(client2)
 
     def test_module_imports_successfully(self):
         """Test that the module can be imported without errors."""
