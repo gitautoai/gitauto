@@ -8,14 +8,24 @@ from config import (
     PR_BODY_STARTS_WITH,
     PRODUCT_ID,
 )
+
+# Local imports (AWS)
+from services.aws.delete_scheduler import delete_scheduler
+from services.aws.get_schedulers import get_schedulers_by_owner_id
+
+# Local imports (GitHub)
 from services.github.comments.create_gitauto_button_comment import (
     create_gitauto_button_comment,
 )
+
+# Local imports (Resend)
 from services.github.types.owner import OwnerType
 from services.resend.get_first_name import get_first_name
 from services.resend.send_email import send_email
 from services.resend.text.suspend_email import get_suspend_email_text
 from services.resend.text.uninstall_email import get_uninstall_email_text
+
+# Local imports (Slack)
 from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase)
@@ -77,10 +87,12 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=deleted#installation
     if event_name == "installation" and action in ("deleted"):
+        owner_id = payload["installation"]["account"]["id"]
         owner_name = payload["installation"]["account"]["login"]
         sender_name = payload["sender"]["login"]
         msg = f":skull: Installation deleted by `{sender_name}` for `{owner_name}`"
         slack_notify(msg)
+
         delete_installation(
             installation_id=payload["installation"]["id"],
             user_id=payload["sender"]["id"],
@@ -94,14 +106,21 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
             subject, text = get_uninstall_email_text(first_name)
             send_email(to=user["email"], subject=subject, text=text)
 
+        # Delete AWS schedulers for this owner
+        schedulers_to_delete = get_schedulers_by_owner_id(owner_id)
+        for schedule_name in schedulers_to_delete:
+            delete_scheduler(schedule_name)
+
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=suspend#installation
     if event_name == "installation" and action in ("suspend"):
+        owner_id = payload["installation"]["account"]["id"]
         owner_name = payload["installation"]["account"]["login"]
         sender_name = payload["sender"]["login"]
         msg = f":skull: Installation suspended by `{sender_name}` for `{owner_name}`"
         slack_notify(msg)
+
         delete_installation(
             installation_id=payload["installation"]["id"],
             user_id=payload["sender"]["id"],
@@ -114,6 +133,11 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
             first_name = get_first_name(user.get("user_name", ""))
             subject, text = get_suspend_email_text(first_name)
             send_email(to=user["email"], subject=subject, text=text)
+
+        # Delete AWS schedulers for this owner
+        schedulers_to_delete = get_schedulers_by_owner_id(owner_id)
+        for schedule_name in schedulers_to_delete:
+            delete_scheduler(schedule_name)
 
         return
 
