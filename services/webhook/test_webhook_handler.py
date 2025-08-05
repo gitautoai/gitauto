@@ -311,7 +311,7 @@ class TestHandleWebhookEvent:
         # Verify
         mock_handle_checkbox.assert_called_once_with(payload=mock_issue_payload)
 
-    @patch("config.PRODUCT_ID", "gitauto")
+    @patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto")
     @patch("services.webhook.webhook_handler.handle_pr_checkbox_trigger")
     @patch("services.webhook.webhook_handler.create_pr_from_issue")
     async def test_issue_comment_edited_with_production_checkbox(
