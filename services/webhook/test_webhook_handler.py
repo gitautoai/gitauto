@@ -331,7 +331,7 @@ class TestHandleWebhookEvent:
             payload=mock_issue_payload, trigger="issue_comment", input_from="github"
         )
 
-    @patch("config.GITHUB_CHECK_RUN_FAILURES", ["failure", "cancelled"])
+    @patch("services.webhook.webhook_handler.GITHUB_CHECK_RUN_FAILURES", ["failure", "cancelled"])
     @patch("services.webhook.webhook_handler.handle_check_run")
     async def test_check_run_completed_failure(
         self, mock_handle_check_run, mock_check_run_payload
