@@ -1,1 +1,2 @@
-# This file has been renamed to test_aws_client.py to avoid naming conflicts
+# This file is intentionally empty to avoid naming conflicts
+# The tests have been moved to test_aws_client.py
