@@ -1,1 +1,1 @@
-# Empty conftest file
+# Empty file
