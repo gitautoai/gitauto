@@ -343,7 +343,7 @@ class TestHandleWebhookEvent:
         # Verify
         mock_handle_check_run.assert_called_once_with(payload=mock_check_run_payload)
 
-    @patch("config.GITHUB_CHECK_RUN_FAILURES", ["failure", "cancelled"])
+    @patch("services.webhook.webhook_handler.GITHUB_CHECK_RUN_FAILURES", ["failure", "cancelled"])
     @patch("services.webhook.webhook_handler.handle_check_run")
     async def test_check_run_completed_success(
         self, mock_handle_check_run, mock_check_run_payload
