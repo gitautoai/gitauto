@@ -7,7 +7,9 @@ backoff==2.2.1
 beautifulsoup4==4.12.3
 black==24.8.0
 boto3==1.36.21
+boto3-stubs==1.40.2
 botocore==1.36.21
+botocore-stubs==1.38.46
 certifi==2024.7.4
 cffi==1.17.0
 cfgv==3.4.0
@@ -57,6 +59,7 @@ MarkupSafe==3.0.2
 mccabe==0.7.0
 mdurl==0.1.2
 multidict==6.1.0
+mypy-boto3-scheduler==1.40.0
 mypy-extensions==1.0.0
 nodeenv==1.9.1
 openai==1.60.2
@@ -115,7 +118,9 @@ toml==0.10.2
 tomlkit==0.13.0
 tqdm==4.66.5
 typer==0.12.3
+types-awscrt==0.27.5
 types-psycopg2==2.9.21.20250516
+types-s3transfer==0.13.0
 typing_extensions==4.12.2
 ujson==5.10.0
 urllib3==2.5.0

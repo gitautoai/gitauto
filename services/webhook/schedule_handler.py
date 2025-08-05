@@ -2,11 +2,14 @@
 import logging
 from typing import cast
 
-# Local imports (AWS)
+# Local imports (Types)
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
+from schemas.supabase.fastapi.schema_public_latest import Coverages
+
+# Local imports (AWS)
+from services.aws.delete_scheduler import delete_scheduler
 
 # Local imports (GitHub)
-from schemas.supabase.fastapi.schema_public_latest import Coverages
 from services.github.branches.get_default_branch import get_default_branch
 from services.github.issues.create_issue import create_issue
 from services.github.issues.is_issue_open import is_issue_open
@@ -57,6 +60,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     # Get installation access token - simplified since we already have installation_id
     token = get_installation_access_token(installation_id=installation_id)
     if token is None:
+        # Delete scheduler since installation is invalid
+        schedule_name = f"gitauto-repo-{owner_id}-{repo_id}"
+        delete_scheduler(schedule_name)
         raise ValueError(f"Token is None for installation_id: {installation_id}")
 
     # Get repository settings - check if trigger_on_schedule is enabled
