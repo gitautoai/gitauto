@@ -1,1 +1,1 @@
--
+# This file is intentionally empty - all tests are in test_installations_get_stripe_customer_id.py
