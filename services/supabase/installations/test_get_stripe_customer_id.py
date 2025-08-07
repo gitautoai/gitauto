@@ -27,7 +27,7 @@ def test_get_stripe_customer_id_returns_customer_id_when_found(mock_supabase_que
     # Arrange
     expected_customer_id = "cus_test123456"
     mock_supabase_query.execute.return_value = (
-        None, [{"owners": {"stripe_customer_id": expected_customer_id}}]
+        (None, [{"owners": {"stripe_customer_id": expected_customer_id}}]), None
     )
 
     # Act
@@ -40,7 +40,7 @@ def test_get_stripe_customer_id_returns_customer_id_when_found(mock_supabase_que
 def test_get_stripe_customer_id_returns_none_when_no_data_found(mock_supabase_query):
     """Test that get_stripe_customer_id returns None when no data is found."""
     # Arrange
-    mock_supabase_query.execute.return_value = (None, [])
+    mock_supabase_query.execute.return_value = ((None, []), None)
 
     # Act
     result = get_stripe_customer_id(installation_id=TEST_INSTALLATION_ID)
@@ -52,7 +52,7 @@ def test_get_stripe_customer_id_returns_none_when_no_data_found(mock_supabase_qu
 def test_get_stripe_customer_id_returns_none_when_data_is_none(mock_supabase_query):
     """Test that get_stripe_customer_id returns None when data[1] is None."""
     # Arrange
-    mock_supabase_query.execute.return_value = (None, None)
+    mock_supabase_query.execute.return_value = ((None, None), None)
 
     # Act
     result = get_stripe_customer_id(installation_id=TEST_INSTALLATION_ID)
@@ -77,7 +77,7 @@ def test_get_stripe_customer_id_returns_none_when_owners_key_missing(mock_supaba
     """Test that get_stripe_customer_id returns None when owners key is missing."""
     # Arrange
     mock_supabase_query.execute.return_value = (
-        None, [{"other_field": "value"}]
+        (None, [{"other_field": "value"}]), None
     )
 
     # Act
@@ -91,7 +91,7 @@ def test_get_stripe_customer_id_returns_none_when_owners_is_none(mock_supabase_q
     """Test that get_stripe_customer_id returns None when owners is None."""
     # Arrange
     mock_supabase_query.execute.return_value = (
-        None, [{"owners": None}]
+        (None, [{"owners": None}]), None
     )
 
     # Act
@@ -105,7 +105,7 @@ def test_get_stripe_customer_id_returns_none_when_stripe_customer_id_missing(moc
     """Test that get_stripe_customer_id returns None when stripe_customer_id key is missing."""
     # Arrange
     mock_supabase_query.execute.return_value = (
-        None, [{"owners": {"other_field": "value"}}]
+        (None, [{"owners": {"other_field": "value"}}]), None
     )
 
     # Act
@@ -119,7 +119,7 @@ def test_get_stripe_customer_id_returns_none_when_stripe_customer_id_is_none(moc
     """Test that get_stripe_customer_id returns None when stripe_customer_id is None."""
     # Arrange
     mock_supabase_query.execute.return_value = (
-        None, [{"owners": {"stripe_customer_id": None}}]
+        (None, [{"owners": {"stripe_customer_id": None}}]), None
     )
 
     # Act
@@ -133,7 +133,7 @@ def test_get_stripe_customer_id_returns_none_when_stripe_customer_id_is_empty_st
     """Test that get_stripe_customer_id returns None when stripe_customer_id is empty string."""
     # Arrange
     mock_supabase_query.execute.return_value = (
-        None, [{"owners": {"stripe_customer_id": ""}}]
+        (None, [{"owners": {"stripe_customer_id": ""}}]), None
     )
 
     # Act
@@ -150,7 +150,7 @@ def test_get_stripe_customer_id_returns_none_when_stripe_customer_id_is_not_stri
     
     for non_string_value in non_string_values:
         mock_supabase_query.execute.return_value = (
-            None, [{"owners": {"stripe_customer_id": non_string_value}}]
+            (None, [{"owners": {"stripe_customer_id": non_string_value}}]), None
         )
 
         # Act
@@ -166,11 +166,10 @@ def test_get_stripe_customer_id_returns_first_result_when_multiple_found(mock_su
     first_customer_id = "cus_first123"
     second_customer_id = "cus_second456"
     mock_supabase_query.execute.return_value = (
-        None,
-        [
+        (None, [
             {"owners": {"stripe_customer_id": first_customer_id}},
             {"owners": {"stripe_customer_id": second_customer_id}},
-        ]
+        ]), None
     )
 
     # Act
@@ -195,7 +194,7 @@ def test_get_stripe_customer_id_returns_none_when_exception_occurs(mock_supabase
 def test_get_stripe_customer_id_calls_correct_supabase_methods(mock_supabase_query):
     """Test that get_stripe_customer_id calls the correct Supabase methods with correct parameters."""
     # Arrange
-    mock_supabase_query.execute.return_value = (None, [])
+    mock_supabase_query.execute.return_value = ((None, []), None)
 
     with patch("services.supabase.installations.get_stripe_customer_id.supabase") as mock_supabase:
         mock_table = MagicMock()
@@ -205,7 +204,7 @@ def test_get_stripe_customer_id_calls_correct_supabase_methods(mock_supabase_que
         mock_supabase.table.return_value = mock_table
         mock_table.select.return_value = mock_select
         mock_select.eq.return_value = mock_eq
-        mock_eq.execute.return_value = (None, [])
+        mock_eq.execute.return_value = ((None, []), None)
 
         # Act
         get_stripe_customer_id(installation_id=TEST_INSTALLATION_ID)
@@ -232,7 +231,7 @@ def test_get_stripe_customer_id_with_various_installation_ids(
     """Test get_stripe_customer_id with various installation IDs using parametrize."""
     # Arrange
     mock_supabase_query.execute.return_value = (
-        None, [{"owners": {"stripe_customer_id": expected_customer_id}}]
+        (None, [{"owners": {"stripe_customer_id": expected_customer_id}}]), None
     )
 
     # Act
@@ -255,7 +254,7 @@ def test_get_stripe_customer_id_with_valid_stripe_customer_ids(mock_supabase_que
     for customer_id in valid_customer_ids:
         # Arrange
         mock_supabase_query.execute.return_value = (
-            None, [{"owners": {"stripe_customer_id": customer_id}}]
+            (None, [{"owners": {"stripe_customer_id": customer_id}}]), None
         )
 
         # Act
@@ -302,10 +301,10 @@ def test_get_stripe_customer_id_with_malformed_data_structure(mock_supabase_quer
     """Test that get_stripe_customer_id handles malformed data gracefully."""
     # Arrange - simulate various malformed data structures
     malformed_cases = [
-        (None, {}),  # dict instead of list
-        ("wrong_structure", None),  # wrong tuple structure
-        (None, [{}]),  # empty dict in list
-        (None, [{"owners": {}}]),  # empty owners dict
+        ((None, {}), None),  # dict instead of list
+        (("wrong_structure", None), None),  # wrong tuple structure
+        ((None, [{}]), None),  # empty dict in list
+        ((None, [{"owners": {}}]), None),  # empty owners dict
     ]
 
     for malformed_data in malformed_cases:
