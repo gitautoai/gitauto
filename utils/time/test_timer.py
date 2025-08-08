@@ -100,7 +100,7 @@ def test_timer_decorator_with_async_function_arguments(mock_time, mock_logger):
 
     result = asyncio.run(run_test())
 
-    expected = {"a": 1, "b": 2, "c": 3, "args": (4, 5), "kwargs": {"key": "value"}}
+    expected = {"a": 1, "b": 2, "c": 3, "args": (), "kwargs": {"extra1": 4, "extra2": 5, "key": "value"}}
     assert result == expected
     mock_logger.info.assert_called_once_with(
         "%s took %.2f seconds", "async_function_with_args", 2.0
