@@ -79,7 +79,7 @@ def test_timer_decorator_with_function_arguments(mock_time, mock_logger):
     def function_with_args(a, b, c=None, *args, **kwargs):
         return {"a": a, "b": b, "c": c, "args": args, "kwargs": kwargs}
 
-    result = function_with_args(1, 2, c=3, extra1=4, extra2=5, key="value")
+    result = function_with_args(1, 2, 3, 4, 5, key="value")
 
     expected = {"a": 1, "b": 2, "c": 3, "args": (), "kwargs": {"extra1": 4, "extra2": 5, "key": "value"}}
     assert result == expected
