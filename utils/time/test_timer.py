@@ -95,7 +95,7 @@ def test_timer_decorator_with_async_function_arguments(mock_time, mock_logger):
         return {"a": a, "b": b, "c": c, "args": args, "kwargs": kwargs}
 
     async def run_test():
-        result = await async_function_with_args(1, 2, c=3, extra1=4, extra2=5, key="value")
+        result = await async_function_with_args(1, 2, 3, 4, 5, key="value")
         return result
 
     result = asyncio.run(run_test())
