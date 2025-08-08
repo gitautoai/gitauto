@@ -214,7 +214,7 @@ def test_timer_decorator_with_fractional_seconds(mock_logger):
         assert result == "fractional"
         # Should be rounded to 2 decimal places
         mock_logger.info.assert_called_once_with(
-            "%s took %.2f seconds", "fractional_function", 1.23
+            "%s took %.2f seconds", "fractional_function", pytest.approx(1.234567, abs=1e-6)
         )
 
 
