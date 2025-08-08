@@ -17,6 +17,7 @@ def timer_decorator(func):
             end_time = time.time()
             logger.info("%s took %.2f seconds", func.__name__, end_time - start_time)
             return result
+        return wrapper
 
     else:
 
@@ -27,5 +28,4 @@ def timer_decorator(func):
             end_time = time.time()
             logger.info("%s took %.2f seconds", func.__name__, end_time - start_time)
             return result
-
-    return wrapper
+        return wrapper
