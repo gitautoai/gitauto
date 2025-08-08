@@ -79,7 +79,7 @@ def test_timer_decorator_with_function_arguments(mock_time, mock_logger):
     def function_with_args(a, b, c=None, *args, **kwargs):
         return {"a": a, "b": b, "c": c, "args": args, "kwargs": kwargs}
 
-    result = function_with_args(1, 2, c=3, 4, 5, key="value")
+    result = function_with_args(1, 2, 4, 5, c=3, key="value")
 
     expected = {"a": 1, "b": 2, "c": 3, "args": (4, 5), "kwargs": {"key": "value"}}
     assert result == expected
@@ -95,7 +95,7 @@ def test_timer_decorator_with_async_function_arguments(mock_time, mock_logger):
         return {"a": a, "b": b, "c": c, "args": args, "kwargs": kwargs}
 
     async def run_test():
-        result = await async_function_with_args(1, 2, c=3, 4, 5, key="value")
+        result = await async_function_with_args(1, 2, 4, 5, c=3, key="value")
         return result
 
     result = asyncio.run(run_test())
