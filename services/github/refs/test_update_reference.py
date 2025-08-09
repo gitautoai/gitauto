@@ -203,7 +203,10 @@ def test_update_reference_timeout_error_returns_false(sample_base_args, mock_req
 
 
 def test_update_reference_request_exception_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
-    mock_requests_patch.side_effect = requests.exceptions.RequestException("Generic request error")
+    # Create a proper RequestException
+    request_exception = requests.exceptions.RequestException("Generic request error")
+    # Set side_effect to the exception
+    mock_requests_patch.side_effect = request_exception
     
     new_commit_sha = "request123"
     result = update_reference(sample_base_args, new_commit_sha)
