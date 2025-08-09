@@ -156,7 +156,11 @@ def test_update_reference_with_short_commit_sha(sample_base_args, mock_requests_
 
 def test_update_reference_http_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
     mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404 Not Found")
+    http_error = requests.exceptions.HTTPError("404 Not Found")
+    mock_error_response = MagicMock()
+    mock_error_response.status_code = 404
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
     mock_requests_patch.return_value = mock_response
     
     new_commit_sha = "error123"
