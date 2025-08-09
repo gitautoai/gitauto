@@ -107,14 +107,14 @@ def test_update_reference_with_different_owner_repo(sample_base_args, mock_reque
     # Create a new BaseArgs with different owner and repo
     modified_args = sample_base_args.copy()
     modified_args.update({"owner": "different-owner"})
-    modified_args["repo"] = "different-repo"
+    modified_args.update({"repo": "different-repo"})
     
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_requests_patch.return_value = mock_response
     
     new_commit_sha = "abc999"
-    update_reference(sample_base_args, new_commit_sha)
+    update_reference(modified_args, new_commit_sha)
     
     expected_url = f"{GITHUB_API_URL}/repos/different-owner/different-repo/git/refs/heads/feature-branch"
     mock_requests_patch.assert_called_once()
