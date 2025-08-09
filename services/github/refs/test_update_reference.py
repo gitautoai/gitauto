@@ -106,7 +106,7 @@ def test_update_reference_with_different_branch(sample_base_args, mock_requests_
 def test_update_reference_with_different_owner_repo(sample_base_args, mock_requests_patch, mock_create_headers):
     # Create a new BaseArgs with different owner and repo
     modified_args = sample_base_args.copy()
-    modified_args["owner"] = "different-owner"
+    modified_args.update({"owner": "different-owner"})
     modified_args["repo"] = "different-repo"
     
     mock_response = MagicMock()
