@@ -167,6 +167,9 @@ def test_update_reference_http_error_returns_false(sample_base_args, mock_reques
     mock_response = MagicMock()
     http_error = requests.exceptions.HTTPError("404 Not Found")
     mock_error_response = MagicMock()
+    mock_error_response.reason = "Not Found"
+    mock_error_response.text = "The requested resource was not found"
+    mock_error_response.headers = {"X-RateLimit-Limit": "5000", "X-RateLimit-Remaining": "4999", "X-RateLimit-Used": "1"}
     mock_error_response.status_code = 404
     http_error.response = mock_error_response
     mock_response.raise_for_status.side_effect = http_error
