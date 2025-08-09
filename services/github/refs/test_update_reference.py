@@ -85,7 +85,10 @@ def test_update_reference_success(sample_base_args, mock_requests_patch, mock_cr
 
 
 def test_update_reference_with_different_branch(sample_base_args, mock_requests_patch, mock_create_headers):
-    sample_base_args["new_branch"] = "develop"
+    # Create a new BaseArgs with different branch
+    modified_args = sample_base_args.copy()
+    modified_args["new_branch"] = "develop"
+    
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_requests_patch.return_value = mock_response
@@ -101,8 +104,11 @@ def test_update_reference_with_different_branch(sample_base_args, mock_requests_
 
 
 def test_update_reference_with_different_owner_repo(sample_base_args, mock_requests_patch, mock_create_headers):
-    sample_base_args["owner"] = "different-owner"
-    sample_base_args["repo"] = "different-repo"
+    # Create a new BaseArgs with different owner and repo
+    modified_args = sample_base_args.copy()
+    modified_args["owner"] = "different-owner"
+    modified_args["repo"] = "different-repo"
+    
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_requests_patch.return_value = mock_response
@@ -117,7 +123,10 @@ def test_update_reference_with_different_owner_repo(sample_base_args, mock_reque
 
 
 def test_update_reference_with_different_token(sample_base_args, mock_requests_patch, mock_create_headers):
-    sample_base_args["token"] = "different-token"
+    # Create a new BaseArgs with different token
+    modified_args = sample_base_args.copy()
+    modified_args["token"] = "different-token"
+    
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_requests_patch.return_value = mock_response
