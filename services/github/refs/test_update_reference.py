@@ -191,7 +191,10 @@ def test_update_reference_connection_error_returns_false(sample_base_args, mock_
 
 
 def test_update_reference_timeout_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
-    mock_requests_patch.side_effect = requests.exceptions.Timeout("Request timed out")
+    # Create a proper Timeout error
+    timeout_error = requests.exceptions.Timeout("Request timed out")
+    # Set side_effect to the exception
+    mock_requests_patch.side_effect = timeout_error
     
     new_commit_sha = "timeout123"
     result = update_reference(sample_base_args, new_commit_sha)
