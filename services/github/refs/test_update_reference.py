@@ -179,7 +179,10 @@ def test_update_reference_http_error_returns_false(sample_base_args, mock_reques
 
 
 def test_update_reference_connection_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
-    mock_requests_patch.side_effect = requests.exceptions.ConnectionError("Connection failed")
+    # Create a proper ConnectionError
+    connection_error = requests.exceptions.ConnectionError("Connection failed")
+    # Set side_effect to the exception
+    mock_requests_patch.side_effect = connection_error
     
     new_commit_sha = "connection123"
     result = update_reference(sample_base_args, new_commit_sha)
