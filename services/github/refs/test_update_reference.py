@@ -125,14 +125,14 @@ def test_update_reference_with_different_owner_repo(sample_base_args, mock_reque
 def test_update_reference_with_different_token(sample_base_args, mock_requests_patch, mock_create_headers):
     # Create a new BaseArgs with different token
     modified_args = sample_base_args.copy()
-    modified_args["token"] = "different-token"
+    modified_args.update({"token": "different-token"})
     
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_requests_patch.return_value = mock_response
     
     new_commit_sha = "token123"
-    update_reference(sample_base_args, new_commit_sha)
+    update_reference(modified_args, new_commit_sha)
     
     mock_create_headers.assert_called_once_with(token="different-token")
 
