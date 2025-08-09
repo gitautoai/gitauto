@@ -87,14 +87,14 @@ def test_update_reference_success(sample_base_args, mock_requests_patch, mock_cr
 def test_update_reference_with_different_branch(sample_base_args, mock_requests_patch, mock_create_headers):
     # Create a new BaseArgs with different branch
     modified_args = sample_base_args.copy()
-    modified_args["new_branch"] = "develop"
+    modified_args.update({"new_branch": "develop"})
     
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_requests_patch.return_value = mock_response
     
     new_commit_sha = "xyz789"
-    update_reference(sample_base_args, new_commit_sha)
+    update_reference(modified_args, new_commit_sha)
     
     expected_url = f"{GITHUB_API_URL}/repos/test-owner/test-repo/git/refs/heads/develop"
     mock_requests_patch.assert_called_once()
