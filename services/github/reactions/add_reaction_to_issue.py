@@ -6,7 +6,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def add_reaction_to_issue(
+def add_reaction_to_issue(
     issue_number: int, content: str, base_args: BaseArgs
 ) -> None:
     """https://docs.github.com/en/rest/reactions/reactions?apiVersion=2022-11-28#create-reaction-for-an-issue"""
