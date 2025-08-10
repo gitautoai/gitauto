@@ -71,8 +71,7 @@ def mock_successful_response():
     return mock_response
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_success(
+def test_add_reaction_to_issue_success(
     base_args, mock_requests_post, mock_create_headers, mock_successful_response
 ):
     """Test successful reaction addition to an issue."""
@@ -82,7 +81,7 @@ async def test_add_reaction_to_issue_success(
     content = "+1"
 
     # Execute
-    result = await add_reaction_to_issue(issue_number, content, base_args)
+    result = add_reaction_to_issue(issue_number, content, base_args)
 
     # Assert
     assert result is None  # Function returns None on success
@@ -102,8 +101,7 @@ async def test_add_reaction_to_issue_success(
     mock_successful_response.json.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_different_reactions(
+def test_add_reaction_to_issue_different_reactions(
     base_args, mock_requests_post, mock_create_headers, mock_successful_response
 ):
     """Test adding different types of reactions."""
@@ -112,7 +110,7 @@ async def test_add_reaction_to_issue_different_reactions(
 
     for reaction in reactions:
         # Execute
-        result = await add_reaction_to_issue(456, reaction, base_args)
+        result = add_reaction_to_issue(456, reaction, base_args)
 
         # Assert
         assert result is None
@@ -121,8 +119,7 @@ async def test_add_reaction_to_issue_different_reactions(
         assert call_args[1]["json"]["content"] == reaction
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_different_issue_numbers(
+def test_add_reaction_to_issue_different_issue_numbers(
     base_args, mock_requests_post, mock_create_headers, mock_successful_response
 ):
     """Test adding reactions to different issue numbers."""
@@ -131,7 +128,7 @@ async def test_add_reaction_to_issue_different_issue_numbers(
 
     for issue_num in issue_numbers:
         # Execute
-        result = await add_reaction_to_issue(issue_num, "+1", base_args)
+        result = add_reaction_to_issue(issue_num, "+1", base_args)
 
         # Assert
         assert result is None
@@ -141,8 +138,7 @@ async def test_add_reaction_to_issue_different_issue_numbers(
         assert call_args[1]["url"] == expected_url
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_different_repositories(
+def test_add_reaction_to_issue_different_repositories(
     mock_requests_post, mock_create_headers, mock_successful_response
 ):
     """Test adding reactions to issues in different repositories."""
@@ -185,7 +181,7 @@ async def test_add_reaction_to_issue_different_repositories(
         )
 
         # Execute
-        result = await add_reaction_to_issue(123, "+1", test_base_args)
+        result = add_reaction_to_issue(123, "+1", test_base_args)
 
         # Assert
         assert result is None
@@ -195,8 +191,7 @@ async def test_add_reaction_to_issue_different_repositories(
         assert call_args[1]["url"] == expected_url
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_http_error(
+def test_add_reaction_to_issue_http_error(
     base_args, mock_requests_post, mock_create_headers
 ):
     """Test handling of HTTP errors during reaction addition."""
@@ -206,7 +201,7 @@ async def test_add_reaction_to_issue_http_error(
     mock_requests_post.return_value = mock_response
 
     # Execute
-    result = await add_reaction_to_issue(123, "+1", base_args)
+    result = add_reaction_to_issue(123, "+1", base_args)
 
     # Assert - should return None due to handle_exceptions decorator
     assert result is None
@@ -214,8 +209,7 @@ async def test_add_reaction_to_issue_http_error(
     mock_response.raise_for_status.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_network_error(
+def test_add_reaction_to_issue_network_error(
     base_args, mock_requests_post, mock_create_headers
 ):
     """Test handling of network errors during reaction addition."""
@@ -223,15 +217,14 @@ async def test_add_reaction_to_issue_network_error(
     mock_requests_post.side_effect = requests.exceptions.ConnectionError("Network error")
 
     # Execute
-    result = await add_reaction_to_issue(123, "+1", base_args)
+    result = add_reaction_to_issue(123, "+1", base_args)
 
     # Assert - should return None due to handle_exceptions decorator
     assert result is None
     mock_requests_post.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_json_decode_error(
+def test_add_reaction_to_issue_json_decode_error(
     base_args, mock_requests_post, mock_create_headers
 ):
     """Test handling of JSON decode errors."""
@@ -242,7 +235,7 @@ async def test_add_reaction_to_issue_json_decode_error(
     mock_requests_post.return_value = mock_response
 
     # Execute
-    result = await add_reaction_to_issue(123, "+1", base_args)
+    result = add_reaction_to_issue(123, "+1", base_args)
 
     # Assert - should return None due to handle_exceptions decorator
     assert result is None
@@ -251,8 +244,7 @@ async def test_add_reaction_to_issue_json_decode_error(
     mock_response.json.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_empty_content(
+def test_add_reaction_to_issue_empty_content(
     base_args, mock_requests_post, mock_create_headers, mock_successful_response
 ):
     """Test adding reaction with empty content."""
@@ -260,7 +252,7 @@ async def test_add_reaction_to_issue_empty_content(
     mock_requests_post.return_value = mock_successful_response
 
     # Execute
-    result = await add_reaction_to_issue(123, "", base_args)
+    result = add_reaction_to_issue(123, "", base_args)
 
     # Assert
     assert result is None
@@ -268,8 +260,7 @@ async def test_add_reaction_to_issue_empty_content(
     assert call_args[1]["json"]["content"] == ""
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_special_characters_content(
+def test_add_reaction_to_issue_special_characters_content(
     base_args, mock_requests_post, mock_create_headers, mock_successful_response
 ):
     """Test adding reaction with special characters in content."""
@@ -278,7 +269,7 @@ async def test_add_reaction_to_issue_special_characters_content(
     special_content = "special-chars-123!@#"
 
     # Execute
-    result = await add_reaction_to_issue(123, special_content, base_args)
+    result = add_reaction_to_issue(123, special_content, base_args)
 
     # Assert
     assert result is None
@@ -286,8 +277,7 @@ async def test_add_reaction_to_issue_special_characters_content(
     assert call_args[1]["json"]["content"] == special_content
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_timeout_configuration(
+def test_add_reaction_to_issue_timeout_configuration(
     base_args, mock_requests_post, mock_create_headers, mock_successful_response
 ):
     """Test that the correct timeout value is used."""
@@ -295,7 +285,7 @@ async def test_add_reaction_to_issue_timeout_configuration(
     mock_requests_post.return_value = mock_successful_response
 
     # Execute
-    result = await add_reaction_to_issue(123, "+1", base_args)
+    result = add_reaction_to_issue(123, "+1", base_args)
 
     # Assert
     assert result is None
@@ -303,8 +293,7 @@ async def test_add_reaction_to_issue_timeout_configuration(
     assert call_args[1]["timeout"] == 120  # TIMEOUT from config
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_url_construction(
+def test_add_reaction_to_issue_url_construction(
     base_args, mock_requests_post, mock_create_headers, mock_successful_response
 ):
     """Test that the GitHub API URL is constructed correctly."""
@@ -312,7 +301,7 @@ async def test_add_reaction_to_issue_url_construction(
     mock_requests_post.return_value = mock_successful_response
 
     # Execute
-    result = await add_reaction_to_issue(999, "heart", base_args)
+    result = add_reaction_to_issue(999, "heart", base_args)
 
     # Assert
     assert result is None
@@ -321,8 +310,7 @@ async def test_add_reaction_to_issue_url_construction(
     assert call_args[1]["url"] == expected_url
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_json_payload_structure(
+def test_add_reaction_to_issue_json_payload_structure(
     base_args, mock_requests_post, mock_create_headers, mock_successful_response
 ):
     """Test that the JSON payload is structured correctly."""
@@ -330,7 +318,7 @@ async def test_add_reaction_to_issue_json_payload_structure(
     mock_requests_post.return_value = mock_successful_response
 
     # Execute
-    result = await add_reaction_to_issue(123, "rocket", base_args)
+    result = add_reaction_to_issue(123, "rocket", base_args)
 
     # Assert
     assert result is None
@@ -342,8 +330,7 @@ async def test_add_reaction_to_issue_json_payload_structure(
     assert json_payload["content"] == "rocket"
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_headers_passed_correctly(
+def test_add_reaction_to_issue_headers_passed_correctly(
     base_args, mock_requests_post, mock_create_headers, mock_successful_response
 ):
     """Test that headers are passed correctly to the request."""
@@ -358,7 +345,7 @@ async def test_add_reaction_to_issue_headers_passed_correctly(
     mock_requests_post.return_value = mock_successful_response
 
     # Execute
-    result = await add_reaction_to_issue(123, "+1", base_args)
+    result = add_reaction_to_issue(123, "+1", base_args)
 
     # Assert
     assert result is None
@@ -367,8 +354,7 @@ async def test_add_reaction_to_issue_headers_passed_correctly(
     assert call_args[1]["headers"] == expected_headers
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_response_processing(
+def test_add_reaction_to_issue_response_processing(
     base_args, mock_requests_post, mock_create_headers
 ):
     """Test that response is processed correctly."""
@@ -379,7 +365,7 @@ async def test_add_reaction_to_issue_response_processing(
     mock_requests_post.return_value = mock_response
 
     # Execute
-    result = await add_reaction_to_issue(123, "eyes", base_args)
+    result = add_reaction_to_issue(123, "eyes", base_args)
 
     # Assert
     assert result is None
@@ -387,8 +373,7 @@ async def test_add_reaction_to_issue_response_processing(
     mock_response.json.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_add_reaction_to_issue_base_args_extraction(
+def test_add_reaction_to_issue_base_args_extraction(
     mock_requests_post, mock_create_headers, mock_successful_response
 ):
     """Test that owner, repo, and token are correctly extracted from base_args."""
@@ -423,7 +408,7 @@ async def test_add_reaction_to_issue_base_args_extraction(
     )
 
     # Execute
-    result = await add_reaction_to_issue(789, "confused", custom_base_args)
+    result = add_reaction_to_issue(789, "confused", custom_base_args)
 
     # Assert
     assert result is None
