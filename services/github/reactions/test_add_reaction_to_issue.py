@@ -197,11 +197,13 @@ def test_add_reaction_to_issue_http_error(
     """Test handling of HTTP errors during reaction addition."""
     # Setup
     mock_response = MagicMock()
-    mock_error_response = MagicMock()
-    mock_error_response.status_code = 404
-    mock_error_response.reason = "Not Found"
-    mock_error_response.text = "Not Found"
-    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404 Not Found", response=mock_error_response)
+    mock_response.status_code = 404
+    mock_response.reason = "Not Found"
+    mock_response.text = "Not Found"
+    
+    http_error = requests.exceptions.HTTPError("404 Not Found")
+    http_error.response = mock_response
+    mock_response.raise_for_status.side_effect = http_error
     mock_requests_post.return_value = mock_response
 
     # Execute
