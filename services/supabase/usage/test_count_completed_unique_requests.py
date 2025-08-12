@@ -397,3 +397,37 @@ def test_count_completed_unique_requests_with_missing_fields():
 
         # Should return empty set due to missing fields causing KeyError
         assert result == set()
+
+
+def test_count_completed_unique_requests_with_none_data():
+    """Test count when data is None"""
+    with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_table
+        mock_table.gt.return_value = mock_table
+        mock_table.eq.return_value = mock_table
+        mock_table.in_.return_value = mock_table
+        mock_table.execute.return_value = (None, None)
+
+        start_date = datetime(2023, 1, 1, 0, 0, 0)
+        result = count_completed_unique_requests(installation_id=12345, start_date=start_date)
+
+        assert result == set()
+
+
+def test_count_completed_unique_requests_with_malformed_data_tuple():
+    """Test count when data tuple is malformed"""
+    with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_table
+        mock_table.gt.return_value = mock_table
+        mock_table.eq.return_value = mock_table
+        mock_table.in_.return_value = mock_table
+        mock_table.execute.return_value = ("unexpected_format",)  # Wrong tuple format
+
+        start_date = datetime(2023, 1, 1, 0, 0, 0)
+        result = count_completed_unique_requests(installation_id=12345, start_date=start_date)
+
+        assert result == set()
