@@ -1,4 +1,5 @@
 from utils.objects.truncate_value import truncate_value
+from datetime import datetime
 
 
 def test_truncate_string_within_limit():
@@ -135,3 +136,15 @@ def test_truncate_complex_nested_structure():
         }
     ]
     assert result == expected
+
+def test_truncate_datetime():
+    """Test that datetime objects are converted to ISO format strings."""
+    dt = datetime(2023, 1, 1, 12, 30, 45)
+    result = truncate_value(dt)
+    assert result == "2023-01-01T12:30:45"
+
+
+def test_truncate_datetime_in_dict():
+    """Test that datetime objects in dictionaries are converted to ISO format strings."""
+    input_dict = {"created_at": datetime(2023, 1, 1, 12, 30, 45), "name": "test"}
+    result = truncate_value(input_dict)
