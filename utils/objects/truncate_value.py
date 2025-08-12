@@ -1,4 +1,5 @@
 from typing import Any
+from datetime import datetime
 
 
 def truncate_value(value: Any, max_length: int = 30):
@@ -10,4 +11,6 @@ def truncate_value(value: Any, max_length: int = 30):
         return [truncate_value(item, max_length) for item in value]
     if isinstance(value, tuple):
         return tuple(truncate_value(item, max_length) for item in value)
+    if isinstance(value, datetime):
+        return value.isoformat()
     return value
