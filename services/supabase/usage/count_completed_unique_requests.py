@@ -23,6 +23,9 @@ def count_completed_unique_requests(installation_id: int, start_date: datetime):
     )
 
     # Process unique requests in Python by combining fields
+    if not data or not data[1]:
+        return set()
+
     unique_requests = {
         f"{record['owner_type']}/{record['owner_name']}/{record['repo_name']}#{record['issue_number']}"
         for record in data[1]
