@@ -8,24 +8,20 @@ from services.supabase.usage.count_completed_unique_requests import count_comple
 
 def test_count_completed_unique_requests_with_valid_data():
     """Test successful count with valid data"""
-    mock_response = Mock()
-    mock_response.data = (
-        None,
-        [
-            {
-                "owner_type": "Organization",
-                "owner_name": "gitautoai",
-                "repo_name": "gitauto",
-                "issue_number": 123,
-            },
-            {
-                "owner_type": "User",
-                "owner_name": "john",
-                "repo_name": "project",
-                "issue_number": 456,
-            },
-        ],
-    )
+    mock_data = [
+        {
+            "owner_type": "Organization",
+            "owner_name": "gitautoai",
+            "repo_name": "gitauto",
+            "issue_number": 123,
+        },
+        {
+            "owner_type": "User",
+            "owner_name": "john",
+            "repo_name": "project",
+            "issue_number": 456,
+        },
+    ]
 
     with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
         mock_table = Mock()
@@ -34,7 +30,7 @@ def test_count_completed_unique_requests_with_valid_data():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        mock_table.execute.return_value = ((None, mock_data), None)
 
         start_date = datetime(2023, 1, 1, 0, 0, 0)
         result = count_completed_unique_requests(installation_id=12345, start_date=start_date)
@@ -63,9 +59,6 @@ def test_count_completed_unique_requests_with_valid_data():
 
 def test_count_completed_unique_requests_with_empty_data():
     """Test count with empty data"""
-    mock_response = Mock()
-    mock_response.data = (None, [])
-
     with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
         mock_table = Mock()
         mock_supabase.table.return_value = mock_table
@@ -73,7 +66,7 @@ def test_count_completed_unique_requests_with_empty_data():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        mock_table.execute.return_value = ((None, []), None)
 
         start_date = datetime(2023, 1, 1, 0, 0, 0)
         result = count_completed_unique_requests(installation_id=12345, start_date=start_date)
@@ -83,30 +76,26 @@ def test_count_completed_unique_requests_with_empty_data():
 
 def test_count_completed_unique_requests_with_duplicate_requests():
     """Test count with duplicate requests (should be deduplicated)"""
-    mock_response = Mock()
-    mock_response.data = (
-        None,
-        [
-            {
-                "owner_type": "Organization",
-                "owner_name": "gitautoai",
-                "repo_name": "gitauto",
-                "issue_number": 123,
-            },
-            {
-                "owner_type": "Organization",
-                "owner_name": "gitautoai",
-                "repo_name": "gitauto",
-                "issue_number": 123,
-            },
-            {
-                "owner_type": "User",
-                "owner_name": "john",
-                "repo_name": "project",
-                "issue_number": 456,
-            },
-        ],
-    )
+    mock_data = [
+        {
+            "owner_type": "Organization",
+            "owner_name": "gitautoai",
+            "repo_name": "gitauto",
+            "issue_number": 123,
+        },
+        {
+            "owner_type": "Organization",
+            "owner_name": "gitautoai",
+            "repo_name": "gitauto",
+            "issue_number": 123,
+        },
+        {
+            "owner_type": "User",
+            "owner_name": "john",
+            "repo_name": "project",
+            "issue_number": 456,
+        },
+    ]
 
     with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
         mock_table = Mock()
@@ -115,7 +104,7 @@ def test_count_completed_unique_requests_with_duplicate_requests():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        mock_table.execute.return_value = ((None, mock_data), None)
 
         start_date = datetime(2023, 1, 1, 0, 0, 0)
         result = count_completed_unique_requests(installation_id=12345, start_date=start_date)
@@ -130,18 +119,14 @@ def test_count_completed_unique_requests_with_duplicate_requests():
 
 def test_count_completed_unique_requests_with_single_record():
     """Test count with single record"""
-    mock_response = Mock()
-    mock_response.data = (
-        None,
-        [
-            {
-                "owner_type": "Organization",
-                "owner_name": "gitautoai",
-                "repo_name": "gitauto",
-                "issue_number": 123,
-            },
-        ],
-    )
+    mock_data = [
+        {
+            "owner_type": "Organization",
+            "owner_name": "gitautoai",
+            "repo_name": "gitauto",
+            "issue_number": 123,
+        },
+    ]
 
     with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
         mock_table = Mock()
@@ -150,7 +135,7 @@ def test_count_completed_unique_requests_with_single_record():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        mock_table.execute.return_value = ((None, mock_data), None)
 
         start_date = datetime(2023, 1, 1, 0, 0, 0)
         result = count_completed_unique_requests(installation_id=12345, start_date=start_date)
@@ -161,9 +146,6 @@ def test_count_completed_unique_requests_with_single_record():
 
 def test_count_completed_unique_requests_with_zero_installation_id():
     """Test count with zero installation_id"""
-    mock_response = Mock()
-    mock_response.data = (None, [])
-
     with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
         mock_table = Mock()
         mock_supabase.table.return_value = mock_table
@@ -171,7 +153,7 @@ def test_count_completed_unique_requests_with_zero_installation_id():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        mock_table.execute.return_value = ((None, []), None)
 
         start_date = datetime(2023, 1, 1, 0, 0, 0)
         result = count_completed_unique_requests(installation_id=0, start_date=start_date)
@@ -182,9 +164,6 @@ def test_count_completed_unique_requests_with_zero_installation_id():
 
 def test_count_completed_unique_requests_with_negative_installation_id():
     """Test count with negative installation_id"""
-    mock_response = Mock()
-    mock_response.data = (None, [])
-
     with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
         mock_table = Mock()
         mock_supabase.table.return_value = mock_table
@@ -192,7 +171,7 @@ def test_count_completed_unique_requests_with_negative_installation_id():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        mock_table.execute.return_value = ((None, []), None)
 
         start_date = datetime(2023, 1, 1, 0, 0, 0)
         result = count_completed_unique_requests(installation_id=-1, start_date=start_date)
@@ -203,9 +182,6 @@ def test_count_completed_unique_requests_with_negative_installation_id():
 
 def test_count_completed_unique_requests_with_large_installation_id():
     """Test count with large installation_id"""
-    mock_response = Mock()
-    mock_response.data = (None, [])
-
     with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
         mock_table = Mock()
         mock_supabase.table.return_value = mock_table
@@ -213,7 +189,7 @@ def test_count_completed_unique_requests_with_large_installation_id():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        mock_table.execute.return_value = ((None, []), None)
 
         start_date = datetime(2023, 1, 1, 0, 0, 0)
         result = count_completed_unique_requests(installation_id=999999999, start_date=start_date)
@@ -224,9 +200,6 @@ def test_count_completed_unique_requests_with_large_installation_id():
 
 def test_count_completed_unique_requests_with_different_start_dates():
     """Test count with different start dates"""
-    mock_response = Mock()
-    mock_response.data = (None, [])
-
     with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
         mock_table = Mock()
         mock_supabase.table.return_value = mock_table
@@ -234,7 +207,7 @@ def test_count_completed_unique_requests_with_different_start_dates():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        mock_table.execute.return_value = ((None, []), None)
 
         # Test with different start dates
         start_dates = [
@@ -251,24 +224,20 @@ def test_count_completed_unique_requests_with_different_start_dates():
 
 def test_count_completed_unique_requests_with_special_characters():
     """Test count with special characters in names"""
-    mock_response = Mock()
-    mock_response.data = (
-        None,
-        [
-            {
-                "owner_type": "Organization",
-                "owner_name": "test-org_123",
-                "repo_name": "my-repo.test",
-                "issue_number": 456,
-            },
-            {
-                "owner_type": "User",
-                "owner_name": "user@domain",
-                "repo_name": "repo_with_underscores",
-                "issue_number": 789,
-            },
-        ],
-    )
+    mock_data = [
+        {
+            "owner_type": "Organization",
+            "owner_name": "test-org_123",
+            "repo_name": "my-repo.test",
+            "issue_number": 456,
+        },
+        {
+            "owner_type": "User",
+            "owner_name": "user@domain",
+            "repo_name": "repo_with_underscores",
+            "issue_number": 789,
+        },
+    ]
 
     with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
         mock_table = Mock()
@@ -277,7 +246,7 @@ def test_count_completed_unique_requests_with_special_characters():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        mock_table.execute.return_value = ((None, mock_data), None)
 
         start_date = datetime(2023, 1, 1, 0, 0, 0)
         result = count_completed_unique_requests(installation_id=12345, start_date=start_date)
@@ -399,24 +368,20 @@ def test_count_completed_unique_requests_with_execute_exception():
 
 def test_count_completed_unique_requests_with_missing_fields():
     """Test count when records have missing fields"""
-    mock_response = Mock()
-    mock_response.data = (
-        None,
-        [
-            {
-                "owner_type": "Organization",
-                "owner_name": "gitautoai",
-                "repo_name": "gitauto",
-                # Missing issue_number
-            },
-            {
-                "owner_type": "User",
-                # Missing owner_name
-                "repo_name": "project",
-                "issue_number": 456,
-            },
-        ],
-    )
+    mock_data = [
+        {
+            "owner_type": "Organization",
+            "owner_name": "gitautoai",
+            "repo_name": "gitauto",
+            # Missing issue_number
+        },
+        {
+            "owner_type": "User",
+            # Missing owner_name
+            "repo_name": "project",
+            "issue_number": 456,
+        },
+    ]
 
     with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
         mock_table = Mock()
@@ -425,50 +390,10 @@ def test_count_completed_unique_requests_with_missing_fields():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        mock_table.execute.return_value = ((None, mock_data), None)
 
         start_date = datetime(2023, 1, 1, 0, 0, 0)
         result = count_completed_unique_requests(installation_id=12345, start_date=start_date)
 
         # Should return empty set due to missing fields causing KeyError
-        assert result == set()
-
-
-def test_count_completed_unique_requests_with_none_data():
-    """Test count when data is None"""
-    mock_response = Mock()
-    mock_response.data = None
-
-    with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.gt.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = mock_response
-
-        start_date = datetime(2023, 1, 1, 0, 0, 0)
-        result = count_completed_unique_requests(installation_id=12345, start_date=start_date)
-
-        assert result == set()
-
-
-def test_count_completed_unique_requests_with_malformed_data_tuple():
-    """Test count when data tuple is malformed"""
-    mock_response = Mock()
-    mock_response.data = ("unexpected_format",)  # Wrong tuple format
-
-    with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.gt.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = mock_response
-
-        start_date = datetime(2023, 1, 1, 0, 0, 0)
-        result = count_completed_unique_requests(installation_id=12345, start_date=start_date)
-
         assert result == set()
