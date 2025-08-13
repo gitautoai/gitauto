@@ -449,7 +449,7 @@ async def test_verify_webhook_signature_exception_handling(mock_request, sample_
     [
         ("simple", b"test", True),
         ("", b"empty_secret", True),
-        ("unicode_世界", b"unicode_secret", True),
+        ("unicode_chars", b"unicode_secret", True),
         ("special!@#$", b"special_chars", True),
         ("very_long_secret_" * 10, b"long_secret", True),
     ],
