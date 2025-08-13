@@ -455,3 +455,19 @@ async def test_verify_webhook_signature_exception_handling(mock_request, sample_
     ],
 )
 @pytest.mark.asyncio
+async def test_verify_webhook_signature_parametrized(
+    mock_request, secret, body, expected_valid
+):
+    """Test verification with various secret and body combinations."""
+    hmac_signature = hmac.new(
+        key=secret.encode(),
+        msg=body,
+        digestmod=hashlib.sha256
+    ).hexdigest()
+    valid_signature = f"sha256={hmac_signature}"
+
+    mock_request.headers = {"X-Hub-Signature-256": valid_signature}
+    mock_request.body.return_value = body
+
+    # Should not raise any exception for all valid cases
+    await verify_webhook_signature(mock_request, secret)
