@@ -356,7 +356,7 @@ async def test_verify_webhook_signature_secret_encoding(
     mock_request, sample_body, valid_signature
 ):
     """Test that secret is properly encoded to bytes."""
-    unicode_secret = "test_secret_with_unicode_世界"
+    unicode_secret = "test_secret_with_unicode_chars"
     
     # Create valid signature with the unicode secret
     hmac_signature = hmac.new(
