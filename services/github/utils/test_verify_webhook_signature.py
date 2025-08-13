@@ -373,3 +373,85 @@ async def test_verify_webhook_signature_secret_encoding(
     await verify_webhook_signature(mock_request, unicode_secret)
 
     mock_request.body.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_verify_webhook_signature_whitespace_in_signature(
+    mock_request, sample_secret, sample_body
+):
+    """Test verification fails with whitespace in signature."""
+    hmac_signature = hmac.new(
+        key=sample_secret.encode(),
+        msg=sample_body,
+        digestmod=hashlib.sha256
+    ).hexdigest()
+    
+    # Add whitespace to signature
+    signature_with_whitespace = f" sha256={hmac_signature} "
+    mock_request.headers = {"X-Hub-Signature-256": signature_with_whitespace}
+    mock_request.body.return_value = sample_body
+
+    with pytest.raises(ValueError) as exc_info:
+        await verify_webhook_signature(mock_request, sample_secret)
+
+    assert str(exc_info.value) == "Invalid webhook signature"
+    mock_request.body.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_verify_webhook_signature_different_body_content(
+    mock_request, sample_secret
+):
+    """Test verification with different types of body content."""
+    test_bodies = [
+        b'{"key": "value"}',  # JSON
+        b'key=value&another=test',  # Form data
+        b'<xml><data>test</data></xml>',  # XML
+        b'plain text content',  # Plain text
+        b'\x00\x01\x02\x03',  # Binary data
+    ]
+
+    for body in test_bodies:
+        hmac_signature = hmac.new(
+            key=sample_secret.encode(),
+            msg=body,
+            digestmod=hashlib.sha256
+        ).hexdigest()
+        valid_signature = f"sha256={hmac_signature}"
+
+        mock_request.headers = {"X-Hub-Signature-256": valid_signature}
+        mock_request.body.return_value = body
+
+        # Should not raise any exception
+        await verify_webhook_signature(mock_request, sample_secret)
+
+        mock_request.body.assert_called_once()
+        # Reset mock for next iteration
+        mock_request.body.reset_mock()
+
+
+@pytest.mark.asyncio
+async def test_verify_webhook_signature_exception_handling(mock_request, sample_secret):
+    """Test that exceptions from request.body() are properly handled."""
+    mock_request.headers = {"X-Hub-Signature-256": "sha256=test"}
+    mock_request.body.side_effect = Exception("Body read error")
+
+    # Since the function is decorated with @handle_exceptions(raise_on_error=True),
+    # it should re-raise the exception
+    with pytest.raises(Exception) as exc_info:
+        await verify_webhook_signature(mock_request, sample_secret)
+
+    assert str(exc_info.value) == "Body read error"
+    mock_request.body.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "secret,body,expected_valid",
+    [
+        ("simple", b"test", True),
+        ("", b"empty_secret", True),
+        ("unicode_世界", b"unicode_secret", True),
+        ("special!@#$", b"special_chars", True),
+        ("very_long_secret_" * 10, b"long_secret", True),
+    ],
+)
+@pytest.mark.asyncio
