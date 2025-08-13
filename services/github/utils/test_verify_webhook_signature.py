@@ -279,7 +279,7 @@ async def test_verify_webhook_signature_timing_attack_protection(
     mock_request.headers = {"X-Hub-Signature-256": valid_signature}
     mock_request.body.return_value = sample_body
 
-    with patch('hmac.compare_digest') as mock_compare_digest:
+    with patch('services.github.utils.verify_webhook_signature.hmac.compare_digest') as mock_compare_digest:
         mock_compare_digest.return_value = True
         
         await verify_webhook_signature(mock_request, sample_secret)
