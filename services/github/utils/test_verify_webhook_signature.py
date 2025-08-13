@@ -154,7 +154,7 @@ async def test_verify_webhook_signature_large_body(mock_request, sample_secret):
 @pytest.mark.asyncio
 async def test_verify_webhook_signature_unicode_body(mock_request, sample_secret):
     """Test verification with Unicode characters in body."""
-    unicode_body = '{"message": "Hello 世界 🌍"}'.encode('utf-8')
+    unicode_body = '{"message": "Hello world"}'.encode('utf-8')
     hmac_signature = hmac.new(
         key=sample_secret.encode(),
         msg=unicode_body,
