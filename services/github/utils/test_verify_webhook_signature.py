@@ -337,7 +337,7 @@ async def test_verify_webhook_signature_hmac_computation_steps(
     mock_request.headers = {"X-Hub-Signature-256": valid_signature}
     mock_request.body.return_value = sample_body
 
-    with patch('hmac.new') as mock_hmac_new:
+    with patch('services.github.utils.verify_webhook_signature.hmac.new') as mock_hmac_new:
         mock_hmac_obj = MagicMock()
         mock_hmac_obj.hexdigest.return_value = hmac_signature
         mock_hmac_new.return_value = mock_hmac_obj
