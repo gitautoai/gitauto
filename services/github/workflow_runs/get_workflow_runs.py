@@ -17,8 +17,8 @@ def get_workflow_runs(
     commit_sha: str | None = None,
     branch: str | None = None,
 ):
-    if not commit_sha and not branch:
-        raise ValueError("Either commit_sha or branch must be provided")
+    if (not commit_sha or commit_sha == "") and (not branch or branch == ""):
+        return []
 
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs"
     if commit_sha:
