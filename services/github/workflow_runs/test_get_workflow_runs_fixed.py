@@ -277,7 +277,8 @@ def test_get_workflow_runs_rate_limit_exceeded():
 
     # Act
     with patch("services.github.workflow_runs.get_workflow_runs.get") as mock_get, \
-         patch("services.github.workflow_runs.get_workflow_runs.create_headers") as mock_create_headers:
+         patch("services.github.workflow_runs.get_workflow_runs.create_headers") as mock_create_headers, \
+         patch("time.sleep") as mock_sleep:
         mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
         mock_get.return_value.raise_for_status.side_effect = http_error
         result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=commit_sha)
