@@ -271,7 +271,7 @@ def test_get_workflow_runs_rate_limit_exceeded():
         "X-RateLimit-Limit": "5000",
         "X-RateLimit-Remaining": "0",
         "X-RateLimit-Used": "5000",
-        "X-RateLimit-Reset": "1000000010",
+        "X-RateLimit-Reset": str(int(time.time()) + 3600),  # 1 hour in the future
     }
     http_error.response = mock_error_response
 
