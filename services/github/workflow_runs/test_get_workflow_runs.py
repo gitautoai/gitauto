@@ -271,7 +271,7 @@ def test_get_workflow_runs_rate_limit_exceeded():
     mock_error_response.text = "API rate limit exceeded"
     mock_error_response.headers = {
         "X-RateLimit-Limit": "5000",
-        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Remaining": "100",  # Not zero to avoid retry
         "X-RateLimit-Used": "5000",
         "X-RateLimit-Reset": str(future_reset_time),
     }
