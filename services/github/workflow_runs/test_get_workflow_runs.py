@@ -261,6 +261,8 @@ def test_get_workflow_runs_http_error():
 def test_get_workflow_runs_rate_limit_exceeded():
     """Test handling of rate limit exceeded error."""
     # Arrange
+    current_time = int(time.time())
+    future_reset_time = current_time + 3600  # 1 hour in the future
     commit_sha = "abc123def456"
     http_error = requests.HTTPError("403 Forbidden")
     mock_error_response = MagicMock()
@@ -271,7 +273,7 @@ def test_get_workflow_runs_rate_limit_exceeded():
         "X-RateLimit-Limit": "5000",
         "X-RateLimit-Remaining": "0",
         "X-RateLimit-Used": "5000",
-        "X-RateLimit-Reset": "1000000010",
+        "X-RateLimit-Reset": str(future_reset_time),
     }
     http_error.response = mock_error_response
 
