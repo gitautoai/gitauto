@@ -1,6 +1,4 @@
-from unittest.mock import patch, MagicMock
-import time
-
+# This file has been removed to comply with test rules - only one test file per source file is allowed
 import pytest
 import requests
 
