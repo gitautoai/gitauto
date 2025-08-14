@@ -277,17 +277,24 @@ def test_get_workflow_runs_rate_limit_exceeded():
     }
     http_error.response = mock_error_response
 
+    # Create a successful response for the retry
+    mock_success_response = MagicMock()
+    mock_success_response.status_code = 200
+    mock_success_response.json.return_value = {"workflow_runs": []}
+
     # Act
     with patch("services.github.workflow_runs.get_workflow_runs.get") as mock_get, \
          patch("services.github.workflow_runs.get_workflow_runs.create_headers") as mock_create_headers, \
          patch("time.sleep") as mock_sleep:
         mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
-        mock_get.return_value.raise_for_status.side_effect = http_error
-        mock_get.return_value = mock_error_response  # This will be called recursively
+        # First call raises error, second call succeeds
+        mock_get.side_effect = [mock_error_response, mock_success_response]
+        mock_error_response.raise_for_status.side_effect = http_error
+        mock_success_response.raise_for_status.return_value = None
         result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=commit_sha)
 
     # Assert
-    mock_get.assert_called_once()
+    assert mock_get.call_count == 2  # Called twice due to retry
     assert result == []  # Default return value from handle_exceptions decorator
 
 
