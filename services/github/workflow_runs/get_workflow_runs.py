@@ -21,7 +21,7 @@ def get_workflow_runs(
         return []
 
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs"
-    if commit_sha:
+    if commit_sha and commit_sha != "":
         url += f"?head_sha={commit_sha}"
     else:  # branch
         url += f"?branch={branch}"
