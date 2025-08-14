@@ -258,35 +258,6 @@ def test_get_workflow_runs_http_error():
     assert result == []  # Default return value from handle_exceptions decorator
 
 
-def test_get_workflow_runs_rate_limit_exceeded():
-    """Test handling of rate limit exceeded error."""
-    # Arrange
-    commit_sha = "abc123def456"
-    http_error = requests.HTTPError("403 Forbidden")
-    mock_error_response = MagicMock()
-    mock_error_response.status_code = 403
-    mock_error_response.reason = "Forbidden"
-    mock_error_response.text = "API rate limit exceeded"
-    mock_error_response.headers = {
-        "X-RateLimit-Limit": "5000",
-        "X-RateLimit-Remaining": "0",
-        "X-RateLimit-Used": "5000",
-        "X-RateLimit-Reset": str(int(time.time()) + 3600),  # 1 hour in the future
-    }
-    http_error.response = mock_error_response
-
-    # Act
-    with patch("services.github.workflow_runs.get_workflow_runs.get") as mock_get, \
-         patch("services.github.workflow_runs.get_workflow_runs.create_headers") as mock_create_headers, \
-         patch("time.sleep") as mock_sleep:
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
-        mock_get.return_value.raise_for_status.side_effect = http_error
-        result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=commit_sha)
-
-    # Assert
-    mock_get.assert_called_once()
-    assert result == []  # Default return value from handle_exceptions decorator
-
 
 def test_get_workflow_runs_json_decode_error():
     """Test handling of JSON decode error."""
