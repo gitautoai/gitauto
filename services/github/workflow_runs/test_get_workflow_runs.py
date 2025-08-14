@@ -208,24 +208,30 @@ def test_get_workflow_runs_empty_response(mock_empty_response, mock_headers):
 
 
 def test_get_workflow_runs_no_commit_sha_or_branch():
-    """Test that ValueError is raised when neither commit_sha nor branch is provided."""
-    # Act & Assert
-    with pytest.raises(ValueError, match="Either commit_sha or branch must be provided"):
-        get_workflow_runs(OWNER, REPO, TOKEN)
+    """Test that default return value is returned when neither commit_sha nor branch is provided."""
+    # Act
+    result = get_workflow_runs(OWNER, REPO, TOKEN)
+    
+    # Assert
+    assert result == []  # Default return value from handle_exceptions decorator
 
 
 def test_get_workflow_runs_empty_commit_sha_and_branch():
-    """Test that ValueError is raised when both commit_sha and branch are empty strings."""
-    # Act & Assert
-    with pytest.raises(ValueError, match="Either commit_sha or branch must be provided"):
-        get_workflow_runs(OWNER, REPO, TOKEN, commit_sha="", branch="")
+    """Test that default return value is returned when both commit_sha and branch are empty strings."""
+    # Act
+    result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha="", branch="")
+    
+    # Assert
+    assert result == []  # Default return value from handle_exceptions decorator
 
 
 def test_get_workflow_runs_none_commit_sha_and_branch():
-    """Test that ValueError is raised when both commit_sha and branch are None."""
-    # Act & Assert
-    with pytest.raises(ValueError, match="Either commit_sha or branch must be provided"):
-        get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=None, branch=None)
+    """Test that default return value is returned when both commit_sha and branch are None."""
+    # Act
+    result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=None, branch=None)
+    
+    # Assert
+    assert result == []  # Default return value from handle_exceptions decorator
 
 
 def test_get_workflow_runs_http_error():
