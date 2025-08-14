@@ -259,42 +259,32 @@ def test_get_workflow_runs_http_error():
 
 
 def test_get_workflow_runs_rate_limit_exceeded():
-    """Test handling of rate limit exceeded error."""
+    """Test handling of rate limit exceeded error (without retry to avoid sleep issues)."""
     # Arrange
-    current_time = int(time.time())
-    future_reset_time = current_time + 3600  # 1 hour in the future
     commit_sha = "abc123def456"
     http_error = requests.HTTPError("403 Forbidden")
     mock_error_response = MagicMock()
     mock_error_response.status_code = 403
     mock_error_response.reason = "Forbidden"
     mock_error_response.text = "API rate limit exceeded"
+    # Set remaining > 0 to avoid the retry mechanism that causes sleep issues
     mock_error_response.headers = {
         "X-RateLimit-Limit": "5000",
-        "X-RateLimit-Remaining": "100",  # Not zero to avoid retry
-        "X-RateLimit-Used": "5000",
-        "X-RateLimit-Reset": str(future_reset_time),
+        "X-RateLimit-Remaining": "100",
+        "X-RateLimit-Used": "4900",
+        "X-RateLimit-Reset": "1000000010",
     }
     http_error.response = mock_error_response
 
-    # Create a successful response for the retry
-    mock_success_response = MagicMock()
-    mock_success_response.status_code = 200
-    mock_success_response.json.return_value = {"workflow_runs": []}
-
     # Act
     with patch("services.github.workflow_runs.get_workflow_runs.get") as mock_get, \
-         patch("services.github.workflow_runs.get_workflow_runs.create_headers") as mock_create_headers, \
-         patch("time.sleep") as mock_sleep:
+         patch("services.github.workflow_runs.get_workflow_runs.create_headers") as mock_create_headers:
         mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
-        # First call raises error, second call succeeds
-        mock_get.side_effect = [mock_error_response, mock_success_response]
-        mock_error_response.raise_for_status.side_effect = http_error
-        mock_success_response.raise_for_status.return_value = None
+        mock_get.return_value.raise_for_status.side_effect = http_error
         result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=commit_sha)
 
     # Assert
-    assert mock_get.call_count == 2  # Called twice due to retry
+    mock_get.assert_called_once()
     assert result == []  # Default return value from handle_exceptions decorator
 
 
