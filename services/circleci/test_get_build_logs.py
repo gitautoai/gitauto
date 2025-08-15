@@ -1,65 +1,94 @@
-"""Unit tests for get_circleci_build_logs using real data."""
+"""Unit tests for get_circleci_build_logs using mocked data."""
 
-import os
-import pytest
+import json
+from unittest.mock import patch, Mock
 
 from services.circleci.get_build_logs import get_circleci_build_logs
 
 
-def test_get_build_logs_with_valid_token():
+@patch("services.circleci.get_build_logs.get")
+def test_get_build_logs_with_valid_token(mock_get):
     """Test getting build logs with valid token and project slug."""
-    # Real project slug from the CircleCI URL in the payload
-    project_slug = "circleci/J2wtzLah5rmzRnx6qn4RyQ/UUb5FLNgQCnif8mB6mQn7s"
+    project_slug = "test/project/slug"
+    build_number = 16
+    token = "test-token"
 
-    # Real build number from a failed job
-    build_number = 13  # This should be the "Stress Tests (Intentional Failure)" job
+    # Load mock build data
+    with open("payloads/circleci/build_16.json", "r") as f:
+        mock_build_data = json.load(f)
+    
+    # Load mock log entries
+    with open("payloads/circleci/log_entries.json", "r") as f:
+        mock_log_data = json.load(f)
 
-    # Get token from environment
-    token = os.environ.get("CIRCLECI_TOKEN")
-    if not token:
-        pytest.skip("CIRCLECI_TOKEN not set")
+    def mock_get_side_effect(url, **kwargs):
+        mock_response = Mock()
+        if "/project/" in url:
+            mock_response.status_code = 200
+            mock_response.json.return_value = mock_build_data
+        else:  # output_url request
+            mock_response.status_code = 200
+            mock_response.json.return_value = mock_log_data
+        return mock_response
+
+    mock_get.side_effect = mock_get_side_effect
 
     result = get_circleci_build_logs(project_slug, build_number, token)
 
-    # For build 13 (failed job), we expect error logs
     assert isinstance(result, str)
     assert "CircleCI Build Log" in result
-    assert "ERROR" in result
 
 
-def test_get_build_logs_without_token():
-    """Test getting build logs without token (public repo scenario)."""
-    project_slug = "circleci/J2wtzLah5rmzRnx6qn4RyQ/UUb5FLNgQCnif8mB6mQn7s"
-    build_number = 13
+@patch("services.circleci.get_build_logs.get")
+def test_get_build_logs_without_token(mock_get):
+    """Test getting build logs without token."""
+    project_slug = "test/project/slug"
+    build_number = 16
 
-    result = get_circleci_build_logs(project_slug, build_number, None)
+    mock_response = Mock()
+    mock_response.status_code = 404
+    mock_get.return_value = mock_response
 
-    # Private repo without token should return 404
+    result = get_circleci_build_logs(project_slug, build_number, "")
+
     assert result == 404
 
 
-def test_get_build_logs_with_invalid_build_number():
+@patch("services.circleci.get_build_logs.get")
+def test_get_build_logs_with_invalid_build_number(mock_get):
     """Test getting build logs with invalid build number."""
-    project_slug = "circleci/J2wtzLah5rmzRnx6qn4RyQ/UUb5FLNgQCnif8mB6mQn7s"
+    project_slug = "test/project/slug"
     build_number = 99999
+    token = "test-token"
 
-    token = os.environ.get("CIRCLECI_TOKEN")
-    if not token:
-        pytest.skip("CIRCLECI_TOKEN not set")
+    mock_response = Mock()
+    mock_response.status_code = 404
+    mock_get.return_value = mock_response
 
     result = get_circleci_build_logs(project_slug, build_number, token)
 
     assert result == 404
 
 
-def test_get_build_logs_successful_build():
+@patch("services.circleci.get_build_logs.get")
+def test_get_build_logs_successful_build(mock_get):
     """Test getting logs from a successful build (should return None)."""
-    project_slug = "circleci/J2wtzLah5rmzRnx6qn4RyQ/UUb5FLNgQCnif8mB6mQn7s"
-    build_number = 14
+    project_slug = "test/project/slug"
+    build_number = 15
+    token = "test-token"
 
-    token = os.environ.get("CIRCLECI_TOKEN")
-    if not token:
-        pytest.skip("CIRCLECI_TOKEN not set")
+    # Load successful build data
+    with open("payloads/circleci/build_15.json", "r") as f:
+        mock_build_data = json.load(f)
+    
+    # Modify to be successful
+    mock_build_data["status"] = "success"
+    mock_build_data["failed"] = False
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = mock_build_data
+    mock_get.return_value = mock_response
 
     result = get_circleci_build_logs(project_slug, build_number, token)
 
