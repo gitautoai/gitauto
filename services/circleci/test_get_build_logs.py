@@ -1,7 +1,4 @@
-"""Unit tests for get_circleci_build_logs using mocked data."""
-
-import json
-from unittest.mock import patch, Mock
+# This file has been replaced by test_get_build_logs_comprehensive.py to avoid naming conflicts
 
 from config import UTF8
 from services.circleci.get_build_logs import get_circleci_build_logs
