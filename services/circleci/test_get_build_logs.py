@@ -16,7 +16,7 @@ def test_get_build_logs_with_valid_token(mock_get):
     # Load mock build data
     with open("payloads/circleci/build_16.json", "r") as f:
         mock_build_data = json.load(f)
-    
+
     # Load mock log entries
     with open("payloads/circleci/log_entries.json", "r") as f:
         mock_log_data = json.load(f)
@@ -80,7 +80,7 @@ def test_get_build_logs_successful_build(mock_get):
     # Load successful build data
     with open("payloads/circleci/build_15.json", "r") as f:
         mock_build_data = json.load(f)
-    
+
     # Modify to be successful
     mock_build_data["status"] = "success"
     mock_build_data["failed"] = False

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 
-from pydantic import BaseModel, Field, Json
+from pydantic import UUID4, BaseModel, Field, Json
 
 # CUSTOM CLASSES
 # Note: These are custom model classes for defining common features among
@@ -29,6 +29,21 @@ class CustomModelUpdate(CustomModel):
 
 # BASE CLASSES
 # Note: These are the base Row models that include all fields.
+
+
+class CircleciTokensBaseSchema(CustomModel):
+    """CircleciTokens Base Schema."""
+
+    # Primary Keys
+    id: UUID4
+
+    # Columns
+    created_at: datetime.datetime
+    created_by: str
+    owner_id: int
+    token: str
+    updated_at: datetime.datetime
+    updated_by: str
 
 
 class ContactsBaseSchema(CustomModel):
@@ -338,6 +353,27 @@ class UsersBaseSchema(CustomModel):
 # INSERT CLASSES
 # Note: These models are used for insert operations. Auto-generated fields
 # (like IDs and timestamps) are optional.
+
+
+class CircleciTokensInsert(CustomModelInsert):
+    """CircleciTokens Insert Schema."""
+
+    # Primary Keys
+    id: UUID4 | None = Field(default=None)  # has default value
+
+    # Field properties:
+    # created_at: has default value
+    # updated_at: has default value
+
+    # Required fields
+    created_by: str
+    owner_id: int
+    token: str
+    updated_by: str
+
+    # Optional fields
+    created_at: datetime.datetime | None = Field(default=None)
+    updated_at: datetime.datetime | None = Field(default=None)
 
 
 class ContactsInsert(CustomModelInsert):
@@ -833,6 +869,25 @@ class UsersInsert(CustomModelInsert):
 # Note: These models are used for update operations. All fields are optional.
 
 
+class CircleciTokensUpdate(CustomModelUpdate):
+    """CircleciTokens Update Schema."""
+
+    # Primary Keys
+    id: UUID4 | None = Field(default=None)
+
+    # Field properties:
+    # created_at: has default value
+    # updated_at: has default value
+
+    # Optional fields
+    created_at: datetime.datetime | None = Field(default=None)
+    created_by: str | None = Field(default=None)
+    owner_id: int | None = Field(default=None)
+    token: str | None = Field(default=None)
+    updated_at: datetime.datetime | None = Field(default=None)
+    updated_by: str | None = Field(default=None)
+
+
 class ContactsUpdate(CustomModelUpdate):
     """Contacts Update Schema."""
 
@@ -1299,6 +1354,15 @@ class UsersUpdate(CustomModelUpdate):
 
 
 # OPERATIONAL CLASSES
+
+
+class CircleciTokens(CircleciTokensBaseSchema):
+    """CircleciTokens Schema for Pydantic.
+
+    Inherits from CircleciTokensBaseSchema. Add any customization here.
+    """
+
+    pass
 
 
 class Contacts(ContactsBaseSchema):

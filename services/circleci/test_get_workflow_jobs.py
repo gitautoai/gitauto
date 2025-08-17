@@ -15,7 +15,7 @@ def test_get_workflow_jobs_with_valid_token(mock_get):
     # Load mock response from saved payload
     with open("payloads/circleci/workflow_jobs.json", "r") as f:
         job_items = json.load(f)
-    
+
     mock_response_data = {"items": job_items, "next_page_token": None}
 
     mock_response = Mock()

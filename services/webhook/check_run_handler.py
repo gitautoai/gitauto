@@ -45,6 +45,7 @@ from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase)
 from services.supabase.create_user_request import create_user_request
+from services.supabase.get_circleci_token import get_circleci_token
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.get_retry_pairs import get_retry_workflow_id_hash_pairs
 from services.supabase.usage.update_retry_pairs import (
@@ -245,7 +246,7 @@ def handle_check_run(payload: CheckRunCompletedPayload):
 
     # Get the error log from the workflow run
     if is_circleci:
-        circleci_token = repo_settings.get("circleci_token") if repo_settings else None
+        circleci_token = get_circleci_token(owner_id)
 
         if not circleci_token:
             comment_body = "CircleCI token not configured. Please add your CircleCI token in GitAuto repository settings to enable automatic test failure fixes."
