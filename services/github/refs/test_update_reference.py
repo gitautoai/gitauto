@@ -338,7 +338,8 @@ def test_update_reference_rate_limit_error_returns_false(sample_base_args, mock_
         "X-RateLimit-Limit": "5000", 
         "X-RateLimit-Remaining": "0", 
         "X-RateLimit-Used": "5000",
-        "X-RateLimit-Reset": "1640995200"
+        import time
+        "X-RateLimit-Reset": str(int(time.time()) + 3600)  # 1 hour from now
     }
     mock_error_response.status_code = 403
     http_error.response = mock_error_response
