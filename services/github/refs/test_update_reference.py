@@ -389,7 +389,6 @@ def test_update_reference_server_error_returns_false(sample_base_args, mock_requ
 
 
 def test_update_reference_json_decode_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
-    import json
     json_error = json.JSONDecodeError("Invalid JSON", "invalid json", 0)
     mock_requests_patch.side_effect = json_error
     
