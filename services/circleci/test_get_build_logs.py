@@ -3,6 +3,7 @@
 import json
 from unittest.mock import patch, Mock
 
+from config import UTF8
 from services.circleci.get_build_logs import get_circleci_build_logs
 
 
@@ -14,14 +15,14 @@ def test_get_build_logs_with_valid_token(mock_get):
     token = "test-token"
 
     # Load mock build data
-    with open("payloads/circleci/build_16.json", "r") as f:
+    with open("payloads/circleci/build_16.json", "r", encoding=UTF8) as f:
         mock_build_data = json.load(f)
 
     # Load mock log entries
-    with open("payloads/circleci/log_entries.json", "r") as f:
+    with open("payloads/circleci/log_entries.json", "r", encoding=UTF8) as f:
         mock_log_data = json.load(f)
 
-    def mock_get_side_effect(url, **kwargs):
+    def mock_get_side_effect(url, **_kwargs):
         mock_response = Mock()
         if "/project/" in url:
             mock_response.status_code = 200
@@ -78,7 +79,7 @@ def test_get_build_logs_successful_build(mock_get):
     token = "test-token"
 
     # Load successful build data
-    with open("payloads/circleci/build_15.json", "r") as f:
+    with open("payloads/circleci/build_15.json", "r", encoding=UTF8) as f:
         mock_build_data = json.load(f)
 
     # Modify to be successful

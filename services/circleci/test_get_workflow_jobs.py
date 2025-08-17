@@ -3,6 +3,7 @@
 import json
 from unittest.mock import patch, Mock
 
+from config import UTF8
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
 
 
@@ -13,7 +14,7 @@ def test_get_workflow_jobs_with_valid_token(mock_get):
     token = "test-token"
 
     # Load mock response from saved payload
-    with open("payloads/circleci/workflow_jobs.json", "r") as f:
+    with open("payloads/circleci/workflow_jobs.json", "r", encoding=UTF8) as f:
         job_items = json.load(f)
 
     mock_response_data = {"items": job_items, "next_page_token": None}
