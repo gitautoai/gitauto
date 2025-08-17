@@ -1,0 +1,494 @@
+{
+  "all_commit_details": [
+    {
+      "author_date": null,
+      "author_email": "hnishio0105@gmail.com",
+      "author_login": "Hiroshi Nishio",
+      "author_name": "Hiroshi Nishio",
+      "body": "Trigger fresh CircleCI build for type verification",
+      "branch": "wes",
+      "commit": "db4ec424965804032dc8db860f2bb7f391c1914c",
+      "commit_url": "https://github.com/gitautoai/gitauto/commit/db4ec424965804032dc8db860f2bb7f391c1914c",
+      "committer_date": null,
+      "committer_email": null,
+      "committer_login": null,
+      "committer_name": null,
+      "subject": "Trigger fresh CircleCI build for type verification"
+    }
+  ],
+  "all_commit_details_truncated": false,
+  "author_date": null,
+  "author_email": "hnishio0105@gmail.com",
+  "author_name": "Hiroshi Nishio",
+  "body": "Trigger fresh CircleCI build for type verification",
+  "branch": "wes",
+  "build_num": 15,
+  "build_parameters": {
+    "CIRCLE_PULL_REQUEST": "https://github.com/gitautoai/gitauto/pull/1436"
+  },
+  "build_time_millis": 41652,
+  "build_url": "https://circleci.com/circleci/89f0ee9c-2c51-4655-af80-59b8a060422f/de80d2f0-75e3-402c-8158-23af436980da/15",
+  "canceled": false,
+  "canceler": null,
+  "circle_yml": {
+    "string": "# Orb 'circleci/python@2.1.1' resolved to 'circleci/python@2.1.1'\nversion: 2\njobs:\n  Quick Validation Tests (Should Pass):\n    docker:\n    - image: cimg/python:3.11\n    steps:\n    - checkout\n    - run:\n        command: |-\n          # shellcheck disable=SC2016\n          echo 'if [ \"${PARAM_PKG_MNGR}\" = \"auto\" ]; then\n            if [ -f \"requirements.txt\" ]; then\n                if [ -f \"${PARAM_SETUP_FILE_PATH:-setup.py}\" ]; then\n                    export DETECT_PKG_MNGR=\"pip-dist\"\n                else\n                    export DETECT_PKG_MNGR=\"pip\"\n                fi\n                elif [ -f \"Pipfile\" ]; then\n                export DETECT_PKG_MNGR=\"pipenv\"\n                export PYTHON_ENV_TOOL=\"pipenv\"\n                elif [ -f \"pyproject.toml\" ]; then\n                export DETECT_PKG_MNGR=\"poetry\"\n                export PYTHON_ENV_TOOL=\"poetry\"\n            fi\n            echo \"INFO: Detected Package Manager ${DETECT_PKG_MNGR}\"\n          fi' > /tmp/detect-env.sh\n          chmod +x /tmp/detect-env.sh\n          echo 'export AUTO_DETECT_ENV_SCRIPT=\"/tmp/detect-env.sh\"' >> \"$BASH_ENV\"\n        name: Export automatic environment detection script\n    - run:\n        command: |-\n          if [ ! \"${BASH_ENV_PYTHON_ALIASED}\" ]; then\n              echo 'if [ ! $(command -v python) ]; then\n            shopt -s expand_aliases\n            alias python=python3\n            alias pip=pip3\n          fi\n\n          BASH_ENV_PYTHON_ALIASED=true' >> \"$BASH_ENV\"\n          fi\n        name: Alias Python\n    - run:\n        command: \"# shellcheck source=detect-env.sh\\nsource \\\"$AUTO_DETECT_ENV_SCRIPT\\\"\\n\\nCACHE_DIR=\\\"/tmp/cci_pycache\\\"\\nLOCKFILE_PATH=\\\"${CACHE_DIR}/lockfile\\\"\\n\\nmkdir -p \\\"${CACHE_DIR}\\\"\\n\\nif [ ! -f \\\"${LOCKFILE_PATH}\\\" ]; then\\n    case ${DETECT_PKG_MNGR:-${PARAM_PKG_MNGR}} in\\n        pip | pip-dist)\\n            LOCK_FILE=\\\"${PARAM_DEPENDENCY_FILE:-requirements.txt}\\\"\\n        ;;\\n        pipenv)\\n            LOCK_FILE=\\\"Pipfile.lock\\\"\\n        ;;\\n        poetry)\\n            LOCK_FILE=\\\"poetry.lock\\\"\\n        ;;\\n    esac\\n    \\n    if [ -z \\\"${LOCK_FILE}\\\" ]; then\\n        echo \\\"WARNING: Could not determine lockfile path for ${DETECT_PKG_MNGR:-PARAM_PKG_MNGR}\\\"\\n    else\\n        FULL_LOCK_FILE=$(readlink -f \\\"${LOCK_FILE}\\\")\\n\\n        if [ -f \\\"${LOCK_FILE}\\\" ]; then\\n            echo \\\"INFO: Copying ${FULL_LOCK_FILE} to ${LOCKFILE_PATH}\\\"\\n            cp \\\"${FULL_LOCK_FILE}\\\" \\\"${LOCKFILE_PATH}\\\"\\n        else\\n            echo \\\"WARNING: Could not find lockfile at ${LOCK_FILE}\\\"\\n        fi\\n    fi\\nfi\"\n        environment:\n          PARAM_DEPENDENCY_FILE: requirements.txt\n          PARAM_PKG_MNGR: pip\n          PARAM_PYPI_CACHE: true\n          PARAM_VENV_CACHE: true\n          PARAM_VENV_PATH: ''\n        name: Link lockfile\n        working_directory: .\n    - run:\n        command: python --version | cut -d ' ' -f2 > /tmp/python-version\n        name: Save python version\n    - restore_cache:\n        keys:\n        - v1-cci_pycache-{{ .Branch }}-{{ checksum \"/tmp/cci_pycache/lockfile\" }}-{{ checksum \"/tmp/python-version\" }}-\n    - run:\n        command: \"recurse() {\\n    if [ ! -d \\\"$1\\\" ] || [ ! -e \\\"$2\\\" ]; then\\n        mv -u \\\"$1\\\" \\\"$2\\\" || exit\\n        return\\n    fi\\n    for entry in \\\"$1/\\\"* \\\"$1/.\\\"[!.]* \\\"$1/..\\\"?*; do\\n        if [ -e \\\"$entry\\\" ]; then\\n            recurse \\\"$entry\\\" \\\"$2/${entry##\\\"$1/\\\"}\\\"\\n        fi\\n    done\\n}\\n\\nrestore_paths() {\\n    if [ -d \\\"${1}\\\" ] && [ -n \\\"$(ls -A \\\"${1}\\\" 2>/dev/null)\\\" ]; then\\n        for file in \\\"${1}\\\"/*; do\\n            decoded=$(basename \\\"${file}\\\" | base64 -d)\\n            parent_dir=$(dirname \\\"${decoded}\\\")\\n            \\n            # make sure the parent directories exist\\n            if [ ! -d \\\"${parent_dir}\\\" ]; then\\n                mkdir -p \\\"${parent_dir}\\\"\\n            fi\\n            \\n            echo \\\"INFO: Restoring ${file} to ${decoded}\\\"\\n\\n            recurse \\\"${file}\\\" \\\"${decoded}\\\"\\n        done\\n    fi\\n}\\n\\nCACHE_DIR=\\\"/tmp/cci_pycache\\\"\\n\\nif [ \\\"${PARAM_VENV_CACHE}\\\" = \\\"1\\\" ]; then\\n    restore_paths \\\"${CACHE_DIR}/venv\\\"\\nfi\\n\\nif [ \\\"${PARAM_PYPI_CACHE}\\\" = \\\"1\\\" ]; then\\n    restore_paths \\\"${CACHE_DIR}/pypi\\\"\\nfi\"\n        environment:\n          PARAM_PYPI_CACHE: true\n          PARAM_VENV_CACHE: true\n        name: Move restored cache\n        working_directory: .\n    - run:\n        command: \"pip install -r requirements.txt \\n\"\n        name: Install dependencies with pip using project requirements.txt\n        working_directory: .\n    - run:\n        command: \"# shellcheck source=detect-env.sh\\nsource \\\"$AUTO_DETECT_ENV_SCRIPT\\\"\\n\\ncase ${DETECT_PKG_MNGR:-${PARAM_PKG_MNGR}} in\\n    pip | pip-dist)\\n        LOCK_FILE=\\\"${PARAM_DEPENDENCY_FILE:-requirements.txt}\\\"\\n        CACHE_PATHS='[ \\\"/home/circleci/.cache/pip\\\", \\\"/home/circleci/.pyenv/versions\\\", \\\"/home/circleci/.local/lib\\\" ]'\\n    ;;\\n    pipenv) # TODO: use PIPENV_PIPFILE\\n        LOCK_FILE=\\\"Pipfile.lock\\\"\\n        PIPENV_VENV_PATH=\\\"${WORKON_HOME:-/home/circleci/.local/share/virtualenvs}\\\"\\n        \\n        if [ -z \\\"${PIPENV_VENV_IN_PROJECT}\\\" ]; then\\n            VENV_PATHS=\\\"[ \\\\\\\"${PIPENV_VENV_PATH}\\\\\\\" ]\\\"\\n        else\\n            VENV_PATHS=\\\"[ \\\\\\\"${CIRCLE_WORKING_DIRECTORY}/.venvs\\\\\\\" ]\\\"\\n        fi\\n        \\n        CACHE_PATHS='[ \\\"/home/circleci/.cache/pip\\\", \\\"/home/circleci/.cache/pipenv\\\" ]'\\n    ;;\\n    poetry)\\n        LOCK_FILE=\\\"poetry.lock\\\"\\n        VENV_PATHS='[ \\\"/home/circleci/.cache/pypoetry/virtualenvs\\\" ]'\\n        CACHE_PATHS='[ \\\"/home/circleci/.cache/pip\\\" ]'\\n    ;;\\nesac\\n\\nif [ -n \\\"${PARAM_VENV_PATH}\\\" ]; then\\n    VENV_PATHS=\\\"${PARAM_VENV_PATH}\\\"\\nfi\\n\\nCACHE_DIR=\\\"/tmp/cci_pycache\\\"\\nmkdir -p \\\"${CACHE_DIR}\\\"\\n\\nlink_paths() {\\n    if [ -d \\\"${1}\\\" ]; then\\n        echo \\\"INFO: Cache directory already exists. Skipping...\\\"\\n        return\\n    fi\\n    \\n    mkdir \\\"${1}\\\"\\n    \\n    for encoded in $(echo \\\"${2}\\\" | jq -r '.[] | @base64'); do\\n        decoded=$(echo \\\"${encoded}\\\" | base64 -d)\\n        \\n        if [ -e \\\"${decoded}\\\" ]; then\\n            echo \\\"INFO: Copying ${decoded} to ${1}/${encoded}\\\"\\n            cp -a \\\"${decoded}\\\" \\\"${1}/${encoded}\\\"\\n        else\\n            echo \\\"INFO: Could not find ${decoded}. Skipping...\\\"\\n        fi\\n    done\\n}\\n\\nif [ \\\"${PARAM_VENV_CACHE}\\\" = \\\"1\\\" ] && [ -n \\\"${VENV_PATHS}\\\" ]; then\\n    link_paths \\\"${CACHE_DIR}/venv\\\" \\\"${VENV_PATHS}\\\"\\nfi\\n\\nif [ \\\"${PARAM_PYPI_CACHE}\\\" = \\\"1\\\" ]; then\\n    link_paths \\\"${CACHE_DIR}/pypi\\\" \\\"${CACHE_PATHS}\\\"\\nfi\\n\\nLOCKFILE_PATH=\\\"${CACHE_DIR}/lockfile\\\"\\n\\nif [ -e \\\"${LOCKFILE_PATH}\\\" ]; then\\n    rm -f \\\"${LOCKFILE_PATH}\\\"\\nfi\\n\\nif [ -e \\\"${LOCK_FILE}\\\" ]; then\\n    FULL_LOCK_FILE=$(readlink -f \\\"${LOCK_FILE}\\\")\\n    \\n    echo \\\"INFO: Copying ${FULL_LOCK_FILE} to ${LOCKFILE_PATH}\\\"\\n    cp \\\"${FULL_LOCK_FILE}\\\" \\\"${LOCKFILE_PATH}\\\"\\nfi\"\n        environment:\n          PARAM_DEPENDENCY_FILE: requirements.txt\n          PARAM_PKG_MNGR: pip\n          PARAM_PYPI_CACHE: true\n          PARAM_VENV_CACHE: true\n          PARAM_VENV_PATH: ''\n        name: Copy to cache directory\n        working_directory: .\n    - save_cache:\n        key: v1-cci_pycache-{{ .Branch }}-{{ checksum \"/tmp/cci_pycache/lockfile\" }}-{{ checksum \"/tmp/python-version\" }}-\n        paths:\n        - /tmp/cci_pycache\n    - run:\n        name: Run passing tests\n        command: |\n          echo \"Starting passing test suite...\"\n          python -c \"print('Test 1: Configuration loaded successfully')\"\n          python -c \"print('Test 2: Database connection established')\"\n          python -c \"print('Test 3: API endpoints responding')\"\n          echo \"All tests passed!\"\n  Stress Tests (Intentional Failure):\n    docker:\n    - image: cimg/python:3.11\n    steps:\n    - checkout\n    - run:\n        command: |-\n          # shellcheck disable=SC2016\n          echo 'if [ \"${PARAM_PKG_MNGR}\" = \"auto\" ]; then\n            if [ -f \"requirements.txt\" ]; then\n                if [ -f \"${PARAM_SETUP_FILE_PATH:-setup.py}\" ]; then\n                    export DETECT_PKG_MNGR=\"pip-dist\"\n                else\n                    export DETECT_PKG_MNGR=\"pip\"\n                fi\n                elif [ -f \"Pipfile\" ]; then\n                export DETECT_PKG_MNGR=\"pipenv\"\n                export PYTHON_ENV_TOOL=\"pipenv\"\n                elif [ -f \"pyproject.toml\" ]; then\n                export DETECT_PKG_MNGR=\"poetry\"\n                export PYTHON_ENV_TOOL=\"poetry\"\n            fi\n            echo \"INFO: Detected Package Manager ${DETECT_PKG_MNGR}\"\n          fi' > /tmp/detect-env.sh\n          chmod +x /tmp/detect-env.sh\n          echo 'export AUTO_DETECT_ENV_SCRIPT=\"/tmp/detect-env.sh\"' >> \"$BASH_ENV\"\n        name: Export automatic environment detection script\n    - run:\n        command: |-\n          if [ ! \"${BASH_ENV_PYTHON_ALIASED}\" ]; then\n              echo 'if [ ! $(command -v python) ]; then\n            shopt -s expand_aliases\n            alias python=python3\n            alias pip=pip3\n          fi\n\n          BASH_ENV_PYTHON_ALIASED=true' >> \"$BASH_ENV\"\n          fi\n        name: Alias Python\n    - run:\n        command: \"# shellcheck source=detect-env.sh\\nsource \\\"$AUTO_DETECT_ENV_SCRIPT\\\"\\n\\nCACHE_DIR=\\\"/tmp/cci_pycache\\\"\\nLOCKFILE_PATH=\\\"${CACHE_DIR}/lockfile\\\"\\n\\nmkdir -p \\\"${CACHE_DIR}\\\"\\n\\nif [ ! -f \\\"${LOCKFILE_PATH}\\\" ]; then\\n    case ${DETECT_PKG_MNGR:-${PARAM_PKG_MNGR}} in\\n        pip | pip-dist)\\n            LOCK_FILE=\\\"${PARAM_DEPENDENCY_FILE:-requirements.txt}\\\"\\n        ;;\\n        pipenv)\\n            LOCK_FILE=\\\"Pipfile.lock\\\"\\n        ;;\\n        poetry)\\n            LOCK_FILE=\\\"poetry.lock\\\"\\n        ;;\\n    esac\\n    \\n    if [ -z \\\"${LOCK_FILE}\\\" ]; then\\n        echo \\\"WARNING: Could not determine lockfile path for ${DETECT_PKG_MNGR:-PARAM_PKG_MNGR}\\\"\\n    else\\n        FULL_LOCK_FILE=$(readlink -f \\\"${LOCK_FILE}\\\")\\n\\n        if [ -f \\\"${LOCK_FILE}\\\" ]; then\\n            echo \\\"INFO: Copying ${FULL_LOCK_FILE} to ${LOCKFILE_PATH}\\\"\\n            cp \\\"${FULL_LOCK_FILE}\\\" \\\"${LOCKFILE_PATH}\\\"\\n        else\\n            echo \\\"WARNING: Could not find lockfile at ${LOCK_FILE}\\\"\\n        fi\\n    fi\\nfi\"\n        environment:\n          PARAM_DEPENDENCY_FILE: requirements.txt\n          PARAM_PKG_MNGR: pip\n          PARAM_PYPI_CACHE: true\n          PARAM_VENV_CACHE: true\n          PARAM_VENV_PATH: ''\n        name: Link lockfile\n        working_directory: .\n    - run:\n        command: python --version | cut -d ' ' -f2 > /tmp/python-version\n        name: Save python version\n    - restore_cache:\n        keys:\n        - v1-cci_pycache-{{ .Branch }}-{{ checksum \"/tmp/cci_pycache/lockfile\" }}-{{ checksum \"/tmp/python-version\" }}-\n    - run:\n        command: \"recurse() {\\n    if [ ! -d \\\"$1\\\" ] || [ ! -e \\\"$2\\\" ]; then\\n        mv -u \\\"$1\\\" \\\"$2\\\" || exit\\n        return\\n    fi\\n    for entry in \\\"$1/\\\"* \\\"$1/.\\\"[!.]* \\\"$1/..\\\"?*; do\\n        if [ -e \\\"$entry\\\" ]; then\\n            recurse \\\"$entry\\\" \\\"$2/${entry##\\\"$1/\\\"}\\\"\\n        fi\\n    done\\n}\\n\\nrestore_paths() {\\n    if [ -d \\\"${1}\\\" ] && [ -n \\\"$(ls -A \\\"${1}\\\" 2>/dev/null)\\\" ]; then\\n        for file in \\\"${1}\\\"/*; do\\n            decoded=$(basename \\\"${file}\\\" | base64 -d)\\n            parent_dir=$(dirname \\\"${decoded}\\\")\\n            \\n            # make sure the parent directories exist\\n            if [ ! -d \\\"${parent_dir}\\\" ]; then\\n                mkdir -p \\\"${parent_dir}\\\"\\n            fi\\n            \\n            echo \\\"INFO: Restoring ${file} to ${decoded}\\\"\\n\\n            recurse \\\"${file}\\\" \\\"${decoded}\\\"\\n        done\\n    fi\\n}\\n\\nCACHE_DIR=\\\"/tmp/cci_pycache\\\"\\n\\nif [ \\\"${PARAM_VENV_CACHE}\\\" = \\\"1\\\" ]; then\\n    restore_paths \\\"${CACHE_DIR}/venv\\\"\\nfi\\n\\nif [ \\\"${PARAM_PYPI_CACHE}\\\" = \\\"1\\\" ]; then\\n    restore_paths \\\"${CACHE_DIR}/pypi\\\"\\nfi\"\n        environment:\n          PARAM_PYPI_CACHE: true\n          PARAM_VENV_CACHE: true\n        name: Move restored cache\n        working_directory: .\n    - run:\n        command: \"pip install -r requirements.txt \\n\"\n        name: Install dependencies with pip using project requirements.txt\n        working_directory: .\n    - run:\n        command: \"# shellcheck source=detect-env.sh\\nsource \\\"$AUTO_DETECT_ENV_SCRIPT\\\"\\n\\ncase ${DETECT_PKG_MNGR:-${PARAM_PKG_MNGR}} in\\n    pip | pip-dist)\\n        LOCK_FILE=\\\"${PARAM_DEPENDENCY_FILE:-requirements.txt}\\\"\\n        CACHE_PATHS='[ \\\"/home/circleci/.cache/pip\\\", \\\"/home/circleci/.pyenv/versions\\\", \\\"/home/circleci/.local/lib\\\" ]'\\n    ;;\\n    pipenv) # TODO: use PIPENV_PIPFILE\\n        LOCK_FILE=\\\"Pipfile.lock\\\"\\n        PIPENV_VENV_PATH=\\\"${WORKON_HOME:-/home/circleci/.local/share/virtualenvs}\\\"\\n        \\n        if [ -z \\\"${PIPENV_VENV_IN_PROJECT}\\\" ]; then\\n            VENV_PATHS=\\\"[ \\\\\\\"${PIPENV_VENV_PATH}\\\\\\\" ]\\\"\\n        else\\n            VENV_PATHS=\\\"[ \\\\\\\"${CIRCLE_WORKING_DIRECTORY}/.venvs\\\\\\\" ]\\\"\\n        fi\\n        \\n        CACHE_PATHS='[ \\\"/home/circleci/.cache/pip\\\", \\\"/home/circleci/.cache/pipenv\\\" ]'\\n    ;;\\n    poetry)\\n        LOCK_FILE=\\\"poetry.lock\\\"\\n        VENV_PATHS='[ \\\"/home/circleci/.cache/pypoetry/virtualenvs\\\" ]'\\n        CACHE_PATHS='[ \\\"/home/circleci/.cache/pip\\\" ]'\\n    ;;\\nesac\\n\\nif [ -n \\\"${PARAM_VENV_PATH}\\\" ]; then\\n    VENV_PATHS=\\\"${PARAM_VENV_PATH}\\\"\\nfi\\n\\nCACHE_DIR=\\\"/tmp/cci_pycache\\\"\\nmkdir -p \\\"${CACHE_DIR}\\\"\\n\\nlink_paths() {\\n    if [ -d \\\"${1}\\\" ]; then\\n        echo \\\"INFO: Cache directory already exists. Skipping...\\\"\\n        return\\n    fi\\n    \\n    mkdir \\\"${1}\\\"\\n    \\n    for encoded in $(echo \\\"${2}\\\" | jq -r '.[] | @base64'); do\\n        decoded=$(echo \\\"${encoded}\\\" | base64 -d)\\n        \\n        if [ -e \\\"${decoded}\\\" ]; then\\n            echo \\\"INFO: Copying ${decoded} to ${1}/${encoded}\\\"\\n            cp -a \\\"${decoded}\\\" \\\"${1}/${encoded}\\\"\\n        else\\n            echo \\\"INFO: Could not find ${decoded}. Skipping...\\\"\\n        fi\\n    done\\n}\\n\\nif [ \\\"${PARAM_VENV_CACHE}\\\" = \\\"1\\\" ] && [ -n \\\"${VENV_PATHS}\\\" ]; then\\n    link_paths \\\"${CACHE_DIR}/venv\\\" \\\"${VENV_PATHS}\\\"\\nfi\\n\\nif [ \\\"${PARAM_PYPI_CACHE}\\\" = \\\"1\\\" ]; then\\n    link_paths \\\"${CACHE_DIR}/pypi\\\" \\\"${CACHE_PATHS}\\\"\\nfi\\n\\nLOCKFILE_PATH=\\\"${CACHE_DIR}/lockfile\\\"\\n\\nif [ -e \\\"${LOCKFILE_PATH}\\\" ]; then\\n    rm -f \\\"${LOCKFILE_PATH}\\\"\\nfi\\n\\nif [ -e \\\"${LOCK_FILE}\\\" ]; then\\n    FULL_LOCK_FILE=$(readlink -f \\\"${LOCK_FILE}\\\")\\n    \\n    echo \\\"INFO: Copying ${FULL_LOCK_FILE} to ${LOCKFILE_PATH}\\\"\\n    cp \\\"${FULL_LOCK_FILE}\\\" \\\"${LOCKFILE_PATH}\\\"\\nfi\"\n        environment:\n          PARAM_DEPENDENCY_FILE: requirements.txt\n          PARAM_PKG_MNGR: pip\n          PARAM_PYPI_CACHE: true\n          PARAM_VENV_CACHE: true\n          PARAM_VENV_PATH: ''\n        name: Copy to cache directory\n        working_directory: .\n    - save_cache:\n        key: v1-cci_pycache-{{ .Branch }}-{{ checksum \"/tmp/cci_pycache/lockfile\" }}-{{ checksum \"/tmp/python-version\" }}-\n        paths:\n        - /tmp/cci_pycache\n    - run:\n        name: Run intentionally failing tests\n        command: |\n          echo \"Starting failing test suite...\"\n          python -c \"print('Test 1: Starting validation...')\"\n          python -c \"import sys; print('ERROR: Database connection failed - timeout after 30 seconds'); sys.exit(1)\"\n          echo \"This line should not be reached\"\nworkflows:\n  version: 2\n  test-and-deploy:\n    jobs:\n    - Quick Validation Tests (Should Pass)\n    - Stress Tests (Intentional Failure)\n"
+  },
+  "committer_date": null,
+  "committer_email": null,
+  "committer_name": null,
+  "compare": null,
+  "context_ids": [],
+  "dont_build": null,
+  "fail_reason": null,
+  "failed": false,
+  "infrastructure_fail": false,
+  "is_first_green_build": false,
+  "job_name": null,
+  "lifecycle": "finished",
+  "messages": [],
+  "node": null,
+  "oss": false,
+  "outcome": "success",
+  "owners": [],
+  "parallel": 1,
+  "picard": {
+    "executor": "docker",
+    "resource_class": {
+      "class": "large",
+      "name": "Large",
+      "cpu": 4,
+      "ram": 8192
+    }
+  },
+  "platform": "2.0",
+  "previous": {
+    "build_num": 14,
+    "build_time_millis": 35756,
+    "status": "success"
+  },
+  "previous_successful_build": {
+    "build_num": 14,
+    "build_time_millis": 35756,
+    "status": "success"
+  },
+  "pull_requests": [
+    {
+      "head_sha": null,
+      "url": "https://github.com/gitautoai/gitauto/pull/1436"
+    }
+  ],
+  "queued_at": "2025-08-15T06:19:26.058Z",
+  "reponame": "de80d2f0-75e3-402c-8158-23af436980da",
+  "retries": null,
+  "retry_of": null,
+  "ssh_disabled": false,
+  "ssh_users": [],
+  "start_time": "2025-08-15T06:19:27.497Z",
+  "status": "success",
+  "steps": [
+    {
+      "name": "Spin up environment",
+      "actions": [
+        {
+          "index": 0,
+          "step": 0,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Spin up environment",
+          "type": "test",
+          "start_time": "2025-08-15T06:19:26.943Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": null,
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:19:29.157Z",
+          "exit_code": null,
+          "run_time_millis": 2214,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/0?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    },
+    {
+      "name": "Preparing environment variables",
+      "actions": [
+        {
+          "index": 0,
+          "step": 99,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Preparing environment variables",
+          "type": "test",
+          "start_time": "2025-08-15T06:19:29.445Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": null,
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:19:29.455Z",
+          "exit_code": null,
+          "run_time_millis": 10,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/99?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    },
+    {
+      "name": "Checkout code",
+      "actions": [
+        {
+          "index": 0,
+          "step": 101,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Checkout code",
+          "type": "test",
+          "start_time": "2025-08-15T06:19:29.513Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": null,
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:19:35.022Z",
+          "exit_code": null,
+          "run_time_millis": 5509,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/101?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    },
+    {
+      "name": "Export automatic environment detection script",
+      "actions": [
+        {
+          "index": 0,
+          "step": 102,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Export automatic environment detection script",
+          "type": "test",
+          "start_time": "2025-08-15T06:19:35.074Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": "#!/bin/bash -eo pipefail\n# shellcheck disable=SC2016\necho 'if [ \"${PARAM_PKG_MNGR}\" = \"auto\" ]; then\n  if [ -f \"requirements.txt\" ]; then\n      if [ -f \"${PARAM_SETUP_FILE_PATH:-setup.py}\" ]; then\n          export DETECT_PKG_MNGR=\"pip-dist\"\n      else\n          export DETECT_PKG_MNGR=\"pip\"\n      fi\n      elif [ -f \"Pipfile\" ]; then\n      export DETECT_PKG_MNGR=\"pipenv\"\n      export PYTHON_ENV_TOOL=\"pipenv\"\n      elif [ -f \"pyproject.toml\" ]; then\n      export DETECT_PKG_MNGR=\"poetry\"\n      export PYTHON_ENV_TOOL=\"poetry\"\n  fi\n  echo \"INFO: Detected Package Manager ${DETECT_PKG_MNGR}\"\nfi' > /tmp/detect-env.sh\nchmod +x /tmp/detect-env.sh\necho 'export AUTO_DETECT_ENV_SCRIPT=\"/tmp/detect-env.sh\"' >> \"$BASH_ENV\"",
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:19:35.083Z",
+          "exit_code": 0,
+          "run_time_millis": 9,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/102?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    },
+    {
+      "name": "Alias Python",
+      "actions": [
+        {
+          "index": 0,
+          "step": 103,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Alias Python",
+          "type": "test",
+          "start_time": "2025-08-15T06:19:35.125Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": "#!/bin/bash -eo pipefail\nif [ ! \"${BASH_ENV_PYTHON_ALIASED}\" ]; then\n    echo 'if [ ! $(command -v python) ]; then\n  shopt -s expand_aliases\n  alias python=python3\n  alias pip=pip3\nfi\n\nBASH_ENV_PYTHON_ALIASED=true' >> \"$BASH_ENV\"\nfi",
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:19:35.131Z",
+          "exit_code": 0,
+          "run_time_millis": 6,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/103?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    },
+    {
+      "name": "Link lockfile",
+      "actions": [
+        {
+          "index": 0,
+          "step": 104,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Link lockfile",
+          "type": "test",
+          "start_time": "2025-08-15T06:19:35.17Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": "#!/bin/bash -eo pipefail\n# shellcheck source=detect-env.sh\nsource \"$AUTO_DETECT_ENV_SCRIPT\"\n\nCACHE_DIR=\"/tmp/cci_pycache\"\nLOCKFILE_PATH=\"${CACHE_DIR}/lockfile\"\n\nmkdir -p \"${CACHE_DIR}\"\n\nif [ ! -f \"${LOCKFILE_PATH}\" ]; then\n    case ${DETECT_PKG_MNGR:-${PARAM_PKG_MNGR}} in\n        pip | pip-dist)\n            LOCK_FILE=\"${PARAM_DEPENDENCY_FILE:-requirements.txt}\"\n        ;;\n        pipenv)\n            LOCK_FILE=\"Pipfile.lock\"\n        ;;\n        poetry)\n            LOCK_FILE=\"poetry.lock\"\n        ;;\n    esac\n    \n    if [ -z \"${LOCK_FILE}\" ]; then\n        echo \"WARNING: Could not determine lockfile path for ${DETECT_PKG_MNGR:-PARAM_PKG_MNGR}\"\n    else\n        FULL_LOCK_FILE=$(readlink -f \"${LOCK_FILE}\")\n\n        if [ -f \"${LOCK_FILE}\" ]; then\n            echo \"INFO: Copying ${FULL_LOCK_FILE} to ${LOCKFILE_PATH}\"\n            cp \"${FULL_LOCK_FILE}\" \"${LOCKFILE_PATH}\"\n        else\n            echo \"WARNING: Could not find lockfile at ${LOCK_FILE}\"\n        fi\n    fi\nfi",
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:19:35.186Z",
+          "exit_code": 0,
+          "run_time_millis": 16,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/104?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    },
+    {
+      "name": "Save python version",
+      "actions": [
+        {
+          "index": 0,
+          "step": 105,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Save python version",
+          "type": "test",
+          "start_time": "2025-08-15T06:19:35.247Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": "#!/bin/bash -eo pipefail\npython --version | cut -d ' ' -f2 > /tmp/python-version",
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:19:35.346Z",
+          "exit_code": 0,
+          "run_time_millis": 99,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/105?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    },
+    {
+      "name": "Restoring cache",
+      "actions": [
+        {
+          "index": 0,
+          "step": 106,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Restoring cache",
+          "type": "test",
+          "start_time": "2025-08-15T06:19:35.387Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": null,
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:19:46.893Z",
+          "exit_code": null,
+          "run_time_millis": 11506,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/106?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    },
+    {
+      "name": "Move restored cache",
+      "actions": [
+        {
+          "index": 0,
+          "step": 107,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Move restored cache",
+          "type": "test",
+          "start_time": "2025-08-15T06:19:46.935Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": "#!/bin/bash -eo pipefail\nrecurse() {\n    if [ ! -d \"$1\" ] || [ ! -e \"$2\" ]; then\n        mv -u \"$1\" \"$2\" || exit\n        return\n    fi\n    for entry in \"$1/\"* \"$1/.\"[!.]* \"$1/..\"?*; do\n        if [ -e \"$entry\" ]; then\n            recurse \"$entry\" \"$2/${entry##\"$1/\"}\"\n        fi\n    done\n}\n\nrestore_paths() {\n    if [ -d \"${1}\" ] && [ -n \"$(ls -A \"${1}\" 2>/dev/null)\" ]; then\n        for file in \"${1}\"/*; do\n            decoded=$(basename \"${file}\" | base64 -d)\n            parent_dir=$(dirname \"${decoded}\")\n            \n            # make sure the parent directories exist\n            if [ ! -d \"${parent_dir}\" ]; then\n                mkdir -p \"${parent_dir}\"\n            fi\n            \n            echo \"INFO: Restoring ${file} to ${decoded}\"\n\n            recurse \"${file}\" \"${decoded}\"\n        done\n    fi\n}\n\nCACHE_DIR=\"/tmp/cci_pycache\"\n\nif [ \"${PARAM_VENV_CACHE}\" = \"1\" ]; then\n    restore_paths \"${CACHE_DIR}/venv\"\nfi\n\nif [ \"${PARAM_PYPI_CACHE}\" = \"1\" ]; then\n    restore_paths \"${CACHE_DIR}/pypi\"\nfi",
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:20:06.069Z",
+          "exit_code": 0,
+          "run_time_millis": 19134,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/107?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    },
+    {
+      "name": "Install dependencies with pip using project requirements.txt",
+      "actions": [
+        {
+          "index": 0,
+          "step": 108,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Install dependencies with pip using project requirements.txt",
+          "type": "test",
+          "start_time": "2025-08-15T06:20:06.149Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": "#!/bin/bash -eo pipefail\npip install -r requirements.txt \n",
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:20:08.22Z",
+          "exit_code": 0,
+          "run_time_millis": 2071,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/108?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    },
+    {
+      "name": "Copy to cache directory",
+      "actions": [
+        {
+          "index": 0,
+          "step": 109,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Copy to cache directory",
+          "type": "test",
+          "start_time": "2025-08-15T06:20:08.268Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": "#!/bin/bash -eo pipefail\n# shellcheck source=detect-env.sh\nsource \"$AUTO_DETECT_ENV_SCRIPT\"\n\ncase ${DETECT_PKG_MNGR:-${PARAM_PKG_MNGR}} in\n    pip | pip-dist)\n        LOCK_FILE=\"${PARAM_DEPENDENCY_FILE:-requirements.txt}\"\n        CACHE_PATHS='[ \"/home/circleci/.cache/pip\", \"/home/circleci/.pyenv/versions\", \"/home/circleci/.local/lib\" ]'\n    ;;\n    pipenv) # TODO: use PIPENV_PIPFILE\n        LOCK_FILE=\"Pipfile.lock\"\n        PIPENV_VENV_PATH=\"${WORKON_HOME:-/home/circleci/.local/share/virtualenvs}\"\n        \n        if [ -z \"${PIPENV_VENV_IN_PROJECT}\" ]; then\n            VENV_PATHS=\"[ \\\"${PIPENV_VENV_PATH}\\\" ]\"\n        else\n            VENV_PATHS=\"[ \\\"${CIRCLE_WORKING_DIRECTORY}/.venvs\\\" ]\"\n        fi\n        \n        CACHE_PATHS='[ \"/home/circleci/.cache/pip\", \"/home/circleci/.cache/pipenv\" ]'\n    ;;\n    poetry)\n        LOCK_FILE=\"poetry.lock\"\n        VENV_PATHS='[ \"/home/circleci/.cache/pypoetry/virtualenvs\" ]'\n        CACHE_PATHS='[ \"/home/circleci/.cache/pip\" ]'\n    ;;\nesac\n\nif [ -n \"${PARAM_VENV_PATH}\" ]; then\n    VENV_PATHS=\"${PARAM_VENV_PATH}\"\nfi\n\nCACHE_DIR=\"/tmp/cci_pycache\"\nmkdir -p \"${CACHE_DIR}\"\n\nlink_paths() {\n    if [ -d \"${1}\" ]; then\n        echo \"INFO: Cache directory already exists. Skipping...\"\n        return\n    fi\n    \n    mkdir \"${1}\"\n    \n    for encoded in $(echo \"${2}\" | jq -r '.[] | @base64'); do\n        decoded=$(echo \"${encoded}\" | base64 -d)\n        \n        if [ -e \"${decoded}\" ]; then\n            echo \"INFO: Copying ${decoded} to ${1}/${encoded}\"\n            cp -a \"${decoded}\" \"${1}/${encoded}\"\n        else\n            echo \"INFO: Could not find ${decoded}. Skipping...\"\n        fi\n    done\n}\n\nif [ \"${PARAM_VENV_CACHE}\" = \"1\" ] && [ -n \"${VENV_PATHS}\" ]; then\n    link_paths \"${CACHE_DIR}/venv\" \"${VENV_PATHS}\"\nfi\n\nif [ \"${PARAM_PYPI_CACHE}\" = \"1\" ]; then\n    link_paths \"${CACHE_DIR}/pypi\" \"${CACHE_PATHS}\"\nfi\n\nLOCKFILE_PATH=\"${CACHE_DIR}/lockfile\"\n\nif [ -e \"${LOCKFILE_PATH}\" ]; then\n    rm -f \"${LOCKFILE_PATH}\"\nfi\n\nif [ -e \"${LOCK_FILE}\" ]; then\n    FULL_LOCK_FILE=$(readlink -f \"${LOCK_FILE}\")\n    \n    echo \"INFO: Copying ${FULL_LOCK_FILE} to ${LOCKFILE_PATH}\"\n    cp \"${FULL_LOCK_FILE}\" \"${LOCKFILE_PATH}\"\nfi",
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:20:08.286Z",
+          "exit_code": 0,
+          "run_time_millis": 18,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/109?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    },
+    {
+      "name": "Saving cache",
+      "actions": [
+        {
+          "index": 0,
+          "step": 110,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Saving cache",
+          "type": "test",
+          "start_time": "2025-08-15T06:20:08.327Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": null,
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:20:08.461Z",
+          "exit_code": null,
+          "run_time_millis": 134,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/110?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    },
+    {
+      "name": "Run passing tests",
+      "actions": [
+        {
+          "index": 0,
+          "step": 111,
+          "allocation_id": "689ed16d55d0ab58b30a86e2-0-build/ABCDEFGH",
+          "name": "Run passing tests",
+          "type": "test",
+          "start_time": "2025-08-15T06:20:08.536Z",
+          "truncated": false,
+          "parallel": true,
+          "bash_command": "#!/bin/bash -eo pipefail\necho \"Starting passing test suite...\"\npython -c \"print('Test 1: Configuration loaded successfully')\"\npython -c \"print('Test 2: Database connection established')\"\npython -c \"print('Test 3: API endpoints responding')\"\necho \"All tests passed!\"\n",
+          "background": false,
+          "insignificant": false,
+          "has_output": true,
+          "continue": null,
+          "end_time": "2025-08-15T06:20:08.854Z",
+          "exit_code": 0,
+          "run_time_millis": 318,
+          "output_url": "https://circleci.com/api/private/output/presigned/ef9e4213-dcb2-42df-b298-fa88441f903c/0/111?token=eyJhbGciOiJFUzI1NiIsImtpZCI6InRhc2tzLW91dHB1dC1qd3QtdjEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NTUyMzk3NDQsImlzcyI6ImNpcmNsZWNpLmNvbSIsInN1YiI6ImVmOWU0MjEzLWRjYjItNDJkZi1iMjk4LWZhODg0NDFmOTAzYyJ9.U8IhX_ZOk2xNqVL77mACGpqxQqyoFU3lEUxUO8QvveQvr3lHCkBzF10sH7RrzLYizNIedf8elyXbLXDGsXDGrw",
+          "status": "success",
+          "failed": null,
+          "infrastructure_fail": null,
+          "timedout": null,
+          "canceled": null
+        }
+      ]
+    }
+  ],
+  "stop_time": "2025-08-15T06:20:09.15Z",
+  "subject": "Trigger fresh CircleCI build for type verification",
+  "timedout": false,
+  "usage_queued_at": "2025-08-15T06:19:25.882Z",
+  "user": {
+    "avatar_url": "https://avatars.githubusercontent.com/u/1231870?s=200&v=4",
+    "id": "b5307bcf-8b66-4311-8893-f30bd3b0907a",
+    "is_user": true,
+    "login": "wes@gitauto.ai",
+    "name": "wes@gitauto.ai",
+    "vcs_type": "circleci"
+  },
+  "username": "89f0ee9c-2c51-4655-af80-59b8a060422f",
+  "vcs_revision": "db4ec424965804032dc8db860f2bb7f391c1914c",
+  "vcs_tag": null,
+  "vcs_type": "circleci",
+  "vcs_url": "//circleci.com/89f0ee9c-2c51-4655-af80-59b8a060422f/de80d2f0-75e3-402c-8158-23af436980da",
+  "why": "github_app",
+  "workflows": {
+    "job_id": "ef9e4213-dcb2-42df-b298-fa88441f903c",
+    "job_name": "Quick Validation Tests (Should Pass)",
+    "upstream_concurrency_map": {},
+    "upstream_job_ids": [],
+    "workflow_id": "95f4abd1-5220-4946-af38-a27354085788",
+    "workflow_name": "test-and-deploy",
+    "workspace_id": "95f4abd1-5220-4946-af38-a27354085788"
+  }
+}

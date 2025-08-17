@@ -9,6 +9,10 @@ from config import EMAIL_LINK, GITHUB_APP_USER_NAME, UTF8
 from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_STUMBLED_MESSAGE
 from services.chat_with_agent import chat_with_agent
 
+# Local imports (CircleCI)
+from services.circleci.get_build_logs import get_circleci_build_logs
+from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
+
 # Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.create_comment import create_comment
@@ -41,6 +45,7 @@ from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase)
 from services.supabase.create_user_request import create_user_request
+from services.supabase.get_circleci_token import get_circleci_token
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.get_retry_pairs import get_retry_workflow_id_hash_pairs
 from services.supabase.usage.update_retry_pairs import (
@@ -54,14 +59,23 @@ from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approachi
 from utils.time.get_timeout_message import get_timeout_message
 
 
-def handle_check_run(payload: CheckRunCompletedPayload) -> None:
+def handle_check_run(payload: CheckRunCompletedPayload):
     current_time = time.time()
     trigger = "test_failure"
 
     # Extract workflow run id
     check_run: CheckRun = payload["check_run"]
     details_url = check_run["details_url"]
-    workflow_id = details_url.split(sep="/")[-3]
+
+    is_circleci = "circleci.com" in details_url if details_url else False
+    if is_circleci:
+        # URL: https://app.circleci.com/pipelines/circleci/J2wtzLah5rmzRnx6qn4RyQ/UUb5FLNgQCnif8mB6mQn7s/7/workflows/772ddda7-d6b7-49ad-9123-108d9f8164b5
+        workflow_id = details_url.split("/workflows/")[1].split("?")[0]
+        url_parts = details_url.split("/pipelines/")[1].split("/")
+        circleci_project_slug = f"{url_parts[0]}/{url_parts[1]}/{url_parts[2]}"
+    else:
+        workflow_id = details_url.split(sep="/")[-3]
+
     check_run_name = check_run["name"]
 
     # Extract repository related variables
@@ -197,33 +211,28 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
-    # Get the GitHub workflow file content
-    workflow_path = get_workflow_run_path(
-        owner=owner_name, repo=repo_name, run_id=workflow_id, token=token
-    )
-    permission_url = create_permission_url(
-        owner_type=owner_type, owner_name=owner_name, installation_id=installation_id
-    )
+    # Get the CI/CD workflow file content
+    if is_circleci:
+        # CircleCI uses .circleci/config.yml
+        workflow_path = ".circleci/config.yml"
+        workflow_content = get_remote_file_content(
+            file_path=workflow_path, base_args=base_args
+        )
+    else:
+        # GitHub Actions workflow
+        workflow_path = get_workflow_run_path(
+            owner=owner_name, repo=repo_name, run_id=workflow_id, token=token
+        )
 
-    if workflow_path == 404:
-        comment_body = f"{PERMISSION_DENIED_MESSAGE} {permission_url}"
-        log_messages.append(comment_body)
-        update_comment(body="\n".join(log_messages), base_args=base_args)
+        workflow_content = ""
+        if workflow_path != 404:
+            workflow_content = get_remote_file_content(
+                file_path=workflow_path, base_args=base_args
+            )
 
-        # Get installation permissions via API
-        permissions = get_installation_permissions(installation_id)
-
-        # Early return notification
-        early_return_msg = f"workflow_path is 404. Permission denied for workflow run id `{workflow_id}` in `{owner_name}/{repo_name}` - Permissions: `{permissions}`"
-        slack_notify(early_return_msg, thread_ts)
-        return
-
-    workflow_content = get_remote_file_content(
-        file_path=workflow_path, base_args=base_args
-    )
     p += 5
     log_messages.append(
-        f"Checked out the GitHub Action workflow file. `{workflow_path}`"
+        f"Checked out the {'CircleCI' if is_circleci else 'GitHub Action'} workflow file. `{workflow_path}`"
     )
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
@@ -236,10 +245,53 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
     update_comment(body=comment_body, base_args=base_args)
 
     # Get the error log from the workflow run
-    error_log: str | int | None = get_workflow_run_logs(
-        owner=owner_name, repo=repo_name, run_id=workflow_id, token=token
-    )
+    if is_circleci:
+        circleci_token = get_circleci_token(owner_id)
+
+        if not circleci_token:
+            comment_body = "CircleCI token not configured. Please add your CircleCI token in GitAuto repository settings to enable automatic test failure fixes."
+            update_comment(body=comment_body, base_args=base_args)
+            slack_notify(
+                f"CircleCI token not configured for {owner_name}/{repo_name}", thread_ts
+            )
+            return
+
+        # Use the project slug extracted from the URL
+        # Get failed jobs from workflow and collect their logs
+        workflow_jobs = get_circleci_workflow_jobs(workflow_id, circleci_token)
+        failed_job_logs = []
+
+        for job in workflow_jobs:
+            if job.get("status") != "failed":
+                continue
+
+            job_number = job.get("job_number")
+            if not job_number:
+                continue
+
+            job_logs = get_circleci_build_logs(
+                circleci_project_slug, job_number, circleci_token
+            )
+            if job_logs and job_logs != 404:
+                failed_job_logs.append(job_logs)
+
+        error_log = (
+            "\n\n".join(failed_job_logs)
+            if failed_job_logs
+            else "No failed job logs found"
+        )
+    else:
+        # GitHub Actions log retrieval (existing logic)
+        error_log = get_workflow_run_logs(
+            owner=owner_name, repo=repo_name, run_id=workflow_id, token=token
+        )
+
     if error_log == 404:
+        permission_url = create_permission_url(
+            owner_type=owner_type,
+            owner_name=owner_name,
+            installation_id=installation_id,
+        )
         comment_body = f"{PERMISSION_DENIED_MESSAGE} {permission_url}"
         log_messages.append(comment_body)
         update_comment(body="\n".join(log_messages), base_args=base_args)
@@ -251,6 +303,7 @@ def handle_check_run(payload: CheckRunCompletedPayload) -> None:
         early_return_msg = f"error_log is 404. Permission denied for workflow run id `{workflow_id}` in `{owner_name}/{repo_name}` - Permissions: `{permissions}`"
         slack_notify(early_return_msg, thread_ts)
         return
+
     if error_log is None:
         comment_body = f"I couldn't find the error log. Contact {EMAIL_LINK} if the issue persists."
         log_messages.append(comment_body)

@@ -205,7 +205,7 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 
 1. Run black formatting: `black .`
 2. Run ruff linting: `ruff check . --fix`
-3. Run pylint: `pylint .`
+3. Run pylint: `pylint . --fail-under=10.0`
 4. Run pyright type checking: `pyright`
 5. Run pytest: `python -m pytest -r fE -x`
 6. Check current branch is not main: `git branch --show-current`

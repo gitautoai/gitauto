@@ -1,0 +1,47 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@2.1.1
+
+jobs:
+  test-pass:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements.txt
+      - run:
+          name: Run passing tests
+          command: |
+            echo "Starting passing test suite..."
+            python -c "print('Test 1: Configuration loaded successfully')"
+            python -c "print('Test 2: Database connection established')"
+            python -c "print('Test 3: API endpoints responding')"
+            echo "All tests passed!"
+
+  test-fail:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements.txt
+      - run:
+          name: Run intentionally failing tests
+          command: |
+            echo "Starting failing test suite..."
+            python -c "print('Test 1: Starting validation...')"
+            python -c "import sys; print('ERROR: Database connection failed - timeout after 30 seconds'); sys.exit(1)"
+            echo "This line should not be reached"
+
+workflows:
+  version: 2
+  test-and-deploy:
+    jobs:
+      - test-pass:
+          name: "Quick Validation Tests (Should Pass)"
+      - test-fail:
+          name: "Stress Tests (Intentional Failure)"

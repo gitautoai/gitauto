@@ -1,6 +1,5 @@
 # Standard imports
-from unittest.mock import patch, MagicMock
-import logging
+from unittest.mock import patch
 
 # Third party imports
 import pytest
@@ -75,11 +74,15 @@ def test_delete_scheduler_with_special_characters(mock_scheduler_client, mock_lo
     )
 
 
-def test_delete_scheduler_client_error_resource_not_found(mock_scheduler_client, mock_logging):
+def test_delete_scheduler_client_error_resource_not_found(
+    mock_scheduler_client, mock_logging
+):
     """Test scheduler deletion when resource is not found."""
     # Setup
     schedule_name = "non-existent-schedule"
-    error_response = {"Error": {"Code": "ResourceNotFoundException", "Message": "Schedule not found"}}
+    error_response = {
+        "Error": {"Code": "ResourceNotFoundException", "Message": "Schedule not found"}
+    }
     mock_scheduler_client.delete_schedule.side_effect = ClientError(
         error_response, "DeleteSchedule"
     )
@@ -94,11 +97,15 @@ def test_delete_scheduler_client_error_resource_not_found(mock_scheduler_client,
     mock_logging.info.assert_not_called()
 
 
-def test_delete_scheduler_client_error_access_denied(mock_scheduler_client, mock_logging):
+def test_delete_scheduler_client_error_access_denied(
+    mock_scheduler_client, mock_logging
+):
     """Test scheduler deletion when access is denied."""
     # Setup
     schedule_name = "restricted-schedule"
-    error_response = {"Error": {"Code": "AccessDeniedException", "Message": "Access denied"}}
+    error_response = {
+        "Error": {"Code": "AccessDeniedException", "Message": "Access denied"}
+    }
     mock_scheduler_client.delete_schedule.side_effect = ClientError(
         error_response, "DeleteSchedule"
     )
@@ -116,7 +123,9 @@ def test_delete_scheduler_client_error_throttling(mock_scheduler_client, mock_lo
     """Test scheduler deletion when throttling occurs."""
     # Setup
     schedule_name = "throttled-schedule"
-    error_response = {"Error": {"Code": "ThrottlingException", "Message": "Rate exceeded"}}
+    error_response = {
+        "Error": {"Code": "ThrottlingException", "Message": "Rate exceeded"}
+    }
     mock_scheduler_client.delete_schedule.side_effect = ClientError(
         error_response, "DeleteSchedule"
     )
@@ -212,23 +221,25 @@ def test_delete_scheduler_logging_level(mock_scheduler_client):
     """Test that the function uses logging.info for success messages."""
     schedule_name = "test-schedule"
     mock_scheduler_client.delete_schedule.return_value = None
-    
+
     with patch("services.aws.delete_scheduler.logging.info") as mock_info:
         result = delete_scheduler(schedule_name)
-        
+
         assert result is True
         mock_info.assert_called_once_with(
             "Deleted EventBridge Scheduler: %s", schedule_name
         )
 
 
-def test_delete_scheduler_client_method_call_parameters(mock_scheduler_client, mock_logging):
+def test_delete_scheduler_client_method_call_parameters(
+    mock_scheduler_client, mock_logging
+):
     """Test that scheduler_client.delete_schedule is called with correct parameters."""
     schedule_name = "test-schedule-params"
     mock_scheduler_client.delete_schedule.return_value = None
-    
+
     delete_scheduler(schedule_name)
-    
+
     # Verify the exact method call
     mock_scheduler_client.delete_schedule.assert_called_once()
     call_args = mock_scheduler_client.delete_schedule.call_args
@@ -241,12 +252,11 @@ def test_delete_scheduler_exception_before_logging(mock_scheduler_client, mock_l
     schedule_name = "exception-before-log"
     # Exception occurs during delete_schedule call, before logging
     mock_scheduler_client.delete_schedule.side_effect = Exception("AWS Error")
-    
+
     result = delete_scheduler(schedule_name)
-    
+
     # Should return False due to handle_exceptions decorator
     assert result is False
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
     # Logging should not be called since exception occurred before it
     mock_logging.info.assert_not_called()
-
