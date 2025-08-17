@@ -74,3 +74,89 @@ def test_get_workflow_jobs_with_invalid_workflow_id(mock_get):
 
     # Should return empty list for 404
     assert result == []
+
+
+@patch("services.circleci.get_workflow_jobs.get")
+def test_get_workflow_jobs_successful_request_no_items(mock_get):
+    """Test successful request but no items in response."""
+    workflow_id = "test-workflow-id"
+    token = "test-token"
+
+    mock_response_data = {"next_page_token": None}  # No items key
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = mock_response_data
+    mock_get.return_value = mock_response
+
+    result = get_circleci_workflow_jobs(workflow_id, token)
+
+    # Should return empty list when no items
+    assert result == []
+
+
+@patch("services.circleci.get_workflow_jobs.get")
+def test_get_workflow_jobs_successful_request_empty_items(mock_get):
+    """Test successful request with empty items list."""
+    workflow_id = "test-workflow-id"
+    token = "test-token"
+
+    mock_response_data = {"items": [], "next_page_token": None}
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = mock_response_data
+    mock_get.return_value = mock_response
+
+    result = get_circleci_workflow_jobs(workflow_id, token)
+
+    # Should return empty list
+    assert result == []
+
+
+@patch("services.circleci.get_workflow_jobs.get")
+def test_get_workflow_jobs_with_next_page_token(mock_get):
+    """Test response with next page token."""
+    workflow_id = "test-workflow-id"
+    token = "test-token"
+
+    # Load mock response from saved payload
+    with open("payloads/circleci/workflow_jobs.json", "r", encoding=UTF8) as f:
+        job_items = json.load(f)
+
+    mock_response_data = {"items": job_items, "next_page_token": "next_token_123"}
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = mock_response_data
+    mock_get.return_value = mock_response
+
+    result = get_circleci_workflow_jobs(workflow_id, token)
+
+    # Should return the items regardless of next_page_token
+    assert isinstance(result, list)
+    assert len(result) >= 2
+
+
+@patch("services.circleci.get_workflow_jobs.get")
+def test_get_workflow_jobs_http_error(mock_get):
+    """Test handling of HTTP errors other than 404."""
+    workflow_id = "test-workflow-id"
+    token = "test-token"
+
+    mock_response = Mock()
+    mock_response.status_code = 500
+    mock_response.raise_for_status.side_effect = Exception("Internal Server Error")
+    mock_get.return_value = mock_response
+
+    result = get_circleci_workflow_jobs(workflow_id, token)
+
+    # Should return empty list due to exception handling
+    assert result == []
+
+
+@patch("services.circleci.get_workflow_jobs.get")
+def test_get_workflow_jobs_request_parameters(mock_get):
+    """Test that the request is made with correct parameters."""
+    workflow_id = "test-workflow-id-123"
+    token = "test-token-456"
