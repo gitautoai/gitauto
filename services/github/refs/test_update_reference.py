@@ -337,7 +337,7 @@ def test_update_reference_rate_limit_error_returns_false(sample_base_args, mock_
     mock_error_response.text = "API rate limit exceeded"
     mock_error_response.headers = {
         "X-RateLimit-Limit": "5000", 
-        "X-RateLimit-Remaining": "0", 
+        "X-RateLimit-Remaining": "1",
         "X-RateLimit-Used": "5000",
         "X-RateLimit-Reset": str(int(time.time()) + 3600)  # 1 hour from now
     }
