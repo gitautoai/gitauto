@@ -384,3 +384,88 @@ def test_update_reference_server_error_returns_false(sample_base_args, mock_requ
     new_commit_sha = "server123"
     result = update_reference(sample_base_args, new_commit_sha)
     
+
+
+def test_update_reference_json_decode_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    import json
+    json_error = json.JSONDecodeError("Invalid JSON", "invalid json", 0)
+    mock_requests_patch.side_effect = json_error
+    
+    new_commit_sha = "json_error123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_attribute_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    attribute_error = AttributeError("'NoneType' object has no attribute 'patch'")
+    mock_requests_patch.side_effect = attribute_error
+    
+    new_commit_sha = "attr_error123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_key_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    key_error = KeyError("missing_key")
+    mock_requests_patch.side_effect = key_error
+    
+    new_commit_sha = "key_error123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_type_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    type_error = TypeError("unsupported operand type(s)")
+    mock_requests_patch.side_effect = type_error
+    
+    new_commit_sha = "type_error123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_generic_exception_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    generic_error = Exception("Generic error occurred")
+    mock_requests_patch.side_effect = generic_error
+    
+    new_commit_sha = "generic_error123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+@pytest.mark.parametrize("commit_sha", [
+    "a1b2c3d4e5f6",  # Short SHA
+    "a1b2c3d4e5f67890abcdef1234567890abcdef12",  # Full 40-character SHA
+    "0123456789abcdef0123456789abcdef01234567",  # All hex characters
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",  # All same character
+    "1234567890123456789012345678901234567890",  # All numbers (valid hex)
+])
+def test_update_reference_with_various_commit_sha_formats(sample_base_args, mock_requests_patch, mock_create_headers, commit_sha):
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    update_reference(sample_base_args, commit_sha)
+    
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["json"]["sha"] == commit_sha
+
+
+@pytest.mark.parametrize("branch_name", [
+    "main",
+    "develop", 
+    "feature/new-feature",
+    "hotfix/urgent-fix",
+    "release/v1.0.0",
+    "bugfix/issue-123",
+    "feature_branch_with_underscores",
+    "branch-with-dashes",
+    "UPPERCASE_BRANCH",
+    "mixed_Case_Branch",
+])
+def test_update_reference_with_various_branch_names(sample_base_args, mock_requests_patch, mock_create_headers, branch_name):
