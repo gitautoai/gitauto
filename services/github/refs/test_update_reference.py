@@ -264,3 +264,123 @@ def test_update_reference_calls_raise_for_status(sample_base_args, mock_requests
     update_reference(sample_base_args, new_commit_sha)
     
     mock_response.raise_for_status.assert_called_once()
+
+
+def test_update_reference_with_special_characters_in_branch(sample_base_args, mock_requests_patch, mock_create_headers):
+    # Create a new BaseArgs with branch containing special characters
+    modified_args = sample_base_args.copy()
+    modified_args.update({"new_branch": "feature/fix-bug-123"})
+    
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "special123"
+    update_reference(modified_args, new_commit_sha)
+    
+    expected_url = f"{GITHUB_API_URL}/repos/test-owner/test-repo/git/refs/heads/feature/fix-bug-123"
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["url"] == expected_url
+
+
+def test_update_reference_with_unicode_characters_in_branch(sample_base_args, mock_requests_patch, mock_create_headers):
+    # Create a new BaseArgs with branch containing unicode characters
+    modified_args = sample_base_args.copy()
+    modified_args.update({"new_branch": "feature-测试"})
+    
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "unicode123"
+    update_reference(modified_args, new_commit_sha)
+    
+    expected_url = f"{GITHUB_API_URL}/repos/test-owner/test-repo/git/refs/heads/feature-测试"
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["url"] == expected_url
+
+
+def test_update_reference_with_empty_commit_sha(sample_base_args, mock_requests_patch, mock_create_headers):
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = ""  # Empty SHA
+    update_reference(sample_base_args, new_commit_sha)
+    
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["json"]["sha"] == ""
+
+
+def test_update_reference_with_numeric_commit_sha(sample_base_args, mock_requests_patch, mock_create_headers):
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "1234567890abcdef"  # Numeric and hex characters
+    update_reference(sample_base_args, new_commit_sha)
+    
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["json"]["sha"] == new_commit_sha
+
+
+def test_update_reference_rate_limit_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    mock_response = MagicMock()
+    http_error = requests.exceptions.HTTPError("403 Forbidden")
+    mock_error_response = MagicMock()
+    mock_error_response.reason = "Forbidden"
+    mock_error_response.text = "API rate limit exceeded"
+    mock_error_response.headers = {
+        "X-RateLimit-Limit": "5000", 
+        "X-RateLimit-Remaining": "0", 
+        "X-RateLimit-Used": "5000",
+        "X-RateLimit-Reset": "1640995200"
+    }
+    mock_error_response.status_code = 403
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "ratelimit123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_unauthorized_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    mock_response = MagicMock()
+    http_error = requests.exceptions.HTTPError("401 Unauthorized")
+    mock_error_response = MagicMock()
+    mock_error_response.reason = "Unauthorized"
+    mock_error_response.text = "Bad credentials"
+    mock_error_response.headers = {"X-RateLimit-Limit": "5000", "X-RateLimit-Remaining": "4999", "X-RateLimit-Used": "1"}
+    mock_error_response.status_code = 401
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "unauthorized123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_server_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    mock_response = MagicMock()
+    http_error = requests.exceptions.HTTPError("500 Internal Server Error")
+    mock_error_response = MagicMock()
+    mock_error_response.reason = "Internal Server Error"
+    mock_error_response.text = "Server error occurred"
+    mock_error_response.headers = {"X-RateLimit-Limit": "5000", "X-RateLimit-Remaining": "4999", "X-RateLimit-Used": "1"}
+    mock_error_response.status_code = 500
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "server123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
