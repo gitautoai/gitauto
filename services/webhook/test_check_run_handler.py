@@ -493,3 +493,10 @@ def test_handle_check_run_progress_updates(mock_payload, mock_dependencies):
     
     # Should update comment multiple times for progress
     assert mock_dependencies["update_comment"].call_count >= 3
+
+
+def test_handle_check_run_empty_details_url(mock_payload, mock_dependencies):
+    """Test handling when details_url is empty."""
+    mock_payload["check_run"]["details_url"] = ""
+    result = handle_check_run(mock_payload)
+    mock_dependencies["create_user_request"].assert_called_once()
