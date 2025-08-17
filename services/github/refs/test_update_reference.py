@@ -384,6 +384,7 @@ def test_update_reference_server_error_returns_false(sample_base_args, mock_requ
     new_commit_sha = "server123"
     result = update_reference(sample_base_args, new_commit_sha)
     
+    assert result is False
 
 
 def test_update_reference_json_decode_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
@@ -469,3 +470,91 @@ def test_update_reference_with_various_commit_sha_formats(sample_base_args, mock
     "mixed_Case_Branch",
 ])
 def test_update_reference_with_various_branch_names(sample_base_args, mock_requests_patch, mock_create_headers, branch_name):
+    modified_args = sample_base_args.copy()
+    modified_args.update({"new_branch": branch_name})
+    
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "branch_test123"
+    update_reference(modified_args, new_commit_sha)
+    
+    expected_url = f"{GITHUB_API_URL}/repos/test-owner/test-repo/git/refs/heads/{branch_name}"
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["url"] == expected_url
+
+
+@pytest.mark.parametrize("status_code,reason,text", [
+    (400, "Bad Request", "Invalid request"),
+    (401, "Unauthorized", "Bad credentials"),
+    (403, "Forbidden", "Access denied"),
+    (404, "Not Found", "Repository not found"),
+    (409, "Conflict", "Reference already exists"),
+    (422, "Unprocessable Entity", "Validation failed"),
+    (500, "Internal Server Error", "Server error"),
+    (502, "Bad Gateway", "Bad gateway"),
+    (503, "Service Unavailable", "Service unavailable"),
+])
+def test_update_reference_various_http_errors_return_false(sample_base_args, mock_requests_patch, mock_create_headers, status_code, reason, text):
+    mock_response = MagicMock()
+    http_error = requests.exceptions.HTTPError(f"{status_code} {reason}")
+    mock_error_response = MagicMock()
+    mock_error_response.reason = reason
+    mock_error_response.text = text
+    mock_error_response.headers = {"X-RateLimit-Limit": "5000", "X-RateLimit-Remaining": "4999", "X-RateLimit-Used": "1"}
+    mock_error_response.status_code = status_code
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = f"error_{status_code}"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_extracts_correct_values_from_base_args(sample_base_args, mock_requests_patch, mock_create_headers):
+    # Test that the function correctly extracts values from BaseArgs
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "extract_test123"
+    update_reference(sample_base_args, new_commit_sha)
+    
+    # Verify that create_headers was called with the token from base_args
+    mock_create_headers.assert_called_once_with(token=sample_base_args["token"])
+    
+    # Verify the URL construction uses correct values from base_args
+    expected_url = f"{GITHUB_API_URL}/repos/{sample_base_args['owner']}/{sample_base_args['repo']}/git/refs/heads/{sample_base_args['new_branch']}"
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["url"] == expected_url
+
+
+def test_update_reference_preserves_request_structure(sample_base_args, mock_requests_patch, mock_create_headers):
+    # Test that the request structure matches GitHub API expectations
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "structure_test123"
+    update_reference(sample_base_args, new_commit_sha)
+    
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    
+    # Verify all required parameters are present
+    assert "url" in call_args[1]
+    assert "json" in call_args[1]
+    assert "headers" in call_args[1]
+    assert "timeout" in call_args[1]
+    
+    # Verify the JSON payload structure
+    json_payload = call_args[1]["json"]
+    assert isinstance(json_payload, dict)
+    assert "sha" in json_payload
+    assert json_payload["sha"] == new_commit_sha
+    assert len(json_payload) == 1  # Only 'sha' should be in the payload
