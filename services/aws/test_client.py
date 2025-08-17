@@ -1,6 +1,5 @@
 from unittest.mock import patch, MagicMock
 import pytest
-import boto3
 from mypy_boto3_scheduler import EventBridgeSchedulerClient
 
 from services.aws.client import scheduler_client, AWS_REGION
