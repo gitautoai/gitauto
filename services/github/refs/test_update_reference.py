@@ -1,3 +1,5 @@
+import time
+import json
 from unittest.mock import patch, MagicMock
 import pytest
 import requests
@@ -264,3 +266,295 @@ def test_update_reference_calls_raise_for_status(sample_base_args, mock_requests
     update_reference(sample_base_args, new_commit_sha)
     
     mock_response.raise_for_status.assert_called_once()
+
+
+def test_update_reference_with_special_characters_in_branch(sample_base_args, mock_requests_patch, mock_create_headers):
+    # Create a new BaseArgs with branch containing special characters
+    modified_args = sample_base_args.copy()
+    modified_args.update({"new_branch": "feature/fix-bug-123"})
+    
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "special123"
+    update_reference(modified_args, new_commit_sha)
+    
+    expected_url = f"{GITHUB_API_URL}/repos/test-owner/test-repo/git/refs/heads/feature/fix-bug-123"
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["url"] == expected_url
+
+
+def test_update_reference_with_unicode_characters_in_branch(sample_base_args, mock_requests_patch, mock_create_headers):
+    # Create a new BaseArgs with branch containing unicode characters
+    modified_args = sample_base_args.copy()
+    modified_args.update({"new_branch": "feature-测试"})
+    
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "unicode123"
+    update_reference(modified_args, new_commit_sha)
+    
+    expected_url = f"{GITHUB_API_URL}/repos/test-owner/test-repo/git/refs/heads/feature-测试"
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["url"] == expected_url
+
+
+def test_update_reference_with_empty_commit_sha(sample_base_args, mock_requests_patch, mock_create_headers):
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = ""  # Empty SHA
+    update_reference(sample_base_args, new_commit_sha)
+    
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["json"]["sha"] == ""
+
+
+def test_update_reference_with_numeric_commit_sha(sample_base_args, mock_requests_patch, mock_create_headers):
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "1234567890abcdef"  # Numeric and hex characters
+    update_reference(sample_base_args, new_commit_sha)
+    
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["json"]["sha"] == new_commit_sha
+
+
+def test_update_reference_rate_limit_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    mock_response = MagicMock()
+    http_error = requests.exceptions.HTTPError("403 Forbidden")
+    mock_error_response = MagicMock()
+    mock_error_response.reason = "Forbidden"
+    mock_error_response.text = "API rate limit exceeded"
+    mock_error_response.headers = {
+        "X-RateLimit-Limit": "5000", 
+        "X-RateLimit-Remaining": "1",
+        "X-RateLimit-Used": "5000",
+    }
+    mock_error_response.status_code = 403
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "ratelimit123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_unauthorized_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    mock_response = MagicMock()
+    http_error = requests.exceptions.HTTPError("401 Unauthorized")
+    mock_error_response = MagicMock()
+    mock_error_response.reason = "Unauthorized"
+    mock_error_response.text = "Bad credentials"
+    mock_error_response.headers = {"X-RateLimit-Limit": "5000", "X-RateLimit-Remaining": "4999", "X-RateLimit-Used": "1"}
+    mock_error_response.status_code = 401
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "unauthorized123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_server_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    mock_response = MagicMock()
+    http_error = requests.exceptions.HTTPError("500 Internal Server Error")
+    mock_error_response = MagicMock()
+    mock_error_response.reason = "Internal Server Error"
+    mock_error_response.text = "Server error occurred"
+    mock_error_response.headers = {"X-RateLimit-Limit": "5000", "X-RateLimit-Remaining": "4999", "X-RateLimit-Used": "1"}
+    mock_error_response.status_code = 500
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "server123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_json_decode_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    json_error = json.JSONDecodeError("Invalid JSON", "invalid json", 0)
+    mock_requests_patch.side_effect = json_error
+    
+    new_commit_sha = "json_error123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_attribute_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    attribute_error = AttributeError("'NoneType' object has no attribute 'patch'")
+    mock_requests_patch.side_effect = attribute_error
+    
+    new_commit_sha = "attr_error123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_key_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    key_error = KeyError("missing_key")
+    mock_requests_patch.side_effect = key_error
+    
+    new_commit_sha = "key_error123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_type_error_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    type_error = TypeError("unsupported operand type(s)")
+    mock_requests_patch.side_effect = type_error
+    
+    new_commit_sha = "type_error123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_generic_exception_returns_false(sample_base_args, mock_requests_patch, mock_create_headers):
+    generic_error = Exception("Generic error occurred")
+    mock_requests_patch.side_effect = generic_error
+    
+    new_commit_sha = "generic_error123"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+@pytest.mark.parametrize("commit_sha", [
+    "a1b2c3d4e5f6",  # Short SHA
+    "a1b2c3d4e5f67890abcdef1234567890abcdef12",  # Full 40-character SHA
+    "0123456789abcdef0123456789abcdef01234567",  # All hex characters
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",  # All same character
+    "1234567890123456789012345678901234567890",  # All numbers (valid hex)
+])
+def test_update_reference_with_various_commit_sha_formats(sample_base_args, mock_requests_patch, mock_create_headers, commit_sha):
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    update_reference(sample_base_args, commit_sha)
+    
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["json"]["sha"] == commit_sha
+
+
+@pytest.mark.parametrize("branch_name", [
+    "main",
+    "develop", 
+    "feature/new-feature",
+    "hotfix/urgent-fix",
+    "release/v1.0.0",
+    "bugfix/issue-123",
+    "feature_branch_with_underscores",
+    "branch-with-dashes",
+    "UPPERCASE_BRANCH",
+    "mixed_Case_Branch",
+])
+def test_update_reference_with_various_branch_names(sample_base_args, mock_requests_patch, mock_create_headers, branch_name):
+    modified_args = sample_base_args.copy()
+    modified_args.update({"new_branch": branch_name})
+    
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "branch_test123"
+    update_reference(modified_args, new_commit_sha)
+    
+    expected_url = f"{GITHUB_API_URL}/repos/test-owner/test-repo/git/refs/heads/{branch_name}"
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["url"] == expected_url
+
+
+@pytest.mark.parametrize("status_code,reason,text", [
+    (400, "Bad Request", "Invalid request"),
+    (401, "Unauthorized", "Bad credentials"),
+    (403, "Forbidden", "Access denied"),
+    (404, "Not Found", "Repository not found"),
+    (409, "Conflict", "Reference already exists"),
+    (422, "Unprocessable Entity", "Validation failed"),
+    (500, "Internal Server Error", "Server error"),
+    (502, "Bad Gateway", "Bad gateway"),
+    (503, "Service Unavailable", "Service unavailable"),
+])
+def test_update_reference_various_http_errors_return_false(sample_base_args, mock_requests_patch, mock_create_headers, status_code, reason, text):
+    mock_response = MagicMock()
+    http_error = requests.exceptions.HTTPError(f"{status_code} {reason}")
+    mock_error_response = MagicMock()
+    mock_error_response.reason = reason
+    mock_error_response.text = text
+    mock_error_response.headers = {"X-RateLimit-Limit": "5000", "X-RateLimit-Remaining": "4999", "X-RateLimit-Used": "1"}
+    mock_error_response.status_code = status_code
+    http_error.response = mock_error_response
+    mock_response.raise_for_status.side_effect = http_error
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = f"error_{status_code}"
+    result = update_reference(sample_base_args, new_commit_sha)
+    
+    assert result is False
+
+
+def test_update_reference_extracts_correct_values_from_base_args(sample_base_args, mock_requests_patch, mock_create_headers):
+    # Test that the function correctly extracts values from BaseArgs
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "extract_test123"
+    update_reference(sample_base_args, new_commit_sha)
+    
+    # Verify that create_headers was called with the token from base_args
+    mock_create_headers.assert_called_once_with(token=sample_base_args["token"])
+    
+    # Verify the URL construction uses correct values from base_args
+    expected_url = f"{GITHUB_API_URL}/repos/{sample_base_args['owner']}/{sample_base_args['repo']}/git/refs/heads/{sample_base_args['new_branch']}"
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    assert call_args[1]["url"] == expected_url
+
+
+def test_update_reference_preserves_request_structure(sample_base_args, mock_requests_patch, mock_create_headers):
+    # Test that the request structure matches GitHub API expectations
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_requests_patch.return_value = mock_response
+    
+    new_commit_sha = "structure_test123"
+    update_reference(sample_base_args, new_commit_sha)
+    
+    mock_requests_patch.assert_called_once()
+    call_args = mock_requests_patch.call_args
+    
+    # Verify all required parameters are present
+    assert "url" in call_args[1]
+    assert "json" in call_args[1]
+    assert "headers" in call_args[1]
+    assert "timeout" in call_args[1]
+    
+    # Verify the JSON payload structure
+    json_payload = call_args[1]["json"]
+    assert isinstance(json_payload, dict)
+    assert "sha" in json_payload
+    assert json_payload["sha"] == new_commit_sha
+    assert len(json_payload) == 1  # Only 'sha' should be in the payload
