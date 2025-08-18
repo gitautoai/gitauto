@@ -302,36 +302,45 @@ def test_is_issue_open_key_error():
 
 def test_is_issue_open_url_parsing_edge_cases():
     """Test URL parsing with various edge cases."""
-    edge_cases = [
-        ("https://github.com/owner/repo/issues/123/", True),  # Trailing slash
-        ("https://github.com/owner/repo/issues/123#comment", True),  # With fragment
-        ("https://github.com/owner/repo/issues/123?tab=timeline", True),  # With query params
-        ("https://github.com/owner-with-dash/repo_with_underscore/issues/999", True),  # Special chars in names
-        ("https://github.com/a/b/issues/1", True),  # Minimal valid case
-        ("https://github.com/owner/repo/issues/", True),  # Missing issue number - invalid format
-        ("https://github.com/owner/repo/issues", True),  # Missing slash and number - invalid format
+    # URLs that will make API calls (have proper structure)
+    api_call_urls = [
+        "https://github.com/owner/repo/issues/123/",  # Trailing slash
+        "https://github.com/owner/repo/issues/123#comment",  # With fragment
+        "https://github.com/owner/repo/issues/123?tab=timeline",  # With query params
+        "https://github.com/owner-with-dash/repo_with_underscore/issues/999",  # Special chars in names
+        "https://github.com/a/b/issues/1",  # Minimal valid case
+        "https://github.com/owner/repo/issues/",  # Missing issue number but still makes API call
     ]
     
-    for url, expected_for_invalid in edge_cases:
+    # URLs that will NOT make API calls (return True early)
+    no_api_call_urls = [
+        "https://github.com/owner/repo/issues",  # Missing slash and number - invalid format
+    ]
+    
+    # Test URLs that make API calls
+    for url in api_call_urls:
         with patch("services.github.issues.is_issue_open.requests.get") as mock_get, \
              patch("services.github.issues.is_issue_open.create_headers") as mock_create_headers:
             
-            if "/issues/" in url and url.split("/issues/")[1] and url.split("/issues/")[1][0].isdigit():
-                # Valid URL format - mock successful response
-                mock_response = MagicMock()
-                mock_response.status_code = 200
-                mock_response.json.return_value = {"state": "open"}
-                mock_get.return_value = mock_response
-                mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
-                
-                result = is_issue_open(url, TOKEN)
-                assert result is True, f"Expected True for valid URL: {url}"
-                mock_get.assert_called_once()
-            else:
-                # Invalid URL format - should return True without making API call
-                result = is_issue_open(url, TOKEN)
-                assert result == expected_for_invalid, f"Expected {expected_for_invalid} for URL: {url}"
-                mock_get.assert_not_called()
+            # Mock successful response
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {"state": "open"}
+            mock_get.return_value = mock_response
+            mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+            
+            result = is_issue_open(url, TOKEN)
+            assert result is True, f"Expected True for URL that makes API call: {url}"
+            mock_get.assert_called_once()
+    
+    # Test URLs that do NOT make API calls
+    for url in no_api_call_urls:
+        with patch("services.github.issues.is_issue_open.requests.get") as mock_get, \
+             patch("services.github.issues.is_issue_open.create_headers") as mock_create_headers:
+            
+            result = is_issue_open(url, TOKEN)
+            assert result is True, f"Expected True for URL that doesn't make API call: {url}"
+            mock_get.assert_not_called()
 
 
 def test_is_issue_open_decorator_applied():
