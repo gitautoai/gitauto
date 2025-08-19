@@ -126,3 +126,24 @@ def test_update_comment_missing_comment_url_key():
     # Assert
     mock_patch.assert_not_called()
     assert result is None
+
+
+def test_update_comment_404_not_found():
+    # Arrange
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
+    )
+
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch, patch(
+        "services.github.comments.update_comment.logging"
+    ) as mock_logging:
+        mock_patch.return_value = mock_response
+        result = update_comment("Test comment", base_args)
+
