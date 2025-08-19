@@ -196,6 +196,10 @@ def test_update_comment_uses_timeout():
         mock_patch.return_value = mock_response
         result = update_comment("Test comment", base_args)
 
+    # Assert
+    mock_patch.assert_called_once()
+    assert mock_patch.call_args[1]["timeout"] == 30
+    assert result == {"id": 123, "body": "Test comment"}
 
 def test_update_comment_calls_raise_for_status():
     # Arrange
