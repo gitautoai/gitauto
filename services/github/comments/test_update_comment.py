@@ -146,7 +146,11 @@ def test_update_comment_404_not_found():
     ) as mock_logging:
         mock_patch.return_value = mock_response
         result = update_comment("Test comment", base_args)
-
+    # Assert
+    mock_patch.assert_called_once()
+    mock_logging.info.assert_called_once_with(
+        "Comment %s not found", "https://api.github.com/repos/owner/repo/issues/comments/123"
+    )
 
 
 def test_update_comment_prints_body():
