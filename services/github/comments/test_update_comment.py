@@ -191,3 +191,26 @@ def test_update_comment_uses_timeout():
     ) as mock_timeout:
         mock_patch.return_value = mock_response
         result = update_comment("Test comment", base_args)
+
+
+def test_update_comment_calls_raise_for_status():
+    # Arrange
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"id": 123, "body": "Test comment"}
+
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
+    )
+
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch:
+        mock_patch.return_value = mock_response
+        result = update_comment("Test comment", base_args)
+
+    # Assert
+    mock_response.raise_for_status.assert_called_once()
+    assert result == {"id": 123, "body": "Test comment"}
