@@ -201,6 +201,7 @@ def test_update_comment_uses_timeout():
     assert mock_patch.call_args[1]["timeout"] == 30
     assert result == {"id": 123, "body": "Test comment"}
 
+
 def test_update_comment_calls_raise_for_status():
     # Arrange
     mock_response = MagicMock()
