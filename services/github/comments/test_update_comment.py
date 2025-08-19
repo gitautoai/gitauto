@@ -151,7 +151,7 @@ def test_update_comment_404_not_found():
     mock_logging.info.assert_called_once_with(
         "Comment %s not found", "https://api.github.com/repos/owner/repo/issues/comments/123"
     )
-
+    assert result is None
 
 def test_update_comment_prints_body():
     # Arrange
