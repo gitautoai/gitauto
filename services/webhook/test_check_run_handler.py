@@ -286,7 +286,7 @@ def test_handle_check_run_with_404_logs(
     mock_get_changes.return_value = mock_pr_changes
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_tree.return_value = (mock_file_tree, None)
+    mock_get_tree.return_value = ("src/\n  main.py\n  test_main.py", None)
     mock_get_logs.return_value = 404
     mock_create_permission_url.return_value = "https://permission-url"
     mock_get_permissions.return_value = {"actions": "read"}
@@ -354,7 +354,7 @@ def test_handle_check_run_with_none_logs(
     mock_get_changes.return_value = mock_pr_changes
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_tree.return_value = (mock_file_tree, None)
+    mock_get_tree.return_value = ("src/\n  main.py\n  test_main.py", None)
     mock_get_logs.return_value = None
 
     # Execute
@@ -423,7 +423,7 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_changes.return_value = mock_pr_changes
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_tree.return_value = (mock_file_tree, None)
+    mock_get_tree.return_value = ("src/\n  main.py\n  test_main.py", None)
     mock_get_logs.return_value = mock_workflow_run_logs
 
     # Mock that this workflow/error pair has been seen before
@@ -498,7 +498,7 @@ def test_handle_check_run_with_closed_pr(
     mock_get_changes.return_value = mock_pr_changes
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_tree.return_value = (mock_file_tree, None)
+    mock_get_tree.return_value = ("src/\n  main.py\n  test_main.py", None)
     mock_get_logs.return_value = mock_workflow_run_logs
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = False
@@ -574,7 +574,7 @@ def test_handle_check_run_with_deleted_branch(
     mock_get_changes.return_value = mock_pr_changes
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_tree.return_value = (mock_file_tree, None)
+    mock_get_tree.return_value = ("src/\n  main.py\n  test_main.py", None)
     mock_get_logs.return_value = mock_workflow_run_logs
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = True
