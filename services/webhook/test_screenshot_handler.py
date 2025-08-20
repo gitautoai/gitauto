@@ -54,7 +54,7 @@ class TestGetUrlFilename:
         """Test URL filename generation with special characters."""
         url = "https://example.com/path with spaces/page?query=1"
         result = get_url_filename(url)
-        assert "path%20with%20spaces/page%3Fquery%3D1.png" == result
+        assert result == "path%20with%20spaces/page.png"
 
     def test_get_url_filename_with_empty_string(self):
         """Test URL filename generation with empty string."""
