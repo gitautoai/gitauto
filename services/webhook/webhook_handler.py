@@ -10,10 +10,8 @@ from config import (
 )
 
 # Local imports (AWS)
-from services.aws.create_log_group import create_log_group
 from services.aws.delete_scheduler import delete_scheduler
 from services.aws.get_schedulers import get_schedulers_by_owner_id
-from services.aws.switch_log_group import switch_lambda_log_group
 
 # Local imports (GitHub)
 from services.github.comments.create_gitauto_button_comment import (
@@ -63,16 +61,6 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     https://docs.github.com/en/apps/github-marketplace/using-the-github-marketplace-api-in-your-app/handling-new-purchases-and-free-trials
     https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=purchased#marketplace_purchase
     """
-    # Switch to repo-specific log group if we can extract owner/repo
-    repo = payload.get("repository")
-    if repo:
-        owner = repo.get("owner", {})
-        owner_name = owner.get("login")
-        repo_name = repo.get("name")
-        if owner_name and repo_name:
-            create_log_group(owner_name, repo_name)
-            switch_lambda_log_group(owner_name, repo_name)
-
     action: str | None = payload.get("action")
 
     # Handle push events from non-bot users
