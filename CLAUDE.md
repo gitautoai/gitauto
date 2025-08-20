@@ -59,6 +59,25 @@ source .env && psql "postgresql://postgres.dkrxtcbaqzrodvsagwwn:$SUPABASE_DB_PAS
 
 AWS CLI is available and configured for us-west-1 region.
 
+#### Searching CloudWatch Logs
+
+```bash
+# Search production Lambda logs
+# Log group: /aws/lambda/pr-agent-prod
+
+# Convert date to epoch milliseconds for AWS logs
+python3 -c "import datetime; print(int(datetime.datetime(2025, 8, 19, 19, 0, 0).timestamp() * 1000))"
+
+# Search for errors
+aws logs filter-log-events --log-group-name "/aws/lambda/pr-agent-prod" --filter-pattern "ERROR" --start-time START_EPOCH --end-time END_EPOCH --max-items 100
+
+# Get recent logs without filter
+aws logs filter-log-events --log-group-name "/aws/lambda/pr-agent-prod" --start-time START_EPOCH --end-time END_EPOCH --max-items 50
+
+# List available log groups
+aws logs describe-log-groups --log-group-name-prefix "/aws/lambda" --max-items 20
+```
+
 ## Architecture Overview
 
 ### Core Application Structure
