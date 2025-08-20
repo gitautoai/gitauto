@@ -12,7 +12,7 @@ from playwright.async_api import async_playwright
 
 # Local imports
 from config import GITHUB_APP_USER_NAME
-from services.aws.client import AWS_REGION
+from services.aws.clients import AWS_REGION
 from services.git.clone_repo import clone_repo
 from services.git.git_manager import (
     fetch_branch,

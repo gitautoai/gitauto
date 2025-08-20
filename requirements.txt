@@ -59,6 +59,8 @@ MarkupSafe==3.0.2
 mccabe==0.7.0
 mdurl==0.1.2
 multidict==6.1.0
+mypy-boto3-lambda==1.40.7
+mypy-boto3-logs==1.40.0
 mypy-boto3-scheduler==1.40.0
 mypy-extensions==1.0.0
 nodeenv==1.9.1
