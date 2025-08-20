@@ -211,10 +211,8 @@ def test_handle_check_run_full_workflow(
     mock_check_branch_exists.return_value = True
     
     mock_chat_agent.side_effect = [
-        ([], [], None, None, None, None, True, 50),   # First call (get mode) - exploration found
-        ([], [], None, None, None, None, True, 75),   # Second call (commit mode) - commit made
-        ([], [], None, None, None, None, False, 90),  # Third call (get mode) - no more exploration
-        ([], [], None, None, None, None, False, 100), # Fourth call (commit mode) - no more commits, loop exits
+        ([], [], None, None, None, None, False, 50),  # First call (get mode) - no exploration
+        ([], [], None, None, None, None, False, 75),  # Second call (commit mode) - no commit, loop exits
     ]
 
     # Execute
