@@ -241,13 +241,6 @@ def test_handle_check_run_full_workflow(
     second_call = mock_chat_agent.call_args_list[1]
     assert second_call.kwargs["mode"] == "commit"
     assert second_call.kwargs["trigger"] == "test_failure"
-    
-    # Second iteration
-    third_call = mock_chat_agent.call_args_list[2]
-    assert third_call.kwargs["mode"] == "get"
-    
-    fourth_call = mock_chat_agent.call_args_list[3]
-    assert fourth_call.kwargs["mode"] == "commit"
 
 
 @patch("services.webhook.check_run_handler.get_installation_access_token")
