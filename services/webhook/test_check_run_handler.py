@@ -131,7 +131,7 @@ def test_handle_check_run_skips_when_comment_exists(
     mock_check_run_payload,
 ):
     """Test that handler skips when relevant comment already exists."""
-    mock_get_token.return_value = TOKEN
+    mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = True
 
