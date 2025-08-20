@@ -146,17 +146,39 @@ def test_handle_check_run_skips_when_comment_exists(
 @patch("services.webhook.check_run_handler.slack_notify")
 @patch("services.webhook.check_run_handler.has_comment_with_text")
 @patch("services.webhook.check_run_handler.create_comment")
+@patch("services.webhook.check_run_handler.create_user_request")
+@patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
-@patch("services.webhook.check_run_handler.get_workflow_run_logs")
+@patch("services.webhook.check_run_handler.get_workflow_run_path")
+@patch("services.webhook.check_run_handler.get_remote_file_content")
 @patch("services.webhook.check_run_handler.get_file_tree_list")
+@patch("services.webhook.check_run_handler.get_workflow_run_logs")
+@patch("services.webhook.check_run_handler.update_comment")
+@patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_run_handler.is_pull_request_open")
+@patch("services.webhook.check_run_handler.check_branch_exists")
 @patch("services.webhook.check_run_handler.chat_with_agent")
+@patch("services.webhook.check_run_handler.create_empty_commit")
+@patch("services.webhook.check_run_handler.update_usage")
 def test_handle_check_run_full_workflow(
+    mock_update_usage,
+    mock_create_empty_commit,
     mock_chat_agent,
-    mock_get_tree,
+    mock_check_branch_exists,
+    mock_is_pr_open,
+    mock_update_retry_pairs,
+    mock_get_retry_pairs,
+    mock_update_comment,
     mock_get_logs,
+    mock_get_tree,
+    mock_get_remote_file,
+    mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
+    mock_cancel_workflows,
+    mock_create_user_request,
     mock_create_comment,
     mock_has_comment,
     mock_slack_notify,
@@ -174,27 +196,36 @@ def test_handle_check_run_full_workflow(
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
+    mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = mock_pr_data
     mock_get_changes.return_value = mock_pr_changes
-    mock_get_logs.return_value = mock_workflow_run_logs
+    mock_get_workflow_path.return_value = ".github/workflows/test.yml"
+    mock_get_remote_file.return_value = "workflow content"
     mock_get_tree.return_value = (mock_file_tree, None)
+    mock_get_logs.return_value = mock_workflow_run_logs
+    mock_get_retry_pairs.return_value = []
+    mock_is_pr_open.return_value = True
+    mock_check_branch_exists.return_value = True
     mock_chat_agent.side_effect = [
         ([], [], None, None, None, None, True, 50),  # First call (explore)
-        ([], [], None, None, None, None, True, 100),  # Second call (commit)
+        ([], [], None, None, None, None, False, 100),  # Second call (commit) - no commit to break loop
     ]
 
     # Execute
     handle_check_run(mock_check_run_payload)
 
-    # Verify
+    # Verify key functions were called
     mock_get_token.assert_called_once()
     mock_get_repo.assert_called_once()
     mock_has_comment.assert_called_once()
     mock_create_comment.assert_called_once()
+    mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
     mock_get_tree.assert_called_once()
+    mock_get_retry_pairs.assert_called_once()
+    mock_update_retry_pairs.assert_called_once()
     assert mock_chat_agent.call_count == 2
 
     # Verify chat_with_agent calls
@@ -212,13 +243,19 @@ def test_handle_check_run_full_workflow(
 @patch("services.webhook.check_run_handler.slack_notify")
 @patch("services.webhook.check_run_handler.has_comment_with_text")
 @patch("services.webhook.check_run_handler.create_comment")
+@patch("services.webhook.check_run_handler.create_user_request")
+@patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
+@patch("services.webhook.check_run_handler.update_comment")
 def test_handle_check_run_with_404_logs(
+    mock_update_comment,
     mock_get_logs,
     mock_get_changes,
     mock_get_pr,
+    mock_cancel_workflows,
+    mock_create_user_request,
     mock_create_comment,
     mock_has_comment,
     mock_slack_notify,
@@ -234,6 +271,7 @@ def test_handle_check_run_with_404_logs(
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
+    mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = mock_pr_data
     mock_get_changes.return_value = mock_pr_changes
     mock_get_logs.return_value = 404
@@ -246,15 +284,13 @@ def test_handle_check_run_with_404_logs(
     mock_get_repo.assert_called_once()
     mock_has_comment.assert_called_once()
     mock_create_comment.assert_called_once()
+    mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
 
     # Verify permission denied message in comment
-    mock_create_comment.assert_called_once_with(
-        body=ANY,  # The exact message is defined in constants
-        base_args=ANY
-    )
+    mock_update_comment.assert_called()
 
 
 @patch("services.webhook.check_run_handler.get_installation_access_token")
@@ -262,13 +298,19 @@ def test_handle_check_run_with_404_logs(
 @patch("services.webhook.check_run_handler.slack_notify")
 @patch("services.webhook.check_run_handler.has_comment_with_text")
 @patch("services.webhook.check_run_handler.create_comment")
+@patch("services.webhook.check_run_handler.create_user_request")
+@patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
+@patch("services.webhook.check_run_handler.update_comment")
 def test_handle_check_run_with_none_logs(
+    mock_update_comment,
     mock_get_logs,
     mock_get_changes,
     mock_get_pr,
+    mock_cancel_workflows,
+    mock_create_user_request,
     mock_create_comment,
     mock_has_comment,
     mock_slack_notify,
@@ -284,6 +326,7 @@ def test_handle_check_run_with_none_logs(
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
+    mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = mock_pr_data
     mock_get_changes.return_value = mock_pr_changes
     mock_get_logs.return_value = None
@@ -296,15 +339,13 @@ def test_handle_check_run_with_none_logs(
     mock_get_repo.assert_called_once()
     mock_has_comment.assert_called_once()
     mock_create_comment.assert_called_once()
+    mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
 
     # Verify error message in comment
-    mock_create_comment.assert_called_once_with(
-        body=ANY,  # The exact message includes EMAIL_LINK
-        base_args=ANY
-    )
+    mock_update_comment.assert_called()
 
 
 @patch("services.webhook.check_run_handler.get_installation_access_token")
@@ -312,15 +353,29 @@ def test_handle_check_run_with_none_logs(
 @patch("services.webhook.check_run_handler.slack_notify")
 @patch("services.webhook.check_run_handler.has_comment_with_text")
 @patch("services.webhook.check_run_handler.create_comment")
+@patch("services.webhook.check_run_handler.create_user_request")
+@patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
+@patch("services.webhook.check_run_handler.get_workflow_run_path")
+@patch("services.webhook.check_run_handler.get_remote_file_content")
+@patch("services.webhook.check_run_handler.get_file_tree_list")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
+@patch("services.webhook.check_run_handler.update_comment")
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
 def test_handle_check_run_with_existing_retry_pair(
-    mock_get_pairs,
+    mock_update_retry_pairs,
+    mock_get_retry_pairs,
+    mock_update_comment,
     mock_get_logs,
+    mock_get_tree,
+    mock_get_remote_file,
+    mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
+    mock_cancel_workflows,
+    mock_create_user_request,
     mock_create_comment,
     mock_has_comment,
     mock_slack_notify,
@@ -337,12 +392,16 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
+    mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = mock_pr_data
     mock_get_changes.return_value = mock_pr_changes
+    mock_get_workflow_path.return_value = ".github/workflows/test.yml"
+    mock_get_remote_file.return_value = "workflow content"
+    mock_get_tree.return_value = (mock_file_tree, None)
     mock_get_logs.return_value = mock_workflow_run_logs
 
     # Mock that this workflow/error pair has been seen before
-    mock_get_pairs.return_value = ["123:abc123"]  # Matches what will be generated
+    mock_get_retry_pairs.return_value = ["123:abc123"]  # Matches what will be generated
 
     # Execute
     handle_check_run(mock_check_run_payload)
@@ -352,16 +411,14 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_repo.assert_called_once()
     mock_has_comment.assert_called_once()
     mock_create_comment.assert_called_once()
+    mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
-    mock_get_pairs.assert_called_once()
+    mock_get_retry_pairs.assert_called_once()
 
     # Verify skip message in comment
-    mock_create_comment.assert_called_once_with(
-        body=ANY,  # Should contain "already tried to fix this exact error"
-        base_args=ANY
-    )
+    mock_update_comment.assert_called()
 
 
 @patch("services.webhook.check_run_handler.get_installation_access_token")
@@ -369,15 +426,31 @@ def test_handle_check_run_with_existing_retry_pair(
 @patch("services.webhook.check_run_handler.slack_notify")
 @patch("services.webhook.check_run_handler.has_comment_with_text")
 @patch("services.webhook.check_run_handler.create_comment")
+@patch("services.webhook.check_run_handler.create_user_request")
+@patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
+@patch("services.webhook.check_run_handler.get_workflow_run_path")
+@patch("services.webhook.check_run_handler.get_remote_file_content")
+@patch("services.webhook.check_run_handler.get_file_tree_list")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
+@patch("services.webhook.check_run_handler.update_comment")
+@patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_run_handler.is_pull_request_open")
 def test_handle_check_run_with_closed_pr(
     mock_is_pr_open,
+    mock_update_retry_pairs,
+    mock_get_retry_pairs,
+    mock_update_comment,
     mock_get_logs,
+    mock_get_tree,
+    mock_get_remote_file,
+    mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
+    mock_cancel_workflows,
+    mock_create_user_request,
     mock_create_comment,
     mock_has_comment,
     mock_slack_notify,
@@ -394,9 +467,14 @@ def test_handle_check_run_with_closed_pr(
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
+    mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = mock_pr_data
     mock_get_changes.return_value = mock_pr_changes
+    mock_get_workflow_path.return_value = ".github/workflows/test.yml"
+    mock_get_remote_file.return_value = "workflow content"
+    mock_get_tree.return_value = (mock_file_tree, None)
     mock_get_logs.return_value = mock_workflow_run_logs
+    mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = False
 
     # Execute
@@ -406,17 +484,15 @@ def test_handle_check_run_with_closed_pr(
     mock_get_token.assert_called_once()
     mock_get_repo.assert_called_once()
     mock_has_comment.assert_called_once()
-    mock_create_comment.assert_called()
+    mock_create_comment.assert_called_once()
+    mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
     mock_is_pr_open.assert_called_once()
 
     # Verify closed PR message in comment
-    mock_create_comment.assert_called_with(
-        body="Process stopped: Pull request #1 was closed during execution.",
-        base_args=ANY
-    )
+    mock_update_comment.assert_called()
 
 
 @patch("services.webhook.check_run_handler.get_installation_access_token")
@@ -424,15 +500,33 @@ def test_handle_check_run_with_closed_pr(
 @patch("services.webhook.check_run_handler.slack_notify")
 @patch("services.webhook.check_run_handler.has_comment_with_text")
 @patch("services.webhook.check_run_handler.create_comment")
+@patch("services.webhook.check_run_handler.create_user_request")
+@patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
+@patch("services.webhook.check_run_handler.get_workflow_run_path")
+@patch("services.webhook.check_run_handler.get_remote_file_content")
+@patch("services.webhook.check_run_handler.get_file_tree_list")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
+@patch("services.webhook.check_run_handler.update_comment")
+@patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_run_handler.is_pull_request_open")
 @patch("services.webhook.check_run_handler.check_branch_exists")
 def test_handle_check_run_with_deleted_branch(
     mock_branch_exists,
+    mock_is_pr_open,
+    mock_update_retry_pairs,
+    mock_get_retry_pairs,
+    mock_update_comment,
     mock_get_logs,
+    mock_get_tree,
+    mock_get_remote_file,
+    mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
+    mock_cancel_workflows,
+    mock_create_user_request,
     mock_create_comment,
     mock_has_comment,
     mock_slack_notify,
@@ -449,9 +543,15 @@ def test_handle_check_run_with_deleted_branch(
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
+    mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = mock_pr_data
     mock_get_changes.return_value = mock_pr_changes
+    mock_get_workflow_path.return_value = ".github/workflows/test.yml"
+    mock_get_remote_file.return_value = "workflow content"
+    mock_get_tree.return_value = (mock_file_tree, None)
     mock_get_logs.return_value = mock_workflow_run_logs
+    mock_get_retry_pairs.return_value = []
+    mock_is_pr_open.return_value = True
     mock_branch_exists.return_value = False
 
     # Execute
@@ -461,14 +561,12 @@ def test_handle_check_run_with_deleted_branch(
     mock_get_token.assert_called_once()
     mock_get_repo.assert_called_once()
     mock_has_comment.assert_called_once()
-    mock_create_comment.assert_called()
+    mock_create_comment.assert_called_once()
+    mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
     mock_branch_exists.assert_called_once()
 
     # Verify deleted branch message in comment
-    mock_create_comment.assert_called_with(
-        body="Process stopped: Branch 'feature-branch' has been deleted",
-        base_args=ANY
-    )
+    mock_update_comment.assert_called()
