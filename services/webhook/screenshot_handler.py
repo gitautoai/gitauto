@@ -127,7 +127,7 @@ def find_all_html_pages(repo_dir: str) -> list[str]:
                         .replace(".tsx", "")
                         .replace(".jsx", "")
                     )
-                    all_paths.add("/" + path.rstrip("/"))
+                    all_paths.add("/" + path.rstrip("/") if path else "/")
                     print(f"Found Next.js Pages Router file: `{file_path}`")
 
     return list(all_paths)
