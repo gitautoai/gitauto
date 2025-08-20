@@ -2,7 +2,7 @@
 import logging
 
 # Local imports
-from services.aws.client import scheduler_client
+from services.aws.clients import scheduler_client
 from utils.error.handle_exceptions import handle_exceptions
 
 
