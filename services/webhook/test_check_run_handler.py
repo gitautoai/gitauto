@@ -195,7 +195,7 @@ def test_handle_check_run_full_workflow(
 ):
     """Test the full workflow of handling a check run failure."""
     # Setup mocks
-    mock_get_token.return_value = TOKEN
+    mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
