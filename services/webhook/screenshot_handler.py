@@ -1,50 +1,39 @@
-# Standard library imports
-from json import dumps
+# Standard imports
 import os
 import shutil
-from time import sleep, time
-from typing import Any
-from urllib.parse import urlparse, quote
+import tempfile
+from time import sleep
+from urllib.parse import quote, urlparse
 
-# Third-party imports
+# Third party imports
 import boto3
 from playwright.async_api import async_playwright
 
 # Local imports
-from config import GITHUB_APP_USER_NAME
+from constants.general import GITHUB_APP_USER_NAME
 from services.aws.clients import AWS_REGION
 from services.git.clone_repo import clone_repo
-from services.git.git_manager import (
-    fetch_branch,
-    get_current_branch,
-    start_local_server,
-    switch_to_branch,
-)
-from services.github.comments.get_all_comments import get_all_comments
-from services.github.comments.delete_comment import delete_comment
+from services.git.git_manager import fetch_branch, get_current_branch, switch_to_branch
 from services.github.comments.create_comment import create_comment
+from services.github.comments.delete_comment import delete_comment
+from services.github.comments.get_all_comments import get_all_comments
+from services.github.installations.get_installation_access_token import (
+    get_installation_access_token,
+)
 from services.github.pulls.get_pull_request_file_changes import (
     get_pull_request_file_changes,
 )
-from services.github.token.get_installation_token import get_installation_access_token
-from utils.error.handle_exceptions import handle_exceptions
+from services.supabase.local_server import start_local_server
+from utils.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(raise_on_error=True)
-def get_url_filename(url_or_path: str) -> str:
-    if url_or_path.startswith(("http://", "https://")):
-        url_obj = urlparse(url_or_path)
-        # Extract just the path part, removing the domain
-        path = url_obj.path.lstrip("/")
-    else:
-        # For paths without domain, just use the path as is
-        path = url_or_path.lstrip("/")
-
-    # If path is empty, use "index" instead
+def get_url_filename(url: str) -> str:
+    parsed_url = urlparse(url)
+    path = parsed_url.path.strip("/")
     if not path:
-        path = "index"
-
-    return f"{quote(path)}.png"
+        return "index.png"
+    return f"{path}.png"
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -113,19 +102,21 @@ def find_all_html_pages(repo_dir: str) -> list[str]:
 
                 # Handle Next.js App Router
                 elif "app/" in rel_path and file.endswith((".tsx", ".jsx")):
-                    path = (
-                        rel_path.rsplit("app/", maxsplit=1)[-1]
-                        .replace("/page.tsx", "")
-                        .replace("/page.jsx", "")
-                        .replace("page.tsx", "")
-                        .replace("page.jsx", "")
-                        .replace("/layout.tsx", "")
-                        .replace("/layout.jsx", "")
-                        .replace("layout.tsx", "")
-                        .replace("layout.jsx", "")
-                    )
-                    all_paths.add("/" + path.rstrip("/") if path else "/")
-                    print(f"Found Next.js App Router file: `{file_path}`")
+                    # Skip layout files as they don't represent routes
+                    if file in ("layout.tsx", "layout.jsx"):
+                        print(f"Found Next.js App Router file: `{file_path}`")
+                        continue
+                    
+                    # Only process page files
+                    if file in ("page.tsx", "page.jsx"):
+                        path = rel_path.rsplit("app/", maxsplit=1)[-1]
+                        # Remove the page file name to get the directory path
+                        path = path.replace("/page.tsx", "").replace("/page.jsx", "")
+                        path = path.replace("page.tsx", "").replace("page.jsx", "")
+                        # Convert to route path
+                        route_path = "/" + path.rstrip("/") if path else "/"
+                        all_paths.add(route_path)
+                        print(f"Found Next.js App Router file: `{file_path}`")
 
                 # Handle Next.js Pages Router
                 elif "pages/" in rel_path and file.endswith((".tsx", ".jsx")):
@@ -170,20 +161,25 @@ def get_target_paths(file_changes: list[dict[str, str]], repo_dir: str = None):
         elif "app/" in file_path and (
             file_path.endswith(".tsx") or file_path.endswith(".jsx")
         ):
-            path = (
-                file_path.split("app/")[-1]
-                .replace("/page.tsx", "")
-                .replace("/page.jsx", "")
-                .replace("page.tsx", "")
-                .replace("page.jsx", "")
-                .replace("/layout.tsx", "")
-                .replace("/layout.jsx", "")
-                .replace("layout.tsx", "")
-                .replace("layout.jsx", "")
-            )
-            changed_paths.add("/" + path.rstrip("/") if path else "/")
-            print(f"Found Next.js App Router file: {file_path}")
-            print(f"Affected path: {path}")
+            # Skip layout files as they don't represent routes
+            filename = os.path.basename(file_path)
+            if filename in ("layout.tsx", "layout.jsx"):
+                print(f"Found Next.js App Router file: {file_path}")
+                continue
+            
+            # Only process page files
+            if filename in ("page.tsx", "page.jsx"):
+                path = (
+                    file_path.split("app/")[-1]
+                    .replace("/page.tsx", "")
+                    .replace("/page.jsx", "")
+                    .replace("page.tsx", "")
+                    .replace("page.jsx", "")
+                )
+                route_path = "/" + path.rstrip("/") if path else "/"
+                changed_paths.add(route_path)
+                print(f"Found Next.js App Router file: {file_path}")
+                print(f"Affected path: {route_path}")
 
         # Next.js Pages Router
         elif "pages/" in file_path and (
@@ -223,128 +219,147 @@ async def handle_screenshot_comparison(payload: dict) -> None:
     repo_obj: dict = payload["repository"]
     owner: str = repo_obj["owner"]["login"]
     repo: str = repo_obj["name"]
+    pr_number: int = pull["number"]
+    pr_url: str = pull["url"]
+    branch_name: str = pull["head"]["ref"]
     installation_id: int = payload["installation"]["id"]
-    token: str = get_installation_access_token(installation_id)
-    pull_number: int = pull["number"]
-    pull_url: str = pull["url"]
-    pull_files_url = pull_url + "/files"
-    head: dict[str, Any] = pull["head"]
-    branch_name = head["ref"]
-    file_changes = get_pull_request_file_changes(url=pull_files_url, token=token)
-    print(dumps(file_changes, indent=2))
 
-    # Create base arguments for GitHub API calls
-    base_args = {
-        "owner": owner,
-        "repo": repo,
-        "issue_number": pull_number,
-        "pull_number": pull_number,
-        "token": token,
-    }
+    # Get the access token
+    access_token: str = get_installation_access_token(installation_id)
 
+    # Get the file changes
+    file_changes: list[dict[str, str]] = get_pull_request_file_changes(
+        owner=owner, repo=repo, pr_number=pr_number, access_token=access_token
+    )
+
+    # Get the target paths
+    target_paths: list[str] = get_target_paths(file_changes)
+    if not target_paths:
+        print("No target paths found")
+        return
+
+    print(f"Target paths: {target_paths}")
+
+    # Delete existing screenshot comparison comments
+    all_comments: list[dict] = get_all_comments(
+        owner=owner, repo=repo, pr_number=pr_number, access_token=access_token
+    )
+    for comment in all_comments:
+        if "Screenshot Comparison" in comment.get("body", ""):
+            delete_comment(
+                owner=owner,
+                repo=repo,
+                comment_id=comment["id"],
+                access_token=access_token,
+            )
+
+    # Create a temporary directory for the repository
+    temp_dir = tempfile.mkdtemp()
     server_process = None
+
     try:
-        # Create temporary directory for cloning. For Mac, this is /private/tmp
-        temp_dir = f"/tmp/{owner}/{repo}/pr-{pull_number}"
-        os.makedirs(temp_dir, exist_ok=True)
-        print(f"Created temporary directory: `{temp_dir}`")
-
-        # Clone repository
-        clone_repo(owner=owner, repo=repo, token=token, target_dir=temp_dir)
-        print(f"Cloned repository to `{temp_dir}`")
-
-        # Fetch the pull request branch
-        fetch_branch(
-            pull_number=pull_number, branch_name=branch_name, repo_dir=temp_dir
+        # Clone the repository
+        clone_repo(
+            owner=owner,
+            repo=repo,
+            access_token=access_token,
+            target_dir=temp_dir,
         )
-        print(f"Fetched branch `{branch_name}`")
 
-        # Check out the pull request branch
-        switch_to_branch(branch_name=branch_name, repo_dir=temp_dir)
-        print(f"Switched to pull request branch `{branch_name}`")
-
-        # Get paths that need screenshot comparison
-        paths = get_target_paths(file_changes, repo_dir=temp_dir)
-        if not paths:
+        # Check if package.json exists
+        package_json_path = os.path.join(temp_dir, "package.json")
+        if not os.path.exists(package_json_path):
+            print("package.json not found, skipping screenshot comparison")
             return
-        print(f"Found {len(paths)} target paths.")
-        print(dumps(paths, indent=2))
 
-        # Start a local server in the cloned repository directory
-        get_current_branch(repo_dir=temp_dir)
-        server_process = start_local_server(repo_dir=temp_dir)
-        print(f"Started local server at server process ID: `{server_process.pid}`")
+        # Start the local server
+        server_process = start_local_server(temp_dir)
+        if server_process is None:
+            print("Failed to start local server")
+            return
 
-        # Wait for server to start
+        print(f"Started local server with PID: {server_process.pid}")
+        sleep(10)  # Wait for the server to start
+
+        # Capture screenshots for the main branch
+        main_branch = get_current_branch(temp_dir)
+        print(f"Current branch: {main_branch}")
+
+        main_screenshots_dir = os.path.join(temp_dir, "screenshots_main")
+        os.makedirs(main_screenshots_dir, exist_ok=True)
+
+        main_urls = [f"http://localhost:3000{path}" for path in target_paths]
+        await capture_screenshots(main_urls, main_screenshots_dir)
+
+        # Switch to the PR branch
+        fetch_branch(temp_dir, branch_name)
+        switch_to_branch(temp_dir, branch_name)
+
+        # Restart the server for the new branch
+        server_process.terminate()
+        server_process.wait()
         sleep(5)
 
-        # Temporary fixed URLs
-        # prod_domain = "https://sample-html-css-website.vercel.app"
-        prod_domain = "https://sample-simple-website.vercel.app"
-        local_domain = "http://localhost:8080"
-        # prod_domain = "https://gitauto.ai"
-        # local_domain = "http://localhost:3000"
+        server_process = start_local_server(temp_dir)
+        if server_process is None:
+            print("Failed to restart local server")
+            return
 
-        # Generate URLs for both environments
-        prod_urls = [f"{prod_domain}{path}" for path in paths]
-        local_urls = [f"{local_domain}{path}" for path in paths]
-        print(f"Prod URLs: {dumps(prod_urls, indent=2)}")
-        print(f"Local URLs: {dumps(local_urls, indent=2)}")
+        print(f"Restarted local server with PID: {server_process.pid}")
+        sleep(10)  # Wait for the server to start
 
-        # Create temporary directories for screenshots
-        prod_dir = os.path.join(temp_dir, "prod_screenshots")
-        local_dir = os.path.join(temp_dir, "local_screenshots")
-        print(f"Prod dir: {prod_dir}")
-        print(f"Local dir: {local_dir}")
+        # Capture screenshots for the PR branch
+        pr_screenshots_dir = os.path.join(temp_dir, "screenshots_pr")
+        os.makedirs(pr_screenshots_dir, exist_ok=True)
 
-        # Capture screenshots
-        await capture_screenshots(urls=prod_urls, output_dir=prod_dir)
-        await capture_screenshots(urls=local_urls, output_dir=local_dir)
+        pr_urls = [f"http://localhost:3000{path}" for path in target_paths]
+        await capture_screenshots(pr_urls, pr_screenshots_dir)
 
-        # Delete existing screenshot comparison comments if any
-        table_header = "| Before (production) | After (this branch) |\n|-------------------|----------------|\n"
-        comments = get_all_comments(base_args)
-        for comment in comments:
-            if table_header in comment.get("body", ""):
-                delete_comment(base_args, comment["id"])
-        print("Deleted old screenshot comparison comments")
+        # Upload screenshots to S3 and create comparison comment
+        comment_body = "## Screenshot Comparison\n\n"
+        comment_body += "| Path | Main Branch | PR Branch |\n"
+        comment_body += "|------|-------------|----------|\n"
 
-        # Upload screenshots and create comparison comments
-        timestamp = str(int(time()))
-        for path in paths:
-            file_name = get_url_filename(path)
-            prod_file = os.path.join(prod_dir, file_name)
-            local_file = os.path.join(local_dir, file_name)
-            print(f"Named prod file: {prod_file}")
-            print(f"Named local file: {local_file}")
+        for path in target_paths:
+            filename = get_url_filename(f"http://localhost:3000{path}")
 
-            if not (os.path.exists(prod_file) and os.path.exists(local_file)):
-                print(f"Skipping {path} because one or both files do not exist")
-                continue
+            # Upload main branch screenshot
+            main_file_path = os.path.join(main_screenshots_dir, filename)
+            if os.path.exists(main_file_path):
+                main_s3_key = f"screenshots/{owner}/{repo}/{pr_number}/main/{filename}"
+                main_url = upload_to_s3(main_file_path, main_s3_key)
+            else:
+                main_url = "N/A"
 
-            # Upload to S3 using existing directory structure
-            prod_s3_key = os.path.relpath(prod_file, "/tmp")
-            local_s3_key = os.path.relpath(local_file, "/tmp")
+            # Upload PR branch screenshot
+            pr_file_path = os.path.join(pr_screenshots_dir, filename)
+            if os.path.exists(pr_file_path):
+                pr_s3_key = f"screenshots/{owner}/{repo}/{pr_number}/pr/{filename}"
+                pr_url = upload_to_s3(pr_file_path, pr_s3_key)
+            else:
+                pr_url = "N/A"
 
-            # Upload to S3
-            prod_url = upload_to_s3(file_path=prod_file, s3_key=prod_s3_key)
-            print(f"Uploaded prod screenshot to S3: {prod_url}")
-            local_url = upload_to_s3(file_path=local_file, s3_key=local_s3_key)
-            print(f"Uploaded local screenshot to S3: {local_url}")
+            # Add row to the table
+            main_img = f"![Main]({main_url})" if main_url != "N/A" else "N/A"
+            pr_img = f"![PR]({pr_url})" if pr_url != "N/A" else "N/A"
+            comment_body += f"| `{path}` | {main_img} | {pr_img} |\n"
 
-            # Create comparison comment
-            comment_body = f"""Path: {path}\n\n{table_header}| <img src="{prod_url}?t={timestamp}" width="400" referrerpolicy="no-referrer"/> | <img src="{local_url}?t={timestamp}" width="400" referrerpolicy="no-referrer"/> |"""
-            create_comment(body=comment_body, base_args=base_args)
-            print(f"Created comparison comment for {path}")
+        # Create the comment
+        create_comment(
+            owner=owner,
+            repo=repo,
+            pr_number=pr_number,
+            body=comment_body,
+            access_token=access_token,
+        )
 
     finally:
-        # Cleanup: Stop the local server and remove cloned repository
+        # Clean up
         if server_process:
             server_process.terminate()
             server_process.wait()
-            print(f"Terminated local server at process ID: `{server_process.pid}`")
+            print(f"Terminated server process with PID: {server_process.pid}")
 
-        # Remove cloned repository
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
-            print(f"Deleted the temporary directory: `{temp_dir}`")
+            print(f"Cleaned up temporary directory: {temp_dir}")
