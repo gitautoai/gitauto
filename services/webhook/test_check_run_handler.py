@@ -570,7 +570,7 @@ def test_handle_check_run_with_deleted_branch(
 ):
     """Test handling when the branch is deleted during processing."""
     # Setup mocks
-    mock_get_token.return_value = TOKEN
+    mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
