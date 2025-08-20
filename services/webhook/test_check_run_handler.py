@@ -108,7 +108,7 @@ def test_handle_check_run_skips_non_bot_sender(mock_get_repo, mock_get_token, mo
 @patch("services.webhook.check_run_handler.get_repository")
 def test_handle_check_run_skips_when_trigger_disabled(mock_get_repo, mock_get_token, mock_check_run_payload):
     """Test that handler skips when trigger_on_test_failure is disabled."""
-    mock_get_token.return_value = TOKEN
+    mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_repo.return_value = {"trigger_on_test_failure": False}
 
     handle_check_run(mock_check_run_payload)
