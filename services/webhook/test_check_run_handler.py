@@ -247,11 +247,21 @@ def test_handle_check_run_full_workflow(
 @patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
+@patch("services.webhook.check_run_handler.get_workflow_run_path")
+@patch("services.webhook.check_run_handler.get_remote_file_content")
+@patch("services.webhook.check_run_handler.get_file_tree_list")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
+@patch("services.webhook.check_run_handler.create_permission_url")
+@patch("services.webhook.check_run_handler.get_installation_permissions")
 def test_handle_check_run_with_404_logs(
+    mock_get_permissions,
+    mock_create_permission_url,
     mock_update_comment,
     mock_get_logs,
+    mock_get_tree,
+    mock_get_remote_file,
+    mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
     mock_cancel_workflows,
@@ -274,7 +284,12 @@ def test_handle_check_run_with_404_logs(
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = mock_pr_data
     mock_get_changes.return_value = mock_pr_changes
+    mock_get_workflow_path.return_value = ".github/workflows/test.yml"
+    mock_get_remote_file.return_value = "workflow content"
+    mock_get_tree.return_value = (mock_file_tree, None)
     mock_get_logs.return_value = 404
+    mock_create_permission_url.return_value = "https://permission-url"
+    mock_get_permissions.return_value = {"actions": "read"}
 
     # Execute
     handle_check_run(mock_check_run_payload)
@@ -288,6 +303,8 @@ def test_handle_check_run_with_404_logs(
     mock_get_pr.assert_called_once()
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
+    mock_create_permission_url.assert_called_once()
+    mock_get_permissions.assert_called_once()
 
     # Verify permission denied message in comment
     mock_update_comment.assert_called()
@@ -302,11 +319,17 @@ def test_handle_check_run_with_404_logs(
 @patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
+@patch("services.webhook.check_run_handler.get_workflow_run_path")
+@patch("services.webhook.check_run_handler.get_remote_file_content")
+@patch("services.webhook.check_run_handler.get_file_tree_list")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 def test_handle_check_run_with_none_logs(
     mock_update_comment,
     mock_get_logs,
+    mock_get_tree,
+    mock_get_remote_file,
+    mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
     mock_cancel_workflows,
@@ -329,6 +352,9 @@ def test_handle_check_run_with_none_logs(
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = mock_pr_data
     mock_get_changes.return_value = mock_pr_changes
+    mock_get_workflow_path.return_value = ".github/workflows/test.yml"
+    mock_get_remote_file.return_value = "workflow content"
+    mock_get_tree.return_value = (mock_file_tree, None)
     mock_get_logs.return_value = None
 
     # Execute
