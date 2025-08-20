@@ -230,7 +230,7 @@ def test_handle_check_run_full_workflow(
     mock_get_retry_pairs.assert_called_once()
     mock_update_retry_pairs.assert_called_once()
     assert mock_chat_agent.call_count == 2
-
+    
     # Verify chat_with_agent calls
     first_call = mock_chat_agent.call_args_list[0]
     assert first_call.kwargs["mode"] == "get"
