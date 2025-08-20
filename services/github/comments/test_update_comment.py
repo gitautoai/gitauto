@@ -126,3 +126,100 @@ def test_update_comment_missing_comment_url_key():
     # Assert
     mock_patch.assert_not_called()
     assert result is None
+
+
+def test_update_comment_404_not_found():
+    # Arrange
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
+    )
+
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch, patch(
+        "services.github.comments.update_comment.logging"
+    ) as mock_logging:
+        mock_patch.return_value = mock_response
+        result = update_comment("Test comment", base_args)
+    # Assert
+    mock_patch.assert_called_once()
+    mock_logging.info.assert_called_once_with(
+        "Comment %s not found", "https://api.github.com/repos/owner/repo/issues/comments/123"
+    )
+    assert result is None
+
+def test_update_comment_prints_body():
+    # Arrange
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"id": 123, "body": "Test comment"}
+
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
+    )
+
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch, patch(
+        "builtins.print"
+    ) as mock_print:
+        mock_patch.return_value = mock_response
+        result = update_comment("Test comment", base_args)
+
+    # Assert
+    mock_print.assert_called_once_with("Test comment\n")
+    assert result == {"id": 123, "body": "Test comment"}
+
+
+def test_update_comment_uses_timeout():
+    # Arrange
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"id": 123, "body": "Test comment"}
+
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
+    )
+
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch, patch(
+        "services.github.comments.update_comment.TIMEOUT", 30
+    ) as mock_timeout:
+        mock_patch.return_value = mock_response
+        result = update_comment("Test comment", base_args)
+
+    # Assert
+    mock_patch.assert_called_once()
+    assert mock_patch.call_args[1]["timeout"] == 30
+    assert result == {"id": 123, "body": "Test comment"}
+
+
+def test_update_comment_calls_raise_for_status():
+    # Arrange
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"id": 123, "body": "Test comment"}
+
+    base_args = create_test_base_args(
+        owner=OWNER,
+        repo=REPO,
+        token=TOKEN,
+        comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
+    )
+
+    # Act
+    with patch("services.github.comments.update_comment.patch") as mock_patch:
+        mock_patch.return_value = mock_response
+        result = update_comment("Test comment", base_args)
+
+    # Assert
+    mock_response.raise_for_status.assert_called_once()
+    assert result == {"id": 123, "body": "Test comment"}
