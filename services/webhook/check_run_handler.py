@@ -318,6 +318,8 @@ def handle_check_run(payload: CheckRunCompletedPayload):
     error_log_hash = hashlib.sha256(error_log.encode(encoding=UTF8)).hexdigest()
     current_pair = f"{workflow_id}:{error_log_hash}"
     print(f"Workflow ID and error log hash pair: {current_pair}")
+    print(f"Error log content for {owner_name}/{repo_name} PR #{pull_number}:")
+    print(error_log)
 
     # Check if this exact pair exists
     existing_pairs = get_retry_workflow_id_hash_pairs(
