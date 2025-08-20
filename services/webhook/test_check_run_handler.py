@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch, ANY
 import pytest
 from config import GITHUB_APP_USER_NAME, UTF8
 from services.webhook.check_run_handler import handle_check_run
-from tests.constants import OWNER, REPO, TOKEN
+from tests.constants import OWNER, REPO
 
 
 @pytest.fixture
