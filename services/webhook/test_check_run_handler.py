@@ -1,6 +1,7 @@
 """Unit tests for check_run_handler.py"""
 
 import json
+import hashlib
 from unittest.mock import Mock, patch, ANY
 import pytest
 from config import GITHUB_APP_USER_NAME, UTF8
@@ -427,7 +428,9 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_logs.return_value = mock_workflow_run_logs
 
     # Mock that this workflow/error pair has been seen before
-    mock_get_retry_pairs.return_value = ["runs:abc123"]  # Matches what will be generated (workflow_id is "runs" from URL)
+    # Calculate the expected hash: workflow_id is "runs" from URL, error_log is "Test failure log content"
+    expected_hash = hashlib.sha256("Test failure log content".encode(UTF8)).hexdigest()
+    mock_get_retry_pairs.return_value = [f"runs:{expected_hash}"]
 
     # Execute
     handle_check_run(mock_check_run_payload)
