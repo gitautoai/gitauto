@@ -427,7 +427,7 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_logs.return_value = mock_workflow_run_logs
 
     # Mock that this workflow/error pair has been seen before
-    mock_get_retry_pairs.return_value = ["123:abc123"]  # Matches what will be generated
+    mock_get_retry_pairs.return_value = ["runs:abc123"]  # Matches what will be generated (workflow_id is "runs" from URL)
 
     # Execute
     handle_check_run(mock_check_run_payload)
