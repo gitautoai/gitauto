@@ -209,6 +209,7 @@ def test_handle_check_run_full_workflow(
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = True
     mock_check_branch_exists.return_value = True
+    
     mock_chat_agent.side_effect = [
         ([], [], None, None, None, None, True, 50),   # First call (get mode) - exploration found
         ([], [], None, None, None, None, True, 75),   # Second call (commit mode) - commit made
