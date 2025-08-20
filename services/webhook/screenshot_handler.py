@@ -117,10 +117,14 @@ def find_all_html_pages(repo_dir: str) -> list[str]:
                         rel_path.rsplit("app/", maxsplit=1)[-1]
                         .replace("/page.tsx", "")
                         .replace("/page.jsx", "")
+                        .replace("page.tsx", "")
+                        .replace("page.jsx", "")
                         .replace("/layout.tsx", "")
                         .replace("/layout.jsx", "")
+                        .replace("layout.tsx", "")
+                        .replace("layout.jsx", "")
                     )
-                    all_paths.add("/" + path.rstrip("/"))
+                    all_paths.add("/" + path.rstrip("/") if path else "/")
                     print(f"Found Next.js App Router file: `{file_path}`")
 
                 # Handle Next.js Pages Router
