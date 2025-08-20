@@ -306,7 +306,7 @@ class TestGetTargetPaths:
         file_changes = [
             {"filename": "app/page.tsx"},
             {"filename": "app/about/page.jsx"},
-            {"filename": "app/products/category/layout.tsx"},
+            {"filename": "app/products/category/page.tsx"},
         ]
         
         # Execute
