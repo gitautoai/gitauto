@@ -165,7 +165,9 @@ def test_handle_check_run_skips_when_comment_exists(
 @patch("services.webhook.check_run_handler.chat_with_agent")
 @patch("services.webhook.check_run_handler.create_empty_commit")
 @patch("services.webhook.check_run_handler.update_usage")
+@patch("services.webhook.check_run_handler.is_lambda_timeout_approaching")
 def test_handle_check_run_full_workflow(
+    mock_timeout_check,
     mock_update_usage,
     mock_create_empty_commit,
     mock_chat_agent,
@@ -209,16 +211,13 @@ def test_handle_check_run_full_workflow(
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = True
     mock_check_branch_exists.return_value = True
+    mock_timeout_check.return_value = (False, 0)  # No timeout
     
     mock_chat_agent.side_effect = [
         ([], [], None, None, None, None, False, 50),  # First call (get mode) - no exploration
         ([], [], None, None, None, None, False, 75),  # Second call (commit mode) - no commit, loop exits
     ]
 
-    # Mock timeout function to prevent early exit
-    with patch("services.webhook.check_run_handler.is_lambda_timeout_approaching") as mock_timeout:
-        mock_timeout.return_value = (False, 0)  # No timeout
-        
     # Execute
     handle_check_run(mock_check_run_payload)
 
@@ -237,7 +236,6 @@ def test_handle_check_run_full_workflow(
     assert mock_chat_agent.call_count == 2
     
     # Verify chat_with_agent calls
-    # First iteration
     first_call = mock_chat_agent.call_args_list[0]
     assert first_call.kwargs["mode"] == "get"
     assert first_call.kwargs["trigger"] == "test_failure"
