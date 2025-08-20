@@ -174,10 +174,14 @@ def get_target_paths(file_changes: list[dict[str, str]], repo_dir: str = None):
                 file_path.split("app/")[-1]
                 .replace("/page.tsx", "")
                 .replace("/page.jsx", "")
+                .replace("page.tsx", "")
+                .replace("page.jsx", "")
                 .replace("/layout.tsx", "")
                 .replace("/layout.jsx", "")
+                .replace("layout.tsx", "")
+                .replace("layout.jsx", "")
             )
-            changed_paths.add("/" + path.rstrip("/"))
+            changed_paths.add("/" + path.rstrip("/") if path else "/")
             print(f"Found Next.js App Router file: {file_path}")
             print(f"Affected path: {path}")
 
