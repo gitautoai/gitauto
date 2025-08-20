@@ -215,6 +215,10 @@ def test_handle_check_run_full_workflow(
         ([], [], None, None, None, None, False, 75),  # Second call (commit mode) - no commit, loop exits
     ]
 
+    # Mock timeout function to prevent early exit
+    with patch("services.webhook.check_run_handler.is_lambda_timeout_approaching") as mock_timeout:
+        mock_timeout.return_value = (False, 0)  # No timeout
+        
     # Execute
     handle_check_run(mock_check_run_payload)
 
