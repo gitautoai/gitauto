@@ -376,6 +376,31 @@ def test_create_empty_commit_function_call_sequence(all_mocks_successful, sample
         call_order.append("get_reference")
         return "current_sha_123"
 
+    def track_get_commit(*args, **kwargs):
+        call_order.append("get_commit")
+        return "tree_sha_456"
+
+    def track_create_commit(*args, **kwargs):
+        call_order.append("create_commit")
+        return "new_commit_sha_789"
+
+    def track_update_reference(*args, **kwargs):
+        call_order.append("update_reference")
+        return True
+
+    all_mocks_successful["get_reference"].side_effect = track_get_reference
+    all_mocks_successful["get_commit"].side_effect = track_get_commit
+    all_mocks_successful["create_commit"].side_effect = track_create_commit
+    all_mocks_successful["update_reference"].side_effect = track_update_reference
+
+    result = create_empty_commit(sample_base_args)
+
+    # Verify the function returns True for successful execution
+    assert result is True
+
+    # Verify functions were called in the correct order
+    expected_order = ["get_reference", "get_commit", "create_commit", "update_reference"]
+    assert call_order == expected_order
 
 
 def test_create_empty_commit_exception_in_get_reference(
@@ -478,28 +503,14 @@ def test_create_empty_commit_return_value_from_update_reference(all_mocks_succes
     result = create_empty_commit(sample_base_args)
     assert result is True
 
-    def track_get_commit(*args, **kwargs):
-        call_order.append("get_commit")
-        return "tree_sha_456"
-
-    def track_create_commit(*args, **kwargs):
-        call_order.append("create_commit")
-        return "new_commit_sha_789"
-
-    def track_update_reference(*args, **kwargs):
-        call_order.append("update_reference")
-        return True
-
-    all_mocks_successful["get_reference"].side_effect = track_get_reference
-    all_mocks_successful["get_commit"].side_effect = track_get_commit
-    all_mocks_successful["create_commit"].side_effect = track_create_commit
-    all_mocks_successful["update_reference"].side_effect = track_update_reference
-
+    # Reset mocks and test with False return value
+    for mock in all_mocks_successful.values():
+        mock.reset_mock()
+    
+    all_mocks_successful["get_reference"].return_value = "current_sha_123"
+    all_mocks_successful["get_commit"].return_value = "tree_sha_456"
+    all_mocks_successful["create_commit"].return_value = "new_commit_sha_789"
+    all_mocks_successful["update_reference"].return_value = False
+    
     result = create_empty_commit(sample_base_args)
-
-    # Verify the function returns True for successful execution
-    assert result is True
-
-    # Verify functions were called in the correct order
-    expected_order = ["get_reference", "get_commit", "create_commit", "update_reference"]
-    assert call_order == expected_order
+    assert result is False
