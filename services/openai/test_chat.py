@@ -1,9 +1,7 @@
-from unittest import mock
 from unittest.mock import MagicMock, patch
 from openai import OpenAIError
 
 import pytest
-from openai import OpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 from openai.types.chat.chat_completion import Choice
 
@@ -14,7 +12,7 @@ from services.openai.chat import chat_with_ai
 @pytest.fixture
 def mock_openai_client():
     """Mock OpenAI client with proper method chaining"""
-    client = MagicMock(spec=OpenAI)
+    client = MagicMock()
     return client
 
 
