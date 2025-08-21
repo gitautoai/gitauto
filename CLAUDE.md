@@ -51,8 +51,11 @@ uvicorn main:app --reload --port 8000 --log-level warning
 ### Database Access
 
 ```bash
-# Connect to Supabase PostgreSQL database
+# Connect to Supabase PostgreSQL database (Development)
 source .env && psql "postgresql://postgres.dkrxtcbaqzrodvsagwwn:$SUPABASE_DB_PASSWORD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
+
+# Connect to Supabase PostgreSQL database (Production)
+source .env && psql "postgresql://postgres.awegqusxzsmlgxaxyyrq:$SUPABASE_DB_PASSWORD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
 ```
 
 ### AWS CLI
@@ -65,6 +68,7 @@ AWS CLI is available and configured for us-west-1 region.
 # Search production Lambda logs
 # Log group: /aws/lambda/pr-agent-prod
 
+# IMPORTANT: First check today's date with 'date' command to ensure correct timestamp calculation
 # Convert date to epoch milliseconds for AWS logs
 python3 -c "import datetime; print(int(datetime.datetime(2025, 8, 19, 19, 0, 0).timestamp() * 1000))"
 

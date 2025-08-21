@@ -19,6 +19,7 @@ def create_user_request(
     source: str,
     trigger: Trigger,
     email: str | None,
+    pr_number: int | None = None,
 ):
     existing_issue = get_issue(
         owner_type=owner_type,
@@ -49,6 +50,7 @@ def create_user_request(
         installation_id=installation_id,
         source=source,
         trigger=trigger,
+        pr_number=pr_number,
     )
 
     upsert_user(user_id=user_id, user_name=user_name, email=email)
