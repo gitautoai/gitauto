@@ -2,9 +2,8 @@
 
 # Test to verify imports work correctly
 # Standard imports
-import json
 import hashlib
-from unittest.mock import Mock, patch, ANY
+from unittest.mock import patch
 import pytest
 from config import GITHUB_APP_USER_NAME, UTF8
 from services.webhook.check_run_handler import handle_check_run
@@ -91,7 +90,9 @@ def mock_pr_changes():
 
 @patch("services.webhook.check_run_handler.get_installation_access_token")
 @patch("services.webhook.check_run_handler.get_repository")
-def test_handle_check_run_skips_non_bot_sender(mock_get_repo, mock_get_token, mock_check_run_payload):
+def test_handle_check_run_skips_non_bot_sender(
+    mock_get_repo, mock_get_token, mock_check_run_payload
+):
     """Test that handler skips when sender is not the bot."""
     # Modify sender to be a non-bot user
     payload = mock_check_run_payload.copy()
@@ -106,7 +107,9 @@ def test_handle_check_run_skips_non_bot_sender(mock_get_repo, mock_get_token, mo
 
 @patch("services.webhook.check_run_handler.get_installation_access_token")
 @patch("services.webhook.check_run_handler.get_repository")
-def test_handle_check_run_skips_when_trigger_disabled(mock_get_repo, mock_get_token, mock_check_run_payload):
+def test_handle_check_run_skips_when_trigger_disabled(
+    mock_get_repo, mock_get_token, mock_check_run_payload
+):
     """Test that handler skips when trigger_on_test_failure is disabled."""
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_repo.return_value = {"trigger_on_test_failure": False}
@@ -155,7 +158,6 @@ def test_handle_check_run_skips_when_comment_exists(
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
 @patch("services.webhook.check_run_handler.get_workflow_run_path")
 @patch("services.webhook.check_run_handler.get_remote_file_content")
-@patch("services.webhook.check_run_handler.get_file_tree_list")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
@@ -177,7 +179,6 @@ def test_handle_check_run_full_workflow(
     mock_get_retry_pairs,
     mock_update_comment,
     mock_get_logs,
-    mock_get_tree,
     mock_get_remote_file,
     mock_get_workflow_path,
     mock_get_changes,
@@ -206,16 +207,33 @@ def test_handle_check_run_full_workflow(
     mock_get_changes.return_value = mock_pr_changes
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_tree.return_value = ("src/\n  main.py\n  test_main.py", None)
     mock_get_logs.return_value = mock_workflow_run_logs
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = True
     mock_check_branch_exists.return_value = True
     mock_timeout_check.return_value = (False, 0)  # No timeout
-    
+
     mock_chat_agent.side_effect = [
-        ([], [], None, None, None, None, False, 50),  # First call (get mode) - no exploration
-        ([], [], None, None, None, None, False, 75),  # Second call (commit mode) - no commit, loop exits
+        (
+            [],
+            [],
+            None,
+            None,
+            None,
+            None,
+            False,
+            50,
+        ),  # First call (get mode) - no exploration
+        (
+            [],
+            [],
+            None,
+            None,
+            None,
+            None,
+            False,
+            75,
+        ),  # Second call (commit mode) - no commit, loop exits
     ]
 
     # Execute
@@ -230,11 +248,10 @@ def test_handle_check_run_full_workflow(
     mock_get_pr.assert_called_once()
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
-    mock_get_tree.assert_called_once()
     mock_get_retry_pairs.assert_called_once()
     mock_update_retry_pairs.assert_called_once()
     assert mock_chat_agent.call_count == 2
-    
+
     # Verify chat_with_agent calls
     first_call = mock_chat_agent.call_args_list[0]
     assert first_call.kwargs["mode"] == "get"
@@ -256,7 +273,6 @@ def test_handle_check_run_full_workflow(
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
 @patch("services.webhook.check_run_handler.get_workflow_run_path")
 @patch("services.webhook.check_run_handler.get_remote_file_content")
-@patch("services.webhook.check_run_handler.get_file_tree_list")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 @patch("services.webhook.check_run_handler.create_permission_url")
@@ -266,7 +282,6 @@ def test_handle_check_run_with_404_logs(
     mock_create_permission_url,
     mock_update_comment,
     mock_get_logs,
-    mock_get_tree,
     mock_get_remote_file,
     mock_get_workflow_path,
     mock_get_changes,
@@ -293,7 +308,6 @@ def test_handle_check_run_with_404_logs(
     mock_get_changes.return_value = mock_pr_changes
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_tree.return_value = ("src/\n  main.py\n  test_main.py", None)
     mock_get_logs.return_value = 404
     mock_create_permission_url.return_value = "https://permission-url"
     mock_get_permissions.return_value = {"actions": "read"}
@@ -328,13 +342,11 @@ def test_handle_check_run_with_404_logs(
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
 @patch("services.webhook.check_run_handler.get_workflow_run_path")
 @patch("services.webhook.check_run_handler.get_remote_file_content")
-@patch("services.webhook.check_run_handler.get_file_tree_list")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 def test_handle_check_run_with_none_logs(
     mock_update_comment,
     mock_get_logs,
-    mock_get_tree,
     mock_get_remote_file,
     mock_get_workflow_path,
     mock_get_changes,
@@ -361,7 +373,6 @@ def test_handle_check_run_with_none_logs(
     mock_get_changes.return_value = mock_pr_changes
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_tree.return_value = ("src/\n  main.py\n  test_main.py", None)
     mock_get_logs.return_value = None
 
     # Execute
@@ -392,7 +403,6 @@ def test_handle_check_run_with_none_logs(
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
 @patch("services.webhook.check_run_handler.get_workflow_run_path")
 @patch("services.webhook.check_run_handler.get_remote_file_content")
-@patch("services.webhook.check_run_handler.get_file_tree_list")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
@@ -402,7 +412,6 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_retry_pairs,
     mock_update_comment,
     mock_get_logs,
-    mock_get_tree,
     mock_get_remote_file,
     mock_get_workflow_path,
     mock_get_changes,
@@ -430,7 +439,6 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_changes.return_value = mock_pr_changes
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_tree.return_value = ("src/\n  main.py\n  test_main.py", None)
     mock_get_logs.return_value = mock_workflow_run_logs
 
     # Mock that this workflow/error pair has been seen before
@@ -467,7 +475,6 @@ def test_handle_check_run_with_existing_retry_pair(
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
 @patch("services.webhook.check_run_handler.get_workflow_run_path")
 @patch("services.webhook.check_run_handler.get_remote_file_content")
-@patch("services.webhook.check_run_handler.get_file_tree_list")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
@@ -479,7 +486,6 @@ def test_handle_check_run_with_closed_pr(
     mock_get_retry_pairs,
     mock_update_comment,
     mock_get_logs,
-    mock_get_tree,
     mock_get_remote_file,
     mock_get_workflow_path,
     mock_get_changes,
@@ -507,7 +513,6 @@ def test_handle_check_run_with_closed_pr(
     mock_get_changes.return_value = mock_pr_changes
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_tree.return_value = ("src/\n  main.py\n  test_main.py", None)
     mock_get_logs.return_value = mock_workflow_run_logs
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = False
@@ -541,7 +546,6 @@ def test_handle_check_run_with_closed_pr(
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
 @patch("services.webhook.check_run_handler.get_workflow_run_path")
 @patch("services.webhook.check_run_handler.get_remote_file_content")
-@patch("services.webhook.check_run_handler.get_file_tree_list")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
@@ -555,7 +559,6 @@ def test_handle_check_run_with_deleted_branch(
     mock_get_retry_pairs,
     mock_update_comment,
     mock_get_logs,
-    mock_get_tree,
     mock_get_remote_file,
     mock_get_workflow_path,
     mock_get_changes,
@@ -583,7 +586,6 @@ def test_handle_check_run_with_deleted_branch(
     mock_get_changes.return_value = mock_pr_changes
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_tree.return_value = ("src/\n  main.py\n  test_main.py", None)
     mock_get_logs.return_value = mock_workflow_run_logs
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = True
