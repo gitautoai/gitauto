@@ -373,3 +373,119 @@ def test_get_failed_step_log_file_name_timeout_parameter():
     # Assert
     mock_get.assert_called_once()
     assert mock_get.call_args[1]["timeout"] == 60
+
+def test_get_failed_step_log_file_name_http_error():
+    """Test handling of HTTP error when retrieving workflow run jobs."""
+    # Arrange
+    run_id = 12345
+    http_error = requests.HTTPError("500 Internal Server Error")
+    mock_error_response = MagicMock()
+    mock_error_response.status_code = 500
+    mock_error_response.reason = "Internal Server Error"
+    mock_error_response.text = "Server error"
+    http_error.response = mock_error_response
+
+    # Act & Assert - function doesn't have handle_exceptions decorator, so it should raise
+    with patch(
+        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+    ) as mock_get, patch(
+        "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
+    ) as mock_create_headers:
+        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_get.return_value.raise_for_status.side_effect = http_error
+        
+        with pytest.raises(requests.HTTPError):
+            get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+
+        mock_get.assert_called_once()
+
+
+def test_get_failed_step_log_file_name_missing_step_fields():
+    """Test handling when step fields are missing."""
+    # Arrange
+    run_id = 12345
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "jobs": [
+            {
+                "name": "test",
+                "steps": [
+                    {
+                        # Missing number and name fields
+                        "conclusion": "failure"
+                    }
+                ]
+            }
+        ]
+    }
+
+    # Act
+    with patch(
+        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+    ) as mock_get, patch(
+        "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
+    ):
+        mock_get.return_value = mock_response
+        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+
+    # Assert - should handle missing fields gracefully
+    assert result == "test/None_None.txt"
+
+
+def test_get_failed_step_log_file_name_missing_steps_key():
+    """Test handling when 'steps' key is missing from job."""
+    # Arrange
+    run_id = 12345
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "jobs": [
+            {
+                "name": "test"
+                # Missing steps key
+            }
+        ]
+    }
+
+    # Act
+    with patch(
+        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+    ) as mock_get, patch(
+        "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
+    ):
+        mock_get.return_value = mock_response
+        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+
+    # Assert
+    assert result is None
+
+
+def test_get_failed_step_log_file_name_empty_steps_list():
+    """Test handling when steps list is empty."""
+    # Arrange
+    run_id = 12345
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "jobs": [
+            {
+                "name": "test",
+                "steps": []
+            }
+        ]
+    }
+
+    # Act
+    with patch(
+        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+    ) as mock_get, patch(
+        "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
+    ):
+        mock_get.return_value = mock_response
+        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+
+    # Assert
+    assert result is None
+
+
