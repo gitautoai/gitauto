@@ -207,7 +207,10 @@ def test_get_file_tree_409_without_empty_message(mock_headers):
     mock_response = Mock()
     mock_response.status_code = 409
     mock_response.text = "Some other conflict"
-    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError()
+    mock_response.reason = "Conflict"
+    http_error = requests.exceptions.HTTPError()
+    http_error.response = mock_response
+    mock_response.raise_for_status.side_effect = http_error
     
     with patch("services.github.trees.get_file_tree.requests.get") as mock_get, \
          patch("services.github.trees.get_file_tree.create_headers") as mock_create_headers:
