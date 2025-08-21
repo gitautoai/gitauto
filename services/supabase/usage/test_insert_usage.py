@@ -24,7 +24,7 @@ def test_insert_usage_success_with_pr_number(mock_supabase_client, mock_usage_in
     mock_table = MagicMock()
     mock_insert = MagicMock()
     mock_execute = MagicMock()
-    mock_execute.return_value = (None, [{"id": 123}])
+    mock_execute.data = [{"id": 123}]
     mock_insert.execute = mock_execute
     mock_table.insert.return_value = mock_insert
     mock_supabase_client.table.return_value = mock_table
