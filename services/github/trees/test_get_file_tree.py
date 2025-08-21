@@ -66,7 +66,10 @@ def mock_not_found_response():
 def mock_server_error_response():
     response = Mock()
     response.status_code = 500
-    response.raise_for_status.side_effect = requests.exceptions.HTTPError()
+    response.reason = "Internal Server Error"
+    response.text = "Server error"
+    http_error = requests.exceptions.HTTPError()
+    http_error.response = response
     return response
 
 
