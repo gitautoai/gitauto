@@ -273,7 +273,7 @@ def test_insert_usage_empty_response_data_raises_exception(mock_supabase_client,
     mock_table = MagicMock()
     mock_insert = MagicMock()
     mock_execute = MagicMock()
-    mock_execute.return_value = (None, [])
+    mock_execute.data = []
     mock_insert.execute = mock_execute
     mock_table.insert.return_value = mock_insert
     mock_supabase_client.table.return_value = mock_table
