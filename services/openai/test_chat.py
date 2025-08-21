@@ -1,5 +1,6 @@
 from unittest import mock
 from unittest.mock import MagicMock, patch
+from openai import OpenAIError
 
 import pytest
 from openai import OpenAI
@@ -201,3 +202,67 @@ def test_chat_with_ai_empty_inputs(
         ],
         model=OPENAI_MODEL_ID_O3_MINI,
     )
+
+
+@patch("services.openai.chat.create_openai_client")
+@patch("services.openai.chat.truncate_message")
+def test_chat_with_ai_openai_error_raises(mock_truncate_message, mock_create_client, mock_openai_client):
+    """Test that OpenAI errors are raised due to handle_exceptions(raise_on_error=True)"""
+    # Setup mocks
+    mock_create_client.return_value = mock_openai_client
+    mock_truncate_message.return_value = "truncated user input"
+    mock_openai_client.chat.completions.create.side_effect = OpenAIError("API Error")
+
+    # Test inputs
+    system_input = "You are a helpful assistant"
+    user_input = "Hello, how are you?"
+
+    # Call function and expect exception
+    with pytest.raises(OpenAIError):
+        chat_with_ai(system_input=system_input, user_input=user_input)
+
+    # Verify mocks were called
+    mock_create_client.assert_called_once()
+    mock_truncate_message.assert_called_once_with(input_message=user_input)
+
+
+@patch("services.openai.chat.create_openai_client")
+@patch("services.openai.chat.truncate_message")
+def test_chat_with_ai_attribute_error_raises(mock_truncate_message, mock_create_client, mock_openai_client):
+    """Test that AttributeError is raised due to handle_exceptions(raise_on_error=True)"""
+    # Setup mocks
+    mock_create_client.return_value = mock_openai_client
+    mock_truncate_message.return_value = "truncated user input"
+    mock_openai_client.chat.completions.create.side_effect = AttributeError("Missing attribute")
+
+    # Test inputs
+    system_input = "You are a helpful assistant"
+    user_input = "Hello, how are you?"
+
+    # Call function and expect exception
+    with pytest.raises(AttributeError):
+        chat_with_ai(system_input=system_input, user_input=user_input)
+
+
+@patch("services.openai.chat.create_openai_client")
+@patch("services.openai.chat.truncate_message")
+def test_chat_with_ai_unicode_inputs(
+    mock_truncate_message, mock_create_client, mock_openai_client, mock_chat_completion
+):
+    """Test chat completion with unicode characters in inputs"""
+    # Setup mocks
+    mock_create_client.return_value = mock_openai_client
+    mock_truncate_message.return_value = "🌟 truncated unicode input 🚀"
+    mock_openai_client.chat.completions.create.return_value = mock_chat_completion
+
+    # Test inputs with unicode
+    system_input = "You are a helpful assistant 🤖"
+    user_input = "Hello 👋, how are you? 🌟"
+
+    # Call function
+    result = chat_with_ai(system_input=system_input, user_input=user_input)
+
+    # Assertions
+    assert result == "Test response from AI"
+    mock_truncate_message.assert_called_once_with(input_message=user_input)
+    # Verify unicode characters are preserved in system message
