@@ -177,3 +177,67 @@ def test_create_pull_request_empty_strings(mock_post, mock_create_headers, mock_
     expected_base_args = base_args.copy()
     expected_base_args["pr_number"] = 123
     mock_add_reviewers.assert_called_once_with(base_args=expected_base_args)
+
+
+@patch("services.github.pulls.create_pull_request.add_reviewers")
+@patch("services.github.pulls.create_pull_request.create_headers")
+@patch("services.github.pulls.create_pull_request.requests.post")
+def test_create_pull_request_different_branches(mock_post, mock_create_headers, mock_add_reviewers, base_args, mock_response):
+    mock_post.return_value = mock_response
+    mock_create_headers.return_value = {"Authorization": "Bearer token"}
+    base_args["base_branch"] = "develop"
+    base_args["new_branch"] = "feature/new-feature"
+    
+    result = create_pull_request("Feature body", "Feature title", base_args)
+    
+    assert result == "https://github.com/owner/repo/pull/123"
+    mock_post.assert_called_once_with(
+        url="https://api.github.com/repos/gitautoai/gitauto/pulls",
+        headers={"Authorization": "Bearer token"},
+        json={"title": "Feature title", "body": "Feature body", "head": "feature/new-feature", "base": "develop"},
+        timeout=120
+    )
+
+
+@patch("services.github.pulls.create_pull_request.add_reviewers")
+@patch("services.github.pulls.create_pull_request.create_headers")
+@patch("services.github.pulls.create_pull_request.requests.post")
+def test_create_pull_request_requests_exception(mock_post, mock_create_headers, mock_add_reviewers, base_args):
+    mock_post.side_effect = requests.RequestException("Network error")
+    mock_create_headers.return_value = {"Authorization": "Bearer token"}
+    
+    result = create_pull_request("Test body", "Test title", base_args)
+    
+    assert result is None
+    mock_post.assert_called_once()
+    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_add_reviewers.assert_not_called()
+
+
+@patch("services.github.pulls.create_pull_request.add_reviewers")
+@patch("services.github.pulls.create_pull_request.create_headers")
+@patch("services.github.pulls.create_pull_request.requests.post")
+def test_create_pull_request_create_headers_exception(mock_post, mock_create_headers, mock_add_reviewers, base_args):
+    mock_create_headers.side_effect = Exception("Header creation error")
+    
+    result = create_pull_request("Test body", "Test title", base_args)
+    
+    assert result is None
+    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_post.assert_not_called()
+    mock_add_reviewers.assert_not_called()
+
+
+@patch("services.github.pulls.create_pull_request.add_reviewers")
+@patch("services.github.pulls.create_pull_request.create_headers")
+@patch("services.github.pulls.create_pull_request.requests.post")
+def test_create_pull_request_key_error_in_base_args(mock_post, mock_create_headers, mock_add_reviewers):
+    mock_create_headers.return_value = {"Authorization": "Bearer token"}
+    incomplete_base_args = {"owner": OWNER, "repo": REPO}
+    
+    result = create_pull_request("Test body", "Test title", incomplete_base_args)
+    
+    assert result is None
+    mock_create_headers.assert_not_called()
+    mock_post.assert_not_called()
+    mock_add_reviewers.assert_not_called()
