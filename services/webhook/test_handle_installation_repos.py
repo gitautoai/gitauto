@@ -235,3 +235,100 @@ class TestHandleInstallationReposAdded:
             installation_id=INSTALLATION_ID
         )
         mock_process_repositories.assert_not_called()
+
+    async def test_handle_installation_repos_added_with_missing_payload_fields(
+        self,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling when payload is missing required fields."""
+        # Setup - payload missing sender information
+        incomplete_payload = {
+            "installation": {
+                "id": INSTALLATION_ID,
+                "account": {
+                    "id": 12345,
+                    "login": "test-owner",
+                },
+            },
+            "repositories_added": [
+                {"id": 111, "name": "test-repo-1"},
+            ],
+        }
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+
+        # Execute
+        result = await handle_installation_repos_added(incomplete_payload)
+
+        # Verify - function should return None due to handle_exceptions decorator
+        assert result is None
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_get_installation_access_token.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_process_repositories.assert_not_called()
+
+    async def test_handle_installation_repos_added_with_single_repository(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling with a single repository."""
+        # Setup
+        mock_installation_payload["repositories_added"] = [
+            {"id": 333, "name": "single-repo"}
+        ]
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+
+        # Execute
+        await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_get_installation_access_token.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_process_repositories.assert_called_once_with(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=[{"id": 333, "name": "single-repo"}],
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-sender",
+        )
+
+    async def test_handle_installation_repos_added_with_different_installation_id(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling with a different installation ID."""
+        # Setup
+        different_installation_id = 99999
+        mock_installation_payload["installation"]["id"] = different_installation_id
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_different_token"
+
+        # Execute
+        await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=different_installation_id
+        )
+        mock_get_installation_access_token.assert_called_once_with(
+            installation_id=different_installation_id
+        )
+        mock_process_repositories.assert_called_once_with(
+            owner_id=12345,
