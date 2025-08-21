@@ -213,3 +213,22 @@ def test_get_file_tree_409_without_empty_message(mock_headers):
         mock_create_headers.return_value = mock_headers
         
         result = get_file_tree(OWNER, REPO, "main", TOKEN)
+        
+        assert result == []
+
+
+def test_get_file_tree_no_truncated_key(mock_headers):
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "tree": [{"path": "test.py", "mode": "100644", "type": "blob", "size": 50, "sha": "def456", "url": "https://api.github.com/test"}]
+    }
+    
+    with patch("services.github.trees.get_file_tree.requests.get") as mock_get, \
+         patch("services.github.trees.get_file_tree.create_headers") as mock_create_headers:
+        
+        mock_get.return_value = mock_response
+        mock_create_headers.return_value = mock_headers
+        
+        result = get_file_tree(OWNER, REPO, "main", TOKEN)
+        
