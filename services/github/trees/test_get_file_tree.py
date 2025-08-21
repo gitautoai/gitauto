@@ -182,3 +182,34 @@ def test_get_file_tree_exception_handling(mock_headers):
         result = get_file_tree(OWNER, REPO, "main", TOKEN)
         
         assert result == []
+
+
+def test_get_file_tree_http_error_handling(mock_headers):
+    mock_response = Mock()
+    mock_response.status_code = 422
+    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError()
+    
+    with patch("services.github.trees.get_file_tree.requests.get") as mock_get, \
+         patch("services.github.trees.get_file_tree.create_headers") as mock_create_headers:
+        
+        mock_get.return_value = mock_response
+        mock_create_headers.return_value = mock_headers
+        
+        result = get_file_tree(OWNER, REPO, "main", TOKEN)
+        
+        assert result == []
+
+
+def test_get_file_tree_409_without_empty_message(mock_headers):
+    mock_response = Mock()
+    mock_response.status_code = 409
+    mock_response.text = "Some other conflict"
+    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError()
+    
+    with patch("services.github.trees.get_file_tree.requests.get") as mock_get, \
+         patch("services.github.trees.get_file_tree.create_headers") as mock_create_headers:
+        
+        mock_get.return_value = mock_response
+        mock_create_headers.return_value = mock_headers
+        
+        result = get_file_tree(OWNER, REPO, "main", TOKEN)
