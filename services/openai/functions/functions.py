@@ -12,8 +12,8 @@ from services.github.commits.replace_remote_file import (
     REPLACE_REMOTE_FILE_CONTENT,
     replace_remote_file_content,
 )
-from services.github.github_manager import (
-    get_remote_file_content,
+from services.github.files.get_remote_file_content import get_remote_file_content
+from services.github.search.search_remote_file_contents import (
     search_remote_file_contents,
 )
 from services.github.trees.get_file_tree_list import get_file_tree_list

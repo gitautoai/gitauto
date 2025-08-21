@@ -1,7 +1,7 @@
 from json import dumps
 import requests
 from config import TIMEOUT, PER_PAGE
-from services.github.github_manager import get_remote_file_content
+from services.github.files.get_remote_file_content import get_remote_file_content
 from services.github.utils.create_headers import create_headers
 from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions

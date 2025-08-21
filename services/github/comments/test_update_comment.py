@@ -149,9 +149,11 @@ def test_update_comment_404_not_found():
     # Assert
     mock_patch.assert_called_once()
     mock_logging.info.assert_called_once_with(
-        "Comment %s not found", "https://api.github.com/repos/owner/repo/issues/comments/123"
+        "Comment %s not found",
+        "https://api.github.com/repos/owner/repo/issues/comments/123",
     )
     assert result is None
+
 
 def test_update_comment_prints_body():
     # Arrange
@@ -192,7 +194,7 @@ def test_update_comment_uses_timeout():
     # Act
     with patch("services.github.comments.update_comment.patch") as mock_patch, patch(
         "services.github.comments.update_comment.TIMEOUT", 30
-    ) as mock_timeout:
+    ):
         mock_patch.return_value = mock_response
         result = update_comment("Test comment", base_args)
 

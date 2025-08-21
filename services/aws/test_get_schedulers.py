@@ -1,5 +1,5 @@
 # Standard imports
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Third party imports
 import pytest
@@ -48,7 +48,7 @@ def test_get_schedulers_by_owner_id_success_multiple_pages(mock_scheduler_client
             {"Name": "gitauto-repo-123-456"},
             {"Name": "gitauto-repo-123-789"},
         ],
-        "NextToken": "token123"
+        "NextToken": "token123",
     }
     second_response = {
         "Schedules": [
@@ -164,7 +164,7 @@ def test_get_schedulers_by_owner_id_with_index_pattern(mock_scheduler_client):
         "gitauto-repo-123-456",
         "gitauto-repo-123-456-1",
         "gitauto-repo-123-456-2",
-        "gitauto-repo-123-789-0"
+        "gitauto-repo-123-789-0",
     ]
     assert result == expected
     mock_scheduler_client.list_schedules.assert_called_once_with()
@@ -174,7 +174,9 @@ def test_get_schedulers_by_owner_id_client_error(mock_scheduler_client):
     """Test retrieval when ClientError occurs."""
     # Setup
     owner_id = 123
-    error_response = {"Error": {"Code": "AccessDeniedException", "Message": "Access denied"}}
+    error_response = {
+        "Error": {"Code": "AccessDeniedException", "Message": "Access denied"}
+    }
     mock_scheduler_client.list_schedules.side_effect = ClientError(
         error_response, "ListSchedules"
     )
@@ -221,11 +223,11 @@ def test_get_schedulers_by_owner_id_exception_during_pagination(mock_scheduler_c
     owner_id = 123
     first_response = {
         "Schedules": [{"Name": "gitauto-repo-123-456"}],
-        "NextToken": "token123"
+        "NextToken": "token123",
     }
     mock_scheduler_client.list_schedules.side_effect = [
         first_response,
-        Exception("Error on second page")
+        Exception("Error on second page"),
     ]
 
     # Execute
@@ -274,8 +276,8 @@ def test_get_schedulers_by_owner_id_handle_exceptions_decorator():
     # by checking the function's behavior when an exception occurs
     with patch("services.aws.get_schedulers.scheduler_client") as mock_client:
         mock_client.list_schedules.side_effect = Exception("Test exception")
-        
+
         result = get_schedulers_by_owner_id(123)
-        
+
         # Should return [] (default_return_value) and not raise exception (raise_on_error=False)
         assert result == []
