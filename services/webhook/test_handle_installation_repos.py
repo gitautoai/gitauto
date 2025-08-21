@@ -184,13 +184,6 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
-            token="ghs_different_token",
-            user_id=67890,
-            user_name="test-sender",
-        )
-                {"id": 111, "name": "test-repo-1"},
-                {"id": 222, "name": "test-repo-2"},
-            ],
             token=None,
             user_id=67890,
             user_name="test-sender",
@@ -339,3 +332,12 @@ class TestHandleInstallationReposAdded:
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
+            owner_name="test-owner",
+            repositories=[
+                {"id": 111, "name": "test-repo-1"},
+                {"id": 222, "name": "test-repo-2"},
+            ],
+            token="ghs_different_token",
+            user_id=67890,
+            user_name="test-sender",
+        )
