@@ -187,7 +187,10 @@ def test_get_file_tree_exception_handling(mock_headers):
 def test_get_file_tree_http_error_handling(mock_headers):
     mock_response = Mock()
     mock_response.status_code = 422
-    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError()
+    mock_response.reason = "Unprocessable Entity"
+    mock_response.text = "Validation failed"
+    http_error = requests.exceptions.HTTPError()
+    http_error.response = mock_response
     
     with patch("services.github.trees.get_file_tree.requests.get") as mock_get, \
          patch("services.github.trees.get_file_tree.create_headers") as mock_create_headers:
