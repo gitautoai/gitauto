@@ -376,6 +376,108 @@ def test_create_empty_commit_function_call_sequence(all_mocks_successful, sample
         call_order.append("get_reference")
         return "current_sha_123"
 
+
+
+def test_create_empty_commit_exception_in_get_reference(
+    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+):
+    """Test behavior when get_reference raises an exception."""
+    # pylint: disable=redefined-outer-name
+    mock_get_reference.side_effect = Exception("Network error")
+
+    result = create_empty_commit(sample_base_args)
+
+    # Verify the function returns False due to handle_exceptions decorator
+    assert result is False
+
+    # Verify only get_reference was called
+    mock_get_reference.assert_called_once_with(sample_base_args)
+    mock_get_commit.assert_not_called()
+    mock_create_commit.assert_not_called()
+    mock_update_reference.assert_not_called()
+
+
+def test_create_empty_commit_exception_in_get_commit(
+    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+):
+    """Test behavior when get_commit raises an exception."""
+    # pylint: disable=redefined-outer-name
+    mock_get_reference.return_value = "current_sha_123"
+    mock_get_commit.side_effect = Exception("API error")
+
+    result = create_empty_commit(sample_base_args)
+
+    # Verify the function returns False due to handle_exceptions decorator
+    assert result is False
+
+    # Verify get_reference and get_commit were called, but not the others
+    mock_get_reference.assert_called_once_with(sample_base_args)
+    mock_get_commit.assert_called_once_with(sample_base_args, "current_sha_123")
+    mock_create_commit.assert_not_called()
+    mock_update_reference.assert_not_called()
+
+
+def test_create_empty_commit_exception_in_create_commit(
+    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+):
+    """Test behavior when create_commit raises an exception."""
+    # pylint: disable=redefined-outer-name
+    mock_get_reference.return_value = "current_sha_123"
+    mock_get_commit.return_value = "tree_sha_456"
+    mock_create_commit.side_effect = Exception("Commit creation failed")
+
+    result = create_empty_commit(sample_base_args)
+
+    # Verify the function returns False due to handle_exceptions decorator
+    assert result is False
+
+    # Verify all functions except update_reference were called
+    mock_get_reference.assert_called_once_with(sample_base_args)
+    mock_get_commit.assert_called_once_with(sample_base_args, "current_sha_123")
+    mock_create_commit.assert_called_once_with(
+        sample_base_args,
+        "Empty commit to trigger final tests",
+        "tree_sha_456",
+        "current_sha_123",
+    )
+    mock_update_reference.assert_not_called()
+
+
+def test_create_empty_commit_exception_in_update_reference(
+    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+):
+    """Test behavior when update_reference raises an exception."""
+    # pylint: disable=redefined-outer-name
+    mock_get_reference.return_value = "current_sha_123"
+    mock_get_commit.return_value = "tree_sha_456"
+    mock_create_commit.return_value = "new_commit_sha_789"
+    mock_update_reference.side_effect = Exception("Reference update failed")
+
+    result = create_empty_commit(sample_base_args)
+
+    # Verify the function returns False due to handle_exceptions decorator
+    assert result is False
+
+    # Verify all functions were called
+    mock_get_reference.assert_called_once_with(sample_base_args)
+    mock_get_commit.assert_called_once_with(sample_base_args, "current_sha_123")
+    mock_create_commit.assert_called_once_with(
+        sample_base_args,
+        "Empty commit to trigger final tests",
+        "tree_sha_456",
+        "current_sha_123",
+    )
+    mock_update_reference.assert_called_once_with(sample_base_args, "new_commit_sha_789")
+
+
+def test_create_empty_commit_return_value_from_update_reference(all_mocks_successful, sample_base_args):
+    """Test that the function returns the result from update_reference."""
+    # pylint: disable=redefined-outer-name
+    # Test with True return value
+    all_mocks_successful["update_reference"].return_value = True
+    result = create_empty_commit(sample_base_args)
+    assert result is True
+
     def track_get_commit(*args, **kwargs):
         call_order.append("get_commit")
         return "tree_sha_456"
