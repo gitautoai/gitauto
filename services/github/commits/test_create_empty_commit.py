@@ -107,7 +107,11 @@ def test_create_empty_commit_success_with_custom_message(
 
 
 def test_create_empty_commit_get_reference_fails(
-    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+    mock_get_reference,
+    mock_get_commit,
+    mock_create_commit,
+    mock_update_reference,
+    sample_base_args,
 ):
     """Test behavior when get_reference returns None."""
     # pylint: disable=redefined-outer-name
@@ -126,7 +130,11 @@ def test_create_empty_commit_get_reference_fails(
 
 
 def test_create_empty_commit_get_reference_returns_falsy_value(
-    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+    mock_get_reference,
+    mock_get_commit,
+    mock_create_commit,
+    mock_update_reference,
+    sample_base_args,
 ):
     """Test behavior when get_reference returns falsy values."""
     # pylint: disable=redefined-outer-name
@@ -154,7 +162,11 @@ def test_create_empty_commit_get_reference_returns_falsy_value(
 
 
 def test_create_empty_commit_get_commit_fails(
-    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+    mock_get_reference,
+    mock_get_commit,
+    mock_create_commit,
+    mock_update_reference,
+    sample_base_args,
 ):
     """Test behavior when get_commit returns None."""
     # pylint: disable=redefined-outer-name
@@ -174,7 +186,11 @@ def test_create_empty_commit_get_commit_fails(
 
 
 def test_create_empty_commit_get_commit_returns_falsy_value(
-    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+    mock_get_reference,
+    mock_get_commit,
+    mock_create_commit,
+    mock_update_reference,
+    sample_base_args,
 ):
     """Test behavior when get_commit returns falsy values."""
     # pylint: disable=redefined-outer-name
@@ -204,7 +220,11 @@ def test_create_empty_commit_get_commit_returns_falsy_value(
 
 
 def test_create_empty_commit_create_commit_fails(
-    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+    mock_get_reference,
+    mock_get_commit,
+    mock_create_commit,
+    mock_update_reference,
+    sample_base_args,
 ):
     """Test behavior when create_commit returns None."""
     # pylint: disable=redefined-outer-name
@@ -230,7 +250,11 @@ def test_create_empty_commit_create_commit_fails(
 
 
 def test_create_empty_commit_create_commit_returns_falsy_value(
-    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+    mock_get_reference,
+    mock_get_commit,
+    mock_create_commit,
+    mock_update_reference,
+    sample_base_args,
 ):
     """Test behavior when create_commit returns falsy values."""
     # pylint: disable=redefined-outer-name
@@ -267,7 +291,11 @@ def test_create_empty_commit_create_commit_returns_falsy_value(
 
 
 def test_create_empty_commit_update_reference_fails(
-    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+    mock_get_reference,
+    mock_get_commit,
+    mock_create_commit,
+    mock_update_reference,
+    sample_base_args,
 ):
     """Test behavior when update_reference returns False."""
     # pylint: disable=redefined-outer-name
@@ -290,7 +318,9 @@ def test_create_empty_commit_update_reference_fails(
         "tree_sha_456",
         "current_sha_123",
     )
-    mock_update_reference.assert_called_once_with(sample_base_args, "new_commit_sha_789")
+    mock_update_reference.assert_called_once_with(
+        sample_base_args, "new_commit_sha_789"
+    )
 
 
 def test_create_empty_commit_with_different_base_args(all_mocks_successful):
@@ -367,7 +397,9 @@ def test_create_empty_commit_with_special_characters_in_message(
     )
 
 
-def test_create_empty_commit_function_call_sequence(all_mocks_successful, sample_base_args):
+def test_create_empty_commit_function_call_sequence(
+    all_mocks_successful, sample_base_args
+):
     """Test that functions are called in the correct sequence."""
     # pylint: disable=redefined-outer-name
     call_order = []
@@ -399,12 +431,21 @@ def test_create_empty_commit_function_call_sequence(all_mocks_successful, sample
     assert result is True
 
     # Verify functions were called in the correct order
-    expected_order = ["get_reference", "get_commit", "create_commit", "update_reference"]
+    expected_order = [
+        "get_reference",
+        "get_commit",
+        "create_commit",
+        "update_reference",
+    ]
     assert call_order == expected_order
 
 
 def test_create_empty_commit_exception_in_get_reference(
-    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+    mock_get_reference,
+    mock_get_commit,
+    mock_create_commit,
+    mock_update_reference,
+    sample_base_args,
 ):
     """Test behavior when get_reference raises an exception."""
     # pylint: disable=redefined-outer-name
@@ -423,7 +464,11 @@ def test_create_empty_commit_exception_in_get_reference(
 
 
 def test_create_empty_commit_exception_in_get_commit(
-    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+    mock_get_reference,
+    mock_get_commit,
+    mock_create_commit,
+    mock_update_reference,
+    sample_base_args,
 ):
     """Test behavior when get_commit raises an exception."""
     # pylint: disable=redefined-outer-name
@@ -443,7 +488,11 @@ def test_create_empty_commit_exception_in_get_commit(
 
 
 def test_create_empty_commit_exception_in_create_commit(
-    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+    mock_get_reference,
+    mock_get_commit,
+    mock_create_commit,
+    mock_update_reference,
+    sample_base_args,
 ):
     """Test behavior when create_commit raises an exception."""
     # pylint: disable=redefined-outer-name
@@ -469,7 +518,11 @@ def test_create_empty_commit_exception_in_create_commit(
 
 
 def test_create_empty_commit_exception_in_update_reference(
-    mock_get_reference, mock_get_commit, mock_create_commit, mock_update_reference, sample_base_args
+    mock_get_reference,
+    mock_get_commit,
+    mock_create_commit,
+    mock_update_reference,
+    sample_base_args,
 ):
     """Test behavior when update_reference raises an exception."""
     # pylint: disable=redefined-outer-name
@@ -492,10 +545,14 @@ def test_create_empty_commit_exception_in_update_reference(
         "tree_sha_456",
         "current_sha_123",
     )
-    mock_update_reference.assert_called_once_with(sample_base_args, "new_commit_sha_789")
+    mock_update_reference.assert_called_once_with(
+        sample_base_args, "new_commit_sha_789"
+    )
 
 
-def test_create_empty_commit_return_value_from_update_reference(all_mocks_successful, sample_base_args):
+def test_create_empty_commit_return_value_from_update_reference(
+    all_mocks_successful, sample_base_args
+):
     """Test that the function returns the result from update_reference."""
     # pylint: disable=redefined-outer-name
     # Test with True return value
@@ -506,11 +563,11 @@ def test_create_empty_commit_return_value_from_update_reference(all_mocks_succes
     # Reset mocks and test with False return value
     for mock in all_mocks_successful.values():
         mock.reset_mock()
-    
+
     all_mocks_successful["get_reference"].return_value = "current_sha_123"
     all_mocks_successful["get_commit"].return_value = "tree_sha_456"
     all_mocks_successful["create_commit"].return_value = "new_commit_sha_789"
     all_mocks_successful["update_reference"].return_value = False
-    
+
     result = create_empty_commit(sample_base_args)
     assert result is False

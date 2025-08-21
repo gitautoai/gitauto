@@ -22,8 +22,10 @@ from services.github.comments.delete_comments_by_identifiers import (
 from services.github.comments.get_comments import get_comments
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.github_manager import (
+from services.github.commits.get_latest_remote_commit_sha import (
     get_latest_remote_commit_sha,
+)
+from services.github.files.get_remote_file_content_by_url import (
     get_remote_file_content_by_url,
 )
 from services.github.markdown.render_text import render_text

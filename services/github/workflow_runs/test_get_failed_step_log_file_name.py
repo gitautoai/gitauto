@@ -3,7 +3,9 @@ from unittest.mock import patch, MagicMock
 import pytest
 import requests
 
-from services.github.workflow_runs.get_failed_step_log_file_name import get_failed_step_log_file_name
+from services.github.workflow_runs.get_failed_step_log_file_name import (
+    get_failed_step_log_file_name,
+)
 from tests.constants import OWNER, REPO, TOKEN
 
 
@@ -17,22 +19,10 @@ def mock_successful_response():
             {
                 "name": "build",
                 "steps": [
-                    {
-                        "number": 1,
-                        "name": "Set up job",
-                        "conclusion": "success"
-                    },
-                    {
-                        "number": 2,
-                        "name": "Run tests",
-                        "conclusion": "failure"
-                    },
-                    {
-                        "number": 3,
-                        "name": "Clean up",
-                        "conclusion": "skipped"
-                    }
-                ]
+                    {"number": 1, "name": "Set up job", "conclusion": "success"},
+                    {"number": 2, "name": "Run tests", "conclusion": "failure"},
+                    {"number": 3, "name": "Clean up", "conclusion": "skipped"},
+                ],
             }
         ]
     }
@@ -49,17 +39,9 @@ def mock_no_failed_steps_response():
             {
                 "name": "build",
                 "steps": [
-                    {
-                        "number": 1,
-                        "name": "Set up job",
-                        "conclusion": "success"
-                    },
-                    {
-                        "number": 2,
-                        "name": "Run tests",
-                        "conclusion": "success"
-                    }
-                ]
+                    {"number": 1, "name": "Set up job", "conclusion": "success"},
+                    {"number": 2, "name": "Run tests", "conclusion": "success"},
+                ],
             }
         ]
     }
@@ -111,7 +93,9 @@ def test_get_failed_step_log_file_name_success(mock_successful_response, mock_he
     assert result == expected_filename
 
 
-def test_get_failed_step_log_file_name_no_failed_steps(mock_no_failed_steps_response, mock_headers):
+def test_get_failed_step_log_file_name_no_failed_steps(
+    mock_no_failed_steps_response, mock_headers
+):
     """Test handling when no failed steps are found."""
     # Arrange
     run_id = 12345
@@ -167,12 +151,8 @@ def test_get_failed_step_log_file_name_404_without_not_found_text(mock_headers):
             {
                 "name": "test",
                 "steps": [
-                    {
-                        "number": 1,
-                        "name": "Failed step",
-                        "conclusion": "failure"
-                    }
-                ]
+                    {"number": 1, "name": "Failed step", "conclusion": "failure"}
+                ],
             }
         ]
     }
@@ -205,28 +185,14 @@ def test_get_failed_step_log_file_name_multiple_jobs_first_failed():
             {
                 "name": "lint",
                 "steps": [
-                    {
-                        "number": 1,
-                        "name": "Setup",
-                        "conclusion": "success"
-                    },
-                    {
-                        "number": 2,
-                        "name": "Run linter",
-                        "conclusion": "failure"
-                    }
-                ]
+                    {"number": 1, "name": "Setup", "conclusion": "success"},
+                    {"number": 2, "name": "Run linter", "conclusion": "failure"},
+                ],
             },
             {
                 "name": "test",
-                "steps": [
-                    {
-                        "number": 1,
-                        "name": "Run tests",
-                        "conclusion": "failure"
-                    }
-                ]
-            }
+                "steps": [{"number": 1, "name": "Run tests", "conclusion": "failure"}],
+            },
         ]
     }
 
@@ -251,15 +217,7 @@ def test_get_failed_step_log_file_name_missing_job_name():
     mock_response.status_code = 200
     mock_response.json.return_value = {
         "jobs": [
-            {
-                "steps": [
-                    {
-                        "number": 1,
-                        "name": "Failed step",
-                        "conclusion": "failure"
-                    }
-                ]
-            }
+            {"steps": [{"number": 1, "name": "Failed step", "conclusion": "failure"}]}
         ]
     }
 
@@ -374,6 +332,7 @@ def test_get_failed_step_log_file_name_timeout_parameter():
     mock_get.assert_called_once()
     assert mock_get.call_args[1]["timeout"] == 60
 
+
 def test_get_failed_step_log_file_name_http_error():
     """Test handling of HTTP error when retrieving workflow run jobs."""
     # Arrange
@@ -393,7 +352,7 @@ def test_get_failed_step_log_file_name_http_error():
     ) as mock_create_headers:
         mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
         mock_get.return_value.raise_for_status.side_effect = http_error
-        
+
         with pytest.raises(requests.HTTPError):
             get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
 
@@ -415,7 +374,7 @@ def test_get_failed_step_log_file_name_missing_step_fields():
                         # Missing number and name fields
                         "conclusion": "failure"
                     }
-                ]
+                ],
             }
         ]
     }
@@ -467,14 +426,7 @@ def test_get_failed_step_log_file_name_empty_steps_list():
     run_id = 12345
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_response.json.return_value = {
-        "jobs": [
-            {
-                "name": "test",
-                "steps": []
-            }
-        ]
-    }
+    mock_response.json.return_value = {"jobs": [{"name": "test", "steps": []}]}
 
     # Act
     with patch(
@@ -487,5 +439,3 @@ def test_get_failed_step_log_file_name_empty_steps_list():
 
     # Assert
     assert result is None
-
-

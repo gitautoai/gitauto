@@ -12,7 +12,7 @@ from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.github_manager import get_remote_file_content
+from services.github.files.get_remote_file_content import get_remote_file_content
 from services.github.pulls.get_pull_request_file_contents import (
     get_pull_request_file_contents,
 )

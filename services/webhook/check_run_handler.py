@@ -19,7 +19,7 @@ from services.github.comments.create_comment import create_comment
 from services.github.comments.has_comment_with_text import has_comment_with_text
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.github_manager import get_remote_file_content
+from services.github.files.get_remote_file_content import get_remote_file_content
 from services.github.installations.get_installation_permissions import (
     get_installation_permissions,
 )

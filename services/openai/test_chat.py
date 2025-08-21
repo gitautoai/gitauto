@@ -115,7 +115,10 @@ def test_chat_with_ai_empty_truncated_message(
 @patch("services.openai.chat.create_openai_client")
 @patch("services.openai.chat.truncate_message")
 def test_chat_with_ai_none_content(
-    mock_truncate_message, mock_create_client, mock_openai_client, mock_chat_completion_empty
+    mock_truncate_message,
+    mock_create_client,
+    mock_openai_client,
+    mock_chat_completion_empty,
 ):
     """Test chat completion when response content is None"""
     # Setup mocks
@@ -204,7 +207,9 @@ def test_chat_with_ai_empty_inputs(
 
 @patch("services.openai.chat.create_openai_client")
 @patch("services.openai.chat.truncate_message")
-def test_chat_with_ai_openai_error_raises(mock_truncate_message, mock_create_client, mock_openai_client):
+def test_chat_with_ai_openai_error_raises(
+    mock_truncate_message, mock_create_client, mock_openai_client
+):
     """Test that OpenAI errors are raised due to handle_exceptions(raise_on_error=True)"""
     # Setup mocks
     mock_create_client.return_value = mock_openai_client
@@ -226,12 +231,16 @@ def test_chat_with_ai_openai_error_raises(mock_truncate_message, mock_create_cli
 
 @patch("services.openai.chat.create_openai_client")
 @patch("services.openai.chat.truncate_message")
-def test_chat_with_ai_attribute_error_raises(mock_truncate_message, mock_create_client, mock_openai_client):
+def test_chat_with_ai_attribute_error_raises(
+    mock_truncate_message, mock_create_client, mock_openai_client
+):
     """Test that AttributeError is raised due to handle_exceptions(raise_on_error=True)"""
     # Setup mocks
     mock_create_client.return_value = mock_openai_client
     mock_truncate_message.return_value = "truncated user input"
-    mock_openai_client.chat.completions.create.side_effect = AttributeError("Missing attribute")
+    mock_openai_client.chat.completions.create.side_effect = AttributeError(
+        "Missing attribute"
+    )
 
     # Test inputs
     system_input = "You are a helpful assistant"
@@ -328,7 +337,7 @@ def test_chat_with_ai_message_structure(
     # Verify message structure
     call_args = mock_openai_client.chat.completions.create.call_args[1]
     messages = call_args["messages"]
-    
+
     assert len(messages) == 2
     assert messages[0]["role"] == "developer"
     assert messages[1]["role"] == "user"

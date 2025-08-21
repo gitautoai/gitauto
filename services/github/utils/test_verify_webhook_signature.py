@@ -33,9 +33,7 @@ def sample_body():
 def valid_signature(sample_secret, sample_body):
     """Fixture providing a valid GitHub webhook signature."""
     hmac_signature = hmac.new(
-        key=sample_secret.encode(),
-        msg=sample_body,
-        digestmod=hashlib.sha256
+        key=sample_secret.encode(), msg=sample_body, digestmod=hashlib.sha256
     ).hexdigest()
     return f"sha256={hmac_signature}"
 
@@ -116,9 +114,7 @@ async def test_verify_webhook_signature_empty_body(mock_request, sample_secret):
     """Test verification with empty request body."""
     empty_body = b""
     hmac_signature = hmac.new(
-        key=sample_secret.encode(),
-        msg=empty_body,
-        digestmod=hashlib.sha256
+        key=sample_secret.encode(), msg=empty_body, digestmod=hashlib.sha256
     ).hexdigest()
     valid_signature = f"sha256={hmac_signature}"
 
@@ -136,9 +132,7 @@ async def test_verify_webhook_signature_large_body(mock_request, sample_secret):
     """Test verification with large request body."""
     large_body = b"x" * 10000  # 10KB body
     hmac_signature = hmac.new(
-        key=sample_secret.encode(),
-        msg=large_body,
-        digestmod=hashlib.sha256
+        key=sample_secret.encode(), msg=large_body, digestmod=hashlib.sha256
     ).hexdigest()
     valid_signature = f"sha256={hmac_signature}"
 
@@ -154,11 +148,9 @@ async def test_verify_webhook_signature_large_body(mock_request, sample_secret):
 @pytest.mark.asyncio
 async def test_verify_webhook_signature_unicode_body(mock_request, sample_secret):
     """Test verification with Unicode characters in body."""
-    unicode_body = '{"message": "Hello world"}'.encode('utf-8')
+    unicode_body = '{"message": "Hello world"}'.encode("utf-8")
     hmac_signature = hmac.new(
-        key=sample_secret.encode(),
-        msg=unicode_body,
-        digestmod=hashlib.sha256
+        key=sample_secret.encode(), msg=unicode_body, digestmod=hashlib.sha256
     ).hexdigest()
     valid_signature = f"sha256={hmac_signature}"
 
@@ -178,9 +170,7 @@ async def test_verify_webhook_signature_special_characters_secret(
     """Test verification with special characters in secret."""
     special_secret = "secret!@#$%^&*()_+-=[]{}|;:,.<>?"
     hmac_signature = hmac.new(
-        key=special_secret.encode(),
-        msg=sample_body,
-        digestmod=hashlib.sha256
+        key=special_secret.encode(), msg=sample_body, digestmod=hashlib.sha256
     ).hexdigest()
     valid_signature = f"sha256={hmac_signature}"
 
@@ -198,9 +188,7 @@ async def test_verify_webhook_signature_empty_secret(mock_request, sample_body):
     """Test verification with empty secret."""
     empty_secret = ""
     hmac_signature = hmac.new(
-        key=empty_secret.encode(),
-        msg=sample_body,
-        digestmod=hashlib.sha256
+        key=empty_secret.encode(), msg=sample_body, digestmod=hashlib.sha256
     ).hexdigest()
     valid_signature = f"sha256={hmac_signature}"
 
@@ -247,11 +235,9 @@ async def test_verify_webhook_signature_case_sensitivity(
 ):
     """Test that signature verification is case sensitive."""
     hmac_signature = hmac.new(
-        key=sample_secret.encode(),
-        msg=sample_body,
-        digestmod=hashlib.sha256
+        key=sample_secret.encode(), msg=sample_body, digestmod=hashlib.sha256
     ).hexdigest()
-    
+
     # Test uppercase signature (should fail)
     uppercase_signature = f"sha256={hmac_signature.upper()}"
     mock_request.headers = {"X-Hub-Signature-256": uppercase_signature}
@@ -270,20 +256,20 @@ async def test_verify_webhook_signature_timing_attack_protection(
 ):
     """Test that hmac.compare_digest is used for timing attack protection."""
     valid_hmac = hmac.new(
-        key=sample_secret.encode(),
-        msg=sample_body,
-        digestmod=hashlib.sha256
+        key=sample_secret.encode(), msg=sample_body, digestmod=hashlib.sha256
     ).hexdigest()
     valid_signature = f"sha256={valid_hmac}"
-    
+
     mock_request.headers = {"X-Hub-Signature-256": valid_signature}
     mock_request.body.return_value = sample_body
 
-    with patch('services.github.utils.verify_webhook_signature.hmac.compare_digest') as mock_compare_digest:
+    with patch(
+        "services.github.utils.verify_webhook_signature.hmac.compare_digest"
+    ) as mock_compare_digest:
         mock_compare_digest.return_value = True
-        
+
         await verify_webhook_signature(mock_request, sample_secret)
-        
+
         # Verify that hmac.compare_digest was called with correct arguments
         # Verify that hmac.compare_digest was called
         # The actual arguments will be the received signature and expected signature
@@ -328,16 +314,16 @@ async def test_verify_webhook_signature_hmac_computation_steps(
 ):
     """Test the HMAC computation steps are performed correctly."""
     hmac_signature = hmac.new(
-        key=sample_secret.encode(),
-        msg=sample_body,
-        digestmod=hashlib.sha256
+        key=sample_secret.encode(), msg=sample_body, digestmod=hashlib.sha256
     ).hexdigest()
     valid_signature = f"sha256={hmac_signature}"
 
     mock_request.headers = {"X-Hub-Signature-256": valid_signature}
     mock_request.body.return_value = sample_body
 
-    with patch('services.github.utils.verify_webhook_signature.hmac.new') as mock_hmac_new:
+    with patch(
+        "services.github.utils.verify_webhook_signature.hmac.new"
+    ) as mock_hmac_new:
         mock_hmac_obj = MagicMock()
         mock_hmac_obj.hexdigest.return_value = hmac_signature
         mock_hmac_new.return_value = mock_hmac_obj
@@ -346,9 +332,7 @@ async def test_verify_webhook_signature_hmac_computation_steps(
 
         # Verify HMAC was created with correct parameters
         mock_hmac_new.assert_called_once_with(
-            key=sample_secret.encode(),
-            msg=sample_body,
-            digestmod=hashlib.sha256
+            key=sample_secret.encode(), msg=sample_body, digestmod=hashlib.sha256
         )
         mock_hmac_obj.hexdigest.assert_called_once()
 
@@ -359,12 +343,10 @@ async def test_verify_webhook_signature_secret_encoding(
 ):
     """Test that secret is properly encoded to bytes."""
     unicode_secret = "test_secret_with_unicode_chars"
-    
+
     # Create valid signature with the unicode secret
     hmac_signature = hmac.new(
-        key=unicode_secret.encode(),
-        msg=sample_body,
-        digestmod=hashlib.sha256
+        key=unicode_secret.encode(), msg=sample_body, digestmod=hashlib.sha256
     ).hexdigest()
     valid_signature = f"sha256={hmac_signature}"
 
@@ -376,17 +358,16 @@ async def test_verify_webhook_signature_secret_encoding(
 
     mock_request.body.assert_called_once()
 
+
 @pytest.mark.asyncio
 async def test_verify_webhook_signature_whitespace_in_signature(
     mock_request, sample_secret, sample_body
 ):
     """Test verification fails with whitespace in signature."""
     hmac_signature = hmac.new(
-        key=sample_secret.encode(),
-        msg=sample_body,
-        digestmod=hashlib.sha256
+        key=sample_secret.encode(), msg=sample_body, digestmod=hashlib.sha256
     ).hexdigest()
-    
+
     # Add whitespace to signature
     signature_with_whitespace = f" sha256={hmac_signature} "
     mock_request.headers = {"X-Hub-Signature-256": signature_with_whitespace}
@@ -406,17 +387,15 @@ async def test_verify_webhook_signature_different_body_content(
     """Test verification with different types of body content."""
     test_bodies = [
         b'{"key": "value"}',  # JSON
-        b'key=value&another=test',  # Form data
-        b'<xml><data>test</data></xml>',  # XML
-        b'plain text content',  # Plain text
-        b'\x00\x01\x02\x03',  # Binary data
+        b"key=value&another=test",  # Form data
+        b"<xml><data>test</data></xml>",  # XML
+        b"plain text content",  # Plain text
+        b"\x00\x01\x02\x03",  # Binary data
     ]
 
     for body in test_bodies:
         hmac_signature = hmac.new(
-            key=sample_secret.encode(),
-            msg=body,
-            digestmod=hashlib.sha256
+            key=sample_secret.encode(), msg=body, digestmod=hashlib.sha256
         ).hexdigest()
         valid_signature = f"sha256={hmac_signature}"
 
@@ -462,9 +441,7 @@ async def test_verify_webhook_signature_parametrized(
 ):
     """Test verification with various secret and body combinations."""
     hmac_signature = hmac.new(
-        key=secret.encode(),
-        msg=body,
-        digestmod=hashlib.sha256
+        key=secret.encode(), msg=body, digestmod=hashlib.sha256
     ).hexdigest()
     valid_signature = f"sha256={hmac_signature}"
 

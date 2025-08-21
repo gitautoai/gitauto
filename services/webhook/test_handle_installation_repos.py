@@ -1,8 +1,10 @@
 """Unit tests for handle_installation_repos.py"""
 
 # Standard imports
+from unittest.mock import patch
+
+# Third-party imports
 import pytest
-from unittest.mock import patch, AsyncMock
 
 # Local imports
 from services.webhook.handle_installation_repos import handle_installation_repos_added
