@@ -232,3 +232,4 @@ def test_get_file_tree_no_truncated_key(mock_headers):
         
         result = get_file_tree(OWNER, REPO, "main", TOKEN)
         
+        assert result == [{"path": "test.py", "mode": "100644", "type": "blob", "size": 50, "sha": "def456", "url": "https://api.github.com/test"}]
