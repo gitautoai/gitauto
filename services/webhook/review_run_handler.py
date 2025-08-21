@@ -19,7 +19,6 @@ from services.github.pulls.get_pull_request_file_contents import (
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.github_types import BaseArgs
 from services.github.types.owner import Owner
 from services.github.types.pull_request import PullRequest
@@ -189,13 +188,6 @@ def handle_review_run(payload: dict[str, Any]):
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
-    # Get the file tree in the root of the repo
-    file_tree, tree_comment = get_file_tree_list(base_args=base_args, max_files=100)
-    p += 5
-    log_messages.append(tree_comment)
-    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
-    update_comment(body=comment_body, base_args=base_args)
-
     # Get repository settings
     repo_settings = get_repository(repo_id=repo_id)
 
@@ -207,7 +199,6 @@ def handle_review_run(payload: dict[str, Any]):
         "review_comment": review_comment,
         "review_file": review_file,
         "pull_files": pull_files,
-        "file_tree": file_tree,
         "today": today,
     }
     user_input = json.dumps(obj=input_message)

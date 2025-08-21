@@ -24,16 +24,13 @@ from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.github_manager import (
     get_latest_remote_commit_sha,
-    get_remote_file_content,
     get_remote_file_content_by_url,
 )
 from services.github.markdown.render_text import render_text
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.reactions.add_reaction_to_issue import add_reaction_to_issue
-from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.github_types import GitHubLabeledPayload
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
-from services.github.utils.find_config_files import find_config_files
 
 # Local imports (Jira, OpenAI, Slack)
 from services.jira.deconstruct_jira_payload import deconstruct_jira_payload
@@ -204,35 +201,6 @@ async def create_pr_from_issue(
             )
         )
 
-    # Check out the issue comments, and file tree
-    file_tree, tree_comment = get_file_tree_list(base_args=base_args, max_files=100)
-    p += 5
-    log_messages.append(tree_comment)
-    update_comment(
-        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
-    )
-
-    config_files: list[str] = find_config_files(file_tree=file_tree)
-    comment_body = f"Found {len(config_files)} configuration files."
-    if len(config_files) > 0:
-        comment_body += "\n- " + "\n- ".join(config_files) + "\n"
-    p += 5
-    log_messages.append(comment_body)
-    update_comment(
-        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
-    )
-
-    config_contents: list[str] = []
-    for config_file in config_files:
-        content = get_remote_file_content(file_path=config_file, base_args=base_args)
-        config_contents.append(content)
-    comment_body = f"Read {len(config_files)} configuration files."
-    p += 5
-    log_messages.append(comment_body)
-    update_comment(
-        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
-    )
-
     # Check out the issue comments
     issue_comments: list[str] = []
     if input_from == "github":
@@ -299,8 +267,6 @@ async def create_pr_from_issue(
             "parent_issue_number": parent_issue_number,
             "parent_issue_title": parent_issue_title,
             "parent_issue_body": parent_issue_body,
-            "file_tree": file_tree,
-            "config_contents": config_contents,
         }
     )
 
