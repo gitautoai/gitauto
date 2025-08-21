@@ -16,6 +16,7 @@ from services.github.github_manager import (
     get_remote_file_content,
     search_remote_file_contents,
 )
+from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.google.search import google_search
 from services.openai.functions.properties import FILE_PATH
 from services.openai.functions.search_google import SEARCH_GOOGLE
@@ -112,15 +113,35 @@ SEARCH_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
 }
 
 # See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
+GET_FILE_TREE_LIST: shared_params.FunctionDefinition = {
+    "name": "get_file_tree_list",
+    "description": "Gets a list of all files in the repository organized by directory depth. This is useful for understanding the repository structure and finding files to examine.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "max_files": {
+                "type": "integer",
+                "description": "Maximum number of files to return. If not specified, returns all files. Use this to limit results when you only need an overview of the repository structure.",
+            }
+        },
+        "required": [],
+        "additionalProperties": False,  # For Structured Outpus
+    },
+    "strict": True,  # For Structured Outpus
+}
+
+# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
 TOOLS_TO_UPDATE_COMMENT: Iterable[ChatCompletionToolParam] = [
     {"type": "function", "function": UPDATE_GITHUB_COMMENT},
 ]
 TOOLS_TO_GET_FILE: Iterable[ChatCompletionToolParam] = [
+    {"type": "function", "function": GET_FILE_TREE_LIST},
     {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
 ]
 TOOLS_TO_EXPLORE_REPO: Iterable[ChatCompletionToolParam] = [
     # {"type": "code_interpreter"},
     # {"type": "retrieval"},
+    {"type": "function", "function": GET_FILE_TREE_LIST},
     {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
     {"type": "function", "function": SEARCH_REMOTE_FILE_CONTENT},
 ]
@@ -136,6 +157,7 @@ TOOLS_TO_COMMIT_CHANGES: Iterable[ChatCompletionToolParam] = [
 tools_to_call: dict[str, Any] = {
     # GitHub
     "apply_diff_to_file": apply_diff_to_file,
+    "get_file_tree_list": get_file_tree_list,
     "get_remote_file_content": get_remote_file_content,
     "replace_remote_file_content": replace_remote_file_content,
     "search_remote_file_contents": search_remote_file_contents,

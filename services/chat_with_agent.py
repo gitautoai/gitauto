@@ -214,6 +214,12 @@ def chat_with_agent(
         else:
             msg = "Searched repository but found no matching files."
 
+    elif tool_name == "get_file_tree_list":
+        if isinstance(tool_args, dict) and "max_files" in tool_args:
+            msg = f"Retrieved file tree (limited to {tool_args['max_files']} files)."
+        else:
+            msg = "Retrieved complete file tree."
+
     # Claude sometimes tries to call functions that don't exist in the list of tools...
     elif (
         tool_name in ["apply_diff_to_file", "replace_remote_file_content"]

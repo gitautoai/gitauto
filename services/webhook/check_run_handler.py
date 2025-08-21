@@ -31,7 +31,6 @@ from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.types.github_types import BaseArgs, CheckRunCompletedPayload
 from services.github.utils.create_permission_url import create_permission_url
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.check_run import CheckRun
 from services.github.types.check_suite import CheckSuite
 from services.github.types.pull_request import PullRequest
@@ -238,13 +237,6 @@ def handle_check_run(payload: CheckRunCompletedPayload):
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
-    # Get the file tree in the root of the repo
-    file_tree, _ = get_file_tree_list(base_args=base_args, max_files=100)
-    p += 5
-    log_messages.append("Checked out the file tree in the repo.")
-    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
-    update_comment(body=comment_body, base_args=base_args)
-
     # Get the error log from the workflow run
     if is_circleci:
         circleci_token = get_circleci_token(owner_id)
@@ -367,7 +359,6 @@ def handle_check_run(payload: CheckRunCompletedPayload):
         "pull_request_body": pull_body,
         "pull_request_changes": json.dumps(obj=pull_changes),
         "workflow_content": workflow_content,
-        "file_tree": file_tree,
         "error_log": error_log,
         "today": today,
     }

@@ -18,7 +18,6 @@ from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.github_types import BaseArgs
 from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
@@ -198,17 +197,10 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
-    file_tree, tree_comment = get_file_tree_list(base_args=base_args, max_files=100)
-    p += 10
-    log_messages.append(tree_comment)
-    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
-    update_comment(body=comment_body, base_args=base_args)
-
     today = datetime.now().strftime("%Y-%m-%d")
 
     input_message = {
         "selected_files": selected_files,
-        "file_tree": file_tree,
         "today": today,
     }
 
