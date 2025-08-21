@@ -41,7 +41,9 @@ def mock_422_response():
 def mock_error_response():
     response = Mock(spec=requests.Response)
     response.status_code = 500
-    response.raise_for_status.side_effect = requests.HTTPError("500 Server Error")
+    http_error = requests.HTTPError("500 Server Error")
+    http_error.response = response
+    response.raise_for_status.side_effect = http_error
     return response
 
 
