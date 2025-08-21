@@ -331,7 +331,7 @@ def test_insert_usage_exclude_none_behavior(mock_supabase_client, mock_usage_ins
     mock_table = MagicMock()
     mock_insert = MagicMock()
     mock_execute = MagicMock()
-    mock_execute.return_value = (None, [{"id": 100}])
+    mock_execute.data = [{"id": 100}]
     mock_insert.execute = mock_execute
     mock_table.insert.return_value = mock_insert
     mock_supabase_client.table.return_value = mock_table
