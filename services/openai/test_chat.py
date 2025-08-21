@@ -261,6 +261,11 @@ def test_chat_with_ai_unicode_inputs(
 
     # Call function
     result = chat_with_ai(system_input=system_input, user_input=user_input)
+
+    # Assertions
+    assert result == "Test response from AI"
+    mock_truncate_message.assert_called_once_with(input_message=user_input)
+    # Verify unicode characters are preserved in system message
     call_args = mock_openai_client.chat.completions.create.call_args[1]
     assert call_args["messages"][0]["content"] == system_input
     assert call_args["messages"][1]["content"] == "🌟 truncated unicode input 🚀"
@@ -316,7 +321,18 @@ def test_chat_with_ai_message_structure(
     """Test that messages are structured correctly with proper roles"""
     # Setup mocks
     mock_create_client.return_value = mock_openai_client
-    # Assertions
-    assert result == "Test response from AI"
-    mock_truncate_message.assert_called_once_with(input_message=user_input)
-    # Verify unicode characters are preserved in system message
+    mock_truncate_message.return_value = "truncated"
+    mock_openai_client.chat.completions.create.return_value = mock_chat_completion
+
+    # Call function
+    chat_with_ai(system_input="system", user_input="user")
+
+    # Verify message structure
+    call_args = mock_openai_client.chat.completions.create.call_args[1]
+    messages = call_args["messages"]
+    
+    assert len(messages) == 2
+    assert messages[0]["role"] == "developer"
+    assert messages[1]["role"] == "user"
+    assert "content" in messages[0]
+    assert "content" in messages[1]
