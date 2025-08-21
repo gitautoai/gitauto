@@ -28,6 +28,7 @@ def insert_usage(
     installation_id: int,
     source: str,
     trigger: Trigger,
+    pr_number: int | None = None,
 ):
     usage_data = UsageInsert(
         owner_id=owner_id,
@@ -40,6 +41,7 @@ def insert_usage(
         installation_id=installation_id,
         source=source,
         trigger=trigger,
+        pr_number=pr_number,
     )
     usage_data_dict = usage_data.model_dump(exclude_none=True)
     data, _ = supabase.table(table_name="usage").insert(json=usage_data_dict).execute()

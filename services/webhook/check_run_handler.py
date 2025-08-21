@@ -191,6 +191,7 @@ def handle_check_run(payload: CheckRunCompletedPayload):
         source="github",
         trigger="test_failure",
         email=None,
+        pr_number=pull_number,
     )
 
     # Cancel other in_progress check runs before proceeding with the fix
@@ -329,6 +330,17 @@ def handle_check_run(payload: CheckRunCompletedPayload):
         msg = f"Skipping `{check_run_name}` because GitAuto has already tried to fix this exact error before `{current_pair}`."
         log_messages.append(msg)
         update_comment(body="\n".join(log_messages), base_args=base_args)
+
+        # Update usage record for skipped duplicate
+        update_usage(
+            usage_id=usage_id,
+            token_input=0,
+            token_output=0,
+            total_seconds=int(time.time() - current_time),
+            is_completed=True,
+            pr_number=pull_number,
+            retry_workflow_id_hash_pairs=existing_pairs,
+        )
 
         # Early return notification
         early_return_msg = (
@@ -478,6 +490,7 @@ def handle_check_run(payload: CheckRunCompletedPayload):
         total_seconds=int(end_time - current_time),
         pr_number=pull_number,
         is_completed=True,
+        retry_workflow_id_hash_pairs=existing_pairs,
     )
 
     # End notification
