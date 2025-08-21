@@ -261,7 +261,61 @@ def test_chat_with_ai_unicode_inputs(
 
     # Call function
     result = chat_with_ai(system_input=system_input, user_input=user_input)
+    call_args = mock_openai_client.chat.completions.create.call_args[1]
+    assert call_args["messages"][0]["content"] == system_input
+    assert call_args["messages"][1]["content"] == "🌟 truncated unicode input 🚀"
 
+
+@patch("services.openai.chat.create_openai_client")
+@patch("services.openai.chat.truncate_message")
+def test_chat_with_ai_special_characters(
+    mock_truncate_message, mock_create_client, mock_openai_client, mock_chat_completion
+):
+    """Test chat completion with special characters and newlines"""
+    # Setup mocks
+    mock_create_client.return_value = mock_openai_client
+    mock_truncate_message.return_value = "Line 1\nLine 2\tTabbed"
+    mock_openai_client.chat.completions.create.return_value = mock_chat_completion
+
+    # Test inputs with special characters
+    system_input = "System message with\nnewlines and\ttabs"
+    user_input = "User input with\nspecial\tcharacters"
+
+    # Call function
+    result = chat_with_ai(system_input=system_input, user_input=user_input)
+
+    # Assertions
+    assert result == "Test response from AI"
+    mock_truncate_message.assert_called_once_with(input_message=user_input)
+
+
+@patch("services.openai.chat.create_openai_client")
+@patch("services.openai.chat.truncate_message")
+def test_chat_with_ai_model_configuration(
+    mock_truncate_message, mock_create_client, mock_openai_client, mock_chat_completion
+):
+    """Test that the correct model is used in the API call"""
+    # Setup mocks
+    mock_create_client.return_value = mock_openai_client
+    mock_truncate_message.return_value = "test message"
+    mock_openai_client.chat.completions.create.return_value = mock_chat_completion
+
+    # Call function
+    chat_with_ai(system_input="test system", user_input="test user")
+
+    # Verify the model parameter
+    call_args = mock_openai_client.chat.completions.create.call_args[1]
+    assert call_args["model"] == OPENAI_MODEL_ID_O3_MINI
+
+
+@patch("services.openai.chat.create_openai_client")
+@patch("services.openai.chat.truncate_message")
+def test_chat_with_ai_message_structure(
+    mock_truncate_message, mock_create_client, mock_openai_client, mock_chat_completion
+):
+    """Test that messages are structured correctly with proper roles"""
+    # Setup mocks
+    mock_create_client.return_value = mock_openai_client
     # Assertions
     assert result == "Test response from AI"
     mock_truncate_message.assert_called_once_with(input_message=user_input)
