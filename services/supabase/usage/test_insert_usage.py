@@ -13,14 +13,9 @@ from schemas.supabase.fastapi.schema_public_latest import UsageInsert
 def mock_supabase_client():
     """Mock the supabase client for testing."""
     with patch("services.supabase.usage.insert_usage.supabase") as mock_client:
-        # Create explicit mock objects for the chain
-        mock_execute = MagicMock()
-        mock_execute.return_value = ([None, [{"id": 123}]], None)
-        
-        mock_insert = MagicMock()
-        mock_insert.execute = mock_execute
-        
-        mock_client.table.return_value.insert.return_value = mock_insert
+        # Mock the execute method to return the expected tuple structure
+        # The execute() method should return (data, metadata) where data[1][0]["id"] is the ID
+        mock_client.table.return_value.insert.return_value.execute.return_value = ([None, [{"id": 123}]], None)
         
         yield mock_client
 
