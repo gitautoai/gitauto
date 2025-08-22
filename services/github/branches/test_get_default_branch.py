@@ -3,6 +3,7 @@ import pytest
 import requests
 import json
 
+from config import GITHUB_API_URL, TIMEOUT
 from services.github.branches.get_default_branch import get_default_branch
 
 
@@ -76,13 +77,13 @@ class TestGetDefaultBranch:
         
         # Verify first call (repository info)
         first_call = mock_requests_get.call_args_list[0]
-        assert first_call[1]["url"] == "https://api.github.com/repos/test-owner/test-repo"
-        assert first_call[1]["timeout"] == 120
+        assert first_call[1]["url"] == f"{GITHUB_API_URL}/repos/test-owner/test-repo"
+        assert first_call[1]["timeout"] == TIMEOUT
         
         # Verify second call (branch info)
         second_call = mock_requests_get.call_args_list[1]
-        assert second_call[1]["url"] == "https://api.github.com/repos/test-owner/test-repo/branches/main"
-        assert second_call[1]["timeout"] == 120
+        assert second_call[1]["url"] == f"{GITHUB_API_URL}/repos/test-owner/test-repo/branches/main"
+        assert second_call[1]["timeout"] == TIMEOUT
         
         # Verify headers were created
         mock_create_headers.assert_called_with(token="test-token")
@@ -128,7 +129,7 @@ class TestGetDefaultBranch:
         
         # Verify the branch URL was constructed correctly
         second_call = mock_requests_get.call_args_list[1]
-        assert second_call[1]["url"] == "https://api.github.com/repos/test-owner/test-repo/branches/develop"
+        assert second_call[1]["url"] == f"{GITHUB_API_URL}/repos/test-owner/test-repo/branches/develop"
 
     def test_repo_api_http_error(self, mock_requests_get, mock_create_headers):
         """Test behavior when repository API call fails with HTTP error."""
@@ -286,10 +287,10 @@ class TestGetDefaultBranch:
     @pytest.mark.parametrize(
         "owner,repo,expected_repo_url",
         [
-            ("test-owner", "test-repo", "https://api.github.com/repos/test-owner/test-repo"),
-            ("org-name", "my-project", "https://api.github.com/repos/org-name/my-project"),
-            ("user123", "repo-with-dashes", "https://api.github.com/repos/user123/repo-with-dashes"),
-            ("special.user", "repo_with_underscores", "https://api.github.com/repos/special.user/repo_with_underscores"),
+            ("test-owner", "test-repo", f"{GITHUB_API_URL}/repos/test-owner/test-repo"),
+            ("org-name", "my-project", f"{GITHUB_API_URL}/repos/org-name/my-project"),
+            ("user123", "repo-with-dashes", f"{GITHUB_API_URL}/repos/user123/repo-with-dashes"),
+            ("special.user", "repo_with_underscores", f"{GITHUB_API_URL}/repos/special.user/repo_with_underscores"),
         ],
     )
     def test_url_construction_with_various_owner_repo_names(
@@ -344,7 +345,7 @@ class TestGetDefaultBranch:
         
         # Verify both calls used correct timeout
         for call in mock_requests_get.call_args_list:
-            assert call[1]["timeout"] == 120
+            assert call[1]["timeout"] == TIMEOUT
 
     def test_headers_passed_to_both_requests(self, mock_requests_get, mock_create_headers, sample_repo_response, sample_branch_response):
         """Test that headers are passed to both API requests."""
@@ -465,5 +466,5 @@ class TestGetDefaultBranch:
         
         # Verify the branch URL was constructed correctly
         second_call = mock_requests_get.call_args_list[1]
-        expected_branch_url = f"https://api.github.com/repos/test-owner/test-repo/branches/{default_branch}"
+        expected_branch_url = f"{GITHUB_API_URL}/repos/test-owner/test-repo/branches/{default_branch}"
         assert second_call[1]["url"] == expected_branch_url
