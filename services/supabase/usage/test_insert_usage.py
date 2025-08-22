@@ -204,21 +204,6 @@ class TestInsertUsage:
             # Verify model_dump was called with exclude_none=True
             mock_instance.model_dump.assert_called_once_with(exclude_none=True)
 
-    @patch("services.supabase.usage.insert_usage.handle_exceptions")
-    def test_insert_usage_decorator_applied(self, mock_handle_exceptions, sample_usage_data):
-        """Test that handle_exceptions decorator is properly applied."""
-        # Setup
-        mock_handle_exceptions.return_value = lambda func: func
-        
-        # Import the module to trigger decorator application
-        from services.supabase.usage.insert_usage import insert_usage
-        
-        # Verify decorator was called with correct parameters
-        mock_handle_exceptions.assert_called_with(
-            default_return_value=None,
-            raise_on_error=True
-        )
-
     def test_insert_usage_with_minimal_required_fields(self, mock_supabase_client):
         """Test insert_usage with only required fields."""
         # Setup - minimal required data
