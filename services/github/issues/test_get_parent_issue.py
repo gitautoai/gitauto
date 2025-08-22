@@ -181,12 +181,12 @@ class TestGetParentIssue:
         assert call_args is not None
 
         # Check that document parameter is a gql query
-        document = call_args.kwargs.get("document") or call_args[0][0]
+        document = call_args.args[0] if call_args.args else call_args.kwargs.get("document")
         assert document is not None
 
         # Check variable_values parameter
         variable_values = (
-            call_args.kwargs.get("variable_values") or call_args[1]["variable_values"]
+            call_args.kwargs.get("variable_values")
         )
         expected_variables = {
             "owner": sample_params["owner"],
