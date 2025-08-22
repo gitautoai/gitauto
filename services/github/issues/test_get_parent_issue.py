@@ -186,7 +186,7 @@ class TestGetParentIssue:
 
         # Check variable_values parameter
         variable_values = (
-            call_args.kwargs.get("variable_values")
+            call_args.kwargs.get("variable_values") or call_args[1]["variable_values"]
         )
         expected_variables = {
             "owner": sample_params["owner"],
