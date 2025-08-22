@@ -319,7 +319,7 @@ class TestInsertUsageErrorHandling:
         """Test handling of cast exceptions when return value is not castable to int."""
         # Setup mock to return non-castable value
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = (
-            None, [{"id": "not-a-number"}]
+            [None, [{"id": "not-a-number"}]], None
         )
         
         # Execute and verify exception is raised
