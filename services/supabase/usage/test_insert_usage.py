@@ -341,7 +341,7 @@ class TestInsertUsageErrorHandling:
         """Test handling when response data array is empty."""
         # Setup mock to return empty data array
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = (
-            None, []
+            [None, []], None
         )
         
         # Execute and verify exception is raised
