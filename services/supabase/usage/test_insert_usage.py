@@ -264,7 +264,6 @@ class TestInsertUsage:
         assert result == 789
 
 
-
 class TestTriggerType:
     """Test cases for Trigger type definition."""
 
@@ -276,3 +275,92 @@ class TestTriggerType:
         
         # Verify Trigger is a type (this will pass if import succeeds)
         assert Trigger is not None
+
+
+class TestInsertUsageErrorHandling:
+    """Test error handling scenarios for insert_usage function."""
+
+    def test_insert_usage_supabase_exception_with_raise_on_error(self, sample_usage_data):
+        """Test that exceptions are raised when raise_on_error=True."""
+        with patch("services.supabase.usage.insert_usage.supabase") as mock_client:
+            # Setup mock to raise an exception
+            mock_client.table.return_value.insert.return_value.execute.side_effect = Exception("Database error")
+            
+            # Execute and verify exception is raised
+            with pytest.raises(Exception, match="Database error"):
+                insert_usage(**sample_usage_data)
+
+    def test_insert_usage_usage_insert_model_validation_error(self, mock_supabase_client):
+        """Test handling of UsageInsert model validation errors."""
+        with patch("services.supabase.usage.insert_usage.UsageInsert") as mock_usage_insert:
+            # Setup mock to raise validation error
+            mock_usage_insert.side_effect = ValueError("Invalid data")
+            
+            # Execute and verify exception is raised (due to raise_on_error=True)
+            with pytest.raises(ValueError, match="Invalid data"):
+                insert_usage(
+                    owner_id=1,
+                    owner_type="User",
+                    owner_name="user",
+                    repo_id=1,
+                    repo_name="repo",
+                    issue_number=1,
+                    user_id=1,
+                    installation_id=1,
+                    source="test",
+                    trigger="issue_label",
+                )
+
+    def test_insert_usage_model_dump_exception(self, mock_supabase_client, sample_usage_data):
+        """Test handling of model_dump exceptions."""
+        with patch("services.supabase.usage.insert_usage.UsageInsert") as mock_usage_insert:
+            mock_instance = MagicMock()
+            mock_instance.model_dump.side_effect = AttributeError("model_dump failed")
+            mock_usage_insert.return_value = mock_instance
+            
+            # Execute and verify exception is raised
+            with pytest.raises(AttributeError, match="model_dump failed"):
+                insert_usage(**sample_usage_data)
+
+    def test_insert_usage_cast_exception(self, mock_supabase_client, sample_usage_data):
+        """Test handling of cast exceptions when return value is not castable to int."""
+        # Setup mock to return non-castable value
+        mock_supabase_client.table.return_value.insert.return_value.execute.return_value = (
+            None, [{"id": "not-a-number"}]
+        )
+        
+        # Execute and verify exception is raised
+        with pytest.raises(ValueError):
+            insert_usage(**sample_usage_data)
+
+    def test_insert_usage_missing_id_in_response(self, mock_supabase_client, sample_usage_data):
+        """Test handling when response doesn't contain expected id field."""
+        # Setup mock to return response without id
+        mock_supabase_client.table.return_value.insert.return_value.execute.return_value = (
+            None, [{"other_field": "value"}]
+        )
+        
+        # Execute and verify exception is raised
+        with pytest.raises(KeyError):
+            insert_usage(**sample_usage_data)
+
+    def test_insert_usage_empty_response_data(self, mock_supabase_client, sample_usage_data):
+        """Test handling when response data array is empty."""
+        # Setup mock to return empty data array
+        mock_supabase_client.table.return_value.insert.return_value.execute.return_value = (
+            None, []
+        )
+        
+        # Execute and verify exception is raised
+        with pytest.raises(IndexError):
+            insert_usage(**sample_usage_data)
+
+    def test_insert_usage_invalid_trigger_type(self, mock_supabase_client, sample_usage_data):
+        """Test with invalid trigger type (should be caught by type system but test runtime behavior)."""
+        # Setup with invalid trigger
+        sample_usage_data["trigger"] = "invalid_trigger"
+        
+        # This should still work at runtime since Python doesn't enforce Literal types at runtime
+        # The UsageInsert model will accept any string value
+        result = insert_usage(**sample_usage_data)
+        assert result == 123
