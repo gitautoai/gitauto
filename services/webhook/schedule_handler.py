@@ -27,6 +27,7 @@ from services.supabase.usage.is_request_limit_reached import is_request_limit_re
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
+from utils.files.is_migration_file import is_migration_file
 from utils.files.should_skip_test import should_skip_test
 from utils.files.is_test_file import is_test_file
 from utils.files.is_type_file import is_type_file
@@ -196,6 +197,10 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
         # Skip types files
         if is_type_file(item_path):
+            continue
+
+        # Skip migration files
+        if is_migration_file(item_path):
             continue
 
         # Skip files that only contain exports/re-exports or are empty

@@ -12,7 +12,9 @@ class TestGetParentIssue:
     @pytest.fixture
     def mock_graphql_client(self):
         """Fixture to provide a mocked GraphQL client."""
-        with patch("services.github.issues.get_parent_issue.get_graphql_client") as mock:
+        with patch(
+            "services.github.issues.get_parent_issue.get_graphql_client"
+        ) as mock:
             mock_client = MagicMock()
             mock.return_value = mock_client
             yield mock_client
@@ -222,7 +224,9 @@ class TestGetParentIssue:
             assert result == expected
             mock_graphql_client.execute.assert_called_once()
 
-    def test_get_parent_issue_multiline_content(self, mock_graphql_client, sample_params):
+    def test_get_parent_issue_multiline_content(
+        self, mock_graphql_client, sample_params
+    ):
         """Test with multiline parent issue content."""
         multiline_title = "Multi-line\nTitle"
         multiline_body = """This is a multiline parent issue body.

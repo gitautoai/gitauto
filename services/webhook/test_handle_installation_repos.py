@@ -1,7 +1,7 @@
 """Unit tests for handle_installation_repos.py"""
 
 # Standard imports
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import json
 
 # Third-party imports
@@ -706,7 +706,9 @@ class TestHandleInstallationReposAdded:
         # Setup
         mock_is_installation_valid.return_value = True
         mock_get_installation_access_token.return_value = "ghs_test_token"
-        mock_process_repositories.side_effect = AttributeError("'NoneType' object has no attribute 'some_attr'")
+        mock_process_repositories.side_effect = AttributeError(
+            "'NoneType' object has no attribute 'some_attr'"
+        )
 
         # Execute
         result = await handle_installation_repos_added(mock_installation_payload)
@@ -809,9 +811,7 @@ class TestHandleInstallationReposAdded:
     ):
         """Test handling with a large number of repositories."""
         # Setup - create a large list of repositories
-        large_repo_list = [
-            {"id": i, "name": f"repo-{i}"} for i in range(100)
-        ]
+        large_repo_list = [{"id": i, "name": f"repo-{i}"} for i in range(100)]
         mock_installation_payload["repositories_added"] = large_repo_list
         mock_is_installation_valid.return_value = True
         mock_get_installation_access_token.return_value = "ghs_test_token"
