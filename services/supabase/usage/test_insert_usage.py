@@ -264,6 +264,7 @@ class TestInsertUsage:
         assert result == 789
 
 
+
 class TestTriggerType:
     """Test cases for Trigger type definition."""
 
