@@ -27,7 +27,7 @@ def get_parent_issue(owner: str, repo: str, issue_number: int, token: str):
     )
 
     variables = {"owner": owner, "repo": repo, "number": issue_number}
-    result = client.execute(query, variable_values=variables)
+    result = client.execute(document=query, variable_values=variables)
 
     parent = result.get("repository", {}).get("issue", {}).get("parent", {})
     if not parent:
