@@ -212,7 +212,7 @@ class TestScheduleHandler:
             token="test-token",
         )
 
-        # Verify issue was created for helper.ts (not index.ts)  
+        # Verify issue was created for helper.ts (not index.ts)
         mock_create_issue.assert_called_once()
         call_kwargs = mock_create_issue.call_args.kwargs
         assert "src/utils/helper.ts" in call_kwargs["title"]
@@ -255,7 +255,7 @@ class TestScheduleHandler:
 
         # Mock empty index.ts, app.ts with actual code that should generate an issue
         mock_get_raw_content.side_effect = lambda file_path=None, **kwargs: {
-            "src/index.ts": "   \n\n   ",  # Empty with whitespace  
+            "src/index.ts": "   \n\n   ",  # Empty with whitespace
             "src/app.ts": "function processData(data) {\n  return data.map(x => x * 2);\n}\nexport { processData };",
         }.get(file_path, None)
 
