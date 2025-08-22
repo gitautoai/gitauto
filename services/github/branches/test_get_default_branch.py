@@ -282,3 +282,67 @@ class TestGetDefaultBranch:
         assert isinstance(result[1], str)  # commit SHA
         assert result[0] == "main"
         assert result[1] == "abc123def456789"
+
+    @pytest.mark.parametrize(
+        "owner,repo,expected_repo_url",
+        [
+            ("test-owner", "test-repo", "https://api.github.com/repos/test-owner/test-repo"),
+            ("org-name", "my-project", "https://api.github.com/repos/org-name/my-project"),
+            ("user123", "repo-with-dashes", "https://api.github.com/repos/user123/repo-with-dashes"),
+            ("special.user", "repo_with_underscores", "https://api.github.com/repos/special.user/repo_with_underscores"),
+        ],
+    )
+    def test_url_construction_with_various_owner_repo_names(
+        self, mock_requests_get, mock_create_headers, sample_repo_response, sample_branch_response, owner, repo, expected_repo_url
+    ):
+        """Test that URLs are constructed correctly for various owner and repo name formats."""
+        # Update sample responses to match the test parameters
+        updated_repo_response = sample_repo_response.copy()
+        updated_repo_response["name"] = repo
+        updated_repo_response["full_name"] = f"{owner}/{repo}"
+        
+        # Setup mock responses
+        repo_response = MagicMock()
+        repo_response.json.return_value = updated_repo_response
+        repo_response.raise_for_status.return_value = None
+        
+        branch_response = MagicMock()
+        branch_response.json.return_value = sample_branch_response
+        branch_response.raise_for_status.return_value = None
+        
+        mock_requests_get.side_effect = [repo_response, branch_response]
+        
+        # Execute
+        result = get_default_branch(owner, repo, "test-token")
+        
+        # Verify URLs were constructed correctly
+        first_call = mock_requests_get.call_args_list[0]
+        assert first_call[1]["url"] == expected_repo_url
+        
+        second_call = mock_requests_get.call_args_list[1]
+        expected_branch_url = f"{expected_repo_url}/branches/main"
+        assert second_call[1]["url"] == expected_branch_url
+        
+        # Verify result
+        assert result == ("main", "abc123def456789")
+
+    @pytest.mark.parametrize(
+        "default_branch,commit_sha",
+        [
+            ("main", "abc123def456789"),
+            ("master", "xyz789abc123456"),
+            ("develop", "123456789abcdef"),
+            ("feature-branch", "fedcba987654321"),
+            ("release/v1.0", "111222333444555"),
+        ],
+    )
+    def test_various_branch_names_and_commit_shas(
+        self, mock_requests_get, mock_create_headers, default_branch, commit_sha
+    ):
+        """Test function with various branch names and commit SHAs."""
+        # Setup repo response with parameterized default branch
+        repo_response_data = {
+            "id": 123456789,
+            "name": "test-repo",
+            "full_name": "test-owner/test-repo",
+            "default_branch": default_branch,
