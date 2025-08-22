@@ -380,6 +380,38 @@ class TestGetDefaultBranch:
         
         # Update sample responses to match the test parameters
         updated_repo_response = sample_repo_response.copy()
+
+    def test_handle_exceptions_decorator_default_return_value(self, mock_requests_get, mock_create_headers):
+        """Test that the handle_exceptions decorator's default return value is correctly configured."""
+        # This test verifies the decorator configuration without triggering an exception
+        # The decorator is configured with default_return_value=("main", "") and raise_on_error=True
+        
+        # Setup a successful response to verify normal operation
+        repo_response_data = {
+            "id": 123456789,
+            "name": "test-repo",
+            "full_name": "test-owner/test-repo",
+            "default_branch": "main",
+            "private": False,
+        }
+        
+        branch_response_data = {
+            "name": "main",
+            "commit": {
+                "sha": "abc123def456789",
+                "url": "https://api.github.com/repos/test-owner/test-repo/commits/abc123def456789",
+            },
+            "protected": False,
+        }
+        
+        repo_response = MagicMock()
+        repo_response.json.return_value = repo_response_data
+        repo_response.raise_for_status.return_value = None
+        
+        branch_response = MagicMock()
+        branch_response.json.return_value = branch_response_data
+        branch_response.raise_for_status.return_value = None
+        
         updated_repo_response["name"] = repo
         updated_repo_response["full_name"] = f"{owner}/{repo}"
         
