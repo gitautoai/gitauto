@@ -76,7 +76,7 @@ class TestGetIssue(unittest.TestCase):
 
         # Assert
         assert result is not None
-        self.assertIsInstance(result, dict)  # cast returns the original dict
+        self.assertIsInstance(result, dict)
         self.assertEqual(result["id"], 1)
         self.assertEqual(result["owner_type"], "Organization")
         self.assertEqual(result["owner_name"], "test-owner")
