@@ -4,7 +4,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
-def get_file_tree_list(base_args: BaseArgs, max_files: int | None = None):
+def get_file_tree_list(base_args: BaseArgs, max_files: int | None = None, **kwargs):
     owner, repo, ref = base_args["owner"], base_args["repo"], base_args["base_branch"]
 
     # Get complete tree recursively
