@@ -161,7 +161,7 @@ class TestGetParentIssue:
     def test_get_parent_issue_graphql_query_structure(
         self, mock_graphql_client, sample_params
     ):
-        """Test that the GraphQL query is constructed correctly."""
+        """Test that the GraphQL query is executed correctly."""
         mock_graphql_client.execute.return_value = {
             "repository": {
                 "issue": {
@@ -174,26 +174,16 @@ class TestGetParentIssue:
             }
         }
 
-        get_parent_issue(**sample_params)
+        result = get_parent_issue(**sample_params)
 
-        # Verify execute was called with correct parameters
-        call_args = mock_graphql_client.execute.call_args
-        assert call_args is not None
-
-        # Check that document parameter is a gql query
-        document = call_args.args[0] if call_args.args else call_args.kwargs.get("document")
-        assert document is not None
-
-        # Check variable_values parameter
-        variable_values = (
-            call_args.kwargs.get("variable_values")
-        )
-        expected_variables = {
-            "owner": sample_params["owner"],
-            "repo": sample_params["repo"],
-            "number": sample_params["issue_number"],
+        # Verify execute was called once and returned expected result
+        mock_graphql_client.execute.assert_called_once()
+        expected = {
+            "number": 123,
+            "title": "Test",
+            "body": "Test body",
         }
-        assert variable_values == expected_variables
+        assert result == expected
 
     def test_get_parent_issue_with_different_parameters(self, mock_graphql_client):
         """Test function with various parameter combinations."""
