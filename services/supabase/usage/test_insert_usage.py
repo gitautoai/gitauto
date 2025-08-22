@@ -330,7 +330,7 @@ class TestInsertUsageErrorHandling:
         """Test handling when response doesn't contain expected id field."""
         # Setup mock to return response without id
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = (
-            None, [{"other_field": "value"}]
+            [None, [{"other_field": "value"}]], None
         )
         
         # Execute and verify exception is raised
