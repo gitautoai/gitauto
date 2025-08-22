@@ -166,7 +166,7 @@ class TestInsertUsage:
         """Test that the return value is properly cast to int."""
         # Setup - mock different return value types
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = (
-            None, [{"id": "456"}]  # String ID that should be cast to int
+            [None, [{"id": "456"}]], None  # String ID that should be cast to int
         )
         
         # Execute
