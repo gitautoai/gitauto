@@ -244,10 +244,10 @@ class TestInsertUsage:
 
     def test_insert_usage_supabase_response_structure(self, mock_supabase_client, sample_usage_data):
         """Test that function correctly handles supabase response structure."""
-        # Setup - mock response with expected structure: (metadata, [data])
+        # Setup - mock response with expected structure: (data, metadata)
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = (
-            {"status": "success"},  # metadata
-            [{"id": 789, "created_at": "2023-01-01"}]  # data array
+            [None, [{"id": 789, "created_at": "2023-01-01"}]],  # data array
+            {"status": "success"}  # metadata
         )
         
         # Execute
