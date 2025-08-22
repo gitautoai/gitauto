@@ -14,17 +14,10 @@ def mock_supabase_client():
     """Mock the supabase client for testing."""
     with patch("services.supabase.usage.insert_usage.supabase") as mock_client:
         # Mock the chain: supabase.table().insert().execute()
-        mock_execute = MagicMock()
-        mock_execute.execute.return_value = (None, [{"id": 123}])
-        
-        mock_insert = MagicMock()
-        mock_insert.insert.return_value = mock_execute
-        
-        mock_table = MagicMock()
-        mock_table.table.return_value = mock_insert
-        
-        mock_client.return_value = mock_table
-        mock_client.table.return_value = mock_insert
+        # The execute() method returns (data, metadata) where data[1][0]["id"] is the ID
+        mock_client.table.return_value.insert.return_value.execute.return_value = (
+            [None, [{"id": 123}]], None
+        )
         
         yield mock_client
 
