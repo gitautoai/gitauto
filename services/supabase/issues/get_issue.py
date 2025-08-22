@@ -1,6 +1,3 @@
-# Standard imports
-from typing import cast
-
 # Third-party imports
 from schemas.supabase.fastapi.schema_public_latest import Issues
 
@@ -27,4 +24,4 @@ def get_issue(
     )
     if not data[1]:
         return None
-    return cast(Issues, data[1][0])
+    return Issues(**data[1][0])
