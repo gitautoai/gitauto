@@ -1,0 +1,82 @@
+import re
+
+
+def should_skip_rust(content: str) -> bool:
+    """
+    Determines if a Rust file should be skipped for test generation.
+
+    Returns True if the file contains only:
+    - Use statements and mod declarations
+    - Constants (const and static)
+    - Type definitions (struct, enum, trait without implementation)
+    - Type aliases
+
+    Returns False if the file contains:
+    - Function definitions (fn)
+    - Implementation blocks (impl)
+    - Macros with logic
+    - Any executable code beyond declarations
+    """
+    lines = content.split("\n")
+    in_struct_or_enum = False
+    in_trait = False
+
+    for line in lines:
+        line = line.strip()
+        # Skip comments
+        if line.startswith("//"):
+            continue
+        # Skip attributes
+        if line.startswith("#[") or line.startswith("#!["):
+            continue
+        # Skip empty lines
+        if not line:
+            continue
+
+        # Handle struct/enum definitions (data types without implementation)
+        if re.match(r"^(pub\s+)?struct\s+\w+", line):
+            if "{" in line:
+                in_struct_or_enum = True
+            continue
+        if re.match(r"^(pub\s+)?enum\s+\w+", line):
+            if "{" in line:
+                in_struct_or_enum = True
+            continue
+        if in_struct_or_enum:
+            if "}" in line:
+                in_struct_or_enum = False
+            continue
+
+        # Handle trait definitions (interfaces without implementation)
+        if re.match(r"^(pub\s+)?trait\s+\w+", line):
+            if "{" in line:
+                in_trait = True
+            continue
+        if in_trait:
+            if "}" in line:
+                in_trait = False
+            continue
+
+        # Skip type aliases
+        if re.match(r"^(pub\s+)?type\s+\w+\s*=", line):
+            continue
+
+        # Skip use statements
+        if line.startswith("pub use ") or line.startswith("use "):
+            continue
+        # Skip mod statements
+        if line.startswith("pub mod ") or line.startswith("mod "):
+            continue
+        # Skip extern crate
+        if line.startswith("extern crate"):
+            continue
+        # Skip constants (Rust const is truly constant - compile-time immutable values)
+        if line.startswith("pub const ") or line.startswith("const "):
+            continue
+        # Skip static variables (global variables with 'static lifetime)
+        if line.startswith("pub static ") or line.startswith("static "):
+            continue
+        # If we find any other code, it's not export-only
+        return False
+
+    return True

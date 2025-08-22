@@ -156,3 +156,116 @@ class TestScheduleHandler:
             assert result == []
             assert result is not None
             assert isinstance(result, list)
+
+    @patch("services.webhook.schedule_handler.get_installation_access_token")
+    @patch("services.webhook.schedule_handler.get_repository")
+    @patch("services.webhook.schedule_handler.is_request_limit_reached")
+    @patch("services.webhook.schedule_handler.get_default_branch")
+    @patch("services.webhook.schedule_handler.get_file_tree")
+    @patch("services.webhook.schedule_handler.get_all_coverages")
+    @patch("services.webhook.schedule_handler.get_raw_content")
+    @patch("services.webhook.schedule_handler.create_issue")
+    def test_schedule_handler_skips_export_only_files(
+        self,
+        mock_create_issue,
+        mock_get_raw_content,
+        mock_get_all_coverages,
+        mock_get_file_tree,
+        mock_get_default_branch,
+        mock_is_request_limit_reached,
+        mock_get_repository,
+        mock_get_token,
+        mock_event,
+    ):
+        """Test that schedule_handler skips files that only contain exports."""
+        # Setup
+        mock_get_token.return_value = "test-token"
+        mock_get_repository.return_value = {"trigger_on_schedule": True}
+        mock_is_request_limit_reached.return_value = {"is_limit_reached": False}
+        mock_get_default_branch.return_value = ("main", None)
+
+        # Mock file tree with index.ts that only has exports
+        mock_get_file_tree.return_value = [
+            {"path": "src/components/Button/index.ts", "type": "blob", "size": 100},
+            {"path": "src/utils/helper.ts", "type": "blob", "size": 200},
+        ]
+
+        mock_get_all_coverages.return_value = []
+
+        # Mock index.ts as export-only, helper.ts with actual logic (should create issue)
+        mock_get_raw_content.side_effect = lambda file_path=None, **kwargs: {
+            "src/components/Button/index.ts": "export * from './Button';\nexport { default } from './Button';",
+            "src/utils/helper.ts": "function helper() { return processData(input); }\nexport { helper };",
+        }.get(file_path, None)
+
+        mock_create_issue.return_value = {"html_url": "https://github.com/test/issue/1"}
+
+        # Execute
+        result = schedule_handler(mock_event)
+
+        # Verify index.ts was checked for content
+        mock_get_raw_content.assert_any_call(
+            owner="test-org",
+            repo="test-repo",
+            file_path="src/components/Button/index.ts",
+            ref="main",
+            token="test-token",
+        )
+
+        # Verify issue was created for helper.ts (not index.ts)  
+        mock_create_issue.assert_called_once()
+        call_kwargs = mock_create_issue.call_args.kwargs
+        assert "src/utils/helper.ts" in call_kwargs["title"]
+        assert result["status"] == "success"
+
+    @patch("services.webhook.schedule_handler.get_installation_access_token")
+    @patch("services.webhook.schedule_handler.get_repository")
+    @patch("services.webhook.schedule_handler.is_request_limit_reached")
+    @patch("services.webhook.schedule_handler.get_default_branch")
+    @patch("services.webhook.schedule_handler.get_file_tree")
+    @patch("services.webhook.schedule_handler.get_all_coverages")
+    @patch("services.webhook.schedule_handler.get_raw_content")
+    @patch("services.webhook.schedule_handler.create_issue")
+    def test_schedule_handler_skips_empty_files(
+        self,
+        mock_create_issue,
+        mock_get_raw_content,
+        mock_get_all_coverages,
+        mock_get_file_tree,
+        mock_get_default_branch,
+        mock_is_request_limit_reached,
+        mock_get_repository,
+        mock_get_token,
+        mock_event,
+    ):
+        """Test that schedule_handler skips empty files."""
+        # Setup
+        mock_get_token.return_value = "test-token"
+        mock_get_repository.return_value = {"trigger_on_schedule": True}
+        mock_is_request_limit_reached.return_value = {"is_limit_reached": False}
+        mock_get_default_branch.return_value = ("main", None)
+
+        # Mock file tree with empty index.ts
+        mock_get_file_tree.return_value = [
+            {"path": "src/index.ts", "type": "blob", "size": 0},
+            {"path": "src/app.ts", "type": "blob", "size": 300},
+        ]
+
+        mock_get_all_coverages.return_value = []
+
+        # Mock empty index.ts, app.ts with actual code that should generate an issue
+        mock_get_raw_content.side_effect = lambda file_path=None, **kwargs: {
+            "src/index.ts": "   \n\n   ",  # Empty with whitespace  
+            "src/app.ts": "function processData(data) {\n  return data.map(x => x * 2);\n}\nexport { processData };",
+        }.get(file_path, None)
+
+        mock_create_issue.return_value = {"html_url": "https://github.com/test/issue/2"}
+
+        # Execute
+        result = schedule_handler(mock_event)
+
+        # Verify issue was created for app.ts (not empty index.ts)
+        mock_create_issue.assert_called_once()
+        call_kwargs = mock_create_issue.call_args.kwargs
+        assert "src/app.ts" in call_kwargs["title"]
+        assert result["status"] == "success"

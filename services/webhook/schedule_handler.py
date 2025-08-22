@@ -11,6 +11,7 @@ from services.aws.delete_scheduler import delete_scheduler
 
 # Local imports (GitHub)
 from services.github.branches.get_default_branch import get_default_branch
+from services.github.files.get_raw_content import get_raw_content
 from services.github.issues.create_issue import create_issue
 from services.github.issues.is_issue_open import is_issue_open
 from services.github.token.get_installation_token import get_installation_access_token
@@ -26,6 +27,7 @@ from services.supabase.usage.is_request_limit_reached import is_request_limit_re
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
+from utils.files.should_skip_test import should_skip_test
 from utils.files.is_test_file import is_test_file
 from utils.files.is_type_file import is_type_file
 from utils.issue_templates.schedule import get_issue_title, get_issue_body
@@ -194,6 +196,17 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
         # Skip types files
         if is_type_file(item_path):
+            continue
+
+        # Skip files that only contain exports/re-exports or are empty
+        content = get_raw_content(
+            owner=owner_name,
+            repo=repo_name,
+            file_path=item_path,
+            ref=default_branch,
+            token=token,
+        )
+        if content and should_skip_test(item_path, content):
             continue
 
         # Skip files excluded from testing
