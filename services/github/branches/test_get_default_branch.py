@@ -296,6 +296,35 @@ class TestGetDefaultBranch:
         self, mock_requests_get, mock_create_headers, sample_repo_response, sample_branch_response, owner, repo, expected_repo_url
     ):
         """Test that URLs are constructed correctly for various owner and repo name formats."""
+        # Update sample responses to match the test parameters
+        updated_repo_response = sample_repo_response.copy()
+        updated_repo_response["name"] = repo
+        updated_repo_response["full_name"] = f"{owner}/{repo}"
+        
+        # Setup mock responses
+        repo_response = MagicMock()
+        repo_response.json.return_value = updated_repo_response
+        repo_response.raise_for_status.return_value = None
+        
+        branch_response = MagicMock()
+        branch_response.json.return_value = sample_branch_response
+        branch_response.raise_for_status.return_value = None
+        
+        mock_requests_get.side_effect = [repo_response, branch_response]
+        
+        # Execute
+        result = get_default_branch(owner, repo, "test-token")
+        
+        # Verify URLs were constructed correctly
+        first_call = mock_requests_get.call_args_list[0]
+        assert first_call[1]["url"] == expected_repo_url
+        
+        second_call = mock_requests_get.call_args_list[1]
+        expected_branch_url = f"{expected_repo_url}/branches/main"
+        assert second_call[1]["url"] == expected_branch_url
+        
+        # Verify result
+        assert result == ("main", "abc123def456789")
 
     def test_requests_timeout_parameter(self, mock_requests_get, mock_create_headers, sample_repo_response, sample_branch_response):
         """Test that requests are made with correct timeout parameter."""
@@ -378,67 +407,12 @@ class TestGetDefaultBranch:
         
         mock_requests_get.side_effect = [repo_response, branch_response]
         
-        # Update sample responses to match the test parameters
-        updated_repo_response = sample_repo_response.copy()
-
-    def test_handle_exceptions_decorator_default_return_value(self, mock_requests_get, mock_create_headers):
-        """Test that the handle_exceptions decorator's default return value is correctly configured."""
-        # This test verifies the decorator configuration without triggering an exception
-        # The decorator is configured with default_return_value=("main", "") and raise_on_error=True
-        
-        # Setup a successful response to verify normal operation
-        repo_response_data = {
-            "id": 123456789,
-            "name": "test-repo",
-            "full_name": "test-owner/test-repo",
-            "default_branch": "main",
-            "private": False,
-        }
-        
-        branch_response_data = {
-            "name": "main",
-            "commit": {
-                "sha": "abc123def456789",
-                "url": "https://api.github.com/repos/test-owner/test-repo/commits/abc123def456789",
-            },
-            "protected": False,
-        }
-        
-        repo_response = MagicMock()
-        repo_response.json.return_value = repo_response_data
-        repo_response.raise_for_status.return_value = None
-        
-        branch_response = MagicMock()
-        branch_response.json.return_value = branch_response_data
-        branch_response.raise_for_status.return_value = None
-        
-        updated_repo_response["name"] = repo
-        updated_repo_response["full_name"] = f"{owner}/{repo}"
-        
-        # Setup mock responses
-        repo_response = MagicMock()
-        repo_response.json.return_value = updated_repo_response
-        repo_response.raise_for_status.return_value = None
-        
-        branch_response = MagicMock()
-        branch_response.json.return_value = sample_branch_response
-        branch_response.raise_for_status.return_value = None
-        
-        mock_requests_get.side_effect = [repo_response, branch_response]
-        
         # Execute
-        result = get_default_branch(owner, repo, "test-token")
+        get_default_branch("test-owner", "test-repo", "test-token")
         
-        # Verify URLs were constructed correctly
-        first_call = mock_requests_get.call_args_list[0]
-        assert first_call[1]["url"] == expected_repo_url
-        
-        second_call = mock_requests_get.call_args_list[1]
-        expected_branch_url = f"{expected_repo_url}/branches/main"
-        assert second_call[1]["url"] == expected_branch_url
-        
-        # Verify result
-        assert result == ("main", "abc123def456789")
+        # Verify json() was called on both responses
+        repo_response.json.assert_called_once()
+        branch_response.json.assert_called_once()
 
     @pytest.mark.parametrize(
         "default_branch,commit_sha",
@@ -460,3 +434,36 @@ class TestGetDefaultBranch:
             "name": "test-repo",
             "full_name": "test-owner/test-repo",
             "default_branch": default_branch,
+            "private": False,
+        }
+        
+        # Setup branch response with parameterized commit SHA
+        branch_response_data = {
+            "name": default_branch,
+            "commit": {
+                "sha": commit_sha,
+                "url": f"https://api.github.com/repos/test-owner/test-repo/commits/{commit_sha}",
+            },
+            "protected": False,
+        }
+        
+        repo_response = MagicMock()
+        repo_response.json.return_value = repo_response_data
+        repo_response.raise_for_status.return_value = None
+        
+        branch_response = MagicMock()
+        branch_response.json.return_value = branch_response_data
+        branch_response.raise_for_status.return_value = None
+        
+        mock_requests_get.side_effect = [repo_response, branch_response]
+        
+        # Execute
+        result = get_default_branch("test-owner", "test-repo", "test-token")
+        
+        # Verify
+        assert result == (default_branch, commit_sha)
+        
+        # Verify the branch URL was constructed correctly
+        second_call = mock_requests_get.call_args_list[1]
+        expected_branch_url = f"https://api.github.com/repos/test-owner/test-repo/branches/{default_branch}"
+        assert second_call[1]["url"] == expected_branch_url
