@@ -1,4 +1,4 @@
-from typing import Literal, cast
+from typing import Literal
 from schemas.supabase.fastapi.schema_public_latest import UsageInsert
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
