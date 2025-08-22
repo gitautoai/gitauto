@@ -4,7 +4,6 @@ from unittest.mock import patch, MagicMock
 from typing import Any, Dict, List
 
 # Third-party imports
-from schemas.supabase.fastapi.schema_public_latest import Issues
 
 # Local imports
 from services.supabase.issues.get_issue import get_issue
@@ -77,12 +76,12 @@ class TestGetIssue(unittest.TestCase):
 
         # Assert
         assert result is not None
-        self.assertIsInstance(result, Issues)
-        self.assertEqual(result.id, 1)
-        self.assertEqual(result.owner_type, "Organization")
-        self.assertEqual(result.owner_name, "test-owner")
-        self.assertEqual(result.repo_name, "test-repo")
-        self.assertEqual(result.issue_number, 123)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["id"], 1)
+        self.assertEqual(result["owner_type"], "Organization")
+        self.assertEqual(result["owner_name"], "test-owner")
+        self.assertEqual(result["repo_name"], "test-repo")
+        self.assertEqual(result["issue_number"], 123)
 
         # Verify the database query was constructed correctly
         mock_supabase.table.assert_called_once_with(table_name="issues")
@@ -152,10 +151,10 @@ class TestGetIssue(unittest.TestCase):
 
         # Assert
         assert result is not None
-        self.assertIsInstance(result, Issues)
-        self.assertEqual(result.owner_type, "User")
-        self.assertEqual(result.merged, True)
-        self.assertEqual(result.run_id, 999)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["owner_type"], "User")
+        self.assertEqual(result["merged"], True)
+        self.assertEqual(result["run_id"], 999)
 
     @patch("services.supabase.issues.get_issue.supabase")
     def test_get_issue_database_exception(self, mock_supabase):
@@ -205,9 +204,9 @@ class TestGetIssue(unittest.TestCase):
 
         # Assert
         assert result is not None
-        self.assertIsInstance(result, Issues)
-        self.assertEqual(result.owner_name, "test-org-with-dashes")
-        self.assertEqual(result.repo_name, "repo_with_underscores")
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["owner_name"], "test-org-with-dashes")
+        self.assertEqual(result["repo_name"], "repo_with_underscores")
 
     @patch("services.supabase.issues.get_issue.supabase")
     def test_get_issue_query_parameters_validation(self, mock_supabase):
@@ -247,8 +246,8 @@ class TestGetIssue(unittest.TestCase):
         )
 
         assert result is not None
-        self.assertIsInstance(result, Issues)
-        self.assertEqual(result.issue_number, 0)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["issue_number"], 0)
 
     @patch("services.supabase.issues.get_issue.supabase")
     def test_get_issue_with_large_issue_number(self, mock_supabase):
@@ -266,8 +265,8 @@ class TestGetIssue(unittest.TestCase):
         )
 
         assert result is not None
-        self.assertIsInstance(result, Issues)
-        self.assertEqual(result.issue_number, large_issue_number)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["issue_number"], large_issue_number)
 
     @patch("services.supabase.issues.get_issue.supabase")
     def test_get_issue_returns_first_result_only(self, mock_supabase):
@@ -284,10 +283,10 @@ class TestGetIssue(unittest.TestCase):
 
         # Should return the first result
         assert result is not None
-        self.assertIsInstance(result, Issues)
-        self.assertEqual(result.id, 1)  # First issue's ID
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["id"], 1)  # First issue's ID
         self.assertEqual(
-            result.created_at, "2024-01-01T00:00:00Z"
+            result["created_at"], "2024-01-01T00:00:00Z"
         )  # First issue's date
 
     @patch("services.supabase.issues.get_issue.supabase")
@@ -297,10 +296,8 @@ class TestGetIssue(unittest.TestCase):
 
         result = get_issue(**self.test_params)
 
-        # The function now returns a Pydantic Issues object
-        assert result is not None
-        self.assertEqual(result.id, self.sample_issue_data["id"])
-        self.assertEqual(result.owner_type, self.sample_issue_data["owner_type"])
+        # The cast function from typing just returns the value as-is
+        self.assertEqual(result, self.sample_issue_data)
 
     @patch("services.supabase.issues.get_issue.supabase")
     def test_get_issue_with_none_values(self, mock_supabase):
@@ -314,9 +311,9 @@ class TestGetIssue(unittest.TestCase):
         result = get_issue(**self.test_params)
 
         assert result is not None
-        self.assertIsInstance(result, Issues)
-        self.assertIsNone(result.run_id)
-        self.assertIsNone(result.created_by)
+        self.assertIsInstance(result, dict)
+        self.assertIsNone(result["run_id"])
+        self.assertIsNone(result["created_by"])
 
     @patch("services.supabase.issues.get_issue.supabase")
     def test_get_issue_supabase_execute_exception(self, mock_supabase):
@@ -358,9 +355,9 @@ class TestGetIssue(unittest.TestCase):
         )
 
         assert result is not None
-        self.assertIsInstance(result, Issues)
-        self.assertEqual(result.id, 999)
-        self.assertEqual(result.owner_type, "Organization")
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["id"], 999)
+        self.assertEqual(result["owner_type"], "Organization")
 
 
 if __name__ == "__main__":
