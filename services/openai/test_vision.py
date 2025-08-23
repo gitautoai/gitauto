@@ -166,7 +166,9 @@ def test_describe_image_with_whitespace_content(
     """Test image description with content that has leading/trailing whitespace"""
     # Setup mocks
     mock_create_client.return_value = mock_openai_client
-    mock_openai_client.chat.completions.create.return_value = mock_chat_completion_with_whitespace
+    mock_openai_client.chat.completions.create.return_value = (
+        mock_chat_completion_with_whitespace
+    )
 
     # Test input
     base64_image = "test_image_data"
@@ -186,7 +188,9 @@ def test_describe_image_none_content(
     """Test image description when response content is None"""
     # Setup mocks
     mock_create_client.return_value = mock_openai_client
-    mock_openai_client.chat.completions.create.return_value = mock_chat_completion_empty_content
+    mock_openai_client.chat.completions.create.return_value = (
+        mock_chat_completion_empty_content
+    )
 
     # Test input
     base64_image = "test_image_data"
@@ -206,7 +210,9 @@ def test_describe_image_empty_string_content(
     """Test image description when response content is empty string"""
     # Setup mocks
     mock_create_client.return_value = mock_openai_client
-    mock_openai_client.chat.completions.create.return_value = mock_chat_completion_empty_string
+    mock_openai_client.chat.completions.create.return_value = (
+        mock_chat_completion_empty_string
+    )
 
     # Test input
     base64_image = "test_image_data"
@@ -226,7 +232,9 @@ def test_describe_image_whitespace_only_content(
     """Test image description when response content is whitespace only"""
     # Setup mocks
     mock_create_client.return_value = mock_openai_client
-    mock_openai_client.chat.completions.create.return_value = mock_chat_completion_whitespace_only
+    mock_openai_client.chat.completions.create.return_value = (
+        mock_chat_completion_whitespace_only
+    )
 
     # Test input
     base64_image = "test_image_data"
@@ -240,7 +248,9 @@ def test_describe_image_whitespace_only_content(
 
 
 @patch("services.openai.vision.create_openai_client")
-def test_describe_image_openai_error_returns_default(mock_create_client, mock_openai_client):
+def test_describe_image_openai_error_returns_default(
+    mock_create_client, mock_openai_client
+):
     """Test that OpenAI errors return default value due to handle_exceptions(raise_on_error=False)"""
     # Setup mocks
     mock_create_client.return_value = mock_openai_client
@@ -258,11 +268,15 @@ def test_describe_image_openai_error_returns_default(mock_create_client, mock_op
 
 
 @patch("services.openai.vision.create_openai_client")
-def test_describe_image_attribute_error_returns_default(mock_create_client, mock_openai_client):
+def test_describe_image_attribute_error_returns_default(
+    mock_create_client, mock_openai_client
+):
     """Test that AttributeError returns default value due to handle_exceptions(raise_on_error=False)"""
     # Setup mocks
     mock_create_client.return_value = mock_openai_client
-    mock_openai_client.chat.completions.create.side_effect = AttributeError("Missing attribute")
+    mock_openai_client.chat.completions.create.side_effect = AttributeError(
+        "Missing attribute"
+    )
 
     # Test input
     base64_image = "test_image_data"

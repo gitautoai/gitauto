@@ -117,13 +117,13 @@ SEARCH_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
 # See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
 GET_FILE_TREE_LIST: shared_params.FunctionDefinition = {
     "name": "get_file_tree_list",
-    "description": "Gets a list of all files in the repository organized by directory depth. This is useful for understanding the repository structure and finding files to examine.",
+    "description": "Lists files and directories at a specific directory path in the repository. Works like 'ls' command - shows contents of the specified directory, or root if no dir_path specified.",
     "parameters": {
         "type": "object",
         "properties": {
-            "max_files": {
-                "type": "integer",
-                "description": "Maximum number of files to return. If not specified, returns all files. Use this to limit results when you only need an overview of the repository structure.",
+            "dir_path": {
+                "type": "string",
+                "description": "Directory path to list contents of. Use empty string or omit for root directory. Examples: 'src', 'src/utils', 'tests/unit'.",
             }
         },
         "required": [],
