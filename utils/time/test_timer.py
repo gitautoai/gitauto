@@ -21,9 +21,12 @@ def mock_logger():
 def mock_time():
     """Fixture to mock time.time() for consistent timing tests."""
     with patch("utils.time.timer.time.time") as mock:
-        # Set up predictable time values
-        # Return start time first, then end time
-        mock.side_effect = [1000.0, 1002.5]
+        # Set up predictable time values that reset for each test
+        call_count = [0]
+        def time_mock():
+            call_count[0] += 1
+            return 1000.0 if call_count[0] % 2 == 1 else 1002.5
+        mock.side_effect = time_mock
         yield mock
 
 
