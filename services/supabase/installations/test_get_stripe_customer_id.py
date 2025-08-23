@@ -9,6 +9,7 @@ from services.supabase.installations.get_stripe_customer_id import get_stripe_cu
 
 @pytest.fixture
 def mock_supabase_query():
+    # pylint: disable=redefined-outer-name
     """Fixture to provide a mocked Supabase query chain."""
     with patch("services.supabase.installations.get_stripe_customer_id.supabase") as mock:
         mock_table = MagicMock()
