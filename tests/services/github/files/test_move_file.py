@@ -1,5 +1,6 @@
 # Standard imports
 from unittest.mock import patch, MagicMock
+import json
 
 # Third-party imports
 import pytest
