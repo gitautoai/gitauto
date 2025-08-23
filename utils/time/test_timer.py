@@ -22,7 +22,8 @@ def mock_time():
     """Fixture to mock time.time() for consistent timing tests."""
     with patch("utils.time.timer.time.time") as mock:
         # Set up predictable time values
-        mock.side_effect = lambda: [1000.0, 1002.5][mock.call_count - 1] if mock.call_count <= 2 else 1002.5
+        # Use a function that returns different values on each call
+        mock.side_effect = [1000.0, 1002.5] * 10  # Repeat pattern for multiple tests
         yield mock
 
 
