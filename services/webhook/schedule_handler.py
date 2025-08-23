@@ -211,7 +211,12 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             ref=default_branch,
             token=token,
         )
-        if content and should_skip_test(item_path, content):
+        # Skip empty files or files with only whitespace
+        if not content or not content.strip():
+            continue
+
+        # Skip files that should be skipped based on content
+        if should_skip_test(item_path, content):
             continue
 
         # Skip files excluded from testing
