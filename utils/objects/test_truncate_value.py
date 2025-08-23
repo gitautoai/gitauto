@@ -172,4 +172,3 @@ def test_truncate_pydantic_model():
     assert result["created_at"] == datetime(2023, 1, 1, 12, 0, 0)
 
 
-def test_truncate_pydantic_model_with_nested_structures():
