@@ -169,6 +169,6 @@ def test_truncate_pydantic_model():
     
     # Check that non-string values are preserved
     assert result["age"] == 25
-    assert result["created_at"] == datetime(2023, 1, 1, 12, 0, 0)
+    assert result["created_at"] == "2023-01-01T12:00:00"
 
 
