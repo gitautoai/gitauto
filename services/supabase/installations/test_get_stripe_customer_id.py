@@ -379,7 +379,8 @@ def test_get_stripe_customer_id_function_signature():
     assert installation_id_param.annotation is int
 
     # Assert return type annotation
-    assert sig.return_annotation == "str | None"
+    # Check for both possible string representations of the union type
+    assert sig.return_annotation in ["str | None", "str | None", str(str | None)]
 
 
 def test_get_stripe_customer_id_has_handle_exceptions_decorator():
