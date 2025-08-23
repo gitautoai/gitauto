@@ -3,6 +3,9 @@ from pydantic import BaseModel
 
 
 def truncate_value(value: Any, max_length: int = 30):
+    # Handle Pydantic models by converting them to dictionaries
+    if isinstance(value, BaseModel):
+        return truncate_value(value.model_dump(), max_length)
     if isinstance(value, str) and len(value) > max_length:
         return f"{value[:max_length]}..."
     if isinstance(value, dict):
