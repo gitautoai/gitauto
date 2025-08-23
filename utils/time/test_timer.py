@@ -188,8 +188,8 @@ class TestTimerDecoratorEdgeCases:
 
     def test_timing_precision(self, mock_logger):
         """Test that timing precision is maintained."""
-        with patch("utils.time.timer.time") as mock_time:
-            mock_time.time.side_effect = [1000.123456, 1000.987654]  # 0.864198 seconds
+        with patch("utils.time.timer.time.time") as mock_time:
+            mock_time.side_effect = [1000.123456, 1000.987654]  # 0.864198 seconds
 
             @timer_decorator
             def precision_function():
