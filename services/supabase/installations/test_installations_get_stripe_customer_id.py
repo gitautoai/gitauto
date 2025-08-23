@@ -124,7 +124,7 @@ class TestGetStripeCustomerId:
         }
         mock_supabase_query.execute.return_value = (
             [None, [installation_data]],
-            None,
+            1,
         )
 
         # Act
