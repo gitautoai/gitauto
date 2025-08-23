@@ -138,3 +138,38 @@ def test_truncate_complex_nested_structure():
         }
     ]
     assert result == expected
+
+
+class TestModel(BaseModel):
+    """Test Pydantic model for testing truncate_value."""
+    name: str
+    description: str
+    age: int
+    created_at: datetime
+
+
+def test_truncate_pydantic_model():
+    """Test that Pydantic models are properly converted to dictionaries and truncated."""
+    test_model = TestModel(
+        name="this is a very long name that should be truncated",
+        description="this is a very long description that should be truncated",
+        age=25,
+        created_at=datetime(2023, 1, 1, 12, 0, 0)
+    )
+    
+    result = truncate_value(test_model, 15)
+    
+    # Should be a dictionary (not a Pydantic model)
+    assert isinstance(result, dict)
+    assert not isinstance(result, BaseModel)
+    
+    # Check that string values are truncated
+    assert result["name"] == "this is a very ..."
+    assert result["description"] == "this is a very ..."
+    
+    # Check that non-string values are preserved
+    assert result["age"] == 25
+    assert result["created_at"] == datetime(2023, 1, 1, 12, 0, 0)
+
+
+def test_truncate_pydantic_model_with_nested_structures():
