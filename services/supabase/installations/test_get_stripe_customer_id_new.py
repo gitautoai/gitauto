@@ -1,1 +1,1 @@
--# This file has been removed as it was empty.
+# This file was renamed to avoid naming conflicts
