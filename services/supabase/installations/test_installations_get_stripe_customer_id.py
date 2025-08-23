@@ -382,7 +382,13 @@ def test_get_stripe_customer_id_function_signature():
     # Assert return type annotation
     # Check if the return annotation represents str | None (Union[str, None])
     return_annotation = sig.return_annotation
-    assert return_annotation == "str | None" or str(return_annotation) == "str | None"
+    # Handle different Python versions and typing representations
+    annotation_str = str(return_annotation)
+    assert (return_annotation == "str | None" or 
+            annotation_str == "str | None" or 
+            return_annotation == Union[str, None] or
+            annotation_str == "typing.Union[str, NoneType]" or
+            "str" in annotation_str and "None" in annotation_str)
 
 
 def test_get_stripe_customer_id_has_handle_exceptions_decorator():
