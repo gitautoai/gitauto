@@ -383,3 +383,75 @@ def test_get_stripe_customer_id_decorator_behavior():
 
         result = get_stripe_customer_id(installation_id=TEST_INSTALLATION_ID)
         assert result is None
+
+
+def test_get_stripe_customer_id_with_malformed_data_structure(mock_supabase_query):
+    """Test that get_stripe_customer_id handles malformed data gracefully."""
+    # Arrange - simulate various malformed data structures
+    malformed_cases = [
+        ((None, {}), None),  # dict instead of list, data[1][0] will raise KeyError
+        ((None, []), None),  # empty list
+        (("wrong_structure",), None),  # wrong structure
+        (None, None),  # None data
+    ]
+
+    for malformed_data in malformed_cases:
+        mock_supabase_query.execute.return_value = malformed_data
+
+        # Act
+        result = get_stripe_customer_id(installation_id=TEST_INSTALLATION_ID)
+
+        # Assert
+        assert result is None
+
+
+def test_get_stripe_customer_id_with_edge_case_installation_ids(mock_supabase_query):
+    """Test get_stripe_customer_id with edge case installation ID values."""
+    edge_cases = [
+        (-1, "cus_negative"),  # Negative installation ID
+        (0, "cus_zero"),  # Zero installation ID
+        (2**31 - 1, "cus_max_int"),  # Large positive integer
+    ]
+
+    for installation_id, expected_customer_id in edge_cases:
+        # Arrange
+        installation_data = {
+            "owner_id": 123456789,
+            "owners": {
+                "stripe_customer_id": expected_customer_id
+            }
+        }
+        mock_supabase_query.execute.return_value = (
+            (None, [installation_data]),
+            None,
+        )
+
+        # Act
+        result = get_stripe_customer_id(installation_id=installation_id)
+
+        # Assert
+        assert result == expected_customer_id
+
+
+def test_get_stripe_customer_id_with_various_stripe_customer_id_formats(
+    mock_supabase_query
+):
+    """Test get_stripe_customer_id with various valid stripe customer ID formats."""
+    valid_customer_ids = [
+        "cus_1234567890",
+        "cus_abcdefghij",
+        "cus_MixedCase123",
+        "cus_with_underscores_123",
+    ]
+
+    for customer_id in valid_customer_ids:
+        # Arrange
+        installation_data = {
+            "owner_id": 123456789,
+            "owners": {
+                "stripe_customer_id": customer_id
+            }
+        }
+        mock_supabase_query.execute.return_value = (
+            (None, [installation_data]),
+            None,
