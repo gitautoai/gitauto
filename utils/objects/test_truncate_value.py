@@ -1,3 +1,6 @@
+from datetime import datetime
+from pydantic import BaseModel
+
 from utils.objects.truncate_value import truncate_value
 
 
@@ -135,3 +138,55 @@ def test_truncate_complex_nested_structure():
         }
     ]
     assert result == expected
+
+
+class SampleModel(BaseModel):
+    """Test Pydantic model for testing truncate_value."""
+    name: str
+    description: str
+    age: int
+    created_at: datetime
+
+
+def test_truncate_pydantic_model():
+    """Test that Pydantic models are properly converted to dictionaries and truncated."""
+    test_model = SampleModel(
+        name="this is a very long name that should be truncated",
+        description="this is a very long description that should be truncated",
+        age=25,
+        created_at=datetime(2023, 1, 1, 12, 0, 0)
+    )
+    
+    result = truncate_value(test_model, 15)
+    
+    # Should be a dictionary (not a Pydantic model)
+    assert isinstance(result, dict)
+    assert not isinstance(result, BaseModel)
+    
+    # Check that string values are truncated
+    assert result["name"] == "this is a very ..."
+    assert result["description"] == "this is a very ..."
+    
+    # Check that non-string values are preserved
+    assert result["age"] == 25
+    assert result["created_at"] == "2023-01-01T12:00:00"
+
+
+def test_truncate_datetime_object():
+    """Test that datetime objects are converted to ISO format strings."""
+    dt = datetime(2023, 5, 15, 14, 30, 45)
+    result = truncate_value(dt)
+    assert result == "2023-05-15T14:30:45"
+
+
+def test_truncate_datetime_in_nested_structures():
+    """Test that datetime objects in nested structures are converted to ISO format strings."""
+    input_data = {
+        "timestamp": datetime(2023, 5, 15, 14, 30, 45),
+        "events": [datetime(2023, 5, 15, 10, 0, 0), datetime(2023, 5, 15, 11, 0, 0)],
+        "metadata": {"created": datetime(2023, 5, 15, 9, 0, 0)}
+    }
+    result = truncate_value(input_data)
+    assert result["timestamp"] == "2023-05-15T14:30:45"
+    assert result["events"] == ["2023-05-15T10:00:00", "2023-05-15T11:00:00"]
+    assert result["metadata"]["created"] == "2023-05-15T09:00:00"
