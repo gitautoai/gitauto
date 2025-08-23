@@ -1,6 +1,5 @@
 from unittest.mock import patch, MagicMock
 import inspect
-from typing import Union
 
 import pytest
 
