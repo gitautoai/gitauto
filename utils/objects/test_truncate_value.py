@@ -171,6 +171,7 @@ def test_truncate_pydantic_model():
     assert result["age"] == 25
     assert result["created_at"] == "2023-01-01T12:00:00"
 
+
 def test_truncate_datetime_object():
     """Test that datetime objects are converted to ISO format strings."""
     dt = datetime(2023, 5, 15, 14, 30, 45)
@@ -178,3 +179,14 @@ def test_truncate_datetime_object():
     assert result == "2023-05-15T14:30:45"
 
 
+def test_truncate_datetime_in_nested_structures():
+    """Test that datetime objects in nested structures are converted to ISO format strings."""
+    input_data = {
+        "timestamp": datetime(2023, 5, 15, 14, 30, 45),
+        "events": [datetime(2023, 5, 15, 10, 0, 0), datetime(2023, 5, 15, 11, 0, 0)],
+        "metadata": {"created": datetime(2023, 5, 15, 9, 0, 0)}
+    }
+    result = truncate_value(input_data)
+    assert result["timestamp"] == "2023-05-15T14:30:45"
+    assert result["events"] == ["2023-05-15T10:00:00", "2023-05-15T11:00:00"]
+    assert result["metadata"]["created"] == "2023-05-15T09:00:00"
