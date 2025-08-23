@@ -171,4 +171,10 @@ def test_truncate_pydantic_model():
     assert result["age"] == 25
     assert result["created_at"] == "2023-01-01T12:00:00"
 
+def test_truncate_datetime_object():
+    """Test that datetime objects are converted to ISO format strings."""
+    dt = datetime(2023, 5, 15, 14, 30, 45)
+    result = truncate_value(dt)
+    assert result == "2023-05-15T14:30:45"
+
 
