@@ -140,7 +140,7 @@ class TestGetStripeCustomerId:
         # Arrange
         mock_supabase_query.execute.return_value = (
             [None, [sample_installation_with_empty_owners]],
-            None,
+            1,
         )
 
         # Act
