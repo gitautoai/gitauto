@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import inspect
 import logging
 import time
 from unittest.mock import patch, MagicMock
@@ -199,3 +200,65 @@ class TestTimerDecoratorEdgeCases:
             mock_logger.info.assert_called_once_with(
                 "%s took %.2f seconds", "precision_function", 0.86
             )
+
+    def test_multiple_decorations(self, mock_logger, mock_time):
+        """Test that timer_decorator works with multiple decorations."""
+        def another_decorator(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+
+        @timer_decorator
+        @another_decorator
+        def multi_decorated_function():
+            return "decorated"
+
+        result = multi_decorated_function()
+
+        assert result == "decorated"
+        mock_logger.info.assert_called_once_with(
+            "%s took %.2f seconds", "multi_decorated_function", 2.5
+        )
+
+    def test_function_inspection_detection(self):
+        """Test that inspect.iscoroutinefunction correctly identifies function types."""
+        def sync_func():
+            pass
+
+        async def async_func():
+            pass
+
+        # Test that our decorator correctly identifies function types
+        assert not inspect.iscoroutinefunction(sync_func)
+        assert inspect.iscoroutinefunction(async_func)
+
+        # Test decorated functions
+        decorated_sync = timer_decorator(sync_func)
+        decorated_async = timer_decorator(async_func)
+
+        # Sync function should not be a coroutine function after decoration
+        assert not inspect.iscoroutinefunction(decorated_sync)
+        # Async function should still be a coroutine function after decoration
+        assert inspect.iscoroutinefunction(decorated_async)
+
+    def test_zero_execution_time(self, mock_logger):
+        """Test behavior when execution time is exactly zero."""
+        with patch("utils.time.timer.time") as mock_time:
+            mock_time.time.side_effect = [1000.0, 1000.0]  # Same time
+
+            @timer_decorator
+            def instant_function():
+                return "instant"
+
+            result = instant_function()
+
+            assert result == "instant"
+            mock_logger.info.assert_called_once_with(
+                "%s took %.2f seconds", "instant_function", 0.0
+            )
+
+    def test_logger_module_name(self):
+        """Test that logger is created with correct module name."""
+        from utils.time.timer import logger
+        assert logger.name == "utils.time.timer"
