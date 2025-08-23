@@ -279,7 +279,7 @@ class TestGetStripeCustomerId:
     ):
         """Test that get_stripe_customer_id calls the correct Supabase methods with correct parameters."""
         # Arrange
-        mock_supabase_query.execute.return_value = ((None, []), None)
+        mock_supabase_query.execute.return_value = ([None, []], 0)
 
         with patch(
             "services.supabase.installations.get_stripe_customer_id.supabase"
