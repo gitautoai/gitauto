@@ -10,7 +10,7 @@ import pytest
 from utils.time.timer import timer_decorator
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def mock_logger():
     """Fixture to mock the logger."""
     with patch("utils.time.timer.logger") as mock:
