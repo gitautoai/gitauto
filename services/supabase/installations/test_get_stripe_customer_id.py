@@ -1,1 +1,1 @@
-# This file was removed to avoid naming conflicts
+# This file was renamed to avoid naming conflicts
