@@ -262,3 +262,80 @@ class TestTimerDecoratorEdgeCases:
         """Test that logger is created with correct module name."""
         from utils.time.timer import logger
         assert logger.name == "utils.time.timer"
+
+
+class TestTimerDecoratorIntegration:
+    """Integration tests for timer_decorator."""
+
+    def test_real_timing_sync_function(self, mock_logger):
+        """Test actual timing with real time.sleep for sync function."""
+        @timer_decorator
+        def sleep_function():
+            time.sleep(0.1)  # Sleep for 100ms
+            return "slept"
+
+        result = sleep_function()
+
+        assert result == "slept"
+        # Verify that logger was called
+        mock_logger.info.assert_called_once()
+        # Get the actual call arguments
+        call_args = mock_logger.info.call_args[0]
+        assert call_args[0] == "%s took %.2f seconds"
+        assert call_args[1] == "sleep_function"
+        # Timing should be approximately 0.1 seconds (allow some variance)
+        assert 0.05 <= call_args[2] <= 0.2
+
+    @pytest.mark.asyncio
+    async def test_real_timing_async_function(self, mock_logger):
+        """Test actual timing with real asyncio.sleep for async function."""
+        @timer_decorator
+        async def async_sleep_function():
+            await asyncio.sleep(0.1)  # Sleep for 100ms
+            return "async_slept"
+
+        result = await async_sleep_function()
+
+        assert result == "async_slept"
+        # Verify that logger was called
+        mock_logger.info.assert_called_once()
+        # Get the actual call arguments
+        call_args = mock_logger.info.call_args[0]
+        assert call_args[0] == "%s took %.2f seconds"
+        assert call_args[1] == "async_sleep_function"
+        # Timing should be approximately 0.1 seconds (allow some variance)
+        assert 0.05 <= call_args[2] <= 0.2
+
+    def test_decorator_without_parentheses(self, mock_logger, mock_time):
+        """Test that decorator works when applied without parentheses."""
+        @timer_decorator
+        def simple_function():
+            return "simple"
+
+        result = simple_function()
+
+        assert result == "simple"
+        mock_logger.info.assert_called_once_with(
+            "%s took %.2f seconds", "simple_function", 2.5
+        )
+
+    def test_complex_return_values(self, mock_logger, mock_time):
+        """Test decorator with complex return values."""
+        @timer_decorator
+        def complex_return_function():
+            return {"key": "value", "list": [1, 2, 3], "nested": {"inner": True}}
+
+        result = complex_return_function()
+
+        expected = {"key": "value", "list": [1, 2, 3], "nested": {"inner": True}}
+        assert result == expected
+        mock_logger.info.assert_called_once_with(
+            "%s took %.2f seconds", "complex_return_function", 2.5
+        )
+
+    def test_logging_configuration_independence(self):
+        """Test that timer decorator doesn't interfere with existing logging config."""
+        # This test ensures that the logging.basicConfig call in timer.py
+        # doesn't override existing logging configuration
+        original_level = logging.getLogger().level
+        
