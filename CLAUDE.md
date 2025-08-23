@@ -226,15 +226,16 @@ aws logs describe-log-groups --log-group-name-prefix "/aws/lambda" --max-items 2
 
 When the user says "LGTM" (Looks Good To Me), automatically execute this workflow:
 
-1. Run black formatting: `black .`
-2. Run ruff linting: `ruff check . --fix`
-3. Run pylint: `pylint . --fail-under=10.0`
-4. Run pyright type checking: `pyright`
-5. Run pytest: `python -m pytest -r fE -x`
-6. Check current branch is not main: `git branch --show-current`
-7. Merge latest main: `git fetch origin main && git merge origin/main`
-8. Add changes: `git add .`
-9. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
-10. Push to remote: `git push`
+1. Activate virtual environment: `source venv/bin/activate`
+2. Run black formatting: `black .`
+3. Run ruff linting: `ruff check . --fix`
+4. Run pylint: `pylint . --fail-under=10.0`
+5. Run pyright type checking: `pyright`
+6. Run pytest: `python -m pytest -r fE -x`
+7. Check current branch is not main: `git branch --show-current`
+8. Merge latest main: `git fetch origin main && git merge origin/main`
+9. Add changes: `git add .`
+10. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
+11. Push to remote: `git push`
 
 IMPORTANT: Must fix every error/failure in each step before proceeding to the next step.

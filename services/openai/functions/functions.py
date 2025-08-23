@@ -12,7 +12,9 @@ from services.github.commits.replace_remote_file import (
     REPLACE_REMOTE_FILE_CONTENT,
     replace_remote_file_content,
 )
+from services.github.files.delete_file import delete_file
 from services.github.files.get_remote_file_content import get_remote_file_content
+from services.github.files.move_file import move_file
 from services.github.search.search_remote_file_contents import (
     search_remote_file_contents,
 )
@@ -131,6 +133,43 @@ GET_FILE_TREE_LIST: shared_params.FunctionDefinition = {
 }
 
 # See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
+MOVE_FILE: shared_params.FunctionDefinition = {
+    "name": "move_file",
+    "description": "Moves a file to a new location in the GitHub repository. This is useful for resolving naming conflicts, improving code organization, or fixing pytest import collisions caused by duplicate filenames.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "old_file_path": {
+                "type": "string",
+                "description": "The current path of the file to be moved. For example, 'src/old_name.py'.",
+            },
+            "new_file_path": {
+                "type": "string",
+                "description": "The new path for the file. For example, 'src/new_name.py'. Must be different from old_file_path.",
+            },
+        },
+        "required": ["old_file_path", "new_file_path"],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
+
+# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
+DELETE_FILE: shared_params.FunctionDefinition = {
+    "name": "delete_file",
+    "description": "Deletes a file from the GitHub repository. Use this to remove unused or duplicate files that cause conflicts.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "file_path": FILE_PATH,
+        },
+        "required": ["file_path"],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
+
+# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
 TOOLS_TO_UPDATE_COMMENT: Iterable[ChatCompletionToolParam] = [
     {"type": "function", "function": UPDATE_GITHUB_COMMENT},
 ]
@@ -150,6 +189,8 @@ TOOLS_TO_SEARCH_GOOGLE: Iterable[ChatCompletionToolParam] = [
 ]
 TOOLS_TO_COMMIT_CHANGES: Iterable[ChatCompletionToolParam] = [
     {"type": "function", "function": APPLY_DIFF_TO_FILE},
+    {"type": "function", "function": DELETE_FILE},
+    {"type": "function", "function": MOVE_FILE},
     {"type": "function", "function": REPLACE_REMOTE_FILE_CONTENT},
 ]
 
@@ -157,8 +198,10 @@ TOOLS_TO_COMMIT_CHANGES: Iterable[ChatCompletionToolParam] = [
 tools_to_call: dict[str, Any] = {
     # GitHub
     "apply_diff_to_file": apply_diff_to_file,
+    "delete_file": delete_file,
     "get_file_tree_list": get_file_tree_list,
     "get_remote_file_content": get_remote_file_content,
+    "move_file": move_file,
     "replace_remote_file_content": replace_remote_file_content,
     "search_remote_file_contents": search_remote_file_contents,
     "update_github_comment": update_comment,

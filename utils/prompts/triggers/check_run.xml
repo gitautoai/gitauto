@@ -4,4 +4,20 @@
   When you get stuck and can't solve the problem, simplify rather than making it more complex. It's better to create a simple solution that passes tests (even if something is missing) than to over-complicate and mess up the PR. Simple solutions that work have more value than complex solutions that fail.
   
   If you cannot clearly identify the root cause of test failures, prefer removing problematic test cases over adding more code to fix them. Adding complexity often creates more errors. It's better to have fewer passing tests than many failing ones.
+
+  ## Common Test Issue Solutions:
+
+  **Import/Module Collision Errors**: If you see errors about "import file mismatch", "imported module has different __file__ attribute", or "not the same as the test file we want to collect", this indicates duplicate filenames in different directories.
+
+  **Root Cause**: Module systems cache modules by name. When test runners encounter multiple files with identical names in different directories, the first one gets cached and subsequent ones cause path conflicts.
+
+  **Solutions**:
+  1. **move_file**: Use the move_file tool to make filenames unique with descriptive prefixes/suffixes based on their location or purpose
+  2. **delete_file**: Use the delete_file tool to remove unused duplicate files if one version is not being used in the codebase
+
+  **When to Use File Management Tools**:
+  - Use **move_file** when you need to resolve naming conflicts while keeping both files (e.g., rename test_client.py to test_stripe_client.py)
+  - Use **delete_file** when one of the duplicate files is unused or redundant (check imports first to confirm it's not referenced)
+  - Always search for import statements before deleting files to avoid breaking the codebase
+  - After renaming/deleting files, update any import statements that reference the old paths
 </trigger_instruction> 
