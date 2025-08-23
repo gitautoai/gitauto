@@ -1,4 +1,5 @@
 from typing import Any
+from pydantic import BaseModel
 
 
 def truncate_value(value: Any, max_length: int = 30):
