@@ -424,6 +424,7 @@ def test_get_stripe_customer_id_with_malformed_data_structure(mock_supabase_quer
 
 
 def test_get_stripe_customer_id_with_edge_case_installation_ids(mock_supabase_query):
+    # pylint: disable=redefined-outer-name
     """Test get_stripe_customer_id with edge case installation ID values."""
     edge_cases = [
         (-1, "cus_negative"),  # Negative installation ID
