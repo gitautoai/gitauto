@@ -447,7 +447,7 @@ def test_get_stripe_customer_id_with_edge_case_installation_ids(mock_supabase_qu
             }
         }
         mock_supabase_query.execute.return_value = (
-            (None, [installation_data]),
+            [None, [installation_data]],
             None,
         )
 
