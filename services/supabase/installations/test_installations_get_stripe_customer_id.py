@@ -356,7 +356,7 @@ class TestGetStripeCustomerId:
         }
         mock_supabase_query.execute.return_value = (
             [None, [first_installation, second_installation]],
-            None,
+            2,
         )
 
         # Act
