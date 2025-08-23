@@ -1,43 +1,61 @@
-from services.github.types.github_types import BaseArgs
 from services.github.trees.get_file_tree import get_file_tree
+from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value="", raise_on_error=False)
-def get_file_tree_list(base_args: BaseArgs, max_files: int | None = None, **kwargs):
-    owner, repo, ref = base_args["owner"], base_args["repo"], base_args["base_branch"]
-
-    # Get complete tree recursively
-    tree_items = get_file_tree(owner, repo, ref, base_args["token"])
-
-    # Group files by their depth and collect file info
-    paths_by_depth: dict[int, list[str]] = {}
-    for item in tree_items:
-        if item["type"] != "blob":  # Skip non-file items
-            continue
-        path = item["path"]
-        depth = path.count("/")
-        paths_by_depth.setdefault(depth, []).append(path)
-
-    # Collect files starting from shallowest depth
+@handle_exceptions(default_return_value=[], raise_on_error=False)
+def get_file_tree_list(base_args: BaseArgs, dir_path: str = "", **_kwargs):
     result: list[str] = []
-    max_depth = max(paths_by_depth.keys()) if paths_by_depth else 0
 
-    for depth in range(max_depth + 1):
-        if depth in paths_by_depth:
-            result.extend(sorted(paths_by_depth[depth]))
+    # Get the complete tree using existing function
+    tree_items = get_file_tree(
+        owner=base_args["owner"],
+        repo=base_args["repo"],
+        ref=base_args["base_branch"],
+        token=base_args["token"],
+    )
 
-    total_files = len(result)
-    # Convert max_files to int if it's passed as string
-    if max_files:
-        max_files = int(max_files) if isinstance(max_files, str) else max_files
-    if max_files and total_files > max_files:
-        result = result[:max_files]
-        msg = f"Found {total_files} files across {max_depth + 1} directory levels but limited to {max_files} files for now."
-    else:
-        msg = f"Found {total_files} files across {max_depth + 1} directory levels."
+    if not tree_items:
+        return result
 
-    # Sort the result by alphabetical order
-    result.sort()
+    files = []
+    dirs = []
 
-    return f"{msg}\n\n" + "\n".join(result)
+    if not dir_path:
+        # Show root directory contents (no "/" in path)
+        for item in tree_items:
+            path = item["path"]
+            if "/" not in path:  # Root level only
+                if item["type"] == "blob":
+                    files.append(path)
+                elif item["type"] == "tree":
+                    dirs.append(f"{path}/")
+
+        result = sorted(dirs) + sorted(files)
+        return result
+
+    # Clean up dir_path (remove leading/trailing slashes)
+    dir_path = dir_path.strip("/")
+
+    # Find items that are direct children of the specified directory
+    for item in tree_items:
+        path = item["path"]
+
+        # Check if this item is inside our target directory
+        if path.startswith(dir_path + "/"):
+            # Get the relative path within the directory
+            relative_path = path[len(dir_path) + 1 :]
+
+            # Only include direct children (no additional slashes)
+            if "/" not in relative_path:
+                if item["type"] == "blob":
+                    files.append(relative_path)
+                elif item["type"] == "tree":
+                    dirs.append(f"{relative_path}/")
+
+    if not files and not dirs:
+        return result
+
+    result = sorted(dirs) + sorted(files)
+
+    return result

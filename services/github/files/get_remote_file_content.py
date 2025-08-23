@@ -32,7 +32,7 @@ def get_remote_file_content(
     line_number: Optional[int] = None,
     keyword: Optional[str] = None,
     **_kwargs,
-) -> str:
+):
     """
     https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
 

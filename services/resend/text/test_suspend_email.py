@@ -92,9 +92,9 @@ def test_get_suspend_email_text_email_structure():
         "Hi TestUser,",
         "I noticed you suspended GitAuto. What happened?",
         "Any feedback? Just hit reply and let me know.",
-        "Wes\nGitAuto"
+        "Wes\nGitAuto",
     ]
-    
+
     for content in expected_content:
         assert content in text
 

@@ -215,10 +215,24 @@ def chat_with_agent(
             msg = "Searched repository but found no matching files."
 
     elif tool_name == "get_file_tree_list":
-        if isinstance(tool_args, dict) and "max_files" in tool_args:
-            msg = f"Retrieved file tree (limited to {tool_args['max_files']} files)."
+        if tool_result and isinstance(tool_result, list):
+            file_list = tool_result
+            if (
+                isinstance(tool_args, dict)
+                and "dir_path" in tool_args
+                and tool_args["dir_path"]
+            ):
+                msg = f"Listed contents of directory '{tool_args['dir_path']}': \n- {'\n- '.join(file_list)}\n"
+            else:
+                msg = f"Listed root directory contents: \n- {'\n- '.join(file_list)}\n"
+        elif (
+            isinstance(tool_args, dict)
+            and "dir_path" in tool_args
+            and tool_args["dir_path"]
+        ):
+            msg = f"Directory '{tool_args['dir_path']}' not found or is empty."
         else:
-            msg = "Retrieved complete file tree."
+            msg = "Root directory is empty or not found."
 
     # Claude sometimes tries to call functions that don't exist in the list of tools...
     elif (
