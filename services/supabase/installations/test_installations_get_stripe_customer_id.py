@@ -245,11 +245,11 @@ class TestGetStripeCustomerId:
         """Test that get_stripe_customer_id returns None when TypeError occurs accessing data[1][0]."""
         # Arrange - simulate data[1] being a non-indexable object
         mock_supabase_query.execute.return_value = (
-            (
+            [
                 None,
                 123,  # data[1][0] tries to access index 0 of int, which raises TypeError
-            ),
-            None,
+            ],
+            0,
         )
 
         # Act
