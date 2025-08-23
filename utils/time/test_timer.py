@@ -17,13 +17,13 @@ def mock_logger():
         yield mock
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def mock_time():
     """Fixture to mock time.time() for consistent timing tests."""
     with patch("utils.time.timer.time.time") as mock:
         # Set up predictable time values
-        # Use a function that returns different values on each call
-        mock.side_effect = [1000.0, 1002.5] * 10  # Repeat pattern for multiple tests
+        # Return start time first, then end time
+        mock.side_effect = [1000.0, 1002.5]
         yield mock
 
 
