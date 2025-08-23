@@ -92,7 +92,7 @@ class TestGetStripeCustomerId:
     ):
         """Test that get_stripe_customer_id returns None when data[1] is None."""
         # Arrange
-        mock_supabase_query.execute.return_value = ((None, None), None)
+        mock_supabase_query.execute.return_value = ([None, None], 0)
 
         # Act
         result = get_stripe_customer_id(installation_id=TEST_INSTALLATION_ID)
