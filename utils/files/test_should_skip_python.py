@@ -130,3 +130,19 @@ def test_whitespace_only():
 
     """
     assert should_skip_python(content) is True
+
+
+def test_init_file_with_imports():
+    # Typical __init__.py file with only imports and __all__
+    content = """from .module1 import Class1, function1
+from .module2 import Class2
+from .utils import helper_function
+
+__all__ = ['Class1', 'Class2', 'function1', 'helper_function']"""
+    assert should_skip_python(content) is True
+
+
+def test_empty_init_file():
+    # Empty __init__.py file
+    content = ""
+    assert should_skip_python(content) is True
