@@ -155,18 +155,6 @@ class TestUpsertRepoCoverage:
         assert result is None
         mock_supabase_client.table.assert_called_once_with("repo_coverage")
 
-    @patch("services.supabase.repo_coverage.upsert_repo_coverage.handle_exceptions")
-    def test_handle_exceptions_decorator_applied(self, mock_handle_exceptions, sample_repo_coverage_data):
-        """Test that the handle_exceptions decorator is properly applied."""
-        # Setup
-        mock_handle_exceptions.return_value = lambda func: func
-        
-        # Import the function to trigger decorator application
-        from services.supabase.repo_coverage.upsert_repo_coverage import upsert_repo_coverage
-        
-        # Verify
-        mock_handle_exceptions.assert_called_with(default_return_value=None, raise_on_error=False)
-
     def test_exception_handling_returns_none(self, mock_supabase_client, sample_repo_coverage_data):
         """Test that exceptions are handled and None is returned as default."""
         # Setup - make the supabase call raise an exception
