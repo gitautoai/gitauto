@@ -455,3 +455,10 @@ def test_get_stripe_customer_id_with_various_stripe_customer_id_formats(
         mock_supabase_query.execute.return_value = (
             (None, [installation_data]),
             None,
+        )
+
+        # Act
+        result = get_stripe_customer_id(installation_id=TEST_INSTALLATION_ID)
+
+        # Assert
+        assert result == customer_id
