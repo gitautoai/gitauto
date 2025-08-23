@@ -201,9 +201,14 @@ class TestTimerDecoratorEdgeCases:
 
             precision_function()
 
-            mock_logger.info.assert_called_once_with(
-                "%s took %.2f seconds", "precision_function", 0.86
-            )
+            # Verify the logger was called once
+            mock_logger.info.assert_called_once()
+            # Get the actual call arguments
+            call_args = mock_logger.info.call_args[0]
+            assert call_args[0] == "%s took %.2f seconds"
+            assert call_args[1] == "precision_function"
+            # Check timing is approximately correct (allow for floating point precision)
+            assert abs(call_args[2] - 0.864198) < 0.001
 
     def test_multiple_decorations(self, mock_logger, mock_time):
         """Test that timer_decorator works with multiple decorations."""
