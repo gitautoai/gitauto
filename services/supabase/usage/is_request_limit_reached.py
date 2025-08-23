@@ -4,7 +4,7 @@ from typing import TypedDict
 
 # Local imports
 from config import ONE_YEAR_FROM_NOW, EXCEPTION_OWNERS, TZ
-from services.supabase.installations.get_stripe_customer_id import (
+from services.supabase.owners.get_stripe_customer_id import (
     get_stripe_customer_id,
 )
 from services.supabase.owners.get_owner import get_owner
@@ -58,7 +58,7 @@ def is_request_limit_reached(
         }
 
     # Get Stripe customer ID
-    stripe_customer_id = get_stripe_customer_id(installation_id)
+    stripe_customer_id = get_stripe_customer_id(owner_id)
     if not stripe_customer_id:
         # Create Stripe customer with available info (use defaults for missing user info)
         stripe_customer_id = create_stripe_customer(
