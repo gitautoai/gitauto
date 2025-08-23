@@ -1,1 +1,0 @@
-# This file is no longer needed - tests have been consolidated into test_installations_get_stripe_customer_id.py
