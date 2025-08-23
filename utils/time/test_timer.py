@@ -20,9 +20,9 @@ def mock_logger():
 @pytest.fixture
 def mock_time():
     """Fixture to mock time.time() for consistent timing tests."""
-    with patch("utils.time.timer.time") as mock:
+    with patch("utils.time.timer.time.time") as mock:
         # Set up predictable time values
-        mock.time.side_effect = [1000.0, 1002.5]  # 2.5 second difference
+        mock.side_effect = [1000.0, 1002.5]  # 2.5 second difference
         yield mock
 
 
