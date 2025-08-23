@@ -455,6 +455,7 @@ def test_get_stripe_customer_id_with_edge_case_installation_ids(mock_supabase_qu
 def test_get_stripe_customer_id_with_various_stripe_customer_id_formats(
     mock_supabase_query
 ):
+    # pylint: disable=redefined-outer-name
     """Test get_stripe_customer_id with various valid stripe customer ID formats."""
     valid_customer_ids = [
         "cus_1234567890",
