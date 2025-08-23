@@ -147,6 +147,23 @@ class TestGetStripeCustomerId:
         # Assert
         assert result is None
 
+    def test_get_stripe_customer_id_returns_none_when_owners_key_missing(
+        self, mock_supabase_query
+    ):
+        """Test that get_stripe_customer_id returns None when owners key is missing entirely."""
+        # Arrange
+        installation_data = {"owner_id": 123456789}
+        mock_supabase_query.execute.return_value = (
+            (None, [installation_data]),
+            None,
+        )
+
+        # Act
+        result = get_stripe_customer_id(installation_id=TEST_INSTALLATION_ID)
+
+        # Assert
+        assert result is None
+
     def test_get_stripe_customer_id_returns_none_when_stripe_customer_id_is_none(
         self, mock_supabase_query, sample_installation_without_stripe_data
     ):
@@ -462,3 +479,4 @@ def test_get_stripe_customer_id_with_various_stripe_customer_id_formats(
 
         # Assert
         assert result == customer_id
+        assert isinstance(result, str)
