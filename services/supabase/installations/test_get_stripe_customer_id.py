@@ -1,5 +1,6 @@
 from unittest.mock import patch, MagicMock
 import inspect
+from typing import Union
 
 import pytest
 
@@ -379,8 +380,9 @@ def test_get_stripe_customer_id_function_signature():
     assert installation_id_param.annotation is int
 
     # Assert return type annotation
-    # Check for both possible string representations of the union type
-    assert sig.return_annotation in ["str | None", "str | None", str(str | None)]
+    # Check if the return annotation represents str | None (Union[str, None])
+    return_annotation = sig.return_annotation
+    assert return_annotation == "str | None" or str(return_annotation) == "str | None"
 
 
 def test_get_stripe_customer_id_has_handle_exceptions_decorator():
