@@ -291,7 +291,7 @@ class TestGetStripeCustomerId:
             mock_supabase.table.return_value = mock_table
             mock_table.select.return_value = mock_select
             mock_select.eq.return_value = mock_eq
-            mock_eq.execute.return_value = ((None, []), None)
+            mock_eq.execute.return_value = ([None, []], 0)
 
             # Act
             get_stripe_customer_id(installation_id=TEST_INSTALLATION_ID)
