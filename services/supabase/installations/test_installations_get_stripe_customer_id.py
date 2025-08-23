@@ -265,7 +265,7 @@ class TestGetStripeCustomerId:
         # Arrange - simulate malformed response structure that causes IndexError
         mock_supabase_query.execute.return_value = (
             ("invalid",),  # This will cause IndexError when accessing data[1]
-            None,
+            0,
         )
 
         # Act
