@@ -244,8 +244,8 @@ class TestTimerDecoratorEdgeCases:
 
     def test_zero_execution_time(self, mock_logger):
         """Test behavior when execution time is exactly zero."""
-        with patch("utils.time.timer.time") as mock_time:
-            mock_time.time.side_effect = [1000.0, 1000.0]  # Same time
+        with patch("utils.time.timer.time.time") as mock_time:
+            mock_time.side_effect = [1000.0, 1000.0]  # Same time
 
             @timer_decorator
             def instant_function():
