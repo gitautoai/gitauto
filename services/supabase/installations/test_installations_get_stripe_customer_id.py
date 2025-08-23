@@ -416,7 +416,7 @@ def test_get_stripe_customer_id_with_malformed_data_structure(mock_supabase_quer
         ([None, {}], 0),  # dict instead of list, data[1][0] will raise KeyError
         ([None, []], 0),  # empty list
         (("wrong_structure",), 0),  # wrong structure
-        (None, None),  # None data
+        (None, 0),  # None data
     ]
 
     for malformed_data in malformed_cases:
