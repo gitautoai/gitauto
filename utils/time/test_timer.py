@@ -38,7 +38,7 @@ class TestTimerDecoratorSync:
         result = test_function(3, 4)
 
         assert result == 7
-        mock_time.time.assert_called()
+        mock_time.assert_called()
         mock_logger.info.assert_called_once_with(
             "%s took %.2f seconds", "test_function", 2.5
         )
