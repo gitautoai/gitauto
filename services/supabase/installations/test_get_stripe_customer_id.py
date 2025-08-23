@@ -403,6 +403,7 @@ def test_get_stripe_customer_id_decorator_behavior():
 
 
 def test_get_stripe_customer_id_with_malformed_data_structure(mock_supabase_query):
+    # pylint: disable=redefined-outer-name
     """Test that get_stripe_customer_id handles malformed data gracefully."""
     # Arrange - simulate various malformed data structures
     malformed_cases = [
