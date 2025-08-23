@@ -108,7 +108,7 @@ class TestTimerDecoratorAsync:
         result = await async_test_function(6, 7)
 
         assert result == 42
-        mock_time.time.assert_called()
+        mock_time.assert_called()
         mock_logger.info.assert_called_once_with(
             "%s took %.2f seconds", "async_test_function", 2.5
         )
