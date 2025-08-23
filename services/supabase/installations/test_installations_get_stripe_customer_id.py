@@ -480,7 +480,7 @@ def test_get_stripe_customer_id_with_various_stripe_customer_id_formats(
         }
         mock_supabase_query.execute.return_value = (
             [None, [installation_data]],
-            None,
+            1,
         )
 
         # Act
