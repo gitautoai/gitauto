@@ -150,7 +150,7 @@ class SampleModel(BaseModel):
 
 def test_truncate_pydantic_model():
     """Test that Pydantic models are properly converted to dictionaries and truncated."""
-    test_model = TestModel(
+    test_model = SampleModel(
         name="this is a very long name that should be truncated",
         description="this is a very long description that should be truncated",
         age=25,
