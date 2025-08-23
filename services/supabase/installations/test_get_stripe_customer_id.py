@@ -487,4 +487,3 @@ def test_get_stripe_customer_id_with_various_stripe_customer_id_formats(
         # Assert
         assert result == customer_id
         assert isinstance(result, str)
- 
