@@ -422,3 +422,75 @@ def test_count_completed_unique_requests_with_different_start_dates():
             expected = {"Organization/test_org/test_repo#1"}
             assert result == expected
             mock_table.gt.assert_called_with("created_at", start_date)
+
+
+def test_count_completed_unique_requests_with_single_record():
+    """Test with single record"""
+    mock_data = [
+        {
+            "owner_type": "Organization",
+            "owner_name": "single_org",
+            "repo_name": "single_repo",
+            "issue_number": 42
+        }
+    ]
+    
+    with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_table
+        mock_table.gt.return_value = mock_table
+        mock_table.eq.return_value = mock_table
+        mock_table.in_.return_value = mock_table
+        mock_table.execute.return_value = ((None, mock_data), None)
+        
+        start_date = datetime(2023, 1, 1)
+        result = count_completed_unique_requests(123, start_date)
+        
+        expected = {"Organization/single_org/single_repo#42"}
+        assert result == expected
+        assert len(result) == 1
+
+
+def test_count_completed_unique_requests_with_numeric_strings():
+    """Test with numeric strings in owner/repo names"""
+    mock_data = [
+        {
+            "owner_type": "Organization",
+            "owner_name": "org123",
+            "repo_name": "repo456",
+            "issue_number": 789
+        },
+        {
+            "owner_type": "User",
+            "owner_name": "user999",
+            "repo_name": "project2023",
+            "issue_number": 1
+        }
+    ]
+    
+    with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_table
+        mock_table.gt.return_value = mock_table
+        mock_table.eq.return_value = mock_table
+        mock_table.in_.return_value = mock_table
+        mock_table.execute.return_value = ((None, mock_data), None)
+        
+        start_date = datetime(2023, 1, 1)
+        result = count_completed_unique_requests(123, start_date)
+        
+        expected = {
+            "Organization/org123/repo456#789",
+            "User/user999/project2023#1"
+        }
+        assert result == expected
+        assert len(result) == 2
+
+
+def test_count_completed_unique_requests_query_parameters():
+    """Test that all query parameters are correctly passed"""
+    with patch("services.supabase.usage.count_completed_unique_requests.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_supabase.table.return_value = mock_table
