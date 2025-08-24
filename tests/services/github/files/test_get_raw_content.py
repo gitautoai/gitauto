@@ -297,6 +297,12 @@ class TestGetRawContent:
     @patch('services.github.files.get_raw_content.create_headers')
     def test_create_headers_exception_handled_by_decorator(self, mock_create_headers, mock_requests_get):
         """Test that create_headers exceptions are handled by the exception decorator."""
+        mock_create_headers.side_effect = Exception("Header creation failed")
+        
+        result = get_raw_content("test-owner", "test-repo", "test.py", "main", "test-token")
+        
+        # The handle_exceptions decorator should catch the exception and return None
+        assert result is None
 
     @patch('services.github.files.get_raw_content.requests.get')
     @patch('services.github.files.get_raw_content.create_headers')
@@ -349,10 +355,12 @@ class TestGetRawContent:
             "content": encoded_content,
             "encoding": "base64"
         }
-        mock_create_headers.side_effect = Exception("Header creation failed")
+        mock_requests_get.return_value = mock_response
         
-        result = get_raw_content("test-owner", "test-repo", "test.py", "main", "test-token")
+        result = get_raw_content("test-owner", "test-repo", "large_file.py", "main", "test-token")
         
+        assert result == large_content
+        assert len(result.split('\n')) == 1002  # 1 header + 1000 lines + 1 empty line at end
 
     @pytest.mark.parametrize(
         "owner,repo,file_path,ref",
@@ -421,3 +429,21 @@ class TestGetRawContent:
     @patch('services.github.files.get_raw_content.requests.get')
     @patch('services.github.files.get_raw_content.create_headers')
     def test_various_file_types(self, mock_create_headers, mock_requests_get, file_extension, content):
+        """Test handling of various file types and content."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        
+        # Create response with specific content
+        encoded_content = base64.b64encode(content.encode('utf-8')).decode('utf-8')
+        
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "content": encoded_content,
+            "encoding": "base64"
+        }
+        mock_requests_get.return_value = mock_response
+        
+        result = get_raw_content("test-owner", "test-repo", f"test{file_extension}", "main", "test-token")
+        
+        assert result == content
