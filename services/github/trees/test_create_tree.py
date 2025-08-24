@@ -237,3 +237,102 @@ def test_create_tree_network_exception_handling(base_args, tree_items, mock_head
         result = create_tree(base_args, base_tree_sha, tree_items)
         
         assert result is None
+
+
+def test_create_tree_timeout_exception_handling(base_args, tree_items, mock_headers):
+    base_tree_sha = "base_tree_sha_123"
+    
+    with patch("services.github.trees.create_tree.requests.post") as mock_post, patch(
+        "services.github.trees.create_tree.create_headers"
+    ) as mock_create_headers:
+        
+        mock_post.side_effect = requests.exceptions.Timeout("Request timed out")
+        mock_create_headers.return_value = mock_headers
+        
+        result = create_tree(base_args, base_tree_sha, tree_items)
+        
+        assert result is None
+
+
+def test_create_tree_json_decode_error_handling(base_args, tree_items, mock_headers):
+    base_tree_sha = "base_tree_sha_123"
+    
+    mock_response = Mock()
+    mock_response.status_code = 201
+    mock_response.json.side_effect = ValueError("Invalid JSON")
+    
+    with patch("services.github.trees.create_tree.requests.post") as mock_post, patch(
+        "services.github.trees.create_tree.create_headers"
+    ) as mock_create_headers:
+        
+        mock_post.return_value = mock_response
+        mock_create_headers.return_value = mock_headers
+        
+        result = create_tree(base_args, base_tree_sha, tree_items)
+        
+        assert result is None
+
+
+def test_create_tree_missing_sha_in_response(base_args, tree_items, mock_headers):
+    base_tree_sha = "base_tree_sha_123"
+    
+    mock_response = Mock()
+    mock_response.status_code = 201
+    mock_response.json.return_value = {
+        "url": f"https://api.github.com/repos/{OWNER}/{REPO}/git/trees/new_tree_sha_123456",
+        "tree": []
+    }  # Missing 'sha' key
+    
+    with patch("services.github.trees.create_tree.requests.post") as mock_post, patch(
+        "services.github.trees.create_tree.create_headers"
+    ) as mock_create_headers:
+        
+        mock_post.return_value = mock_response
+        mock_create_headers.return_value = mock_headers
+        
+        result = create_tree(base_args, base_tree_sha, tree_items)
+        
+        assert result is None
+
+
+def test_create_tree_rate_limit_error(base_args, tree_items, mock_headers):
+    base_tree_sha = "base_tree_sha_123"
+    
+    mock_response = Mock()
+    mock_response.status_code = 403
+    mock_response.reason = "Forbidden"
+    mock_response.text = "API rate limit exceeded"
+    mock_response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Used": "5000",
+        "X-RateLimit-Reset": "1234567890"
+    }
+    http_error = requests.exceptions.HTTPError()
+    http_error.response = mock_response
+    mock_response.raise_for_status.side_effect = http_error
+    
+    with patch("services.github.trees.create_tree.requests.post") as mock_post, patch(
+        "services.github.trees.create_tree.create_headers"
+    ) as mock_create_headers, patch("time.time") as mock_time, patch("time.sleep") as mock_sleep:
+        
+        mock_post.return_value = mock_response
+        mock_create_headers.return_value = mock_headers
+        mock_time.return_value = 1234567880  # 10 seconds before reset
+        
+        result = create_tree(base_args, base_tree_sha, tree_items)
+        
+        # The function should handle rate limiting and eventually return None
+        assert result is None
+        mock_sleep.assert_called()
+
+
+def test_create_tree_large_tree_items(base_args, mock_success_response, mock_headers):
+    base_tree_sha = "base_tree_sha_123"
+    
+    # Create a large list of tree items
+    large_tree_items = [
+        {
+            "path": f"file_{i}.py",
+            "mode": "100644",
+            "type": "blob",
