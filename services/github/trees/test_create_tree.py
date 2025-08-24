@@ -336,6 +336,81 @@ def test_create_tree_large_tree_items(base_args, mock_success_response, mock_hea
             "path": f"file_{i}.py",
             "mode": "100644",
             "type": "blob",
+            "content": f"# File {i}\nprint('File {i}')",
+        }
+        for i in range(100)
+    ]
+    
+    with patch("services.github.trees.create_tree.requests.post") as mock_post, patch(
+        "services.github.trees.create_tree.create_headers"
+    ) as mock_create_headers:
+        
+        mock_post.return_value = mock_success_response
+        mock_create_headers.return_value = mock_headers
+        
+        result = create_tree(base_args, base_tree_sha, large_tree_items)
+        
+        assert result == "new_tree_sha_123456"
+        
+        expected_tree_data = {
+            "base_tree": base_tree_sha,
+            "tree": large_tree_items
+        }
+        
+        mock_post.assert_called_once_with(
+            url=f"https://api.github.com/repos/{OWNER}/{REPO}/git/trees",
+            json=expected_tree_data,
+            headers=mock_headers,
+            timeout=120
+        )
+
+
+def test_create_tree_with_different_file_modes(base_args, mock_success_response, mock_headers):
+    base_tree_sha = "base_tree_sha_123"
+    
+    tree_items_with_modes = [
+        {
+            "path": "executable_script.sh",
+            "mode": "100755",  # Executable file
+            "type": "blob",
+            "content": "#!/bin/bash\necho 'Hello World'",
+        },
+        {
+            "path": "regular_file.txt",
+            "mode": "100644",  # Regular file
+            "type": "blob",
+            "content": "Regular text file",
+        },
+        {
+            "path": "symlink",
+            "mode": "120000",  # Symbolic link
+            "type": "blob",
+            "content": "target_file.txt",
+        },
+    ]
+    
+    with patch("services.github.trees.create_tree.requests.post") as mock_post, patch(
+        "services.github.trees.create_tree.create_headers"
+    ) as mock_create_headers:
+        
+        mock_post.return_value = mock_success_response
+        mock_create_headers.return_value = mock_headers
+        
+        result = create_tree(base_args, base_tree_sha, tree_items_with_modes)
+        
+        assert result == "new_tree_sha_123456"
+        
+        expected_tree_data = {
+            "base_tree": base_tree_sha,
+            "tree": tree_items_with_modes
+        }
+        
+        mock_post.assert_called_once_with(
+            url=f"https://api.github.com/repos/{OWNER}/{REPO}/git/trees",
+            json=expected_tree_data,
+            headers=mock_headers,
+            timeout=120
+        )
 
 
 def test_create_tree_with_tree_references(base_args, mock_success_response, mock_headers):
@@ -421,3 +496,12 @@ def test_create_tree_with_none_base_tree_sha(base_args, tree_items, mock_success
         
         expected_tree_data = {
             "base_tree": None,
+            "tree": tree_items
+        }
+        
+        mock_post.assert_called_once_with(
+            url=f"https://api.github.com/repos/{OWNER}/{REPO}/git/trees",
+            json=expected_tree_data,
+            headers=mock_headers,
+            timeout=120
+        )
