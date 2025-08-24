@@ -76,6 +76,7 @@ class TestGetRawContent:
         mock_response.text = "Internal Server Error"
         http_error = requests.exceptions.HTTPError("500 Server Error")
         http_error.response = mock_response
+        mock_response.raise_for_status.side_effect = http_error
         return mock_response
 
     @patch('services.github.files.get_raw_content.requests.get')
