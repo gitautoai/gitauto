@@ -297,6 +297,58 @@ class TestGetRawContent:
     @patch('services.github.files.get_raw_content.create_headers')
     def test_create_headers_exception_handled_by_decorator(self, mock_create_headers, mock_requests_get):
         """Test that create_headers exceptions are handled by the exception decorator."""
+
+    @patch('services.github.files.get_raw_content.requests.get')
+    @patch('services.github.files.get_raw_content.create_headers')
+    def test_commit_sha_as_ref(self, mock_create_headers, mock_requests_get, mock_response_success):
+        """Test retrieval using commit SHA as reference."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_requests_get.return_value = mock_response_success
+        
+        commit_sha = "abc123def456"
+        result = get_raw_content("test-owner", "test-repo", "test.py", commit_sha, "test-token")
+        
+        assert result == "print('Hello, World!')\n"
+        mock_requests_get.assert_called_once_with(
+            url=f"https://api.github.com/repos/test-owner/test-repo/contents/test.py?ref={commit_sha}",
+            headers={"Authorization": "Bearer test-token"},
+            timeout=120  # TIMEOUT constant from config
+        )
+
+    @patch('services.github.files.get_raw_content.requests.get')
+    @patch('services.github.files.get_raw_content.create_headers')
+    def test_special_characters_in_file_path(self, mock_create_headers, mock_requests_get, mock_response_success):
+        """Test retrieval of file with special characters in path."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_requests_get.return_value = mock_response_success
+        
+        file_path = "src/files with spaces/test-file.py"
+        result = get_raw_content("test-owner", "test-repo", file_path, "main", "test-token")
+        
+        assert result == "print('Hello, World!')\n"
+        mock_requests_get.assert_called_once_with(
+            url=f"https://api.github.com/repos/test-owner/test-repo/contents/{file_path}?ref=main",
+            headers={"Authorization": "Bearer test-token"},
+            timeout=120  # TIMEOUT constant from config
+        )
+
+    @patch('services.github.files.get_raw_content.requests.get')
+    @patch('services.github.files.get_raw_content.create_headers')
+    def test_large_file_content(self, mock_create_headers, mock_requests_get):
+        """Test handling of large file content."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        
+        # Create large content (simulating a large file)
+        large_content = "# Large file\n" + "print('line')\n" * 1000
+        encoded_content = base64.b64encode(large_content.encode('utf-8')).decode('utf-8')
+        
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "content": encoded_content,
+            "encoding": "base64"
+        }
         mock_create_headers.side_effect = Exception("Header creation failed")
         
         result = get_raw_content("test-owner", "test-repo", "test.py", "main", "test-token")
