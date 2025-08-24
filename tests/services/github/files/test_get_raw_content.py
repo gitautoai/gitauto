@@ -72,7 +72,10 @@ class TestGetRawContent:
         """Create a 500 mock response that raises HTTPError."""
         mock_response = MagicMock()
         mock_response.status_code = 500
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("500 Server Error")
+        mock_response.reason = "Internal Server Error"
+        mock_response.text = "Internal Server Error"
+        http_error = requests.exceptions.HTTPError("500 Server Error")
+        http_error.response = mock_response
         return mock_response
 
     @patch('services.github.files.get_raw_content.requests.get')
