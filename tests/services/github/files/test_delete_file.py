@@ -207,7 +207,9 @@ class TestDeleteFile:
         assert result == "Error: Failed to delete file"
         mock_get_file_info.assert_called_once_with("test_file.py", base_args)
         mock_delete_file_by_sha.assert_called_once_with("test_file.py", "abc123def456", base_args)
-
+            result = delete_file("", base_args)
+            
+            assert result == "Error: File  not found or is a directory"
     def test_empty_file_path(self, base_args):
         """Test behavior with empty file path."""
         with patch("services.github.files.delete_file.get_file_info") as mock_get_file_info:
