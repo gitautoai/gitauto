@@ -89,6 +89,19 @@ class TestDeleteFile:
         assert result == "Error: Unable to get SHA for file test_file.py"
         mock_get_file_info.assert_called_once_with("test_file.py", base_args)
 
+    @patch("services.github.files.delete_file.get_file_info")
+    def test_file_info_whitespace_sha(self, mock_get_file_info, base_args, mock_file_info):
+        """Test error when file info contains whitespace-only SHA."""
+        # Set SHA to whitespace string
+        mock_file_info_whitespace_sha = mock_file_info.copy()
+        mock_file_info_whitespace_sha["sha"] = "   "
+        mock_get_file_info.return_value = mock_file_info_whitespace_sha
+        
+        result = delete_file("test_file.py", base_args)
+        
+        assert result == "Error: Unable to get SHA for file test_file.py"
+        mock_get_file_info.assert_called_once_with("test_file.py", base_args)
+
     @patch("services.github.files.delete_file.delete_file_by_sha")
     @patch("services.github.files.delete_file.get_file_info")
     def test_successful_deletion(self, mock_get_file_info, mock_delete_file_by_sha, base_args, mock_file_info):
@@ -112,6 +125,19 @@ class TestDeleteFile:
         result = delete_file("test_file.py", base_args)
         
         assert result is None
+        mock_get_file_info.assert_called_once_with("test_file.py", base_args)
+        mock_delete_file_by_sha.assert_called_once_with("test_file.py", "abc123def456", base_args)
+
+    @patch("services.github.files.delete_file.delete_file_by_sha")
+    @patch("services.github.files.delete_file.get_file_info")
+    def test_delete_file_by_sha_returns_error_message(self, mock_get_file_info, mock_delete_file_by_sha, base_args, mock_file_info):
+        """Test when delete_file_by_sha returns an error message."""
+        mock_get_file_info.return_value = mock_file_info
+        mock_delete_file_by_sha.return_value = "Error: Failed to delete file"
+        
+        result = delete_file("test_file.py", base_args)
+        
+        assert result == "Error: Failed to delete file"
         mock_get_file_info.assert_called_once_with("test_file.py", base_args)
         mock_delete_file_by_sha.assert_called_once_with("test_file.py", "abc123def456", base_args)
 
@@ -182,36 +208,12 @@ class TestDeleteFile:
         mock_get_file_info.assert_called_once_with("path/to/nested/file.py", base_args)
         mock_delete_file_by_sha.assert_called_once_with("path/to/nested/file.py", "abc123def456", base_args)
 
-    @patch("services.github.files.delete_file.get_file_info")
-    def test_file_info_whitespace_sha(self, mock_get_file_info, base_args, mock_file_info):
-        """Test error when file info contains whitespace-only SHA."""
-        # Set SHA to whitespace string
-        mock_file_info_whitespace_sha = mock_file_info.copy()
-        mock_file_info_whitespace_sha["sha"] = "   "
-        mock_get_file_info.return_value = mock_file_info_whitespace_sha
-        
-        result = delete_file("test_file.py", base_args)
-        
-        assert result == "Error: Unable to get SHA for file test_file.py"
-        mock_get_file_info.assert_called_once_with("test_file.py", base_args)
-
-    @patch("services.github.files.delete_file.delete_file_by_sha")
-    @patch("services.github.files.delete_file.get_file_info")
-    def test_delete_file_by_sha_returns_error_message(self, mock_get_file_info, mock_delete_file_by_sha, base_args, mock_file_info):
-        """Test when delete_file_by_sha returns an error message."""
-        mock_get_file_info.return_value = mock_file_info
-        mock_delete_file_by_sha.return_value = "Error: Failed to delete file"
-        
-        result = delete_file("test_file.py", base_args)
-        
-        assert result == "Error: Failed to delete file"
-        mock_get_file_info.assert_called_once_with("test_file.py", base_args)
-        mock_delete_file_by_sha.assert_called_once_with("test_file.py", "abc123def456", base_args)
-            result = delete_file("", base_args)
-            
-            assert result == "Error: File  not found or is a directory"
     def test_empty_file_path(self, base_args):
         """Test behavior with empty file path."""
         with patch("services.github.files.delete_file.get_file_info") as mock_get_file_info:
             mock_get_file_info.return_value = None
             
+            result = delete_file("", base_args)
+            
+            assert result == "Error: File  not found or is a directory"
+            mock_get_file_info.assert_called_once_with("", base_args)
