@@ -353,3 +353,71 @@ class TestGetRawContent:
         
         result = get_raw_content("test-owner", "test-repo", "test.py", "main", "test-token")
         
+
+    @pytest.mark.parametrize(
+        "owner,repo,file_path,ref",
+        [
+            ("test-owner", "test-repo", "README.md", "main"),
+            ("org-name", "repo-name", "src/main.py", "develop"),
+            ("user123", "project_name", "docs/guide.txt", "feature/new-feature"),
+            ("owner-with-dashes", "repo.with.dots", "path/to/file.json", "v1.0.0"),
+            ("CamelCaseOwner", "CamelCaseRepo", "CamelCase/File.py", "CamelCaseBranch"),
+        ],
+    )
+    @patch('services.github.files.get_raw_content.requests.get')
+    @patch('services.github.files.get_raw_content.create_headers')
+    def test_various_parameter_combinations(self, mock_create_headers, mock_requests_get, mock_response_success, owner, repo, file_path, ref):
+        """Test that the function handles various parameter combinations correctly."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_requests_get.return_value = mock_response_success
+        
+        result = get_raw_content(owner, repo, file_path, ref, "test-token")
+        
+        assert result == "print('Hello, World!')\n"
+        expected_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
+        mock_requests_get.assert_called_once_with(
+            url=expected_url,
+            headers={"Authorization": "Bearer test-token"},
+            timeout=120  # TIMEOUT constant from config
+        )
+
+    @pytest.mark.parametrize(
+        "status_code",
+        [400, 401, 403, 422, 500, 502, 503],
+    )
+    @patch('services.github.files.get_raw_content.requests.get')
+    @patch('services.github.files.get_raw_content.create_headers')
+    def test_various_http_error_codes(self, mock_create_headers, mock_requests_get, status_code):
+        """Test handling of various HTTP error status codes."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        
+        mock_response = MagicMock()
+        mock_response.status_code = status_code
+        mock_response.reason = f"HTTP {status_code} Error"
+        mock_response.text = f"Error {status_code}"
+        
+        http_error = requests.exceptions.HTTPError(f"{status_code} Error")
+        http_error.response = mock_response
+        mock_response.raise_for_status.side_effect = http_error
+        
+        mock_requests_get.return_value = mock_response
+        
+        result = get_raw_content("test-owner", "test-repo", "test.py", "main", "test-token")
+        
+        # The handle_exceptions decorator should catch all HTTP errors and return None
+        assert result is None
+
+    @pytest.mark.parametrize(
+        "file_extension,content",
+        [
+            (".py", "#!/usr/bin/env python3\nprint('Hello, World!')"),
+            (".js", "console.log('Hello, World!');"),
+            (".md", "# Hello World\n\nThis is a markdown file."),
+            (".json", '{"message": "Hello, World!"}'),
+            (".txt", "Hello, World!\nThis is a text file."),
+            (".yml", "version: '3'\nservices:\n  app:\n    image: nginx"),
+        ],
+    )
+    @patch('services.github.files.get_raw_content.requests.get')
+    @patch('services.github.files.get_raw_content.create_headers')
+    def test_various_file_types(self, mock_create_headers, mock_requests_get, file_extension, content):
