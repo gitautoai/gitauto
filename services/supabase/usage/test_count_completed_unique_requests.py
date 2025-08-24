@@ -30,7 +30,7 @@ def test_count_completed_unique_requests_with_valid_data():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = (None, mock_data)
+        mock_table.execute.return_value = ((None, mock_data), None)
         
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -81,7 +81,7 @@ def test_count_completed_unique_requests_with_duplicate_data():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = (None, mock_data)
+        mock_table.execute.return_value = ((None, mock_data), None)
         
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -104,7 +104,7 @@ def test_count_completed_unique_requests_with_empty_data():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = (None, [])
+        mock_table.execute.return_value = ((None, []), None)
         
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -121,7 +121,7 @@ def test_count_completed_unique_requests_with_none_data():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = (None, None)
+        mock_table.execute.return_value = ((None, None), None)
         
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -147,7 +147,7 @@ def test_count_completed_unique_requests_with_zero_installation_id():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = (None, mock_data)
+        mock_table.execute.return_value = ((None, mock_data), None)
         
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(0, start_date)
@@ -175,7 +175,7 @@ def test_count_completed_unique_requests_with_negative_installation_id():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = (None, mock_data)
+        mock_table.execute.return_value = ((None, mock_data), None)
         
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(-1, start_date)
@@ -203,7 +203,7 @@ def test_count_completed_unique_requests_with_large_installation_id():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = (None, mock_data)
+        mock_table.execute.return_value = ((None, mock_data), None)
         
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(999999999, start_date)
@@ -237,7 +237,7 @@ def test_count_completed_unique_requests_with_special_characters():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = (None, mock_data)
+        mock_table.execute.return_value = ((None, mock_data), None)
         
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -381,7 +381,7 @@ def test_count_completed_unique_requests_with_malformed_data():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = (None, mock_data)
+        mock_table.execute.return_value = ((None, mock_data), None)
         
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -408,7 +408,7 @@ def test_count_completed_unique_requests_with_different_start_dates():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = (None, mock_data)
+        mock_table.execute.return_value = ((None, mock_data), None)
         
         # Test with different datetime formats
         start_dates = [
