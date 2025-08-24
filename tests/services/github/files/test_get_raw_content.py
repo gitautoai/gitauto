@@ -237,3 +237,67 @@ class TestGetRawContent:
         
         # The handle_exceptions decorator should catch the JSONDecodeError and return None
         assert result is None
+
+    @patch('services.github.files.get_raw_content.requests.get')
+    @patch('services.github.files.get_raw_content.create_headers')
+    def test_empty_file_content(self, mock_create_headers, mock_requests_get):
+        """Test handling of empty file content."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        
+        # Create response with empty content
+        empty_content = ""
+        encoded_content = base64.b64encode(empty_content.encode('utf-8')).decode('utf-8')
+        
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "content": encoded_content,
+            "encoding": "base64"
+        }
+        mock_requests_get.return_value = mock_response
+        
+        result = get_raw_content("test-owner", "test-repo", "empty.txt", "main", "test-token")
+        
+        assert result == ""
+
+    @patch('services.github.files.get_raw_content.requests.get')
+    @patch('services.github.files.get_raw_content.create_headers')
+    def test_base64_decode_error_handled_by_decorator(self, mock_create_headers, mock_requests_get):
+        """Test that base64 decode errors are handled by the exception decorator."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "content": "invalid-base64-content!@#$%",
+            "encoding": "base64"
+        }
+        mock_requests_get.return_value = mock_response
+        
+        result = get_raw_content("test-owner", "test-repo", "test.py", "main", "test-token")
+        
+        # The handle_exceptions decorator should catch the base64 decode error and return None
+        assert result is None
+
+    @patch('services.github.files.get_raw_content.requests.get')
+    @patch('services.github.files.get_raw_content.create_headers')
+    def test_requests_exception_handled_by_decorator(self, mock_create_headers, mock_requests_get):
+        """Test that requests exceptions are handled by the exception decorator."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_requests_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
+        
+        result = get_raw_content("test-owner", "test-repo", "test.py", "main", "test-token")
+        
+        # The handle_exceptions decorator should catch the connection error and return None
+        assert result is None
+
+    @patch('services.github.files.get_raw_content.requests.get')
+    @patch('services.github.files.get_raw_content.create_headers')
+    def test_create_headers_exception_handled_by_decorator(self, mock_create_headers, mock_requests_get):
+        """Test that create_headers exceptions are handled by the exception decorator."""
+        mock_create_headers.side_effect = Exception("Header creation failed")
+        
+        result = get_raw_content("test-owner", "test-repo", "test.py", "main", "test-token")
+        
