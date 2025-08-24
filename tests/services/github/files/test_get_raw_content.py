@@ -89,7 +89,7 @@ class TestGetRawContent:
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/test.py?ref=main",
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=120  # TIMEOUT constant from config
         )
         mock_response_success.raise_for_status.assert_called_once()
 
@@ -107,7 +107,7 @@ class TestGetRawContent:
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/nonexistent.py?ref=main",
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=120  # TIMEOUT constant from config
         )
         # Should not call raise_for_status for 404
         mock_response_404.raise_for_status.assert_not_called()
@@ -126,7 +126,7 @@ class TestGetRawContent:
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src?ref=main",
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=120  # TIMEOUT constant from config
         )
         mock_response_directory.raise_for_status.assert_called_once()
 
@@ -144,7 +144,7 @@ class TestGetRawContent:
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/test.py?ref=main",
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=120  # TIMEOUT constant from config
         )
         mock_response_no_content.raise_for_status.assert_called_once()
 
@@ -163,7 +163,7 @@ class TestGetRawContent:
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/test.py?ref=main",
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=120  # TIMEOUT constant from config
         )
 
     @patch('services.github.files.get_raw_content.requests.get')
@@ -179,7 +179,7 @@ class TestGetRawContent:
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/test.py?ref=feature-branch",
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=120  # TIMEOUT constant from config
         )
 
     @patch('services.github.files.get_raw_content.requests.get')
@@ -195,7 +195,7 @@ class TestGetRawContent:
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src/utils/helper.py?ref=main",
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=120  # TIMEOUT constant from config
         )
 
     @patch('services.github.files.get_raw_content.requests.get')
