@@ -56,28 +56,28 @@ def test_invalid_types_trigger_exception_handler():
 
 def test_complex_objects_trigger_exception_handler():
     from unittest.mock import MagicMock
-    
+
     mock_obj = MagicMock()
     mock_obj.__str__ = lambda: "complex"
-    
+
     assert is_valid_line_number(mock_obj) is False
 
 
 def test_super_strict_failure_case():
     from unittest.mock import MagicMock
-    
+
     mock_obj = MagicMock()
     mock_obj.__str__.side_effect = ValueError("String conversion failed")
-    
+
     assert is_valid_line_number(mock_obj) is False
 
 
 def test_exception_during_processing():
     from unittest.mock import MagicMock
-    
+
     mock_obj = MagicMock()
     mock_obj.__int__.side_effect = ValueError("Cannot convert to int")
-    
+
     assert is_valid_line_number(mock_obj) is False
 
 

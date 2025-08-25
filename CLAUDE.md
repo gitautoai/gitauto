@@ -58,6 +58,45 @@ source .env && psql "postgresql://postgres.dkrxtcbaqzrodvsagwwn:$SUPABASE_DB_PAS
 source .env && psql "postgresql://postgres.awegqusxzsmlgxaxyyrq:$SUPABASE_DB_PASSWORD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
 ```
 
+### Sentry CLI
+
+Sentry CLI is available for accessing error logs and issues.
+
+#### Installation
+
+```bash
+# Install Sentry CLI if not already installed
+brew install getsentry/tools/sentry-cli
+```
+
+#### Accessing Sentry Issues
+
+```bash
+# List recent issues (requires SENTRY_PERSONAL_TOKEN in .env)
+source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --max-rows 10
+
+# List issues with specific status
+source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --status unresolved --max-rows 20
+
+# Get details for a specific issue by ID (Note: CLI doesn't have a 'show' command, use --id flag with list)
+source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --id ISSUE_ID
+
+# Search issues with query
+source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --query "is:unresolved level:error" --max-rows 10
+
+# Get full event details for an issue (includes error context, stack traces, etc.)
+source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" \
+  "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/ISSUE_ID/events/latest/" | python -m json.tool
+```
+
+#### Required Environment Variables
+
+The following variables must be set in .env file:
+
+- `SENTRY_PERSONAL_TOKEN`: Personal auth token with project:read permissions (get from <https://gitauto-ai.sentry.io/settings/auth-tokens/>)
+- `SENTRY_ORG_SLUG`: Organization slug (gitauto-ai)
+- `SENTRY_PROJECT_ID`: Project ID (4506865231200256)
+
 ### AWS CLI
 
 AWS CLI is available and configured for us-west-1 region.
@@ -66,13 +105,13 @@ AWS CLI is available and configured for us-west-1 region.
 
 ```bash
 # Search production Lambda logs
-# Log group: /aws/lambda/pr-agent-prod
+# Main log group: /aws/lambda/pr-agent-prod (configured for the Lambda function)
 
 # IMPORTANT: First check today's date with 'date' command to ensure correct timestamp calculation
 # Convert date to epoch milliseconds for AWS logs
 python3 -c "import datetime; print(int(datetime.datetime(2025, 8, 19, 19, 0, 0).timestamp() * 1000))"
 
-# Search for errors
+# Search for errors in main log group
 aws logs filter-log-events --log-group-name "/aws/lambda/pr-agent-prod" --filter-pattern "ERROR" --start-time START_EPOCH --end-time END_EPOCH --max-items 100
 
 # Get recent logs without filter
@@ -80,6 +119,12 @@ aws logs filter-log-events --log-group-name "/aws/lambda/pr-agent-prod" --start-
 
 # List available log groups
 aws logs describe-log-groups --log-group-name-prefix "/aws/lambda" --max-items 20
+
+# List log streams in a specific log group
+aws logs describe-log-streams --log-group-name "/aws/lambda/pr-agent-prod" --order-by LastEventTime --descending --max-items 10
+
+# Update Lambda function log group configuration
+aws lambda update-function-configuration --function-name pr-agent-prod --logging-config LogFormat=Text,LogGroup=/aws/lambda/pr-agent-prod
 ```
 
 ## Architecture Overview
