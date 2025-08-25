@@ -58,7 +58,7 @@ def test_get_credits_depleted_email_text_includes_dashboard_url():
         "services.resend.text.credits_depleted_email.DASHBOARD_CREDITS_URL",
         "https://test.com/credits",
     ):
-        subject, text = get_credits_depleted_email_text("Alice")
+        _, text = get_credits_depleted_email_text("Alice")
 
         assert "https://test.com/credits" in text
         assert "Grab more credits here: https://test.com/credits" in text
@@ -70,7 +70,7 @@ def test_get_credits_depleted_email_text_includes_email_signature():
         "services.resend.text.credits_depleted_email.EMAIL_SIGNATURE",
         "Custom Signature",
     ):
-        subject, text = get_credits_depleted_email_text("Bob")
+        _, text = get_credits_depleted_email_text("Bob")
 
         assert "Custom Signature" in text
         assert text.endswith("Custom Signature")

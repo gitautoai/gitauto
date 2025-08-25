@@ -66,14 +66,14 @@ class TestGetIssueBodyForPrMerged:
     """Test cases for get_issue_body_for_pr_merged function."""
 
     @pytest.fixture
-    def mock_settings_links(self):
+    def _(self):
         """Mock the SETTINGS_LINKS constant."""
         with patch(
             "utils.issue_templates.merge.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS"
         ) as mock:
             yield mock
 
-    def test_get_issue_body_for_pr_merged_single_file(self, mock_settings_links):
+    def test_get_issue_body_for_pr_merged_single_file(self, _):
         """Test generating issue body with a single file."""
         pr_number = 123
         file_list = ["src/main.py"]
@@ -88,7 +88,7 @@ class TestGetIssueBodyForPrMerged:
         expected = "\n".join(expected_lines)
         assert result == expected
 
-    def test_get_issue_body_for_pr_merged_multiple_files(self, mock_settings_links):
+    def test_get_issue_body_for_pr_merged_multiple_files(self, _):
         """Test generating issue body with multiple files."""
         pr_number = 456
         file_list = ["src/main.py", "src/utils.py", "tests/test_main.py"]
@@ -105,7 +105,7 @@ class TestGetIssueBodyForPrMerged:
         expected = "\n".join(expected_lines)
         assert result == expected
 
-    def test_get_issue_body_for_pr_merged_empty_file_list(self, mock_settings_links):
+    def test_get_issue_body_for_pr_merged_empty_file_list(self, _):
         """Test generating issue body with an empty file list."""
         pr_number = 789
         file_list = []
@@ -121,7 +121,7 @@ class TestGetIssueBodyForPrMerged:
         assert result == expected
 
     def test_get_issue_body_for_pr_merged_files_with_special_characters(
-        self, mock_settings_links
+        self, _
     ):
         """Test generating issue body with files containing special characters."""
         pr_number = 101
@@ -145,7 +145,7 @@ class TestGetIssueBodyForPrMerged:
         expected = "\n".join(expected_lines)
         assert result == expected
 
-    def test_get_issue_body_for_pr_merged_nested_paths(self, mock_settings_links):
+    def test_get_issue_body_for_pr_merged_nested_paths(self, _):
         """Test generating issue body with deeply nested file paths."""
         pr_number = 202
         file_list = [
@@ -166,7 +166,7 @@ class TestGetIssueBodyForPrMerged:
         expected = "\n".join(expected_lines)
         assert result == expected
 
-    def test_get_issue_body_for_pr_merged_return_type(self, mock_settings_links):
+    def test_get_issue_body_for_pr_merged_return_type(self, _):
         """Test that the function returns a string."""
         pr_number = 303
         file_list = ["test.py"]
@@ -174,7 +174,7 @@ class TestGetIssueBodyForPrMerged:
         assert isinstance(result, str)
 
     def test_get_issue_body_for_pr_merged_structure_consistency(
-        self, mock_settings_links
+        self, _
     ):
         """Test that the body structure is consistent across different inputs."""
         test_cases = [

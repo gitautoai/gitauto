@@ -114,8 +114,7 @@ class TestScheduleHandler:
         assert len(all_coverages) == 0
 
         # This would fail with TypeError if all_coverages was None
-        for coverage in all_coverages:
-            pass  # Should not raise TypeError
+        _ = all_coverages  # Should not raise TypeError when iterated
 
         # Test the actual pattern used in schedule_handler
         test_files = [("src/main.py", 1024), ("src/utils.py", 512)]

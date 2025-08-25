@@ -1,10 +1,9 @@
 from services.anthropic.message_to_dict import message_to_dict
 
 
-class MockMessage:
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+def create_mock_message(**kwargs):
+    from types import SimpleNamespace
+    return SimpleNamespace(**kwargs)
 
 
 def test_message_to_dict_with_dict():
@@ -16,7 +15,7 @@ def test_message_to_dict_with_dict():
 
 def test_message_to_dict_with_object_all_attributes():
     """Test with an object that has all attributes."""
-    message = MockMessage(
+    message = create_mock_message(
         role="assistant",
         content="Hello there",
         tool_calls=[{"type": "function", "function": {"name": "get_weather"}}],
@@ -37,7 +36,7 @@ def test_message_to_dict_with_object_all_attributes():
 
 def test_message_to_dict_with_object_some_attributes():
     """Test with an object that has only some attributes."""
-    message = MockMessage(role="user", content="Hello")
+    message = create_mock_message(role="user", content="Hello")
 
     result = message_to_dict(message)
 
@@ -46,7 +45,7 @@ def test_message_to_dict_with_object_some_attributes():
 
 def test_message_to_dict_with_object_no_attributes():
     """Test with an object that has none of the expected attributes."""
-    message = MockMessage(unexpected="value")
+    message = create_mock_message(unexpected="value")
 
     result = message_to_dict(message)
 
@@ -55,7 +54,7 @@ def test_message_to_dict_with_object_no_attributes():
 
 def test_message_to_dict_with_object_none_values():
     """Test with an object that has attributes with None values."""
-    message = MockMessage(
+    message = create_mock_message(
         role="user", content=None, tool_calls=None, tool_call_id=None, name=None
     )
 
@@ -66,7 +65,7 @@ def test_message_to_dict_with_object_none_values():
 
 def test_message_to_dict_with_empty_object():
     """Test with an empty object."""
-    message = MockMessage()
+    message = create_mock_message()
 
     result = message_to_dict(message)
 

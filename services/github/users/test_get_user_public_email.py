@@ -67,7 +67,7 @@ def test_get_user_public_email_calls_correct_api_endpoint(
 
         expected_url = f"{GITHUB_API_URL}/users/{sample_username}"
         mock_get.assert_called_once()
-        args, kwargs = mock_get.call_args
+        _, kwargs = mock_get.call_args
         assert kwargs["url"] == expected_url
 
 
@@ -88,7 +88,7 @@ def test_get_user_public_email_uses_correct_headers(sample_username, sample_toke
 
         mock_create_headers.assert_called_once_with(token=sample_token)
         mock_get.assert_called_once()
-        args, kwargs = mock_get.call_args
+        _, kwargs = mock_get.call_args
         assert kwargs["headers"] == mock_headers
 
 
@@ -101,7 +101,7 @@ def test_get_user_public_email_uses_correct_timeout(sample_username, sample_toke
         get_user_public_email(username=sample_username, token=sample_token)
 
         mock_get.assert_called_once()
-        args, kwargs = mock_get.call_args
+        _, kwargs = mock_get.call_args
         assert kwargs["timeout"] == TIMEOUT
 
 

@@ -71,7 +71,7 @@ def test_get_no_credits_email_text_includes_dashboard_url():
         "services.resend.text.no_credits_email.DASHBOARD_CREDITS_URL",
         "https://test.gitauto.ai/dashboard/credits",
     ):
-        subject, text = get_no_credits_email_text("TestUser")
+        _, text = get_no_credits_email_text("TestUser")
 
         assert "https://test.gitauto.ai/dashboard/credits" in text
 
@@ -81,7 +81,7 @@ def test_get_no_credits_email_text_includes_email_signature():
     with patch(
         "services.resend.text.no_credits_email.EMAIL_SIGNATURE", "Test Signature"
     ):
-        subject, text = get_no_credits_email_text("TestUser")
+        _, text = get_no_credits_email_text("TestUser")
 
         assert "Test Signature" in text
 
