@@ -34,7 +34,7 @@ def handle_exceptions(
 
             try:
                 return func(*args, **kwargs)
-            except requests.exceptions.HTTPError as err:
+            except requests.HTTPError as err:
                 status_code: int = err.response.status_code
 
                 # Skip logging for 500 Internal Server Error as it's usually a temporary issue and no meaningful information is available
