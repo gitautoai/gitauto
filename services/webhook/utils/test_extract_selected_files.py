@@ -15,7 +15,7 @@ class TestExtractSelectedFiles:
         result = extract_selected_files(comment_body)
 
         # Assert
-        assert result == []
+        assert not result
 
     def test_comment_body_without_checkboxes(self):
         """Test extracting files from comment body without any checkboxes."""
@@ -26,7 +26,7 @@ class TestExtractSelectedFiles:
         result = extract_selected_files(comment_body)
 
         # Assert
-        assert result == []
+        assert not result
 
     def test_comment_body_with_unchecked_boxes(self):
         """Test extracting files from comment body with unchecked boxes."""
@@ -41,7 +41,7 @@ class TestExtractSelectedFiles:
         result = extract_selected_files(comment_body)
 
         # Assert
-        assert result == []
+        assert not result
 
     def test_single_checked_file(self):
         """Test extracting single checked file."""
