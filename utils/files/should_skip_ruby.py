@@ -18,6 +18,7 @@ def should_skip_ruby(content: str) -> bool:
     lines = content.split("\n")
     in_empty_class = False
     in_heredoc = False
+    in_multiline_comment = False
 
     for line in lines:
         line = line.strip()
@@ -30,6 +31,15 @@ def should_skip_ruby(content: str) -> bool:
             # Check if we've reached the end marker
             if line and not line.startswith(" ") and line.isalpha():
                 in_heredoc = False
+            continue
+
+        # Handle multi-line comments (=begin ... =end)
+        if not in_multiline_comment and line == "=begin":
+            in_multiline_comment = True
+            continue
+        if in_multiline_comment:
+            if line == "=end":
+                in_multiline_comment = False
             continue
 
         # Skip comments
@@ -46,6 +56,11 @@ def should_skip_ruby(content: str) -> bool:
             continue
         # Skip constants (Ruby constants are UPPERCASE)
         if re.match(r"^[A-Z_][A-Z0-9_]*\s*=", line):
+            # Check if constant has function calls (like Pathname.new or ENV[])
+            if "(" in line and ")" in line:
+                return False
+            if "[" in line and "]" in line:
+                return False
             continue
         # Handle empty class/module definitions
         if line.startswith("class ") or line.startswith("module "):
