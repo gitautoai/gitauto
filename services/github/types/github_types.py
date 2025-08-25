@@ -48,6 +48,12 @@ class BaseArgs(TypedDict):
     comment_url: NotRequired[str | None]
     pr_body: NotRequired[str]
     issuer_email: NotRequired[str]
+    pull_number: NotRequired[int]
+    pr_number: NotRequired[int]
+    review_id: NotRequired[int]
+    parent_issue_number: NotRequired[int]
+    parent_issue_title: NotRequired[str]
+    parent_issue_body: NotRequired[str]
 
 
 class CheckRunCompletedPayload(TypedDict):
