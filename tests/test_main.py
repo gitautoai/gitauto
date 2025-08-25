@@ -254,47 +254,44 @@ class TestHandleWebhook:
         assert response == {"message": "Webhook processed successfully"}
 
 
-class TestHandleJiraWebhook:
-    @patch("main.verify_jira_webhook")
-    @patch("main.create_pr_from_issue")
-    async def test_handle_jira_webhook_success(
-        self, mock_create_pr, mock_verify_jira, mock_jira_request
-    ):
-        """Test handle_jira_webhook function with successful execution."""
-        # Setup
-        mock_verify_jira.return_value = {"issue": {"key": "JIRA-123"}}
-        mock_create_pr.return_value = None
+@patch("main.verify_jira_webhook")
+@patch("main.create_pr_from_issue")
+async def test_handle_jira_webhook_success(
+    mock_create_pr, mock_verify_jira, mock_jira_request
+):
+    """Test handle_jira_webhook function with successful execution."""
+    # Setup
+    mock_verify_jira.return_value = {"issue": {"key": "JIRA-123"}}
+    mock_create_pr.return_value = None
 
-        # Execute
-        response = await handle_jira_webhook(request=mock_jira_request)
+    # Execute
+    response = await handle_jira_webhook(request=mock_jira_request)
 
-        # Verify
-        mock_verify_jira.assert_called_once_with(mock_jira_request)
-        mock_create_pr.assert_called_once_with(
-            payload={"issue": {"key": "JIRA-123"}},
-            trigger="issue_comment",
-            input_from="jira",
-        )
-        assert response == {"message": "Jira webhook processed successfully"}
-
-
-class TestRoot:
-    async def test_root_endpoint(self):
-        """Test root endpoint returns correct product name."""
-        response = await root()
-        assert response == {"message": PRODUCT_NAME}
+    # Verify
+    mock_verify_jira.assert_called_once_with(mock_jira_request)
+    mock_create_pr.assert_called_once_with(
+        payload={"issue": {"key": "JIRA-123"}},
+        trigger="issue_comment",
+        input_from="jira",
+    )
+    assert response == {"message": "Jira webhook processed successfully"}
 
 
-class TestFastAPIApp:
-    def test_app_routes(self):
-        """Test that the FastAPI app has the expected routes."""
-        routes = {route.path: route.methods for route in app.routes}
+async def test_root_endpoint():
+    """Test root endpoint returns correct product name."""
+    response = await root()
+    assert response == {"message": PRODUCT_NAME}
 
-        assert "/" in routes
-        assert "GET" in routes["/"]
 
-        assert "/webhook" in routes
-        assert "POST" in routes["/webhook"]
+def test_app_routes():
+    """Test that the FastAPI app has the expected routes."""
+    routes = {route.path: route.methods for route in app.routes}
 
-        assert "/jira-webhook" in routes
-        assert "POST" in routes["/jira-webhook"]
+    assert "/" in routes
+    assert "GET" in routes["/"]
+
+    assert "/webhook" in routes
+    assert "POST" in routes["/webhook"]
+
+    assert "/jira-webhook" in routes
+    assert "POST" in routes["/jira-webhook"]
