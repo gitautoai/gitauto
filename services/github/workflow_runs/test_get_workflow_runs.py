@@ -158,8 +158,8 @@ def test_get_workflow_runs_neither_commit_sha_nor_branch_returns_empty_list():
     assert result == []  # Default return value from handle_exceptions decorator
 
 
-def test_get_workflow_runs_empty_commit_sha_and_branch_raises_value_error():
-    """Test that ValueError is raised when both commit_sha and branch are empty strings."""
+def test_get_workflow_runs_empty_commit_sha_and_branch_returns_empty_list():
+    """Test that empty list is returned when both commit_sha and branch are empty strings."""
     # Act & Assert
     result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha="", branch="")
     assert result == []  # Default return value from handle_exceptions decorator
