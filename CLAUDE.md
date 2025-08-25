@@ -283,4 +283,4 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 10. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
 11. Push to remote: `git push`
 
-IMPORTANT: Must fix every error/failure in each step before proceeding to the next step.
+IMPORTANT: When pylint and pyright show many alerts/errors, focus on fixing issues related to your code changes unless explicitly told to fix all issues. Don't ignore everything, but prioritize errors in files you modified.

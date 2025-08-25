@@ -45,15 +45,18 @@ class BaseArgs(TypedDict):
     other_urls: list[str]
 
     # Optional fields
+    check_run_name: NotRequired[str]
     comment_url: NotRequired[str | None]
-    pr_body: NotRequired[str]
     issuer_email: NotRequired[str]
     pull_number: NotRequired[int]
-    pr_number: NotRequired[int]
-    review_id: NotRequired[int]
+    workflow_id: NotRequired[str | int]
+    parent_issue_body: NotRequired[str]
     parent_issue_number: NotRequired[int]
     parent_issue_title: NotRequired[str]
-    parent_issue_body: NotRequired[str]
+    pr_body: NotRequired[str]
+    pr_number: NotRequired[int]
+    review_id: NotRequired[int]
+    skip_ci: NotRequired[bool]
 
 
 class CheckRunCompletedPayload(TypedDict):

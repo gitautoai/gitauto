@@ -68,13 +68,17 @@ def handle_check_run(payload: CheckRunCompletedPayload):
     details_url = check_run["details_url"]
 
     is_circleci = "circleci.com" in details_url if details_url else False
+    circleci_project_slug = ""
+    circleci_workflow_id = ""
+    github_run_id = 0
+
     if is_circleci:
         # URL: https://app.circleci.com/pipelines/circleci/J2wtzLah5rmzRnx6qn4RyQ/UUb5FLNgQCnif8mB6mQn7s/7/workflows/772ddda7-d6b7-49ad-9123-108d9f8164b5
-        workflow_id = details_url.split("/workflows/")[1].split("?")[0]
+        circleci_workflow_id = details_url.split("/workflows/")[1].split("?")[0]
         url_parts = details_url.split("/pipelines/")[1].split("/")
         circleci_project_slug = f"{url_parts[0]}/{url_parts[1]}/{url_parts[2]}"
     else:
-        workflow_id = details_url.split(sep="/")[-3]
+        github_run_id = int(details_url.split(sep="/")[-3])
 
     check_run_name = check_run["name"]
 
@@ -153,7 +157,7 @@ def handle_check_run(payload: CheckRunCompletedPayload):
         "other_urls": [],
         # Extra fields for backward compatibility
         "pull_number": pull_number,
-        "workflow_id": workflow_id,
+        "workflow_id": circleci_workflow_id if is_circleci else github_run_id,
         "check_run_name": check_run_name,
         "skip_ci": True,
     }
@@ -222,7 +226,7 @@ def handle_check_run(payload: CheckRunCompletedPayload):
     else:
         # GitHub Actions workflow
         workflow_path = get_workflow_run_path(
-            owner=owner_name, repo=repo_name, run_id=workflow_id, token=token
+            owner=owner_name, repo=repo_name, run_id=github_run_id, token=token
         )
 
         workflow_content = ""
@@ -252,7 +256,7 @@ def handle_check_run(payload: CheckRunCompletedPayload):
 
         # Use the project slug extracted from the URL
         # Get failed jobs from workflow and collect their logs
-        workflow_jobs = get_circleci_workflow_jobs(workflow_id, circleci_token)
+        workflow_jobs = get_circleci_workflow_jobs(circleci_workflow_id, circleci_token)
         failed_job_logs = []
 
         for job in workflow_jobs:
@@ -277,7 +281,7 @@ def handle_check_run(payload: CheckRunCompletedPayload):
     else:
         # GitHub Actions log retrieval (existing logic)
         error_log = get_workflow_run_logs(
-            owner=owner_name, repo=repo_name, run_id=workflow_id, token=token
+            owner=owner_name, repo=repo_name, run_id=github_run_id, token=token
         )
 
     if error_log == 404:
@@ -294,7 +298,7 @@ def handle_check_run(payload: CheckRunCompletedPayload):
         permissions = get_installation_permissions(installation_id)
 
         # Early return notification
-        early_return_msg = f"error_log is 404. Permission denied for workflow run id `{workflow_id}` in `{owner_name}/{repo_name}` - Permissions: `{permissions}`"
+        early_return_msg = f"error_log is 404. Permission denied for workflow run id `{circleci_workflow_id if is_circleci else github_run_id}` in `{owner_name}/{repo_name}` - Permissions: `{permissions}`"
         slack_notify(early_return_msg, thread_ts)
         return
 
@@ -310,7 +314,9 @@ def handle_check_run(payload: CheckRunCompletedPayload):
 
     # Create a pair of workflow ID and error log hash
     error_log_hash = hashlib.sha256(error_log.encode(encoding=UTF8)).hexdigest()
-    current_pair = f"{workflow_id}:{error_log_hash}"
+    current_pair = (
+        f"{circleci_workflow_id if is_circleci else github_run_id}:{error_log_hash}"
+    )
     print(f"Workflow ID and error log hash pair: {current_pair}")
     print(f"Error log content for {owner_name}/{repo_name} PR #{pull_number}:")
     print(error_log)
