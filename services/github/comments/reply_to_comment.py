@@ -9,8 +9,11 @@ from utils.error.handle_exceptions import handle_exceptions
 def reply_to_comment(base_args: BaseArgs, body: str):
     """https://docs.github.com/en/rest/pulls/comments?apiVersion=2022-11-28#create-a-reply-for-a-review-comment"""
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
-    pull_number = base_args["pull_number"]
-    comment_id = base_args["review_id"]
+    pull_number = base_args.get("pull_number")
+    comment_id = base_args.get("review_id")
+
+    if not pull_number or not comment_id:
+        raise ValueError("pull_number and review_id are required for reply_to_comment")
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies"
     headers: dict[str, str] = create_headers(token=token)
     response = post(url=url, headers=headers, json={"body": body}, timeout=TIMEOUT)
