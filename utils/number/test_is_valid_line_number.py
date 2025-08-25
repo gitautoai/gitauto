@@ -55,27 +55,30 @@ def test_invalid_types_trigger_exception_handler():
 
 
 def test_complex_objects_trigger_exception_handler():
-    class ComplexObject:
-        def __str__(self):
-            return "complex"
-
-    assert is_valid_line_number(ComplexObject()) is False
+    from unittest.mock import MagicMock
+    
+    mock_obj = MagicMock()
+    mock_obj.__str__ = lambda: "complex"
+    
+    assert is_valid_line_number(mock_obj) is False
 
 
 def test_super_strict_failure_case():
-    class ComplexObject:
-        def __str__(self):
-            raise ValueError("String conversion failed")
-
-    assert is_valid_line_number(ComplexObject()) is False
+    from unittest.mock import MagicMock
+    
+    mock_obj = MagicMock()
+    mock_obj.__str__.side_effect = ValueError("String conversion failed")
+    
+    assert is_valid_line_number(mock_obj) is False
 
 
 def test_exception_during_processing():
-    class BadObject:
-        def __int__(self):
-            raise ValueError("Cannot convert to int")
-
-    assert is_valid_line_number(BadObject()) is False
+    from unittest.mock import MagicMock
+    
+    mock_obj = MagicMock()
+    mock_obj.__int__.side_effect = ValueError("Cannot convert to int")
+    
+    assert is_valid_line_number(mock_obj) is False
 
 
 def test_large_numbers():

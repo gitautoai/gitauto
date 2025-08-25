@@ -45,7 +45,7 @@ class TestUpdateIssueUrl:
     def test_update_issue_url_success(self, mock_supabase_success):
         """Test successful update of issue URL"""
         # Arrange
-        mock_supabase, mock_table = mock_supabase_success
+        _, mock_table = mock_supabase_success
         repo_id = 123456
         file_path = "src/main.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
@@ -87,7 +87,7 @@ class TestUpdateIssueUrl:
     def test_update_issue_url_with_zero_repo_id(self, mock_supabase_success):
         """Test update with zero repo_id"""
         # Arrange
-        mock_supabase, mock_table = mock_supabase_success
+        _, mock_table = mock_supabase_success
         repo_id = 0
         file_path = "src/main.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
@@ -102,7 +102,7 @@ class TestUpdateIssueUrl:
     def test_update_issue_url_with_negative_repo_id(self, mock_supabase_success):
         """Test update with negative repo_id"""
         # Arrange
-        mock_supabase, mock_table = mock_supabase_success
+        _, mock_table = mock_supabase_success
         repo_id = -1
         file_path = "src/main.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
@@ -117,7 +117,7 @@ class TestUpdateIssueUrl:
     def test_update_issue_url_with_empty_file_path(self, mock_supabase_success):
         """Test update with empty file path"""
         # Arrange
-        mock_supabase, mock_table = mock_supabase_success
+        _, mock_table = mock_supabase_success
         repo_id = 123456
         file_path = ""
         github_issue_url = "https://github.com/owner/repo/issues/123"
@@ -132,7 +132,7 @@ class TestUpdateIssueUrl:
     def test_update_issue_url_with_empty_github_url(self, mock_supabase_success):
         """Test update with empty GitHub issue URL"""
         # Arrange
-        mock_supabase, mock_table = mock_supabase_success
+        _, mock_table = mock_supabase_success
         repo_id = 123456
         file_path = "src/main.py"
         github_issue_url = ""
@@ -149,7 +149,7 @@ class TestUpdateIssueUrl:
     def test_update_issue_url_with_long_file_path(self, mock_supabase_success):
         """Test update with very long file path"""
         # Arrange
-        mock_supabase, mock_table = mock_supabase_success
+        _, mock_table = mock_supabase_success
         repo_id = 123456
         file_path = "very/long/nested/directory/structure/with/many/levels/src/main.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
@@ -166,7 +166,7 @@ class TestUpdateIssueUrl:
     ):
         """Test update with special characters in file path"""
         # Arrange
-        mock_supabase, mock_table = mock_supabase_success
+        _, mock_table = mock_supabase_success
         repo_id = 123456
         file_path = "src/file-with_special.chars@123.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
@@ -181,7 +181,7 @@ class TestUpdateIssueUrl:
     def test_update_issue_url_with_large_repo_id(self, mock_supabase_success):
         """Test update with very large repo_id"""
         # Arrange
-        mock_supabase, mock_table = mock_supabase_success
+        _, mock_table = mock_supabase_success
         repo_id = 999999999999
         file_path = "src/main.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
@@ -212,7 +212,7 @@ class TestUpdateIssueUrl:
     def test_update_issue_url_method_chaining(self, mock_supabase_success):
         """Test that the method chaining works correctly"""
         # Arrange
-        mock_supabase, mock_table = mock_supabase_success
+        _, mock_table = mock_supabase_success
 
         # Act
         update_issue_url(

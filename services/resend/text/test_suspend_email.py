@@ -58,7 +58,7 @@ def test_get_suspend_email_text_includes_email_signature():
         "services.resend.text.suspend_email.EMAIL_SIGNATURE",
         "Custom Signature",
     ):
-        subject, text = get_suspend_email_text("Bob")
+        _, text = get_suspend_email_text("Bob")
 
         assert "Custom Signature" in text
         assert text.endswith("Custom Signature")
@@ -85,7 +85,7 @@ def test_get_suspend_email_text_subject_is_constant():
 
 def test_get_suspend_email_text_email_structure():
     """Test that the email has the expected structure and content."""
-    subject, text = get_suspend_email_text("TestUser")
+    _, text = get_suspend_email_text("TestUser")
 
     # Check that all expected content is present
     expected_content = [

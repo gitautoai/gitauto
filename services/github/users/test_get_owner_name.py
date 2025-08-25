@@ -48,7 +48,7 @@ def test_get_owner_name_calls_correct_api_endpoint(sample_owner_id, sample_token
 
         expected_url = f"{GITHUB_API_URL}/user/{sample_owner_id}"
         mock_get.assert_called_once()
-        args, kwargs = mock_get.call_args
+        _, kwargs = mock_get.call_args
         assert kwargs["url"] == expected_url
 
 
@@ -67,7 +67,7 @@ def test_get_owner_name_uses_correct_headers(sample_owner_id, sample_token):
 
         mock_create_headers.assert_called_once_with(token=sample_token)
         mock_get.assert_called_once()
-        args, kwargs = mock_get.call_args
+        _, kwargs = mock_get.call_args
         assert kwargs["headers"] == mock_headers
 
 
@@ -80,7 +80,7 @@ def test_get_owner_name_uses_correct_timeout(sample_owner_id, sample_token):
         get_owner_name(owner_id=sample_owner_id, token=sample_token)
 
         mock_get.assert_called_once()
-        args, kwargs = mock_get.call_args
+        _, kwargs = mock_get.call_args
         assert kwargs["timeout"] == TIMEOUT
 
 
