@@ -3,7 +3,7 @@ from utils.files.filter_code_files import filter_code_files
 
 def test_filter_code_files_empty_list():
     result = filter_code_files([])
-    assert result == []
+    assert not result
 
 
 def test_filter_code_files_code_files_only():
@@ -42,7 +42,7 @@ def test_filter_code_files_non_code_extensions():
         "environment.env",
     ]
     result = filter_code_files(filenames)
-    assert result == []
+    assert not result
 
 
 def test_filter_code_files_test_patterns():
@@ -60,7 +60,7 @@ def test_filter_code_files_test_patterns():
         "fixture_setup.py",
     ]
     result = filter_code_files(filenames)
-    assert result == []
+    assert not result
 
 
 def test_filter_code_files_mixed_files():
@@ -92,7 +92,7 @@ def test_filter_code_files_case_insensitive_test_patterns():
         "FIXTURE_setup.py",
     ]
     result = filter_code_files(filenames)
-    assert result == []
+    assert not result
 
 
 def test_filter_code_files_partial_matches():
@@ -131,9 +131,9 @@ def test_filter_code_files_edge_cases():
 
 def test_filter_code_files_exception_handling():
     result = filter_code_files(None)
-    assert result == []
+    assert not result
     result = filter_code_files("not_a_list")
-    assert result == []
+    assert not result
 
 
 def test_filter_code_files_all_non_code_extensions():
@@ -161,7 +161,7 @@ def test_filter_code_files_all_non_code_extensions():
         ]
     ]
     result = filter_code_files(filenames)
-    assert result == []
+    assert not result
 
 
 def test_filter_code_files_all_test_patterns():
@@ -179,7 +179,7 @@ def test_filter_code_files_all_test_patterns():
         "fixture_file.py",
     ]
     result = filter_code_files(filenames)
-    assert result == []
+    assert not result
 
 
 def test_filter_code_files_complex_scenarios():

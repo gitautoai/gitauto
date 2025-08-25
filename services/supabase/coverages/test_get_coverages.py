@@ -125,7 +125,7 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=filenames)
 
         # Verify
-        assert result == {}
+        assert not result
 
         # Verify no database query was made
         mock_supabase_chain.execute.assert_not_called()
@@ -144,7 +144,7 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=filenames)
 
         # Verify
-        assert result == {}
+        assert not result
         mock_supabase_chain.execute.assert_called_once()
 
     def test_get_coverages_none_data(self, mock_supabase_chain):
@@ -161,7 +161,7 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=filenames)
 
         # Verify
-        assert result == {}
+        assert not result
         mock_supabase_chain.execute.assert_called_once()
 
     def test_get_coverages_single_file(self, mock_supabase_chain, sample_coverage_data):
@@ -328,7 +328,7 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=filenames)
 
         # Verify - should return empty dict due to handle_exceptions decorator
-        assert result == {}
+        assert not result
 
     def test_get_coverages_supabase_table_exception(self, mock_supabase):
         """Test that supabase.table exceptions are handled gracefully."""
@@ -342,7 +342,7 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=filenames)
 
         # Verify - should return empty dict due to handle_exceptions decorator
-        assert result == {}
+        assert not result
 
     @pytest.mark.parametrize(
         "repo_id,filenames",
@@ -366,7 +366,7 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=filenames)
 
         # Verify
-        assert result == {}
+        assert not result
         mock_supabase_chain.eq.assert_called_once_with("repo_id", repo_id)
         mock_supabase_chain.in_.assert_called_once_with("full_path", filenames)
 
@@ -441,7 +441,7 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=large_filenames)
 
         # Verify
-        assert result == {}
+        assert not result
         mock_supabase_chain.in_.assert_called_once_with("full_path", large_filenames)
 
     def test_get_coverages_duplicate_filenames(
