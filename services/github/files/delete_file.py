@@ -19,7 +19,7 @@ def delete_file(
         return f"Error: File {file_path} not found or is a directory"
 
     sha = file_info.get("sha")
-    if not sha:
+    if not sha or not sha.strip():
         return f"Error: Unable to get SHA for file {file_path}"
 
     # Delete the file using the SHA
