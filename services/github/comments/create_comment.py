@@ -25,3 +25,5 @@ def create_comment(body: str, base_args: BaseArgs):
 
     if input_from == "jira":
         return None
+
+    return None
