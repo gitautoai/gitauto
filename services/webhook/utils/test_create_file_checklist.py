@@ -72,7 +72,7 @@ class TestCreateFileChecklist:
         result = create_file_checklist(file_changes, coverage_data)
 
         # Assert
-        assert result == []
+        assert not result
         mock_is_excluded_from_testing.assert_not_called()
 
     def test_single_file_no_coverage_data(self, mock_is_excluded_from_testing):
