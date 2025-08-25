@@ -120,9 +120,7 @@ class TestGetIssueBodyForPrMerged:
         expected = "\n".join(expected_lines)
         assert result == expected
 
-    def test_get_issue_body_for_pr_merged_files_with_special_characters(
-        self, _
-    ):
+    def test_get_issue_body_for_pr_merged_files_with_special_characters(self, _):
         """Test generating issue body with files containing special characters."""
         pr_number = 101
         file_list = [
@@ -173,9 +171,7 @@ class TestGetIssueBodyForPrMerged:
         result = get_issue_body_for_pr_merged(pr_number, file_list)
         assert isinstance(result, str)
 
-    def test_get_issue_body_for_pr_merged_structure_consistency(
-        self, _
-    ):
+    def test_get_issue_body_for_pr_merged_structure_consistency(self, _):
         """Test that the body structure is consistent across different inputs."""
         test_cases = [
             (1, ["file1.py"]),

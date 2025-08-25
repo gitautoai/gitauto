@@ -46,7 +46,7 @@ def mock_workflow_runs_response():
                 "workflow_url": "https://api.github.com/repos/owner/repo/actions/workflows/123",
                 "head_commit": {"id": "abc123def456", "message": "Test commit"},
                 "repository": {"id": 123, "name": "repo"},
-                "head_repository": {"id": 123, "name": "repo"}
+                "head_repository": {"id": 123, "name": "repo"},
             }
         ]
     }
@@ -67,7 +67,9 @@ def mock_headers():
     return {"Authorization": f"Bearer {TOKEN}"}
 
 
-def test_get_workflow_runs_success_with_commit_sha(mock_successful_response, mock_headers, mock_workflow_runs_response):
+def test_get_workflow_runs_success_with_commit_sha(
+    mock_successful_response, mock_headers, mock_workflow_runs_response
+):
     """Test successful retrieval of workflow runs with commit_sha."""
     # Arrange
     commit_sha = "abc123def456"
@@ -97,7 +99,9 @@ def test_get_workflow_runs_success_with_commit_sha(mock_successful_response, moc
     assert result == expected_workflow_runs
 
 
-def test_get_workflow_runs_success_with_branch(mock_successful_response, mock_headers, mock_workflow_runs_response):
+def test_get_workflow_runs_success_with_branch(
+    mock_successful_response, mock_headers, mock_workflow_runs_response
+):
     """Test successful retrieval of workflow runs with branch."""
     # Arrange
     branch = "feature-branch"
@@ -127,7 +131,9 @@ def test_get_workflow_runs_success_with_branch(mock_successful_response, mock_he
     assert result == expected_workflow_runs
 
 
-def test_get_workflow_runs_both_commit_sha_and_branch_prefers_commit_sha(mock_successful_response, mock_headers):
+def test_get_workflow_runs_both_commit_sha_and_branch_prefers_commit_sha(
+    mock_successful_response, mock_headers
+):
     """Test that commit_sha takes precedence when both commit_sha and branch are provided."""
     # Arrange
     commit_sha = "abc123def456"
@@ -335,7 +341,9 @@ def test_get_workflow_runs_missing_workflow_runs_key():
     branch = "main"
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_response.json.return_value = {"other_field": "value"}  # Missing 'workflow_runs' key
+    mock_response.json.return_value = {
+        "other_field": "value"
+    }  # Missing 'workflow_runs' key
 
     # Act
     with patch(

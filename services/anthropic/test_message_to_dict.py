@@ -3,6 +3,7 @@ from services.anthropic.message_to_dict import message_to_dict
 
 def create_mock_message(**kwargs):
     from types import SimpleNamespace
+
     return SimpleNamespace(**kwargs)
 
 

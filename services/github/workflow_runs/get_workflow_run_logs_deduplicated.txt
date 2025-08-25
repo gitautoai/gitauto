@@ -1,0 +1,279 @@
+```GitHub Check Run Log: build/6_Run pytest.txt
+##[group]Run python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
+[36;1mpython -m pytest -r fE -x --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info[0m
+shell: /usr/bin/bash -e {0}
+env:
+  pythonLocation: /opt/hostedtoolcache/Python/3.12.11/x64
+  PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.11/x64/lib/pkgconfig
+  Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.11/x64
+  Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.11/x64
+  Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.11/x64
+  LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.11/x64/lib
+  PYTHONPATH: /home/runner/work/gitauto/gitauto
+  GH_APP_ID: ***
+  GH_APP_NAME: ***
+  GH_APP_USER_ID: ***
+  GH_APP_USER_NAME: ***
+  GH_PRIVATE_KEY: ***
+  GH_WEBHOOK_SECRET: ***
+  ANTHROPIC_API_KEY: ***
+  OPENAI_API_KEY: ***
+  OPENAI_ORG_ID: ***
+
+  RESEND_API_KEY: ***
+  SENTRY_DSN: ***
+  SUPABASE_SERVICE_ROLE_KEY: ***
+  SUPABASE_URL: ***
+  STRIPE_API_KEY: ***
+  STRIPE_FREE_TIER_PRICE_ID: ***
+  STRIPE_PRODUCT_ID_FREE: ***
+  STRIPE_PRODUCT_ID_STANDARD: ***
+  ENV: ***
+  PRODUCT_ID: ***
+##[endgroup]
+/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:217: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.3.3, pluggy-1.5.0
+rootdir: /home/runner/work/gitauto/gitauto
+plugins: cov-6.0.0, anyio-4.4.0, asyncio-0.26.0, Faker-24.14.1
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 2276 items
+
+services/anthropic/test_client.py ..................                     [  0%]
+services/anthropic/test_client_integration.py ..                         [  0%]
+services/anthropic/test_exceptions.py ................                   [  1%]
+services/anthropic/test_message_to_dict.py ........                      [  1%]
+services/anthropic/test_trim_messages.py .........                       [  2%]
+services/aws/test_delete_scheduler.py ....................               [  3%]
+services/aws/test_get_schedulers.py ................                     [  3%]
+services/circleci/test_get_build_logs.py ....                            [  4%]
+services/circleci/test_get_workflow_jobs.py ...                          [  4%]
+services/coverages/test_create_coverage_report.py ...........            [  4%]
+services/coverages/test_create_empty_stats.py .........                  [  5%]
+services/git/test_clone_repo.py ...                                      [  5%]
+services/github/artifacts/test_download_artifact.py ..................   [  6%]
+services/github/artifacts/test_get_workflow_artifacts.py .............   [  6%]
+services/github/branches/test_check_branch_exists.py ................... [  7%]
+..............                                                           [  8%]
+services/github/branches/test_create_remote_branch.py .................. [  8%]
+....                                                                     [  9%]
+services/github/branches/test_get_default_branch.py .................... [  9%]
+..                                                                       [  9%]
+services/github/collaborators/test_check_user_is_collaborator.py ....... [ 10%]
+....                                                                     [ 10%]
+services/github/comments/test_create_comment.py .....                    [ 10%]
+services/github/comments/test_delete_comment.py .............            [ 11%]
+services/github/comments/test_delete_comments_by_identifiers.py ........ [ 11%]
+.............                                                            [ 12%]
+services/github/comments/test_filter_comments_by_identifiers.py ........ [ 12%]
+...                                                                      [ 12%]
+services/github/comments/test_get_all_comments.py ...................... [ 13%]
+....                                                                     [ 13%]
+services/github/comments/test_get_comments.py ....                       [ 13%]
+services/github/comments/test_has_comment_with_text.py ............      [ 14%]
+services/github/comments/test_reply_to_comment.py ...................... [ 15%]
+                                                                         [ 15%]
+services/github/comments/test_update_comment.py ..........               [ 15%]
+services/github/commits/test_create_commit.py .....................      [ 16%]
+services/github/commits/test_create_empty_commit.py ...................  [ 17%]
+services/github/commits/test_get_commit.py ....................          [ 18%]
+services/github/commits/test_get_commit_diff.py ............             [ 19%]
+services/github/installations/test_get_installation_permissions.py ..... [ 19%]
+...                                                                      [ 19%]
+services/github/issues/test_create_issue.py .........                    [ 19%]
+services/github/issues/test_get_issue_body.py ........................   [ 20%]
+services/github/issues/test_get_parent_issue.py ...................      [ 21%]
+services/github/issues/test_is_issue_open.py ..................          [ 22%]
+services/github/markdown/test_render_text.py ........................... [ 23%]
+..........                                                               [ 24%]
+services/github/pulls/test_create_pull_request.py ..........             [ 24%]
+services/github/pulls/test_find_pull_request_by_branch.py .............. [ 25%]
+........                                                                 [ 25%]
+services/github/pulls/test_get_pull_request.py ..........                [ 25%]
+services/github/pulls/test_is_pull_request_open.py .........             [ 26%]
+services/github/pulls/test_update_pull_request_body.py ................. [ 27%]
+......                                                                   [ 27%]
+services/github/reactions/test_add_reaction_to_issue.py ssssssss         [ 27%]
+services/github/refs/test_get_reference.py .....................         [ 28%]
+services/github/refs/test_update_reference.py .......................... [ 29%]
+..........................                                               [ 30%]
+services/github/repositories/test_get_repository_languages.py .......... [ 31%]
+....                                                                     [ 31%]
+services/github/repositories/test_get_repository_stats.py .............. [ 32%]
+.............                                                            [ 32%]
+services/github/repositories/test_is_repo_forked.py ......               [ 32%]
+services/github/repositories/test_is_repo_forked_integration.py ....     [ 33%]
+services/github/repositories/test_turn_on_issue.py ..........            [ 33%]
+services/github/test_graphql_client.py ..                                [ 33%]
+services/github/trees/test_create_tree.py .........F
+
+=================================== FAILURES ===================================
+______________________ test_create_tree_rate_limit_error _______________________
+
+args = ({'base_branch': 'main', 'clone_url': 'https://github.com/gitautoai/gitauto.git', 'github_urls': [], 'input_from': 'gi..._file.py', 'type': 'blob'}, {'content': '# Test README', 'mode': '100644', 'path': 'another_file.md', 'type': 'blob'}])
+kwargs = {}
+truncated_args = [{'base_branch': 'main', 'clone_url': 'https://github.com/gitautoai/g...', 'github_urls': [], 'input_from': 'github', ..._file.py', 'type': 'blob'}, {'content': '# Test README', 'mode': '100644', 'path': 'another_file.md', 'type': 'blob'}]]
+truncated_kwargs = {}, status_code = 403, reason = 'Forbidden'
+text = 'API rate limit exceeded', limit = 5000
+
+    @wraps(wrapped=func)
+    def wrapper(*args: Tuple[Any, ...], **kwargs: Any):
+        # Create truncated args and kwargs at the beginning
+        truncated_args = [truncate_value(arg) for arg in args]
+        truncated_kwargs = {
+            key: truncate_value(value) for key, value in kwargs.items()
+        }
+    
+        try:
+>           return func(*args, **kwargs)
+
+utils/error/handle_exceptions.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/github/trees/create_tree.py:24: in create_tree
+    response.raise_for_status()
+/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/unittest/mock.py:1139: in __call__
+    return self._mock_call(*args, **kwargs)
+/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/unittest/mock.py:1143: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/unittest/mock.py:1198: in _execute_mock_call
+    raise effect
+utils/error/handle_exceptions.py:36: in wrapper
+    return func(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Mock name='post().raise_for_status' id='140461186535488'>, args = ()
+kwargs = {}, effect = HTTPError()
+
+    def _execute_mock_call(self, /, *args, **kwargs):
+        # separate from _increment_mock_call so that awaited functions are
+        # executed separately from their call, also AsyncMock overrides this method
+    
+        effect = self.side_effect
+        if effect is not None:
+            if _is_exception(effect):
+>               raise effect
+E               requests.exceptions.HTTPError
+
+/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/unittest/mock.py:1198: HTTPError
+
+During handling of the above exception, another exception occurred:
+
+base_args = {'base_branch': 'main', 'clone_url': 'https://github.com/gitautoai/gitauto.git', 'github_urls': [], 'input_from': 'github', ...}
+tree_items = [{'content': "print('Hello, World!')", 'mode': '100644', 'path': 'test_file.py', 'type': 'blob'}, {'content': '# Test README', 'mode': '100644', 'path': 'another_file.md', 'type': 'blob'}]
+mock_headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': '***', 'User-Agent': 'test-app', 'X-GitHub-Api-Version': '2022-11-28'}
+
+    def test_create_tree_rate_limit_error(base_args, tree_items, mock_headers):
+        base_tree_sha = "base_tree_sha_123"
+    
+        mock_response = Mock()
+        mock_response.status_code = 403
+        mock_response.reason = "Forbidden"
+        mock_response.text = "API rate limit exceeded"
+        mock_response.headers = {
+            "X-RateLimit-Limit": "5000",
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Used": "5000",
+            "X-RateLimit-Reset": "1234567890"
+        }
+        http_error = requests.exceptions.HTTPError()
+        http_error.response = mock_response
+        mock_response.raise_for_status.side_effect = http_error
+    
+        with patch("services.github.trees.create_tree.requests.post") as mock_post, patch(
+            "services.github.trees.create_tree.create_headers"
+        ) as mock_create_headers, patch("time.time") as mock_time, patch("time.sleep") as mock_sleep:
+    
+            mock_post.return_value = mock_response
+            mock_create_headers.return_value = mock_headers
+            mock_time.return_value = 1234567880  # 10 seconds before reset
+    
+>           result = create_tree(base_args, base_tree_sha, tree_items)
+
+services/github/trees/test_create_tree.py:323: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+utils/error/handle_exceptions.py:64: in wrapper
+    return wrapper(*args, **kwargs)
+utils/error/handle_exceptions.py:64: in wrapper
+    return wrapper(*args, **kwargs)
+E   RecursionError: maximum recursion depth exceeded
+!!! Recursion detected (same locals & position)
+----------------------------- Captured stdout call -----------------------------
+reason: Forbidden, text: API rate limit exceeded, status_code: 403
+err.response.headers: {'X-RateLimit-Limit': '5000', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Used': '5000', 'X-RateLimit-Reset': '1234567890'}
+------------------------------ Captured log call -------------------------------
+WARNING  root:handle_exceptions.py:62 create_tree encountered a GitHubPrimaryRateLimitError: . Retrying after 10 seconds. Limit: 5000, Remaining: 0, Used: 5000. Reason: Forbidden. Text: API rate limit exceeded
+
+
+=============================== warnings summary ===============================
+services/github/reactions/test_add_reaction_to_issue.py::test_add_reaction_to_issue_success
+services/github/reactions/test_add_reaction_to_issue.py::test_add_reaction_to_issue_different_reactions
+services/github/reactions/test_add_reaction_to_issue.py::test_add_reaction_to_issue_different_repositories
+services/github/reactions/test_add_reaction_to_issue.py::test_add_reaction_to_issue_http_error_handled
+services/github/reactions/test_add_reaction_to_issue.py::test_add_reaction_to_issue_request_exception_handled
+services/github/reactions/test_add_reaction_to_issue.py::test_add_reaction_to_issue_json_decode_error_handled
+services/github/reactions/test_add_reaction_to_issue.py::test_add_reaction_to_issue_edge_case_values
+services/github/reactions/test_add_reaction_to_issue.py::test_add_reaction_to_issue_response_json_called
+  /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/_pytest/python.py:148: PytestUnhandledCoroutineWarning: async def functions are not natively supported and have been skipped.
+  You need to install a suitable plugin for your async framework, for example:
+    - anyio
+    - pytest-asyncio
+    - pytest-tornasync
+    - pytest-trio
+    - pytest-twisted
+    warnings.warn(PytestUnhandledCoroutineWarning(msg.format(nodeid)))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform linux, python 3.12.11-final-0 ----------
+Coverage LCOV written to file coverage/lcov.info
+
+=========================== short test summary info ============================
+FAILED services/github/trees/test_create_tree.py::test_create_tree_rate_limit_error - RecursionError: maximum recursion depth exceeded
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+======= 1 failed, 768 passed, 8 skipped, 8 warnings in 138.76s (0:02:18) =======
+##[error]Process completed with exit code 1.
+##[group]Run actions/upload-artifact@v4
+with:
+  name: coverage-report
+  path: coverage/lcov.info
+  if-no-files-found: warn
+  compression-level: 6
+  overwrite: false
+  include-hidden-files: false
+env:
+  pythonLocation: /opt/hostedtoolcache/Python/3.12.11/x64
+  PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.11/x64/lib/pkgconfig
+  Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.11/x64
+  Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.11/x64
+  Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.11/x64
+  LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.11/x64/lib
+  PYTHONPATH: /home/runner/work/gitauto/gitauto
+##[endgroup]
+With the provided path, there will be 1 file uploaded
+Artifact name is valid!
+Root directory input is valid!
+Beginning upload of artifact content to blob storage
+Uploaded bytes 88726
+Finished uploading artifact content to blob storage!
+SHA256 digest of uploaded artifact zip is 23e2fb7961a0f9e22b8352feba0688007fabbcbf69a8fad4cb91f64e8a38afe3
+Finalizing artifact upload
+Artifact coverage-report.zip successfully finalized. Artifact ID 3836046657
+Artifact coverage-report has been successfully uploaded! Final size is 88726 bytes. Artifact ID is 3836046657
+Artifact download URL: https://github.com/gitautoai/gitauto/actions/runs/17181772238/artifacts/3836046657
+Post job cleanup.
+[command]/usr/bin/git version
+git version 2.51.0
+Temporarily overriding HOME='/home/runner/work/_temp/645f6149-ccdf-45c8-a81b-710c860579c0' before making global git config changes
+Adding repository directory to the temporary git global config as a safe directory
+[command]/usr/bin/git config --global --add safe.directory /home/runner/work/gitauto/gitauto
+[command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+[command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+[command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+http.https://github.com/.extraheader
+[command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+[command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Cleaning up orphan processes
+```
