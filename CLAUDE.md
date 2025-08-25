@@ -97,6 +97,18 @@ source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" \
 - Use the exact issue ID in commands (e.g., `--id AGENT-129` or in API URLs)
 - Issue IDs can be found in Sentry dashboard or error notifications
 
+#### Finding Exact Error Location
+
+When analyzing Sentry issues, use grep to find the specific error location instead of reading truncated output:
+
+```bash
+# INCORRECT - Shows truncated middleware frames only
+source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/ISSUE_ID/events/latest/" | python -m json.tool
+
+# CORRECT - Shows actual application code where error occurs
+source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/ISSUE_ID/events/latest/" | python -m json.tool | grep -A 10 -B 5 "error_keyword"
+```
+
 #### Required Environment Variables
 
 The following variables must be set in .env file:
