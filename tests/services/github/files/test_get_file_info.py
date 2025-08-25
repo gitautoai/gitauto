@@ -175,6 +175,9 @@ class TestGetFileInfo:
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_response = MagicMock()
         mock_response.status_code = 403
+        mock_response.reason = "Forbidden"
+        mock_response.text = "Access denied"
+        mock_response.headers = {}
         http_error = requests.exceptions.HTTPError("Forbidden")
         http_error.response = mock_response
         mock_response.raise_for_status.side_effect = http_error
