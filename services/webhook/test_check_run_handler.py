@@ -19,7 +19,7 @@ def mock_check_run_payload():
             "id": 12345,
             "name": "test-check",
             "head_sha": "abc123",
-            "details_url": "https://github.com/actions/runs/123",
+            "details_url": "https://github.com/hiroshinishio/tetris/actions/runs/11393174689/job/31710113401",
             "status": "completed",
             "conclusion": "failure",
             "check_suite": {

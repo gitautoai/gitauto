@@ -71,6 +71,8 @@ brew install getsentry/tools/sentry-cli
 
 #### Accessing Sentry Issues
 
+Sentry issues are identified by IDs like `AGENT-129`. Use these commands to investigate specific issues:
+
 ```bash
 # List recent issues (requires SENTRY_PERSONAL_TOKEN in .env)
 source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --max-rows 10
@@ -78,15 +80,33 @@ source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --or
 # List issues with specific status
 source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --status unresolved --max-rows 20
 
-# Get details for a specific issue by ID (Note: CLI doesn't have a 'show' command, use --id flag with list)
-source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --id ISSUE_ID
+# Get details for a specific issue by ID (replace AGENT-129 with actual issue ID)
+source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --id AGENT-129
 
 # Search issues with query
 source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --query "is:unresolved level:error" --max-rows 10
 
-# Get full event details for an issue (includes error context, stack traces, etc.)
+# Get full event details for a specific issue (replace AGENT-129 with actual issue ID)
 source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" \
-  "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/ISSUE_ID/events/latest/" | python -m json.tool
+  "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/AGENT-129/events/latest/" | python -m json.tool
+```
+
+#### Issue ID Format
+
+- Issues are identified with IDs like `AGENT-129`
+- Use the exact issue ID in commands (e.g., `--id AGENT-129` or in API URLs)
+- Issue IDs can be found in Sentry dashboard or error notifications
+
+#### Finding Exact Error Location
+
+When analyzing Sentry issues, use grep to find the specific error location instead of reading truncated output:
+
+```bash
+# INCORRECT - Shows truncated middleware frames only
+source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/ISSUE_ID/events/latest/" | python -m json.tool
+
+# CORRECT - Shows actual application code where error occurs
+source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/ISSUE_ID/events/latest/" | python -m json.tool | grep -A 10 -B 5 "error_keyword"
 ```
 
 #### Required Environment Variables
