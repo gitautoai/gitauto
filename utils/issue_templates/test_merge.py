@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from utils.issue_templates.merge import (
     get_issue_title_for_pr_merged,

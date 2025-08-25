@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from services.supabase.coverages.update_issue_url import update_issue_url
 

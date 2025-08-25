@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch, call
+
+import pytest
 from utils.prompts.get_mode_prompt import get_mode_prompt
 
 

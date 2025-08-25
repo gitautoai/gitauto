@@ -1,7 +1,8 @@
+import json
 from unittest.mock import patch, MagicMock
+
 import pytest
 import requests
-import json
 
 from config import (
     TEST_OWNER_TYPE,

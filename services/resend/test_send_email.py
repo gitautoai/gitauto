@@ -23,7 +23,7 @@ def mock_datetime_now():
     fixed_time = datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc)
     with patch("services.resend.send_email.datetime") as mock_dt:
         mock_dt.now.return_value = fixed_time
-        mock_dt.side_effect = lambda *args, **kwargs: datetime(*args, **kwargs)
+        mock_dt.side_effect = datetime
         yield mock_dt
 
 

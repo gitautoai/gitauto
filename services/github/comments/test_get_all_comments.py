@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch, MagicMock
+
+import pytest
 import requests
 
 from services.github.comments.get_all_comments import get_all_comments

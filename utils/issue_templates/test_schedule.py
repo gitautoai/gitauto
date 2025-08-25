@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from utils.issue_templates.schedule import get_issue_title, get_issue_body
 

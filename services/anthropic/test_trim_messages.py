@@ -177,9 +177,9 @@ def test_real_message_json_format_trimming(mock_client):
         num_msgs = len(messages)
         if num_msgs == 4:
             return Mock(input_tokens=200000)  # Over limit
-        elif num_msgs == 3:
+        if num_msgs == 3:
             return Mock(input_tokens=150000)  # Still over limit
-        elif num_msgs == 2:
+        if num_msgs == 2:
             return Mock(input_tokens=100000)  # Under limit
         else:
             return Mock(input_tokens=50000)  # Well under limit

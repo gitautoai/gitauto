@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from config import GITHUB_APP_USER_NAME
 from services.github.comments.has_comment_with_text import has_comment_with_text
