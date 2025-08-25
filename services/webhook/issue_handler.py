@@ -2,6 +2,7 @@
 from asyncio import create_task
 from datetime import datetime
 from json import dumps
+import logging
 import time
 from typing import Literal
 
@@ -231,7 +232,20 @@ async def create_pr_from_issue(
         issue_comment_rendered = render_text(base_args=base_args, text=issue_comment)
         image_urls.extend(extract_image_urls(text=issue_comment_rendered))
     for url in image_urls:
+        # Check if URL has a valid image extension (OpenAI only supports: png, jpeg, gif, webp)
+        image_extensions = (".png", ".jpg", ".jpeg", ".gif", ".webp")
+        if not any(url["url"].lower().endswith(ext) for ext in image_extensions):
+            logging.warning(
+                "Skipping non-image URL or unsupported format: %s", url["url"]
+            )
+            continue
+
         base64_image = get_base64(url=url["url"])
+
+        if not base64_image:
+            logging.warning("Failed to fetch image from URL: %s", url["url"])
+            continue
+
         context = f"## Issue:\n{issue_title}\n\n## Issue Body:\n{issue_body}\n\n## Issue Comments:\n{'\n'.join(issue_comments)}"
         description = describe_image(base64_image=base64_image, context=context)
         description = f"## {url['alt']}\n\n{description}"
