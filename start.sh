@@ -27,9 +27,73 @@ fi
 
 echo -e "${GREEN}Virtual environment ready${NC}"
 
-# Generate Supabase types (hide INFO logs only)
-echo -e "Generating Supabase types..."
-sb-pydantic gen --type pydantic --db-url "postgresql://postgres.dkrxtcbaqzrodvsagwwn:${SUPABASE_DB_PASSWORD}@aws-0-us-west-1.pooler.supabase.com:6543/postgres" --dir schemas/supabase 2>&1 | grep -v "^INFO:"
+# Generate TypedDict schemas directly from PostgreSQL
+echo -e "Generating TypedDict schemas..."
+PGPASSWORD="$SUPABASE_DB_PASSWORD" psql -h "aws-0-us-west-1.pooler.supabase.com" -U postgres.dkrxtcbaqzrodvsagwwn -d postgres -p 6543 -t -c "
+SELECT 
+    table_name,
+    column_name,
+    data_type,
+    is_nullable
+FROM information_schema.columns 
+WHERE table_schema = 'public' AND table_name NOT LIKE 'pg_%'
+ORDER BY table_name, ordinal_position;
+" | python3 -c "
+import sys
+import datetime
+from collections import defaultdict
+
+# Read schema data from stdin
+tables = defaultdict(list)
+for line in sys.stdin:
+    if line.strip():
+        parts = [p.strip() for p in line.split('|')]
+        if len(parts) == 4:
+            table_name, column_name, data_type, is_nullable = parts
+            
+            # Convert PostgreSQL types to Python types
+            type_mapping = {
+                'integer': 'int',
+                'bigint': 'int',
+                'text': 'str', 
+                'character varying': 'str',
+                'boolean': 'bool',
+                'timestamp with time zone': 'datetime.datetime',
+                'timestamp without time zone': 'datetime.datetime',
+                'time without time zone': 'datetime.time',
+                'uuid': 'str',
+                'json': 'dict[str, Any]',
+                'jsonb': 'dict[str, Any]',
+                'real': 'float',
+                'double precision': 'float',
+                'numeric': 'float'
+            }
+            
+            python_type = type_mapping.get(data_type, 'Any')
+            if is_nullable == 'YES':
+                python_type = f'{python_type} | None'
+                
+            tables[table_name].append(f'    {column_name}: {python_type}')
+
+# Generate TypedDict file
+with open('schemas/supabase/types.py', 'w') as f:
+    f.write('import datetime\\n')
+    f.write('from typing import Any\\n')
+    f.write('from typing_extensions import TypedDict\\n')
+    f.write('\\n\\n')
+    
+    for table_name in sorted(tables.keys()):
+        class_name = ''.join(word.capitalize() for word in table_name.split('_'))
+        f.write(f'class {class_name}(TypedDict):\\n')
+        
+        if tables[table_name]:
+            f.write('\\n'.join(tables[table_name]) + '\\n')
+        else:
+            f.write('    pass\\n')
+        f.write('\\n')
+
+print(f'Generated {len(tables)} TypedDict classes directly from PostgreSQL')
+"
 
 # Function to cleanup background processes
 cleanup() {
