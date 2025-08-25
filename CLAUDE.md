@@ -294,13 +294,14 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 1. Activate virtual environment: `source venv/bin/activate`
 2. Run black formatting: `black .`
 3. Run ruff linting: `ruff check . --fix`
-4. Run pylint: `find . -name "*.py" -not -path "./venv/*" | xargs pylint --fail-under=10.0`
-5. Run pyright type checking: `pyright`
-6. Run pytest: `python -m pytest -r fE -x`
-7. Check current branch is not main: `git branch --show-current`
-8. Merge latest main: `git fetch origin main && git merge origin/main`
-9. Add changes: `git add .`
-10. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
-11. Push to remote: `git push`
+4. Get list of modified files: `git diff --name-only HEAD`
+5. Run pylint on modified Python files only: `git diff --name-only HEAD | grep "\.py$" | xargs pylint --fail-under=10.0` (if no modified Python files, skip)
+6. Run pyright on modified Python files only: `git diff --name-only HEAD | grep "\.py$" | xargs pyright` (if no modified Python files, skip)
+7. Run pytest: `python -m pytest -r fE -x`
+8. Check current branch is not main: `git branch --show-current`
+9. Merge latest main: `git fetch origin main && git merge origin/main`
+10. Add changes: `git add .`
+11. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
+12. Push to remote: `git push`
 
 IMPORTANT: When pylint and pyright show many alerts/errors, focus on fixing issues related to your code changes unless explicitly told to fix all issues. Don't ignore everything, but prioritize errors in files you modified.
