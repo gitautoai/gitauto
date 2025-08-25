@@ -834,3 +834,292 @@ class TestHandleInstallationReposAdded:
             user_id=67890,
             user_name="test-sender",
         )
+
+    async def test_handle_installation_repos_added_with_negative_installation_id(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling with negative installation ID."""
+        # Setup
+        mock_installation_payload["installation"]["id"] = -1
+        mock_is_installation_valid.return_value = False
+
+        # Execute
+        result = await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify
+        assert result is None
+        mock_is_installation_valid.assert_called_once_with(installation_id=-1)
+        mock_get_installation_access_token.assert_not_called()
+        mock_process_repositories.assert_not_called()
+
+    async def test_handle_installation_repos_added_with_repositories_added_none(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling when repositories_added is None."""
+        # Setup
+        mock_installation_payload["repositories_added"] = None
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+
+        # Execute
+        await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_get_installation_access_token.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_process_repositories.assert_called_once_with(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=None,
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-sender",
+        )
+
+    async def test_handle_installation_repos_added_with_very_long_names(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling with very long owner and sender names."""
+        # Setup
+        long_name = "a" * 1000  # Very long name
+        mock_installation_payload["installation"]["account"]["login"] = long_name
+        mock_installation_payload["sender"]["login"] = long_name
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+
+        # Execute
+        await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_get_installation_access_token.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_process_repositories.assert_called_once_with(
+            owner_id=12345,
+            owner_name=long_name,
+            repositories=[
+                {"id": 111, "name": "test-repo-1"},
+                {"id": 222, "name": "test-repo-2"},
+            ],
+            token="ghs_test_token",
+            user_id=67890,
+            user_name=long_name,
+        )
+
+    async def test_handle_installation_repos_added_with_special_characters_in_names(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling with special characters in owner and sender names."""
+        # Setup
+        special_owner = "test-owner@#$%^&*()_+-=[]{}|;':\",./<>?"
+        special_sender = "test-sender!@#$%^&*()_+-=[]{}|;':\",./<>?"
+        mock_installation_payload["installation"]["account"]["login"] = special_owner
+        mock_installation_payload["sender"]["login"] = special_sender
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+
+        # Execute
+        await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_get_installation_access_token.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_process_repositories.assert_called_once_with(
+            owner_id=12345,
+            owner_name=special_owner,
+            repositories=[
+                {"id": 111, "name": "test-repo-1"},
+                {"id": 222, "name": "test-repo-2"},
+            ],
+            token="ghs_test_token",
+            user_id=67890,
+            user_name=special_sender,
+        )
+
+    async def test_handle_installation_repos_added_with_max_int_values(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling with maximum integer values for IDs."""
+        # Setup
+        max_int = 2**63 - 1  # Maximum value for 64-bit signed integer
+        mock_installation_payload["installation"]["id"] = max_int
+        mock_installation_payload["installation"]["account"]["id"] = max_int
+        mock_installation_payload["sender"]["id"] = max_int
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+
+        # Execute
+        await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify
+        mock_is_installation_valid.assert_called_once_with(installation_id=max_int)
+        mock_get_installation_access_token.assert_called_once_with(
+            installation_id=max_int
+        )
+        mock_process_repositories.assert_called_once_with(
+            owner_id=max_int,
+            owner_name="test-owner",
+            repositories=[
+                {"id": 111, "name": "test-repo-1"},
+                {"id": 222, "name": "test-repo-2"},
+            ],
+            token="ghs_test_token",
+            user_id=max_int,
+            user_name="test-sender",
+        )
+
+    async def test_handle_installation_repos_added_with_float_installation_id(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling when installation ID is provided as float."""
+        # Setup
+        mock_installation_payload["installation"]["id"] = 12345.0
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+
+        # Execute
+        await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify
+        mock_is_installation_valid.assert_called_once_with(installation_id=12345.0)
+        mock_get_installation_access_token.assert_called_once_with(
+            installation_id=12345.0
+        )
+        mock_process_repositories.assert_called_once_with(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=[
+                {"id": 111, "name": "test-repo-1"},
+                {"id": 222, "name": "test-repo-2"},
+            ],
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-sender",
+        )
+
+    async def test_handle_installation_repos_added_with_whitespace_only_names(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling with whitespace-only names."""
+        # Setup
+        mock_installation_payload["installation"]["account"]["login"] = "   "
+        mock_installation_payload["sender"]["login"] = "\t\n\r"
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+
+        # Execute
+        await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_get_installation_access_token.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_process_repositories.assert_called_once_with(
+            owner_id=12345,
+            owner_name="   ",
+            repositories=[
+                {"id": 111, "name": "test-repo-1"},
+                {"id": 222, "name": "test-repo-2"},
+            ],
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="\t\n\r",
+        )
+
+    async def test_handle_installation_repos_added_with_boolean_installation_valid_response(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling when is_installation_valid returns non-boolean truthy value."""
+        # Setup
+        mock_is_installation_valid.return_value = "valid"  # Truthy but not boolean
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+
+        # Execute
+        await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify - should still proceed since "valid" is truthy
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_get_installation_access_token.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_process_repositories.assert_called_once_with(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=[
+                {"id": 111, "name": "test-repo-1"},
+                {"id": 222, "name": "test-repo-2"},
+            ],
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-sender",
+        )
+
+    async def test_handle_installation_repos_added_with_falsy_installation_valid_response(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling when is_installation_valid returns falsy non-boolean value."""
+        # Setup
+        mock_is_installation_valid.return_value = 0  # Falsy but not boolean
+
+        # Execute
+        result = await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify - should return early since 0 is falsy
+        assert result is None
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_get_installation_access_token.assert_not_called()
+        mock_process_repositories.assert_not_called()
