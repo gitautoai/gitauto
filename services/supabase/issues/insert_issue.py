@@ -1,4 +1,3 @@
-from schemas.supabase.fastapi.schema_public_latest import IssuesInsert
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -13,14 +12,14 @@ def insert_issue(
     issue_number: int,
     installation_id: int,
 ):
-    issue_data = IssuesInsert(
-        owner_id=owner_id,
-        owner_type=owner_type,
-        owner_name=owner_name,
-        repo_id=repo_id,
-        repo_name=repo_name,
-        issue_number=issue_number,
-        installation_id=installation_id,
-    )
-    issue_data_dict = issue_data.model_dump(exclude_none=True)
-    supabase.table(table_name="issues").insert(json=issue_data_dict).execute()
+    supabase.table(table_name="issues").insert(
+        json={
+            "owner_id": owner_id,
+            "owner_type": owner_type,
+            "owner_name": owner_name,
+            "repo_id": repo_id,
+            "repo_name": repo_name,
+            "issue_number": issue_number,
+            "installation_id": installation_id,
+        }
+    ).execute()

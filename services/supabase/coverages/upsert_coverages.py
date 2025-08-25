@@ -1,5 +1,5 @@
 # Third-party imports
-from schemas.supabase.fastapi.schema_public_latest import Coverages
+from schemas.supabase.types import Coverages
 
 # Local imports
 from services.supabase.client import supabase

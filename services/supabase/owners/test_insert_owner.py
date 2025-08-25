@@ -31,21 +31,6 @@ def valid_owner_data():
 
 
 @pytest.fixture
-def mock_owners_insert():
-    """Fixture to mock OwnersInsert model."""
-    with patch("services.supabase.owners.insert_owner.OwnersInsert") as mock:
-        mock_instance = MagicMock()
-        mock.return_value = mock_instance
-        mock_instance.model_dump.return_value = {
-            "owner_id": 123456789,
-            "owner_type": "Organization",
-            "owner_name": "test-organization",
-            "stripe_customer_id": "cus_test123456789",
-        }
-        yield mock
-
-
-@pytest.fixture
 def sample_test_constants():
     """Fixture providing test constants from config."""
     from config import TEST_OWNER_ID, TEST_OWNER_TYPE, TEST_OWNER_NAME
@@ -64,26 +49,6 @@ def test_insert_owner_successful_insertion(mock_supabase, valid_owner_data):
 
     # Function should return None (no explicit return value)
     assert result is None
-
-
-def test_insert_owner_creates_correct_owners_insert_object(
-    mock_owners_insert, valid_owner_data
-):
-    """Test that OwnersInsert object is created with correct parameters."""
-    insert_owner(**valid_owner_data)
-
-    # Verify OwnersInsert was called with correct parameters
-    mock_owners_insert.assert_called_once_with(
-        owner_id=valid_owner_data["owner_id"],
-        owner_type=valid_owner_data["owner_type"],
-        owner_name=valid_owner_data["owner_name"],
-        stripe_customer_id=valid_owner_data["stripe_customer_id"],
-    )
-
-    # Verify model_dump was called with exclude_none=True
-    mock_owners_insert.return_value.model_dump.assert_called_once_with(
-        exclude_none=True
-    )
 
 
 def test_insert_owner_with_integer_owner_id(mock_supabase):
@@ -184,24 +149,6 @@ def test_insert_owner_supabase_table_called_with_correct_table_name(
     mock_supabase.table.assert_called_once_with(table_name="owners")
 
 
-def test_insert_owner_model_dump_excludes_none_values():
-    """Test that model_dump is called with exclude_none=True."""
-    with patch(
-        "services.supabase.owners.insert_owner.OwnersInsert"
-    ) as mock_owners_insert:
-        mock_instance = MagicMock()
-        mock_owners_insert.return_value = mock_instance
-
-        insert_owner(
-            owner_id=555666777,
-            owner_type="User",
-            owner_name="test-exclude-none",
-            stripe_customer_id="cus_exclude123",
-        )
-
-        mock_instance.model_dump.assert_called_once_with(exclude_none=True)
-
-
 @pytest.mark.parametrize(
     "owner_id,owner_type,owner_name,stripe_customer_id",
     [
@@ -277,30 +224,3 @@ def test_insert_owner_function_signature_compliance():
     assert (
         sig.return_annotation == inspect.Signature.empty
     )  # No explicit return annotation
-
-
-def test_insert_owner_data_passed_to_insert_method():
-    """Test that the correct data is passed to the insert method."""
-    with patch(
-        "services.supabase.owners.insert_owner.supabase"
-    ) as mock_supabase, patch(
-        "services.supabase.owners.insert_owner.OwnersInsert"
-    ) as mock_owners_insert:
-
-        # Setup mock data
-        expected_data = {
-            "owner_id": 999888777,
-            "owner_type": "Organization",
-            "owner_name": "test-data-org",
-            "stripe_customer_id": "cus_data_test",
-        }
-        mock_owners_insert.return_value.model_dump.return_value = expected_data
-
-        # Call function
-        insert_owner(**expected_data)
-
-        # Verify the insert method was called with the correct data
-        mock_supabase.table.return_value.insert.assert_called_once_with(
-            json=expected_data
-        )
-        mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()

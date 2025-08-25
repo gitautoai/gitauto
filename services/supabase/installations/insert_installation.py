@@ -1,4 +1,3 @@
-from schemas.supabase.fastapi.schema_public_latest import InstallationsInsert
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -10,13 +9,11 @@ def insert_installation(
     owner_type: str,
     owner_name: str,
 ):
-    installation_data = InstallationsInsert(
-        installation_id=installation_id,
-        owner_id=owner_id,
-        owner_type=owner_type,
-        owner_name=owner_name,
-    )
-    installation_data_dict = installation_data.model_dump(exclude_none=True)
     supabase.table(table_name="installations").insert(
-        json=installation_data_dict
+        json={
+            "installation_id": installation_id,
+            "owner_id": owner_id,
+            "owner_type": owner_type,
+            "owner_name": owner_name,
+        }
     ).execute()
