@@ -1,11 +1,11 @@
-from schemas.supabase.fastapi.schema_public_latest import CoveragesBaseSchema
+from schemas.supabase.types import Coverages
 from services.github.pulls.get_pull_request_files import FileChange
 from services.webhook.utils.create_test_selection_comment import FileChecklistItem
 from utils.files.is_excluded_from_testing import is_excluded_from_testing
 
 
 def create_file_checklist(
-    file_changes: list[FileChange], coverage_data: dict[str, CoveragesBaseSchema]
+    file_changes: list[FileChange], coverage_data: dict[str, Coverages]
 ) -> list[FileChecklistItem]:
     checklist = []
 

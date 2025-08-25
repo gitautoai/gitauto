@@ -1,6 +1,6 @@
 import datetime
 from typing import Any
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, NotRequired
 
 
 class CircleciTokens(TypedDict):
@@ -11,6 +11,13 @@ class CircleciTokens(TypedDict):
     created_at: datetime.datetime
     updated_at: datetime.datetime
     updated_by: str
+
+
+class CircleciTokensInsert(TypedDict):
+    owner_id: NotRequired[int]
+    token: NotRequired[str]
+    created_by: NotRequired[str]
+    updated_by: NotRequired[str]
 
 
 class Contacts(TypedDict):
@@ -35,6 +42,27 @@ class Contacts(TypedDict):
     additional_info: str | None
     created_at: datetime.datetime | None
     updated_at: datetime.datetime | None
+
+
+class ContactsInsert(TypedDict):
+    user_id: NotRequired[int | None]
+    user_name: NotRequired[str | None]
+    first_name: NotRequired[str]
+    last_name: NotRequired[str]
+    email: NotRequired[str]
+    company_url: NotRequired[str]
+    job_title: NotRequired[str]
+    team_size: NotRequired[str]
+    team_size_other: NotRequired[str | None]
+    job_description: NotRequired[str]
+    current_coverage: NotRequired[str]
+    current_coverage_other: NotRequired[str | None]
+    minimum_coverage: NotRequired[str]
+    minimum_coverage_other: NotRequired[str | None]
+    target_coverage: NotRequired[str]
+    target_coverage_other: NotRequired[str | None]
+    testing_challenges: NotRequired[str | None]
+    additional_info: NotRequired[str | None]
 
 
 class Coverages(TypedDict):
@@ -63,6 +91,29 @@ class Coverages(TypedDict):
     is_excluded_from_testing: bool | None
 
 
+class CoveragesInsert(TypedDict):
+    owner_id: NotRequired[int]
+    repo_id: NotRequired[int]
+    primary_language: NotRequired[str | None]
+    package_name: NotRequired[str | None]
+    level: NotRequired[str]
+    full_path: NotRequired[str]
+    statement_coverage: NotRequired[float | None]
+    function_coverage: NotRequired[float | None]
+    branch_coverage: NotRequired[float | None]
+    path_coverage: NotRequired[float | None]
+    line_coverage: NotRequired[float | None]
+    uncovered_lines: NotRequired[str | None]
+    created_by: NotRequired[str]
+    updated_by: NotRequired[str]
+    github_issue_url: NotRequired[str | None]
+    uncovered_functions: NotRequired[str | None]
+    uncovered_branches: NotRequired[str | None]
+    branch_name: NotRequired[str]
+    file_size: NotRequired[int | None]
+    is_excluded_from_testing: NotRequired[bool | None]
+
+
 class Credits(TypedDict):
     id: int
     owner_id: int
@@ -74,6 +125,15 @@ class Credits(TypedDict):
     created_at: datetime.datetime
 
 
+class CreditsInsert(TypedDict):
+    owner_id: NotRequired[int]
+    amount_usd: NotRequired[int]
+    transaction_type: NotRequired[str]
+    stripe_payment_intent_id: NotRequired[str | None]
+    usage_id: NotRequired[int | None]
+    expires_at: NotRequired[datetime.datetime | None]
+
+
 class Installations(TypedDict):
     created_at: datetime.datetime
     installation_id: int
@@ -83,6 +143,16 @@ class Installations(TypedDict):
     owner_id: int
     created_by: str | None
     uninstalled_by: str | None
+
+
+class InstallationsInsert(TypedDict):
+    installation_id: NotRequired[int]
+    owner_name: NotRequired[str]
+    uninstalled_at: NotRequired[datetime.datetime | None]
+    owner_type: NotRequired[str]
+    owner_id: NotRequired[int]
+    created_by: NotRequired[str | None]
+    uninstalled_by: NotRequired[str | None]
 
 
 class Issues(TypedDict):
@@ -98,6 +168,19 @@ class Issues(TypedDict):
     repo_id: int
     repo_name: str
     issue_number: int
+
+
+class IssuesInsert(TypedDict):
+    run_id: NotRequired[int | None]
+    installation_id: NotRequired[int]
+    merged: NotRequired[bool]
+    created_by: NotRequired[str | None]
+    owner_id: NotRequired[int]
+    owner_type: NotRequired[str]
+    owner_name: NotRequired[str]
+    repo_id: NotRequired[int]
+    repo_name: NotRequired[str]
+    issue_number: NotRequired[int]
 
 
 class JiraGithubLinks(TypedDict):
@@ -116,6 +199,19 @@ class JiraGithubLinks(TypedDict):
     updated_by: int | None
 
 
+class JiraGithubLinksInsert(TypedDict):
+    jira_site_id: NotRequired[str]
+    jira_site_name: NotRequired[str]
+    jira_project_id: NotRequired[int]
+    jira_project_name: NotRequired[str]
+    github_owner_id: NotRequired[int]
+    github_owner_name: NotRequired[str]
+    github_repo_id: NotRequired[int]
+    github_repo_name: NotRequired[str]
+    created_by: NotRequired[int]
+    updated_by: NotRequired[int | None]
+
+
 class OauthTokens(TypedDict):
     id: int
     user_id: int
@@ -128,6 +224,17 @@ class OauthTokens(TypedDict):
     updated_at: datetime.datetime
     created_by: int
     updated_by: int | None
+
+
+class OauthTokensInsert(TypedDict):
+    user_id: NotRequired[int]
+    service_name: NotRequired[str]
+    access_token: NotRequired[str]
+    refresh_token: NotRequired[str | None]
+    scope: NotRequired[str]
+    expires_at: NotRequired[datetime.datetime]
+    created_by: NotRequired[int]
+    updated_by: NotRequired[int | None]
 
 
 class Owners(TypedDict):
@@ -147,6 +254,21 @@ class Owners(TypedDict):
     max_spending_limit_usd: int | None
 
 
+class OwnersInsert(TypedDict):
+    owner_id: NotRequired[int]
+    stripe_customer_id: NotRequired[str]
+    created_by: NotRequired[str | None]
+    owner_name: NotRequired[str]
+    org_rules: NotRequired[str]
+    owner_type: NotRequired[str]
+    updated_by: NotRequired[str | None]
+    credit_balance_usd: NotRequired[int]
+    auto_reload_enabled: NotRequired[bool]
+    auto_reload_threshold_usd: NotRequired[int]
+    auto_reload_target_usd: NotRequired[int]
+    max_spending_limit_usd: NotRequired[int | None]
+
+
 class RepoCoverage(TypedDict):
     id: int
     owner_id: int
@@ -161,6 +283,20 @@ class RepoCoverage(TypedDict):
     branch_coverage: float
     created_at: datetime.datetime
     created_by: str
+
+
+class RepoCoverageInsert(TypedDict):
+    owner_id: NotRequired[int]
+    owner_name: NotRequired[str]
+    repo_id: NotRequired[int]
+    repo_name: NotRequired[str]
+    branch_name: NotRequired[str]
+    primary_language: NotRequired[str | None]
+    line_coverage: NotRequired[float]
+    statement_coverage: NotRequired[float]
+    function_coverage: NotRequired[float]
+    branch_coverage: NotRequired[float]
+    created_by: NotRequired[str]
 
 
 class Repositories(TypedDict):
@@ -200,6 +336,40 @@ class Repositories(TypedDict):
     schedule_interval_minutes: int
 
 
+class RepositoriesInsert(TypedDict):
+    owner_id: NotRequired[int]
+    repo_id: NotRequired[int]
+    repo_name: NotRequired[str]
+    created_by: NotRequired[str]
+    updated_by: NotRequired[str]
+    use_screenshots: NotRequired[bool | None]
+    production_url: NotRequired[str | None]
+    local_port: NotRequired[int | None]
+    startup_commands: NotRequired[Any | None]
+    web_urls: NotRequired[Any | None]
+    file_paths: NotRequired[Any | None]
+    repo_rules: NotRequired[str | None]
+    file_count: NotRequired[int]
+    blank_lines: NotRequired[int]
+    comment_lines: NotRequired[int]
+    code_lines: NotRequired[int]
+    target_branch: NotRequired[str]
+    trigger_on_review_comment: NotRequired[bool]
+    trigger_on_test_failure: NotRequired[bool]
+    trigger_on_commit: NotRequired[bool]
+    trigger_on_merged: NotRequired[bool]
+    trigger_on_schedule: NotRequired[bool]
+    schedule_frequency: NotRequired[str | None]
+    schedule_minute: NotRequired[int | None]
+    schedule_time: NotRequired[Any | None]
+    schedule_day_of_week: NotRequired[str | None]
+    schedule_include_weekends: NotRequired[bool]
+    structured_rules: NotRequired[dict[str, Any] | None]
+    trigger_on_pr_change: NotRequired[bool]
+    schedule_execution_count: NotRequired[int]
+    schedule_interval_minutes: NotRequired[int]
+
+
 class Usage(TypedDict):
     id: int
     created_at: datetime.datetime
@@ -224,6 +394,28 @@ class Usage(TypedDict):
     trigger: str
 
 
+class UsageInsert(TypedDict):
+    is_completed: NotRequired[bool]
+    token_input: NotRequired[int | None]
+    token_output: NotRequired[int | None]
+    user_id: NotRequired[int]
+    installation_id: NotRequired[int]
+    created_by: NotRequired[str | None]
+    total_seconds: NotRequired[int | None]
+    owner_id: NotRequired[int]
+    owner_type: NotRequired[str]
+    owner_name: NotRequired[str]
+    repo_id: NotRequired[int]
+    repo_name: NotRequired[str]
+    issue_number: NotRequired[int]
+    source: NotRequired[str]
+    pr_number: NotRequired[int | None]
+    is_test_passed: NotRequired[bool]
+    retry_workflow_id_hash_pairs: NotRequired[Any | None]
+    is_merged: NotRequired[bool]
+    trigger: NotRequired[str]
+
+
 class UsageWithIssues(TypedDict):
     id: int | None
     created_at: datetime.datetime | None
@@ -244,6 +436,24 @@ class UsageWithIssues(TypedDict):
     merged: bool | None
 
 
+class UsageWithIssuesInsert(TypedDict):
+    is_completed: NotRequired[bool | None]
+    token_input: NotRequired[int | None]
+    token_output: NotRequired[int | None]
+    user_id: NotRequired[int | None]
+    installation_id: NotRequired[int | None]
+    created_by: NotRequired[str | None]
+    total_seconds: NotRequired[int | None]
+    owner_id: NotRequired[int | None]
+    owner_type: NotRequired[str | None]
+    owner_name: NotRequired[str | None]
+    repo_id: NotRequired[int | None]
+    repo_name: NotRequired[str | None]
+    issue_number: NotRequired[int | None]
+    source: NotRequired[str | None]
+    merged: NotRequired[bool | None]
+
+
 class Users(TypedDict):
     id: int
     user_name: str
@@ -252,3 +462,11 @@ class Users(TypedDict):
     created_at: datetime.datetime
     created_by: str | None
     user_rules: str
+
+
+class UsersInsert(TypedDict):
+    user_name: NotRequired[str]
+    user_id: NotRequired[int]
+    email: NotRequired[str | None]
+    created_by: NotRequired[str | None]
+    user_rules: NotRequired[str]

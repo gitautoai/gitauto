@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import cast
-from schemas.supabase.fastapi.schema_public_latest import Coverages
+from schemas.supabase.types import Coverages
 from utils.files.is_excluded_from_testing import is_excluded_from_testing
 
 

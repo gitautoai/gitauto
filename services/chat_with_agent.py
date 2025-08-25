@@ -2,7 +2,7 @@
 from typing import Any, Literal
 
 # Third party imports
-from schemas.supabase.fastapi.schema_public_latest import Repositories
+from schemas.supabase.types import Repositories
 
 # Local imports
 from config import OPENAI_MODEL_ID_O3_MINI

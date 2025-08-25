@@ -1,9 +1,8 @@
-import pytest
 from unittest.mock import patch
 from datetime import datetime
 from typing import cast
-
-from schemas.supabase.fastapi.schema_public_latest import CoveragesBaseSchema
+import pytest
+from schemas.supabase.types import Coverages
 from services.github.pulls.get_pull_request_files import FileChange
 from services.webhook.utils.create_file_checklist import create_file_checklist
 
@@ -20,7 +19,7 @@ def create_coverage_data(
     branch_coverage: float | None = None,
     is_excluded: bool = False,
     **overrides,
-) -> CoveragesBaseSchema:
+) -> Coverages:
     """Helper function to create coverage data."""
     base_data = {
         "id": 1,
@@ -48,7 +47,7 @@ def create_coverage_data(
         "is_excluded_from_testing": is_excluded,
     }
     base_data.update(overrides)
-    return cast(CoveragesBaseSchema, base_data)
+    return cast(Coverages, base_data)
 
 
 @pytest.fixture

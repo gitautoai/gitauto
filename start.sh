@@ -79,20 +79,40 @@ for line in sys.stdin:
 with open('schemas/supabase/types.py', 'w') as f:
     f.write('import datetime\\n')
     f.write('from typing import Any\\n')
-    f.write('from typing_extensions import TypedDict\\n')
+    f.write('from typing_extensions import TypedDict, NotRequired\\n')
     f.write('\\n\\n')
+    
+    # Auto-generated fields to exclude from Insert types
+    auto_fields = {'id', 'created_at', 'updated_at'}
     
     for table_name in sorted(tables.keys()):
         class_name = ''.join(word.capitalize() for word in table_name.split('_'))
-        f.write(f'class {class_name}(TypedDict):\\n')
         
+        # Generate base TypedDict
+        f.write(f'class {class_name}(TypedDict):\\n')
         if tables[table_name]:
             f.write('\\n'.join(tables[table_name]) + '\\n')
         else:
             f.write('    pass\\n')
-        f.write('\\n')
+        f.write('\\n\\n')  # Two blank lines after base class
+        
+        # Generate Insert TypedDict (exclude auto-generated fields)
+        insert_fields = []
+        for field in tables[table_name]:
+            field_name = field.strip().split(':')[0].strip()
+            if field_name not in auto_fields:
+                # Make all fields in Insert type NotRequired for flexibility
+                field_type = ':'.join(field.strip().split(':')[1:]).strip()
+                insert_fields.append(f'    {field_name}: NotRequired[{field_type}]')
+        
+        if insert_fields:
+            f.write(f'class {class_name}Insert(TypedDict):\\n')
+            f.write('\\n'.join(insert_fields) + '\\n')
+            # Only add two blank lines if not the last table
+            if table_name != sorted(tables.keys())[-1]:
+                f.write('\\n\\n')
 
-print(f'Generated {len(tables)} TypedDict classes directly from PostgreSQL')
+print(f'Generated {len(tables)*2} TypedDict classes (base + Insert) directly from PostgreSQL')
 "
 
 # Function to cleanup background processes
