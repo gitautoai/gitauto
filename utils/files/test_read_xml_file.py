@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import mock_open, patch
+
+import pytest
 from utils.files.read_xml_file import read_xml_file
 
 

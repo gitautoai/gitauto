@@ -1,6 +1,7 @@
-from unittest.mock import patch, MagicMock
-import pytest
 from datetime import datetime
+from unittest.mock import patch, MagicMock
+
+import pytest
 
 from services.supabase.repo_coverage.upsert_repo_coverage import upsert_repo_coverage
 
