@@ -1,7 +1,8 @@
+import json
 from unittest.mock import patch, MagicMock
+
 import pytest
 import requests
-import json
 
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.branches.get_default_branch import get_default_branch
