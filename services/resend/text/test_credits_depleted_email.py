@@ -7,7 +7,7 @@ from services.resend.text.credits_depleted_email import get_credits_depleted_ema
 
 def test_get_credits_depleted_email_text_basic():
     """Test basic functionality with a simple user name."""
-    _, text = get_credits_depleted_email_text("John")
+    subject, text = get_credits_depleted_email_text("John")
 
     assert subject == "You're out of credits!"
     assert "Hey John!" in text
@@ -18,7 +18,7 @@ def test_get_credits_depleted_email_text_basic():
 
 def test_get_credits_depleted_email_text_with_full_name():
     """Test with a full name containing spaces."""
-    _, text = get_credits_depleted_email_text("John Doe")
+    subject, text = get_credits_depleted_email_text("John Doe")
 
     assert subject == "You're out of credits!"
     assert "Hey John Doe!" in text
@@ -27,7 +27,7 @@ def test_get_credits_depleted_email_text_with_full_name():
 
 def test_get_credits_depleted_email_text_with_special_characters():
     """Test with user name containing special characters."""
-    _, text = get_credits_depleted_email_text("José María")
+    subject, text = get_credits_depleted_email_text("José María")
 
     assert subject == "You're out of credits!"
     assert "Hey José María!" in text
@@ -36,7 +36,7 @@ def test_get_credits_depleted_email_text_with_special_characters():
 
 def test_get_credits_depleted_email_text_with_empty_string():
     """Test with empty string as user name."""
-    _, text = get_credits_depleted_email_text("")
+    subject, text = get_credits_depleted_email_text("")
 
     assert subject == "You're out of credits!"
     assert "Hey !" in text
@@ -45,7 +45,7 @@ def test_get_credits_depleted_email_text_with_empty_string():
 
 def test_get_credits_depleted_email_text_with_none():
     """Test with None as user name."""
-    _, text = get_credits_depleted_email_text(None)
+    subject, text = get_credits_depleted_email_text(None)
 
     assert subject == "You're out of credits!"
     assert "Hey None!" in text
@@ -100,7 +100,7 @@ def test_get_credits_depleted_email_text_return_type():
 )
 def test_get_credits_depleted_email_text_parametrized(user_name, expected_greeting):
     """Test various user name scenarios with parametrized test cases."""
-    _, text = get_credits_depleted_email_text(user_name)
+    subject, text = get_credits_depleted_email_text(user_name)
 
     assert subject == "You're out of credits!"
     assert expected_greeting in text

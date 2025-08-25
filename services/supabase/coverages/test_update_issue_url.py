@@ -45,7 +45,7 @@ class TestUpdateIssueUrl:
     def test_update_issue_url_success(self, mock_supabase_success):
         """Test successful update of issue URL"""
         # Arrange
-        _, mock_table = mock_supabase_success
+        mock_supabase, mock_table = mock_supabase_success
         repo_id = 123456
         file_path = "src/main.py"
         github_issue_url = "https://github.com/owner/repo/issues/123"
