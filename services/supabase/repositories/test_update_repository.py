@@ -4,7 +4,6 @@ from unittest.mock import patch, MagicMock
 
 # Local imports
 from services.supabase.repositories.update_repository import update_repository
-from schemas.supabase.fastapi.schema_public_latest import RepositoriesUpdate
 
 
 class TestUpdateRepository(unittest.TestCase):
@@ -225,36 +224,35 @@ class TestUpdateRepository(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_repositories_update_schema_creation(self):
-        """Test RepositoriesUpdate schema creation with valid data"""
+        """Test repository data dict creation with valid data"""
         # Execute
-        repository_data = RepositoriesUpdate(
-            file_count=self.test_file_count,
-            blank_lines=self.test_blank_lines,
-            comment_lines=self.test_comment_lines,
-            code_lines=self.test_code_lines,
-            updated_by=f"{self.test_user_id}:{self.test_user_name}",
-        )
+        repository_data = {
+            "file_count": self.test_file_count,
+            "blank_lines": self.test_blank_lines,
+            "comment_lines": self.test_comment_lines,
+            "code_lines": self.test_code_lines,
+            "updated_by": f"{self.test_user_id}:{self.test_user_name}",
+        }
 
         # Assert
-        self.assertEqual(repository_data.file_count, self.test_file_count)
-        self.assertEqual(repository_data.blank_lines, self.test_blank_lines)
-        self.assertEqual(repository_data.comment_lines, self.test_comment_lines)
-        self.assertEqual(repository_data.code_lines, self.test_code_lines)
+        self.assertEqual(repository_data["file_count"], self.test_file_count)
+        self.assertEqual(repository_data["blank_lines"], self.test_blank_lines)
+        self.assertEqual(repository_data["comment_lines"], self.test_comment_lines)
+        self.assertEqual(repository_data["code_lines"], self.test_code_lines)
         self.assertEqual(
-            repository_data.updated_by, f"{self.test_user_id}:{self.test_user_name}"
+            repository_data["updated_by"], f"{self.test_user_id}:{self.test_user_name}"
         )
 
-    def test_repositories_update_schema_model_dump(self):
-        """Test RepositoriesUpdate schema model_dump with exclude_none"""
+    def test_repositories_update_schema_dict_keys(self):
+        """Test repository data dict has expected keys"""
         # Execute
-        repository_data = RepositoriesUpdate(
-            file_count=self.test_file_count,
-            blank_lines=self.test_blank_lines,
-            comment_lines=self.test_comment_lines,
-            code_lines=self.test_code_lines,
-            updated_by=f"{self.test_user_id}:{self.test_user_name}",
-        )
-        data_dict = repository_data.model_dump(exclude_none=True)
+        repository_data = {
+            "file_count": self.test_file_count,
+            "blank_lines": self.test_blank_lines,
+            "comment_lines": self.test_comment_lines,
+            "code_lines": self.test_code_lines,
+            "updated_by": f"{self.test_user_id}:{self.test_user_name}",
+        }
 
         # Assert
         expected_keys = {
@@ -264,5 +262,5 @@ class TestUpdateRepository(unittest.TestCase):
             "code_lines",
             "updated_by",
         }
-        self.assertEqual(set(data_dict.keys()), expected_keys)
-        self.assertNotIn(None, data_dict.values())
+        self.assertEqual(set(repository_data.keys()), expected_keys)
+        self.assertNotIn(None, repository_data.values())

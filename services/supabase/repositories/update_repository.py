@@ -1,4 +1,3 @@
-from schemas.supabase.fastapi.schema_public_latest import RepositoriesUpdate
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -13,18 +12,19 @@ def update_repository(
     comment_lines: int,
     code_lines: int,
 ):
-    repository_data = RepositoriesUpdate(
-        file_count=file_count,
-        blank_lines=blank_lines,
-        comment_lines=comment_lines,
-        code_lines=code_lines,
-        updated_by=str(user_id) + ":" + user_name,
-    )
-    repository_data_dict = repository_data.model_dump(exclude_none=True)
     update_result = (
         supabase.table("repositories")
-        .update(repository_data_dict)
+        .update(
+            {
+                "file_count": file_count,
+                "blank_lines": blank_lines,
+                "comment_lines": comment_lines,
+                "code_lines": code_lines,
+                "updated_by": str(user_id) + ":" + user_name,
+            }
+        )
         .eq("repo_id", repo_id)
         .execute()
     )
+
     return update_result.data[0] if update_result.data else None
