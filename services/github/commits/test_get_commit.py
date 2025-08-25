@@ -7,7 +7,6 @@ import requests
 
 # Local imports
 from services.github.commits.get_commit import get_commit
-from services.github.types.github_types import BaseArgs
 from test_utils import create_test_base_args
 from tests.constants import OWNER, REPO, TOKEN
 

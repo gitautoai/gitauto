@@ -20,11 +20,32 @@ def should_skip_rust(content: str) -> bool:
     lines = content.split("\n")
     in_struct_or_enum = False
     in_trait = False
+    in_multiline_string = False
+    in_multiline_comment = False
 
     for line in lines:
         line = line.strip()
+        
+        # Handle multiline comments (/* ... */)
+        if not in_multiline_comment and "/*" in line and "*/" not in line:
+            in_multiline_comment = True
+            continue
+        if in_multiline_comment:
+            if "*/" in line:
+                in_multiline_comment = False
+            continue
+        
+        # Handle multiline raw strings (r#"..."#)
+        if not in_multiline_string and 'r#"' in line and not line.endswith('"#;'):
+            in_multiline_string = True
+            continue
+        if in_multiline_string:
+            if line.endswith('"#;'):
+                in_multiline_string = False
+            continue
+        
         # Skip comments
-        if line.startswith("//"):
+        if line.startswith("//") or (line.startswith("/*") and line.endswith("*/")):
             continue
         # Skip attributes
         if line.startswith("#[") or line.startswith("#!["):
@@ -72,9 +93,15 @@ def should_skip_rust(content: str) -> bool:
             continue
         # Skip constants (Rust const is truly constant - compile-time immutable values)
         if line.startswith("pub const ") or line.startswith("const "):
+            # Check if constant has function calls (like env::var() or Path::new()) but not struct constructors
+            if "::" in line and ("(" in line and ")" in line) and not re.search(r'\w+\s*\{\}', line):
+                return False
             continue
         # Skip static variables (global variables with 'static lifetime)
         if line.startswith("pub static ") or line.startswith("static "):
+            # Check if static has function calls (like env::var() or Path::new()) but not struct constructors
+            if "::" in line and ("(" in line and ")" in line) and not re.search(r'\w+\s*\{\}', line):
+                return False
             continue
         # If we find any other code, it's not export-only
         return False

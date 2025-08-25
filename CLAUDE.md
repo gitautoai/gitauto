@@ -229,7 +229,7 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 1. Activate virtual environment: `source venv/bin/activate`
 2. Run black formatting: `black .`
 3. Run ruff linting: `ruff check . --fix`
-4. Run pylint: `pylint . --fail-under=10.0`
+4. Run pylint: `find . -name "*.py" -not -path "./venv/*" | xargs pylint --fail-under=10.0`
 5. Run pyright type checking: `pyright`
 6. Run pytest: `python -m pytest -r fE -x`
 7. Check current branch is not main: `git branch --show-current`

@@ -37,7 +37,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
     # Get repository settings
     repo_settings = get_repository(repo_id=repo_id)
     if not repo_settings or not repo_settings["trigger_on_merged"]:
-        return
+        return None
 
     # Get PR number and details
     pr_number = payload["number"]
@@ -77,7 +77,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
             f"No code files changed in PR #{pr_number} for {owner_name}/{repo_name}"
         )
         slack_notify(early_return_msg, thread_ts)
-        return
+        return None
 
     # Build the list of files to include in the issue
     files_to_test = []
@@ -107,7 +107,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
             f"No files need tests in PR #{pr_number} for {owner_name}/{repo_name}"
         )
         slack_notify(early_return_msg, thread_ts)
-        return
+        return None
 
     # Get PR creator to assign as reviewer
     pr_creator = pull_request["user"]["login"]

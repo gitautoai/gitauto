@@ -206,7 +206,7 @@ async def handle_screenshot_comparison(payload: dict) -> None:
     return
 
     # Return if the author of the pull request is not GitAuto itself
-    print("\n\n\n\nStarting screenshot comparison")
+    print("\n\n\n\nStarting screenshot comparison")  # pylint: disable=unreachable
     pull: dict = payload["pull_request"]
     if pull["user"]["login"] != GITHUB_APP_USER_NAME:
         return

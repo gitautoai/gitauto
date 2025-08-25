@@ -29,9 +29,20 @@ def should_skip_csharp(content: str) -> bool:
     in_attribute = False
     in_record = False
     in_const_initialization = False
+    in_multiline_string = False
 
     for line in lines:
         line = line.strip()
+
+        # Handle verbatim strings (@"...")
+        if not in_multiline_string and '@"' in line:
+            if line.count('"') == 1:  # String starts
+                in_multiline_string = True
+                continue
+        if in_multiline_string:
+            if '";' in line:
+                in_multiline_string = False
+            continue
 
         # Handle multi-line comments
         if "/*" in line:
@@ -53,12 +64,14 @@ def should_skip_csharp(content: str) -> bool:
             r"^(public\s+|internal\s+|private\s+|protected\s+)?(partial\s+)?interface\s+\w+",
             line,
         ):
-            if "{" in line:
-                in_interface = True
+            in_interface = True
+            continue
+        if re.match(r"^\{", line):
             continue
         if in_interface:
             if "}" in line:
                 in_interface = False
+                continue
             # Skip property and method signatures in interfaces
             if re.match(r"^\s*\w+\s+\w+\s*{\s*(get;\s*set;|get;)\s*}", line):
                 continue
@@ -107,6 +120,17 @@ def should_skip_csharp(content: str) -> bool:
             if "{" in line or ";" in line:
                 in_record = True
             continue
+
+        # Handle simple empty class definitions
+        if re.match(
+            r"^(public\s+|internal\s+|private\s+|protected\s+)?class\s+\w+(\s*:\s*[^{]+)?\s*$",
+            line,
+        ) or re.match(
+            r"^(public\s+|internal\s+|private\s+|protected\s+)?class\s+\w+(\s*:\s*[^{]+)?\s*\{",
+            line,
+        ):
+            in_struct = True  # Reuse struct logic for empty classes
+            continue
         if in_record:
             if "}" in line or line.endswith(";"):
                 in_record = False
@@ -145,7 +169,7 @@ def should_skip_csharp(content: str) -> bool:
 
         # Skip constants (comprehensive pattern)
         if re.match(
-            r"^(public\s+|private\s+|internal\s+|protected\s+)?(static\s+)?(readonly\s+)?const\s+\w+\s+[A-Z_][A-Z0-9_]*\s*=",
+            r"^(public\s+|private\s+|internal\s+|protected\s+)?(static\s+)?(readonly\s+)?const\s+\w+\s+\w+\s*=",
             line,
         ):
             if "{" in line and "}" not in line:

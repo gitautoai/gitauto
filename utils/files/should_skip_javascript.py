@@ -24,6 +24,8 @@ def should_skip_javascript(content: str) -> bool:
     in_multiline_comment = False
     in_interface_or_type = False
     in_enum = False
+    in_template_literal = False
+    in_class_definition = False
 
     for line in lines:
         line = line.strip()
@@ -34,6 +36,17 @@ def should_skip_javascript(content: str) -> bool:
                 in_multiline_comment = False
             continue
         if line.startswith("//"):
+            continue
+        # Handle template literals
+        if not in_template_literal and line.startswith("const ") and "`" in line:
+            if line.count("`") == 1:  # Template literal starts
+                in_template_literal = True
+                if line:
+                    code_lines.append(line)
+                continue
+        if in_template_literal:
+            if line.endswith("`;") or "`;" in line:  # Template literal ends
+                in_template_literal = False
             continue
         if line:
             code_lines.append(line)
@@ -75,6 +88,17 @@ def should_skip_javascript(content: str) -> bool:
 
         # First check for function definitions - these should NOT be skipped
         if line.startswith("function ") or re.match(r"^\w+\s*\(.*\)\s*{", line):
+            return False
+
+        # Skip empty class definitions (class Name {} or class Name extends Base {})
+        if re.match(r"^class\s+\w+(\s+extends\s+\w+)?\s*\{$", line):
+            in_class_definition = True
+            continue
+        if in_class_definition and line == "}":
+            in_class_definition = False
+            continue
+        if in_class_definition:
+            # If there's anything inside the class, it's not empty
             return False
 
         # Handle TypeScript type definitions

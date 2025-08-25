@@ -21,11 +21,20 @@ def should_skip_java(content: str) -> bool:
     lines = content.split("\n")
     in_interface_or_class = False
     in_annotation = False
+    in_multiline_string = False
 
     for line in lines:
         line = line.strip()
         # Skip comments
         if line.startswith("//") or line.startswith("/*") or line.startswith("*"):
+            continue
+        # Handle multiline strings (Java 15+ text blocks)
+        if '"""' in line and not in_multiline_string:
+            in_multiline_string = True
+            continue
+        if in_multiline_string:
+            if '"""' in line:
+                in_multiline_string = False
             continue
         # Skip empty lines
         if not line:
@@ -70,6 +79,14 @@ def should_skip_java(content: str) -> bool:
             in_interface_or_class = True
             continue
 
+        # Handle simple empty class definitions (including inheritance)
+        if re.match(
+            r"^(public\s+|private\s+|protected\s+)?class\s+\w+(\s+extends\s+\w+)?\s*\{",
+            line,
+        ):
+            in_interface_or_class = True
+            continue
+
         if in_interface_or_class:
             if "}" in line or (line.endswith(")") and not line.startswith("(")):
                 in_interface_or_class = False
@@ -78,11 +95,13 @@ def should_skip_java(content: str) -> bool:
         # Skip module exports (Java 9+)
         if line.startswith("exports ") or line.startswith("opens "):
             continue
-        # Skip constants (Java/Kotlin/Scala)
+        # Skip constants (Java/Kotlin/Scala) - but NOT if they contain function calls
         if re.match(
             r"^(public\s+|private\s+|protected\s+)?(static\s+)?(final\s+)?(const\s+|val\s+)?[\w\<\>\[\],\s]+\s+[A-Z_][A-Z0-9_]*\s*=",
             line,
         ):
+            if "(" in line and ")" in line:  # Contains function calls
+                return False
             continue
         # Skip object declarations (Scala/Kotlin)
         if line.startswith("object ") and "{" in line:

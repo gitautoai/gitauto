@@ -20,11 +20,32 @@ def should_skip_cpp(content: str) -> bool:
     lines = content.split("\n")
     in_struct_or_class = False
     in_enum = False
+    in_raw_string = False
+    in_multiline_comment = False
 
     for line in lines:
         line = line.strip()
-        # Skip comments
-        if line.startswith("//") or line.startswith("/*") or line.startswith("*"):
+
+        # Handle raw string literals (C++11 R"(...)")
+        if not in_raw_string and 'R"(' in line:
+            in_raw_string = True
+            continue
+        if in_raw_string:
+            if ')";' in line:
+                in_raw_string = False
+            continue
+
+        # Handle multiline comments
+        if not in_multiline_comment and "/*" in line:
+            in_multiline_comment = True
+            continue
+        if in_multiline_comment:
+            if "*/" in line:
+                in_multiline_comment = False
+            continue
+
+        # Skip single-line comments
+        if line.startswith("//"):
             continue
         # Skip preprocessor directives
         if line.startswith("#"):
@@ -34,7 +55,7 @@ def should_skip_cpp(content: str) -> bool:
             continue
 
         # Handle struct/class definitions (without implementation)
-        if re.match(r"^(struct|class)\s+\w+\s*{", line):
+        if re.match(r"^(struct|class)\s+\w+(\s*:\s*[^{]+)?\s*{", line):
             in_struct_or_class = True
             continue
         if re.match(r"^enum\s+\w+\s*{", line):

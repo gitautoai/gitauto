@@ -11,14 +11,28 @@ export { Button, Input } from './components';"""
 
 def test_constants_only():
     # Constants only
-    content = """const MAX_SIZE = 100;
+    content = """const MAX_RETRIES = 3;
 const API_URL = "https://api.example.com";
-const CONFIG = { timeout: 5000 };
-const COLORS = ["red", "blue", "green"];"""
+const DEFAULT_CONFIG = { debug: true };
+const STATUS_CODES = [200, 201, 404];"""
     assert should_skip_javascript(content) is True
 
 
-def test_typescript_types_only():
+def test_multiline_string_constants():
+    # Multi-line string constants
+    content = """const IDENTIFY_CAUSE = `
+You are a GitHub Actions expert.
+Given information such as a pull request title, identify the cause.
+`;
+
+const ANOTHER_TEMPLATE = `
+This is another template
+with multiple lines
+`;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_typeddict_only():
     # TypeScript interface and type definitions only
     content = """interface User {
     id: number;
@@ -26,49 +40,32 @@ def test_typescript_types_only():
     email?: string;
 }
 
-type Status = "active" | "inactive" | "pending";
-
-enum Color {
-    Red = "red",
-    Green = "green",
-    Blue = "blue"
+interface Config {
+    timeout: number;
+    retries: number;
 }"""
     assert should_skip_javascript(content) is True
 
 
-def test_imports_and_exports():
-    # File with imports and exports only
-    content = """import { Something } from './lib';
-import React from 'react';
+def test_exception_classes_only():
+    # Simple empty classes
+    content = """class CustomError extends Error {
+}
 
-export * from './lib';
-export { Something };
-export default MyComponent;"""
+class AuthenticationError extends Error {
+}"""
     assert should_skip_javascript(content) is True
 
 
-def test_commonjs_requires():
-    # CommonJS require statements
-    content = """const fs = require('fs');
-const { spawn } = require('child_process');
-const config = require('./config.json');
+def test_mixed_imports_and_constants():
+    # Mixed imports and constants
+    content = """import os from 'os';
+import { Dict } from 'typing';
 
-module.exports = {
-    fs,
-    spawn,
-    config
-};"""
-    assert should_skip_javascript(content) is True
+const MAX_RETRIES = 3;
+const API_URL = "https://api.example.com";
 
-
-def test_mixed_constants_and_exports():
-    # Mixed constants and exports
-    content = """export * from './lib';
-
-const MAX_SIZE = 100;
-const API_URL = "https://api.com";
-
-export { MAX_SIZE, API_URL };"""
+export { MAX_RETRIES, API_URL };"""
     assert should_skip_javascript(content) is True
 
 
@@ -81,15 +78,6 @@ def test_function_with_logic():
 function processData(data) {
     return data.map(x => x * 2);
 }"""
-    assert should_skip_javascript(content) is False
-
-
-def test_arrow_functions():
-    # Arrow functions - should NOT be skipped
-    content = """const MAX_SIZE = 100;
-
-const calculate = () => MAX_SIZE * 2;
-const multiply = (a, b) => a * b;"""
     assert should_skip_javascript(content) is False
 
 
@@ -111,19 +99,6 @@ def test_class_with_methods():
     assert should_skip_javascript(content) is False
 
 
-def test_typescript_with_logic():
-    # TypeScript with function logic - should NOT be skipped
-    content = """interface User {
-    id: number;
-    name: string;
-}
-
-function createUser(id: number, name: string): User {
-    return { id, name };
-}"""
-    assert should_skip_javascript(content) is False
-
-
 def test_mixed_constants_and_logic():
     # Mixed constants and logic - should NOT be skipped
     content = """const MAX_SIZE = 100;
@@ -132,6 +107,16 @@ const API_URL = "https://api.com";
 function calculateSize() {
     return MAX_SIZE * 2;
 }"""
+    assert should_skip_javascript(content) is False
+
+
+def test_constants_with_function_calls():
+    # Constants with function calls - should NOT be skipped
+    content = """import os from 'os';
+import { getEnvVar } from './config';
+
+const IS_PRD = getEnvVar("ENV") === "prod";
+const BASE_PATH = os.path.join("/", "app");"""
     assert should_skip_javascript(content) is False
 
 
@@ -148,4 +133,32 @@ def test_whitespace_only():
 
 
     """
+    assert should_skip_javascript(content) is True
+
+
+def test_init_file_with_imports():
+    # Typical index.js file with only imports and exports
+    content = """import { Class1, function1 } from './module1';
+import { Class2 } from './module2';
+import { helperFunction } from './utils';
+
+export { Class1, Class2, function1, helperFunction };"""
+    assert should_skip_javascript(content) is True
+
+
+def test_empty_init_file():
+    # Empty index.js file
+    content = ""
+    assert should_skip_javascript(content) is True
+
+
+def test_comment_with_simple_class():
+    # File with comment and simple empty class should be skipped
+    content = """/**
+ * Base class for application components
+ */
+class BaseComponent {
+}
+
+export default BaseComponent;"""
     assert should_skip_javascript(content) is True

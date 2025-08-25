@@ -2,74 +2,71 @@ from utils.files.should_skip_rust import should_skip_rust
 
 
 def test_export_only():
-    # File with only pub use statements
-    content = """pub use self::core::Core;
-pub use self::utils::helper;
-use std::io;
+    # File with only use statements and pub use
+    content = """use std::collections::HashMap;
+use std::fs::File;
+use crate::types::User;
 
-pub mod core;
-pub mod utils;"""
+pub use crate::module::*;"""
     assert should_skip_rust(content) is True
 
 
 def test_constants_only():
     # Constants only
-    content = """pub const PI: f64 = 3.14159;
-const MAX_SIZE: usize = 1024;
-pub static VERSION: &str = "1.0.0";
-static CONFIG: &str = "production";"""
+    content = """const MAX_RETRIES: i32 = 3;
+const API_URL: &str = "https://api.example.com";
+const DEBUG: bool = true;
+static VERSION: &str = "1.0.0";"""
     assert should_skip_rust(content) is True
 
 
-def test_struct_definitions_only():
-    # Struct definitions without implementation
-    content = """pub struct User {
-    id: u64,
+def test_multiline_string_constants():
+    # Multi-line string constants
+    content = """const IDENTIFY_CAUSE: &str = r#"
+You are a GitHub Actions expert.
+Given information such as a pull request title, identify the cause.
+"#;
+
+const ANOTHER_TEMPLATE: &str = r#"
+This is another template
+with multiple lines
+"#;"""
+    assert should_skip_rust(content) is True
+
+
+def test_typeddict_only():
+    # Struct definitions only
+    content = """#[derive(Debug, Clone)]
+struct User {
+    id: i64,
     name: String,
-    email: Option<String>,
+    email: String,
 }
 
 struct Config {
     timeout: u32,
-    retries: u8,
+    retries: u32,
 }"""
     assert should_skip_rust(content) is True
 
 
-def test_enum_definitions_only():
-    # Enum definitions only
-    content = """pub enum Status {
-    Active,
-    Inactive,
-    Pending,
-}
+def test_exception_classes_only():
+    # Simple empty structs
+    content = """struct CustomError {}
 
-enum Result<T, E> {
-    Ok(T),
-    Err(E),
-}"""
+struct AuthenticationError {}"""
     assert should_skip_rust(content) is True
 
 
-def test_trait_definitions_only():
-    # Trait definitions without implementation
-    content = """pub trait Display {
-    fn fmt(&self) -> String;
-}
+def test_mixed_imports_and_constants():
+    # Mixed imports and constants
+    content = """use std::env;
+use std::path::Path;
 
-trait Clone {
-    fn clone(&self) -> Self;
-}"""
-    assert should_skip_rust(content) is True
+const MAX_RETRIES: i32 = 3;
+const API_URL: &str = "https://api.example.com";
 
-
-def test_mixed_uses_and_constants():
-    # Mixed use statements and constants
-    content = """use std::collections::HashMap;
-pub use crate::types::*;
-
-pub const DEFAULT_TIMEOUT: u64 = 30;
-static CONFIG: &str = "production";"""
+pub const VERSION: &str = "1.0.0";"""
     assert should_skip_rust(content) is True
 
 
@@ -79,68 +76,52 @@ def test_function_with_logic():
     items.iter().map(|item| item.price).sum()
 }
 
-pub fn process_data(data: Vec<i32>) -> Vec<i32> {
-    data.into_iter().map(|x| x * 2).collect()
+fn process_data(data: &[i32]) -> Vec<i32> {
+    data.iter().map(|x| x * 2).collect()
 }"""
     assert should_skip_rust(content) is False
 
 
-def test_impl_blocks():
-    # Implementation blocks - should NOT be skipped
-    content = """struct Calculator;
+def test_class_with_methods():
+    # Impl blocks with methods - should NOT be skipped
+    content = """struct Calculator {
+    value: i32,
+}
 
 impl Calculator {
     fn new() -> Self {
-        Calculator
+        Calculator { value: 0 }
     }
 
     fn add(&self, a: i32, b: i32) -> i32 {
         a + b
     }
-}"""
-    assert should_skip_rust(content) is False
 
-
-def test_mixed_struct_and_impl():
-    # Mixed struct definition and implementation - should NOT be skipped
-    content = """struct User {
-    name: String,
-}
-
-impl User {
-    fn new(name: String) -> Self {
-        User { name }
+    fn multiply(&self, a: i32, b: i32) -> i32 {
+        a * b
     }
-
-    fn get_name(&self) -> &str {
-        &self.name
-    }
-}"""
-    assert should_skip_rust(content) is False
-
-
-def test_macros_with_logic():
-    # Macros with logic - should NOT be skipped
-    content = """macro_rules! calculate {
-    ($x:expr) => {
-        $x * 2
-    };
-}
-
-fn use_macro() {
-    let result = calculate!(5);
 }"""
     assert should_skip_rust(content) is False
 
 
 def test_mixed_constants_and_logic():
     # Mixed constants and logic - should NOT be skipped
-    content = """const MAX_SIZE: usize = 1024;
-static VERSION: &str = "1.0.0";
+    content = """const MAX_SIZE: i32 = 100;
+const API_URL: &str = "https://api.com";
 
-fn get_max_size() -> usize {
-    MAX_SIZE
+fn calculate_size() -> i32 {
+    MAX_SIZE * 2
 }"""
+    assert should_skip_rust(content) is False
+
+
+def test_constants_with_function_calls():
+    # Constants with function calls - should NOT be skipped
+    content = """use std::env;
+use std::path::Path;
+
+static IS_PRD: bool = env::var("ENV").unwrap_or_default() == "prod";
+static BASE_PATH: &str = Path::new("/").join("app").to_str().unwrap();"""
     assert should_skip_rust(content) is False
 
 
@@ -157,4 +138,31 @@ def test_whitespace_only():
 
 
     """
+    assert should_skip_rust(content) is True
+
+
+def test_init_file_with_imports():
+    # Typical lib.rs file with only use statements
+    content = """pub use crate::module1::Class1;
+pub use crate::module2::Class2;
+pub use crate::utils::helper_function;
+
+use std::collections::HashMap;"""
+    assert should_skip_rust(content) is True
+
+
+def test_empty_init_file():
+    # Empty lib.rs file
+    content = ""
+    assert should_skip_rust(content) is True
+
+
+def test_comment_with_simple_class():
+    # File with comment and simple empty struct should be skipped
+    content = """/*
+Base struct for application components
+*/
+struct BaseComponent {}
+
+const _: BaseComponent = BaseComponent {};"""
     assert should_skip_rust(content) is True

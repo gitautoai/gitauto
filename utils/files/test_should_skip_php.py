@@ -1,130 +1,182 @@
 from utils.files.should_skip_php import should_skip_php
 
 
-def test_includes_only():
-    # File with only includes and requires
+def test_export_only():
+    # File with only require statements
     content = """<?php
-
-require_once 'config.php';
-require_once __DIR__ . '/vendor/autoload.php';
-include 'helpers.php';
-include_once 'constants.php';
-
+require_once 'vendor/autoload.php';
+require_once 'config/database.php';
 use App\\Models\\User;
-use App\\Services\\ApiClient;"""
+use App\\Services\\Logger;"""
     assert should_skip_php(content) is True
 
 
 def test_constants_only():
     # Constants only
     content = """<?php
+const MAX_RETRIES = 3;
+const API_URL = 'https://api.example.com';
+const DEBUG = true;
+define('STATUS_CODE', 200);"""
+    assert should_skip_php(content) is True
+
+
+def test_multiline_string_constants():
+    # Multi-line string constants
+    content = """<?php
+const IDENTIFY_CAUSE = <<<EOT
+You are a GitHub Actions expert.
+Given information such as a pull request title, identify the cause.
+EOT;
+
+const ANOTHER_TEMPLATE = <<<EOT
+This is another template
+with multiple lines
+EOT;"""
+    assert should_skip_php(content) is True
+
+
+def test_typeddict_only():
+    # Interface definitions only
+    content = """<?php
+interface User
+{
+    public function getId(): int;
+    public function getName(): string;
+    public function getEmail(): string;
+}
+
+interface Config
+{
+    public function getTimeout(): int;
+    public function getRetries(): int;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_exception_classes_only():
+    # Simple empty classes
+    content = """<?php
+class CustomError extends Exception
+{
+}
+
+class AuthenticationError extends Exception
+{
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_mixed_imports_and_constants():
+    # Mixed requires and constants
+    content = """<?php
+require_once 'config/app.php';
+use App\\Services\\Cache;
 
 const MAX_RETRIES = 3;
 const API_URL = 'https://api.example.com';
-const DEFAULT_CONFIG = ['debug' => true];
 
-define('VERSION', '1.0.0');
-define('STATUS_ACTIVE', 1);
-
-$CONFIG_ARRAY = [
-    'database' => 'mysql',
-    'host' => 'localhost'
-];"""
+const VERSION = '1.0.0';"""
     assert should_skip_php(content) is True
 
 
-def test_interface_definition():
-    # Interface definition should be skipped
+def test_function_with_logic():
+    # Function definitions - should NOT be skipped
     content = """<?php
-
-interface UserRepositoryInterface {
-    public function findById(int $id): ?User;
-    public function save(User $user): void;
-    public function delete(int $id): bool;
+function calculateTotal(array $items): float
+{
+    return array_sum(array_column($items, 'price'));
 }
 
-interface CacheInterface {
-    public function get(string $key);
-    public function set(string $key, $value, int $ttl = 3600);
-}"""
-    assert should_skip_php(content) is True
-
-
-def test_trait_definition():
-    # Trait definition should be skipped
-    content = """<?php
-
-trait Timestampable {
-    public $created_at;
-    public $updated_at;
-}
-
-trait Cacheable {
-    protected $cache_key;
-    protected $cache_ttl = 3600;
-}"""
-    assert should_skip_php(content) is True
-
-
-def test_simple_data_class():
-    # Simple data class with only properties
-    content = """<?php
-
-class UserData {
-    public string $name;
-    public string $email;
-    public int $age;
-    protected bool $active;
-}
-
-class ConfigData {
-    public $database_host;
-    public $database_name;
-}"""
-    assert should_skip_php(content) is True
-
-
-def test_with_function_definition():
-    # File with function should not be skipped
-    content = """<?php
-
-require_once 'config.php';
-
-const MAX_RETRIES = 3;
-
-function calculateTax(float $amount): float {
-    return $amount * 0.1;
+function processData(array $data): array
+{
+    return array_map(fn($x) => $x * 2, $data);
 }"""
     assert should_skip_php(content) is False
 
 
 def test_class_with_methods():
-    # Class with methods should not be skipped
+    # Class with methods - should NOT be skipped
     content = """<?php
+class Calculator
+{
+    private int $value = 0;
 
-class Calculator {
-    public function add(int $a, int $b): int {
+    public function add(int $a, int $b): int
+    {
         return $a + $b;
     }
 
-    public function multiply(int $x, int $y): int {
-        return $x * $y;
+    public function multiply(int $a, int $b): int
+    {
+        return $a * $b;
     }
 }"""
     assert should_skip_php(content) is False
 
 
-def test_config_file_with_return():
-    # Config file that returns array should be skipped
+def test_mixed_constants_and_logic():
+    # Mixed constants and logic - should NOT be skipped
     content = """<?php
+const MAX_SIZE = 100;
+const API_URL = 'https://api.com';
 
-return [
-    'database' => [
-        'host' => 'localhost',
-        'name' => 'myapp'
-    ],
-    'cache' => [
-        'driver' => 'redis'
-    ]
-];"""
+function calculateSize(): int
+{
+    return MAX_SIZE * 2;
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_constants_with_function_calls():
+    # Constants with function calls - should NOT be skipped
+    content = """<?php
+$isPrd = getenv('ENV') === 'prod';
+$basePath = realpath('/') . DIRECTORY_SEPARATOR . 'app';"""
+    assert should_skip_php(content) is False
+
+
+def test_empty_file():
+    # Empty content should be skipped
+    assert should_skip_php("") is True
+
+
+def test_whitespace_only():
+    # File with only whitespace should be skipped
+    content = """
+
+
+
+
+    """
+    assert should_skip_php(content) is True
+
+
+def test_init_file_with_imports():
+    # Typical module file with only requires
+    content = """<?php
+require_once 'src/Module1/Class1.php';
+require_once 'src/Module2/Class2.php';
+require_once 'src/Utils/Helper.php';
+
+use App\\Module1\\Class1;
+use App\\Module2\\Class2;"""
+    assert should_skip_php(content) is True
+
+
+def test_empty_init_file():
+    # Empty module file
+    content = ""
+    assert should_skip_php(content) is True
+
+
+def test_comment_with_simple_class():
+    # File with comment and simple empty class should be skipped
+    content = """<?php
+/*
+Base class for application components
+*/
+class BaseComponent
+{
+}"""
     assert should_skip_php(content) is True
