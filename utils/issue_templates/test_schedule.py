@@ -99,7 +99,7 @@ class TestGetIssueBody:
     """Test cases for get_issue_body function."""
 
     @pytest.fixture
-    def mock_constants(self):
+    def _(self):
         """Mock the imported constants."""
         with patch(
             "utils.issue_templates.schedule.GH_BASE_URL", "https://github.com"
@@ -108,7 +108,7 @@ class TestGetIssueBody:
         ) as mock_settings:
             yield mock_gh_url, mock_settings
 
-    def test_get_issue_body_with_coverage(self, mock_constants):
+    def test_get_issue_body_with_coverage(self, _):
         """Test generating issue body with coverage percentage."""
         owner = "testowner"
         repo = "testrepo"
@@ -122,7 +122,7 @@ class TestGetIssueBody:
         expected = f"Add unit tests for [src/main.py]({expected_url}) (Coverage: 75.5%).\n\nMOCK_SETTINGS_LINKS"
         assert result == expected
 
-    def test_get_issue_body_without_coverage(self, mock_constants):
+    def test_get_issue_body_without_coverage(self, _):
         """Test generating issue body without coverage percentage."""
         owner = "testowner"
         repo = "testrepo"
@@ -138,7 +138,7 @@ class TestGetIssueBody:
         )
         assert result == expected
 
-    def test_get_issue_body_zero_coverage(self, mock_constants):
+    def test_get_issue_body_zero_coverage(self, _):
         """Test generating issue body with zero coverage."""
         owner = "owner"
         repo = "repo"
@@ -152,7 +152,7 @@ class TestGetIssueBody:
         expected = f"Add unit tests for [utils/helper.py]({expected_url}) (Coverage: 0.0%).\n\nMOCK_SETTINGS_LINKS"
         assert result == expected
 
-    def test_get_issue_body_full_coverage(self, mock_constants):
+    def test_get_issue_body_full_coverage(self, _):
         """Test generating issue body with 100% coverage."""
         owner = "owner"
         repo = "repo"
@@ -166,7 +166,7 @@ class TestGetIssueBody:
         expected = f"Add unit tests for [src/complete.py]({expected_url}) (Coverage: 100.0%).\n\nMOCK_SETTINGS_LINKS"
         assert result == expected
 
-    def test_get_issue_body_different_branches(self, mock_constants):
+    def test_get_issue_body_different_branches(self, _):
         """Test generating issue body with different branch names."""
         owner = "owner"
         repo = "repo"
@@ -188,7 +188,7 @@ class TestGetIssueBody:
             assert expected_url in result
             assert "(Coverage: 50.0%)" in result
 
-    def test_get_issue_body_special_characters_in_paths(self, mock_constants):
+    def test_get_issue_body_special_characters_in_paths(self, _):
         """Test generating issue body with special characters in file paths."""
         owner = "test-owner"
         repo = "test_repo"
@@ -210,7 +210,7 @@ class TestGetIssueBody:
             assert f"[{file_path}]({expected_url})" in result
             assert "(Coverage: 42.5%)" in result
 
-    def test_get_issue_body_nested_file_paths(self, mock_constants):
+    def test_get_issue_body_nested_file_paths(self, _):
         """Test generating issue body with deeply nested file paths."""
         owner = "owner"
         repo = "repo"
@@ -226,7 +226,7 @@ class TestGetIssueBody:
         expected = f"Add unit tests for [very/deeply/nested/path/to/file.py]({expected_url}) (Coverage: 33.3%).\n\nMOCK_SETTINGS_LINKS"
         assert result == expected
 
-    def test_get_issue_body_decimal_coverage_values(self, mock_constants):
+    def test_get_issue_body_decimal_coverage_values(self, _):
         """Test generating issue body with various decimal coverage values."""
         owner = "owner"
         repo = "repo"
@@ -241,7 +241,7 @@ class TestGetIssueBody:
             expected_url = "https://github.com/owner/repo/blob/main/test.py"
             assert expected_url in result
 
-    def test_get_issue_body_url_construction(self, mock_constants):
+    def test_get_issue_body_url_construction(self, _):
         """Test that the GitHub URL is constructed correctly."""
         owner = "myowner"
         repo = "myrepo"
@@ -254,7 +254,7 @@ class TestGetIssueBody:
         expected_url = "https://github.com/myowner/myrepo/blob/mybranch/myfile.py"
         assert expected_url in result
 
-    def test_get_issue_body_return_type(self, mock_constants):
+    def test_get_issue_body_return_type(self, _):
         """Test that the function returns a string."""
         result = get_issue_body("owner", "repo", "main", "test.py", 50.0)
         assert isinstance(result, str)
@@ -262,7 +262,7 @@ class TestGetIssueBody:
         result = get_issue_body("owner", "repo", "main", "test.py", None)
         assert isinstance(result, str)
 
-    def test_get_issue_body_structure_with_coverage(self, mock_constants):
+    def test_get_issue_body_structure_with_coverage(self, _):
         """Test the structure of the issue body with coverage."""
         owner = "owner"
         repo = "repo"
@@ -280,7 +280,7 @@ class TestGetIssueBody:
         assert lines[1] == ""
         assert lines[2] == "MOCK_SETTINGS_LINKS"
 
-    def test_get_issue_body_structure_without_coverage(self, mock_constants):
+    def test_get_issue_body_structure_without_coverage(self, _):
         """Test the structure of the issue body without coverage."""
         owner = "owner"
         repo = "repo"
@@ -319,7 +319,7 @@ class TestGetIssueBody:
         assert "update coding rules" in result
         assert "exclude files" in result
 
-    def test_get_issue_body_edge_cases(self, mock_constants):
+    def test_get_issue_body_edge_cases(self, _):
         """Test edge cases for get_issue_body function."""
         # Test with empty strings
         result = get_issue_body("", "", "", "", None)
