@@ -290,7 +290,7 @@ async def test_add_reaction_to_issue_rate_limit_403_handled(
             "X-RateLimit-Used": "5000",
             "X-RateLimit-Reset": "1640995200",
         }
-        
+
         http_error = requests.exceptions.HTTPError("403 Forbidden")
         http_error.response = mock_response
         mock_response.raise_for_status.side_effect = http_error
@@ -322,7 +322,7 @@ async def test_add_reaction_to_issue_rate_limit_429_handled(
             "X-RateLimit-Used": "5000",
             "X-RateLimit-Reset": "1640995200",
         }
-        
+
         http_error = requests.exceptions.HTTPError("429 Too Many Requests")
         http_error.response = mock_response
         mock_response.raise_for_status.side_effect = http_error
@@ -354,7 +354,7 @@ async def test_add_reaction_to_issue_secondary_rate_limit_handled(
             "X-RateLimit-Used": "1000",
             "Retry-After": "60",
         }
-        
+
         http_error = requests.exceptions.HTTPError("403 Forbidden")
         http_error.response = mock_response
         mock_response.raise_for_status.side_effect = http_error
@@ -380,7 +380,7 @@ async def test_add_reaction_to_issue_500_error_handled(
         mock_response.status_code = 500
         mock_response.reason = "Internal Server Error"
         mock_response.text = "Internal server error"
-        
+
         http_error = requests.exceptions.HTTPError("500 Internal Server Error")
         http_error.response = mock_response
         mock_response.raise_for_status.side_effect = http_error
@@ -406,7 +406,7 @@ async def test_add_reaction_to_issue_401_unauthorized_handled(
         mock_response.status_code = 401
         mock_response.reason = "Unauthorized"
         mock_response.text = "Bad credentials"
-        
+
         http_error = requests.exceptions.HTTPError("401 Unauthorized")
         http_error.response = mock_response
         mock_response.raise_for_status.side_effect = http_error
@@ -432,7 +432,7 @@ async def test_add_reaction_to_issue_422_unprocessable_entity_handled(
         mock_response.status_code = 422
         mock_response.reason = "Unprocessable Entity"
         mock_response.text = "Validation Failed"
-        
+
         http_error = requests.exceptions.HTTPError("422 Unprocessable Entity")
         http_error.response = mock_response
         mock_response.raise_for_status.side_effect = http_error
@@ -454,7 +454,9 @@ async def test_add_reaction_to_issue_ssl_error_handled(
         "services.github.reactions.add_reaction_to_issue.requests.post"
     ) as mock_post:
         # Simulate SSL error
-        mock_post.side_effect = requests.exceptions.SSLError("SSL certificate verification failed")
+        mock_post.side_effect = requests.exceptions.SSLError(
+            "SSL certificate verification failed"
+        )
 
         result = await add_reaction_to_issue(123, "+1", base_args)
 
@@ -499,7 +501,9 @@ async def test_add_reaction_to_issue_attribute_error_handled(
         "services.github.reactions.add_reaction_to_issue.requests.post"
     ) as mock_post:
         # Simulate AttributeError
-        mock_post.side_effect = AttributeError("'NoneType' object has no attribute 'post'")
+        mock_post.side_effect = AttributeError(
+            "'NoneType' object has no attribute 'post'"
+        )
 
         result = await add_reaction_to_issue(123, "+1", base_args)
 
@@ -552,12 +556,12 @@ async def test_add_reaction_to_issue_special_characters_in_repo_names(
     mock_requests_post, mock_create_headers, mock_config
 ):
     """Test function with special characters in repository names."""
-    special_args = BaseArgs(
-        owner="test-owner_123", 
-        repo="test-repo.name_with-special.chars", 
-        token="test_token"
+    special_args = create_test_base_args(
+        owner="test-owner_123",
+        repo="test-repo.name_with-special.chars",
+        token="test_token",
     )
-    
+
     result = await add_reaction_to_issue(123, "+1", special_args)
 
     assert result is None
@@ -579,7 +583,7 @@ async def test_add_reaction_to_issue_unicode_content(
 ):
     """Test function with unicode characters in content."""
     unicode_content = "🎉"
-    
+
     result = await add_reaction_to_issue(123, unicode_content, base_args)
 
     assert result is None
@@ -601,12 +605,10 @@ async def test_add_reaction_to_issue_very_long_token(
 ):
     """Test function with very long token."""
     long_token = "a" * 1000  # Very long token
-    long_token_args = BaseArgs(
-        owner="test_owner", 
-        repo="test_repo", 
-        token=long_token
+    long_token_args = create_test_base_args(
+        owner="test_owner", repo="test_repo", token=long_token
     )
-    
+
     result = await add_reaction_to_issue(123, "+1", long_token_args)
 
     assert result is None
@@ -617,12 +619,10 @@ async def test_add_reaction_to_issue_empty_token(
     mock_requests_post, mock_create_headers, mock_config
 ):
     """Test function with empty token."""
-    empty_token_args = BaseArgs(
-        owner="test_owner", 
-        repo="test_repo", 
-        token=""
+    empty_token_args = create_test_base_args(
+        owner="test_owner", repo="test_repo", token=""
     )
-    
+
     result = await add_reaction_to_issue(123, "+1", empty_token_args)
 
     assert result is None
@@ -643,7 +643,7 @@ async def test_add_reaction_to_issue_response_json_returns_different_data(
             "id": 999,
             "content": "heart",
             "user": {"login": "test_user"},
-            "created_at": "2023-01-01T00:00:00Z"
+            "created_at": "2023-01-01T00:00:00Z",
         }
         mock_post.return_value = mock_response
 
