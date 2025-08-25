@@ -80,7 +80,7 @@ def test_get_schedulers_by_owner_id_empty_response(mock_scheduler_client):
     result = get_schedulers_by_owner_id(owner_id)
 
     # Assert
-    assert result == []
+    assert not result
     mock_scheduler_client.list_schedules.assert_called_once_with()
 
 
@@ -101,7 +101,7 @@ def test_get_schedulers_by_owner_id_no_matching_schedules(mock_scheduler_client)
     result = get_schedulers_by_owner_id(owner_id)
 
     # Assert
-    assert result == []
+    assert not result
     mock_scheduler_client.list_schedules.assert_called_once_with()
 
 
@@ -116,7 +116,7 @@ def test_get_schedulers_by_owner_id_missing_schedules_key(mock_scheduler_client)
     result = get_schedulers_by_owner_id(owner_id)
 
     # Assert
-    assert result == []
+    assert not result
     mock_scheduler_client.list_schedules.assert_called_once_with()
 
 
@@ -185,7 +185,7 @@ def test_get_schedulers_by_owner_id_client_error(mock_scheduler_client):
     result = get_schedulers_by_owner_id(owner_id)
 
     # Assert - should return default value [] due to handle_exceptions decorator
-    assert result == []
+    assert not result
     mock_scheduler_client.list_schedules.assert_called_once_with()
 
 
@@ -199,7 +199,7 @@ def test_get_schedulers_by_owner_id_botocore_error(mock_scheduler_client):
     result = get_schedulers_by_owner_id(owner_id)
 
     # Assert - should return default value [] due to handle_exceptions decorator
-    assert result == []
+    assert not result
     mock_scheduler_client.list_schedules.assert_called_once_with()
 
 
@@ -213,7 +213,7 @@ def test_get_schedulers_by_owner_id_generic_exception(mock_scheduler_client):
     result = get_schedulers_by_owner_id(owner_id)
 
     # Assert - should return default value [] due to handle_exceptions decorator
-    assert result == []
+    assert not result
     mock_scheduler_client.list_schedules.assert_called_once_with()
 
 
@@ -234,7 +234,7 @@ def test_get_schedulers_by_owner_id_exception_during_pagination(mock_scheduler_c
     result = get_schedulers_by_owner_id(owner_id)
 
     # Assert - should return default value [] due to handle_exceptions decorator
-    assert result == []
+    assert not result
     assert mock_scheduler_client.list_schedules.call_count == 2
 
 
@@ -280,4 +280,4 @@ def test_get_schedulers_by_owner_id_handle_exceptions_decorator():
         result = get_schedulers_by_owner_id(123)
 
         # Should return [] (default_return_value) and not raise exception (raise_on_error=False)
-        assert result == []
+        assert not result
