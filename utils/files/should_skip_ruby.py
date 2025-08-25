@@ -26,8 +26,31 @@ def should_skip_ruby(content: str) -> bool:
         if not stripped_line:
             continue
             
-        # Remove inline comments for processing (but keep the line for other checks)
-        code_part = stripped_line.split('#')[0].strip()
+        # Handle inline comments more carefully - only remove comments that are not in strings
+        code_part = stripped_line
+        # Simple approach: if line starts with #, it's a comment
+        if stripped_line.startswith("#"):
+            continue
+            
+        # For inline comments, we need to be more careful about strings
+        # For now, let's use a simple heuristic: find # that's not inside quotes
+        in_string = False
+        quote_char = None
+        comment_pos = -1
+        
+        for i, char in enumerate(stripped_line):
+            if not in_string and char in ['"', "'"]:
+                in_string = True
+                quote_char = char
+            elif in_string and char == quote_char and (i == 0 or stripped_line[i-1] != '\\'):
+                in_string = False
+                quote_char = None
+            elif not in_string and char == '#':
+                comment_pos = i
+                break
+                
+        if comment_pos >= 0:
+            code_part = stripped_line[:comment_pos].strip()
         
         # Skip lines that are only comments
         if not code_part:
