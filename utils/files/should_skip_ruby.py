@@ -16,24 +16,48 @@ def should_skip_ruby(content: str) -> bool:
     - Any executable code beyond declarations
     """
     lines = content.split("\n")
-
+    in_constant_definition = False
+    brace_count = 0
+    
     for line in lines:
-        line = line.strip()
+        stripped_line = line.strip()
+        
         # Skip comments
-        if line.startswith("#"):
+        if stripped_line.startswith("#"):
             continue
         # Skip empty lines
-        if not line:
+        if not stripped_line:
             continue
+            
+        # If we're inside a constant definition (multi-line hash/array)
+        if in_constant_definition:
+            # Count braces to track when we exit the definition
+            brace_count += stripped_line.count("{") + stripped_line.count("[")
+            brace_count -= stripped_line.count("}") + stripped_line.count("]")
+            
+            # If we've closed all braces, we're done with this constant
+            if brace_count <= 0:
+                in_constant_definition = False
+                brace_count = 0
+            continue
+            
         # Skip require statements
-        if line.startswith("require ") or line.startswith("require_relative "):
+        if stripped_line.startswith("require ") or stripped_line.startswith("require_relative "):
             continue
         # Skip autoload
-        if line.startswith("autoload "):
+        if stripped_line.startswith("autoload "):
             continue
-        # Skip constants (Ruby constants are UPPERCASE)
-        if re.match(r"^[A-Z_][A-Z0-9_]*\s*=", line):
+            
+        # Check for constants (Ruby constants are UPPERCASE)
+        if re.match(r"^[A-Z_][A-Z0-9_]*\s*=", stripped_line):
+            # Check if this constant definition contains opening braces (multi-line)
+            brace_count = stripped_line.count("{") + stripped_line.count("[")
+            brace_count -= stripped_line.count("}") + stripped_line.count("]")
+            
+            if brace_count > 0:
+                in_constant_definition = True
             continue
+            
         # If we find any other code, it's not export-only
         return False
 
