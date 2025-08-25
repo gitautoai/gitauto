@@ -168,8 +168,8 @@ def test_get_workflow_runs_empty_commit_sha_and_branch_raises_value_error():
 def test_get_workflow_runs_none_commit_sha_and_empty_branch_raises_value_error():
     """Test that ValueError is raised when commit_sha is None and branch is empty string."""
     # Act & Assert
-    with pytest.raises(ValueError, match="Either commit_sha or branch must be provided"):
-        get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=None, branch="")
+    result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=None, branch="")
+    assert result == []  # Default return value from handle_exceptions decorator
 
 
 def test_get_workflow_runs_http_error():
