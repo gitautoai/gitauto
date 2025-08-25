@@ -2,7 +2,7 @@
 from typing import cast
 
 # Third-party imports
-from schemas.supabase.fastapi.schema_public_latest import Repositories
+from schemas.supabase.types import Repositories
 
 # Local imports
 from services.supabase.client import supabase

@@ -1,4 +1,4 @@
-from schemas.supabase.fastapi.schema_public_latest import Coverages
+from schemas.supabase.types import Coverages
 from utils.error.handle_exceptions import handle_exceptions
 
 

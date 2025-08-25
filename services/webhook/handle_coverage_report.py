@@ -4,7 +4,6 @@ from typing import TypedDict, Literal
 import json
 
 # Local imports
-from schemas.supabase.fastapi.schema_public_latest import RepoCoverageInsert
 from services.coverages.parse_lcov_coverage import parse_lcov_coverage
 from services.github.artifacts.download_artifact import download_artifact
 from services.github.artifacts.get_workflow_artifacts import get_workflow_artifacts
@@ -170,19 +169,19 @@ async def handle_coverage_report(
     repo_coverage = next((c for c in coverage_data if c["level"] == "repository"), None)
 
     if repo_coverage:
-        repo_coverage_data = RepoCoverageInsert(
-            owner_id=owner_id,
-            owner_name=owner_name,
-            repo_id=repo_id,
-            repo_name=repo_name,
-            branch_name=head_branch,
-            primary_language=primary_language,
-            line_coverage=repo_coverage["line_coverage"],
-            statement_coverage=repo_coverage["statement_coverage"],
-            function_coverage=repo_coverage["function_coverage"],
-            branch_coverage=repo_coverage["branch_coverage"],
-            created_by=user_name,
-        )
+        repo_coverage_data = {
+            "owner_id": owner_id,
+            "owner_name": owner_name,
+            "repo_id": repo_id,
+            "repo_name": repo_name,
+            "branch_name": head_branch,
+            "primary_language": primary_language,
+            "line_coverage": repo_coverage["line_coverage"],
+            "statement_coverage": repo_coverage["statement_coverage"],
+            "function_coverage": repo_coverage["function_coverage"],
+            "branch_coverage": repo_coverage["branch_coverage"],
+            "created_by": user_name,
+        }
 
         upsert_repo_coverage(repo_coverage_data)
 

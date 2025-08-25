@@ -2,40 +2,39 @@ from unittest.mock import patch, MagicMock
 import pytest
 from datetime import datetime
 
-from schemas.supabase.fastapi.schema_public_latest import RepoCoverageInsert
 from services.supabase.repo_coverage.upsert_repo_coverage import upsert_repo_coverage
 
 
 @pytest.fixture
 def sample_repo_coverage_data():
-    """Fixture providing sample RepoCoverageInsert data."""
-    return RepoCoverageInsert(
-        branch_name="main",
-        created_by="test-user",
-        owner_id=123456,
-        owner_name="test-owner",
-        repo_id=789012,
-        repo_name="test-repo",
-        branch_coverage=85.5,
-        function_coverage=90.0,
-        line_coverage=88.2,
-        statement_coverage=87.8,
-        primary_language="Python",
-        created_at=datetime(2023, 1, 1, 12, 0, 0),
-    )
+    """Fixture providing sample repo coverage data."""
+    return {
+        "branch_name": "main",
+        "created_by": "test-user",
+        "owner_id": 123456,
+        "owner_name": "test-owner",
+        "repo_id": 789012,
+        "repo_name": "test-repo",
+        "branch_coverage": 85.5,
+        "function_coverage": 90.0,
+        "line_coverage": 88.2,
+        "statement_coverage": 87.8,
+        "primary_language": "Python",
+        "created_at": datetime(2023, 1, 1, 12, 0, 0),
+    }
 
 
 @pytest.fixture
 def minimal_repo_coverage_data():
-    """Fixture providing minimal required RepoCoverageInsert data."""
-    return RepoCoverageInsert(
-        branch_name="develop",
-        created_by="minimal-user",
-        owner_id=111111,
-        owner_name="minimal-owner",
-        repo_id=222222,
-        repo_name="minimal-repo",
-    )
+    """Fixture providing minimal required repo coverage data."""
+    return {
+        "branch_name": "develop",
+        "created_by": "minimal-user",
+        "owner_id": 111111,
+        "owner_name": "minimal-owner",
+        "repo_id": 222222,
+        "repo_name": "minimal-repo",
+    }
 
 
 @pytest.fixture
@@ -66,10 +65,9 @@ class TestUpsertRepoCoverage:
         assert result == expected_data
         mock_supabase_client.table.assert_called_once_with("repo_coverage")
 
-        # Verify the insert was called with model_dump(exclude_none=True)
-        expected_insert_data = sample_repo_coverage_data.model_dump(exclude_none=True)
+        # Verify the insert was called with the data
         mock_supabase_client.table.return_value.insert.assert_called_once_with(
-            expected_insert_data
+            sample_repo_coverage_data
         )
         mock_supabase_client.table.return_value.insert.return_value.execute.assert_called_once()
 
@@ -93,29 +91,24 @@ class TestUpsertRepoCoverage:
         assert result == expected_data
         mock_supabase_client.table.assert_called_once_with("repo_coverage")
 
-        # Verify the insert was called with model_dump(exclude_none=True)
-        expected_insert_data = minimal_repo_coverage_data.model_dump(exclude_none=True)
+        # Verify the insert was called with the data
         mock_supabase_client.table.return_value.insert.assert_called_once_with(
-            expected_insert_data
+            minimal_repo_coverage_data
         )
         mock_supabase_client.table.return_value.insert.return_value.execute.assert_called_once()
 
     def test_upsert_with_none_values_excluded(self, mock_supabase_client):
         """Test that None values are properly excluded from the insert data."""
         # Setup
-        coverage_data = RepoCoverageInsert(
-            branch_name="feature-branch",
-            created_by="test-user",
-            owner_id=123456,
-            owner_name="test-owner",
-            repo_id=789012,
-            repo_name="test-repo",
-            branch_coverage=None,  # This should be excluded
-            function_coverage=None,  # This should be excluded
-            line_coverage=75.0,
-            statement_coverage=None,  # This should be excluded
-            primary_language=None,  # This should be excluded
-        )
+        coverage_data = {
+            "branch_name": "feature-branch",
+            "created_by": "test-user",
+            "owner_id": 123456,
+            "owner_name": "test-owner",
+            "repo_id": 789012,
+            "repo_name": "test-repo",
+            "line_coverage": 75.0,
+        }
 
         expected_data = [{"id": 3, "repo_name": "test-repo"}]
         mock_result = MagicMock()
@@ -131,13 +124,10 @@ class TestUpsertRepoCoverage:
         # Verify
         assert result == expected_data
 
-        # Verify that None values were excluded
+        # Verify that only included fields are present
         call_args = mock_supabase_client.table.return_value.insert.call_args[0][0]
-        assert "branch_coverage" not in call_args
-        assert "function_coverage" not in call_args
-        assert "statement_coverage" not in call_args
-        assert "primary_language" not in call_args
         assert call_args["line_coverage"] == 75.0
+        assert len(call_args) == 7  # Only the 7 fields we included
 
     def test_empty_result_data(self, mock_supabase_client, sample_repo_coverage_data):
         """Test handling of empty result data."""

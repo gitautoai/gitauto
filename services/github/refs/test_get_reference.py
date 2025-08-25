@@ -6,12 +6,13 @@ from config import TIMEOUT
 
 from services.github.refs.get_reference import get_reference
 from services.github.types.github_types import BaseArgs
+from test_utils import create_test_base_args
 
 
 @pytest.fixture
 def base_args():
     """Fixture providing valid BaseArgs for testing."""
-    return BaseArgs(
+    return create_test_base_args(
         owner="test-owner",
         repo="test-repo",
         token="test-token",
@@ -111,7 +112,7 @@ def test_get_reference_with_different_branch_names(
         mock_requests_get.reset_mock()
         mock_requests_get.return_value = mock_response
 
-        args = BaseArgs(
+        args = create_test_base_args(
             owner="owner", repo="repo", token="token", new_branch=branch_name
         )
 
@@ -132,7 +133,7 @@ def test_get_reference_with_special_characters_in_params(
     mock_response, mock_requests_get, mock_create_headers
 ):
     """Test with special characters in owner, repo, and branch names."""
-    args = BaseArgs(
+    args = create_test_base_args(
         owner="test-owner-123",
         repo="test.repo_name",
         token="ghp_test123token",

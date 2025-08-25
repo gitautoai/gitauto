@@ -3,6 +3,7 @@ import requests
 import pytest
 from services.github.reactions.add_reaction_to_issue import add_reaction_to_issue
 from services.github.types.github_types import BaseArgs
+from test_utils import create_test_base_args
 
 
 @pytest.fixture
@@ -34,7 +35,9 @@ def mock_create_headers():
 @pytest.fixture
 def base_args():
     """Fixture providing valid BaseArgs for testing."""
-    return BaseArgs(owner="test_owner", repo="test_repo", token="test_token_123")
+    return create_test_base_args(
+        owner="test_owner", repo="test_repo", token="test_token_123"
+    )
 
 
 @pytest.fixture
@@ -120,10 +123,10 @@ async def test_add_reaction_to_issue_different_repositories(
 ):
     """Test adding reactions to issues in different repositories."""
     test_cases = [
-        BaseArgs(owner="owner1", repo="repo1", token="token1"),
-        BaseArgs(owner="owner2", repo="repo2", token="token2"),
-        BaseArgs(owner="test-org", repo="test-repo", token="token3"),
-        BaseArgs(owner="user_name", repo="project_name", token="token4"),
+        create_test_base_args(owner="owner1", repo="repo1", token="token1"),
+        create_test_base_args(owner="owner2", repo="repo2", token="token2"),
+        create_test_base_args(owner="test-org", repo="test-repo", token="token3"),
+        create_test_base_args(owner="user_name", repo="project_name", token="token4"),
     ]
 
     issue_number = 100

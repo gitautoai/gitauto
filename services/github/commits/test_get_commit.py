@@ -8,13 +8,14 @@ import requests
 # Local imports
 from services.github.commits.get_commit import get_commit
 from services.github.types.github_types import BaseArgs
+from test_utils import create_test_base_args
 from tests.constants import OWNER, REPO, TOKEN
 
 
 @pytest.fixture
 def base_args():
     """Fixture providing base arguments for testing."""
-    return BaseArgs(owner=OWNER, repo=REPO, token=TOKEN)
+    return create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
 
 
 @pytest.fixture
@@ -72,7 +73,7 @@ def test_get_commit_headers_creation(base_args, mock_commit_response):
         mock_headers.return_value = {"Authorization": "Bearer custom_token"}
 
         # Create base args with custom token
-        custom_base_args = BaseArgs(
+        custom_base_args = create_test_base_args(
             owner="test-owner", repo="test-repo", token="custom_token_123"
         )
 
@@ -93,7 +94,7 @@ def test_get_commit_url_construction(base_args, mock_commit_response):
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
         # Test with different parameters
-        custom_base_args = BaseArgs(
+        custom_base_args = create_test_base_args(
             owner="test-owner", repo="test-repo", token="test_token"
         )
         get_commit(custom_base_args, "def789ghi012")
@@ -117,7 +118,7 @@ def test_get_commit_with_special_characters(mock_commit_response):
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
         # Test with special characters
-        special_base_args = BaseArgs(
+        special_base_args = create_test_base_args(
             owner="owner-name", repo="repo_name.test", token="token_123"
         )
         get_commit(special_base_args, "abc-123_def.456")

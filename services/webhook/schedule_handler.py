@@ -4,7 +4,7 @@ from typing import cast
 
 # Local imports (Types)
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
-from schemas.supabase.fastapi.schema_public_latest import Coverages
+from schemas.supabase.types import Coverages
 
 # Local imports (AWS)
 from services.aws.delete_scheduler import delete_scheduler
@@ -109,7 +109,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
     # Extract necessary data
     all_files_with_sizes = [
-        (item["path"], item["size"])
+        (item["path"], item.get("size", 0))
         for item in tree_items
         if item["type"] == "blob"  # Only files
     ]

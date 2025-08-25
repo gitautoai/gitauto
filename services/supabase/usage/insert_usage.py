@@ -1,5 +1,4 @@
 from typing import Literal, cast
-from schemas.supabase.fastapi.schema_public_latest import UsageInsert
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -30,19 +29,23 @@ def insert_usage(
     trigger: Trigger,
     pr_number: int | None = None,
 ):
-    usage_data = UsageInsert(
-        owner_id=owner_id,
-        owner_type=owner_type,
-        owner_name=owner_name,
-        repo_id=repo_id,
-        repo_name=repo_name,
-        issue_number=issue_number,
-        user_id=user_id,
-        installation_id=installation_id,
-        source=source,
-        trigger=trigger,
-        pr_number=pr_number,
+    data, _ = (
+        supabase.table(table_name="usage")
+        .insert(
+            json={
+                "owner_id": owner_id,
+                "owner_type": owner_type,
+                "owner_name": owner_name,
+                "repo_id": repo_id,
+                "repo_name": repo_name,
+                "issue_number": issue_number,
+                "user_id": user_id,
+                "installation_id": installation_id,
+                "source": source,
+                "trigger": trigger,
+                "pr_number": pr_number,
+            }
+        )
+        .execute()
     )
-    usage_data_dict = usage_data.model_dump(exclude_none=True)
-    data, _ = supabase.table(table_name="usage").insert(json=usage_data_dict).execute()
     return cast(int, data[1][0]["id"])

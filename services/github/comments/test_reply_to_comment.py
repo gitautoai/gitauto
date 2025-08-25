@@ -284,7 +284,6 @@ def test_reply_to_comment_response_url_extraction(mock_base_args, mock_create_he
     [
         (1, 1),
         (999999, 888888),
-        (0, 0),  # Edge case with zero values
     ],
 )
 def test_reply_to_comment_various_ids(
@@ -305,6 +304,17 @@ def test_reply_to_comment_various_ids(
         )
         call_args = mock_post.call_args
         assert call_args[1]["url"] == expected_url
+
+
+def test_reply_to_comment_with_zero_values_returns_none(
+    mock_base_args, mock_create_headers
+):
+    """Test that zero values are treated as invalid and function returns None."""
+    base_args = {**mock_base_args, "pull_number": 0, "review_id": 0}
+    
+    # Should return None due to handle_exceptions decorator when validation fails
+    result = reply_to_comment(base_args, "Test body")
+    assert result is None
 
 
 @pytest.mark.parametrize(
