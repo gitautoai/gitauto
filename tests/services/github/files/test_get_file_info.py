@@ -21,7 +21,7 @@ class TestGetFileInfo:
             owner="test-owner",
             repo="test-repo",
             token="test-token",
-            new_branch="test-branch"
+            new_branch="test-branch",
         )
 
     @pytest.fixture
@@ -42,8 +42,8 @@ class TestGetFileInfo:
             "_links": {
                 "self": "https://api.github.com/repos/test-owner/test-repo/contents/src/test.py",
                 "git": "https://api.github.com/repos/test-owner/test-repo/git/blobs/abc123def456",
-                "html": "https://github.com/test-owner/test-repo/blob/test-branch/src/test.py"
-            }
+                "html": "https://github.com/test-owner/test-repo/blob/test-branch/src/test.py",
+            },
         }
 
     @pytest.fixture
@@ -62,8 +62,8 @@ class TestGetFileInfo:
             "_links": {
                 "self": "https://api.github.com/repos/test-owner/test-repo/contents/src",
                 "git": "https://api.github.com/repos/test-owner/test-repo/git/trees/dir123abc456",
-                "html": "https://github.com/test-owner/test-repo/tree/test-branch/src"
-            }
+                "html": "https://github.com/test-owner/test-repo/tree/test-branch/src",
+            },
         }
 
     @pytest.fixture
@@ -74,19 +74,21 @@ class TestGetFileInfo:
                 "type": "file",
                 "name": "file1.py",
                 "path": "src/file1.py",
-                "sha": "file1sha"
+                "sha": "file1sha",
             },
             {
                 "type": "file",
                 "name": "file2.py",
                 "path": "src/file2.py",
-                "sha": "file2sha"
-            }
+                "sha": "file2sha",
+            },
         ]
 
     @patch("services.github.files.get_file_info.requests.get")
     @patch("services.github.files.get_file_info.create_headers")
-    def test_successful_file_retrieval(self, mock_create_headers, mock_get, base_args, mock_file_info):
+    def test_successful_file_retrieval(
+        self, mock_create_headers, mock_get, base_args, mock_file_info
+    ):
         """Test successful file information retrieval."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_response = MagicMock()
@@ -101,7 +103,7 @@ class TestGetFileInfo:
         mock_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src/test.py?ref=test-branch",
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=120,
         )
         mock_response.raise_for_status.assert_called_once()
 
@@ -121,14 +123,16 @@ class TestGetFileInfo:
         mock_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/nonexistent/file.py?ref=test-branch",
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=120,
         )
         # Should not call raise_for_status for 404
         mock_response.raise_for_status.assert_not_called()
 
     @patch("services.github.files.get_file_info.requests.get")
     @patch("services.github.files.get_file_info.create_headers")
-    def test_directory_response_returns_none(self, mock_create_headers, mock_get, base_args, mock_directory_info):
+    def test_directory_response_returns_none(
+        self, mock_create_headers, mock_get, base_args, mock_directory_info
+    ):
         """Test that directory response returns None."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_response = MagicMock()
@@ -143,13 +147,15 @@ class TestGetFileInfo:
         mock_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src?ref=test-branch",
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=120,
         )
         mock_response.raise_for_status.assert_called_once()
 
     @patch("services.github.files.get_file_info.requests.get")
     @patch("services.github.files.get_file_info.create_headers")
-    def test_directory_listing_returns_none(self, mock_create_headers, mock_get, base_args, mock_directory_listing):
+    def test_directory_listing_returns_none(
+        self, mock_create_headers, mock_get, base_args, mock_directory_listing
+    ):
         """Test that directory listing (list response) returns None."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_response = MagicMock()
@@ -164,13 +170,15 @@ class TestGetFileInfo:
         mock_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src?ref=test-branch",
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=120,
         )
         mock_response.raise_for_status.assert_called_once()
 
     @patch("services.github.files.get_file_info.requests.get")
     @patch("services.github.files.get_file_info.create_headers")
-    def test_http_error_handled_by_decorator(self, mock_create_headers, mock_get, base_args):
+    def test_http_error_handled_by_decorator(
+        self, mock_create_headers, mock_get, base_args
+    ):
         """Test that HTTP errors are handled by the decorator."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_response = MagicMock()
@@ -181,7 +189,7 @@ class TestGetFileInfo:
             "X-RateLimit-Limit": "5000",
             "X-RateLimit-Remaining": "4999",
             "X-RateLimit-Used": "1",
-            "X-RateLimit-Reset": "1640995200"
+            "X-RateLimit-Reset": "1640995200",
         }
         http_error = requests.exceptions.HTTPError("Forbidden")
         http_error.response = mock_response
@@ -198,7 +206,9 @@ class TestGetFileInfo:
 
     @patch("services.github.files.get_file_info.requests.get")
     @patch("services.github.files.get_file_info.create_headers")
-    def test_json_decode_error_handled_by_decorator(self, mock_create_headers, mock_get, base_args):
+    def test_json_decode_error_handled_by_decorator(
+        self, mock_create_headers, mock_get, base_args
+    ):
         """Test that JSON decode errors are handled by the decorator."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_response = MagicMock()
@@ -216,7 +226,9 @@ class TestGetFileInfo:
 
     @patch("services.github.files.get_file_info.requests.get")
     @patch("services.github.files.get_file_info.create_headers")
-    def test_request_exception_handled_by_decorator(self, mock_create_headers, mock_get, base_args):
+    def test_request_exception_handled_by_decorator(
+        self, mock_create_headers, mock_get, base_args
+    ):
         """Test that request exceptions are handled by the decorator."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_get.side_effect = requests.exceptions.RequestException("Network error")
@@ -230,7 +242,9 @@ class TestGetFileInfo:
 
     @patch("services.github.files.get_file_info.requests.get")
     @patch("services.github.files.get_file_info.create_headers")
-    def test_kwargs_parameter_ignored(self, mock_create_headers, mock_get, base_args, mock_file_info):
+    def test_kwargs_parameter_ignored(
+        self, mock_create_headers, mock_get, base_args, mock_file_info
+    ):
         """Test that additional kwargs are ignored."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_response = MagicMock()
@@ -238,7 +252,9 @@ class TestGetFileInfo:
         mock_response.json.return_value = mock_file_info
         mock_get.return_value = mock_response
 
-        result = get_file_info("src/test.py", base_args, extra_param="ignored", another_param=123)
+        result = get_file_info(
+            "src/test.py", base_args, extra_param="ignored", another_param=123
+        )
 
         assert result == mock_file_info
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -246,7 +262,9 @@ class TestGetFileInfo:
 
     @patch("services.github.files.get_file_info.requests.get")
     @patch("services.github.files.get_file_info.create_headers")
-    def test_url_construction_with_special_characters(self, mock_create_headers, mock_get, base_args, mock_file_info):
+    def test_url_construction_with_special_characters(
+        self, mock_create_headers, mock_get, base_args, mock_file_info
+    ):
         """Test URL construction with special characters in file path."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_response = MagicMock()
@@ -263,20 +281,22 @@ class TestGetFileInfo:
         mock_get.assert_called_once_with(
             url=expected_url,
             headers={"Authorization": "Bearer test-token"},
-            timeout=120
+            timeout=120,
         )
 
     @patch("services.github.files.get_file_info.requests.get")
     @patch("services.github.files.get_file_info.create_headers")
-    def test_different_base_args_values(self, mock_create_headers, mock_get, mock_file_info):
+    def test_different_base_args_values(
+        self, mock_create_headers, mock_get, mock_file_info
+    ):
         """Test function with different base_args values."""
         custom_base_args = create_test_base_args(
             owner="different-owner",
             repo="different-repo",
             token="different-token",
-            new_branch="feature-branch"
+            new_branch="feature-branch",
         )
-        
+
         mock_create_headers.return_value = {"Authorization": "Bearer different-token"}
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -290,5 +310,5 @@ class TestGetFileInfo:
         mock_get.assert_called_once_with(
             url="https://api.github.com/repos/different-owner/different-repo/contents/src/test.py?ref=feature-branch",
             headers={"Authorization": "Bearer different-token"},
-            timeout=120
+            timeout=120,
         )
