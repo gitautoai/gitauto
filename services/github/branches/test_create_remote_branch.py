@@ -1,8 +1,9 @@
 from unittest.mock import patch, MagicMock
 import pytest
 import requests
+
 from services.github.branches.create_remote_branch import create_remote_branch
-from services.github.types.github_types import BaseArgs
+from test_utils import create_test_base_args
 
 
 @pytest.fixture
@@ -35,12 +36,7 @@ def mock_create_headers():
 @pytest.fixture
 def sample_base_args():
     """Fixture providing sample BaseArgs for testing."""
-    return BaseArgs(
-        owner="test_owner",
-        repo="test_repo",
-        new_branch="feature/test-branch",
-        token="test_token_123",
-    )
+    return create_test_base_args()
 
 
 @pytest.fixture
@@ -99,7 +95,7 @@ def test_create_remote_branch_with_different_branch_names(
         mock_requests_post.reset_mock()
         mock_create_headers.reset_mock()
 
-        base_args = BaseArgs(
+        base_args = create_test_base_args(
             owner="test_owner",
             repo="test_repo",
             new_branch=branch_name,
@@ -250,7 +246,7 @@ def test_create_remote_branch_with_special_characters_in_owner_repo(
     mock_requests_post, mock_create_headers, sample_sha
 ):
     """Test branch creation with special characters in owner and repo names."""
-    base_args = BaseArgs(
+    base_args = create_test_base_args(
         owner="test-owner_123",
         repo="test.repo-name_456",
         new_branch="feature/test",
@@ -271,7 +267,7 @@ def test_create_remote_branch_extracts_base_args_correctly(
     mock_requests_post, mock_create_headers, sample_sha
 ):
     """Test that BaseArgs values are extracted correctly."""
-    base_args = BaseArgs(
+    base_args = create_test_base_args(
         owner="extracted_owner",
         repo="extracted_repo",
         new_branch="extracted/branch",
@@ -328,7 +324,7 @@ def test_create_remote_branch_with_empty_values(
     mock_requests_post, mock_create_headers
 ):
     """Test behavior with empty or minimal values."""
-    base_args = BaseArgs(owner="", repo="", new_branch="", token="")
+    base_args = create_test_base_args(owner="", repo="", new_branch="", token="")
 
     result = create_remote_branch(sha="", base_args=base_args)
     assert result is None
@@ -413,7 +409,7 @@ def test_create_remote_branch_ref_format_consistency(
     for branch_name, expected_ref in test_branches:
         mock_requests_post.reset_mock()
 
-        base_args = BaseArgs(
+        base_args = create_test_base_args(
             owner="test_owner",
             repo="test_repo",
             new_branch=branch_name,

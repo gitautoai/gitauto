@@ -6,13 +6,16 @@ from requests import HTTPError
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.markdown.render_text import render_text
 from services.github.types.github_types import BaseArgs
+from test_utils import create_test_base_args
 from tests.constants import OWNER, REPO, TOKEN
 
 
 @pytest.fixture
 def mock_base_args():
     """Fixture providing test BaseArgs."""
-    return BaseArgs(owner="test-owner", repo="test-repo", token="test-token-123")
+    return create_test_base_args(
+        owner="test-owner", repo="test-repo", token="test-token-123"
+    )
 
 
 @pytest.fixture
@@ -56,7 +59,7 @@ def mock_create_headers(mock_headers):
 @pytest.fixture
 def integration_base_args():
     """Fixture providing real BaseArgs for integration testing."""
-    return BaseArgs(owner=OWNER, repo=REPO, token=TOKEN)
+    return create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
 
 
 def test_render_text_successful_request(
@@ -145,7 +148,7 @@ def test_render_text_extracts_correct_base_args_values(
     mock_post_request, mock_create_headers
 ):
     """Test that function correctly extracts values from BaseArgs."""
-    base_args = BaseArgs(
+    base_args = create_test_base_args(
         owner="different-owner", repo="different-repo", token="different-token-456"
     )
     text = "Test content"
@@ -332,7 +335,7 @@ def test_render_text_context_formatting(
     owner, repo, expected_context, mock_post_request, mock_create_headers
 ):
     """Test that context is correctly formatted for various owner/repo combinations."""
-    base_args = BaseArgs(owner=owner, repo=repo, token="test-token")
+    base_args = create_test_base_args(owner=owner, repo=repo, token="test-token")
     text = "Test"
 
     render_text(base_args, text)
@@ -498,7 +501,7 @@ def test_integration_render_text_unicode_content(integration_base_args):
 
 def test_integration_render_text_with_invalid_token():
     """Integration test: render text with invalid token should return empty string."""
-    base_args = BaseArgs(owner=OWNER, repo=REPO, token="invalid-token")
+    base_args = create_test_base_args(owner=OWNER, repo=REPO, token="invalid-token")
     text = "# Test"
 
     result = render_text(base_args, text)

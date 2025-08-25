@@ -4,12 +4,15 @@ import requests
 from requests import HTTPError
 from services.github.comments.delete_comment import delete_comment
 from services.github.types.github_types import BaseArgs
+from test_utils import create_test_base_args
 
 
 @pytest.fixture
 def base_args():
     """Fixture providing test BaseArgs."""
-    return BaseArgs(owner="test-owner", repo="test-repo", token="test-token-123")
+    return create_test_base_args(
+        owner="test-owner", repo="test-repo", token="test-token-123"
+    )
 
 
 @pytest.fixture
@@ -88,7 +91,7 @@ def test_delete_comment_with_different_owner_repo(
     mock_delete_response, mock_create_headers
 ):
     """Test comment deletion with different owner and repo."""
-    base_args = BaseArgs(
+    base_args = create_test_base_args(
         owner="different-owner", repo="different-repo", token="different-token"
     )
     comment_id = 54321
@@ -225,7 +228,7 @@ def test_delete_comment_with_special_characters_in_repo_name(
     mock_delete_response, mock_create_headers
 ):
     """Test comment deletion with special characters in repository name."""
-    base_args = BaseArgs(
+    base_args = create_test_base_args(
         owner="test-owner", repo="test-repo-with-dashes", token="test-token"
     )
     comment_id = 12345
