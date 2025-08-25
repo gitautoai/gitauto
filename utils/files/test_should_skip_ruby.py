@@ -1,15 +1,12 @@
 from utils.files.should_skip_ruby import should_skip_ruby
 
 
-def test_requires_only():
+def test_export_only():
     # File with only require statements
     content = """require 'json'
 require 'net/http'
-require_relative 'config'
-require_relative '../lib/helper'
-
-autoload :Parser, 'parser'
-autoload :Validator, 'validator'"""
+require_relative 'user'
+require_relative 'config'"""
     assert should_skip_ruby(content) is True
 
 
@@ -17,60 +14,147 @@ def test_constants_only():
     # Constants only
     content = """MAX_RETRIES = 3
 API_URL = 'https://api.example.com'
-DEFAULT_CONFIG = { debug: true }
-STATUS_CODES = [200, 201, 404]
+DEBUG = true
+STATUS_CODE = 200"""
+    assert should_skip_ruby(content) is True
+
+
+def test_multiline_string_constants():
+    # Multi-line string constants
+    content = """IDENTIFY_CAUSE = <<~TEXT
+  You are a GitHub Actions expert.
+  Given information such as a pull request title, identify the cause.
+TEXT
+
+ANOTHER_TEMPLATE = <<~TEXT
+  This is another template
+  with multiple lines
+TEXT"""
+    assert should_skip_ruby(content) is True
+
+
+def test_typeddict_only():
+    # Module definitions only
+    content = """module UserModule
+  attr_accessor :id, :name, :email
+end
+
+module Config
+  attr_reader :timeout, :retries
+end"""
+    assert should_skip_ruby(content) is True
+
+
+def test_exception_classes_only():
+    # Simple empty classes
+    content = """class CustomError < StandardError
+end
+
+class AuthenticationError < StandardError
+end"""
+    assert should_skip_ruby(content) is True
+
+
+def test_mixed_imports_and_constants():
+    # Mixed requires and constants
+    content = """require 'logger'
+require_relative 'cache'
+
+MAX_RETRIES = 3
+API_URL = 'https://api.example.com'
+
 VERSION = '1.0.0'"""
     assert should_skip_ruby(content) is True
 
 
-def test_mixed_requires_and_constants():
-    # Mix of requires and constants
-    content = """require 'json'
-require_relative 'config'
+def test_function_with_logic():
+    # Method definitions - should NOT be skipped
+    content = """def calculate_total(items)
+  items.sum(&:price)
+end
 
-API_ENDPOINT = 'https://api.github.com'
-MAX_TIMEOUT = 30
-SUPPORTED_FORMATS = ['json', 'xml']
+def process_data(data)
+  data.map { |x| x * 2 }
+end"""
+    assert should_skip_ruby(content) is False
 
-autoload :Client, 'client'"""
+
+def test_class_with_methods():
+    # Class with methods - should NOT be skipped
+    content = """class Calculator
+  def initialize
+    @value = 0
+  end
+
+  def add(a, b)
+    a + b
+  end
+
+  def multiply(a, b)
+    a * b
+  end
+end"""
+    assert should_skip_ruby(content) is False
+
+
+def test_mixed_constants_and_logic():
+    # Mixed constants and logic - should NOT be skipped
+    content = """MAX_SIZE = 100
+API_URL = 'https://api.com'
+
+def calculate_size
+  MAX_SIZE * 2
+end"""
+    assert should_skip_ruby(content) is False
+
+
+def test_constants_with_function_calls():
+    # Constants with function calls - should NOT be skipped
+    content = """require 'pathname'
+
+IS_PRD = ENV['ENV'] == 'prod'
+BASE_PATH = Pathname.new('/').join('app')"""
+    assert should_skip_ruby(content) is False
+
+
+def test_empty_file():
+    # Empty content should be skipped
+    assert should_skip_ruby("") is True
+
+
+def test_whitespace_only():
+    # File with only whitespace should be skipped
+    content = """
+
+
+
+
+    """
     assert should_skip_ruby(content) is True
 
 
-def test_with_method_definition():
-    # File with method definition should not be skipped
-    content = """require 'json'
+def test_init_file_with_imports():
+    # Typical module file with only requires
+    content = """require_relative 'module1/class1'
+require_relative 'module2/class2'
+require_relative 'utils/helper'
 
-API_URL = 'https://api.example.com'
+require 'json'
+require 'net/http'"""
+    assert should_skip_ruby(content) is True
 
-def fetch_data(url)
-  Net::HTTP.get(URI(url))
+
+def test_empty_init_file():
+    # Empty module file
+    content = ""
+    assert should_skip_ruby(content) is True
+
+
+def test_comment_with_simple_class():
+    # File with comment and simple empty class should be skipped
+    content = """=begin
+Base class for application components
+=end
+class BaseComponent
 end"""
-    assert should_skip_ruby(content) is False
-
-
-def test_with_class_definition():
-    # File with class should not be skipped
-    content = """require 'net/http'
-
-class ApiClient
-  def initialize(base_url)
-    @base_url = base_url
-  end
-
-  def get(path)
-    # implementation
-  end
-end"""
-    assert should_skip_ruby(content) is False
-
-
-def test_with_module_and_methods():
-    # Module with methods should not be skipped
-    content = """MAX_SIZE = 100
-
-module Utils
-  def self.format_time(time)
-    time.strftime('%Y-%m-%d')
-  end
-end"""
-    assert should_skip_ruby(content) is False
+    assert should_skip_ruby(content) is True

@@ -24,9 +24,19 @@ def should_skip_php(content: str) -> bool:
     in_trait = False
     in_class = False
     in_array_initialization = False
+    in_heredoc = False
 
     for line in lines:
         line = line.strip()
+
+        # Handle heredoc strings (<<<EOT ... EOT;)
+        if not in_heredoc and "<<<" in line:
+            in_heredoc = True
+            continue
+        if in_heredoc:
+            if line.endswith(";") and not line.startswith("<<<"):
+                in_heredoc = False
+            continue
 
         # Handle multi-line comments
         if "/*" in line:
@@ -48,12 +58,14 @@ def should_skip_php(content: str) -> bool:
 
         # Handle interface definitions (no implementation)
         if re.match(r"^(abstract\s+|final\s+)?interface\s+\w+", line):
-            if "{" in line:
-                in_interface = True
+            in_interface = True
+            continue
+        if re.match(r"^\{", line):
             continue
         if in_interface:
             if "}" in line:
                 in_interface = False
+                continue
             # Skip method signatures in interfaces
             if re.match(
                 r"^\s*(public\s+|private\s+|protected\s+)?function\s+\w+\s*\(.*\)\s*;",

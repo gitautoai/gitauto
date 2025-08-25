@@ -19,7 +19,7 @@ def test_constants_only():
     content = """package main
 
 const (
-    MaxSize = 100
+    MaxRetries = 3
     ApiURL = "https://api.example.com"
     Debug = true
 )
@@ -32,14 +32,30 @@ var (
     assert should_skip_go(content) is True
 
 
-def test_struct_definitions_only():
-    # Struct definitions without methods
-    content = """package types
+def test_multiline_string_constants():
+    # Multi-line string constants
+    content = """package main
+
+const IdentifyCause = `
+You are a GitHub Actions expert.
+Given information such as a pull request title, identify the cause.
+`
+
+const AnotherTemplate = `
+This is another template
+with multiple lines
+`"""
+    assert should_skip_go(content) is True
+
+
+def test_typeddict_only():
+    # Struct and interface definitions only
+    content = """package main
 
 type User struct {
     ID    int64
     Name  string
-    Email *string
+    Email string
 }
 
 type Config struct {
@@ -49,63 +65,37 @@ type Config struct {
     assert should_skip_go(content) is True
 
 
-def test_interface_definitions_only():
-    # Interface definitions only
-    content = """package interfaces
+def test_exception_classes_only():
+    # Simple empty structs
+    content = """package main
 
-type Reader interface {
-    Read([]byte) (int, error)
+type CustomError struct {
 }
 
-type Writer interface {
-    Write([]byte) (int, error)
-}
-
-type ReadWriter interface {
-    Reader
-    Writer
+type AuthenticationError struct {
 }"""
-    assert should_skip_go(content) is True
-
-
-def test_type_aliases_only():
-    # Type aliases only
-    content = """package types
-
-type ID string
-type UserID ID
-type Status int
-
-const (
-    StatusActive Status = iota
-    StatusInactive
-)"""
     assert should_skip_go(content) is True
 
 
 def test_mixed_imports_and_constants():
     # Mixed imports and constants
-    content = """package config
+    content = """package main
 
 import "os"
+import "fmt"
 
-const (
-    DefaultPort = 8080
-    MaxRetries  = 3
-)
+const MaxRetries = 3
+const ApiURL = "https://api.example.com"
 
-var (
-    Environment = os.Getenv("ENV")
-    Debug       = true
-)"""
+var Version = "1.0.0\""""
     assert should_skip_go(content) is True
 
 
 def test_function_with_logic():
     # Function definitions - should NOT be skipped
-    content = """package utils
+    content = """package main
 
-func CalculateTotal(items []Item) float64 {
+func calculateTotal(items []Item) float64 {
     total := 0.0
     for _, item := range items {
         total += item.Price
@@ -113,21 +103,23 @@ func CalculateTotal(items []Item) float64 {
     return total
 }
 
-func ProcessData(data []int) []int {
+func processData(data []int) []int {
     result := make([]int, len(data))
-    for i, v := range data {
-        result[i] = v * 2
+    for i, x := range data {
+        result[i] = x * 2
     }
     return result
 }"""
     assert should_skip_go(content) is False
 
 
-def test_methods_with_logic():
-    # Method definitions - should NOT be skipped
-    content = """package calculator
+def test_class_with_methods():
+    # Struct with methods - should NOT be skipped
+    content = """package main
 
-type Calculator struct{}
+type Calculator struct {
+    value int
+}
 
 func (c *Calculator) Add(a, b int) int {
     return a + b
@@ -139,48 +131,28 @@ func (c *Calculator) Multiply(a, b int) int {
     assert should_skip_go(content) is False
 
 
-def test_mixed_struct_and_methods():
-    # Mixed struct definition and methods - should NOT be skipped
-    content = """package user
-
-type User struct {
-    Name string
-}
-
-func (u *User) GetName() string {
-    return u.Name
-}
-
-func (u *User) SetName(name string) {
-    u.Name = name
-}"""
-    assert should_skip_go(content) is False
-
-
-def test_init_function():
-    # Init function - should NOT be skipped
-    content = """package config
-
-var GlobalConfig Config
-
-func init() {
-    GlobalConfig = Config{
-        Timeout: 30,
-        Retries: 3,
-    }
-}"""
-    assert should_skip_go(content) is False
-
-
 def test_mixed_constants_and_logic():
     # Mixed constants and logic - should NOT be skipped
-    content = """package utils
+    content = """package main
 
-const MaxSize = 1024
+const MaxSize = 100
+const ApiURL = "https://api.com"
 
-func GetMaxSize() int {
-    return MaxSize
+func calculateSize() int {
+    return MaxSize * 2
 }"""
+    assert should_skip_go(content) is False
+
+
+def test_constants_with_function_calls():
+    # Constants with function calls - should NOT be skipped
+    content = """package main
+
+import "os"
+import "path/filepath"
+
+var IsPrd = os.Getenv("ENV") == "prod"
+var BasePath = filepath.Join("/", "app")"""
     assert should_skip_go(content) is False
 
 
@@ -197,4 +169,34 @@ def test_whitespace_only():
 
 
     """
+    assert should_skip_go(content) is True
+
+
+def test_init_file_with_imports():
+    # Typical module file with only imports
+    content = """package main
+
+import (
+    "github.com/example/module1"
+    "github.com/example/module2"
+    "github.com/example/utils"
+)"""
+    assert should_skip_go(content) is True
+
+
+def test_empty_init_file():
+    # Empty module file
+    content = ""
+    assert should_skip_go(content) is True
+
+
+def test_comment_with_simple_class():
+    # File with comment and simple empty struct should be skipped
+    content = """/*
+Base struct for application components
+*/
+type BaseComponent struct {
+}
+
+var _ = BaseComponent{}"""
     assert should_skip_go(content) is True

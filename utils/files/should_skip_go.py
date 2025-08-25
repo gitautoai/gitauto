@@ -20,11 +20,29 @@ def should_skip_go(content: str) -> bool:
     lines = content.split("\n")
     in_struct = False
     in_interface = False
+    in_multiline_string = False
+    in_multiline_comment = False
 
     for line in lines:
         line = line.strip()
         # Skip comments
         if line.startswith("//"):
+            continue
+        # Handle multiline comments
+        if "/*" in line and not in_multiline_comment:
+            in_multiline_comment = True
+        if in_multiline_comment:
+            if "*/" in line:
+                in_multiline_comment = False
+            continue
+        # Handle multiline string literals (backticks)
+        if not in_multiline_string and "const " in line and "`" in line:
+            if line.count("`") == 1:  # String starts
+                in_multiline_string = True
+                continue
+        if in_multiline_string:
+            if "`" in line:  # String ends
+                in_multiline_string = False
             continue
         # Skip empty lines
         if not line:
@@ -66,9 +84,14 @@ def should_skip_go(content: str) -> bool:
             or line.startswith("var ")
             or line == "var ("
         ):
+            # But NOT if they contain function calls
+            if "(" in line and ")" in line and not line.endswith("("):
+                return False
             continue
-        # Skip individual const/var declarations in blocks
+        # Skip individual const/var declarations in blocks - but NOT if they contain function calls
         if re.match(r"^\w+(\s+\w+)?\s*=", line):
+            if "(" in line and ")" in line:  # Contains function calls
+                return False
             continue
         # Skip bare const declarations without assignment (like StatusInactive)
         if re.match(r"^\w+$", line):

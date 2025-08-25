@@ -3,7 +3,6 @@ import pytest
 import requests
 from requests import HTTPError
 from services.github.comments.delete_comment import delete_comment
-from services.github.types.github_types import BaseArgs
 from test_utils import create_test_base_args
 
 

@@ -311,7 +311,7 @@ def test_reply_to_comment_with_zero_values_returns_none(
 ):
     """Test that zero values are treated as invalid and function returns None."""
     base_args = {**mock_base_args, "pull_number": 0, "review_id": 0}
-    
+
     # Should return None due to handle_exceptions decorator when validation fails
     result = reply_to_comment(base_args, "Test body")
     assert result is None

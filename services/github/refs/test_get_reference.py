@@ -1,11 +1,10 @@
+import json
 from unittest.mock import patch, MagicMock
 import pytest
 import requests
-import json
 from config import TIMEOUT
 
 from services.github.refs.get_reference import get_reference
-from services.github.types.github_types import BaseArgs
 from test_utils import create_test_base_args
 
 

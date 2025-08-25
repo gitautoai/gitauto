@@ -31,7 +31,7 @@ def should_skip_python(content: str) -> bool:
     for line in lines:
         line = line.strip()
 
-        # Handle triple-quoted strings (including multi-line string constants)
+        # Handle triple-quoted strings (including multi-line string constants and docstrings)
         if not in_triple_quote_string:
             if '"""' in line or "'''" in line:
                 # Check if this is a string assignment (constant)
@@ -43,6 +43,11 @@ def should_skip_python(content: str) -> bool:
                         # String opens and closes on same line
                         continue
                     # String continues to next lines
+                    in_triple_quote_string = True
+                    continue
+                # Handle module-level docstrings (standalone triple-quoted strings)
+                if line.strip() in ['"""', "'''"]:
+                    triple_quote_type = line.strip()
                     in_triple_quote_string = True
                     continue
         else:
@@ -72,6 +77,11 @@ def should_skip_python(content: str) -> bool:
 
         # Handle other data classes (NamedTuple, dataclass, etc.)
         if re.match(r"^class\s+\w+\((NamedTuple|typing\.NamedTuple)\):", line):
+            in_class_definition = True
+            continue
+
+        # Handle simple empty classes without inheritance
+        if re.match(r"^class\s+\w+\s*:\s*$", line):
             in_class_definition = True
             continue
 

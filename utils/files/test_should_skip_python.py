@@ -146,3 +146,15 @@ def test_empty_init_file():
     # Empty __init__.py file
     content = ""
     assert should_skip_python(content) is True
+
+
+def test_comment_with_simple_class():
+    # File with comment and simple empty class should be skipped
+    content = '''"""
+Base class for application components
+"""
+class BaseComponent:
+    pass
+
+__all__ = ["BaseComponent"]'''
+    assert should_skip_python(content) is True

@@ -2,7 +2,6 @@ from unittest.mock import patch, MagicMock
 import requests
 import pytest
 from services.github.reactions.add_reaction_to_issue import add_reaction_to_issue
-from services.github.types.github_types import BaseArgs
 from test_utils import create_test_base_args
 
 

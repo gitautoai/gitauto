@@ -5,7 +5,6 @@ from requests import HTTPError
 
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.markdown.render_text import render_text
-from services.github.types.github_types import BaseArgs
 from test_utils import create_test_base_args
 from tests.constants import OWNER, REPO, TOKEN
 
