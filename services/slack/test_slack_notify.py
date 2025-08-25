@@ -163,7 +163,9 @@ def test_slack_notify_requests_exception(
 ):
     """Test handling of requests exceptions."""
     # Setup
-    mock_requests_post.side_effect = requests.RequestException("Network error")
+    mock_requests_post.side_effect = requests.exceptions.RequestException(
+        "Network error"
+    )
 
     # Execute
     result = slack_notify("Test message")
