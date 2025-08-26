@@ -7,7 +7,7 @@ from anthropic._exceptions import OverloadedError
 from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 
 # Local imports
-from config import ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40, TIMEOUT
+from config import ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40
 from services.anthropic.client import get_anthropic_client
 from services.anthropic.exceptions import (
     ClaudeAuthenticationError,
@@ -70,7 +70,6 @@ def chat_with_claude(
             # https://docs.anthropic.com/en/docs/about-claude/models/all-models#model-comparison-table
             max_tokens=max_tokens,
             temperature=0.0,
-            timeout=TIMEOUT,
         )
     except OverloadedError as e:
         raise ClaudeOverloadedError("Claude API is overloaded (529)") from e
