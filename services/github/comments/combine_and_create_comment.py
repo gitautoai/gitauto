@@ -54,7 +54,7 @@ def combine_and_create_comment(
     # Add usage info if end_date is valid
     if end_date != datetime(year=1, month=1, day=1, hour=0, minute=0, second=0):
         body += request_issue_comment(
-            requests_left=requests_left,
+            requests_left=requests_left or 0,
             sender_name=sender_name,
             end_date=end_date,
             is_credit_user=(billing_type == "credit"),
