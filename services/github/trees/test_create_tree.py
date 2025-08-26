@@ -290,7 +290,7 @@ def test_unauthorized_401(
 def test_forbidden_403_rate_limit(
     mock_create_headers, mock_requests_post, base_args, tree_items, mock_response_403
 ):
-    """Test handling of 403 Forbidden error with rate limiting."""
+    """Test handling of 403 Forbidden error."""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
     mock_requests_post.return_value = mock_response_403
 
