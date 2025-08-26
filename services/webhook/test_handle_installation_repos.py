@@ -1123,3 +1123,151 @@ class TestHandleInstallationReposAdded:
         )
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
+
+    async def test_handle_installation_repos_added_with_nested_account_structure(
+        self,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling with deeply nested account structure."""
+        # Setup - payload with nested account structure
+        nested_payload = {
+            "installation": {
+                "id": INSTALLATION_ID,
+                "account": {
+                    "id": 12345,
+                    "login": "test-owner",
+                    "type": "Organization",
+                    "site_admin": False,
+                    "avatar_url": "https://example.com/avatar.png",
+                    "gravatar_id": "",
+                    "url": "https://api.github.com/users/test-owner",
+                    "html_url": "https://github.com/test-owner",
+                },
+            },
+            "sender": {
+                "id": 67890,
+                "login": "test-sender",
+                "type": "User",
+                "site_admin": False,
+            },
+            "repositories_added": [
+                {"id": 111, "name": "test-repo-1"},
+            ],
+        }
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+
+        # Execute
+        await handle_installation_repos_added(nested_payload)
+
+        # Verify - should extract the correct values from nested structure
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_get_installation_access_token.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_process_repositories.assert_called_once_with(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=[{"id": 111, "name": "test-repo-1"}],
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-sender",
+        )
+
+    async def test_handle_installation_repos_added_with_concurrent_calls(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling multiple concurrent calls to the function."""
+        import asyncio
+        
+        # Setup
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+        mock_process_repositories.return_value = None
+
+        # Create multiple payloads with different installation IDs
+        payloads = []
+        for i in range(3):
+            payload = mock_installation_payload.copy()
+            payload["installation"]["id"] = INSTALLATION_ID + i
+            payloads.append(payload)
+
+        # Execute - run multiple calls concurrently
+        tasks = [handle_installation_repos_added(payload) for payload in payloads]
+        results = await asyncio.gather(*tasks)
+
+        # Verify - all calls should complete successfully
+        assert all(result is None for result in results)
+        assert mock_is_installation_valid.call_count == 3
+        assert mock_get_installation_access_token.call_count == 3
+        assert mock_process_repositories.call_count == 3
+
+    async def test_handle_installation_repos_added_with_timeout_simulation(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling when process_repositories takes a long time."""
+        import asyncio
+        
+        # Setup
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+        
+        async def slow_process(*args, **kwargs):
+            await asyncio.sleep(0.1)  # Simulate slow processing
+            return None
+        
+        mock_process_repositories.side_effect = slow_process
+
+        # Execute
+        start_time = asyncio.get_event_loop().time()
+        result = await handle_installation_repos_added(mock_installation_payload)
+        end_time = asyncio.get_event_loop().time()
+
+        # Verify - function should complete and handle the delay
+        assert result is None
+        assert end_time - start_time >= 0.1  # Should take at least 0.1 seconds
+        mock_process_repositories.assert_called_once()
+
+    async def test_handle_installation_repos_added_with_memory_intensive_payload(
+        self,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling with a memory-intensive payload."""
+        # Setup - create a payload with large data structures
+        large_payload = {
+            "installation": {
+                "id": INSTALLATION_ID,
+                "account": {
+                    "id": 12345,
+                    "login": "test-owner",
+                },
+            },
+            "sender": {
+                "id": 67890,
+                "login": "test-sender",
+            },
+            "repositories_added": [
+                {
+                    "id": i,
+                    "name": f"repo-{i}",
+                    "description": "x" * 1000,  # Large description
+                    "topics": [f"topic-{j}" for j in range(50)],  # Many topics
+                }
+                for i in range(50)  # Many repositories
+            ],
+        }
+        mock_is_installation_valid.return_value = True
