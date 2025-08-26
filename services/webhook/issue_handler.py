@@ -168,7 +168,6 @@ async def create_pr_from_issue(
     user_message = availability_status["user_message"]
     billing_type = availability_status["billing_type"]
 
-    # Add the log message from availability check
     if availability_status["log_message"] and can_proceed:
         log_messages.append(availability_status["log_message"])
 

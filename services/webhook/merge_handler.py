@@ -4,7 +4,7 @@ from services.github.comments.create_comment import create_comment
 from services.github.issues.create_issue import create_issue
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.types.github_types import GitHubPullRequestClosedPayload, BaseArgs
+from services.github.types.github_types import GitHubPullRequestClosedPayload
 from services.slack.slack_notify import slack_notify
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.repositories.get_repository import get_repository
@@ -40,7 +40,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
     pull_request = payload["pull_request"]
     merged_by = (
         pull_request["merged_by"]["login"]
-        if pull_request.get("merged_by")
+        if pull_request.get("merged_by") and pull_request["merged_by"]
         else "unknown"
     )
     token = get_installation_access_token(installation_id=installation_id)
@@ -61,7 +61,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
 
     if not availability_status["can_proceed"]:
         pr_number = payload["number"]
-        base_args: BaseArgs = {
+        base_args = {
             "owner": owner_name,
             "repo": repo_name,
             "token": token,
@@ -132,7 +132,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
         # Check if we have coverage data for this file
         if file["filename"] in coverage_data:
             file_info = coverage_data[file["filename"]]
-            file_entry = {"path": file["filename"]}
+            file_entry: dict[str, str | float] = {"path": file["filename"]}
 
             # Only add coverage data if it exists
             if file_info["line_coverage"] is not None:
@@ -187,7 +187,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
     body = get_issue_body_for_pr_merged(pr_number=pr_number, file_list=file_list)
 
     # Create base args for issue creation
-    base_args: BaseArgs = {"owner": owner_name, "repo": repo_name, "token": token}
+    base_args = {"owner": owner_name, "repo": repo_name, "token": token}
 
     # Create the issue
     issue_response = create_issue(
