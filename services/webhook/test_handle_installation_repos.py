@@ -1296,3 +1296,83 @@ class TestHandleInstallationReposAdded:
         self,
         mock_is_installation_valid,
         mock_get_installation_access_token,
+
+    async def test_handle_installation_repos_added_with_is_installation_valid_edge_cases(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test edge cases for is_installation_valid return values."""
+        edge_cases = [
+            ([], "empty list - falsy"),
+            ({}, "empty dict - falsy"),
+            ("", "empty string - falsy"),
+            ([1, 2, 3], "non-empty list - truthy"),
+            ({"key": "value"}, "non-empty dict - truthy"),
+            ("valid", "non-empty string - truthy"),
+            (1, "positive integer - truthy"),
+            (-1, "negative integer - truthy"),
+        ]
+        
+        for return_value, description in edge_cases:
+            # Reset mocks
+            mock_is_installation_valid.reset_mock()
+            mock_get_installation_access_token.reset_mock()
+            mock_process_repositories.reset_mock()
+            
+            # Setup
+            mock_is_installation_valid.return_value = return_value
+            mock_get_installation_access_token.return_value = "ghs_test_token"
+
+            # Execute
+            result = await handle_installation_repos_added(mock_installation_payload)
+
+            # Verify based on truthiness
+            mock_is_installation_valid.assert_called_once_with(
+                installation_id=INSTALLATION_ID
+            )
+            
+            if return_value:  # Truthy values
+                mock_get_installation_access_token.assert_called_once_with(
+                    installation_id=INSTALLATION_ID
+                )
+                mock_process_repositories.assert_called_once()
+            else:  # Falsy values
+                mock_get_installation_access_token.assert_not_called()
+                mock_process_repositories.assert_not_called()
+            
+            assert result is None
+
+    async def test_handle_installation_repos_added_with_repositories_added_variations(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test different variations of repositories_added field."""
+        test_cases = [
+            ([], "empty list"),
+            (None, "None value"),
+            ([{"id": 1, "name": "repo1"}], "single repo"),
+            ([{"id": i, "name": f"repo{i}"} for i in range(10)], "multiple repos"),
+            ([{"id": 1, "name": "repo1", "extra": "data"}], "repo with extra fields"),
+        ]
+        
+        for repositories_value, description in test_cases:
+            # Reset mocks
+            mock_is_installation_valid.reset_mock()
+            mock_get_installation_access_token.reset_mock()
+            mock_process_repositories.reset_mock()
+            
+            # Setup
+            mock_installation_payload["repositories_added"] = repositories_value
+            mock_is_installation_valid.return_value = True
+            mock_get_installation_access_token.return_value = "ghs_test_token"
+
+            # Execute
+            await handle_installation_repos_added(mock_installation_payload)
+
+            # Verify
