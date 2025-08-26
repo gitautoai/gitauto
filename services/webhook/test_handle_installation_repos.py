@@ -1292,10 +1292,6 @@ class TestHandleInstallationReposAdded:
         assert result is None
         mock_process_repositories.assert_called_once()
 
-    async def test_handle_installation_repos_added_with_mixed_data_types_in_payload(
-        self,
-        mock_is_installation_valid,
-        mock_get_installation_access_token,
 
     async def test_handle_installation_repos_added_with_is_installation_valid_edge_cases(
         self,
