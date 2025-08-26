@@ -156,7 +156,7 @@ def test_create_issue_with_none_assignees():
         mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
         mock_post.return_value = mock_response
 
-        result = create_issue("Test Title", "Test Body", None, base_args)
+        result = create_issue("Test Title", "Test Body", [], base_args)
 
     call_args = mock_post.call_args
     assert "assignees" not in call_args.kwargs["json"]
@@ -244,3 +244,49 @@ def test_create_issue_headers_creation():
     mock_create_headers.assert_called_once_with(token="test-token-123")
     call_args = mock_post.call_args
     assert call_args.kwargs["headers"] == {"Authorization": "Bearer test-token-123"}
+
+
+def test_create_issue_retry_on_invalid_assignees():
+    # Mock first response with 422 error
+    mock_first_response = MagicMock()
+    mock_first_response.status_code = 422
+    mock_first_response.text = '{"message":"Validation Failed","errors":[{"value":["Copilot"],"resource":"Issue","field":"assignees","code":"invalid"}]}'
+
+    # Mock second response (successful retry)
+    mock_second_response = MagicMock()
+    mock_second_response.raise_for_status.return_value = None
+    mock_second_response.json.return_value = {
+        "id": 555,
+        "html_url": "https://github.com/owner/repo/issues/555",
+    }
+
+    base_args = create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
+
+    with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
+        "services.github.issues.create_issue.create_headers"
+    ) as mock_create_headers, patch(
+        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
+    ):
+        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        # First call returns 422, second call succeeds
+        mock_post.side_effect = [mock_first_response, mock_second_response]
+
+        result = create_issue("Test Title", "Test Body", ["Copilot"], base_args)
+
+    # Should make two calls - first with assignees, second without
+    assert mock_post.call_count == 2
+
+    # First call should have assignees
+    first_call_args = mock_post.call_args_list[0]
+    assert first_call_args.kwargs["json"]["assignees"] == ["Copilot"]
+
+    # Second call should not have assignees
+    second_call_args = mock_post.call_args_list[1]
+    assert "assignees" not in second_call_args.kwargs["json"]
+    assert second_call_args.kwargs["json"]["title"] == "Test Title"
+    assert second_call_args.kwargs["json"]["body"] == "Test Body"
+    assert second_call_args.kwargs["json"]["labels"] == ["test-product-id"]
+
+    mock_second_response.raise_for_status.assert_called_once()
+    mock_second_response.json.assert_called_once()
+    assert result == {"id": 555, "html_url": "https://github.com/owner/repo/issues/555"}
