@@ -122,17 +122,15 @@ def mock_response_401():
 
 @pytest.fixture
 def mock_response_403():
-    """Create a 403 Forbidden mock response with rate limit headers."""
-    future_reset_time = int(time.time()) + 3600  # 1 hour from now
+    """Create a 403 Forbidden mock response."""
     mock_response = MagicMock()
     mock_response.status_code = 403
     mock_response.reason = "Forbidden"
-    mock_response.text = "API rate limit exceeded"
+    mock_response.text = "Forbidden"
     mock_response.headers = {
         "X-RateLimit-Limit": "5000",
-        "X-RateLimit-Remaining": "0",
-        "X-RateLimit-Used": "5000",
-        "X-RateLimit-Reset": str(future_reset_time),
+        "X-RateLimit-Remaining": "4999",
+        "X-RateLimit-Used": "1",
     }
     http_error = requests.exceptions.HTTPError("403 Client Error: Forbidden")
     http_error.response = mock_response
