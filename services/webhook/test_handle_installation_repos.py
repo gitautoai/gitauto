@@ -1496,3 +1496,88 @@ class TestHandleInstallationReposAdded:
             mock_process_repositories.reset_mock()
             
             # Setup - make is_installation_valid raise the exception
+
+    async def test_handle_installation_repos_added_with_token_variations(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling with different token variations."""
+        token_variations = [
+            ("ghs_valid_token", "valid token"),
+            ("", "empty string token"),
+            (None, "None token"),
+            ("gho_old_format_token", "old format token"),
+            ("ghp_personal_token", "personal access token format"),
+            ("token_with_special_chars!@#$%", "token with special characters"),
+        ]
+        
+        for token_value, description in token_variations:
+            # Reset mocks
+            mock_is_installation_valid.reset_mock()
+            mock_get_installation_access_token.reset_mock()
+            mock_process_repositories.reset_mock()
+            
+            # Setup
+            mock_is_installation_valid.return_value = True
+            mock_get_installation_access_token.return_value = token_value
+
+            # Execute
+            await handle_installation_repos_added(mock_installation_payload)
+
+            # Verify - should pass token as-is to process_repositories
+            mock_is_installation_valid.assert_called_once_with(
+                installation_id=INSTALLATION_ID
+            )
+            mock_get_installation_access_token.assert_called_once_with(
+                installation_id=INSTALLATION_ID
+            )
+            mock_process_repositories.assert_called_once_with(
+                owner_id=12345,
+                owner_name="test-owner",
+                repositories=[
+                    {"id": 111, "name": "test-repo-1"},
+                    {"id": 222, "name": "test-repo-2"},
+                ],
+                token=token_value,
+                user_id=67890,
+                user_name="test-sender",
+            )
+
+    async def test_handle_installation_repos_added_with_payload_field_extraction(
+        self,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test that all required fields are correctly extracted from payload."""
+        # Setup - payload with specific values to verify extraction
+        test_payload = {
+            "installation": {
+                "id": 999888777,
+                "account": {
+                    "id": 123456789,
+                    "login": "specific-owner-name",
+                },
+            },
+            "sender": {
+                "id": 987654321,
+                "login": "specific-sender-name",
+            },
+            "repositories_added": [
+                {"id": 555, "name": "specific-repo"},
+            ],
+        }
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "specific_token"
+
+        # Execute
+        await handle_installation_repos_added(test_payload)
+
+        # Verify - all specific values should be extracted and passed correctly
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=999888777
+        )
+        mock_get_installation_access_token.assert_called_once_with(
