@@ -1376,3 +1376,123 @@ class TestHandleInstallationReposAdded:
             await handle_installation_repos_added(mock_installation_payload)
 
             # Verify
+
+    async def test_handle_installation_repos_added_with_installation_id_type_variations(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test handling with different installation ID types that are valid."""
+        test_cases = [
+            (12345, "integer"),
+            ("12345", "string"),
+            (12345.0, "float"),
+        ]
+        
+        for installation_id, id_type in test_cases:
+            # Setup
+            mock_installation_payload["installation"]["id"] = installation_id
+            mock_is_installation_valid.return_value = True
+            mock_get_installation_access_token.return_value = "ghs_test_token"
+            mock_process_repositories.return_value = None
+            
+            # Reset mocks
+            mock_is_installation_valid.reset_mock()
+            mock_get_installation_access_token.reset_mock()
+            mock_process_repositories.reset_mock()
+
+            # Execute
+            await handle_installation_repos_added(mock_installation_payload)
+
+            # Verify
+            mock_is_installation_valid.assert_called_once_with(
+                installation_id=installation_id
+            )
+            mock_get_installation_access_token.assert_called_once_with(
+                installation_id=installation_id
+            )
+            mock_process_repositories.assert_called_once()
+
+    async def test_handle_installation_repos_added_with_function_call_order(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test that functions are called in the correct order."""
+        # Setup
+        call_order = []
+        
+        def track_is_installation_valid(*args, **kwargs):
+            call_order.append("is_installation_valid")
+            return True
+        
+        def track_get_token(*args, **kwargs):
+            call_order.append("get_installation_access_token")
+            return "ghs_test_token"
+        
+        def track_process_repositories(*args, **kwargs):
+            call_order.append("process_repositories")
+            return None
+        
+        mock_is_installation_valid.side_effect = track_is_installation_valid
+        mock_get_installation_access_token.side_effect = track_get_token
+        mock_process_repositories.side_effect = track_process_repositories
+
+        # Execute
+        await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify - functions should be called in the correct order
+        expected_order = [
+            "is_installation_valid",
+            "get_installation_access_token",
+            "process_repositories",
+        ]
+        assert call_order == expected_order
+
+    async def test_handle_installation_repos_added_with_payload_mutation_safety(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test that the function doesn't mutate the input payload."""
+        # Setup
+        original_payload = json.loads(json.dumps(mock_installation_payload))  # Deep copy
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+
+        # Execute
+        await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify - payload should remain unchanged
+        assert mock_installation_payload == original_payload
+
+    async def test_handle_installation_repos_added_with_decorator_exception_handling(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test that the handle_exceptions decorator properly handles all exception types."""
+        exception_types = [
+            ValueError("Invalid value"),
+            TypeError("Type error"),
+            KeyError("missing_key"),
+            AttributeError("'NoneType' object has no attribute 'attr'"),
+            RuntimeError("Runtime error"),
+            Exception("Generic exception"),
+        ]
+        
+        for exception in exception_types:
+            # Reset mocks
+            mock_is_installation_valid.reset_mock()
+            mock_get_installation_access_token.reset_mock()
+            mock_process_repositories.reset_mock()
+            
+            # Setup - make is_installation_valid raise the exception
