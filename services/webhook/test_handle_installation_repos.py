@@ -1581,3 +1581,63 @@ class TestHandleInstallationReposAdded:
             installation_id=999888777
         )
         mock_get_installation_access_token.assert_called_once_with(
+
+    async def test_handle_installation_repos_added_with_early_return_verification(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test that early return works correctly when installation is invalid."""
+        # Setup
+        mock_is_installation_valid.return_value = False
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+
+        # Execute
+        result = await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify - should return early and not call subsequent functions
+        assert result is None
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_get_installation_access_token.assert_not_called()
+        mock_process_repositories.assert_not_called()
+
+    async def test_handle_installation_repos_added_with_complete_success_flow(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test the complete success flow with all functions called."""
+        # Setup
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_success_token"
+        mock_process_repositories.return_value = None
+
+        # Execute
+        result = await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify - all functions should be called in sequence
+        assert result is None
+        mock_is_installation_valid.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_get_installation_access_token.assert_called_once_with(
+            installation_id=INSTALLATION_ID
+        )
+        mock_process_repositories.assert_called_once_with(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=[
+                {"id": 111, "name": "test-repo-1"},
+                {"id": 222, "name": "test-repo-2"},
+            ],
+            token="ghs_success_token",
+            user_id=67890,
+            user_name="test-sender",
+        )
+
