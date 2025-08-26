@@ -193,3 +193,7 @@ class TestTimerDecorator:
             mock_logger.info.assert_called_once_with(
                 "%s took %.2f seconds", "slow_async_function", 5.75
             )
+            # Check that logger was called with correct function name and format
+            mock_logger.info.assert_called_once()
+            call_args = mock_logger.info.call_args[0]
+            assert call_args[0] == "%s took %.2f seconds"
