@@ -286,7 +286,7 @@ def test_unauthorized_401(
 
 @patch("services.github.trees.create_tree.requests.post")
 @patch("services.github.trees.create_tree.create_headers")
-def test_forbidden_403_rate_limit(
+def test_forbidden_403(
     mock_create_headers, mock_requests_post, base_args, tree_items, mock_response_403
 ):
     """Test handling of 403 Forbidden error."""
