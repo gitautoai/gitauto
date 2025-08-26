@@ -797,6 +797,104 @@ async def test_add_reaction_to_issue_with_boolean_content(
     )
 
 
+async def test_add_reaction_to_issue_with_whitespace_only_content(
+    mock_requests_post, mock_create_headers, base_args, mock_config
+):
+    """Test function with whitespace-only content."""
+    whitespace_content = "   \t\n  "
+    
+    result = await add_reaction_to_issue(123, whitespace_content, base_args)
+    
+    assert result is None
+    mock_requests_post.assert_called_once_with(
+        url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
+        headers={
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": "Bearer test_token",
+            "User-Agent": "GitAuto",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+        json={"content": whitespace_content},
+        timeout=120,
+    )
+
+
+async def test_add_reaction_to_issue_with_numeric_string_content(
+    mock_requests_post, mock_create_headers, base_args, mock_config
+):
+    """Test function with numeric string content."""
+    result = await add_reaction_to_issue(123, "123", base_args)
+    
+    assert result is None
+    mock_requests_post.assert_called_once_with(
+        url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
+        headers={
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": "Bearer test_token",
+            "User-Agent": "GitAuto",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+        json={"content": "123"},
+        timeout=120,
+    )
+
+
+async def test_add_reaction_to_issue_with_zero_issue_number(
+    mock_requests_post, mock_create_headers, base_args, mock_config
+):
+    """Test function with zero issue number."""
+    result = await add_reaction_to_issue(0, "+1", base_args)
+    
+    assert result is None
+    mock_requests_post.assert_called_once_with(
+        url="https://api.github.com/repos/test_owner/test_repo/issues/0/reactions",
+        headers={
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": "Bearer test_token",
+            "User-Agent": "GitAuto",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+        json={"content": "+1"},
+        timeout=120,
+    )
+
+
+async def test_add_reaction_to_issue_base_args_missing_multiple_keys(mock_config):
+    """Test that function handles base_args missing multiple required keys."""
+    incomplete_base_args = {"owner": "test_owner"}  # Missing repo, token, and others
+    
+    result = await add_reaction_to_issue(123, "+1", incomplete_base_args)
+    
+    # The handle_exceptions decorator should catch the KeyError and return None
+    assert result is None
+
+
+async def test_add_reaction_to_issue_with_list_content(
+    mock_requests_post, mock_create_headers, base_args, mock_config
+):
+    """Test function with list content (should be serialized by requests)."""
+    list_content = ["+1", "heart"]
+    
+    result = await add_reaction_to_issue(123, list_content, base_args)
+    
+    assert result is None
+    mock_requests_post.assert_called_once_with(
+        url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
+        headers={
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": "Bearer test_token",
+            "User-Agent": "GitAuto",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+        json={"content": list_content},
+        timeout=120,
+    )
+
+
+# pylint: disable=redefined-outer-name
+# This is needed because pytest fixtures can have the same name as test parameters
+
+
 async def test_add_reaction_to_issue_response_json_raises_value_error(
     mock_create_headers, base_args, mock_config
 ):
