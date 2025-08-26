@@ -17,12 +17,6 @@ def git_command(new_branch_name: str) -> str:
     )
 
 
-def request_limit_reached(
-    user_name: str, request_count: int, end_date: datetime
-) -> str:
-    return f"Hello @{user_name}, you have reached your request limit of {request_count}, your cycle will refresh on {end_date}.\nConsider <a href='https://gitauto.ai/#pricing'>subscribing</a> if you want more requests.\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
-
-
 def pull_request_completed(
     issuer_name: str, sender_name: str, pr_url: str, is_automation: bool
 ) -> str:

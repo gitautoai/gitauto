@@ -44,7 +44,10 @@ from services.slack.slack_notify import slack_notify
 from services.supabase.create_user_request import create_user_request
 from services.supabase.credits.insert_credit import insert_credit
 from services.supabase.usage.insert_usage import Trigger
-from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
+from services.stripe.check_availability import check_availability
+from services.stripe.create_stripe_customer import create_stripe_customer
+from services.supabase.owners.get_stripe_customer_id import get_stripe_customer_id
+from services.supabase.owners.update_stripe_customer_id import update_stripe_customer_id
 from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 from services.supabase.owners.get_owner import get_owner
@@ -57,7 +60,6 @@ from utils.text.text_copy import (
     UPDATE_COMMENT_FOR_422,
     git_command,
     pull_request_completed,
-    request_limit_reached,
 )
 from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 from utils.time.get_timeout_message import get_timeout_message
@@ -140,31 +142,43 @@ async def create_pr_from_issue(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
 
-    # Check if the user has reached the request limit
-    limit_result = is_request_limit_reached(
-        installation_id=installation_id,
+    # Ensure stripe customer exists (create if needed)
+    stripe_customer_id = get_stripe_customer_id(owner_id)
+    if not stripe_customer_id:
+        stripe_customer_id = create_stripe_customer(
+            owner_id=owner_id,
+            owner_name=owner_name,
+            installation_id=installation_id,
+            user_id=sender_id if sender_id else 0,
+            user_name=sender_name if sender_name else "unknown",
+        )
+        if stripe_customer_id:
+            update_stripe_customer_id(owner_id, stripe_customer_id)
+
+    # Now check availability (stripe_customer_id will exist or be None if creation failed)
+    availability_status = check_availability(
         owner_id=owner_id,
         owner_name=owner_name,
-        owner_type=owner_type,
         repo_name=repo_name,
-        issue_number=issue_number,
+        installation_id=installation_id,
+        sender_name=sender_name,
     )
-    is_limit_reached = limit_result["is_limit_reached"]
-    requests_left = limit_result["requests_left"]
-    request_limit = limit_result["request_limit"]
-    end_date = limit_result["end_date"]
-    is_credit_user = limit_result["is_credit_user"]
+
+    can_proceed = availability_status["can_proceed"]
+    user_message = availability_status["user_message"]
+    billing_type = availability_status["billing_type"]
+
+    if availability_status["log_message"] and can_proceed:
+        log_messages.append(availability_status["log_message"])
+
     p += 5
-    log_messages.append(f"Checked request limit. {requests_left} requests left.")
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
 
-    # Notify the user if the request limit is reached and early return
-    if is_limit_reached:
-        body = request_limit_reached(
-            user_name=sender_name, request_count=request_limit, end_date=end_date
-        )
+    # Notify the user if access is denied and early return
+    if not can_proceed:
+        body = user_message
         update_comment(body=body, base_args=base_args)
         print(body)
 
@@ -177,8 +191,7 @@ async def create_pr_from_issue(
         #         send_email(to=user["email"], subject=subject, text=text)
 
         # Early return notification
-        early_return_msg = f"Request limit reached for {owner_name}/{repo_name} - {request_limit} requests used"
-        slack_notify(early_return_msg, thread_ts)
+        slack_notify(availability_status["log_message"], thread_ts)
         return
 
     # Create a usage record
@@ -472,7 +485,7 @@ async def create_pr_from_issue(
     )
 
     # Insert credit usage if user is using credits (not paid subscription)
-    if is_completed and is_credit_user:
+    if is_completed and billing_type == "credit":
         insert_credit(owner_id=owner_id, transaction_type="usage", usage_id=usage_id)
 
         # Check if user just ran out of credits and send casual notification

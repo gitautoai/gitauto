@@ -60,8 +60,7 @@ def test_upsert_repository_owner_exists_repo_exists(mocks):
     mocks["get_repository"].assert_called_once_with(456)
     mocks["update_repository"].assert_called_once_with(
         repo_id=456,
-        user_id=789,
-        user_name="test_user",
+        updated_by="789:test_user",
         file_count=10,
         blank_lines=5,
         comment_lines=3,
@@ -159,8 +158,7 @@ def test_upsert_repository_update_no_data_returned(mocks):
     mocks["get_repository"].assert_called_once_with(456)
     mocks["update_repository"].assert_called_once_with(
         repo_id=456,
-        user_id=789,
-        user_name="test_user",
+        updated_by="789:test_user",
         file_count=0,
         blank_lines=0,
         comment_lines=0,

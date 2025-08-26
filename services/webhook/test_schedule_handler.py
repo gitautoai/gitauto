@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 # Local imports
+from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.webhook.schedule_handler import schedule_handler
 
 
@@ -70,15 +71,15 @@ class TestScheduleHandler:
 
     @patch("services.webhook.schedule_handler.get_installation_access_token")
     @patch("services.webhook.schedule_handler.get_repository")
-    @patch("services.webhook.schedule_handler.is_request_limit_reached")
-    def test_schedule_handler_request_limit_reached(
+    @patch("services.webhook.schedule_handler.check_availability")
+    def test_schedule_handler_access_denied(
         self,
-        mock_is_request_limit_reached,
+        mock_check_availability,
         mock_get_repository,
         mock_get_token,
         mock_event,
     ):
-        """Test that schedule_handler skips when request limit is reached."""
+        """Test that schedule_handler skips when access is denied."""
         # Setup
         mock_get_token.return_value = "test-token"
         mock_get_repository.return_value = {
@@ -86,14 +87,22 @@ class TestScheduleHandler:
             "name": "test-repo",
             "trigger_on_schedule": True,
         }
-        mock_is_request_limit_reached.return_value = {"is_limit_reached": True}
+        mock_check_availability.return_value = {
+            "can_proceed": False,
+            "billing_type": "credit",
+            "requests_left": None,
+            "credit_balance_usd": 0,
+            "period_end_date": None,
+            "user_message": "Insufficient credits",
+            "log_message": "Insufficient credits for test-org/test-repo",
+        }
 
         # Execute
         result = schedule_handler(mock_event)
 
         # Verify
         assert result["status"] == "skipped"
-        assert "Request limit reached" in result["message"]
+        assert "Insufficient credits" in result["message"]
 
     @patch("services.webhook.schedule_handler.get_all_coverages")
     def test_get_all_coverages_returns_empty_list_not_none(
@@ -136,8 +145,6 @@ class TestScheduleHandler:
 
     def test_get_all_coverages_contract(self):
         """Verify that get_all_coverages always returns a list."""
-        from services.supabase.coverages.get_all_coverages import get_all_coverages
-
         with patch(
             "services.supabase.coverages.get_all_coverages.supabase"
         ) as mock_supabase:
@@ -158,7 +165,7 @@ class TestScheduleHandler:
 
     @patch("services.webhook.schedule_handler.get_installation_access_token")
     @patch("services.webhook.schedule_handler.get_repository")
-    @patch("services.webhook.schedule_handler.is_request_limit_reached")
+    @patch("services.webhook.schedule_handler.check_availability")
     @patch("services.webhook.schedule_handler.get_default_branch")
     @patch("services.webhook.schedule_handler.get_file_tree")
     @patch("services.webhook.schedule_handler.get_all_coverages")
@@ -171,7 +178,7 @@ class TestScheduleHandler:
         mock_get_all_coverages,
         mock_get_file_tree,
         mock_get_default_branch,
-        mock_is_request_limit_reached,
+        mock_check_availability,
         mock_get_repository,
         mock_get_token,
         mock_event,
@@ -180,7 +187,15 @@ class TestScheduleHandler:
         # Setup
         mock_get_token.return_value = "test-token"
         mock_get_repository.return_value = {"trigger_on_schedule": True}
-        mock_is_request_limit_reached.return_value = {"is_limit_reached": False}
+        mock_check_availability.return_value = {
+            "can_proceed": True,
+            "billing_type": "exception",
+            "requests_left": None,
+            "credit_balance_usd": 0,
+            "period_end_date": None,
+            "user_message": "",
+            "log_message": "Exception owner - unlimited access.",
+        }
         mock_get_default_branch.return_value = ("main", None)
 
         # Mock file tree with index.ts that only has exports
@@ -219,7 +234,7 @@ class TestScheduleHandler:
 
     @patch("services.webhook.schedule_handler.get_installation_access_token")
     @patch("services.webhook.schedule_handler.get_repository")
-    @patch("services.webhook.schedule_handler.is_request_limit_reached")
+    @patch("services.webhook.schedule_handler.check_availability")
     @patch("services.webhook.schedule_handler.get_default_branch")
     @patch("services.webhook.schedule_handler.get_file_tree")
     @patch("services.webhook.schedule_handler.get_all_coverages")
@@ -232,7 +247,7 @@ class TestScheduleHandler:
         mock_get_all_coverages,
         mock_get_file_tree,
         mock_get_default_branch,
-        mock_is_request_limit_reached,
+        mock_check_availability,
         mock_get_repository,
         mock_get_token,
         mock_event,
@@ -241,7 +256,15 @@ class TestScheduleHandler:
         # Setup
         mock_get_token.return_value = "test-token"
         mock_get_repository.return_value = {"trigger_on_schedule": True}
-        mock_is_request_limit_reached.return_value = {"is_limit_reached": False}
+        mock_check_availability.return_value = {
+            "can_proceed": True,
+            "billing_type": "exception",
+            "requests_left": None,
+            "credit_balance_usd": 0,
+            "period_end_date": None,
+            "user_message": "",
+            "log_message": "Exception owner - unlimited access.",
+        }
         mock_get_default_branch.return_value = ("main", None)
 
         # Mock file tree with empty index.ts

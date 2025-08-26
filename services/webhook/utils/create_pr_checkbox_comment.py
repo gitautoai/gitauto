@@ -51,7 +51,6 @@ def create_pr_checkbox_comment(payload: PullRequestWebhookPayload):
     # Extract owner related variables
     owner = repo["owner"]
     owner_id = owner["id"]
-    owner_type = owner["type"]
     owner_name = owner["login"]
 
     # Extract PR related variables
@@ -109,9 +108,6 @@ def create_pr_checkbox_comment(payload: PullRequestWebhookPayload):
         installation_id=installation_id,
         owner_id=owner_id,
         owner_name=owner_name,
-        owner_type=owner_type,
-        repo_name=repo_name,
-        issue_number=pull_number,
         sender_name=sender_name,
         base_args=base_args,
     )

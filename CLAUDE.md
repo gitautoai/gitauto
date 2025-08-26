@@ -52,10 +52,10 @@ uvicorn main:app --reload --port 8000 --log-level warning
 
 ```bash
 # Connect to Supabase PostgreSQL database (Development)
-source .env && psql "postgresql://postgres.dkrxtcbaqzrodvsagwwn:$SUPABASE_DB_PASSWORD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
+source .env && psql "postgresql://postgres.dkrxtcbaqzrodvsagwwn:$SUPABASE_DB_PASSWORD_DEV@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
 
 # Connect to Supabase PostgreSQL database (Production)
-source .env && psql "postgresql://postgres.awegqusxzsmlgxaxyyrq:$SUPABASE_DB_PASSWORD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
+source .env && psql "postgresql://postgres.awegqusxzsmlgxaxyyrq:$SUPABASE_DB_PASSWORD_PRD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
 ```
 
 ### Sentry CLI
@@ -287,6 +287,68 @@ aws lambda update-function-configuration --function-name pr-agent-prod --logging
 - NO CAST: Do not use typing.cast() to suppress type errors. Fix the underlying type issues instead.
 - NO ANY: Do not use Any type. Fix the specific type issues instead.
 
+## Proactive Code Cleanup
+
+When refactoring or replacing old systems, always be PROACTIVE and think comprehensively. Don't wait for the user to point out every piece of old code that needs cleanup.
+
+### Examples of Proactive Cleanup
+
+1. **Function Replacement**: When replacing `is_request_limit_reached()` with new billing system:
+   - AUTOMATICALLY search for ALL usages: imports, function calls, test files
+   - Remove the old function file entirely
+   - Remove ALL related test files and test functions
+   - Search for related functions like `request_limit_reached()`, `get_billing_type()`
+   - Remove ALL old/unused functions from the same refactoring session
+
+2. **When Changing Function Signatures**: When changing `update_repository()` to accept `**kwargs`:
+   - AUTOMATICALLY search ALL files that call this function
+   - Update ALL call sites systematically using grep/search
+   - Don't make the user repeatedly tell you about missed files
+
+3. **Comprehensive Search Patterns**: Use multiple search approaches:
+
+   ```bash
+   # Search for function imports
+   grep -r "from.*function_name" .
+   # Search for function calls  
+   grep -r "function_name(" .
+   # Search for test files
+   find . -name "*test*" -exec grep -l "function_name" {} \;
+   # Search for related functions with similar names
+   ```
+
+4. **When Removing Old Code**: Always check for:
+   - Original function files
+   - Test files (test_*.py, *_test.py)
+   - Import statements
+   - Related helper functions
+   - Similar naming patterns
+
+5. **System-Wide Impact**: When making architecture changes:
+
+   - Think about ALL handlers that might use the old pattern
+   - Search for ALL files in related directories
+   - Look for similar patterns that should be updated consistently
+
+### Bad Examples (Reactive)
+
+- User: "You missed schedule_handler.py" → You fix only that file
+- User: "What about the test files?" → You then look for tests
+- User: "Remove get_billing_type too" → You remove only that
+
+### Good Examples (Proactive)
+
+- User: "Replace is_request_limit_reached" → You automatically:
+  1. Find ALL files using it (handlers, tests, utilities)
+  2. Replace ALL usages with new billing system
+  3. Remove the old function file
+  4. Remove ALL related test files
+  5. Search for related functions (request_limit_reached, get_billing_type, etc.)
+  6. Remove ALL old functions from that refactoring session
+  7. Verify no remaining references exist
+
+**ALWAYS THINK: "What other files/functions/tests are related to this change?" and handle them ALL at once.**
+
 ## LGTM Workflow
 
 When the user says "LGTM" (Looks Good To Me), automatically execute this workflow:
@@ -295,8 +357,8 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 2. Run black formatting: `black .`
 3. Run ruff linting: `ruff check . --fix`
 4. Get list of modified files: `git diff --name-only HEAD`
-5. Run pylint on modified Python files only: `git diff --name-only HEAD | grep "\.py$" | xargs pylint --fail-under=10.0` (if no modified Python files, skip)
-6. Run pyright on modified Python files only: `git diff --name-only HEAD | grep "\.py$" | xargs pyright` (if no modified Python files, skip)
+5. Run pylint on modified Python files only: `git diff --name-only HEAD | grep "\.py$" | while read f; do [ -f "$f" ] && echo "$f"; done | xargs pylint --fail-under=10.0` (if no modified Python files, skip)
+6. Run pyright on modified Python files only: `git diff --name-only HEAD | grep "\.py$" | while read f; do [ -f "$f" ] && echo "$f"; done | xargs pyright` (if no modified Python files, skip)
 7. Run pytest: `python -m pytest -r fE -x`
 8. Check current branch is not main: `git branch --show-current`
 9. Merge latest main: `git fetch origin main && git merge origin/main`

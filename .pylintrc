@@ -423,6 +423,7 @@ confidence=HIGH,
 # --disable=W".
 disable=bad-inline-option,
         deprecated-pragma,
+        duplicate-code,
         file-ignored,
         line-too-long,
         locally-disabled,

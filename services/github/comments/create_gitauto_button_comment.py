@@ -16,7 +16,6 @@ def create_gitauto_button_comment(payload: GitHubLabeledPayload) -> None:
     token: str = get_installation_access_token(installation_id=installation_id)
     owner_id: int = payload["repository"]["owner"]["id"]
     owner_name: str = payload["repository"]["owner"]["login"]
-    owner_type: str = payload["repository"]["owner"]["type"]
     repo_name: str = payload["repository"]["name"]
     issue_number: int = payload["issue"]["number"]
     user_id: int = payload["sender"]["id"]
@@ -43,9 +42,6 @@ def create_gitauto_button_comment(payload: GitHubLabeledPayload) -> None:
         installation_id=installation_id,
         owner_id=owner_id,
         owner_name=owner_name,
-        owner_type=owner_type,
-        repo_name=repo_name,
-        issue_number=issue_number,
         sender_name=user_name,
         base_args=base_args,
     )

@@ -29,7 +29,7 @@ echo -e "${GREEN}Virtual environment ready${NC}"
 
 # Generate TypedDict schemas directly from PostgreSQL
 echo -e "Generating TypedDict schemas..."
-PGPASSWORD="$SUPABASE_DB_PASSWORD" psql -h "aws-0-us-west-1.pooler.supabase.com" -U postgres.dkrxtcbaqzrodvsagwwn -d postgres -p 6543 -t -c "
+PGPASSWORD="$SUPABASE_DB_PASSWORD_DEV" psql -h "aws-0-us-west-1.pooler.supabase.com" -U postgres.dkrxtcbaqzrodvsagwwn -d postgres -p 6543 -t -c "
 SELECT 
     table_name,
     column_name,

@@ -1,11 +1,15 @@
 from config import PRODUCT_ID
+from constants.urls import DASHBOARD_CREDITS_URL
+from services.github.comments.create_comment import create_comment
 from services.github.issues.create_issue import create_issue
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.types.github_types import GitHubPullRequestClosedPayload, BaseArgs
+from services.github.types.github_types import GitHubPullRequestClosedPayload
 from services.slack.slack_notify import slack_notify
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.repositories.get_repository import get_repository
+from services.supabase.repositories.update_repository import update_repository
+from services.stripe.check_availability import check_availability
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
 from utils.files.is_excluded_from_testing import is_excluded_from_testing
@@ -28,15 +32,58 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
 
     # Get repository info
     repository = payload["repository"]
+    owner_id = repository["owner"]["id"]
     owner_name = repository["owner"]["login"]
     repo_id = repository["id"]
     repo_name = repository["name"]
     installation_id = payload["installation"]["id"]
+    pull_request = payload["pull_request"]
+    merged_by = (
+        pull_request["merged_by"]["login"]
+        if pull_request.get("merged_by") and pull_request["merged_by"]
+        else "unknown"
+    )
     token = get_installation_access_token(installation_id=installation_id)
 
     # Get repository settings
     repo_settings = get_repository(repo_id=repo_id)
     if not repo_settings or not repo_settings["trigger_on_merged"]:
+        return None
+
+    # Check if owner has sufficient access (credits or subscription)
+    availability_status = check_availability(
+        owner_id=owner_id,
+        owner_name=owner_name,
+        repo_name=repo_name,
+        installation_id=installation_id,
+        sender_name=merged_by,
+    )
+
+    if not availability_status["can_proceed"]:
+        pr_number = payload["number"]
+        base_args = {
+            "owner": owner_name,
+            "repo": repo_name,
+            "token": token,
+            "issue_number": pr_number,
+        }
+
+        comment_body = (
+            f"⚠️ **Merge trigger disabled**: Insufficient credits\n\n"
+            f"Your account has no credits remaining. The merge trigger that creates issues for missing unit tests has been skipped.\n"
+            f"<a href='{DASHBOARD_CREDITS_URL}'>Add credits</a> to re-enable GitAuto functionality."
+        )
+
+        # Create comment on the PR
+        create_comment(body=comment_body, base_args=base_args)
+
+        # Disable the merge trigger to prevent future attempts
+        update_repository(repo_id=repo_id, trigger_on_merged=False)
+
+        # Slack notification
+        slack_notify(
+            f"Merge trigger disabled for {owner_name}/{repo_name} - insufficient credits"
+        )
         return None
 
     # Get PR number and details
@@ -85,7 +132,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
         # Check if we have coverage data for this file
         if file["filename"] in coverage_data:
             file_info = coverage_data[file["filename"]]
-            file_entry = {"path": file["filename"]}
+            file_entry: dict[str, str | float] = {"path": file["filename"]}
 
             # Only add coverage data if it exists
             if file_info["line_coverage"] is not None:
@@ -140,7 +187,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
     body = get_issue_body_for_pr_merged(pr_number=pr_number, file_list=file_list)
 
     # Create base args for issue creation
-    base_args: BaseArgs = {"owner": owner_name, "repo": repo_name, "token": token}
+    base_args = {"owner": owner_name, "repo": repo_name, "token": token}
 
     # Create the issue
     issue_response = create_issue(

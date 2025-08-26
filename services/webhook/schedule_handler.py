@@ -22,7 +22,7 @@ from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.supabase.coverages.insert_coverages import insert_coverages
 from services.supabase.coverages.update_issue_url import update_issue_url
 from services.supabase.repositories.get_repository import get_repository
-from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
+from services.stripe.check_availability import check_availability
 
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
@@ -75,23 +75,17 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         logging.info(msg)
         return {"status": "skipped", "message": msg}
 
-    # Check the remaining available usage count
-    limit_result = is_request_limit_reached(
-        installation_id=installation_id,
+    # Check availability
+    availability_status = check_availability(
         owner_id=owner_id,
         owner_name=owner_name,
-        owner_type=owner_type,
         repo_name=repo_name,
-        issue_number=None,
+        installation_id=installation_id,
+        sender_name=user_name,
     )
-    is_limit_reached = limit_result["is_limit_reached"]
-    # _requests_left = limit_result["requests_left"]
-    # _request_limit = limit_result["request_limit"]
-    # _end_date = limit_result["end_date"]
-    # is_credit_user = limit_result["is_credit_user"]
-    if is_limit_reached:
-        msg = f"Request limit reached for {owner_name}/{repo_name}"
-        return {"status": "skipped", "message": msg}
+
+    if not availability_status["can_proceed"]:
+        return {"status": "skipped", "message": availability_status["log_message"]}
 
     # Get repository files and coverage data
     default_branch, _ = get_default_branch(

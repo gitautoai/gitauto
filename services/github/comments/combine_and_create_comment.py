@@ -1,11 +1,17 @@
 from datetime import datetime
 
 from config import PRODUCT_ID
+
+# Local imports (GitHub)
 from services.github.comments.create_comment import create_comment
 from services.github.types.github_types import BaseArgs
-from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
+
+# Local imports (Stripe)
+from services.stripe.check_availability import check_availability
+
+# Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
-from utils.text.text_copy import request_issue_comment, request_limit_reached
+from utils.text.text_copy import request_issue_comment
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -14,27 +20,28 @@ def combine_and_create_comment(
     installation_id: int,
     owner_id: int,
     owner_name: str,
-    owner_type: str,
-    repo_name: str,
-    issue_number: int,
     sender_name: str,
     base_args: BaseArgs,
 ) -> None:
-    # Check usage limits
-    limit_result = is_request_limit_reached(
-        installation_id=installation_id,
+    # Check availability
+    availability_status = check_availability(
         owner_id=owner_id,
         owner_name=owner_name,
-        owner_type=owner_type,
-        repo_name=repo_name,
-        issue_number=issue_number,
+        repo_name=base_args["repo"],
+        installation_id=installation_id,
+        sender_name=sender_name,
     )
-    is_limit_reached = limit_result["is_limit_reached"]
-    requests_left = limit_result["requests_left"]
-    request_limit = limit_result["request_limit"]
-    end_date = limit_result["end_date"]
-    is_credit_user = limit_result["is_credit_user"]
-    credit_balance_usd = limit_result["credit_balance_usd"]
+
+    can_proceed = availability_status["can_proceed"]
+    user_message = availability_status["user_message"]
+    requests_left = availability_status["requests_left"]
+    billing_type = availability_status["billing_type"]
+    credit_balance_usd = availability_status["credit_balance_usd"]
+
+    # Get period end date for subscription users
+    end_date = availability_status.get("period_end_date") or datetime(
+        year=1, month=1, day=1, hour=0, minute=0, second=0
+    )
 
     # Build comment body
     body = base_comment
@@ -47,20 +54,16 @@ def combine_and_create_comment(
     # Add usage info if end_date is valid
     if end_date != datetime(year=1, month=1, day=1, hour=0, minute=0, second=0):
         body += request_issue_comment(
-            requests_left=requests_left,
+            requests_left=requests_left or 0,
             sender_name=sender_name,
             end_date=end_date,
-            is_credit_user=is_credit_user,
+            is_credit_user=(billing_type == "credit"),
             credit_balance_usd=credit_balance_usd,
         )
 
     # Override with limit reached message if needed
-    if is_limit_reached:
-        body = request_limit_reached(
-            user_name=sender_name,
-            request_count=request_limit,
-            end_date=end_date,
-        )
+    if not can_proceed and user_message:
+        body = user_message
 
     # Create the comment
     create_comment(body=body, base_args=base_args)

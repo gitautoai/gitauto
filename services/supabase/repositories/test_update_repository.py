@@ -32,8 +32,7 @@ class TestUpdateRepository(unittest.TestCase):
         # Execute
         result = update_repository(
             repo_id=self.test_repo_id,
-            user_id=self.test_user_id,
-            user_name=self.test_user_name,
+            updated_by=f"{self.test_user_id}:{self.test_user_name}",
             file_count=self.test_file_count,
             blank_lines=self.test_blank_lines,
             comment_lines=self.test_comment_lines,
@@ -72,8 +71,7 @@ class TestUpdateRepository(unittest.TestCase):
         # Execute
         result = update_repository(
             repo_id=self.test_repo_id,
-            user_id=self.test_user_id,
-            user_name=self.test_user_name,
+            updated_by=f"{self.test_user_id}:{self.test_user_name}",
             file_count=self.test_file_count,
             blank_lines=self.test_blank_lines,
             comment_lines=self.test_comment_lines,
@@ -97,8 +95,7 @@ class TestUpdateRepository(unittest.TestCase):
         # Execute
         result = update_repository(
             repo_id=self.test_repo_id,
-            user_id=self.test_user_id,
-            user_name=self.test_user_name,
+            updated_by=f"{self.test_user_id}:{self.test_user_name}",
             file_count=self.test_file_count,
             blank_lines=self.test_blank_lines,
             comment_lines=self.test_comment_lines,
@@ -121,8 +118,7 @@ class TestUpdateRepository(unittest.TestCase):
         # Execute
         result = update_repository(
             repo_id=self.test_repo_id,
-            user_id=self.test_user_id,
-            user_name=self.test_user_name,
+            updated_by=f"{self.test_user_id}:{self.test_user_name}",
             file_count=0,
             blank_lines=0,
             comment_lines=0,
@@ -153,8 +149,7 @@ class TestUpdateRepository(unittest.TestCase):
         # Execute
         result = update_repository(
             repo_id=self.test_repo_id,
-            user_id=self.test_user_id,
-            user_name=special_username,
+            updated_by=f"{self.test_user_id}:{special_username}",
             file_count=self.test_file_count,
             blank_lines=self.test_blank_lines,
             comment_lines=self.test_comment_lines,
@@ -188,8 +183,7 @@ class TestUpdateRepository(unittest.TestCase):
         # Execute
         result = update_repository(
             repo_id=self.test_repo_id,
-            user_id=self.test_user_id,
-            user_name=self.test_user_name,
+            updated_by=f"{self.test_user_id}:{self.test_user_name}",
             **large_values,
         )
 
@@ -212,8 +206,7 @@ class TestUpdateRepository(unittest.TestCase):
         # Execute
         result = update_repository(
             repo_id=self.test_repo_id,
-            user_id=self.test_user_id,
-            user_name=self.test_user_name,
+            updated_by=f"{self.test_user_id}:{self.test_user_name}",
             file_count=self.test_file_count,
             blank_lines=self.test_blank_lines,
             comment_lines=self.test_comment_lines,
