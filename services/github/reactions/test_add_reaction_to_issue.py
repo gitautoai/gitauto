@@ -948,3 +948,7 @@ async def test_add_reaction_to_issue_with_very_large_issue_number(
             "Accept": "application/vnd.github.v3+json",
             "Authorization": "Bearer test_token",
             "User-Agent": "GitAuto",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+        json={"content": "+1"},
+        timeout=120,
