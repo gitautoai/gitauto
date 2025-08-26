@@ -193,6 +193,9 @@ class TestTimerDecorator:
             result = await slow_async_function()
 
             assert result == "slow async"
-            mock_logger.info.assert_called_once_with(
-                "%s took %.2f seconds", "slow_async_function", 5.75
-            )
+            # Check that logger was called with correct function name and format
+            mock_logger.info.assert_called_once()
+            call_args = mock_logger.info.call_args[0]
+            assert call_args[0] == "%s took %.2f seconds"
+            assert call_args[1] == "slow_async_function"
+            assert abs(call_args[2] - 5.75) < 0.001  # Allow for floating point precision
