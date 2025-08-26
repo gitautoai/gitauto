@@ -171,9 +171,12 @@ class TestTimerDecorator:
             result = quick_function()
 
             assert result == "quick"
-            mock_logger.info.assert_called_once_with(
-                "%s took %.2f seconds", "quick_function", 0.01
-            )
+            # Check that logger was called with correct function name and format
+            mock_logger.info.assert_called_once()
+            call_args = mock_logger.info.call_args[0]
+            assert call_args[0] == "%s took %.2f seconds"
+            assert call_args[1] == "quick_function"
+            assert abs(call_args[2] - 0.01) < 0.001  # Allow for floating point precision
 
     @pytest.mark.asyncio
     async def test_timer_decorator_async_with_different_time_values(self, mock_logger):
@@ -193,7 +196,3 @@ class TestTimerDecorator:
             mock_logger.info.assert_called_once_with(
                 "%s took %.2f seconds", "slow_async_function", 5.75
             )
-            # Check that logger was called with correct function name and format
-            mock_logger.info.assert_called_once()
-            call_args = mock_logger.info.call_args[0]
-            assert call_args[0] == "%s took %.2f seconds"
