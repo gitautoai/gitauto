@@ -452,6 +452,44 @@ def test_get_pull_request_file_changes_different_file_statuses():
             "status": "removed",
             "patch": "@@ -1,1 +0,0 @@\n-deleted content",
         },
+        {
+            "filename": "renamed_file.py",
+            "status": "renamed",
+            "patch": "@@ -1,1 +1,1 @@\n-old name content\n+new name content",
+        }
+    ]
+
+    with patch(
+        "services.github.pulls.get_pull_request_file_changes.requests.get"
+    ) as mock_get, patch(
+        "services.github.pulls.get_pull_request_file_changes.create_headers"
+    ) as mock_headers:
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = mock_files_data
+        mock_get.return_value = mock_response
+        mock_headers.return_value = {"Authorization": "Bearer test_token"}
+
+        # Call function
+        result = get_pull_request_file_changes(
+            "https://api.github.com/repos/owner/repo/pulls/123/files",
+            "test_token"
+        )
+
+        # Verify all file statuses are handled correctly
+        assert len(result) == 4
+        statuses = [change["status"] for change in result]
+        assert "modified" in statuses
+        assert "added" in statuses
+        assert "removed" in statuses
+        assert "renamed" in statuses
+
+        # Verify structure of each result
+        for change in result:
+            assert "filename" in change
+            assert "status" in change
+            assert "patch" in change
+            assert len(change) == 3  # Only these three fields should be present
 
 
 def test_get_pull_request_file_changes_large_pagination():
@@ -502,41 +540,12 @@ def test_get_pull_request_file_changes_large_pagination():
 
         # Verify all pages were called
         assert mock_get.call_count == 6  # 5 pages with data + 1 empty page
-        {
-            "filename": "renamed_file.py",
-            "status": "renamed",
-            "patch": "@@ -1,1 +1,1 @@\n-old name content\n+new name content",
-        }
-    ]
-
-    with patch(
-        "services.github.pulls.get_pull_request_file_changes.requests.get"
-    ) as mock_get, patch(
-        "services.github.pulls.get_pull_request_file_changes.create_headers"
-    ) as mock_headers:
-
-        mock_response = MagicMock()
-        mock_response.json.return_value = mock_files_data
-        mock_get.return_value = mock_response
-        mock_headers.return_value = {"Authorization": "Bearer test_token"}
-
-        # Call function
-        result = get_pull_request_file_changes(
-            "https://api.github.com/repos/owner/repo/pulls/123/files",
-            "test_token"
-        )
-
-        # Verify all file statuses are handled correctly
-        assert len(result) == 4
-        statuses = [change["status"] for change in result]
-        assert "modified" in statuses
-        assert "added" in statuses
-        assert "removed" in statuses
-        assert "renamed" in statuses
-
-        # Verify structure of each result
-        for change in result:
-            assert "filename" in change
-            assert "status" in change
-            assert "patch" in change
-            assert len(change) == 3  # Only these three fields should be present
+        
+        # Verify result contains all files from all pages
+        assert len(result) == 13  # 4 pages * 3 files + 1 page * 1 file = 13 files
+        
+        # Verify some specific files are present
+        filenames = [change["filename"] for change in result]
+        assert "page1_file1.py" in filenames
+        assert "page4_file3.py" in filenames
+        assert "page5_file1.py" in filenames
