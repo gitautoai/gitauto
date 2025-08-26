@@ -25,21 +25,26 @@ from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_r
 # Local imports (Slack)
 from services.slack.slack_notify import slack_notify
 
-# Local imports (Supabase & Webhook)
+# Local imports (Supabase)
 from services.supabase.create_user_request import create_user_request
 from services.supabase.credits.insert_credit import insert_credit
 from services.supabase.repositories.get_repository import get_repository
-from services.supabase.usage.is_request_limit_reached import is_request_limit_reached
+
+# Local imports (Stripe)
+from services.stripe.check_availability import check_availability
+
+# Local imports (Supabase)
 from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 from services.supabase.owners.get_owner import get_owner
+
+# Local imports (Webhook)
 from services.webhook.utils.extract_selected_files import extract_selected_files
 
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.text.reset_command import create_reset_command_message
-from utils.text.text_copy import request_limit_reached
 from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 from utils.time.get_timeout_message import get_timeout_message
 
@@ -90,20 +95,18 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
     start_msg = f"PR checkbox handler started by `{sender_name}` for PR #{issue_number} in `{owner_name}/{repo_name}`"
     thread_ts = slack_notify(start_msg)
 
-    # Check if the user has reached the request limit
-    limit_result = is_request_limit_reached(
-        installation_id=installation_id,
+    # Check availability
+    availability_status = check_availability(
         owner_id=owner_id,
         owner_name=owner_name,
-        owner_type=owner_type,
         repo_name=repo_name,
-        issue_number=issue_number,
+        installation_id=installation_id,
+        sender_name=sender_name,
     )
-    is_limit_reached = limit_result["is_limit_reached"]
-    # _requests_left = limit_result["requests_left"]
-    request_limit = limit_result["request_limit"]
-    end_date = limit_result["end_date"]
-    is_credit_user = limit_result["is_credit_user"]
+
+    can_proceed = availability_status["can_proceed"]
+    user_message = availability_status["user_message"]
+    billing_type = availability_status["billing_type"]
 
     # Get PR info for base_args
     pr_data = get_pull_request(
@@ -139,25 +142,12 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
         "other_urls": [],
     }
 
-    # If request limit is reached, create a comment and return early
-    if is_limit_reached:
-        body = request_limit_reached(
-            user_name=sender_name, request_count=request_limit, end_date=end_date
-        )
-
-        create_comment(body=body, base_args=base_args)
-
-        # Send email notification if user is a credit user and has zero credits
-        # Disabled: This would send emails every time schedule trigger runs, annoying users
-        # if is_credit_user and sender_id:
-        #     user = get_user(user_id=sender_id)
-        #     if user and user.get("email"):
-        #         subject, text = get_no_credits_email_text(sender_name)
-        #         send_email(to=user["email"], subject=subject, text=text)
+    # If access is denied, create a comment and return early
+    if not can_proceed:
+        create_comment(body=user_message, base_args=base_args)
 
         # Early return notification
-        early_return_msg = f"Request limit reached for {owner_name}/{repo_name} - {request_limit} requests used"
-        slack_notify(early_return_msg, thread_ts)
+        slack_notify(availability_status["log_message"], thread_ts)
         return
 
     # Create a usage record
@@ -317,7 +307,7 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
     )
 
     # Insert credit usage if user is using credits (not paid subscription)
-    if is_credit_user:
+    if billing_type == "credit":
         insert_credit(owner_id=owner_id, transaction_type="usage", usage_id=usage_id)
 
         # Check if user just ran out of credits and send casual notification

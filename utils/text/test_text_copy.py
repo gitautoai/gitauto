@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 
 from utils.text.text_copy import (
     git_command,
-    request_limit_reached,
     pull_request_completed,
     request_issue_comment,
 )
@@ -22,18 +21,6 @@ def test_git_command():
         f"git pull origin {branch_name}\n"
         f"```"
     )
-
-    assert result == expected
-
-
-def test_request_limit_reached():
-    user_name = "test-user"
-    request_count = 10
-    end_date = datetime(2025, 5, 1, tzinfo=timezone.utc)
-
-    result = request_limit_reached(user_name, request_count, end_date)
-
-    expected = f"Hello @{user_name}, you have reached your request limit of {request_count}, your cycle will refresh on {end_date}.\nConsider <a href='https://gitauto.ai/#pricing'>subscribing</a> if you want more requests.\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
 
     assert result == expected
 
