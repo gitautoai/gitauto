@@ -452,6 +452,56 @@ def test_get_pull_request_file_changes_different_file_statuses():
             "status": "removed",
             "patch": "@@ -1,1 +0,0 @@\n-deleted content",
         },
+
+
+def test_get_pull_request_file_changes_large_pagination():
+    """Test handling of many pages of file changes."""
+    # Create mock data for 5 pages (4 full pages + 1 partial page)
+    pages_data = []
+    for page_num in range(1, 5):  # Pages 1-4 with full data
+        page_data = []
+        for file_num in range(1, 4):  # 3 files per page
+            page_data.append({
+                "filename": f"page{page_num}_file{file_num}.py",
+                "status": "modified",
+                "patch": f"@@ -1,1 +1,1 @@\n-old content {page_num}_{file_num}\n+new content {page_num}_{file_num}",
+            })
+        pages_data.append(page_data)
+    
+    # Page 5 with 1 file
+    pages_data.append([{
+        "filename": "page5_file1.py",
+        "status": "added",
+        "patch": "@@ -0,0 +1,1 @@\n+final file content",
+    }])
+    
+    # Empty page to end pagination
+    pages_data.append([])
+
+    with patch(
+        "services.github.pulls.get_pull_request_file_changes.requests.get"
+    ) as mock_get, patch(
+        "services.github.pulls.get_pull_request_file_changes.create_headers"
+    ) as mock_headers:
+
+        # Setup mocks for all pages
+        mock_responses = []
+        for page_data in pages_data:
+            mock_response = MagicMock()
+            mock_response.json.return_value = page_data
+            mock_responses.append(mock_response)
+        
+        mock_get.side_effect = mock_responses
+        mock_headers.return_value = {"Authorization": "Bearer test_token"}
+
+        # Call function
+        result = get_pull_request_file_changes(
+            "https://api.github.com/repos/owner/repo/pulls/123/files",
+            "test_token"
+        )
+
+        # Verify all pages were called
+        assert mock_get.call_count == 6  # 5 pages with data + 1 empty page
         {
             "filename": "renamed_file.py",
             "status": "renamed",
