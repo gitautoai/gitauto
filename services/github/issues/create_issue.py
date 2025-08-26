@@ -30,6 +30,26 @@ def create_issue(title: str, body: str, assignees: list[str], base_args: BaseArg
         json=payload,
         timeout=TIMEOUT,
     )
+
+    # If 422 error with invalid assignees, retry without assignees
+    if (
+        response.status_code == 422
+        and assignees
+        and "assignees" in response.text
+        and "invalid" in response.text
+    ):
+        payload_without_assignees = {
+            "title": title,
+            "body": body,
+            "labels": labels,
+        }
+        response = requests.post(
+            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues",
+            headers=create_headers(token=token),
+            json=payload_without_assignees,
+            timeout=TIMEOUT,
+        )
+
     response.raise_for_status()
 
     return cast(Issue, response.json())
