@@ -1271,3 +1271,28 @@ class TestHandleInstallationReposAdded:
             ],
         }
         mock_is_installation_valid.return_value = True
+
+    async def test_handle_installation_repos_added_with_process_repositories_return_value(
+        self,
+        mock_installation_payload,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
+        mock_process_repositories,
+    ):
+        """Test that function handles process_repositories return value correctly."""
+        # Setup
+        mock_is_installation_valid.return_value = True
+        mock_get_installation_access_token.return_value = "ghs_test_token"
+        mock_process_repositories.return_value = {"status": "completed", "count": 2}
+
+        # Execute
+        result = await handle_installation_repos_added(mock_installation_payload)
+
+        # Verify - function should still return None regardless of process_repositories return value
+        assert result is None
+        mock_process_repositories.assert_called_once()
+
+    async def test_handle_installation_repos_added_with_mixed_data_types_in_payload(
+        self,
+        mock_is_installation_valid,
+        mock_get_installation_access_token,
