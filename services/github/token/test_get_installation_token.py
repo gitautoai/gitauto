@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -36,7 +37,7 @@ def mock_requests_post():
 
 
 def test_get_installation_access_token_success(
-    _mock_get_jwt, _mock_create_headers, mock_requests_post
+    mock_get_jwt, mock_create_headers, mock_requests_post
 ):
     """Test successful retrieval of installation access token"""
     # Arrange
@@ -59,7 +60,7 @@ def test_get_installation_access_token_success(
 
 
 def test_get_installation_access_token_suspended(
-    _mock_get_jwt, _mock_create_headers, mock_requests_post, mock_delete_installation
+    mock_get_jwt, mock_create_headers, mock_requests_post, mock_delete_installation
 ):
     """Test handling of suspended installation"""
     # Arrange
@@ -83,7 +84,7 @@ def test_get_installation_access_token_suspended(
 
 
 def test_get_installation_access_token_other_error(
-    _mock_get_jwt, _mock_create_headers, mock_requests_post
+    mock_get_jwt, mock_create_headers, mock_requests_post
 ):
     """Test handling of other HTTP errors"""
     # Arrange

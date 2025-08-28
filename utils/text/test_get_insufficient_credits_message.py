@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 from unittest.mock import patch
 
 import pytest
@@ -18,7 +19,7 @@ def mock_constants():
         yield
 
 
-def test_get_insufficient_credits_message_format(_mock_constants):
+def test_get_insufficient_credits_message_format(mock_constants):
     """Test that the message follows the expected format with all required components."""
     username = "testuser"
     message = get_insufficient_credits_message(username)
@@ -32,7 +33,7 @@ def test_get_insufficient_credits_message_format(_mock_constants):
     assert "email us at" in message
 
 
-def test_get_insufficient_credits_message_user_mention(_mock_constants):
+def test_get_insufficient_credits_message_user_mention(mock_constants):
     """Test that the message correctly mentions different usernames."""
     message = get_insufficient_credits_message("different_user")
     assert "@different_user" in message

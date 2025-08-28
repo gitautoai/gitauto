@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 from unittest.mock import Mock, patch
 import pytest
 import requests
@@ -235,7 +236,7 @@ def test_create_pull_request_empty_strings(
 @patch("services.github.pulls.create_pull_request.create_headers")
 @patch("services.github.pulls.create_pull_request.requests.post")
 def test_create_pull_request_different_branches(
-    mock_post, mock_create_headers, _mock_add_reviewers, base_args, mock_response
+    mock_post, mock_create_headers, mock_add_reviewers, base_args, mock_response
 ):
     mock_post.return_value = mock_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
