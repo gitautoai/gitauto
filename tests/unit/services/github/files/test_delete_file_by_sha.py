@@ -3,7 +3,6 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 from services.github.files.delete_file_by_sha import delete_file_by_sha
-from services.github.types.github_types import BaseArgs
 
 
 @pytest.fixture
