@@ -1,18 +1,18 @@
+# pylint: disable=unused-argument
 from unittest.mock import Mock, patch
 import pytest
 import requests
 from services.github.pulls.create_pull_request import create_pull_request
-from tests.constants import OWNER, REPO, TOKEN
 
 
 @pytest.fixture
-def base_args():
+def base_args(test_owner, test_repo):
     return {
-        "owner": OWNER,
-        "repo": REPO,
+        "owner": test_owner,
+        "repo": test_repo,
         "base_branch": "main",
         "new_branch": "feature-branch",
-        "token": TOKEN,
+        "token": "test-token-mock",
         "reviewers": ["reviewer1", "reviewer2"],
     }
 
@@ -54,7 +54,11 @@ def mock_error_response():
 @patch("services.github.pulls.create_pull_request.create_headers")
 @patch("services.github.pulls.create_pull_request.requests.post")
 def test_create_pull_request_success(
-    mock_post, mock_create_headers, mock_add_reviewers, base_args, mock_response
+    mock_post,
+    mock_create_headers,
+    mock_add_reviewers,
+    base_args,
+    mock_response,
 ):
     mock_post.return_value = mock_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
@@ -73,7 +77,7 @@ def test_create_pull_request_success(
         },
         timeout=120,
     )
-    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_response.raise_for_status.assert_called_once()
     mock_response.json.assert_called_once()
 
@@ -111,7 +115,7 @@ def test_create_pull_request_422_error(
         },
         timeout=120,
     )
-    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_422_response.raise_for_status.assert_not_called()
     mock_422_response.json.assert_not_called()
     mock_add_reviewers.assert_not_called()
@@ -124,7 +128,11 @@ def test_create_pull_request_422_error(
 @patch("services.github.pulls.create_pull_request.create_headers")
 @patch("services.github.pulls.create_pull_request.requests.post")
 def test_create_pull_request_http_error(
-    mock_post, mock_create_headers, mock_add_reviewers, base_args, mock_error_response
+    mock_post,
+    mock_create_headers,
+    mock_add_reviewers,
+    base_args,
+    mock_error_response,
 ):
     mock_post.return_value = mock_error_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
@@ -143,7 +151,7 @@ def test_create_pull_request_http_error(
         },
         timeout=120,
     )
-    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_error_response.raise_for_status.assert_called_once()
     mock_error_response.json.assert_not_called()
     mock_add_reviewers.assert_not_called()
@@ -153,7 +161,11 @@ def test_create_pull_request_http_error(
 @patch("services.github.pulls.create_pull_request.create_headers")
 @patch("services.github.pulls.create_pull_request.requests.post")
 def test_create_pull_request_json_error(
-    mock_post, mock_create_headers, mock_add_reviewers, base_args, mock_response
+    mock_post,
+    mock_create_headers,
+    mock_add_reviewers,
+    base_args,
+    mock_response,
 ):
     mock_post.return_value = mock_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
@@ -163,7 +175,7 @@ def test_create_pull_request_json_error(
 
     assert result is None
     mock_post.assert_called_once()
-    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_response.raise_for_status.assert_called_once()
     mock_response.json.assert_called_once()
     mock_add_reviewers.assert_not_called()
@@ -173,7 +185,11 @@ def test_create_pull_request_json_error(
 @patch("services.github.pulls.create_pull_request.create_headers")
 @patch("services.github.pulls.create_pull_request.requests.post")
 def test_create_pull_request_add_reviewers_error(
-    mock_post, mock_create_headers, mock_add_reviewers, base_args, mock_response
+    mock_post,
+    mock_create_headers,
+    mock_add_reviewers,
+    base_args,
+    mock_response,
 ):
     mock_post.return_value = mock_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
@@ -183,7 +199,7 @@ def test_create_pull_request_add_reviewers_error(
 
     assert result is None
     mock_post.assert_called_once()
-    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_response.raise_for_status.assert_called_once()
     mock_response.json.assert_called_once()
 
@@ -256,7 +272,7 @@ def test_create_pull_request_requests_exception(
 
     assert result is None
     mock_post.assert_called_once()
-    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_add_reviewers.assert_not_called()
 
 
@@ -271,7 +287,7 @@ def test_create_pull_request_create_headers_exception(
     result = create_pull_request("Test body", "Test title", base_args)
 
     assert result is None
-    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_post.assert_not_called()
     mock_add_reviewers.assert_not_called()
 
@@ -280,10 +296,10 @@ def test_create_pull_request_create_headers_exception(
 @patch("services.github.pulls.create_pull_request.create_headers")
 @patch("services.github.pulls.create_pull_request.requests.post")
 def test_create_pull_request_key_error_in_base_args(
-    mock_post, mock_create_headers, mock_add_reviewers
+    mock_post, mock_create_headers, mock_add_reviewers, test_owner, test_repo
 ):
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
-    incomplete_base_args = {"owner": OWNER, "repo": REPO}
+    incomplete_base_args = {"owner": test_owner, "repo": test_repo}
 
     result = create_pull_request("Test body", "Test title", incomplete_base_args)
 

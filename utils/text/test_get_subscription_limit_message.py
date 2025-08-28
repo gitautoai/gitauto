@@ -13,11 +13,9 @@ def sample_datetime():
 def test_get_subscription_limit_message_basic(sample_datetime):
     """Test basic functionality with valid inputs"""
     message = get_subscription_limit_message(
-        user_name="test_user",
-        request_limit=100,
-        period_end_date=sample_datetime
+        user_name="test_user", request_limit=100, period_end_date=sample_datetime
     )
-    
+
     # Verify all required components are present
     assert "@test_user" in message
     assert "100" in message
@@ -31,9 +29,7 @@ def test_get_subscription_limit_message_basic(sample_datetime):
 def test_get_subscription_limit_message_special_chars(sample_datetime):
     """Test with username containing special characters"""
     message = get_subscription_limit_message(
-        user_name="test-user@123",
-        request_limit=50,
-        period_end_date=sample_datetime
+        user_name="test-user@123", request_limit=50, period_end_date=sample_datetime
     )
     assert "@test-user@123" in message
     assert "50" in message

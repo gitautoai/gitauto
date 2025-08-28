@@ -7,11 +7,10 @@ import pytest
 
 # Local imports
 from services.github.files.move_file import move_file
-from tests.helpers.create_test_base_args import create_test_base_args
 
 
 @pytest.fixture
-def base_args():
+def base_args(create_test_base_args):
     """Create base args for testing."""
     return create_test_base_args(
         owner="test-owner",

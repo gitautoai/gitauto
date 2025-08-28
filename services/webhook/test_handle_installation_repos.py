@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines,too-many-public-methods
 """Unit tests for handle_installation_repos.py"""
 
 # Standard imports
@@ -9,7 +10,6 @@ import pytest
 
 # Local imports
 from services.webhook.handle_installation_repos import handle_installation_repos_added
-from tests.constants import INSTALLATION_ID
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def mock_installation_payload():
     """Fixture providing a mock installation repositories payload."""
     return {
         "installation": {
-            "id": INSTALLATION_ID,
+            "id": 67890,
             "account": {
                 "id": 12345,
                 "login": "test-owner",
@@ -86,11 +86,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -120,9 +118,7 @@ class TestHandleInstallationReposAdded:
 
         # Verify
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
 
@@ -143,11 +139,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -174,11 +168,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -208,11 +200,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -242,9 +232,7 @@ class TestHandleInstallationReposAdded:
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
 
@@ -265,11 +253,9 @@ class TestHandleInstallationReposAdded:
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_not_called()
 
@@ -291,11 +277,9 @@ class TestHandleInstallationReposAdded:
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -319,7 +303,7 @@ class TestHandleInstallationReposAdded:
         # Setup - payload missing sender information
         incomplete_payload = {
             "installation": {
-                "id": INSTALLATION_ID,
+                "id": 67890,
                 "account": {
                     "id": 12345,
                     "login": "test-owner",
@@ -337,11 +321,9 @@ class TestHandleInstallationReposAdded:
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_not_called()
 
@@ -388,7 +370,7 @@ class TestHandleInstallationReposAdded:
         # Setup - payload missing account information
         incomplete_payload = {
             "installation": {
-                "id": INSTALLATION_ID,
+                "id": 67890,
             },
             "sender": {
                 "id": 67890,
@@ -406,11 +388,9 @@ class TestHandleInstallationReposAdded:
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_not_called()
 
@@ -433,11 +413,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -524,7 +502,7 @@ class TestHandleInstallationReposAdded:
     ):
         """Test handling when IDs are provided as strings."""
         # Setup
-        mock_installation_payload["installation"]["id"] = str(INSTALLATION_ID)
+        mock_installation_payload["installation"]["id"] = str(67890)
         mock_installation_payload["installation"]["account"]["id"] = "12345"
         mock_installation_payload["sender"]["id"] = "67890"
         mock_is_installation_valid.return_value = True
@@ -534,11 +512,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=str(INSTALLATION_ID)
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=str(67890))
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=str(INSTALLATION_ID)
+            installation_id=str(67890)
         )
         mock_process_repositories.assert_called_once_with(
             owner_id="12345",
@@ -589,11 +565,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -622,11 +596,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -715,11 +687,9 @@ class TestHandleInstallationReposAdded:
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once()
 
@@ -741,11 +711,9 @@ class TestHandleInstallationReposAdded:
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once()
 
@@ -768,11 +736,9 @@ class TestHandleInstallationReposAdded:
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once()
 
@@ -794,11 +760,9 @@ class TestHandleInstallationReposAdded:
 
         # Verify - function should return None (default_return_value from decorator)
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once()
 
@@ -820,11 +784,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -873,11 +835,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -907,11 +867,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -945,11 +903,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -1050,11 +1006,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -1084,11 +1038,9 @@ class TestHandleInstallationReposAdded:
         await handle_installation_repos_added(mock_installation_payload)
 
         # Verify - should still proceed since "valid" is truthy
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
-            installation_id=INSTALLATION_ID
+            installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
@@ -1118,8 +1070,6 @@ class TestHandleInstallationReposAdded:
 
         # Verify - should return early since 0 is falsy
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(
-            installation_id=INSTALLATION_ID
-        )
+        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()

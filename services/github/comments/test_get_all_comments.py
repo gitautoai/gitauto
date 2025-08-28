@@ -1,17 +1,23 @@
+import inspect
 from unittest.mock import patch, MagicMock
 
 import pytest
 import requests
 
+from config import TIMEOUT
 from services.github.comments.get_all_comments import get_all_comments
-from tests.constants import OWNER, REPO, TOKEN
-from tests.helpers.create_test_base_args import create_test_base_args
+from services.github.types.github_types import BaseArgs
 
 
 @pytest.fixture
-def base_args():
+def base_args(test_owner, test_repo, test_token):
     """Fixture providing base arguments for testing."""
-    return {"owner": OWNER, "repo": REPO, "token": TOKEN, "issue_number": 123}
+    return {
+        "owner": test_owner,
+        "repo": test_repo,
+        "token": test_token,
+        "issue_number": 123,
+    }
 
 
 @pytest.fixture
@@ -22,14 +28,16 @@ def mock_requests_get():
 
 
 @pytest.fixture
-def mock_create_headers():
+def mock_create_headers(test_token):
     """Fixture to mock create_headers function."""
     with patch("services.github.comments.get_all_comments.create_headers") as mock:
-        mock.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock.return_value = {"Authorization": f"Bearer {test_token}"}
         yield mock
 
 
-def test_get_all_comments_success(base_args, mock_requests_get, mock_create_headers):
+def test_get_all_comments_success(
+    test_token, base_args, mock_requests_get, mock_create_headers
+):
     """Test successful retrieval of comments."""
     # Arrange
     expected_comments = [
@@ -45,15 +53,13 @@ def test_get_all_comments_success(base_args, mock_requests_get, mock_create_head
 
     # Assert
     assert result == expected_comments
-    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_create_headers.assert_called_once_with(token=test_token)
     mock_requests_get.assert_called_once()
     mock_response.raise_for_status.assert_called_once()
     mock_response.json.assert_called_once()
 
 
-def test_get_all_comments_empty_response(
-    base_args, mock_requests_get, mock_create_headers
-):
+def test_get_all_comments_empty_response(base_args, mock_requests_get):
     """Test handling of empty comments list."""
     # Arrange
     mock_response = MagicMock()
@@ -71,7 +77,7 @@ def test_get_all_comments_empty_response(
 
 
 def test_get_all_comments_correct_url_construction(
-    base_args, mock_requests_get, mock_create_headers
+    test_owner, test_repo, base_args, mock_requests_get
 ):
     """Test that the correct GitHub API URL is constructed."""
     # Arrange
@@ -83,18 +89,20 @@ def test_get_all_comments_correct_url_construction(
     get_all_comments(base_args)
 
     # Assert
-    expected_url = f"https://api.github.com/repos/{OWNER}/{REPO}/issues/123/comments"
+    expected_url = (
+        f"https://api.github.com/repos/{test_owner}/{test_repo}/issues/123/comments"
+    )
     mock_requests_get.assert_called_once()
     call_args = mock_requests_get.call_args
     assert call_args[1]["url"] == expected_url
 
 
 def test_get_all_comments_correct_headers(
-    base_args, mock_requests_get, mock_create_headers
+    test_token, base_args, mock_requests_get, mock_create_headers
 ):
     """Test that correct headers are passed to the request."""
     # Arrange
-    expected_headers = {"Authorization": f"Bearer {TOKEN}"}
+    expected_headers = {"Authorization": f"Bearer {test_token}"}
     mock_create_headers.return_value = expected_headers
     mock_response = MagicMock()
     mock_response.json.return_value = []
@@ -104,14 +112,12 @@ def test_get_all_comments_correct_headers(
     get_all_comments(base_args)
 
     # Assert
-    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_create_headers.assert_called_once_with(token=test_token)
     call_args = mock_requests_get.call_args
     assert call_args[1]["headers"] == expected_headers
 
 
-def test_get_all_comments_timeout_parameter(
-    base_args, mock_requests_get, mock_create_headers
-):
+def test_get_all_comments_timeout_parameter(base_args, mock_requests_get):
     """Test that timeout parameter is correctly passed."""
     # Arrange
     mock_response = MagicMock()
@@ -124,13 +130,11 @@ def test_get_all_comments_timeout_parameter(
     # Assert
     call_args = mock_requests_get.call_args
     assert "timeout" in call_args[1]
-    # Timeout should be imported from config
-    from config import TIMEOUT
-
+    # Timeout should be from config
     assert call_args[1]["timeout"] == TIMEOUT
 
 
-def test_get_all_comments_http_error(base_args, mock_requests_get, mock_create_headers):
+def test_get_all_comments_http_error(base_args, mock_requests_get):
     """Test handling of HTTP errors."""
     # Arrange
     mock_response = MagicMock()
@@ -154,9 +158,7 @@ def test_get_all_comments_http_error(base_args, mock_requests_get, mock_create_h
     mock_response.raise_for_status.assert_called_once()
 
 
-def test_get_all_comments_json_decode_error(
-    base_args, mock_requests_get, mock_create_headers
-):
+def test_get_all_comments_json_decode_error(base_args, mock_requests_get):
     """Test handling of JSON decode errors."""
     # Arrange
     mock_response = MagicMock()
@@ -175,9 +177,7 @@ def test_get_all_comments_json_decode_error(
     mock_response.json.assert_called_once()
 
 
-def test_get_all_comments_network_error(
-    base_args, mock_requests_get, mock_create_headers
-):
+def test_get_all_comments_network_error(base_args, mock_requests_get):
     """Test handling of network errors."""
     # Arrange
     mock_requests_get.side_effect = requests.exceptions.ConnectionError("Network error")
@@ -193,12 +193,16 @@ def test_get_all_comments_network_error(
 
 
 def test_get_all_comments_different_issue_number(
-    mock_requests_get, mock_create_headers
+    test_owner,
+    test_repo,
+    test_token,
+    create_test_base_args,
+    mock_requests_get,
 ):
     """Test with different issue numbers."""
     # Arrange
     base_args = create_test_base_args(
-        owner=OWNER, repo=REPO, token=TOKEN, issue_number=456
+        owner=test_owner, repo=test_repo, token=test_token, issue_number=456
     )
     mock_response = MagicMock()
     mock_response.json.return_value = []
@@ -208,18 +212,22 @@ def test_get_all_comments_different_issue_number(
     get_all_comments(base_args)
 
     # Assert
-    expected_url = f"https://api.github.com/repos/{OWNER}/{REPO}/issues/456/comments"
+    expected_url = (
+        f"https://api.github.com/repos/{test_owner}/{test_repo}/issues/456/comments"
+    )
     call_args = mock_requests_get.call_args
     assert call_args[1]["url"] == expected_url
 
 
-def test_get_all_comments_different_owner_repo(mock_requests_get, mock_create_headers):
+def test_get_all_comments_different_owner_repo(
+    create_test_base_args, test_token, mock_requests_get
+):
     """Test with different owner and repository."""
     # Arrange
     base_args = create_test_base_args(
         owner="different_owner",
         repo="different_repo",
-        token=TOKEN,
+        token=test_token,
         issue_number=123,
     )
     mock_response = MagicMock()
@@ -235,9 +243,7 @@ def test_get_all_comments_different_owner_repo(mock_requests_get, mock_create_he
     assert call_args[1]["url"] == expected_url
 
 
-def test_get_all_comments_large_response(
-    base_args, mock_requests_get, mock_create_headers
-):
+def test_get_all_comments_large_response(base_args, mock_requests_get):
     """Test handling of large comment responses."""
     # Arrange
     large_comments = [
@@ -266,13 +272,13 @@ def test_get_all_comments_decorator_configuration():
 
 
 def test_get_all_comments_with_special_characters_in_repo_name(
-    mock_requests_get, mock_create_headers
+    test_token, mock_requests_get
 ):
     """Test with repository names containing special characters."""
     base_args = {
         "owner": "test-owner",
         "repo": "test-repo-with-dashes_and_underscores",
-        "token": TOKEN,
+        "token": test_token,
         "issue_number": 123,
     }
     mock_response = MagicMock()
@@ -290,13 +296,17 @@ def test_get_all_comments_with_special_characters_in_repo_name(
 
 @pytest.mark.parametrize("issue_number", [1, 999999, 123456789])
 def test_get_all_comments_with_various_issue_numbers(
-    mock_requests_get, mock_create_headers, issue_number
+    test_owner,
+    test_repo,
+    test_token,
+    mock_requests_get,
+    issue_number,
 ):
     """Test with various issue number formats."""
     base_args = {
-        "owner": OWNER,
-        "repo": REPO,
-        "token": TOKEN,
+        "owner": test_owner,
+        "repo": test_repo,
+        "token": test_token,
         "issue_number": issue_number,
     }
     mock_response = MagicMock()
@@ -307,9 +317,7 @@ def test_get_all_comments_with_various_issue_numbers(
     get_all_comments(base_args)
 
     # Assert
-    expected_url = (
-        f"https://api.github.com/repos/{OWNER}/{REPO}/issues/{issue_number}/comments"
-    )
+    expected_url = f"https://api.github.com/repos/{test_owner}/{test_repo}/issues/{issue_number}/comments"
     call_args = mock_requests_get.call_args
     assert call_args[1]["url"] == expected_url
 
@@ -325,7 +333,7 @@ def test_get_all_comments_with_various_issue_numbers(
     ],
 )
 def test_get_all_comments_various_exceptions(
-    base_args, mock_requests_get, mock_create_headers, error_type, error_message
+    base_args, mock_requests_get, error_type, error_message
 ):
     """Test handling of various exception types."""
     # Arrange
@@ -342,7 +350,7 @@ def test_get_all_comments_various_exceptions(
 
 
 def test_get_all_comments_uses_github_api_url_constant(
-    base_args, mock_requests_get, mock_create_headers
+    test_owner, test_repo, base_args, mock_requests_get
 ):
     """Test that the function uses the GITHUB_API_URL constant."""
     # Arrange
@@ -358,15 +366,13 @@ def test_get_all_comments_uses_github_api_url_constant(
         get_all_comments(base_args)
 
     # Assert
-    expected_url = (
-        f"https://custom.api.github.com/repos/{OWNER}/{REPO}/issues/123/comments"
-    )
+    expected_url = f"https://custom.api.github.com/repos/{test_owner}/{test_repo}/issues/123/comments"
     call_args = mock_requests_get.call_args
     assert call_args[1]["url"] == expected_url
 
 
 def test_get_all_comments_response_with_complex_comment_structure(
-    base_args, mock_requests_get, mock_create_headers
+    base_args, mock_requests_get
 ):
     """Test handling of complex comment response structure."""
     # Arrange
@@ -384,7 +390,7 @@ def test_get_all_comments_response_with_complex_comment_structure(
             },
             "created_at": "2023-01-01T00:00:00Z",
             "updated_at": "2023-01-01T00:00:00Z",
-            "author_association": "OWNER",
+            "author_association": "test_owner",
             "reactions": {
                 "total_count": 0,
                 "+1": 0,
@@ -417,8 +423,6 @@ def test_get_all_comments_response_with_complex_comment_structure(
 
 def test_get_all_comments_function_signature_compliance():
     """Test that the function signature matches expected parameters."""
-    import inspect
-
     sig = inspect.signature(get_all_comments)
     params = list(sig.parameters.keys())
 
@@ -427,8 +431,6 @@ def test_get_all_comments_function_signature_compliance():
     assert params == expected_params
 
     # Verify parameter type annotation
-    from services.github.types.github_types import BaseArgs
-
     assert sig.parameters["base_args"].annotation == BaseArgs
 
     # Verify return type annotation
@@ -437,9 +439,16 @@ def test_get_all_comments_function_signature_compliance():
     )  # No explicit return annotation
 
 
-def test_get_all_comments_with_empty_token(mock_requests_get, mock_create_headers):
+def test_get_all_comments_with_empty_token(
+    test_owner, test_repo, mock_requests_get, mock_create_headers
+):
     """Test with empty token."""
-    base_args = {"owner": OWNER, "repo": REPO, "token": "", "issue_number": 123}
+    base_args = {
+        "owner": test_owner,
+        "repo": test_repo,
+        "token": "",
+        "issue_number": 123,
+    }
     mock_response = MagicMock()
     mock_response.json.return_value = []
     mock_requests_get.return_value = mock_response

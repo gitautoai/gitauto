@@ -1,11 +1,10 @@
 from unittest.mock import patch, MagicMock
 
 from services.github.comments.get_comments import get_comments
-from tests.constants import OWNER, REPO, TOKEN
 from config import GITHUB_APP_IDS
 
 
-def test_get_comments_success():
+def test_get_comments_success(test_owner, test_repo, test_token):
     # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = [
@@ -13,13 +12,13 @@ def test_get_comments_success():
         {"body": "Comment 2", "performed_via_github_app": None},
     ]
 
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN}
+    base_args = {"owner": test_owner, "repo": test_repo, "token": test_token}
 
     # Act
     with patch("services.github.comments.get_comments.requests.get") as mock_get, patch(
         "services.github.comments.get_comments.create_headers"
     ) as mock_create_headers:
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_get.return_value = mock_response
         result = get_comments(123, base_args)
 
@@ -28,7 +27,7 @@ def test_get_comments_success():
     assert result == ["Comment 1", "Comment 2"]
 
 
-def test_get_comments_with_app_comments_excluded():
+def test_get_comments_with_app_comments_excluded(test_owner, test_repo, test_token):
     # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = [
@@ -40,7 +39,7 @@ def test_get_comments_with_app_comments_excluded():
         },  # Not in GITHUB_APP_IDS
     ]
 
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN}
+    base_args = {"owner": test_owner, "repo": test_repo, "token": test_token}
 
     # Act
     with patch("services.github.comments.get_comments.requests.get") as mock_get:
@@ -53,7 +52,7 @@ def test_get_comments_with_app_comments_excluded():
     assert result == ["Comment 1", "Comment 3"]
 
 
-def test_get_comments_with_app_comments_included():
+def test_get_comments_with_app_comments_included(test_owner, test_repo, test_token):
     # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = [
@@ -62,7 +61,7 @@ def test_get_comments_with_app_comments_included():
         {"body": "Comment 3", "performed_via_github_app": {"id": 999999}},
     ]
 
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN}
+    base_args = {"owner": test_owner, "repo": test_repo, "token": test_token}
 
     # Act
     with patch("services.github.comments.get_comments.requests.get") as mock_get:
@@ -75,12 +74,12 @@ def test_get_comments_with_app_comments_included():
     assert result == ["Comment 1", "Comment 2", "Comment 3"]
 
 
-def test_get_comments_request_error():
+def test_get_comments_request_error(test_owner, test_repo, test_token):
     # Arrange
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = Exception("API error")
 
-    base_args = {"owner": OWNER, "repo": REPO, "token": TOKEN}
+    base_args = {"owner": test_owner, "repo": test_repo, "token": test_token}
 
     # Act
     with patch("services.github.comments.get_comments.requests.get") as mock_get:

@@ -6,7 +6,6 @@ import requests
 from services.github.workflow_runs.get_failed_step_log_file_name import (
     get_failed_step_log_file_name,
 )
-from tests.constants import OWNER, REPO, TOKEN
 
 
 @pytest.fixture
@@ -58,12 +57,14 @@ def mock_404_response():
 
 
 @pytest.fixture
-def mock_headers():
+def mock_headers(test_token):
     """Fixture providing mock headers."""
-    return {"Authorization": f"Bearer {TOKEN}"}
+    return {"Authorization": f"Bearer {test_token}"}
 
 
-def test_get_failed_step_log_file_name_success(mock_successful_response, mock_headers):
+def test_get_failed_step_log_file_name_success(
+    mock_successful_response, mock_headers, test_owner, test_repo, test_token
+):
     """Test successful retrieval of failed step log file name."""
     # Arrange
     run_id = 12345
@@ -77,14 +78,16 @@ def test_get_failed_step_log_file_name_success(mock_successful_response, mock_he
     ) as mock_create_headers:
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_successful_response
-        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+        result = get_failed_step_log_file_name(
+            test_owner, test_repo, run_id, test_token
+        )
 
     # Assert
-    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_create_headers.assert_called_once_with(token=test_token)
     mock_get.assert_called_once()
     assert (
         mock_get.call_args[1]["url"]
-        == f"https://api.github.com/repos/{OWNER}/{REPO}/actions/runs/{run_id}/jobs"
+        == f"https://api.github.com/repos/{test_owner}/{test_repo}/actions/runs/{run_id}/jobs"
     )
     assert mock_get.call_args[1]["headers"] == mock_headers
     assert mock_get.call_args[1]["timeout"] == 120
@@ -94,7 +97,7 @@ def test_get_failed_step_log_file_name_success(mock_successful_response, mock_he
 
 
 def test_get_failed_step_log_file_name_no_failed_steps(
-    mock_no_failed_steps_response, mock_headers
+    mock_no_failed_steps_response, mock_headers, test_owner, test_repo, test_token
 ):
     """Test handling when no failed steps are found."""
     # Arrange
@@ -108,7 +111,9 @@ def test_get_failed_step_log_file_name_no_failed_steps(
     ) as mock_create_headers:
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_no_failed_steps_response
-        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+        result = get_failed_step_log_file_name(
+            test_owner, test_repo, run_id, test_token
+        )
 
     # Assert
     mock_get.assert_called_once()
@@ -117,7 +122,9 @@ def test_get_failed_step_log_file_name_no_failed_steps(
     assert result is None
 
 
-def test_get_failed_step_log_file_name_404_not_found(mock_404_response, mock_headers):
+def test_get_failed_step_log_file_name_404_not_found(
+    mock_404_response, mock_headers, test_owner, test_repo, test_token
+):
     """Test handling of 404 Not Found response."""
     # Arrange
     run_id = 12345
@@ -130,7 +137,9 @@ def test_get_failed_step_log_file_name_404_not_found(mock_404_response, mock_hea
     ) as mock_create_headers:
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_404_response
-        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+        result = get_failed_step_log_file_name(
+            test_owner, test_repo, run_id, test_token
+        )
 
     # Assert
     mock_get.assert_called_once()
@@ -139,7 +148,9 @@ def test_get_failed_step_log_file_name_404_not_found(mock_404_response, mock_hea
     assert result == 404
 
 
-def test_get_failed_step_log_file_name_404_without_not_found_text(mock_headers):
+def test_get_failed_step_log_file_name_404_without_not_found_text(
+    mock_headers, test_owner, test_repo, test_token
+):
     """Test handling of 404 response without 'Not Found' in text."""
     # Arrange
     run_id = 12345
@@ -165,7 +176,9 @@ def test_get_failed_step_log_file_name_404_without_not_found_text(mock_headers):
     ) as mock_create_headers:
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
-        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+        result = get_failed_step_log_file_name(
+            test_owner, test_repo, run_id, test_token
+        )
 
     # Assert
     mock_get.assert_called_once()
@@ -174,7 +187,9 @@ def test_get_failed_step_log_file_name_404_without_not_found_text(mock_headers):
     assert result == "test/1_Failed step.txt"
 
 
-def test_get_failed_step_log_file_name_multiple_jobs_first_failed():
+def test_get_failed_step_log_file_name_multiple_jobs_first_failed(
+    test_owner, test_repo, test_token
+):
     """Test with multiple jobs where first job has failed step."""
     # Arrange
     run_id = 12345
@@ -203,13 +218,17 @@ def test_get_failed_step_log_file_name_multiple_jobs_first_failed():
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
         mock_get.return_value = mock_response
-        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+        result = get_failed_step_log_file_name(
+            test_owner, test_repo, run_id, test_token
+        )
 
     # Assert - should return first failed step found
     assert result == "lint/2_Run linter.txt"
 
 
-def test_get_failed_step_log_file_name_missing_job_name():
+def test_get_failed_step_log_file_name_missing_job_name(
+    test_owner, test_repo, test_token
+):
     """Test handling when job name is missing."""
     # Arrange
     run_id = 12345
@@ -228,13 +247,17 @@ def test_get_failed_step_log_file_name_missing_job_name():
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
         mock_get.return_value = mock_response
-        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+        result = get_failed_step_log_file_name(
+            test_owner, test_repo, run_id, test_token
+        )
 
     # Assert - should use default job name
     assert result == "unknown_job/1_Failed step.txt"
 
 
-def test_get_failed_step_log_file_name_empty_jobs_list():
+def test_get_failed_step_log_file_name_empty_jobs_list(
+    test_owner, test_repo, test_token
+):
     """Test handling when jobs list is empty."""
     # Arrange
     run_id = 12345
@@ -249,13 +272,17 @@ def test_get_failed_step_log_file_name_empty_jobs_list():
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
         mock_get.return_value = mock_response
-        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+        result = get_failed_step_log_file_name(
+            test_owner, test_repo, run_id, test_token
+        )
 
     # Assert
     assert result is None
 
 
-def test_get_failed_step_log_file_name_missing_jobs_key():
+def test_get_failed_step_log_file_name_missing_jobs_key(
+    test_owner, test_repo, test_token
+):
     """Test handling when 'jobs' key is missing from response."""
     # Arrange
     run_id = 12345
@@ -270,19 +297,23 @@ def test_get_failed_step_log_file_name_missing_jobs_key():
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
         mock_get.return_value = mock_response
-        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+        result = get_failed_step_log_file_name(
+            test_owner, test_repo, run_id, test_token
+        )
 
     # Assert
     assert result is None
 
 
-def test_get_failed_step_log_file_name_url_construction():
+def test_get_failed_step_log_file_name_url_construction(
+    test_owner, test_repo, test_token
+):
     """Test correct URL construction for the API call."""
     # Arrange
-    owner = "test-owner"
-    repo = "test-repo"
+    owner = test_owner
+    repo = test_repo
     run_id = 67890
-    token = "test-token"
+    token = test_token
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"jobs": []}
@@ -308,7 +339,9 @@ def test_get_failed_step_log_file_name_url_construction():
     )
 
 
-def test_get_failed_step_log_file_name_timeout_parameter():
+def test_get_failed_step_log_file_name_timeout_parameter(
+    test_owner, test_repo, test_token
+):
     """Test that the timeout parameter is correctly passed to the request."""
     # Arrange
     run_id = 12345
@@ -324,16 +357,16 @@ def test_get_failed_step_log_file_name_timeout_parameter():
     ) as mock_create_headers, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.TIMEOUT", 60
     ):
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_get.return_value = mock_response
-        get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+        get_failed_step_log_file_name(test_owner, test_repo, run_id, test_token)
 
     # Assert
     mock_get.assert_called_once()
     assert mock_get.call_args[1]["timeout"] == 60
 
 
-def test_get_failed_step_log_file_name_http_error():
+def test_get_failed_step_log_file_name_http_error(test_owner, test_repo, test_token):
     """Test handling of HTTP error when retrieving workflow run jobs."""
     # Arrange
     run_id = 12345
@@ -350,16 +383,18 @@ def test_get_failed_step_log_file_name_http_error():
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ) as mock_create_headers:
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_get.return_value.raise_for_status.side_effect = http_error
 
         with pytest.raises(requests.HTTPError):
-            get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+            get_failed_step_log_file_name(test_owner, test_repo, run_id, test_token)
 
         mock_get.assert_called_once()
 
 
-def test_get_failed_step_log_file_name_missing_step_fields():
+def test_get_failed_step_log_file_name_missing_step_fields(
+    test_owner, test_repo, test_token
+):
     """Test handling when step fields are missing."""
     # Arrange
     run_id = 12345
@@ -386,13 +421,17 @@ def test_get_failed_step_log_file_name_missing_step_fields():
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
         mock_get.return_value = mock_response
-        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+        result = get_failed_step_log_file_name(
+            test_owner, test_repo, run_id, test_token
+        )
 
     # Assert - should handle missing fields gracefully
     assert result == "test/None_None.txt"
 
 
-def test_get_failed_step_log_file_name_missing_steps_key():
+def test_get_failed_step_log_file_name_missing_steps_key(
+    test_owner, test_repo, test_token
+):
     """Test handling when 'steps' key is missing from job."""
     # Arrange
     run_id = 12345
@@ -414,13 +453,17 @@ def test_get_failed_step_log_file_name_missing_steps_key():
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
         mock_get.return_value = mock_response
-        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+        result = get_failed_step_log_file_name(
+            test_owner, test_repo, run_id, test_token
+        )
 
     # Assert
     assert result is None
 
 
-def test_get_failed_step_log_file_name_empty_steps_list():
+def test_get_failed_step_log_file_name_empty_steps_list(
+    test_owner, test_repo, test_token
+):
     """Test handling when steps list is empty."""
     # Arrange
     run_id = 12345
@@ -435,7 +478,9 @@ def test_get_failed_step_log_file_name_empty_steps_list():
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
         mock_get.return_value = mock_response
-        result = get_failed_step_log_file_name(OWNER, REPO, run_id, TOKEN)
+        result = get_failed_step_log_file_name(
+            test_owner, test_repo, run_id, test_token
+        )
 
     # Assert
     assert result is None

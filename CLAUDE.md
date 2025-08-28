@@ -25,6 +25,9 @@ pytest
 # Run tests with coverage (matches CI)
 python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
 
+# Run only last failed tests (faster iteration)
+python -m pytest --lf -x
+
 # Run specific test files
 pytest test_config.py
 pytest tests/test_main.py

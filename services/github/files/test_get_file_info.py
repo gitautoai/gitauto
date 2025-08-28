@@ -8,14 +8,13 @@ import requests
 
 # Local imports
 from services.github.files.get_file_info import get_file_info
-from tests.helpers.create_test_base_args import create_test_base_args
 
 
 class TestGetFileInfo:
     """Test cases for the get_file_info function."""
 
     @pytest.fixture
-    def base_args(self):
+    def base_args(self, create_test_base_args):
         """Create base args for testing."""
         return create_test_base_args(
             owner="test-owner",
@@ -287,7 +286,7 @@ class TestGetFileInfo:
     @patch("services.github.files.get_file_info.requests.get")
     @patch("services.github.files.get_file_info.create_headers")
     def test_different_base_args_values(
-        self, mock_create_headers, mock_get, mock_file_info
+        self, mock_create_headers, mock_get, mock_file_info, create_test_base_args
     ):
         """Test function with different base_args values."""
         custom_base_args = create_test_base_args(

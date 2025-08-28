@@ -1,19 +1,19 @@
 from unittest.mock import patch, MagicMock
 
 from services.github.comments.update_comment import update_comment
-from tests.constants import OWNER, REPO, TOKEN
-from tests.helpers.create_test_base_args import create_test_base_args
 
 
-def test_update_comment_success():
+def test_update_comment_success(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = {"id": 123, "body": "Updated comment"}
 
     base_args = create_test_base_args(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN,
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
         comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
     )
 
@@ -28,10 +28,12 @@ def test_update_comment_success():
     assert mock_patch.call_args[1]["json"] == {"body": "Updated comment"}
 
 
-def test_update_comment_none_url():
+def test_update_comment_none_url(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     base_args = create_test_base_args(
-        owner=OWNER, repo=REPO, token=TOKEN, comment_url=None
+        owner=test_owner, repo=test_repo, token=test_token, comment_url=None
     )
 
     # Act
@@ -43,15 +45,17 @@ def test_update_comment_none_url():
     assert result is None
 
 
-def test_update_comment_request_error():
+def test_update_comment_request_error(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = Exception("API error")
 
     base_args = create_test_base_args(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN,
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
         comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
     )
 
@@ -65,15 +69,17 @@ def test_update_comment_request_error():
     assert result is None  # The handle_exceptions decorator should return None on error
 
 
-def test_update_comment_empty_body():
+def test_update_comment_empty_body(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = {"id": 123, "body": ""}
 
     base_args = create_test_base_args(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN,
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
         comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
     )
 
@@ -88,15 +94,17 @@ def test_update_comment_empty_body():
     assert mock_patch.call_args[1]["json"] == {"body": ""}
 
 
-def test_update_comment_with_headers():
+def test_update_comment_with_headers(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = {"id": 123, "body": "Test comment"}
 
     base_args = create_test_base_args(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN,
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
         comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
     )
 
@@ -104,20 +112,26 @@ def test_update_comment_with_headers():
     with patch("services.github.comments.update_comment.patch") as mock_patch, patch(
         "services.github.comments.update_comment.create_headers"
     ) as mock_create_headers:
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_patch.return_value = mock_response
         result = update_comment("Test comment", base_args)
 
     # Assert
-    mock_create_headers.assert_called_once_with(token=TOKEN)
+    mock_create_headers.assert_called_once_with(token=test_token)
     mock_patch.assert_called_once()
-    assert mock_patch.call_args[1]["headers"] == {"Authorization": f"Bearer {TOKEN}"}
+    assert mock_patch.call_args[1]["headers"] == {
+        "Authorization": f"Bearer {test_token}"
+    }
     assert result == {"id": 123, "body": "Test comment"}
 
 
-def test_update_comment_missing_comment_url_key():
+def test_update_comment_missing_comment_url_key(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
-    base_args = create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
+    base_args = create_test_base_args(
+        owner=test_owner, repo=test_repo, token=test_token
+    )
 
     # Act
     with patch("services.github.comments.update_comment.patch") as mock_patch:
@@ -128,15 +142,17 @@ def test_update_comment_missing_comment_url_key():
     assert result is None
 
 
-def test_update_comment_404_not_found():
+def test_update_comment_404_not_found(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.status_code = 404
 
     base_args = create_test_base_args(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN,
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
         comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
     )
 
@@ -155,15 +171,17 @@ def test_update_comment_404_not_found():
     assert result is None
 
 
-def test_update_comment_prints_body():
+def test_update_comment_prints_body(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = {"id": 123, "body": "Test comment"}
 
     base_args = create_test_base_args(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN,
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
         comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
     )
 
@@ -179,15 +197,17 @@ def test_update_comment_prints_body():
     assert result == {"id": 123, "body": "Test comment"}
 
 
-def test_update_comment_uses_timeout():
+def test_update_comment_uses_timeout(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = {"id": 123, "body": "Test comment"}
 
     base_args = create_test_base_args(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN,
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
         comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
     )
 
@@ -204,16 +224,18 @@ def test_update_comment_uses_timeout():
     assert result == {"id": 123, "body": "Test comment"}
 
 
-def test_update_comment_calls_raise_for_status():
+def test_update_comment_calls_raise_for_status(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"id": 123, "body": "Test comment"}
 
     base_args = create_test_base_args(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN,
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
         comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
     )
 

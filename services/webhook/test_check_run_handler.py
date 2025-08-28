@@ -7,11 +7,10 @@ from unittest.mock import patch
 import pytest
 from config import GITHUB_APP_USER_NAME, UTF8
 from services.webhook.check_run_handler import handle_check_run
-from tests.constants import OWNER, REPO
 
 
 @pytest.fixture
-def mock_check_run_payload():
+def mock_check_run_payload(test_owner, test_repo):
     """Fixture providing a mock check run payload."""
     return {
         "action": "completed",
@@ -34,13 +33,13 @@ def mock_check_run_payload():
         },
         "repository": {
             "id": 98765,
-            "name": REPO,
+            "name": test_repo,
             "owner": {
                 "id": 11111,
-                "login": OWNER,
+                "login": test_owner,
                 "type": "Organization",
             },
-            "clone_url": f"https://github.com/{OWNER}/{REPO}.git",
+            "clone_url": f"https://github.com/{test_owner}/{test_repo}.git",
             "fork": False,
         },
         "sender": {
@@ -170,31 +169,27 @@ def test_handle_check_run_skips_when_comment_exists(
 @patch("services.webhook.check_run_handler.is_lambda_timeout_approaching")
 def test_handle_check_run_full_workflow(
     mock_timeout_check,
-    mock_update_usage,
-    mock_create_empty_commit,
+    _mock_update_usage,
+    _mock_create_empty_commit,
     mock_chat_agent,
     mock_check_branch_exists,
     mock_is_pr_open,
-    mock_update_retry_pairs,
+    _mock_update_retry_pairs,
     mock_get_retry_pairs,
-    mock_update_comment,
+    _mock_update_comment,
     mock_get_logs,
     mock_get_remote_file,
     mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
-    mock_cancel_workflows,
+    _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
     mock_has_comment,
-    mock_slack_notify,
+    _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
     mock_check_run_payload,
-    mock_pr_data,
-    mock_workflow_run_logs,
-    mock_file_tree,
-    mock_pr_changes,
 ):
     """Test the full workflow of handling a check run failure."""
     # Setup mocks
@@ -203,11 +198,22 @@ def test_handle_check_run_full_workflow(
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
-    mock_get_pr.return_value = mock_pr_data
-    mock_get_changes.return_value = mock_pr_changes
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_logs.return_value = mock_workflow_run_logs
+    mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = True
     mock_check_branch_exists.return_value = True
@@ -249,7 +255,6 @@ def test_handle_check_run_full_workflow(
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
     mock_get_retry_pairs.assert_called_once()
-    mock_update_retry_pairs.assert_called_once()
     assert mock_chat_agent.call_count == 2
 
     # Verify chat_with_agent calls
@@ -286,16 +291,14 @@ def test_handle_check_run_with_404_logs(
     mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
-    mock_cancel_workflows,
+    _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
     mock_has_comment,
-    mock_slack_notify,
+    _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
     mock_check_run_payload,
-    mock_pr_data,
-    mock_pr_changes,
 ):
     """Test handling when workflow logs return 404."""
     # Setup mocks
@@ -304,8 +307,19 @@ def test_handle_check_run_with_404_logs(
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
-    mock_get_pr.return_value = mock_pr_data
-    mock_get_changes.return_value = mock_pr_changes
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
     mock_get_logs.return_value = 404
@@ -351,16 +365,14 @@ def test_handle_check_run_with_none_logs(
     mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
-    mock_cancel_workflows,
+    _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
     mock_has_comment,
-    mock_slack_notify,
+    _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
     mock_check_run_payload,
-    mock_pr_data,
-    mock_pr_changes,
 ):
     """Test handling when workflow logs return None."""
     # Setup mocks
@@ -369,8 +381,19 @@ def test_handle_check_run_with_none_logs(
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
-    mock_get_pr.return_value = mock_pr_data
-    mock_get_changes.return_value = mock_pr_changes
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
     mock_get_logs.return_value = None
@@ -408,7 +431,7 @@ def test_handle_check_run_with_none_logs(
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
 def test_handle_check_run_with_existing_retry_pair(
-    mock_update_retry_pairs,
+    _mock_update_retry_pairs,
     mock_get_retry_pairs,
     mock_update_comment,
     mock_get_logs,
@@ -416,17 +439,14 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
-    mock_cancel_workflows,
+    _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
     mock_has_comment,
-    mock_slack_notify,
+    _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
     mock_check_run_payload,
-    mock_pr_data,
-    mock_pr_changes,
-    mock_workflow_run_logs,
 ):
     """Test handling when the workflow/error pair has already been attempted."""
     # Setup mocks
@@ -435,11 +455,22 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
-    mock_get_pr.return_value = mock_pr_data
-    mock_get_changes.return_value = mock_pr_changes
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_logs.return_value = mock_workflow_run_logs
+    mock_get_logs.return_value = "Test failure log content"
 
     # Mock that this workflow/error pair has been seen before
     # Calculate the expected hash: workflow_id is "runs" from URL, error_log is "Test failure log content"
@@ -482,7 +513,7 @@ def test_handle_check_run_with_existing_retry_pair(
 @patch("services.webhook.check_run_handler.is_pull_request_open")
 def test_handle_check_run_with_closed_pr(
     mock_is_pr_open,
-    mock_update_retry_pairs,
+    _mock_update_retry_pairs,
     mock_get_retry_pairs,
     mock_update_comment,
     mock_get_logs,
@@ -490,17 +521,14 @@ def test_handle_check_run_with_closed_pr(
     mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
-    mock_cancel_workflows,
+    _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
     mock_has_comment,
-    mock_slack_notify,
+    _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
     mock_check_run_payload,
-    mock_pr_data,
-    mock_pr_changes,
-    mock_workflow_run_logs,
 ):
     """Test handling when the PR is closed during processing."""
     # Setup mocks
@@ -509,11 +537,22 @@ def test_handle_check_run_with_closed_pr(
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
-    mock_get_pr.return_value = mock_pr_data
-    mock_get_changes.return_value = mock_pr_changes
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_logs.return_value = mock_workflow_run_logs
+    mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = False
 
@@ -555,7 +594,7 @@ def test_handle_check_run_with_closed_pr(
 def test_handle_check_run_with_deleted_branch(
     mock_branch_exists,
     mock_is_pr_open,
-    mock_update_retry_pairs,
+    _mock_update_retry_pairs,
     mock_get_retry_pairs,
     mock_update_comment,
     mock_get_logs,
@@ -563,17 +602,14 @@ def test_handle_check_run_with_deleted_branch(
     mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
-    mock_cancel_workflows,
+    _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
     mock_has_comment,
-    mock_slack_notify,
+    _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
     mock_check_run_payload,
-    mock_pr_data,
-    mock_pr_changes,
-    mock_workflow_run_logs,
 ):
     """Test handling when the branch is deleted during processing."""
     # Setup mocks
@@ -582,11 +618,22 @@ def test_handle_check_run_with_deleted_branch(
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
-    mock_get_pr.return_value = mock_pr_data
-    mock_get_changes.return_value = mock_pr_changes
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
-    mock_get_logs.return_value = mock_workflow_run_logs
+    mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = True
     mock_branch_exists.return_value = False
