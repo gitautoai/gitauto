@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from services.github.files.delete_file_by_sha import delete_file_by_sha
+from github.files.delete_file_by_sha import delete_file_by_sha
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def base_args():
 @pytest.fixture
 def mock_requests():
     """Fixture for mocking requests."""
-    with patch("services.github.files.delete_file_by_sha.requests") as mock:
+    with patch("github.files.delete_file_by_sha.requests") as mock:
         mock.delete.return_value = MagicMock(status_code=200)
         yield mock
 
@@ -27,7 +27,7 @@ def mock_requests():
 @pytest.fixture
 def mock_create_headers():
     """Fixture for mocking create_headers."""
-    with patch("services.github.files.delete_file_by_sha.create_headers") as mock:
+    with patch("github.files.delete_file_by_sha.create_headers") as mock:
         mock.return_value = {"Authorization": "token test-token"}
         yield mock
 
