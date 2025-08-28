@@ -3,16 +3,15 @@ from unittest.mock import patch
 import pytest
 
 from services.github.commits.create_empty_commit import create_empty_commit
-from tests.constants import OWNER, REPO, TOKEN
 
 
 @pytest.fixture
-def sample_base_args():
+def sample_base_args(test_owner, test_repo, test_token):
     """Fixture providing sample BaseArgs for testing."""
     return {
-        "owner": OWNER,
-        "repo": REPO,
-        "token": TOKEN,
+        "owner": test_owner,
+        "repo": test_repo,
+        "token": test_token,
         "new_branch": "test-branch",
     }
 
@@ -404,19 +403,19 @@ def test_create_empty_commit_function_call_sequence(
     # pylint: disable=redefined-outer-name
     call_order = []
 
-    def track_get_reference(*args, **kwargs):
+    def track_get_reference(*_args, **_kwargs):
         call_order.append("get_reference")
         return "current_sha_123"
 
-    def track_get_commit(*args, **kwargs):
+    def track_get_commit(*_args, **_kwargs):
         call_order.append("get_commit")
         return "tree_sha_456"
 
-    def track_create_commit(*args, **kwargs):
+    def track_create_commit(*_args, **_kwargs):
         call_order.append("create_commit")
         return "new_commit_sha_789"
 
-    def track_update_reference(*args, **kwargs):
+    def track_update_reference(*_args, **_kwargs):
         call_order.append("update_reference")
         return True
 

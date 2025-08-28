@@ -208,7 +208,11 @@ def test_insert_repository_attribute_error():
         )
 
         result = insert_repository(
-            owner_id=789, repo_id=123456, repo_name="test-repo", user_id=123, user_name="testuser"
+            owner_id=789,
+            repo_id=123456,
+            repo_name="test-repo",
+            user_id=123,
+            user_name="testuser",
         )
 
         assert result is None

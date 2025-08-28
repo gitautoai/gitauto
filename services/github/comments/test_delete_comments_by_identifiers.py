@@ -1,4 +1,5 @@
 # Standard imports
+import inspect
 from unittest.mock import patch
 
 # Third-party imports
@@ -8,7 +9,6 @@ import pytest
 from services.github.comments.delete_comments_by_identifiers import (
     delete_comments_by_identifiers,
 )
-from tests.helpers.create_test_base_args import create_test_base_args
 
 
 @pytest.fixture
@@ -462,8 +462,6 @@ def test_delete_comments_by_identifiers_large_number_of_comments(
 
 def test_delete_comments_by_identifiers_function_signature():
     """Test that the function has the correct signature and docstring."""
-    import inspect
-
     # Get the function signature
     sig = inspect.signature(delete_comments_by_identifiers)
 
@@ -488,7 +486,10 @@ def test_delete_comments_by_identifiers_decorator_applied():
 
 
 def test_delete_comments_by_identifiers_with_minimal_base_args(
-    mock_get_all_comments, mock_filter_comments_by_identifiers, mock_delete_comment
+    mock_get_all_comments,
+    mock_filter_comments_by_identifiers,
+    mock_delete_comment,
+    create_test_base_args,
 ):
     """Test with minimal BaseArgs containing only required fields."""
     # Setup minimal base_args

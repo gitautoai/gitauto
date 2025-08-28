@@ -44,7 +44,7 @@ def test_delete_file_successful(base_args, mock_requests, mock_create_headers):
     mock_create_headers.assert_called_once_with(token=base_args["token"])
 
 
-def test_delete_file_with_custom_message(base_args, mock_requests, mock_create_headers):
+def test_delete_file_with_custom_message(base_args, mock_requests, _mock_create_headers):
     """Test file deletion with custom commit message."""
     file_path = "test/file.txt"
     sha = "abc123"
@@ -61,7 +61,7 @@ def test_delete_file_with_custom_message(base_args, mock_requests, mock_create_h
     assert called_args["json"]["message"] == custom_message
 
 
-def test_delete_file_with_skip_ci(base_args, mock_requests, mock_create_headers):
+def test_delete_file_with_skip_ci(base_args, mock_requests, _mock_create_headers):
     """Test file deletion with skip_ci flag."""
     file_path = "test/file.txt"
     sha = "abc123"
@@ -73,7 +73,7 @@ def test_delete_file_with_skip_ci(base_args, mock_requests, mock_create_headers)
     assert called_args["json"]["message"] == f"Delete {file_path} [skip ci]"
 
 
-def test_delete_file_request_error(base_args, mock_requests, mock_create_headers):
+def test_delete_file_request_error(base_args, mock_requests, _mock_create_headers):
     """Test file deletion with request error."""
     mock_requests.delete.side_effect = Exception("Network error")
     
@@ -86,7 +86,7 @@ def test_delete_file_request_error(base_args, mock_requests, mock_create_headers
     assert result is None  # Due to @handle_exceptions decorator
 
 
-def test_delete_file_http_error(base_args, mock_requests, mock_create_headers):
+def test_delete_file_http_error(base_args, mock_requests, _mock_create_headers):
     """Test file deletion with HTTP error."""
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = Exception("HTTP error")

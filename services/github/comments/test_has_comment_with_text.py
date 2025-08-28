@@ -4,13 +4,17 @@ import pytest
 
 from config import GITHUB_APP_USER_NAME
 from services.github.comments.has_comment_with_text import has_comment_with_text
-from tests.constants import OWNER, REPO, TOKEN
 
 
 @pytest.fixture
-def base_args():
+def base_args(test_owner, test_repo, test_token):
     """Fixture providing base arguments for testing."""
-    return {"owner": OWNER, "repo": REPO, "token": TOKEN, "issue_number": 123}
+    return {
+        "owner": test_owner,
+        "repo": test_repo,
+        "token": test_token,
+        "issue_number": 123,
+    }
 
 
 @pytest.fixture

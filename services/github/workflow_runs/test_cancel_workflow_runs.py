@@ -4,7 +4,6 @@ import pytest
 import requests
 
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
-from tests.constants import OWNER, REPO, TOKEN
 
 
 @pytest.fixture
@@ -39,7 +38,12 @@ def mock_cancel_workflow_run():
 
 
 def test_cancel_workflow_runs_success_with_commit_sha(
-    mock_get_workflow_runs, mock_cancel_workflow_run, mock_workflow_runs
+    mock_get_workflow_runs,
+    mock_cancel_workflow_run,
+    mock_workflow_runs,
+    test_owner,
+    test_repo,
+    test_token,
 ):
     """Test successful cancellation of workflow runs with commit SHA."""
     # Arrange
@@ -48,12 +52,16 @@ def test_cancel_workflow_runs_success_with_commit_sha(
 
     # Act
     result = cancel_workflow_runs(
-        owner=OWNER, repo=REPO, token=TOKEN, commit_sha=commit_sha
+        owner=test_owner, repo=test_repo, token=test_token, commit_sha=commit_sha
     )
 
     # Assert
     mock_get_workflow_runs.assert_called_once_with(
-        owner=OWNER, repo=REPO, token=TOKEN, commit_sha=commit_sha, branch=None
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+        commit_sha=commit_sha,
+        branch=None,
     )
 
     # Should cancel runs with cancellable statuses (5 out of 6 runs)
@@ -76,15 +84,20 @@ def test_cancel_workflow_runs_success_with_commit_sha(
 
     # Verify all calls have correct owner, repo, and token
     for call in actual_calls:
-        assert call.kwargs["owner"] == OWNER
-        assert call.kwargs["repo"] == REPO
-        assert call.kwargs["token"] == TOKEN
+        assert call.kwargs["owner"] == test_owner
+        assert call.kwargs["repo"] == test_repo
+        assert call.kwargs["token"] == test_token
 
     assert result is None
 
 
 def test_cancel_workflow_runs_success_with_branch(
-    mock_get_workflow_runs, mock_cancel_workflow_run, mock_workflow_runs
+    mock_get_workflow_runs,
+    mock_cancel_workflow_run,
+    mock_workflow_runs,
+    test_owner,
+    test_repo,
+    test_token,
 ):
     """Test successful cancellation of workflow runs with branch."""
     # Arrange
@@ -92,11 +105,17 @@ def test_cancel_workflow_runs_success_with_branch(
     mock_get_workflow_runs.return_value = mock_workflow_runs
 
     # Act
-    result = cancel_workflow_runs(owner=OWNER, repo=REPO, token=TOKEN, branch=branch)
+    result = cancel_workflow_runs(
+        owner=test_owner, repo=test_repo, token=test_token, branch=branch
+    )
 
     # Assert
     mock_get_workflow_runs.assert_called_once_with(
-        owner=OWNER, repo=REPO, token=TOKEN, commit_sha=None, branch=branch
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+        commit_sha=None,
+        branch=branch,
     )
 
     assert mock_cancel_workflow_run.call_count == 5
@@ -104,7 +123,7 @@ def test_cancel_workflow_runs_success_with_branch(
 
 
 def test_cancel_workflow_runs_no_workflow_runs(
-    mock_get_workflow_runs, mock_cancel_workflow_run
+    mock_get_workflow_runs, mock_cancel_workflow_run, test_owner, test_repo, test_token
 ):
     """Test behavior when no workflow runs are returned."""
     # Arrange
@@ -112,7 +131,7 @@ def test_cancel_workflow_runs_no_workflow_runs(
 
     # Act
     result = cancel_workflow_runs(
-        owner=OWNER, repo=REPO, token=TOKEN, commit_sha="abc123"
+        owner=test_owner, repo=test_repo, token=test_token, commit_sha="abc123"
     )
 
     # Assert
@@ -122,7 +141,7 @@ def test_cancel_workflow_runs_no_workflow_runs(
 
 
 def test_cancel_workflow_runs_no_cancellable_runs(
-    mock_get_workflow_runs, mock_cancel_workflow_run
+    mock_get_workflow_runs, mock_cancel_workflow_run, test_owner, test_repo, test_token
 ):
     """Test behavior when no workflow runs have cancellable statuses."""
     # Arrange
@@ -136,7 +155,7 @@ def test_cancel_workflow_runs_no_cancellable_runs(
 
     # Act
     result = cancel_workflow_runs(
-        owner=OWNER, repo=REPO, token=TOKEN, commit_sha="abc123"
+        owner=test_owner, repo=test_repo, token=test_token, commit_sha="abc123"
     )
 
     # Assert
@@ -146,7 +165,7 @@ def test_cancel_workflow_runs_no_cancellable_runs(
 
 
 def test_cancel_workflow_runs_get_workflow_runs_exception(
-    mock_get_workflow_runs, mock_cancel_workflow_run
+    mock_get_workflow_runs, mock_cancel_workflow_run, test_owner, test_repo, test_token
 ):
     """Test handling when get_workflow_runs raises an exception."""
     # Arrange
@@ -160,7 +179,7 @@ def test_cancel_workflow_runs_get_workflow_runs_exception(
 
     # Act
     result = cancel_workflow_runs(
-        owner=OWNER, repo=REPO, token=TOKEN, commit_sha="abc123"
+        owner=test_owner, repo=test_repo, token=test_token, commit_sha="abc123"
     )
 
     # Assert
@@ -170,7 +189,7 @@ def test_cancel_workflow_runs_get_workflow_runs_exception(
 
 
 def test_cancel_workflow_runs_cancel_workflow_run_exception(
-    mock_get_workflow_runs, mock_cancel_workflow_run
+    mock_get_workflow_runs, mock_cancel_workflow_run, test_owner, test_repo, test_token
 ):
     """Test that processing continues when cancel_workflow_run encounters errors."""
     # Arrange
@@ -184,7 +203,7 @@ def test_cancel_workflow_runs_cancel_workflow_run_exception(
 
     # Act
     result = cancel_workflow_runs(
-        owner=OWNER, repo=REPO, token=TOKEN, commit_sha="abc123"
+        owner=test_owner, repo=test_repo, token=test_token, commit_sha="abc123"
     )
 
     # Assert
@@ -194,7 +213,12 @@ def test_cancel_workflow_runs_cancel_workflow_run_exception(
 
 
 def test_cancel_workflow_runs_with_both_commit_sha_and_branch(
-    mock_get_workflow_runs, mock_cancel_workflow_run, mock_workflow_runs
+    mock_get_workflow_runs,
+    mock_cancel_workflow_run,
+    mock_workflow_runs,
+    test_owner,
+    test_repo,
+    test_token,
 ):
     """Test behavior when both commit_sha and branch are provided."""
     # Arrange
@@ -204,13 +228,21 @@ def test_cancel_workflow_runs_with_both_commit_sha_and_branch(
 
     # Act
     result = cancel_workflow_runs(
-        owner=OWNER, repo=REPO, token=TOKEN, commit_sha=commit_sha, branch=branch
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+        commit_sha=commit_sha,
+        branch=branch,
     )
 
     # Assert
     # Should pass both parameters to get_workflow_runs
     mock_get_workflow_runs.assert_called_once_with(
-        owner=OWNER, repo=REPO, token=TOKEN, commit_sha=commit_sha, branch=branch
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+        commit_sha=commit_sha,
+        branch=branch,
     )
 
     assert mock_cancel_workflow_run.call_count == 5

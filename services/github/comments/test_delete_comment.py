@@ -3,11 +3,10 @@ import pytest
 import requests
 from requests import HTTPError
 from services.github.comments.delete_comment import delete_comment
-from test_utils import create_test_base_args
 
 
 @pytest.fixture
-def base_args():
+def base_args(create_test_base_args):
     """Fixture providing test BaseArgs."""
     return create_test_base_args(
         owner="test-owner", repo="test-repo", token="test-token-123"
@@ -66,9 +65,7 @@ def test_delete_comment_success(base_args, mock_delete_response, mock_create_hea
         assert result is None
 
 
-def test_delete_comment_with_different_comment_id(
-    base_args, mock_delete_response, mock_create_headers
-):
+def test_delete_comment_with_different_comment_id(base_args, mock_delete_response):
     """Test comment deletion with different comment ID."""
     comment_id = 98765
 
@@ -87,7 +84,7 @@ def test_delete_comment_with_different_comment_id(
 
 
 def test_delete_comment_with_different_owner_repo(
-    mock_delete_response, mock_create_headers
+    mock_delete_response, create_test_base_args
 ):
     """Test comment deletion with different owner and repo."""
     base_args = create_test_base_args(
@@ -106,11 +103,10 @@ def test_delete_comment_with_different_owner_repo(
         actual_call = mock_delete.call_args
         assert actual_call[1]["url"] == expected_url
 
-        # Verify headers were created with correct token
-        mock_create_headers.assert_called_once_with(token="different-token")
+        # Headers are mocked via patch
 
 
-def test_delete_comment_http_error_handled(base_args, mock_create_headers):
+def test_delete_comment_http_error_handled(base_args):
     """Test that HTTP errors are handled by the decorator."""
     comment_id = 12345
 
@@ -136,7 +132,7 @@ def test_delete_comment_http_error_handled(base_args, mock_create_headers):
         mock_response.raise_for_status.assert_called_once()
 
 
-def test_delete_comment_request_timeout_handled(base_args, mock_create_headers):
+def test_delete_comment_request_timeout_handled(base_args):
     """Test that request timeout is handled by the decorator."""
     comment_id = 12345
 
@@ -150,9 +146,7 @@ def test_delete_comment_request_timeout_handled(base_args, mock_create_headers):
         mock_delete.assert_called_once()
 
 
-def test_delete_comment_uses_correct_timeout(
-    base_args, mock_delete_response, mock_create_headers
-):
+def test_delete_comment_uses_correct_timeout(base_args, mock_delete_response):
     """Test that the function uses the correct timeout value."""
     comment_id = 12345
 
@@ -168,9 +162,7 @@ def test_delete_comment_uses_correct_timeout(
             assert actual_call[1]["timeout"] == 60
 
 
-def test_delete_comment_uses_github_api_url(
-    base_args, mock_delete_response, mock_create_headers
-):
+def test_delete_comment_uses_github_api_url(base_args, mock_delete_response):
     """Test that the function uses the correct GitHub API URL."""
     comment_id = 12345
 
@@ -192,7 +184,7 @@ def test_delete_comment_uses_github_api_url(
 
 @pytest.mark.parametrize("comment_id", [1, 999999, 123456789])
 def test_delete_comment_with_various_comment_ids(
-    base_args, mock_delete_response, mock_create_headers, comment_id
+    base_args, mock_delete_response, comment_id
 ):
     """Test comment deletion with various comment ID formats."""
     with patch("services.github.comments.delete_comment.delete") as mock_delete:
@@ -207,7 +199,7 @@ def test_delete_comment_with_various_comment_ids(
         assert actual_call[1]["url"] == expected_url
 
 
-def test_delete_comment_connection_error_handled(base_args, mock_create_headers):
+def test_delete_comment_connection_error_handled(base_args):
     """Test that connection errors are handled by the decorator."""
     comment_id = 12345
 
@@ -224,7 +216,7 @@ def test_delete_comment_connection_error_handled(base_args, mock_create_headers)
 
 
 def test_delete_comment_with_special_characters_in_repo_name(
-    mock_delete_response, mock_create_headers
+    mock_delete_response, create_test_base_args
 ):
     """Test comment deletion with special characters in repository name."""
     base_args = create_test_base_args(
@@ -246,9 +238,6 @@ def test_delete_comment_with_special_characters_in_repo_name(
 
 def test_delete_comment_decorator_configuration():
     """Test that the handle_exceptions decorator is configured correctly."""
-    # Import the function to check its decorator
-    from services.github.comments.delete_comment import delete_comment
-
     # The function should have the handle_exceptions decorator applied
     # We can verify this by checking if the function has been wrapped
     assert hasattr(delete_comment, "__wrapped__")

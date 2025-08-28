@@ -5,12 +5,10 @@ from requests import HTTPError
 
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.markdown.render_text import render_text
-from test_utils import create_test_base_args
-from tests.constants import OWNER, REPO, TOKEN
 
 
 @pytest.fixture
-def mock_base_args():
+def mock_base_args(create_test_base_args):
     """Fixture providing test BaseArgs."""
     return create_test_base_args(
         owner="test-owner", repo="test-repo", token="test-token-123"
@@ -56,9 +54,9 @@ def mock_create_headers(mock_headers):
 
 
 @pytest.fixture
-def integration_base_args():
+def integration_base_args(test_owner, test_repo, test_token, create_test_base_args):
     """Fixture providing real BaseArgs for integration testing."""
-    return create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
+    return create_test_base_args(owner=test_owner, repo=test_repo, token=test_token)
 
 
 def test_render_text_successful_request(
@@ -144,7 +142,7 @@ def test_render_text_with_special_characters(
 
 
 def test_render_text_extracts_correct_base_args_values(
-    mock_post_request, mock_create_headers
+    mock_post_request, mock_create_headers, create_test_base_args
 ):
     """Test that function correctly extracts values from BaseArgs."""
     base_args = create_test_base_args(
@@ -163,9 +161,7 @@ def test_render_text_extracts_correct_base_args_values(
     )
 
 
-def test_render_text_uses_correct_api_endpoint(
-    mock_base_args, mock_post_request, mock_create_headers
-):
+def test_render_text_uses_correct_api_endpoint(mock_base_args, mock_post_request):
     """Test that the correct GitHub API endpoint is used."""
     text = "Test"
 
@@ -177,9 +173,7 @@ def test_render_text_uses_correct_api_endpoint(
     assert call_args[1]["url"] == expected_url
 
 
-def test_render_text_uses_gfm_mode(
-    mock_base_args, mock_post_request, mock_create_headers
-):
+def test_render_text_uses_gfm_mode(mock_base_args, mock_post_request):
     """Test that GitHub Flavored Markdown mode is used."""
     text = "Test"
 
@@ -189,9 +183,7 @@ def test_render_text_uses_gfm_mode(
     assert call_args[1]["json"]["mode"] == "gfm"
 
 
-def test_render_text_uses_correct_context_format(
-    mock_base_args, mock_post_request, mock_create_headers
-):
+def test_render_text_uses_correct_context_format(mock_base_args, mock_post_request):
     """Test that context is formatted as owner/repo."""
     text = "Test"
 
@@ -201,9 +193,7 @@ def test_render_text_uses_correct_context_format(
     assert call_args[1]["json"]["context"] == "test-owner/test-repo"
 
 
-def test_render_text_uses_correct_timeout(
-    mock_base_args, mock_post_request, mock_create_headers
-):
+def test_render_text_uses_correct_timeout(mock_base_args, mock_post_request):
     """Test that the correct timeout value is used."""
     text = "Test"
 
@@ -213,9 +203,7 @@ def test_render_text_uses_correct_timeout(
     assert call_args[1]["timeout"] == TIMEOUT
 
 
-def test_render_text_http_error_returns_empty_string(
-    mock_base_args, mock_create_headers
-):
+def test_render_text_http_error_returns_empty_string(mock_base_args):
     """Test that HTTP errors return empty string due to handle_exceptions decorator."""
     text = "Test content"
 
@@ -237,9 +225,7 @@ def test_render_text_http_error_returns_empty_string(
         assert result == ""
 
 
-def test_render_text_request_exception_returns_empty_string(
-    mock_base_args, mock_create_headers
-):
+def test_render_text_request_exception_returns_empty_string(mock_base_args):
     """Test that request exceptions return empty string due to handle_exceptions decorator."""
     text = "Test content"
 
@@ -252,9 +238,7 @@ def test_render_text_request_exception_returns_empty_string(
         assert result == ""
 
 
-def test_render_text_response_calls_raise_for_status(
-    mock_base_args, mock_post_request, mock_create_headers
-):
+def test_render_text_response_calls_raise_for_status(mock_base_args, mock_post_request):
     """Test that response.raise_for_status() is called."""
     text = "Test content"
 
@@ -263,7 +247,7 @@ def test_render_text_response_calls_raise_for_status(
     mock_post_request.return_value.raise_for_status.assert_called_once()
 
 
-def test_render_text_returns_response_text(mock_base_args, mock_create_headers):
+def test_render_text_returns_response_text(mock_base_args):
     """Test that the function returns the response text."""
     text = "Test content"
     expected_response = "<h1>Rendered HTML</h1>"
@@ -279,9 +263,7 @@ def test_render_text_returns_response_text(mock_base_args, mock_create_headers):
         assert result == expected_response
 
 
-def test_render_text_with_multiline_markdown(
-    mock_base_args, mock_post_request, mock_create_headers
-):
+def test_render_text_with_multiline_markdown(mock_base_args, mock_post_request):
     """Test rendering with multiline markdown content."""
     text = """Line 1
 Line 2
@@ -298,7 +280,7 @@ New paragraph"""
 
 
 def test_render_text_with_github_flavored_markdown_features(
-    mock_base_args, mock_post_request, mock_create_headers
+    mock_base_args, mock_post_request
 ):
     """Test rendering with GitHub Flavored Markdown specific features."""
     text = """- [x] Completed task
@@ -331,7 +313,11 @@ def test_render_text_with_github_flavored_markdown_features(
     ],
 )
 def test_render_text_context_formatting(
-    owner, repo, expected_context, mock_post_request, mock_create_headers
+    owner,
+    repo,
+    expected_context,
+    mock_post_request,
+    create_test_base_args,
 ):
     """Test that context is correctly formatted for various owner/repo combinations."""
     base_args = create_test_base_args(owner=owner, repo=repo, token="test-token")
@@ -356,9 +342,7 @@ def test_render_text_context_formatting(
         "Very long text " * 100,
     ],
 )
-def test_render_text_various_text_inputs(
-    text_input, mock_base_args, mock_post_request, mock_create_headers
-):
+def test_render_text_various_text_inputs(text_input, mock_base_args, mock_post_request):
     """Test rendering with various text inputs."""
     result = render_text(mock_base_args, text_input)
 
@@ -368,9 +352,7 @@ def test_render_text_various_text_inputs(
     assert call_args[1]["json"]["text"] == text_input
 
 
-def test_render_text_json_decode_error_returns_empty_string(
-    mock_base_args, mock_create_headers
-):
+def test_render_text_json_decode_error_returns_empty_string(mock_base_args):
     """Test that JSON decode errors return empty string due to handle_exceptions decorator."""
     text = "Test content"
 
@@ -388,9 +370,7 @@ def test_render_text_json_decode_error_returns_empty_string(
         assert result == "Invalid JSON response"
 
 
-def test_render_text_attribute_error_returns_empty_string(
-    mock_base_args, mock_create_headers
-):
+def test_render_text_attribute_error_returns_empty_string(mock_base_args):
     """Test that attribute errors return empty string due to handle_exceptions decorator."""
     text = "Test content"
 
@@ -406,7 +386,7 @@ def test_render_text_attribute_error_returns_empty_string(
         assert result == ""
 
 
-def test_render_text_key_error_returns_empty_string(mock_create_headers):
+def test_render_text_key_error_returns_empty_string():
     """Test that key errors return empty string due to handle_exceptions decorator."""
     # Create BaseArgs missing required keys to trigger KeyError
     incomplete_base_args = {}
@@ -419,7 +399,7 @@ def test_render_text_key_error_returns_empty_string(mock_create_headers):
         assert result == ""
 
 
-def test_render_text_type_error_returns_empty_string(mock_create_headers):
+def test_render_text_type_error_returns_empty_string():
     """Test that type errors return empty string due to handle_exceptions decorator."""
     # Pass None as base_args to trigger TypeError
     text = "Test content"
@@ -498,9 +478,13 @@ def test_integration_render_text_unicode_content(integration_base_args):
     assert len(result) > 0
 
 
-def test_integration_render_text_with_invalid_token():
+def test_integration_render_text_with_invalid_token(
+    test_owner, test_repo, create_test_base_args
+):
     """Integration test: render text with invalid token should return empty string."""
-    base_args = create_test_base_args(owner=OWNER, repo=REPO, token="invalid-token")
+    base_args = create_test_base_args(
+        owner=test_owner, repo=test_repo, token="invalid-token"
+    )
     text = "# Test"
 
     result = render_text(base_args, text)

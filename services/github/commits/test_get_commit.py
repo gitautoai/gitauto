@@ -7,14 +7,12 @@ import requests
 
 # Local imports
 from services.github.commits.get_commit import get_commit
-from test_utils import create_test_base_args
-from tests.constants import OWNER, REPO, TOKEN
 
 
 @pytest.fixture
-def base_args():
+def base_args(test_owner, test_repo, test_token, create_test_base_args):
     """Fixture providing base arguments for testing."""
-    return create_test_base_args(owner=OWNER, repo=REPO, token=TOKEN)
+    return create_test_base_args(owner=test_owner, repo=test_repo, token=test_token)
 
 
 @pytest.fixture
@@ -51,7 +49,7 @@ def test_get_commit_success(base_args, mock_commit_response):
 
         # Verify API call
         mock_get.assert_called_once_with(
-            url=f"https://api.github.com/repos/{OWNER}/{REPO}/git/commits/abc123def456",
+            url=f"https://api.github.com/repos/{base_args['owner']}/{base_args['repo']}/git/commits/abc123def456",
             headers={"Authorization": "Bearer test_token"},
             timeout=120,  # Default TIMEOUT value from config.py
         )
@@ -61,7 +59,7 @@ def test_get_commit_success(base_args, mock_commit_response):
         assert result == "tree_sha_789xyz"
 
 
-def test_get_commit_headers_creation(base_args, mock_commit_response):
+def test_get_commit_headers_creation(mock_commit_response, create_test_base_args):
     """Test that headers are created correctly with the token."""
     with patch("services.github.commits.get_commit.requests.get") as mock_get, patch(
         "services.github.commits.get_commit.create_headers"
@@ -82,7 +80,7 @@ def test_get_commit_headers_creation(base_args, mock_commit_response):
         mock_headers.assert_called_once_with(token="custom_token_123")
 
 
-def test_get_commit_url_construction(base_args, mock_commit_response):
+def test_get_commit_url_construction(mock_commit_response, create_test_base_args):
     """Test that the URL is constructed correctly with different parameters."""
     with patch("services.github.commits.get_commit.requests.get") as mock_get, patch(
         "services.github.commits.get_commit.create_headers"
@@ -106,7 +104,9 @@ def test_get_commit_url_construction(base_args, mock_commit_response):
         )
 
 
-def test_get_commit_with_special_characters(mock_commit_response):
+def test_get_commit_with_special_characters(
+    mock_commit_response, create_test_base_args
+):
     """Test with owner/repo/commit names containing special characters."""
     with patch("services.github.commits.get_commit.requests.get") as mock_get, patch(
         "services.github.commits.get_commit.create_headers"
@@ -164,7 +164,7 @@ def test_get_commit_custom_api_url(base_args, mock_commit_response):
 
         # Verify URL construction uses the custom API URL
         mock_get.assert_called_once_with(
-            url=f"https://custom-github-api.com/repos/{OWNER}/{REPO}/git/commits/abc123def456",
+            url=f"https://custom-github-api.com/repos/{base_args['owner']}/{base_args['repo']}/git/commits/abc123def456",
             headers={"Authorization": "Bearer test_token"},
             timeout=120,
         )
@@ -368,9 +368,7 @@ def test_get_commit_various_commit_sha_formats(
         result = get_commit(base_args, commit_sha)
 
         # Verify the commit SHA is correctly used in the URL
-        expected_url = (
-            f"https://api.github.com/repos/{OWNER}/{REPO}/git/commits/{commit_sha}"
-        )
+        expected_url = f"https://api.github.com/repos/{base_args['owner']}/{base_args['repo']}/git/commits/{commit_sha}"
         mock_get.assert_called_once_with(
             url=expected_url,
             headers={"Authorization": "Bearer test_token"},

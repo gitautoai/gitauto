@@ -4,7 +4,6 @@ import pytest
 import requests
 
 from services.github.workflow_runs.get_workflow_runs import get_workflow_runs
-from tests.constants import OWNER, REPO, TOKEN
 
 
 @pytest.fixture
@@ -62,13 +61,18 @@ def mock_successful_response(mock_workflow_runs_response):
 
 
 @pytest.fixture
-def mock_headers():
+def mock_headers(test_token):
     """Fixture providing mock headers."""
-    return {"Authorization": f"Bearer {TOKEN}"}
+    return {"Authorization": f"Bearer {test_token}"}
 
 
 def test_get_workflow_runs_success_with_commit_sha(
-    mock_successful_response, mock_headers, mock_workflow_runs_response
+    test_owner,
+    test_repo,
+    test_token,
+    mock_successful_response,
+    mock_headers,
+    mock_workflow_runs_response,
 ):
     """Test successful retrieval of workflow runs with commit_sha."""
     # Arrange
@@ -83,14 +87,16 @@ def test_get_workflow_runs_success_with_commit_sha(
     ) as mock_create_headers:
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_successful_response
-        result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=commit_sha)
+        result = get_workflow_runs(
+            test_owner, test_repo, test_token, commit_sha=commit_sha
+        )
 
     # Assert
-    mock_create_headers.assert_called_once_with(token=TOKEN, media_type="")
+    mock_create_headers.assert_called_once_with(token=test_token, media_type="")
     mock_get.assert_called_once()
     assert (
         mock_get.call_args[1]["url"]
-        == f"https://api.github.com/repos/{OWNER}/{REPO}/actions/runs?head_sha={commit_sha}"
+        == f"https://api.github.com/repos/{test_owner}/{test_repo}/actions/runs?head_sha={commit_sha}"
     )
     assert mock_get.call_args[1]["headers"] == mock_headers
     assert mock_get.call_args[1]["timeout"] == 120
@@ -100,7 +106,12 @@ def test_get_workflow_runs_success_with_commit_sha(
 
 
 def test_get_workflow_runs_success_with_branch(
-    mock_successful_response, mock_headers, mock_workflow_runs_response
+    test_owner,
+    test_repo,
+    test_token,
+    mock_successful_response,
+    mock_headers,
+    mock_workflow_runs_response,
 ):
     """Test successful retrieval of workflow runs with branch."""
     # Arrange
@@ -115,14 +126,14 @@ def test_get_workflow_runs_success_with_branch(
     ) as mock_create_headers:
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_successful_response
-        result = get_workflow_runs(OWNER, REPO, TOKEN, branch=branch)
+        result = get_workflow_runs(test_owner, test_repo, test_token, branch=branch)
 
     # Assert
-    mock_create_headers.assert_called_once_with(token=TOKEN, media_type="")
+    mock_create_headers.assert_called_once_with(token=test_token, media_type="")
     mock_get.assert_called_once()
     assert (
         mock_get.call_args[1]["url"]
-        == f"https://api.github.com/repos/{OWNER}/{REPO}/actions/runs?branch={branch}"
+        == f"https://api.github.com/repos/{test_owner}/{test_repo}/actions/runs?branch={branch}"
     )
     assert mock_get.call_args[1]["headers"] == mock_headers
     assert mock_get.call_args[1]["timeout"] == 120
@@ -132,7 +143,7 @@ def test_get_workflow_runs_success_with_branch(
 
 
 def test_get_workflow_runs_both_commit_sha_and_branch_prefers_commit_sha(
-    mock_successful_response, mock_headers
+    test_owner, test_repo, test_token, mock_successful_response, mock_headers
 ):
     """Test that commit_sha takes precedence when both commit_sha and branch are provided."""
     # Arrange
@@ -147,38 +158,50 @@ def test_get_workflow_runs_both_commit_sha_and_branch_prefers_commit_sha(
     ) as mock_create_headers:
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_successful_response
-        get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=commit_sha, branch=branch)
+        get_workflow_runs(
+            test_owner, test_repo, test_token, commit_sha=commit_sha, branch=branch
+        )
 
     # Assert
     mock_get.assert_called_once()
     assert (
         mock_get.call_args[1]["url"]
-        == f"https://api.github.com/repos/{OWNER}/{REPO}/actions/runs?head_sha={commit_sha}"
+        == f"https://api.github.com/repos/{test_owner}/{test_repo}/actions/runs?head_sha={commit_sha}"
     )
 
 
-def test_get_workflow_runs_neither_commit_sha_nor_branch_returns_empty_list():
+def test_get_workflow_runs_neither_commit_sha_nor_branch_returns_empty_list(
+    test_owner, test_repo, test_token
+):
     """Test that empty list is returned when neither commit_sha nor branch is provided."""
     # Act & Assert
-    result = get_workflow_runs(OWNER, REPO, TOKEN)
+    result = get_workflow_runs(test_owner, test_repo, test_token)
     assert result == []  # Default return value from handle_exceptions decorator
 
 
-def test_get_workflow_runs_empty_commit_sha_and_branch_returns_empty_list():
+def test_get_workflow_runs_empty_commit_sha_and_branch_returns_empty_list(
+    test_owner, test_repo, test_token
+):
     """Test that empty list is returned when both commit_sha and branch are empty strings."""
     # Act & Assert
-    result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha="", branch="")
+    result = get_workflow_runs(
+        test_owner, test_repo, test_token, commit_sha="", branch=""
+    )
     assert result == []  # Default return value from handle_exceptions decorator
 
 
-def test_get_workflow_runs_none_commit_sha_and_empty_branch_returns_empty_list():
+def test_get_workflow_runs_none_commit_sha_and_empty_branch_returns_empty_list(
+    test_owner, test_repo, test_token
+):
     """Test that empty list is returned when commit_sha is None and branch is empty string."""
     # Act & Assert
-    result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=None, branch="")
+    result = get_workflow_runs(
+        test_owner, test_repo, test_token, commit_sha=None, branch=""
+    )
     assert result == []  # Default return value from handle_exceptions decorator
 
 
-def test_get_workflow_runs_http_error():
+def test_get_workflow_runs_http_error(test_owner, test_repo, test_token):
     """Test handling of HTTP error when retrieving workflow runs."""
     # Arrange
     commit_sha = "abc123def456"
@@ -195,16 +218,18 @@ def test_get_workflow_runs_http_error():
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers:
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_get.return_value.raise_for_status.side_effect = http_error
-        result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=commit_sha)
+        result = get_workflow_runs(
+            test_owner, test_repo, test_token, commit_sha=commit_sha
+        )
 
     # Assert
     mock_get.assert_called_once()
     assert result == []  # Default return value from handle_exceptions decorator
 
 
-def test_get_workflow_runs_request_exception():
+def test_get_workflow_runs_request_exception(test_owner, test_repo, test_token):
     """Test handling of request exception when retrieving workflow runs."""
     # Arrange
     branch = "main"
@@ -215,16 +240,16 @@ def test_get_workflow_runs_request_exception():
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers:
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_get.side_effect = requests.RequestException("Connection error")
-        result = get_workflow_runs(OWNER, REPO, TOKEN, branch=branch)
+        result = get_workflow_runs(test_owner, test_repo, test_token, branch=branch)
 
     # Assert
     mock_get.assert_called_once()
     assert result == []  # Default return value from handle_exceptions decorator
 
 
-def test_get_workflow_runs_rate_limit_exceeded():
+def test_get_workflow_runs_rate_limit_exceeded(test_owner, test_repo, test_token):
     """Test handling of rate limit exceeded error."""
     # Arrange
     commit_sha = "abc123def456"
@@ -251,7 +276,7 @@ def test_get_workflow_runs_rate_limit_exceeded():
     ) as mock_sleep, patch(
         "time.time", return_value=1000000000
     ):
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
         # First call raises rate limit error, second call succeeds
         mock_success_response = MagicMock()
@@ -260,7 +285,9 @@ def test_get_workflow_runs_rate_limit_exceeded():
         mock_get.side_effect = [mock_error_response, mock_success_response]
         mock_error_response.raise_for_status.side_effect = http_error
 
-        result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=commit_sha)
+        result = get_workflow_runs(
+            test_owner, test_repo, test_token, commit_sha=commit_sha
+        )
 
     # Assert
     assert mock_get.call_count == 2
@@ -268,7 +295,7 @@ def test_get_workflow_runs_rate_limit_exceeded():
     assert result == []
 
 
-def test_get_workflow_runs_secondary_rate_limit():
+def test_get_workflow_runs_secondary_rate_limit(test_owner, test_repo, test_token):
     """Test handling of secondary rate limit."""
     # Arrange
     branch = "main"
@@ -293,7 +320,7 @@ def test_get_workflow_runs_secondary_rate_limit():
     ) as mock_create_headers, patch(
         "time.sleep"
     ) as mock_sleep:
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
         # First call raises secondary rate limit error, second call succeeds
         mock_success_response = MagicMock()
@@ -302,7 +329,7 @@ def test_get_workflow_runs_secondary_rate_limit():
         mock_get.side_effect = [mock_error_response, mock_success_response]
         mock_error_response.raise_for_status.side_effect = http_error
 
-        result = get_workflow_runs(OWNER, REPO, TOKEN, branch=branch)
+        result = get_workflow_runs(test_owner, test_repo, test_token, branch=branch)
 
     # Assert
     assert mock_get.call_count == 2
@@ -310,7 +337,7 @@ def test_get_workflow_runs_secondary_rate_limit():
     assert result == []
 
 
-def test_get_workflow_runs_json_decode_error():
+def test_get_workflow_runs_json_decode_error(test_owner, test_repo, test_token):
     """Test handling of JSON decode error."""
     # Arrange
     commit_sha = "abc123def456"
@@ -324,9 +351,11 @@ def test_get_workflow_runs_json_decode_error():
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers:
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_get.return_value = mock_response
-        result = get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=commit_sha)
+        result = get_workflow_runs(
+            test_owner, test_repo, test_token, commit_sha=commit_sha
+        )
 
     # Assert
     mock_get.assert_called_once()
@@ -335,7 +364,7 @@ def test_get_workflow_runs_json_decode_error():
     assert result == []  # Default return value from handle_exceptions decorator
 
 
-def test_get_workflow_runs_missing_workflow_runs_key():
+def test_get_workflow_runs_missing_workflow_runs_key(test_owner, test_repo, test_token):
     """Test handling when the response JSON is missing the 'workflow_runs' key."""
     # Arrange
     branch = "main"
@@ -351,9 +380,9 @@ def test_get_workflow_runs_missing_workflow_runs_key():
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers:
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_get.return_value = mock_response
-        result = get_workflow_runs(OWNER, REPO, TOKEN, branch=branch)
+        result = get_workflow_runs(test_owner, test_repo, test_token, branch=branch)
 
     # Assert
     mock_get.assert_called_once()
@@ -426,7 +455,7 @@ def test_get_workflow_runs_url_construction_with_branch():
     )
 
 
-def test_get_workflow_runs_timeout_parameter():
+def test_get_workflow_runs_timeout_parameter(test_owner, test_repo, test_token):
     """Test that the timeout parameter is correctly passed to the request."""
     # Arrange
     commit_sha = "abc123def456"
@@ -442,9 +471,9 @@ def test_get_workflow_runs_timeout_parameter():
     ) as mock_create_headers, patch(
         "services.github.workflow_runs.get_workflow_runs.TIMEOUT", 60
     ):
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_get.return_value = mock_response
-        get_workflow_runs(OWNER, REPO, TOKEN, commit_sha=commit_sha)
+        get_workflow_runs(test_owner, test_repo, test_token, commit_sha=commit_sha)
 
     # Assert
     mock_get.assert_called_once()

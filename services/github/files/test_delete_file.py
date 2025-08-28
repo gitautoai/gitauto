@@ -7,14 +7,13 @@ import pytest
 
 # Local imports
 from services.github.files.delete_file import delete_file
-from tests.helpers.create_test_base_args import create_test_base_args
 
 
 class TestDeleteFile:
     """Test cases for the delete_file function."""
 
     @pytest.fixture
-    def base_args(self):
+    def base_args(self, create_test_base_args):
         """Create base args for testing."""
         return create_test_base_args(
             owner="test-owner",

@@ -1,11 +1,12 @@
+import inspect
 from unittest.mock import patch, MagicMock
-from requests.exceptions import HTTPError, JSONDecodeError, Timeout, ConnectionError
+from requests.exceptions import HTTPError, JSONDecodeError, Timeout
+from requests.exceptions import ConnectionError as RequestsConnectionError
 
 from services.github.issues.is_issue_open import is_issue_open
-from tests.constants import TOKEN
 
 
-def test_is_issue_open_with_open_issue():
+def test_is_issue_open_with_open_issue(test_token):
     """Test is_issue_open returns True for an open issue."""
     issue_url = "https://github.com/owner/repo/issues/123"
 
@@ -17,16 +18,16 @@ def test_is_issue_open_with_open_issue():
         mock_response.status_code = 200
         mock_response.json.return_value = {"state": "open"}
         mock_get.return_value = mock_response
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-        result = is_issue_open(issue_url, TOKEN)
+        result = is_issue_open(issue_url, test_token)
 
         assert result is True
         mock_get.assert_called_once()
         mock_response.json.assert_called_once()
 
 
-def test_is_issue_open_with_closed_issue():
+def test_is_issue_open_with_closed_issue(test_token):
     """Test is_issue_open returns False for a closed issue."""
     issue_url = "https://github.com/owner/repo/issues/456"
 
@@ -38,25 +39,25 @@ def test_is_issue_open_with_closed_issue():
         mock_response.status_code = 200
         mock_response.json.return_value = {"state": "closed"}
         mock_get.return_value = mock_response
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-        result = is_issue_open(issue_url, TOKEN)
+        result = is_issue_open(issue_url, test_token)
 
         assert result is False
         mock_get.assert_called_once()
         mock_response.json.assert_called_once()
 
 
-def test_is_issue_open_with_empty_url():
+def test_is_issue_open_with_empty_url(test_token):
     """Test is_issue_open returns False for empty URL."""
-    result = is_issue_open("", TOKEN)
+    result = is_issue_open("", test_token)
     assert result is False
 
-    result = is_issue_open(None, TOKEN)
+    result = is_issue_open(None, test_token)
     assert result is False
 
 
-def test_is_issue_open_with_invalid_url_format():
+def test_is_issue_open_with_invalid_url_format(test_token):
     """Test is_issue_open returns True for invalid URL formats (assumes open to avoid duplicates)."""
     invalid_urls = [
         "https://github.com/owner/repo",  # Missing issues part
@@ -67,11 +68,11 @@ def test_is_issue_open_with_invalid_url_format():
     ]
 
     for url in invalid_urls:
-        result = is_issue_open(url, TOKEN)
+        result = is_issue_open(url, test_token)
         assert result is True, f"Expected True for invalid URL: {url}"
 
 
-def test_is_issue_open_api_url_construction():
+def test_is_issue_open_api_url_construction(test_token):
     """Test that the correct GitHub API URL is constructed."""
     issue_url = "https://github.com/test-owner/test-repo/issues/789"
 
@@ -85,9 +86,9 @@ def test_is_issue_open_api_url_construction():
         mock_response.status_code = 200
         mock_response.json.return_value = {"state": "open"}
         mock_get.return_value = mock_response
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-        is_issue_open(issue_url, TOKEN)
+        is_issue_open(issue_url, test_token)
 
         expected_api_url = (
             "https://api.github.com/repos/test-owner/test-repo/issues/789"
@@ -120,7 +121,7 @@ def test_is_issue_open_headers_creation():
         assert call_args.kwargs["headers"] == expected_headers
 
 
-def test_is_issue_open_timeout_parameter():
+def test_is_issue_open_timeout_parameter(test_token):
     """Test that timeout parameter is correctly passed."""
     issue_url = "https://github.com/owner/repo/issues/123"
 
@@ -132,15 +133,15 @@ def test_is_issue_open_timeout_parameter():
         mock_response.status_code = 200
         mock_response.json.return_value = {"state": "open"}
         mock_get.return_value = mock_response
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-        is_issue_open(issue_url, TOKEN)
+        is_issue_open(issue_url, test_token)
 
         call_args = mock_get.call_args
         assert call_args.kwargs["timeout"] == 60
 
 
-def test_is_issue_open_non_200_status_code():
+def test_is_issue_open_non_200_status_code(test_token):
     """Test is_issue_open returns True for non-200 status codes (assumes open to avoid duplicates)."""
     issue_url = "https://github.com/owner/repo/issues/123"
 
@@ -156,9 +157,9 @@ def test_is_issue_open_non_200_status_code():
             mock_response = MagicMock()
             mock_response.status_code = status_code
             mock_get.return_value = mock_response
-            mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+            mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-            result = is_issue_open(issue_url, TOKEN)
+            result = is_issue_open(issue_url, test_token)
 
             assert result is True, f"Expected True for status code {status_code}"
             mock_get.assert_called_once()
@@ -166,7 +167,7 @@ def test_is_issue_open_non_200_status_code():
             mock_response.json.assert_not_called()
 
 
-def test_is_issue_open_missing_state_in_response():
+def test_is_issue_open_missing_state_in_response(test_token):
     """Test is_issue_open returns False when state is missing from response."""
     issue_url = "https://github.com/owner/repo/issues/123"
 
@@ -178,16 +179,16 @@ def test_is_issue_open_missing_state_in_response():
         mock_response.status_code = 200
         mock_response.json.return_value = {}  # Missing 'state' key
         mock_get.return_value = mock_response
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-        result = is_issue_open(issue_url, TOKEN)
+        result = is_issue_open(issue_url, test_token)
 
         assert result is False
         mock_get.assert_called_once()
         mock_response.json.assert_called_once()
 
 
-def test_is_issue_open_state_not_open():
+def test_is_issue_open_state_not_open(test_token):
     """Test is_issue_open returns False for states other than 'open'."""
     issue_url = "https://github.com/owner/repo/issues/123"
 
@@ -204,16 +205,16 @@ def test_is_issue_open_state_not_open():
             mock_response.status_code = 200
             mock_response.json.return_value = {"state": state}
             mock_get.return_value = mock_response
-            mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+            mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-            result = is_issue_open(issue_url, TOKEN)
+            result = is_issue_open(issue_url, test_token)
 
             assert result is False, f"Expected False for state: {state}"
             mock_get.assert_called_once()
             mock_response.json.assert_called_once()
 
 
-def test_is_issue_open_http_error():
+def test_is_issue_open_http_error(test_token):
     """Test is_issue_open returns True when HTTPError occurs (assumes open to avoid duplicates)."""
     issue_url = "https://github.com/owner/repo/issues/123"
 
@@ -234,15 +235,15 @@ def test_is_issue_open_http_error():
         http_error = HTTPError("404 Client Error")
         http_error.response = mock_response
         mock_get.side_effect = http_error
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-        result = is_issue_open(issue_url, TOKEN)
+        result = is_issue_open(issue_url, test_token)
 
         assert result is True
         mock_get.assert_called_once()
 
 
-def test_is_issue_open_json_decode_error():
+def test_is_issue_open_json_decode_error(test_token):
     """Test is_issue_open returns True when JSONDecodeError occurs."""
     issue_url = "https://github.com/owner/repo/issues/123"
 
@@ -254,16 +255,16 @@ def test_is_issue_open_json_decode_error():
         mock_response.status_code = 200
         mock_response.json.side_effect = JSONDecodeError("Invalid JSON", "{", 0)
         mock_get.return_value = mock_response
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-        result = is_issue_open(issue_url, TOKEN)
+        result = is_issue_open(issue_url, test_token)
 
         assert result is True
         mock_get.assert_called_once()
         mock_response.json.assert_called_once()
 
 
-def test_is_issue_open_timeout_error():
+def test_is_issue_open_timeout_error(test_token):
     """Test is_issue_open returns True when Timeout occurs."""
     issue_url = "https://github.com/owner/repo/issues/123"
 
@@ -272,15 +273,15 @@ def test_is_issue_open_timeout_error():
     ) as mock_create_headers:
 
         mock_get.side_effect = Timeout("Request timed out")
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-        result = is_issue_open(issue_url, TOKEN)
+        result = is_issue_open(issue_url, test_token)
 
         assert result is True
         mock_get.assert_called_once()
 
 
-def test_is_issue_open_connection_error():
+def test_is_issue_open_connection_error(test_token):
     """Test is_issue_open returns True when ConnectionError occurs."""
     issue_url = "https://github.com/owner/repo/issues/123"
 
@@ -288,16 +289,16 @@ def test_is_issue_open_connection_error():
         "services.github.issues.is_issue_open.create_headers"
     ) as mock_create_headers:
 
-        mock_get.side_effect = ConnectionError("Connection failed")
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_get.side_effect = RequestsConnectionError("Connection failed")
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-        result = is_issue_open(issue_url, TOKEN)
+        result = is_issue_open(issue_url, test_token)
 
         assert result is True
         mock_get.assert_called_once()
 
 
-def test_is_issue_open_key_error():
+def test_is_issue_open_key_error(test_token):
     """Test is_issue_open returns True when KeyError occurs."""
     issue_url = "https://github.com/owner/repo/issues/123"
 
@@ -309,16 +310,16 @@ def test_is_issue_open_key_error():
         mock_response.status_code = 200
         mock_response.json.side_effect = KeyError("Missing key")
         mock_get.return_value = mock_response
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-        result = is_issue_open(issue_url, TOKEN)
+        result = is_issue_open(issue_url, test_token)
 
         assert result is True
         mock_get.assert_called_once()
         mock_response.json.assert_called_once()
 
 
-def test_is_issue_open_url_parsing_edge_cases():
+def test_is_issue_open_url_parsing_edge_cases(test_token):
     """Test URL parsing with various edge cases."""
     # URLs that will make API calls (have proper structure)
     api_call_urls = [
@@ -348,9 +349,9 @@ def test_is_issue_open_url_parsing_edge_cases():
             mock_response.status_code = 200
             mock_response.json.return_value = {"state": "open"}
             mock_get.return_value = mock_response
-            mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+            mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
 
-            result = is_issue_open(url, TOKEN)
+            result = is_issue_open(url, test_token)
             assert result is True, f"Expected True for URL that makes API call: {url}"
             mock_get.assert_called_once()
 
@@ -362,7 +363,7 @@ def test_is_issue_open_url_parsing_edge_cases():
             "services.github.issues.is_issue_open.create_headers"
         ) as mock_create_headers:
 
-            result = is_issue_open(url, TOKEN)
+            result = is_issue_open(url, test_token)
             assert (
                 result is True
             ), f"Expected True for URL that doesn't make API call: {url}"
@@ -376,8 +377,6 @@ def test_is_issue_open_decorator_applied():
 
 def test_is_issue_open_function_signature():
     """Test that the function has the correct signature."""
-    import inspect
-
     sig = inspect.signature(is_issue_open)
     params = list(sig.parameters.keys())
 

@@ -1,16 +1,15 @@
 from unittest.mock import patch
 import pytest
 from services.github.trees.get_file_tree_list import get_file_tree_list
-from tests.constants import OWNER, REPO, TOKEN
 
 
 @pytest.fixture
-def base_args():
+def base_args(test_owner, test_repo, test_token):
     return {
-        "owner": OWNER,
-        "repo": REPO,
+        "owner": test_owner,
+        "repo": test_repo,
         "base_branch": "main",
-        "token": TOKEN,
+        "token": test_token,
     }
 
 

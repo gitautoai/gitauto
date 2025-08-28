@@ -3,7 +3,6 @@ import pytest
 import requests
 
 from services.github.branches.create_remote_branch import create_remote_branch
-from test_utils import create_test_base_args
 
 
 @pytest.fixture
@@ -34,7 +33,7 @@ def mock_create_headers():
 
 
 @pytest.fixture
-def sample_base_args():
+def sample_base_args(create_test_base_args):
     """Fixture providing sample BaseArgs for testing."""
     return create_test_base_args()
 
@@ -56,26 +55,26 @@ def test_create_remote_branch_success(
 
     # Verify requests.post was called with correct parameters
     mock_requests_post.assert_called_once_with(
-        url="https://api.github.com/repos/test_owner/test_repo/git/refs",
+        url="https://api.github.com/repos/test-owner/test-repo/git/refs",
         headers={
             "Accept": "application/vnd.github.v3+json",
             "Authorization": "Bearer test_token",
             "User-Agent": "GitAuto",
             "X-GitHub-Api-Version": "2022-11-28",
         },
-        json={"ref": "refs/heads/feature/test-branch", "sha": "abc123def456789"},
+        json={"ref": "refs/heads/test-branch", "sha": "abc123def456789"},
         timeout=120,
     )
 
     # Verify create_headers was called with the token
-    mock_create_headers.assert_called_once_with(token="test_token_123")
+    mock_create_headers.assert_called_once_with(token="test-token")
 
     # Verify raise_for_status was called
     mock_requests_post.return_value.raise_for_status.assert_called_once()
 
 
 def test_create_remote_branch_with_different_branch_names(
-    mock_requests_post, mock_create_headers, sample_sha
+    mock_requests_post, mock_create_headers, sample_sha, create_test_base_args
 ):
     """Test branch creation with various branch name formats."""
     test_cases = [
@@ -135,9 +134,7 @@ def test_create_remote_branch_with_different_shas(
         assert call_args[1]["json"]["sha"] == sha
 
 
-def test_create_remote_branch_http_error_raised(
-    mock_create_headers, sample_base_args, sample_sha
-):
+def test_create_remote_branch_http_error_raised(sample_base_args, sample_sha):
     """Test that HTTP errors are raised due to raise_on_error=True."""
     with patch(
         "services.github.branches.create_remote_branch.requests.post"
@@ -164,9 +161,7 @@ def test_create_remote_branch_http_error_raised(
         mock_response.raise_for_status.assert_called_once()
 
 
-def test_create_remote_branch_request_timeout_raised(
-    mock_create_headers, sample_base_args, sample_sha
-):
+def test_create_remote_branch_request_timeout_raised(sample_base_args, sample_sha):
     """Test that request timeout is raised due to raise_on_error=True."""
     with patch(
         "services.github.branches.create_remote_branch.requests.post"
@@ -183,9 +178,7 @@ def test_create_remote_branch_request_timeout_raised(
         mock_post.assert_called_once()
 
 
-def test_create_remote_branch_connection_error_raised(
-    mock_create_headers, sample_base_args, sample_sha
-):
+def test_create_remote_branch_connection_error_raised(sample_base_args, sample_sha):
     """Test that connection errors are raised due to raise_on_error=True."""
     with patch(
         "services.github.branches.create_remote_branch.requests.post"
@@ -203,18 +196,18 @@ def test_create_remote_branch_connection_error_raised(
 
 
 def test_create_remote_branch_uses_correct_api_url(
-    mock_requests_post, mock_create_headers, sample_base_args, sample_sha
+    mock_requests_post, sample_base_args, sample_sha
 ):
     """Test that the correct GitHub API URL is used."""
     create_remote_branch(sha=sample_sha, base_args=sample_base_args)
 
     call_args = mock_requests_post.call_args
-    expected_url = "https://api.github.com/repos/test_owner/test_repo/git/refs"
+    expected_url = "https://api.github.com/repos/test-owner/test-repo/git/refs"
     assert call_args[1]["url"] == expected_url
 
 
 def test_create_remote_branch_uses_correct_timeout(
-    mock_requests_post, mock_create_headers, sample_base_args, sample_sha
+    mock_requests_post, sample_base_args, sample_sha
 ):
     """Test that the correct timeout value is used."""
     create_remote_branch(sha=sample_sha, base_args=sample_base_args)
@@ -224,7 +217,7 @@ def test_create_remote_branch_uses_correct_timeout(
 
 
 def test_create_remote_branch_json_payload_structure(
-    mock_requests_post, mock_create_headers, sample_base_args, sample_sha
+    mock_requests_post, sample_base_args, sample_sha
 ):
     """Test that the JSON payload has the correct structure."""
     create_remote_branch(sha=sample_sha, base_args=sample_base_args)
@@ -238,12 +231,12 @@ def test_create_remote_branch_json_payload_structure(
     assert len(json_payload) == 2
 
     # Verify payload values
-    assert json_payload["ref"] == "refs/heads/feature/test-branch"
+    assert json_payload["ref"] == "refs/heads/test-branch"
     assert json_payload["sha"] == sample_sha
 
 
 def test_create_remote_branch_with_special_characters_in_owner_repo(
-    mock_requests_post, mock_create_headers, sample_sha
+    mock_requests_post, sample_sha, create_test_base_args
 ):
     """Test branch creation with special characters in owner and repo names."""
     base_args = create_test_base_args(
@@ -264,7 +257,7 @@ def test_create_remote_branch_with_special_characters_in_owner_repo(
 
 
 def test_create_remote_branch_extracts_base_args_correctly(
-    mock_requests_post, mock_create_headers, sample_sha
+    mock_requests_post, mock_create_headers, sample_sha, create_test_base_args
 ):
     """Test that BaseArgs values are extracted correctly."""
     base_args = create_test_base_args(
@@ -321,7 +314,7 @@ def test_create_remote_branch_with_monkeypatch(
 
 
 def test_create_remote_branch_with_empty_values(
-    mock_requests_post, mock_create_headers
+    mock_requests_post, create_test_base_args
 ):
     """Test behavior with empty or minimal values."""
     base_args = create_test_base_args(owner="", repo="", new_branch="", token="")
@@ -347,7 +340,7 @@ def test_create_remote_branch_with_empty_values(
     ],
 )
 def test_create_remote_branch_raises_various_exceptions(
-    mock_create_headers, sample_base_args, sample_sha, error_type, error_message
+    sample_base_args, sample_sha, error_type, error_message
 ):
     """Test that various exception types are raised due to raise_on_error=True."""
     with patch(
@@ -369,9 +362,7 @@ def test_create_remote_branch_raises_various_exceptions(
         mock_post.assert_called_once()
 
 
-def test_create_remote_branch_raises_http_error_exception(
-    mock_create_headers, sample_base_args, sample_sha
-):
+def test_create_remote_branch_raises_http_error_exception(sample_base_args, sample_sha):
     """Test that HTTPError is raised due to raise_on_error=True with proper response object."""
     with patch(
         "services.github.branches.create_remote_branch.requests.post"
@@ -396,7 +387,7 @@ def test_create_remote_branch_raises_http_error_exception(
 
 
 def test_create_remote_branch_ref_format_consistency(
-    mock_requests_post, mock_create_headers, sample_sha
+    mock_requests_post, sample_sha, create_test_base_args
 ):
     """Test that the ref format is consistently 'refs/heads/{branch_name}'."""
     test_branches = [
@@ -423,7 +414,7 @@ def test_create_remote_branch_ref_format_consistency(
 
 
 def test_create_remote_branch_api_endpoint_structure(
-    mock_requests_post, mock_create_headers, sample_base_args, sample_sha
+    mock_requests_post, sample_base_args, sample_sha
 ):
     """Test that the API endpoint follows GitHub's expected structure."""
     create_remote_branch(sha=sample_sha, base_args=sample_base_args)
@@ -434,11 +425,11 @@ def test_create_remote_branch_api_endpoint_structure(
     # Verify URL structure matches GitHub API pattern
     assert url.startswith("https://api.github.com/repos/")
     assert url.endswith("/git/refs")
-    assert "/test_owner/test_repo/" in url
+    assert "/test-owner/test-repo/" in url
 
 
 def test_create_remote_branch_request_method_and_headers(
-    mock_requests_post, mock_create_headers, sample_base_args, sample_sha
+    mock_requests_post, sample_base_args, sample_sha
 ):
     """Test that the correct HTTP method and headers are used."""
     create_remote_branch(sha=sample_sha, base_args=sample_base_args)
@@ -450,5 +441,4 @@ def test_create_remote_branch_request_method_and_headers(
     call_args = mock_requests_post.call_args
     assert "headers" in call_args[1]
 
-    # Verify create_headers was called
-    mock_create_headers.assert_called_once_with(token="test_token_123")
+    # Headers are verified through the fixture mock

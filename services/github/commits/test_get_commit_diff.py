@@ -6,10 +6,9 @@ import requests
 
 # Local imports
 from services.github.commits.get_commit_diff import get_commit_diff
-from tests.constants import OWNER, REPO, TOKEN
 
 
-def test_get_commit_diff_success():
+def test_get_commit_diff_success(test_owner, test_repo, test_token):
     """Test successful commit diff retrieval."""
     # Mock response data
     mock_commit_data = {
@@ -54,11 +53,11 @@ def test_get_commit_diff_success():
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
         # Call function
-        result = get_commit_diff(OWNER, REPO, "abc123def456", TOKEN)
+        result = get_commit_diff(test_owner, test_repo, "abc123def456", test_token)
 
         # Verify API call
         mock_get.assert_called_once_with(
-            url=f"https://api.github.com/repos/{OWNER}/{REPO}/commits/abc123def456",
+            url=f"https://api.github.com/repos/{test_owner}/{test_repo}/commits/abc123def456",
             headers={"Authorization": "Bearer test_token"},
             timeout=120,  # Default TIMEOUT value from config.py
         )
@@ -92,7 +91,7 @@ def test_get_commit_diff_success():
         assert result["files"][1]["patch"] == "@@ -0,0 +1,20 @@\n+new content\n"
 
 
-def test_get_commit_diff_empty_files():
+def test_get_commit_diff_empty_files(test_owner, test_repo, test_token):
     """Test commit diff with no files changed."""
     mock_commit_data = {
         "sha": "abc123def456",
@@ -117,14 +116,14 @@ def test_get_commit_diff_empty_files():
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        result = get_commit_diff(OWNER, REPO, "abc123def456", TOKEN)
+        result = get_commit_diff(test_owner, test_repo, "abc123def456", test_token)
 
         assert result["commit_id"] == "abc123def456"
         assert result["message"] == "Empty commit"
         assert len(result["files"]) == 0
 
 
-def test_get_commit_diff_missing_fields():
+def test_get_commit_diff_missing_fields(test_owner, test_repo, test_token):
     """Test commit diff with missing optional fields."""
     mock_commit_data = {
         "sha": "abc123def456",
@@ -152,7 +151,7 @@ def test_get_commit_diff_missing_fields():
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        result = get_commit_diff(OWNER, REPO, "abc123def456", TOKEN)
+        result = get_commit_diff(test_owner, test_repo, "abc123def456", test_token)
 
         assert result["commit_id"] == "abc123def456"
         assert result["message"] == "Commit with missing fields"
@@ -166,7 +165,7 @@ def test_get_commit_diff_missing_fields():
         assert result["files"][0]["patch"] == ""  # Default value
 
 
-def test_get_commit_diff_http_error():
+def test_get_commit_diff_http_error(test_owner, test_repo, test_token):
     """Test handling of HTTP error."""
     with patch(
         "services.github.commits.get_commit_diff.requests.get"
@@ -187,13 +186,15 @@ def test_get_commit_diff_http_error():
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
         # Call function - should return None due to handle_exceptions decorator
-        result = get_commit_diff(OWNER, REPO, "nonexistent_commit", TOKEN)
+        result = get_commit_diff(
+            test_owner, test_repo, "nonexistent_commit", test_token
+        )
 
         # Verify result is None (default_return_value from decorator)
         assert result is None
 
 
-def test_get_commit_diff_network_error():
+def test_get_commit_diff_network_error(test_owner, test_repo, test_token):
     """Test handling of network connection error."""
     with patch(
         "services.github.commits.get_commit_diff.requests.get"
@@ -205,13 +206,13 @@ def test_get_commit_diff_network_error():
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
         # Call function - should return None due to handle_exceptions decorator
-        result = get_commit_diff(OWNER, REPO, "abc123def456", TOKEN)
+        result = get_commit_diff(test_owner, test_repo, "abc123def456", test_token)
 
         # Verify result is None (default_return_value from decorator)
         assert result is None
 
 
-def test_get_commit_diff_timeout_error():
+def test_get_commit_diff_timeout_error(test_owner, test_repo, test_token):
     """Test handling of timeout error."""
     with patch(
         "services.github.commits.get_commit_diff.requests.get"
@@ -223,13 +224,13 @@ def test_get_commit_diff_timeout_error():
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
         # Call function - should return None due to handle_exceptions decorator
-        result = get_commit_diff(OWNER, REPO, "abc123def456", TOKEN)
+        result = get_commit_diff(test_owner, test_repo, "abc123def456", test_token)
 
         # Verify result is None (default_return_value from decorator)
         assert result is None
 
 
-def test_get_commit_diff_headers_creation():
+def test_get_commit_diff_headers_creation(test_owner, test_repo):
     """Test that headers are created correctly."""
     with patch(
         "services.github.commits.get_commit_diff.requests.get"
@@ -245,13 +246,13 @@ def test_get_commit_diff_headers_creation():
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer custom_token"}
 
-        get_commit_diff(OWNER, REPO, "abc123def456", "custom_token")
+        get_commit_diff(test_owner, test_repo, "abc123def456", "custom_token")
 
         # Verify headers creation
         mock_headers.assert_called_once_with(token="custom_token")
 
 
-def test_get_commit_diff_timeout_parameter():
+def test_get_commit_diff_timeout_parameter(test_owner, test_repo, test_token):
     """Test that the timeout parameter is correctly used."""
     with patch(
         "services.github.commits.get_commit_diff.requests.get"
@@ -269,7 +270,7 @@ def test_get_commit_diff_timeout_parameter():
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        get_commit_diff(OWNER, REPO, "abc123def456", TOKEN)
+        get_commit_diff(test_owner, test_repo, "abc123def456", test_token)
 
         # Verify timeout parameter
         call_args = mock_get.call_args
@@ -303,7 +304,7 @@ def test_get_commit_diff_url_construction():
         )
 
 
-def test_get_commit_diff_json_decode_error():
+def test_get_commit_diff_json_decode_error(test_owner, test_repo, test_token):
     """Test handling of JSON decode error."""
     with patch(
         "services.github.commits.get_commit_diff.requests.get"
@@ -317,13 +318,13 @@ def test_get_commit_diff_json_decode_error():
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
         # Call function - should return None due to handle_exceptions decorator
-        result = get_commit_diff(OWNER, REPO, "abc123def456", TOKEN)
+        result = get_commit_diff(test_owner, test_repo, "abc123def456", test_token)
 
         # Verify result is None (default_return_value from decorator)
         assert result is None
 
 
-def test_get_commit_diff_with_special_characters():
+def test_get_commit_diff_with_special_characters(test_token):
     """Test with owner/repo/commit names containing special characters."""
     with patch(
         "services.github.commits.get_commit_diff.requests.get"
@@ -340,7 +341,7 @@ def test_get_commit_diff_with_special_characters():
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
         # Test with special characters
-        get_commit_diff("owner-name", "repo_name", "abc-123_def.456", TOKEN)
+        get_commit_diff("owner-name", "repo_name", "abc-123_def.456", test_token)
 
         # Verify URL construction handles the names correctly
         mock_get.assert_called_once_with(
@@ -350,7 +351,7 @@ def test_get_commit_diff_with_special_characters():
         )
 
 
-def test_get_commit_diff_custom_api_url():
+def test_get_commit_diff_custom_api_url(test_owner, test_repo, test_token):
     """Test with a custom GitHub API URL."""
     with patch(
         "services.github.commits.get_commit_diff.requests.get"
@@ -370,11 +371,11 @@ def test_get_commit_diff_custom_api_url():
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
         # Test with custom API URL
-        get_commit_diff(OWNER, REPO, "abc123def456", TOKEN)
+        get_commit_diff(test_owner, test_repo, "abc123def456", test_token)
 
         # Verify URL construction uses the custom API URL
         mock_get.assert_called_once_with(
-            url=f"https://custom-github-api.com/repos/{OWNER}/{REPO}/commits/abc123def456",
+            url=f"https://custom-github-api.com/repos/{test_owner}/{test_repo}/commits/abc123def456",
             headers={"Authorization": "Bearer test_token"},
             timeout=120,
         )

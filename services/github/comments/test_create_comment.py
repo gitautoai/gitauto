@@ -1,11 +1,11 @@
 from unittest.mock import patch, MagicMock
 
 from services.github.comments.create_comment import create_comment
-from tests.constants import OWNER, REPO, TOKEN
-from tests.helpers.create_test_base_args import create_test_base_args
 
 
-def test_create_comment_github_success():
+def test_create_comment_github_success(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = {
@@ -13,9 +13,9 @@ def test_create_comment_github_success():
     }
 
     base_args = create_test_base_args(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN,
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
         issue_number=123,
         input_from="github",
     )
@@ -26,7 +26,7 @@ def test_create_comment_github_success():
     ) as mock_post, patch(
         "services.github.comments.create_comment.create_headers"
     ) as mock_create_headers:
-        mock_create_headers.return_value = {"Authorization": f"Bearer {TOKEN}"}
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
         result = create_comment("Test comment", base_args)
 
@@ -36,7 +36,9 @@ def test_create_comment_github_success():
     assert result == "https://api.github.com/repos/owner/repo/issues/comments/123"
 
 
-def test_create_comment_github_default_input_from():
+def test_create_comment_github_default_input_from(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = {
@@ -45,7 +47,7 @@ def test_create_comment_github_default_input_from():
 
     # Base args without input_from should default to "github"
     base_args = create_test_base_args(
-        owner=OWNER, repo=REPO, token=TOKEN, issue_number=123
+        owner=test_owner, repo=test_repo, token=test_token, issue_number=123
     )
 
     # Act
@@ -58,12 +60,12 @@ def test_create_comment_github_default_input_from():
     assert result == "https://api.github.com/repos/owner/repo/issues/comments/123"
 
 
-def test_create_comment_jira():
+def test_create_comment_jira(test_owner, test_repo, test_token, create_test_base_args):
     # Arrange
     base_args = create_test_base_args(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN,
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
         issue_number=123,
         input_from="jira",
     )
@@ -77,15 +79,17 @@ def test_create_comment_jira():
     assert result is None
 
 
-def test_create_comment_request_error():
+def test_create_comment_request_error(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = Exception("API error")
 
     base_args = create_test_base_args(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN,
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
         issue_number=123,
         input_from="github",
     )
@@ -99,12 +103,14 @@ def test_create_comment_request_error():
     assert result is None  # The handle_exceptions decorator should return None on error
 
 
-def test_create_comment_unknown_input_from():
+def test_create_comment_unknown_input_from(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     base_args = create_test_base_args(
-        owner=OWNER,
-        repo=REPO,
-        token=TOKEN,
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
         issue_number=123,
         input_from="unknown",  # Neither github nor jira
     )
