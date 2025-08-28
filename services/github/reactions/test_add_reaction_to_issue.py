@@ -160,9 +160,13 @@ def test_add_reaction_to_issue_http_error_handled(reaction_base_args):
     ) as mock_post:
         # Simulate HTTP error
         mock_response = MagicMock()
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-            "404 Not Found"
-        )
+        mock_response.status_code = 404
+        mock_response.reason = "Not Found"
+        mock_response.text = "Not Found"
+        
+        http_error = requests.exceptions.HTTPError("404 Not Found")
+        http_error.response = mock_response
+        mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
 
         result = add_reaction_to_issue(123, "+1", reaction_base_args)
