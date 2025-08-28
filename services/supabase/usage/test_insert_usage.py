@@ -1,4 +1,3 @@
-@@ -0,0 +1,243 @@
 import json
 from unittest.mock import Mock, patch
 import requests
@@ -250,4 +249,3 @@ def test_insert_usage_execute_exception():
         )
 
         assert result is None
-```
