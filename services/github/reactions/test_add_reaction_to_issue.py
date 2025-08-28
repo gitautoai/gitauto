@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+
 from unittest.mock import patch, MagicMock
 import requests
 import pytest
@@ -48,14 +50,14 @@ def reaction_mock_config():
         yield
 
 
-async def test_add_reaction_to_issue_success(
+def test_add_reaction_to_issue_success(
     reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test successful reaction addition to an issue."""
     issue_number = 123
     content = "+1"
 
-    result = await add_reaction_to_issue(issue_number, content, reaction_base_args)
+    result = add_reaction_to_issue(issue_number, content, reaction_base_args)
 
     # Verify the function returns None as expected
     assert result is None
@@ -81,7 +83,7 @@ async def test_add_reaction_to_issue_success(
     reaction_mock_requests_post.return_value.json.assert_called_once()
 
 
-async def test_add_reaction_to_issue_different_reactions(
+def test_add_reaction_to_issue_different_reactions(
     reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test adding different types of reactions."""
@@ -100,7 +102,7 @@ async def test_add_reaction_to_issue_different_reactions(
         reaction_mock_requests_post.reset_mock()
         reaction_mock_create_headers.reset_mock()
 
-        result = await add_reaction_to_issue(issue_number, content, reaction_base_args)
+        result = add_reaction_to_issue(issue_number, content, reaction_base_args)
 
         assert result is None
         reaction_mock_requests_post.assert_called_once_with(
@@ -116,7 +118,7 @@ async def test_add_reaction_to_issue_different_reactions(
         )
 
 
-async def test_add_reaction_to_issue_different_repositories(
+def test_add_reaction_to_issue_different_repositories(
     reaction_mock_requests_post, reaction_mock_create_headers, create_test_base_args
 ):
     """Test adding reactions to issues in different repositories."""
@@ -134,7 +136,7 @@ async def test_add_reaction_to_issue_different_repositories(
         reaction_mock_requests_post.reset_mock()
         reaction_mock_create_headers.reset_mock()
 
-        result = await add_reaction_to_issue(issue_number, content, args)
+        result = add_reaction_to_issue(issue_number, content, args)
 
         assert result is None
         reaction_mock_requests_post.assert_called_once_with(
@@ -151,7 +153,7 @@ async def test_add_reaction_to_issue_different_repositories(
         reaction_mock_create_headers.assert_called_with(token=args["token"])
 
 
-async def test_add_reaction_to_issue_http_error_handled(reaction_base_args):
+def test_add_reaction_to_issue_http_error_handled(reaction_base_args):
     """Test that HTTP errors are handled by the decorator and return None."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
@@ -163,7 +165,7 @@ async def test_add_reaction_to_issue_http_error_handled(reaction_base_args):
         )
         mock_post.return_value = mock_response
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
@@ -171,7 +173,7 @@ async def test_add_reaction_to_issue_http_error_handled(reaction_base_args):
         mock_response.raise_for_status.assert_called_once()
 
 
-async def test_add_reaction_to_issue_request_exception_handled(reaction_base_args):
+def test_add_reaction_to_issue_request_exception_handled(reaction_base_args):
     """Test that request exceptions are handled by the decorator."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
@@ -179,14 +181,14 @@ async def test_add_reaction_to_issue_request_exception_handled(reaction_base_arg
         # Simulate connection error
         mock_post.side_effect = requests.exceptions.ConnectionError("Connection failed")
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
         mock_post.assert_called_once()
 
 
-async def test_add_reaction_to_issue_json_decode_error_handled(reaction_base_args):
+def test_add_reaction_to_issue_json_decode_error_handled(reaction_base_args):
     """Test that JSON decode errors are handled by the decorator."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
@@ -198,7 +200,7 @@ async def test_add_reaction_to_issue_json_decode_error_handled(reaction_base_arg
         )
         mock_post.return_value = mock_response
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
@@ -207,7 +209,7 @@ async def test_add_reaction_to_issue_json_decode_error_handled(reaction_base_arg
         mock_response.json.assert_called_once()
 
 
-async def test_add_reaction_to_issue_edge_case_values(
+def test_add_reaction_to_issue_edge_case_values(
     reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test function with edge case values."""
@@ -222,7 +224,7 @@ async def test_add_reaction_to_issue_edge_case_values(
         reaction_mock_requests_post.reset_mock()
         reaction_mock_create_headers.reset_mock()
 
-        result = await add_reaction_to_issue(issue_number, content, reaction_base_args)
+        result = add_reaction_to_issue(issue_number, content, reaction_base_args)
 
         assert result is None
         reaction_mock_requests_post.assert_called_once_with(
@@ -238,17 +240,17 @@ async def test_add_reaction_to_issue_edge_case_values(
         )
 
 
-async def test_add_reaction_to_issue_response_json_called(
+def test_add_reaction_to_issue_response_json_called(
     reaction_mock_requests_post, reaction_base_args
 ):
     """Test that response.json() is called even though result is not used."""
-    result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+    result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
     assert result is None
     reaction_mock_requests_post.return_value.json.assert_called_once()
 
 
-async def test_add_reaction_to_issue_timeout_error_handled(reaction_base_args):
+def test_add_reaction_to_issue_timeout_error_handled(reaction_base_args):
     """Test that timeout errors are handled by the decorator."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
@@ -256,44 +258,51 @@ async def test_add_reaction_to_issue_timeout_error_handled(reaction_base_args):
         # Simulate timeout error
         mock_post.side_effect = requests.exceptions.Timeout("Request timed out")
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
         mock_post.assert_called_once()
 
 
-async def test_add_reaction_to_issue_rate_limit_403_handled(reaction_base_args):
+def test_add_reaction_to_issue_rate_limit_403_handled(reaction_base_args):
     """Test that 403 rate limit errors are handled by the decorator."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
     ) as mock_post:
-        # Simulate 403 rate limit error
-        mock_response = MagicMock()
-        mock_response.status_code = 403
-        mock_response.reason = "Forbidden"
-        mock_response.text = "API rate limit exceeded"
-        mock_response.headers = {
+        # First response: 403 rate limit error
+        mock_response_error = MagicMock()
+        mock_response_error.status_code = 403
+        mock_response_error.reason = "Forbidden"
+        mock_response_error.text = "API rate limit exceeded"
+        mock_response_error.headers = {
             "X-RateLimit-Limit": "5000",
             "X-RateLimit-Remaining": "0",
             "X-RateLimit-Used": "5000",
             "X-RateLimit-Reset": "1640995200",
         }
 
+        # Second response: success
+        mock_response_success = MagicMock()
+        mock_response_success.status_code = 201
+        mock_response_success.raise_for_status.return_value = None
+        mock_response_success.json.return_value = {"id": 1}
+
+        # Configure mock to return error first, then success
         http_error = requests.exceptions.HTTPError("403 Forbidden")
-        http_error.response = mock_response
-        mock_response.raise_for_status.side_effect = http_error
-        mock_post.return_value = mock_response
+        http_error.response = mock_response_error
+        mock_response_error.raise_for_status.side_effect = http_error
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        mock_post.side_effect = [mock_response_error, mock_response_success]
 
-        # The handle_exceptions decorator should catch the error and return None
-        assert result is None
-        mock_post.assert_called_once()
-        mock_response.raise_for_status.assert_called_once()
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
+
+        # Should succeed after retry
+        assert result is None  # Function returns None on success
+        assert mock_post.call_count == 2  # Called twice: first fails, second succeeds
 
 
-async def test_add_reaction_to_issue_rate_limit_429_handled(reaction_base_args):
+def test_add_reaction_to_issue_rate_limit_429_handled(reaction_base_args):
     """Test that 429 rate limit errors are handled by the decorator."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
@@ -307,7 +316,7 @@ async def test_add_reaction_to_issue_rate_limit_429_handled(reaction_base_args):
             "X-RateLimit-Limit": "5000",
             "X-RateLimit-Remaining": "0",
             "X-RateLimit-Used": "5000",
-            "X-RateLimit-Reset": "1640995200",
+            "X-RateLimit-Reset": "1756391658",
         }
 
         http_error = requests.exceptions.HTTPError("429 Too Many Requests")
@@ -315,7 +324,7 @@ async def test_add_reaction_to_issue_rate_limit_429_handled(reaction_base_args):
         mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
@@ -323,7 +332,7 @@ async def test_add_reaction_to_issue_rate_limit_429_handled(reaction_base_args):
         mock_response.raise_for_status.assert_called_once()
 
 
-async def test_add_reaction_to_issue_secondary_rate_limit_handled(reaction_base_args):
+def test_add_reaction_to_issue_secondary_rate_limit_handled(reaction_base_args):
     """Test that secondary rate limit errors are handled by the decorator."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
@@ -345,7 +354,7 @@ async def test_add_reaction_to_issue_secondary_rate_limit_handled(reaction_base_
         mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
@@ -353,7 +362,7 @@ async def test_add_reaction_to_issue_secondary_rate_limit_handled(reaction_base_
         mock_response.raise_for_status.assert_called_once()
 
 
-async def test_add_reaction_to_issue_500_error_handled(reaction_base_args):
+def test_add_reaction_to_issue_500_error_handled(reaction_base_args):
     """Test that 500 internal server errors are handled by the decorator."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
@@ -369,7 +378,7 @@ async def test_add_reaction_to_issue_500_error_handled(reaction_base_args):
         mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
@@ -377,7 +386,7 @@ async def test_add_reaction_to_issue_500_error_handled(reaction_base_args):
         mock_response.raise_for_status.assert_called_once()
 
 
-async def test_add_reaction_to_issue_401_unauthorized_handled(reaction_base_args):
+def test_add_reaction_to_issue_401_unauthorized_handled(reaction_base_args):
     """Test that 401 unauthorized errors are handled by the decorator."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
@@ -393,7 +402,7 @@ async def test_add_reaction_to_issue_401_unauthorized_handled(reaction_base_args
         mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
@@ -401,7 +410,7 @@ async def test_add_reaction_to_issue_401_unauthorized_handled(reaction_base_args
         mock_response.raise_for_status.assert_called_once()
 
 
-async def test_add_reaction_to_issue_422_unprocessable_entity_handled(
+def test_add_reaction_to_issue_422_unprocessable_entity_handled(
     reaction_base_args,
 ):
     """Test that 422 unprocessable entity errors are handled by the decorator."""
@@ -419,7 +428,7 @@ async def test_add_reaction_to_issue_422_unprocessable_entity_handled(
         mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
@@ -427,7 +436,7 @@ async def test_add_reaction_to_issue_422_unprocessable_entity_handled(
         mock_response.raise_for_status.assert_called_once()
 
 
-async def test_add_reaction_to_issue_ssl_error_handled(reaction_base_args):
+def test_add_reaction_to_issue_ssl_error_handled(reaction_base_args):
     """Test that SSL errors are handled by the decorator."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
@@ -437,14 +446,14 @@ async def test_add_reaction_to_issue_ssl_error_handled(reaction_base_args):
             "SSL certificate verification failed"
         )
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
         mock_post.assert_called_once()
 
 
-async def test_add_reaction_to_issue_create_headers_exception_handled(
+def test_add_reaction_to_issue_create_headers_exception_handled(
     reaction_base_args,
 ):
     """Test that exceptions in create_headers are handled by the decorator."""
@@ -454,25 +463,25 @@ async def test_add_reaction_to_issue_create_headers_exception_handled(
         # Simulate exception in create_headers
         mock_create_headers.side_effect = Exception("Header creation failed")
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
         mock_create_headers.assert_called_once_with(token="test_token_123")
 
 
-async def test_add_reaction_to_issue_key_error_in_base_args_handled():
+def test_add_reaction_to_issue_key_error_in_base_args_handled():
     """Test that KeyError from missing base_args keys is handled by the decorator."""
     # Create incomplete base_args missing required keys
     incomplete_base_args = {"owner": "test_owner"}  # Missing repo and token
 
-    result = await add_reaction_to_issue(123, "+1", incomplete_base_args)
+    result = add_reaction_to_issue(123, "+1", incomplete_base_args)
 
     # The handle_exceptions decorator should catch the KeyError and return None
     assert result is None
 
 
-async def test_add_reaction_to_issue_attribute_error_handled(reaction_base_args):
+def test_add_reaction_to_issue_attribute_error_handled(reaction_base_args):
     """Test that AttributeError is handled by the decorator."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
@@ -482,14 +491,14 @@ async def test_add_reaction_to_issue_attribute_error_handled(reaction_base_args)
             "'NoneType' object has no attribute 'post'"
         )
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
         mock_post.assert_called_once()
 
 
-async def test_add_reaction_to_issue_type_error_handled(reaction_base_args):
+def test_add_reaction_to_issue_type_error_handled(reaction_base_args):
     """Test that TypeError is handled by the decorator."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
@@ -497,21 +506,21 @@ async def test_add_reaction_to_issue_type_error_handled(reaction_base_args):
         # Simulate TypeError
         mock_post.side_effect = TypeError("unsupported operand type(s)")
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
         mock_post.assert_called_once()
 
 
-async def test_add_reaction_to_issue_negative_issue_number(
-    reaction_mock_requests_post, reaction_base_args
+def test_add_reaction_to_issue_negative_issue_number(
+    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test function with negative issue number."""
     issue_number = -1
     content = "+1"
 
-    result = await add_reaction_to_issue(issue_number, content, reaction_base_args)
+    result = add_reaction_to_issue(issue_number, content, reaction_base_args)
 
     assert result is None
     reaction_mock_requests_post.assert_called_once_with(
@@ -527,8 +536,8 @@ async def test_add_reaction_to_issue_negative_issue_number(
     )
 
 
-async def test_add_reaction_to_issue_special_characters_in_repo_names(
-    reaction_mock_requests_post, create_test_base_args
+def test_add_reaction_to_issue_special_characters_in_repo_names(
+    reaction_mock_requests_post, reaction_mock_create_headers, create_test_base_args
 ):
     """Test function with special characters in repository names."""
     special_args = create_test_base_args(
@@ -537,7 +546,7 @@ async def test_add_reaction_to_issue_special_characters_in_repo_names(
         token="test_token",
     )
 
-    result = await add_reaction_to_issue(123, "+1", special_args)
+    result = add_reaction_to_issue(123, "+1", special_args)
 
     assert result is None
     reaction_mock_requests_post.assert_called_once_with(
@@ -553,13 +562,13 @@ async def test_add_reaction_to_issue_special_characters_in_repo_names(
     )
 
 
-async def test_add_reaction_to_issue_unicode_content(
-    reaction_mock_requests_post, reaction_base_args
+def test_add_reaction_to_issue_unicode_content(
+    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test function with unicode characters in content."""
     unicode_content = "🎉"
 
-    result = await add_reaction_to_issue(123, unicode_content, reaction_base_args)
+    result = add_reaction_to_issue(123, unicode_content, reaction_base_args)
 
     assert result is None
     reaction_mock_requests_post.assert_called_once_with(
@@ -575,7 +584,7 @@ async def test_add_reaction_to_issue_unicode_content(
     )
 
 
-async def test_add_reaction_to_issue_very_long_token(
+def test_add_reaction_to_issue_very_long_token(
     reaction_mock_create_headers, create_test_base_args
 ):
     """Test function with very long token."""
@@ -584,13 +593,13 @@ async def test_add_reaction_to_issue_very_long_token(
         owner="test_owner", repo="test_repo", token=long_token
     )
 
-    result = await add_reaction_to_issue(123, "+1", long_token_args)
+    result = add_reaction_to_issue(123, "+1", long_token_args)
 
     assert result is None
     reaction_mock_create_headers.assert_called_once_with(token=long_token)
 
 
-async def test_add_reaction_to_issue_empty_token(
+def test_add_reaction_to_issue_empty_token(
     reaction_mock_create_headers, create_test_base_args
 ):
     """Test function with empty token."""
@@ -598,13 +607,13 @@ async def test_add_reaction_to_issue_empty_token(
         owner="test_owner", repo="test_repo", token=""
     )
 
-    result = await add_reaction_to_issue(123, "+1", empty_token_args)
+    result = add_reaction_to_issue(123, "+1", empty_token_args)
 
     assert result is None
     reaction_mock_create_headers.assert_called_once_with(token="")
 
 
-async def test_add_reaction_to_issue_response_json_returns_different_data(
+def test_add_reaction_to_issue_response_json_returns_different_data(
     reaction_base_args,
 ):
     """Test that function works correctly when response.json() returns different data."""
@@ -622,7 +631,7 @@ async def test_add_reaction_to_issue_response_json_returns_different_data(
         }
         mock_post.return_value = mock_response
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # Function should still return None regardless of response content
         assert result is None
@@ -631,7 +640,7 @@ async def test_add_reaction_to_issue_response_json_returns_different_data(
         mock_response.json.assert_called_once()
 
 
-async def test_add_reaction_to_issue_response_json_returns_empty_dict(
+def test_add_reaction_to_issue_response_json_returns_empty_dict(
     reaction_base_args,
 ):
     """Test that function works correctly when response.json() returns empty dict."""
@@ -643,7 +652,7 @@ async def test_add_reaction_to_issue_response_json_returns_empty_dict(
         mock_response.json.return_value = {}
         mock_post.return_value = mock_response
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # Function should still return None regardless of response content
         assert result is None
@@ -652,7 +661,7 @@ async def test_add_reaction_to_issue_response_json_returns_empty_dict(
         mock_response.json.assert_called_once()
 
 
-async def test_add_reaction_to_issue_response_json_returns_none(reaction_base_args):
+def test_add_reaction_to_issue_response_json_returns_none(reaction_base_args):
     """Test that function works correctly when response.json() returns None."""
     with patch(
         "services.github.reactions.add_reaction_to_issue.requests.post"
@@ -662,7 +671,7 @@ async def test_add_reaction_to_issue_response_json_returns_none(reaction_base_ar
         mock_response.json.return_value = None
         mock_post.return_value = mock_response
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # Function should still return None regardless of response content
         assert result is None
@@ -671,27 +680,27 @@ async def test_add_reaction_to_issue_response_json_returns_none(reaction_base_ar
         mock_response.json.assert_called_once()
 
 
-async def test_add_reaction_to_issue_with_none_base_args():
+def test_add_reaction_to_issue_with_none_base_args():
     """Test that function handles None base_args gracefully."""
-    result = await add_reaction_to_issue(123, "+1", None)
+    result = add_reaction_to_issue(123, "+1", None)
 
     # The handle_exceptions decorator should catch the TypeError and return None
     assert result is None
 
 
-async def test_add_reaction_to_issue_with_none_issue_number(reaction_base_args):
+def test_add_reaction_to_issue_with_none_issue_number(reaction_base_args):
     """Test function with None issue number."""
-    result = await add_reaction_to_issue(None, "+1", reaction_base_args)
+    result = add_reaction_to_issue(None, "+1", reaction_base_args)
 
     # The handle_exceptions decorator should catch the error and return None
     assert result is None
 
 
-async def test_add_reaction_to_issue_with_none_content(
-    reaction_mock_requests_post, reaction_base_args
+def test_add_reaction_to_issue_with_none_content(
+    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test function with None content."""
-    result = await add_reaction_to_issue(123, None, reaction_base_args)
+    result = add_reaction_to_issue(123, None, reaction_base_args)
 
     assert result is None
     reaction_mock_requests_post.assert_called_once_with(
@@ -707,11 +716,11 @@ async def test_add_reaction_to_issue_with_none_content(
     )
 
 
-async def test_add_reaction_to_issue_with_float_issue_number(
-    reaction_mock_requests_post, reaction_base_args
+def test_add_reaction_to_issue_with_float_issue_number(
+    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test function with float issue number (should be converted to int in URL)."""
-    result = await add_reaction_to_issue(123.5, "+1", reaction_base_args)
+    result = add_reaction_to_issue(123.5, "+1", reaction_base_args)
 
     assert result is None
     # Python f-string will convert float to string, so 123.5 becomes "123.5"
@@ -728,11 +737,11 @@ async def test_add_reaction_to_issue_with_float_issue_number(
     )
 
 
-async def test_add_reaction_to_issue_with_string_issue_number(
-    reaction_mock_requests_post, reaction_base_args
+def test_add_reaction_to_issue_with_string_issue_number(
+    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test function with string issue number."""
-    result = await add_reaction_to_issue("123", "+1", reaction_base_args)
+    result = add_reaction_to_issue("123", "+1", reaction_base_args)
 
     assert result is None
     reaction_mock_requests_post.assert_called_once_with(
@@ -748,11 +757,11 @@ async def test_add_reaction_to_issue_with_string_issue_number(
     )
 
 
-async def test_add_reaction_to_issue_with_boolean_content(
-    reaction_mock_requests_post, reaction_base_args
+def test_add_reaction_to_issue_with_boolean_content(
+    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test function with boolean content."""
-    result = await add_reaction_to_issue(123, True, reaction_base_args)
+    result = add_reaction_to_issue(123, True, reaction_base_args)
 
     assert result is None
     reaction_mock_requests_post.assert_called_once_with(
@@ -768,13 +777,13 @@ async def test_add_reaction_to_issue_with_boolean_content(
     )
 
 
-async def test_add_reaction_to_issue_with_whitespace_only_content(
-    reaction_mock_requests_post, reaction_base_args
+def test_add_reaction_to_issue_with_whitespace_only_content(
+    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test function with whitespace-only content."""
     whitespace_content = "   \t\n  "
 
-    result = await add_reaction_to_issue(123, whitespace_content, reaction_base_args)
+    result = add_reaction_to_issue(123, whitespace_content, reaction_base_args)
 
     assert result is None
     reaction_mock_requests_post.assert_called_once_with(
@@ -790,11 +799,11 @@ async def test_add_reaction_to_issue_with_whitespace_only_content(
     )
 
 
-async def test_add_reaction_to_issue_with_numeric_string_content(
-    reaction_mock_requests_post, reaction_base_args
+def test_add_reaction_to_issue_with_numeric_string_content(
+    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test function with numeric string content."""
-    result = await add_reaction_to_issue(123, "123", reaction_base_args)
+    result = add_reaction_to_issue(123, "123", reaction_base_args)
 
     assert result is None
     reaction_mock_requests_post.assert_called_once_with(
@@ -810,11 +819,11 @@ async def test_add_reaction_to_issue_with_numeric_string_content(
     )
 
 
-async def test_add_reaction_to_issue_with_zero_issue_number(
-    reaction_mock_requests_post, reaction_base_args
+def test_add_reaction_to_issue_with_zero_issue_number(
+    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test function with zero issue number."""
-    result = await add_reaction_to_issue(0, "+1", reaction_base_args)
+    result = add_reaction_to_issue(0, "+1", reaction_base_args)
 
     assert result is None
     reaction_mock_requests_post.assert_called_once_with(
@@ -830,23 +839,23 @@ async def test_add_reaction_to_issue_with_zero_issue_number(
     )
 
 
-async def test_add_reaction_to_issue_base_args_missing_multiple_keys():
+def test_add_reaction_to_issue_base_args_missing_multiple_keys():
     """Test that function handles base_args missing multiple required keys."""
     incomplete_base_args = {"owner": "test_owner"}  # Missing repo, token, and others
 
-    result = await add_reaction_to_issue(123, "+1", incomplete_base_args)
+    result = add_reaction_to_issue(123, "+1", incomplete_base_args)
 
     # The handle_exceptions decorator should catch the KeyError and return None
     assert result is None
 
 
-async def test_add_reaction_to_issue_with_list_content(
-    reaction_mock_requests_post, reaction_base_args
+def test_add_reaction_to_issue_with_list_content(
+    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test function with list content (should be serialized by requests)."""
     list_content = ["+1", "heart"]
 
-    result = await add_reaction_to_issue(123, list_content, reaction_base_args)
+    result = add_reaction_to_issue(123, list_content, reaction_base_args)
 
     assert result is None
     reaction_mock_requests_post.assert_called_once_with(
@@ -862,7 +871,7 @@ async def test_add_reaction_to_issue_with_list_content(
     )
 
 
-async def test_add_reaction_to_issue_response_json_raises_value_error(
+def test_add_reaction_to_issue_response_json_raises_value_error(
     reaction_base_args,
 ):
     """Test that ValueError from response.json() is handled by the decorator."""
@@ -874,7 +883,7 @@ async def test_add_reaction_to_issue_response_json_raises_value_error(
         mock_response.json.side_effect = ValueError("Invalid JSON format")
         mock_post.return_value = mock_response
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
@@ -883,7 +892,7 @@ async def test_add_reaction_to_issue_response_json_raises_value_error(
         mock_response.json.assert_called_once()
 
 
-async def test_add_reaction_to_issue_requests_post_raises_runtime_error(
+def test_add_reaction_to_issue_requests_post_raises_runtime_error(
     reaction_base_args,
 ):
     """Test that RuntimeError from requests.post is handled by the decorator."""
@@ -893,20 +902,20 @@ async def test_add_reaction_to_issue_requests_post_raises_runtime_error(
         # Simulate RuntimeError
         mock_post.side_effect = RuntimeError("Unexpected runtime error")
 
-        result = await add_reaction_to_issue(123, "+1", reaction_base_args)
+        result = add_reaction_to_issue(123, "+1", reaction_base_args)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
         mock_post.assert_called_once()
 
 
-async def test_add_reaction_to_issue_with_very_large_issue_number(
-    reaction_mock_requests_post, reaction_base_args
+def test_add_reaction_to_issue_with_very_large_issue_number(
+    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
     """Test function with very large issue number."""
     large_issue_number = 2**63 - 1  # Maximum 64-bit signed integer
 
-    result = await add_reaction_to_issue(large_issue_number, "+1", reaction_base_args)
+    result = add_reaction_to_issue(large_issue_number, "+1", reaction_base_args)
 
     assert result is None
     reaction_mock_requests_post.assert_called_once_with(
