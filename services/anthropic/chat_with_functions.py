@@ -8,7 +8,7 @@ from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 
 # Local imports
 from config import ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40
-from services.anthropic.client import get_anthropic_client
+from services.anthropic.client import claude
 from services.anthropic.exceptions import (
     ClaudeAuthenticationError,
     ClaudeOverloadedError,
@@ -27,8 +27,6 @@ def chat_with_claude(
     model_id: str = ANTHROPIC_MODEL_ID_40,
 ):
     # https://docs.anthropic.com/en/api/client-sdks
-    client = get_anthropic_client()
-
     # Check token count and delete messages if necessary
     max_tokens = (
         64000 if model_id in [ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40] else 8192
@@ -36,7 +34,7 @@ def chat_with_claude(
     buffer = 4096
     max_input = 200_000 - max_tokens - buffer
     messages = trim_messages_to_token_limit(
-        messages=messages, client=client, model=model_id, max_input=max_input
+        messages=messages, client=claude, model=model_id, max_input=max_input
     )
 
     # Convert OpenAI tools format to Anthropic tools format
@@ -62,7 +60,7 @@ def chat_with_claude(
 
     # https://docs.anthropic.com/en/api/messages
     try:
-        response = client.messages.create(
+        response = claude.messages.create(
             model=model_id,
             system=system_content,
             messages=messages,
@@ -78,7 +76,7 @@ def chat_with_claude(
 
     # Calculate tokens (approximation using OpenAI's tokenizer)
     # Convert messages to dicts for token counting
-    token_input = client.messages.count_tokens(
+    token_input = claude.messages.count_tokens(
         messages=messages, model=model_id
     ).input_tokens
 
@@ -123,7 +121,7 @@ def chat_with_claude(
         )
 
     token_output = 0
-    # token_output = client.messages.count_tokens(
+    # token_output = claude.messages.count_tokens(
     #     messages=[assistant_message], model=model_id
     # )
 

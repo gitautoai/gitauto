@@ -179,7 +179,11 @@ def mock_response_500():
 @patch("services.github.trees.create_tree.requests.post")
 @patch("services.github.trees.create_tree.create_headers")
 def test_successful_tree_creation(
-    mock_create_headers, mock_requests_post, base_args, tree_items, mock_response_success
+    mock_create_headers,
+    mock_requests_post,
+    base_args,
+    tree_items,
+    mock_response_success,
 ):
     """Test successful tree creation."""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
@@ -376,7 +380,9 @@ def test_json_decode_error(
 
 @patch("services.github.trees.create_tree.requests.post")
 @patch("services.github.trees.create_tree.create_headers")
-def test_connection_error(mock_create_headers, mock_requests_post, base_args, tree_items):
+def test_connection_error(
+    mock_create_headers, mock_requests_post, base_args, tree_items
+):
     """Test handling of connection error."""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
     mock_requests_post.side_effect = requests.exceptions.ConnectionError(
@@ -393,7 +399,9 @@ def test_connection_error(mock_create_headers, mock_requests_post, base_args, tr
 
 @patch("services.github.trees.create_tree.requests.post")
 @patch("services.github.trees.create_tree.create_headers")
-def test_create_headers_exception(mock_create_headers, mock_requests_post, base_args, tree_items):
+def test_create_headers_exception(
+    mock_create_headers, mock_requests_post, base_args, tree_items
+):
     """Test handling of create_headers exception."""
     mock_create_headers.side_effect = Exception("Header creation failed")
 
