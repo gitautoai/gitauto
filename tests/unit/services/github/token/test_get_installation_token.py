@@ -66,11 +66,13 @@ def test_get_installation_access_token_suspended(
     mock_error = requests.exceptions.HTTPError(response=mock_response)
     mock_requests_post.side_effect = mock_error
 
-    # Act & Assert
-    with pytest.raises(requests.exceptions.HTTPError):
-        get_installation_access_token(installation_id)
+    # Act
+    result = get_installation_access_token(installation_id)
 
-    # Verify delete_installation was called
+    # Assert
+    assert result is None  # Function should return None due to @handle_exceptions
+    mock_requests_post.assert_called_once()
+    # Verify delete_installation was called with correct parameters
     mock_delete_installation.assert_called_once_with(
         installation_id=installation_id,
         user_id=0,
@@ -87,3 +89,11 @@ def test_get_installation_access_token_other_error(
     installation_id = 12345
     mock_response = MagicMock()
     mock_response.status_code = 404
+    mock_error = requests.exceptions.HTTPError(response=mock_response)
+    mock_requests_post.side_effect = mock_error
+
+    # Act
+    result = get_installation_access_token(installation_id)
+
+    # Assert
+    assert result is None  # Function should return None due to @handle_exceptions
