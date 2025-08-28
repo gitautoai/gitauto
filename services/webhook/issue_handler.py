@@ -1,5 +1,4 @@
 # Standard imports
-from asyncio import create_task
 from datetime import datetime
 from json import dumps
 import logging
@@ -211,10 +210,8 @@ async def create_pr_from_issue(
     )
 
     if input_from == "github":
-        create_task(
-            add_reaction_to_issue(
-                issue_number=issue_number, content="eyes", base_args=base_args
-            )
+        add_reaction_to_issue(
+            issue_number=issue_number, content="eyes", base_args=base_args
         )
 
     # Check out the issue comments

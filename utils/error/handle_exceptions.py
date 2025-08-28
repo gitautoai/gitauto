@@ -58,9 +58,13 @@ def handle_exceptions(
                         reset_ts = int(err.response.headers.get("X-RateLimit-Reset", 0))
                         current_ts = int(time.time())
                         wait_time = reset_ts - current_ts
+                        if wait_time <= 0:
+                            wait_time = 1  # Rate limit already reset, minimal wait
+                        else:
+                            wait_time = wait_time + 5  # 5 seconds is a buffer
                         err_msg = f"{func.__name__} encountered a GitHubPrimaryRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n\n"
                         logging.warning(msg=err_msg)
-                        time.sleep(wait_time + 5)  # 5 seconds is a buffer
+                        time.sleep(wait_time)
                         return wrapper(*args, **kwargs)
 
                     # Check if the secondary rate limit has been exceeded
