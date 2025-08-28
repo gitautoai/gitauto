@@ -140,8 +140,9 @@ class TestHandler:
 
 
 class TestHandleWebhook:
-    @patch("main.verify_webhook_signature")
-    @patch("main.handle_webhook_event")
+    @patch("main.verify_webhook_signature", new_callable=AsyncMock)
+    @patch("main.handle_webhook_event", new_callable=AsyncMock)
+    @pytest.mark.asyncio
     async def test_handle_webhook_success(
         self, mock_handle_webhook_event, mock_verify_signature, mock_github_request
     ):
@@ -162,8 +163,9 @@ class TestHandleWebhook:
         )
         assert response == {"message": "Webhook processed successfully"}
 
-    @patch("main.verify_webhook_signature")
-    @patch("main.handle_webhook_event")
+    @patch("main.verify_webhook_signature", new_callable=AsyncMock)
+    @patch("main.handle_webhook_event", new_callable=AsyncMock)
+    @pytest.mark.asyncio
     async def test_handle_webhook_body_error(
         self, mock_handle_webhook_event, mock_verify_signature, mock_github_request
     ):
@@ -182,8 +184,9 @@ class TestHandleWebhook:
         mock_handle_webhook_event.assert_called_once_with(event_name="push", payload={})
         assert response == {"message": "Webhook processed successfully"}
 
-    @patch("main.verify_webhook_signature")
-    @patch("main.handle_webhook_event")
+    @patch("main.verify_webhook_signature", new_callable=AsyncMock)
+    @patch("main.handle_webhook_event", new_callable=AsyncMock)
+    @pytest.mark.asyncio
     async def test_handle_webhook_json_decode_error(
         self, mock_handle_webhook_event, mock_verify_signature, mock_github_request
     ):
@@ -202,8 +205,9 @@ class TestHandleWebhook:
         mock_handle_webhook_event.assert_called_once_with(event_name="push", payload={})
         assert response == {"message": "Webhook processed successfully"}
 
-    @patch("main.verify_webhook_signature")
-    @patch("main.handle_webhook_event")
+    @patch("main.verify_webhook_signature", new_callable=AsyncMock)
+    @patch("main.handle_webhook_event", new_callable=AsyncMock)
+    @pytest.mark.asyncio
     async def test_handle_webhook_url_encoded_payload(
         self,
         mock_handle_webhook_event,
@@ -230,8 +234,9 @@ class TestHandleWebhook:
         )
         assert response == {"message": "Webhook processed successfully"}
 
-    @patch("main.verify_webhook_signature")
-    @patch("main.handle_webhook_event")
+    @patch("main.verify_webhook_signature", new_callable=AsyncMock)
+    @patch("main.handle_webhook_event", new_callable=AsyncMock)
+    @pytest.mark.asyncio
     async def test_handle_webhook_with_custom_event_name(
         self, mock_handle_webhook_event, mock_verify_signature, mock_github_request
     ):
@@ -254,8 +259,9 @@ class TestHandleWebhook:
         assert response == {"message": "Webhook processed successfully"}
 
 
-@patch("main.verify_jira_webhook")
-@patch("main.create_pr_from_issue")
+@patch("main.verify_jira_webhook", new_callable=AsyncMock)
+@patch("main.create_pr_from_issue", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_handle_jira_webhook_success(
     mock_create_pr, mock_verify_jira, mock_jira_request
 ):
@@ -277,6 +283,7 @@ async def test_handle_jira_webhook_success(
     assert response == {"message": "Jira webhook processed successfully"}
 
 
+@pytest.mark.asyncio
 async def test_root_endpoint():
     """Test root endpoint returns correct product name."""
     response = await root()
