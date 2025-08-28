@@ -1,7 +1,5 @@
 import asyncio
-import logging
-import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import pytest
 
 from utils.time.timer import timer_decorator
@@ -13,19 +11,20 @@ class TestTimerDecorator:
     @pytest.fixture
     def mock_logger(self):
         """Mock the logger to capture log messages."""
-        with patch('utils.time.timer.logger') as mock_log:
+        with patch("utils.time.timer.logger") as mock_log:
             yield mock_log
 
     @pytest.fixture
     def mock_time(self):
         """Mock time.time() to control timing measurements."""
-        with patch('utils.time.timer.time.time') as mock_t:
+        with patch("utils.time.timer.time.time") as mock_t:
             # Set up mock to return predictable time values
             mock_t.side_effect = [1000.0, 1002.5]  # 2.5 second difference
             yield mock_t
 
     def test_timer_decorator_with_sync_function(self, mock_logger, mock_time):
         """Test timer decorator with synchronous function."""
+
         @timer_decorator
         def sample_sync_function(x, y):
             return x + y
@@ -38,8 +37,11 @@ class TestTimerDecorator:
             "%s took %.2f seconds", "sample_sync_function", 2.5
         )
 
-    def test_timer_decorator_with_sync_function_args_kwargs(self, mock_logger, mock_time):
+    def test_timer_decorator_with_sync_function_args_kwargs(
+        self, mock_logger, mock_time
+    ):
         """Test timer decorator with sync function using args and kwargs."""
+
         @timer_decorator
         def sample_function(a, b, c=None, d=None):
             return f"{a}-{b}-{c}-{d}"
@@ -54,6 +56,7 @@ class TestTimerDecorator:
     @pytest.mark.asyncio
     async def test_timer_decorator_with_async_function(self, mock_logger, mock_time):
         """Test timer decorator with asynchronous function."""
+
         @timer_decorator
         async def sample_async_function(x, y):
             await asyncio.sleep(0)  # Simulate async operation
@@ -68,8 +71,11 @@ class TestTimerDecorator:
         )
 
     @pytest.mark.asyncio
-    async def test_timer_decorator_with_async_function_args_kwargs(self, mock_logger, mock_time):
+    async def test_timer_decorator_with_async_function_args_kwargs(
+        self, mock_logger, mock_time
+    ):
         """Test timer decorator with async function using args and kwargs."""
+
         @timer_decorator
         async def sample_async_function(a, b, c=None, d=None):
             await asyncio.sleep(0)  # Simulate async operation
@@ -84,6 +90,7 @@ class TestTimerDecorator:
 
     def test_timer_decorator_preserves_function_metadata(self):
         """Test that timer decorator preserves original function metadata."""
+
         @timer_decorator
         def original_function():
             """Original function docstring."""
@@ -95,6 +102,7 @@ class TestTimerDecorator:
     @pytest.mark.asyncio
     async def test_timer_decorator_preserves_async_function_metadata(self):
         """Test that timer decorator preserves async function metadata."""
+
         @timer_decorator
         async def original_async_function():
             """Original async function docstring."""
@@ -103,8 +111,11 @@ class TestTimerDecorator:
         assert original_async_function.__name__ == "original_async_function"
         assert original_async_function.__doc__ == "Original async function docstring."
 
-    def test_timer_decorator_with_exception_in_sync_function(self, mock_logger, mock_time):
+    def test_timer_decorator_with_exception_in_sync_function(
+        self, mock_logger, mock_time
+    ):
         """Test timer decorator when sync function raises exception - timing not logged."""
+
         @timer_decorator
         def failing_function():
             raise ValueError("Test exception")
@@ -117,8 +128,11 @@ class TestTimerDecorator:
         mock_logger.info.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_timer_decorator_with_exception_in_async_function(self, mock_logger, mock_time):
+    async def test_timer_decorator_with_exception_in_async_function(
+        self, mock_logger, mock_time
+    ):
         """Test timer decorator when async function raises exception - timing not logged."""
+
         @timer_decorator
         async def failing_async_function():
             raise ValueError("Async test exception")
@@ -132,6 +146,7 @@ class TestTimerDecorator:
 
     def test_timer_decorator_with_no_args_sync_function(self, mock_logger, mock_time):
         """Test timer decorator with sync function that takes no arguments."""
+
         @timer_decorator
         def no_args_function():
             return "no args"
@@ -144,8 +159,11 @@ class TestTimerDecorator:
         )
 
     @pytest.mark.asyncio
-    async def test_timer_decorator_with_no_args_async_function(self, mock_logger, mock_time):
+    async def test_timer_decorator_with_no_args_async_function(
+        self, mock_logger, mock_time
+    ):
         """Test timer decorator with async function that takes no arguments."""
+
         @timer_decorator
         async def no_args_async_function():
             await asyncio.sleep(0)
@@ -160,10 +178,10 @@ class TestTimerDecorator:
 
     def test_timer_decorator_with_different_time_values(self, mock_logger):
         """Test timer decorator with different timing scenarios."""
-        with patch('utils.time.timer.time.time') as mock_t:
+        with patch("utils.time.timer.time.time") as mock_t:
             # Test with very short execution time
             mock_t.side_effect = [1000.0, 1000.01]  # 0.01 second difference
-            
+
             @timer_decorator
             def quick_function():
                 return "quick"
@@ -176,15 +194,17 @@ class TestTimerDecorator:
             call_args = mock_logger.info.call_args[0]
             assert call_args[0] == "%s took %.2f seconds"
             assert call_args[1] == "quick_function"
-            assert abs(call_args[2] - 0.01) < 0.001  # Allow for floating point precision
+            assert (
+                abs(call_args[2] - 0.01) < 0.001
+            )  # Allow for floating point precision
 
     @pytest.mark.asyncio
     async def test_timer_decorator_async_with_different_time_values(self, mock_logger):
         """Test timer decorator with async function and different timing scenarios."""
-        with patch('utils.time.timer.time.time') as mock_t:
+        with patch("utils.time.timer.time.time") as mock_t:
             # Test with longer execution time
             mock_t.side_effect = [1000.0, 1005.75]  # 5.75 second difference
-            
+
             @timer_decorator
             async def slow_async_function():
                 await asyncio.sleep(0)
@@ -198,4 +218,6 @@ class TestTimerDecorator:
             call_args = mock_logger.info.call_args[0]
             assert call_args[0] == "%s took %.2f seconds"
             assert call_args[1] == "slow_async_function"
-            assert abs(call_args[2] - 5.75) < 0.001  # Allow for floating point precision
+            assert (
+                abs(call_args[2] - 5.75) < 0.001
+            )  # Allow for floating point precision

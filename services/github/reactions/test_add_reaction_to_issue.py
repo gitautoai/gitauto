@@ -701,7 +701,7 @@ async def test_add_reaction_to_issue_response_json_returns_none(
 async def test_add_reaction_to_issue_with_none_base_args(mock_config):
     """Test that function handles None base_args gracefully."""
     result = await add_reaction_to_issue(123, "+1", None)
-    
+
     # The handle_exceptions decorator should catch the TypeError and return None
     assert result is None
 
@@ -711,7 +711,7 @@ async def test_add_reaction_to_issue_with_none_issue_number(
 ):
     """Test function with None issue number."""
     result = await add_reaction_to_issue(None, "+1", base_args)
-    
+
     # The handle_exceptions decorator should catch the error and return None
     assert result is None
 
@@ -721,7 +721,7 @@ async def test_add_reaction_to_issue_with_none_content(
 ):
     """Test function with None content."""
     result = await add_reaction_to_issue(123, None, base_args)
-    
+
     assert result is None
     mock_requests_post.assert_called_once_with(
         url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
@@ -741,7 +741,7 @@ async def test_add_reaction_to_issue_with_float_issue_number(
 ):
     """Test function with float issue number (should be converted to int in URL)."""
     result = await add_reaction_to_issue(123.5, "+1", base_args)
-    
+
     assert result is None
     # Python f-string will convert float to string, so 123.5 becomes "123.5"
     mock_requests_post.assert_called_once_with(
@@ -762,7 +762,7 @@ async def test_add_reaction_to_issue_with_string_issue_number(
 ):
     """Test function with string issue number."""
     result = await add_reaction_to_issue("123", "+1", base_args)
-    
+
     assert result is None
     mock_requests_post.assert_called_once_with(
         url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
@@ -782,7 +782,7 @@ async def test_add_reaction_to_issue_with_boolean_content(
 ):
     """Test function with boolean content."""
     result = await add_reaction_to_issue(123, True, base_args)
-    
+
     assert result is None
     mock_requests_post.assert_called_once_with(
         url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
@@ -802,9 +802,9 @@ async def test_add_reaction_to_issue_with_whitespace_only_content(
 ):
     """Test function with whitespace-only content."""
     whitespace_content = "   \t\n  "
-    
+
     result = await add_reaction_to_issue(123, whitespace_content, base_args)
-    
+
     assert result is None
     mock_requests_post.assert_called_once_with(
         url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
@@ -824,7 +824,7 @@ async def test_add_reaction_to_issue_with_numeric_string_content(
 ):
     """Test function with numeric string content."""
     result = await add_reaction_to_issue(123, "123", base_args)
-    
+
     assert result is None
     mock_requests_post.assert_called_once_with(
         url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
@@ -844,7 +844,7 @@ async def test_add_reaction_to_issue_with_zero_issue_number(
 ):
     """Test function with zero issue number."""
     result = await add_reaction_to_issue(0, "+1", base_args)
-    
+
     assert result is None
     mock_requests_post.assert_called_once_with(
         url="https://api.github.com/repos/test_owner/test_repo/issues/0/reactions",
@@ -862,9 +862,9 @@ async def test_add_reaction_to_issue_with_zero_issue_number(
 async def test_add_reaction_to_issue_base_args_missing_multiple_keys(mock_config):
     """Test that function handles base_args missing multiple required keys."""
     incomplete_base_args = {"owner": "test_owner"}  # Missing repo, token, and others
-    
+
     result = await add_reaction_to_issue(123, "+1", incomplete_base_args)
-    
+
     # The handle_exceptions decorator should catch the KeyError and return None
     assert result is None
 
@@ -874,9 +874,9 @@ async def test_add_reaction_to_issue_with_list_content(
 ):
     """Test function with list content (should be serialized by requests)."""
     list_content = ["+1", "heart"]
-    
+
     result = await add_reaction_to_issue(123, list_content, base_args)
-    
+
     assert result is None
     mock_requests_post.assert_called_once_with(
         url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
@@ -938,9 +938,9 @@ async def test_add_reaction_to_issue_with_very_large_issue_number(
 ):
     """Test function with very large issue number."""
     large_issue_number = 2**63 - 1  # Maximum 64-bit signed integer
-    
+
     result = await add_reaction_to_issue(large_issue_number, "+1", base_args)
-    
+
     assert result is None
     mock_requests_post.assert_called_once_with(
         url=f"https://api.github.com/repos/test_owner/test_repo/issues/{large_issue_number}/reactions",
