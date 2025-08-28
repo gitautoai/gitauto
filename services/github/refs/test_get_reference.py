@@ -77,10 +77,11 @@ def test_get_reference_404_returns_none(
 
 
 def test_get_reference_constructs_correct_url(
-    base_args, mock_response, mock_requests_get
+    base_args, mock_response, mock_requests_get, mock_create_headers
 ):
     """Test that the correct GitHub API URL is constructed."""
     mock_requests_get.return_value = mock_response
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     get_reference(base_args)
 
@@ -89,18 +90,13 @@ def test_get_reference_constructs_correct_url(
     )
     mock_requests_get.assert_called_once_with(
         url=expected_url,
-        headers={
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": "Bearer test-token",
-            "User-Agent": "GitAuto for Dev",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
+        headers={"Authorization": "Bearer test-token"},
         timeout=TIMEOUT,
     )
 
 
 def test_get_reference_with_different_branch_names(
-    mock_response, mock_requests_get, create_test_base_args
+    mock_response, mock_requests_get, create_test_base_args, mock_create_headers
 ):
     """Test with various branch name formats."""
     test_cases = [
@@ -113,7 +109,9 @@ def test_get_reference_with_different_branch_names(
 
     for branch_name in test_cases:
         mock_requests_get.reset_mock()
+        mock_create_headers.reset_mock()
         mock_requests_get.return_value = mock_response
+        mock_create_headers.return_value = {"Authorization": "Bearer token"}
 
         args = create_test_base_args(
             owner="owner", repo="repo", token="token", new_branch=branch_name
@@ -127,18 +125,13 @@ def test_get_reference_with_different_branch_names(
         )
         mock_requests_get.assert_called_with(
             url=expected_url,
-            headers={
-                "Accept": "application/vnd.github.v3+json",
-                "Authorization": "Bearer token",
-                "User-Agent": "GitAuto for Dev",
-                "X-GitHub-Api-Version": "2022-11-28",
-            },
+            headers={"Authorization": "Bearer token"},
             timeout=TIMEOUT,
         )
 
 
 def test_get_reference_with_special_characters_in_params(
-    mock_response, mock_requests_get, create_test_base_args
+    mock_response, mock_requests_get, create_test_base_args, mock_create_headers
 ):
     """Test with special characters in owner, repo, and branch names."""
     args = create_test_base_args(
@@ -148,6 +141,7 @@ def test_get_reference_with_special_characters_in_params(
         new_branch="feature/test-branch_v2",
     )
     mock_requests_get.return_value = mock_response
+    mock_create_headers.return_value = {"Authorization": "Bearer ghp_test123token"}
 
     result = get_reference(args)
 
@@ -155,12 +149,7 @@ def test_get_reference_with_special_characters_in_params(
     expected_url = "https://api.github.com/repos/test-owner-123/test.repo_name/git/ref/heads/feature/test-branch_v2"
     mock_requests_get.assert_called_with(
         url=expected_url,
-        headers={
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": "Bearer ghp_test123token",
-            "User-Agent": "GitAuto for Dev",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
+        headers={"Authorization": "Bearer ghp_test123token"},
         timeout=TIMEOUT,
     )
 
