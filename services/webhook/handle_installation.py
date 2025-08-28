@@ -22,7 +22,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def handle_installation_created(payload: GitHubInstallationPayload):
+def handle_installation_created(payload: GitHubInstallationPayload):
     installation_id = payload["installation"]["id"]
     owner_type = payload["installation"]["account"]["type"]
     owner_name = payload["installation"]["account"]["login"]
