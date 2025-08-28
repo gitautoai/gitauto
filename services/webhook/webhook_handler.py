@@ -153,7 +153,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     # Add issue templates to the repositories when GitAuto is added to a repository
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation_repositories
     if event_name == "installation_repositories" and action in ("added"):
-        await handle_installation_repos_added(payload=payload)
+        handle_installation_repos_added(payload=payload)
         return
 
     # Handle issue events

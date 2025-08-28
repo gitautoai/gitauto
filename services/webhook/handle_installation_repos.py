@@ -5,7 +5,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def handle_installation_repos_added(payload) -> None:
+def handle_installation_repos_added(payload) -> None:
     installation_id: int = payload["installation"]["id"]
     if not is_installation_valid(installation_id=installation_id):
         return
