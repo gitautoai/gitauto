@@ -120,7 +120,6 @@ def test_insert_usage_with_zero_values():
 def test_insert_usage_with_different_triggers():
     """Test usage insertion with different valid triggers"""
     mock_response = Mock()
-    mock_response.data = [[{"id": 123}]]
 
     triggers = [
         "issue_label",
@@ -135,7 +134,7 @@ def test_insert_usage_with_different_triggers():
         mock_table = Mock()
         mock_supabase.table.return_value = mock_table
         mock_table.insert.return_value = mock_table
-        mock_table.execute.return_value = (mock_response, None)
+        mock_table.execute.return_value = ([None, [{"id": 123}]], None)
 
         for trigger in triggers:
             result = insert_usage(
