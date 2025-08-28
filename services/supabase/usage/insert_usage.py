@@ -15,7 +15,7 @@ Trigger = Literal[
 ]
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=True)
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def insert_usage(
     owner_id: int,
     owner_type: str,
