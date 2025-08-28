@@ -30,3 +30,35 @@ def test_get_insufficient_credits_message_user_mention(mock_constants):
     """Test that the message correctly mentions different usernames."""
     message = get_insufficient_credits_message("different_user")
     assert "@different_user" in message
+
+def test_get_insufficient_credits_message_urls(mock_constants):
+    """Test that the message contains the exact URLs."""
+    message = get_insufficient_credits_message("testuser")
+    
+    # Check exact URLs are included
+    assert "https://dashboard/credits" in message
+    assert "https://contact" in message
+
+
+def test_get_insufficient_credits_message_email(mock_constants):
+    """Test that the message contains the exact email link."""
+    message = get_insufficient_credits_message("testuser")
+    assert "test@example.com" in message
+
+
+def test_get_insufficient_credits_message_special_chars():
+    """Test that the message handles usernames with special characters."""
+    special_usernames = [
+        "user.name",
+        "user-name",
+        "user_name",
+        "123user",
+        "user123",
+        "USER_CAPS"
+    ]
+    
+    for username in special_usernames:
+        message = get_insufficient_credits_message(username)
+        # Verify the username is included exactly as provided
+        assert f"@{username}" in message
+        # Verify the message is still properly formatted
