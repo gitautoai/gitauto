@@ -365,8 +365,13 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 7. Run pytest: `python -m pytest -r fE -x`
 8. Check current branch is not main: `git branch --show-current`
 9. Merge latest main: `git fetch origin main && git merge origin/main`
-10. Add changes: `git add .`
+10. **CRITICAL**: Add ONLY the specific files that were modified: `git add file1.py file2.py file3.py` (**NEVER use `git add .`**)
 11. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
 12. Push to remote: `git push`
+
+**CRITICAL GIT RULES:**
+- **NEVER EVER use `git add .`** - this adds ALL files including unrelated changes
+- **ALWAYS specify exact files**: Use `git diff --name-only HEAD` to see what's changed, then add only those specific files
+- **Example**: `git add $(git diff --name-only HEAD)` or list files manually
 
 IMPORTANT: When pylint and pyright show many alerts/errors, focus on fixing issues related to your code changes unless explicitly told to fix all issues. Don't ignore everything, but prioritize errors in files you modified.

@@ -82,7 +82,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
         sender_name = payload["sender"]["login"]
         msg = f"🎉 New installation by `{sender_name}` for `{owner_name}`"
         slack_notify(msg)
-        await handle_installation_created(payload=payload)
+        handle_installation_created(payload=payload)
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=deleted#installation
@@ -160,7 +160,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues
     if event_name == "issues":
         if action == "labeled":
-            await create_pr_from_issue(
+            create_pr_from_issue(
                 payload=payload, trigger="issue_label", input_from="github"
             )
             return
@@ -181,7 +181,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
             PRODUCT_ID != "gitauto"
             and (search_text + " - " + PRODUCT_ID) in comment_body
         ):
-            await create_pr_from_issue(
+            create_pr_from_issue(
                 payload=payload, trigger="issue_comment", input_from="github"
             )
             return
@@ -189,7 +189,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
         # For production environment, ensure it's just "- [x] Generate PR" without any suffix
         # This prevents both prod and dev from triggering on prod checkbox
         if search_text in comment_body and (search_text + " - ") not in comment_body:
-            await create_pr_from_issue(
+            create_pr_from_issue(
                 payload=payload, trigger="issue_comment", input_from="github"
             )
         return

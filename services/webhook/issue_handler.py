@@ -65,7 +65,7 @@ from utils.time.get_timeout_message import get_timeout_message
 from utils.urls.extract_urls import extract_image_urls
 
 
-async def create_pr_from_issue(
+def create_pr_from_issue(
     payload: GitHubLabeledPayload,
     trigger: Trigger,
     input_from: Literal["github", "jira"],
