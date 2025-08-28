@@ -93,13 +93,12 @@ def test_insert_usage_success_without_pr_number():
 def test_insert_usage_with_zero_values():
     """Test usage insertion with zero values"""
     mock_response = Mock()
-    mock_response.data = [[{"id": 0}]]
 
     with patch("services.supabase.usage.insert_usage.supabase") as mock_supabase:
         mock_table = Mock()
         mock_supabase.table.return_value = mock_table
         mock_table.insert.return_value = mock_table
-        mock_table.execute.return_value = (mock_response, None)
+        mock_table.execute.return_value = ([None, [{"id": 0}]], None)
 
         result = insert_usage(
             owner_id=0,
