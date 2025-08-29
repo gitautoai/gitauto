@@ -88,5 +88,5 @@ def test_evaluate_condition_ambiguous_response():
 
         result = evaluate_condition(content="test content", system_prompt="test prompt")
 
-        # Should return None when can't determine true/false
-        assert result is None
+        # Should return False when can't determine true/false
+        assert result is False
