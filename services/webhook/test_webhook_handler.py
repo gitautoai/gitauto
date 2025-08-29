@@ -26,9 +26,7 @@ def mock_unsuspend_installation():
 
 @pytest.fixture
 def mock_handle_installation_created():
-    with patch(
-        "services.webhook.webhook_handler.handle_installation_created"
-    ) as mock:
+    with patch("services.webhook.webhook_handler.handle_installation_created") as mock:
         mock.return_value = None
         yield mock
 
@@ -44,9 +42,7 @@ def mock_handle_installation_repos_added():
 
 @pytest.fixture
 def mock_create_pr_from_issue():
-    with patch(
-        "services.webhook.webhook_handler.create_pr_from_issue"
-    ) as mock:
+    with patch("services.webhook.webhook_handler.create_pr_from_issue") as mock:
         mock.return_value = None
         yield mock
 
