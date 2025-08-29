@@ -158,3 +158,12 @@ Base class for application components
 class BaseComponent
 end"""
     assert should_skip_ruby(content) is True
+
+
+def test_empty_class_single_line_braces():
+    # Empty class on single line should be skipped
+    content = """# Base class for components
+class MyComponent; end
+
+module MyModule; end"""
+    assert should_skip_ruby(content) is True

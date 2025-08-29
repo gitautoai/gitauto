@@ -158,3 +158,12 @@ class BaseComponent:
 
 __all__ = ["BaseComponent"]'''
     assert should_skip_python(content) is True
+
+
+def test_empty_class_single_line_braces():
+    # Empty class with pass on same line should be skipped
+    content = """# Base class for components
+class MyComponent: pass
+
+__all__ = ['MyComponent']"""
+    assert should_skip_python(content) is True

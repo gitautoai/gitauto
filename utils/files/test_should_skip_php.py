@@ -180,3 +180,13 @@ class BaseComponent
 {
 }"""
     assert should_skip_php(content) is True
+
+
+def test_empty_class_single_line_braces():
+    # Empty class with braces on same line should be skipped
+    content = """<?php
+// Base class for components
+class MyComponent {}
+
+interface MyInterface {}"""
+    assert should_skip_php(content) is True

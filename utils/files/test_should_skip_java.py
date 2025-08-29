@@ -183,3 +183,12 @@ def test_comment_with_simple_class():
 public class BaseComponent {
 }"""
     assert should_skip_java(content) is True
+
+
+def test_empty_class_single_line_braces():
+    # Empty class with braces on same line should be skipped
+    content = """// Base class for components
+public class MyComponent {}
+
+class AnotherComponent {}"""
+    assert should_skip_java(content) is True

@@ -200,3 +200,12 @@ type BaseComponent struct {
 
 var _ = BaseComponent{}"""
     assert should_skip_go(content) is True
+
+
+def test_empty_class_single_line_braces():
+    # Empty struct with braces on same line should be skipped
+    content = """// Base struct for components
+type MyComponent struct{}
+
+var _ = MyComponent{}"""
+    assert should_skip_go(content) is True

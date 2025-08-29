@@ -172,3 +172,12 @@ Base class for application components
 class BaseComponent {
 };"""
     assert should_skip_cpp(content) is True
+
+
+def test_empty_class_single_line_braces():
+    # Empty class with braces on same line should be skipped
+    content = """// Base class for components
+class MyComponent {};
+
+struct MyStruct {};"""
+    assert should_skip_cpp(content) is True

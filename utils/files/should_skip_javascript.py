@@ -91,6 +91,10 @@ def should_skip_javascript(content: str) -> bool:
             return False
 
         # Skip empty class definitions (class Name {} or class Name extends Base {})
+        # Handle single-line empty classes like: class Name {}
+        if re.match(r"^class\s+\w+(\s+extends\s+\w+)?\s*\{\s*\}$", line):
+            continue
+        # Handle multi-line empty classes
         if re.match(r"^class\s+\w+(\s+extends\s+\w+)?\s*\{$", line):
             in_class_definition = True
             continue
