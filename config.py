@@ -1,4 +1,3 @@
-# Checking config file
 # Standard imports
 import base64
 import os
