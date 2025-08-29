@@ -1,8 +1,18 @@
 # Standard imports
+import json
+from typing import cast
 from unittest.mock import patch, AsyncMock
 import pytest
 
 # Local imports
+from config import UTF8
+from services.github.types.github_types import (
+    CheckRunCompletedPayload,
+    GitHubInstallationPayload,
+    GitHubLabeledPayload,
+    GitHubPullRequestClosedPayload,
+)
+from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
 from services.webhook.webhook_handler import handle_webhook_event
 
 
@@ -592,3 +602,266 @@ class TestHandleWebhookEvent:
         result = await handle_webhook_event(event_name="unknown_event", payload=payload)
 
         assert result is None
+
+    @pytest.mark.asyncio
+    async def test_check_run_completed_type_checking_with_real_payload(
+        self, mock_handle_check_run
+    ):
+        with open("payloads/github/check_run/completed.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        await handle_webhook_event("check_run", payload)
+
+        mock_handle_check_run.assert_called_once()
+
+        call_args = mock_handle_check_run.call_args[1]
+        received_payload = call_args["payload"]
+
+        assert isinstance(received_payload, dict)
+        assert received_payload["action"] == "completed"
+        assert received_payload["check_run"]["conclusion"] == "failure"
+        assert received_payload["check_run"]["name"] == "MSBuild (3.9)"
+        assert received_payload["repository"]["name"] == "tetris"
+        assert received_payload["repository"]["owner"]["login"] == "hiroshinishio"
+
+    def test_check_run_completed_payload_cast(self):
+        with open("payloads/github/check_run/completed.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        casted_payload = cast(CheckRunCompletedPayload, payload)
+
+        assert casted_payload["action"] == "completed"
+        assert casted_payload["check_run"]["id"] == 31710113401
+        assert casted_payload["check_run"]["status"] == "completed"
+        assert casted_payload["check_run"]["conclusion"] == "failure"
+        assert casted_payload["check_run"]["name"] == "MSBuild (3.9)"
+        assert (
+            casted_payload["check_run"]["head_sha"]
+            == "cf4fb4f60a67e1b8ff1447ba72cb5131e4979ed7"
+        )
+        assert casted_payload["repository"]["id"] == 871345449
+        assert casted_payload["repository"]["name"] == "tetris"
+        assert casted_payload["repository"]["owner"]["login"] == "hiroshinishio"
+        assert casted_payload["installation"]["id"] == 52733965
+
+    @pytest.mark.asyncio
+    async def test_check_run_success_not_handled(self, mock_handle_check_run):
+        with open("payloads/github/check_run/completed.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        payload["check_run"]["conclusion"] = "success"
+
+        await handle_webhook_event("check_run", payload)
+
+        mock_handle_check_run.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_check_run_skipped_not_handled(self, mock_handle_check_run):
+        with open("payloads/github/check_run/completed.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        payload["check_run"]["conclusion"] = "skipped"
+
+        await handle_webhook_event("check_run", payload)
+
+        mock_handle_check_run.assert_not_called()
+
+    def test_github_labeled_payload_cast(self):
+        with open("payloads/github/issues/labeled.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        casted_payload = cast(GitHubLabeledPayload, payload)
+
+        assert casted_payload["action"] == "labeled"
+        assert casted_payload["issue"]["id"] == 2145314834
+        assert casted_payload["issue"]["number"] == 13
+        assert casted_payload["issue"]["title"] == "Add Python Unit Testing"
+        assert casted_payload["label"]["id"] == 6588739585
+        assert casted_payload["label"]["name"] == "pragent"
+        assert casted_payload["repository"]["id"] == 756737722
+        assert casted_payload["repository"]["name"] == "issue-to-pr"
+        assert casted_payload["repository"]["owner"]["login"] == "issue-to-pr"
+        assert casted_payload["organization"]["login"] == "issue-to-pr"
+        assert casted_payload["sender"]["login"] == "hiroshinishio"
+        assert casted_payload["installation"]["id"] == 47463026
+
+    @pytest.mark.asyncio
+    async def test_issues_labeled_type_checking_with_real_payload(
+        self, mock_create_pr_from_issue
+    ):
+        with open("payloads/github/issues/labeled.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        await handle_webhook_event("issues", payload)
+
+        mock_create_pr_from_issue.assert_called_once()
+
+        call_args = mock_create_pr_from_issue.call_args[1]
+        received_payload = call_args["payload"]
+
+        assert isinstance(received_payload, dict)
+        assert received_payload["action"] == "labeled"
+        assert received_payload["issue"]["number"] == 13
+        assert received_payload["label"]["name"] == "pragent"
+        assert received_payload["repository"]["name"] == "issue-to-pr"
+        assert received_payload["sender"]["login"] == "hiroshinishio"
+
+    def test_github_pull_request_closed_payload_cast(self):
+        with open("payloads/github/pull_request/closed.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        casted_payload = cast(GitHubPullRequestClosedPayload, payload)
+
+        assert casted_payload["action"] == "closed"
+        assert casted_payload["number"] == 715
+        assert casted_payload["pull_request"]["id"] == 2460076952
+        assert casted_payload["pull_request"]["number"] == 715
+        assert (
+            casted_payload["pull_request"]["title"]
+            == "GitAuto: Low Test Coverage: utils/colorize_log.py"
+        )
+        assert casted_payload["pull_request"]["merged"] is True
+        assert casted_payload["pull_request"]["merged_at"] == "2025-04-15T14:18:29Z"
+        assert casted_payload["repository"]["id"] == 756737722
+        assert casted_payload["repository"]["name"] == "gitauto"
+        assert casted_payload["repository"]["owner"]["login"] == "gitautoai"
+        assert casted_payload["organization"]["login"] == "gitautoai"
+        assert casted_payload["sender"]["login"] == "hiroshinishio"
+        assert casted_payload["installation"]["id"] == 60314628
+
+    @pytest.mark.asyncio
+    async def test_pull_request_closed_type_checking_with_real_payload(
+        self, mock_update_issue_merged, mock_slack_notify
+    ):
+        with open("payloads/github/pull_request/closed.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto-wes"), patch(
+            "services.webhook.webhook_handler.ISSUE_NUMBER_FORMAT", "/issue-"
+        ), patch("services.webhook.webhook_handler.PR_BODY_STARTS_WITH", "Resolves #"):
+
+            await handle_webhook_event("pull_request", payload)
+
+            mock_update_issue_merged.assert_called_once()
+            mock_slack_notify.assert_called_once()
+
+            call_args = mock_update_issue_merged.call_args[1]
+            assert call_args["owner_type"] == "Organization"
+            assert call_args["owner_name"] == "gitautoai"
+            assert call_args["repo_name"] == "gitauto"
+            assert call_args["issue_number"] == 714
+            assert call_args["merged"] is True
+
+    def test_github_installation_payload_cast(self):
+        with open(
+            "payloads/github/installation_repositories/added.json", "r", encoding=UTF8
+        ) as f:
+            payload = json.load(f)
+
+        casted_payload = cast(GitHubInstallationPayload, payload)
+
+        assert casted_payload["action"] == "added"
+        assert casted_payload["installation"]["id"] == 52733965
+        assert casted_payload["installation"]["account"]["login"] == "hiroshinishio"
+        assert casted_payload["installation"]["target_type"] == "User"
+        assert casted_payload["repository_selection"] == "selected"
+        assert len(casted_payload["repositories_added"]) == 1
+        assert casted_payload["repositories_added"][0]["id"] == 416759137
+        assert casted_payload["repositories_added"][0]["name"] == "slack-analysis"
+        assert len(casted_payload["repositories_removed"]) == 0
+        assert casted_payload["sender"]["login"] == "hiroshinishio"
+        assert casted_payload["requester"] is None
+
+    @pytest.mark.asyncio
+    async def test_installation_created_type_checking_with_real_payload(
+        self, mock_slack_notify, mock_handle_installation_created
+    ):
+        with open("payloads/github/installation/created.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        await handle_webhook_event("installation", payload)
+
+        mock_slack_notify.assert_called_once_with(
+            "🎉 New installation by `nikitamalinov` for `issue-to-pr`"
+        )
+        mock_handle_installation_created.assert_called_once()
+
+        call_args = mock_handle_installation_created.call_args[1]
+        received_payload = call_args["payload"]
+
+        assert isinstance(received_payload, dict)
+        assert received_payload["action"] == "created"
+        assert received_payload["installation"]["id"] == 47406978
+        assert received_payload["sender"]["login"] == "nikitamalinov"
+
+    @pytest.mark.asyncio
+    async def test_installation_repositories_added_type_checking_with_real_payload(
+        self, mock_handle_installation_repos_added
+    ):
+        with open(
+            "payloads/github/installation_repositories/added.json", "r", encoding=UTF8
+        ) as f:
+            payload = json.load(f)
+
+        await handle_webhook_event("installation_repositories", payload)
+
+        mock_handle_installation_repos_added.assert_called_once()
+
+        call_args = mock_handle_installation_repos_added.call_args[1]
+        received_payload = call_args["payload"]
+
+        assert isinstance(received_payload, dict)
+        assert received_payload["action"] == "added"
+        assert received_payload["installation"]["id"] == 52733965
+        assert received_payload["sender"]["login"] == "hiroshinishio"
+
+    def test_pull_request_webhook_payload_cast(self):
+        with open("payloads/github/pull_request/opened.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        casted_payload = cast(PullRequestWebhookPayload, payload)
+
+        assert casted_payload["action"] == "opened"
+        assert casted_payload["number"] == 517
+        assert casted_payload["pull_request"]["id"] == 2310561810
+        assert casted_payload["pull_request"]["number"] == 517
+        assert (
+            casted_payload["pull_request"]["title"]
+            == "GitAuto: Add an integration test to is_repo_forked() in services/github/repo_manager.py"
+        )
+        assert casted_payload["pull_request"]["state"] == "open"
+        assert casted_payload["pull_request"]["merged"] is False
+        assert casted_payload["repository"]["id"] == 756737722
+        assert casted_payload["repository"]["name"] == "gitauto"
+        assert casted_payload["repository"]["owner"]["login"] == "gitautoai"
+        assert casted_payload["organization"]["login"] == "gitautoai"
+        assert casted_payload["sender"]["login"] == "gitauto-for-dev[bot]"
+        assert casted_payload["installation"]["id"] == 60314628
+
+    @pytest.mark.asyncio
+    async def test_pull_request_opened_type_checking_with_real_payload(
+        self,
+        mock_create_pr_checkbox_comment,
+        mock_write_pr_description,
+        mock_handle_screenshot_comparison,
+    ):
+        with open("payloads/github/pull_request/opened.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        await handle_webhook_event("pull_request", payload)
+
+        mock_create_pr_checkbox_comment.assert_called_once()
+        mock_write_pr_description.assert_called_once()
+        mock_handle_screenshot_comparison.assert_called_once()
+
+        call_args = mock_create_pr_checkbox_comment.call_args[1]
+        received_payload = call_args["payload"]
+
+        assert isinstance(received_payload, dict)
+        assert received_payload["action"] == "opened"
+        assert received_payload["number"] == 517
+        assert (
+            received_payload["pull_request"]["title"]
+            == "GitAuto: Add an integration test to is_repo_forked() in services/github/repo_manager.py"
+        )
+        assert received_payload["repository"]["name"] == "gitauto"

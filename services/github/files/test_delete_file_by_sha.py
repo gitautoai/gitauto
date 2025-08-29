@@ -1,4 +1,3 @@
-"""Unit tests for delete_file_by_sha function."""
 # pylint: disable=unused-argument
 
 from unittest.mock import patch, MagicMock

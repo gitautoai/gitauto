@@ -284,8 +284,10 @@ aws lambda update-function-configuration --function-name pr-agent-prod --logging
 
 ## Coding Standards
 
-- NO DOCSTRINGS: Do not add docstrings to functions or classes. Keep code clean and minimal.
-- NO TYPE HINTS USING ->: Do not add return type hints using -> because this is assertion
+- NO DOCSTRINGS: Do not add docstrings to functions or classes. Keep code clean and minimal. Always add API documentation URLs as comments for external API calls.
+- API URLS: Always verify API documentation URLs using WebFetch before using them. Never guess API endpoints.
+- NO COMMENTS: Do not add any comments in code when making changes. Never explain what was removed or why in the code itself. Explanations belong in terminal responses, not in code.
+- NO TYPE HINTS USING ->: Do not add return type hints using -> because it asserts type and ignores what the implementation actually returns. Return type hints are PROHIBITED.
 - NO TYPE: IGNORE: Do not use # type: ignore comments to suppress type errors. Fix the underlying type issues instead.
 - NO CAST: Do not use typing.cast() to suppress type errors. Fix the underlying type issues instead.
 - NO ANY: Do not use Any type. Fix the specific type issues instead.
@@ -322,7 +324,7 @@ When refactoring or replacing old systems, always be PROACTIVE and think compreh
 
 4. **When Removing Old Code**: Always check for:
    - Original function files
-   - Test files (test_*.py, *_test.py)
+   - Test files (`test_*.py`, `*_test.py`)
    - Import statements
    - Related helper functions
    - Similar naming patterns
@@ -359,9 +361,9 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 1. Activate virtual environment: `source venv/bin/activate`
 2. Run black formatting: `black .`
 3. Run ruff linting: `ruff check . --fix`
-4. Get list of modified files: `git diff --name-only HEAD`
-5. Run pylint on modified Python files only: `git diff --name-only HEAD | grep "\.py$" | while read f; do [ -f "$f" ] && echo "$f"; done | xargs pylint --fail-under=10.0` (if no modified Python files, skip)
-6. Run pyright on modified Python files only: `git diff --name-only HEAD | grep "\.py$" | while read f; do [ -f "$f" ] && echo "$f"; done | xargs pyright` (if no modified Python files, skip)
+4. Get list of modified files: `{ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u`
+5. Run pylint on modified Python files only: `PYFILES=$({ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u | grep "\.py$" | while read f; do [ -f "$f" ] && echo "$f"; done); [ -n "$PYFILES" ] && echo "$PYFILES" | xargs pylint --fail-under=10.0 || echo "No Python files to check"` (if no modified Python files, skip)
+6. Run pyright on modified Python files only: `PYFILES=$({ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u | grep "\.py$" | while read f; do [ -f "$f" ] && echo "$f"; done); [ -n "$PYFILES" ] && echo "$PYFILES" | xargs pyright || echo "No Python files to check"` (if no modified Python files, skip)
 7. Run pytest: `python -m pytest -r fE -x`
 8. Check current branch is not main: `git branch --show-current`
 9. Merge latest main: `git fetch origin main && git merge origin/main`
@@ -370,6 +372,7 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 12. Push to remote: `git push`
 
 **CRITICAL GIT RULES:**
+
 - **NEVER EVER use `git add .`** - this adds ALL files including unrelated changes
 - **ALWAYS specify exact files**: Use `git diff --name-only HEAD` to see what's changed, then add only those specific files
 - **Example**: `git add $(git diff --name-only HEAD)` or list files manually

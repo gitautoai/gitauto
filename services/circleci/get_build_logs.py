@@ -3,7 +3,7 @@ from requests import get
 
 # Internal libraries
 from config import TIMEOUT
-from services.circleci.types import CircleCIBuildData, CircleCILogEntry
+from services.circleci.circleci_types import CircleCIBuildData, CircleCILogEntry
 from utils.error.handle_exceptions import handle_exceptions
 
 

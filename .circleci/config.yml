@@ -37,6 +37,74 @@ jobs:
             python -c "import sys; print('ERROR: Database connection failed - timeout after 30 seconds'); sys.exit(1)"
             echo "This line should not be reached"
 
+  jest-test:
+    docker:
+      - image: cimg/node:18.20
+    steps:
+      - checkout
+      - run:
+          name: Create test JavaScript files
+          command: |
+            mkdir -p src
+            cat > src/math.js << 'EOF'
+            function add(a, b) {
+              return a + b;
+            }
+
+            function subtract(a, b) {
+              return a - b;
+            }
+
+            function multiply(a, b) {
+              return a * b;
+            }
+
+            module.exports = { add, subtract, multiply };
+            EOF
+
+            mkdir -p __tests__
+            cat > __tests__/math.test.js << 'EOF'
+            const { add, subtract, multiply } = require('../src/math');
+
+            describe('Math functions', () => {
+              test('add function', () => {
+                expect(add(2, 3)).toBe(5);
+                expect(add(-1, 1)).toBe(0);
+              });
+
+              test('subtract function', () => {
+                expect(subtract(5, 3)).toBe(2);
+                expect(subtract(1, 1)).toBe(0);
+              });
+            });
+            EOF
+      - run:
+          name: Create package.json
+          command: |
+            cat > package.json << 'EOF'
+            {
+              "name": "jest-coverage-test",
+              "version": "1.0.0",
+              "scripts": {
+                "test": "jest --coverage --coverageReporters=lcov"
+              },
+              "devDependencies": {
+                "jest": "^29.0.0"
+              }
+            }
+            EOF
+      - run:
+          name: Install dependencies
+          command: npm install
+      - run:
+          name: Run Jest tests
+          command: npm test
+      - run:
+          name: Copy sample LCOV file
+          command: cp payloads/lcov/lcov-javascript-sample.info coverage/lcov.info
+      - store_artifacts:
+          path: coverage/lcov.info
+
 workflows:
   version: 2
   test-and-deploy:
