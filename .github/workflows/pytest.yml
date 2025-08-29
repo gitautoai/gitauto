@@ -35,10 +35,10 @@ jobs:
       with:
         python-version: "3.12"
 
-    - name: Install pytest
+    - name: Install dependencies
       run: |
-        pip install pytest pytest-cov pytest-asyncio
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
