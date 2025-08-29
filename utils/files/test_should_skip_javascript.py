@@ -162,3 +162,14 @@ class BaseComponent {
 
 export default BaseComponent;"""
     assert should_skip_javascript(content) is True
+
+
+def test_empty_class_single_line_braces():
+    # Empty class with braces on same line should be skipped
+    content = """/**
+ * Base class for components
+ */
+class MyComponent {}
+
+export default MyComponent;"""
+    assert should_skip_javascript(content) is True

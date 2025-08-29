@@ -80,6 +80,10 @@ def should_skip_python(content: str) -> bool:
             in_class_definition = True
             continue
 
+        # Handle single-line empty classes like: class Name: pass
+        if re.match(r"^class\s+\w+\s*:\s*pass$", line):
+            continue
+
         # Handle simple empty classes without inheritance
         if re.match(r"^class\s+\w+\s*:\s*$", line):
             in_class_definition = True

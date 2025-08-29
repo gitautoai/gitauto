@@ -174,3 +174,12 @@ public class BaseComponent
 {
 }"""
     assert should_skip_csharp(content) is True
+
+
+def test_empty_class_single_line_braces():
+    # Empty class with braces on same line should be skipped
+    content = """// Base class for components
+public class MyComponent {}
+
+interface IMyInterface {}"""
+    assert should_skip_csharp(content) is True

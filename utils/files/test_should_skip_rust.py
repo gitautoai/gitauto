@@ -166,3 +166,12 @@ struct BaseComponent {}
 
 const _: BaseComponent = BaseComponent {};"""
     assert should_skip_rust(content) is True
+
+
+def test_empty_class_single_line_braces():
+    # Empty struct with braces on same line should be skipped
+    content = """// Base struct for components
+struct MyComponent {}
+
+const _: MyComponent = MyComponent {};"""
+    assert should_skip_rust(content) is True
