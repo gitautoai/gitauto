@@ -1,5 +1,5 @@
 # Standard imports
-from unittest.mock import patch, Mock, AsyncMock
+from unittest.mock import patch, AsyncMock
 import pytest
 
 # Local imports
