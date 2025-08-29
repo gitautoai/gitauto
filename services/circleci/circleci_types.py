@@ -1,7 +1,9 @@
 """Type definitions for CircleCI API responses."""
 
-from typing import Optional, Any
-from typing_extensions import TypedDict
+from typing import Optional, Any, TypeVar
+from typing_extensions import TypedDict, Generic
+
+T = TypeVar("T")
 
 
 class CircleCIWorkflowJob(TypedDict):
@@ -19,11 +21,14 @@ class CircleCIWorkflowJob(TypedDict):
     dependencies: list[Any]
 
 
-class CircleCIWorkflowJobsData(TypedDict):
-    """Response data from CircleCI workflow jobs API."""
+class CircleCIPagedResponse(TypedDict, Generic[T]):
+    """Generic paged response from CircleCI API."""
 
     next_page_token: Optional[str]
-    items: list[CircleCIWorkflowJob]
+    items: list[T]
+
+
+CircleCIWorkflowJobsData = CircleCIPagedResponse[CircleCIWorkflowJob]
 
 
 class CircleCIBuildAction(TypedDict):
@@ -89,3 +94,14 @@ class CircleCILogEntry(TypedDict):
     time: str
     type: str
     truncated: bool
+
+
+class CircleCIArtifact(TypedDict):
+    """CircleCI job artifact."""
+
+    path: str
+    node_index: int
+    url: str
+
+
+CircleCIJobArtifactsData = CircleCIPagedResponse[CircleCIArtifact]

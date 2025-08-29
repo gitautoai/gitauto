@@ -1,10 +1,12 @@
 # Standard imports
+from typing import cast
 from unittest.mock import patch, MagicMock
 
 # Third-party imports
 import pytest
 
 # Local imports
+from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.webhook.schedule_handler import schedule_handler
 
@@ -36,7 +38,7 @@ class TestScheduleHandler:
 
         # Execute and verify - should raise ValueError
         with pytest.raises(ValueError, match="Missing required fields in event detail"):
-            schedule_handler(incomplete_event)
+            schedule_handler(cast(EventBridgeSchedulerEvent, incomplete_event))
 
     @patch("services.webhook.schedule_handler.get_installation_access_token")
     def test_schedule_handler_no_token(self, mock_get_token, mock_event):
@@ -211,18 +213,27 @@ class TestScheduleHandler:
         mock_get_all_coverages.return_value = []
 
         # Mock index.ts as export-only, helper.ts with actual logic (should create issue)
-        mock_get_raw_content.side_effect = lambda file_path=None, **kwargs: {
-            "src/components/Button/index.ts": "export * from './Button';\nexport { default } from './Button';",
-            "src/utils/helper.ts": "function helper() { return processData(input); }\nexport { helper };",
-        }.get(file_path, None)
+        def mock_content_side_effect(file_path=None, **_):
+            content_map = {
+                "src/components/Button/index.ts": "export * from './Button';\nexport { default } from './Button';",
+                "src/utils/helper.ts": "function helper() { return processData(input); }\nexport { helper };",
+            }
+            return content_map.get(file_path or "")
+
+        mock_get_raw_content.side_effect = mock_content_side_effect
 
         mock_create_issue.return_value = {"html_url": "https://github.com/test/issue/1"}
 
         # Mock should_skip_test to return True for export-only files, False for files with logic
         def mock_should_skip_side_effect(file_path, content):
-            if "index.ts" in file_path and "export" in content and "function" not in content:
+            if (
+                "index.ts" in file_path
+                and "export" in content
+                and "function" not in content
+            ):
                 return True  # Export-only file should be skipped
             return False  # File with actual logic should not be skipped
+
         mock_should_skip_test.side_effect = mock_should_skip_side_effect
 
         # Mock should_test_file to return True for files with logic
@@ -290,10 +301,14 @@ class TestScheduleHandler:
         mock_get_all_coverages.return_value = []
 
         # Mock empty index.ts, app.ts with actual code that should generate an issue
-        mock_get_raw_content.side_effect = lambda file_path=None, **kwargs: {
-            "src/index.ts": "   \n\n   ",  # Empty with whitespace
-            "src/app.ts": "function processData(data) {\n  return data.map(x => x * 2);\n}\nexport { processData };",
-        }.get(file_path, None)
+        def mock_empty_content_side_effect(file_path=None, **_):
+            content_map = {
+                "src/index.ts": "   \n\n   ",  # Empty with whitespace
+                "src/app.ts": "function processData(data) {\n  return data.map(x => x * 2);\n}\nexport { processData };",
+            }
+            return content_map.get(file_path or "")
+
+        mock_get_raw_content.side_effect = mock_empty_content_side_effect
 
         mock_create_issue.return_value = {"html_url": "https://github.com/test/issue/2"}
 

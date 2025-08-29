@@ -19,7 +19,15 @@ from services.github.comments.create_gitauto_button_comment import (
 )
 
 # Local imports (Resend)
+from services.github.types.github_types import (
+    CheckRunCompletedPayload,
+    GitHubInstallationPayload,
+    GitHubLabeledPayload,
+    GitHubPullRequestClosedPayload,
+)
 from services.github.types.owner import OwnerType
+from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
+from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
 from services.resend.get_first_name import get_first_name
 from services.resend.send_email import send_email
 from services.resend.text.suspend_email import get_suspend_email_text
@@ -82,7 +90,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
         sender_name = payload["sender"]["login"]
         msg = f"🎉 New installation by `{sender_name}` for `{owner_name}`"
         slack_notify(msg)
-        handle_installation_created(payload=payload)
+        handle_installation_created(payload=cast(GitHubInstallationPayload, payload))
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=deleted#installation
@@ -161,17 +169,21 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     if event_name == "issues":
         if action == "labeled":
             create_pr_from_issue(
-                payload=payload, trigger="issue_label", input_from="github"
+                payload=cast(GitHubLabeledPayload, payload),
+                trigger="issue_label",
+                input_from="github",
             )
             return
         if action == "opened":
-            create_gitauto_button_comment(payload=payload)
+            create_gitauto_button_comment(payload=cast(GitHubLabeledPayload, payload))
             return
 
     # Run GitAuto when checkbox is checked (edited)
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
     if event_name == "issue_comment" and action == "edited":
-        await handle_pr_checkbox_trigger(payload=payload)
+        await handle_pr_checkbox_trigger(
+            payload=cast(IssueCommentWebhookPayload, payload)
+        )
 
         search_text = "- [x] Generate PR"
         comment_body = payload["comment"]["body"]
@@ -182,7 +194,9 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
             and (search_text + " - " + PRODUCT_ID) in comment_body
         ):
             create_pr_from_issue(
-                payload=payload, trigger="issue_comment", input_from="github"
+                payload=cast(GitHubLabeledPayload, payload),
+                trigger="issue_comment",
+                input_from="github",
             )
             return
 
@@ -190,7 +204,9 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
         # This prevents both prod and dev from triggering on prod checkbox
         if search_text in comment_body and (search_text + " - ") not in comment_body:
             create_pr_from_issue(
-                payload=payload, trigger="issue_comment", input_from="github"
+                payload=cast(GitHubLabeledPayload, payload),
+                trigger="issue_comment",
+                input_from="github",
             )
         return
 
@@ -199,20 +215,20 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     if event_name == "check_run" and action in ("completed"):
         conclusion: str = payload["check_run"]["conclusion"]
         if conclusion in GITHUB_CHECK_RUN_FAILURES:
-            handle_check_run(payload=payload)
+            handle_check_run(payload=cast(CheckRunCompletedPayload, payload))
         return
 
     # Write a PR description to the issue when GitAuto opened the PR
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
     if event_name == "pull_request" and action == "opened":
-        create_pr_checkbox_comment(payload=payload)
+        create_pr_checkbox_comment(payload=cast(PullRequestWebhookPayload, payload))
         write_pr_description(payload=payload)
         await handle_screenshot_comparison(payload=payload)
         return
 
     # Compare screenshots when the PR is synchronized
     if event_name == "pull_request" and action in ("synchronize"):
-        create_pr_checkbox_comment(payload=payload)
+        create_pr_checkbox_comment(payload=cast(PullRequestWebhookPayload, payload))
         await handle_screenshot_comparison(payload=payload)
         return
 
@@ -231,7 +247,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
             return
 
         if not ref.startswith(PRODUCT_ID + ISSUE_NUMBER_FORMAT):
-            handle_pr_merged(payload=payload)
+            handle_pr_merged(payload=cast(GitHubPullRequestClosedPayload, payload))
             return
 
         # Get issue number from PR body
@@ -272,7 +288,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     # Add workflow_run event handler
     if event_name == "workflow_run" and action == "completed":
         if payload["workflow_run"]["conclusion"] == "success":
-            await handle_coverage_report(
+            handle_coverage_report(
                 owner_id=payload["repository"]["owner"]["id"],
                 owner_name=payload["repository"]["owner"]["login"],
                 repo_id=payload["repository"]["id"],

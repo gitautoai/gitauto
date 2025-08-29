@@ -4,7 +4,7 @@ import os
 # Local imports
 from services.coverages.create_coverage_report import create_coverage_report
 from services.coverages.create_empty_stats import create_empty_stats
-from services.coverages.types import CoverageReport
+from services.coverages.coverage_types import CoverageReport
 from utils.error.handle_exceptions import handle_exceptions
 
 

@@ -1,5 +1,7 @@
 from typing import Literal
 
+from services.coverages.coverage_types import CoverageReport
+
 
 def create_coverage_report(
     path: str, stats: dict, level: Literal["repository", "directory", "file"]
@@ -33,14 +35,16 @@ def create_coverage_report(
         2,
     )
 
-    return {
+    coverage_report: CoverageReport = {
         "package_name": None,
+        "detected_language": "unknown",
         "level": level,
         "full_path": path,
         "statement_coverage": line_coverage,
+        "line_coverage": line_coverage,
         "function_coverage": function_coverage,
         "branch_coverage": branch_coverage,
-        "line_coverage": line_coverage,
+        "path_coverage": branch_coverage,
         "uncovered_lines": (
             ", ".join(map(str, sorted(stats["uncovered_lines"])))
             if level == "file" and line_coverage > 0
@@ -58,3 +62,4 @@ def create_coverage_report(
         ),
         "uncovered_branches": (", ".join(sorted(stats["uncovered_branches"]))),
     }
+    return coverage_report
