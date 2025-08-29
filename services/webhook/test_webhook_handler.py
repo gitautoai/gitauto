@@ -1,5 +1,5 @@
 # Standard imports
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, Mock, AsyncMock
 import pytest
 
 # Local imports
@@ -27,8 +27,7 @@ def mock_unsuspend_installation():
 @pytest.fixture
 def mock_handle_installation_created():
     with patch(
-        "services.webhook.webhook_handler.handle_installation_created",
-        new_callable=AsyncMock,
+        "services.webhook.webhook_handler.handle_installation_created"
     ) as mock:
         mock.return_value = None
         yield mock
@@ -37,8 +36,7 @@ def mock_handle_installation_created():
 @pytest.fixture
 def mock_handle_installation_repos_added():
     with patch(
-        "services.webhook.webhook_handler.handle_installation_repos_added",
-        new_callable=AsyncMock,
+        "services.webhook.webhook_handler.handle_installation_repos_added"
     ) as mock:
         mock.return_value = None
         yield mock
@@ -47,7 +45,7 @@ def mock_handle_installation_repos_added():
 @pytest.fixture
 def mock_create_pr_from_issue():
     with patch(
-        "services.webhook.webhook_handler.create_pr_from_issue", new_callable=AsyncMock
+        "services.webhook.webhook_handler.create_pr_from_issue"
     ) as mock:
         mock.return_value = None
         yield mock
