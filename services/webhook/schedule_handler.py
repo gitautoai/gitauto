@@ -28,9 +28,10 @@ from services.stripe.check_availability import check_availability
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
 from utils.files.is_migration_file import is_migration_file
-from utils.files.should_skip_test import should_skip_test
 from utils.files.is_test_file import is_test_file
 from utils.files.is_type_file import is_type_file
+from utils.files.should_skip_test import should_skip_test
+from utils.files.should_test_file import should_test_file
 from utils.issue_templates.schedule import get_issue_title, get_issue_body
 
 
@@ -220,6 +221,10 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         # Skip files that have open GitHub issues
         github_issue_url = cast(str | None, item.get("github_issue_url"))
         if github_issue_url and is_issue_open(issue_url=github_issue_url, token=token):
+            continue
+
+        # Final check: Use Claude AI to determine if this file should be tested (expensive, so run last)
+        if not should_test_file(item_path, content):
             continue
 
         # Found the best suitable file
