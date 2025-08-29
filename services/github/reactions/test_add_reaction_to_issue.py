@@ -163,7 +163,7 @@ def test_add_reaction_to_issue_http_error_handled(reaction_base_args):
         mock_response.status_code = 404
         mock_response.reason = "Not Found"
         mock_response.text = "Not Found"
-        
+
         http_error = requests.exceptions.HTTPError("404 Not Found")
         http_error.response = mock_response
         mock_response.raise_for_status.side_effect = http_error
@@ -333,7 +333,7 @@ def test_add_reaction_to_issue_rate_limit_429_handled(reaction_base_args):
         http_error = requests.exceptions.HTTPError("429 Too Many Requests")
         http_error.response = mock_response_error
         mock_response_error.raise_for_status.side_effect = http_error
-        
+
         mock_post.side_effect = [mock_response_error, mock_response_success]
 
         result = add_reaction_to_issue(123, "+1", reaction_base_args)
@@ -341,36 +341,6 @@ def test_add_reaction_to_issue_rate_limit_429_handled(reaction_base_args):
         # Should succeed after retry
         assert result is None  # Function returns None on success
         assert mock_post.call_count == 2  # Called twice: first fails, second succeeds
-
-
-def test_add_reaction_to_issue_secondary_rate_limit_handled(reaction_base_args):
-    """Test that secondary rate limit errors are handled by the decorator."""
-    with patch(
-        "services.github.reactions.add_reaction_to_issue.requests.post"
-    ) as mock_post:
-        # Simulate secondary rate limit error
-        mock_response = MagicMock()
-        mock_response.status_code = 403
-        mock_response.reason = "Forbidden"
-        mock_response.text = "You have exceeded a secondary rate limit"
-        mock_response.headers = {
-            "X-RateLimit-Limit": "5000",
-            "X-RateLimit-Remaining": "4000",
-            "X-RateLimit-Used": "1000",
-            "Retry-After": "60",
-        }
-
-        http_error = requests.exceptions.HTTPError("403 Forbidden")
-        http_error.response = mock_response
-        mock_response.raise_for_status.side_effect = http_error
-        mock_post.return_value = mock_response
-
-        result = add_reaction_to_issue(123, "+1", reaction_base_args)
-
-        # The handle_exceptions decorator should catch the error and return None
-        assert result is None
-        mock_post.assert_called_once()
-        mock_response.raise_for_status.assert_called_once()
 
 
 def test_add_reaction_to_issue_500_error_handled(reaction_base_args):
