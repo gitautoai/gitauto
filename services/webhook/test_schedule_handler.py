@@ -163,6 +163,8 @@ class TestScheduleHandler:
             assert result is not None
             assert isinstance(result, list)
 
+    @patch("services.webhook.schedule_handler.should_skip_test")
+    @patch("services.webhook.schedule_handler.should_test_file")
     @patch("services.webhook.schedule_handler.get_installation_access_token")
     @patch("services.webhook.schedule_handler.get_repository")
     @patch("services.webhook.schedule_handler.check_availability")
@@ -181,6 +183,8 @@ class TestScheduleHandler:
         mock_check_availability,
         mock_get_repository,
         mock_get_token,
+        mock_should_test_file,
+        mock_should_skip_test,
         mock_event,
     ):
         """Test that schedule_handler skips files that only contain exports."""
@@ -213,6 +217,16 @@ class TestScheduleHandler:
         }.get(file_path, None)
 
         mock_create_issue.return_value = {"html_url": "https://github.com/test/issue/1"}
+
+        # Mock should_skip_test to return True for export-only files, False for files with logic
+        def mock_should_skip_side_effect(file_path, content):
+            if "index.ts" in file_path and "export" in content and "function" not in content:
+                return True  # Export-only file should be skipped
+            return False  # File with actual logic should not be skipped
+        mock_should_skip_test.side_effect = mock_should_skip_side_effect
+
+        # Mock should_test_file to return True for files with logic
+        mock_should_test_file.return_value = True
 
         # Execute
         result = schedule_handler(mock_event)

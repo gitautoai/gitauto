@@ -1,14 +1,13 @@
 from unittest.mock import patch, MagicMock
 import pytest
 import requests
-import time
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def mock_function_for_testing():
     """Mock function to test handle_exceptions decorator."""
-    response = requests.get("https://api.github.com/test")
+    response = requests.get("https://api.github.com/test", timeout=120)
     response.raise_for_status()
     return response.json()
 
@@ -16,13 +15,13 @@ def mock_function_for_testing():
 @handle_exceptions(default_return_value="default", raise_on_error=False)
 def mock_function_with_custom_default():
     """Mock function to test custom default return value."""
-    raise Exception("Test error")
+    raise ValueError("Test error")
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=True)
 def mock_function_with_raise_on_error():
     """Mock function to test raise_on_error=True."""
-    raise Exception("Test error")
+    raise ValueError("Test error")
 
 
 def test_handle_exceptions_returns_none_on_error():
@@ -44,7 +43,7 @@ def test_handle_exceptions_returns_custom_default():
 
 def test_handle_exceptions_raises_when_raise_on_error_true():
     """Test that decorator raises exception when raise_on_error=True."""
-    with pytest.raises(Exception, match="Test error"):
+    with pytest.raises(ValueError, match="Test error"):
         mock_function_with_raise_on_error()
 
 
@@ -244,7 +243,7 @@ def test_handle_exceptions_json_decode_error():
 def test_handle_exceptions_generic_exception():
     """Test that generic exceptions are handled."""
     with patch("utils.error.test_handle_exceptions.requests.get") as mock_get:
-        mock_get.side_effect = Exception("Generic error")
+        mock_get.side_effect = ValueError("Generic error")
 
         result = mock_function_for_testing()
 
