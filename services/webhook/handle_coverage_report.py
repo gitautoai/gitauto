@@ -72,7 +72,9 @@ def handle_coverage_report(
             artifact.get("name", "") if source == "github" else artifact.get("path", "")
         )
 
-        if "lcov.info" not in artifact_name.lower():
+        # Check for coverage artifacts - lcov files, coverage reports, or default artifact
+        coverage_keywords = ["lcov", "coverage", "artifact"]
+        if not any(keyword in artifact_name.lower() for keyword in coverage_keywords):
             continue
 
         if source == "github":

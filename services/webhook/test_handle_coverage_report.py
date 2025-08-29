@@ -48,6 +48,125 @@ def test_handle_coverage_report_with_python_sample():
         mock_upsert_repo.assert_called_once()
 
 
+def test_handle_coverage_report_with_coverage_report_artifact():
+    """Test handling coverage with artifact named 'coverage-report'"""
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_workflow_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_file_tree"
+    ) as mock_tree, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo:
+
+        mock_token.return_value = "fake-token"
+        mock_artifacts.return_value = [{"id": 123, "name": "coverage-report"}]
+        mock_download.return_value = sample_lcov
+        mock_tree.return_value = []
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=222,
+            head_branch="main",
+            user_name="test-user",
+        )
+
+        assert result is True
+        mock_download.assert_called_once()
+
+
+def test_handle_coverage_report_with_default_artifact_name():
+    """Test handling coverage with default artifact name 'artifact'"""
+    with open("payloads/lcov/lcov-javascript-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_workflow_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_file_tree"
+    ) as mock_tree, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo:
+
+        mock_token.return_value = "fake-token"
+        mock_artifacts.return_value = [{"id": 456, "name": "artifact"}]
+        mock_download.return_value = sample_lcov
+        mock_tree.return_value = []
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=333,
+            head_branch="main",
+            user_name="test-user",
+        )
+
+        assert result is True
+        mock_download.assert_called_once()
+
+
+def test_handle_coverage_report_skips_non_coverage_artifacts():
+    """Test that non-coverage artifacts are skipped"""
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_workflow_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_artifact"
+    ) as mock_download:
+
+        mock_token.return_value = "fake-token"
+        mock_artifacts.return_value = [
+            {"id": 123, "name": "build-logs"},
+            {"id": 456, "name": "test-results"},
+        ]
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=444,
+            head_branch="main",
+            user_name="test-user",
+        )
+
+        assert result is None
+        mock_download.assert_not_called()
+
+
 def test_handle_coverage_report_with_javascript_sample():
     with open("payloads/lcov/lcov-javascript-sample.info", "r", encoding=UTF8) as f:
         sample_lcov = f.read()
