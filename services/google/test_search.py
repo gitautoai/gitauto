@@ -28,9 +28,9 @@ class TestSearchUrls:
     def test_search_urls_success_single_result(self, mock_search, mock_search_result):
         """Test successful search with single result."""
         mock_search.return_value = [mock_search_result]
-        
+
         result = search_urls("test query")
-        
+
         assert len(result) == 1
         assert result[0]["title"] == "Test Title"
         assert result[0]["description"] == "Test Description"
@@ -40,7 +40,7 @@ class TestSearchUrls:
             num_results=NUM_RESULTS_DEFAULT,
             lang="en",
             safe=None,
-            advanced=True
+            advanced=True,
         )
 
     @patch("services.google.search.search")
@@ -50,16 +50,16 @@ class TestSearchUrls:
         result1.title = "Title 1"
         result1.description = "Description 1"
         result1.url = "https://example1.com"
-        
+
         result2 = Mock()
         result2.title = "Title 2"
         result2.description = "Description 2"
         result2.url = "https://example2.com"
-        
+
         mock_search.return_value = [result1, result2]
-        
+
         result = search_urls("test query", num_results=2)
-        
+
         assert len(result) == 2
         assert result[0]["title"] == "Title 1"
         assert result[1]["title"] == "Title 2"
@@ -68,34 +68,30 @@ class TestSearchUrls:
     def test_search_urls_with_custom_params(self, mock_search, mock_search_result):
         """Test search with custom parameters."""
         mock_search.return_value = [mock_search_result]
-        
+
         result = search_urls("test query", num_results=5, lang="fr")
-        
+
         assert len(result) == 1
         mock_search.assert_called_once_with(
-            term="test query",
-            num_results=5,
-            lang="fr",
-            safe=None,
-            advanced=True
+            term="test query", num_results=5, lang="fr", safe=None, advanced=True
         )
 
     @patch("services.google.search.search")
     def test_search_urls_empty_results(self, mock_search):
         """Test search with no results."""
         mock_search.return_value = []
-        
+
         result = search_urls("test query")
-        
+
         assert result == []
 
     @patch("services.google.search.search")
     def test_search_urls_exception_handling(self, mock_search):
         """Test search with exception (handled by decorator)."""
         mock_search.side_effect = Exception("Search failed")
-        
+
         result = search_urls("test query")
-        
+
         # Should return default value [] due to handle_exceptions decorator
         assert result == []
 
@@ -127,20 +123,20 @@ class TestScrapeContentFromUrl:
             </body>
         </html>
         """
-        
+
         mock_response = Mock()
         mock_response.text = html_content
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
-        
+
         result = scrape_content_from_url("https://example.com")
-        
+
         assert result is not None
         assert result["title"] == "Test Page Title"
         assert result["url"] == "https://example.com"
         assert "Main Article Title" in result["content"]
         assert "main content of the article" in result["content"]
-        
+
         # Verify print calls
         assert mock_print.call_count == 2
 
@@ -155,14 +151,14 @@ class TestScrapeContentFromUrl:
             </body>
         </html>
         """
-        
+
         mock_response = Mock()
         mock_response.text = html_no_title
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
-        
+
         result = scrape_content_from_url("https://example.com")
-        
+
         assert result is not None
         assert result["title"] == ""
         assert result["url"] == "https://example.com"
@@ -183,14 +179,14 @@ class TestScrapeContentFromUrl:
             </body>
         </html>
         """
-        
+
         mock_response = Mock()
         mock_response.text = html_with_main
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
-        
+
         result = scrape_content_from_url("https://example.com")
-        
+
         assert result is not None
         assert result["title"] == "Page with Main"
         assert "Main content here" in result["content"]
@@ -212,14 +208,14 @@ class TestScrapeContentFromUrl:
             </body>
         </html>
         """
-        
+
         mock_response = Mock()
         mock_response.text = html_with_article
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
-        
+
         result = scrape_content_from_url("https://example.com")
-        
+
         assert result is not None
         assert result["title"] == "Page with Article"
         assert "Article content here" in result["content"]
@@ -249,14 +245,14 @@ class TestScrapeContentFromUrl:
             </body>
         </html>
         """
-        
+
         mock_response = Mock()
         mock_response.text = html_with_unnecessary_tags
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
-        
+
         result = scrape_content_from_url("https://example.com")
-        
+
         assert result is not None
         assert "Main content to keep" in result["content"]
         # Verify unnecessary content is removed
@@ -278,9 +274,9 @@ class TestScrapeContentFromUrl:
         http_error = requests.HTTPError("HTTP Error")
         http_error.response = mock_response
         mock_get.side_effect = http_error
-        
+
         result = scrape_content_from_url("https://example.com")
-        
+
         # Should return None due to handle_exceptions decorator
         assert result is None
 
@@ -291,9 +287,9 @@ class TestScrapeContentFromUrl:
         mock_response.text = "<html><body>Test</body></html>"
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
-        
+
         scrape_content_from_url("https://example.com")
-        
+
         # Verify get was called with correct headers and timeout
         mock_get.assert_called_once()
         call_args = mock_get.call_args
@@ -311,14 +307,14 @@ class TestScrapeContentFromUrl:
             <body><p>Content</p></body>
         </html>
         """
-        
+
         mock_response = Mock()
         mock_response.text = html_with_whitespace_title
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
-        
+
         result = scrape_content_from_url("https://example.com")
-        
+
         assert result is not None
         assert result["title"] == "Title with spaces"  # Should be stripped
 
@@ -337,14 +333,14 @@ class TestScrapeContentFromUrl:
             </body>
         </html>
         """
-        
+
         mock_response = Mock()
         mock_response.text = html_without_main
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
-        
+
         result = scrape_content_from_url("https://example.com")
-        
+
         assert result is not None
         assert "Regular div content" in result["content"]
         assert "Some span content" in result["content"]
@@ -356,107 +352,131 @@ class TestGoogleSearch:
     def test_google_search_empty_query(self, create_test_base_args):
         """Test google_search with empty query."""
         base_args = create_test_base_args()
-        
+
         result = google_search(base_args, "")
-        
+
         assert result == []
 
     def test_google_search_none_query(self, create_test_base_args):
         """Test google_search with None query."""
         base_args = create_test_base_args()
-        
+
         result = google_search(base_args, None)
-        
+
         assert result == []
 
     @patch("services.google.search.scrape_content_from_url")
     @patch("services.google.search.search_urls")
-    def test_google_search_success_single_url(self, mock_search_urls, mock_scrape, create_test_base_args):
+    def test_google_search_success_single_url(
+        self, mock_search_urls, mock_scrape, create_test_base_args
+    ):
         """Test successful google_search with single URL."""
         base_args = create_test_base_args()
-        
+
         mock_search_urls.return_value = [
-            {"title": "Test Title", "description": "Test Desc", "url": "https://example.com"}
+            {
+                "title": "Test Title",
+                "description": "Test Desc",
+                "url": "https://example.com",
+            }
         ]
         mock_scrape.return_value = {
             "title": "Scraped Title",
             "content": "Scraped content",
-            "url": "https://example.com"
+            "url": "https://example.com",
         }
-        
+
         result = google_search(base_args, "test query")
-        
+
         assert len(result) == 1
         assert result[0]["title"] == "Scraped Title"
         assert result[0]["content"] == "Scraped content"
-        
+
         mock_search_urls.assert_called_once_with(
-            query="test query",
-            num_results=NUM_RESULTS_DEFAULT,
-            lang="en"
+            query="test query", num_results=NUM_RESULTS_DEFAULT, lang="en"
         )
         mock_scrape.assert_called_once_with("https://example.com")
 
     @patch("services.google.search.scrape_content_from_url")
     @patch("services.google.search.search_urls")
-    def test_google_search_success_multiple_urls(self, mock_search_urls, mock_scrape, create_test_base_args):
+    def test_google_search_success_multiple_urls(
+        self, mock_search_urls, mock_scrape, create_test_base_args
+    ):
         """Test successful google_search with multiple URLs."""
         base_args = create_test_base_args()
-        
+
         mock_search_urls.return_value = [
-            {"title": "Title 1", "description": "Desc 1", "url": "https://example1.com"},
-            {"title": "Title 2", "description": "Desc 2", "url": "https://example2.com"}
+            {
+                "title": "Title 1",
+                "description": "Desc 1",
+                "url": "https://example1.com",
+            },
+            {
+                "title": "Title 2",
+                "description": "Desc 2",
+                "url": "https://example2.com",
+            },
         ]
         mock_scrape.side_effect = [
-            {"title": "Scraped Title 1", "content": "Content 1", "url": "https://example1.com"},
-            {"title": "Scraped Title 2", "content": "Content 2", "url": "https://example2.com"}
+            {
+                "title": "Scraped Title 1",
+                "content": "Content 1",
+                "url": "https://example1.com",
+            },
+            {
+                "title": "Scraped Title 2",
+                "content": "Content 2",
+                "url": "https://example2.com",
+            },
         ]
-        
+
         result = google_search(base_args, "test query", num_results=2)
-        
+
         assert len(result) == 2
         assert result[0]["title"] == "Scraped Title 1"
         assert result[1]["title"] == "Scraped Title 2"
-        
+
         mock_search_urls.assert_called_once_with(
-            query="test query",
-            num_results=2,
-            lang="en"
+            query="test query", num_results=2, lang="en"
         )
         assert mock_scrape.call_count == 2
 
     @patch("services.google.search.scrape_content_from_url")
     @patch("services.google.search.search_urls")
-    def test_google_search_no_urls_found(self, mock_search_urls, mock_scrape, create_test_base_args):
+    def test_google_search_no_urls_found(
+        self, mock_search_urls, mock_scrape, create_test_base_args
+    ):
         """Test google_search when no URLs are found."""
         base_args = create_test_base_args()
-        
+
         mock_search_urls.return_value = []
-        
+
         result = google_search(base_args, "test query")
-        
+
         assert result == []
         mock_scrape.assert_not_called()
 
     @patch("services.google.search.scrape_content_from_url")
     @patch("services.google.search.search_urls")
-    def test_google_search_exception_handling(self, mock_search_urls, mock_scrape, create_test_base_args):
+    def test_google_search_exception_handling(
+        self, mock_search_urls, mock_scrape, create_test_base_args
+    ):
         """Test google_search with exception."""
         base_args = create_test_base_args()
-        
+
         mock_search_urls.side_effect = Exception("Search failed")
-        
+
         result = google_search(base_args, "test query")
-        
+
         # Should return default value [] due to handle_exceptions decorator
         assert result == []
 
     def test_google_search_with_falsy_query_values(self, create_test_base_args):
         """Test google_search with various falsy query values."""
         base_args = create_test_base_args()
-        
+
         falsy_values = ["", None, 0, False, [], {}]
-        
+
         for falsy_value in falsy_values:
             result = google_search(base_args, falsy_value)
             assert result == [], f"Expected [] for falsy query value: {falsy_value}"
@@ -473,9 +493,21 @@ class TestConstants:
     def test_unnecessary_tags(self):
         """Test UNNECESSARY_TAGS constant."""
         expected_tags = [
-            "ads", "advertisement", "aside", "footer", "head", "header",
-            "iframe", "link", "meta", "nav", "noscript", "path",
-            "script", "style", "svg"
+            "ads",
+            "advertisement",
+            "aside",
+            "footer",
+            "head",
+            "header",
+            "iframe",
+            "link",
+            "meta",
+            "nav",
+            "noscript",
+            "path",
+            "script",
+            "style",
+            "svg",
         ]
         assert UNNECESSARY_TAGS == expected_tags
         assert isinstance(UNNECESSARY_TAGS, list)

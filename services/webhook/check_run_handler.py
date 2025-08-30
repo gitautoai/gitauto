@@ -69,6 +69,7 @@ def handle_check_run(payload: CheckRunCompletedPayload):
 
     is_circleci = "circleci.com" in details_url if details_url else False
     is_deepsource = "deepsource.com" in details_url if details_url else False
+    is_side8 = "side8.io" in details_url if details_url else False
     circleci_project_slug = ""
     circleci_workflow_id = ""
     github_run_id = 0
@@ -80,6 +81,9 @@ def handle_check_run(payload: CheckRunCompletedPayload):
         circleci_project_slug = f"{url_parts[0]}/{url_parts[1]}/{url_parts[2]}"
     elif is_deepsource:
         # DeepSource URLs like https://app.deepsource.com/gh/guibranco/projects-monitor-ui/
+        return
+    elif is_side8:
+        # Side8 URLs like https://admin.pipeline.side8.io
         return
     else:
         github_run_id = int(details_url.split(sep="/")[-3])
