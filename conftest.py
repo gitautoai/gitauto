@@ -1,4 +1,3 @@
-# Check conftest content
 import random
 import pytest
 from services.github.token.get_installation_token import get_installation_access_token
