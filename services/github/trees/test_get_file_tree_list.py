@@ -428,3 +428,27 @@ def test_get_file_tree_list_path_edge_cases(base_args):
         expected_result = ["file.py"]
 
         assert result == expected_result
+
+
+def test_get_file_tree_list_nested_items_not_direct_children(base_args):
+    # Test that nested items (not direct children) are not included
+    mock_nested_tree = [
+        {"path": "parent", "type": "tree"},
+        {"path": "parent/child", "type": "tree"},
+        {"path": "parent/file.py", "type": "blob"},
+        {"path": "parent/child/nested_file.py", "type": "blob"},
+        {"path": "parent/child/deep", "type": "tree"},
+        {"path": "parent/child/deep/very_deep_file.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_nested_tree
+
+        result = get_file_tree_list(base_args, dir_path="parent")
+
+        # Should only include direct children, not nested items
+        expected_result = ["child/", "file.py"]
+
+        assert result == expected_result
