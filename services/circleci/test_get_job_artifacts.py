@@ -1,5 +1,6 @@
+import json
 from unittest.mock import patch, MagicMock, call
-from services.circleci.get_job_artifacts import get_circleci_job_artifacts, handle_exceptions
+from services.circleci.get_job_artifacts import get_circleci_job_artifacts
 
 
 def test_get_circleci_job_artifacts_success():
@@ -112,4 +113,23 @@ def test_get_circleci_job_artifacts_connection_error():
 
         # Verify the get function was called with the expected parameters
         mock_get.assert_called_once()
+
+
+def test_get_circleci_job_artifacts_json_decode_error():
+    """Test handling of JSON decode errors through the handle_exceptions decorator."""
+    mock_response = MagicMock()
+    # Set up the json method to raise a JSONDecodeError
+    mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "{invalid", 0)
+    mock_response.raise_for_status.return_value = None
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
+        # Call the function and verify it returns the default empty list
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="303", circle_token="test-token"
+        )
+
+        # Verify the result is an empty list (default_return_value from handle_exceptions)
+        assert result == []
         assert "gh/owner/repo" in mock_get.call_args[1]["url"]
