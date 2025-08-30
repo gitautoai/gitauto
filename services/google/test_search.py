@@ -275,7 +275,9 @@ class TestScrapeContentFromUrl:
         mock_response.status_code = 404
         mock_response.reason = "Not Found"
         mock_response.text = "Page not found"
-        mock_get.side_effect = requests.HTTPError("HTTP Error", response=mock_response)
+        http_error = requests.HTTPError("HTTP Error")
+        http_error.response = mock_response
+        mock_get.side_effect = http_error
         
         result = scrape_content_from_url("https://example.com")
         
