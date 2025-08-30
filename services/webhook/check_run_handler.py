@@ -80,13 +80,19 @@ def handle_check_run(payload: CheckRunCompletedPayload):
         url_parts = details_url.split("/pipelines/")[1].split("/")
         circleci_project_slug = f"{url_parts[0]}/{url_parts[1]}/{url_parts[2]}"
     elif is_deepsource:
-        # DeepSource URLs like https://app.deepsource.com/gh/guibranco/projects-monitor-ui/
+        # DeepSource: https://app.deepsource.com/gh/guibranco/projects-monitor-ui/
         return
     elif is_side8:
-        # Side8 URLs like https://admin.pipeline.side8.io
+        # Side8: https://admin.pipeline.side8.io
         return
     else:
-        github_run_id = int(details_url.split(sep="/")[-3])
+        # Check if this is a GitHub Actions URL with run ID
+        if details_url and "/actions/runs/" in details_url:
+            # https://github.com/hiroshinishio/tetris/actions/runs/11393174689/job/31710113401
+            github_run_id = int(details_url.split(sep="/")[-3])
+        else:
+            # Other CI/CD services or external apps - skip processing
+            return
 
     check_run_name = check_run["name"]
 
