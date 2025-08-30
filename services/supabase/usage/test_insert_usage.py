@@ -7,8 +7,6 @@ from services.supabase.usage.insert_usage import insert_usage
 
 def test_insert_usage_success_with_all_parameters():
     """Test successful usage insertion with all parameters provided"""
-    mock_response = Mock()
-
     with patch("services.supabase.usage.insert_usage.supabase") as mock_supabase:
         mock_table = Mock()
         mock_supabase.table.return_value = mock_table
@@ -51,8 +49,6 @@ def test_insert_usage_success_with_all_parameters():
 
 def test_insert_usage_success_without_pr_number():
     """Test successful usage insertion without pr_number"""
-    mock_response = Mock()
-
     with patch("services.supabase.usage.insert_usage.supabase") as mock_supabase:
         mock_table = Mock()
         mock_supabase.table.return_value = mock_table
@@ -92,8 +88,6 @@ def test_insert_usage_success_without_pr_number():
 
 def test_insert_usage_with_zero_values():
     """Test usage insertion with zero values"""
-    mock_response = Mock()
-
     with patch("services.supabase.usage.insert_usage.supabase") as mock_supabase:
         mock_table = Mock()
         mock_supabase.table.return_value = mock_table
@@ -119,8 +113,6 @@ def test_insert_usage_with_zero_values():
 
 def test_insert_usage_with_different_triggers():
     """Test usage insertion with different valid triggers"""
-    mock_response = Mock()
-
     triggers = [
         "issue_label",
         "issue_comment",

@@ -10,9 +10,6 @@ from typing import Any, Callable, Tuple, TypeVar
 # Third party imports
 import requests
 
-# Local imports
-from utils.objects.truncate_value import truncate_value
-
 F = TypeVar("F", bound=Callable[..., Any])
 
 
@@ -26,11 +23,8 @@ def handle_exceptions(
     def decorator(func: F) -> F:
         @wraps(wrapped=func)
         def wrapper(*args: Tuple[Any, ...], **kwargs: Any):
-            # Create truncated args and kwargs at the beginning
-            truncated_args = [truncate_value(arg) for arg in args]
-            truncated_kwargs = {
-                key: truncate_value(value) for key, value in kwargs.items()
-            }
+            log_args = list(args)
+            log_kwargs = dict(kwargs)
 
             try:
                 return func(*args, **kwargs)
@@ -94,7 +88,7 @@ def handle_exceptions(
 
                 # Ex) 409: Conflict, 422: Unprocessable Entity (No changes made), and etc.
                 else:
-                    err_msg = f"{func.__name__} encountered an HTTPError: {err}\n\nArgs: {json.dumps(truncated_args, indent=2)}\n\nKwargs: {json.dumps(truncated_kwargs, indent=2)}\n\nReason: {reason}\n\nText: {text}\n\n"
+                    err_msg = f"{func.__name__} encountered an HTTPError: {err}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}\n\nReason: {reason}\n\nText: {text}\n\n"
                     logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
@@ -106,14 +100,14 @@ def handle_exceptions(
                 else:
                     raw_response = "Raw response not available"
 
-                err_msg = f"{func.__name__} encountered a JSONDecodeError: {err}\n\nRaw response: {raw_response}\n\nArgs: {json.dumps(truncated_args, indent=2)}\n\nKwargs: {json.dumps(truncated_kwargs, indent=2)}"
+                err_msg = f"{func.__name__} encountered a JSONDecodeError: {err}\n\nRaw response: {raw_response}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}"
                 logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
 
             # Catch all other exceptions
             except (AttributeError, KeyError, TypeError, Exception) as err:
-                err_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\n\nArgs: {json.dumps(truncated_args, indent=2)}\n\nKwargs: {json.dumps(truncated_kwargs, indent=2)}"
+                err_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}"
                 logging.error(msg=err_msg)
                 if raise_on_error:
                     raise

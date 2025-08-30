@@ -130,9 +130,20 @@ AWS CLI is available and configured for us-west-1 region.
 # Search production Lambda logs
 # Main log group: /aws/lambda/pr-agent-prod (configured for the Lambda function)
 
-# IMPORTANT: First check today's date with 'date' command to ensure correct timestamp calculation
-# Convert date to epoch milliseconds for AWS logs
-python3 -c "import datetime; print(int(datetime.datetime(2025, 8, 19, 19, 0, 0).timestamp() * 1000))"
+# IMPORTANT: Sentry provides a direct CloudWatch logs URL in the error context!
+# Look for "cloudwatch logs" section in Sentry error details, it contains a URL like:
+# https://console.aws.amazon.com/cloudwatch/home?region=us-west-1#logEventViewer:group=/aws/lambda/pr-agent-prod;stream=2025/08/29/pr-agent-prod[$LATEST]65d5c604f2fc4f44b1a2105a77aaf7cd;start=2025-08-29T13:08:32Z;end=2025-08-29T13:08:51Z
+#
+# Extract the stream name and timestamps from this URL:
+# - Stream: 2025/08/29/pr-agent-prod[$LATEST]65d5c604f2fc4f44b1a2105a77aaf7cd
+# - Start: 2025-08-29T13:08:32Z
+# - End: 2025-08-29T13:08:51Z
+#
+# Convert the timestamps to epoch milliseconds:
+python3 -c "import datetime; start = datetime.datetime(2025, 8, 29, 13, 8, 32); end = datetime.datetime(2025, 8, 29, 13, 8, 51); print(f'Start: {int(start.timestamp() * 1000)}, End: {int(end.timestamp() * 1000)}')"
+#
+# For relative time ranges (usually more practical):
+python3 -c "import datetime; now = datetime.datetime.now(); print(f'Last 2 hours - Start: {int((now - datetime.timedelta(hours=2)).timestamp() * 1000)}, End: {int(now.timestamp() * 1000)}')"
 
 # Search for errors in main log group
 aws logs filter-log-events --log-group-name "/aws/lambda/pr-agent-prod" --filter-pattern "ERROR" --start-time START_EPOCH --end-time END_EPOCH --max-items 100
@@ -143,8 +154,26 @@ aws logs filter-log-events --log-group-name "/aws/lambda/pr-agent-prod" --start-
 # List available log groups
 aws logs describe-log-groups --log-group-name-prefix "/aws/lambda" --max-items 20
 
-# List log streams in a specific log group
+# List log streams in a specific log group (recent streams first)
 aws logs describe-log-streams --log-group-name "/aws/lambda/pr-agent-prod" --order-by LastEventTime --descending --max-items 10
+
+# List log streams from a specific date (cannot use --order-by with prefix)
+aws logs describe-log-streams --log-group-name "/aws/lambda/pr-agent-prod" --log-stream-name-prefix "2025/08/29/" --max-items 20
+
+# Get logs from a specific stream (use [\$LATEST] with escape for $)
+aws logs get-log-events --log-group-name "/aws/lambda/pr-agent-prod" --log-stream-name "2025/08/29/pr-agent-prod[\$LATEST]65d5c604f2fc4f44b1a2105a77aaf7cd" --start-time START_EPOCH --end-time END_EPOCH --limit 100
+
+# Search by keyword across all streams in a time range
+aws logs filter-log-events --log-group-name "/aws/lambda/pr-agent-prod" --filter-pattern "Foxquilt" --start-time START_EPOCH --end-time END_EPOCH --max-items 10
+
+# Find specific error by request ID or issue ID
+aws logs filter-log-events --log-group-name "/aws/lambda/pr-agent-prod" --filter-pattern "AGENT-12N OR req_011CSc46UReJXaoSqKaUX2Lz" --start-time START_EPOCH --end-time END_EPOCH --max-items 10
+
+# Save logs to file for detailed analysis
+aws logs get-log-events --log-group-name "/aws/lambda/pr-agent-prod" --log-stream-name "STREAM_NAME" --start-time START_EPOCH --end-time END_EPOCH --limit 200 > /tmp/cloudwatch_logs.txt
+
+# Parse saved logs with Python
+cat /tmp/cloudwatch_logs.txt | python3 -c "import sys, json; data = json.load(sys.stdin); [print(e['message']) for e in data['events'] if 'ERROR' in e['message']]"
 
 # Update Lambda function log group configuration
 aws lambda update-function-configuration --function-name pr-agent-prod --logging-config LogFormat=Text,LogGroup=/aws/lambda/pr-agent-prod
