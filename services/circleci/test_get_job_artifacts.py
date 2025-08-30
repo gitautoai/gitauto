@@ -133,3 +133,22 @@ def test_get_circleci_job_artifacts_json_decode_error():
         # Verify the result is an empty list (default_return_value from handle_exceptions)
         assert result == []
         assert "gh/owner/repo" in mock_get.call_args[1]["url"]
+
+
+def test_get_circleci_job_artifacts_unexpected_response_structure():
+    """Test handling of unexpected response structure."""
+    mock_response = MagicMock()
+    # Return a response with an unexpected structure
+    mock_response.json.return_value = {
+        "data": [  # Using 'data' instead of 'items'
+            {"file_path": "coverage/lcov.info", "download_url": "https://example.com/lcov.info"},
+        ]
+    }
+    mock_response.raise_for_status.return_value = None
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="404", circle_token="test-token"
+        )
