@@ -1,6 +1,7 @@
 import json
 from unittest.mock import patch, MagicMock, call
 from services.circleci.get_job_artifacts import get_circleci_job_artifacts
+from config import TIMEOUT
 
 
 def test_get_circleci_job_artifacts_success():
@@ -152,3 +153,24 @@ def test_get_circleci_job_artifacts_unexpected_response_structure():
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="404", circle_token="test-token"
         )
+
+
+def test_get_circleci_job_artifacts_timeout_parameter():
+    """Test that the timeout parameter is correctly passed to the requests.get function."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "items": [
+            {"path": "coverage/lcov.info", "url": "https://example.com/lcov.info"},
+        ],
+    }
+    mock_response.raise_for_status.return_value = None
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
+        get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="505", circle_token="test-token"
+        )
+
+        # Verify the timeout parameter is correctly passed
+        assert mock_get.call_args[1]["timeout"] == TIMEOUT
