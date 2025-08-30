@@ -1,5 +1,5 @@
-from unittest.mock import patch, MagicMock
-from services.circleci.get_job_artifacts import get_circleci_job_artifacts
+from unittest.mock import patch, MagicMock, call
+from services.circleci.get_job_artifacts import get_circleci_job_artifacts, handle_exceptions
 
 
 def test_get_circleci_job_artifacts_success():
@@ -94,3 +94,22 @@ def test_get_circleci_job_artifacts_missing_items_key():
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="101", circle_token="test-token"
         )
+
+
+def test_get_circleci_job_artifacts_connection_error():
+    """Test handling of connection errors through the handle_exceptions decorator."""
+    # Mock the requests.get function to raise a ConnectionError
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.side_effect = ConnectionError("Failed to establish a connection")
+
+        # Call the function and verify it returns the default empty list
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="202", circle_token="test-token"
+        )
+
+        # Verify the result is an empty list (default_return_value from handle_exceptions)
+        assert result == []
+
+        # Verify the get function was called with the expected parameters
+        mock_get.assert_called_once()
+        assert "gh/owner/repo" in mock_get.call_args[1]["url"]
