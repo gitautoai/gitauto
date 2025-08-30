@@ -20,7 +20,7 @@ def sample_repo_coverage_data():
         "function_coverage": 90.0,
         "line_coverage": 88.2,
         "statement_coverage": 87.8,
-        "primary_language": "Python",
+        "language": "Python",
         "created_at": datetime(2023, 1, 1, 12, 0, 0),
     }
 

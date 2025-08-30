@@ -142,7 +142,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                     "line_coverage": 0,
                     "path_coverage": 0,
                     "package_name": None,
-                    "primary_language": None,
+                    "language": None,
                     "github_issue_url": None,
                     "is_excluded_from_testing": False,
                     "uncovered_lines": None,

@@ -37,7 +37,7 @@ def create_coverage_report(
 
     coverage_report: CoverageReport = {
         "package_name": None,
-        "detected_language": "unknown",
+        "language": "unknown",
         "level": level,
         "full_path": path,
         "statement_coverage": line_coverage,

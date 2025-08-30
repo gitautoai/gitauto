@@ -99,7 +99,7 @@ def handle_coverage_report(
             report_language = detect_language_from_coverage(parsed_coverage)
 
             for item in parsed_coverage:
-                item["detected_language"] = report_language
+                item["language"] = report_language
                 # LCOV doesn't provide path coverage, use branch coverage as closest approximation
                 item["path_coverage"] = item["branch_coverage"]
 
@@ -127,7 +127,7 @@ def handle_coverage_report(
             coverage_data.append(
                 {
                     "package_name": None,
-                    "detected_language": "unknown",
+                    "language": "unknown",
                     "level": "file",
                     "full_path": source_file,
                     "statement_coverage": 0.0,
@@ -166,7 +166,7 @@ def handle_coverage_report(
                 "owner_id": owner_id,
                 "repo_id": repo_id,
                 "branch_name": head_branch,
-                "primary_language": coverage.get("detected_language", "unknown"),
+                "language": coverage.get("language", "unknown"),
                 "path_coverage": 0,
                 "updated_by": user_name,
                 **coverage,
@@ -209,7 +209,7 @@ def handle_coverage_report(
             "repo_id": repo_id,
             "repo_name": repo_name,
             "branch_name": head_branch,
-            "language": coverage_data[0].get("detected_language", "unknown"),
+            "language": coverage_data[0].get("language", "unknown"),
             "line_coverage": repo_coverage["line_coverage"],
             "statement_coverage": repo_coverage["statement_coverage"],
             "function_coverage": repo_coverage["function_coverage"],

@@ -25,7 +25,7 @@ def create_coverage_data(
         "id": 1,
         "owner_id": 123,
         "repo_id": 456,
-        "primary_language": "python",
+        "language": "python",
         "package_name": "test_package",
         "level": "file",
         "full_path": filename,

@@ -13,9 +13,9 @@ def test_detect_language_from_python_coverage():
         lcov_content = f.read()
 
     coverage_data = parse_lcov_coverage(lcov_content)
-    detected_language = detect_language_from_coverage(coverage_data)
+    language = detect_language_from_coverage(coverage_data)
 
-    assert detected_language == "python"
+    assert language == "python"
 
 
 def test_detect_language_from_javascript_coverage():
@@ -24,9 +24,9 @@ def test_detect_language_from_javascript_coverage():
         lcov_content = f.read()
 
     coverage_data = parse_lcov_coverage(lcov_content)
-    detected_language = detect_language_from_coverage(coverage_data)
+    language = detect_language_from_coverage(coverage_data)
 
-    assert detected_language == "javascript"
+    assert language == "javascript"
 
 
 def test_detect_language_with_mixed_extensions():
@@ -42,10 +42,10 @@ def test_detect_language_with_mixed_extensions():
         ],
     )
 
-    detected_language = detect_language_from_coverage(mixed_coverage)
+    language = detect_language_from_coverage(mixed_coverage)
 
     # Python files are more common (2 vs 1), so should return python
-    assert detected_language == "python"
+    assert language == "python"
 
 
 def test_detect_language_with_typescript():
@@ -59,9 +59,9 @@ def test_detect_language_with_typescript():
         ],
     )
 
-    detected_language = detect_language_from_coverage(ts_coverage)
+    language = detect_language_from_coverage(ts_coverage)
 
-    assert detected_language == "javascript"
+    assert language == "javascript"
 
 
 def test_detect_language_with_no_files():
@@ -74,16 +74,16 @@ def test_detect_language_with_no_files():
         ],
     )
 
-    detected_language = detect_language_from_coverage(no_files_coverage)
+    language = detect_language_from_coverage(no_files_coverage)
 
-    assert detected_language == "unknown"
+    assert language == "unknown"
 
 
 def test_detect_language_with_empty_coverage():
     """Test language detection with empty coverage data"""
-    detected_language = detect_language_from_coverage([])
+    language = detect_language_from_coverage([])
 
-    assert detected_language == "unknown"
+    assert language == "unknown"
 
 
 def test_detect_language_with_unknown_extension():
@@ -96,9 +96,9 @@ def test_detect_language_with_unknown_extension():
         ],
     )
 
-    detected_language = detect_language_from_coverage(unknown_coverage)
+    language = detect_language_from_coverage(unknown_coverage)
 
-    assert detected_language == "unknown"
+    assert language == "unknown"
 
 
 def test_detect_language_with_multiple_same_extension():
@@ -112,6 +112,6 @@ def test_detect_language_with_multiple_same_extension():
         ],
     )
 
-    detected_language = detect_language_from_coverage(java_coverage)
+    language = detect_language_from_coverage(java_coverage)
 
-    assert detected_language == "java"
+    assert language == "java"

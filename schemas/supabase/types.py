@@ -69,7 +69,7 @@ class Coverages(TypedDict):
     id: int
     owner_id: int
     repo_id: int
-    primary_language: str | None
+    language: str | None
     package_name: str | None
     level: str
     full_path: str
@@ -94,7 +94,7 @@ class Coverages(TypedDict):
 class CoveragesInsert(TypedDict):
     owner_id: NotRequired[int]
     repo_id: NotRequired[int]
-    primary_language: NotRequired[str | None]
+    language: NotRequired[str | None]
     package_name: NotRequired[str | None]
     level: NotRequired[str]
     full_path: NotRequired[str]
