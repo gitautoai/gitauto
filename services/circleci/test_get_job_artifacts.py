@@ -77,3 +77,20 @@ def test_get_circleci_job_artifacts_404_response():
         )
 
         assert result == []
+
+
+def test_get_circleci_job_artifacts_missing_items_key():
+    """Test handling of response without 'items' key."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "next_page_token": None,
+        # No 'items' key
+    }
+    mock_response.raise_for_status.return_value = None
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="101", circle_token="test-token"
+        )
