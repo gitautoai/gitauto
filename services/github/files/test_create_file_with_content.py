@@ -1,6 +1,5 @@
 # Standard imports
 import base64
-import json
 from unittest.mock import MagicMock, patch
 
 # Third-party imports
@@ -86,7 +85,7 @@ class TestCreateFileWithContent:
 
         assert result == f"File {file_path} successfully created"
         mock_create_headers.assert_called_once_with(token="test-token")
-        
+
         # Verify the API call
         expected_url = "https://api.github.com/repos/test-owner/test-repo/contents/src/test.py?ref=test-branch"
         expected_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
@@ -95,7 +94,7 @@ class TestCreateFileWithContent:
             "content": expected_content,
             "branch": "test-branch",
         }
-        
+
         mock_put.assert_called_once_with(
             url=expected_url,
             json=expected_data,
@@ -107,7 +106,11 @@ class TestCreateFileWithContent:
     @patch("services.github.files.create_file_with_content.requests.put")
     @patch("services.github.files.create_file_with_content.create_headers")
     def test_successful_file_creation_with_skip_ci(
-        self, mock_create_headers, mock_put, base_args_with_skip_ci, mock_successful_response
+        self,
+        mock_create_headers,
+        mock_put,
+        base_args_with_skip_ci,
+        mock_successful_response,
     ):
         """Test successful file creation with skip_ci enabled."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
@@ -118,7 +121,7 @@ class TestCreateFileWithContent:
         result = create_file_with_content(file_path, content, base_args_with_skip_ci)
 
         assert result == f"File {file_path} successfully created"
-        
+
         # Verify the commit message includes [skip ci]
         expected_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
         expected_data = {
@@ -126,7 +129,7 @@ class TestCreateFileWithContent:
             "content": expected_content,
             "branch": "test-branch",
         }
-        
+
         mock_put.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src/test.py?ref=test-branch",
             json=expected_data,
@@ -146,13 +149,13 @@ class TestCreateFileWithContent:
         file_path = "src/test.py"
         content = "print('Hello, World!')"
         custom_message = "Add new test file with custom message"
-        
+
         result = create_file_with_content(
             file_path, content, base_args, commit_message=custom_message
         )
 
         assert result == f"File {file_path} successfully created"
-        
+
         # Verify the custom commit message is used
         expected_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
         expected_data = {
@@ -160,7 +163,7 @@ class TestCreateFileWithContent:
             "content": expected_content,
             "branch": "test-branch",
         }
-        
+
         mock_put.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src/test.py?ref=test-branch",
             json=expected_data,
@@ -182,7 +185,7 @@ class TestCreateFileWithContent:
         result = create_file_with_content(file_path, content, base_args)
 
         assert result == f"File {file_path} successfully created"
-        
+
         # Verify empty content is properly encoded
         expected_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
         expected_data = {
@@ -190,7 +193,7 @@ class TestCreateFileWithContent:
             "content": expected_content,
             "branch": "test-branch",
         }
-        
+
         mock_put.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/empty_file.txt?ref=test-branch",
             json=expected_data,
@@ -212,7 +215,7 @@ class TestCreateFileWithContent:
         result = create_file_with_content(file_path, content, base_args)
 
         assert result == f"File {file_path} successfully created"
-        
+
         # Verify Unicode content is properly encoded
         expected_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
         expected_data = {
@@ -220,7 +223,7 @@ class TestCreateFileWithContent:
             "content": expected_content,
             "branch": "test-branch",
         }
-        
+
         mock_put.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/unicode_file.txt?ref=test-branch",
             json=expected_data,
@@ -242,7 +245,7 @@ class TestCreateFileWithContent:
         result = create_file_with_content(file_path, content, base_args)
 
         assert result == f"File {file_path} successfully created"
-        
+
         expected_url = "https://api.github.com/repos/test-owner/test-repo/contents/deep/nested/path/to/file.py?ref=test-branch"
         mock_put.assert_called_once()
         call_args = mock_put.call_args
@@ -315,11 +318,11 @@ class TestCreateFileWithContent:
         mock_put.return_value = mock_successful_response
 
         result = create_file_with_content(
-            "test_file.py", 
-            "content", 
-            base_args, 
-            extra_param="ignored", 
-            another_param=123
+            "test_file.py",
+            "content",
+            base_args,
+            extra_param="ignored",
+            another_param=123,
         )
 
         assert result == "File test_file.py successfully created"
@@ -329,7 +332,11 @@ class TestCreateFileWithContent:
     @patch("services.github.files.create_file_with_content.requests.put")
     @patch("services.github.files.create_file_with_content.create_headers")
     def test_different_base_args_values(
-        self, mock_create_headers, mock_put, mock_successful_response, create_test_base_args
+        self,
+        mock_create_headers,
+        mock_put,
+        mock_successful_response,
+        create_test_base_args,
     ):
         """Test function with different base_args values."""
         custom_base_args = create_test_base_args(
@@ -346,7 +353,7 @@ class TestCreateFileWithContent:
 
         assert result == "File test.py successfully created"
         mock_create_headers.assert_called_once_with(token="different-token")
-        
+
         expected_url = "https://api.github.com/repos/different-owner/different-repo/contents/test.py?ref=feature-branch"
         mock_put.assert_called_once()
         call_args = mock_put.call_args
@@ -366,7 +373,7 @@ class TestCreateFileWithContent:
         result = create_file_with_content("test.py", content, base_args)
 
         assert result == "File test.py successfully created"
-        
+
         # Verify the content was properly base64 encoded
         call_args = mock_put.call_args
         sent_content = call_args[1]["json"]["content"]

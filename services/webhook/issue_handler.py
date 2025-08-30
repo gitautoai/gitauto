@@ -3,7 +3,7 @@ from datetime import datetime
 from json import dumps
 import logging
 import time
-from typing import Literal
+from typing import Literal, cast
 
 # Local imports
 from config import PRODUCT_ID, PR_BODY_STARTS_WITH
@@ -32,6 +32,7 @@ from services.github.markdown.render_text import render_text
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.reactions.add_reaction_to_issue import add_reaction_to_issue
 from services.github.types.github_types import GitHubLabeledPayload
+from services.jira.types import JiraPayload
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
 
 # Local imports (Jira, OpenAI, Slack)
@@ -66,23 +67,26 @@ from utils.urls.extract_urls import extract_image_urls
 
 
 def create_pr_from_issue(
-    payload: GitHubLabeledPayload,
+    payload: GitHubLabeledPayload | JiraPayload,
     trigger: Trigger,
     input_from: Literal["github", "jira"],
 ) -> None:
     current_time: float = time.time()
 
     # Extract label and validate it
-    if trigger == "issue_label" and payload["label"]["name"] != PRODUCT_ID:
+    if trigger == "issue_label" and input_from == "github" and "label" in payload and payload["label"]["name"] != PRODUCT_ID:
         return
 
     # Deconstruct payload based on input_from
     base_args = None
     repo_settings = None
     if input_from == "github":
-        base_args, repo_settings = deconstruct_github_payload(payload=payload)
+        base_args, repo_settings = deconstruct_github_payload(payload=cast(GitHubLabeledPayload, payload))
     elif input_from == "jira":
-        base_args, repo_settings = deconstruct_jira_payload(payload=payload)
+        base_args, repo_settings = deconstruct_jira_payload(payload=cast(JiraPayload, payload))
+
+    # Ensure skip_ci is set to True for development commits
+    base_args["skip_ci"] = True
 
     # Get some base args for early notifications
     owner_name = base_args["owner"]
@@ -315,6 +319,30 @@ def create_pr_from_issue(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
 
+    # Create initial empty commit and PR early in the process
+    comment_body = "Creating initial PR..."
+    p += 5
+    log_messages.append(comment_body)
+    update_comment(
+        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
+    )
+    create_empty_commit(
+        base_args=base_args, message="Initial empty commit to create PR"
+    )
+
+    issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
+    pr_body = issue_link + git_command(new_branch_name=new_branch_name)
+    pr_url = create_pull_request(body=pr_body, title=issue_title, base_args=base_args)
+
+    if pr_url is not None:
+        comment_body = f"Created pull request: {pr_url}"
+        p += 5
+        log_messages.append(comment_body)
+        update_comment(
+            body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+            base_args=base_args,
+        )
+
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
     retry_count = 0
@@ -435,17 +463,6 @@ def create_pr_from_issue(
     )
     create_empty_commit(base_args=base_args)
 
-    # Create a pull request to the base branch
-    comment_body = "Creating a pull request."
-    p += 5
-    log_messages.append(comment_body)
-    update_comment(
-        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
-    )
-    issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
-    pr_body = issue_link + git_command(new_branch_name=new_branch_name)
-    pr_url = create_pull_request(body=pr_body, title=issue_title, base_args=base_args)
-
     # Update the issue comment based on if the PR was created or not
     pr_number = None
     if pr_url is not None:
@@ -459,7 +476,7 @@ def create_pr_from_issue(
         )
 
         # Success notification
-        success_msg = f"PR created for {owner_name}/{repo_name}"
+        success_msg = f"Work completed for {owner_name}/{repo_name} PR: {pr_url}"
         slack_notify(success_msg, thread_ts)
     else:
         is_completed = False
