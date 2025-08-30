@@ -270,7 +270,12 @@ class TestScrapeContentFromUrl:
     @patch("services.google.search.get")
     def test_scrape_content_http_error(self, mock_get):
         """Test scraping with HTTP error."""
-        mock_get.side_effect = requests.HTTPError("HTTP Error")
+        # Create a proper HTTPError with a mock response
+        mock_response = Mock()
+        mock_response.status_code = 404
+        mock_response.reason = "Not Found"
+        mock_response.text = "Page not found"
+        mock_get.side_effect = requests.HTTPError("HTTP Error", response=mock_response)
         
         result = scrape_content_from_url("https://example.com")
         
