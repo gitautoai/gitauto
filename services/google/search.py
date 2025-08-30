@@ -57,8 +57,6 @@ def scrape_content_from_url(url: str):
     for element in soup(UNNECESSARY_TAGS):
         element.decompose()
 
-    # Get title and content
-    title = soup.title.string if soup.title else ""
     print(f"Googled url: {url}\nTitle: {title}")
 
     # Print unique HTML tags
