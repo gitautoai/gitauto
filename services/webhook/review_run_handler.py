@@ -13,9 +13,7 @@ from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.files.get_remote_file_content import get_remote_file_content
-from services.github.pulls.get_pull_request_file_contents import (
-    get_pull_request_file_contents,
-)
+from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
@@ -181,10 +179,10 @@ def handle_review_run(payload: dict[str, Any]):
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
-    # Get changed files in the PR
-    pull_files = get_pull_request_file_contents(url=pull_file_url, base_args=base_args)
+    # Get list of changed files in the PR (filenames only, not contents)
+    pull_files = get_pull_request_files(url=pull_file_url, token=token)
     p += 5
-    log_messages.append(f"Read {len(pull_files)} changed files in the PR.")
+    log_messages.append(f"Found {len(pull_files)} changed files in the PR.")
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 

@@ -74,16 +74,25 @@ def create_pr_from_issue(
     current_time: float = time.time()
 
     # Extract label and validate it
-    if trigger == "issue_label" and input_from == "github" and "label" in payload and payload["label"]["name"] != PRODUCT_ID:
+    if (
+        trigger == "issue_label"
+        and input_from == "github"
+        and "label" in payload
+        and payload["label"]["name"] != PRODUCT_ID
+    ):
         return
 
     # Deconstruct payload based on input_from
     base_args = None
     repo_settings = None
     if input_from == "github":
-        base_args, repo_settings = deconstruct_github_payload(payload=cast(GitHubLabeledPayload, payload))
+        base_args, repo_settings = deconstruct_github_payload(
+            payload=cast(GitHubLabeledPayload, payload)
+        )
     elif input_from == "jira":
-        base_args, repo_settings = deconstruct_jira_payload(payload=cast(JiraPayload, payload))
+        base_args, repo_settings = deconstruct_jira_payload(
+            payload=cast(JiraPayload, payload)
+        )
 
     # Ensure skip_ci is set to True for development commits
     base_args["skip_ci"] = True
