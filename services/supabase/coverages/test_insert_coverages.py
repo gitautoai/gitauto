@@ -34,7 +34,7 @@ def sample_coverage_record():
         "function_coverage": 90.0,
         "statement_coverage": 88.0,
         "branch_name": "main",
-        "primary_language": "python",
+        "language": "python",
         "uncovered_lines": "10,15,20",
         "uncovered_branches": "5,8",
         "uncovered_functions": "helper_function",
@@ -131,7 +131,7 @@ def test_insert_coverages_with_all_optional_fields(mock_supabase):
         "line_coverage": 92.3,
         "package_name": "test.package",
         "path_coverage": 89.7,
-        "primary_language": "typescript",
+        "language": "typescript",
         "statement_coverage": 94.1,
         "uncovered_branches": "1,3,7",
         "uncovered_functions": "unused_helper,deprecated_method",
@@ -273,7 +273,7 @@ def test_insert_coverages_with_none_values(mock_supabase):
         "uncovered_functions": None,
         "github_issue_url": None,
         "package_name": None,
-        "primary_language": None,
+        "language": None,
     }
     expected_data = [{"id": 6, "full_path": "test/with_nones.py"}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = (
@@ -413,7 +413,7 @@ def test_insert_coverages_with_empty_strings(mock_supabase):
         "uncovered_branches": "",
         "uncovered_functions": "",
         "package_name": "",
-        "primary_language": "",
+        "language": "",
         "line_coverage": 100.0,
         "branch_coverage": 100.0,
         "function_coverage": 100.0,

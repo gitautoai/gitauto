@@ -3,7 +3,7 @@ from typing import Union, TypedDict, Literal
 
 class CoverageReport(TypedDict):
     package_name: Union[str, None]
-    detected_language: str
+    language: str
     level: Literal["repository", "directory", "file"]
     full_path: str
     statement_coverage: float
@@ -18,7 +18,7 @@ class CoverageReport(TypedDict):
 
 DEFAULT_COVERAGES: CoverageReport = {
     "package_name": None,
-    "detected_language": "unknown",
+    "language": "unknown",
     "level": "repository",
     "full_path": "",
     "statement_coverage": 0,
