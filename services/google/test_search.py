@@ -573,3 +573,50 @@ class TestEdgeCasesAndErrorHandling:
         
         assert len(result) == 1
         assert result[0] is None
+
+    @patch("services.google.search.get")
+    @patch("builtins.print")
+    def test_scrape_content_empty_title_string(self, mock_print, mock_get):
+        """Test scraping content with empty title string."""
+        html_with_empty_title = """
+        <html>
+            <head><title></title></head>
+            <body><p>Content with empty title</p></body>
+        </html>
+        """
+        
+        mock_response = Mock()
+        mock_response.text = html_with_empty_title
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+        
+        result = scrape_content_from_url("https://example.com")
+        
+        assert result is not None
+        assert result["title"] == ""
+        assert "Content with empty title" in result["content"]
+
+    @patch("services.google.search.get")
+    @patch("builtins.print")
+    def test_scrape_content_fallback_to_soup(self, mock_print, mock_get):
+        """Test scraping content when no main/article/div[role=main] found."""
+        html_without_main = """
+        <html>
+            <head><title>No Main Content</title></head>
+            <body>
+                <div>
+                    <p>Regular div content</p>
+                    <span>Some span content</span>
+                </div>
+            </body>
+        </html>
+        """
+        
+        mock_response = Mock()
+        mock_response.text = html_without_main
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+        
+        result = scrape_content_from_url("https://example.com")
+        
+        assert result is not None
