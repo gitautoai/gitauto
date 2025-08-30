@@ -492,3 +492,84 @@ class TestConstants:
         assert UNNECESSARY_TAGS == expected_tags
         assert isinstance(UNNECESSARY_TAGS, list)
         assert all(isinstance(tag, str) for tag in UNNECESSARY_TAGS)
+
+
+class TestEdgeCasesAndErrorHandling:
+    """Test edge cases and error handling scenarios."""
+
+    @patch("services.google.search.get")
+    @patch("builtins.print")
+    def test_scrape_content_with_whitespace_title(self, mock_print, mock_get):
+        """Test scraping content with title that has whitespace."""
+        html_with_whitespace_title = """
+        <html>
+            <head><title>   Title with spaces   </title></head>
+            <body><p>Content</p></body>
+        </html>
+        """
+        
+        mock_response = Mock()
+        mock_response.text = html_with_whitespace_title
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+        
+        result = scrape_content_from_url("https://example.com")
+        
+        assert result is not None
+        assert result["title"] == "Title with spaces"  # Should be stripped
+
+    @patch("services.google.search.get")
+    @patch("builtins.print")
+    def test_scrape_content_with_div_role_main(self, mock_print, mock_get):
+        """Test scraping content with div[role='main']."""
+        html_with_role_main = """
+        <html>
+            <head><title>Test Title</title></head>
+            <body>
+                <div role="main">
+                    <p>Main role content</p>
+                </div>
+                <div>Other content</div>
+            </body>
+        </html>
+        """
+        
+        mock_response = Mock()
+        mock_response.text = html_with_role_main
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+        
+        result = scrape_content_from_url("https://example.com")
+        
+        assert result is not None
+        assert "Main role content" in result["content"]
+        # Should not contain content outside the main role div
+        assert "Other content" not in result["content"]
+
+    @patch("services.google.search.get")
+    def test_scrape_content_raise_for_status_called(self, mock_get):
+        """Test that raise_for_status is called on the response."""
+        mock_response = Mock()
+        mock_response.text = "<html><body>Test</body></html>"
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+        
+        scrape_content_from_url("https://example.com")
+        
+        mock_response.raise_for_status.assert_called_once()
+
+    @patch("services.google.search.scrape_content_from_url")
+    @patch("services.google.search.search_urls")
+    def test_google_search_with_none_scrape_result(self, mock_search_urls, mock_scrape, create_test_base_args):
+        """Test google_search when scrape_content_from_url returns None."""
+        base_args = create_test_base_args()
+        
+        mock_search_urls.return_value = [
+            {"title": "Test Title", "description": "Test Desc", "url": "https://example.com"}
+        ]
+        mock_scrape.return_value = None  # Simulating error case
+        
+        result = google_search(base_args, "test query")
+        
+        assert len(result) == 1
+        assert result[0] is None
