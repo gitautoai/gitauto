@@ -433,4 +433,3 @@ def test_create_test_selection_comment_exact_format_verification(mock_reset_comm
     assert lines == expected_start
     mock_reset_command.assert_called_once_with(branch_name)
 
-    # Verify no extra whitespace or formatting issues
