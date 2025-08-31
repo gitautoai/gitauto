@@ -317,6 +317,12 @@ def test_file_checklist_item_type():
         "coverage_info": " (Coverage: 100%)",
         "status": "modified",
     }
+    
+    # Verify the item has all required fields
+    assert item["path"] == "test/path.py"
+    assert item["checked"] is True
+    assert item["coverage_info"] == " (Coverage: 100%)"
+    assert item["status"] == "modified"
 
 
 def test_create_test_selection_comment_branch_name_with_special_chars(mock_reset_command):
