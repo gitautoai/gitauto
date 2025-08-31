@@ -379,3 +379,98 @@ class TestCreateFileWithContent:
         sent_content = call_args[1]["json"]["content"]
         decoded_content = base64.b64decode(sent_content).decode("utf-8")
         assert decoded_content == content
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_timeout_error_handled_by_decorator(
+        self, mock_create_headers, mock_put, base_args
+    ):
+        """Test that timeout errors are handled by the decorator."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_put.side_effect = requests.exceptions.Timeout("Request timed out")
+
+        result = create_file_with_content("test_file.py", "content", base_args)
+
+        # The handle_exceptions decorator should catch the error and return None
+        assert result is None
+        mock_create_headers.assert_called_once_with(token="test-token")
+        mock_put.assert_called_once()
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_connection_error_handled_by_decorator(
+        self, mock_create_headers, mock_put, base_args
+    ):
+        """Test that connection errors are handled by the decorator."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_put.side_effect = requests.exceptions.ConnectionError("Connection failed")
+
+        result = create_file_with_content("test_file.py", "content", base_args)
+
+        # The handle_exceptions decorator should catch the error and return None
+        assert result is None
+        mock_create_headers.assert_called_once_with(token="test-token")
+        mock_put.assert_called_once()
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_large_content_handling(
+        self, mock_create_headers, mock_put, base_args, mock_successful_response
+    ):
+        """Test file creation with large content."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_put.return_value = mock_successful_response
+
+        # Create large content (1MB of text)
+        large_content = "x" * (1024 * 1024)
+        file_path = "large_file.txt"
+        
+        result = create_file_with_content(file_path, large_content, base_args)
+
+        assert result == f"File {file_path} successfully created"
+        
+        # Verify the large content was properly base64 encoded
+        call_args = mock_put.call_args
+        sent_content = call_args[1]["json"]["content"]
+        decoded_content = base64.b64decode(sent_content).decode("utf-8")
+        assert decoded_content == large_content
+        assert len(decoded_content) == 1024 * 1024
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_special_characters_in_file_path(
+        self, mock_create_headers, mock_put, base_args, mock_successful_response
+    ):
+        """Test file creation with special characters in file path."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_put.return_value = mock_successful_response
+
+        file_path = "path with spaces/file-name_with.special@chars.txt"
+        content = "Content for special path"
+        result = create_file_with_content(file_path, content, base_args)
+
+        assert result == f"File {file_path} successfully created"
+        
+        # Verify the URL encoding is handled properly by requests
+        expected_url = f"https://api.github.com/repos/test-owner/test-repo/contents/{file_path}?ref=test-branch"
+        call_args = mock_put.call_args
+        assert call_args[1]["url"] == expected_url
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_binary_content_as_string(
+        self, mock_create_headers, mock_put, base_args, mock_successful_response
+    ):
+        """Test file creation with binary-like content passed as string."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_put.return_value = mock_successful_response
+
+        # Content that looks like binary but is actually a string
+        binary_like_content = "\x00\x01\x02\x03\xff\xfe\xfd"
+        file_path = "binary_like.dat"
+        
+        result = create_file_with_content(file_path, binary_like_content, base_args)
+
+        assert result == f"File {file_path} successfully created"
+        
+        # Verify the binary-like content was properly encoded
