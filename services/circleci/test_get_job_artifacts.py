@@ -501,7 +501,6 @@ def test_get_circleci_job_artifacts_empty_string_parameters():
         assert mock_get.call_args[1]["timeout"] == TIMEOUT
 
 
-
 def test_get_circleci_job_artifacts_404_returns_typed_empty_list():
     """Test that 404 response returns a properly typed empty list."""
     mock_response = MagicMock()
