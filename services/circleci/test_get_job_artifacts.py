@@ -181,6 +181,7 @@ def test_get_circleci_job_artifacts_timeout_parameter():
         get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="505", circle_token="test-token"
         )
+        assert mock_get.call_args[1]["timeout"] == TIMEOUT
 
         # Verify the timeout parameter is correctly passed
 
