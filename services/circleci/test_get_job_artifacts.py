@@ -524,6 +524,20 @@ def test_get_circleci_job_artifacts_404_returns_typed_empty_list():
         mock_response.raise_for_status.assert_not_called()
 
 
+        mock_get.return_value = mock_response
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
+        )
+
+        # Should return the artifacts list
+        assert len(result) == 1
+        assert result[0]["path"] == "test.txt"
+        assert result[0]["url"] == "https://example.com/test.txt"
+        assert result[0]["node_index"] == 0
+
+        # Verify the function was called correctly
+        mock_get.assert_called_once()
 def test_get_circleci_job_artifacts_successful_with_next_page_token():
     """Test successful response that includes next_page_token."""
     mock_response = MagicMock()
