@@ -315,6 +315,8 @@ def test_file_checklist_item_type():
         "path": "test/path.py",
         "checked": True,
         "coverage_info": " (Coverage: 100%)",
+        "status": "modified",
+    }
 
 
 def test_create_test_selection_comment_branch_name_with_special_chars(mock_reset_command):
