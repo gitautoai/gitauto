@@ -387,3 +387,42 @@ def test_create_test_selection_comment_structure_consistency():
         
         # Verify SETTINGS_LINKS is always at the end
         assert lines[-1] == SETTINGS_LINKS
+
+
+def test_create_test_selection_comment_exact_format_verification(mock_reset_command):
+    """Test the exact format of the generated comment matches expected structure."""
+    branch_name = "format-test"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/test.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 60%)",
+            "status": "modified",
+        }
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+    lines = result.split('\n')
+
+    # Verify exact line-by-line structure
+    expected_start = [
+        TEST_SELECTION_COMMENT_IDENTIFIER,
+        "",
+        "Select files to manage tests for (create, update, or remove):",
+        "",
+        "- [x] modified `src/test.py` (Coverage: 60%)",
+        "",
+        "---",
+        "",
+        "- [ ] Yes, manage tests",
+        "",
+        f"Click the checkbox and {PRODUCT_NAME} will add/update/remove tests for the selected files to this PR.",
+        "MOCK_RESET_COMMAND",
+        "",
+        SETTINGS_LINKS,
+    ]
+    
+    assert lines == expected_start
+    mock_reset_command.assert_called_once_with(branch_name)
+
+    # Verify no extra whitespace or formatting issues
