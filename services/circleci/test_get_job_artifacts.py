@@ -183,8 +183,6 @@ def test_get_circleci_job_artifacts_timeout_parameter():
         )
         assert mock_get.call_args[1]["timeout"] == TIMEOUT
 
-        # Verify the timeout parameter is correctly passed
-
 def test_get_circleci_job_artifacts_with_node_index():
     """Test successful retrieval with artifacts containing node_index."""
     mock_response = MagicMock()
