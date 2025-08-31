@@ -169,3 +169,149 @@ def test_create_test_selection_comment_with_special_characters():
 
     assert "- [x] modified `src/file-with-dashes.py`" in result
     assert "- [ ] added `src/file_with_underscores.py` (Coverage: 0%)" in result
+
+def test_create_test_selection_comment_mixed_coverage_info(mock_reset_command):
+    """Test creating a comment with mixed coverage info scenarios."""
+    branch_name = "mixed-coverage"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/with_coverage.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 85%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/without_coverage.py",
+            "checked": False,
+            "coverage_info": "",
+            "status": "added",
+        },
+        {
+            "path": "src/zero_coverage.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 0%)",
+            "status": "modified",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify different coverage scenarios are handled correctly
+    assert "- [x] modified `src/with_coverage.py` (Coverage: 85%)" in result
+    assert "- [ ] added `src/without_coverage.py`" in result
+    assert "- [x] modified `src/zero_coverage.py` (Coverage: 0%)" in result
+    mock_reset_command.assert_called_once_with(branch_name)
+
+
+def test_create_test_selection_comment_long_file_paths(mock_reset_command):
+    """Test creating a comment with very long file paths."""
+    branch_name = "long-paths"
+    long_path = "src/very/deep/nested/directory/structure/with/many/levels/file.py"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": long_path,
+            "checked": True,
+            "coverage_info": " (Coverage: 42%)",
+            "status": "added",
+        }
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify long paths are handled correctly
+    assert f"- [x] added `{long_path}` (Coverage: 42%)" in result
+    mock_reset_command.assert_called_once_with(branch_name)
+
+
+def test_create_test_selection_comment_multiple_same_status(mock_reset_command):
+    """Test creating a comment with multiple files having the same status."""
+    branch_name = "same-status"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/file1.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 10%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/file2.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 20%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/file3.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 30%)",
+            "status": "modified",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify all files with same status are included
+    assert "- [x] modified `src/file1.py` (Coverage: 10%)" in result
+    assert "- [ ] modified `src/file2.py` (Coverage: 20%)" in result
+    assert "- [x] modified `src/file3.py` (Coverage: 30%)" in result
+    mock_reset_command.assert_called_once_with(branch_name)
+
+
+def test_create_test_selection_comment_all_unchecked(mock_reset_command):
+    """Test creating a comment where all items are unchecked."""
+    branch_name = "all-unchecked"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/file1.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 50%)",
+            "status": "added",
+        },
+        {
+            "path": "src/file2.py",
+            "checked": False,
+            "coverage_info": "",
+            "status": "removed",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify all items are unchecked
+    assert "- [ ] added `src/file1.py` (Coverage: 50%)" in result
+    assert "- [ ] removed `src/file2.py`" in result
+    mock_reset_command.assert_called_once_with(branch_name)
+
+
+def test_create_test_selection_comment_all_checked(mock_reset_command):
+    """Test creating a comment where all items are checked."""
+    branch_name = "all-checked"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/file1.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 75%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/file2.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 90%)",
+            "status": "added",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify all items are checked
+    assert "- [x] modified `src/file1.py` (Coverage: 75%)" in result
+    assert "- [x] added `src/file2.py` (Coverage: 90%)" in result
+    mock_reset_command.assert_called_once_with(branch_name)
+
+
+def test_file_checklist_item_type():
+    """Test that FileChecklistItem TypedDict structure is correctly defined."""
+    # This test ensures the TypedDict is properly structured
+    item: FileChecklistItem = {
+        "path": "test/path.py",
+        "checked": True,
+        "coverage_info": " (Coverage: 100%)",
