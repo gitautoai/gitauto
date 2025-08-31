@@ -480,3 +480,35 @@ def test_get_circleci_job_artifacts_empty_string_parameters():
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
 
+
+
+def test_get_circleci_job_artifacts_404_returns_typed_empty_list():
+    """Test that 404 response returns a properly typed empty list."""
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+    # Don't call raise_for_status for 404 as it's handled before that
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
+        )
+
+        # Should return empty list for 404 without calling raise_for_status
+        assert result == []
+        assert isinstance(result, list)
+        # Verify raise_for_status was not called for 404
+        mock_response.raise_for_status.assert_not_called()
+
+
+def test_get_circleci_job_artifacts_successful_with_next_page_token():
+    """Test successful response that includes next_page_token."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "items": [{"path": "test.txt", "url": "https://example.com/test.txt", "node_index": 0}],
+        "next_page_token": "abc123nextpage",
+    }
+    mock_response.raise_for_status.return_value = None
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
