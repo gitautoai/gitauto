@@ -315,3 +315,75 @@ def test_file_checklist_item_type():
         "path": "test/path.py",
         "checked": True,
         "coverage_info": " (Coverage: 100%)",
+
+
+def test_create_test_selection_comment_branch_name_with_special_chars(mock_reset_command):
+    """Test creating a comment with branch names containing special characters."""
+    branch_name = "feature/test-branch_with.special@chars"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/test.py",
+            "checked": True,
+            "coverage_info": "",
+            "status": "added",
+        }
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify the branch name is passed correctly to reset command
+    mock_reset_command.assert_called_once_with(branch_name)
+    assert "- [x] added `src/test.py`" in result
+
+
+def test_create_test_selection_comment_single_item(mock_reset_command):
+    """Test creating a comment with exactly one checklist item."""
+    branch_name = "single-item"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/single.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 25%)",
+            "status": "modified",
+        }
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify single item is handled correctly
+    assert "- [ ] modified `src/single.py` (Coverage: 25%)" in result
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert "- [ ] Yes, manage tests" in result
+    mock_reset_command.assert_called_once_with(branch_name)
+
+
+def test_create_test_selection_comment_structure_consistency():
+    """Test that the comment structure is consistent regardless of input."""
+    branch_name = "structure-test"
+    
+    # Test with different checklist sizes
+    test_cases = [
+        [],  # Empty
+        [{"path": "file1.py", "checked": True, "coverage_info": "", "status": "added"}],  # Single
+        [  # Multiple
+            {"path": "file1.py", "checked": True, "coverage_info": "", "status": "added"},
+            {"path": "file2.py", "checked": False, "coverage_info": " (Coverage: 50%)", "status": "modified"},
+        ]
+    ]
+    
+    for checklist in test_cases:
+        result = create_test_selection_comment(checklist, branch_name)
+        lines = result.split('\n')
+        
+        # Verify consistent structure elements are always present
+        assert lines[0] == TEST_SELECTION_COMMENT_IDENTIFIER
+        assert lines[1] == ""
+        assert lines[2] == "Select files to manage tests for (create, update, or remove):"
+        assert lines[3] == ""
+        
+        # Find the "Yes, manage tests" line - it should always be present
+        yes_manage_line = next((line for line in lines if "Yes, manage tests" in line), None)
+        assert yes_manage_line == "- [ ] Yes, manage tests"
+        
+        # Verify SETTINGS_LINKS is always at the end
+        assert lines[-1] == SETTINGS_LINKS
