@@ -474,3 +474,63 @@ class TestCreateFileWithContent:
         assert result == f"File {file_path} successfully created"
         
         # Verify the binary-like content was properly encoded
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_multiline_content_with_various_line_endings(
+        self, mock_create_headers, mock_put, base_args, mock_successful_response
+    ):
+        """Test file creation with multiline content and various line endings."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_put.return_value = mock_successful_response
+
+        # Content with different line endings
+        content = "Line 1\nLine 2\r\nLine 3\rLine 4\n"
+        file_path = "multiline.txt"
+        
+        result = create_file_with_content(file_path, content, base_args)
+
+        assert result == f"File {file_path} successfully created"
+        
+        # Verify the content with line endings was properly encoded
+        call_args = mock_put.call_args
+        sent_content = call_args[1]["json"]["content"]
+        decoded_content = base64.b64decode(sent_content).decode("utf-8")
+        assert decoded_content == content
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_content_with_tabs_and_spaces(
+        self, mock_create_headers, mock_put, base_args, mock_successful_response
+    ):
+        """Test file creation with content containing tabs and spaces."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_put.return_value = mock_successful_response
+
+        # Content with tabs, spaces, and mixed indentation
+        content = "def function():\n\tif True:\n        print('mixed indentation')\n\t\treturn True"
+        file_path = "indented_code.py"
+        
+        result = create_file_with_content(file_path, content, base_args)
+
+        assert result == f"File {file_path} successfully created"
+        
+        # Verify the content with tabs and spaces was properly encoded
+        call_args = mock_put.call_args
+        sent_content = call_args[1]["json"]["content"]
+        decoded_content = base64.b64decode(sent_content).decode("utf-8")
+        assert decoded_content == content
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_base_args_missing_skip_ci_key(
+        self, mock_create_headers, mock_put, mock_successful_response, create_test_base_args
+    ):
+        """Test function when base_args doesn't have skip_ci key."""
+        # Create base_args without skip_ci key
+        base_args_no_skip_ci = create_test_base_args(
+            owner="test-owner",
+            repo="test-repo", 
+            token="test-token",
+            new_branch="test-branch"
+        )
