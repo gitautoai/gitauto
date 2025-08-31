@@ -330,3 +330,89 @@ def test_get_circleci_job_artifacts_empty_items_list():
         assert result == []
         assert isinstance(result, list)
         assert mock_get.call_args[1]["timeout"] == TIMEOUT
+
+def test_get_circleci_job_artifacts_request_timeout():
+    """Test handling of request timeout errors."""
+    from requests.exceptions import Timeout
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.side_effect = Timeout("Request timed out")
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
+        )
+
+        # Should return empty list due to exception handling
+        assert result == []
+
+
+def test_get_circleci_job_artifacts_request_exception():
+    """Test handling of general request exceptions."""
+    from requests.exceptions import RequestException
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.side_effect = RequestException("Network error")
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
+        )
+
+        # Should return empty list due to exception handling
+        assert result == []
+
+
+def test_get_circleci_job_artifacts_malformed_json():
+    """Test handling of malformed JSON response."""
+    mock_response = MagicMock()
+    mock_response.json.side_effect = json.JSONDecodeError("Malformed JSON", "invalid", 0)
+    mock_response.raise_for_status.return_value = None
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
+        )
+
+        # Should return empty list due to exception handling
+        assert result == []
+
+
+def test_get_circleci_job_artifacts_none_response():
+    """Test handling of None response from requests.get."""
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = None
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
+        )
+
+        # Should return empty list due to exception handling
+        assert result == []
+
+
+def test_get_circleci_job_artifacts_attribute_error():
+    """Test handling of AttributeError when accessing response attributes."""
+    mock_response = MagicMock()
+    # Remove the status_code attribute to trigger AttributeError
+    del mock_response.status_code
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
+        )
+
+        # Should return empty list due to exception handling
+        assert result == []
+
+
+def test_get_circleci_job_artifacts_type_error():
+    """Test handling of TypeError in response processing."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = "not a dict"  # This should cause a TypeError
+    mock_response.raise_for_status.return_value = None
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
