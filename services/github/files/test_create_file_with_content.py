@@ -534,3 +534,21 @@ class TestCreateFileWithContent:
             token="test-token",
             new_branch="test-branch"
         )
+
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_create_headers_exception_handled_by_decorator(
+        self, mock_create_headers, base_args
+    ):
+        """Test that exceptions from create_headers are handled by the decorator."""
+        mock_create_headers.side_effect = Exception("Header creation failed")
+
+        result = create_file_with_content("test_file.py", "content", base_args)
+
+        # The handle_exceptions decorator should catch the error and return None
+        assert result is None
+        mock_create_headers.assert_called_once_with(token="test-token")
+
+    def test_function_signature_and_docstring(self):
+        """Test that the function has the expected signature and docstring."""
+        import inspect
+        
