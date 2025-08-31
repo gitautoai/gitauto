@@ -416,3 +416,67 @@ def test_get_circleci_job_artifacts_type_error():
     mock_response.raise_for_status.return_value = None
 
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
+
+def test_get_circleci_job_artifacts_large_response():
+    """Test handling of large response with many artifacts."""
+    mock_response = MagicMock()
+    # Create a large list of artifacts
+    large_artifacts_list = [
+        {
+            "path": f"artifact_{i}.txt",
+            "url": f"https://example.com/artifact_{i}.txt",
+            "node_index": i % 4,
+        }
+        for i in range(100)
+    ]
+    mock_response.json.return_value = {
+        "items": large_artifacts_list,
+        "next_page_token": "next-page-token",
+    }
+    mock_response.raise_for_status.return_value = None
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
+        )
+
+        assert len(result) == 100
+        assert result[0]["path"] == "artifact_0.txt"
+        assert result[99]["path"] == "artifact_99.txt"
+
+
+def test_get_circleci_job_artifacts_special_characters_in_params():
+    """Test handling of special characters in parameters."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"items": []}
+    mock_response.raise_for_status.return_value = None
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
+        # Test with special characters in project slug and job number
+        get_circleci_job_artifacts(
+            project_slug="gh/user-name/repo_name.test",
+            job_number="123-456",
+            circle_token="token-with-special-chars_123",
+        )
+
+        expected_url = "https://circleci.com/api/v2/project/gh/user-name/repo_name.test/job/123-456/artifacts"
+        mock_get.assert_called_with(
+            url=expected_url,
+            headers={"Circle-Token": "token-with-special-chars_123"},
+            timeout=TIMEOUT,
+        )
+
+
+def test_get_circleci_job_artifacts_empty_string_parameters():
+    """Test handling of empty string parameters."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"items": []}
+    mock_response.raise_for_status.return_value = None
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
