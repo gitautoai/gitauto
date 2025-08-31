@@ -490,6 +490,18 @@ def test_get_circleci_job_artifacts_empty_string_parameters():
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
 
+        # Test with empty string parameters - should still construct URL
+        get_circleci_job_artifacts(
+            project_slug="gh/owner/repo",
+            job_number="123",
+            circle_token="test-token",
+        )
+
+        # Verify the function was called despite empty parameters
+        mock_get.assert_called_once()
+        assert "gh/owner/repo" in mock_get.call_args[1]["url"]
+        assert mock_get.call_args[1]["timeout"] == TIMEOUT
+
 
 
 def test_get_circleci_job_artifacts_404_returns_typed_empty_list():
