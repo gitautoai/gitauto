@@ -524,6 +524,7 @@ def test_get_circleci_job_artifacts_404_returns_typed_empty_list():
         mock_response.raise_for_status.assert_not_called()
 
 
+def test_get_circleci_job_artifacts_successful_with_next_page_token():
     """Test successful response that includes next_page_token."""
     mock_response = MagicMock()
     mock_response.json.return_value = {
