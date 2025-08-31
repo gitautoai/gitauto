@@ -417,6 +417,15 @@ def test_get_circleci_job_artifacts_type_error():
     mock_response.raise_for_status.return_value = None
 
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
+        )
+
+        # Should return empty list due to exception handling
+        assert result == []
+
 
 def test_get_circleci_job_artifacts_large_response():
     """Test handling of large response with many artifacts."""
