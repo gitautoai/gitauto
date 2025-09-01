@@ -348,6 +348,39 @@ def test_check_subscription_limit_request_limit_calculation(
     }
     
     # Setup mocks
+    mock_get_base_request_limit.return_value = base_limit
+    mock_count_completed_unique_requests.return_value = set()  # No requests used
+    
+    result = check_subscription_limit(subscription, sample_installation_id)
+    
+    # Assertions
+    assert result["request_limit"] == expected_limit
+    assert result["requests_left"] == expected_limit  # No requests used
+    assert result["can_proceed"] is True
+
+
+def test_subscription_limit_result_type_annotation():
+    """Test that SubscriptionLimitResult TypedDict has correct structure."""
+    # This test ensures the TypedDict is properly defined
+    sample_result: SubscriptionLimitResult = {
+        "can_proceed": True,
+        "requests_left": 100,
+        "request_limit": 200,
+        "period_end_date": datetime.now(TZ),
+    }
+    
+    # Verify all required keys are present
+    assert "can_proceed" in sample_result
+    assert "requests_left" in sample_result
+    assert "request_limit" in sample_result
+    assert "period_end_date" in sample_result
+    
+    # Verify types
+    assert isinstance(sample_result["can_proceed"], bool)
+    assert isinstance(sample_result["requests_left"], int)
+    assert isinstance(sample_result["request_limit"], int)
+    assert isinstance(sample_result["period_end_date"], datetime)
+
 
 def test_check_subscription_limit_handles_missing_subscription_keys(
     mock_get_base_request_limit,
@@ -429,8 +462,6 @@ def test_check_subscription_limit_with_zero_base_request_limit(
     
     # Verify function calls
     mock_get_base_request_limit.assert_called_once_with("prod_test123")
-    mock_get_base_request_limit.return_value = base_limit
-    mock_count_completed_unique_requests.return_value = set()  # No requests used
 
 
 def test_check_subscription_limit_integration_with_real_usage_pattern(
@@ -463,14 +494,13 @@ def test_check_subscription_limit_integration_with_real_usage_pattern(
     
     # Verify realistic behavior
     assert result["can_proceed"] is True
+    assert result["requests_left"] == 750  # 1000 - 250
+    assert result["request_limit"] == 1000
+    assert isinstance(result["period_end_date"], datetime)
+    assert result["period_end_date"].tzinfo == TZ
     
-    result = check_subscription_limit(subscription, sample_installation_id)
-    
-    # Assertions
-    assert result["request_limit"] == expected_limit
-    assert result["requests_left"] == expected_limit  # No requests used
-    assert result["can_proceed"] is True
-
+    # Verify function calls with realistic product ID
+    mock_get_base_request_limit.assert_called_once_with("prod_PqZFpCs1Jq6X4E")
 
 
 def test_check_subscription_limit_datetime_conversion_accuracy(
@@ -498,25 +528,19 @@ def test_check_subscription_limit_datetime_conversion_accuracy(
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
     mock_count_completed_unique_requests.return_value = {"req1"}
-
-def test_subscription_limit_result_type_annotation():
-    """Test that SubscriptionLimitResult TypedDict has correct structure."""
-    # This test ensures the TypedDict is properly defined
-    sample_result: SubscriptionLimitResult = {
-        "can_proceed": True,
-        "requests_left": 100,
-        "request_limit": 200,
-        "period_end_date": datetime.now(TZ),
-    }
     
-    # Verify all required keys are present
-    assert "can_proceed" in sample_result
-    assert "requests_left" in sample_result
-    assert "request_limit" in sample_result
-    assert "period_end_date" in sample_result
+    result = check_subscription_limit(subscription_with_specific_timestamps, sample_installation_id)
     
-    # Verify types
-    assert isinstance(sample_result["can_proceed"], bool)
-    assert isinstance(sample_result["requests_left"], int)
-    assert isinstance(sample_result["request_limit"], int)
-    assert isinstance(sample_result["period_end_date"], datetime)
+    # Verify datetime conversion accuracy
+    expected_end_date = datetime.fromtimestamp(1675209600, tz=TZ)
+    assert result["period_end_date"] == expected_end_date
+    assert result["period_end_date"].year == 2023
+    assert result["period_end_date"].month == 2
+    assert result["period_end_date"].day == 1
+    assert result["period_end_date"].tzinfo == TZ
+    
+    # Verify that start_date was correctly passed to count_completed_unique_requests
+    expected_start_date = datetime.fromtimestamp(1672531200, tz=TZ)
+    mock_count_completed_unique_requests.assert_called_once_with(
+        sample_installation_id, expected_start_date
+    )
