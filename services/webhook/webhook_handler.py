@@ -1,4 +1,5 @@
 # Standard imports
+import logging
 from typing import Any, cast
 
 # Local imports
@@ -285,7 +286,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
         handle_review_run(payload=payload)
         return
 
-    # Add workflow_run event handler
+    # Add workflow_run event handler (GitHub Actions)
     if event_name == "workflow_run" and action == "completed":
         if payload["workflow_run"]["conclusion"] == "success":
             handle_coverage_report(
@@ -297,5 +298,36 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
                 run_id=payload["workflow_run"]["id"],
                 head_branch=payload["workflow_run"]["head_branch"],
                 user_name=payload["sender"]["login"],
+            )
+        return
+
+    # Add check_suite event handler (CircleCI only)
+    if (
+        event_name == "check_suite"
+        and action == "completed"
+        and payload["check_suite"]["app"]["slug"] == "circleci-checks"
+    ):
+        if payload["check_suite"]["conclusion"] == "success":
+            repository = payload["repository"]
+            owner_id = repository["owner"]["id"]
+            owner_name = repository["owner"]["login"]
+            repo_name = repository["name"]
+            check_suite = payload["check_suite"]
+            logging.info(
+                "Processing CircleCI check_suite completion for %s/%s (run_id: %s)",
+                owner_name,
+                repo_name,
+                check_suite["id"],
+            )
+            handle_coverage_report(
+                owner_id=owner_id,
+                owner_name=owner_name,
+                repo_id=repository["id"],
+                repo_name=repo_name,
+                installation_id=payload["installation"]["id"],
+                run_id=check_suite["id"],
+                head_branch=check_suite["head_branch"],
+                user_name=payload["sender"]["login"],
+                source="circleci",
             )
         return

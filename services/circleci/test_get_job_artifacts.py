@@ -28,7 +28,7 @@ def test_get_circleci_job_artifacts_success():
         assert result[1]["path"] == "test-results.xml"
 
         mock_get.assert_called_once_with(
-            url="https://circleci.com/api/v2/project/gh/owner/repo/job/123/artifacts",
+            url="https://circleci.com/api/v2/project/gh/owner/repo/123/artifacts",
             headers={"Circle-Token": "test-token"},
             timeout=120,
         )
