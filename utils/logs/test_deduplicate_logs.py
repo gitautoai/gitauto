@@ -189,7 +189,7 @@ Processing item 2
 Error in processing
 Error in processing
 Error in processing"""
-    
+
     expected = """Starting process
 Connecting to database
 Connection failed
@@ -198,6 +198,6 @@ Connected successfully
 Processing item 1
 Processing item 2
 Error in processing"""
-    
+
     result = deduplicate_repetitive_logs(log_content)
     assert result == expected
