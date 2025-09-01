@@ -40,6 +40,7 @@ def test_deduplicate_repetitive_logs_with_real_sample():
         deduplicated == expected_content
     ), "Deduplicated content should match expected file exactly"
 
+
 def test_no_repetitive_logs():
     """Test that non-repetitive logs remain unchanged."""
     log_content = "Line 1\nLine 2\nLine 3\nLine 4"
@@ -187,4 +188,16 @@ Processing item 1
 Processing item 2
 Error in processing
 Error in processing
-Error in processing
+Error in processing"""
+    
+    expected = """Starting process
+Connecting to database
+Connection failed
+Retrying connection
+Connected successfully
+Processing item 1
+Processing item 2
+Error in processing"""
+    
+    result = deduplicate_repetitive_logs(log_content)
+    assert result == expected
