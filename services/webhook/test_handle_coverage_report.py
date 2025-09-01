@@ -70,7 +70,7 @@ def test_handle_coverage_report_with_coverage_report_artifact():
     ) as mock_upsert_repo:
 
         mock_token.return_value = "fake-token"
-        mock_artifacts.return_value = [{"id": 123, "name": "coverage-report"}]
+        mock_artifacts.return_value = [{"id": 123, "name": "coverage-report.lcov.info"}]
         mock_download.return_value = sample_lcov
         mock_tree.return_value = []
         mock_get_cov.return_value = {}
@@ -114,7 +114,7 @@ def test_handle_coverage_report_with_default_artifact_name():
     ) as mock_upsert_repo:
 
         mock_token.return_value = "fake-token"
-        mock_artifacts.return_value = [{"id": 456, "name": "artifact"}]
+        mock_artifacts.return_value = [{"id": 456, "name": "artifact.lcov.info"}]
         mock_download.return_value = sample_lcov
         mock_tree.return_value = []
         mock_get_cov.return_value = {}
@@ -216,8 +216,12 @@ def test_handle_coverage_report_circleci():
         sample_lcov = f.read()
 
     with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
         "services.webhook.handle_coverage_report.get_circleci_token"
     ) as mock_get_token, patch(
+        "services.webhook.handle_coverage_report.get_circleci_workflow_ids_from_check_suite"
+    ) as mock_workflow_ids, patch(
         "services.webhook.handle_coverage_report.get_circleci_workflow_jobs"
     ) as mock_jobs, patch(
         "services.webhook.handle_coverage_report.get_circleci_job_artifacts"
@@ -233,8 +237,12 @@ def test_handle_coverage_report_circleci():
         "services.webhook.handle_coverage_report.upsert_repo_coverage"
     ) as mock_upsert_repo:
 
+        mock_token.return_value = "fake-token"
         mock_get_token.return_value = {"token": "circle-token"}
-        mock_jobs.return_value = [{"job_number": 1, "status": "success"}]
+        mock_workflow_ids.return_value = ["workflow-123"]
+        mock_jobs.return_value = [
+            {"job_number": 1, "name": "test-job", "status": "success"}
+        ]
         mock_artifacts.return_value = [
             {"path": "lcov.info", "url": "http://example.com/lcov.info"}
         ]

@@ -13,6 +13,9 @@ from services.circleci.get_job_artifacts import get_circleci_job_artifacts
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
 from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.check_suites.get_circleci_workflow_id import (
+    get_circleci_workflow_ids_from_check_suite,
+)
 from services.github.trees.get_file_tree import get_file_tree
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.coverages.upsert_coverages import upsert_coverages
@@ -48,33 +51,49 @@ def handle_coverage_report(
             logging.warning("No CircleCI token found for owner %d", owner_id)
             return None
         circle_token = token_record["token"]
-        project_slug = f"gh/{owner_name}/{repo_name}"
-        jobs = get_circleci_workflow_jobs(
-            workflow_id=str(run_id), circle_token=circle_token
+        circleci_workflow_ids = get_circleci_workflow_ids_from_check_suite(
+            owner_name, repo_name, run_id, github_token
         )
-        artifacts = []
-        for job in jobs:
-            if job["status"] != "success":
-                continue
-
-            job_artifacts = get_circleci_job_artifacts(
-                project_slug=project_slug,
-                job_number=str(job["job_number"]),
-                circle_token=circle_token,
+        if not circleci_workflow_ids:
+            logging.warning(
+                "Failed to get CircleCI workflow IDs from check suite %d", run_id
             )
-            artifacts.extend(job_artifacts)
+            return None
+
+        project_slug = f"gh/{owner_name}/{repo_name}"
+        artifacts = []
+
+        # Try each workflow ID until we find coverage artifacts
+        for workflow_id in circleci_workflow_ids:
+            logging.info("Checking CircleCI workflow ID: %s", workflow_id)
+            jobs = get_circleci_workflow_jobs(
+                workflow_id=workflow_id, circle_token=circle_token
+            )
+            for job in jobs:
+                logging.info(
+                    "Found CircleCI job: %s (status: %s)", job["name"], job["status"]
+                )
+                if job["status"] != "success":
+                    continue
+
+                job_artifacts = get_circleci_job_artifacts(
+                    project_slug=project_slug,
+                    job_number=str(job["job_number"]),
+                    circle_token=circle_token,
+                )
+                artifacts.extend(job_artifacts)
     else:
         return None
 
     coverage_data: list[CoverageReport] = []
     for artifact in artifacts:
-        artifact_name = (
-            artifact.get("name", "") if source == "github" else artifact.get("path", "")
-        )
+        if source == "github":
+            artifact_name = artifact.get("name", "")
+        else:
+            artifact_name = artifact.get("path", "")
 
         # Check for coverage artifacts - lcov files, coverage reports, or default artifact
-        coverage_keywords = ["lcov", "coverage", "artifact"]
-        if not any(keyword in artifact_name.lower() for keyword in coverage_keywords):
+        if not artifact_name.endswith("lcov.info"):
             continue
 
         if source == "github":
@@ -87,6 +106,7 @@ def handle_coverage_report(
         else:
             if not circle_token:
                 continue
+            logging.info("Downloading CircleCI artifact from %s", artifact_name)
             lcov_content = download_circleci_artifact(
                 artifact_url=artifact["url"], token=circle_token
             )

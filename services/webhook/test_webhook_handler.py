@@ -865,3 +865,57 @@ class TestHandleWebhookEvent:
             == "GitAuto: Add an integration test to is_repo_forked() in services/github/repo_manager.py"
         )
         assert received_payload["repository"]["name"] == "gitauto"
+
+    @patch("services.webhook.webhook_handler.handle_coverage_report")
+    @pytest.mark.asyncio
+    async def test_handle_webhook_event_check_suite_completed_circleci_success(
+        self, mock_handle_coverage_report
+    ):
+        with open(
+            "payloads/github/check_suite/completed_by_circleci.json", "r", encoding=UTF8
+        ) as f:
+            payload = json.load(f)
+
+        await handle_webhook_event("check_suite", payload)
+
+        mock_handle_coverage_report.assert_called_once_with(
+            owner_id=159883862,
+            owner_name="gitautoai",
+            repo_id=1048247380,
+            repo_name="circle-ci-test",
+            installation_id=60314628,
+            run_id=44556199312,
+            head_branch="wes",
+            user_name="hiroshinishio",
+            source="circleci",
+        )
+
+    @patch("services.webhook.webhook_handler.handle_coverage_report")
+    @pytest.mark.asyncio
+    async def test_handle_webhook_event_check_suite_completed_circleci_failure(
+        self, mock_handle_coverage_report
+    ):
+        with open(
+            "payloads/github/check_suite/completed_by_circleci.json", "r", encoding=UTF8
+        ) as f:
+            payload = json.load(f)
+        payload["check_suite"]["conclusion"] = "failure"
+
+        await handle_webhook_event("check_suite", payload)
+
+        mock_handle_coverage_report.assert_not_called()
+
+    @patch("services.webhook.webhook_handler.handle_coverage_report")
+    @pytest.mark.asyncio
+    async def test_handle_webhook_event_check_suite_completed_non_circleci(
+        self, mock_handle_coverage_report
+    ):
+        with open(
+            "payloads/github/check_suite/completed_by_circleci.json", "r", encoding=UTF8
+        ) as f:
+            payload = json.load(f)
+        payload["check_suite"]["app"]["slug"] = "github-actions"
+
+        await handle_webhook_event("check_suite", payload)
+
+        mock_handle_coverage_report.assert_not_called()

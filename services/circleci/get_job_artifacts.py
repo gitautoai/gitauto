@@ -11,7 +11,7 @@ from utils.error.handle_exceptions import handle_exceptions
 def get_circleci_job_artifacts(project_slug: str, job_number: str, circle_token: str):
     # https://circleci.com/docs/api/v2/#operation/getJobArtifacts
     base_url = "https://circleci.com/api/v2"
-    url = f"{base_url}/project/{project_slug}/job/{job_number}/artifacts"
+    url = f"{base_url}/project/{project_slug}/{job_number}/artifacts"
     headers = {"Circle-Token": circle_token}
 
     response = get(url=url, headers=headers, timeout=TIMEOUT)
