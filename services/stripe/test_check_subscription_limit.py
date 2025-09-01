@@ -348,6 +348,87 @@ def test_check_subscription_limit_request_limit_calculation(
     }
     
     # Setup mocks
+
+def test_check_subscription_limit_handles_missing_subscription_keys(
+    mock_get_base_request_limit,
+    mock_count_completed_unique_requests,
+    sample_installation_id,
+):
+    """Test that function returns default values when subscription is missing required keys."""
+    incomplete_subscription = {
+        "items": {"data": [{}]},  # Missing price and quantity
+        "current_period_start": 1640995200,
+        "current_period_end": 1643673600,
+    }
+    
+    # Setup mocks
+    mock_get_base_request_limit.return_value = 100
+    mock_count_completed_unique_requests.return_value = {"req1"}
+    
+    result = check_subscription_limit(incomplete_subscription, sample_installation_id)
+    
+    # Should return default error values due to @handle_exceptions decorator
+    assert result["can_proceed"] is False
+    assert result["requests_left"] == 0
+    assert result["request_limit"] == 0
+    assert result["period_end_date"] == ONE_YEAR_FROM_NOW
+
+
+def test_check_subscription_limit_handles_missing_current_period_attributes(
+    mock_get_base_request_limit,
+    mock_count_completed_unique_requests,
+    sample_installation_id,
+):
+    """Test that function returns default values when subscription is missing period attributes."""
+    subscription_missing_periods = {
+        "items": {
+            "data": [
+                {
+                    "price": {
+                        "product": "prod_test123",
+                        "recurring": {"interval": "month"},
+                    },
+                    "quantity": 1,
+                }
+            ]
+        },
+        # Missing current_period_start and current_period_end
+    }
+    
+    # Setup mocks
+    mock_get_base_request_limit.return_value = 100
+    mock_count_completed_unique_requests.return_value = {"req1"}
+    
+    result = check_subscription_limit(subscription_missing_periods, sample_installation_id)
+    
+    # Should return default error values due to @handle_exceptions decorator
+    assert result["can_proceed"] is False
+    assert result["requests_left"] == 0
+    assert result["request_limit"] == 0
+    assert result["period_end_date"] == ONE_YEAR_FROM_NOW
+
+
+def test_check_subscription_limit_with_zero_base_request_limit(
+    mock_get_base_request_limit,
+    mock_count_completed_unique_requests,
+    sample_monthly_subscription,
+    sample_installation_id,
+):
+    """Test subscription with zero base request limit."""
+    # Setup mocks
+    mock_get_base_request_limit.return_value = 0
+    mock_count_completed_unique_requests.return_value = set()  # No requests used
+    
+    result = check_subscription_limit(sample_monthly_subscription, sample_installation_id)
+    
+    # Assertions
+    assert result["can_proceed"] is False  # 0 requests left means can't proceed
+    assert result["requests_left"] == 0  # 0 - 0
+    assert result["request_limit"] == 0  # base_limit * quantity
+    assert result["period_end_date"] == datetime.fromtimestamp(1643673600, tz=TZ)
+    
+    # Verify function calls
+    mock_get_base_request_limit.assert_called_once_with("prod_test123")
     mock_get_base_request_limit.return_value = base_limit
     mock_count_completed_unique_requests.return_value = set()  # No requests used
     
