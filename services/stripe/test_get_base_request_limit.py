@@ -1,4 +1,3 @@
-# This is just to check the file content
 from unittest.mock import patch
 import pytest
 from config import PRODUCT_ID_FOR_STANDARD
