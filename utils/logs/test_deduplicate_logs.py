@@ -159,7 +159,7 @@ def test_pattern_at_beginning():
 
 def test_whitespace_lines():
     """Test handling of whitespace and empty lines."""
-    log_content = "Line 1\n\n\n\nLine 2"
+    log_content = "Line 1\n\n\n\nLine 2"  # Three consecutive empty lines
     expected = "Line 1\n\nLine 2"
     result = deduplicate_repetitive_logs(log_content)
     assert result == expected
