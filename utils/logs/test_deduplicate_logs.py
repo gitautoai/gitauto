@@ -126,7 +126,7 @@ def test_mixed_patterns():
 def test_overlapping_patterns():
     """Test handling of overlapping patterns."""
     log_content = "A\nB\nA\nB\nA\nB\nA\nC"
-    # The pattern "A\nB" repeats 3 times consecutively
+    # The pattern "A\nB" repeats 3 times consecutively, so we keep only the first occurrence
     expected = "A\nB\nA\nC"
     result = deduplicate_repetitive_logs(log_content)
     assert result == expected
