@@ -9,10 +9,31 @@ from gql.transport.exceptions import TransportError
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 
 
-def test_get_review_thread_comments_success_comment_found():
-    """Test successful retrieval when comment is found in a thread."""
-    # Mock GraphQL response data
-    mock_response = {
+@pytest.fixture
+def mock_graphql_client():
+    """Fixture to provide a mocked GraphQL client."""
+    with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock:
+        mock_client = MagicMock()
+        mock.return_value = mock_client
+        yield mock_client
+
+
+@pytest.fixture
+def sample_params():
+    """Fixture to provide sample parameters for testing."""
+    return {
+        "owner": "test-owner",
+        "repo": "test-repo",
+        "pull_number": 123,
+        "comment_node_id": "target_comment_456",
+        "token": "test-token",
+    }
+
+
+@pytest.fixture
+def mock_response_with_target_comment():
+    """Fixture providing a mock response where target comment is found."""
+    return {
         "repository": {
             "pullRequest": {
                 "reviewThreads": {
@@ -53,60 +74,41 @@ def test_get_review_thread_comments_success_comment_found():
         }
     }
 
-    with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock_client_func:
-        # Setup mock client
-        mock_client = MagicMock()
-        mock_client.execute.return_value = mock_response
-        mock_client_func.return_value = mock_client
 
-        # Call function
-        result = get_review_thread_comments(
-            owner="test-owner",
-            repo="test-repo", 
-            pull_number=123,
-            comment_node_id="target_comment_456",
-            token="test_token"
-        )
+def test_get_review_thread_comments_success_comment_found(
+    mock_graphql_client, sample_params, mock_response_with_target_comment
+):
+    """Test successful retrieval when comment is found in a thread."""
+    # Arrange
+    mock_graphql_client.execute.return_value = mock_response_with_target_comment
 
-        # Verify GraphQL client was created with correct token
-        mock_client_func.assert_called_once_with("test_token")
-        
-        # Verify GraphQL query was executed
-        mock_client.execute.assert_called_once()
-        call_args = mock_client.execute.call_args
-        
-        # Check that the query contains expected fields
-        query_str = str(call_args[1]["document"])
-        assert "GetReviewThreadComments" in query_str
-        assert "reviewThreads" in query_str
-        assert "comments" in query_str
-        
-        # Check variables
-        variables = call_args[1]["variable_values"]
-        assert variables["owner"] == "test-owner"
-        assert variables["repo"] == "test-repo"
-        assert variables["pull_number"] == 123
+    # Act
+    result = get_review_thread_comments(**sample_params)
 
-        # Verify result - should return the comments from the thread containing target comment
-        expected_comments = [
-            {
-                "id": "comment_123",
-                "author": {"login": "user1"},
-                "body": "First comment",
-                "createdAt": "2023-01-01T00:00:00Z"
-            },
-            {
-                "id": "target_comment_456",
-                "author": {"login": "user2"},
-                "body": "Target comment",
-                "createdAt": "2023-01-02T00:00:00Z"
-            }
-        ]
-        assert result == expected_comments
+    # Assert
+    mock_graphql_client.execute.assert_called_once()
+    
+    # Verify result - should return the comments from the thread containing target comment
+    expected_comments = [
+        {
+            "id": "comment_123",
+            "author": {"login": "user1"},
+            "body": "First comment",
+            "createdAt": "2023-01-01T00:00:00Z"
+        },
+        {
+            "id": "target_comment_456",
+            "author": {"login": "user2"},
+            "body": "Target comment",
+            "createdAt": "2023-01-02T00:00:00Z"
+        }
+    ]
+    assert result == expected_comments
 
 
-def test_get_review_thread_comments_comment_not_found():
+def test_get_review_thread_comments_comment_not_found(mock_graphql_client, sample_params):
     """Test when the target comment is not found in any thread."""
+    # Arrange
     mock_response = {
         "repository": {
             "pullRequest": {
@@ -129,27 +131,18 @@ def test_get_review_thread_comments_comment_not_found():
             }
         }
     }
+    mock_graphql_client.execute.return_value = mock_response
 
-    with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock_client_func:
-        mock_client = MagicMock()
-        mock_client.execute.return_value = mock_response
-        mock_client_func.return_value = mock_client
+    # Act
+    result = get_review_thread_comments(**sample_params)
 
-        # Call function with non-existent comment ID
-        result = get_review_thread_comments(
-            owner="test-owner",
-            repo="test-repo",
-            pull_number=123,
-            comment_node_id="non_existent_comment",
-            token="test_token"
-        )
-
-        # Should return empty list when comment not found
-        assert result == []
+    # Assert
+    assert result == []
 
 
-def test_get_review_thread_comments_empty_threads():
+def test_get_review_thread_comments_empty_threads(mock_graphql_client, sample_params):
     """Test when there are no review threads."""
+    # Arrange
     mock_response = {
         "repository": {
             "pullRequest": {
@@ -159,25 +152,18 @@ def test_get_review_thread_comments_empty_threads():
             }
         }
     }
+    mock_graphql_client.execute.return_value = mock_response
 
-    with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock_client_func:
-        mock_client = MagicMock()
-        mock_client.execute.return_value = mock_response
-        mock_client_func.return_value = mock_client
+    # Act
+    result = get_review_thread_comments(**sample_params)
 
-        result = get_review_thread_comments(
-            owner="test-owner",
-            repo="test-repo",
-            pull_number=123,
-            comment_node_id="any_comment",
-            token="test_token"
-        )
-
-        assert result == []
+    # Assert
+    assert result == []
 
 
-def test_get_review_thread_comments_empty_comments_in_thread():
+def test_get_review_thread_comments_empty_comments_in_thread(mock_graphql_client, sample_params):
     """Test when threads exist but have no comments."""
+    # Arrange
     mock_response = {
         "repository": {
             "pullRequest": {
@@ -193,105 +179,76 @@ def test_get_review_thread_comments_empty_comments_in_thread():
             }
         }
     }
+    mock_graphql_client.execute.return_value = mock_response
 
-    with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock_client_func:
-        mock_client = MagicMock()
-        mock_client.execute.return_value = mock_response
-        mock_client_func.return_value = mock_client
+    # Act
+    result = get_review_thread_comments(**sample_params)
 
-        result = get_review_thread_comments(
-            owner="test-owner",
-            repo="test-repo",
-            pull_number=123,
-            comment_node_id="any_comment",
-            token="test_token"
-        )
-
-        assert result == []
+    # Assert
+    assert result == []
 
 
-def test_get_review_thread_comments_missing_repository():
+def test_get_review_thread_comments_missing_repository(mock_graphql_client, sample_params):
     """Test when repository is not found in response."""
+    # Arrange
     mock_response = {}
+    mock_graphql_client.execute.return_value = mock_response
 
-    with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock_client_func:
-        mock_client = MagicMock()
-        mock_client.execute.return_value = mock_response
-        mock_client_func.return_value = mock_client
+    # Act
+    result = get_review_thread_comments(**sample_params)
 
-        result = get_review_thread_comments(
-            owner="non-existent-owner",
-            repo="non-existent-repo",
-            pull_number=123,
-            comment_node_id="any_comment",
-            token="test_token"
-        )
-
-        assert result == []
+    # Assert
+    assert result == []
 
 
-def test_get_review_thread_comments_missing_pull_request():
+def test_get_review_thread_comments_missing_pull_request(mock_graphql_client, sample_params):
     """Test when pull request is not found in response."""
+    # Arrange
     mock_response = {
         "repository": {}
     }
+    mock_graphql_client.execute.return_value = mock_response
 
-    with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock_client_func:
-        mock_client = MagicMock()
-        mock_client.execute.return_value = mock_response
-        mock_client_func.return_value = mock_client
+    # Act
+    result = get_review_thread_comments(**sample_params)
 
-        result = get_review_thread_comments(
-            owner="test-owner",
-            repo="test-repo",
-            pull_number=999,
-            comment_node_id="any_comment",
-            token="test_token"
-        )
-
-        assert result == []
+    # Assert
+    assert result == []
 
 
-def test_get_review_thread_comments_transport_error():
+def test_get_review_thread_comments_transport_error(sample_params):
     """Test handling of GraphQL transport error."""
+    # Arrange
     with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock_client_func:
         mock_client = MagicMock()
         mock_client.execute.side_effect = TransportError("Network error")
         mock_client_func.return_value = mock_client
 
-        # Should return None due to handle_exceptions decorator
-        result = get_review_thread_comments(
-            owner="test-owner",
-            repo="test-repo",
-            pull_number=123,
-            comment_node_id="any_comment",
-            token="test_token"
-        )
+        # Act
+        result = get_review_thread_comments(**sample_params)
 
+        # Assert - should return None due to handle_exceptions decorator
         assert result is None
 
 
-def test_get_review_thread_comments_generic_exception():
+def test_get_review_thread_comments_generic_exception(sample_params):
     """Test handling of generic exception."""
+    # Arrange
     with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock_client_func:
         mock_client = MagicMock()
         mock_client.execute.side_effect = Exception("Unexpected error")
         mock_client_func.return_value = mock_client
 
-        # Should return None due to handle_exceptions decorator
-        result = get_review_thread_comments(
-            owner="test-owner",
-            repo="test-repo",
-            pull_number=123,
-            comment_node_id="any_comment",
-            token="test_token"
-        )
+        # Act
+        result = get_review_thread_comments(**sample_params)
 
+        # Assert - should return None due to handle_exceptions decorator
         assert result is None
 
 
-def test_get_review_thread_comments_malformed_response():
+def test_get_review_thread_comments_malformed_response(sample_params):
     """Test handling of malformed GraphQL response."""
+    # Arrange
     mock_response = {
         "repository": {
             "pullRequest": {
@@ -301,7 +258,7 @@ def test_get_review_thread_comments_malformed_response():
                             "comments": {
                                 "nodes": [
                                     {
-                                        # Missing required fields
+                                        # Missing required 'id' field
                                         "author": {"login": "user1"},
                                         "body": "Comment without ID"
                                     }
@@ -313,26 +270,22 @@ def test_get_review_thread_comments_malformed_response():
             }
         }
     }
-
+    
     with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock_client_func:
         mock_client = MagicMock()
         mock_client.execute.return_value = mock_response
         mock_client_func.return_value = mock_client
 
-        # Should return None due to handle_exceptions decorator catching KeyError
-        result = get_review_thread_comments(
-            owner="test-owner",
-            repo="test-repo",
-            pull_number=123,
-            comment_node_id="any_comment",
-            token="test_token"
-        )
+        # Act
+        result = get_review_thread_comments(**sample_params)
 
+        # Assert - should return None due to handle_exceptions decorator catching KeyError
         assert result is None
 
 
-def test_get_review_thread_comments_multiple_threads_with_target():
+def test_get_review_thread_comments_multiple_threads_with_target(mock_graphql_client, sample_params):
     """Test when target comment is in the second thread."""
+    # Arrange
     mock_response = {
         "repository": {
             "pullRequest": {
@@ -354,7 +307,7 @@ def test_get_review_thread_comments_multiple_threads_with_target():
                             "comments": {
                                 "nodes": [
                                     {
-                                        "id": "target_comment_222",
+                                        "id": "target_comment_456",
                                         "author": {"login": "user2"},
                                         "body": "Target comment in second thread",
                                         "createdAt": "2023-01-02T00:00:00Z"
@@ -373,33 +326,200 @@ def test_get_review_thread_comments_multiple_threads_with_target():
             }
         }
     }
+    mock_graphql_client.execute.return_value = mock_response
 
-    with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock_client_func:
-        mock_client = MagicMock()
-        mock_client.execute.return_value = mock_response
-        mock_client_func.return_value = mock_client
+    # Act
+    result = get_review_thread_comments(**sample_params)
 
-        result = get_review_thread_comments(
-            owner="test-owner",
-            repo="test-repo",
-            pull_number=123,
-            comment_node_id="target_comment_222",
-            token="test_token"
-        )
+    # Assert - should return comments from the second thread
+    expected_comments = [
+        {
+            "id": "target_comment_456",
+            "author": {"login": "user2"},
+            "body": "Target comment in second thread",
+            "createdAt": "2023-01-02T00:00:00Z"
+        },
+        {
+            "id": "comment_333",
+            "author": {"login": "user3"},
+            "body": "Another comment in same thread",
+            "createdAt": "2023-01-03T00:00:00Z"
+        }
+    ]
+    assert result == expected_comments
 
-        # Should return comments from the second thread
-        expected_comments = [
-            {
-                "id": "target_comment_222",
-                "author": {"login": "user2"},
-                "body": "Target comment in second thread",
-                "createdAt": "2023-01-02T00:00:00Z"
-            },
-            {
-                "id": "comment_333",
-                "author": {"login": "user3"},
-                "body": "Another comment in same thread",
-                "createdAt": "2023-01-03T00:00:00Z"
+
+def test_get_review_thread_comments_calls_graphql_with_correct_parameters(
+    mock_graphql_client, sample_params
+):
+    """Test that function calls GraphQL client with correct query and variables."""
+    # Arrange
+    mock_graphql_client.execute.return_value = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {"nodes": []}
             }
-        ]
-        assert result == expected_comments
+        }
+    }
+
+    # Act
+    get_review_thread_comments(**sample_params)
+
+    # Assert
+    call_args = mock_graphql_client.execute.call_args
+    query_arg = call_args[1]["document"]
+    variables_arg = call_args[1]["variable_values"]
+
+    # Verify the query structure (checking if it's a gql DocumentNode)
+    assert str(type(query_arg).__name__) == "DocumentNode"
+    
+    # Check that the query contains expected fields
+    query_str = str(query_arg)
+    assert "GetReviewThreadComments" in query_str
+    assert "reviewThreads" in query_str
+    assert "comments" in query_str
+
+    # Verify the variables
+    expected_variables = {
+        "owner": "test-owner",
+        "repo": "test-repo", 
+        "pull_number": 123
+    }
+    assert variables_arg == expected_variables
+
+
+def test_get_review_thread_comments_creates_graphql_client_with_token(sample_params):
+    """Test that function creates GraphQL client with the provided token."""
+    # Arrange
+    with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock_get_client:
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        mock_client.execute.return_value = {
+            "repository": {
+                "pullRequest": {
+                    "reviewThreads": {"nodes": []}
+                }
+            }
+        }
+
+        # Act
+        get_review_thread_comments(**sample_params)
+
+        # Assert
+        mock_get_client.assert_called_once_with(token="test-token")
+
+
+def test_get_review_thread_comments_with_null_repository(mock_graphql_client, sample_params):
+    """Test when repository is null in response."""
+    # Arrange
+    mock_response = {"repository": None}
+    mock_graphql_client.execute.return_value = mock_response
+
+    # Act
+    result = get_review_thread_comments(**sample_params)
+
+    # Assert
+    assert result == []
+
+
+def test_get_review_thread_comments_with_null_pull_request(mock_graphql_client, sample_params):
+    """Test when pull request is null in response."""
+    # Arrange
+    mock_response = {
+        "repository": {
+            "pullRequest": None
+        }
+    }
+    mock_graphql_client.execute.return_value = mock_response
+
+    # Act
+    result = get_review_thread_comments(**sample_params)
+
+    # Assert
+    assert result == []
+
+
+def test_get_review_thread_comments_with_null_review_threads(mock_graphql_client, sample_params):
+    """Test when reviewThreads is null in response."""
+    # Arrange
+    mock_response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": None
+            }
+        }
+    }
+    mock_graphql_client.execute.return_value = mock_response
+
+    # Act
+    result = get_review_thread_comments(**sample_params)
+
+    # Assert
+    assert result == []
+
+
+def test_get_review_thread_comments_with_null_comments(mock_graphql_client, sample_params):
+    """Test when comments is null in a thread."""
+    # Arrange
+    mock_response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {
+                    "nodes": [
+                        {
+                            "comments": None
+                        }
+                    ]
+                }
+            }
+        }
+    }
+    mock_graphql_client.execute.return_value = mock_response
+
+    # Act
+    result = get_review_thread_comments(**sample_params)
+
+    # Assert
+    assert result == []
+
+
+def test_get_review_thread_comments_single_comment_thread(mock_graphql_client, sample_params):
+    """Test when target comment is the only comment in its thread."""
+    # Arrange
+    mock_response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {
+                    "nodes": [
+                        {
+                            "comments": {
+                                "nodes": [
+                                    {
+                                        "id": "target_comment_456",
+                                        "author": {"login": "user1"},
+                                        "body": "Single comment in thread",
+                                        "createdAt": "2023-01-01T00:00:00Z"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+    mock_graphql_client.execute.return_value = mock_response
+
+    # Act
+    result = get_review_thread_comments(**sample_params)
+
+    # Assert
+    expected_comments = [
+        {
+            "id": "target_comment_456",
+            "author": {"login": "user1"},
+            "body": "Single comment in thread",
+            "createdAt": "2023-01-01T00:00:00Z"
+        }
+    ]
+    assert result == expected_comments
