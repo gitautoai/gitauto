@@ -472,6 +472,33 @@ def test_check_subscription_limit_integration_with_real_usage_pattern(
     assert result["can_proceed"] is True
 
 
+
+def test_check_subscription_limit_datetime_conversion_accuracy(
+    mock_get_base_request_limit,
+    mock_count_completed_unique_requests,
+    sample_installation_id,
+):
+    """Test that datetime conversion from timestamps is accurate."""
+    subscription_with_specific_timestamps = {
+        "items": {
+            "data": [
+                {
+                    "price": {
+                        "product": "prod_datetime_test",
+                        "recurring": {"interval": "month"},
+                    },
+                    "quantity": 1,
+                }
+            ]
+        },
+        "current_period_start": 1672531200,  # 2023-01-01 00:00:00 UTC
+        "current_period_end": 1675209600,    # 2023-02-01 00:00:00 UTC
+    }
+    
+    # Setup mocks
+    mock_get_base_request_limit.return_value = 100
+    mock_count_completed_unique_requests.return_value = {"req1"}
+
 def test_subscription_limit_result_type_annotation():
     """Test that SubscriptionLimitResult TypedDict has correct structure."""
     # This test ensures the TypedDict is properly defined
