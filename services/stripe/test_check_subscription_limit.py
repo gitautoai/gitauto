@@ -431,6 +431,38 @@ def test_check_subscription_limit_with_zero_base_request_limit(
     mock_get_base_request_limit.assert_called_once_with("prod_test123")
     mock_get_base_request_limit.return_value = base_limit
     mock_count_completed_unique_requests.return_value = set()  # No requests used
+
+
+def test_check_subscription_limit_integration_with_real_usage_pattern(
+    mock_get_base_request_limit,
+    mock_count_completed_unique_requests,
+    sample_installation_id,
+):
+    """Test function with realistic subscription data similar to actual usage."""
+    realistic_subscription = {
+        "items": {
+            "data": [
+                {
+                    "price": {
+                        "product": "prod_PqZFpCs1Jq6X4E",  # Using actual product ID from config
+                        "recurring": {"interval": "month"},
+                    },
+                    "quantity": 1,
+                }
+            ]
+        },
+        "current_period_start": 1704067200,  # 2024-01-01 00:00:00 UTC
+        "current_period_end": 1706745600,    # 2024-02-01 00:00:00 UTC
+    }
+    
+    # Setup mocks with realistic values
+    mock_get_base_request_limit.return_value = 1000  # Standard tier limit
+    mock_count_completed_unique_requests.return_value = set(f"req{i}" for i in range(250))  # 250 requests used
+    
+    result = check_subscription_limit(realistic_subscription, sample_installation_id)
+    
+    # Verify realistic behavior
+    assert result["can_proceed"] is True
     
     result = check_subscription_limit(subscription, sample_installation_id)
     
