@@ -98,7 +98,12 @@ def test_get_pull_request_files_missing_fields():
         mock_response = Mock()
         mock_response.json.return_value = mock_response_data
         mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
+        
+        empty_response = Mock()
+        empty_response.json.return_value = []
+        empty_response.raise_for_status.return_value = None
+        
+        mock_get.side_effect = [mock_response, empty_response]
 
         result = get_pull_request_files(
             "https://api.github.com/repos/test/test/pulls/1/files", "token123"
@@ -116,9 +121,10 @@ def test_get_pull_request_files_http_error():
     """Test handling of HTTP errors"""
     with patch("services.github.pulls.get_pull_request_files.requests.get") as mock_get:
         mock_response = Mock()
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-            "404 Not Found"
-        )
+        mock_response.status_code = 404
+        http_error = requests.exceptions.HTTPError("404 Not Found")
+        http_error.response = mock_response
+        mock_response.raise_for_status.side_effect = http_error
         mock_get.return_value = mock_response
 
         result = get_pull_request_files(
