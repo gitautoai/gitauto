@@ -141,6 +141,7 @@ def test_get_circleci_workflow_ids_empty_response(mock_create_headers, mock_get)
 
     assert not result
 
+
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
 @patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
 def test_get_circleci_workflow_ids_empty_check_runs(mock_create_headers, mock_get):
@@ -196,6 +197,29 @@ def test_get_circleci_workflow_ids_none_workflow_id(mock_create_headers, mock_ge
     mock_response.json.return_value = {
         "check_runs": [
             {"external_id": json.dumps({"workflow-id": None})},
+            {"external_id": json.dumps({"workflow-id": "valid-id"})},
+        ]
+    }
+    mock_get.return_value = mock_response
+
+    result = get_circleci_workflow_ids_from_check_suite(
+        "owner", "repo", 12345, "test-token"
+    )
+
+    assert result == ["valid-id"]
+
+
+@patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
+@patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
+def test_get_circleci_workflow_ids_empty_workflow_id(mock_create_headers, mock_get):
+    """Test when workflow-id is an empty string in external_id JSON"""
+    mock_create_headers.return_value = {"Authorization": "token test-token"}
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "check_runs": [
+            {"external_id": json.dumps({"workflow-id": ""})},
             {"external_id": json.dumps({"workflow-id": "valid-id"})},
         ]
     }
@@ -271,6 +295,12 @@ def test_get_circleci_workflow_ids_connection_error(mock_create_headers, mock_ge
     # Simulate connection error
     mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
 
+    result = get_circleci_workflow_ids_from_check_suite(
+        "owner", "repo", 12345, "test-token"
+    )
+
+    # Should return default value due to handle_exceptions decorator
+    assert result == []
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
