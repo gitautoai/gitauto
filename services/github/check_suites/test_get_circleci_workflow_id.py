@@ -271,3 +271,18 @@ def test_get_circleci_workflow_ids_connection_error(mock_create_headers, mock_ge
     # Simulate connection error
     mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
 
+
+
+@patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
+@patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
+def test_get_circleci_workflow_ids_malformed_response_json(mock_create_headers, mock_get):
+    """Test when the API response itself has malformed JSON"""
+    mock_create_headers.return_value = {"Authorization": "token test-token"}
+    
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+    mock_get.return_value = mock_response
+
+    result = get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "test-token")
+    assert result == []
