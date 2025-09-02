@@ -1,7 +1,7 @@
 import json
-from requests import HTTPError, ConnectionError, Timeout
-import pytest
 from unittest.mock import patch, MagicMock
+import pytest
+import requests
 from services.circleci.get_job_artifacts import get_circleci_job_artifacts
 from config import TIMEOUT
 
