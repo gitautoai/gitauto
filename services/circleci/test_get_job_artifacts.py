@@ -239,7 +239,7 @@ def test_get_circleci_job_artifacts_with_next_page_token():
 def test_get_circleci_job_artifacts_timeout_error():
     """Test handling of timeout errors through the handle_exceptions decorator."""
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
-        mock_get.side_effect = Timeout("Request timed out")
+        mock_get.side_effect = requests.exceptions.Timeout("Request timed out")
 
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="606", circle_token="test-token"
