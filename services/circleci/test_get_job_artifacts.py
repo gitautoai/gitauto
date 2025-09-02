@@ -273,8 +273,7 @@ def test_get_circleci_job_artifacts_http_error_401():
     mock_response.status_code = 401
     mock_response.reason = "Unauthorized"
     mock_response.text = "Invalid token"
-    http_error = HTTPError("Unauthorized")
-    http_error.response = mock_response
+    http_error = requests.exceptions.HTTPError(response=mock_response)
     mock_response.raise_for_status.side_effect = http_error
 
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
