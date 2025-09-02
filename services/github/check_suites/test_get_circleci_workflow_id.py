@@ -1,5 +1,6 @@
 import json
 import pytest
+import requests
 from unittest.mock import Mock, patch
 
 from services.github.check_suites.get_circleci_workflow_id import (
