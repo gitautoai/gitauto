@@ -253,8 +253,8 @@ def test_get_circleci_job_artifacts_http_error_500():
     """Test handling of HTTP 500 errors."""
     mock_response = MagicMock()
     mock_response.status_code = 500
-    http_error = HTTPError("Internal Server Error")
-    http_error.response = mock_response
+    mock_response.reason = "Internal Server Error"
+    http_error = requests.exceptions.HTTPError(response=mock_response)
     mock_response.raise_for_status.side_effect = http_error
 
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
