@@ -392,3 +392,36 @@ def test_get_circleci_job_artifacts_request_exception():
     """Test handling of general request exceptions."""
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.side_effect = requests.exceptions.RequestException("Request failed")
+
+def test_get_circleci_job_artifacts_malformed_json_response():
+    """Test handling of malformed JSON response."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = "not a dict"  # Invalid structure
+    mock_response.raise_for_status.return_value = None
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="606", circle_token="test-token"
+        )
+
+        # Should handle gracefully and return empty list due to .get("items", [])
+        assert result == []
+
+
+def test_get_circleci_job_artifacts_none_response():
+    """Test handling of None response from json()."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = None
+    mock_response.raise_for_status.return_value = None
+
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="707", circle_token="test-token"
+        )
+
+        # Should handle gracefully and return empty list
+        assert result == []
