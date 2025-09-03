@@ -16,4 +16,4 @@ Return FALSE for trivial code that doesn't need tests."""
     )
 
     # Default to False if evaluation fails (avoid generating garbage)
-    return bool(result) if result is not None else False
+    return result is True
