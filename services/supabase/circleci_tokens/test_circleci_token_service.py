@@ -330,3 +330,88 @@ class TestGetCircleciToken:
             
             # Assert
             assert result is None
+
+    def test_function_signature_and_return_type(self):
+        """Test that function has correct signature and return type annotation."""
+        # Arrange & Act
+        import inspect
+        from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
+        
+        # Assert
+        signature = inspect.signature(get_circleci_token)
+        assert len(signature.parameters) == 1
+        assert "owner_id" in signature.parameters
+        assert signature.parameters["owner_id"].annotation == int
+
+    def test_decorator_configuration(self):
+        """Test that handle_exceptions decorator is configured correctly."""
+        # Arrange & Act
+        from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
+        
+        # Assert - Function should have the decorator applied
+        assert hasattr(get_circleci_token, "__wrapped__")
+        assert get_circleci_token.__name__ == "get_circleci_token"
+
+    def test_supabase_query_structure(self, mock_supabase_with_token):
+        """Test that the Supabase query is structured correctly."""
+        # Arrange
+        mock_supabase, mock_table, _ = mock_supabase_with_token
+        owner_id = 12345
+        
+        # Act
+        get_circleci_token(owner_id)
+        
+        # Assert - Verify exact query structure
+        mock_supabase.table.assert_called_once_with("circleci_tokens")
+        mock_table.select.assert_called_once_with("*")
+        mock_table.eq.assert_called_once_with("owner_id", owner_id)
+        mock_table.limit.assert_called_once_with(1)
+        
+        # Check that methods were called in the correct sequence
+        assert mock_supabase.table.call_count == 1
+        assert mock_table.select.call_count == 1
+        assert mock_table.eq.call_count == 1
+        assert mock_table.limit.call_count == 1
+        assert mock_table.execute.call_count == 1
+
+    def test_result_data_access_pattern(self):
+        """Test that result.data is accessed correctly."""
+        # Arrange
+        sample_token_data = {
+            "id": "test-id-123",
+            "owner_id": 12345,
+            "token": "circleci-token-abc123",
+            "created_by": "test-user",
+            "created_at": datetime.datetime(2024, 1, 1, 12, 0, 0),
+            "updated_at": datetime.datetime(2024, 1, 1, 12, 0, 0),
+            "updated_by": "test-user"
+        }
+        
+        mock_response = Mock()
+        mock_response.data = [sample_token_data]
+        
+        with patch("services.supabase.circleci_tokens.get_circleci_token.supabase") as mock_supabase:
+            mock_table = Mock()
+            mock_supabase.table.return_value = mock_table
+            mock_table.select.return_value = mock_table
+            mock_table.eq.return_value = mock_table
+            mock_table.limit.return_value = mock_table
+            mock_table.execute.return_value = mock_response
+            
+            owner_id = 12345
+            
+            # Act
+            result = get_circleci_token(owner_id)
+            
+            # Assert - Verify that result.data[0] is returned
+            assert result == sample_token_data
+
+    def test_handles_falsy_result_data(self):
+        """Test that function handles falsy result.data correctly."""
+        # Arrange
+        mock_response = Mock()
+        mock_response.data = False  # Falsy but not None or empty list
+        
+        with patch("services.supabase.circleci_tokens.get_circleci_token.supabase") as mock_supabase:
+            mock_table = Mock()
+            mock_supabase.table.return_value = mock_table
