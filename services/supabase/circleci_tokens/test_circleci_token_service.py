@@ -524,3 +524,4 @@ class TestGetCircleciToken:
             
             # Act & Assert - False branch
             result = get_circleci_token(12345)
+            assert result is None
