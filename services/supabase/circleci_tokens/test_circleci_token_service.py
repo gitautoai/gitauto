@@ -415,3 +415,63 @@ class TestGetCircleciToken:
         with patch("services.supabase.circleci_tokens.get_circleci_token.supabase") as mock_supabase:
             mock_table = Mock()
             mock_supabase.table.return_value = mock_table
+
+    def test_handles_empty_string_in_result_data(self):
+        """Test that function handles empty string in result.data correctly."""
+        # Arrange
+        mock_response = Mock()
+        mock_response.data = ""  # Empty string is falsy
+        
+        with patch("services.supabase.circleci_tokens.get_circleci_token.supabase") as mock_supabase:
+            mock_table = Mock()
+            mock_supabase.table.return_value = mock_table
+            mock_table.select.return_value = mock_table
+            mock_table.eq.return_value = mock_table
+            mock_table.limit.return_value = mock_table
+            mock_table.execute.return_value = mock_response
+            
+            owner_id = 12345
+            
+            # Act
+            result = get_circleci_token(owner_id)
+            
+            # Assert
+            assert result is None
+
+    def test_handles_zero_in_result_data(self):
+        """Test that function handles zero in result.data correctly."""
+        # Arrange
+        mock_response = Mock()
+        mock_response.data = 0  # Zero is falsy
+        
+        with patch("services.supabase.circleci_tokens.get_circleci_token.supabase") as mock_supabase:
+            mock_table = Mock()
+            mock_supabase.table.return_value = mock_table
+            mock_table.select.return_value = mock_table
+            mock_table.eq.return_value = mock_table
+            mock_table.limit.return_value = mock_table
+            mock_table.execute.return_value = mock_response
+            
+            owner_id = 12345
+            
+            # Act
+            result = get_circleci_token(owner_id)
+            
+            # Assert
+            assert result is None
+
+    def test_returns_exact_token_data_structure(self, mock_supabase_with_token):
+        """Test that function returns exact token data structure matching CircleciTokens type."""
+        # Arrange
+        mock_supabase, mock_table, expected_token_data = mock_supabase_with_token
+        owner_id = 12345
+        
+        # Act
+        result = get_circleci_token(owner_id)
+        
+        # Assert - Verify all required fields are present
+        assert "id" in result
+        assert "owner_id" in result
+        assert "token" in result
+        assert "created_by" in result
+        assert "created_at" in result
