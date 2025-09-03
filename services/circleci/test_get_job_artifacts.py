@@ -431,3 +431,88 @@ def test_get_circleci_job_artifacts_none_response():
 
         # Should handle gracefully and return empty list
         assert result == []
+
+
+def test_get_circleci_job_artifacts_type_annotation_coverage():
+    """Test to ensure type annotation line coverage for list[CircleCIArtifact]()."""
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+    
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+        
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
+        )
+        
+        # This should trigger the list[CircleCIArtifact]() return on line 19
+        assert result == []
+        assert isinstance(result, list)
+
+
+def test_get_circleci_job_artifacts_ssl_error():
+    """Test handling of SSL errors."""
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.side_effect = requests.exceptions.SSLError("SSL certificate verification failed")
+        
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="606", circle_token="test-token"
+        )
+        
+        assert result == []
+
+
+def test_get_circleci_job_artifacts_dns_error():
+    """Test handling of DNS resolution errors."""
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.side_effect = requests.exceptions.ConnectionError("DNS lookup failed")
+        
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="707", circle_token="test-token"
+        )
+        
+        assert result == []
+
+
+def test_get_circleci_job_artifacts_with_special_characters():
+    """Test with project slug containing special characters."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"items": []}
+    mock_response.raise_for_status.return_value = None
+    
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+        
+        result = get_circleci_job_artifacts(
+            project_slug="gh/user-name/repo_name.test",
+            job_number="123",
+            circle_token="test-token"
+        )
+        
+        expected_url = "https://circleci.com/api/v2/project/gh/user-name/repo_name.test/123/artifacts"
+        mock_get.assert_called_once_with(
+            url=expected_url,
+            headers={"Circle-Token": "test-token"},
+            timeout=TIMEOUT,
+        )
+        assert result == []
+
+
+def test_get_circleci_job_artifacts_large_job_number():
+    """Test with very large job number."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"items": []}
+    mock_response.raise_for_status.return_value = None
+    
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+        
+        large_job_number = "999999999999"
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo",
+            job_number=large_job_number,
+            circle_token="test-token"
+        )
+        
+        expected_url = f"https://circleci.com/api/v2/project/gh/owner/repo/{large_job_number}/artifacts"
+        mock_get.assert_called_once_with(
