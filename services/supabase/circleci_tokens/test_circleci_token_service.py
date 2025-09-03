@@ -320,6 +320,13 @@ class TestGetCircleciToken:
 
     def test_handles_type_error(self):
         """Test that function handles TypeError correctly."""
+        # Arrange
+        with patch("services.supabase.circleci_tokens.get_circleci_token.supabase") as mock_supabase:
+            mock_supabase.table.side_effect = TypeError("Invalid type")
+            owner_id = 12345
             
-            # Assert - Should return None due to handle_exceptions decorator
+            # Act
+            result = get_circleci_token(owner_id)
+            
+            # Assert
             assert result is None
