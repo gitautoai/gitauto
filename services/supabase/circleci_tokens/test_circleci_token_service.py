@@ -480,6 +480,12 @@ class TestGetCircleciToken:
         
         # Verify data types
         assert isinstance(result["id"], str)
+        assert isinstance(result["owner_id"], int)
+        assert isinstance(result["token"], str)
+        assert isinstance(result["created_by"], str)
+        assert isinstance(result["created_at"], datetime.datetime)
+        assert isinstance(result["updated_at"], datetime.datetime)
+        assert isinstance(result["updated_by"], str)
 
     def test_conditional_logic_coverage(self):
         """Test both branches of the if result.data conditional."""
