@@ -393,6 +393,12 @@ def test_get_circleci_job_artifacts_request_exception():
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.side_effect = requests.exceptions.RequestException("Request failed")
 
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="505", circle_token="test-token"
+        )
+
+        assert result == []
+
 def test_get_circleci_job_artifacts_malformed_json_response():
     """Test handling of malformed JSON response."""
     mock_response = MagicMock()
