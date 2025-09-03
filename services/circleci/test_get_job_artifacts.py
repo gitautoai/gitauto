@@ -657,6 +657,7 @@ def test_get_circleci_job_artifacts_import_coverage():
     
     # Verify the types are imported correctly
     assert CircleCIArtifact is not None
+    assert CircleCIJobArtifactsData is not None
 
 
 def test_get_circleci_job_artifacts_404_return_type():
