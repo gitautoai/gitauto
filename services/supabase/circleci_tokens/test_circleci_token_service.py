@@ -3,6 +3,8 @@
 import datetime
 from unittest.mock import Mock, patch
 import pytest
+import requests
+import json
 
 from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 
