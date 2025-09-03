@@ -29,6 +29,11 @@ def handle_exceptions(
             try:
                 return func(*args, **kwargs)
             except requests.HTTPError as err:
+                # Handle cases where HTTPError doesn't have a response (e.g., in tests)
+                if err.response is None:
+                    if raise_on_error:
+                        raise
+                    return default_return_value
                 status_code: int = err.response.status_code
 
                 # Skip logging for 500 Internal Server Error as it's usually a temporary issue and no meaningful information is available
