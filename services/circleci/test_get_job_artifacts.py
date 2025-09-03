@@ -516,6 +516,11 @@ def test_get_circleci_job_artifacts_large_job_number():
         
         expected_url = f"https://circleci.com/api/v2/project/gh/owner/repo/{large_job_number}/artifacts"
         mock_get.assert_called_once_with(
+            url=expected_url,
+            headers={"Circle-Token": "test-token"},
+            timeout=TIMEOUT,
+        )
+        assert result == []
 
 
 def test_get_circleci_job_artifacts_unicode_characters():
