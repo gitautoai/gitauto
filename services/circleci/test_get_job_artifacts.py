@@ -651,3 +651,28 @@ def test_get_circleci_job_artifacts_import_coverage():
     # This test ensures that the import statements and type annotations are covered
     from services.circleci.get_job_artifacts import get_circleci_job_artifacts
     from services.circleci.circleci_types import CircleCIArtifact, CircleCIJobArtifactsData
+
+
+def test_get_circleci_job_artifacts_404_return_type():
+    """Test that 404 response returns the correct type (list[CircleCIArtifact])."""
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+    # Ensure raise_for_status is not called for 404
+    mock_response.raise_for_status = MagicMock()
+    
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+        
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="404", circle_token="test-token"
+        )
+        
+        # Verify the result is an empty list (from line 19: return list[CircleCIArtifact]())
+        assert result == []
+        assert isinstance(result, list)
+        
+        # Verify that raise_for_status was NOT called for 404
+        mock_response.raise_for_status.assert_not_called()
+        
+        # Verify that json() was NOT called for 404
+        mock_response.json.assert_not_called()
