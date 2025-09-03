@@ -651,6 +651,12 @@ def test_get_circleci_job_artifacts_import_coverage():
     # This test ensures that the import statements and type annotations are covered
     from services.circleci.get_job_artifacts import get_circleci_job_artifacts
     from services.circleci.circleci_types import CircleCIArtifact, CircleCIJobArtifactsData
+    
+    # Verify the function exists and is callable
+    assert callable(get_circleci_job_artifacts)
+    
+    # Verify the types are imported correctly
+    assert CircleCIArtifact is not None
 
 
 def test_get_circleci_job_artifacts_404_return_type():
