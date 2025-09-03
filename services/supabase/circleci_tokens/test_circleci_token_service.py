@@ -200,6 +200,126 @@ class TestGetCircleciToken:
             
             # Act
             result = get_circleci_token(owner_id)
+
+    def test_handles_negative_owner_id(self, mock_supabase_empty_response):
+        """Test that function handles negative owner_id correctly."""
+        # Arrange
+        mock_supabase, mock_table = mock_supabase_empty_response
+        owner_id = -1
+        
+        # Act
+        result = get_circleci_token(owner_id)
+        
+        # Assert
+        assert result is None
+        mock_table.eq.assert_called_once_with("owner_id", -1)
+
+    def test_returns_first_token_when_multiple_exist(self):
+        """Test that function returns first token when multiple tokens exist for owner."""
+        # Arrange
+        sample_token_data_1 = {
+            "id": "test-id-123",
+            "owner_id": 12345,
+            "token": "circleci-token-abc123",
+            "created_by": "test-user",
+            "created_at": datetime.datetime(2024, 1, 1, 12, 0, 0),
+            "updated_at": datetime.datetime(2024, 1, 1, 12, 0, 0),
+            "updated_by": "test-user"
+        }
+        sample_token_data_2 = {
+            "id": "test-id-456",
+            "owner_id": 12345,
+            "token": "circleci-token-def456",
+            "created_by": "test-user-2",
+            "created_at": datetime.datetime(2024, 1, 2, 12, 0, 0),
+            "updated_at": datetime.datetime(2024, 1, 2, 12, 0, 0),
+            "updated_by": "test-user-2"
+        }
+        
+        mock_response = Mock()
+        mock_response.data = [sample_token_data_1, sample_token_data_2]
+        
+        with patch("services.supabase.circleci_tokens.get_circleci_token.supabase") as mock_supabase:
+            mock_table = Mock()
+            mock_supabase.table.return_value = mock_table
+            mock_table.select.return_value = mock_table
+            mock_table.eq.return_value = mock_table
+            mock_table.limit.return_value = mock_table
+            mock_table.execute.return_value = mock_response
+            
+            owner_id = 12345
+            
+            # Act
+            result = get_circleci_token(owner_id)
+            
+            # Assert - Should return first token
+            assert result == sample_token_data_1
+            mock_table.limit.assert_called_once_with(1)
+
+    def test_handles_http_error_exception(self):
+        """Test that function handles HTTPError exceptions correctly."""
+        # Arrange
+        mock_response = Mock()
+        mock_response.status_code = 404
+        mock_response.reason = "Not Found"
+        mock_response.text = "Resource not found"
+        
+        http_error = requests.HTTPError("404 Client Error")
+        http_error.response = mock_response
+        
+        with patch("services.supabase.circleci_tokens.get_circleci_token.supabase") as mock_supabase:
+            mock_supabase.table.side_effect = http_error
+            owner_id = 12345
+            
+            # Act
+            result = get_circleci_token(owner_id)
+            
+            # Assert
+            assert result is None
+
+    def test_handles_json_decode_error(self):
+        """Test that function handles JSONDecodeError correctly."""
+        # Arrange
+        json_error = json.JSONDecodeError("Invalid JSON", "invalid json", 0)
+        
+        with patch("services.supabase.circleci_tokens.get_circleci_token.supabase") as mock_supabase:
+            mock_supabase.table.side_effect = json_error
+            owner_id = 12345
+            
+            # Act
+            result = get_circleci_token(owner_id)
+            
+            # Assert
+            assert result is None
+
+    def test_handles_attribute_error(self):
+        """Test that function handles AttributeError correctly."""
+        # Arrange
+        with patch("services.supabase.circleci_tokens.get_circleci_token.supabase") as mock_supabase:
+            mock_supabase.table.side_effect = AttributeError("'NoneType' object has no attribute 'table'")
+            owner_id = 12345
+            
+            # Act
+            result = get_circleci_token(owner_id)
+            
+            # Assert
+            assert result is None
+
+    def test_handles_key_error(self):
+        """Test that function handles KeyError correctly."""
+        # Arrange
+        with patch("services.supabase.circleci_tokens.get_circleci_token.supabase") as mock_supabase:
+            mock_supabase.table.side_effect = KeyError("Missing key")
+            owner_id = 12345
+            
+            # Act
+            result = get_circleci_token(owner_id)
+            
+            # Assert
+            assert result is None
+
+    def test_handles_type_error(self):
+        """Test that function handles TypeError correctly."""
             
             # Assert - Should return None due to handle_exceptions decorator
             assert result is None
