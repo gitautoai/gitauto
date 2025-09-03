@@ -510,3 +510,11 @@ class TestGetCircleciToken:
             result = get_circleci_token(12345)
             assert result == sample_token_data
             
+            
+            # Test False branch
+            mock_response_false = Mock()
+            mock_response_false.data = []
+            mock_table.execute.return_value = mock_response_false
+            
+            # Act & Assert - False branch
+            result = get_circleci_token(12345)
