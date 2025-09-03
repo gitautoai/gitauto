@@ -516,3 +516,63 @@ def test_get_circleci_job_artifacts_large_job_number():
         
         expected_url = f"https://circleci.com/api/v2/project/gh/owner/repo/{large_job_number}/artifacts"
         mock_get.assert_called_once_with(
+
+
+def test_get_circleci_job_artifacts_unicode_characters():
+    """Test with unicode characters in parameters."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "items": [
+            {"path": "测试/artifact.txt", "url": "https://example.com/测试/artifact.txt", "node_index": 0}
+        ]
+    }
+    mock_response.raise_for_status.return_value = None
+    
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+        
+        result = get_circleci_job_artifacts(
+            project_slug="gh/用户/项目",
+            job_number="123",
+            circle_token="测试-token"
+        )
+        
+        assert len(result) == 1
+        assert result[0]["path"] == "测试/artifact.txt"
+        
+        expected_url = "https://circleci.com/api/v2/project/gh/用户/项目/123/artifacts"
+        mock_get.assert_called_once_with(
+            url=expected_url,
+            headers={"Circle-Token": "测试-token"},
+            timeout=TIMEOUT,
+        )
+
+
+def test_get_circleci_job_artifacts_response_with_extra_fields():
+    """Test response with extra fields beyond the expected schema."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "items": [
+            {
+                "path": "coverage/lcov.info",
+                "url": "https://example.com/lcov.info",
+                "node_index": 0,
+                "extra_field": "extra_value",
+                "metadata": {"size": 1024, "created_at": "2023-01-01T00:00:00Z"}
+            }
+        ],
+        "next_page_token": None,
+        "total_count": 1,
+        "extra_response_field": "extra_response_value"
+    }
+    mock_response.raise_for_status.return_value = None
+    
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+        
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
+        )
+        
+        assert len(result) == 1
+        assert result[0]["path"] == "coverage/lcov.info"
