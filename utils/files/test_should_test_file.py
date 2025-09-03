@@ -259,3 +259,202 @@ class DataProcessor:
         
         # Should have exactly 2 keyword arguments
         assert len(call_args[1]) == 2
+
+    def test_should_test_file_with_none_file_path(
+        self, mock_evaluate_condition, sample_code_content
+    ):
+        """Test function behavior when file_path is None (edge case)."""
+        mock_evaluate_condition.return_value = True
+
+        # This should work due to f-string handling None
+        result = should_test_file(None, sample_code_content)
+
+        assert result is True
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify None file path is converted to string
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert "File path: None" in content_arg
+
+    def test_should_test_file_with_none_content(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior when content is None (edge case)."""
+        mock_evaluate_condition.return_value = False
+
+        # This should work due to f-string handling None
+        result = should_test_file(sample_file_path, None)
+
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify None content is converted to string
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert "Content:\nNone" in content_arg
+
+    def test_should_test_file_with_very_long_content(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with very long content."""
+        long_content = "def function():\n    pass\n" * 1000  # Very long content
+        mock_evaluate_condition.return_value = True
+
+        result = should_test_file(sample_file_path, long_content)
+
+        assert result is True
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify long content is passed correctly
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert long_content in content_arg
+
+    def test_should_test_file_system_prompt_exact_content(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that the exact system prompt is used."""
+        mock_evaluate_condition.return_value = True
+
+        should_test_file(sample_file_path, sample_code_content)
+
+        call_args = mock_evaluate_condition.call_args
+        system_prompt = call_args[1]["system_prompt"]
+        
+        expected_prompt = """You are a very experienced senior engineer. Look at this code and decide if it needs unit tests.
+
+Be practical and strict - only return TRUE if the code has actual logic worth testing.
+
+Return FALSE for trivial code that doesn't need tests."""
+        
+        assert system_prompt == expected_prompt
+
+    def test_should_test_file_content_format_exact(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test the exact format of content passed to evaluate_condition."""
+        mock_evaluate_condition.return_value = True
+
+        should_test_file(sample_file_path, sample_code_content)
+
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        
+        expected_content = f"File path: {sample_file_path}\n\nContent:\n{sample_code_content}"
+        assert content_arg == expected_content
+
+    def test_should_test_file_handles_http_error_exception(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that function handles HTTP errors gracefully."""
+        import requests
+        mock_evaluate_condition.side_effect = requests.HTTPError("HTTP 500 Error")
+
+        result = should_test_file(sample_file_path, sample_code_content)
+
+        # Should return False when HTTP exception occurs (handled by decorator)
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+
+    def test_should_test_file_handles_json_decode_error(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that function handles JSON decode errors gracefully."""
+        import json
+        mock_evaluate_condition.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+
+        result = should_test_file(sample_file_path, sample_code_content)
+
+        # Should return False when JSON decode exception occurs (handled by decorator)
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+
+    def test_should_test_file_handles_attribute_error(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that function handles attribute errors gracefully."""
+        mock_evaluate_condition.side_effect = AttributeError("'NoneType' object has no attribute 'text'")
+
+        result = should_test_file(sample_file_path, sample_code_content)
+
+        # Should return False when attribute exception occurs (handled by decorator)
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+
+    def test_should_test_file_handles_key_error(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that function handles key errors gracefully."""
+        mock_evaluate_condition.side_effect = KeyError("missing key")
+
+        result = should_test_file(sample_file_path, sample_code_content)
+
+        # Should return False when key exception occurs (handled by decorator)
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+
+    def test_should_test_file_handles_type_error(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that function handles type errors gracefully."""
+        mock_evaluate_condition.side_effect = TypeError("unsupported operand type(s)")
+
+        result = should_test_file(sample_file_path, sample_code_content)
+
+        # Should return False when type exception occurs (handled by decorator)
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+
+    def test_should_test_file_with_whitespace_only_content(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with whitespace-only content."""
+        whitespace_content = "   \n\t\n   \n"
+        mock_evaluate_condition.return_value = False
+
+        result = should_test_file(sample_file_path, whitespace_content)
+
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify whitespace content is preserved
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert whitespace_content in content_arg
+
+    def test_should_test_file_with_binary_like_content(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with binary-like content."""
+        binary_content = "\\x00\\x01\\x02\\xff"
+        mock_evaluate_condition.return_value = False
+
+        result = should_test_file(sample_file_path, binary_content)
+
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify binary-like content is passed correctly
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert binary_content in content_arg
+
+    def test_should_test_file_return_value_type_consistency(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that function always returns boolean type."""
+        test_cases = [True, False, None, "true", "false", 1, 0, [], {}]
+        
+        for return_value in test_cases:
+            mock_evaluate_condition.return_value = return_value
+            result = should_test_file(sample_file_path, sample_code_content)
+            
+            # Should always return a boolean
+            assert isinstance(result, bool)
+            
+            # Should return the actual value for True/False, False for everything else
+            if return_value is True:
+                assert result is True
+            else:
+                assert result is False
