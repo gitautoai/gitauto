@@ -348,8 +348,6 @@ class TestEdgeCases:
         get_current_branch("/path/to/repo")
         
         mock_print.assert_called_once_with("Current branch: ``")
-            cwd="/path/to/repo"
-        )
 
     @patch("subprocess.run")
     def test_switch_to_branch_with_empty_branch_name(self, mock_run, mock_subprocess_run):
@@ -364,3 +362,5 @@ class TestEdgeCases:
             capture_output=True,
             text=True,
             check=True,
+            cwd="/path/to/repo"
+        )
