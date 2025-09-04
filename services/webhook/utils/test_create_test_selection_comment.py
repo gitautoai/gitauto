@@ -169,3 +169,95 @@ def test_create_test_selection_comment_with_special_characters():
 
     assert "- [x] modified `src/file-with-dashes.py`" in result
     assert "- [ ] added `src/file_with_underscores.py` (Coverage: 0%)" in result
+
+def test_create_test_selection_comment_with_empty_coverage_info(mock_reset_command):
+    """Test creating a comment with empty coverage info."""
+    branch_name = "test-branch"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/file1.py",
+            "checked": True,
+            "coverage_info": "",
+            "status": "added",
+        },
+        {
+            "path": "src/file2.py",
+            "checked": False,
+            "coverage_info": "",
+            "status": "modified",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify items with empty coverage info are handled correctly
+    assert "- [x] added `src/file1.py`" in result
+    assert "- [ ] modified `src/file2.py`" in result
+    # Ensure no extra spaces are added when coverage_info is empty
+    assert "`src/file1.py` " not in result  # No trailing space after backtick
+    assert "`src/file2.py` " not in result  # No trailing space after backtick
+
+
+def test_create_test_selection_comment_with_long_file_paths(mock_reset_command):
+    """Test creating a comment with very long file paths."""
+    branch_name = "feature/long-paths"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/very/deep/nested/directory/structure/with/many/levels/file.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 85%)",
+            "status": "modified",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    assert "- [x] modified `src/very/deep/nested/directory/structure/with/many/levels/file.py` (Coverage: 85%)" in result
+
+
+def test_create_test_selection_comment_with_mixed_checked_states(mock_reset_command):
+    """Test creating a comment with a mix of checked and unchecked items."""
+    branch_name = "mixed-states"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/checked1.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 90%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/unchecked1.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 10%)",
+            "status": "added",
+        },
+        {
+            "path": "src/checked2.py",
+            "checked": True,
+            "coverage_info": "",
+            "status": "removed",
+        },
+        {
+            "path": "src/unchecked2.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 0%)",
+            "status": "modified",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify all items are present with correct checkbox states
+    assert "- [x] modified `src/checked1.py` (Coverage: 90%)" in result
+    assert "- [ ] added `src/unchecked1.py` (Coverage: 10%)" in result
+    assert "- [x] removed `src/checked2.py`" in result
+    assert "- [ ] modified `src/unchecked2.py` (Coverage: 0%)" in result
+
+
+def test_create_test_selection_comment_structure_consistency(mock_reset_command):
+    """Test that the comment structure is consistent regardless of checklist content."""
+    branch_name = "structure-test"
+    
+    # Test with different checklist sizes
+    for checklist_size in [0, 1, 5, 10]:
+        checklist: list[FileChecklistItem] = []
