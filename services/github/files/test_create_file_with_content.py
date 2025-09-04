@@ -498,3 +498,85 @@ class TestCreateFileWithContent:
 
         result = create_file_with_content("test_file.py", "content", base_args)
 
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_rate_limit_error_handled_by_decorator(
+        self, mock_create_headers, mock_put, base_args
+    ):
+        """Test that rate limit errors are handled by the decorator."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_response = MagicMock()
+        mock_response.status_code = 403
+        mock_response.reason = "Forbidden"
+        mock_response.text = "API rate limit exceeded"
+        mock_response.headers = {
+            "X-RateLimit-Limit": "5000",
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Used": "5000",
+            "X-RateLimit-Reset": "1640995200",
+        }
+        http_error = requests.exceptions.HTTPError("Forbidden")
+        http_error.response = mock_response
+        mock_response.raise_for_status.side_effect = http_error
+        mock_put.return_value = mock_response
+
+        result = create_file_with_content("test_file.py", "content", base_args)
+
+        # The handle_exceptions decorator should catch the error and return None
+        assert result is None
+        mock_create_headers.assert_called_once_with(token="test-token")
+        mock_put.assert_called_once()
+        mock_response.raise_for_status.assert_called_once()
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_custom_commit_message_with_skip_ci_override(
+        self, mock_create_headers, mock_put, base_args_with_skip_ci, mock_successful_response
+    ):
+        """Test that custom commit message overrides skip_ci behavior."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_put.return_value = mock_successful_response
+
+        file_path = "src/test.py"
+        content = "print('Hello, World!')"
+        custom_message = "Custom message without skip ci"
+
+        result = create_file_with_content(
+            file_path, content, base_args_with_skip_ci, commit_message=custom_message
+        )
+
+        assert result == f"File {file_path} successfully created"
+
+        # Verify the custom commit message is used (not the skip_ci default)
+        expected_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
+        expected_data = {
+            "message": custom_message,
+            "content": expected_content,
+            "branch": "test-branch",
+        }
+
+        mock_put.assert_called_once_with(
+            url="https://api.github.com/repos/test-owner/test-repo/contents/src/test.py?ref=test-branch",
+            json=expected_data,
+            headers={"Authorization": "Bearer test-token"},
+            timeout=120,
+        )
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_root_level_file_creation(
+        self, mock_create_headers, mock_put, base_args, mock_successful_response
+    ):
+        """Test file creation at root level (no subdirectories)."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_put.return_value = mock_successful_response
+
+        file_path = "README.md"
+        content = "# Project Title\n\nProject description."
+        result = create_file_with_content(file_path, content, base_args)
+
+        assert result == f"File {file_path} successfully created"
+        mock_create_headers.assert_called_once_with(token="test-token")
+        mock_put.assert_called_once()
+
