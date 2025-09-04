@@ -301,6 +301,16 @@ class DataProcessor:
         test_cases = [True, False, None, "true", "false", 1, 0, [], {}]
         
         for return_value in test_cases:
+            mock_evaluate_condition.return_value = return_value
+            result = should_test_file(sample_file_path, sample_code_content)
+            
+            # Should always return a boolean
+            assert isinstance(result, bool)
+            
+            # Should return False for any non-True value (including None)
+            if return_value is True:
+                assert result is True
+            else:
 
     def test_should_test_file_system_prompt_immutability(
         self, mock_evaluate_condition, sample_file_path, sample_code_content
