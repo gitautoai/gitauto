@@ -580,3 +580,67 @@ class TestCreateFileWithContent:
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_put.assert_called_once()
 
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_very_long_file_path(
+        self, mock_create_headers, mock_put, base_args, mock_successful_response
+    ):
+        """Test file creation with very long file path."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_put.return_value = mock_successful_response
+
+        # Create a very long file path
+        long_path_segments = ["very"] * 20 + ["long"] * 20 + ["path"] * 10
+        file_path = "/".join(long_path_segments) + "/test_file.py"
+        content = "# Test file with very long path"
+        result = create_file_with_content(file_path, content, base_args)
+
+        assert result == f"File {file_path} successfully created"
+        mock_create_headers.assert_called_once_with(token="test-token")
+        mock_put.assert_called_once()
+
+        # Verify the URL construction
+        call_args = mock_put.call_args
+        expected_url = f"https://api.github.com/repos/test-owner/test-repo/contents/{file_path}?ref=test-branch"
+        assert call_args[1]["url"] == expected_url
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_content_with_json_special_characters(
+        self, mock_create_headers, mock_put, base_args, mock_successful_response
+    ):
+        """Test file creation with content containing JSON special characters."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_put.return_value = mock_successful_response
+
+        # Content with JSON special characters that need escaping
+        json_content = '{"message": "Hello \\"World\\"", "data": [1, 2, 3], "escaped": "\\n\\t\\r"}'
+        result = create_file_with_content("config.json", json_content, base_args)
+
+        assert result == "File config.json successfully created"
+        mock_create_headers.assert_called_once_with(token="test-token")
+        mock_put.assert_called_once()
+
+        # Verify the content was properly base64 encoded
+        call_args = mock_put.call_args
+        sent_content = call_args[1]["json"]["content"]
+        decoded_content = base64.b64decode(sent_content).decode("utf-8")
+        assert decoded_content == json_content
+
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_base_args_missing_skip_ci_key(
+        self, mock_create_headers, mock_put, mock_successful_response, create_test_base_args
+    ):
+        """Test function behavior when skip_ci key is missing from base_args."""
+        # Create base_args without skip_ci key
+        base_args_no_skip_ci = create_test_base_args(
+            owner="test-owner",
+            repo="test-repo",
+            token="test-token",
+            new_branch="test-branch",
+        )
+        # Ensure skip_ci is not in the dict
+        if "skip_ci" in base_args_no_skip_ci:
+            del base_args_no_skip_ci["skip_ci"]
