@@ -602,3 +602,25 @@ class TestCreateFileWithContent:
             headers={"Authorization": "Bearer test-token"},
             timeout=120,
         )
+    @patch("services.github.files.create_file_with_content.requests.put")
+    @patch("services.github.files.create_file_with_content.create_headers")
+    def test_base_args_missing_skip_ci_key(
+        self, mock_create_headers, mock_put, mock_successful_response, create_test_base_args
+    ):
+        """Test function behavior when skip_ci key is missing from base_args."""
+        # Create base_args without skip_ci key
+        base_args_no_skip_ci = create_test_base_args(
+            owner="test-owner",
+            repo="test-repo",
+            token="test-token",
+            new_branch="test-branch",
+        )
+        # Ensure skip_ci is not in the dict
+        if "skip_ci" in base_args_no_skip_ci:
+            del base_args_no_skip_ci["skip_ci"]
+        
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_put.return_value = mock_successful_response
+        
+        result = create_file_with_content("test.py", "content", base_args_no_skip_ci)
+        assert result == "File test.py successfully created"
