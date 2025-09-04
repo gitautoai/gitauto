@@ -583,6 +583,9 @@ class TestCreateFileWithContent:
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_put.assert_called_once()
 
+        # Verify the URL construction for root level file
+        call_args = mock_put.call_args
+        expected_url = "https://api.github.com/repos/test-owner/test-repo/contents/README.md?ref=test-branch"
 
     @patch("services.github.files.create_file_with_content.requests.put")
     @patch("services.github.files.create_file_with_content.create_headers")
