@@ -263,3 +263,102 @@ class TestSwitchToBranch:
         
         with pytest.raises(subprocess.CalledProcessError):
             switch_to_branch("nonexistent-branch", "/path/to/repo")
+
+    @patch("subprocess.run")
+    def test_switch_to_branch_with_different_path(self, mock_run, mock_subprocess_run):
+        """Test branch switch with different repository path"""
+        mock_run.return_value = mock_subprocess_run
+        
+        switch_to_branch("develop", "/different/repo/path")
+        
+        mock_run.assert_called_once_with(
+            "git switch develop",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd="/different/repo/path"
+        )
+
+
+class TestHandleExceptionsIntegration:
+    """Test cases for handle_exceptions decorator integration"""
+
+    @patch("subprocess.run")
+    def test_fetch_branch_with_generic_exception_raises(self, mock_run):
+        """Test that generic exceptions are raised due to handle_exceptions(raise_on_error=True)"""
+        mock_run.side_effect = OSError("Permission denied")
+        
+        with pytest.raises(OSError):
+            fetch_branch(123, "feature-branch", "/path/to/repo")
+
+    @patch("subprocess.run")
+    def test_get_current_branch_with_generic_exception_returns_none(self, mock_run):
+        """Test that generic exceptions return None due to handle_exceptions(raise_on_error=False)"""
+        mock_run.side_effect = OSError("Permission denied")
+        
+        result = get_current_branch("/path/to/repo")
+        
+        assert result is None
+
+    @patch("subprocess.Popen")
+    def test_start_local_server_with_generic_exception_raises(self, mock_popen):
+        """Test that generic exceptions are raised due to handle_exceptions(raise_on_error=True)"""
+        mock_popen.side_effect = PermissionError("Access denied")
+        
+        with pytest.raises(PermissionError):
+            start_local_server("/path/to/repo")
+
+    @patch("subprocess.run")
+    def test_switch_to_branch_with_generic_exception_raises(self, mock_run):
+        """Test that generic exceptions are raised due to handle_exceptions(raise_on_error=True)"""
+        mock_run.side_effect = FileNotFoundError("Git not found")
+        
+        with pytest.raises(FileNotFoundError):
+            switch_to_branch("feature-branch", "/path/to/repo")
+
+
+class TestEdgeCases:
+    """Test cases for edge cases and boundary conditions"""
+
+    @patch("subprocess.run")
+    def test_fetch_branch_with_zero_pull_number(self, mock_run, mock_subprocess_run):
+        """Test fetch_branch with pull number 0"""
+        mock_run.return_value = mock_subprocess_run
+        
+        fetch_branch(0, "branch", "/path")
+        
+        mock_run.assert_called_once_with(
+            "git fetch origin pull/0/head:branch",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd="/path"
+        )
+
+    @patch("subprocess.run")
+    @patch("builtins.print")
+    def test_get_current_branch_with_empty_output(self, mock_print, mock_run):
+        """Test get_current_branch when git returns empty output"""
+        mock_result = MagicMock()
+        mock_result.stdout = "\n"
+        mock_run.return_value = mock_result
+        
+        get_current_branch("/path/to/repo")
+        
+        mock_print.assert_called_once_with("Current branch: ``")
+
+    @patch("subprocess.run")
+    def test_switch_to_branch_with_empty_branch_name(self, mock_run, mock_subprocess_run):
+        """Test switch_to_branch with empty branch name"""
+        mock_run.return_value = mock_subprocess_run
+        
+        switch_to_branch("", "/path/to/repo")
+        
+        mock_run.assert_called_once_with(
+            "git switch ",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=True,
