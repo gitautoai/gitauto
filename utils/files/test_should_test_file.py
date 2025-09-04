@@ -450,7 +450,6 @@ class DataProcessor:
         params = sig.parameters
         assert params['file_path'].annotation == str
         assert params['content'].annotation == str
-
     def test_should_test_file_integration_with_real_scenarios(
         self, mock_evaluate_condition
     ):
