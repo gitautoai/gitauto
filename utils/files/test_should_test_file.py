@@ -379,6 +379,9 @@ class DataProcessor:
         
         # Verify whitespace content is preserved exactly
 
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert whitespace_content in content_arg
     def test_should_test_file_mock_reset_between_tests(
         self, mock_evaluate_condition, sample_file_path, sample_code_content
     ):
