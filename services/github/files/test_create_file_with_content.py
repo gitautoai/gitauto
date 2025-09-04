@@ -453,7 +453,14 @@ class TestCreateFileWithContent:
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_put.side_effect = requests.exceptions.HTTPError("HTTP Error")
 
-        result = create_file_with_content("test_file.py", "content", base_args)
+        # Disable logging to prevent recursion issues during test
+        import logging
+        logging.disable(logging.CRITICAL)
+        
+        try:
+            result = create_file_with_content("test_file.py", "content", base_args)
+        finally:
+            logging.disable(logging.NOTSET)
 
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
