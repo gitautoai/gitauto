@@ -498,6 +498,9 @@ class TestCreateFileWithContent:
 
         result = create_file_with_content("test_file.py", "content", base_args)
 
+        # The handle_exceptions decorator should catch the error and return None
+        assert result is None
+        mock_create_headers.assert_called_once_with(token="test-token")
 
     @patch("services.github.files.create_file_with_content.requests.put")
     @patch("services.github.files.create_file_with_content.create_headers")
