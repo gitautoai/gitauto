@@ -478,4 +478,3 @@ class DataProcessor:
                 assert f"File path: {file_path}" in content_arg
                 assert content in content_arg
                 mock_evaluate_condition.reset_mock()
-                
