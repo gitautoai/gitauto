@@ -446,22 +446,15 @@ class TestCreateFileWithContent:
 
     @patch("services.github.files.create_file_with_content.requests.put")
     @patch("services.github.files.create_file_with_content.create_headers")
-    def test_http_error_handled_by_decorator(
+    def test_rate_limit_error_handled_by_decorator(
         self, mock_create_headers, mock_put, base_args
     ):
-        """Test that HTTP errors are handled by the decorator."""
+        """Test that rate limit errors are handled by the decorator."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
-        mock_put.side_effect = requests.exceptions.HTTPError("HTTP Error")
+        mock_put.side_effect = requests.exceptions.HTTPError("Rate limit exceeded")
 
-        # Disable logging to prevent recursion issues during test
-        import logging
-        logging.disable(logging.CRITICAL)
+        result = create_file_with_content("test_file.py", "content", base_args)
         
-        try:
-            result = create_file_with_content("test_file.py", "content", base_args)
-        finally:
-            logging.disable(logging.NOTSET)
-
         # The handle_exceptions decorator should catch the error and return None
         assert result is None
         mock_create_headers.assert_called_once_with(token="test-token")
