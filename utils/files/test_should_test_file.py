@@ -301,3 +301,70 @@ class DataProcessor:
         test_cases = [True, False, None, "true", "false", 1, 0, [], {}]
         
         for return_value in test_cases:
+
+    def test_should_test_file_system_prompt_immutability(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that the system prompt is consistent across multiple calls."""
+        mock_evaluate_condition.return_value = True
+        
+        # Make multiple calls
+        should_test_file(sample_file_path, sample_code_content)
+        first_call_prompt = mock_evaluate_condition.call_args[1]["system_prompt"]
+        
+        should_test_file("different_file.py", "different content")
+        second_call_prompt = mock_evaluate_condition.call_args[1]["system_prompt"]
+        
+        # System prompt should be identical across calls
+        assert first_call_prompt == second_call_prompt
+        assert mock_evaluate_condition.call_count == 2
+
+    def test_should_test_file_large_content_handling(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with very large content."""
+        # Create a large content string (simulating a large file)
+        large_content = "def function_{}():\n    return {}\n\n".format("x", "x") * 1000
+        mock_evaluate_condition.return_value = True
+
+        result = should_test_file(sample_file_path, large_content)
+
+        assert result is True
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify large content is passed correctly
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert large_content in content_arg
+        assert len(content_arg) > len(large_content)  # Should include file path prefix
+
+    def test_should_test_file_unicode_file_path(
+        self, mock_evaluate_condition, sample_code_content
+    ):
+        """Test function behavior with unicode characters in file path."""
+        unicode_file_path = "services/测试文件.py"
+        mock_evaluate_condition.return_value = True
+
+        result = should_test_file(unicode_file_path, sample_code_content)
+
+        assert result is True
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify unicode file path is preserved
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert f"File path: {unicode_file_path}" in content_arg
+
+    def test_should_test_file_whitespace_only_content(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with whitespace-only content."""
+        whitespace_content = "   \n\t\n   \n\t\t  \n"
+        mock_evaluate_condition.return_value = False
+
+        result = should_test_file(sample_file_path, whitespace_content)
+
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify whitespace content is preserved exactly
