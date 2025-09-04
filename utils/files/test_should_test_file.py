@@ -457,3 +457,9 @@ class DataProcessor:
                 assert result == expected_result
                 mock_evaluate_condition.assert_called_once()
                 
+                # Verify content is formatted correctly for each scenario
+                call_args = mock_evaluate_condition.call_args
+                content_arg = call_args[1]["content"]
+                assert f"File path: {file_path}" in content_arg
+                assert content in content_arg
+                
