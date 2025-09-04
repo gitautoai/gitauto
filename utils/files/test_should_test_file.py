@@ -259,3 +259,45 @@ class DataProcessor:
         
         # Should have exactly 2 keyword arguments
         assert len(call_args[1]) == 2
+
+    def test_should_test_file_with_none_file_path(
+        self, mock_evaluate_condition, sample_code_content
+    ):
+        """Test function behavior when file_path is None."""
+        mock_evaluate_condition.return_value = True
+
+        # This should handle None gracefully due to f-string conversion
+        result = should_test_file(None, sample_code_content)
+
+        assert result is True
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify None is converted to string in f-string
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert "File path: None\n\nContent:\n" in content_arg
+
+    def test_should_test_file_with_none_content(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior when content is None."""
+        mock_evaluate_condition.return_value = False
+
+        # This should handle None gracefully due to f-string conversion
+        result = should_test_file(sample_file_path, None)
+
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify None is converted to string in f-string
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert f"File path: {sample_file_path}\n\nContent:\nNone" == content_arg
+
+    def test_should_test_file_return_type_consistency(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that function always returns a boolean type."""
+        test_cases = [True, False, None, "true", "false", 1, 0, [], {}]
+        
+        for return_value in test_cases:
