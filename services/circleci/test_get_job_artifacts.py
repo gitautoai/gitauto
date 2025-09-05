@@ -784,3 +784,30 @@ def test_get_circleci_job_artifacts_decorator_coverage():
         assert result == []
         assert mock_get.called
         assert mock_response.json.called
+
+
+def test_get_circleci_job_artifacts_line_by_line_coverage():
+    """Test to ensure every line of the function is covered."""
+    mock_response = MagicMock()
+    mock_response.status_code = 201  # Not 404, so line 18 condition is False
+    mock_response.json.return_value = {
+        "items": [
+            {"path": "final_test.txt", "url": "https://example.com/final_test.txt", "node_index": 2}
+        ],
+        "next_page_token": "final_token"
+    }
+    mock_response.raise_for_status.return_value = None  # Line 20 executes
+    
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+        
+        # This should execute all lines: 13, 14, 15, 17, 18 (False), 20, 22, 23
+        result = get_circleci_job_artifacts(
+            project_slug="gh/final/test", job_number="final", circle_token="final-token"
+        )
+        
+        # Verify the complete execution
+        assert len(result) == 1
+        assert result[0]["path"] == "final_test.txt"
+        assert result[0]["node_index"] == 2
+        mock_response.raise_for_status.assert_called_once()
