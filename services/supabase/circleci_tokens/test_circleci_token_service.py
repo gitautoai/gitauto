@@ -192,7 +192,7 @@ class TestGetCircleciToken:
     def test_method_chaining_works_correctly(self, mock_supabase_with_token):
         """Test that the Supabase method chaining works correctly."""
         # Arrange
-        mock_supabase, mock_table, _ = mock_supabase_with_token
+        _, mock_table, _ = mock_supabase_with_token
         owner_id = 12345
 
         # Act
@@ -219,7 +219,7 @@ class TestGetCircleciToken:
     def test_handles_negative_owner_id(self, mock_supabase_empty_response):
         """Test that function handles negative owner_id correctly."""
         # Arrange
-        mock_supabase, mock_table = mock_supabase_empty_response
+        _, mock_table = mock_supabase_empty_response
         owner_id = -1
 
         # Act
@@ -504,7 +504,7 @@ class TestGetCircleciToken:
     def test_returns_exact_token_data_structure(self, mock_supabase_with_token):
         """Test that function returns exact token data structure matching CircleciTokens type."""
         # Arrange
-        mock_supabase, mock_table, expected_token_data = mock_supabase_with_token
+        _, _, _ = mock_supabase_with_token
         owner_id = 12345
 
         # Act
