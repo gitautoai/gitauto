@@ -12,13 +12,15 @@ def deduplicate_repetitive_logs(log_content: str) -> str:
                 pattern_occurrences[pattern] = []
             pattern_occurrences[pattern].append(i)
 
-    # Find patterns that repeat consecutively 3+ times
+    # Find patterns that repeat 3+ times (consecutive OR scattered)
     to_remove = set()
     for pattern, positions in pattern_occurrences.items():
         if len(positions) < 3:
             continue
 
         size = len(pattern)
+
+        # Handle consecutive repetitions (original logic)
         consecutive_groups = []
         current_group = [positions[0]]
 
@@ -33,9 +35,16 @@ def deduplicate_repetitive_logs(log_content: str) -> str:
         if len(current_group) >= 3:
             consecutive_groups.append(current_group)
 
-        # Mark positions for removal (keep first occurrence)
+        # Mark consecutive repetitions for removal (keep first occurrence)
         for group in consecutive_groups:
             for pos in group[1:]:  # Skip first occurrence
+                for j in range(size):
+                    to_remove.add(pos + j)
+
+        # Handle scattered repetitions (new logic)
+        # If pattern appears 3+ times scattered, keep only first occurrence
+        if len(positions) >= 3:
+            for pos in positions[1:]:  # Keep first 1, remove rest
                 for j in range(size):
                     to_remove.add(pos + j)
 

@@ -31,6 +31,9 @@ python -m pytest --lf -x
 # Run specific test files
 pytest test_config.py
 pytest tests/test_main.py
+
+# Run only modified test files
+MODIFIED_TEST_FILES=$({ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u | grep "test_" | grep "\.py$"); [ -n "$MODIFIED_TEST_FILES" ] && echo "$MODIFIED_TEST_FILES" | xargs python -m pytest -v
 ```
 
 ### Code Quality
