@@ -356,4 +356,8 @@ class DataProcessor:
         # Make multiple calls
         should_test_file(sample_file_path, sample_code_content)
         first_call_prompt = mock_evaluate_condition.call_args[1]["system_prompt"]
-                assert result is False
+        
+        should_test_file("different_file.py", "different content")
+        second_call_prompt = mock_evaluate_condition.call_args[1]["system_prompt"]
+        
+        # System prompt should be identical across calls
