@@ -121,55 +121,91 @@ source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https
 When a Sentry issue shows a token limit error (e.g., "167,154 token context limit"), find the actual input that caused it:
 
 ```bash
-# 1. Get the Sentry error details to find CloudWatch URL
+# 1. Get the Sentry error details including request ID
 source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" \
   "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/AGENT-146/events/latest/" | \
-  python -m json.tool | grep -A 5 "cloudwatch"
+  python -m json.tool > /tmp/sentry_error.json
 
-# 2. Extract log stream and timestamps from CloudWatch URL
-# Example URL: https://console.aws.amazon.com/cloudwatch/home?region=us-west-1#logEventViewer:group=/aws/lambda/pr-agent-prod;stream=2025/01/03/pr-agent-prod[$LATEST]abc123;start=2025-01-03T12:00:00Z;end=2025-01-03T12:05:00Z
-#
-# Extract: stream=2025/01/03/pr-agent-prod[$LATEST]abc123
-
-# 3. Convert timestamps to epoch milliseconds
-python3 -c "import datetime; dt = datetime.datetime(2025, 1, 3, 12, 0, 0); print(int(dt.timestamp() * 1000))"
-
-# 4. Get the actual log with the input that caused the error
-aws logs get-log-events \
-  --log-group-name "/aws/lambda/pr-agent-prod" \
-  --log-stream-name "2025/01/03/pr-agent-prod[\$LATEST]abc123" \
-  --start-time START_EPOCH_MS \
-  --end-time END_EPOCH_MS \
-  --limit 200 > /tmp/agent_error_log.txt
-
-# 5. Extract the exact input from the log (usually in JSON format)
-cat /tmp/agent_error_log.txt | python3 -c "
+# Extract CloudWatch info and request ID
+cat /tmp/sentry_error.json | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
-for event in data['events']:
-    msg = event['message']
-    if 'input' in msg or 'payload' in msg:
-        # Parse the Lambda invocation payload
-        try:
-            parsed = json.loads(msg)
-            if 'body' in parsed:
-                body = json.loads(parsed['body'])
-                # Save the exact input
-                with open('/tmp/exact_input.json', 'w') as f:
-                    json.dump(body, f, indent=2)
-                print(f'Input size: {len(json.dumps(body))} chars')
-                break
-        except:
-            continue
+# Get CloudWatch URL
+contexts = data.get('contexts', {})
+cloudwatch = contexts.get('cloudwatch logs', {})
+print(f'Log Stream: {cloudwatch.get(\"log_stream\")}')
+print(f'CloudWatch URL: {cloudwatch.get(\"url\")}')
+# Get Lambda request ID
+lambda_info = contexts.get('lambda', {})
+print(f'Request ID: {lambda_info.get(\"aws_request_id\")}')
 "
 
-# 6. Analyze what's consuming tokens
-cat /tmp/exact_input.json | python3 -c "
+# 2. Search for the error by request ID (more reliable than timestamps)
+REQUEST_ID="YOUR_REQUEST_ID"  # From step 1
+# Note: Adjust time range based on when error occurred
+# For recent errors (within last 24 hours):
+aws logs filter-log-events \
+  --log-group-name "/aws/lambda/pr-agent-prod" \
+  --filter-pattern "\"$REQUEST_ID\"" \
+  --start-time $(date -d '24 hours ago' +%s)000 \
+  --end-time $(date +%s)000 > /tmp/agent_error_log.json
+
+# For specific date range (if logs are older):
+# Convert error timestamp to epoch: 
+# python3 -c "import datetime; dt = datetime.datetime(2025, 9, 4, 13, 27, 13); print(int(dt.timestamp() * 1000))"
+# Then use: --start-time START_EPOCH_MS --end-time END_EPOCH_MS
+
+# 3. Extract the exact input that caused the error
+cat /tmp/agent_error_log.json | python3 -c "
+import sys, json, re
+data = json.load(sys.stdin)
+for event in data.get('events', []):
+    msg = event['message']
+    # Look for the actual webhook payload
+    if 'Received task payload' in msg or 'body' in msg:
+        # Extract JSON from the log message
+        match = re.search(r'(\{.*\})', msg, re.DOTALL)
+        if match:
+            try:
+                payload = json.loads(match.group(1))
+                # The webhook body is usually stringified JSON
+                if 'body' in payload:
+                    body = json.loads(payload['body'])
+                    with open('/tmp/agent_146_exact_input.json', 'w') as f:
+                        json.dump(body, f, indent=2)
+                    print(f'Found input! Size: {len(json.dumps(body)):,} chars')
+                    # Show field breakdown
+                    for key, value in body.items():
+                        size = len(str(value))
+                        print(f'  {key}: {size:,} chars')
+            except json.JSONDecodeError as e:
+                continue
+"
+
+# 4. If the input is too large/complex, save to file and analyze
+cat /tmp/agent_146_exact_input.json | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
+
+# Calculate size of each field
+total_size = len(json.dumps(data))
+print(f'Total input size: {total_size:,} chars')
+print('\nField breakdown:')
+
 for key, value in data.items():
-    size = len(json.dumps(value))
-    print(f'{key}: {size:,} chars ({size/len(json.dumps(data))*100:.1f}%)')
+    field_size = len(json.dumps(value))
+    percentage = (field_size / total_size) * 100
+    print(f'  {key}: {field_size:,} chars ({percentage:.1f}%)')
+    
+# Find the largest field
+largest_field = max(data.items(), key=lambda x: len(json.dumps(x[1])))
+print(f'\nLargest field: {largest_field[0]} ({len(json.dumps(largest_field[1])):,} chars)')
+
+# If error_log is the culprit, show sample
+if 'error_log' in data:
+    error_log = data['error_log']
+    print(f'\nerror_log preview (first 500 chars):')
+    print(error_log[:500])
 "
 ```
 
