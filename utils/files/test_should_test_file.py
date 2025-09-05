@@ -361,3 +361,4 @@ class DataProcessor:
         second_call_prompt = mock_evaluate_condition.call_args[1]["system_prompt"]
         
         # System prompt should be identical across calls
+        assert first_call_prompt == second_call_prompt
