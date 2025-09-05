@@ -259,3 +259,56 @@ class DataProcessor:
         
         # Should have exactly 2 keyword arguments
         assert len(call_args[1]) == 2
+
+    def test_should_test_file_with_none_file_path(
+        self, mock_evaluate_condition, sample_code_content
+    ):
+        """Test function behavior with None file path."""
+        mock_evaluate_condition.return_value = False
+
+        # This should handle None gracefully due to string formatting
+        result = should_test_file(None, sample_code_content)
+
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify None file path is converted to string
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert "File path: None\n\nContent:\n" in content_arg
+
+    def test_should_test_file_with_none_content(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with None content."""
+        mock_evaluate_condition.return_value = False
+
+        # This should handle None gracefully due to string formatting
+        result = should_test_file(sample_file_path, None)
+
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify None content is converted to string
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert f"File path: {sample_file_path}\n\nContent:\nNone" == content_arg
+
+    def test_should_test_file_return_type_consistency(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that function always returns boolean type."""
+        test_cases = [True, False, None, "true", "false", 1, 0, [], {}]
+        
+        for return_value in test_cases:
+            mock_evaluate_condition.return_value = return_value
+            result = should_test_file(sample_file_path, sample_code_content)
+            
+            # Should always return a boolean
+            assert isinstance(result, bool)
+            
+            # Should be False for None and other non-boolean truthy values
+            if return_value is True:
+                assert result is True
+            else:
+                assert result is False
