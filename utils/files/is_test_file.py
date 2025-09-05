@@ -44,8 +44,8 @@ def is_test_file(filename: str) -> bool:
         # Mock files
         r"/__mocks__/",  # src/__mocks__/api.js
         r"\.mock\.",  # api.mock.ts, database.mock.js
-        r"mock\.",  # ApiMock.java, DatabaseMock.cs
-        r"mocks\.",  # ApiMocks.java, DatabaseMocks.cs
+        r"mock\.[^.]+$",  # ApiMock.java, DatabaseMock.cs
+        r"mocks\.[^.]+$",  # ApiMocks.java, DatabaseMocks.cs
         # Common test file names
         r"^test\.",  # test.js, test.py
         r"^spec\.",  # spec.rb, spec.js
