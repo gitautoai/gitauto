@@ -11,13 +11,16 @@ def is_test_file(filename: str) -> bool:
     if not isinstance(filename, str):
         return False
 
+    # Convert to lowercase for case-insensitive matching
+    filename_lower = filename.lower()
+
     # Test file naming patterns (more comprehensive than current)
     test_patterns = [
         # Direct test file patterns
         r"\.test\.",  # Button.test.tsx, utils.test.js
         r"\.spec\.",  # Button.spec.tsx, api.spec.js
-        r"[A-Z][a-z]*Test\.[^.]+$",  # ButtonTest.java, UserTest.cs
-        r"[A-Z][a-z]*Tests\.[^.]+$",  # ButtonTests.java, UserTests.cs
+        r"[a-z]test\.[^.]+$",  # ButtonTest.java, UserTest.cs (requires letter before test)
+        r"[a-z]tests\.[^.]+$",  # ButtonTests.java, UserTests.cs (requires letter before tests)
         r"_test\.[^.]+$",  # button_test.py, user_test.go
         r"_spec\.[^.]+$",  # button_spec.rb, user_spec.rb
         r"^test_",  # test_button.py, test_utils.py
@@ -41,8 +44,8 @@ def is_test_file(filename: str) -> bool:
         # Mock files
         r"/__mocks__/",  # src/__mocks__/api.js
         r"\.mock\.",  # api.mock.ts, database.mock.js
-        r"[A-Z][a-z]*Mock\.[^.]+$",  # ApiMock.java, DatabaseMock.cs
-        r"[A-Z][a-z]*Mocks\.[^.]+$",  # ApiMocks.java, DatabaseMocks.cs
+        r"[a-z]mock\.[^.]+$",  # ApiMock.java, DatabaseMock.cs (requires letter before mock)
+        r"[a-z]mocks\.[^.]+$",  # ApiMocks.java, DatabaseMocks.cs (requires letter before mocks)
         # Common test file names
         r"^test\.",  # test.js, test.py
         r"^spec\.",  # spec.rb, spec.js
@@ -50,43 +53,9 @@ def is_test_file(filename: str) -> bool:
         r"^\.github/",  # .github/scripts/*, .github/workflows/*
     ]
 
-    # Check against all patterns (case-sensitive for CamelCase patterns)
+    # Check against all patterns
     for pattern in test_patterns:
-        if re.search(pattern, filename):
-            return True
-
-    # Check against case-insensitive patterns for non-CamelCase patterns
-    case_insensitive_patterns = [
-        r"\.test\.",  # Button.test.tsx, utils.test.js
-        r"\.spec\.",  # Button.spec.tsx, api.spec.js
-        r"_test\.[^.]+$",  # button_test.py, user_test.go
-        r"_spec\.[^.]+$",  # button_spec.rb, user_spec.rb
-        r"^test_",  # test_button.py, test_utils.py
-        r"/test_",  # services/anthropic/test_client.py
-        r"^spec_[^_]+\.",  # spec_button.rb, spec_helper.rb
-        r"/spec_[^_]+\.",  # services/anthropic/spec_client.py
-        r"/__tests__/",  # src/__tests__/Button.tsx
-        r"/tests?/",  # src/tests/Button.tsx, src/test/Button.java
-        r"^tests?/",  # tests/constants.py, test/utils.py
-        r"/e2e/",  # e2e/login.spec.ts
-        r"/cypress/",  # cypress/integration/login.js
-        r"/playwright/",  # playwright/tests/login.spec.ts
-        r"/spec/",  # spec/models/user_spec.rb
-        r"/testing/",  # testing/utils.py
-        r"^e2e/",  # e2e/login.spec.ts
-        r"^cypress/",  # cypress/integration/login.js
-        r"^playwright/",  # playwright/tests/login.spec.ts
-        r"^spec/",  # spec/models/user_spec.rb
-        r"^testing/",  # testing/utils.py
-        r"/__mocks__/",  # src/__mocks__/api.js
-        r"\.mock\.",  # api.mock.ts, database.mock.js
-        r"^test\.",  # test.js, test.py
-        r"^spec\.",  # spec.rb, spec.js
-        r"^\.github/",  # .github/scripts/*, .github/workflows/*
-    ]
-
-    for pattern in case_insensitive_patterns:
-        if re.search(pattern, filename, re.IGNORECASE):
+        if re.search(pattern, filename_lower):
             return True
 
     return False
