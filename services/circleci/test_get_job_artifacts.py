@@ -715,3 +715,50 @@ def test_get_circleci_job_artifacts_404_return_type():
         
         # Verify that json() was NOT called for 404
         mock_response.json.assert_not_called()
+
+
+def test_get_circleci_job_artifacts_data_type_annotation():
+    """Test to ensure CircleCIJobArtifactsData type annotation on line 22 is covered."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "items": [
+            {"path": "test.log", "url": "https://example.com/test.log", "node_index": 1}
+        ],
+        "next_page_token": "token123"
+    }
+    mock_response.raise_for_status.return_value = None
+    
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+        
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="789", circle_token="test-token"
+        )
+        
+        # Verify the data structure matches CircleCIJobArtifactsData
+        assert len(result) == 1
+        assert result[0]["path"] == "test.log"
+        assert result[0]["url"] == "https://example.com/test.log"
+        assert result[0]["node_index"] == 1
+
+
+def test_get_circleci_job_artifacts_complete_flow():
+    """Test complete successful flow covering all execution lines."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200  # Line 18 check passes
+    mock_response.json.return_value = {"items": []}  # Line 22-23 execution
+    mock_response.raise_for_status.return_value = None  # Line 20 execution
+    
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+        
+        result = get_circleci_job_artifacts(
+            project_slug="gh/test/repo", job_number="999", circle_token="token"
+        )
+        
+        # Verify complete execution path
+        assert result == []
+        mock_get.assert_called_once_with(
+            url="https://circleci.com/api/v2/project/gh/test/repo/999/artifacts",
+            headers={"Circle-Token": "token"},
