@@ -1,4 +1,16 @@
-def deduplicate_repetitive_logs(log_content: str) -> str:
+import re
+
+
+def deduplicate_logs(log_content: str) -> str:
+    # Remove ANSI escape sequences (terminal formatting codes with no semantic value)
+    ansi_sequences = [
+        r"\\\x1b\[\d+D\\\x1b\[K",  # Cursor movement sequences
+        r"\x1b\[[0-9;]+m",  # All ANSI color/formatting codes
+    ]
+
+    for pattern in ansi_sequences:
+        log_content = re.sub(pattern, "", log_content)
+
     lines = log_content.split("\n")
 
     # Find all repetitive patterns using rolling hash
