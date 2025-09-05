@@ -36,6 +36,11 @@ def is_test_file(filename: str) -> bool:
         r"/playwright/",  # playwright/tests/login.spec.ts
         r"/spec/",  # spec/models/user_spec.rb
         r"/testing/",  # testing/utils.py
+        r"^e2e/",  # e2e/login.spec.ts
+        r"^cypress/",  # cypress/integration/login.js
+        r"^playwright/",  # playwright/tests/login.spec.ts
+        r"^spec/",  # spec/models/user_spec.rb
+        r"^testing/",  # testing/utils.py
         # Mock files
         r"/__mocks__/",  # src/__mocks__/api.js
         r"\.mock\.",  # api.mock.ts, database.mock.js
