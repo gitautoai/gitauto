@@ -6,7 +6,9 @@ import pytest
 import requests
 
 # Local imports
-from services.github.pulls.get_pull_request_file_changes import get_pull_request_file_changes
+from services.github.pulls.get_pull_request_file_changes import (
+    get_pull_request_file_changes,
+)
 
 
 @pytest.fixture
@@ -19,7 +21,9 @@ def mock_requests():
 @pytest.fixture
 def mock_create_headers():
     """Mock create_headers function for testing."""
-    with patch("services.github.pulls.get_pull_request_file_changes.create_headers") as mock:
+    with patch(
+        "services.github.pulls.get_pull_request_file_changes.create_headers"
+    ) as mock:
         mock.return_value = {"Authorization": "Bearer test_token"}
         yield mock
 
@@ -30,18 +34,18 @@ def test_get_pull_request_file_changes_success(mock_requests, mock_create_header
         {
             "filename": "file1.py",
             "status": "modified",
-            "patch": "@@ -1,3 +1,3 @@\n-old line\n+new line"
+            "patch": "@@ -1,3 +1,3 @@\n-old line\n+new line",
         },
         {
             "filename": "file2.js",
             "status": "added",
-            "patch": "@@ -0,0 +1,5 @@\n+new file content"
+            "patch": "@@ -0,0 +1,5 @@\n+new file content",
         },
         {
             "filename": "file3.txt",
             "status": "removed",
-            "patch": "@@ -1,2 +0,0 @@\n-deleted content"
-        }
+            "patch": "@@ -1,2 +0,0 @@\n-deleted content",
+        },
     ]
 
     # Setup mock response
@@ -66,18 +70,18 @@ def test_get_pull_request_file_changes_success(mock_requests, mock_create_header
         {
             "filename": "file1.py",
             "status": "modified",
-            "patch": "@@ -1,3 +1,3 @@\n-old line\n+new line"
+            "patch": "@@ -1,3 +1,3 @@\n-old line\n+new line",
         },
         {
             "filename": "file2.js",
             "status": "added",
-            "patch": "@@ -0,0 +1,5 @@\n+new file content"
+            "patch": "@@ -0,0 +1,5 @@\n+new file content",
         },
         {
             "filename": "file3.txt",
             "status": "removed",
-            "patch": "@@ -1,2 +0,0 @@\n-deleted content"
-        }
+            "patch": "@@ -1,2 +0,0 @@\n-deleted content",
+        },
     ]
 
     assert result == expected
@@ -91,15 +95,11 @@ def test_get_pull_request_file_changes_pagination(mock_requests, mock_create_hea
         {
             "filename": "file1.py",
             "status": "modified",
-            "patch": "@@ -1,1 +1,1 @@\n-old\n+new"
+            "patch": "@@ -1,1 +1,1 @@\n-old\n+new",
         }
     ]
     page2_data = [
-        {
-            "filename": "file2.js",
-            "status": "added",
-            "patch": "@@ -0,0 +1,1 @@\n+added"
-        }
+        {"filename": "file2.js", "status": "added", "patch": "@@ -0,0 +1,1 @@\n+added"}
     ]
 
     mock_response1 = Mock()
@@ -124,13 +124,9 @@ def test_get_pull_request_file_changes_pagination(mock_requests, mock_create_hea
         {
             "filename": "file1.py",
             "status": "modified",
-            "patch": "@@ -1,1 +1,1 @@\n-old\n+new"
+            "patch": "@@ -1,1 +1,1 @@\n-old\n+new",
         },
-        {
-            "filename": "file2.js",
-            "status": "added",
-            "patch": "@@ -0,0 +1,1 @@\n+added"
-        }
+        {"filename": "file2.js", "status": "added", "patch": "@@ -0,0 +1,1 @@\n+added"},
     ]
 
     assert result == expected
@@ -143,29 +139,31 @@ def test_get_pull_request_file_changes_pagination(mock_requests, mock_create_hea
     assert calls[2][1]["params"] == {"per_page": 100, "page": 3}
 
 
-def test_get_pull_request_file_changes_filter_no_patch(mock_requests, mock_create_headers):
+def test_get_pull_request_file_changes_filter_no_patch(
+    mock_requests, mock_create_headers
+):
     """Test filtering of files without patch field."""
     mock_response_data = [
         {
             "filename": "file1.py",
             "status": "modified",
-            "patch": "@@ -1,1 +1,1 @@\n-old\n+new"
+            "patch": "@@ -1,1 +1,1 @@\n-old\n+new",
         },
         {
             "filename": "file2.js",
-            "status": "renamed"
+            "status": "renamed",
             # No patch field - should be filtered out
         },
         {
             "filename": "file3.txt",
             "status": "added",
-            "patch": "@@ -0,0 +1,1 @@\n+content"
+            "patch": "@@ -0,0 +1,1 @@\n+content",
         },
         {
             "filename": "binary_file.png",
-            "status": "added"
+            "status": "added",
             # No patch field - should be filtered out
-        }
+        },
     ]
 
     mock_response = Mock()
@@ -186,19 +184,21 @@ def test_get_pull_request_file_changes_filter_no_patch(mock_requests, mock_creat
         {
             "filename": "file1.py",
             "status": "modified",
-            "patch": "@@ -1,1 +1,1 @@\n-old\n+new"
+            "patch": "@@ -1,1 +1,1 @@\n-old\n+new",
         },
         {
             "filename": "file3.txt",
             "status": "added",
-            "patch": "@@ -0,0 +1,1 @@\n+content"
-        }
+            "patch": "@@ -0,0 +1,1 @@\n+content",
+        },
     ]
 
     assert result == expected
 
 
-def test_get_pull_request_file_changes_empty_response(mock_requests, mock_create_headers):
+def test_get_pull_request_file_changes_empty_response(
+    mock_requests, mock_create_headers
+):
     """Test handling of empty response."""
     mock_response = Mock()
     mock_response.json.return_value = []
@@ -214,7 +214,9 @@ def test_get_pull_request_file_changes_empty_response(mock_requests, mock_create
     mock_requests.get.assert_called_once()
 
 
-def test_get_pull_request_file_changes_http_error_404(mock_requests, mock_create_headers):
+def test_get_pull_request_file_changes_http_error_404(
+    mock_requests, mock_create_headers
+):
     """Test handling of 404 HTTP error."""
     mock_response = Mock()
     mock_response.status_code = 404
@@ -231,7 +233,9 @@ def test_get_pull_request_file_changes_http_error_404(mock_requests, mock_create
     assert result is None
 
 
-def test_get_pull_request_file_changes_http_error_500(mock_requests, mock_create_headers):
+def test_get_pull_request_file_changes_http_error_500(
+    mock_requests, mock_create_headers
+):
     """Test handling of 500 HTTP error."""
     mock_response = Mock()
     mock_response.status_code = 500
@@ -248,7 +252,9 @@ def test_get_pull_request_file_changes_http_error_500(mock_requests, mock_create
     assert result is None
 
 
-def test_get_pull_request_file_changes_network_error(mock_requests, mock_create_headers):
+def test_get_pull_request_file_changes_network_error(
+    mock_requests, mock_create_headers
+):
     """Test handling of network connection error."""
     mock_requests.get.side_effect = requests.exceptions.ConnectionError("Network error")
 
@@ -260,7 +266,9 @@ def test_get_pull_request_file_changes_network_error(mock_requests, mock_create_
     assert result is None
 
 
-def test_get_pull_request_file_changes_timeout_error(mock_requests, mock_create_headers):
+def test_get_pull_request_file_changes_timeout_error(
+    mock_requests, mock_create_headers
+):
     """Test handling of timeout error."""
     mock_requests.get.side_effect = requests.exceptions.Timeout("Request timeout")
 
@@ -272,7 +280,9 @@ def test_get_pull_request_file_changes_timeout_error(mock_requests, mock_create_
     assert result is None
 
 
-def test_get_pull_request_file_changes_json_decode_error(mock_requests, mock_create_headers):
+def test_get_pull_request_file_changes_json_decode_error(
+    mock_requests, mock_create_headers
+):
     """Test handling of JSON decode error."""
     mock_response = Mock()
     mock_response.json.side_effect = ValueError("Invalid JSON")
@@ -287,7 +297,9 @@ def test_get_pull_request_file_changes_json_decode_error(mock_requests, mock_cre
     assert result is None
 
 
-def test_get_pull_request_file_changes_request_parameters(mock_requests, mock_create_headers):
+def test_get_pull_request_file_changes_request_parameters(
+    mock_requests, mock_create_headers
+):
     """Test that request parameters are correctly set."""
     mock_response = Mock()
     mock_response.json.return_value = []
@@ -307,20 +319,18 @@ def test_get_pull_request_file_changes_request_parameters(mock_requests, mock_cr
         url=url,
         headers={"Authorization": "Bearer test_token"},
         params={"per_page": 100, "page": 1},
-        timeout=120
+        timeout=120,
     )
 
 
 def test_get_pull_request_file_changes_large_patch(mock_requests, mock_create_headers):
     """Test handling of files with large patch content."""
-    large_patch = "@@ -1,100 +1,100 @@\n" + "\n".join([f"-old line {i}\n+new line {i}" for i in range(50)])
-    
+    large_patch = "@@ -1,100 +1,100 @@\n" + "\n".join(
+        [f"-old line {i}\n+new line {i}" for i in range(50)]
+    )
+
     mock_response_data = [
-        {
-            "filename": "large_file.py",
-            "status": "modified",
-            "patch": large_patch
-        }
+        {"filename": "large_file.py", "status": "modified", "patch": large_patch}
     ]
 
     mock_response = Mock()
@@ -338,39 +348,37 @@ def test_get_pull_request_file_changes_large_patch(mock_requests, mock_create_he
     )
 
     expected = [
-        {
-            "filename": "large_file.py",
-            "status": "modified",
-            "patch": large_patch
-        }
+        {"filename": "large_file.py", "status": "modified", "patch": large_patch}
     ]
 
     assert result == expected
 
 
-def test_get_pull_request_file_changes_mixed_file_types(mock_requests, mock_create_headers):
+def test_get_pull_request_file_changes_mixed_file_types(
+    mock_requests, mock_create_headers
+):
     """Test handling of mixed file types and statuses."""
     mock_response_data = [
         {
             "filename": "src/main.py",
             "status": "modified",
-            "patch": "@@ -10,1 +10,1 @@\n-    old_code()\n+    new_code()"
+            "patch": "@@ -10,1 +10,1 @@\n-    old_code()\n+    new_code()",
         },
         {
             "filename": "tests/test_main.py",
             "status": "added",
-            "patch": "@@ -0,0 +1,10 @@\n+def test_new_feature():\n+    assert True"
+            "patch": "@@ -0,0 +1,10 @@\n+def test_new_feature():\n+    assert True",
         },
         {
             "filename": "old_file.py",
             "status": "removed",
-            "patch": "@@ -1,5 +0,0 @@\n-def old_function():\n-    pass"
+            "patch": "@@ -1,5 +0,0 @@\n-def old_function():\n-    pass",
         },
         {
             "filename": "README.md",
             "status": "modified",
-            "patch": "@@ -1,1 +1,2 @@\n # Project\n+\n+Updated documentation"
-        }
+            "patch": "@@ -1,1 +1,2 @@\n # Project\n+\n+Updated documentation",
+        },
     ]
 
     mock_response = Mock()
@@ -388,8 +396,11 @@ def test_get_pull_request_file_changes_mixed_file_types(mock_requests, mock_crea
     )
 
     assert len(result) == 4
-    assert all("filename" in change and "status" in change and "patch" in change for change in result)
-    
+    assert all(
+        "filename" in change and "status" in change and "patch" in change
+        for change in result
+    )
+
     # Verify specific files are included
     filenames = [change["filename"] for change in result]
     assert "src/main.py" in filenames
@@ -398,24 +409,26 @@ def test_get_pull_request_file_changes_mixed_file_types(mock_requests, mock_crea
     assert "README.md" in filenames
 
 
-def test_get_pull_request_file_changes_special_characters_in_filename(mock_requests, mock_create_headers):
+def test_get_pull_request_file_changes_special_characters_in_filename(
+    mock_requests, mock_create_headers
+):
     """Test handling of filenames with special characters."""
     mock_response_data = [
         {
             "filename": "file with spaces.py",
             "status": "modified",
-            "patch": "@@ -1,1 +1,1 @@\n-old\n+new"
+            "patch": "@@ -1,1 +1,1 @@\n-old\n+new",
         },
         {
             "filename": "file-with-dashes.js",
             "status": "added",
-            "patch": "@@ -0,0 +1,1 @@\n+content"
+            "patch": "@@ -0,0 +1,1 @@\n+content",
         },
         {
             "filename": "file_with_underscores.txt",
             "status": "modified",
-            "patch": "@@ -1,1 +1,1 @@\n-before\n+after"
-        }
+            "patch": "@@ -1,1 +1,1 @@\n-before\n+after",
+        },
     ]
 
     mock_response = Mock()
@@ -442,16 +455,12 @@ def test_get_pull_request_file_changes_special_characters_in_filename(mock_reque
 def test_get_pull_request_file_changes_empty_patch(mock_requests, mock_create_headers):
     """Test handling of files with empty patch content."""
     mock_response_data = [
-        {
-            "filename": "file1.py",
-            "status": "modified",
-            "patch": ""  # Empty patch
-        },
+        {"filename": "file1.py", "status": "modified", "patch": ""},  # Empty patch
         {
             "filename": "file2.py",
             "status": "modified",
-            "patch": "@@ -1,1 +1,1 @@\n-old\n+new"  # Non-empty patch
-        }
+            "patch": "@@ -1,1 +1,1 @@\n-old\n+new",  # Non-empty patch
+        },
     ]
 
     mock_response = Mock()
