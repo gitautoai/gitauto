@@ -116,6 +116,63 @@ source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https
 source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/ISSUE_ID/events/latest/" | python -m json.tool | grep -A 10 -B 5 "error_keyword"
 ```
 
+#### Investigating Token/Context Limit Errors (e.g., AGENT-146)
+
+When a Sentry issue shows a token limit error (e.g., "167,154 token context limit"), find the actual input that caused it:
+
+```bash
+# 1. Get the Sentry error details to find CloudWatch URL
+source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" \
+  "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/AGENT-146/events/latest/" | \
+  python -m json.tool | grep -A 5 "cloudwatch"
+
+# 2. Extract log stream and timestamps from CloudWatch URL
+# Example URL: https://console.aws.amazon.com/cloudwatch/home?region=us-west-1#logEventViewer:group=/aws/lambda/pr-agent-prod;stream=2025/01/03/pr-agent-prod[$LATEST]abc123;start=2025-01-03T12:00:00Z;end=2025-01-03T12:05:00Z
+#
+# Extract: stream=2025/01/03/pr-agent-prod[$LATEST]abc123
+
+# 3. Convert timestamps to epoch milliseconds
+python3 -c "import datetime; dt = datetime.datetime(2025, 1, 3, 12, 0, 0); print(int(dt.timestamp() * 1000))"
+
+# 4. Get the actual log with the input that caused the error
+aws logs get-log-events \
+  --log-group-name "/aws/lambda/pr-agent-prod" \
+  --log-stream-name "2025/01/03/pr-agent-prod[\$LATEST]abc123" \
+  --start-time START_EPOCH_MS \
+  --end-time END_EPOCH_MS \
+  --limit 200 > /tmp/agent_error_log.txt
+
+# 5. Extract the exact input from the log (usually in JSON format)
+cat /tmp/agent_error_log.txt | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+for event in data['events']:
+    msg = event['message']
+    if 'input' in msg or 'payload' in msg:
+        # Parse the Lambda invocation payload
+        try:
+            parsed = json.loads(msg)
+            if 'body' in parsed:
+                body = json.loads(parsed['body'])
+                # Save the exact input
+                with open('/tmp/exact_input.json', 'w') as f:
+                    json.dump(body, f, indent=2)
+                print(f'Input size: {len(json.dumps(body))} chars')
+                break
+        except:
+            continue
+"
+
+# 6. Analyze what's consuming tokens
+cat /tmp/exact_input.json | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+for key, value in data.items():
+    size = len(json.dumps(value))
+    print(f'{key}: {size:,} chars ({size/len(json.dumps(data))*100:.1f}%)')
+"
+```
+
 #### Required Environment Variables
 
 The following variables must be set in .env file:
