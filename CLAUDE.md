@@ -116,74 +116,85 @@ source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https
 source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/ISSUE_ID/events/latest/" | python -m json.tool | grep -A 10 -B 5 "error_keyword"
 ```
 
-#### Investigating Token/Context Limit Errors (e.g., AGENT-146)
+#### Investigating Token/Context Limit Errors (e.g., AGENT-146) 
 
 When a Sentry issue shows a token limit error (e.g., "167,154 token context limit"), find the actual input that caused it:
 
 ```bash
-# 1. Get the Sentry error details including request ID
+# 1. Get the CloudWatch URL from Sentry error
 source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" \
   "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/AGENT-146/events/latest/" | \
-  python -m json.tool > /tmp/sentry_error.json
+  python -m json.tool | grep -A 5 "cloudwatch"
 
-# Extract CloudWatch info and request ID
-cat /tmp/sentry_error.json | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-# Get CloudWatch URL
-contexts = data.get('contexts', {})
-cloudwatch = contexts.get('cloudwatch logs', {})
-print(f'Log Stream: {cloudwatch.get(\"log_stream\")}')
-print(f'CloudWatch URL: {cloudwatch.get(\"url\")}')
-# Get Lambda request ID
-lambda_info = contexts.get('lambda', {})
-print(f'Request ID: {lambda_info.get(\"aws_request_id\")}')
-"
+# Example output:
+# "cloudwatch logs": {
+#     "log_stream": "2025/09/04/pr-agent-prod[$LATEST]841315c5054c49ca80316cf2861696a3",
+#     "url": "https://console.aws.amazon.com/cloudwatch/home?region=us-west-1#logEventViewer:group=/aws/lambda/pr-agent-prod;stream=2025/09/04/pr-agent-prod[$LATEST]841315c5054c49ca80316cf2861696a3;start=2025-09-04T13:27:13Z;end=2025-09-04T13:27:36Z"
+# }
 
-# 2. Search for the error by request ID (more reliable than timestamps)
-REQUEST_ID="YOUR_REQUEST_ID"  # From step 1
-# Note: Adjust time range based on when error occurred
-# For recent errors (within last 24 hours):
-aws logs filter-log-events \
+# 2. Extract stream name and convert timestamps from URL
+# Stream: 2025/09/04/pr-agent-prod[$LATEST]841315c5054c49ca80316cf2861696a3
+# Start: 2025-09-04T13:27:13Z -> epoch milliseconds
+python3 -c "import datetime; dt = datetime.datetime(2025, 9, 4, 13, 27, 13); print(int(dt.timestamp() * 1000))"
+
+# 3. Get the actual Lambda invocation log
+STREAM="2025/09/04/pr-agent-prod[\$LATEST]841315c5054c49ca80316cf2861696a3"
+aws logs get-log-events \
   --log-group-name "/aws/lambda/pr-agent-prod" \
-  --filter-pattern "\"$REQUEST_ID\"" \
-  --start-time $(date -d '24 hours ago' +%s)000 \
-  --end-time $(date +%s)000 > /tmp/agent_error_log.json
+  --log-stream-name "$STREAM" \
+  --start-time 1756960033000 \
+  --end-time 1756960056000 \
+  --limit 200 > /tmp/cloudwatch_raw.json
 
-# For specific date range (if logs are older):
-# Convert error timestamp to epoch: 
-# python3 -c "import datetime; dt = datetime.datetime(2025, 9, 4, 13, 27, 13); print(int(dt.timestamp() * 1000))"
-# Then use: --start-time START_EPOCH_MS --end-time END_EPOCH_MS
-
-# 3. Extract the exact input that caused the error
-cat /tmp/agent_error_log.json | python3 -c "
+# 4. Extract the Lambda invocation payload with the webhook body
+cat /tmp/cloudwatch_raw.json | python3 -c "
 import sys, json, re
 data = json.load(sys.stdin)
 for event in data.get('events', []):
     msg = event['message']
-    # Look for the actual webhook payload
-    if 'Received task payload' in msg or 'body' in msg:
-        # Extract JSON from the log message
-        match = re.search(r'(\{.*\})', msg, re.DOTALL)
-        if match:
-            try:
-                payload = json.loads(match.group(1))
-                # The webhook body is usually stringified JSON
-                if 'body' in payload:
-                    body = json.loads(payload['body'])
-                    with open('/tmp/agent_146_exact_input.json', 'w') as f:
+    # Look for the task execution with the payload
+    if 'Task execution started' in msg or 'Received' in msg or '{' in msg:
+        # Try to extract JSON payload
+        try:
+            # Find JSON in the message (handling escaped quotes)
+            start = msg.find('{')
+            if start != -1:
+                json_str = msg[start:]
+                # Handle escaped JSON
+                json_str = json_str.replace('\\\\\"', '\"')
+                json_str = json_str.replace('\\\\n', '\\n')
+                
+                # Try to parse
+                parsed = json.loads(json_str)
+                if 'body' in parsed:
+                    # The webhook body is stringified JSON
+                    body = json.loads(parsed['body'])
+                    
+                    # Save exact input
+                    with open('/tmp/exact_input.json', 'w') as f:
                         json.dump(body, f, indent=2)
-                    print(f'Found input! Size: {len(json.dumps(body)):,} chars')
-                    # Show field breakdown
+                    
+                    print(f'Found webhook payload!')
+                    print(f'Total size: {len(json.dumps(body)):,} chars')
+                    
+                    # Show field sizes
                     for key, value in body.items():
-                        size = len(str(value))
-                        print(f'  {key}: {size:,} chars')
-            except json.JSONDecodeError as e:
-                continue
+                        size = len(json.dumps(value))
+                        pct = (size / len(json.dumps(body))) * 100
+                        print(f'  {key}: {size:,} chars ({pct:.1f}%)')
+                    
+                    # Save the problematic field
+                    if 'error_log' in body:
+                        with open('/tmp/error_log.txt', 'w') as f:
+                            f.write(body['error_log'])
+                        print(f'\\nSaved error_log to /tmp/error_log.txt')
+        except:
+            continue
 "
 
-# 4. If the input is too large/complex, save to file and analyze
-cat /tmp/agent_146_exact_input.json | python3 -c "
+# 5. If the above doesn't work (complex escaping), manually extract
+# Sometimes the JSON is heavily escaped. Save raw and process:
+cat /tmp/cloudwatch_raw.json | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
 
