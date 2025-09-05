@@ -1,9 +1,8 @@
-import json
-import pytest
-import requests
-from unittest.mock import Mock, patch
-import logging
 import inspect
+import json
+from unittest.mock import Mock, patch
+
+import requests
 
 from services.github.check_suites.get_circleci_workflow_id import (
     get_circleci_workflow_ids_from_check_suite,
@@ -117,7 +116,9 @@ def test_get_circleci_workflow_ids_invalid_json(mock_create_headers, mock_get):
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
 @patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
 @patch("services.github.check_suites.get_circleci_workflow_id.logging.error")
-def test_get_circleci_workflow_ids_api_error(mock_logging_error, mock_create_headers, mock_get):
+def test_get_circleci_workflow_ids_api_error(
+    mock_logging_error, mock_create_headers, mock_get
+):
     """Test API error response and logging"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
 
@@ -131,11 +132,12 @@ def test_get_circleci_workflow_ids_api_error(mock_logging_error, mock_create_hea
     )
 
     assert not result
-    
+
     # Verify logging was called with correct parameters
     mock_logging_error.assert_called_once_with(
         "Failed to get check runs for check suite %s: %s",
-        12345, "Internal Server Error"
+        12345,
+        "Internal Server Error",
     )
 
 
@@ -172,7 +174,7 @@ def test_get_circleci_workflow_ids_empty_check_runs(mock_create_headers, mock_ge
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
@@ -263,13 +265,15 @@ def test_get_circleci_workflow_ids_different_error_codes(mock_create_headers, mo
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
 @patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
 @patch("services.github.check_suites.get_circleci_workflow_id.logging.error")
-def test_get_circleci_workflow_ids_401_unauthorized(mock_logging_error, mock_create_headers, mock_get):
+def test_get_circleci_workflow_ids_401_unauthorized(
+    mock_logging_error, mock_create_headers, mock_get
+):
     """Test 401 Unauthorized error with logging"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
 
@@ -282,10 +286,9 @@ def test_get_circleci_workflow_ids_401_unauthorized(mock_logging_error, mock_cre
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
     mock_logging_error.assert_called_once_with(
-        "Failed to get check runs for check suite %s: %s",
-        12345, "Unauthorized"
+        "Failed to get check runs for check suite %s: %s", 12345, "Unauthorized"
     )
 
 
@@ -294,7 +297,7 @@ def test_get_circleci_workflow_ids_401_unauthorized(mock_logging_error, mock_cre
 def test_get_circleci_workflow_ids_network_timeout(mock_create_headers, mock_get):
     """Test network timeout exception"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
-    
+
     # Simulate timeout exception
     mock_get.side_effect = requests.exceptions.Timeout("Request timed out")
 
@@ -303,7 +306,7 @@ def test_get_circleci_workflow_ids_network_timeout(mock_create_headers, mock_get
     )
 
     # Should return default value due to handle_exceptions decorator
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
@@ -311,7 +314,7 @@ def test_get_circleci_workflow_ids_network_timeout(mock_create_headers, mock_get
 def test_get_circleci_workflow_ids_connection_error(mock_create_headers, mock_get):
     """Test connection error exception"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
-    
+
     # Simulate connection error
     mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
 
@@ -320,27 +323,33 @@ def test_get_circleci_workflow_ids_connection_error(mock_create_headers, mock_ge
     )
 
     # Should return default value due to handle_exceptions decorator
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
 @patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
-def test_get_circleci_workflow_ids_malformed_response_json(mock_create_headers, mock_get):
+def test_get_circleci_workflow_ids_malformed_response_json(
+    mock_create_headers, mock_get
+):
     """Test when the API response itself has malformed JSON"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
-    
+
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
     mock_get.return_value = mock_response
 
-    result = get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "test-token")
-    assert result == []
+    result = get_circleci_workflow_ids_from_check_suite(
+        "owner", "repo", 12345, "test-token"
+    )
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
 @patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
-def test_get_circleci_workflow_ids_mixed_valid_invalid_external_ids(mock_create_headers, mock_get):
+def test_get_circleci_workflow_ids_mixed_valid_invalid_external_ids(
+    mock_create_headers, mock_get
+):
     """Test mix of valid and invalid external_ids"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
 
@@ -363,7 +372,7 @@ def test_get_circleci_workflow_ids_mixed_valid_invalid_external_ids(mock_create_
     )
 
     # Should return empty list due to handle_exceptions catching JSON decode error
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
@@ -377,9 +386,7 @@ def test_get_circleci_workflow_ids_large_dataset(mock_create_headers, mock_get):
     expected_ids = []
     for i in range(100):
         workflow_id = f"workflow-{i:03d}"
-        check_runs.append({
-            "external_id": json.dumps({"workflow-id": workflow_id})
-        })
+        check_runs.append({"external_id": json.dumps({"workflow-id": workflow_id})})
         expected_ids.append(workflow_id)
 
     mock_response = Mock()
@@ -397,7 +404,9 @@ def test_get_circleci_workflow_ids_large_dataset(mock_create_headers, mock_get):
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
 @patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
-def test_get_circleci_workflow_ids_special_characters_in_workflow_id(mock_create_headers, mock_get):
+def test_get_circleci_workflow_ids_special_characters_in_workflow_id(
+    mock_create_headers, mock_get
+):
     """Test workflow IDs with special characters"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
 
@@ -420,10 +429,10 @@ def test_get_circleci_workflow_ids_special_characters_in_workflow_id(mock_create
 
     expected = [
         "workflow-with-dashes",
-        "workflow_with_underscores", 
+        "workflow_with_underscores",
         "workflow.with.dots",
         "workflow@with@symbols",
-        "workflow with spaces"
+        "workflow with spaces",
     ]
     assert result == expected
 
@@ -454,7 +463,9 @@ def test_get_circleci_workflow_ids_unicode_characters(mock_create_headers, mock_
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
 @patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
 @patch("services.github.check_suites.get_circleci_workflow_id.logging.error")
-def test_get_circleci_workflow_ids_403_forbidden_with_logging(mock_logging_error, mock_create_headers, mock_get):
+def test_get_circleci_workflow_ids_403_forbidden_with_logging(
+    mock_logging_error, mock_create_headers, mock_get
+):
     """Test 403 Forbidden error with logging verification"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
 
@@ -467,10 +478,11 @@ def test_get_circleci_workflow_ids_403_forbidden_with_logging(mock_logging_error
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
     mock_logging_error.assert_called_once_with(
         "Failed to get check runs for check suite %s: %s",
-        12345, "Forbidden - insufficient permissions"
+        12345,
+        "Forbidden - insufficient permissions",
     )
 
 
@@ -479,7 +491,7 @@ def test_get_circleci_workflow_ids_403_forbidden_with_logging(mock_logging_error
 def test_get_circleci_workflow_ids_http_error_exception(mock_create_headers, mock_get):
     """Test HTTP error exception handling"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
-    
+
     # Simulate HTTP error exception
     mock_get.side_effect = requests.exceptions.HTTPError("HTTP Error occurred")
 
@@ -488,7 +500,7 @@ def test_get_circleci_workflow_ids_http_error_exception(mock_create_headers, moc
     )
 
     # Should return default value due to handle_exceptions decorator
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
@@ -496,7 +508,7 @@ def test_get_circleci_workflow_ids_http_error_exception(mock_create_headers, moc
 def test_get_circleci_workflow_ids_request_exception(mock_create_headers, mock_get):
     """Test general request exception handling"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
-    
+
     # Simulate general request exception
     mock_get.side_effect = requests.exceptions.RequestException("Request failed")
 
@@ -505,7 +517,7 @@ def test_get_circleci_workflow_ids_request_exception(mock_create_headers, mock_g
     )
 
     # Should return default value due to handle_exceptions decorator
-    assert result == []
+    assert not result
 
 
 def test_get_circleci_workflow_ids_function_signature():
@@ -517,10 +529,12 @@ def test_get_circleci_workflow_ids_function_signature():
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
 @patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
-def test_get_circleci_workflow_ids_verify_url_construction(mock_create_headers, mock_get):
+def test_get_circleci_workflow_ids_verify_url_construction(
+    mock_create_headers, mock_get
+):
     """Test that the URL is constructed correctly with different parameters"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
-    
+
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"check_runs": []}
@@ -544,15 +558,13 @@ def test_get_circleci_workflow_ids_verify_url_construction(mock_create_headers, 
 def test_get_circleci_workflow_ids_verify_headers_called(mock_create_headers, mock_get):
     """Test that create_headers is called with the correct token"""
     mock_create_headers.return_value = {"Authorization": "Bearer custom-token"}
-    
+
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"check_runs": []}
     mock_get.return_value = mock_response
 
-    get_circleci_workflow_ids_from_check_suite(
-        "owner", "repo", 12345, "custom-token"
-    )
+    get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "custom-token")
 
     mock_create_headers.assert_called_once_with("custom-token")
     mock_get.assert_called_once_with(
@@ -567,16 +579,14 @@ def test_get_circleci_workflow_ids_verify_headers_called(mock_create_headers, mo
 def test_get_circleci_workflow_ids_timeout_parameter(mock_create_headers, mock_get):
     """Test that the timeout parameter is set correctly"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
-    
+
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"check_runs": []}
     mock_get.return_value = mock_response
 
-    get_circleci_workflow_ids_from_check_suite(
-        "owner", "repo", 12345, "test-token"
-    )
+    get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "test-token")
 
     # Verify timeout is set to 30 seconds
-    args, kwargs = mock_get.call_args
+    _, kwargs = mock_get.call_args
     assert kwargs["timeout"] == 30

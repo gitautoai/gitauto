@@ -1,7 +1,8 @@
 # pylint: disable=redefined-outer-name
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from utils.files.should_test_file import should_test_file
 
@@ -65,8 +66,7 @@ class TestShouldTestFile:
         mock_evaluate_condition.return_value = None
 
         result = should_test_file(
-            file_path=sample_file_path,
-            content=sample_code_content
+            file_path=sample_file_path, content=sample_code_content
         )
 
         # Should return False when evaluation fails (avoid generating garbage)
@@ -80,8 +80,7 @@ class TestShouldTestFile:
         mock_evaluate_condition.side_effect = Exception("API Error")
 
         result = should_test_file(
-            file_path=sample_file_path,
-            content=sample_code_content
+            file_path=sample_file_path, content=sample_code_content
         )
 
         # Should return False when exception occurs (handled by decorator)
@@ -114,7 +113,7 @@ class TestShouldTestFile:
         # Verify the system prompt contains expected keywords
         call_args = mock_evaluate_condition.call_args
         system_prompt = call_args[1]["system_prompt"]
-        
+
         # Check for key phrases in the system prompt
         assert "experienced senior engineer" in system_prompt
         assert "practical and strict" in system_prompt
@@ -133,7 +132,7 @@ class TestShouldTestFile:
 
         assert result is True
         mock_evaluate_condition.assert_called_once()
-        
+
         # Verify empty file path is still passed correctly
         call_args = mock_evaluate_condition.call_args
         content_arg = call_args[1]["content"]
@@ -149,7 +148,7 @@ class TestShouldTestFile:
 
         assert result is False
         mock_evaluate_condition.assert_called_once()
-        
+
         # Verify empty content is passed correctly
         call_args = mock_evaluate_condition.call_args
         content_arg = call_args[1]["content"]
@@ -168,19 +167,19 @@ class TestShouldTestFile:
 class DataProcessor:
     def process(self, data):
         return [item.upper() for item in data if item]"""
-        
+
         mock_evaluate_condition.return_value = True
 
         result = should_test_file(sample_file_path, multiline_content)
 
         assert result is True
         mock_evaluate_condition.assert_called_once()
-        
+
         # Verify multiline content is preserved
         call_args = mock_evaluate_condition.call_args
         content_arg = call_args[1]["content"]
         assert multiline_content in content_arg
-        assert content_arg.count('\n') >= multiline_content.count('\n')
+        assert content_arg.count("\n") >= multiline_content.count("\n")
 
     def test_should_test_file_with_special_characters_in_content(
         self, mock_evaluate_condition, sample_file_path
@@ -193,7 +192,7 @@ class DataProcessor:
 
         assert result is True
         mock_evaluate_condition.assert_called_once()
-        
+
         # Verify special characters are preserved
         call_args = mock_evaluate_condition.call_args
         content_arg = call_args[1]["content"]
@@ -224,15 +223,15 @@ class DataProcessor:
             "helper.go",
             "utils.ts",
             "config.json",
-            "README.md"
+            "README.md",
         ]
-        
+
         mock_evaluate_condition.return_value = True
 
         for file_path in file_paths:
             result = should_test_file(file_path, sample_code_content)
             assert result is True
-            
+
             # Verify each file path is passed correctly
             call_args = mock_evaluate_condition.call_args
             content_arg = call_args[1]["content"]
@@ -249,13 +248,13 @@ class DataProcessor:
         # Verify evaluate_condition was called exactly once with correct parameters
         mock_evaluate_condition.assert_called_once()
         call_args = mock_evaluate_condition.call_args
-        
+
         # Should be called with keyword arguments
         assert "content" in call_args[1]
         assert "system_prompt" in call_args[1]
-        
+
         # Should not have positional arguments
         assert len(call_args[0]) == 0
-        
+
         # Should have exactly 2 keyword arguments
         assert len(call_args[1]) == 2

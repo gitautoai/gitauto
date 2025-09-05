@@ -2,6 +2,8 @@ import json
 from unittest.mock import patch, MagicMock
 import pytest
 import requests
+from services.circleci import circleci_types
+from services.circleci import get_job_artifacts as circleci_artifacts
 from services.circleci.get_job_artifacts import get_circleci_job_artifacts
 from config import TIMEOUT
 
@@ -180,6 +182,7 @@ def test_get_circleci_job_artifacts_timeout_parameter():
         # Verify the timeout parameter is correctly passed
         assert mock_get.call_args[1]["timeout"] == TIMEOUT
 
+
 def test_get_circleci_job_artifacts_with_node_index():
     """Test successful retrieval with artifacts containing node_index."""
     mock_response = MagicMock()
@@ -299,7 +302,7 @@ def test_get_circleci_job_artifacts_url_construction():
         get_circleci_job_artifacts(
             project_slug="bb/bitbucket-user/repo-name",
             job_number="999",
-            circle_token="test-token"
+            circle_token="test-token",
         )
 
         expected_url = "https://circleci.com/api/v2/project/bb/bitbucket-user/repo-name/999/artifacts"
@@ -324,9 +327,7 @@ def test_get_circleci_job_artifacts_various_http_errors(status_code):
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
-            project_slug="gh/owner/repo",
-            job_number="909",
-            circle_token="test-token"
+            project_slug="gh/owner/repo", job_number="909", circle_token="test-token"
         )
 
         assert result == []
@@ -399,6 +400,7 @@ def test_get_circleci_job_artifacts_request_exception():
 
         assert result == []
 
+
 def test_get_circleci_job_artifacts_malformed_json_response():
     """Test handling of malformed JSON response."""
     mock_response = MagicMock()
@@ -437,14 +439,14 @@ def test_get_circleci_job_artifacts_type_annotation_coverage():
     """Test to ensure type annotation line coverage for list[CircleCIArtifact]()."""
     mock_response = MagicMock()
     mock_response.status_code = 404
-    
+
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
-        
+
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
         )
-        
+
         # This should trigger the list[CircleCIArtifact]() return on line 19
         assert result == []
         assert isinstance(result, list)
@@ -453,12 +455,14 @@ def test_get_circleci_job_artifacts_type_annotation_coverage():
 def test_get_circleci_job_artifacts_ssl_error():
     """Test handling of SSL errors."""
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
-        mock_get.side_effect = requests.exceptions.SSLError("SSL certificate verification failed")
-        
+        mock_get.side_effect = requests.exceptions.SSLError(
+            "SSL certificate verification failed"
+        )
+
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="606", circle_token="test-token"
         )
-        
+
         assert result == []
 
 
@@ -466,11 +470,11 @@ def test_get_circleci_job_artifacts_dns_error():
     """Test handling of DNS resolution errors."""
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.side_effect = requests.exceptions.ConnectionError("DNS lookup failed")
-        
+
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="707", circle_token="test-token"
         )
-        
+
         assert result == []
 
 
@@ -479,16 +483,16 @@ def test_get_circleci_job_artifacts_with_special_characters():
     mock_response = MagicMock()
     mock_response.json.return_value = {"items": []}
     mock_response.raise_for_status.return_value = None
-    
+
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
-        
+
         result = get_circleci_job_artifacts(
             project_slug="gh/user-name/repo_name.test",
             job_number="123",
-            circle_token="test-token"
+            circle_token="test-token",
         )
-        
+
         expected_url = "https://circleci.com/api/v2/project/gh/user-name/repo_name.test/123/artifacts"
         mock_get.assert_called_once_with(
             url=expected_url,
@@ -503,17 +507,17 @@ def test_get_circleci_job_artifacts_large_job_number():
     mock_response = MagicMock()
     mock_response.json.return_value = {"items": []}
     mock_response.raise_for_status.return_value = None
-    
+
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
-        
+
         large_job_number = "999999999999"
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo",
             job_number=large_job_number,
-            circle_token="test-token"
+            circle_token="test-token",
         )
-        
+
         expected_url = f"https://circleci.com/api/v2/project/gh/owner/repo/{large_job_number}/artifacts"
         mock_get.assert_called_once_with(
             url=expected_url,
@@ -528,23 +532,25 @@ def test_get_circleci_job_artifacts_unicode_characters():
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "items": [
-            {"path": "测试/artifact.txt", "url": "https://example.com/测试/artifact.txt", "node_index": 0}
+            {
+                "path": "测试/artifact.txt",
+                "url": "https://example.com/测试/artifact.txt",
+                "node_index": 0,
+            }
         ]
     }
     mock_response.raise_for_status.return_value = None
-    
+
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
-        
+
         result = get_circleci_job_artifacts(
-            project_slug="gh/用户/项目",
-            job_number="123",
-            circle_token="测试-token"
+            project_slug="gh/用户/项目", job_number="123", circle_token="测试-token"
         )
-        
+
         assert len(result) == 1
         assert result[0]["path"] == "测试/artifact.txt"
-        
+
         expected_url = "https://circleci.com/api/v2/project/gh/用户/项目/123/artifacts"
         mock_get.assert_called_once_with(
             url=expected_url,
@@ -563,22 +569,22 @@ def test_get_circleci_job_artifacts_response_with_extra_fields():
                 "url": "https://example.com/lcov.info",
                 "node_index": 0,
                 "extra_field": "extra_value",
-                "metadata": {"size": 1024, "created_at": "2023-01-01T00:00:00Z"}
+                "metadata": {"size": 1024, "created_at": "2023-01-01T00:00:00Z"},
             }
         ],
         "next_page_token": None,
         "total_count": 1,
-        "extra_response_field": "extra_response_value"
+        "extra_response_field": "extra_response_value",
     }
     mock_response.raise_for_status.return_value = None
-    
+
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
-        
+
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
         )
-        
+
         assert len(result) == 1
         assert result[0]["path"] == "coverage/lcov.info"
 
@@ -587,16 +593,18 @@ def test_get_circleci_job_artifacts_attribute_error():
     """Test handling of AttributeError exceptions."""
     mock_response = MagicMock()
     # Simulate an AttributeError when accessing response.json()
-    mock_response.json.side_effect = AttributeError("'NoneType' object has no attribute 'json'")
+    mock_response.json.side_effect = AttributeError(
+        "'NoneType' object has no attribute 'json'"
+    )
     mock_response.raise_for_status.return_value = None
-    
+
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
-        
+
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
         )
-        
+
         assert result == []
 
 
@@ -606,14 +614,14 @@ def test_get_circleci_job_artifacts_key_error():
     # Simulate a KeyError when accessing response data
     mock_response.json.side_effect = KeyError("Missing required key")
     mock_response.raise_for_status.return_value = None
-    
+
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
-        
+
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
         )
-        
+
         assert result == []
 
 
@@ -623,14 +631,14 @@ def test_get_circleci_job_artifacts_type_error():
     # Simulate a TypeError when processing response
     mock_response.json.side_effect = TypeError("unsupported operand type(s)")
     mock_response.raise_for_status.return_value = None
-    
+
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
-        
+
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
         )
-        
+
         assert result == []
 
 
@@ -640,29 +648,27 @@ def test_get_circleci_job_artifacts_generic_exception():
     # Simulate a generic exception
     mock_response.json.side_effect = Exception("Unexpected error occurred")
     mock_response.raise_for_status.return_value = None
-    
+
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
-        
+
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
         )
-        
+
         assert result == []
 
 
 def test_get_circleci_job_artifacts_import_coverage():
     """Test to ensure import statements are covered."""
     # This test ensures that the import statements and type annotations are covered
-    from services.circleci.get_job_artifacts import get_circleci_job_artifacts
-    from services.circleci.circleci_types import CircleCIArtifact, CircleCIJobArtifactsData
-    
+
     # Verify the function exists and is callable
-    assert callable(get_circleci_job_artifacts)
-    
+    assert callable(circleci_artifacts.get_circleci_job_artifacts)
+
     # Verify the types are imported correctly
-    assert CircleCIArtifact is not None
-    assert CircleCIJobArtifactsData is not None
+    assert circleci_types.CircleCIArtifact is not None
+    assert circleci_types.CircleCIJobArtifactsData is not None
 
 
 def test_get_circleci_job_artifacts_404_return_type():
@@ -671,20 +677,20 @@ def test_get_circleci_job_artifacts_404_return_type():
     mock_response.status_code = 404
     # Ensure raise_for_status is not called for 404
     mock_response.raise_for_status = MagicMock()
-    
+
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
-        
+
         result = get_circleci_job_artifacts(
             project_slug="gh/owner/repo", job_number="404", circle_token="test-token"
         )
-        
+
         # Verify the result is an empty list (from line 19: return list[CircleCIArtifact]())
         assert result == []
         assert isinstance(result, list)
-        
+
         # Verify that raise_for_status was NOT called for 404
         mock_response.raise_for_status.assert_not_called()
-        
+
         # Verify that json() was NOT called for 404
         mock_response.json.assert_not_called()

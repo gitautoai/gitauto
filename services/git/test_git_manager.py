@@ -35,15 +35,15 @@ class TestFetchBranch:
     def test_fetch_branch_success(self, mock_run, mock_subprocess_run):
         """Test successful branch fetch"""
         mock_run.return_value = mock_subprocess_run
-        
+
         # Test parameters
         pull_number = 123
         branch_name = "feature-branch"
         repo_dir = "/path/to/repo"
-        
+
         # Call function
         result = fetch_branch(pull_number, branch_name, repo_dir)
-        
+
         # Assertions
         assert result is None  # Function doesn't return anything on success
         mock_run.assert_called_once_with(
@@ -52,35 +52,37 @@ class TestFetchBranch:
             capture_output=True,
             text=True,
             check=True,
-            cwd="/path/to/repo"
+            cwd="/path/to/repo",
         )
 
     @patch("subprocess.run")
-    def test_fetch_branch_with_different_parameters(self, mock_run, mock_subprocess_run):
+    def test_fetch_branch_with_different_parameters(
+        self, mock_run, mock_subprocess_run
+    ):
         """Test fetch_branch with different parameter values"""
         mock_run.return_value = mock_subprocess_run
-        
+
         # Test with different parameters
         pull_number = 456
         branch_name = "bugfix-branch"
         repo_dir = "/different/path"
-        
+
         fetch_branch(pull_number, branch_name, repo_dir)
-        
+
         mock_run.assert_called_once_with(
             "git fetch origin pull/456/head:bugfix-branch",
             shell=True,
             capture_output=True,
             text=True,
             check=True,
-            cwd="/different/path"
+            cwd="/different/path",
         )
 
     @patch("subprocess.run")
     def test_fetch_branch_subprocess_error_raises(self, mock_run):
         """Test that subprocess errors are raised due to handle_exceptions(raise_on_error=True)"""
         mock_run.side_effect = subprocess.CalledProcessError(1, "git fetch")
-        
+
         with pytest.raises(subprocess.CalledProcessError):
             fetch_branch(123, "feature-branch", "/path/to/repo")
 
@@ -88,21 +90,21 @@ class TestFetchBranch:
     def test_fetch_branch_with_special_characters(self, mock_run, mock_subprocess_run):
         """Test fetch_branch with branch names containing special characters"""
         mock_run.return_value = mock_subprocess_run
-        
+
         # Test with branch name containing special characters
         pull_number = 789
         branch_name = "feature/user-auth-fix"
         repo_dir = "/path/to/repo"
-        
+
         fetch_branch(pull_number, branch_name, repo_dir)
-        
+
         mock_run.assert_called_once_with(
             "git fetch origin pull/789/head:feature/user-auth-fix",
             shell=True,
             capture_output=True,
             text=True,
             check=True,
-            cwd="/path/to/repo"
+            cwd="/path/to/repo",
         )
 
 
@@ -116,12 +118,12 @@ class TestGetCurrentBranch:
         mock_result = MagicMock()
         mock_result.stdout = "main\n"
         mock_run.return_value = mock_result
-        
+
         repo_dir = "/path/to/repo"
-        
+
         # Call function
         result = get_current_branch(repo_dir)
-        
+
         # Assertions
         assert result is None  # Function doesn't return anything
         mock_run.assert_called_once_with(
@@ -130,7 +132,7 @@ class TestGetCurrentBranch:
             capture_output=True,
             text=True,
             check=True,
-            cwd="/path/to/repo"
+            cwd="/path/to/repo",
         )
         mock_print.assert_called_once_with("Current branch: `main`")
 
@@ -141,9 +143,9 @@ class TestGetCurrentBranch:
         mock_result = MagicMock()
         mock_result.stdout = "feature-branch\n"
         mock_run.return_value = mock_result
-        
+
         get_current_branch("/different/path")
-        
+
         mock_print.assert_called_once_with("Current branch: `feature-branch`")
 
     @patch("subprocess.run")
@@ -153,18 +155,18 @@ class TestGetCurrentBranch:
         mock_result = MagicMock()
         mock_result.stdout = "  develop  \n"
         mock_run.return_value = mock_result
-        
+
         get_current_branch("/path/to/repo")
-        
+
         mock_print.assert_called_once_with("Current branch: `develop`")
 
     @patch("subprocess.run")
     def test_get_current_branch_subprocess_error_returns_none(self, mock_run):
         """Test that subprocess errors return None due to handle_exceptions(raise_on_error=False)"""
         mock_run.side_effect = subprocess.CalledProcessError(1, "git branch")
-        
+
         result = get_current_branch("/path/to/repo")
-        
+
         assert result is None
 
 
@@ -175,12 +177,12 @@ class TestStartLocalServer:
     def test_start_local_server_success(self, mock_popen, mock_subprocess_popen):
         """Test successful local server start"""
         mock_popen.return_value = mock_subprocess_popen
-        
+
         repo_dir = "/path/to/repo"
-        
+
         # Call function
         result = start_local_server(repo_dir)
-        
+
         # Assertions
         assert result is mock_subprocess_popen
         mock_popen.assert_called_once_with(
@@ -192,12 +194,14 @@ class TestStartLocalServer:
         )
 
     @patch("subprocess.Popen")
-    def test_start_local_server_with_different_path(self, mock_popen, mock_subprocess_popen):
+    def test_start_local_server_with_different_path(
+        self, mock_popen, mock_subprocess_popen
+    ):
         """Test server start with different repository path"""
         mock_popen.return_value = mock_subprocess_popen
-        
+
         start_local_server("/different/repo/path")
-        
+
         mock_popen.assert_called_once_with(
             args="python -m http.server 8080",
             shell=True,
@@ -210,7 +214,7 @@ class TestStartLocalServer:
     def test_start_local_server_popen_error_raises(self, mock_popen):
         """Test that Popen errors are raised due to handle_exceptions(raise_on_error=True)"""
         mock_popen.side_effect = OSError("Failed to start process")
-        
+
         with pytest.raises(OSError):
             start_local_server("/path/to/repo")
 
@@ -222,13 +226,13 @@ class TestSwitchToBranch:
     def test_switch_to_branch_success(self, mock_run, mock_subprocess_run):
         """Test successful branch switch"""
         mock_run.return_value = mock_subprocess_run
-        
+
         branch_name = "feature-branch"
         repo_dir = "/path/to/repo"
-        
+
         # Call function
         result = switch_to_branch(branch_name, repo_dir)
-        
+
         # Assertions
         assert result is None  # Function doesn't return anything on success
         mock_run.assert_called_once_with(
@@ -237,30 +241,32 @@ class TestSwitchToBranch:
             capture_output=True,
             text=True,
             check=True,
-            cwd="/path/to/repo"
+            cwd="/path/to/repo",
         )
 
     @patch("subprocess.run")
-    def test_switch_to_branch_with_special_characters(self, mock_run, mock_subprocess_run):
+    def test_switch_to_branch_with_special_characters(
+        self, mock_run, mock_subprocess_run
+    ):
         """Test branch switch with special characters in branch name"""
         mock_run.return_value = mock_subprocess_run
-        
+
         switch_to_branch("feature/user-auth", "/path/to/repo")
-        
+
         mock_run.assert_called_once_with(
             "git switch feature/user-auth",
             shell=True,
             capture_output=True,
             text=True,
             check=True,
-            cwd="/path/to/repo"
+            cwd="/path/to/repo",
         )
 
     @patch("subprocess.run")
     def test_switch_to_branch_subprocess_error_raises(self, mock_run):
         """Test that subprocess errors are raised due to handle_exceptions(raise_on_error=True)"""
         mock_run.side_effect = subprocess.CalledProcessError(1, "git switch")
-        
+
         with pytest.raises(subprocess.CalledProcessError):
             switch_to_branch("nonexistent-branch", "/path/to/repo")
 
@@ -268,16 +274,16 @@ class TestSwitchToBranch:
     def test_switch_to_branch_with_different_path(self, mock_run, mock_subprocess_run):
         """Test branch switch with different repository path"""
         mock_run.return_value = mock_subprocess_run
-        
+
         switch_to_branch("develop", "/different/repo/path")
-        
+
         mock_run.assert_called_once_with(
             "git switch develop",
             shell=True,
             capture_output=True,
             text=True,
             check=True,
-            cwd="/different/repo/path"
+            cwd="/different/repo/path",
         )
 
 
@@ -288,7 +294,7 @@ class TestHandleExceptionsIntegration:
     def test_fetch_branch_with_generic_exception_raises(self, mock_run):
         """Test that generic exceptions are raised due to handle_exceptions(raise_on_error=True)"""
         mock_run.side_effect = OSError("Permission denied")
-        
+
         with pytest.raises(OSError):
             fetch_branch(123, "feature-branch", "/path/to/repo")
 
@@ -296,16 +302,16 @@ class TestHandleExceptionsIntegration:
     def test_get_current_branch_with_generic_exception_returns_none(self, mock_run):
         """Test that generic exceptions return None due to handle_exceptions(raise_on_error=False)"""
         mock_run.side_effect = OSError("Permission denied")
-        
+
         result = get_current_branch("/path/to/repo")
-        
+
         assert result is None
 
     @patch("subprocess.Popen")
     def test_start_local_server_with_generic_exception_raises(self, mock_popen):
         """Test that generic exceptions are raised due to handle_exceptions(raise_on_error=True)"""
         mock_popen.side_effect = PermissionError("Access denied")
-        
+
         with pytest.raises(PermissionError):
             start_local_server("/path/to/repo")
 
@@ -313,7 +319,7 @@ class TestHandleExceptionsIntegration:
     def test_switch_to_branch_with_generic_exception_raises(self, mock_run):
         """Test that generic exceptions are raised due to handle_exceptions(raise_on_error=True)"""
         mock_run.side_effect = FileNotFoundError("Git not found")
-        
+
         with pytest.raises(FileNotFoundError):
             switch_to_branch("feature-branch", "/path/to/repo")
 
@@ -325,16 +331,16 @@ class TestEdgeCases:
     def test_fetch_branch_with_zero_pull_number(self, mock_run, mock_subprocess_run):
         """Test fetch_branch with pull number 0"""
         mock_run.return_value = mock_subprocess_run
-        
+
         fetch_branch(0, "branch", "/path")
-        
+
         mock_run.assert_called_once_with(
             "git fetch origin pull/0/head:branch",
             shell=True,
             capture_output=True,
             text=True,
             check=True,
-            cwd="/path"
+            cwd="/path",
         )
 
     @patch("subprocess.run")
@@ -344,23 +350,25 @@ class TestEdgeCases:
         mock_result = MagicMock()
         mock_result.stdout = "\n"
         mock_run.return_value = mock_result
-        
+
         get_current_branch("/path/to/repo")
-        
+
         mock_print.assert_called_once_with("Current branch: ``")
 
     @patch("subprocess.run")
-    def test_switch_to_branch_with_empty_branch_name(self, mock_run, mock_subprocess_run):
+    def test_switch_to_branch_with_empty_branch_name(
+        self, mock_run, mock_subprocess_run
+    ):
         """Test switch_to_branch with empty branch name"""
         mock_run.return_value = mock_subprocess_run
-        
+
         switch_to_branch("", "/path/to/repo")
-        
+
         mock_run.assert_called_once_with(
             "git switch ",
             shell=True,
             capture_output=True,
             text=True,
             check=True,
-            cwd="/path/to/repo"
+            cwd="/path/to/repo",
         )
