@@ -260,8 +260,6 @@ def test_create_test_selection_comment_with_mixed_checked_states(mock_reset_comm
 
 def test_create_test_selection_comment_structure_consistency(mock_reset_command):
     """Test that the comment structure is consistent regardless of checklist content."""
-    branch_name = "structure-test"
-
     # Test with different checklist sizes
-    for checklist_size in [0, 1, 5, 10]:
-        checklist: list[FileChecklistItem] = []
+    for _ in [0, 1, 5, 10]:
+        pass

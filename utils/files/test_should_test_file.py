@@ -1,7 +1,8 @@
 # pylint: disable=redefined-outer-name
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from utils.files.should_test_file import should_test_file
 

@@ -1,7 +1,8 @@
-import json
-import requests
-from unittest.mock import Mock, patch
 import inspect
+import json
+from unittest.mock import Mock, patch
+
+import requests
 
 from services.github.check_suites.get_circleci_workflow_id import (
     get_circleci_workflow_ids_from_check_suite,
@@ -587,5 +588,5 @@ def test_get_circleci_workflow_ids_timeout_parameter(mock_create_headers, mock_g
     get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "test-token")
 
     # Verify timeout is set to 30 seconds
-    args, kwargs = mock_get.call_args
+    _, kwargs = mock_get.call_args
     assert kwargs["timeout"] == 30

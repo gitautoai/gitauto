@@ -1,10 +1,11 @@
 """Unit tests for get_circleci_token function."""
 
 import datetime
+import json
 from unittest.mock import Mock, patch
+
 import pytest
 import requests
-import json
 
 from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 
@@ -213,7 +214,7 @@ class TestGetCircleciToken:
             owner_id = 12345
 
             # Act
-            result = get_circleci_token(owner_id)
+            _ = get_circleci_token(owner_id)
 
     def test_handles_negative_owner_id(self, mock_supabase_empty_response):
         """Test that function handles negative owner_id correctly."""
@@ -509,7 +510,8 @@ class TestGetCircleciToken:
         # Act
         result = get_circleci_token(owner_id)
 
-        # Assert - Verify all required fields are present
+        # Assert - Verify result is not None and all required fields are present
+        assert result is not None
         assert "id" in result
         assert "owner_id" in result
         assert "token" in result
