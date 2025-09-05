@@ -311,4 +311,49 @@ class DataProcessor:
             if return_value is True:
                 assert result is True
             else:
+
+    def test_should_test_file_with_very_long_content(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with very long content."""
+        # Create a long content string
+        long_content = "def function():\n    pass\n" * 1000
+        mock_evaluate_condition.return_value = True
+
+        result = should_test_file(sample_file_path, long_content)
+
+        assert result is True
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify long content is passed correctly
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert long_content in content_arg
+
+    def test_should_test_file_with_binary_like_content(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with binary-like content."""
+        binary_content = "\x00\x01\x02\x03\xff\xfe"
+        mock_evaluate_condition.return_value = False
+
+        result = should_test_file(sample_file_path, binary_content)
+
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+        
+        # Verify binary content is handled
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert binary_content in content_arg
+
+    def test_should_test_file_system_prompt_immutability(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that system prompt remains consistent across calls."""
+        mock_evaluate_condition.return_value = True
+
+        # Make multiple calls
+        should_test_file(sample_file_path, sample_code_content)
+        first_call_prompt = mock_evaluate_condition.call_args[1]["system_prompt"]
                 assert result is False
