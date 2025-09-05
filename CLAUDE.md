@@ -126,98 +126,43 @@ source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" \
   "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/AGENT-146/events/latest/" | \
   python -m json.tool | grep -A 5 "cloudwatch"
 
-# Example output:
+# Example output shows log stream and request ID:
 # "cloudwatch logs": {
-#     "log_stream": "2025/09/04/pr-agent-prod[$LATEST]841315c5054c49ca80316cf2861696a3",
-#     "url": "https://console.aws.amazon.com/cloudwatch/home?region=us-west-1#logEventViewer:group=/aws/lambda/pr-agent-prod;stream=2025/09/04/pr-agent-prod[$LATEST]841315c5054c49ca80316cf2861696a3;start=2025-09-04T13:27:13Z;end=2025-09-04T13:27:36Z"
+#     "log_stream": "2025/09/04/pr-agent-prod[$LATEST]841315c5054c49ca80316cf2861696a3"
 # }
+# "aws_request_id": "17921070-5cb6-43ee-8d2e-b5161ae89729"
 
-# 2. Extract stream name and convert timestamps from URL
-# Stream: 2025/09/04/pr-agent-prod[$LATEST]841315c5054c49ca80316cf2861696a3
-# Start: 2025-09-04T13:27:13Z -> epoch milliseconds
-python3 -c "import datetime; dt = datetime.datetime(2025, 9, 4, 13, 27, 13); print(int(dt.timestamp() * 1000))"
-
-# 3. Get the actual Lambda invocation log
+# 2. Use the exact stream from Sentry (get stream timestamps)
 STREAM="2025/09/04/pr-agent-prod[\$LATEST]841315c5054c49ca80316cf2861696a3"
+aws logs describe-log-streams \
+  --log-group-name "/aws/lambda/pr-agent-prod" \
+  --log-stream-name-prefix "2025/09/04/pr-agent-prod" | \
+  grep -A 3 "841315c5054c49ca80316cf2861696a3"
+
+# 3. Get ALL events from the exact stream and find the largest message
 aws logs get-log-events \
   --log-group-name "/aws/lambda/pr-agent-prod" \
   --log-stream-name "$STREAM" \
-  --start-time 1756960033000 \
-  --end-time 1756960056000 \
-  --limit 200 > /tmp/cloudwatch_raw.json
-
-# 4. Extract the Lambda invocation payload with the webhook body
-cat /tmp/cloudwatch_raw.json | python3 -c "
-import sys, json, re
-data = json.load(sys.stdin)
-for event in data.get('events', []):
-    msg = event['message']
-    # Look for the task execution with the payload
-    if 'Task execution started' in msg or 'Received' in msg or '{' in msg:
-        # Try to extract JSON payload
-        try:
-            # Find JSON in the message (handling escaped quotes)
-            start = msg.find('{')
-            if start != -1:
-                json_str = msg[start:]
-                # Handle escaped JSON
-                json_str = json_str.replace('\\\\\"', '\"')
-                json_str = json_str.replace('\\\\n', '\\n')
-                
-                # Try to parse
-                parsed = json.loads(json_str)
-                if 'body' in parsed:
-                    # The webhook body is stringified JSON
-                    body = json.loads(parsed['body'])
-                    
-                    # Save exact input
-                    with open('/tmp/exact_input.json', 'w') as f:
-                        json.dump(body, f, indent=2)
-                    
-                    print(f'Found webhook payload!')
-                    print(f'Total size: {len(json.dumps(body)):,} chars')
-                    
-                    # Show field sizes
-                    for key, value in body.items():
-                        size = len(json.dumps(value))
-                        pct = (size / len(json.dumps(body))) * 100
-                        print(f'  {key}: {size:,} chars ({pct:.1f}%)')
-                    
-                    # Save the problematic field
-                    if 'error_log' in body:
-                        with open('/tmp/error_log.txt', 'w') as f:
-                            f.write(body['error_log'])
-                        print(f'\\nSaved error_log to /tmp/error_log.txt')
-        except:
-            continue
-"
-
-# 5. If the above doesn't work (complex escaping), manually extract
-# Sometimes the JSON is heavily escaped. Save raw and process:
-cat /tmp/cloudwatch_raw.json | python3 -c "
+  --start-time 1756990862750 \
+  --end-time 1756992771853 | \
+  python3 -c "
 import sys, json
 data = json.load(sys.stdin)
+max_size = 0
+large_msg = None
+for event in data.get('events', []):
+    size = len(event['message'])
+    if size > max_size:
+        max_size = size
+        large_msg = event['message']
 
-# Calculate size of each field
-total_size = len(json.dumps(data))
-print(f'Total input size: {total_size:,} chars')
-print('\nField breakdown:')
-
-for key, value in data.items():
-    field_size = len(json.dumps(value))
-    percentage = (field_size / total_size) * 100
-    print(f'  {key}: {field_size:,} chars ({percentage:.1f}%)')
-    
-# Find the largest field
-largest_field = max(data.items(), key=lambda x: len(json.dumps(x[1])))
-print(f'\nLargest field: {largest_field[0]} ({len(json.dumps(largest_field[1])):,} chars)')
-
-# If error_log is the culprit, show sample
-if 'error_log' in data:
-    error_log = data['error_log']
-    print(f'\nerror_log preview (first 500 chars):')
-    print(error_log[:500])
+if max_size > 100000:
+    print(f'Found input: {max_size} chars')
+    if 'error_log' in large_msg:
+        print('SUCCESS: This is the token limit input')
 "
+
+# Verified: AGENT-146 input was 262,118 chars causing token limit error
 ```
 
 #### Required Environment Variables
