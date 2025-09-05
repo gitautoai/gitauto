@@ -19,8 +19,8 @@ def is_test_file(filename: str) -> bool:
         # Direct test file patterns
         r"\.test\.",  # Button.test.tsx, utils.test.js
         r"\.spec\.",  # Button.spec.tsx, api.spec.js
-        r"test\.[^.]+$",  # ButtonTest.java, UserTest.cs
-        r"tests\.[^.]+$",  # ButtonTests.java, UserTests.cs
+        r"[A-Za-z]test\.[^.]+$",  # ButtonTest.java, UserTest.cs
+        r"[A-Za-z]tests\.[^.]+$",  # ButtonTests.java, UserTests.cs
         r"_test\.[^.]+$",  # button_test.py, user_test.go
         r"_spec\.[^.]+$",  # button_spec.rb, user_spec.rb
         r"^test_",  # test_button.py, test_utils.py
