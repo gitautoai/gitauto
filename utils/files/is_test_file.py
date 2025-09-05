@@ -11,16 +11,13 @@ def is_test_file(filename: str) -> bool:
     if not isinstance(filename, str):
         return False
 
-    # Convert to lowercase for case-insensitive matching
-    filename_lower = filename.lower()
-
     # Test file naming patterns (more comprehensive than current)
     test_patterns = [
         # Direct test file patterns
         r"\.test\.",  # Button.test.tsx, utils.test.js
         r"\.spec\.",  # Button.spec.tsx, api.spec.js
-        r"\btest\.[^.]+$",  # ButtonTest.java, UserTest.cs  
-        r"\btests\.[^.]+$",  # ButtonTests.java, UserTests.cs
+        r"Test\.[^.]+$",  # ButtonTest.java, UserTest.cs
+        r"Tests\.[^.]+$",  # ButtonTests.java, UserTests.cs
         r"_test\.[^.]+$",  # button_test.py, user_test.go
         r"_spec\.[^.]+$",  # button_spec.rb, user_spec.rb
         r"^test_",  # test_button.py, test_utils.py
@@ -44,8 +41,8 @@ def is_test_file(filename: str) -> bool:
         # Mock files
         r"/__mocks__/",  # src/__mocks__/api.js
         r"\.mock\.",  # api.mock.ts, database.mock.js
-        r"mock\.[^.]+$",  # ApiMock.java, DatabaseMock.cs
-        r"mocks\.[^.]+$",  # ApiMocks.java, DatabaseMocks.cs
+        r"Mock\.[^.]+$",  # ApiMock.java, DatabaseMock.cs
+        r"Mocks\.[^.]+$",  # ApiMocks.java, DatabaseMocks.cs
         # Common test file names
         r"^test\.",  # test.js, test.py
         r"^spec\.",  # spec.rb, spec.js
@@ -53,9 +50,9 @@ def is_test_file(filename: str) -> bool:
         r"^\.github/",  # .github/scripts/*, .github/workflows/*
     ]
 
-    # Check against all patterns
+    # Check against all patterns using case-insensitive matching
     for pattern in test_patterns:
-        if re.search(pattern, filename_lower):
+        if re.search(pattern, filename, re.IGNORECASE):
             return True
 
     return False
