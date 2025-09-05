@@ -126,10 +126,7 @@ GET_FILE_TREE_LIST: shared_params.FunctionDefinition = {
                 "description": "Directory path to list contents of. Use empty string or omit for root directory. Examples: 'src', 'src/utils', 'tests/unit'.",
             }
         },
-        "required": [],
-        "additionalProperties": False,  # For Structured Outpus
     },
-    "strict": True,  # For Structured Outpus
 }
 
 # See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
