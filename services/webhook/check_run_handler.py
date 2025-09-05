@@ -53,7 +53,7 @@ from services.supabase.usage.update_retry_pairs import (
 from services.supabase.usage.update_usage import update_usage
 
 # Local imports (Others)
-from utils.logs.deduplicate_repetitive_logs import deduplicate_repetitive_logs
+from utils.logs.deduplicate_logs import deduplicate_logs
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 from utils.time.get_timeout_message import get_timeout_message
@@ -377,7 +377,7 @@ def handle_check_run(payload: CheckRunCompletedPayload):
     today = datetime.now().strftime("%Y-%m-%d")
 
     # Deduplicate repetitive log patterns to prevent token overflow - see get_workflow_run_logs_duplicated.txt
-    deduplicated_error_log = deduplicate_repetitive_logs(error_log)
+    deduplicated_error_log = deduplicate_logs(error_log)
 
     input_message: dict[str, str] = {
         "pull_request_title": pull_title,

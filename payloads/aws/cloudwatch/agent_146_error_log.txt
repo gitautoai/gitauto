@@ -1,0 +1,2104 @@
+error_log\": \"```CircleCI Build Log: yarn test
+te, demand or claim against you related to copyright infringement, libel, slander, disparagement or invasion of privacy?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"BusinessInformation_100_9219DroneUsage_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you use drones or unmanned aircraft in your business operations? \",\"questionType\":\"customboolean\",\"value\":\"No\"},\"BusinessInformation_100_9219IndependentContractors_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Have you ever been involved in a dispute, demand or claim involving the status of independent contractors and whether they can be classified as such?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"BusinessInformation_100_9219PayrollOpenTextOfficers_USD_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"How many officer(s) of the business are there not already included?\",\"questionType\":\"custominput\",\"value\":\"1\"},\"BusinessInformation_100_9219PayrollOpenTextOwners_USD_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"How many owner(s) or partner(s) of the business are there?\",\"questionType\":\"custominput\",\"value\":\"1\"},\"BusinessInformation_100_9219PayrollOpenText_USD_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"How many employees does the business have not including owner(s), partner(s) or officer(s)?\",\"questionType\":\"custominput\",\"value\":\"1\"},\"BusinessInformation_100_9219RegulatoryBodyClaims_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Have you ever been involved in a dispute, demand or claim either
+
+(1) brought by the: 
+      Federal Trade Commission (FTC);
+      CTIA (Cellular Telecommunications Industry Association);
+      FCC (Federal Communications Commission);
+      MMA (Mobile Marketing Association); 
+      or similar state regulatory body, or 
+
+(2) brought by any person, company or body and alleging or relating to violations of: 
+      TCPA (Telephone Consumer Protection Act); 
+      \\u201cCAN-SPAM\\u201d (Controlling The Assault of Non-solicited Pornography and Marketing Act); 
+      Federal Communications Act; 
+      FTCA (Federal Trade Commission Act); 
+      or similar state or other local act?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"BusinessInformation_100_9219SafeStorage_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you store the property, equipment, tools and materials used in your business operations in a secured locked location at night or while unattended?\",\"questionType\":\"customboolean\",\"value\":\"Yes\"},\"BusinessInformation_100_9219SingleItemValue_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you own property or regularly have property in your care, custody or control where the value of a single item is worth over $100,000?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"BusinessInformation_100_BusinessAddress_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Business Address\",\"questionType\":\"address\",\"value\":\"Street: 10285 W Youth Camp Rd
+City: Columbus
+Province: IN
+PostalCode: 47201\"},\"BusinessInformation_100_BusinessBuildingUnitCoffeeShop_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you work out of your house or coffee shop?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"BusinessInformation_100_BusinessBuildingUnit_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you own or lease the building/unit that the business operates from?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"BusinessInformation_100_BusinessHistory_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"How long have you been in business?\",\"questionType\":\"customselect\",\"value\":\"2 years\"},\"BusinessInformation_100_BusinessMailingConfirmation_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Is your mailing address same as the business address?\",\"questionType\":\"customboolean\",\"value\":\"Yes\"},\"BusinessInformation_100_BusinessStarted_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"What year was the business started?\",\"questionType\":\"custominput\",\"value\":\"2020\"},\"BusinessInformation_100_BusinessType_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Form of business\",\"questionType\":\"customselect\",\"value\":\"Individual\"},\"BusinessInformation_100_CompanyName_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Company Name\",\"questionType\":\"custominput\",\"value\":\"abc\"},\"BusinessInformation_100_ContinuousInsuranceHistory_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"How long has your business been insured?\",\"questionType\":\"customselect\",\"value\":\"<1 year\"},\"BusinessInformation_100_CustomerInfo_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Customer Info\",\"questionType\":\"customer\",\"value\":\"FirstName: jhjdhkkj
+LastName: jkhjhk
+Email: test@test.com
+PhoneNumber: +1 (589) 749-8985\"},\"BusinessInformation_100_EffectiveDate_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"When would you like your new coverage to start?\",\"questionType\":\"datepicker\",\"value\":\"2022-04-14\"},\"BusinessInformation_100_ExistingPolicy_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you currently have a similar insurance policy in place?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"BusinessInformation_100_Locations_US_EN\":{\"inSortedList\":true,\"questionLabel\":\"Are all your employees and physical locations based in\",\"questionType\":\"customboolean\",\"value\":\"Yes\"},\"BusinessInformation_100_MailingAddress_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Mailing Address\",\"questionType\":\"address\",\"value\":\"Street: 10285 W Youth Camp Rd
+City: Columbus
+Province: IN
+PostalCode: 47201\"},\"BusinessInformation_100_Profession_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Profession\",\"questionType\":\"checkbox\",\"value\":\"
+ Yoga Instructors\"},\"BusinessInformation_100_RevenueLastYearDetails_USD_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Will all your revenue be generated in Canada and the USA?\",\"questionType\":\"customboolean\",\"value\":\"Yes\"},\"BusinessInformation_100_RevenueLastYear_USD_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Next 12 months\",\"questionType\":\"custominput\",\"value\":\"1\"},\"BusinessInformation_100_RevenueNextYear_USD_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Subsequent 12 months \",\"questionType\":\"custominput\",\"value\":\"1\"},\"Coverage_Munich_201_9219_CGLAggregateLimit_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"CGL Aggregate Limit\",\"questionType\":\"custominput\",\"value\":\"2000000\"},\"Coverage_Munich_201_9219_CGLOccurrenceLimit_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"CGL Occurrence Limit\",\"questionType\":\"custominput\",\"value\":\"1000000\"},\"Coverage_Munich_201_9219_CGL_US_EN\":{\"inSortedList\":true,\"questionLabel\":\"Commercial General Liability (CGL) \",\"questionType\":\"coverageoption\",\"value\":\"Yes\"},\"Coverage_Munich_201_9219_ContractorsEOAggregateLimit_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Contractors E&O Aggregate Limit\",\"questionType\":\"custominput\",\"value\":\"No Coverage\"},\"Coverage_Munich_201_9219_ContractorsEOOccurrenceLimit_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Contractors E&O Occurence Limit\",\"questionType\":\"custominput\",\"value\":\"No Coverage\"},\"Coverage_Munich_201_9219_E&O_US_EN\":{\"inSortedList\":true,\"questionLabel\":\"Professional Liability (E&O) \",\"questionType\":\"coverageoption\",\"value\":\"No\"},\"Coverage_Munich_201_9219_LimitedCoverageForUnmannedAircraftLimit_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Unmanned Aircraft Limit\",\"questionType\":\"custominput\",\"value\":\"No Coverage\"},\"Coverage_Munich_201_9219_LimitedPollutionLiabilityAggregateLimit_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Limited Pollution Aggregate Limit\",\"questionType\":\"custominput\",\"value\":\"No Coverage\"},\"Coverage_Munich_201_9219_LimitedPollutionLiabilityOccurrenceLimit_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Limited Pollution Occurence Limit\",\"questionType\":\"custominput\",\"value\":\"No Coverage\"},\"Coverage_Munich_201_9219_LimitedPollution_US_EN\":{\"inSortedList\":true,\"questionLabel\":\"Limited Pollution Liability\",\"questionType\":\"coverageoption\",\"value\":\"No\"},\"Coverage_Munich_201_9219_MedicalPaymentsLimit_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Medical Payment Limit\",\"questionType\":\"custominput\",\"value\":\"5000\"},\"Coverage_Munich_201_9219_MiscellaneousEOAggregateLimit_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Misc EO Aggregate Limit\",\"questionType\":\"custominput\",\"value\":\"No Coverage\"},\"Coverage_Munich_201_9219_MiscellaneousEOOccurrenceLimit_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Misc E&O Occurrence Limit\",\"questionType\":\"custominput\",\"value\":\"No Coverage\"},\"Coverage_Munich_201_9219_MobileEquipment_US_EN\":{\"inSortedList\":true,\"questionLabel\":\"Mobile Equipment\",\"questionType\":\"coverageoption\",\"value\":\"No\"},\"Coverage_Munich_201_9219_PremisesRentedToYouLimit_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Premises Rented Limit\",\"questionType\":\"custominput\",\"value\":\"100000\"},\"Coverage_Munich_201_9219_TRIA_US_EN\":{\"inSortedList\":true,\"questionLabel\":\"Terrorism\",\"questionType\":\"coverageoption\",\"value\":\"No\"},\"Munich_PersonalServices_9219_Attestations_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you acknowledge and accept the below attestations: 
+
+ I acknowledge that there is no coverage for buildings that I own or space that I lease. 
+ I acknowledge that there is no coverage for autos that I own or use in my business operations. 
+ I acknowledge that there is no coverage for mechanical breakdown or failure. 
+ I acknowledge that my business has no prior history of bankruptcy and is not currently in bankruptcy.  Further, I acknowledge that I have no prior history of bankruptcy and am not currently in bankruptcy.
+ I acknowledge that any subcontractors I or my business works with must have limits of insurance greater than or equal to my own policy.
+ I acknowledge that I train all new employees on the use and safety procedures for the equipment, tools and materials used in business operations.
+ I acknowledge that the unmanned aircraft(s) used in business operations is less than or equal to 55 lbs (25kg) and that I have a license in jurisdictions where a license is required for operation.
+ I acknowledge that services are intended and advertised as for entertainment only.
+ I acknowledge that I conduct regular servicing and maintenance on equipment, tools and materials used in business operations.
+ I am licensed by the state or jurisdiction as required by the state or jurisdiction for the work I perform.
+ I acknowledge that my business does not perform or plan to perform the application of pesticide or herbicide for agricultural purposes.
+ I acknowledge that I follow all local and jurisdictional guidelines for \"Call before you dig\".\",\"questionType\":\"checkbox\",\"value\":\"Yes - 
+
+ \\u2611I acknowledge that there is no coverage for buildings that I own or space that I lease. 
+ \\u2611I acknowledge that there is no coverage for autos that I own or use in my business operations. 
+ \\u2611I acknowledge that there is no coverage for mechanical breakdown or failure. 
+ \\u2611I acknowledge that my business has no prior history of bankruptcy and is not currently in bankruptcy.  Further, I acknowledge that I have no prior history of bankruptcy and am not currently in bankruptcy.
+ \\u2611I acknowledge that any subcontractors I or my business works with must have limits of insurance greater than or equal to my own policy.\"},\"Munich_PersonalServices_9219_Bankruptcy_US_EN\":{\"inSortedList\":true,\"questionLabel\":\"Has your current business or past businesses ever declared bankruptcy?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"Munich_PersonalServices_9219_CircumstancesClaims_US_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you have knowledge of a circumstance which may give rise to a claim for the business you are looking to insure?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"Munich_PersonalServices_9219_CompanyName_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Does your business sell, re-sell or distribute products that display your company name?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"Munich_PersonalServices_9219_Daycare_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Does your business provide or plan to provide child care or elder care services?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"Munich_PersonalServices_9219_DenialClaims_US_EN\":{\"inSortedList\":true,\"questionLabel\":\"Has an insurance carrier ever cancelled your business insurance policy for nonpayment of premium?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"Munich_PersonalServices_9219_Guilty_US_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do any named insured(s), officer(s), owner(s) or partner(s) have prior felony convictions or been found guilty of any criminal, dishonest or fraudulent act in the past 5 years?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"Munich_PersonalServices_9219_HostEventsServices_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you own or host any of the following?
+
+ Boxing gym
+ Martial arts studio
+ Gymnastics studio
+ Mud races or challenge courses
+ Recreational leagues 
+ Gym or health center that provides 24 hour fitness\",\"questionType\":\"checkbox\",\"value\":\"No - None of the above\"},\"Munich_PersonalServices_9219_HostEvents_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Does your business plan on hosting an athletic event or sporting event?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"Munich_PersonalServices_9219_InsuranceClaimsEO_US_EN\":{\"inSortedList\":true,\"questionLabel\":\"Have you had insurance claims for this business as it relates to the coverage you are looking to purchase?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"Munich_PersonalServices_9219_MedicalOptions_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you provide, sell, re-sell or distribute any of the following:
+
+ Homeopathic or Herbal Remedies
+ Nutraceuticals
+ Products containing cannabis or cannabis derivatives including CBD
+ Diet Supplements
+ Contraceptives\",\"questionType\":\"checkbox\",\"value\":\"No - None of the above\"},\"Munich_PersonalServices_9219_MedicalServices_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you provide or plan to provide the following services?
+
+
+ Medical care
+ Treatment for illness or disease
+ Hospice care
+ Home health care
+ Chiropractic care
+ Licensed therapy 
+ Treatment of mental health conditions
+ Treatment for healing from trauma
+ Alternative medicine
+ Alternative healing practices\",\"questionType\":\"checkbox\",\"value\":\"No - None of the above\"},\"Munich_PersonalServices_9219_MinorServices_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you provide services to minors under the age of 18 including infants?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"Munich_PersonalServices_9219_SpecialEventsAllProfessions_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Do you host or plan any special events that are separate and distinct from your regular ongoing operations? Examples include: competitions, concerts, conventions, festivals.\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"Munich_PersonalServices_9219_TangibleGoods_WORLD_EN\":{\"inSortedList\":true,\"questionLabel\":\"Does your business sell or distribute any tangible goods or products?\",\"questionType\":\"customboolean\",\"value\":\"No\"},\"Munich_PersonalServices_9219_WorkExclusion_WORLD_EN\":{\"questionLabel\":\"WorkExclusion Text: 
+Sale, re-sale or distribution of health and wellness type products including homeopathic or herbal remedies, nutraceuticals, products containing cannabis or cannabis derivatives (including CBD), diet supplements and contraceptives. 
+Medical care, treatments for illness or disease, hospice care, home health care, chiropractic care, licensed therapy activities, treatment of mental health conditions, healing from trauma. 
+The hosting of sporting events or athletic events. 
+Ownership of a gym including boxing gyms, gymnastic studios and martial arts studios. 
+Hosting or coordinating recreational leagues. 
+Hosting or coordinating mud races or challenge courses. 
+Ownership interest in a fitness center, gym or health center that provides 24 hour fitness. 
+The sale of products that display your name or your company's name. 
+Daycare or eldercare. 
+Work with children when there is no applicable open-door policy permitting a parent or guardian to observe at any time. 
+ 
+\"},\"partnerCode\":{\"inSortedList\":false,\"questionLabel\":\"Partner Code\",\"questionType\":\"partnerCode\",\"value\":\"N/A\"},\"professionPercentage\":{\"inSortedList\":false,\"questionLabel\":\"Allocation of operations(in %)\",\"questionType\":\"professionPercentage\",\"value\":\"N/A\"}},\"transactionId\":\"6919b47e-7c39-4919-ae95-0199016904b6\"}}
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.disconnect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:131:10)
+        at async Promise.allSettled (index 0)
+        at Object.close (/home/circleci/project/test/utils/context/createTestContext.ts:80:22)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/getQuestionAnswersMapMunich.test.ts:44:7) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '2e1ae4fb-ad0c-43be-9976-fd46cc18b8ec',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 78 |\[39m     \[90m// note: awaiting on Promise.allSettled doesn't throw Errors, so we're\[39m
+     \[90m 79 |\[39m     \[90m// closing the foreign services with best efforts (i.e. it doesn't matter if one fails)\[39m
+    \[31m\[1m>\[22m\[39m\[90m 80 |\[39m     \[36mconst\[39m promises \[33m=\[39m \[36mawait\[39m \[33mPromise\[39m\[33m.\[39mallSettled(closables\[33m.\[39mmap((fn) \[33m=>\[39m fn()))\[33m;\[39m
+     \[90m    |\[39m                      \[31m\[1m^\[22m\[39m
+     \[90m 81 |\[39m     \[36mconst\[39m errors \[33m=\[39m promises\[33m.\[39mreduce((acc\[33m,\[39m promise) \[33m=>\[39m {
+     \[90m 82 |\[39m       \[36mif\[39m (promise\[33m.\[39mstatus \[33m===\[39m \[32m'rejected'\[39m) {
+     \[90m 83 |\[39m         acc\[33m.\[39mpush(promise\[33m.\[39mreason)\[33m;\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.disconnect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:131:10)
+          at async Promise.allSettled (index 0)
+      at Object.close (test/utils/context/createTestContext.ts:80:22)
+      at Object.<anonymous> (test/testing/foxden_quoting/getQuestionAnswersMapMunich.test.ts:44:7)
+
+\[999D\[K  console.log
+    Using default value true for turnOnEmfileProbe
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    MongoDB connection pool closed
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    [EMFILE investigation]: Ending investigation in undefined for MongoDBConnection...
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    *** no leak emfiles found
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+{\"level\":\"debug\",\"message\":\"Everything in the Context are closed properly\",\"metadata\":{\"transactionId\":\"6919b47e-7c39-4919-ae95-0199016904b6\"}}
+PASS test/testing/foxden_quoting/getQuestionAnswersMapMunich.test.ts
+  getQuestionAnswersMapMunich test
+    \\u2713 test the generated map (2730 ms)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch maxPoolSize from SSM, falling back to default: 10 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/maxPoolSize because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:79:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/utils/checkConfigurationFlag.test.ts:16:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '4efc4dc0-b80d-4504-8be7-98621011fb16',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:79:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/utils/checkConfigurationFlag.test.ts:16:15)
+
+\[999D\[K  console.log
+    Using default value 10 for maxPoolSize
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch maxIdleTimeMS from SSM, falling back to default: 10000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/maxIdleTimeMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:83:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/utils/checkConfigurationFlag.test.ts:16:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '22a8a641-60dd-4026-a6f1-c55300a8a091',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:83:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/utils/checkConfigurationFlag.test.ts:16:15)
+
+\[999D\[K  console.log
+    Using default value 10000 for maxIdleTimeMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch serverSelectionTimeoutMS from SSM, falling back to default: 3000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/serverSelectionTimeoutMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:87:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/utils/checkConfigurationFlag.test.ts:16:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '77d4363d-37b7-4125-b16f-ca221b2ba152',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:87:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/utils/checkConfigurationFlag.test.ts:16:15)
+
+\[999D\[K  console.log
+    Using default value 3000 for serverSelectionTimeoutMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch heartbeatFrequencyMS from SSM, falling back to default: 5000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/heartbeatFrequencyMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:91:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/utils/checkConfigurationFlag.test.ts:16:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'e5fdfd34-cf91-414c-8ea8-cb2118839b3c',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:91:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/utils/checkConfigurationFlag.test.ts:16:15)
+
+\[999D\[K  console.log
+    Using default value 5000 for heartbeatFrequencyMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:95:10)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/utils/checkConfigurationFlag.test.ts:16:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '7086e2b5-10e7-49d2-9b62-a6519df6859a',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:95:10)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/utils/checkConfigurationFlag.test.ts:16:15)
+
+\[999D\[K  console.log
+    Using default value true for turnOnEmfileProbe
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    [EMFILE investigation] Starting investigation in undefined for MongoDBConnection...
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    *** new process, emfiles count: 30
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    Connected to MongoDB (maxPoolSize: 10, maxIdleTimeMS: 10000)
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+{\"level\":\"debug\",\"message\":\"Quote configuration in db\",\"metadata\":{\"configurationObject\":{\"CGLLimitsIncreaseApprovalDateForCA\":\"2024-08-23T00:00:00.000Z\",\"_id\":\"68b993816f95820bab3621b8\"},\"transactionId\":\"c11ca039-9d18-429e-a232-952b84ab9d55\"}}
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.disconnect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:131:10)
+        at async Promise.allSettled (index 0)
+        at Object.close (/home/circleci/project/test/utils/context/createTestContext.ts:80:22)
+        at Object.<anonymous> (/home/circleci/project/test/testing/utils/checkConfigurationFlag.test.ts:24:5) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'fc19a4af-1e71-4a98-bec5-1e2d86908a0f',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 78 |\[39m     \[90m// note: awaiting on Promise.allSettled doesn't throw Errors, so we're\[39m
+     \[90m 79 |\[39m     \[90m// closing the foreign services with best efforts (i.e. it doesn't matter if one fails)\[39m
+    \[31m\[1m>\[22m\[39m\[90m 80 |\[39m     \[36mconst\[39m promises \[33m=\[39m \[36mawait\[39m \[33mPromise\[39m\[33m.\[39mallSettled(closables\[33m.\[39mmap((fn) \[33m=>\[39m fn()))\[33m;\[39m
+     \[90m    |\[39m                      \[31m\[1m^\[22m\[39m
+     \[90m 81 |\[39m     \[36mconst\[39m errors \[33m=\[39m promises\[33m.\[39mreduce((acc\[33m,\[39m promise) \[33m=>\[39m {
+     \[90m 82 |\[39m       \[36mif\[39m (promise\[33m.\[39mstatus \[33m===\[39m \[32m'rejected'\[39m) {
+     \[90m 83 |\[39m         acc\[33m.\[39mpush(promise\[33m.\[39mreason)\[33m;\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.disconnect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:131:10)
+          at async Promise.allSettled (index 0)
+      at Object.close (test/utils/context/createTestContext.ts:80:22)
+      at Object.<anonymous> (test/testing/utils/checkConfigurationFlag.test.ts:24:5)
+
+\[999D\[K  console.log
+    Using default value true for turnOnEmfileProbe
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    MongoDB connection pool closed
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    [EMFILE investigation]: Ending investigation in undefined for MongoDBConnection...
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    *** no leak emfiles found
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+{\"level\":\"debug\",\"message\":\"Everything in the Context are closed properly\",\"metadata\":{\"transactionId\":\"c11ca039-9d18-429e-a232-952b84ab9d55\"}}
+PASS test/testing/utils/checkConfigurationFlag.test.ts
+  checkConfigurationFlag tests
+    \\u2713 should return the value of the flag from the configuration object (25 ms)
+    \\u2713 should throw an error if the configuration object does not exist in the database (9 ms)
+
+FAIL src/models/user/isBroker.test.ts
+  isBroker
+    when user has foxquilt.com email
+      \\u2713 returns true for standard foxquilt.com email (1 ms)
+      \\u2715 returns true for email with subdomain (2 ms)
+      \\u2713 returns true for email with numbers and special characters
+    when user does not have foxquilt.com email
+      \\u2713 returns false for different domain
+      \\u2713 returns false for similar but different domain
+      \\u2713 returns false for domain containing foxquilt.com as substring
+
+  \\u25cf isBroker \\u203a when user has foxquilt.com email \\u203a returns true for email with subdomain
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+    \[0m \[90m 20 |\[39m     it(\[32m'returns true for email with subdomain'\[39m\[33m,\[39m () \[33m=>\[39m {
+     \[90m 21 |\[39m       \[36mconst\[39m user \[33m=\[39m createUser(\[32m'admin@subdomain.foxquilt.com'\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 22 |\[39m       expect(isBroker(user))\[33m.\[39mtoBe(\[36mtrue\[39m)\[33m;\[39m
+     \[90m    |\[39m                              \[31m\[1m^\[22m\[39m
+     \[90m 23 |\[39m     })\[33m;\[39m
+     \[90m 24 |\[39m
+     \[90m 25 |\[39m     it(\[32m'returns true for email with numbers and special characters'\[39m\[33m,\[39m () \[33m=>\[39m {\[0m
+
+      at Object.<anonymous> (src/models/user/isBroker.test.ts:22:30)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch maxPoolSize from SSM, falling back to default: 10 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/maxPoolSize because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:79:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts:17:13) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'fa84a6bf-1c26-4887-92b2-cd35e0df24de',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:79:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts:17:13)
+
+\[999D\[K  console.log
+    Using default value 10 for maxPoolSize
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch maxIdleTimeMS from SSM, falling back to default: 10000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/maxIdleTimeMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:83:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts:17:13) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'ffb0f924-a638-4531-b63f-fabd1b3140af',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:83:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts:17:13)
+
+\[999D\[K  console.log
+    Using default value 10000 for maxIdleTimeMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch serverSelectionTimeoutMS from SSM, falling back to default: 3000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/serverSelectionTimeoutMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:87:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts:17:13) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'd6e51afb-226a-475c-b16e-1ed2546d1d41',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:87:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts:17:13)
+
+\[999D\[K  console.log
+    Using default value 3000 for serverSelectionTimeoutMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch heartbeatFrequencyMS from SSM, falling back to default: 5000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/heartbeatFrequencyMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:91:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts:17:13) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '7c57cacc-8511-4daf-918e-98533048dd89',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:91:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts:17:13)
+
+\[999D\[K  console.log
+    Using default value 5000 for heartbeatFrequencyMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:95:10)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts:17:13) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'a2e4b024-7fee-41b5-aca1-de6d6d20bdab',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:95:10)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts:17:13)
+
+\[999D\[K  console.log
+    Using default value true for turnOnEmfileProbe
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    [EMFILE investigation] Starting investigation in undefined for MongoDBConnection...
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    *** new process, emfiles count: 30
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    Connected to MongoDB (maxPoolSize: 10, maxIdleTimeMS: 10000)
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+{\"level\":\"debug\",\"message\":\"Start convert underwriting answers\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Calculate premium input:\",\"metadata\":{\"GL\":{\"TRIA\":false,\"abuseAndMolestationAggregateLimit\":0,\"abuseAndMolestationCoverage\":false,\"abuseAndMolestationEachPersonLimit\":0,\"aggregateLimit\":1000000,\"chooseCGL\":true,\"contractorsEO\":false,\"contractorsEOAggregateLimit\":0,\"contractorsEODuctible\":0,\"contractorsEOOccurrenceLimit\":0,\"deductible\":0,\"deductibleAppliesTo\":\"\",\"employeeBenefits\":false,\"employeeBenefitsAggregateLimit\":0,\"employeeBenefitsOccurrenceLimit\":0,\"isAdditionalInsuredChosen\":false,\"limitedPollutionLiability\":true,\"limitedPollutionLiabilityAggregateLimit\":5000,\"limitedPollutionLiabilityOccurrenceLimit\":5000,\"medicalPaymentsLimit\":5000,\"miscellaneousEO\":true,\"miscellaneousEOAggregateLimit\":50000,\"miscellaneousEODeductible\":0,\"miscellaneousEOOccurrenceLimit\":25000,\"occurrenceLimit\":1000000,\"policyEffectiveDate\":\"2021-05-05T00:00:00.000Z\",\"policyExpirationDate\":\"2022-05-05T00:00:00.000Z\",\"premisesRentedToYouLimit\":100000,\"transactionEffectiveDate\":\"2021-05-05T00:00:00.000Z\",\"transactionExpirationDate\":\"2022-05-05T00:00:00.000Z\",\"unmannedAircraftForCoverageA\":true,\"unmannedAircraftForCoverageAB\":false,\"unmannedAircraftForCoverageB\":false,\"unmannedAircraftLimitForCoverageA\":25000,\"unmannedAircraftLimitForCoverageAB\":0,\"unmannedAircraftLimitForCoverageB\":0},\"IM\":{\"TRIA\":false,\"additionallyCoveredPropertyEndorsement\":false,\"additionallyCoveredPropertyLimit\":0,\"baileesCustomerCoverageForm\":false,\"baileesCustomerDeductible\":0,\"baileesCustomerLimit\":0,\"biAndEeSelection\":false,\"biLimit\":0,\"commercialBusinessItemsCoverageForm\":true,\"commercialBusinessItemsDeductible\":500,\"commercialContractorsCoverageForm\":false,\"commercialContractorsDeductible\":500,\"contractorsLockAndKeyLimit\":0,\"eeLimit\":0,\"hardwareAndSoftwareLimit\":5000,\"installationEndorsement\":false,\"installationLimit\":0,\"lockAndKeyLimit\":5000,\"photographyAndVideographyEndorsement\":true,\"photographyAndVideographyLimit\":5000,\"policyEffectiveDate\":\"2021-05-05T00:00:00.000Z\",\"policyExpirationDate\":\"2022-05-05T00:00:00.000Z\",\"theftDeductible\":0,\"theftDeductibleSelection\":false,\"theftExclusion\":false,\"theftSublimit\":0,\"theftSublimitSelection\":false,\"transactionEffectiveDate\":\"2021-05-05T00:00:00.000Z\",\"transactionExpirationDate\":\"2022-05-05T00:00:00.000Z\",\"unmannedAircraftEndorsement\":true,\"unmannedAircraftLimit\":5000,\"unscheduledBPPLimit\":5000,\"unscheduledContractorsEquipmentLimit\":0,\"unscheduledHardwareAndSoftwareLimit\":0,\"unscheduledSmallToolsLimit\":0,\"valuablePapersEndorsement\":false,\"valuablePapersLimit\":0,\"whExclusion\":false},\"grossSales\":11111,\"numOfEmployees\":1,\"numOfPayrollOpenTextOfficers\":1,\"numOfPayrollOwners\":1,\"payroll\":11111,\"professionList\":[\"BusinessInformation_100_Profession_9219_9562505_WORLD_EN\"],\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"workPercentageData\":{\"commercialWorkPercentage\":0,\"exteriorWorkPercentage\":0,\"interiorWorkPercentage\":0,\"residentialWorkPercentage\":0},\"zipCode\":\"43210\"}}
+{\"level\":\"debug\",\"message\":\"Start Ohio Quoting\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start table lookup for filling data\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Using policy dates to calculate policy term measurements\",\"metadata\":{\"policyDates\":{\"policyEffectiveDate\":\"2021-05-05T00:00:00.000Z\",\"policyExpirationDate\":\"2022-05-05T00:00:00.000Z\",\"transactionEffectiveDate\":\"2021-05-05T00:00:00.000Z\",\"transactionExpirationDate\":\"2022-05-05T00:00:00.000Z\"},\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Successfully calculated policy term measurements\",\"metadata\":{\"policyTermMeasurements\":{\"policyTermFactor\":1,\"policyTermLength\":1,\"prorateFactor\":1},\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Using policy dates to calculate policy term measurements\",\"metadata\":{\"policyDates\":{\"policyEffectiveDate\":\"2021-05-05T00:00:00.000Z\",\"policyExpirationDate\":\"2022-05-05T00:00:00.000Z\",\"transactionEffectiveDate\":\"2021-05-05T00:00:00.000Z\",\"transactionExpirationDate\":\"2022-05-05T00:00:00.000Z\"},\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Successfully calculated policy term measurements\",\"metadata\":{\"policyTermMeasurements\":{\"policyTermFactor\":1,\"policyTermLength\":1,\"prorateFactor\":1},\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Filling data input\",\"metadata\":{\"carrierPartner\":\"Munich\",\"grossSales\":11111,\"numOfEmployees\":1,\"numOfPayrollOpenTextOfficers\":1,\"numOfPayrollOwners\":1,\"payroll\":11111,\"professionList\":[\"BusinessInformation_100_Profession_9219_9562505_WORLD_EN\"],\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"workPercentageData\":{\"commercialWorkPercentage\":0,\"exteriorWorkPercentage\":0,\"interiorWorkPercentage\":0,\"residentialWorkPercentage\":0},\"zipCode\":\"43210\"}}
+{\"level\":\"debug\",\"message\":\"Filling data output\",\"metadata\":{\"abuseAndMolestationHazardGroup\":\"L\",\"exceptionRules\":[],\"isoData\":[{\"abuseAndMolestationHGRank\":1,\"abuseAndMolestationHazardGroup\":\"L\",\"exposures\":84911,\"ilfTable\":\"2A\",\"ilfTablePrem\":\"2\",\"ilfTableProd\":\"A\",\"isoClassCode\":\"95625\",\"isoClassDescription\":\"Handyperson\",\"minimumPremium\":\"400\",\"minimumPremiumGroup\":\"Medium Contractors\",\"premiumBase\":\"Payroll\"}],\"isoMapper\":{\"95625\":[\"95625\"]},\"isoTerritory\":\"505\",\"minimumPremium\":400,\"policyLevelRevenue\":11111,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for gl table\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for base CGL Prem\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for base CGL Prem of iso 95625\",\"metadata\":{\"LCM\":1.538,\"adjustedLimitFactor\":1.51,\"audit\":{\"unroundedBasicLimitRate\":6.73644,\"unroundedFinalPremium\":864,\"unroundedModifiedPremium\":863.63,\"unroundedRotableExposures\":84.911,\"unroundedUnmodifiedPremium\":863.629781,\"unroundedUnmodifiedRate\":10.17136},\"basicLimitRate\":6.736,\"deductibleFactor\":0,\"exposures\":84911,\"finalPremium\":864,\"ilf\":1.51,\"lossCostFactor\":4.38,\"modifiedPremium\":864,\"policyTermFactor\":1,\"premiumBaseAdjustment\":0.001,\"prorateFactor\":1,\"rotableExposures\":84.911,\"scheduleModFactor\":1,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":863.63,\"unmodifiedRate\":10.171}}
+{\"level\":\"debug\",\"message\":\"Start rating for base CGL Prod\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for base CGL Prod\",\"metadata\":{\"LCM\":1.538,\"adjustedLimitFactor\":1.45,\"audit\":{\"unroundedBasicLimitRate\":4.78318,\"unroundedFinalPremium\":589,\"unroundedModifiedPremium\":588.858,\"unroundedRotableExposures\":84.911,\"unroundedUnmodifiedPremium\":588.8577849999999,\"unroundedUnmodifiedRate\":6.935350000000001},\"basicLimitRate\":4.783,\"deductibleFactor\":0,\"exposures\":84911,\"finalPremium\":589,\"ilf\":1.45,\"lossCostFactor\":3.11,\"modifiedPremium\":589,\"policyTermFactor\":1,\"premiumBaseAdjustment\":0.001,\"prorateFactor\":1,\"rotableExposures\":84.911,\"scheduleModFactor\":1,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":588.858,\"unmodifiedRate\":6.935}}
+{\"level\":\"debug\",\"message\":\"Start rating for cgl additional limits\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for cgl additional limits\",\"metadata\":{\"audit\":{\"unroundedBasicLimitsUnmodifiedPremium\":571.960496,\"unroundedMedicalPaymentsFinalPremium\":0,\"unroundedMedicalPaymentsModifiedPremium\":0,\"unroundedMedicalPaymentsUnmodifiedPremium\":0,\"unroundedPremisesRentedToYouModifiedPremium\":0,\"unroundedPremisesRentedToYouUnmodifiedPremium\":0,\"unroundedpPremisesRentedToYouFinalPremium\":0},\"basicLimitsUnmodifiedPremium\":571.96,\"medicalPaymentsFinalPremium\":0,\"medicalPaymentsModifiedPremium\":0,\"medicalPaymentsRate\":0,\"medicalPaymentsUnmodifiedPremium\":0,\"premisesRentedToYouFinalPremium\":0,\"premisesRentedToYouModifiedPremium\":0,\"premisesRentedToYouRate\":0,\"premisesRentedToYouUnmodifiedPremium\":0,\"prorateFactor\":1,\"scheduleModFactor\":1,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for cgl minimum to add\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for cgl minimum to add\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedTermPremium\":0},\"finalPremium\":0,\"minimumPremium\":400,\"prorateFactor\":1,\"sum\":1453,\"termPremium\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for pollution liability\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for pollution liability\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":25,\"unroundedTermPremium\":25},\"finalPremium\":25,\"flatCharge\":25,\"prorateFactor\":1,\"termPremium\":25,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for unmanned aircraft (coverage A only)\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for unmanned aircraft (coverage A only)\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":185,\"unroundedTermPremium\":185},\"finalPremium\":185,\"flatCharge\":185,\"prorateFactor\":1,\"termPremium\":185,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for unmanned aircraft (coverage B only)\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for unmanned aircraft (coverage B only)\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedTermPremium\":0},\"finalPremium\":0,\"flatCharge\":0,\"prorateFactor\":1,\"termPremium\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for unmanned aircraft (coverage A&B)\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for unmanned aircraft (coverage A&B)\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedTermPremium\":0},\"finalPremium\":0,\"flatCharge\":0,\"prorateFactor\":1,\"termPremium\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for Miscellaneous EO\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for Miscellaneous EO\",\"metadata\":{\"additionalPremiumToMeetMinimum\":47.767,\"audit\":{\"unroundedFinalPremium\":50,\"unroundedModifiedPremium\":2.233,\"unroundedRevenue\":11.111,\"unroundedTermPremium\":50,\"unroundedUnmodifiedPremium\":2.233311},\"finalPremium\":50,\"modifiedPremium\":2.233,\"prorateFactor\":1,\"rate\":0.201,\"revenue\":11.111,\"scheduleModFactor\":1,\"termPremium\":50,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":2.233}}
+{\"level\":\"debug\",\"message\":\"Start rating for Contractors EO\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for Contractors EO\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedTermPremium\":0},\"finalPremium\":0,\"flatCharge\":0,\"prorateFactor\":1,\"termPremium\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for abuse and molestation coverage\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for abuse and molestation coverage\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedTermPremium\":0},\"finalPremium\":0,\"flatCharge\":0,\"prorateFactor\":1,\"termPremium\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for employee benefits coverage\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for employee benefits coverage\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedTermPremium\":0},\"finalPremium\":0,\"flatCharge\":0,\"prorateFactor\":1,\"termPremium\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for TRIA\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for TRIA\",\"metadata\":{\"active\":false,\"audit\":{\"unroundedFinalPremium\":17,\"unroundedTermPremium\":16.63},\"finalPremium\":17,\"prorateFactor\":1,\"rate\":0.01,\"sum\":1663,\"termPremium\":17,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"info\",\"message\":\"Start rating for addtional insured\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Final gl premium\",\"metadata\":{\"glPremium\":1713,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for IM table\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for business items table\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for unscheduled BPP\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for unscheduled BPP\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":50,\"unroundedModifiedPremium\":50,\"unroundedTermPremium\":50,\"unroundedUnmodifiedPremium\":50},\"deductibleFactor\":1,\"finalPremium\":50,\"flatCharge\":50,\"modifiedPremium\":50,\"policyTermFactor\":1,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":50,\"theftDeductibleFactor\":1,\"theftExclusionFactor\":1,\"theftSublimitFactor\":1,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":50,\"whExclusionFactor\":1}}
+{\"level\":\"debug\",\"message\":\"Start rating for hardware and software\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for hardware and software\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":75,\"unroundedModifiedPremium\":75,\"unroundedTermPremium\":75,\"unroundedUnmodifiedPremium\":75},\"deductibleFactor\":1,\"finalPremium\":75,\"flatCharge\":75,\"modifiedPremium\":75,\"policyTermFactor\":1,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":75,\"theftDeductibleFactor\":1,\"theftExclusionFactor\":1,\"theftSublimitFactor\":1,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":75,\"whExclusionFactor\":1}}
+{\"level\":\"debug\",\"message\":\"Start rating for lock and key\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for lock and key\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":25,\"unroundedModifiedPremium\":25,\"unroundedTermPremium\":25,\"unroundedUnmodifiedPremium\":25},\"deductibleFactor\":1,\"finalPremium\":25,\"flatCharge\":25,\"modifiedPremium\":25,\"policyTermFactor\":1,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":25,\"theftDeductibleFactor\":1,\"theftExclusionFactor\":1,\"theftSublimitFactor\":1,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":25,\"whExclusionFactor\":1}}
+{\"level\":\"debug\",\"message\":\"Start rating for photography and videiography\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for photography and videiography\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":237,\"unroundedModifiedPremium\":237,\"unroundedTermPremium\":237,\"unroundedUnmodifiedPremium\":237},\"deductibleFactor\":1,\"finalPremium\":237,\"flatCharge\":237,\"modifiedPremium\":237,\"policyTermFactor\":1,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":237,\"theftDeductibleFactor\":1,\"theftExclusionFactor\":1,\"theftSublimitFactor\":1,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":237,\"whExclusionFactor\":1}}
+{\"level\":\"debug\",\"message\":\"Start rating for unmanned aircraft (physical loss)\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for unmanned aircraft (physical loss)\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":125,\"unroundedModifiedPremium\":125,\"unroundedTermPremium\":125,\"unroundedUnmodifiedPremium\":125},\"deductibleFactor\":1,\"finalPremium\":125,\"flatCharge\":125,\"modifiedPremium\":125,\"policyTermFactor\":1,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":125,\"theftDeductibleFactor\":1,\"theftExclusionFactor\":1,\"theftSublimitFactor\":1,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":125,\"whExclusionFactor\":1}}
+{\"level\":\"debug\",\"message\":\"Start rating for valuable papers\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for valuable papers\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedModifiedPremium\":0,\"unroundedTermPremium\":0,\"unroundedUnmodifiedPremium\":0},\"deductibleFactor\":0,\"finalPremium\":0,\"flatCharge\":0,\"modifiedPremium\":0,\"policyTermFactor\":0,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":0,\"theftDeductibleFactor\":0,\"theftExclusionFactor\":0,\"theftSublimitFactor\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":0,\"whExclusionFactor\":0}}
+{\"level\":\"debug\",\"message\":\"Start rating for covered property\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for additionally covered property\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedModifiedPremium\":0,\"unroundedTermPremium\":0,\"unroundedUnmodifiedPremium\":0},\"deductibleFactor\":0,\"finalPremium\":0,\"flatCharge\":0,\"modifiedPremium\":0,\"policyTermFactor\":0,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":0,\"theftDeductibleFactor\":0,\"theftExclusionFactor\":0,\"theftSublimitFactor\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":0,\"whExclusionFactor\":0}}
+{\"level\":\"debug\",\"message\":\"Start rating for contractors table\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for unscheduled contractors equipment\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for unscheduled contractors equipment\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedModifiedPremium\":0,\"unroundedTermPremium\":0,\"unroundedUnmodifiedPremium\":0},\"deductibleFactor\":0,\"finalPremium\":0,\"flatCharge\":0,\"modifiedPremium\":0,\"policyTermFactor\":0,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":0,\"theftDeductibleFactor\":0,\"theftExclusionFactor\":0,\"theftSublimitFactor\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":0,\"whExclusionFactor\":0}}
+{\"level\":\"debug\",\"message\":\"Start rating for unscheduled hardware and software\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for unscheduled hardware and software\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedModifiedPremium\":0,\"unroundedTermPremium\":0,\"unroundedUnmodifiedPremium\":0},\"deductibleFactor\":0,\"finalPremium\":0,\"flatCharge\":0,\"modifiedPremium\":0,\"policyTermFactor\":0,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":0,\"theftDeductibleFactor\":0,\"theftExclusionFactor\":0,\"theftSublimitFactor\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":0,\"whExclusionFactor\":0}}
+{\"level\":\"debug\",\"message\":\"Start rating for unscheduled small tools\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for unscheduled small tools\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedModifiedPremium\":0,\"unroundedTermPremium\":0,\"unroundedUnmodifiedPremium\":0},\"deductibleFactor\":0,\"finalPremium\":0,\"flatCharge\":0,\"modifiedPremium\":0,\"policyTermFactor\":0,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":0,\"theftDeductibleFactor\":0,\"theftExclusionFactor\":0,\"theftSublimitFactor\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":0,\"whExclusionFactor\":0}}
+{\"level\":\"debug\",\"message\":\"Start rating for lock and key\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for lock and key\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedModifiedPremium\":0,\"unroundedTermPremium\":0,\"unroundedUnmodifiedPremium\":0},\"deductibleFactor\":0,\"finalPremium\":0,\"flatCharge\":0,\"modifiedPremium\":0,\"policyTermFactor\":0,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":0,\"theftDeductibleFactor\":0,\"theftExclusionFactor\":0,\"theftSublimitFactor\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":0,\"whExclusionFactor\":0}}
+{\"level\":\"debug\",\"message\":\"Start rating for unmanned aircraft (physical loss)\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for unmanned aircraft (physical loss)\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedModifiedPremium\":0,\"unroundedTermPremium\":0,\"unroundedUnmodifiedPremium\":0},\"deductibleFactor\":0,\"finalPremium\":0,\"flatCharge\":0,\"modifiedPremium\":0,\"policyTermFactor\":0,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":0,\"theftDeductibleFactor\":0,\"theftExclusionFactor\":0,\"theftSublimitFactor\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":0,\"whExclusionFactor\":0}}
+{\"level\":\"debug\",\"message\":\"Start rating for valuable papers\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for valuable papers\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedModifiedPremium\":0,\"unroundedTermPremium\":0,\"unroundedUnmodifiedPremium\":0},\"deductibleFactor\":0,\"finalPremium\":0,\"flatCharge\":0,\"modifiedPremium\":0,\"policyTermFactor\":0,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":0,\"theftDeductibleFactor\":0,\"theftExclusionFactor\":0,\"theftSublimitFactor\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":0,\"whExclusionFactor\":0}}
+{\"level\":\"debug\",\"message\":\"Start rating for installation\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for installation\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedModifiedPremium\":0,\"unroundedTermPremium\":0,\"unroundedUnmodifiedPremium\":0},\"deductibleFactor\":0,\"finalPremium\":0,\"flatCharge\":0,\"modifiedPremium\":0,\"policyTermFactor\":0,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":0,\"theftDeductibleFactor\":0,\"theftExclusionFactor\":0,\"theftSublimitFactor\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":0,\"whExclusionFactor\":0}}
+{\"level\":\"debug\",\"message\":\"Start rating for covered property\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for additionally covered property\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedModifiedPremium\":0,\"unroundedTermPremium\":0,\"unroundedUnmodifiedPremium\":0},\"deductibleFactor\":0,\"finalPremium\":0,\"flatCharge\":0,\"modifiedPremium\":0,\"policyTermFactor\":0,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":0,\"theftDeductibleFactor\":0,\"theftExclusionFactor\":0,\"theftSublimitFactor\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":0,\"whExclusionFactor\":0}}
+{\"level\":\"debug\",\"message\":\"Start rating for business items table\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Start rating for bailees customer\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Rating result for  bailees customer\",\"metadata\":{\"audit\":{\"unroundedFinalPremium\":0,\"unroundedModifiedPremium\":0,\"unroundedTermPremium\":0,\"unroundedUnmodifiedPremium\":0},\"deductibleFactor\":0,\"finalPremium\":0,\"flatCharge\":0,\"modifiedPremium\":0,\"policyTermFactor\":0,\"prorateFactor\":1,\"scheduleModFactor\":1,\"termPremium\":0,\"theftDeductibleFactor\":0,\"theftExclusionFactor\":0,\"theftSublimitFactor\":0,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\",\"unmodifiedPremium\":0,\"whExclusionFactor\":0}}
+{\"level\":\"debug\",\"message\":\"Start rating for business income and extra expense table\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+{\"level\":\"debug\",\"message\":\"Finish rating - final premium\",\"metadata\":{\"finalPremium\":2225,\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.disconnect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:131:10)
+        at async Promise.allSettled (index 0)
+        at Object.close (/home/circleci/project/test/utils/context/createTestContext.ts:80:22)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts:20:3) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'f21e8628-bf43-4cd5-82ec-9cb8f18ea3a2',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 78 |\[39m     \[90m// note: awaiting on Promise.allSettled doesn't throw Errors, so we're\[39m
+     \[90m 79 |\[39m     \[90m// closing the foreign services with best efforts (i.e. it doesn't matter if one fails)\[39m
+    \[31m\[1m>\[22m\[39m\[90m 80 |\[39m     \[36mconst\[39m promises \[33m=\[39m \[36mawait\[39m \[33mPromise\[39m\[33m.\[39mallSettled(closables\[33m.\[39mmap((fn) \[33m=>\[39m fn()))\[33m;\[39m
+     \[90m    |\[39m                      \[31m\[1m^\[22m\[39m
+     \[90m 81 |\[39m     \[36mconst\[39m errors \[33m=\[39m promises\[33m.\[39mreduce((acc\[33m,\[39m promise) \[33m=>\[39m {
+     \[90m 82 |\[39m       \[36mif\[39m (promise\[33m.\[39mstatus \[33m===\[39m \[32m'rejected'\[39m) {
+     \[90m 83 |\[39m         acc\[33m.\[39mpush(promise\[33m.\[39mreason)\[33m;\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.disconnect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:131:10)
+          at async Promise.allSettled (index 0)
+      at Object.close (test/utils/context/createTestContext.ts:80:22)
+      at Object.<anonymous> (test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts:20:3)
+
+\[999D\[K  console.log
+    Using default value true for turnOnEmfileProbe
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    MongoDB connection pool closed
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    [EMFILE investigation]: Ending investigation in undefined for MongoDBConnection...
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    *** no leak emfiles found
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+{\"level\":\"debug\",\"message\":\"Everything in the Context are closed properly\",\"metadata\":{\"transactionId\":\"d37ac974-e71e-495d-8fd4-d3ca50e7603d\"}}
+PASS test/testing/foxden_quoting/US/getOhioQuote.munich.test.ts
+  geOhiotQuote
+    \\u2713 basic test (505 ms)
+
+PASS test/testing/utils/getCsvPath.test.ts
+  getCsvPath
+    \\u2713 returns the correct path when the file exists in the state/carrierPartner directory (2 ms)
+    \\u2713 returns the correct path when the file exists in the state/common directory (1 ms)
+    \\u2713 throws an error when the file does not exist in either directory (5 ms)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch maxPoolSize from SSM, falling back to default: 10 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/maxPoolSize because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:79:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/getPartnerCode.test.ts:15:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '4aa9f788-b727-4615-b83c-20e9861d6764',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:79:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/foxden_quoting/getPartnerCode.test.ts:15:15)
+
+\[999D\[K  console.log
+    Using default value 10 for maxPoolSize
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch maxIdleTimeMS from SSM, falling back to default: 10000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/maxIdleTimeMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:83:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/getPartnerCode.test.ts:15:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '7f3f2600-87bc-43cc-9901-6b6233aa4699',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:83:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/foxden_quoting/getPartnerCode.test.ts:15:15)
+
+\[999D\[K  console.log
+    Using default value 10000 for maxIdleTimeMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch serverSelectionTimeoutMS from SSM, falling back to default: 3000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/serverSelectionTimeoutMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:87:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/getPartnerCode.test.ts:15:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'a9f6273e-60d1-4659-83ee-01c1c17cb52d',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:87:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/foxden_quoting/getPartnerCode.test.ts:15:15)
+
+\[999D\[K  console.log
+    Using default value 3000 for serverSelectionTimeoutMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch heartbeatFrequencyMS from SSM, falling back to default: 5000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/heartbeatFrequencyMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:91:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/getPartnerCode.test.ts:15:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'f655aebb-bbd0-4abb-9e26-43ba5c8a74c3',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:91:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/foxden_quoting/getPartnerCode.test.ts:15:15)
+
+\[999D\[K  console.log
+    Using default value 5000 for heartbeatFrequencyMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:95:10)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/getPartnerCode.test.ts:15:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'f4365156-7f5d-40a5-8c69-3dc46c8026cc',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:95:10)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/foxden_quoting/getPartnerCode.test.ts:15:15)
+
+\[999D\[K  console.log
+    Using default value true for turnOnEmfileProbe
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    [EMFILE investigation] Starting investigation in undefined for MongoDBConnection...
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    *** new process, emfiles count: 31
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    Connected to MongoDB (maxPoolSize: 10, maxIdleTimeMS: 10000)
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+{\"level\":\"debug\",\"message\":\"Trying to find ApplicationAnswers object with applicationId \",\"metadata\":{\"transactionId\":\"a50699ea-fb6a-4874-b4f3-e94b58cd2a5d\"}}
+{\"level\":\"debug\",\"message\":\"Trying to find ApplicationAnswers object with applicationId \",\"metadata\":{\"transactionId\":\"a50699ea-fb6a-4874-b4f3-e94b58cd2a5d\"}}
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.disconnect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:131:10)
+        at async Promise.allSettled (index 0)
+        at Object.close (/home/circleci/project/test/utils/context/createTestContext.ts:80:22)
+        at Object.<anonymous> (/home/circleci/project/test/testing/foxden_quoting/getPartnerCode.test.ts:22:5) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '7bee11f0-5ae9-4860-beea-1f1a5d6cde78',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 78 |\[39m     \[90m// note: awaiting on Promise.allSettled doesn't throw Errors, so we're\[39m
+     \[90m 79 |\[39m     \[90m// closing the foreign services with best efforts (i.e. it doesn't matter if one fails)\[39m
+    \[31m\[1m>\[22m\[39m\[90m 80 |\[39m     \[36mconst\[39m promises \[33m=\[39m \[36mawait\[39m \[33mPromise\[39m\[33m.\[39mallSettled(closables\[33m.\[39mmap((fn) \[33m=>\[39m fn()))\[33m;\[39m
+     \[90m    |\[39m                      \[31m\[1m^\[22m\[39m
+     \[90m 81 |\[39m     \[36mconst\[39m errors \[33m=\[39m promises\[33m.\[39mreduce((acc\[33m,\[39m promise) \[33m=>\[39m {
+     \[90m 82 |\[39m       \[36mif\[39m (promise\[33m.\[39mstatus \[33m===\[39m \[32m'rejected'\[39m) {
+     \[90m 83 |\[39m         acc\[33m.\[39mpush(promise\[33m.\[39mreason)\[33m;\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.disconnect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:131:10)
+          at async Promise.allSettled (index 0)
+      at Object.close (test/utils/context/createTestContext.ts:80:22)
+      at Object.<anonymous> (test/testing/foxden_quoting/getPartnerCode.test.ts:22:5)
+
+\[999D\[K  console.log
+    Using default value true for turnOnEmfileProbe
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    MongoDB connection pool closed
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    [EMFILE investigation]: Ending investigation in undefined for MongoDBConnection...
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    *** no leak emfiles found
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+{\"level\":\"debug\",\"message\":\"Everything in the Context are closed properly\",\"metadata\":{\"transactionId\":\"a50699ea-fb6a-4874-b4f3-e94b58cd2a5d\"}}
+PASS test/testing/foxden_quoting/getPartnerCode.test.ts
+  getpartnerCode test
+    \\u2713 partner code does not exist (313 ms)
+    \\u2713 partner code does exist (12 ms)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch maxPoolSize from SSM, falling back to default: 10 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/maxPoolSize because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:79:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/getProfessionsErrors.test.ts:9:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '7b7d62b9-e129-4e0a-8de8-51ecd5e500a6',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:79:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/getProfessionsErrors.test.ts:9:15)
+
+\[999D\[K  console.log
+    Using default value 10 for maxPoolSize
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch maxIdleTimeMS from SSM, falling back to default: 10000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/maxIdleTimeMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:83:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/getProfessionsErrors.test.ts:9:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '826b5ae5-bea6-4de1-93b1-b1606e42003a',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:83:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/getProfessionsErrors.test.ts:9:15)
+
+\[999D\[K  console.log
+    Using default value 10000 for maxIdleTimeMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch serverSelectionTimeoutMS from SSM, falling back to default: 3000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/serverSelectionTimeoutMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:87:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/getProfessionsErrors.test.ts:9:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '5a0bbf14-2e4d-47cf-b6d4-c8268b9523a9',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:87:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/getProfessionsErrors.test.ts:9:15)
+
+\[999D\[K  console.log
+    Using default value 3000 for serverSelectionTimeoutMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch heartbeatFrequencyMS from SSM, falling back to default: 5000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/heartbeatFrequencyMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:91:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/getProfessionsErrors.test.ts:9:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'add81936-902a-4b8c-affb-72c1e61cdd34',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:91:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/getProfessionsErrors.test.ts:9:15)
+
+\[999D\[K  console.log
+    Using default value 5000 for heartbeatFrequencyMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:95:10)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/getProfessionsErrors.test.ts:9:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'd9c9592c-e141-4010-ab52-3f784e1a7185',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:95:10)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/getProfessionsErrors.test.ts:9:15)
+
+\[999D\[K  console.log
+    Using default value true for turnOnEmfileProbe
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    [EMFILE investigation] Starting investigation in undefined for MongoDBConnection...
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    *** new process, emfiles count: 31
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    Connected to MongoDB (maxPoolSize: 10, maxIdleTimeMS: 10000)
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.disconnect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:131:10)
+        at async Promise.allSettled (index 0)
+        at Object.close (/home/circleci/project/test/utils/context/createTestContext.ts:80:22)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/getProfessionsErrors.test.ts:14:5) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '0a604efb-c46d-4b45-b7b0-5673e97d6f33',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 78 |\[39m     \[90m// note: awaiting on Promise.allSettled doesn't throw Errors, so we're\[39m
+     \[90m 79 |\[39m     \[90m// closing the foreign services with best efforts (i.e. it doesn't matter if one fails)\[39m
+    \[31m\[1m>\[22m\[39m\[90m 80 |\[39m     \[36mconst\[39m promises \[33m=\[39m \[36mawait\[39m \[33mPromise\[39m\[33m.\[39mallSettled(closables\[33m.\[39mmap((fn) \[33m=>\[39m fn()))\[33m;\[39m
+     \[90m    |\[39m                      \[31m\[1m^\[22m\[39m
+     \[90m 81 |\[39m     \[36mconst\[39m errors \[33m=\[39m promises\[33m.\[39mreduce((acc\[33m,\[39m promise) \[33m=>\[39m {
+     \[90m 82 |\[39m       \[36mif\[39m (promise\[33m.\[39mstatus \[33m===\[39m \[32m'rejected'\[39m) {
+     \[90m 83 |\[39m         acc\[33m.\[39mpush(promise\[33m.\[39mreason)\[33m;\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.disconnect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:131:10)
+          at async Promise.allSettled (index 0)
+      at Object.close (test/utils/context/createTestContext.ts:80:22)
+      at Object.<anonymous> (test/testing/amtrust/getProfessionsErrors.test.ts:14:5)
+
+\[999D\[K  console.log
+    Using default value true for turnOnEmfileProbe
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    MongoDB connection pool closed
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    [EMFILE investigation]: Ending investigation in undefined for MongoDBConnection...
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    *** no leak emfiles found
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+{\"level\":\"debug\",\"message\":\"Everything in the Context are closed properly\",\"metadata\":{\"transactionId\":\"e71b7986-e405-4f77-8877-4c1c5ad40faf\"}}
+PASS test/testing/amtrust/getProfessionsErrors.test.ts
+  Amtrust API Errors getProfessions
+    \\u2713 getProfessions Timeout Request (119 ms)
+    \\u2713 getProfessions Status Error 404 (140 ms)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch maxPoolSize from SSM, falling back to default: 10 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/maxPoolSize because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:79:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/checkFeinErrors.test.ts:9:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '6a8c8bdb-aa9f-46e8-8437-1d600a184ef8',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:79:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/checkFeinErrors.test.ts:9:15)
+
+\[999D\[K  console.log
+    Using default value 10 for maxPoolSize
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch maxIdleTimeMS from SSM, falling back to default: 10000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/maxIdleTimeMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:83:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/checkFeinErrors.test.ts:9:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'eaf37a87-9888-4733-9f09-579165f6e6df',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:83:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/checkFeinErrors.test.ts:9:15)
+
+\[999D\[K  console.log
+    Using default value 10000 for maxIdleTimeMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch serverSelectionTimeoutMS from SSM, falling back to default: 3000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/serverSelectionTimeoutMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:87:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/checkFeinErrors.test.ts:9:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '9fe23264-df39-465c-8ae6-393c52faecc1',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:87:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/checkFeinErrors.test.ts:9:15)
+
+\[999D\[K  console.log
+    Using default value 3000 for serverSelectionTimeoutMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch heartbeatFrequencyMS from SSM, falling back to default: 5000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/heartbeatFrequencyMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:91:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/checkFeinErrors.test.ts:9:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '0e11b051-6174-49d5-9db9-597106c34469',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:91:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/checkFeinErrors.test.ts:9:15)
+
+\[999D\[K  console.log
+    Using default value 5000 for heartbeatFrequencyMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:95:10)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/checkFeinErrors.test.ts:9:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '5065d963-ce15-49b0-9629-45e613967ccc',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:95:10)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/checkFeinErrors.test.ts:9:15)
+
+\[999D\[K  console.log
+    Using default value true for turnOnEmfileProbe
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    [EMFILE investigation] Starting investigation in undefined for MongoDBConnection...
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    *** new process, emfiles count: 32
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    Connected to MongoDB (maxPoolSize: 10, maxIdleTimeMS: 10000)
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.disconnect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:131:10)
+        at async Promise.allSettled (index 0)
+        at Object.close (/home/circleci/project/test/utils/context/createTestContext.ts:80:22)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/checkFeinErrors.test.ts:14:5) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'b849621d-149c-4d62-b687-f36749688e47',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 78 |\[39m     \[90m// note: awaiting on Promise.allSettled doesn't throw Errors, so we're\[39m
+     \[90m 79 |\[39m     \[90m// closing the foreign services with best efforts (i.e. it doesn't matter if one fails)\[39m
+    \[31m\[1m>\[22m\[39m\[90m 80 |\[39m     \[36mconst\[39m promises \[33m=\[39m \[36mawait\[39m \[33mPromise\[39m\[33m.\[39mallSettled(closables\[33m.\[39mmap((fn) \[33m=>\[39m fn()))\[33m;\[39m
+     \[90m    |\[39m                      \[31m\[1m^\[22m\[39m
+     \[90m 81 |\[39m     \[36mconst\[39m errors \[33m=\[39m promises\[33m.\[39mreduce((acc\[33m,\[39m promise) \[33m=>\[39m {
+     \[90m 82 |\[39m       \[36mif\[39m (promise\[33m.\[39mstatus \[33m===\[39m \[32m'rejected'\[39m) {
+     \[90m 83 |\[39m         acc\[33m.\[39mpush(promise\[33m.\[39mreason)\[33m;\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.disconnect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:131:10)
+          at async Promise.allSettled (index 0)
+      at Object.close (test/utils/context/createTestContext.ts:80:22)
+      at Object.<anonymous> (test/testing/amtrust/checkFeinErrors.test.ts:14:5)
+
+\[999D\[K  console.log
+    Using default value true for turnOnEmfileProbe
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    MongoDB connection pool closed
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    [EMFILE investigation]: Ending investigation in undefined for MongoDBConnection...
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+\[999D\[K  console.log
+    *** no leak emfiles found
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+          at async Promise.allSettled (index 0)
+
+{\"level\":\"debug\",\"message\":\"Everything in the Context are closed properly\",\"metadata\":{\"transactionId\":\"7ea96fd8-2e8d-466e-9c28-4f054b6db672\"}}
+PASS test/testing/amtrust/checkFeinErrors.test.ts
+  Amtrust API Errors checkFein
+    \\u2713 checkFein Timeout Request (73 ms)
+    \\u2713 checkFein Status Error 404 (120 ms)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch maxPoolSize from SSM, falling back to default: 10 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/maxPoolSize because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:79:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/getProfessions.test.ts:13:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'c5df4fa0-348f-4bbc-9229-b13d94f9a3bf',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:79:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/getProfessions.test.ts:13:15)
+
+\[999D\[K  console.log
+    Using default value 10 for maxPoolSize
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch maxIdleTimeMS from SSM, falling back to default: 10000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/maxIdleTimeMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:83:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/getProfessions.test.ts:13:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'c86fa52c-1aff-4b1d-a114-c2300877b84c',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:83:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/getProfessions.test.ts:13:15)
+
+\[999D\[K  console.log
+    Using default value 10000 for maxIdleTimeMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch serverSelectionTimeoutMS from SSM, falling back to default: 3000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/serverSelectionTimeoutMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:87:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/getProfessions.test.ts:13:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '6c0f214e-92b2-4c6f-9aab-6db425eec871',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:87:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/getProfessions.test.ts:13:15)
+
+\[999D\[K  console.log
+    Using default value 3000 for serverSelectionTimeoutMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch heartbeatFrequencyMS from SSM, falling back to default: 5000 AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/heartbeatFrequencyMS because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:91:9)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/getProfessions.test.ts:13:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: 'e4dfb821-2371-4710-88f4-784c2d2bcce8',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:91:9)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/getProfessions.test.ts:13:15)
+
+\[999D\[K  console.log
+    Using default value 5000 for heartbeatFrequencyMS
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 response listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:1542) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [ClientRequest]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+\[999D\[K  console.warn
+    Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:iam::448894833180:user/foxden-backend-context-user is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:************:448894833180:parameter/foxden-undefined/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+        at de_AccessDeniedExceptionRes (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7721:21)
+        at de_CommandError (/home/circleci/project/node_modules/@aws-sdk/client-ssm/dist-cjs/index.js:7519:19)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-serde/dist-cjs/index.js:36:20
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/core/dist-cjs/index.js:193:18
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@smithy/middleware-retry/dist-cjs/index.js:320:38
+        at /home/circleci/project/node_modules/@aws-sdk/client-ssm/node_modules/@aws-sdk/middleware-logger/dist-cjs/index.js:33:22
+        at MongoDBConnection.getConfigParameter (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:54:24)
+        at MongoDBConnection.connect (/home/circleci/project/node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:95:10)
+        at default_1 (/home/circleci/project/test/utils/context/createTestContext.ts:63:23)
+        at Object.<anonymous> (/home/circleci/project/test/testing/amtrust/getProfessions.test.ts:13:15) {
+      '$fault': 'client',
+      '$metadata': {
+        httpStatusCode: 400,
+        requestId: '0d2dd2cd-c37b-461e-86e9-c8bef4ff34de',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+      },
+      __type: 'AccessDeniedException'
+    }
+
+    \[0m \[90m 61 |\[39m   \[36mconst\[39m mongoServerUrl \[33m=\[39m \[32m`mongodb://127.0.0.1:${port}/${dbName}?`\[39m\[33m;\[39m
+     \[90m 62 |\[39m   \[36mconst\[39m mongoConnection \[33m=\[39m \[36mnew\[39m \[33mMongoDBConnection\[39m(\[33mSTAGE\[39m)\[33m;\[39m
+    \[31m\[1m>\[22m\[39m\[90m 63 |\[39m   \[36mconst\[39m mongoClient \[33m=\[39m \[36mawait\[39m mongoConnection\[33m.\[39mconnect(mongoServerUrl)\[33m;\[39m
+     \[90m    |\[39m                       \[31m\[1m^\[22m\[39m
+     \[90m 64 |\[39m   closables\[33m.\[39mpush(() \[33m=>\[39m mongoConnection\[33m.\[39mdisconnect())\[33m;\[39m
+     \[90m 65 |\[39m   \[36mconst\[39m dbOps \[33m=\[39m createDBOperations(mongoClient)\[33m;\[39m
+     \[90m 66 |\[39m\[0m
+
+      at console.warn (node_modules/@sentry/src/integrations/console.ts:51:29)
+      at MongoDBConnection.getConfigParameter (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:63:15)
+      at MongoDBConnection.connect (node_modules/@foxden/shared-lib/src/mongoDBConnection.ts:95:10)
+      at default_1 (test/utils/context/createTestContext.ts:63:23)
+      at Object.<anonymous> (test/testing/amtrust/getProfessions.test.ts:13:15)
+
+\[999D\[K  console.log
+    Using default value true for turnOnEmfileProbe
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    [EMFILE investigation] Starting investigation in undefined for MongoDBConnection...
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    *** new process, emfiles count: 31
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+\[999D\[K  console.log
+    Connected to MongoDB (maxPoolSize: 10, maxIdleTimeMS: 10000)
+
+      at console.log (node_modules/@sentry/src/integrations/console.ts:51:29)
+
+{\"level\":\"debug\",\"message\":\"Downloaded class codes\",\"metadata\":{\"length\":1,\"transactionId\":\"340aa88b-4b6f-4027-97b3-3457b83352a3\"}}
+{\"level\":\"debug\",\"message\":\"Filtered out duplicated class codes\",\"metadata\":{\"newLength\":1,\"transactionId\":\"340aa88b-4b6f-4027-97b3-3457b83352a3\
