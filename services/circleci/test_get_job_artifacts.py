@@ -762,3 +762,25 @@ def test_get_circleci_job_artifacts_complete_flow():
         mock_get.assert_called_once_with(
             url="https://circleci.com/api/v2/project/gh/test/repo/999/artifacts",
             headers={"Circle-Token": "token"},
+
+
+def test_get_circleci_job_artifacts_decorator_coverage():
+    """Test to ensure the handle_exceptions decorator is properly covered."""
+    # This test ensures the decorator with specific parameters is covered
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"items": []}
+    mock_response.raise_for_status.return_value = None
+    
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+        
+        # Call the decorated function
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="100", circle_token="test"
+        )
+        
+        # Verify the decorator allows normal execution
+        assert result == []
+        assert mock_get.called
+        assert mock_response.json.called
