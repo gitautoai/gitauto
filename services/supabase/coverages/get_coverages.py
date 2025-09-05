@@ -15,19 +15,52 @@ def get_coverages(repo_id: int, filenames: list[str]):
     if not filenames:
         return coverage_dict
 
-    result = (
-        supabase.table("coverages")
-        .select("*")
-        .eq("repo_id", repo_id)
-        .in_("full_path", filenames)
-        .execute()
-    )
+    # Dynamic batching based on character count
+    # Empirically tested exact limit: 25,036 characters
+    # Using 20,000 as safe limit (80% of max)
+    MAX_CHARS = 20000
+    OVERHEAD = 100  # Query structure overhead
 
-    if not result.data:
-        return coverage_dict
+    batch = []
+    current_chars = OVERHEAD
 
-    # Create a dictionary mapping file paths to their coverage data
-    for item in result.data:
-        coverage_dict[item["full_path"]] = cast(Coverages, item)
+    for filename in filenames:
+        # Each filename needs quotes and comma: "filename",
+        filename_chars = len(filename) + 3
+
+        if current_chars + filename_chars > MAX_CHARS and batch:
+            # Process current batch
+            result = (
+                supabase.table("coverages")
+                .select("*")
+                .eq("repo_id", repo_id)
+                .in_("full_path", batch)
+                .execute()
+            )
+
+            if result.data:
+                for item in result.data:
+                    coverage_dict[item["full_path"]] = cast(Coverages, item)
+
+            # Start new batch
+            batch = [filename]
+            current_chars = OVERHEAD + filename_chars
+        else:
+            batch.append(filename)
+            current_chars += filename_chars
+
+    # Process final batch
+    if batch:
+        result = (
+            supabase.table("coverages")
+            .select("*")
+            .eq("repo_id", repo_id)
+            .in_("full_path", batch)
+            .execute()
+        )
+
+        if result.data:
+            for item in result.data:
+                coverage_dict[item["full_path"]] = cast(Coverages, item)
 
     return coverage_dict
