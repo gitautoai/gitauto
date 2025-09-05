@@ -665,6 +665,33 @@ def test_get_circleci_job_artifacts_import_coverage():
     assert CircleCIJobArtifactsData is not None
 
 
+def test_get_circleci_job_artifacts_successful_path_coverage():
+    """Test successful path to ensure all lines are covered."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200  # Not 404, so continues to line 20
+    mock_response.json.return_value = {
+        "items": [
+            {"path": "coverage.xml", "url": "https://example.com/coverage.xml", "node_index": 0}
+        ]
+    }
+    mock_response.raise_for_status.return_value = None
+    
+    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+        mock_get.return_value = mock_response
+        
+        result = get_circleci_job_artifacts(
+            project_slug="gh/owner/repo", job_number="456", circle_token="test-token"
+        )
+        
+        # Verify successful execution path
+        assert len(result) == 1
+        assert result[0]["path"] == "coverage.xml"
+        assert result[0]["node_index"] == 0
+        
+        # Verify all expected method calls
+        mock_response.raise_for_status.assert_called_once()
+        mock_response.json.assert_called_once()
+
 def test_get_circleci_job_artifacts_404_return_type():
     """Test that 404 response returns the correct type (list[CircleCIArtifact])."""
     mock_response = MagicMock()
