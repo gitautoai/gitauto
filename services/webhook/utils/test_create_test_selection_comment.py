@@ -171,7 +171,7 @@ def test_create_test_selection_comment_with_special_characters():
     assert "- [ ] added `src/file_with_underscores.py` (Coverage: 0%)" in result
 
 
-def test_create_test_selection_comment_with_empty_coverage_info(mock_reset_command):
+def test_create_test_selection_comment_with_empty_coverage_info():
     """Test creating a comment with empty coverage info."""
     branch_name = "test-branch"
     checklist: list[FileChecklistItem] = [
@@ -199,7 +199,7 @@ def test_create_test_selection_comment_with_empty_coverage_info(mock_reset_comma
     assert "`src/file2.py` " not in result  # No trailing space after backtick
 
 
-def test_create_test_selection_comment_with_long_file_paths(mock_reset_command):
+def test_create_test_selection_comment_with_long_file_paths():
     """Test creating a comment with very long file paths."""
     branch_name = "feature/long-paths"
     checklist: list[FileChecklistItem] = [
@@ -219,7 +219,7 @@ def test_create_test_selection_comment_with_long_file_paths(mock_reset_command):
     )
 
 
-def test_create_test_selection_comment_with_mixed_checked_states(mock_reset_command):
+def test_create_test_selection_comment_with_mixed_checked_states():
     """Test creating a comment with a mix of checked and unchecked items."""
     branch_name = "mixed-states"
     checklist: list[FileChecklistItem] = [
@@ -258,7 +258,7 @@ def test_create_test_selection_comment_with_mixed_checked_states(mock_reset_comm
     assert "- [ ] modified `src/unchecked2.py` (Coverage: 0%)" in result
 
 
-def test_create_test_selection_comment_structure_consistency(mock_reset_command):
+def test_create_test_selection_comment_structure_consistency():
     """Test that the comment structure is consistent regardless of checklist content."""
     # Test with different checklist sizes
     for _ in [0, 1, 5, 10]:

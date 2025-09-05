@@ -2,6 +2,8 @@ import json
 from unittest.mock import patch, MagicMock
 import pytest
 import requests
+from services.circleci import circleci_types
+from services.circleci import get_job_artifacts as circleci_artifacts
 from services.circleci.get_job_artifacts import get_circleci_job_artifacts
 from config import TIMEOUT
 
@@ -660,18 +662,13 @@ def test_get_circleci_job_artifacts_generic_exception():
 def test_get_circleci_job_artifacts_import_coverage():
     """Test to ensure import statements are covered."""
     # This test ensures that the import statements and type annotations are covered
-    from services.circleci.get_job_artifacts import get_circleci_job_artifacts
-    from services.circleci.circleci_types import (
-        CircleCIArtifact,
-        CircleCIJobArtifactsData,
-    )
 
     # Verify the function exists and is callable
-    assert callable(get_circleci_job_artifacts)
+    assert callable(circleci_artifacts.get_circleci_job_artifacts)
 
     # Verify the types are imported correctly
-    assert CircleCIArtifact is not None
-    assert CircleCIJobArtifactsData is not None
+    assert circleci_types.CircleCIArtifact is not None
+    assert circleci_types.CircleCIJobArtifactsData is not None
 
 
 def test_get_circleci_job_artifacts_404_return_type():

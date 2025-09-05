@@ -40,11 +40,14 @@ def test_get_file_tree_list_schema_allows_optional_dir_path():
     ), "get_file_tree_list should not use strict=True because dir_path is optional"
 
     # Should have dir_path in properties
-    properties = schema["parameters"]["properties"]
+    parameters = schema.get("parameters", {})
+    properties = parameters.get("properties", {})
+    assert isinstance(properties, dict), "properties should be a dict"
     assert "dir_path" in properties, "dir_path should be defined in properties"
 
     # dir_path should not be required (or required array should be empty/not include it)
-    required = schema["parameters"].get("required", [])
+    required = parameters.get("required", [])
+    assert isinstance(required, list), "required should be a list"
     assert (
         "dir_path" not in required
     ), "dir_path should not be in required array since it has default value"
@@ -65,9 +68,9 @@ def test_all_strict_functions_have_valid_schemas():
             parameters = func_def["parameters"]
 
             # Must have additionalProperties=False when strict=True
-            assert parameters.get("additionalProperties") is False, (
-                f"Function '{func_name}' (variable: {var_name}) with strict=True must have additionalProperties=False"
-            )
+            assert (
+                parameters.get("additionalProperties") is False
+            ), f"Function '{func_name}' (variable: {var_name}) with strict=True must have additionalProperties=False"
 
             # Must have all properties in required array
             properties = parameters.get("properties", {})

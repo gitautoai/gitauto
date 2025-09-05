@@ -1,12 +1,14 @@
 """Unit tests for get_circleci_token function."""
 
 import datetime
+import inspect
 import json
 from unittest.mock import Mock, patch
 
 import pytest
 import requests
 
+from services.supabase.circleci_tokens import get_circleci_token as token_module
 from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 
 
@@ -166,7 +168,7 @@ class TestGetCircleciToken:
     def test_handles_zero_owner_id(self, mock_supabase_with_token):
         """Test that function works with zero owner_id."""
         # Arrange
-        mock_supabase, mock_table, expected_token_data = mock_supabase_with_token
+        _, mock_table, expected_token_data = mock_supabase_with_token
         owner_id = 0
 
         # Act
@@ -179,7 +181,7 @@ class TestGetCircleciToken:
     def test_handles_large_owner_id(self, mock_supabase_with_token):
         """Test that function works with very large owner_id."""
         # Arrange
-        mock_supabase, mock_table, expected_token_data = mock_supabase_with_token
+        _, mock_table, expected_token_data = mock_supabase_with_token
         owner_id = 999999999999
 
         # Act
@@ -363,27 +365,18 @@ class TestGetCircleciToken:
     def test_function_signature_and_return_type(self):
         """Test that function has correct signature and return type annotation."""
         # Arrange & Act
-        import inspect
-        from services.supabase.circleci_tokens.get_circleci_token import (
-            get_circleci_token,
-        )
-
         # Assert
-        signature = inspect.signature(get_circleci_token)
+        signature = inspect.signature(token_module.get_circleci_token)
         assert len(signature.parameters) == 1
         assert "owner_id" in signature.parameters
-        assert signature.parameters["owner_id"].annotation == int
+        assert signature.parameters["owner_id"].annotation is int
 
     def test_decorator_configuration(self):
         """Test that handle_exceptions decorator is configured correctly."""
         # Arrange & Act
-        from services.supabase.circleci_tokens.get_circleci_token import (
-            get_circleci_token,
-        )
-
         # Assert - Function should have the decorator applied
-        assert hasattr(get_circleci_token, "__wrapped__")
-        assert get_circleci_token.__name__ == "get_circleci_token"
+        assert hasattr(token_module.get_circleci_token, "__wrapped__")
+        assert token_module.get_circleci_token.__name__ == "get_circleci_token"
 
     def test_supabase_query_structure(self, mock_supabase_with_token):
         """Test that the Supabase query is structured correctly."""

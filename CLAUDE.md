@@ -408,3 +408,11 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 - **Example**: `git add $(git diff --name-only HEAD)` or list files manually
 
 IMPORTANT: When pylint and pyright show many alerts/errors, focus on fixing issues related to your code changes unless explicitly told to fix all issues. Don't ignore everything, but prioritize errors in files you modified.
+
+**CRITICAL VERIFICATION REQUIREMENT:**
+
+- NEVER claim completion without running ALL checks on ALL modified files
+- Must achieve EXACTLY 10.0/10 pylint score and 0 pyright errors
+- Must verify ALL tests pass by actually running them
+- NEVER say "close to 10.00" or "good progress" - either it's PERFECT or it's NOT DONE
+- LAZY CHECKING IS UNACCEPTABLE and will result in punishment

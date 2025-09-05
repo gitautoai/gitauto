@@ -174,7 +174,7 @@ def test_get_circleci_workflow_ids_empty_check_runs(mock_create_headers, mock_ge
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
@@ -265,7 +265,7 @@ def test_get_circleci_workflow_ids_different_error_codes(mock_create_headers, mo
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
@@ -286,7 +286,7 @@ def test_get_circleci_workflow_ids_401_unauthorized(
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
     mock_logging_error.assert_called_once_with(
         "Failed to get check runs for check suite %s: %s", 12345, "Unauthorized"
     )
@@ -306,7 +306,7 @@ def test_get_circleci_workflow_ids_network_timeout(mock_create_headers, mock_get
     )
 
     # Should return default value due to handle_exceptions decorator
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
@@ -323,7 +323,7 @@ def test_get_circleci_workflow_ids_connection_error(mock_create_headers, mock_ge
     )
 
     # Should return default value due to handle_exceptions decorator
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
@@ -342,7 +342,7 @@ def test_get_circleci_workflow_ids_malformed_response_json(
     result = get_circleci_workflow_ids_from_check_suite(
         "owner", "repo", 12345, "test-token"
     )
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
@@ -372,7 +372,7 @@ def test_get_circleci_workflow_ids_mixed_valid_invalid_external_ids(
     )
 
     # Should return empty list due to handle_exceptions catching JSON decode error
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
@@ -478,7 +478,7 @@ def test_get_circleci_workflow_ids_403_forbidden_with_logging(
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
     mock_logging_error.assert_called_once_with(
         "Failed to get check runs for check suite %s: %s",
         12345,
@@ -500,7 +500,7 @@ def test_get_circleci_workflow_ids_http_error_exception(mock_create_headers, moc
     )
 
     # Should return default value due to handle_exceptions decorator
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
@@ -517,7 +517,7 @@ def test_get_circleci_workflow_ids_request_exception(mock_create_headers, mock_g
     )
 
     # Should return default value due to handle_exceptions decorator
-    assert result == []
+    assert not result
 
 
 def test_get_circleci_workflow_ids_function_signature():
