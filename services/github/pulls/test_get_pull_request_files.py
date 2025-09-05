@@ -98,11 +98,11 @@ def test_get_pull_request_files_missing_fields():
         mock_response = Mock()
         mock_response.json.return_value = mock_response_data
         mock_response.raise_for_status.return_value = None
-        
+
         empty_response = Mock()
         empty_response.json.return_value = []
         empty_response.raise_for_status.return_value = None
-        
+
         mock_get.side_effect = [mock_response, empty_response]
 
         result = get_pull_request_files(

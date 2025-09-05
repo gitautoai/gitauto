@@ -442,6 +442,7 @@ class TestGetCoverages:
 
         # Verify
         assert not result
+        # With new character-based batching, this should be called once (small filenames fit in one batch)
         mock_supabase_chain.in_.assert_called_once_with("full_path", large_filenames)
 
     def test_get_coverages_duplicate_filenames(
@@ -463,3 +464,207 @@ class TestGetCoverages:
         assert len(result) == 1  # Should only have one entry despite duplicates
         assert "src/main.py" in result
         mock_supabase_chain.in_.assert_called_once_with("full_path", filenames)
+
+    def test_get_coverages_character_batching(self, mock_supabase):
+        """Test that batching occurs based on character count."""
+        # Setup - Create filenames that will require multiple batches
+        # Generate filenames that total > 20,000 chars
+        # 180 files with 110 char paths = 19,800 chars + overhead
+        long_filenames = [
+            f"src/very/long/path/to/deeply/nested/component/with/many/extra/folders/to/exceed/the/character/limit/easily/file{i:04d}.tsx"
+            for i in range(180)
+        ]
+
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+
+        mock_result = Mock()
+        mock_result.data = []
+        mock_chain.execute.return_value = mock_result
+
+        repo_id = 123
+
+        # Execute
+        get_coverages(repo_id=repo_id, filenames=long_filenames)
+
+        # Verify - Should be called twice due to character limit
+        assert mock_chain.execute.call_count == 2
+        assert mock_chain.in_.call_count == 2
+
+        # Check that batches were split correctly
+        first_batch = mock_chain.in_.call_args_list[0][0][1]
+        second_batch = mock_chain.in_.call_args_list[1][0][1]
+
+        # All files should be included across batches
+        assert len(first_batch) + len(second_batch) == 180
+        assert set(first_batch + second_batch) == set(long_filenames)
+
+    def test_get_coverages_exact_character_limit(self, mock_supabase):
+        """Test that we correctly handle queries near the 25,036 character limit."""
+        # Setup mock
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+        mock_result = Mock()
+        mock_result.data = []
+        mock_chain.execute.return_value = mock_result
+
+        # Test 1: Just under limit (should be single batch)
+        # 19,900 chars total (well under 20,000 limit)
+        filenames_under = [
+            "a" * 195 for _ in range(100)
+        ]  # 100 files × 195 chars = 19,500 + overhead
+
+        get_coverages(repo_id=123, filenames=filenames_under)
+        assert mock_chain.execute.call_count == 1
+
+        # Reset mock
+        mock_chain.reset_mock()
+
+        # Test 2: Over limit (should be multiple batches)
+        # 22,000+ chars total (over 20,000 limit)
+        filenames_over = [
+            "b" * 215 for _ in range(100)
+        ]  # 100 files × 215 chars = 21,500 + overhead
+
+        get_coverages(repo_id=123, filenames=filenames_over)
+        assert mock_chain.execute.call_count == 2
+
+    def test_get_coverages_agent_zx_scenario(self, mock_supabase):
+        """Test the exact AGENT-ZX error scenario with many long filenames."""
+        # Recreate the exact scenario from AGENT-ZX error
+        filenames = [
+            "src/createGenericServer.ts",
+            "src/features.ts",
+            "src/global.ts",
+            "src/index.ts",
+            "src/raw-loader.d.ts",
+            "src/resolvers.ts",
+            "src/sentry.ts",
+            "src/context/getSecrets.ts",
+            "src/context/index.ts",
+            "src/context/logger.ts",
+            "src/context/mongodb.ts",
+        ] + [f"src/context/amTrust/file{i:04d}.ts" for i in range(600)]
+
+        # Setup mock
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+        mock_result = Mock()
+        mock_result.data = []
+        mock_chain.execute.return_value = mock_result
+
+        # This should not raise an exception with the fix
+        result = get_coverages(repo_id=297717337, filenames=filenames)
+
+        # Should have made 2 batches (total ~20,735 chars)
+        assert mock_chain.execute.call_count == 2
+        assert isinstance(result, dict)
+
+    def test_get_coverages_mixed_filename_lengths(self, mock_supabase):
+        """Test batching with mixed short and long filenames."""
+        # Mix of very short and very long filenames
+        filenames = (
+            ["a.py"] * 100  # 4 chars each
+            + ["src/medium/path/file.js"] * 100  # 24 chars each
+            + ["src/very/long/path/to/deeply/nested/component/file.tsx"]
+            * 100  # 55 chars each
+        )
+
+        # Setup mock
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+        mock_result = Mock()
+        mock_result.data = []
+        mock_chain.execute.return_value = mock_result
+
+        result = get_coverages(repo_id=123, filenames=filenames)
+
+        # Total: (4+3)*100 + (24+3)*100 + (55+3)*100 + 100 = 9,600 chars
+        # Should fit in single batch
+        assert mock_chain.execute.call_count == 1
+        assert isinstance(result, dict)
+
+
+class TestGetCoveragesIntegration:
+    """Integration tests that hit the actual Supabase database."""
+
+    def test_find_exact_character_limit(self):
+        """Integration test to find the exact character limit for Supabase queries."""
+        from services.supabase.client import supabase
+        import logging
+
+        # Suppress error logging for this test
+        logging.disable(logging.ERROR)
+
+        try:
+            # Binary search for exact character limit
+            low, high = 20000, 30000
+            max_working = 0
+
+            while low <= high:
+                mid = (low + high) // 2
+
+                # Create a single filename with exact length
+                overhead = 60  # Query structure overhead
+                filename_length = mid - overhead
+                filename = "x" * filename_length
+
+                try:
+                    supabase.table("coverages").select("*").eq("repo_id", 999999).in_(
+                        "full_path", [filename]
+                    ).execute()
+                    max_working = mid
+                    low = mid + 1
+                except Exception as e:
+                    if (
+                        "400" in str(e)
+                        or "Bad Request" in str(e)
+                        or "JSON could not be generated" in str(e)
+                    ):
+                        high = mid - 1
+                    else:
+                        # Different error, skip
+                        high = mid - 1
+
+            # We found the limit to be 25,036 chars
+            assert (
+                25000 <= max_working <= 26000
+            ), f"Expected limit around 25,036, got {max_working}"
+
+        finally:
+            logging.disable(logging.NOTSET)
+
+    def test_get_coverages_with_realistic_large_batch(self):
+        """Test that get_coverages can handle realistic large batches from real repos."""
+        # Create filenames similar to the AGENT-ZX error case
+        filenames = [
+            "src/createGenericServer.ts",
+            "src/features.ts",
+            "src/global.ts",
+            "src/index.ts",
+            "src/raw-loader.d.ts",
+            "src/resolvers.ts",
+            "src/sentry.ts",
+            "src/context/getSecrets.ts",
+            "src/context/index.ts",
+            "src/context/logger.ts",
+            "src/context/mongodb.ts",
+        ] + [
+            f"src/context/amTrust/file{i}.ts" for i in range(100)
+        ]  # Simulate many amTrust files
+
+        # This should not raise an exception
+        result = get_coverages(repo_id=999999, filenames=filenames)
+        assert isinstance(result, dict)
