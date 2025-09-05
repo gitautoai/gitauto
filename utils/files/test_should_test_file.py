@@ -311,6 +311,7 @@ class DataProcessor:
             if return_value is True:
                 assert result is True
             else:
+                assert result is False
 
     def test_should_test_file_with_very_long_content(
         self, mock_evaluate_condition, sample_file_path
@@ -362,3 +363,27 @@ class DataProcessor:
         
         # System prompt should be identical across calls
         assert first_call_prompt == second_call_prompt
+
+    def test_should_test_file_multiple_exception_types(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that function handles different types of exceptions gracefully."""
+        exception_types = [
+            ValueError("Invalid value"),
+            TypeError("Type error"),
+            ConnectionError("Network error"),
+            KeyError("Missing key"),
+            AttributeError("Missing attribute"),
+            RuntimeError("Runtime error")
+        ]
+        
+        for exception in exception_types:
+            mock_evaluate_condition.side_effect = exception
+            
+            result = should_test_file(sample_file_path, sample_code_content)
+            
+            # Should always return False when any exception occurs
+            assert result is False
+            
+        # Verify all exceptions were handled
+        assert mock_evaluate_condition.call_count == len(exception_types)
