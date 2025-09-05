@@ -116,6 +116,55 @@ source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https
 source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/ISSUE_ID/events/latest/" | python -m json.tool | grep -A 10 -B 5 "error_keyword"
 ```
 
+#### Investigating Token/Context Limit Errors (e.g., AGENT-146) 
+
+When a Sentry issue shows a token limit error (e.g., "167,154 token context limit"), find the actual input that caused it:
+
+```bash
+# 1. Get the CloudWatch URL from Sentry error
+source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" \
+  "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/AGENT-146/events/latest/" | \
+  python -m json.tool | grep -A 5 "cloudwatch"
+
+# Example output shows log stream and request ID:
+# "cloudwatch logs": {
+#     "log_stream": "2025/09/04/pr-agent-prod[$LATEST]841315c5054c49ca80316cf2861696a3"
+# }
+# "aws_request_id": "17921070-5cb6-43ee-8d2e-b5161ae89729"
+
+# 2. Use the exact stream from Sentry (get stream timestamps)
+STREAM="2025/09/04/pr-agent-prod[\$LATEST]841315c5054c49ca80316cf2861696a3"
+aws logs describe-log-streams \
+  --log-group-name "/aws/lambda/pr-agent-prod" \
+  --log-stream-name-prefix "2025/09/04/pr-agent-prod" | \
+  grep -A 3 "841315c5054c49ca80316cf2861696a3"
+
+# 3. Get ALL events from the exact stream and find the largest message
+aws logs get-log-events \
+  --log-group-name "/aws/lambda/pr-agent-prod" \
+  --log-stream-name "$STREAM" \
+  --start-time 1756990862750 \
+  --end-time 1756992771853 | \
+  python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+max_size = 0
+large_msg = None
+for event in data.get('events', []):
+    size = len(event['message'])
+    if size > max_size:
+        max_size = size
+        large_msg = event['message']
+
+if max_size > 100000:
+    print(f'Found input: {max_size} chars')
+    if 'error_log' in large_msg:
+        print('SUCCESS: This is the token limit input')
+"
+
+# Verified: AGENT-146 input was 262,118 chars causing token limit error
+```
+
 #### Required Environment Variables
 
 The following variables must be set in .env file:
