@@ -21,7 +21,7 @@ def is_test_file(filename: str) -> bool:
         r"\.spec\.",  # Button.spec.tsx, api.spec.js
         r"test\.",  # ButtonTest.java, UserTest.cs
         r"tests\.",  # ButtonTests.java, UserTests.cs
-        r"_test\.",  # button_test.py, user_test.go
+        r"_test\.[^.]+$",  # button_test.py, user_test.go
         r"_spec\.",  # button_spec.rb, user_spec.rb
         r"^test_",  # test_button.py, test_utils.py
         r"/test_",  # services/anthropic/test_client.py
