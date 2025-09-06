@@ -615,3 +615,80 @@ def test_get_circleci_workflow_ids_timeout_parameter(mock_create_headers, mock_g
     # Verify timeout is set to 30 seconds
     _, kwargs = mock_get.call_args
     assert kwargs["timeout"] == 30
+
+
+# Additional behavioral tests using fixtures
+def test_extracts_workflow_ids_successfully(mock_create_headers, mock_requests_get):
+    """Test that the function successfully extracts workflow IDs from a check suite."""
+    # pylint: disable=redefined-outer-name
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "check_runs": [
+            {"external_id": json.dumps({"workflow-id": "build-workflow"})},
+            {"external_id": json.dumps({"workflow-id": "test-workflow"})},
+        ]
+    }
+    mock_requests_get.return_value = mock_response
+
+    result = get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "token")
+
+    assert result == ["build-workflow", "test-workflow"]
+
+
+def test_returns_empty_list_on_api_failure(mock_create_headers, mock_requests_get, mock_logging_error):
+    """Test that the function returns empty list when API call fails."""
+    # pylint: disable=redefined-outer-name
+    mock_response = Mock()
+    mock_response.status_code = 500
+    mock_response.text = "Server Error"
+    mock_requests_get.return_value = mock_response
+
+    result = get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "token")
+
+    assert result == []
+    mock_logging_error.assert_called_once()
+
+
+def test_handles_network_errors_gracefully(mock_create_headers, mock_requests_get):
+    """Test that the function handles network errors gracefully."""
+    # pylint: disable=redefined-outer-name
+    mock_requests_get.side_effect = requests.exceptions.ConnectionError("Network error")
+
+    result = get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "token")
+
+    # Due to handle_exceptions decorator, should return default value
+    assert result == []
+
+
+def test_deduplicates_workflow_ids_correctly(mock_create_headers, mock_requests_get):
+    """Test that duplicate workflow IDs are properly deduplicated."""
+    # pylint: disable=redefined-outer-name
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "check_runs": [
+            {"external_id": json.dumps({"workflow-id": "workflow-1"})},
+            {"external_id": json.dumps({"workflow-id": "workflow-2"})},
+            {"external_id": json.dumps({"workflow-id": "workflow-1"})},  # Duplicate
+        ]
+    }
+    mock_requests_get.return_value = mock_response
+
+    result = get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "token")
+
+    assert result == ["workflow-1", "workflow-2"]
+
+
+def test_skips_invalid_check_runs(mock_create_headers, mock_requests_get):
+    """Test that invalid check runs are properly skipped."""
+    # pylint: disable=redefined-outer-name
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "check_runs": [
+            {"name": "no-external-id"},  # Missing external_id
+            {"external_id": None},  # Null external_id
+            {"external_id": ""},  # Empty external_id
+            {"external_id": json.dumps({"workflow-id": "valid-workflow"})},  # Valid
+            {"external_id": json.dumps({"other-field": "value"})},  # No workflow-id
