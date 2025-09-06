@@ -323,3 +323,75 @@ class TestCreateUserRequest:
         mock_dependencies["get_issue"].assert_called_once()
         mock_dependencies["insert_usage"].assert_called_once()
         mock_dependencies["upsert_user"].assert_called_once()
+
+    def test_create_user_request_large_ids(self, sample_params, mock_dependencies):
+        """Test create_user_request with large ID values."""
+        # Setup
+        params = sample_params.copy()
+        params["user_id"] = 999999999
+        params["owner_id"] = 888888888
+        params["repo_id"] = 777777777
+        params["installation_id"] = 666666666
+        
+        mock_dependencies["get_issue"].return_value = None
+        mock_dependencies["insert_usage"].return_value = 111
+
+        # Execute
+        result = create_user_request(**params)
+
+        # Assert
+        assert result == 111
+        
+        # Verify functions were called with large IDs
+        mock_dependencies["insert_issue"].assert_called_once_with(
+            owner_id=888888888,
+            owner_type="Organization",
+            owner_name="test_org",
+            repo_id=777777777,
+            repo_name="test_repo",
+            issue_number=123,
+            installation_id=666666666,
+        )
+        
+        mock_dependencies["upsert_user"].assert_called_once_with(
+            user_id=999999999,
+            user_name="test_user",
+            email="test@example.com",
+        )
+
+    def test_create_user_request_different_sources(self, sample_params, mock_dependencies):
+        """Test create_user_request with different source values."""
+        sources = ["github", "webhook", "api", "manual"]
+        
+        for source in sources:
+            # Setup
+            params = sample_params.copy()
+            params["source"] = source
+            
+            mock_dependencies["get_issue"].return_value = {"id": 1}
+            mock_dependencies["insert_usage"].return_value = 100
+            
+            # Reset mocks
+            for mock in mock_dependencies.values():
+                mock.reset_mock()
+
+            # Execute
+            result = create_user_request(**params)
+
+            # Assert
+            assert result == 100
+            
+            # Verify insert_usage was called with correct source
+            mock_dependencies["insert_usage"].assert_called_once()
+            call_args = mock_dependencies["insert_usage"].call_args[1]
+            assert call_args["source"] == source
+
+    def test_create_user_request_function_call_order(self, sample_params, mock_dependencies):
+        """Test that functions are called in the correct order."""
+        # Setup
+        mock_dependencies["get_issue"].return_value = None
+        mock_dependencies["insert_usage"].return_value = 123
+        
+        # Execute
+        create_user_request(**sample_params)
+        
