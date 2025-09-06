@@ -373,3 +373,55 @@ class UserManager:
 from app import main
 if __name__ == "__main__":
     main()
+
+    def test_should_test_file_mock_call_count_verification(self, mock_evaluate_condition, sample_file_path, sample_code_content):
+        """Test that evaluate_condition is called exactly once per function call."""
+        mock_evaluate_condition.return_value = True
+        
+        # Single call
+        should_test_file(sample_file_path, sample_code_content)
+        assert mock_evaluate_condition.call_count == 1
+        
+        # Multiple calls should each call evaluate_condition once
+        should_test_file(sample_file_path, sample_code_content)
+        assert mock_evaluate_condition.call_count == 2
+        
+        should_test_file("another_file.py", "different content")
+        assert mock_evaluate_condition.call_count == 3
+
+    def test_should_test_file_with_unicode_file_paths(self, mock_evaluate_condition, sample_code_content):
+        """Test function behavior with unicode characters in file paths."""
+        unicode_paths = [
+            "测试文件.py",
+            "файл.py", 
+            "ファイル.py",
+            "archivo_español.py",
+            "tệp_tiếng_việt.py"
+        ]
+        
+        mock_evaluate_condition.return_value = True
+        
+        for file_path in unicode_paths:
+            mock_evaluate_condition.reset_mock()
+            result = should_test_file(file_path, sample_code_content)
+            
+            assert result is True
+            mock_evaluate_condition.assert_called_once()
+            
+            # Verify unicode file path is preserved
+            call_args = mock_evaluate_condition.call_args
+            content_arg = call_args[1]["content"]
+            assert f"File path: {file_path}" in content_arg
+
+    def test_should_test_file_thread_safety_simulation(self, mock_evaluate_condition, sample_file_path, sample_code_content):
+        """Test that function calls don't interfere with each other (simulating thread safety)."""
+        # Simulate concurrent calls with different return values
+        call_results = []
+        
+        for i in range(5):
+            mock_evaluate_condition.reset_mock()
+            mock_evaluate_condition.return_value = i % 2 == 0  # Alternate True/False
+            
+            result = should_test_file(f"file_{i}.py", f"content_{i}")
+            call_results.append(result)
+        
