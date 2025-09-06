@@ -449,7 +449,6 @@ class TestEdgeCases:
 
         large_pull_number = 9999999999
         fetch_branch(large_pull_number, "branch", "/path")
-        )
 
         mock_run.assert_called_once_with(
             f"git fetch origin pull/{large_pull_number}/head:branch",
