@@ -323,6 +323,38 @@ class TestSwitchToBranch:
             cwd="/different/repo/path",
         )
 
+    @patch("subprocess.run")
+    def test_switch_to_branch_with_non_ascii_characters(self, mock_run, mock_subprocess_run):
+        """Test branch switch with non-ASCII characters in branch name"""
+        mock_run.return_value = mock_subprocess_run
+
+        branch_name = "feature/café-auth"
+        repo_dir = "/path/to/repo"
+
+        switch_to_branch(branch_name, repo_dir)
+
+        mock_run.assert_called_once_with(
+            "git switch feature/café-auth",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd="/path/to/repo",
+        )
+
+    @patch("subprocess.run")
+    def test_switch_to_branch_with_very_long_name(self, mock_run, mock_subprocess_run):
+        """Test branch switch with a very long branch name"""
+        mock_run.return_value = mock_subprocess_run
+
+        long_branch_name = "feature/" + "x" * 100
+        switch_to_branch(long_branch_name, "/path/to/repo")
+
+        expected_cmd = f"git switch {long_branch_name}"
+        mock_run.assert_called_once()
+        call_args = mock_run.call_args[0][0]
+        assert call_args == expected_cmd
+
 
 class TestHandleExceptionsIntegration:
     """Test cases for handle_exceptions decorator integration"""
