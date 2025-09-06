@@ -692,6 +692,7 @@ def test_skips_invalid_check_runs(mock_create_headers, mock_requests_get):
             {"external_id": ""},  # Empty external_id
             {"external_id": json.dumps({"workflow-id": "valid-workflow"})},  # Valid
             {"external_id": json.dumps({"other-field": "value"})},  # No workflow-id
+            {"external_id": json.dumps({"workflow-id": "another-valid-workflow"})},  # Another valid
         ]
     }
     mock_requests_get.return_value = mock_response
