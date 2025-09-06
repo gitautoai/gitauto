@@ -739,3 +739,40 @@ def test_function_signature_is_correct():
     
     # Verify function accepts the expected parameters
     assert params == ["owner", "repo", "check_suite_id", "github_token"]
+
+
+@pytest.mark.parametrize("status_code,error_text", [
+    (401, "Unauthorized"),
+    (403, "Forbidden"),
+    (404, "Not Found"),
+    (422, "Unprocessable Entity"),
+    (500, "Internal Server Error"),
+])
+def test_handles_various_http_errors(mock_create_headers, mock_requests_get, mock_logging_error, status_code, error_text):
+    """Test that function handles various HTTP error status codes gracefully."""
+    # pylint: disable=redefined-outer-name
+    mock_response = Mock()
+    mock_response.status_code = status_code
+    mock_response.text = error_text
+    mock_requests_get.return_value = mock_response
+
+    result = get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "token")
+
+    assert result == []
+    mock_logging_error.assert_called_once()
+
+
+@pytest.mark.parametrize("exception_class,exception_message", [
+    (requests.exceptions.ConnectionError, "Connection failed"),
+    (requests.exceptions.Timeout, "Request timed out"),
+    (requests.exceptions.HTTPError, "HTTP error occurred"),
+    (requests.exceptions.RequestException, "Request failed"),
+])
+def test_handles_various_request_exceptions(mock_create_headers, mock_requests_get, exception_class, exception_message):
+    """Test that function handles various request exceptions gracefully."""
+    # pylint: disable=redefined-outer-name
+    mock_requests_get.side_effect = exception_class(exception_message)
+
+    result = get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "token")
+
+    assert result == []
