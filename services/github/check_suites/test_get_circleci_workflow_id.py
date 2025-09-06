@@ -681,7 +681,7 @@ def test_deduplicates_workflow_ids_correctly(mock_create_headers, mock_requests_
 
 
 def test_skips_invalid_check_runs(mock_create_headers, mock_requests_get):
-    """Test that invalid check runs are properly skipped."""
+    """Test that check runs without external_id or workflow-id are properly skipped."""
     # pylint: disable=redefined-outer-name
     mock_response = Mock()
     mock_response.status_code = 200
