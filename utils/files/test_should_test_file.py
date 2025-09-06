@@ -1,4 +1,5 @@
 # pylint: disable=redefined-outer-name
+"""Unit tests for the should_test_file function."""
 
 from unittest.mock import patch
 
