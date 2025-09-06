@@ -263,3 +263,64 @@ def test_create_test_selection_comment_structure_consistency():
     # Test with different checklist sizes
     for _ in [0, 1, 5, 10]:
         pass
+
+def test_create_test_selection_comment_structure_consistency_complete():
+    """Test that the comment structure is consistent regardless of checklist content."""
+    branch_name = "consistency-test"
+    
+    # Test with different checklist sizes
+    for size in [0, 1, 3, 5]:
+        checklist: list[FileChecklistItem] = []
+        for i in range(size):
+            checklist.append({
+                "path": f"src/file{i}.py",
+                "checked": i % 2 == 0,  # Alternate checked state
+                "coverage_info": f" (Coverage: {i * 20}%)" if i > 0 else "",
+                "status": "modified",
+            })
+        
+        result = create_test_selection_comment(checklist, branch_name)
+        
+        # Verify consistent structure elements are always present
+        assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+        assert "Select files to manage tests for (create, update, or remove):" in result
+        assert "---" in result
+        assert "- [ ] Yes, manage tests" in result
+        assert PRODUCT_NAME in result
+        assert SETTINGS_LINKS in result
+        
+        # Verify the number of file items matches the checklist size
+        file_lines = [line for line in result.split('\n') if line.startswith('- [')]
+        # Subtract 1 for the "Yes, manage tests" line
+        assert len(file_lines) - 1 == size
+
+
+def test_create_test_selection_comment_with_all_coverage_variations():
+    """Test creating a comment with various coverage info formats."""
+    branch_name = "coverage-variations"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/no_coverage.py",
+            "checked": True,
+            "coverage_info": "",
+            "status": "added",
+        },
+        {
+            "path": "src/zero_coverage.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 0%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/full_coverage.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 100%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/partial_coverage.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 42%)",
+            "status": "added",
+        },
+    ]
