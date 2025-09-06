@@ -425,3 +425,33 @@ if __name__ == "__main__":
             result = should_test_file(f"file_{i}.py", f"content_{i}")
             call_results.append(result)
         
+
+    def test_should_test_file_comprehensive_error_scenarios(self, mock_evaluate_condition, sample_file_path, sample_code_content):
+        """Test various error scenarios to ensure robust error handling."""
+        error_scenarios = [
+            ValueError("Invalid input"),
+            TypeError("Type mismatch"),
+            AttributeError("Missing attribute"),
+            KeyError("Missing key"),
+            RuntimeError("Runtime error"),
+            ConnectionError("Network error"),
+            TimeoutError("Request timeout"),
+        ]
+        
+        for error in error_scenarios:
+            mock_evaluate_condition.reset_mock()
+            mock_evaluate_condition.side_effect = error
+            
+            # Should handle all errors gracefully and return False
+            result = should_test_file(sample_file_path, sample_code_content)
+            assert result is False
+            mock_evaluate_condition.assert_called_once()
+
+    def test_should_test_file_function_signature_validation(self):
+        """Test that the function has the correct signature."""
+        import inspect
+        from utils.files.should_test_file import should_test_file
+        
+        sig = inspect.signature(should_test_file)
+        params = list(sig.parameters.keys())
+        
