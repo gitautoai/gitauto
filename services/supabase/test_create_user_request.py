@@ -296,16 +296,17 @@ class TestCreateUserRequest:
         )
 
     def test_create_user_request_exception_handling(self, sample_params):
-        """Test that exceptions are handled by the decorator."""
+        """Test that exceptions are raised by the decorator."""
         with patch("services.supabase.create_user_request.get_issue") as mock_get_issue:
             # Setup mock to raise exception
             mock_get_issue.side_effect = Exception("Database error")
 
-            # Execute - should not raise exception due to @handle_exceptions
-            result = create_user_request(**sample_params)
-
-            # Assert - should return None due to handle_exceptions decorator
-            assert result is None
+            # Execute - should raise exception due to @handle_exceptions(raise_on_error=True)
+            with pytest.raises(Exception) as exc_info:
+                create_user_request(**sample_params)
+            
+            # Assert - should raise the original exception
+            assert str(exc_info.value) == "Database error"
 
     def test_create_user_request_insert_usage_returns_none(self, sample_params, mock_dependencies):
         """Test when insert_usage returns None."""
@@ -395,3 +396,9 @@ class TestCreateUserRequest:
         # Execute
         create_user_request(**sample_params)
         
+        # Verify call order by checking that get_issue is called before insert_issue
+        # and insert_usage is called after both
+        assert mock_dependencies["get_issue"].call_count == 1
+        assert mock_dependencies["insert_issue"].call_count == 1
+        assert mock_dependencies["insert_usage"].call_count == 1
+        assert mock_dependencies["upsert_user"].call_count == 1
