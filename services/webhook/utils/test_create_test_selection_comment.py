@@ -324,3 +324,85 @@ def test_create_test_selection_comment_with_all_coverage_variations():
             "status": "added",
         },
     ]
+
+
+def test_create_test_selection_comment_with_unicode_paths():
+    """Test creating a comment with paths containing unicode characters."""
+    branch_name = "unicode-test"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/测试文件.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 50%)",
+            "status": "added",
+        },
+        {
+            "path": "src/файл.py",
+            "checked": False,
+            "coverage_info": "",
+            "status": "modified",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify unicode paths are handled correctly
+    assert "- [x] added `src/测试文件.py` (Coverage: 50%)" in result
+    assert "- [ ] modified `src/файл.py`" in result
+
+
+def test_create_test_selection_comment_with_removed_status():
+    """Test creating a comment specifically with removed status files."""
+    branch_name = "removed-files"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/deleted_file.py",
+            "checked": True,
+            "coverage_info": "",
+            "status": "removed",
+        },
+        {
+            "path": "src/another_deleted.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 80%)",
+            "status": "removed",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify removed files are handled correctly
+    assert "- [x] removed `src/deleted_file.py`" in result
+    assert "- [ ] removed `src/another_deleted.py` (Coverage: 80%)" in result
+
+
+def test_create_test_selection_comment_with_single_item():
+    """Test creating a comment with exactly one checklist item."""
+    branch_name = "single-item"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/single.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 95%)",
+            "status": "modified",
+        }
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify single item is handled correctly
+    assert "- [x] modified `src/single.py` (Coverage: 95%)" in result
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert "- [ ] Yes, manage tests" in result
+
+
+def test_create_test_selection_comment_line_endings():
+    """Test that the comment uses consistent line endings."""
+    branch_name = "line-endings"
+    checklist: list[FileChecklistItem] = []
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify consistent line endings (should use \n)
+    assert '\r\n' not in result  # No Windows line endings
+    assert result.count('\n') > 0  # Has Unix line endings
