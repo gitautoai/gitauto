@@ -1,5 +1,6 @@
 import inspect
 import json
+import pytest
 from unittest.mock import Mock, patch
 
 import requests
@@ -9,6 +10,30 @@ from services.github.check_suites.get_circleci_workflow_id import (
 )
 
 
+# Fixtures for better mock management
+@pytest.fixture
+def mock_create_headers():
+    """Mock create_headers function with proper lifecycle management."""
+    with patch("services.github.check_suites.get_circleci_workflow_id.create_headers") as mock:
+        mock.return_value = {"Authorization": "Bearer test-token"}
+        yield mock
+
+
+@pytest.fixture
+def mock_requests_get():
+    """Mock requests.get with proper lifecycle management."""
+    with patch("services.github.check_suites.get_circleci_workflow_id.requests.get") as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_logging_error():
+    """Mock logging.error with proper lifecycle management."""
+    with patch("services.github.check_suites.get_circleci_workflow_id.logging.error") as mock:
+        yield mock
+
+
+# Behavioral tests focusing on outcomes rather than implementation details
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
 @patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
 def test_get_circleci_workflow_ids_success(mock_create_headers, mock_get):
