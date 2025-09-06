@@ -692,6 +692,13 @@ def test_skips_invalid_check_runs(mock_create_headers, mock_requests_get):
             {"external_id": ""},  # Empty external_id
             {"external_id": json.dumps({"workflow-id": "valid-workflow"})},  # Valid
             {"external_id": json.dumps({"other-field": "value"})},  # No workflow-id
+        ]
+    }
+    mock_requests_get.return_value = mock_response
+
+    result = get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "token")
+
+    assert result == ["valid-workflow"]
 
 
 def test_complete_workflow_extraction_scenario(mock_create_headers, mock_requests_get):
