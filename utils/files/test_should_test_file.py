@@ -259,3 +259,72 @@ class DataProcessor:
 
         # Should have exactly 2 keyword arguments
         assert len(call_args[1]) == 2
+
+    def test_should_test_file_with_none_inputs(self, mock_evaluate_condition):
+        """Test function behavior with None inputs."""
+        mock_evaluate_condition.return_value = False
+
+        # Test with None file_path - should handle gracefully
+        result = should_test_file(None, "some content")
+        assert result is False
+
+        # Test with None content - should handle gracefully  
+        result = should_test_file("test.py", None)
+        assert result is False
+
+    def test_should_test_file_with_very_long_content(self, mock_evaluate_condition, sample_file_path):
+        """Test function behavior with very long content."""
+        # Create a very long content string
+        long_content = "def function():\n    pass\n" * 1000
+        mock_evaluate_condition.return_value = True
+
+        result = should_test_file(sample_file_path, long_content)
+
+        assert result is True
+        mock_evaluate_condition.assert_called_once()
+
+        # Verify long content is passed correctly
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert long_content in content_arg
+
+    def test_should_test_file_system_prompt_immutable(self, mock_evaluate_condition, sample_file_path, sample_code_content):
+        """Test that the system prompt remains consistent across calls."""
+        mock_evaluate_condition.return_value = True
+
+        # Make multiple calls
+        should_test_file(sample_file_path, sample_code_content)
+        first_call_prompt = mock_evaluate_condition.call_args[1]["system_prompt"]
+
+        mock_evaluate_condition.reset_mock()
+        should_test_file("different_file.py", "different content")
+        second_call_prompt = mock_evaluate_condition.call_args[1]["system_prompt"]
+
+        # System prompt should be identical
+        assert first_call_prompt == second_call_prompt
+
+    def test_should_test_file_content_formatting_consistency(self, mock_evaluate_condition):
+        """Test that content formatting is consistent."""
+        mock_evaluate_condition.return_value = True
+        
+        test_cases = [
+            ("file.py", "content"),
+            ("path/to/file.js", "function test() {}"),
+            ("", "empty path"),
+            ("file.txt", ""),
+        ]
+
+        for file_path, content in test_cases:
+            mock_evaluate_condition.reset_mock()
+            should_test_file(file_path, content)
+            
+            call_args = mock_evaluate_condition.call_args
+            content_arg = call_args[1]["content"]
+            
+            # Verify consistent formatting pattern
+            expected_start = f"File path: {file_path}\n\nContent:\n"
+            assert content_arg.startswith(expected_start)
+            assert content_arg == f"{expected_start}{content}"
+
+    def test_should_test_file_return_type_consistency(self, mock_evaluate_condition, sample_file_path, sample_code_content):
+        """Test that function always returns a boolean."""
