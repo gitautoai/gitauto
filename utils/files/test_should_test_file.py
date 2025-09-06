@@ -328,6 +328,23 @@ class DataProcessor:
 
     def test_should_test_file_return_type_consistency(self, mock_evaluate_condition, sample_file_path, sample_code_content):
         """Test that function always returns a boolean."""
+        # Test with True return value
+        mock_evaluate_condition.return_value = True
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert isinstance(result, bool)
+        assert result is True
+
+        # Test with False return value
+        mock_evaluate_condition.return_value = False
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert isinstance(result, bool)
+        assert result is False
+
+        # Test with None return value
+        mock_evaluate_condition.return_value = None
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert isinstance(result, bool)
+        assert result is False
 
     def test_should_test_file_integration_with_handle_exceptions_decorator(self, mock_evaluate_condition, sample_file_path, sample_code_content):
         """Integration test to verify the decorator is properly applied."""
@@ -373,6 +390,17 @@ class UserManager:
 from app import main
 if __name__ == "__main__":
     main()
+'''
+
+        # Test complex code
+        mock_evaluate_condition.return_value = True
+        result = should_test_file("user_manager.py", complex_code)
+        assert result is True
+
+        # Test simple code
+        mock_evaluate_condition.return_value = False
+        result = should_test_file("main.py", simple_code)
+        assert result is False
 
     def test_should_test_file_mock_call_count_verification(self, mock_evaluate_condition, sample_file_path, sample_code_content):
         """Test that evaluate_condition is called exactly once per function call."""
@@ -425,6 +453,9 @@ if __name__ == "__main__":
             result = should_test_file(f"file_{i}.py", f"content_{i}")
             call_results.append(result)
         
+        # Verify results match expected pattern
+        expected_results = [True, False, True, False, True]
+        assert call_results == expected_results
 
     def test_should_test_file_comprehensive_error_scenarios(self, mock_evaluate_condition, sample_file_path, sample_code_content):
         """Test various error scenarios to ensure robust error handling."""
@@ -455,3 +486,7 @@ if __name__ == "__main__":
         sig = inspect.signature(should_test_file)
         params = list(sig.parameters.keys())
         
+        # Should have exactly 2 parameters
+        assert len(params) == 2
+        assert "file_path" in params
+        assert "content" in params
