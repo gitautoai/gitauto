@@ -441,6 +441,7 @@ class TestEdgeCases:
             check=True,
             cwd="/path/to/repo",
         )
+
     @patch("subprocess.run")
     def test_fetch_branch_with_very_large_pull_number(self, mock_run, mock_subprocess_run):
         """Test fetch_branch with a very large pull number"""
