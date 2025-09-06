@@ -328,3 +328,48 @@ class DataProcessor:
 
     def test_should_test_file_return_type_consistency(self, mock_evaluate_condition, sample_file_path, sample_code_content):
         """Test that function always returns a boolean."""
+
+    def test_should_test_file_integration_with_handle_exceptions_decorator(self, mock_evaluate_condition, sample_file_path, sample_code_content):
+        """Integration test to verify the decorator is properly applied."""
+        # Test that the function has the decorator applied
+        from utils.files.should_test_file import should_test_file as original_function
+        
+        # Check that the function is wrapped (has __wrapped__ attribute)
+        assert hasattr(original_function, '__wrapped__')
+        
+        # Test that exceptions are handled according to decorator configuration
+        mock_evaluate_condition.side_effect = Exception("Test exception")
+        
+        result = should_test_file(sample_file_path, sample_code_content)
+        
+        # Should return False (default_return_value) and not raise
+        assert result is False
+
+    def test_should_test_file_with_realistic_code_samples(self, mock_evaluate_condition):
+        """Test with realistic code samples that should/shouldn't be tested."""
+        
+        # Code that should be tested (complex logic)
+        complex_code = '''
+class UserManager:
+    def __init__(self, db_connection):
+        self.db = db_connection
+        
+    def create_user(self, username, email):
+        if not username or not email:
+            raise ValueError("Username and email are required")
+        
+        if self.user_exists(username):
+            return None
+            
+        user_id = self.db.insert_user(username, email)
+        return user_id
+        
+    def user_exists(self, username):
+        return self.db.query_user(username) is not None
+'''
+        
+        # Simple code that might not need tests
+        simple_code = '''
+from app import main
+if __name__ == "__main__":
+    main()
