@@ -280,6 +280,7 @@ def test_create_test_selection_comment_structure_consistency():
     assert lines[2] == "Select files to manage tests for (create, update, or remove):"
     assert lines[3] == ""
 
+
 def test_create_test_selection_comment_structure_consistency_complete():
     """Test that the comment structure is consistent regardless of checklist content."""
     branch_name = "consistency-test"
@@ -340,6 +341,14 @@ def test_create_test_selection_comment_with_all_coverage_variations():
             "status": "added",
         },
     ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify all coverage variations are handled correctly
+    assert "- [x] added `src/no_coverage.py`" in result
+    assert "- [ ] modified `src/zero_coverage.py` (Coverage: 0%)" in result
+    assert "- [x] modified `src/full_coverage.py` (Coverage: 100%)" in result
+    assert "- [ ] added `src/partial_coverage.py` (Coverage: 42%)" in result
 
 
 def test_create_test_selection_comment_with_unicode_paths():
@@ -422,3 +431,58 @@ def test_create_test_selection_comment_line_endings():
     # Verify consistent line endings (should use \n)
     assert '\r\n' not in result  # No Windows line endings
     assert result.count('\n') > 0  # Has Unix line endings
+
+
+def test_create_test_selection_comment_with_edge_case_coverage():
+    """Test creating a comment with edge case coverage values."""
+    branch_name = "edge-cases"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/edge1.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 1%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/edge2.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 99%)",
+            "status": "added",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify edge case coverage values are handled correctly
+    assert "- [x] modified `src/edge1.py` (Coverage: 1%)" in result
+    assert "- [ ] added `src/edge2.py` (Coverage: 99%)" in result
+
+
+def test_create_test_selection_comment_with_large_checklist():
+    """Test creating a comment with a large number of checklist items."""
+    branch_name = "large-checklist"
+    checklist: list[FileChecklistItem] = []
+    
+    # Create a large checklist with 20 items
+    for i in range(20):
+        checklist.append({
+            "path": f"src/file_{i:02d}.py",
+            "checked": i % 3 == 0,  # Every third item checked
+            "coverage_info": f" (Coverage: {i * 5}%)" if i < 20 else " (Coverage: 100%)",
+            "status": "modified" if i % 2 == 0 else "added",
+        })
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify all items are present
+    for i in range(20):
+        checkbox = "[x]" if i % 3 == 0 else "[ ]"
+        status = "modified" if i % 2 == 0 else "added"
+        coverage = f" (Coverage: {i * 5}%)" if i < 20 else " (Coverage: 100%)"
+        expected_line = f"- {checkbox} {status} `src/file_{i:02d}.py`{coverage}"
+        assert expected_line in result
+
+    # Verify structure is still intact
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert "- [ ] Yes, manage tests" in result
+    assert SETTINGS_LINKS in result
