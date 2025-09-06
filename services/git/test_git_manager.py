@@ -457,3 +457,4 @@ class TestEdgeCases:
             text=True,
             check=True,
             cwd="/path",
+        )
