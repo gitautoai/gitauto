@@ -231,6 +231,30 @@ class TestStartLocalServer:
         with pytest.raises(OSError):
             start_local_server("/path/to/repo")
 
+    @patch("subprocess.Popen")
+    def test_start_local_server_with_npm_command(self, mock_popen, mock_subprocess_popen):
+        """Test server start with npm command (commented out in the code)"""
+        mock_popen.return_value = mock_subprocess_popen
+        repo_dir = "/path/to/repo"
+
+        # Temporarily patch the command in the function
+        with patch("services.git.git_manager.command", "npm run dev"):
+            result = start_local_server(repo_dir)
+
+        # Assertions
+        assert result is mock_subprocess_popen
+        mock_popen.assert_called_once_with(
+            args="npm run dev",
+            shell=True,
+            cwd="/path/to/repo",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        # Verify the command is restored to its original value
+        from services.git.git_manager import start_local_server
+        assert "python -m http.server 8080" in start_local_server.__code__.co_consts
+
 
 class TestSwitchToBranch:
     """Test cases for switch_to_branch function"""
