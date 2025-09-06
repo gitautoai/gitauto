@@ -441,3 +441,18 @@ class TestEdgeCases:
             check=True,
             cwd="/path/to/repo",
         )
+    @patch("subprocess.run")
+    def test_fetch_branch_with_very_large_pull_number(self, mock_run, mock_subprocess_run):
+        """Test fetch_branch with a very large pull number"""
+        mock_run.return_value = mock_subprocess_run
+
+        large_pull_number = 9999999999
+        fetch_branch(large_pull_number, "branch", "/path")
+
+        mock_run.assert_called_once_with(
+            f"git fetch origin pull/{large_pull_number}/head:branch",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd="/path",
