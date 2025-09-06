@@ -169,6 +169,19 @@ class TestGetCurrentBranch:
 
         assert result is None
 
+    @patch("subprocess.run")
+    @patch("builtins.print")
+    def test_get_current_branch_with_non_ascii_characters(self, mock_print, mock_run):
+        """Test current branch retrieval with non-ASCII characters in branch name"""
+        mock_result = MagicMock()
+        mock_result.stdout = "feature/café-auth-fix\n"
+        mock_run.return_value = mock_result
+
+        repo_dir = "/path/to/repo"
+        get_current_branch(repo_dir)
+
+        mock_print.assert_called_once_with("Current branch: `feature/café-auth-fix`")
+
 
 class TestStartLocalServer:
     """Test cases for start_local_server function"""
