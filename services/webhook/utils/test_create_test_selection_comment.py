@@ -260,9 +260,25 @@ def test_create_test_selection_comment_with_mixed_checked_states():
 
 def test_create_test_selection_comment_structure_consistency():
     """Test that the comment structure is consistent regardless of checklist content."""
-    # Test with different checklist sizes
-    for _ in [0, 1, 5, 10]:
-        pass
+    branch_name = "consistency-test"
+    
+    # Basic structure verification for empty checklist
+    result = create_test_selection_comment([], branch_name)
+    
+    # Verify consistent structure elements are always present
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert "Select files to manage tests for (create, update, or remove):" in result
+    assert "---" in result
+    assert "- [ ] Yes, manage tests" in result
+    assert PRODUCT_NAME in result
+    assert SETTINGS_LINKS in result
+    
+    # Verify the structure is consistent
+    lines = result.split('\n')
+    assert lines[0] == TEST_SELECTION_COMMENT_IDENTIFIER
+    assert lines[1] == ""
+    assert lines[2] == "Select files to manage tests for (create, update, or remove):"
+    assert lines[3] == ""
 
 def test_create_test_selection_comment_structure_consistency_complete():
     """Test that the comment structure is consistent regardless of checklist content."""
