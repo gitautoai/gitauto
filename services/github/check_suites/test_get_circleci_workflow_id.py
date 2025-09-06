@@ -692,3 +692,50 @@ def test_skips_invalid_check_runs(mock_create_headers, mock_requests_get):
             {"external_id": ""},  # Empty external_id
             {"external_id": json.dumps({"workflow-id": "valid-workflow"})},  # Valid
             {"external_id": json.dumps({"other-field": "value"})},  # No workflow-id
+
+
+def test_complete_workflow_extraction_scenario(mock_create_headers, mock_requests_get):
+    """Test a realistic scenario with mixed check run data."""
+    # pylint: disable=redefined-outer-name
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "check_runs": [
+            # Valid workflow IDs
+            {"external_id": json.dumps({"workflow-id": "build-workflow", "actor-id": "user1"})},
+            {"external_id": json.dumps({"workflow-id": "test-workflow", "source": "ci"})},
+            {"external_id": json.dumps({"workflow-id": "deploy-workflow"})},
+            
+            # Duplicate workflow ID (should be deduplicated)
+            {"external_id": json.dumps({"workflow-id": "build-workflow", "run-id": "123"})},
+            
+            # Check runs without external_id (should be skipped)
+            {"name": "manual-check"},
+            {"external_id": None},
+            {"external_id": ""},
+            
+            # Check runs with external_id but no workflow-id (should be skipped)
+            {"external_id": json.dumps({"actor-id": "user2"})},
+            {"external_id": json.dumps({"workflow-id": None})},
+            {"external_id": json.dumps({"workflow-id": ""})},
+            
+            # Another valid workflow ID
+            {"external_id": json.dumps({"workflow-id": "lint-workflow"})},
+        ]
+    }
+    mock_requests_get.return_value = mock_response
+
+    result = get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "token")
+
+    # Should return unique workflow IDs in order of first appearance
+    expected = ["build-workflow", "test-workflow", "deploy-workflow", "lint-workflow"]
+    assert result == expected
+
+
+def test_function_signature_is_correct():
+    """Test that the function has the expected signature."""
+    sig = inspect.signature(get_circleci_workflow_ids_from_check_suite)
+    params = list(sig.parameters.keys())
+    
+    # Verify function accepts the expected parameters
+    assert params == ["owner", "repo", "check_suite_id", "github_token"]
