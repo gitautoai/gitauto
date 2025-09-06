@@ -699,7 +699,7 @@ def test_skips_invalid_check_runs(mock_create_headers, mock_requests_get):
 
     result = get_circleci_workflow_ids_from_check_suite("owner", "repo", 12345, "token")
 
-    assert result == ["valid-workflow"]
+    assert result == ["valid-workflow", "another-valid-workflow"]
 
 
 def test_complete_workflow_extraction_scenario(mock_create_headers, mock_requests_get):
