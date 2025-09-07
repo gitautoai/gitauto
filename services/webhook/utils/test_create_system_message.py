@@ -575,3 +575,6 @@ class TestCreateSystemMessage:
 
         # Act
         result = create_system_message("issue_comment", "comment")
+
+        # Assert
+        assert result == ""
