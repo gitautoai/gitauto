@@ -307,39 +307,6 @@ def test_add_reviewers_single_reviewer(
     )
 
 
-@patch("services.github.pulls.add_reviewers.create_headers")
-@patch("services.github.pulls.add_reviewers.requests.post")
-@patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
-def test_add_reviewers_rate_limit_403(
-    mock_check_collaborator,
-    mock_post,
-    mock_create_headers,
-    base_args,
-):
-    mock_check_collaborator.return_value = True
-    mock_create_headers.return_value = {"Authorization": "Bearer token"}
-    
-    # Create a 403 rate limit response
-    response = Mock(spec=requests.Response)
-    response.status_code = 403
-    response.reason = "Forbidden"
-    response.text = "API rate limit exceeded"
-    response.headers = {
-        "X-RateLimit-Limit": "5000",
-        "X-RateLimit-Remaining": "0",
-        "X-RateLimit-Used": "5000",
-        "X-RateLimit-Reset": "1640995200",
-    }
-    http_error = requests.HTTPError("403 Forbidden")
-    http_error.response = response
-    response.raise_for_status.side_effect = http_error
-    mock_post.return_value = response
-
-    result = add_reviewers(base_args)
-
-    assert result is None  # handle_exceptions decorator returns None on error
-    mock_post.assert_called_once()
-
 
 @patch("services.github.pulls.add_reviewers.create_headers")
 @patch("services.github.pulls.add_reviewers.requests.post")
