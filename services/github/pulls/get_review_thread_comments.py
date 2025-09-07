@@ -60,7 +60,9 @@ def get_review_thread_comments(
     for thread in threads:
         if not isinstance(thread, dict):
             continue
-        thread_comments = thread.get("comments") or {}
+        thread_comments = thread.get("comments")
+        if not isinstance(thread_comments, dict):
+            continue
         comments = thread_comments.get("nodes", [])
         if not isinstance(comments, list):
             continue
