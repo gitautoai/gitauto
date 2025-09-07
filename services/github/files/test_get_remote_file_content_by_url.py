@@ -488,8 +488,6 @@ class TestGetRemoteFileContentByUrl:
         # Should handle gracefully when line number exceeds file length
         expected_content = "## src/test.py#L10\n\n"
         assert result == expected_content
-        # Verify that the result contains the header even when no content lines are available
-        assert "## src/test.py#L10" in result
 
     @pytest.mark.parametrize(
         "status_code",
