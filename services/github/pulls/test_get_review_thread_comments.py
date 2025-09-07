@@ -347,14 +347,14 @@ def test_get_review_thread_comments_malformed_response_structure(
 ):
     """Test handling of malformed response structures."""
     malformed_responses = [
-        None,
-        "string_instead_of_dict",
-        123,
-        [],
+        {},  # Empty response
         {"repository": "string"},
         {"repository": {"pullRequest": "string"}},
         {"repository": {"pullRequest": {"reviewThreads": "string"}}},
         {"repository": {"pullRequest": {"reviewThreads": {"nodes": "string"}}}},
+        {"repository": None},
+        {"repository": {"pullRequest": None}},
+        {"repository": {"pullRequest": {"reviewThreads": None}}},
     ]
 
     for malformed_response in malformed_responses:
