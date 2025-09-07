@@ -26,44 +26,41 @@ def mock_count_completed_unique_requests():
         yield mock
 
 
-@pytest.fixture
-def sample_monthly_subscription():
-    """Fixture providing a sample monthly subscription."""
-    return {
+def create_mock_subscription(product_id, interval, quantity=1, start_timestamp=1640995200, end_timestamp=1643673600):
+    """Helper to create a mock subscription with proper structure."""
+    mock_subscription = MagicMock()
+    mock_subscription.current_period_start = start_timestamp
+    mock_subscription.current_period_end = end_timestamp
+    
+    # Mock the subscription's items data access using a direct dictionary approach
+    subscription_data = {
         "items": {
             "data": [
                 {
                     "price": {
-                        "product": "prod_test123",
-                        "recurring": {"interval": "month"},
+                        "product": product_id,
+                        "recurring": {"interval": interval},
                     },
-                    "quantity": 1,
+                    "quantity": quantity,
                 }
             ]
-        },
-        "current_period_start": 1640995200,  # 2022-01-01 00:00:00 UTC
-        "current_period_end": 1643673600,    # 2022-02-01 00:00:00 UTC
+        }
     }
+    
+    mock_subscription.__getitem__ = lambda self, key: subscription_data[key]
+    return mock_subscription
+
+
+@pytest.fixture
+def sample_monthly_subscription():
+    """Fixture providing a sample monthly subscription."""
+    return create_mock_subscription("prod_test123", "month", 1, 1640995200, 1643673600)
 
 
 @pytest.fixture
 def sample_yearly_subscription():
     """Fixture providing a sample yearly subscription."""
-    return {
-        "items": {
-            "data": [
-                {
-                    "price": {
-                        "product": "prod_test456",
-                        "recurring": {"interval": "year"},
-                    },
-                    "quantity": 1,
-                }
-            ]
-        },
-        "current_period_start": 1640995200,  # 2022-01-01 00:00:00 UTC
-        "current_period_end": 1672531200,    # 2023-01-01 00:00:00 UTC
-    }
+    return create_mock_subscription("prod_test456", "year", 1, 1640995200, 1672531200)
 
 
 @pytest.fixture
@@ -164,21 +161,7 @@ def test_check_subscription_limit_with_quantity_greater_than_one(
     sample_installation_id,
 ):
     """Test subscription with quantity > 1."""
-    subscription_with_quantity = {
-        "items": {
-            "data": [
-                {
-                    "price": {
-                        "product": "prod_test789",
-                        "recurring": {"interval": "month"},
-                    },
-                    "quantity": 3,
-                }
-            ]
-        },
-        "current_period_start": 1640995200,
-        "current_period_end": 1643673600,
-    }
+    subscription_with_quantity = create_mock_subscription("prod_test789", "month", 3, 1640995200, 1643673600)
     
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
@@ -198,21 +181,7 @@ def test_check_subscription_limit_yearly_with_quantity(
     sample_installation_id,
 ):
     """Test yearly subscription with quantity > 1."""
-    yearly_subscription_with_quantity = {
-        "items": {
-            "data": [
-                {
-                    "price": {
-                        "product": "prod_test999",
-                        "recurring": {"interval": "year"},
-                    },
-                    "quantity": 2,
-                }
-            ]
-        },
-        "current_period_start": 1640995200,
-        "current_period_end": 1672531200,
-    }
+    yearly_subscription_with_quantity = create_mock_subscription("prod_test999", "year", 2, 1640995200, 1672531200)
     
     # Setup mocks
     mock_get_base_request_limit.return_value = 50
@@ -291,11 +260,10 @@ def test_check_subscription_limit_handles_malformed_subscription_data(
     sample_installation_id,
 ):
     """Test that function returns default values when subscription data is malformed."""
-    malformed_subscription = {
-        "items": {"data": []},  # Empty data array
-        "current_period_start": 1640995200,
-        "current_period_end": 1643673600,
-    }
+    malformed_subscription = create_mock_subscription("prod_test", "month", 1, 1640995200, 1643673600)
+    
+    # Override the __getitem__ to return empty data array
+    malformed_subscription.__getitem__ = lambda self, key: {"items": {"data": []}}[key]
     
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
@@ -331,21 +299,7 @@ def test_check_subscription_limit_request_limit_calculation(
     expected_limit,
 ):
     """Test request limit calculation for various intervals and quantities."""
-    subscription = {
-        "items": {
-            "data": [
-                {
-                    "price": {
-                        "product": "prod_test",
-                        "recurring": {"interval": interval},
-                    },
-                    "quantity": quantity,
-                }
-            ]
-        },
-        "current_period_start": 1640995200,
-        "current_period_end": 1643673600,
-    }
+    subscription = create_mock_subscription("prod_test", interval, quantity, 1640995200, 1643673600)
     
     # Setup mocks
     mock_get_base_request_limit.return_value = base_limit
@@ -427,21 +381,7 @@ def test_check_subscription_limit_datetime_conversion(
     sample_installation_id,
 ):
     """Test that timestamps are correctly converted to datetime objects with proper timezone."""
-    subscription = {
-        "items": {
-            "data": [
-                {
-                    "price": {
-                        "product": "prod_datetime_test",
-                        "recurring": {"interval": "month"},
-                    },
-                    "quantity": 1,
-                }
-            ]
-        },
-        "current_period_start": 1609459200,  # 2021-01-01 00:00:00 UTC
-        "current_period_end": 1612137600,    # 2021-02-01 00:00:00 UTC
-    }
+    subscription = create_mock_subscription("prod_datetime_test", "month", 1, 1609459200, 1612137600)
     
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
