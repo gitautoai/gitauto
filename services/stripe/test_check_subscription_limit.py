@@ -357,3 +357,85 @@ def test_check_subscription_limit_request_limit_calculation(
     assert result["request_limit"] == expected_limit
     assert result["requests_left"] == expected_limit
     assert result["can_proceed"] is True
+
+
+def test_check_subscription_limit_return_type_structure(
+    mock_get_base_request_limit,
+    mock_count_completed_unique_requests,
+    sample_monthly_subscription,
+    sample_installation_id,
+):
+    """Test that the function returns the correct SubscriptionLimitResult structure."""
+    # Setup mocks
+    mock_get_base_request_limit.return_value = 100
+    mock_count_completed_unique_requests.return_value = {"req1"}
+    
+    result = check_subscription_limit(sample_monthly_subscription, sample_installation_id)
+    
+    # Verify all required keys are present
+    required_keys = {"can_proceed", "requests_left", "request_limit", "period_end_date"}
+    assert set(result.keys()) == required_keys
+    
+    # Verify types
+    assert isinstance(result["can_proceed"], bool)
+    assert isinstance(result["requests_left"], int)
+    assert isinstance(result["request_limit"], int)
+    assert isinstance(result["period_end_date"], datetime)
+
+
+def test_check_subscription_limit_with_zero_base_limit(
+    mock_get_base_request_limit,
+    mock_count_completed_unique_requests,
+    sample_monthly_subscription,
+    sample_installation_id,
+):
+    """Test subscription with zero base request limit."""
+    # Setup mocks
+    mock_get_base_request_limit.return_value = 0
+    mock_count_completed_unique_requests.return_value = set()
+    
+    result = check_subscription_limit(sample_monthly_subscription, sample_installation_id)
+    
+    # Assertions
+    assert result["can_proceed"] is False
+    assert result["requests_left"] == 0
+    assert result["request_limit"] == 0
+
+
+def test_check_subscription_limit_with_negative_base_limit(
+    mock_get_base_request_limit,
+    mock_count_completed_unique_requests,
+    sample_monthly_subscription,
+    sample_installation_id,
+):
+    """Test subscription with negative base request limit (edge case)."""
+    # Setup mocks
+    mock_get_base_request_limit.return_value = -10
+    mock_count_completed_unique_requests.return_value = set()
+    
+    result = check_subscription_limit(sample_monthly_subscription, sample_installation_id)
+    
+    # Assertions
+    assert result["can_proceed"] is False
+    assert result["requests_left"] == -10
+    assert result["request_limit"] == -10
+
+
+def test_check_subscription_limit_datetime_conversion(
+    mock_get_base_request_limit,
+    mock_count_completed_unique_requests,
+    sample_installation_id,
+):
+    """Test that timestamps are correctly converted to datetime objects with proper timezone."""
+    subscription_with_specific_timestamps = {
+        "items": {
+            "data": [
+                {
+                    "price": {
+                        "product": "prod_datetime_test",
+                        "recurring": {"interval": "month"},
+                    },
+                    "quantity": 1,
+                }
+            ]
+        },
