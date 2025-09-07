@@ -55,7 +55,7 @@ def get_review_thread_comments(
         thread_comments = thread.get("comments") or {}
         comments = thread_comments.get("nodes", [])
         for comment in comments:
-            if comment["id"] == comment_node_id:
+            if isinstance(comment, dict) and comment.get("id") == comment_node_id:
                 # print(f"get_review_thread_comments: {dumps(obj=comments, indent=2)}")
                 return comments
 
