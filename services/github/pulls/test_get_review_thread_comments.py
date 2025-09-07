@@ -263,7 +263,7 @@ def test_get_review_thread_comments_creates_graphql_client_with_token(sample_par
         mock_get_client.assert_called_once_with("test-token")
 
 
-def test_get_review_thread_comments_handles_graphql_exception_returns_none(sample_params):
+def test_get_review_thread_comments_handles_graphql_exception_returns_empty_list(sample_params):
     """Test that function returns None when GraphQL exception occurs (due to @handle_exceptions decorator)."""
     with patch(
         "services.github.pulls.get_review_thread_comments.get_graphql_client"
