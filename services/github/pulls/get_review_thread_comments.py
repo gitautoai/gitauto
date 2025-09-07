@@ -43,9 +43,15 @@ def get_review_thread_comments(
     result = client.execute(document=query, variable_values=variables)
     if not isinstance(result, dict):
         return []
-    repository = result.get("repository") or {}
-    pull_request = repository.get("pullRequest") or {}
-    review_threads = pull_request.get("reviewThreads") or {}
+    repository = result.get("repository")
+    if not isinstance(repository, dict):
+        return []
+    pull_request = repository.get("pullRequest")
+    if not isinstance(pull_request, dict):
+        return []
+    review_threads = pull_request.get("reviewThreads")
+    if not isinstance(review_threads, dict):
+        return []
     threads = review_threads.get("nodes", [])
 
     # Find the thread containing our comment
