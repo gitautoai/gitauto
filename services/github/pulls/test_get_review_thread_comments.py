@@ -526,3 +526,9 @@ def test_get_review_thread_comments_thread_with_missing_comments_structure(
         }
     }
     mock_graphql_client.execute.return_value = response
+    # Act
+    result = get_review_thread_comments(**sample_params)
+
+    # Assert
+    assert result == []
+    mock_graphql_client.execute.assert_called_once()
