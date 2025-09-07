@@ -427,8 +427,31 @@ def test_check_subscription_limit_datetime_conversion(
     sample_installation_id,
 ):
     """Test that timestamps are correctly converted to datetime objects with proper timezone."""
-    subscription_with_specific_timestamps = {
+    subscription = {
         "items": {
+            "data": [
+                {
+                    "price": {
+                        "product": "prod_datetime_test",
+                        "recurring": {"interval": "month"},
+                    },
+                    "quantity": 1,
+                }
+            ]
+        },
+        "current_period_start": 1609459200,  # 2021-01-01 00:00:00 UTC
+        "current_period_end": 1612137600,    # 2021-02-01 00:00:00 UTC
+    }
+    
+    # Setup mocks
+    mock_get_base_request_limit.return_value = 100
+    mock_count_completed_unique_requests.return_value = {"req1"}
+    
+    result = check_subscription_limit(subscription, sample_installation_id)
+    
+    # Verify datetime conversion with proper timezone
+    assert result["period_end_date"] == datetime.fromtimestamp(1612137600, tz=TZ)
+    assert result["period_end_date"].tzinfo == TZ
 
 
 def test_check_subscription_limit_boundary_condition_exactly_zero_requests_left(
@@ -448,13 +471,3 @@ def test_check_subscription_limit_boundary_condition_exactly_zero_requests_left(
     assert result["can_proceed"] is False
     assert result["requests_left"] == 0
     assert result["request_limit"] == 5
-            "data": [
-                {
-                    "price": {
-                        "product": "prod_datetime_test",
-                        "recurring": {"interval": "month"},
-                    },
-                    "quantity": 1,
-                }
-            ]
-        },
