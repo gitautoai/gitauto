@@ -480,3 +480,10 @@ def test_add_reviewers_url_construction(
 
     assert result is None
     mock_post.assert_called_once_with(
+        url="https://api.github.com/repos/different-owner/different-repo/pulls/999/requested_reviewers",
+        headers={"Authorization": "Bearer token"},
+        json={"reviewers": ["test-reviewer"]},
+        timeout=120,
+    )
+    mock_create_headers.assert_called_once_with(token="different-token")
+    mock_print.assert_called_once_with("Adding reviewers: ['test-reviewer']")
