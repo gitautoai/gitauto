@@ -518,3 +518,60 @@ class TestCreateSystemMessage:
     def test_file_not_found_error_handling(
         self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
     ):
+        """Test handling of FileNotFoundError."""
+        # Arrange
+        mock_read_xml_file.side_effect = FileNotFoundError("XML file not found")
+        mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+        mock_get_mode_prompt.return_value = "<mode>Mode</mode>"
+
+        # Act
+        result = create_system_message("issue_comment", "comment")
+
+        # Assert
+        assert result == ""
+
+    def test_type_error_in_structured_rules_handling(
+        self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
+    ):
+        """Test handling of TypeError when processing structured rules."""
+        # Arrange
+        mock_read_xml_file.return_value = "<test_rules>Rules</test_rules>"
+        mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+        mock_get_mode_prompt.return_value = "<mode>Mode</mode>"
+
+        # Create a mock repo_settings that will cause a TypeError when accessing structured_rules
+        mock_repo_settings = MagicMock()
+        mock_repo_settings.get.side_effect = TypeError("Type error in get method")
+
+        # Act
+        result = create_system_message("issue_comment", "comment", mock_repo_settings)
+
+        # Assert
+        assert result == ""
+
+    def test_attribute_error_handling(
+        self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
+    ):
+        """Test handling of AttributeError."""
+        # Arrange
+        mock_read_xml_file.return_value = "<test_rules>Rules</test_rules>"
+        mock_get_trigger_prompt.side_effect = AttributeError("Attribute error")
+        mock_get_mode_prompt.return_value = "<mode>Mode</mode>"
+
+        # Act
+        result = create_system_message("issue_comment", "comment")
+
+        # Assert
+        assert result == ""
+
+    def test_key_error_handling(
+        self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
+    ):
+        """Test handling of KeyError."""
+        # Arrange
+        mock_read_xml_file.return_value = "<test_rules>Rules</test_rules>"
+        mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+        mock_get_mode_prompt.side_effect = KeyError("Key error")
+
+        # Act
+        result = create_system_message("issue_comment", "comment")
