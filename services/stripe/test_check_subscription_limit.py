@@ -4,7 +4,6 @@ import pytest
 from config import TZ, ONE_YEAR_FROM_NOW
 from services.stripe.check_subscription_limit import (
     check_subscription_limit,
-    SubscriptionLimitResult,
 )
 
 
