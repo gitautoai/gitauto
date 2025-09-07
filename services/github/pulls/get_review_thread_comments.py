@@ -41,6 +41,8 @@ def get_review_thread_comments(
     }
 
     result = client.execute(document=query, variable_values=variables)
+    if not isinstance(result, dict):
+        return []
     repository = result.get("repository") or {}
     pull_request = repository.get("pullRequest") or {}
     review_threads = pull_request.get("reviewThreads") or {}
