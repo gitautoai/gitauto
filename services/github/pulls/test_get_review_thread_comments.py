@@ -340,3 +340,85 @@ def test_get_review_thread_comments_with_different_parameters(mock_graphql_clien
     ]
     assert result == expected_comments
     mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_malformed_response_structure(
+    mock_graphql_client, sample_params
+):
+    """Test handling of malformed response structures."""
+    malformed_responses = [
+        None,
+        "string_instead_of_dict",
+        123,
+        [],
+        {"repository": "string"},
+        {"repository": {"pullRequest": "string"}},
+        {"repository": {"pullRequest": {"reviewThreads": "string"}}},
+        {"repository": {"pullRequest": {"reviewThreads": {"nodes": "string"}}}},
+    ]
+
+    for malformed_response in malformed_responses:
+        mock_graphql_client.reset_mock()
+        mock_graphql_client.execute.return_value = malformed_response
+
+        result = get_review_thread_comments(**sample_params)
+
+        assert result == []
+        mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_missing_comment_fields(
+    mock_graphql_client, sample_params
+):
+    """Test handling of comments with missing or malformed fields."""
+    response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {
+                    "nodes": [
+                        {
+                            "comments": {
+                                "nodes": [
+                                    {
+                                        "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+                                        # Missing author, body, createdAt fields
+                                    },
+                                    {
+                                        "id": "AnotherCommentId",
+                                        "author": None,
+                                        "body": None,
+                                        "createdAt": None,
+                                    },
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+    mock_graphql_client.execute.return_value = response
+
+    result = get_review_thread_comments(**sample_params)
+
+    expected_comments = [
+        {
+            "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+        },
+        {
+            "id": "AnotherCommentId",
+            "author": None,
+            "body": None,
+            "createdAt": None,
+        },
+    ]
+    assert result == expected_comments
+    mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_function_has_proper_docstring():
+    """Test that the function has proper documentation."""
+    assert get_review_thread_comments.__doc__ is not None
+    assert "Get all comments in a review thread" in get_review_thread_comments.__doc__
+    assert "GraphQL API" in get_review_thread_comments.__doc__
+    assert "https://docs.github.com/en/graphql/reference/objects#pullrequestreviewcomment" in get_review_thread_comments.__doc__
