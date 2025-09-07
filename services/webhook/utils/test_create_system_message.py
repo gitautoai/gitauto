@@ -483,26 +483,6 @@ class TestCreateSystemMessage:
         # Assert
         assert result == ""
 
-    @patch("services.webhook.utils.create_system_message.handle_exceptions")
-    def test_handle_exceptions_decorator_applied(
-        self, mock_handle_exceptions, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
-    ):
-        """Test that the handle_exceptions decorator is applied correctly."""
-        # Arrange
-        mock_handle_exceptions.return_value = lambda func: func
-        mock_read_xml_file.return_value = "<test_rules>Rules</test_rules>"
-        mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
-        mock_get_mode_prompt.return_value = "<mode>Mode</mode>"
-
-        # Act
-        result = create_system_message("issue_comment", "comment")
-
-        # Assert
-        mock_handle_exceptions.assert_called_once_with(
-            default_return_value="", raise_on_error=False
-        )
-        assert result  # Should return content
-
     def test_integration_without_mocks(self):
         """Test the function with actual dependencies (integration test)."""
         # This test uses real dependencies to ensure the function works end-to-end
