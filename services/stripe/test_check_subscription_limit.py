@@ -429,6 +429,25 @@ def test_check_subscription_limit_datetime_conversion(
     """Test that timestamps are correctly converted to datetime objects with proper timezone."""
     subscription_with_specific_timestamps = {
         "items": {
+
+
+def test_check_subscription_limit_boundary_condition_exactly_zero_requests_left(
+    mock_get_base_request_limit,
+    mock_count_completed_unique_requests,
+    sample_monthly_subscription,
+    sample_installation_id,
+):
+    """Test boundary condition where requests_left is exactly 0."""
+    # Setup mocks - limit equals used requests
+    mock_get_base_request_limit.return_value = 5
+    mock_count_completed_unique_requests.return_value = set(f"req{i}" for i in range(5))  # Exactly 5 requests used
+    
+    result = check_subscription_limit(sample_monthly_subscription, sample_installation_id)
+    
+    # When requests_left is 0, can_proceed should be False (> 0 condition)
+    assert result["can_proceed"] is False
+    assert result["requests_left"] == 0
+    assert result["request_limit"] == 5
             "data": [
                 {
                     "price": {
