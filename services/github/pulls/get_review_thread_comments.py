@@ -48,7 +48,8 @@ def get_review_thread_comments(
 
     # Find the thread containing our comment
     for thread in threads:
-        comments = thread.get("comments", {}).get("nodes", [])
+        thread_comments = thread.get("comments") or {}
+        comments = thread_comments.get("nodes", [])
         for comment in comments:
             if comment["id"] == comment_node_id:
                 # print(f"get_review_thread_comments: {dumps(obj=comments, indent=2)}")
