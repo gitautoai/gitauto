@@ -498,3 +498,23 @@ class TestCreateSystemMessage:
         assert isinstance(result, str)
         # Due to the handle_exceptions decorator, it should return empty string on error
         # or actual content if dependencies work
+
+    def test_exception_handling_returns_default_value(
+        self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
+    ):
+        """Test that exceptions are handled and default value is returned."""
+        # Arrange
+        mock_read_xml_file.side_effect = Exception("File read error")
+        mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+        mock_get_mode_prompt.return_value = "<mode>Mode</mode>"
+
+        # Act
+        result = create_system_message("issue_comment", "comment")
+
+        # Assert
+        # Due to handle_exceptions decorator with default_return_value="", should return empty string
+        assert result == ""
+
+    def test_file_not_found_error_handling(
+        self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
+    ):
