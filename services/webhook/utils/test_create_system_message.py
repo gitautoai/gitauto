@@ -1,4 +1,29 @@
 from unittest.mock import patch, MagicMock
+"""
+Unit tests for services/webhook/utils/create_system_message.py
+
+This test suite provides comprehensive coverage for the create_system_message function,
+including:
+
+1. Basic functionality tests:
+   - Minimal function calls with no repository settings
+   - All supported trigger types (issue_label, issue_comment, review_comment, etc.)
+   - All supported mode types (comment, commit, explore, get, search)
+
+2. Repository settings tests:
+   - Structured rules only, repo rules only, and both combined
+   - Empty, None, and whitespace-only rule handling
+   - Various data types in structured rules (string, int, float, bool, list, dict, None)
+
+3. Edge cases and error handling:
+   - Functions returning None values
+   - Content parts joining with double newlines
+   - Exception handling through the @handle_exceptions decorator
+   - Various error types (FileNotFoundError, TypeError, AttributeError, KeyError)
+
+4. Integration testing with real dependencies
+"""
+
 from typing import cast, Any
 import pytest
 from schemas.supabase.types import Repositories
