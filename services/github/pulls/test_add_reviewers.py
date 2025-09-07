@@ -405,3 +405,78 @@ def test_add_reviewers_mixed_collaborator_results(
     
     mock_check_collaborator.side_effect = collaborator_side_effect
     mock_post.return_value = mock_success_response
+    mock_create_headers.return_value = {"Authorization": "Bearer token"}
+
+    result = add_reviewers(base_args)
+
+    # Should still work with the valid reviewer despite the exception
+    assert result is None
+    assert mock_check_collaborator.call_count == 2  # Should stop after exception on reviewer2
+
+
+@patch("services.github.pulls.add_reviewers.create_headers")
+@patch("services.github.pulls.add_reviewers.requests.post")
+@patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
+def test_add_reviewers_timeout_error(
+    mock_check_collaborator,
+    mock_post,
+    mock_create_headers,
+    base_args,
+):
+    mock_check_collaborator.return_value = True
+    mock_create_headers.return_value = {"Authorization": "Bearer token"}
+    mock_post.side_effect = requests.Timeout("Request timeout")
+
+    result = add_reviewers(base_args)
+
+    assert result is None  # handle_exceptions decorator returns None on error
+    mock_post.assert_called_once()
+
+
+@patch("services.github.pulls.add_reviewers.create_headers")
+@patch("services.github.pulls.add_reviewers.requests.post")
+@patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
+def test_add_reviewers_connection_error(
+    mock_check_collaborator,
+    mock_post,
+    mock_create_headers,
+    base_args,
+):
+    mock_check_collaborator.return_value = True
+    mock_create_headers.return_value = {"Authorization": "Bearer token"}
+    mock_post.side_effect = requests.ConnectionError("Connection failed")
+
+    result = add_reviewers(base_args)
+
+    assert result is None  # handle_exceptions decorator returns None on error
+    mock_post.assert_called_once()
+
+
+@patch("services.github.pulls.add_reviewers.create_headers")
+@patch("services.github.pulls.add_reviewers.requests.post")
+@patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
+@patch("builtins.print")
+def test_add_reviewers_url_construction(
+    mock_print,
+    mock_check_collaborator,
+    mock_post,
+    mock_create_headers,
+    mock_success_response,
+):
+    # Test with different owner/repo/pr_number combinations
+    base_args = {
+        "owner": "different-owner",
+        "repo": "different-repo",
+        "pr_number": 999,
+        "token": "different-token",
+        "reviewers": ["test-reviewer"],
+    }
+    
+    mock_check_collaborator.return_value = True
+    mock_post.return_value = mock_success_response
+    mock_create_headers.return_value = {"Authorization": "Bearer token"}
+
+    result = add_reviewers(base_args)
+
+    assert result is None
+    mock_post.assert_called_once_with(
