@@ -290,7 +290,7 @@ def test_get_review_thread_comments_handles_client_execute_exception_returns_emp
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert result is None
+        assert result == []
 
 
 def test_get_review_thread_comments_with_different_parameters(mock_graphql_client):
