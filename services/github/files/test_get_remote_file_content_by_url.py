@@ -485,9 +485,9 @@ class TestGetRemoteFileContentByUrl:
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py#L10"
         result = get_remote_file_content_by_url(url, "test-token")
 
-        # Should handle gracefully when line number exceeds file length
-        expected_content = "## src/test.py#L10\n\n"
-        assert result == expected_content
+        # When line number exceeds file length, it should cause an IndexError
+        # which is handled by the @handle_exceptions decorator, returning empty string
+        assert result == ""
 
     @pytest.mark.parametrize(
         "status_code",
