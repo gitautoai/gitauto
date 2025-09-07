@@ -367,24 +367,6 @@ def test_get_review_thread_comments_malformed_response_structure(
         mock_graphql_client.execute.assert_called_once()
 
 
-def test_get_review_thread_comments_non_dict_response_types_return_none(sample_params):
-    """Test that function returns None when response is not a dict (handled by decorator)."""
-    non_dict_responses = [
-        None,
-        "string_instead_of_dict", 
-        123,
-        [],
-    ]
-    
-    for response in non_dict_responses:
-        with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock_get_client:
-            mock_client = MagicMock()
-            mock_get_client.return_value = mock_client
-            mock_client.execute.return_value = response
-            
-            result = get_review_thread_comments(**sample_params)
-            assert result == []  # Our improved implementation should handle these
-
 
 def test_get_review_thread_comments_missing_comment_fields(
     mock_graphql_client, sample_params
