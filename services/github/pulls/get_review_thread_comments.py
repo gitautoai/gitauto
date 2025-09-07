@@ -50,6 +50,8 @@ def get_review_thread_comments(
 
     # Find the thread containing our comment
     for thread in threads:
+        if not isinstance(thread, dict):
+            continue
         thread_comments = thread.get("comments") or {}
         comments = thread_comments.get("nodes", [])
         for comment in comments:
