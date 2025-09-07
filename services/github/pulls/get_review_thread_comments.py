@@ -41,12 +41,10 @@ def get_review_thread_comments(
     }
 
     result = client.execute(document=query, variable_values=variables)
-    threads = (
-        result.get("repository", {})
-        .get("pullRequest", {})
-        .get("reviewThreads", {})
-        .get("nodes", [])
-    )
+    repository = result.get("repository") or {}
+    pull_request = repository.get("pullRequest") or {}
+    review_threads = pull_request.get("reviewThreads") or {}
+    threads = review_threads.get("nodes", [])
 
     # Find the thread containing our comment
     for thread in threads:
