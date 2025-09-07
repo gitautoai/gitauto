@@ -274,7 +274,7 @@ def test_get_review_thread_comments_handles_graphql_exception_returns_empty_list
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert result is None
+        assert result == []
 
 
 def test_get_review_thread_comments_handles_client_execute_exception_returns_none(sample_params):
