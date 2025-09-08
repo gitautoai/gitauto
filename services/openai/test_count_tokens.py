@@ -263,8 +263,8 @@ def test_count_tokens_message_with_multiple_tool_calls(mock_tiktoken_encoding_fo
     }]
     result = count_tokens(messages)
     
-    # "assistant" (9) + "search" (6) + '{"query": "test1"}' (18) + "calculate" (9) + '{"expression": "2+2"}' (20) = 62 tokens
-    assert result == 62
+    # "assistant" (9) + "search" (6) + '{"query": "test1"}' (18) + "calculate" (9) + '{"expression": "2+2"}' (21) = 63 tokens
+    assert result == 63
     mock_encoding.encode.assert_any_call("assistant")
     mock_encoding.encode.assert_any_call("search")
     mock_encoding.encode.assert_any_call('{"query": "test1"}')
