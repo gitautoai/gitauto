@@ -188,6 +188,69 @@ def test_create_gitauto_button_comment_combine_comment_error(
     # Arrange
     mock_dependencies["combine_comment"].side_effect = Exception("Comment error")
     
+
+def test_create_gitauto_button_comment_different_payload_values():
+    """Test with different payload values to ensure proper extraction"""
+    # Arrange
+    payload = {
+        "action": "labeled",
+        "installation": {"id": 99999},
+        "repository": {
+            "owner": {"id": 88888, "login": "different-owner"},
+            "name": "different-repo",
+        },
+        "issue": {"number": 456},
+        "sender": {"id": 77777, "login": "different-user"},
+        "label": {"name": "gitauto"},
+        "organization": {"id": 66666, "login": "different-org"},
+    }
+    
+    with patch(
+        "services.github.comments.create_gitauto_button_comment.get_installation_access_token"
+    ) as mock_get_token, patch(
+        "services.github.comments.create_gitauto_button_comment.get_user_public_email"
+    ) as mock_get_email, patch(
+        "services.github.comments.create_gitauto_button_comment.upsert_user"
+    ) as mock_upsert_user, patch(
+        "services.github.comments.create_gitauto_button_comment.combine_and_create_comment"
+    ) as mock_combine_comment:
+        mock_get_token.return_value = "different-token"
+        mock_get_email.return_value = "different@example.com"
+        
+        # Act
+        result = create_gitauto_button_comment(payload)
+        
+        # Assert
+        assert result is None
+        
+        # Verify correct values were extracted and used
+        mock_get_token.assert_called_once_with(installation_id=99999)
+        mock_get_email.assert_called_once_with(
+            username="different-user", token="different-token"
+        )
+        mock_upsert_user.assert_called_once_with(
+            user_id=77777, user_name="different-user", email="different@example.com"
+        )
+        
+        # Verify combine_and_create_comment called with correct values
+        call_args = mock_combine_comment.call_args
+        assert call_args.kwargs["installation_id"] == 99999
+        assert call_args.kwargs["owner_id"] == 88888
+        assert call_args.kwargs["owner_name"] == "different-owner"
+        assert call_args.kwargs["sender_name"] == "different-user"
+        
+        base_args = call_args.kwargs["base_args"]
+        assert base_args["owner"] == "different-owner"
+        assert base_args["repo"] == "different-repo"
+        assert base_args["issue_number"] == 456
+        assert base_args["token"] == "different-token"
+
+
+def test_create_gitauto_button_comment_base_comment_format(mock_github_labeled_payload):
+    """Test that the base comment is formatted correctly"""
+    with patch(
+        "services.github.comments.create_gitauto_button_comment.get_installation_access_token",
+        return_value="test-token",
     # Act
     result = create_gitauto_button_comment(mock_github_labeled_payload)
     
