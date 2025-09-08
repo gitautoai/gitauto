@@ -17,11 +17,15 @@ from services.github.issues.is_issue_open import is_issue_open
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree import get_file_tree
 
+# Local imports (Notifications)
+from services.slack.slack_notify import slack_notify
+
 # Local imports (Supabase)
 from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.supabase.coverages.insert_coverages import insert_coverages
 from services.supabase.coverages.update_issue_url import update_issue_url
 from services.supabase.repositories.get_repository import get_repository
+from services.supabase.repositories.update_repository import update_repository
 from services.stripe.check_availability import check_availability
 
 # Local imports (Utils)
@@ -250,11 +254,27 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     )
 
     # Create the issue with gitauto label and assign to the user
-    issue_response = create_issue(
+    status_code, issue_response = create_issue(
         title=title, body=body, assignees=[user_name], base_args=base_args
     )
 
-    if issue_response and "html_url" in issue_response:
+    # Handle 410 - issues are disabled for this repository
+    if status_code == 410:
+        # Disable schedule trigger in database
+        update_repository(
+            repo_id=repo_id, trigger_on_schedule=False, updated_by=user_name
+        )
+
+        # Delete AWS scheduler
+        schedule_name = f"gitauto-repo-{owner_id}-{repo_id}"
+        delete_scheduler(schedule_name)
+
+        msg = f"Issues are disabled for {owner_name}/{repo_name}. Disabled schedule trigger."
+        logging.warning(msg)
+        slack_notify(msg)
+        return {"status": "skipped", "message": msg}
+
+    if status_code == 200 and issue_response and "html_url" in issue_response:
         if target_item["id"] == 0:
             coverage_record = {**target_item}
             coverage_record.pop("id")
@@ -269,5 +289,10 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                 github_issue_url=issue_response["html_url"],
             )
 
-    msg = f"created issue for {target_path}"
-    return {"status": "success", "message": msg}
+        msg = f"created issue for {target_path}"
+        return {"status": "success", "message": msg}
+
+    # Handle other errors
+    msg = f"Failed to create issue for {target_path} (status: {status_code})"
+    logging.error(msg)
+    return {"status": "failed", "message": msg}

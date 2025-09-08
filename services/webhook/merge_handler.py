@@ -1,3 +1,5 @@
+import logging
+
 from config import PRODUCT_ID
 from constants.urls import DASHBOARD_CREDITS_URL
 from services.github.comments.create_comment import create_comment
@@ -190,11 +192,25 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
     base_args = {"owner": owner_name, "repo": repo_name, "token": token}
 
     # Create the issue
-    issue_response = create_issue(
+    status_code, issue_response = create_issue(
         title=title, body=body, assignees=assignees, base_args=base_args
     )
 
-    if issue_response and "html_url" in issue_response:
+    # Handle 410 - issues are disabled for this repository
+    if status_code == 410:
+        # Disable merge trigger in database
+        update_repository(
+            repo_id=repo_id, trigger_on_merged=False, updated_by=merged_by
+        )
+
+        msg = (
+            f"Issues are disabled for {owner_name}/{repo_name}. Disabled merge trigger."
+        )
+        logging.warning(msg)
+        slack_notify(msg, thread_ts)
+        return None
+
+    if status_code == 200 and issue_response and "html_url" in issue_response:
         # Success notification
         success_msg = f"Issue created for PR #{pr_number} in {owner_name}/{repo_name}"
         slack_notify(success_msg, thread_ts)
@@ -204,7 +220,9 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
         slack_notify(failure_msg, thread_ts)
 
     # End notification
-    end_msg = "Completed" if issue_response else "@channel Failed"
+    end_msg = (
+        "Completed" if (status_code == 200 and issue_response) else "@channel Failed"
+    )
     slack_notify(end_msg, thread_ts)
 
     return None

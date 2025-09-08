@@ -222,7 +222,10 @@ class TestScheduleHandler:
 
         mock_get_raw_content.side_effect = mock_content_side_effect
 
-        mock_create_issue.return_value = {"html_url": "https://github.com/test/issue/1"}
+        mock_create_issue.return_value = (
+            200,
+            {"html_url": "https://github.com/test/issue/1"},
+        )
 
         # Mock should_skip_test to return True for export-only files, False for files with logic
         def mock_should_skip_side_effect(file_path, content):
@@ -310,7 +313,10 @@ class TestScheduleHandler:
 
         mock_get_raw_content.side_effect = mock_empty_content_side_effect
 
-        mock_create_issue.return_value = {"html_url": "https://github.com/test/issue/2"}
+        mock_create_issue.return_value = (
+            200,
+            {"html_url": "https://github.com/test/issue/2"},
+        )
 
         # Execute
         result = schedule_handler(mock_event)
@@ -320,3 +326,111 @@ class TestScheduleHandler:
         call_kwargs = mock_create_issue.call_args.kwargs
         assert "src/app.ts" in call_kwargs["title"]
         assert result["status"] == "success"
+
+    @patch("services.webhook.schedule_handler.slack_notify")
+    @patch("services.webhook.schedule_handler.delete_scheduler")
+    @patch("services.webhook.schedule_handler.update_repository")
+    @patch("services.webhook.schedule_handler.get_issue_body")
+    @patch("services.webhook.schedule_handler.get_issue_title")
+    @patch("services.webhook.schedule_handler.is_issue_open")
+    @patch("services.webhook.schedule_handler.should_test_file")
+    @patch("services.webhook.schedule_handler.should_skip_test")
+    @patch("services.webhook.schedule_handler.get_raw_content")
+    @patch("services.webhook.schedule_handler.get_all_coverages")
+    @patch("services.webhook.schedule_handler.get_file_tree")
+    @patch("services.webhook.schedule_handler.get_default_branch")
+    @patch("services.webhook.schedule_handler.check_availability")
+    @patch("services.webhook.schedule_handler.get_repository")
+    @patch("services.webhook.schedule_handler.create_issue")
+    @patch("services.webhook.schedule_handler.get_installation_access_token")
+    @patch("services.webhook.schedule_handler.is_migration_file")
+    @patch("services.webhook.schedule_handler.is_type_file")
+    @patch("services.webhook.schedule_handler.is_test_file")
+    @patch("services.webhook.schedule_handler.is_code_file")
+    def test_schedule_handler_410_issues_disabled(
+        self,
+        mock_is_code_file,
+        mock_is_test_file,
+        mock_is_type_file,
+        mock_is_migration_file,
+        mock_get_token,
+        mock_create_issue,
+        mock_get_repository,
+        mock_check_availability,
+        mock_get_default_branch,
+        mock_get_file_tree,
+        mock_get_all_coverages,
+        mock_get_raw_content,
+        mock_should_skip_test,
+        mock_should_test_file,
+        mock_is_issue_open,
+        mock_get_issue_title,
+        mock_get_issue_body,
+        mock_update_repository,
+        mock_delete_scheduler,
+        mock_slack_notify,
+        mock_event,
+    ):
+        """Test that schedule_handler handles 410 (issues disabled) correctly."""
+        # Setup all required mocks to reach create_issue call
+        mock_get_token.return_value = "test-token"
+        mock_get_repository.return_value = {"trigger_on_schedule": True}
+        mock_check_availability.return_value = {
+            "can_proceed": True,
+            "billing_type": "exception",
+            "requests_left": None,
+            "credit_balance_usd": 0,
+            "period_end_date": None,
+            "user_message": "",
+            "log_message": "Exception owner - unlimited access.",
+        }
+        mock_get_default_branch.return_value = ("main", None)
+        mock_get_file_tree.return_value = [
+            {"path": "src/test.py", "type": "blob", "size": 100}
+        ]
+        mock_get_all_coverages.return_value = [
+            {
+                "id": 1,
+                "full_path": "src/test.py",
+                "file_size": 100,
+                "statement_coverage": 0.0,
+                "function_coverage": 0.0,
+                "branch_coverage": 0.0,
+                "created_at": "2024-01-01",
+                "updated_at": "2024-01-01",
+                "github_issue_url": None,
+                "is_excluded_from_testing": False,
+            }
+        ]
+        mock_is_code_file.return_value = True
+        mock_is_test_file.return_value = False
+        mock_is_type_file.return_value = False
+        mock_is_migration_file.return_value = False
+        mock_get_raw_content.return_value = "def test_function(): return True"
+        mock_should_skip_test.return_value = False  # Don't skip
+        mock_should_test_file.return_value = True  # Should test
+        mock_is_issue_open.return_value = False  # No open issues
+        mock_get_issue_title.return_value = "Test Title"
+        mock_get_issue_body.return_value = "Test Body"
+
+        # Mock create_issue to return 410 (issues disabled)
+        mock_create_issue.return_value = (410, None)
+
+        result = schedule_handler(cast(EventBridgeSchedulerEvent, mock_event))
+
+        # Verify the function handled 410 correctly
+        assert result["status"] == "skipped"
+        assert "Issues are disabled" in result["message"]
+
+        # Verify that it updated the repository to disable schedule
+        mock_update_repository.assert_called_once_with(
+            repo_id=456, trigger_on_schedule=False, updated_by="test-user"
+        )
+
+        # Verify that it deleted the AWS scheduler
+        mock_delete_scheduler.assert_called_once_with("gitauto-repo-123-456")
+
+        # Verify that it sent a Slack notification
+        mock_slack_notify.assert_called_once()
+        slack_msg = mock_slack_notify.call_args[0][0]
+        assert "Issues are disabled" in slack_msg
