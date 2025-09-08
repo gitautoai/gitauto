@@ -67,10 +67,9 @@ def test_count_tokens_message_with_none_string_content(mock_tiktoken_encoding_fo
     messages = [{"role": "user", "content": None}]
     result = count_tokens(messages)
     
-    # "user" (4) + "" (0, since None becomes "") = 4 tokens
+    # "user" (4) + 0 (None content is not processed as string) = 4 tokens
     assert result == 4
     mock_encoding.encode.assert_any_call("user")
-    mock_encoding.encode.assert_any_call("")
 
 
 def test_count_tokens_message_with_name(mock_tiktoken_encoding_for_model, mock_encoding):
