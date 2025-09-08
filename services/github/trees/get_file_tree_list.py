@@ -37,6 +37,21 @@ def get_file_tree_list(base_args: BaseArgs, dir_path: str = "", **_kwargs):
     # Clean up dir_path (remove leading/trailing slashes)
     dir_path = dir_path.strip("/")
 
+
+    # If dir_path becomes empty after stripping, treat as root directory
+    if not dir_path:
+        # Show root directory contents (no "/" in path)
+        for item in tree_items:
+            path = item["path"]
+            if "/" not in path:  # Root level only
+                if item["type"] == "blob":
+                    files.append(path)
+                elif item["type"] == "tree":
+                    dirs.append(f"{path}/")
+
+        result = sorted(dirs) + sorted(files)
+        return result
+
     # Find items that are direct children of the specified directory
     for item in tree_items:
         path = item["path"]
