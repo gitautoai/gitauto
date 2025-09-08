@@ -521,6 +521,70 @@ def test_search_remote_file_contents_malformed_items(
     result = search_remote_file_contents("query", base_args)
     mock_response.raise_for_status.return_value = None
     mock_requests.get.return_value = mock_response
+
+
+@pytest.mark.parametrize(
+    "query,expected_query_part",
+    [
+        ("simple_function", "simple_function"),
+        ("class MyClass", "class MyClass"),
+        ("def get_user() AND class UserAPI", "def get_user() AND class UserAPI"),
+        ("import requests", "import requests"),
+        ("TODO: fix this", "TODO: fix this"),
+        ("function_with_underscores", "function_with_underscores"),
+        ("function-with-dashes", "function-with-dashes"),
+        ("123numeric", "123numeric"),
+        ("", ""),  # Empty query
+    ],
+)
+def test_search_remote_file_contents_various_queries(
+    mock_requests, mock_create_headers, mock_print, create_test_base_args, query, expected_query_part
+):
+    """Test search with various query formats."""
+    # Setup
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        is_fork=False,
+        token="test-token"
+    )
+    
+    mock_response_data = {"items": [{"path": "result.py"}]}
+    mock_response = Mock()
+    mock_response.json.return_value = mock_response_data
+    mock_response.raise_for_status.return_value = None
+    mock_requests.get.return_value = mock_response
+    
+    # Execute
+    result = search_remote_file_contents(query, base_args)
+    
+    # Verify query construction
+    call_args = mock_requests.get.call_args
+    params = call_args[1]["params"]
+    expected_full_query = f"{expected_query_part} repo:test-owner/test-repo"
+    assert params["q"] == expected_full_query
+    
+    # Verify result message contains the original query
+    assert f"search query '{query}'" in result
+
+
+@pytest.mark.parametrize(
+    "is_fork,expected_fork_part",
+    [
+        (True, " fork:true"),
+        (False, ""),
+    ],
+)
+def test_search_remote_file_contents_fork_parameter(
+    mock_requests, mock_create_headers, create_test_base_args, is_fork, expected_fork_part
+):
+    """Test that fork parameter is correctly handled."""
+    # Setup
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        is_fork=is_fork,
+        token="test-token"
     
     # Execute
     search_remote_file_contents("test_query", base_args)
