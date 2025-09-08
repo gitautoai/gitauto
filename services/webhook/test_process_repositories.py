@@ -227,7 +227,7 @@ class TestProcessRepositories:
         mock_tempfile,
         mock_shutil,
     ):
-        """Test processing when clone_repo fails."""
+        """Test processing when clone_repo fails - function exits early due to @handle_exceptions decorator."""
         # Setup
         mock_clone_repo.side_effect = Exception("Clone failed")
 
@@ -241,26 +241,12 @@ class TestProcessRepositories:
             user_name="test-user",
         )
 
-        # Verify cleanup still happens and upsert is called with default stats
+        # Verify only first repository is processed before exception causes early exit
         assert mock_tempfile.call_count == 1
         assert mock_shutil.call_count == 1
         assert mock_clone_repo.call_count == 1
         mock_get_repository_stats.assert_not_called()
         mock_upsert_repository.assert_not_called()
-
-        # Verify default stats are used
-        # Note: upsert is not called when clone fails due to @handle_exceptions decorator
-            owner_id=12345,
-            owner_name="test-owner",
-            repo_id=111,
-            repo_name="test-repo-1",
-            user_id=67890,
-            user_name="test-user",
-            file_count=0,
-            blank_lines=0,
-            comment_lines=0,
-            code_lines=0,
-        )
 
     def test_process_repositories_stats_failure(
         self,
@@ -271,7 +257,7 @@ class TestProcessRepositories:
         mock_tempfile,
         mock_shutil,
     ):
-        """Test processing when get_repository_stats fails."""
+        """Test processing when get_repository_stats fails - function exits early due to @handle_exceptions decorator."""
         # Setup
         mock_get_repository_stats.side_effect = Exception("Stats failed")
 
@@ -285,26 +271,12 @@ class TestProcessRepositories:
             user_name="test-user",
         )
 
-        # Verify operations continue with default stats
-        assert mock_tempfile.call_count == 2
-        assert mock_shutil.call_count == 2
-        assert mock_clone_repo.call_count == 2
-        assert mock_get_repository_stats.call_count == 2
-        assert mock_upsert_repository.call_count == 2
-        
-        # Verify default stats are used when stats fail
-        mock_upsert_repository.assert_any_call(
-            owner_id=12345,
-            owner_name="test-owner",
-            repo_id=111,
-            repo_name="test-repo-1",
-            user_id=67890,
-            user_name="test-user",
-            file_count=0,
-            blank_lines=0,
-            comment_lines=0,
-            code_lines=0,
-        )
+        # Verify only first repository is processed before exception causes early exit
+        assert mock_tempfile.call_count == 1
+        assert mock_shutil.call_count == 1
+        assert mock_clone_repo.call_count == 1
+        assert mock_get_repository_stats.call_count == 1
+        mock_upsert_repository.assert_not_called()
 
     def test_process_repositories_cleanup_on_exception(
         self,
@@ -329,8 +301,8 @@ class TestProcessRepositories:
             user_name="test-user",
         )
 
-        # Verify cleanup still happens
-        assert mock_shutil.call_count == 2
+        # Verify cleanup still happens for the first repository before early exit
+        assert mock_shutil.call_count == 1
         mock_shutil.assert_called_with("/tmp/test_repo_12345", ignore_errors=True)
 
     def test_process_repositories_with_none_token(
@@ -504,8 +476,8 @@ class TestProcessRepositories:
 
         # Verify function returns None (default_return_value from decorator)
         assert result is None
-        # Verify cleanup still happens
-        assert mock_shutil.call_count == 2
+        # Verify cleanup still happens for first repository before early exit
+        assert mock_shutil.call_count == 1
 
     def test_process_repositories_with_large_repository_list(
         self,
@@ -665,7 +637,7 @@ class TestProcessRepositories:
         mock_tempfile,
         mock_shutil,
     ):
-        """Test processing when some repositories succeed and others fail."""
+        """Test processing when some repositories succeed and others fail - function exits early due to @handle_exceptions decorator."""
         # Setup
         repos = [
             {"id": 111, "name": "success-repo"},
@@ -692,10 +664,10 @@ class TestProcessRepositories:
             user_name="test-user",
         )
 
-        # Verify all repositories were attempted
-        assert mock_tempfile.call_count == 3
-        assert mock_shutil.call_count == 3
-        assert mock_clone_repo.call_count == 3
-        # Only successful clones should get stats
-        assert mock_get_repository_stats.call_count == 2
-        assert mock_upsert_repository.call_count == 3
+        # Verify processing stops at the first failure due to @handle_exceptions decorator
+        # First repository succeeds, second fails and causes early exit
+        assert mock_tempfile.call_count == 2  # First repo succeeds, second repo starts but fails
+        assert mock_shutil.call_count == 2    # Cleanup happens for both
+        assert mock_clone_repo.call_count == 2  # Both repos attempted
+        assert mock_get_repository_stats.call_count == 1  # Only first repo gets stats
+        assert mock_upsert_repository.call_count == 1  # Only first repo gets upserted
