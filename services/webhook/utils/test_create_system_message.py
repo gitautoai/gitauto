@@ -1,5 +1,3 @@
-from unittest.mock import patch, MagicMock
-
 """
 Unit tests for services/webhook/utils/create_system_message.py
 
@@ -25,8 +23,11 @@ including:
 4. Integration testing with real dependencies
 """
 
-from typing import cast, Any
+from typing import Any, Literal, cast
+from unittest.mock import MagicMock, patch
+
 import pytest
+
 from schemas.supabase.types import Repositories
 from services.supabase.usage.insert_usage import Trigger
 from services.webhook.utils.create_system_message import create_system_message
@@ -169,7 +170,10 @@ class TestCreateSystemMessage:
         modes = ["comment", "commit", "explore", "get", "search"]
 
         # Act & Assert
-        for mode in modes:
+        for mode_str in modes:
+            mode = cast(
+                Literal["comment", "commit", "explore", "get", "search"], mode_str
+            )
             result = create_system_message("issue_comment", mode)
             assert result  # Should return non-empty content
             mock_get_mode_prompt.assert_called_with(mode)
@@ -356,7 +360,7 @@ class TestCreateSystemMessage:
         result = create_system_message("issue_comment", "comment")
 
         # Assert
-        expected_content = "<test_rules>Rules</test_rules>\n\n" "<mode>Mode</mode>"
+        expected_content = "<test_rules>Rules</test_rules>\n\n<mode>Mode</mode>"
         assert result == expected_content
 
     def test_mode_prompt_returns_none(
@@ -373,7 +377,7 @@ class TestCreateSystemMessage:
 
         # Assert
         expected_content = (
-            "<test_rules>Rules</test_rules>\n\n" "<trigger>Trigger</trigger>"
+            "<test_rules>Rules</test_rules>\n\n<trigger>Trigger</trigger>"
         )
         assert result == expected_content
 
