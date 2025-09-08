@@ -1,3 +1,4 @@
+import logging
 from typing import cast
 import requests
 from config import GITHUB_API_URL, PRODUCT_ID, TIMEOUT
@@ -7,7 +8,7 @@ from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(default_return_value=(500, None), raise_on_error=False)
 def create_issue(title: str, body: str, assignees: list[str], base_args: BaseArgs):
     """https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#create-an-issue"""
     owner = base_args["owner"]
@@ -50,6 +51,11 @@ def create_issue(title: str, body: str, assignees: list[str], base_args: BaseArg
             timeout=TIMEOUT,
         )
 
+    # Check for 410 Gone status - means issues are disabled for this repository
+    if response.status_code == 410:
+        logging.warning("Issues are disabled for repository %s/%s", owner, repo)
+        return (410, None)
+
     response.raise_for_status()
 
-    return cast(Issue, response.json())
+    return (200, cast(Issue, response.json()))

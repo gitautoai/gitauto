@@ -10,6 +10,7 @@ def test_create_issue_success_with_assignees(
 ):
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
+    mock_response.status_code = 200
     mock_response.json.return_value = {
         "id": 123,
         "html_url": "https://github.com/owner/repo/issues/123",
@@ -27,7 +28,9 @@ def test_create_issue_success_with_assignees(
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
 
-        result = create_issue("Test Title", "Test Body", ["user1", "user2"], base_args)
+        status_code, result = create_issue(
+            "Test Title", "Test Body", ["user1", "user2"], base_args
+        )
 
     mock_post.assert_called_once()
     call_args = mock_post.call_args
@@ -37,6 +40,7 @@ def test_create_issue_success_with_assignees(
     assert call_args.kwargs["json"]["assignees"] == ["user1", "user2"]
     mock_response.raise_for_status.assert_called_once()
     mock_response.json.assert_called_once()
+    assert status_code == 200
     assert result == {"id": 123, "html_url": "https://github.com/owner/repo/issues/123"}
 
 
@@ -45,6 +49,7 @@ def test_create_issue_success_without_assignees(
 ):
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
+    mock_response.status_code = 200
     mock_response.json.return_value = {
         "id": 456,
         "html_url": "https://github.com/owner/repo/issues/456",
@@ -62,7 +67,7 @@ def test_create_issue_success_without_assignees(
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
 
-        result = create_issue("Test Title", "Test Body", [], base_args)
+        status_code, result = create_issue("Test Title", "Test Body", [], base_args)
 
     mock_post.assert_called_once()
     call_args = mock_post.call_args
@@ -72,6 +77,7 @@ def test_create_issue_success_without_assignees(
     assert "assignees" not in call_args.kwargs["json"]
     mock_response.raise_for_status.assert_called_once()
     mock_response.json.assert_called_once()
+    assert status_code == 200
     assert result == {"id": 456, "html_url": "https://github.com/owner/repo/issues/456"}
 
 
@@ -80,6 +86,7 @@ def test_create_issue_success_with_empty_assignees_list(
 ):
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
+    mock_response.status_code = 200
     mock_response.json.return_value = {
         "id": 789,
         "html_url": "https://github.com/owner/repo/issues/789",
@@ -97,11 +104,12 @@ def test_create_issue_success_with_empty_assignees_list(
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
 
-        result = create_issue("Test Title", "Test Body", [], base_args)
+        status_code, result = create_issue("Test Title", "Test Body", [], base_args)
 
     call_args = mock_post.call_args
     assert "assignees" not in call_args.kwargs["json"]
     mock_response.json.assert_called_once()
+    assert status_code == 200
     assert result == {"id": 789, "html_url": "https://github.com/owner/repo/issues/789"}
 
 
@@ -130,9 +138,12 @@ def test_create_issue_http_error(
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
 
-        result = create_issue("Test Title", "Test Body", ["user1"], base_args)
+        status_code, result = create_issue(
+            "Test Title", "Test Body", ["user1"], base_args
+        )
 
     mock_response.raise_for_status.assert_called_once()
+    assert status_code == 500
     assert result is None
 
 
@@ -151,8 +162,11 @@ def test_create_issue_request_exception(
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.side_effect = requests.RequestException("Connection error")
 
-        result = create_issue("Test Title", "Test Body", ["user1"], base_args)
+        status_code, result = create_issue(
+            "Test Title", "Test Body", ["user1"], base_args
+        )
 
+    assert status_code == 500
     assert result is None
 
 
@@ -161,6 +175,7 @@ def test_create_issue_with_none_assignees(
 ):
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
+    mock_response.status_code = 200
     mock_response.json.return_value = {
         "id": 101,
         "html_url": "https://github.com/owner/repo/issues/101",
@@ -178,17 +193,19 @@ def test_create_issue_with_none_assignees(
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
 
-        result = create_issue("Test Title", "Test Body", [], base_args)
+        status_code, result = create_issue("Test Title", "Test Body", [], base_args)
 
     call_args = mock_post.call_args
     assert "assignees" not in call_args.kwargs["json"]
     mock_response.json.assert_called_once()
+    assert status_code == 200
     assert result == {"id": 101, "html_url": "https://github.com/owner/repo/issues/101"}
 
 
 def test_create_issue_api_url_construction(create_test_base_args):
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
+    mock_response.status_code = 200
     mock_response.json.return_value = {
         "id": 202,
         "html_url": "https://github.com/test-owner/test-repo/issues/202",
@@ -222,6 +239,7 @@ def test_create_issue_timeout_parameter(
 ):
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
+    mock_response.status_code = 200
     mock_response.json.return_value = {
         "id": 303,
         "html_url": "https://github.com/owner/repo/issues/303",
@@ -250,6 +268,7 @@ def test_create_issue_timeout_parameter(
 def test_create_issue_headers_creation(test_owner, test_repo, create_test_base_args):
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
+    mock_response.status_code = 200
     mock_response.json.return_value = {
         "id": 404,
         "html_url": "https://github.com/owner/repo/issues/404",
@@ -285,6 +304,7 @@ def test_create_issue_retry_on_invalid_assignees(
     # Mock second response (successful retry)
     mock_second_response = MagicMock()
     mock_second_response.raise_for_status.return_value = None
+    mock_second_response.status_code = 200
     mock_second_response.json.return_value = {
         "id": 555,
         "html_url": "https://github.com/owner/repo/issues/555",
@@ -303,7 +323,9 @@ def test_create_issue_retry_on_invalid_assignees(
         # First call returns 422, second call succeeds
         mock_post.side_effect = [mock_first_response, mock_second_response]
 
-        result = create_issue("Test Title", "Test Body", ["Copilot"], base_args)
+        status_code, result = create_issue(
+            "Test Title", "Test Body", ["Copilot"], base_args
+        )
 
     # Should make two calls - first with assignees, second without
     assert mock_post.call_count == 2
@@ -321,4 +343,47 @@ def test_create_issue_retry_on_invalid_assignees(
 
     mock_second_response.raise_for_status.assert_called_once()
     mock_second_response.json.assert_called_once()
+    assert status_code == 200
     assert result == {"id": 555, "html_url": "https://github.com/owner/repo/issues/555"}
+
+
+def test_create_issue_410_issues_disabled(
+    test_owner, test_repo, test_token, create_test_base_args
+):
+    """Test that create_issue handles 410 Gone (issues disabled) correctly."""
+    mock_response = MagicMock()
+    mock_response.status_code = 410
+    mock_response.raise_for_status.return_value = None  # Won't be called for 410
+
+    base_args = create_test_base_args(
+        owner=test_owner, repo=test_repo, token=test_token
+    )
+
+    with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
+        "services.github.issues.create_issue.create_headers"
+    ) as mock_create_headers, patch(
+        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
+    ), patch(
+        "services.github.issues.create_issue.logging"
+    ) as mock_logging:
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
+        mock_post.return_value = mock_response
+
+        status_code, result = create_issue(
+            "Test Title", "Test Body", ["user1"], base_args
+        )
+
+    # Verify the function returns 410 status and None
+    assert status_code == 410
+    assert result is None
+
+    # Verify that raise_for_status was NOT called (we handle 410 specially)
+    mock_response.raise_for_status.assert_not_called()
+
+    # Verify that a warning was logged
+    mock_logging.warning.assert_called_once()
+    call_args = mock_logging.warning.call_args
+    warning_msg = call_args[0][0]
+    warning_args = call_args[0][1:]
+    assert "Issues are disabled" in warning_msg
+    assert warning_args == (test_owner, test_repo)
