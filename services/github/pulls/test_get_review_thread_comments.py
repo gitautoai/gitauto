@@ -9,7 +9,9 @@ from services.github.pulls.get_review_thread_comments import get_review_thread_c
 @pytest.fixture
 def mock_graphql_client():
     """Fixture to provide a mocked GraphQL client."""
-    with patch("services.github.pulls.get_review_thread_comments.get_graphql_client") as mock:
+    with patch(
+        "services.github.pulls.get_review_thread_comments.get_graphql_client"
+    ) as mock:
         mock_client = MagicMock()
         mock.return_value = mock_client
         yield mock_client
@@ -122,15 +124,7 @@ def test_get_review_thread_comments_no_review_threads_returns_empty_list(
 ):
     """Test that function returns empty list when there are no review threads."""
     # Arrange
-    response = {
-        "repository": {
-            "pullRequest": {
-                "reviewThreads": {
-                    "nodes": []
-                }
-            }
-        }
-    }
+    response = {"repository": {"pullRequest": {"reviewThreads": {"nodes": []}}}}
     mock_graphql_client.execute.return_value = response
 
     # Act
@@ -148,17 +142,7 @@ def test_get_review_thread_comments_empty_thread_comments_returns_empty_list(
     # Arrange
     response = {
         "repository": {
-            "pullRequest": {
-                "reviewThreads": {
-                    "nodes": [
-                        {
-                            "comments": {
-                                "nodes": []
-                            }
-                        }
-                    ]
-                }
-            }
+            "pullRequest": {"reviewThreads": {"nodes": [{"comments": {"nodes": []}}]}}
         }
     }
     mock_graphql_client.execute.return_value = response
@@ -231,7 +215,11 @@ def test_get_review_thread_comments_calls_graphql_with_correct_parameters(
     # Assert
     call_args = mock_graphql_client.execute.call_args
     query_arg = call_args[0][0] if call_args[0] else call_args.kwargs["document"]
-    variables_arg = call_args[1]["variable_values"] if call_args[0] else call_args.kwargs["variable_values"]
+    variables_arg = (
+        call_args[1]["variable_values"]
+        if call_args[0]
+        else call_args.kwargs["variable_values"]
+    )
 
     # Verify the query structure (checking if it's a gql object with the right content)
     assert str(type(query_arg).__name__) == "DocumentNode"
@@ -263,7 +251,9 @@ def test_get_review_thread_comments_creates_graphql_client_with_token(sample_par
         mock_get_client.assert_called_once_with("test-token")
 
 
-def test_get_review_thread_comments_handles_graphql_exception_returns_empty_list(sample_params):
+def test_get_review_thread_comments_handles_graphql_exception_returns_empty_list(
+    sample_params,
+):
     """Test that function returns empty list when GraphQL exception occurs (due to @handle_exceptions decorator)."""
     with patch(
         "services.github.pulls.get_review_thread_comments.get_graphql_client"
@@ -277,7 +267,9 @@ def test_get_review_thread_comments_handles_graphql_exception_returns_empty_list
         assert result == []
 
 
-def test_get_review_thread_comments_handles_client_execute_exception_returns_empty_list(sample_params):
+def test_get_review_thread_comments_handles_client_execute_exception_returns_empty_list(
+    sample_params,
+):
     """Test that function returns empty list when client.execute raises exception (due to @handle_exceptions decorator)."""
     with patch(
         "services.github.pulls.get_review_thread_comments.get_graphql_client"
@@ -326,7 +318,7 @@ def test_get_review_thread_comments_with_different_parameters(mock_graphql_clien
         repo="special-repo",
         pull_number=999,
         comment_node_id="SpecialCommentId123",
-        token="special-token"
+        token="special-token",
     )
 
     # Assert
@@ -365,7 +357,6 @@ def test_get_review_thread_comments_malformed_response_structure(
 
         assert result == []
         mock_graphql_client.execute.assert_called_once()
-
 
 
 def test_get_review_thread_comments_missing_comment_fields(
@@ -422,7 +413,11 @@ def test_get_review_thread_comments_function_has_proper_docstring():
     assert get_review_thread_comments.__doc__ is not None
     assert "Get all comments in a review thread" in get_review_thread_comments.__doc__
     assert "GraphQL API" in get_review_thread_comments.__doc__
-    assert "https://docs.github.com/en/graphql/reference/objects#pullrequestreviewcomment" in get_review_thread_comments.__doc__
+    assert (
+        "https://docs.github.com/en/graphql/reference/objects#pullrequestreviewcomment"
+        in get_review_thread_comments.__doc__
+    )
+
 
 def test_get_review_thread_comments_multiple_threads_finds_correct_one(
     mock_graphql_client, sample_params
@@ -459,7 +454,7 @@ def test_get_review_thread_comments_multiple_threads_finds_correct_one(
                                         "author": {"login": "user3"},
                                         "body": "Correct thread comment 2",
                                         "createdAt": "2023-01-01T12:00:00Z",
-                                    }
+                                    },
                                 ]
                             }
                         },
@@ -474,7 +469,7 @@ def test_get_review_thread_comments_multiple_threads_finds_correct_one(
                                     }
                                 ]
                             }
-                        }
+                        },
                     ]
                 }
             }
@@ -497,7 +492,7 @@ def test_get_review_thread_comments_multiple_threads_finds_correct_one(
             "author": {"login": "user3"},
             "body": "Correct thread comment 2",
             "createdAt": "2023-01-01T12:00:00Z",
-        }
+        },
     ]
     assert result == expected_comments
     mock_graphql_client.execute.assert_called_once()
@@ -515,12 +510,8 @@ def test_get_review_thread_comments_thread_with_missing_comments_structure(
                         {
                             # Missing comments field entirely
                         },
-                        {
-                            "comments": None  # comments is null
-                        },
-                        {
-                            "comments": {}  # comments missing nodes
-                        }
+                        {"comments": None},  # comments is null
+                        {"comments": {}},  # comments missing nodes
                     ]
                 }
             }

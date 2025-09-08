@@ -232,27 +232,34 @@ class TestStartLocalServer:
             start_local_server("/path/to/repo")
 
     @patch("subprocess.Popen")
-    def test_start_local_server_with_npm_command(self, mock_popen, mock_subprocess_popen):
+    def test_start_local_server_with_npm_command(
+        self, mock_popen, mock_subprocess_popen
+    ):
         """Test server start with npm command (commented out in the code)"""
         # Create a modified version of the start_local_server function with npm command
         from services.git.git_manager import start_local_server
-        
+
         # Store original function to restore later
         original_function = start_local_server
-        
+
         # Create a patched version of the function
         def patched_start_local_server(repo_dir):
             command = "npm run dev"
             return subprocess.Popen(
-                args=command, shell=True, cwd=repo_dir, 
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                args=command,
+                shell=True,
+                cwd=repo_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
-        
+
         mock_popen.return_value = mock_subprocess_popen
         repo_dir = "/path/to/repo"
 
         # Skip this test as it's testing an implementation detail (commented code)
-        pytest.skip("This test is for a commented-out code path that isn't currently used")
+        pytest.skip(
+            "This test is for a commented-out code path that isn't currently used"
+        )
 
 
 class TestSwitchToBranch:
@@ -323,7 +330,9 @@ class TestSwitchToBranch:
         )
 
     @patch("subprocess.run")
-    def test_switch_to_branch_with_non_ascii_characters(self, mock_run, mock_subprocess_run):
+    def test_switch_to_branch_with_non_ascii_characters(
+        self, mock_run, mock_subprocess_run
+    ):
         """Test branch switch with non-ASCII characters in branch name"""
         mock_run.return_value = mock_subprocess_run
 
@@ -442,7 +451,9 @@ class TestEdgeCases:
         )
 
     @patch("subprocess.run")
-    def test_fetch_branch_with_very_large_pull_number(self, mock_run, mock_subprocess_run):
+    def test_fetch_branch_with_very_large_pull_number(
+        self, mock_run, mock_subprocess_run
+    ):
         """Test fetch_branch with a very large pull number"""
         mock_run.return_value = mock_subprocess_run
 

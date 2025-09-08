@@ -1,4 +1,5 @@
 from unittest.mock import patch, MagicMock
+
 """
 Unit tests for services/webhook/utils/create_system_message.py
 
@@ -87,7 +88,9 @@ def mock_read_xml_file():
 @pytest.fixture
 def mock_get_trigger_prompt():
     """Mock the get_trigger_prompt function."""
-    with patch("services.webhook.utils.create_system_message.get_trigger_prompt") as mock:
+    with patch(
+        "services.webhook.utils.create_system_message.get_trigger_prompt"
+    ) as mock:
         yield mock
 
 
@@ -107,8 +110,12 @@ class TestCreateSystemMessage:
         """Test creating system message with minimal parameters."""
         # Arrange
         mock_read_xml_file.return_value = "<test_rules>Common test rules</test_rules>"
-        mock_get_trigger_prompt.return_value = "<trigger_instruction>Issue trigger</trigger_instruction>"
-        mock_get_mode_prompt.return_value = "<mode_instruction>Comment mode</mode_instruction>"
+        mock_get_trigger_prompt.return_value = (
+            "<trigger_instruction>Issue trigger</trigger_instruction>"
+        )
+        mock_get_mode_prompt.return_value = (
+            "<mode_instruction>Comment mode</mode_instruction>"
+        )
 
         # Act
         result = create_system_message("issue_comment", "comment")
@@ -120,7 +127,9 @@ class TestCreateSystemMessage:
             "<mode_instruction>Comment mode</mode_instruction>"
         )
         assert result == expected_content
-        mock_read_xml_file.assert_called_once_with("utils/prompts/common_test_rules.xml")
+        mock_read_xml_file.assert_called_once_with(
+            "utils/prompts/common_test_rules.xml"
+        )
         mock_get_trigger_prompt.assert_called_once_with("issue_comment")
         mock_get_mode_prompt.assert_called_once_with("comment")
 
@@ -347,10 +356,7 @@ class TestCreateSystemMessage:
         result = create_system_message("issue_comment", "comment")
 
         # Assert
-        expected_content = (
-            "<test_rules>Rules</test_rules>\n\n"
-            "<mode>Mode</mode>"
-        )
+        expected_content = "<test_rules>Rules</test_rules>\n\n" "<mode>Mode</mode>"
         assert result == expected_content
 
     def test_mode_prompt_returns_none(
@@ -367,8 +373,7 @@ class TestCreateSystemMessage:
 
         # Assert
         expected_content = (
-            "<test_rules>Rules</test_rules>\n\n"
-            "<trigger>Trigger</trigger>"
+            "<test_rules>Rules</test_rules>\n\n" "<trigger>Trigger</trigger>"
         )
         assert result == expected_content
 
@@ -465,8 +470,14 @@ class TestCreateSystemMessage:
         assert parts[0] == "COMMON_RULES"
         assert parts[1] == "TRIGGER_CONTENT"
         assert parts[2] == "MODE_CONTENT"
-        assert parts[3] == "<structured_repository_rules>\nrule: value\n</structured_repository_rules>"
-        assert parts[4] == "<freeform_repository_rules>\nFree form rule\n</freeform_repository_rules>"
+        assert (
+            parts[3]
+            == "<structured_repository_rules>\nrule: value\n</structured_repository_rules>"
+        )
+        assert (
+            parts[4]
+            == "<freeform_repository_rules>\nFree form rule\n</freeform_repository_rules>"
+        )
 
     def test_empty_content_parts_returns_empty_string(
         self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
@@ -487,7 +498,7 @@ class TestCreateSystemMessage:
         """Test the function with actual dependencies (integration test)."""
         # This test uses real dependencies to ensure the function works end-to-end
         # We'll use a simple case to avoid file system dependencies
-        
+
         # Arrange
         structured_rules = {"testRule": "testValue"}
         repo_rules = "Test repo rule"

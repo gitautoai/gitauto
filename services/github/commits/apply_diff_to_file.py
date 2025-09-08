@@ -50,37 +50,28 @@ def apply_diff_to_file(
         original_text = base64.b64decode(s=s1).decode(encoding=UTF8, errors="replace")
         sha: str = file_info.get("sha", "")
 
+    # Check for deletion diff (safety check)
+    if "+++ /dev/null" in diff:
+        return f"Cannot delete files using apply_diff_to_file. Use the delete_file tool instead for file path: {file_path}"
+
     # Create a new commit
     modified_text, rej_text = apply_patch(original_text=original_text, diff_text=diff)
 
-    # Handle file deletion case
-    file_deleted = False
-    if modified_text == "" and original_text != "" and not rej_text:
-        # This is likely a file deletion patch
-        file_deleted = True
-
-    if not file_deleted and modified_text == "":
+    if modified_text == "":
         return f"diff format is incorrect. No changes were made to the file: {file_path}. Review the diff, correct it, and try again.\n\n{diff=}"
 
     if modified_text != "" and rej_text != "":
         return f"diff partially applied to the file: {file_path}. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\n{diff=}\n\n{rej_text=}"
 
-    # Handle file deletion
-    if file_deleted:
-        delete_message = (
-            f"Delete {file_path} [skip ci]" if skip_ci else f"Delete {file_path}"
-        )
-        data = {"message": delete_message, "branch": new_branch, "sha": sha}
-    else:
-        # Normal file update
-        s2 = modified_text.encode(encoding=UTF8)
-        data = {
-            "message": message,
-            "content": base64.b64encode(s=s2).decode(encoding=UTF8),
-            "branch": new_branch,
-        }
-        if sha != "":
-            data["sha"] = sha
+    # Normal file update
+    s2 = modified_text.encode(encoding=UTF8)
+    data = {
+        "message": message,
+        "content": base64.b64encode(s=s2).decode(encoding=UTF8),
+        "branch": new_branch,
+    }
+    if sha != "":
+        data["sha"] = sha
 
     # Create, update, or delete the file
     put_response = requests.put(

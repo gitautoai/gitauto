@@ -8,7 +8,9 @@ import pytest
 import requests
 
 # Local imports
-from services.github.files.get_remote_file_content_by_url import get_remote_file_content_by_url
+from services.github.files.get_remote_file_content_by_url import (
+    get_remote_file_content_by_url,
+)
 
 
 class TestGetRemoteFileContentByUrl:
@@ -80,8 +82,12 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_successful_file_retrieval_full_content(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_parse_github_url, mock_github_response
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url,
+        mock_github_response,
     ):
         """Test successful retrieval of full file content without line filtering."""
         mock_parse_url.return_value = mock_parse_github_url
@@ -115,8 +121,12 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_successful_file_retrieval_with_line_range(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_parse_github_url_with_lines, mock_github_response
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url_with_lines,
+        mock_github_response,
     ):
         """Test successful retrieval with line range filtering."""
         mock_parse_url.return_value = mock_parse_github_url_with_lines
@@ -146,8 +156,12 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_successful_file_retrieval_single_line(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_parse_github_url_single_line, mock_github_response
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url_single_line,
+        mock_github_response,
     ):
         """Test successful retrieval with single line filtering."""
         mock_parse_url.return_value = mock_parse_github_url_single_line
@@ -172,13 +186,16 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_http_error_handled_by_decorator(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_parse_github_url
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url,
     ):
         """Test that HTTP errors are handled by the decorator."""
         mock_parse_url.return_value = mock_parse_github_url
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
-        
+
         mock_response = MagicMock()
         mock_response.status_code = 404
         mock_response.reason = "Not Found"
@@ -201,13 +218,16 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_json_decode_error_handled_by_decorator(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_parse_github_url
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url,
     ):
         """Test that JSON decode errors are handled by the decorator."""
         mock_parse_url.return_value = mock_parse_github_url
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
-        
+
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.raise_for_status.return_value = None
@@ -227,13 +247,16 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_base64_decode_error_handled_by_decorator(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_parse_github_url
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url,
     ):
         """Test that base64 decode errors are handled by the decorator."""
         mock_parse_url.return_value = mock_parse_github_url
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
-        
+
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.raise_for_status.return_value = None
@@ -256,13 +279,18 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_requests_exception_handled_by_decorator(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_parse_github_url
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url,
     ):
         """Test that requests exceptions are handled by the decorator."""
         mock_parse_url.return_value = mock_parse_github_url
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
-        mock_requests_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
+        mock_requests_get.side_effect = requests.exceptions.ConnectionError(
+            "Connection failed"
+        )
 
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py"
         result = get_remote_file_content_by_url(url, "test-token")
@@ -296,8 +324,11 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_create_headers_exception_handled_by_decorator(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_parse_github_url
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url,
     ):
         """Test that create_headers exceptions are handled by the decorator."""
         mock_parse_url.return_value = mock_parse_github_url
@@ -316,16 +347,21 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_empty_file_content(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_parse_github_url
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url,
     ):
         """Test handling of empty file content."""
         mock_parse_url.return_value = mock_parse_github_url
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
-        
+
         empty_content = ""
-        encoded_content = base64.b64encode(empty_content.encode("utf-8")).decode("utf-8")
-        
+        encoded_content = base64.b64encode(empty_content.encode("utf-8")).decode(
+            "utf-8"
+        )
+
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.raise_for_status.return_value = None
@@ -345,16 +381,21 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_unicode_content_handling(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_parse_github_url
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url,
     ):
         """Test proper handling of Unicode content."""
         mock_parse_url.return_value = mock_parse_github_url
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
-        
+
         unicode_content = "# 测试文件\nprint('Hello, 世界!')\n# 这是一个测试"
-        encoded_content = base64.b64encode(unicode_content.encode("utf-8")).decode("utf-8")
-        
+        encoded_content = base64.b64encode(unicode_content.encode("utf-8")).decode(
+            "utf-8"
+        )
+
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.raise_for_status.return_value = None
@@ -379,8 +420,11 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_different_branch_and_commit_sha(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_github_response
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_github_response,
     ):
         """Test retrieval with different branch and commit SHA."""
         mock_parse_url.return_value = {
@@ -408,8 +452,11 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_nested_file_path(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_github_response
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_github_response,
     ):
         """Test retrieval of nested file path."""
         mock_parse_url.return_value = {
@@ -437,8 +484,11 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_line_range_edge_cases(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_github_response
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_github_response,
     ):
         """Test line range edge cases."""
         # Test line range that exceeds file length
@@ -467,8 +517,11 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_single_line_edge_case(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_github_response
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_github_response,
     ):
         """Test single line edge case that exceeds file length."""
         mock_parse_url.return_value = {
@@ -497,18 +550,22 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_various_http_error_codes(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_parse_github_url, status_code
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url,
+        status_code,
     ):
         """Test handling of various HTTP error status codes."""
         mock_parse_url.return_value = mock_parse_github_url
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
-        
+
         mock_response = MagicMock()
         mock_response.status_code = status_code
         mock_response.reason = f"HTTP {status_code} Error"
         mock_response.text = f"Error {status_code}"
-        
+
         http_error = requests.exceptions.HTTPError(f"{status_code} Error")
         http_error.response = mock_response
         mock_response.raise_for_status.side_effect = http_error
@@ -534,8 +591,15 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_various_parameter_combinations(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_github_response, owner, repo, ref, file_path
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_github_response,
+        owner,
+        repo,
+        ref,
+        file_path,
     ):
         """Test that the function handles various parameter combinations correctly."""
         mock_parse_url.return_value = {
@@ -564,17 +628,22 @@ class TestGetRemoteFileContentByUrl:
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
     def test_large_file_content(
-        self, mock_parse_url, mock_create_headers, mock_requests_get,
-        mock_parse_github_url
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url,
     ):
         """Test handling of large file content."""
         mock_parse_url.return_value = mock_parse_github_url
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
-        
+
         # Create large content (simulating a large file)
         large_content = "# Large file\n" + "print('line')\n" * 100
-        encoded_content = base64.b64encode(large_content.encode("utf-8")).decode("utf-8")
-        
+        encoded_content = base64.b64encode(large_content.encode("utf-8")).decode(
+            "utf-8"
+        )
+
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.raise_for_status.return_value = None

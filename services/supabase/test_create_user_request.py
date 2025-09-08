@@ -1,10 +1,9 @@
 """Test for create_user_request function."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 import pytest
 
 from services.supabase.create_user_request import create_user_request
-from services.supabase.usage.insert_usage import Trigger
 
 
 class TestCreateUserRequest:
@@ -32,11 +31,16 @@ class TestCreateUserRequest:
     @pytest.fixture
     def mock_dependencies(self):
         """Mock all dependencies."""
-        with patch("services.supabase.create_user_request.get_issue") as mock_get_issue, \
-             patch("services.supabase.create_user_request.insert_issue") as mock_insert_issue, \
-             patch("services.supabase.create_user_request.insert_usage") as mock_insert_usage, \
-             patch("services.supabase.create_user_request.upsert_user") as mock_upsert_user:
-            
+        with patch(
+            "services.supabase.create_user_request.get_issue"
+        ) as mock_get_issue, patch(
+            "services.supabase.create_user_request.insert_issue"
+        ) as mock_insert_issue, patch(
+            "services.supabase.create_user_request.insert_usage"
+        ) as mock_insert_usage, patch(
+            "services.supabase.create_user_request.upsert_user"
+        ) as mock_upsert_user:
+
             yield {
                 "get_issue": mock_get_issue,
                 "insert_issue": mock_insert_issue,
@@ -56,7 +60,7 @@ class TestCreateUserRequest:
 
         # Assert
         assert result == 999
-        
+
         # Verify get_issue was called with correct parameters
         mock_dependencies["get_issue"].assert_called_once_with(
             owner_type="Organization",
@@ -64,10 +68,10 @@ class TestCreateUserRequest:
             repo_name="test_repo",
             issue_number=123,
         )
-        
+
         # Verify insert_issue was NOT called since issue exists
         mock_dependencies["insert_issue"].assert_not_called()
-        
+
         # Verify insert_usage was called with correct parameters
         mock_dependencies["insert_usage"].assert_called_once_with(
             owner_id=11111,
@@ -82,7 +86,7 @@ class TestCreateUserRequest:
             trigger="issue_comment",
             pr_number=456,
         )
-        
+
         # Verify upsert_user was called with correct parameters
         mock_dependencies["upsert_user"].assert_called_once_with(
             user_id=12345,
@@ -101,7 +105,7 @@ class TestCreateUserRequest:
 
         # Assert
         assert result == 888
-        
+
         # Verify get_issue was called
         mock_dependencies["get_issue"].assert_called_once_with(
             owner_type="Organization",
@@ -109,7 +113,7 @@ class TestCreateUserRequest:
             repo_name="test_repo",
             issue_number=123,
         )
-        
+
         # Verify insert_issue WAS called since issue doesn't exist
         mock_dependencies["insert_issue"].assert_called_once_with(
             owner_id=11111,
@@ -120,19 +124,21 @@ class TestCreateUserRequest:
             issue_number=123,
             installation_id=67890,
         )
-        
+
         # Verify insert_usage was called
         mock_dependencies["insert_usage"].assert_called_once()
-        
+
         # Verify upsert_user was called
         mock_dependencies["upsert_user"].assert_called_once()
 
-    def test_create_user_request_without_pr_number(self, sample_params, mock_dependencies):
+    def test_create_user_request_without_pr_number(
+        self, sample_params, mock_dependencies
+    ):
         """Test create_user_request without pr_number."""
         # Setup
         params_without_pr = sample_params.copy()
         del params_without_pr["pr_number"]
-        
+
         mock_dependencies["get_issue"].return_value = {"id": 1}
         mock_dependencies["insert_usage"].return_value = 777
 
@@ -141,7 +147,7 @@ class TestCreateUserRequest:
 
         # Assert
         assert result == 777
-        
+
         # Verify insert_usage was called with pr_number=None
         mock_dependencies["insert_usage"].assert_called_once_with(
             owner_id=11111,
@@ -162,7 +168,7 @@ class TestCreateUserRequest:
         # Setup
         params_without_email = sample_params.copy()
         params_without_email["email"] = None
-        
+
         mock_dependencies["get_issue"].return_value = {"id": 1}
         mock_dependencies["insert_usage"].return_value = 666
 
@@ -171,7 +177,7 @@ class TestCreateUserRequest:
 
         # Assert
         assert result == 666
-        
+
         # Verify upsert_user was called with email=None
         mock_dependencies["upsert_user"].assert_called_once_with(
             user_id=12345,
@@ -179,18 +185,26 @@ class TestCreateUserRequest:
             email=None,
         )
 
-    def test_create_user_request_different_trigger_types(self, sample_params, mock_dependencies):
+    def test_create_user_request_different_trigger_types(
+        self, sample_params, mock_dependencies
+    ):
         """Test create_user_request with different trigger types."""
-        triggers = ["issue_label", "review_comment", "test_failure", "pr_checkbox", "pr_merge"]
-        
+        triggers = [
+            "issue_label",
+            "review_comment",
+            "test_failure",
+            "pr_checkbox",
+            "pr_merge",
+        ]
+
         for trigger in triggers:
             # Setup
             params = sample_params.copy()
             params["trigger"] = trigger
-            
+
             mock_dependencies["get_issue"].return_value = {"id": 1}
             mock_dependencies["insert_usage"].return_value = 555
-            
+
             # Reset mocks
             for mock in mock_dependencies.values():
                 mock.reset_mock()
@@ -200,19 +214,21 @@ class TestCreateUserRequest:
 
             # Assert
             assert result == 555
-            
+
             # Verify insert_usage was called with correct trigger
             mock_dependencies["insert_usage"].assert_called_once()
             call_args = mock_dependencies["insert_usage"].call_args[1]
             assert call_args["trigger"] == trigger
 
-    def test_create_user_request_user_owner_type(self, sample_params, mock_dependencies):
+    def test_create_user_request_user_owner_type(
+        self, sample_params, mock_dependencies
+    ):
         """Test create_user_request with User owner type."""
         # Setup
         params = sample_params.copy()
         params["owner_type"] = "User"
         params["owner_name"] = "individual_user"
-        
+
         mock_dependencies["get_issue"].return_value = None
         mock_dependencies["insert_usage"].return_value = 444
 
@@ -221,7 +237,7 @@ class TestCreateUserRequest:
 
         # Assert
         assert result == 444
-        
+
         # Verify get_issue was called with User owner_type
         mock_dependencies["get_issue"].assert_called_once_with(
             owner_type="User",
@@ -229,7 +245,7 @@ class TestCreateUserRequest:
             repo_name="test_repo",
             issue_number=123,
         )
-        
+
         # Verify insert_issue was called with User owner_type
         mock_dependencies["insert_issue"].assert_called_once_with(
             owner_id=11111,
@@ -241,14 +257,16 @@ class TestCreateUserRequest:
             installation_id=67890,
         )
 
-    def test_create_user_request_with_special_characters(self, sample_params, mock_dependencies):
+    def test_create_user_request_with_special_characters(
+        self, sample_params, mock_dependencies
+    ):
         """Test create_user_request with special characters in names."""
         # Setup
         params = sample_params.copy()
         params["owner_name"] = "org-with-dashes"
         params["repo_name"] = "repo_with_underscores"
         params["user_name"] = "user.with.dots"
-        
+
         mock_dependencies["get_issue"].return_value = {"id": 1}
         mock_dependencies["insert_usage"].return_value = 333
 
@@ -257,7 +275,7 @@ class TestCreateUserRequest:
 
         # Assert
         assert result == 333
-        
+
         # Verify all functions were called with special character names
         mock_dependencies["get_issue"].assert_called_once_with(
             owner_type="Organization",
@@ -265,19 +283,21 @@ class TestCreateUserRequest:
             repo_name="repo_with_underscores",
             issue_number=123,
         )
-        
+
         mock_dependencies["upsert_user"].assert_called_once_with(
             user_id=12345,
             user_name="user.with.dots",
             email="test@example.com",
         )
 
-    def test_create_user_request_with_zero_issue_number(self, sample_params, mock_dependencies):
+    def test_create_user_request_with_zero_issue_number(
+        self, sample_params, mock_dependencies
+    ):
         """Test create_user_request with issue number 0."""
         # Setup
         params = sample_params.copy()
         params["issue_number"] = 0
-        
+
         mock_dependencies["get_issue"].return_value = None
         mock_dependencies["insert_usage"].return_value = 222
 
@@ -286,7 +306,7 @@ class TestCreateUserRequest:
 
         # Assert
         assert result == 222
-        
+
         # Verify functions were called with issue_number=0
         mock_dependencies["get_issue"].assert_called_once_with(
             owner_type="Organization",
@@ -304,11 +324,13 @@ class TestCreateUserRequest:
             # Execute - should raise exception due to @handle_exceptions(raise_on_error=True)
             with pytest.raises(Exception) as exc_info:
                 create_user_request(**sample_params)
-            
+
             # Assert - should raise the original exception
             assert str(exc_info.value) == "Database error"
 
-    def test_create_user_request_insert_usage_returns_none(self, sample_params, mock_dependencies):
+    def test_create_user_request_insert_usage_returns_none(
+        self, sample_params, mock_dependencies
+    ):
         """Test when insert_usage returns None."""
         # Setup
         mock_dependencies["get_issue"].return_value = {"id": 1}
@@ -319,7 +341,7 @@ class TestCreateUserRequest:
 
         # Assert
         assert result is None
-        
+
         # Verify all functions were still called
         mock_dependencies["get_issue"].assert_called_once()
         mock_dependencies["insert_usage"].assert_called_once()
@@ -333,7 +355,7 @@ class TestCreateUserRequest:
         params["owner_id"] = 888888888
         params["repo_id"] = 777777777
         params["installation_id"] = 666666666
-        
+
         mock_dependencies["get_issue"].return_value = None
         mock_dependencies["insert_usage"].return_value = 111
 
@@ -342,7 +364,7 @@ class TestCreateUserRequest:
 
         # Assert
         assert result == 111
-        
+
         # Verify functions were called with large IDs
         mock_dependencies["insert_issue"].assert_called_once_with(
             owner_id=888888888,
@@ -353,25 +375,27 @@ class TestCreateUserRequest:
             issue_number=123,
             installation_id=666666666,
         )
-        
+
         mock_dependencies["upsert_user"].assert_called_once_with(
             user_id=999999999,
             user_name="test_user",
             email="test@example.com",
         )
 
-    def test_create_user_request_different_sources(self, sample_params, mock_dependencies):
+    def test_create_user_request_different_sources(
+        self, sample_params, mock_dependencies
+    ):
         """Test create_user_request with different source values."""
         sources = ["github", "webhook", "api", "manual"]
-        
+
         for source in sources:
             # Setup
             params = sample_params.copy()
             params["source"] = source
-            
+
             mock_dependencies["get_issue"].return_value = {"id": 1}
             mock_dependencies["insert_usage"].return_value = 100
-            
+
             # Reset mocks
             for mock in mock_dependencies.values():
                 mock.reset_mock()
@@ -381,21 +405,23 @@ class TestCreateUserRequest:
 
             # Assert
             assert result == 100
-            
+
             # Verify insert_usage was called with correct source
             mock_dependencies["insert_usage"].assert_called_once()
             call_args = mock_dependencies["insert_usage"].call_args[1]
             assert call_args["source"] == source
 
-    def test_create_user_request_function_call_order(self, sample_params, mock_dependencies):
+    def test_create_user_request_function_call_order(
+        self, sample_params, mock_dependencies
+    ):
         """Test that functions are called in the correct order."""
         # Setup
         mock_dependencies["get_issue"].return_value = None
         mock_dependencies["insert_usage"].return_value = 123
-        
+
         # Execute
         create_user_request(**sample_params)
-        
+
         # Verify call order by checking that get_issue is called before insert_issue
         # and insert_usage is called after both
         assert mock_dependencies["get_issue"].call_count == 1
