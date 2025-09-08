@@ -169,6 +169,19 @@ class TestGetCurrentBranch:
 
         assert result is None
 
+    @patch("subprocess.run")
+    @patch("builtins.print")
+    def test_get_current_branch_with_non_ascii_characters(self, mock_print, mock_run):
+        """Test current branch retrieval with non-ASCII characters in branch name"""
+        mock_result = MagicMock()
+        mock_result.stdout = "feature/café-auth-fix\n"
+        mock_run.return_value = mock_result
+
+        repo_dir = "/path/to/repo"
+        get_current_branch(repo_dir)
+
+        mock_print.assert_called_once_with("Current branch: `feature/café-auth-fix`")
+
 
 class TestStartLocalServer:
     """Test cases for start_local_server function"""
@@ -217,6 +230,29 @@ class TestStartLocalServer:
 
         with pytest.raises(OSError):
             start_local_server("/path/to/repo")
+
+    @patch("subprocess.Popen")
+    def test_start_local_server_with_npm_command(self, mock_popen, mock_subprocess_popen):
+        """Test server start with npm command (commented out in the code)"""
+        # Create a modified version of the start_local_server function with npm command
+        from services.git.git_manager import start_local_server
+        
+        # Store original function to restore later
+        original_function = start_local_server
+        
+        # Create a patched version of the function
+        def patched_start_local_server(repo_dir):
+            command = "npm run dev"
+            return subprocess.Popen(
+                args=command, shell=True, cwd=repo_dir, 
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+        
+        mock_popen.return_value = mock_subprocess_popen
+        repo_dir = "/path/to/repo"
+
+        # Skip this test as it's testing an implementation detail (commented code)
+        pytest.skip("This test is for a commented-out code path that isn't currently used")
 
 
 class TestSwitchToBranch:
@@ -285,6 +321,38 @@ class TestSwitchToBranch:
             check=True,
             cwd="/different/repo/path",
         )
+
+    @patch("subprocess.run")
+    def test_switch_to_branch_with_non_ascii_characters(self, mock_run, mock_subprocess_run):
+        """Test branch switch with non-ASCII characters in branch name"""
+        mock_run.return_value = mock_subprocess_run
+
+        branch_name = "feature/café-auth"
+        repo_dir = "/path/to/repo"
+
+        switch_to_branch(branch_name, repo_dir)
+
+        mock_run.assert_called_once_with(
+            "git switch feature/café-auth",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd="/path/to/repo",
+        )
+
+    @patch("subprocess.run")
+    def test_switch_to_branch_with_very_long_name(self, mock_run, mock_subprocess_run):
+        """Test branch switch with a very long branch name"""
+        mock_run.return_value = mock_subprocess_run
+
+        long_branch_name = "feature/" + "x" * 100
+        switch_to_branch(long_branch_name, "/path/to/repo")
+
+        expected_cmd = f"git switch {long_branch_name}"
+        mock_run.assert_called_once()
+        call_args = mock_run.call_args[0][0]
+        assert call_args == expected_cmd
 
 
 class TestHandleExceptionsIntegration:
@@ -371,4 +439,21 @@ class TestEdgeCases:
             text=True,
             check=True,
             cwd="/path/to/repo",
+        )
+
+    @patch("subprocess.run")
+    def test_fetch_branch_with_very_large_pull_number(self, mock_run, mock_subprocess_run):
+        """Test fetch_branch with a very large pull number"""
+        mock_run.return_value = mock_subprocess_run
+
+        large_pull_number = 9999999999
+        fetch_branch(large_pull_number, "branch", "/path")
+
+        mock_run.assert_called_once_with(
+            f"git fetch origin pull/{large_pull_number}/head:branch",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd="/path",
         )
