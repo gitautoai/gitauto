@@ -34,7 +34,7 @@ def get_file_tree_list(base_args: BaseArgs, dir_path: str = "", **_kwargs):
         result = sorted(dirs) + sorted(files)
         return result
 
-    # Clean up dir_path (remove leading/trailing slashes)
+    # Clean up dir_path (remove leading/trailing whitespace and slashes)
     dir_path = dir_path.strip("/")
 
 
