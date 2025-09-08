@@ -546,6 +546,156 @@ class TestProcessRepositories:
         mock_tempfile,
         mock_shutil,
             user_id=67890,
+    ):
+        """Test processing when repository data is missing required fields."""
+        # Setup - repository missing 'name' field
+        invalid_repos = [{"id": 555}]  # Missing 'name' field
+
+        # Execute - should handle KeyError gracefully due to decorator
+        result = process_repositories(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=invalid_repos,
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-user",
+        )
+
+        # Verify function returns None due to exception handling
+        assert result is None
+
+    def test_process_repositories_with_none_repositories(
+        self,
+        mock_clone_repo,
+        mock_get_repository_stats,
+        mock_upsert_repository,
+        mock_tempfile,
+        mock_shutil,
+    ):
+        """Test processing when repositories parameter is None."""
+        # Execute - should handle TypeError gracefully due to decorator
+        result = process_repositories(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=None,
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-user",
+        )
+
+        # Verify function returns None due to exception handling
+        assert result is None
+        # Verify no operations were attempted
+        mock_tempfile.assert_not_called()
+        mock_shutil.assert_not_called()
+        mock_clone_repo.assert_not_called()
+        mock_get_repository_stats.assert_not_called()
+        mock_upsert_repository.assert_not_called()
+
+    def test_process_repositories_tempfile_creation_failure(
+        self,
+        sample_repositories,
+        mock_clone_repo,
+        mock_get_repository_stats,
+        mock_upsert_repository,
+        mock_tempfile,
+        mock_shutil,
+    ):
+        """Test processing when tempfile creation fails."""
+        # Setup
+        mock_tempfile.side_effect = OSError("Cannot create temp directory")
+
+        # Execute - should handle OSError gracefully due to decorator
+        result = process_repositories(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=sample_repositories,
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-user",
+        )
+
+        # Verify function returns None due to exception handling
+        assert result is None
+
+    @patch("builtins.print")
+    def test_process_repositories_print_statements(
+        self,
+        mock_print,
+        sample_repositories,
+        sample_stats,
+        mock_clone_repo,
+        mock_get_repository_stats,
+        mock_upsert_repository,
+        mock_tempfile,
+        mock_shutil,
+    ):
+        """Test that print statements are called correctly."""
+        # Setup
+        mock_get_repository_stats.return_value = sample_stats
+
+        # Execute
+        process_repositories(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=sample_repositories,
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-user",
+        )
+
+        # Verify print statements were called
+        expected_calls = [
+            "Cloning repository test-repo-1 into /tmp/test_repo_12345",
+            f"Repository test-repo-1 stats: {sample_stats}",
+            "Cloning repository test-repo-2 into /tmp/test_repo_12345",
+            f"Repository test-repo-2 stats: {sample_stats}",
+        ]
+        
+        # Check that all expected print calls were made
+        actual_calls = [call.args[0] for call in mock_print.call_args_list]
+        for expected_call in expected_calls:
+            assert expected_call in actual_calls
+
+    def test_process_repositories_mixed_success_failure(
+        self,
+        sample_stats,
+        mock_clone_repo,
+        mock_get_repository_stats,
+        mock_upsert_repository,
+        mock_tempfile,
+        mock_shutil,
+    ):
+        """Test processing when some repositories succeed and others fail."""
+        # Setup
+        repos = [
+            {"id": 111, "name": "success-repo"},
+            {"id": 222, "name": "fail-repo"},
+            {"id": 333, "name": "another-success-repo"},
+        ]
+        
+        # Make clone fail for the second repository only
+        def clone_side_effect(owner, repo, token, target_dir):
+            if repo == "fail-repo":
+                raise Exception("Clone failed for fail-repo")
+            return None
+        
+        mock_clone_repo.side_effect = clone_side_effect
+        mock_get_repository_stats.return_value = sample_stats
+
+        # Execute
+        process_repositories(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=repos,
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-user",
+        )
+
+        # Verify all repositories were attempted
+        assert mock_tempfile.call_count == 3
+        assert mock_shutil.call_count == 3
             user_name="test-user",
         )
 
