@@ -45,7 +45,7 @@ def get_remote_file_content_by_url(url: str, token: str) -> str:
         numbered_lines = numbered_lines[start - 1 : end]  # noqa: E203
         file_path_with_lines = f"{file_path}#L{start}-L{end}"
     elif start is not None:
-        numbered_lines = numbered_lines[start - 1]  # noqa: E203
+        numbered_lines = [numbered_lines[start - 1]]  # noqa: E203
         file_path_with_lines = f"{file_path}#L{start}"
     else:
         file_path_with_lines = file_path
