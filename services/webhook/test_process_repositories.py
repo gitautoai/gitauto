@@ -506,3 +506,103 @@ class TestProcessRepositories:
         assert result is None
         # Verify cleanup still happens
         assert mock_shutil.call_count == 2
+
+    def test_process_repositories_with_large_repository_list(
+        self,
+        sample_stats,
+        mock_clone_repo,
+        mock_get_repository_stats,
+        mock_upsert_repository,
+        mock_tempfile,
+        mock_shutil,
+    ):
+        """Test processing with a large number of repositories."""
+        # Setup - create a large list of repositories
+        large_repo_list = [{"id": i, "name": f"repo-{i}"} for i in range(50)]
+        mock_get_repository_stats.return_value = sample_stats
+
+        # Execute
+        process_repositories(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=large_repo_list,
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-user",
+        )
+
+        # Verify all repositories were processed
+        assert mock_tempfile.call_count == 50
+        assert mock_shutil.call_count == 50
+        assert mock_clone_repo.call_count == 50
+        assert mock_get_repository_stats.call_count == 50
+        assert mock_upsert_repository.call_count == 50
+
+    def test_process_repositories_with_missing_repo_fields(
+        self,
+        mock_clone_repo,
+        mock_get_repository_stats,
+        mock_upsert_repository,
+        mock_tempfile,
+        mock_shutil,
+    ):
+        """Test processing when repository data is missing required fields."""
+        # Setup - repository missing 'name' field
+        invalid_repos = [{"id": 555}]  # Missing 'name' field
+
+        # Execute - should handle KeyError gracefully due to decorator
+        result = process_repositories(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=invalid_repos,
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-user",
+        )
+
+        # Verify function returns None due to exception handling
+        assert result is None
+
+    def test_process_repositories_with_none_repositories(
+        self,
+        mock_clone_repo,
+        mock_get_repository_stats,
+        mock_upsert_repository,
+        mock_tempfile,
+        mock_shutil,
+    ):
+        """Test processing when repositories parameter is None."""
+        # Execute - should handle TypeError gracefully due to decorator
+        result = process_repositories(
+            owner_id=12345,
+            owner_name="test-owner",
+            repositories=None,
+            token="ghs_test_token",
+            user_id=67890,
+            user_name="test-user",
+        )
+
+        # Verify function returns None due to exception handling
+        assert result is None
+        # Verify no operations were attempted
+        mock_tempfile.assert_not_called()
+        mock_shutil.assert_not_called()
+        mock_clone_repo.assert_not_called()
+        mock_get_repository_stats.assert_not_called()
+        mock_upsert_repository.assert_not_called()
+
+    def test_process_repositories_tempfile_creation_failure(
+        self,
+        sample_repositories,
+        mock_clone_repo,
+        mock_get_repository_stats,
+        mock_upsert_repository,
+        mock_tempfile,
+        mock_shutil,
+    ):
+        """Test processing when tempfile creation fails."""
+        # Setup
+        mock_tempfile.side_effect = OSError("Cannot create temp directory")
+
+        # Execute - should handle OSError gracefully due to decorator
+        result = process_repositories(
