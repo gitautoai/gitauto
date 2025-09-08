@@ -260,6 +260,229 @@ def test_create_test_selection_comment_with_mixed_checked_states():
 
 def test_create_test_selection_comment_structure_consistency():
     """Test that the comment structure is consistent regardless of checklist content."""
+    branch_name = "consistency-test"
+    
+    # Basic structure verification for empty checklist
+    result = create_test_selection_comment([], branch_name)
+    
+    # Verify consistent structure elements are always present
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert "Select files to manage tests for (create, update, or remove):" in result
+    assert "---" in result
+    assert "- [ ] Yes, manage tests" in result
+    assert PRODUCT_NAME in result
+    assert SETTINGS_LINKS in result
+    
+    # Verify the structure is consistent
+    lines = result.split('\n')
+    assert lines[0] == TEST_SELECTION_COMMENT_IDENTIFIER
+    assert lines[1] == ""
+    assert lines[2] == "Select files to manage tests for (create, update, or remove):"
+    assert lines[3] == ""
+
+
+def test_create_test_selection_comment_structure_consistency_complete():
+    """Test that the comment structure is consistent regardless of checklist content."""
+    branch_name = "consistency-test"
+    
     # Test with different checklist sizes
-    for _ in [0, 1, 5, 10]:
-        pass
+    for size in [0, 1, 3, 5]:
+        checklist: list[FileChecklistItem] = []
+        for i in range(size):
+            checklist.append({
+                "path": f"src/file{i}.py",
+                "checked": i % 2 == 0,  # Alternate checked state
+                "coverage_info": f" (Coverage: {i * 20}%)" if i > 0 else "",
+                "status": "modified",
+            })
+        
+        result = create_test_selection_comment(checklist, branch_name)
+        
+        # Verify consistent structure elements are always present
+        assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+        assert "Select files to manage tests for (create, update, or remove):" in result
+        assert "---" in result
+        assert "- [ ] Yes, manage tests" in result
+        assert PRODUCT_NAME in result
+        assert SETTINGS_LINKS in result
+        
+        # Verify the number of file items matches the checklist size
+        file_lines = [line for line in result.split('\n') if line.startswith('- [')]
+        # Subtract 1 for the "Yes, manage tests" line
+        assert len(file_lines) - 1 == size
+
+
+def test_create_test_selection_comment_with_all_coverage_variations():
+    """Test creating a comment with various coverage info formats."""
+    branch_name = "coverage-variations"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/no_coverage.py",
+            "checked": True,
+            "coverage_info": "",
+            "status": "added",
+        },
+        {
+            "path": "src/zero_coverage.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 0%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/full_coverage.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 100%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/partial_coverage.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 42%)",
+            "status": "added",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify all coverage variations are handled correctly
+    assert "- [x] added `src/no_coverage.py`" in result
+    assert "- [ ] modified `src/zero_coverage.py` (Coverage: 0%)" in result
+    assert "- [x] modified `src/full_coverage.py` (Coverage: 100%)" in result
+    assert "- [ ] added `src/partial_coverage.py` (Coverage: 42%)" in result
+
+
+def test_create_test_selection_comment_with_unicode_paths():
+    """Test creating a comment with paths containing unicode characters."""
+    branch_name = "unicode-test"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/测试文件.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 50%)",
+            "status": "added",
+        },
+        {
+            "path": "src/файл.py",
+            "checked": False,
+            "coverage_info": "",
+            "status": "modified",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify unicode paths are handled correctly
+    assert "- [x] added `src/测试文件.py` (Coverage: 50%)" in result
+    assert "- [ ] modified `src/файл.py`" in result
+
+
+def test_create_test_selection_comment_with_removed_status():
+    """Test creating a comment specifically with removed status files."""
+    branch_name = "removed-files"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/deleted_file.py",
+            "checked": True,
+            "coverage_info": "",
+            "status": "removed",
+        },
+        {
+            "path": "src/another_deleted.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 80%)",
+            "status": "removed",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify removed files are handled correctly
+    assert "- [x] removed `src/deleted_file.py`" in result
+    assert "- [ ] removed `src/another_deleted.py` (Coverage: 80%)" in result
+
+
+def test_create_test_selection_comment_with_single_item():
+    """Test creating a comment with exactly one checklist item."""
+    branch_name = "single-item"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/single.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 95%)",
+            "status": "modified",
+        }
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify single item is handled correctly
+    assert "- [x] modified `src/single.py` (Coverage: 95%)" in result
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert "- [ ] Yes, manage tests" in result
+
+
+def test_create_test_selection_comment_line_endings():
+    """Test that the comment uses consistent line endings."""
+    branch_name = "line-endings"
+    checklist: list[FileChecklistItem] = []
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify consistent line endings (should use \n)
+    assert '\r\n' not in result  # No Windows line endings
+    assert result.count('\n') > 0  # Has Unix line endings
+
+
+def test_create_test_selection_comment_with_edge_case_coverage():
+    """Test creating a comment with edge case coverage values."""
+    branch_name = "edge-cases"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/edge1.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 1%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/edge2.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 99%)",
+            "status": "added",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify edge case coverage values are handled correctly
+    assert "- [x] modified `src/edge1.py` (Coverage: 1%)" in result
+    assert "- [ ] added `src/edge2.py` (Coverage: 99%)" in result
+
+
+def test_create_test_selection_comment_with_large_checklist():
+    """Test creating a comment with a large number of checklist items."""
+    branch_name = "large-checklist"
+    checklist: list[FileChecklistItem] = []
+    
+    # Create a large checklist with 20 items
+    for i in range(20):
+        checklist.append({
+            "path": f"src/file_{i:02d}.py",
+            "checked": i % 3 == 0,  # Every third item checked
+            "coverage_info": f" (Coverage: {i * 5}%)" if i < 20 else " (Coverage: 100%)",
+            "status": "modified" if i % 2 == 0 else "added",
+        })
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify all items are present
+    for i in range(20):
+        checkbox = "[x]" if i % 3 == 0 else "[ ]"
+        status = "modified" if i % 2 == 0 else "added"
+        coverage = f" (Coverage: {i * 5}%)" if i < 20 else " (Coverage: 100%)"
+        expected_line = f"- {checkbox} {status} `src/file_{i:02d}.py`{coverage}"
+        assert expected_line in result
+
+    # Verify structure is still intact
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert "- [ ] Yes, manage tests" in result
+    assert SETTINGS_LINKS in result
