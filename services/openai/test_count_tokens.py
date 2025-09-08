@@ -422,8 +422,8 @@ def test_count_tokens_special_characters(mock_tiktoken_encoding_for_model, mock_
     }]
     result = count_tokens(messages)
     
-    # "user" (4) + content (39) = 43 tokens
-    assert result == 43
+    # "user" (4) + content (37) = 41 tokens
+    assert result == 41
     mock_encoding.encode.assert_any_call("user")
     mock_encoding.encode.assert_any_call("Line 1\nLine 2\tTabbed\r\nWindows newline")
 
