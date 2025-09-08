@@ -268,11 +268,13 @@ class DataProcessor:
         result = should_test_file(None, "some content")
         assert result is False
 
-        # Test with None content - should handle gracefully  
+        # Test with None content - should handle gracefully
         result = should_test_file("test.py", None)
         assert result is False
 
-    def test_should_test_file_with_very_long_content(self, mock_evaluate_condition, sample_file_path):
+    def test_should_test_file_with_very_long_content(
+        self, mock_evaluate_condition, sample_file_path
+    ):
         """Test function behavior with very long content."""
         # Create a very long content string
         long_content = "def function():\n    pass\n" * 1000
@@ -288,7 +290,9 @@ class DataProcessor:
         content_arg = call_args[1]["content"]
         assert long_content in content_arg
 
-    def test_should_test_file_system_prompt_immutable(self, mock_evaluate_condition, sample_file_path, sample_code_content):
+    def test_should_test_file_system_prompt_immutable(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
         """Test that the system prompt remains consistent across calls."""
         mock_evaluate_condition.return_value = True
 
@@ -303,10 +307,12 @@ class DataProcessor:
         # System prompt should be identical
         assert first_call_prompt == second_call_prompt
 
-    def test_should_test_file_content_formatting_consistency(self, mock_evaluate_condition):
+    def test_should_test_file_content_formatting_consistency(
+        self, mock_evaluate_condition
+    ):
         """Test that content formatting is consistent."""
         mock_evaluate_condition.return_value = True
-        
+
         test_cases = [
             ("file.py", "content"),
             ("path/to/file.js", "function test() {}"),
@@ -317,16 +323,18 @@ class DataProcessor:
         for file_path, content in test_cases:
             mock_evaluate_condition.reset_mock()
             should_test_file(file_path, content)
-            
+
             call_args = mock_evaluate_condition.call_args
             content_arg = call_args[1]["content"]
-            
+
             # Verify consistent formatting pattern
             expected_start = f"File path: {file_path}\n\nContent:\n"
             assert content_arg.startswith(expected_start)
             assert content_arg == f"{expected_start}{content}"
 
-    def test_should_test_file_return_type_consistency(self, mock_evaluate_condition, sample_file_path, sample_code_content):
+    def test_should_test_file_return_type_consistency(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
         """Test that function always returns a boolean."""
         # Test with True return value
         mock_evaluate_condition.return_value = True
@@ -346,27 +354,31 @@ class DataProcessor:
         assert isinstance(result, bool)
         assert result is False
 
-    def test_should_test_file_integration_with_handle_exceptions_decorator(self, mock_evaluate_condition, sample_file_path, sample_code_content):
+    def test_should_test_file_integration_with_handle_exceptions_decorator(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
         """Integration test to verify the decorator is properly applied."""
         # Test that the function has the decorator applied
         from utils.files.should_test_file import should_test_file as original_function
-        
+
         # Check that the function is wrapped (has __wrapped__ attribute)
-        assert hasattr(original_function, '__wrapped__')
-        
+        assert hasattr(original_function, "__wrapped__")
+
         # Test that exceptions are handled according to decorator configuration
         mock_evaluate_condition.side_effect = Exception("Test exception")
-        
+
         result = should_test_file(sample_file_path, sample_code_content)
-        
+
         # Should return False (default_return_value) and not raise
         assert result is False
 
-    def test_should_test_file_with_realistic_code_samples(self, mock_evaluate_condition):
+    def test_should_test_file_with_realistic_code_samples(
+        self, mock_evaluate_condition
+    ):
         """Test with realistic code samples that should/shouldn't be tested."""
-        
+
         # Code that should be tested (complex logic)
-        complex_code = '''
+        complex_code = """
 class UserManager:
     def __init__(self, db_connection):
         self.db = db_connection
@@ -383,14 +395,14 @@ class UserManager:
         
     def user_exists(self, username):
         return self.db.query_user(username) is not None
-'''
-        
+"""
+
         # Simple code that might not need tests
-        simple_code = '''
+        simple_code = """
 from app import main
 if __name__ == "__main__":
     main()
-'''
+"""
 
         # Test complex code
         mock_evaluate_condition.return_value = True
@@ -402,62 +414,70 @@ if __name__ == "__main__":
         result = should_test_file("main.py", simple_code)
         assert result is False
 
-    def test_should_test_file_mock_call_count_verification(self, mock_evaluate_condition, sample_file_path, sample_code_content):
+    def test_should_test_file_mock_call_count_verification(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
         """Test that evaluate_condition is called exactly once per function call."""
         mock_evaluate_condition.return_value = True
-        
+
         # Single call
         should_test_file(sample_file_path, sample_code_content)
         assert mock_evaluate_condition.call_count == 1
-        
+
         # Multiple calls should each call evaluate_condition once
         should_test_file(sample_file_path, sample_code_content)
         assert mock_evaluate_condition.call_count == 2
-        
+
         should_test_file("another_file.py", "different content")
         assert mock_evaluate_condition.call_count == 3
 
-    def test_should_test_file_with_unicode_file_paths(self, mock_evaluate_condition, sample_code_content):
+    def test_should_test_file_with_unicode_file_paths(
+        self, mock_evaluate_condition, sample_code_content
+    ):
         """Test function behavior with unicode characters in file paths."""
         unicode_paths = [
             "测试文件.py",
-            "файл.py", 
+            "файл.py",
             "ファイル.py",
             "archivo_español.py",
-            "tệp_tiếng_việt.py"
+            "tệp_tiếng_việt.py",
         ]
-        
+
         mock_evaluate_condition.return_value = True
-        
+
         for file_path in unicode_paths:
             mock_evaluate_condition.reset_mock()
             result = should_test_file(file_path, sample_code_content)
-            
+
             assert result is True
             mock_evaluate_condition.assert_called_once()
-            
+
             # Verify unicode file path is preserved
             call_args = mock_evaluate_condition.call_args
             content_arg = call_args[1]["content"]
             assert f"File path: {file_path}" in content_arg
 
-    def test_should_test_file_thread_safety_simulation(self, mock_evaluate_condition, sample_file_path, sample_code_content):
+    def test_should_test_file_thread_safety_simulation(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
         """Test that function calls don't interfere with each other (simulating thread safety)."""
         # Simulate concurrent calls with different return values
         call_results = []
-        
+
         for i in range(5):
             mock_evaluate_condition.reset_mock()
             mock_evaluate_condition.return_value = i % 2 == 0  # Alternate True/False
-            
+
             result = should_test_file(f"file_{i}.py", f"content_{i}")
             call_results.append(result)
-        
+
         # Verify results match expected pattern
         expected_results = [True, False, True, False, True]
         assert call_results == expected_results
 
-    def test_should_test_file_comprehensive_error_scenarios(self, mock_evaluate_condition, sample_file_path, sample_code_content):
+    def test_should_test_file_comprehensive_error_scenarios(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
         """Test various error scenarios to ensure robust error handling."""
         error_scenarios = [
             ValueError("Invalid input"),
@@ -468,11 +488,11 @@ if __name__ == "__main__":
             ConnectionError("Network error"),
             TimeoutError("Request timeout"),
         ]
-        
+
         for error in error_scenarios:
             mock_evaluate_condition.reset_mock()
             mock_evaluate_condition.side_effect = error
-            
+
             # Should handle all errors gracefully and return False
             result = should_test_file(sample_file_path, sample_code_content)
             assert result is False
@@ -482,10 +502,10 @@ if __name__ == "__main__":
         """Test that the function has the correct signature."""
         import inspect
         from utils.files.should_test_file import should_test_file
-        
+
         sig = inspect.signature(should_test_file)
         params = list(sig.parameters.keys())
-        
+
         # Should have exactly 2 parameters
         assert len(params) == 2
         assert "file_path" in params

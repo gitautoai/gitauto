@@ -1,8 +1,7 @@
 """Unit tests for process_repositories.py"""
 
 # Standard imports
-import tempfile
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Third-party imports
 import pytest
@@ -424,7 +423,12 @@ class TestProcessRepositories:
     ):
         """Test processing when stats return zero values."""
         # Setup
-        zero_stats = {"file_count": 0, "blank_lines": 0, "comment_lines": 0, "code_lines": 0}
+        zero_stats = {
+            "file_count": 0,
+            "blank_lines": 0,
+            "comment_lines": 0,
+            "code_lines": 0,
+        }
         mock_get_repository_stats.return_value = zero_stats
 
         # Execute
@@ -622,7 +626,7 @@ class TestProcessRepositories:
             "Cloning repository test-repo-2 into /tmp/test_repo_12345",
             f"Repository test-repo-2 stats: {sample_stats}",
         ]
-        
+
         # Check that all expected print calls were made
         actual_calls = [call.args[0] for call in mock_print.call_args_list]
         for expected_call in expected_calls:
@@ -644,13 +648,13 @@ class TestProcessRepositories:
             {"id": 222, "name": "fail-repo"},
             {"id": 333, "name": "another-success-repo"},
         ]
-        
+
         # Make clone fail for the second repository only
         def clone_side_effect(owner, repo, token, target_dir):
             if repo == "fail-repo":
                 raise Exception("Clone failed for fail-repo")
             return None
-        
+
         mock_clone_repo.side_effect = clone_side_effect
         mock_get_repository_stats.return_value = sample_stats
 
@@ -666,8 +670,10 @@ class TestProcessRepositories:
 
         # Verify processing stops at the first failure due to @handle_exceptions decorator
         # First repository succeeds, second fails and causes early exit
-        assert mock_tempfile.call_count == 2  # First repo succeeds, second repo starts but fails
-        assert mock_shutil.call_count == 2    # Cleanup happens for both
+        assert (
+            mock_tempfile.call_count == 2
+        )  # First repo succeeds, second repo starts but fails
+        assert mock_shutil.call_count == 2  # Cleanup happens for both
         assert mock_clone_repo.call_count == 2  # Both repos attempted
         assert mock_get_repository_stats.call_count == 1  # Only first repo gets stats
         assert mock_upsert_repository.call_count == 1  # Only first repo gets upserted

@@ -56,13 +56,6 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 + added line 3
 ```
 
-3. For deleted Files
-
-```diff(unified=0)
---- path/to/delete
-+++ /dev/null
-```
-
 ## Hunk header format rules
 
 - A hunk represents where changes occur in a file.

@@ -42,10 +42,7 @@ def mock_success_response():
     response = Mock(spec=requests.Response)
     response.status_code = 200
     response.json.return_value = {
-        "requested_reviewers": [
-            {"login": "reviewer1"},
-            {"login": "reviewer2"}
-        ]
+        "requested_reviewers": [{"login": "reviewer1"}, {"login": "reviewer2"}]
     }
     return response
 
@@ -82,7 +79,7 @@ def test_add_reviewers_success_all_valid(
     result = add_reviewers(base_args)
 
     assert result is None  # Function returns None on success
-    
+
     # Verify collaborator checks were called for each reviewer
     assert mock_check_collaborator.call_count == 3
     mock_check_collaborator.assert_any_call(
@@ -94,10 +91,12 @@ def test_add_reviewers_success_all_valid(
     mock_check_collaborator.assert_any_call(
         owner="gitautoai", repo="gitauto", user="reviewer3", token="test-token-mock"
     )
-    
+
     # Verify print was called with valid reviewers
-    mock_print.assert_called_once_with("Adding reviewers: ['reviewer1', 'reviewer2', 'reviewer3']")
-    
+    mock_print.assert_called_once_with(
+        "Adding reviewers: ['reviewer1', 'reviewer2', 'reviewer3']"
+    )
+
     # Verify API call was made
     mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_post.assert_called_once_with(
@@ -124,7 +123,7 @@ def test_add_reviewers_success_partial_valid(
     # Only some reviewers are collaborators
     def collaborator_side_effect(owner, repo, user, token):
         return user in ["reviewer1", "reviewer3"]
-    
+
     mock_check_collaborator.side_effect = collaborator_side_effect
     mock_post.return_value = mock_success_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
@@ -132,13 +131,13 @@ def test_add_reviewers_success_partial_valid(
     result = add_reviewers(base_args)
 
     assert result is None
-    
+
     # Verify collaborator checks were called for each reviewer
     assert mock_check_collaborator.call_count == 3
-    
+
     # Verify print was called with only valid reviewers
     mock_print.assert_called_once_with("Adding reviewers: ['reviewer1', 'reviewer3']")
-    
+
     # Verify API call was made with only valid reviewers
     mock_post.assert_called_once_with(
         url="https://api.github.com/repos/gitautoai/gitauto/pulls/123/requested_reviewers",
@@ -159,7 +158,7 @@ def test_add_reviewers_no_valid_reviewers(
     result = add_reviewers(base_args)
 
     assert result is None
-    
+
     # Verify collaborator checks were called for each reviewer
     assert mock_check_collaborator.call_count == 3
 
@@ -172,7 +171,7 @@ def test_add_reviewers_empty_reviewers_list(
     result = add_reviewers(base_args_empty_reviewers)
 
     assert result is None
-    
+
     # No collaborator checks should be made for empty list
     mock_check_collaborator.assert_not_called()
 
@@ -191,7 +190,7 @@ def test_add_reviewers_pr_number_none(test_owner, test_repo):
         "token": "test-token-mock",
         "reviewers": ["reviewer1"],
     }
-    
+
     result = add_reviewers(base_args)
 
     assert result is None  # handle_exceptions decorator returns None on error
@@ -216,7 +215,7 @@ def test_add_reviewers_http_error(
     result = add_reviewers(base_args)
 
     assert result is None  # handle_exceptions decorator returns None on error
-    
+
     # Verify the API call was attempted
     mock_post.assert_called_once()
     mock_error_response.raise_for_status.assert_called_once()
@@ -290,7 +289,7 @@ def test_add_reviewers_single_reviewer(
         "token": "test-token-mock",
         "reviewers": ["single_reviewer"],
     }
-    
+
     mock_check_collaborator.return_value = True
     mock_post.return_value = mock_success_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
@@ -307,7 +306,6 @@ def test_add_reviewers_single_reviewer(
     )
 
 
-
 @patch("services.github.pulls.add_reviewers.create_headers")
 @patch("services.github.pulls.add_reviewers.requests.post")
 @patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
@@ -319,7 +317,7 @@ def test_add_reviewers_422_unprocessable_entity(
 ):
     mock_check_collaborator.return_value = True
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
-    
+
     # Create a 422 response (e.g., reviewer already requested)
     response = Mock(spec=requests.Response)
     response.status_code = 422
@@ -344,7 +342,7 @@ def test_add_reviewers_missing_required_fields():
         "token": "test-token",
         "reviewers": ["reviewer1"],
     }
-    
+
     result = add_reviewers(incomplete_args)
     assert result is None  # handle_exceptions decorator returns None on error
 
@@ -369,7 +367,7 @@ def test_add_reviewers_mixed_collaborator_results(
             raise Exception("API error")  # This should be handled by handle_exceptions
         else:  # reviewer3
             return False
-    
+
     mock_check_collaborator.side_effect = collaborator_side_effect
     mock_post.return_value = mock_success_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
@@ -378,7 +376,9 @@ def test_add_reviewers_mixed_collaborator_results(
 
     # Should still work with the valid reviewer despite the exception
     assert result is None
-    assert mock_check_collaborator.call_count == 2  # Should stop after exception on reviewer2
+    assert (
+        mock_check_collaborator.call_count == 2
+    )  # Should stop after exception on reviewer2
 
 
 @patch("services.github.pulls.add_reviewers.create_headers")
@@ -438,7 +438,7 @@ def test_add_reviewers_url_construction(
         "token": "different-token",
         "reviewers": ["test-reviewer"],
     }
-    
+
     mock_check_collaborator.return_value = True
     mock_post.return_value = mock_success_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
