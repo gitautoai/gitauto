@@ -438,3 +438,85 @@ def test_search_remote_file_contents_headers_configuration(
     call_args = mock_requests.get.call_args
     headers = call_args[1]["headers"]
     assert headers["Accept"] == "application/vnd.github.text-match+json"
+
+
+def test_search_remote_file_contents_with_kwargs(
+    mock_requests, mock_create_headers, mock_print, create_test_base_args
+):
+    """Test that function handles additional kwargs properly."""
+    # Setup
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        is_fork=False,
+        token="test-token"
+    )
+    
+    mock_response_data = {"items": [{"path": "test.py"}]}
+    mock_response = Mock()
+    mock_response.json.return_value = mock_response_data
+    mock_response.raise_for_status.return_value = None
+    mock_requests.get.return_value = mock_response
+    
+    # Execute with additional kwargs (should be ignored due to **_kwargs)
+    result = search_remote_file_contents(
+        "query", 
+        base_args, 
+        extra_param="ignored",
+        another_param=123
+    )
+    
+    # Verify
+    expected_msg = "1 files found for the search query 'query':\n- test.py\n"
+    assert result == expected_msg
+    mock_print.assert_called_once_with(expected_msg)
+
+
+def test_search_remote_file_contents_base_args_extraction(
+    mock_requests, mock_create_headers, mock_print, create_test_base_args
+):
+    """Test that base_args values are correctly extracted."""
+    # Setup with specific values to verify extraction
+    base_args = create_test_base_args(
+        owner="specific-owner",
+        repo="specific-repo", 
+        is_fork=True,
+        token="specific-token"
+    )
+    
+    mock_response_data = {"items": []}
+    mock_response = Mock()
+    mock_response.json.return_value = mock_response_data
+    mock_response.raise_for_status.return_value = None
+    mock_requests.get.return_value = mock_response
+    
+    # Execute
+    search_remote_file_contents("test_query", base_args)
+    
+    # Verify that the correct values were extracted and used
+    mock_create_headers.assert_called_once_with(token="specific-token")
+    
+    call_args = mock_requests.get.call_args
+    params = call_args[1]["params"]
+    assert params["q"] == "test_query repo:specific-owner/specific-repo fork:true"
+
+
+def test_search_remote_file_contents_large_result_set(
+    mock_requests, mock_create_headers, mock_print, create_test_base_args
+):
+    """Test handling of large result sets (up to per_page limit)."""
+    # Setup
+    base_args = create_test_base_args(
+        owner="large-owner",
+        repo="large-repo",
+        is_fork=False,
+        token="large-token"
+    )
+    
+    # Create 10 items (the per_page limit)
+    items = [{"path": f"file_{i}.py"} for i in range(10)]
+    mock_response_data = {"items": items}
+    
+    mock_response = Mock()
+    mock_response.json.return_value = mock_response_data
+    mock_response.raise_for_status.return_value = None
