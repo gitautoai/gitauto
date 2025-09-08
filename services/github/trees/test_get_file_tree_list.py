@@ -452,3 +452,162 @@ def test_get_file_tree_list_nested_items_not_direct_children(base_args):
         expected_result = ["child/", "file.py"]
 
         assert result == expected_result
+
+
+def test_get_file_tree_list_with_kwargs_parameter(base_args, mock_tree_items):
+    # Test that the function accepts **_kwargs parameter without issues
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_tree_items
+
+        # Pass additional kwargs that should be ignored
+        result = get_file_tree_list(
+            base_args, 
+            dir_path="services", 
+            extra_param="ignored",
+            another_param=123
+        )
+
+        expected_result = ["github/", "openai/"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_directory_with_only_slash(base_args, mock_tree_items):
+    # Test directory path that is just a slash
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_tree_items
+
+        result = get_file_tree_list(base_args, dir_path="/")
+
+        # Should behave like root directory after stripping slashes
+        expected_result = [
+            ".github/",
+            "services/",
+            "utils/",
+            "README.md",
+            "config.py",
+            "main.py",
+        ]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_directory_with_multiple_slashes(base_args, mock_tree_items):
+    # Test directory path with multiple slashes
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_tree_items
+
+        result = get_file_tree_list(base_args, dir_path="//services//")
+
+        expected_result = ["github/", "openai/"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_empty_files_and_dirs_lists(base_args):
+    # Test scenario where files and dirs lists are empty but tree_items is not
+    mock_no_matches = [
+        {"path": "other", "type": "tree"},
+        {"path": "other/file.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_no_matches
+
+        result = get_file_tree_list(base_args, dir_path="nonexistent")
+
+        # Should return empty list when no matches found
+        assert result == []
+
+
+def test_get_file_tree_list_path_startswith_but_not_exact_match(base_args):
+    # Test paths that start with dir_path but are not exact matches
+    mock_similar_paths = [
+        {"path": "test", "type": "tree"},
+        {"path": "test123", "type": "tree"},
+        {"path": "test/file.py", "type": "blob"},
+        {"path": "test123/file.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_similar_paths
+
+        result = get_file_tree_list(base_args, dir_path="test")
+
+        # Should only include items from "test/" not "test123/"
+        expected_result = ["file.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_whitespace_in_dir_path(base_args, mock_tree_items):
+    # Test directory path with whitespace that gets stripped
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_tree_items
+
+        result = get_file_tree_list(base_args, dir_path="  services  ")
+
+        expected_result = ["github/", "openai/"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_sorting_behavior(base_args):
+    # Test that directories come before files and both are sorted alphabetically
+    mock_unsorted = [
+        {"path": "root", "type": "tree"},
+        {"path": "root/zebra.py", "type": "blob"},
+        {"path": "root/alpha", "type": "tree"},
+        {"path": "root/beta.py", "type": "blob"},
+        {"path": "root/gamma", "type": "tree"},
+        {"path": "root/alpha/nested.py", "type": "blob"},
+        {"path": "root/gamma/nested.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_unsorted
+
+        result = get_file_tree_list(base_args, dir_path="root")
+
+        # Directories should come first, then files, both sorted alphabetically
+        expected_result = ["alpha/", "gamma/", "beta.py", "zebra.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_root_with_complex_structure(base_args):
+    # Test root directory with complex file/directory structure
+    mock_complex_root = [
+        {"path": "z_file.py", "type": "blob"},
+        {"path": "a_dir", "type": "tree"},
+        {"path": "m_file.txt", "type": "blob"},
+        {"path": "b_dir", "type": "tree"},
+        {"path": "a_dir/nested.py", "type": "blob"},
+        {"path": "b_dir/nested.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_complex_root
+
+        result = get_file_tree_list(base_args)
+
+        # Should return sorted directories first, then sorted files
+        expected_result = ["a_dir/", "b_dir/", "m_file.txt", "z_file.py"]
+
+        assert result == expected_result
