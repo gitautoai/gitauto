@@ -10,6 +10,11 @@ from services.github.search.search_remote_file_contents import (
     search_remote_file_contents,
 )
 
+# Local imports (Config)
+from config import (
+    GITHUB_API_URL,
+    TIMEOUT,
+)
 
 @pytest.fixture
 def mock_requests():
@@ -77,7 +82,7 @@ def test_search_remote_file_contents_success_regular_repo(
     
     # Verify request parameters
     mock_requests.get.assert_called_once_with(
-        url="https://api.github.com/search/code",
+        url=f"{GITHUB_API_URL}/search/code",
         headers={
             "Authorization": "Bearer test_token",
             "Accept": "application/vnd.github.text-match+json"
@@ -87,7 +92,7 @@ def test_search_remote_file_contents_success_regular_repo(
             "per_page": 10,
             "page": 1
         },
-        timeout=120
+        timeout=TIMEOUT
     )
 
 
@@ -130,7 +135,7 @@ def test_search_remote_file_contents_success_fork_repo(
     
     # Verify fork-specific query parameter
     mock_requests.get.assert_called_once_with(
-        url="https://api.github.com/search/code",
+        url=f"{GITHUB_API_URL}/search/code",
         headers={
             "Authorization": "Bearer test_token",
             "Accept": "application/vnd.github.text-match+json"
@@ -140,7 +145,7 @@ def test_search_remote_file_contents_success_fork_repo(
             "per_page": 10,
             "page": 1
         },
-        timeout=120
+        timeout=TIMEOUT
     )
 
 
