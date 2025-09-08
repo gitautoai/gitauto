@@ -1,10 +1,9 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import pytest
 
 from services.github.comments.create_gitauto_button_comment import (
     create_gitauto_button_comment,
 )
-from services.github.types.github_types import GitHubLabeledPayload
 
 
 @pytest.fixture
@@ -188,6 +187,18 @@ def test_create_gitauto_button_comment_combine_comment_error(
     # Arrange
     mock_dependencies["combine_comment"].side_effect = Exception("Comment error")
     
+    # Act
+    result = create_gitauto_button_comment(mock_github_labeled_payload)
+    
+    # Assert - handle_exceptions decorator should return None on error
+    assert result is None
+    
+    # Verify all functions were called
+    mock_dependencies["get_token"].assert_called_once()
+    mock_dependencies["get_email"].assert_called_once()
+    mock_dependencies["upsert_user"].assert_called_once()
+    mock_dependencies["combine_comment"].assert_called_once()
+
 
 def test_create_gitauto_button_comment_different_payload_values():
     """Test with different payload values to ensure proper extraction"""
@@ -246,19 +257,47 @@ def test_create_gitauto_button_comment_different_payload_values():
         assert base_args["token"] == "different-token"
 
 
-def test_create_gitauto_button_comment_base_comment_format(mock_github_labeled_payload):
+def test_create_gitauto_button_comment_base_comment_format():
     """Test that the base comment is formatted correctly"""
+    payload = {
+        "action": "labeled",
+        "installation": {"id": 12345},
+        "repository": {
+            "owner": {"id": 67890, "login": "test-owner"},
+            "name": "test-repo",
+        },
+        "issue": {"number": 123},
+        "sender": {"id": 11111, "login": "test-user"},
+        "label": {"name": "gitauto"},
+        "organization": {"id": 22222, "login": "test-org"},
+    }
+    
     with patch(
         "services.github.comments.create_gitauto_button_comment.get_installation_access_token",
         return_value="test-token",
-    # Act
-    result = create_gitauto_button_comment(mock_github_labeled_payload)
-    
-    # Assert - handle_exceptions decorator should return None on error
-    assert result is None
-    
-    # Verify all functions were called
-    mock_dependencies["get_token"].assert_called_once()
-    mock_dependencies["get_email"].assert_called_once()
-    mock_dependencies["upsert_user"].assert_called_once()
-    mock_dependencies["combine_comment"].assert_called_once()
+    ) as mock_get_token, patch(
+        "services.github.comments.create_gitauto_button_comment.get_user_public_email",
+        return_value="test@example.com",
+    ) as mock_get_email, patch(
+        "services.github.comments.create_gitauto_button_comment.upsert_user"
+    ) as mock_upsert_user, patch(
+        "services.github.comments.create_gitauto_button_comment.combine_and_create_comment"
+    ) as mock_combine_comment:
+        
+        # Act
+        result = create_gitauto_button_comment(payload)
+        
+        # Assert
+        assert result is None
+        
+        # Verify the base comment format
+        call_args = mock_combine_comment.call_args
+        base_comment = call_args.kwargs["base_comment"]
+        
+        # Check that the comment contains the expected elements
+        assert "Click the checkbox below to generate a PR!" in base_comment
+        assert "- [ ] Generate PR" in base_comment
+        
+        # Verify the exact format
+        expected_comment = "Click the checkbox below to generate a PR!\n- [ ] Generate PR"
+        assert base_comment == expected_comment
