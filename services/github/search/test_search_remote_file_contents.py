@@ -487,6 +487,38 @@ def test_search_remote_file_contents_base_args_extraction(
     mock_response_data = {"items": []}
     mock_response = Mock()
     mock_response.json.return_value = mock_response_data
+
+
+def test_search_remote_file_contents_malformed_items(
+    mock_requests, mock_create_headers, mock_print, create_test_base_args
+):
+    """Test handling of malformed items in response."""
+    # Setup
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        is_fork=False,
+        token="test-token"
+    )
+    
+    # Mix of valid and invalid items
+    mock_response_data = {
+        "items": [
+            {"path": "valid_file.py"},
+            {"name": "missing_path.py"},  # Missing 'path' key
+            {"path": "another_valid.js"},
+            {},  # Empty item
+            {"path": "final_valid.md"}
+        ]
+    }
+    
+    mock_response = Mock()
+    mock_response.json.return_value = mock_response_data
+    mock_response.raise_for_status.return_value = None
+    mock_requests.get.return_value = mock_response
+    
+    # Execute - should handle KeyError gracefully due to handle_exceptions decorator
+    result = search_remote_file_contents("query", base_args)
     mock_response.raise_for_status.return_value = None
     mock_requests.get.return_value = mock_response
     
