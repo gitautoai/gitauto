@@ -97,7 +97,9 @@ def handle_coverage_report(
         print(f"Processing artifact: {artifact_name}")
 
         # Check for coverage artifacts - lcov files, coverage reports, or default artifact
-        if not (artifact_name.endswith("lcov.info") or artifact_name == "coverage-report"):
+        if not (
+            artifact_name.endswith("lcov.info") or artifact_name == "coverage-report"
+        ):
             print(f"Skipping non-coverage artifact: {artifact_name}")
             continue
 
@@ -239,7 +241,6 @@ def handle_coverage_report(
     # Extract repository-level coverage for historical tracking
     repo_coverage = next((c for c in coverage_data if c["level"] == "repository"), None)
     print(f"Looking for repository-level coverage in {len(coverage_data)} items")
-    print(f"Found repo_coverage: {repo_coverage}")
 
     if repo_coverage:
         repo_coverage_data: RepoCoverageInsert = {

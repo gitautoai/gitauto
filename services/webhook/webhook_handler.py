@@ -71,8 +71,6 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
     https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=purchased#marketplace_purchase
     """
     action: str | None = payload.get("action")
-    
-    print(f"Processing webhook: {event_name}.{action or 'none'}")
 
     # Handle push events from non-bot users
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
@@ -81,7 +79,6 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
 
     # For other events, we need to check the action
     if not action:
-        print("No action found in webhook payload, returning early")
         return
 
     # if event_name == "marketplace_purchase" and action in ("purchased"):
@@ -291,9 +288,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
 
     # Add workflow_run event handler (GitHub Actions)
     if event_name == "workflow_run" and action == "completed":
-        print(f"Received workflow_run completed event, conclusion: {payload.get('workflow_run', {}).get('conclusion', 'unknown')}")
         if payload["workflow_run"]["conclusion"] == "success":
-            print("Calling handle_coverage_report for successful workflow_run")
             handle_coverage_report(
                 owner_id=payload["repository"]["owner"]["id"],
                 owner_name=payload["repository"]["owner"]["login"],
