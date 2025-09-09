@@ -658,6 +658,7 @@ def test_add_reviewers_404_not_found(
     response.status_code = 404
     response.reason = "Not Found"
     response.text = "Not Found"
+    response.headers = {}
     http_error = requests.HTTPError("404 Not Found")
     http_error.response = response
     response.raise_for_status.side_effect = http_error
