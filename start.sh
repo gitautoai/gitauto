@@ -6,6 +6,7 @@ source .env
 # Configuration
 PORT=8000
 NGROK_DOMAIN="gitauto.ngrok.dev"
+LOG_LEVEL=${1:-warning}  # Default to warning, but allow override with first argument
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -151,4 +152,4 @@ echo -e "\n${GREEN}Starting FastAPI server (logs below)...${NC}"
 echo -e "Press Ctrl+C to stop both services\n"
 
 # Start uvicorn in foreground (logs visible)
-uvicorn main:app --reload --port ${PORT} --log-level warning
+uvicorn main:app --reload --port ${PORT} --log-level ${LOG_LEVEL}
