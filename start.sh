@@ -151,5 +151,10 @@ echo -e "FastAPI: http://localhost:${PORT}"
 echo -e "\n${GREEN}Starting FastAPI server (logs below)...${NC}"
 echo -e "Press Ctrl+C to stop both services\n"
 
+# Configure Python logging level to match uvicorn
+if [ "${LOG_LEVEL}" = "info" ]; then
+    python3 -c "import logging; logging.basicConfig(level=logging.INFO)" &
+fi
+
 # Start uvicorn in foreground (logs visible)
 uvicorn main:app --reload --port ${PORT} --log-level ${LOG_LEVEL}

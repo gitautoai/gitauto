@@ -86,7 +86,9 @@ def handle_coverage_report(
         return None
 
     coverage_data: list[CoverageReport] = []
-    print(f"Processing {len(artifacts)} artifacts for {owner_name}/{repo_name}")
+    logging.info(
+        "Processing %d artifacts for %s/%s", len(artifacts), owner_name, repo_name
+    )
 
     for artifact in artifacts:
         if source == "github":
@@ -94,13 +96,13 @@ def handle_coverage_report(
         else:
             artifact_name = artifact.get("path", "")
 
-        print(f"Processing artifact: {artifact_name}")
+        logging.info("Processing artifact: %s", artifact_name)
 
         # Check for coverage artifacts - lcov files, coverage reports, or default artifact
         if not (
             artifact_name.endswith("lcov.info") or artifact_name == "coverage-report"
         ):
-            print(f"Skipping non-coverage artifact: {artifact_name}")
+            logging.info("Skipping non-coverage artifact: %s", artifact_name)
             continue
 
         if source == "github":
@@ -119,19 +121,19 @@ def handle_coverage_report(
             )
 
         if not lcov_content:
-            print(f"No content downloaded from artifact: {artifact_name}")
+            logging.warning("No content downloaded from artifact: %s", artifact_name)
             continue
 
-        print(f"Downloaded lcov content, size: {len(lcov_content)} chars")
+        logging.info("Downloaded lcov content, size: %d chars", len(lcov_content))
         parsed_coverage = parse_lcov_coverage(lcov_content)
 
         if parsed_coverage:
-            print(f"Parsed {len(parsed_coverage)} coverage items")
+            logging.info("Parsed %d coverage items", len(parsed_coverage))
             levels = [item.get("level") for item in parsed_coverage]
-            print(f"Coverage levels found: {levels}")
+            logging.info("Coverage levels found: %s", levels)
 
             report_language = detect_language_from_coverage(parsed_coverage)
-            print(f"Detected language: {report_language}")
+            logging.info("Detected language: %s", report_language)
 
             for item in parsed_coverage:
                 item["language"] = report_language
@@ -140,9 +142,9 @@ def handle_coverage_report(
 
             coverage_data.extend(parsed_coverage)
         else:
-            print(f"No parsed coverage from artifact: {artifact_name}")
+            logging.warning("No parsed coverage from artifact: %s", artifact_name)
 
-    print(f"Total coverage_data items: {len(coverage_data)}")
+    logging.info("Total coverage_data items: %d", len(coverage_data))
 
     if not coverage_data:
         return None
@@ -186,7 +188,7 @@ def handle_coverage_report(
         key = (repo_id, coverage["full_path"])
         if key in seen:
             msg = f"Duplicate coverage for `{owner_name}/{repo_name}`, full_path=`{coverage['full_path']}`"
-            print(msg)
+            logging.warning(msg)
         seen[key] = coverage
 
     # Get current file paths
@@ -231,16 +233,18 @@ def handle_coverage_report(
             upsert_data.append(item)
         except (TypeError, ValueError, OverflowError) as e:
             msg = f"Skipping non-serializable item: {str(e)}\nItem data: {coverage}"
-            print(msg)
+            logging.warning(msg)
             continue
 
     if not upsert_data:
-        print("No valid items to upsert")
+        logging.warning("No valid items to upsert")
         return None
 
     # Extract repository-level coverage for historical tracking
     repo_coverage = next((c for c in coverage_data if c["level"] == "repository"), None)
-    print(f"Looking for repository-level coverage in {len(coverage_data)} items")
+    logging.info(
+        "Looking for repository-level coverage in %d items", len(coverage_data)
+    )
 
     if repo_coverage:
         repo_coverage_data: RepoCoverageInsert = {
@@ -257,13 +261,7 @@ def handle_coverage_report(
             "created_by": user_name,
         }
 
-        print(f"Calling upsert_repo_coverage with data: {repo_coverage_data}")
-        result = upsert_repo_coverage(repo_coverage_data)
-        print(f"upsert_repo_coverage result: {result}")
-    else:
-        print(
-            f"No repository-level coverage found. Coverage data levels: {[c.get('level') for c in coverage_data]}"
-        )
+        upsert_repo_coverage(repo_coverage_data)
 
     # Upsert file coverages
     return upsert_coverages(upsert_data)
