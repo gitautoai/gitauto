@@ -428,3 +428,203 @@ class TestCreateUserRequest:
         assert mock_dependencies["insert_issue"].call_count == 1
         assert mock_dependencies["insert_usage"].call_count == 1
         assert mock_dependencies["upsert_user"].call_count == 1
+
+    def test_create_user_request_with_empty_strings(
+        self, sample_params, mock_dependencies
+    ):
+        """Test create_user_request with empty string values."""
+        # Setup
+        params = sample_params.copy()
+        params["user_name"] = ""
+        params["owner_name"] = ""
+        params["repo_name"] = ""
+        params["source"] = ""
+
+        mock_dependencies["get_issue"].return_value = {"id": 1}
+        mock_dependencies["insert_usage"].return_value = 999
+
+        # Execute
+        result = create_user_request(**params)
+
+        # Assert
+        assert result == 999
+
+        # Verify functions were called with empty strings
+        mock_dependencies["get_issue"].assert_called_once_with(
+            owner_type="Organization",
+            owner_name="",
+            repo_name="",
+            issue_number=123,
+        )
+
+        mock_dependencies["upsert_user"].assert_called_once_with(
+            user_id=12345,
+            user_name="",
+            email="test@example.com",
+        )
+
+    def test_create_user_request_with_negative_ids(
+        self, sample_params, mock_dependencies
+    ):
+        """Test create_user_request with negative ID values."""
+        # Setup
+        params = sample_params.copy()
+        params["user_id"] = -1
+        params["owner_id"] = -2
+        params["repo_id"] = -3
+        params["installation_id"] = -4
+        params["issue_number"] = -5
+        params["pr_number"] = -6
+
+        mock_dependencies["get_issue"].return_value = None
+        mock_dependencies["insert_usage"].return_value = 888
+
+        # Execute
+        result = create_user_request(**params)
+
+        # Assert
+        assert result == 888
+
+        # Verify functions were called with negative IDs
+        mock_dependencies["insert_issue"].assert_called_once_with(
+            owner_id=-2,
+            owner_type="Organization",
+            owner_name="test_org",
+            repo_id=-3,
+            repo_name="test_repo",
+            issue_number=-5,
+            installation_id=-4,
+        )
+
+        mock_dependencies["insert_usage"].assert_called_once_with(
+            owner_id=-2,
+            owner_type="Organization",
+            owner_name="test_org",
+            repo_id=-3,
+            repo_name="test_repo",
+            issue_number=-5,
+            user_id=-1,
+            installation_id=-4,
+            source="github",
+            trigger="issue_comment",
+            pr_number=-6,
+        )
+
+    def test_create_user_request_with_unicode_characters(
+        self, sample_params, mock_dependencies
+    ):
+        """Test create_user_request with unicode characters in names."""
+        # Setup
+        params = sample_params.copy()
+        params["user_name"] = "用户名"
+        params["owner_name"] = "组织名"
+        params["repo_name"] = "仓库名"
+
+        mock_dependencies["get_issue"].return_value = {"id": 1}
+        mock_dependencies["insert_usage"].return_value = 777
+
+        # Execute
+        result = create_user_request(**params)
+
+        # Assert
+        assert result == 777
+
+        # Verify functions were called with unicode characters
+        mock_dependencies["get_issue"].assert_called_once_with(
+            owner_type="Organization",
+            owner_name="组织名",
+            repo_name="仓库名",
+            issue_number=123,
+        )
+
+        mock_dependencies["upsert_user"].assert_called_once_with(
+            user_id=12345,
+            user_name="用户名",
+            email="test@example.com",
+        )
+
+    def test_create_user_request_all_trigger_types_comprehensive(
+        self, sample_params, mock_dependencies
+    ):
+        """Test create_user_request with all valid trigger types from Trigger enum."""
+        valid_triggers = [
+            "issue_label",
+            "issue_comment", 
+            "review_comment",
+            "test_failure",
+            "pr_checkbox",
+            "pr_merge",
+        ]
+
+        for trigger in valid_triggers:
+            # Setup
+            params = sample_params.copy()
+            params["trigger"] = trigger
+
+            mock_dependencies["get_issue"].return_value = {"id": 1}
+            mock_dependencies["insert_usage"].return_value = 666
+
+            # Reset mocks
+            for mock in mock_dependencies.values():
+                mock.reset_mock()
+
+            # Execute
+            result = create_user_request(**params)
+
+            # Assert
+            assert result == 666
+
+            # Verify insert_usage was called with correct trigger
+            mock_dependencies["insert_usage"].assert_called_once()
+            call_args = mock_dependencies["insert_usage"].call_args[1]
+            assert call_args["trigger"] == trigger
+
+    def test_create_user_request_exception_in_insert_issue(
+        self, sample_params, mock_dependencies
+    ):
+        """Test exception handling when insert_issue fails."""
+        # Setup
+        mock_dependencies["get_issue"].return_value = None
+        mock_dependencies["insert_issue"].side_effect = Exception("Insert issue failed")
+
+        # Execute - should raise exception due to @handle_exceptions(raise_on_error=True)
+        with pytest.raises(Exception) as exc_info:
+            create_user_request(**sample_params)
+
+        # Assert
+        assert str(exc_info.value) == "Insert issue failed"
+
+    def test_create_user_request_exception_in_insert_usage(
+        self, sample_params, mock_dependencies
+    ):
+        """Test exception handling when insert_usage fails."""
+        # Setup
+        mock_dependencies["get_issue"].return_value = {"id": 1}
+        mock_dependencies["insert_usage"].side_effect = Exception("Insert usage failed")
+
+        # Execute - should raise exception due to @handle_exceptions(raise_on_error=True)
+        with pytest.raises(Exception) as exc_info:
+            create_user_request(**sample_params)
+
+        # Assert
+        assert str(exc_info.value) == "Insert usage failed"
+
+    def test_create_user_request_exception_in_upsert_user(
+        self, sample_params, mock_dependencies
+    ):
+        """Test exception handling when upsert_user fails."""
+        # Setup
+        mock_dependencies["get_issue"].return_value = {"id": 1}
+        mock_dependencies["insert_usage"].return_value = 555
+        mock_dependencies["upsert_user"].side_effect = Exception("Upsert user failed")
+
+        # Execute - should raise exception due to @handle_exceptions(raise_on_error=True)
+        with pytest.raises(Exception) as exc_info:
+            create_user_request(**sample_params)
+
+        # Assert
+        assert str(exc_info.value) == "Upsert user failed"
+
+    def test_create_user_request_with_very_long_strings(
+        self, sample_params, mock_dependencies
+    ):
