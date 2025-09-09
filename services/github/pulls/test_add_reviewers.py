@@ -631,7 +631,12 @@ def test_add_reviewers_403_forbidden(
     response.status_code = 403
     response.reason = "Forbidden"
     response.text = "Forbidden"
-    response.headers = {}
+    response.headers = {
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "4999",
+        "X-RateLimit-Used": "1",
+        "X-RateLimit-Reset": "1609459200"
+    }
     http_error = requests.HTTPError("403 Forbidden")
     http_error.response = response
     response.raise_for_status.side_effect = http_error
