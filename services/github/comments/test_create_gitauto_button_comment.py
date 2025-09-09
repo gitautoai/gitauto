@@ -1,26 +1,31 @@
+from typing import cast
 from unittest.mock import patch
 import pytest
 
 from services.github.comments.create_gitauto_button_comment import (
     create_gitauto_button_comment,
 )
+from services.github.types.github_types import GitHubLabeledPayload
 
 
 @pytest.fixture
 def mock_github_labeled_payload():
     """Create a mock GitHubLabeledPayload for testing"""
-    return {
-        "action": "labeled",
-        "installation": {"id": 12345},
-        "repository": {
-            "owner": {"id": 67890, "login": "test-owner"},
-            "name": "test-repo",
+    return cast(
+        GitHubLabeledPayload,
+        {
+            "action": "labeled",
+            "installation": {"id": 12345},
+            "repository": {
+                "owner": {"id": 67890, "login": "test-owner"},
+                "name": "test-repo",
+            },
+            "issue": {"number": 123},
+            "sender": {"id": 11111, "login": "test-user"},
+            "label": {"name": "gitauto"},
+            "organization": {"id": 22222, "login": "test-org"},
         },
-        "issue": {"number": 123},
-        "sender": {"id": 11111, "login": "test-user"},
-        "label": {"name": "gitauto"},
-        "organization": {"id": 22222, "login": "test-org"},
-    }
+    )
 
 
 @pytest.fixture
@@ -205,18 +210,21 @@ def test_create_gitauto_button_comment_combine_comment_error(
 def test_create_gitauto_button_comment_different_payload_values():
     """Test with different payload values to ensure proper extraction"""
     # Arrange
-    payload = {
-        "action": "labeled",
-        "installation": {"id": 99999},
-        "repository": {
-            "owner": {"id": 88888, "login": "different-owner"},
-            "name": "different-repo",
+    payload = cast(
+        GitHubLabeledPayload,
+        {
+            "action": "labeled",
+            "installation": {"id": 99999},
+            "repository": {
+                "owner": {"id": 88888, "login": "different-owner"},
+                "name": "different-repo",
+            },
+            "issue": {"number": 456},
+            "sender": {"id": 77777, "login": "different-user"},
+            "label": {"name": "gitauto"},
+            "organization": {"id": 66666, "login": "different-org"},
         },
-        "issue": {"number": 456},
-        "sender": {"id": 77777, "login": "different-user"},
-        "label": {"name": "gitauto"},
-        "organization": {"id": 66666, "login": "different-org"},
-    }
+    )
 
     with patch(
         "services.github.comments.create_gitauto_button_comment.get_installation_access_token"
@@ -261,7 +269,7 @@ def test_create_gitauto_button_comment_different_payload_values():
 
 def test_create_gitauto_button_comment_base_comment_format():
     """Test that the base comment is formatted correctly"""
-    payload = {
+    payload = cast(GitHubLabeledPayload, {
         "action": "labeled",
         "installation": {"id": 12345},
         "repository": {
@@ -272,17 +280,17 @@ def test_create_gitauto_button_comment_base_comment_format():
         "sender": {"id": 11111, "login": "test-user"},
         "label": {"name": "gitauto"},
         "organization": {"id": 22222, "login": "test-org"},
-    }
+    })
 
     with patch(
         "services.github.comments.create_gitauto_button_comment.get_installation_access_token",
         return_value="test-token",
-    ) as mock_get_token, patch(
+    ), patch(
         "services.github.comments.create_gitauto_button_comment.get_user_public_email",
         return_value="test@example.com",
-    ) as mock_get_email, patch(
+    ), patch(
         "services.github.comments.create_gitauto_button_comment.upsert_user"
-    ) as mock_upsert_user, patch(
+    ), patch(
         "services.github.comments.create_gitauto_button_comment.combine_and_create_comment"
     ) as mock_combine_comment:
 
