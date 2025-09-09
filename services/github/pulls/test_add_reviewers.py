@@ -600,6 +600,7 @@ def test_add_reviewers_401_unauthorized(
     response.status_code = 401
     response.reason = "Unauthorized"
     response.text = "Bad credentials"
+    response.headers = {}
     http_error = requests.HTTPError("401 Unauthorized")
     http_error.response = response
     response.raise_for_status.side_effect = http_error
