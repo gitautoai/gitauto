@@ -221,6 +221,8 @@ def handle_coverage_report(
 
     # Extract repository-level coverage for historical tracking
     repo_coverage = next((c for c in coverage_data if c["level"] == "repository"), None)
+    logging.info(f"DEBUG: Looking for repository-level coverage in {len(coverage_data)} items")
+    logging.info(f"DEBUG: Found repo_coverage: {repo_coverage}")
 
     if repo_coverage:
         repo_coverage_data: RepoCoverageInsert = {
@@ -236,8 +238,12 @@ def handle_coverage_report(
             "branch_coverage": repo_coverage["branch_coverage"],
             "created_by": user_name,
         }
-
-        upsert_repo_coverage(repo_coverage_data)
+        
+        logging.info(f"DEBUG: Calling upsert_repo_coverage with data: {repo_coverage_data}")
+        result = upsert_repo_coverage(repo_coverage_data)
+        logging.info(f"DEBUG: upsert_repo_coverage result: {result}")
+    else:
+        logging.warning(f"DEBUG: No repository-level coverage found. Coverage data levels: {[c.get('level') for c in coverage_data]}")
 
     # Upsert file coverages
     return upsert_coverages(upsert_data)
