@@ -237,24 +237,10 @@ class TestStartLocalServer:
     ):
         """Test server start with npm command (commented out in the code)"""
         # Create a modified version of the start_local_server function with npm command
-        from services.git.git_manager import start_local_server
 
         # Store original function to restore later
-        original_function = start_local_server
-
-        # Create a patched version of the function
-        def patched_start_local_server(repo_dir):
-            command = "npm run dev"
-            return subprocess.Popen(
-                args=command,
-                shell=True,
-                cwd=repo_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
 
         mock_popen.return_value = mock_subprocess_popen
-        repo_dir = "/path/to/repo"
 
         # Skip this test as it's testing an implementation detail (commented code)
         pytest.skip(

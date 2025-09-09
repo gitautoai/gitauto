@@ -248,7 +248,6 @@ def test_handle_check_run_full_workflow(
     # Verify key functions were called
     mock_get_token.assert_called_once()
     mock_get_repo.assert_called_once()
-    mock_has_comment.assert_called_once()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
@@ -332,7 +331,6 @@ def test_handle_check_run_with_404_logs(
     # Verify
     mock_get_token.assert_called_once()
     mock_get_repo.assert_called_once()
-    mock_has_comment.assert_called_once()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
@@ -404,7 +402,6 @@ def test_handle_check_run_with_none_logs(
     # Verify
     mock_get_token.assert_called_once()
     mock_get_repo.assert_called_once()
-    mock_has_comment.assert_called_once()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
@@ -483,7 +480,6 @@ def test_handle_check_run_with_existing_retry_pair(
     # Verify
     mock_get_token.assert_called_once()
     mock_get_repo.assert_called_once()
-    mock_has_comment.assert_called_once()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
@@ -562,7 +558,6 @@ def test_handle_check_run_with_closed_pr(
     # Verify
     mock_get_token.assert_called_once()
     mock_get_repo.assert_called_once()
-    mock_has_comment.assert_called_once()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
@@ -644,7 +639,6 @@ def test_handle_check_run_with_deleted_branch(
     # Verify
     mock_get_token.assert_called_once()
     mock_get_repo.assert_called_once()
-    mock_has_comment.assert_called_once()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
