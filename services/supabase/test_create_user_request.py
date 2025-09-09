@@ -628,6 +628,81 @@ class TestCreateUserRequest:
     def test_create_user_request_with_very_long_strings(
         self, sample_params, mock_dependencies
     ):
+        """Test create_user_request with very long string values."""
+        # Setup
+        long_string = "a" * 1000
+        params = sample_params.copy()
+        params["user_name"] = long_string
+        params["owner_name"] = long_string
+        params["repo_name"] = long_string
+        params["source"] = long_string
+
+        mock_dependencies["get_issue"].return_value = None
+        mock_dependencies["insert_usage"].return_value = 444
+
+        # Execute
+        result = create_user_request(**params)
+
+        # Assert
+        assert result == 444
+
+        # Verify functions were called with long strings
+        mock_dependencies["get_issue"].assert_called_once_with(
+            owner_type="Organization",
+            owner_name=long_string,
+            repo_name=long_string,
+            issue_number=123,
+        )
+
+        mock_dependencies["insert_usage"].assert_called_once()
+        call_args = mock_dependencies["insert_usage"].call_args[1]
+        assert call_args["source"] == long_string
+
+        mock_dependencies["upsert_user"].assert_called_once_with(
+            user_id=12345,
+            user_name=long_string,
+            email="test@example.com",
+        )
+
+    def test_create_user_request_with_maximum_integer_values(
+        self, sample_params, mock_dependencies
+    ):
+        """Test create_user_request with maximum integer values."""
+        import sys
+        
+        # Setup
+        max_int = sys.maxsize
+        params = sample_params.copy()
+        params["user_id"] = max_int
+        params["owner_id"] = max_int - 1
+        params["repo_id"] = max_int - 2
+        params["installation_id"] = max_int - 3
+        params["issue_number"] = max_int - 4
+        params["pr_number"] = max_int - 5
+
+        mock_dependencies["get_issue"].return_value = {"id": 1}
+        mock_dependencies["insert_usage"].return_value = 333
+
+        # Execute
+        result = create_user_request(**params)
+
+        # Assert
+        assert result == 333
+
+        # Verify functions were called with maximum integer values
+        mock_dependencies["insert_usage"].assert_called_once_with(
+            owner_id=max_int - 1,
+            owner_type="Organization",
+            owner_name="test_org",
+            repo_id=max_int - 2,
+            repo_name="test_repo",
+            issue_number=max_int - 4,
+            user_id=max_int,
+            installation_id=max_int - 3,
+            source="github",
+            trigger="issue_comment",
+            pr_number=max_int - 5,
+        )
 
     def test_create_user_request_mixed_none_and_zero_values(
         self, sample_params, mock_dependencies
@@ -708,6 +783,46 @@ class TestCreateUserRequest:
     def test_create_user_request_comprehensive_flow_verification(
         self, sample_params, mock_dependencies
     ):
+        """Test comprehensive flow verification with detailed assertions."""
+        # Setup - Test both paths (existing and new issue)
+        test_scenarios = [
+            {"existing_issue": {"id": 42}, "should_insert_issue": False},
+            {"existing_issue": None, "should_insert_issue": True},
+        ]
+
+        for scenario in test_scenarios:
+            # Reset mocks
+            for mock in mock_dependencies.values():
+                mock.reset_mock()
+
+            # Setup scenario
+            mock_dependencies["get_issue"].return_value = scenario["existing_issue"]
+            mock_dependencies["insert_usage"].return_value = 789
+
+            # Execute
+            result = create_user_request(**sample_params)
+
+            # Assert return value
+            assert result == 789
+
+            # Verify get_issue is always called first
+            mock_dependencies["get_issue"].assert_called_once()
+
+            # Verify insert_issue is called conditionally
+            if scenario["should_insert_issue"]:
+                mock_dependencies["insert_issue"].assert_called_once()
+            else:
+                mock_dependencies["insert_issue"].assert_not_called()
+
+            # Verify insert_usage and upsert_user are always called
+            mock_dependencies["insert_usage"].assert_called_once()
+            mock_dependencies["upsert_user"].assert_called_once()
+
+            # Verify the exact call counts
+            assert mock_dependencies["get_issue"].call_count == 1
+            assert mock_dependencies["insert_issue"].call_count == (1 if scenario["should_insert_issue"] else 0)
+            assert mock_dependencies["insert_usage"].call_count == 1
+            assert mock_dependencies["upsert_user"].call_count == 1
 
     def test_create_user_request_with_special_email_formats(
         self, sample_params, mock_dependencies
@@ -768,3 +883,93 @@ class TestCreateUserRequest:
     def test_create_user_request_all_parameters_used(self, mock_dependencies):
         """Test that all function parameters are properly utilized."""
         # Setup with minimal required parameters
+        minimal_params = {
+            "user_id": 1,
+            "user_name": "user",
+            "installation_id": 2,
+            "owner_id": 3,
+            "owner_type": "User",
+            "owner_name": "owner",
+            "repo_id": 4,
+            "repo_name": "repo",
+            "issue_number": 5,
+            "source": "test",
+            "trigger": "issue_label",
+            "email": None,
+            # pr_number is optional and defaults to None
+        }
+
+        mock_dependencies["get_issue"].return_value = None
+        mock_dependencies["insert_usage"].return_value = 42
+
+        # Execute
+        result = create_user_request(**minimal_params)
+
+        # Assert
+        assert result == 42
+
+        # Verify all parameters are passed correctly to each function
+        mock_dependencies["get_issue"].assert_called_once_with(
+            owner_type="User",
+            owner_name="owner",
+            repo_name="repo",
+            issue_number=5,
+        )
+
+        mock_dependencies["insert_issue"].assert_called_once_with(
+            owner_id=3,
+            owner_type="User",
+            owner_name="owner",
+            repo_id=4,
+            repo_name="repo",
+            issue_number=5,
+            installation_id=2,
+        )
+
+        mock_dependencies["insert_usage"].assert_called_once_with(
+            owner_id=3,
+            owner_type="User",
+            owner_name="owner",
+            repo_id=4,
+            repo_name="repo",
+            issue_number=5,
+            user_id=1,
+            installation_id=2,
+            source="test",
+            trigger="issue_label",
+            pr_number=None,
+        )
+
+        mock_dependencies["upsert_user"].assert_called_once_with(
+            user_id=1,
+            user_name="user",
+            email=None,
+        )
+
+    def test_create_user_request_return_value_propagation(
+        self, sample_params, mock_dependencies
+    ):
+        """Test that the return value from insert_usage is properly propagated."""
+        test_cases = [0, 1, 999999, None]
+        
+        for expected_return in test_cases:
+            # Setup
+            mock_dependencies["get_issue"].return_value = {"id": 1}
+            mock_dependencies["insert_usage"].return_value = expected_return
+
+            # Reset mocks
+            for mock in mock_dependencies.values():
+                mock.reset_mock()
+
+            # Execute
+            result = create_user_request(**sample_params)
+
+            # Assert
+            assert result == expected_return
+
+            # Verify all functions were called
+            mock_dependencies["get_issue"].assert_called_once()
+            mock_dependencies["insert_usage"].assert_called_once()
+            mock_dependencies["upsert_user"].assert_called_once()
+            # insert_issue should not be called when issue exists
+            mock_dependencies["insert_issue"].assert_not_called()
