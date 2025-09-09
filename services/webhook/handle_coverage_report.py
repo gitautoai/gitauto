@@ -86,7 +86,7 @@ def handle_coverage_report(
         return None
 
     coverage_data: list[CoverageReport] = []
-    logging.info(f"DEBUG: Processing {len(artifacts)} artifacts for {owner_name}/{repo_name}")
+    logging.info(f"Processing {len(artifacts)} artifacts for {owner_name}/{repo_name}")
     
     for artifact in artifacts:
         if source == "github":
@@ -94,11 +94,11 @@ def handle_coverage_report(
         else:
             artifact_name = artifact.get("path", "")
 
-        logging.info(f"DEBUG: Processing artifact: {artifact_name}")
+        logging.info(f"Processing artifact: {artifact_name}")
 
         # Check for coverage artifacts - lcov files, coverage reports, or default artifact
         if not artifact_name.endswith("lcov.info"):
-            logging.info(f"DEBUG: Skipping non-lcov artifact: {artifact_name}")
+            logging.info(f"Skipping non-lcov artifact: {artifact_name}")
             continue
 
         if source == "github":
@@ -117,19 +117,19 @@ def handle_coverage_report(
             )
 
         if not lcov_content:
-            logging.warning(f"DEBUG: No content downloaded from artifact: {artifact_name}")
+            logging.warning(f"No content downloaded from artifact: {artifact_name}")
             continue
 
-        logging.info(f"DEBUG: Downloaded lcov content, size: {len(lcov_content)} chars")
+        logging.info(f"Downloaded lcov content, size: {len(lcov_content)} chars")
         parsed_coverage = parse_lcov_coverage(lcov_content)
         
         if parsed_coverage:
-            logging.info(f"DEBUG: Parsed {len(parsed_coverage)} coverage items")
+            logging.info(f"Parsed {len(parsed_coverage)} coverage items")
             levels = [item.get('level') for item in parsed_coverage]
-            logging.info(f"DEBUG: Coverage levels found: {levels}")
+            logging.info(f"Coverage levels found: {levels}")
             
             report_language = detect_language_from_coverage(parsed_coverage)
-            logging.info(f"DEBUG: Detected language: {report_language}")
+            logging.info(f"Detected language: {report_language}")
 
             for item in parsed_coverage:
                 item["language"] = report_language
@@ -138,9 +138,9 @@ def handle_coverage_report(
 
             coverage_data.extend(parsed_coverage)
         else:
-            logging.warning(f"DEBUG: No parsed coverage from artifact: {artifact_name}")
+            logging.warning(f"No parsed coverage from artifact: {artifact_name}")
 
-    logging.info(f"DEBUG: Total coverage_data items: {len(coverage_data)}")
+    logging.info(f"Total coverage_data items: {len(coverage_data)}")
 
     if not coverage_data:
         return None
@@ -238,8 +238,8 @@ def handle_coverage_report(
 
     # Extract repository-level coverage for historical tracking
     repo_coverage = next((c for c in coverage_data if c["level"] == "repository"), None)
-    logging.info(f"DEBUG: Looking for repository-level coverage in {len(coverage_data)} items")
-    logging.info(f"DEBUG: Found repo_coverage: {repo_coverage}")
+    logging.info(f"Looking for repository-level coverage in {len(coverage_data)} items")
+    logging.info(f"Found repo_coverage: {repo_coverage}")
 
     if repo_coverage:
         repo_coverage_data: RepoCoverageInsert = {
@@ -256,11 +256,11 @@ def handle_coverage_report(
             "created_by": user_name,
         }
         
-        logging.info(f"DEBUG: Calling upsert_repo_coverage with data: {repo_coverage_data}")
+        logging.info(f"Calling upsert_repo_coverage with data: {repo_coverage_data}")
         result = upsert_repo_coverage(repo_coverage_data)
-        logging.info(f"DEBUG: upsert_repo_coverage result: {result}")
+        logging.info(f"upsert_repo_coverage result: {result}")
     else:
-        logging.warning(f"DEBUG: No repository-level coverage found. Coverage data levels: {[c.get('level') for c in coverage_data]}")
+        logging.warning(f"No repository-level coverage found. Coverage data levels: {[c.get('level') for c in coverage_data]}")
 
     # Upsert file coverages
     return upsert_coverages(upsert_data)
