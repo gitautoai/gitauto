@@ -492,3 +492,89 @@ def test_create_test_selection_comment_with_large_checklist():
     assert TEST_SELECTION_COMMENT_IDENTIFIER in result
     assert "- [ ] Yes, manage tests" in result
     assert SETTINGS_LINKS in result
+def test_create_test_selection_comment_with_none_branch_name():
+    """Test creating a comment with None branch name (edge case)."""
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/test.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 50%)",
+            "status": "modified",
+        }
+    ]
+
+    # This should not raise an exception, the function should handle it gracefully
+    result = create_test_selection_comment(checklist, None)
+    
+    # Verify the comment is still generated correctly
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert "- [x] modified `src/test.py` (Coverage: 50%)" in result
+    assert "- [ ] Yes, manage tests" in result
+
+
+def test_create_test_selection_comment_with_empty_branch_name():
+    """Test creating a comment with empty branch name."""
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/test.py",
+            "checked": False,
+            "coverage_info": "",
+            "status": "added",
+        }
+    ]
+
+    result = create_test_selection_comment(checklist, "")
+    
+    # Verify the comment is still generated correctly
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert "- [ ] added `src/test.py`" in result
+    assert "- [ ] Yes, manage tests" in result
+
+
+def test_create_test_selection_comment_with_whitespace_branch_name():
+    """Test creating a comment with whitespace-only branch name."""
+    checklist: list[FileChecklistItem] = []
+    
+    result = create_test_selection_comment(checklist, "   ")
+    
+    # Verify the comment is still generated correctly
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert "- [ ] Yes, manage tests" in result
+
+
+def test_create_test_selection_comment_with_special_branch_names():
+    """Test creating a comment with various special branch names."""
+    test_cases = [
+        "feature/test-branch",
+        "bugfix/issue-123",
+        "hotfix/critical_fix",
+        "release/v1.0.0",
+        "develop",
+        "main",
+        "master",
+        "feature/user-story/US-456",
+        "feature/test@branch",
+        "feature/test#branch",
+    ]
+    
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/test.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 75%)",
+            "status": "modified",
+        }
+    ]
+    
+    for branch_name in test_cases:
+        result = create_test_selection_comment(checklist, branch_name)
+        
+        # Verify the comment is generated correctly for each branch name
+        assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+        assert "- [x] modified `src/test.py` (Coverage: 75%)" in result
+        assert "- [ ] Yes, manage tests" in result
+        assert PRODUCT_NAME in result
+        assert SETTINGS_LINKS in result
+        # The branch name should appear in the reset command
+        assert branch_name in result
+
