@@ -97,8 +97,8 @@ def handle_coverage_report(
         print(f"Processing artifact: {artifact_name}")
 
         # Check for coverage artifacts - lcov files, coverage reports, or default artifact
-        if not artifact_name.endswith("lcov.info"):
-            print(f"Skipping non-lcov artifact: {artifact_name}")
+        if not (artifact_name.endswith("lcov.info") or artifact_name == "coverage-report"):
+            print(f"Skipping non-coverage artifact: {artifact_name}")
             continue
 
         if source == "github":
