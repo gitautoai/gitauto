@@ -693,3 +693,9 @@ def test_create_test_selection_comment_with_extreme_values():
     ]
     
     # Should not raise an exception
+    result = create_test_selection_comment(checklist, branch_name)
+    
+    # Verify basic structure is maintained
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert "- [ ] Yes, manage tests" in result
+    assert SETTINGS_LINKS in result
