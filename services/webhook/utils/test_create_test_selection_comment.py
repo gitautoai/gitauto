@@ -578,3 +578,76 @@ def test_create_test_selection_comment_with_special_branch_names():
         # The branch name should appear in the reset command
         assert branch_name in result
 
+
+def test_create_test_selection_comment_mock_verification(mock_reset_command):
+    """Test that the reset command mock is called correctly with different scenarios."""
+    test_scenarios = [
+        ("main", []),
+        ("feature/test", [
+            {
+                "path": "src/test.py",
+                "checked": True,
+                "coverage_info": " (Coverage: 50%)",
+                "status": "modified",
+            }
+        ]),
+        ("develop", [
+            {
+                "path": "src/file1.py",
+                "checked": False,
+                "coverage_info": "",
+                "status": "added",
+            },
+            {
+                "path": "src/file2.py",
+                "checked": True,
+                "coverage_info": " (Coverage: 100%)",
+                "status": "removed",
+            }
+        ])
+    ]
+    
+    for branch_name, checklist in test_scenarios:
+        mock_reset_command.reset_mock()
+        result = create_test_selection_comment(checklist, branch_name)
+        
+        # Verify the mock was called exactly once with the correct branch name
+        mock_reset_command.assert_called_once_with(branch_name)
+        
+        # Verify the mock return value is in the result
+        assert "MOCK_RESET_COMMAND" in result
+
+
+def test_create_test_selection_comment_output_format_consistency():
+    """Test that the output format is consistent and properly formatted."""
+    branch_name = "format-test"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/test.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 80%)",
+            "status": "modified",
+        }
+    ]
+    
+    result = create_test_selection_comment(checklist, branch_name)
+    lines = result.split("\n")
+    
+    # Verify specific formatting requirements
+    assert lines[0] == TEST_SELECTION_COMMENT_IDENTIFIER  # First line is identifier
+    assert lines[1] == ""  # Second line is empty
+    assert lines[2] == "Select files to manage tests for (create, update, or remove):"  # Third line is instruction
+    assert lines[3] == ""  # Fourth line is empty
+    
+    # Find the checklist item line
+    checklist_line = None
+    for line in lines:
+        if line.startswith("- [x] modified"):
+            checklist_line = line
+            break
+    
+    assert checklist_line is not None
+    assert checklist_line == "- [x] modified `src/test.py` (Coverage: 80%)"
+    
+    # Verify the "Yes, manage tests" line exists
+    assert "- [ ] Yes, manage tests" in lines
