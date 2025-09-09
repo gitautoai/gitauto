@@ -651,3 +651,45 @@ def test_create_test_selection_comment_output_format_consistency():
     
     # Verify the "Yes, manage tests" line exists
     assert "- [ ] Yes, manage tests" in lines
+
+
+def test_file_checklist_item_type_structure():
+    """Test that FileChecklistItem TypedDict structure is properly used."""
+    # This test ensures that the TypedDict is properly structured and used
+    branch_name = "type-test"
+    
+    # Test with all required fields
+    valid_item: FileChecklistItem = {
+        "path": "src/valid.py",
+        "checked": True,
+        "coverage_info": " (Coverage: 60%)",
+        "status": "modified",
+    }
+    
+    checklist = [valid_item]
+    result = create_test_selection_comment(checklist, branch_name)
+    
+    # Verify the item is processed correctly
+    assert "- [x] modified `src/valid.py` (Coverage: 60%)" in result
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+
+
+def test_create_test_selection_comment_with_extreme_values():
+    """Test creating a comment with extreme or boundary values."""
+    branch_name = "extreme-test"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "",  # Empty path
+            "checked": True,
+            "coverage_info": "",
+            "status": "added",
+        },
+        {
+            "path": "a" * 1000,  # Very long path
+            "checked": False,
+            "coverage_info": " (Coverage: 0%)",
+            "status": "modified",
+        }
+    ]
+    
+    # Should not raise an exception
