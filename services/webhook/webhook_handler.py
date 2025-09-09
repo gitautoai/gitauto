@@ -291,7 +291,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
 
     # Add workflow_run event handler (GitHub Actions)
     if event_name == "workflow_run" and action == "completed":
-        print(f"Received workflow_run completed event for {payload['repository']['owner']['login']}/{payload['repository']['name']}, conclusion: {payload['workflow_run']['conclusion']}")
+        print(f"Received workflow_run completed event, conclusion: {payload.get('workflow_run', {}).get('conclusion', 'unknown')}")
         if payload["workflow_run"]["conclusion"] == "success":
             print("Calling handle_coverage_report for successful workflow_run")
             handle_coverage_report(
