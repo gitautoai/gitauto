@@ -53,6 +53,7 @@ def mock_error_response():
     response.status_code = 500
     response.reason = "Internal Server Error"
     response.text = "Server Error"
+    response.headers = {}
     http_error = requests.HTTPError("500 Server Error")
     http_error.response = response
     response.raise_for_status.side_effect = http_error
