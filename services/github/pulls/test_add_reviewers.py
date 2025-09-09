@@ -324,6 +324,7 @@ def test_add_reviewers_422_unprocessable_entity(
     response.status_code = 422
     response.reason = "Unprocessable Entity"
     response.text = "Validation Failed"
+    response.headers = {}
     http_error = requests.HTTPError("422 Unprocessable Entity")
     http_error.response = response
     response.raise_for_status.side_effect = http_error
