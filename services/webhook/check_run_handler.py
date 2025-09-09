@@ -2,6 +2,7 @@
 from datetime import datetime
 import hashlib
 import json
+import logging
 import time
 
 # Local imports
@@ -177,12 +178,21 @@ def handle_check_run(payload: CheckRunCompletedPayload):
     }
 
     # Check if permission comment or stumbled comment already exists
-    if has_comment_with_text(
-        base_args, [PERMISSION_DENIED_MESSAGE, CHECK_RUN_STUMBLED_MESSAGE]
-    ):
-        slack_notify(
-            f"Permission request has already been made or another check run has already been working on this PR for `{owner_name}/{repo_name}`",
-            thread_ts,
+    if has_comment_with_text(base_args, [CHECK_RUN_STUMBLED_MESSAGE]):
+        logging.info(
+            "Check run stumbled comment already exists for PR #%s in %s/%s. Another GitAuto instance is processing.",
+            pull_number,
+            owner_name,
+            repo_name,
+        )
+        return
+
+    if has_comment_with_text(base_args, [PERMISSION_DENIED_MESSAGE]):
+        logging.info(
+            "Permission request comment already exists for PR #%s in %s/%s. Waiting for user approval.",
+            pull_number,
+            owner_name,
+            repo_name,
         )
         return
 
