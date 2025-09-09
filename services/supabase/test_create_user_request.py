@@ -628,3 +628,83 @@ class TestCreateUserRequest:
     def test_create_user_request_with_very_long_strings(
         self, sample_params, mock_dependencies
     ):
+
+    def test_create_user_request_mixed_none_and_zero_values(
+        self, sample_params, mock_dependencies
+    ):
+        """Test create_user_request with mixed None and zero values."""
+        # Setup
+        params = sample_params.copy()
+        params["email"] = None
+        params["pr_number"] = 0  # Zero instead of None
+        params["issue_number"] = 0
+
+        mock_dependencies["get_issue"].return_value = None
+        mock_dependencies["insert_usage"].return_value = 123
+
+        # Execute
+        result = create_user_request(**params)
+
+        # Assert
+        assert result == 123
+
+        # Verify functions were called with mixed None/zero values
+        mock_dependencies["get_issue"].assert_called_once_with(
+            owner_type="Organization",
+            owner_name="test_org",
+            repo_name="test_repo",
+            issue_number=0,
+        )
+
+        mock_dependencies["insert_usage"].assert_called_once()
+        call_args = mock_dependencies["insert_usage"].call_args[1]
+        assert call_args["pr_number"] == 0
+        assert call_args["issue_number"] == 0
+
+        mock_dependencies["upsert_user"].assert_called_once_with(
+            user_id=12345,
+            user_name="test_user",
+            email=None,
+        )
+
+    def test_create_user_request_with_whitespace_strings(
+        self, sample_params, mock_dependencies
+    ):
+        """Test create_user_request with whitespace-only strings."""
+        # Setup
+        params = sample_params.copy()
+        params["user_name"] = "   "
+        params["owner_name"] = "\t\t"
+        params["repo_name"] = "\n\n"
+        params["source"] = " \t\n "
+
+        mock_dependencies["get_issue"].return_value = {"id": 1}
+        mock_dependencies["insert_usage"].return_value = 456
+
+        # Execute
+        result = create_user_request(**params)
+
+        # Assert
+        assert result == 456
+
+        # Verify functions were called with whitespace strings
+        mock_dependencies["get_issue"].assert_called_once_with(
+            owner_type="Organization",
+            owner_name="\t\t",
+            repo_name="\n\n",
+            issue_number=123,
+        )
+
+        mock_dependencies["upsert_user"].assert_called_once_with(
+            user_id=12345,
+            user_name="   ",
+            email="test@example.com",
+        )
+
+        mock_dependencies["insert_usage"].assert_called_once()
+        call_args = mock_dependencies["insert_usage"].call_args[1]
+        assert call_args["source"] == " \t\n "
+
+    def test_create_user_request_comprehensive_flow_verification(
+        self, sample_params, mock_dependencies
+    ):
