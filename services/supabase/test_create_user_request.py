@@ -708,3 +708,63 @@ class TestCreateUserRequest:
     def test_create_user_request_comprehensive_flow_verification(
         self, sample_params, mock_dependencies
     ):
+
+    def test_create_user_request_with_special_email_formats(
+        self, sample_params, mock_dependencies
+    ):
+        """Test create_user_request with various email formats."""
+        email_formats = [
+            "user@domain.com",
+            "user.name@domain.co.uk", 
+            "user+tag@domain.org",
+            "user_name@sub.domain.com",
+            "123@domain.com",
+            "user@domain-with-dash.com",
+        ]
+
+        for email in email_formats:
+            # Setup
+            params = sample_params.copy()
+            params["email"] = email
+
+            mock_dependencies["get_issue"].return_value = {"id": 1}
+            mock_dependencies["insert_usage"].return_value = 100
+
+            # Reset mocks
+            for mock in mock_dependencies.values():
+                mock.reset_mock()
+
+            # Execute
+            result = create_user_request(**params)
+
+            # Assert
+            assert result == 100
+
+            # Verify upsert_user was called with correct email
+            mock_dependencies["upsert_user"].assert_called_once_with(
+                user_id=12345,
+                user_name="test_user",
+                email=email,
+            )
+
+    def test_create_user_request_decorator_behavior(self, sample_params):
+        """Test that the handle_exceptions decorator is properly applied."""
+        # This test verifies that the function has the decorator applied
+        # by checking that exceptions are raised (due to raise_on_error=True)
+        
+        # Test that the function is decorated
+        assert hasattr(create_user_request, '__wrapped__')
+        
+        # Test that exceptions are properly handled by the decorator
+        with patch("services.supabase.create_user_request.get_issue") as mock_get_issue:
+            mock_get_issue.side_effect = ValueError("Test exception")
+            
+            with pytest.raises(ValueError) as exc_info:
+                create_user_request(**sample_params)
+            
+            assert str(exc_info.value) == "Test exception"
+            mock_get_issue.assert_called_once()
+
+    def test_create_user_request_all_parameters_used(self, mock_dependencies):
+        """Test that all function parameters are properly utilized."""
+        # Setup with minimal required parameters
