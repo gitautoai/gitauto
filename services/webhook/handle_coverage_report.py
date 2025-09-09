@@ -86,14 +86,23 @@ def handle_coverage_report(
         return None
 
     coverage_data: list[CoverageReport] = []
+    logging.info(
+        "Processing %d artifacts for %s/%s", len(artifacts), owner_name, repo_name
+    )
+
     for artifact in artifacts:
         if source == "github":
             artifact_name = artifact.get("name", "")
         else:
             artifact_name = artifact.get("path", "")
 
+        logging.info("Processing artifact: %s", artifact_name)
+
         # Check for coverage artifacts - lcov files, coverage reports, or default artifact
-        if not artifact_name.endswith("lcov.info"):
+        if not (
+            artifact_name.endswith("lcov.info") or artifact_name == "coverage-report"
+        ):
+            logging.info("Skipping non-coverage artifact: %s", artifact_name)
             continue
 
         if source == "github":
@@ -112,11 +121,19 @@ def handle_coverage_report(
             )
 
         if not lcov_content:
+            logging.warning("No content downloaded from artifact: %s", artifact_name)
             continue
 
+        logging.info("Downloaded lcov content, size: %d chars", len(lcov_content))
         parsed_coverage = parse_lcov_coverage(lcov_content)
+
         if parsed_coverage:
+            logging.info("Parsed %d coverage items", len(parsed_coverage))
+            levels = [item.get("level") for item in parsed_coverage]
+            logging.info("Coverage levels found: %s", levels)
+
             report_language = detect_language_from_coverage(parsed_coverage)
+            logging.info("Detected language: %s", report_language)
 
             for item in parsed_coverage:
                 item["language"] = report_language
@@ -124,6 +141,10 @@ def handle_coverage_report(
                 item["path_coverage"] = item["branch_coverage"]
 
             coverage_data.extend(parsed_coverage)
+        else:
+            logging.warning("No parsed coverage from artifact: %s", artifact_name)
+
+    logging.info("Total coverage_data items: %d", len(coverage_data))
 
     if not coverage_data:
         return None
@@ -221,6 +242,9 @@ def handle_coverage_report(
 
     # Extract repository-level coverage for historical tracking
     repo_coverage = next((c for c in coverage_data if c["level"] == "repository"), None)
+    logging.info(
+        "Looking for repository-level coverage in %d items", len(coverage_data)
+    )
 
     if repo_coverage:
         repo_coverage_data: RepoCoverageInsert = {

@@ -82,7 +82,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
         return
 
     # if event_name == "marketplace_purchase" and action in ("purchased"):
-    #     print("Marketplace purchase is triggered")
+    #     logging.info("Marketplace purchase is triggered")
     #     await handle_installation_created(payload=payload)
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=created#installation
