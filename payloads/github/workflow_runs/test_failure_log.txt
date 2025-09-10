@@ -1,0 +1,283 @@
+Run python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
+/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:217: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.3.3, pluggy-1.5.0
+rootdir: /home/runner/work/gitauto/gitauto
+plugins: cov-6.0.0, anyio-4.4.0, Faker-24.14.1, asyncio-0.26.0
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 2900 items
+
+services/anthropic/test_evaluate_condition.py .......                    [  0%]
+services/anthropic/test_exceptions.py ................                   [  0%]
+services/anthropic/test_message_to_dict.py ........                      [  1%]
+services/anthropic/test_trim_messages.py .........                       [  1%]
+services/aws/test_delete_scheduler.py ....................               [  2%]
+services/aws/test_get_schedulers.py ................                     [  2%]
+services/circleci/test_download_circleci_artifact.py ...                 [  2%]
+services/circleci/test_get_build_logs.py ....                            [  2%]
+services/circleci/test_get_job_artifacts.py ............................ [  3%]
+..........                                                               [  4%]
+services/circleci/test_get_workflow_jobs.py ...                          [  4%]
+services/coverages/test_create_coverage_report.py ...........            [  4%]
+services/coverages/test_create_empty_stats.py .........                  [  4%]
+services/coverages/test_parse_lcov_coverage.py ....                      [  5%]
+services/git/test_clone_repo.py ...                                      [  5%]
+services/git/test_git_manager.py ............s..............             [  6%]
+services/github/artifacts/test_download_artifact.py ..................   [  6%]
+services/github/artifacts/test_get_workflow_artifacts.py .............   [  7%]
+services/github/branches/test_check_branch_exists.py ................... [  7%]
+..............                                                           [  8%]
+services/github/branches/test_create_remote_branch.py .................. [  8%]
+....                                                                     [  9%]
+services/github/branches/test_get_default_branch.py .................... [  9%]
+..                                                                       [  9%]
+services/github/check_suites/test_get_circleci_workflow_id.py .......... [ 10%]
+................                                                         [ 10%]
+services/github/collaborators/test_check_user_is_collaborator.py ....... [ 11%]
+....                                                                     [ 11%]
+services/github/comments/test_create_comment.py .....                    [ 11%]
+services/github/comments/test_create_gitauto_button_comment.py ........  [ 11%]
+services/github/comments/test_delete_comment.py .............            [ 12%]
+services/github/comments/test_delete_comments_by_identifiers.py ........ [ 12%]
+.............                                                            [ 12%]
+services/github/comments/test_filter_comments_by_identifiers.py ........ [ 13%]
+...                                                                      [ 13%]
+services/github/comments/test_get_all_comments.py ...................... [ 13%]
+....                                                                     [ 14%]
+services/github/comments/test_get_comments.py ....                       [ 14%]
+services/github/comments/test_has_comment_with_text.py ............      [ 14%]
+services/github/comments/test_reply_to_comment.py ...................... [ 15%]
+                                                                         [ 15%]
+services/github/comments/test_update_comment.py ..........               [ 15%]
+services/github/commits/test_apply_diff_to_file.py ..                    [ 15%]
+services/github/commits/test_create_commit.py .....................      [ 16%]
+services/github/commits/test_create_empty_commit.py ...................  [ 17%]
+services/github/commits/test_get_commit.py ....................          [ 17%]
+services/github/commits/test_get_commit_diff.py ............             [ 18%]
+services/github/files/test_create_file_with_content.py ............      [ 18%]
+services/github/files/test_delete_file.py ...............                [ 19%]
+services/github/files/test_delete_file_by_sha.py .....                   [ 19%]
+services/github/files/test_get_file_info.py ..........                   [ 19%]
+services/github/files/test_get_raw_content.py .......................... [ 20%]
+........                                                                 [ 20%]
+services/github/files/test_get_remote_file_content_by_url.py ........... [ 21%]
+.................                                                        [ 21%]
+services/github/files/test_move_file.py ...................              [ 22%]
+services/github/installations/test_get_installation_permissions.py ..... [ 22%]
+...                                                                      [ 22%]
+services/github/issues/test_create_issue.py ...........                  [ 23%]
+services/github/issues/test_get_issue_body.py ........................   [ 23%]
+services/github/issues/test_get_parent_issue.py ...................      [ 24%]
+services/github/issues/test_is_issue_open.py ..................          [ 25%]
+services/github/markdown/test_render_text.py ........................... [ 26%]
+..........                                                               [ 26%]
+services/github/pulls/test_add_reviewers.py .................            [ 27%]
+services/github/pulls/test_create_pull_request.py ..........             [ 27%]
+services/github/pulls/test_find_pull_request_by_branch.py .............. [ 27%]
+........                                                                 [ 28%]
+services/github/pulls/test_get_pull_request.py ..........                [ 28%]
+services/github/pulls/test_get_pull_request_file_changes.py ............ [ 28%]
+..                                                                       [ 29%]
+services/github/pulls/test_get_pull_request_file_contents.py ...         [ 29%]
+services/github/pulls/test_get_pull_request_files.py .....               [ 29%]
+services/github/pulls/test_get_review_thread_comments.py ............... [ 29%]
+..                                                                       [ 29%]
+services/github/pulls/test_is_pull_request_open.py .........             [ 30%]
+services/github/pulls/test_update_pull_request_body.py ................. [ 30%]
+......                                                                   [ 31%]
+services/github/reactions/test_add_reaction_to_issue.py ................ [ 31%]
+.........................                                                [ 32%]
+services/github/refs/test_get_reference.py .....................         [ 33%]
+services/github/refs/test_update_reference.py .......................... [ 34%]
+..........................                                               [ 34%]
+services/github/repositories/test_get_repository_stats.py .............. [ 35%]
+.............                                                            [ 35%]
+services/github/repositories/test_is_repo_forked.py ......               [ 36%]
+services/github/repositories/test_is_repo_forked_integration.py ....     [ 36%]
+services/github/repositories/test_turn_on_issue.py ..........            [ 36%]
+services/github/test_graphql_client.py ..                                [ 36%]
+services/github/token/test_get_installation_token.py ...                 [ 36%]
+services/github/trees/test_create_tree.py .................              [ 37%]
+services/github/trees/test_get_file_tree.py .........                    [ 37%]
+services/github/trees/test_get_file_tree_list.py ....................... [ 38%]
+.                                                                        [ 38%]
+services/github/users/test_get_owner_name.py .......................     [ 39%]
+services/github/users/test_get_user_public_email.py ...............      [ 39%]
+services/github/utils/test_create_headers.py ..                          [ 39%]
+services/github/utils/test_create_permission_url.py ..................   [ 40%]
+services/github/utils/test_verify_webhook_signature.py ................. [ 41%]
+........                                                                 [ 41%]
+services/github/workflow_runs/test_cancel_workflow_run.py .......        [ 41%]
+services/github/workflow_runs/test_cancel_workflow_runs.py .......       [ 41%]
+services/github/workflow_runs/test_get_failed_step_log_file_name.py .... [ 41%]
+..........                                                               [ 42%]
+services/github/workflow_runs/test_get_workflow_run_path.py .........    [ 42%]
+services/github/workflow_runs/test_get_workflow_runs.py ...............  [ 43%]
+services/google/test_search.py .......................                   [ 43%]
+services/jira/test_verify_jira_webhook.py .............................. [ 44%]
+.                                                                        [ 44%]
+services/openai/functions/test_functions.py ....                         [ 45%]
+services/openai/functions/test_properties.py .....                       [ 45%]
+services/openai/test_chat.py ...........                                 [ 45%]
+services/openai/test_chat_with_functions.py ..                           [ 45%]
+services/openai/test_count_tokens.py ..........................          [ 46%]
+services/openai/test_init.py ...                                         [ 46%]
+services/openai/test_truncate.py ......                                  [ 46%]
+services/openai/test_vision.py ........                                  [ 47%]
+services/resend/test_get_first_name.py ..........................        [ 48%]
+services/resend/test_send_email.py .........                             [ 48%]
+services/resend/text/test_credits_depleted_email.py ...............      [ 48%]
+services/resend/text/test_no_credits_email.py .................          [ 49%]
+services/resend/text/test_suspend_email.py ..................            [ 50%]
+services/resend/text/test_uninstall_email.py .............               [ 50%]
+services/slack/test_slack_notify.py ...............                      [ 51%]
+services/stripe/test_check_subscription_limit.py .....................   [ 51%]
+services/stripe/test_create_stripe_customer.py ......                    [ 52%]
+services/stripe/test_get_base_request_limit.py ............              [ 52%]
+services/stripe/test_get_paid_subscription.py .......                    [ 52%]
+services/supabase/circleci_tokens/test_circleci_token_service.py ....... [ 52%]
+..................                                                       [ 53%]
+services/supabase/coverages/test_get_all_coverages.py .............      [ 54%]
+services/supabase/coverages/test_get_all_coverages_integration.py ...    [ 54%]
+services/supabase/coverages/test_get_coverages.py ...................... [ 54%]
+....                                                                     [ 55%]
+services/supabase/coverages/test_insert_coverages.py ..................  [ 55%]
+services/supabase/coverages/test_update_issue_url.py ...........         [ 56%]
+services/supabase/coverages/test_upsert_coverages.py ................    [ 56%]
+services/supabase/credits/test_check_grant_exists.py ................... [ 57%]
+..........                                                               [ 57%]
+services/supabase/credits/test_insert_credit.py ........................ [ 58%]
+...                                                                      [ 58%]
+services/supabase/installations/test_delete_installation.py ............ [ 58%]
+.....                                                                    [ 59%]
+services/supabase/installations/test_get_installation.py ............... [ 59%]
+......                                                                   [ 59%]
+services/supabase/installations/test_get_installation_id.py ........     [ 60%]
+services/supabase/installations/test_insert_installation.py ............ [ 60%]
+.....                                                                    [ 60%]
+services/supabase/installations/test_is_installation_valid.py .......... [ 61%]
+....                                                                     [ 61%]
+services/supabase/installations/test_unsuspend_installation.py ......... [ 61%]
+....                                                                     [ 61%]
+services/supabase/issues/test_get_issue.py ..............                [ 62%]
+services/supabase/issues/test_insert_issue.py ......                     [ 62%]
+services/supabase/issues/test_update_issue_merged.py ................    [ 62%]
+services/supabase/owners/test_check_owner_exists.py ...............      [ 63%]
+services/supabase/owners/test_create_owner.py ......................     [ 64%]
+services/supabase/owners/test_get_owner_integration.py ..                [ 64%]
+services/supabase/owners/test_get_stripe_customer_id.py ................ [ 64%]
+.....                                                                    [ 64%]
+services/supabase/owners/test_insert_owner.py .................          [ 65%]
+services/supabase/owners/test_update_stripe_customer_id.py ............. [ 65%]
+.............                                                            [ 66%]
+services/supabase/repo_coverage/test_upsert_repo_coverage.py .......     [ 66%]
+services/supabase/repositories/test_get_repository.py .................. [ 67%]
+.                                                                        [ 67%]
+services/supabase/repositories/test_insert_repository.py .......         [ 67%]
+services/supabase/repositories/test_update_repository.py .........       [ 67%]
+services/supabase/repositories/test_upsert_repository.py .........       [ 68%]
+services/supabase/test_create_user_request.py .............              [ 68%]
+services/supabase/test_get_circleci_token.py ...                         [ 68%]
+services/supabase/usage/test_count_completed_unique_requests.py ........ [ 68%]
+.............                                                            [ 69%]
+services/supabase/usage/test_get_retry_pairs.py ..................       [ 70%]
+services/supabase/usage/test_insert_usage.py ........                    [ 70%]
+services/supabase/usage/test_update_retry_pairs.py ...................   [ 70%]
+services/supabase/usage/test_update_usage.py ..................          [ 71%]
+services/supabase/users/test_get_user.py ..........                      [ 71%]
+services/supabase/users/test_upsert_user.py ....                         [ 72%]
+services/test_model_selection.py .....................                   [ 72%]
+services/webhook/test_check_run_handler.py .........                     [ 73%]
+services/webhook/test_handle_coverage_report.py ......                   [ 73%]
+services/webhook/test_handle_installation_repos.py ..................... [ 74%]
+.............                                                            [ 74%]
+services/webhook/test_merge_handler.py ...                               [ 74%]
+services/webhook/test_process_repositories.py .................          [ 75%]
+services/webhook/test_schedule_handler.py .........                      [ 75%]
+services/webhook/test_webhook_handler.py ............................... [ 76%]
+............                                                             [ 76%]
+services/webhook/utils/test_create_file_checklist.py .................   [ 77%]
+services/webhook/utils/test_create_system_message.py ................... [ 78%]
+.....                                                                    [ 78%]
+services/webhook/utils/test_create_test_selection_comment.py ........... [ 78%]
+......                                                                   [ 78%]
+services/webhook/utils/test_extract_selected_files.py .................. [ 79%]
+....                                                                     [ 79%]
+services/website/test_get_default_structured_rules.py ..........         [ 80%]
+test_config.py ..                                                        [ 80%]
+test_main.py ............                                                [ 80%]
+utils/colors/test_colorize_log.py ...                                    [ 80%]
+utils/command/test_run_command.py ..............                         [ 81%]
+utils/email/test_check_email_is_valid.py ............................... [ 82%]
+.                                                                        [ 82%]
+utils/error/test_handle_exceptions.py ............                       [ 82%]
+utils/files/test_filter_code_files.py ............                       [ 83%]
+utils/files/test_get_file_content.py ..................                  [ 83%]
+utils/files/test_is_excluded_from_testing.py ......                      [ 83%]
+utils/files/test_is_migration_file.py .......                            [ 84%]
+utils/files/test_read_xml_file.py ........                               [ 84%]
+utils/files/test_should_skip_cpp.py ................                     [ 84%]
+utils/files/test_should_skip_csharp.py ................                  [ 85%]
+utils/files/test_should_skip_go.py ................                      [ 86%]
+utils/files/test_should_skip_java.py ................                    [ 86%]
+utils/files/test_should_skip_javascript.py ................              [ 87%]
+utils/files/test_should_skip_php.py ................                     [ 87%]
+utils/files/test_should_skip_python.py ................                  [ 88%]
+utils/files/test_should_skip_ruby.py ................                    [ 88%]
+utils/files/test_should_skip_rust.py ................                    [ 89%]
+utils/files/test_should_test_file.py .........................F
+
+=================================== FAILURES ===================================
+_____ TestShouldTestFile.test_should_test_file_with_boolean_return_values ______
+
+self = <test_should_test_file.TestShouldTestFile object at 0x7f44e0106780>
+mock_evaluate_condition = <MagicMock name='evaluate_condition' id='139933788682048'>
+sample_file_path = 'services/calculator.py'
+sample_code_content = 'class Calculator:\n    def add(self, a, b):\n        return a + b'
+
+    def test_should_test_file_with_boolean_return_values(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that function properly handles different boolean-like return values."""
+        # Test with actual boolean True
+        mock_evaluate_condition.return_value = True
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert result is True
+        assert isinstance(result, bool)
+    
+        # Test with actual boolean False
+        mock_evaluate_condition.return_value = False
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert result is False
+        assert isinstance(result, bool)
+    
+        # Test with truthy values that should be converted to boolean
+        for truthy_value in [1, "true", "yes", [1, 2, 3], {"key": "value"}]:
+            mock_evaluate_condition.return_value = truthy_value
+            result = should_test_file(sample_file_path, sample_code_content)
+>           assert isinstance(result, bool)
+E           assert False
+E            +  where False = isinstance(1, bool)
+
+utils/files/test_should_test_file.py:534: AssertionError
+=============================== warnings summary ===============================
+services/webhook/test_webhook_handler.py::TestHandleWebhookEvent::test_handle_webhook_event_workflow_run_completed_success
+  /home/runner/work/gitauto/gitauto/services/webhook/webhook_handler.py:292: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited
+    handle_coverage_report(
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform linux, python 3.12.11-final-0 ----------
+Coverage LCOV written to file coverage/lcov.info
+
+=========================== short test summary info ============================
+FAILED utils/files/test_should_test_file.py::TestShouldTestFile::test_should_test_file_with_boolean_return_values - assert False
+ +  where False = isinstance(1, bool)
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+======= 1 failed, 2616 passed, 1 skipped, 1 warning in 78.37s (0:01:18) ========
+Error: Process completed with exit code 1.
