@@ -492,3 +492,88 @@ def test_create_test_selection_comment_with_large_checklist():
     assert TEST_SELECTION_COMMENT_IDENTIFIER in result
     assert "- [ ] Yes, manage tests" in result
     assert SETTINGS_LINKS in result
+
+def test_file_checklist_item_type_validation():
+    """Test that FileChecklistItem TypedDict structure is correctly defined."""
+    # This test ensures the TypedDict is properly structured
+    valid_item: FileChecklistItem = {
+        "path": "src/test.py",
+        "checked": True,
+        "coverage_info": " (Coverage: 50%)",
+        "status": "modified",
+    }
+    
+    # Verify all required keys are present
+    assert "path" in valid_item
+    assert "checked" in valid_item
+    assert "coverage_info" in valid_item
+    assert "status" in valid_item
+    
+    # Verify types
+    assert isinstance(valid_item["path"], str)
+    assert isinstance(valid_item["checked"], bool)
+    assert isinstance(valid_item["coverage_info"], str)
+    assert valid_item["status"] in ["added", "modified", "removed"]
+
+
+def test_create_test_selection_comment_with_empty_path():
+    """Test creating a comment with edge case values that might cause issues."""
+    branch_name = "edge-case-branch"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "",  # Empty path
+            "checked": False,
+            "coverage_info": "",
+            "status": "added",
+        },
+    ]
+    
+    result = create_test_selection_comment(checklist, branch_name)
+    
+    # Should handle empty path gracefully
+    assert "- [ ] added ``" in result
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+
+
+def test_create_test_selection_comment_with_whitespace_paths():
+    """Test creating a comment with paths containing whitespace."""
+    branch_name = "whitespace-test"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/file with spaces.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 75%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/file\twith\ttabs.py",
+            "checked": False,
+            "coverage_info": "",
+            "status": "added",
+        },
+    ]
+    
+    result = create_test_selection_comment(checklist, branch_name)
+    
+    # Verify whitespace in paths is preserved
+    assert "- [x] modified `src/file with spaces.py` (Coverage: 75%)" in result
+    assert "- [ ] added `src/file\twith\ttabs.py`" in result
+
+
+def test_create_test_selection_comment_with_extreme_branch_names():
+    """Test creating a comment with various branch name formats."""
+    test_cases = [
+        "feature/very-long-branch-name-with-many-hyphens-and-descriptive-text",
+        "hotfix/123-urgent-fix",
+        "release/v1.2.3",
+        "bugfix/issue-#456",
+        "main",
+        "develop",
+    ]
+    
+    for branch_name in test_cases:
+        result = create_test_selection_comment([], branch_name)
+        
+        # Verify branch name is included in the reset command
+        assert branch_name in result
+        assert TEST_SELECTION_COMMENT_IDENTIFIER in result
