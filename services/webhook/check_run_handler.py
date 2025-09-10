@@ -363,6 +363,8 @@ def handle_check_run(payload: CheckRunCompletedPayload):
             is_completed=True,
             pr_number=pull_number,
             retry_workflow_id_hash_pairs=existing_pairs,
+            original_error_log=error_log,
+            minimized_error_log=deduplicate_logs(error_log),
         )
 
         # Early return notification
@@ -517,6 +519,8 @@ def handle_check_run(payload: CheckRunCompletedPayload):
         pr_number=pull_number,
         is_completed=True,
         retry_workflow_id_hash_pairs=existing_pairs,
+        original_error_log=error_log,
+        minimized_error_log=deduplicated_error_log,
     )
 
     # End notification
