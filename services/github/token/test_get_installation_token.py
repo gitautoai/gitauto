@@ -79,14 +79,14 @@ def test_get_installation_access_token_suspended(
     mock_requests_post.assert_called_once()
     # Verify delete_installation was called with correct parameters
     mock_delete_installation.assert_called_once_with(
-        installation_id=installation_id, user_id=0, user_name="Unknown"
+        installation_id=installation_id, user_id=0, user_name="System"
     )
 
 
-def test_get_installation_access_token_other_error(
-    mock_get_jwt, mock_create_headers, mock_requests_post
+def test_get_installation_access_token_not_found(
+    mock_get_jwt, mock_create_headers, mock_requests_post, mock_delete_installation
 ):
-    """Test handling of other HTTP errors"""
+    """Test handling of installation not found (404)"""
     # Arrange
     installation_id = 12345
     mock_response = MagicMock()
@@ -98,4 +98,9 @@ def test_get_installation_access_token_other_error(
     result = get_installation_access_token(installation_id)
 
     # Assert
-    assert result is None  # Function should return None due to @handle_exceptions
+    assert result is None
+    mock_requests_post.assert_called_once()
+    # Verify delete_installation was called with correct parameters
+    mock_delete_installation.assert_called_once_with(
+        installation_id=installation_id, user_id=0, user_name="System"
+    )

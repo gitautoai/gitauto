@@ -25,8 +25,11 @@ def get_installation_access_token(installation_id: int):
         if (
             err.response.status_code == 403
             and "This installation has been suspended" in err.response.text
-        ):
+        ) or err.response.status_code == 404:
+            # 403: Installation suspended, 404: Installation doesn't exist (deleted/uninstalled)
             delete_installation(
-                installation_id=installation_id, user_id=0, user_name="Unknown"
+                installation_id=installation_id, user_id=0, user_name="System"
             )
+            return None
+
         raise
