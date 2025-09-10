@@ -269,18 +269,21 @@ def test_create_gitauto_button_comment_different_payload_values():
 
 def test_create_gitauto_button_comment_base_comment_format():
     """Test that the base comment is formatted correctly"""
-    payload = cast(GitHubLabeledPayload, {
-        "action": "labeled",
-        "installation": {"id": 12345},
-        "repository": {
-            "owner": {"id": 67890, "login": "test-owner"},
-            "name": "test-repo",
+    payload = cast(
+        GitHubLabeledPayload,
+        {
+            "action": "labeled",
+            "installation": {"id": 12345},
+            "repository": {
+                "owner": {"id": 67890, "login": "test-owner"},
+                "name": "test-repo",
+            },
+            "issue": {"number": 123},
+            "sender": {"id": 11111, "login": "test-user"},
+            "label": {"name": "gitauto"},
+            "organization": {"id": 22222, "login": "test-org"},
         },
-        "issue": {"number": 123},
-        "sender": {"id": 11111, "login": "test-user"},
-        "label": {"name": "gitauto"},
-        "organization": {"id": 22222, "login": "test-org"},
-    })
+    )
 
     with patch(
         "services.github.comments.create_gitauto_button_comment.get_installation_access_token",

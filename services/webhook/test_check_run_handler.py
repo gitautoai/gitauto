@@ -427,7 +427,11 @@ def test_handle_check_run_with_none_logs(
 @patch("services.webhook.check_run_handler.update_comment")
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_run_handler.update_usage")
+@patch("services.webhook.check_run_handler.deduplicate_logs")
 def test_handle_check_run_with_existing_retry_pair(
+    mock_deduplicate_logs,
+    mock_update_usage,
     _mock_update_retry_pairs,
     mock_get_retry_pairs,
     mock_update_comment,
@@ -468,6 +472,7 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_workflow_path.return_value = ".github/workflows/test.yml"
     mock_get_remote_file.return_value = "workflow content"
     mock_get_logs.return_value = "Test failure log content"
+    mock_deduplicate_logs.return_value = "Deduplicated test failure log"
 
     # Mock that this workflow/error pair has been seen before
     # Calculate the expected hash: workflow_id is "runs" from URL, error_log is "Test failure log content"
@@ -486,6 +491,13 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
     mock_get_retry_pairs.assert_called_once()
+    mock_deduplicate_logs.assert_called_once_with("Test failure log content")
+
+    # Verify update_usage was called with error logs
+    mock_update_usage.assert_called_once()
+    call_args = mock_update_usage.call_args[1]
+    assert call_args["original_error_log"] == "Test failure log content"
+    assert call_args["minimized_error_log"] == "Deduplicated test failure log"
 
     # Verify skip message in comment
     mock_update_comment.assert_called()

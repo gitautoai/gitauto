@@ -86,7 +86,7 @@ Pygments==2.18.0
 PyJWT==2.9.0
 pylint==3.2.6
 PyNaCl==1.5.0
-pyright==1.1.403
+pyright==1.1.405
 pytest==8.3.3
 pytest-asyncio==0.26.0
 pytest-cov==6.0.0

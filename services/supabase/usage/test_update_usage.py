@@ -24,6 +24,9 @@ def test_update_usage_success_with_all_parameters():
             total_seconds=300,
             is_completed=True,
             pr_number=456,
+            retry_workflow_id_hash_pairs=["hash1", "hash2"],
+            original_error_log="Original error log content",
+            minimized_error_log="Minimized error log content",
         )
 
         assert result is None
@@ -35,6 +38,9 @@ def test_update_usage_success_with_all_parameters():
                 "token_input": 100,
                 "token_output": 200,
                 "total_seconds": 300,
+                "retry_workflow_id_hash_pairs": ["hash1", "hash2"],
+                "original_error_log": "Original error log content",
+                "minimized_error_log": "Minimized error log content",
             }
         )
         mock_table.eq.assert_called_once_with(column="id", value=123)

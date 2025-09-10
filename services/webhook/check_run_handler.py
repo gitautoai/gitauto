@@ -55,6 +55,7 @@ from services.supabase.usage.update_usage import update_usage
 
 # Local imports (Others)
 from utils.logs.deduplicate_logs import deduplicate_logs
+from utils.logs.remove_pytest_sections import remove_pytest_sections
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 from utils.time.get_timeout_message import get_timeout_message
@@ -345,6 +346,10 @@ def handle_check_run(payload: CheckRunCompletedPayload):
     print(f"Error log content for {owner_name}/{repo_name} PR #{pull_number}:")
     print(error_log)
 
+    # Remove pytest sections first, then deduplicate repetitive patterns
+    sections_removed_log = remove_pytest_sections(error_log)
+    minimized_log = deduplicate_logs(sections_removed_log)
+
     # Check if this exact pair exists
     existing_pairs = get_retry_workflow_id_hash_pairs(
         owner_id=owner_id, repo_id=repo_id, pr_number=pull_number
@@ -363,6 +368,8 @@ def handle_check_run(payload: CheckRunCompletedPayload):
             is_completed=True,
             pr_number=pull_number,
             retry_workflow_id_hash_pairs=existing_pairs,
+            original_error_log=error_log,
+            minimized_error_log=minimized_log,
         )
 
         # Early return notification
@@ -386,15 +393,12 @@ def handle_check_run(payload: CheckRunCompletedPayload):
     # Plan how to fix the error
     today = datetime.now().strftime("%Y-%m-%d")
 
-    # Deduplicate repetitive log patterns to prevent token overflow - see get_workflow_run_logs_duplicated.txt
-    deduplicated_error_log = deduplicate_logs(error_log)
-
     input_message: dict[str, str] = {
         "pull_request_title": pull_title,
         "pull_request_body": pull_body,
         "pull_request_changes": json.dumps(obj=pull_changes),
         "workflow_content": workflow_content,
-        "error_log": deduplicated_error_log,
+        "error_log": minimized_log,
         "today": today,
     }
     user_input = json.dumps(obj=input_message)
@@ -517,6 +521,8 @@ def handle_check_run(payload: CheckRunCompletedPayload):
         pr_number=pull_number,
         is_completed=True,
         retry_workflow_id_hash_pairs=existing_pairs,
+        original_error_log=error_log,
+        minimized_error_log=minimized_log,
     )
 
     # End notification

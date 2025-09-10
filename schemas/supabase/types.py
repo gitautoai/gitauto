@@ -392,6 +392,8 @@ class Usage(TypedDict):
     retry_workflow_id_hash_pairs: Any | None
     is_merged: bool
     trigger: str
+    original_error_log: str | None
+    minimized_error_log: str | None
 
 
 class UsageInsert(TypedDict):
@@ -414,6 +416,8 @@ class UsageInsert(TypedDict):
     retry_workflow_id_hash_pairs: NotRequired[Any | None]
     is_merged: NotRequired[bool]
     trigger: NotRequired[str]
+    original_error_log: NotRequired[str | None]
+    minimized_error_log: NotRequired[str | None]
 
 
 class UsageWithIssues(TypedDict):
