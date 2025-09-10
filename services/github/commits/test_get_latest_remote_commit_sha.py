@@ -319,6 +319,17 @@ def test_get_latest_remote_commit_sha_http_error_403(base_args):
         mock_response.status_code = 403
         mock_response.reason = "Forbidden"
 
+        http_error = requests.exceptions.HTTPError("403 Client Error")
+        http_error.response = mock_response
+        mock_response.raise_for_status.side_effect = http_error
+
+        mock_get.return_value = mock_response
+        mock_headers.return_value = {"Authorization": "Bearer test_token"}
+
+        # Call function - should raise HTTPError due to raise_on_error=True
+        with pytest.raises(requests.exceptions.HTTPError):
+            get_latest_remote_commit_sha("https://github.com/owner/repo.git", base_args)
+
 
 def test_get_latest_remote_commit_sha_network_error(base_args):
     """Test handling of network connection error."""
