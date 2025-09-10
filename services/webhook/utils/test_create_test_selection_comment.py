@@ -637,3 +637,47 @@ def test_create_test_selection_comment_output_format_consistency():
     assert lines[7] == ""  # Empty line after separator
     assert lines[8] == "- [ ] Yes, manage tests"
     assert lines[9] == ""  # Empty line after checkbox
+
+def test_create_test_selection_comment_with_all_false_checked():
+    """Test creating a comment where all items are unchecked."""
+    branch_name = "all-unchecked"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/file1.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 50%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/file2.py",
+            "checked": False,
+            "coverage_info": "",
+            "status": "added",
+        },
+        {
+            "path": "src/file3.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 0%)",
+            "status": "removed",
+        },
+    ]
+    
+    result = create_test_selection_comment(checklist, branch_name)
+    
+    # Verify all items are unchecked
+    assert "- [ ] modified `src/file1.py` (Coverage: 50%)" in result
+    assert "- [ ] added `src/file2.py`" in result
+    assert "- [ ] removed `src/file3.py` (Coverage: 0%)" in result
+    
+    # Verify no [x] checkboxes exist except for the "Yes, manage tests" line
+    checkbox_lines = [line for line in result.split("\n") if "- [x]" in line]
+    assert len(checkbox_lines) == 0  # No checked items
+    
+    # Verify the "Yes, manage tests" checkbox is still unchecked
+    assert "- [ ] Yes, manage tests" in result
+    
+    # Verify structure is still intact
+    assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+    assert PRODUCT_NAME in result
+    assert SETTINGS_LINKS in result
+
