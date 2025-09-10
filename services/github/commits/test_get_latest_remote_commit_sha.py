@@ -318,6 +318,7 @@ def test_get_latest_remote_commit_sha_http_error_403(base_args):
         mock_response = MagicMock()
         mock_response.status_code = 403
         mock_response.reason = "Forbidden"
+        mock_response.text = "Forbidden"
 
         http_error = requests.exceptions.HTTPError("403 Client Error")
         http_error.response = mock_response
@@ -589,3 +590,52 @@ def test_get_latest_remote_commit_sha_empty_repo_recursive_call_success(base_arg
         assert result == "initialized_commit_sha"
         
         # Verify initialize_repo was called with correct parameters
+        expected_repo_path = f"/tmp/repo/{base_args['owner']}-{base_args['repo']}"
+        mock_initialize.assert_called_once_with(
+            repo_path=expected_repo_path, remote_url=clone_url, token=base_args["token"]
+        )
+
+
+def test_get_latest_remote_commit_sha_empty_repo_recursive_call_fails(base_args):
+    """Test recursive call failure after empty repository initialization."""
+    with patch(
+        "services.github.commits.get_latest_remote_commit_sha.requests.get"
+    ) as mock_get, patch(
+        "services.github.commits.get_latest_remote_commit_sha.create_headers"
+    ) as mock_headers, patch(
+        "services.github.commits.get_latest_remote_commit_sha.initialize_repo"
+    ) as mock_initialize, patch(
+        "services.github.commits.get_latest_remote_commit_sha.update_comment"
+    ) as mock_update_comment:
+        # Setup mocks for first call (409 error) and second call (network error)
+        mock_response_409 = MagicMock()
+        mock_response_409.status_code = 409
+        mock_response_409.json.return_value = {"message": "Git Repository is empty."}
+        
+        http_error = requests.exceptions.HTTPError("409 Client Error")
+        http_error.response = mock_response_409
+        
+        # First call raises 409, second call raises network error
+        mock_get.side_effect = [
+            MagicMock(raise_for_status=MagicMock(side_effect=http_error)),
+            requests.exceptions.ConnectionError("Network error on retry")
+        ]
+        mock_headers.return_value = {"Authorization": "Bearer test_token"}
+
+        clone_url = "https://github.com/owner/repo.git"
+        
+        # Call function - should raise RuntimeError due to Exception handling in recursive call
+        with pytest.raises(RuntimeError) as exc_info:
+            get_latest_remote_commit_sha(clone_url, base_args)
+        
+        # Verify error message
+        assert "Error: Could not get the latest commit SHA in get_latest_remote_commit_sha" in str(exc_info.value)
+        
+        # Verify both API calls were attempted
+        assert mock_get.call_count == 2
+        
+        # Verify initialize_repo was called
+        mock_initialize.assert_called_once()
+        
+        # Verify update_comment was called for the recursive call error
+        mock_update_comment.assert_called_once()
