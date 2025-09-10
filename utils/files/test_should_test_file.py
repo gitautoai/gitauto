@@ -510,3 +510,33 @@ if __name__ == "__main__":
         assert len(params) == 2
         assert "file_path" in params
         assert "content" in params
+
+    def test_should_test_file_with_boolean_return_values(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that function properly handles different boolean-like return values."""
+        # Test with actual boolean True
+        mock_evaluate_condition.return_value = True
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert result is True
+        assert isinstance(result, bool)
+
+        # Test with actual boolean False
+        mock_evaluate_condition.return_value = False
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert result is False
+        assert isinstance(result, bool)
+
+        # Test with truthy values that should be converted to boolean
+        for truthy_value in [1, "true", "yes", [1, 2, 3], {"key": "value"}]:
+            mock_evaluate_condition.return_value = truthy_value
+            result = should_test_file(sample_file_path, sample_code_content)
+            assert isinstance(result, bool)
+
+        # Test with falsy values that should be converted to boolean
+        for falsy_value in [0, "", [], {}, None]:
+            mock_evaluate_condition.return_value = falsy_value
+            result = should_test_file(sample_file_path, sample_code_content)
+            assert isinstance(result, bool)
+            if falsy_value is None:
+                assert result is False  # Explicit None handling
