@@ -577,3 +577,63 @@ def test_create_test_selection_comment_with_extreme_branch_names():
         # Verify branch name is included in the reset command
         assert branch_name in result
         assert TEST_SELECTION_COMMENT_IDENTIFIER in result
+
+
+def test_create_test_selection_comment_with_special_coverage_formats():
+    """Test creating a comment with various coverage info formats."""
+    branch_name = "coverage-formats"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/file1.py",
+            "checked": True,
+            "coverage_info": " (No coverage data)",
+            "status": "added",
+        },
+        {
+            "path": "src/file2.py",
+            "checked": False,
+            "coverage_info": " (Coverage: N/A)",
+            "status": "modified",
+        },
+        {
+            "path": "src/file3.py",
+            "checked": True,
+            "coverage_info": " (Test file)",
+            "status": "added",
+        },
+    ]
+    
+    result = create_test_selection_comment(checklist, branch_name)
+    
+    # Verify all coverage formats are handled correctly
+    assert "- [x] added `src/file1.py` (No coverage data)" in result
+    assert "- [ ] modified `src/file2.py` (Coverage: N/A)" in result
+    assert "- [x] added `src/file3.py` (Test file)" in result
+
+
+def test_create_test_selection_comment_output_format_consistency():
+    """Test that the output format is consistent and well-formed."""
+    branch_name = "format-test"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/example.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 80%)",
+            "status": "modified",
+        }
+    ]
+    
+    result = create_test_selection_comment(checklist, branch_name)
+    lines = result.split("\n")
+    
+    # Verify the structure is well-formed
+    assert lines[0] == TEST_SELECTION_COMMENT_IDENTIFIER
+    assert lines[1] == ""  # Empty line after identifier
+    assert lines[2] == "Select files to manage tests for (create, update, or remove):"
+    assert lines[3] == ""  # Empty line after instruction
+    assert lines[4] == "- [x] modified `src/example.py` (Coverage: 80%)"
+    assert lines[5] == ""  # Empty line before separator
+    assert lines[6] == "---"
+    assert lines[7] == ""  # Empty line after separator
+    assert lines[8] == "- [ ] Yes, manage tests"
+    assert lines[9] == ""  # Empty line after checkbox
