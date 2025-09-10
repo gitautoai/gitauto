@@ -140,9 +140,12 @@ aws logs describe-log-streams \
   grep -A 3 "841315c5054c49ca80316cf2861696a3"
 
 # 3. Get ALL events from the exact stream and find the largest message
+# IMPORTANT: AWS get-log-events may return empty results even when logs exist!
+# You MUST use --start-from-head or implement pagination with nextToken
 aws logs get-log-events \
   --log-group-name "/aws/lambda/pr-agent-prod" \
   --log-stream-name "$STREAM" \
+  --start-from-head \
   --start-time 1756990862750 \
   --end-time 1756992771853 | \
   python3 -c "
@@ -176,6 +179,56 @@ The following variables must be set in .env file:
 ### AWS CLI
 
 AWS CLI is available and configured for us-west-1 region.
+
+#### IMPORTANT: CloudWatch Log Retrieval Issues
+
+**Known Issue:** The AWS CLI `get-log-events` command **will** return empty results even when logs exist in the CloudWatch console under these conditions:
+1. When called without `--start-from-head` (starts from end of stream by default)
+2. When at a page boundary with no events in that specific page
+3. When not using pagination with nextToken to retrieve subsequent pages
+
+This is documented AWS API behavior, not a bug.
+
+**Solutions:**
+
+1. **Always use `--start-from-head` parameter:**
+```bash
+aws logs get-log-events \
+  --log-group-name "/aws/lambda/pr-agent-prod" \
+  --log-stream-name "STREAM_NAME" \
+  --start-from-head
+```
+
+2. **Implement pagination with nextToken:**
+```python
+import boto3
+
+log_client = boto3.client("logs", region_name="us-west-1")
+params = {
+    "logGroupName": "/aws/lambda/pr-agent-prod",
+    "logStreamName": "your-stream-name",
+    "startFromHead": True,
+}
+
+all_events = []
+while True:
+    response = log_client.get_log_events(**params)
+    events = response.get("events", [])
+    all_events.extend(events)
+    
+    next_token = response.get("nextForwardToken")
+    # Stop when token repeats (no more events)
+    if next_token == params.get("nextToken"):
+        break
+    params['nextToken'] = next_token
+```
+
+3. **Alternative: Use `filter-log-events` instead:**
+```bash
+aws logs filter-log-events \
+  --log-group-name "/aws/lambda/pr-agent-prod" \
+  --log-stream-names "STREAM_NAME"
+```
 
 #### Searching CloudWatch Logs
 

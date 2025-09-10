@@ -90,11 +90,13 @@ def test_delete_scheduler_client_error_resource_not_found(
     # Execute
     result = delete_scheduler(schedule_name)
 
-    # Assert - should return False due to handle_exceptions decorator
-    assert result is False
+    # Assert - should return True since ResourceNotFoundException is handled gracefully
+    assert result is True
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
-    # Logging should not be called when exception occurs
-    mock_logging.info.assert_not_called()
+    # Should log as info that scheduler was already deleted
+    mock_logging.info.assert_called_once_with(
+        "EventBridge Scheduler already deleted: %s", schedule_name
+    )
 
 
 def test_delete_scheduler_client_error_access_denied(
