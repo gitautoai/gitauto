@@ -71,7 +71,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         # Delete scheduler since installation is invalid
         schedule_name = f"gitauto-repo-{owner_id}-{repo_id}"
         delete_scheduler(schedule_name)
-        raise ValueError(f"Token is None for installation_id: {installation_id}")
+        msg = f"Installation {installation_id} no longer exists. Cleaned up scheduler."
+        logging.info(msg)
+        return {"status": "skipped", "message": msg}
 
     # Get repository settings - check if trigger_on_schedule is enabled
     repo_settings = get_repository(repo_id=repo_id)

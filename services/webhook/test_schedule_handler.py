@@ -42,13 +42,17 @@ class TestScheduleHandler:
 
     @patch("services.webhook.schedule_handler.get_installation_access_token")
     def test_schedule_handler_no_token(self, mock_get_token, mock_event):
-        """Test that schedule_handler raises ValueError when token is None."""
+        """Test that schedule_handler returns skipped status when token is None."""
         # Setup
         mock_get_token.return_value = None
 
-        # Execute and verify
-        with pytest.raises(ValueError, match="Token is None for installation_id"):
-            schedule_handler(mock_event)
+        # Execute
+        result = schedule_handler(mock_event)
+
+        # Verify
+        assert result["status"] == "skipped"
+        assert "Installation" in result["message"]
+        assert "no longer exists" in result["message"]
 
     @patch("services.webhook.schedule_handler.get_installation_access_token")
     @patch("services.webhook.schedule_handler.get_repository")
