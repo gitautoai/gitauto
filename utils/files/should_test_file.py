@@ -15,8 +15,10 @@ Return FALSE for trivial code that doesn't need tests."""
         system_prompt=system_prompt,
     )
 
-    # Convert result to boolean and handle None case
+    # Ensure we always return a boolean
+    # Handle None case explicitly
     if result is None:
         return False
     
-    return bool(result)
+    # Convert any truthy/falsy value to boolean
+    return True if result else False
