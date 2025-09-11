@@ -524,6 +524,7 @@ def test_get_installation_access_token_suspended_with_partial_message(
     mock_response = MagicMock()
     mock_response.status_code = 403
     mock_response.text = "Error: This installation has been suspended due to policy violation"
+    mock_response.reason = "Forbidden"
     mock_error = requests.exceptions.HTTPError(response=mock_response)
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
