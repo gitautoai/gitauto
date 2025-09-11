@@ -496,3 +496,65 @@ def test_combine_and_create_comment_all_billing_types(
         is_credit_user=False,
         credit_balance_usd=0,
     )
+
+
+def test_combine_and_create_comment_partial_generate_replacement(
+    mock_check_availability,
+    mock_create_comment,
+    mock_request_issue_comment,
+    create_test_base_args,
+):
+    """Test product ID replacement when only one Generate phrase is present."""
+    # Arrange
+    with patch("services.github.comments.combine_and_create_comment.PRODUCT_ID", "custom-product"):
+        base_comment = "Generate Tests for this issue. Please review the code."
+        installation_id = 12345
+        owner_id = 67890
+        owner_name = "test-owner"
+        sender_name = "test-sender"
+        base_args = create_test_base_args(repo="test-repo")
+
+        # Act
+        combine_and_create_comment(
+            base_comment=base_comment,
+            installation_id=installation_id,
+            owner_id=owner_id,
+            owner_name=owner_name,
+            sender_name=sender_name,
+            base_args=base_args,
+        )
+
+        # Assert
+        expected_body = "Generate Tests - custom-product for this issue. Please review the code." + mock_request_issue_comment.return_value
+        mock_create_comment.assert_called_once_with(body=expected_body, base_args=base_args)
+
+
+def test_combine_and_create_comment_case_sensitive_generate(
+    mock_check_availability,
+    mock_create_comment,
+    mock_request_issue_comment,
+    create_test_base_args,
+):
+    """Test that product ID replacement is case sensitive for 'Generate'."""
+    # Arrange
+    with patch("services.github.comments.combine_and_create_comment.PRODUCT_ID", "custom-product"):
+        base_comment = "generate tests for this issue. generate pr when ready."
+        installation_id = 12345
+        owner_id = 67890
+        owner_name = "test-owner"
+        sender_name = "test-sender"
+        base_args = create_test_base_args(repo="test-repo")
+
+        # Act
+        combine_and_create_comment(
+            base_comment=base_comment,
+            installation_id=installation_id,
+            owner_id=owner_id,
+            owner_name=owner_name,
+            sender_name=sender_name,
+            base_args=base_args,
+        )
+
+        # Assert - should not replace lowercase 'generate'
+        expected_body = base_comment + mock_request_issue_comment.return_value
+        mock_create_comment.assert_called_once_with(body=expected_body, base_args=base_args)
