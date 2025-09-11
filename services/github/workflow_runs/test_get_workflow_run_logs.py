@@ -590,3 +590,66 @@ def test_get_workflow_run_logs_single_line_log(
 
     # Assert
     assert result == expected_content
+
+
+def test_get_workflow_run_logs_timestamp_removal_verification(
+    mock_headers, test_owner, test_repo, test_token
+):
+    """Test that exactly 29 characters are removed from each line (not 28 as comment suggests)."""
+    # Arrange
+    run_id = 12345
+    failed_step_fname = "build/6_Run pytest.txt"
+    
+    # Create zip with specific timestamp format
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        # The timestamp format is exactly 29 characters: "2024-10-18T23:27:40.6602932Z "
+        log_content = "2024-10-18T23:27:40.6602932Z This should remain\n2024-10-18T23:27:41.1234567Z This should also remain"
+        zf.writestr("build/6_Run pytest.txt", log_content)
+    zip_buffer.seek(0)
+    
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.content = zip_buffer.getvalue()
+    
+    expected_content = "```GitHub Check Run Log: build/6_Run pytest.txt\nThis should remain\nThis should also remain\n```"
+
+    # Act
+    with patch(
+        "services.github.workflow_runs.get_workflow_run_logs.get"
+    ) as mock_get, patch(
+        "services.github.workflow_runs.get_workflow_run_logs.create_headers"
+    ) as mock_create_headers, patch(
+        "services.github.workflow_runs.get_workflow_run_logs.get_failed_step_log_file_name"
+    ) as mock_get_failed_step:
+        mock_create_headers.return_value = mock_headers
+        mock_get.return_value = mock_response
+        mock_get_failed_step.return_value = failed_step_fname
+        
+        result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
+
+    # Assert
+    assert result == expected_content
+
+
+def test_get_workflow_run_logs_invalid_zip_content(
+    mock_headers, test_owner, test_repo, test_token
+):
+    """Test handling of invalid zip content."""
+    # Arrange
+    run_id = 12345
+    failed_step_fname = "build/6_Run pytest.txt"
+    
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.content = b"invalid zip content"
+
+    # Act - function has handle_exceptions decorator, so it should return default value
+    with patch(
+        "services.github.workflow_runs.get_workflow_run_logs.get"
+    ) as mock_get, patch(
+        "services.github.workflow_runs.get_workflow_run_logs.create_headers"
+    ) as mock_create_headers, patch(
+        "services.github.workflow_runs.get_workflow_run_logs.get_failed_step_log_file_name"
+    ) as mock_get_failed_step:
+        mock_create_headers.return_value = mock_headers
