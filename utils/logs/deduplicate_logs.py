@@ -17,7 +17,7 @@ def deduplicate_logs(log_content: str) -> str:
     pattern_occurrences = {}
 
     # Check patterns of different sizes
-    for size in range(1, min(20, len(lines) // 3)):
+    for size in range(1, min(20, len(lines) // 2) + 1):
         for i in range(len(lines) - size + 1):
             pattern = tuple(lines[i : i + size])
             if pattern not in pattern_occurrences:
