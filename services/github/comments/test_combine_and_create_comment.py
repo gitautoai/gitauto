@@ -254,7 +254,7 @@ def test_combine_and_create_comment_cannot_proceed_with_user_message(
         is_credit_user=False,
         credit_balance_usd=0,
     )
-        body="You have reached your request limit.", base_args=base_args
+    mock_create_comment.assert_called_once_with(
     )
 
 
