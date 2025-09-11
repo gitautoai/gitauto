@@ -96,6 +96,7 @@ def test_get_installation_access_token_not_found(
     installation_id = 12345
     mock_response = MagicMock()
     mock_response.status_code = 404
+    mock_response.reason = "Not Found"
     mock_error = requests.exceptions.HTTPError(response=mock_response)
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
