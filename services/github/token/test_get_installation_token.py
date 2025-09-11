@@ -167,6 +167,7 @@ def test_get_installation_access_token_422_error(
     mock_response = MagicMock()
     mock_response.status_code = 422
     mock_response.text = "Unprocessable Entity"
+    mock_response.reason = "Unprocessable Entity"
     mock_error = requests.exceptions.HTTPError(response=mock_response)
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
