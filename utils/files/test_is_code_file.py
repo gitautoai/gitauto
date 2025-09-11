@@ -147,3 +147,20 @@ def test_is_code_file_invalid_input():
     assert is_code_file([]) is False
     assert is_code_file({}) is False
     assert is_code_file(True) is False
+
+
+def test_is_code_file_with_paths():
+    assert is_code_file("src/main.py") is True
+    assert is_code_file("utils/helper.js") is True
+    assert is_code_file("lib/module.rb") is True
+    assert is_code_file("package/file.go") is True
+    assert is_code_file("very/long/path/to/deeply/nested/file.cpp") is True
+    assert is_code_file("src/components/Button.tsx") is True
+
+
+def test_is_code_file_real_world_examples():
+    assert is_code_file("services/webhook/merge_handler.py") is True
+    assert is_code_file("utils/files/is_code_file.py") is True
+    assert is_code_file("config/database.yml") is False
+    assert is_code_file("README.md") is False
+    assert is_code_file("package-lock.json") is False
