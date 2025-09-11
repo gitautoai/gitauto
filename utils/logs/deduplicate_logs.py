@@ -55,7 +55,8 @@ def deduplicate_logs(log_content: str) -> str:
 
         # Handle scattered repetitions (new logic)
         # If pattern appears 3+ times scattered, keep only first occurrence
-        if len(positions) >= 3:
+        # Only apply scattered logic if no consecutive groups were found
+        if len(positions) >= 3 and not consecutive_groups:
             for pos in positions[1:]:  # Keep first 1, remove rest
                 for j in range(size):
                     to_remove.add(pos + j)
