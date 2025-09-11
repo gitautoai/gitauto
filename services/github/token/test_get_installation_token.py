@@ -144,6 +144,7 @@ def test_get_installation_access_token_other_http_error(
     mock_response = MagicMock()
     mock_response.status_code = 500
     mock_response.text = "Internal Server Error"
+    mock_response.reason = "Internal Server Error"
     mock_error = requests.exceptions.HTTPError(response=mock_response)
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
