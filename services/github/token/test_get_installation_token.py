@@ -317,6 +317,7 @@ def test_get_installation_access_token_rate_limit_429(
     mock_response = MagicMock()
     mock_response.status_code = 429
     mock_response.text = "Rate limit exceeded"
+    mock_response.reason = "Too Many Requests"
     mock_response.headers = {
         "X-RateLimit-Limit": "5000",
         "X-RateLimit-Remaining": "100",  # Not rate limited, so no retry
