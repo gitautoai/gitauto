@@ -524,3 +524,123 @@ def test_get_review_thread_comments_thread_with_missing_comments_structure(
     # Assert
     assert result == []
     mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_non_dict_result_from_client(
+    mock_graphql_client, sample_params
+):
+    """Test handling when GraphQL client returns non-dict result."""
+    non_dict_results = [
+        None,
+        "string_result",
+        123,
+        [],
+        True,
+    ]
+
+    for non_dict_result in non_dict_results:
+        mock_graphql_client.reset_mock()
+        mock_graphql_client.execute.return_value = non_dict_result
+
+        result = get_review_thread_comments(**sample_params)
+
+        assert result == []
+        mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_non_dict_thread_objects(
+    mock_graphql_client, sample_params
+):
+    """Test handling of non-dict thread objects in threads list."""
+    response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {
+                    "nodes": [
+                        "string_thread",  # Non-dict thread
+                        None,  # None thread
+                        123,  # Number thread
+                        {
+                            "comments": {
+                                "nodes": [
+                                    {
+                                        "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+                                        "author": {"login": "user1"},
+                                        "body": "Valid comment",
+                                        "createdAt": "2023-01-01T10:00:00Z",
+                                    }
+                                ]
+                            }
+                        },  # Valid thread
+                    ]
+                }
+            }
+        }
+    }
+    mock_graphql_client.execute.return_value = response
+
+    result = get_review_thread_comments(**sample_params)
+
+    # Should find the valid thread and return its comments
+    expected_comments = [
+        {
+            "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+            "author": {"login": "user1"},
+            "body": "Valid comment",
+            "createdAt": "2023-01-01T10:00:00Z",
+        }
+    ]
+    assert result == expected_comments
+    mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_non_dict_comment_objects(
+    mock_graphql_client, sample_params
+):
+    """Test handling of non-dict comment objects in comments list."""
+    response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {
+                    "nodes": [
+                        {
+                            "comments": {
+                                "nodes": [
+                                    "string_comment",  # Non-dict comment
+                                    None,  # None comment
+                                    123,  # Number comment
+                                    {
+                                        "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+                                        "author": {"login": "user1"},
+                                        "body": "Valid comment",
+                                        "createdAt": "2023-01-01T10:00:00Z",
+                                    },  # Valid comment with target ID
+                                    {
+                                        "id": "AnotherValidComment",
+                                        "author": {"login": "user2"},
+                                        "body": "Another valid comment",
+                                        "createdAt": "2023-01-01T11:00:00Z",
+                                    },  # Another valid comment
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+    mock_graphql_client.execute.return_value = response
+
+    result = get_review_thread_comments(**sample_params)
+
+    # Should return all comments from the thread containing the target comment
+    # Non-dict comments should be ignored
+    expected_comments = [
+        "string_comment",
+        None,
+        123,
+        {
+            "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+            "author": {"login": "user1"},
+            "body": "Valid comment",
+            "createdAt": "2023-01-01T10:00:00Z",
