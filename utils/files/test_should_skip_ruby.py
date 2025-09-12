@@ -167,3 +167,11 @@ class MyComponent; end
 
 module MyModule; end"""
     assert should_skip_ruby(content) is True
+
+
+def test_autoload_statements():
+    # File with autoload statements should be skipped
+    content = """autoload :MyClass, 'my_class'
+autoload :AnotherClass, 'another_class'
+require 'json'"""
+    assert should_skip_ruby(content) is True
