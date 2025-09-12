@@ -10,7 +10,6 @@ import pytest
 from services.github.repositories.initialize_repo import initialize_repo
 
 
-@pytest.mark.integration
 def test_integration_initialize_repo_with_temp_directory(test_token):
     """Integration test for initialize_repo with a temporary directory."""
     # Create a temporary directory for testing
