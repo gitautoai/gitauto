@@ -184,8 +184,8 @@ def test_boundary_conditions():
     assert is_type_file("types.") is True  # Matches "types?." pattern
     assert is_type_file("_type.py") is True  # Matches "_types?." pattern
     assert is_type_file("_types.js") is True  # Matches "_types?." pattern
-    assert is_type_file("type_") is False  # Doesn't match any pattern
-    assert is_type_file("types_") is False  # Doesn't match any pattern
+    assert is_type_file("type_") is True  # Matches "^types?_" pattern
+    assert is_type_file("types_") is True  # Matches "^types?_" pattern
 
 
 def test_specific_model_file_restrictions():
