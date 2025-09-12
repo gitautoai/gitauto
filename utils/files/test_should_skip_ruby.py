@@ -290,3 +290,10 @@ ANOTHER_CONST_123 = 42
 _PRIVATE_CONST = true
 A = 'simple'"""
     assert should_skip_ruby(content) is True
+
+
+def test_module_with_multiple_attr_types():
+    # Test module with different attr_ declarations
+    content = """module TestModule
+  attr_accessor :name, :age
+  attr_reader :id
