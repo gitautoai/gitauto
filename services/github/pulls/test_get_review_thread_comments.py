@@ -644,3 +644,68 @@ def test_get_review_thread_comments_non_dict_comment_objects(
             "author": {"login": "user1"},
             "body": "Valid comment",
             "createdAt": "2023-01-01T10:00:00Z",
+
+
+def test_get_review_thread_comments_empty_comment_id_in_thread(
+    mock_graphql_client, sample_params
+):
+    """Test handling when comment has empty or None ID."""
+    response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {
+                    "nodes": [
+                        {
+                            "comments": {
+                                "nodes": [
+                                    {
+                                        "id": "",  # Empty ID
+                                        "author": {"login": "user1"},
+                                        "body": "Comment with empty ID",
+                                        "createdAt": "2023-01-01T10:00:00Z",
+                                    },
+                                    {
+                                        "id": None,  # None ID
+                                        "author": {"login": "user2"},
+                                        "body": "Comment with None ID",
+                                        "createdAt": "2023-01-01T11:00:00Z",
+                                    },
+                                    {
+                                        "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+                                        "author": {"login": "user3"},
+                                        "body": "Valid comment",
+                                        "createdAt": "2023-01-01T12:00:00Z",
+                                    },
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+    mock_graphql_client.execute.return_value = response
+
+    result = get_review_thread_comments(**sample_params)
+
+    # Should find the thread with the matching comment and return all comments
+    expected_comments = [
+        {
+            "id": "",
+            "author": {"login": "user1"},
+            "body": "Comment with empty ID",
+            "createdAt": "2023-01-01T10:00:00Z",
+        },
+        {
+            "id": None,
+            "author": {"login": "user2"},
+            "body": "Comment with None ID",
+            "createdAt": "2023-01-01T11:00:00Z",
+        },
+        {
+            "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+            "author": {"login": "user3"},
+            "body": "Valid comment",
+            "createdAt": "2023-01-01T12:00:00Z",
+        },
+    ]
