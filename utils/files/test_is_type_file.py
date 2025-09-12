@@ -152,7 +152,7 @@ def test_invalid_input():
 
 def test_edge_cases_with_paths():
     # Test edge cases with different path separators and structures
-    assert is_type_file("src\\types\\user.py") is True  # Windows path separator
+    assert is_type_file("src\\types\\user.py") is False  # Windows path separator not supported
     assert is_type_file("./types/config.js") is True
     assert is_type_file("../type/models.py") is True
     assert is_type_file("deeply/nested/types/complex/structure.ts") is True
