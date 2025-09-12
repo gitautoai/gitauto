@@ -297,6 +297,7 @@ def test_module_with_multiple_attr_types():
     content = """module TestModule
   attr_accessor :name, :age
   attr_reader :id
+  attr_writer :status
 
 
 def test_only_comments_and_empty_lines():
