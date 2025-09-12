@@ -1,7 +1,6 @@
 from unittest.mock import patch, MagicMock
 
 import pytest
-from gql.transport.exceptions import TransportQueryError
 
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 
