@@ -311,3 +311,9 @@ def test_executable_code():
     # File with executable code should not be skipped
     content = """puts 'Hello World'
 x = 1 + 2"""
+
+
+def test_lowercase_variable_assignment():
+    # Lowercase variable assignment should not be skipped
+    content = """my_variable = 'value'
+another_var = 42"""
