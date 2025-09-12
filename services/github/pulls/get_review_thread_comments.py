@@ -6,7 +6,7 @@ from utils.error.handle_exceptions import handle_exceptions
 @handle_exceptions(default_return_value=[], raise_on_error=False)
 def get_review_thread_comments(
     owner: str, repo: str, pull_number: int, comment_node_id: str, token: str
-):
+) -> list:
     """Get all comments in a review thread using GraphQL API
     https://docs.github.com/en/graphql/reference/objects#pullrequestreviewcomment
     """
