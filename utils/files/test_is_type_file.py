@@ -193,7 +193,7 @@ def test_specific_model_file_restrictions():
     assert is_type_file("models/user.py") is True
     assert is_type_file("model/api.py") is True
     assert is_type_file("models/config.js") is False  # Not Python
-    assert is_type_file("model/types.ts") is False  # Not Python
+    assert is_type_file("model/service.ts") is False  # Not Python, doesn't match type patterns
     assert is_type_file("models/data.java") is False  # Not Python
     assert is_type_file("models/service.rb") is False  # Not Python
     assert is_type_file("model/handler.php") is False  # Not Python
