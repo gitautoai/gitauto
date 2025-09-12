@@ -794,3 +794,33 @@ def test_get_review_thread_comments_with_various_parameter_combinations(
     assert variable_values["pull_number"] == pull_number
 
 
+
+
+def test_get_review_thread_comments_decorator_configuration():
+    """Test that the @handle_exceptions decorator is configured correctly."""
+    # The function should have the handle_exceptions decorator applied
+    # We can verify this by checking that exceptions return the default value (empty list)
+    # rather than raising the exception
+    
+    with patch(
+        "services.github.pulls.get_review_thread_comments.get_graphql_client"
+    ) as mock_get_client:
+        # Test that any exception results in empty list return (not raised)
+        mock_get_client.side_effect = Exception("Any exception")
+        
+        result = get_review_thread_comments("owner", "repo", 123, "comment_id", "token")
+        
+        # Should return empty list (default_return_value) instead of raising
+        assert result == []
+
+
+def test_get_review_thread_comments_handles_general_exception(sample_params):
+    """Test handling of general Exception (handled by @handle_exceptions decorator)."""
+    with patch(
+        "services.github.pulls.get_review_thread_comments.get_graphql_client"
+    ) as mock_get_client:
+        mock_get_client.side_effect = Exception("General exception")
+
+        result = get_review_thread_comments(**sample_params)
+        
+        assert result == []
