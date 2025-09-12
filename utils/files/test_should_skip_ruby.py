@@ -297,3 +297,11 @@ def test_module_with_multiple_attr_types():
     content = """module TestModule
   attr_accessor :name, :age
   attr_reader :id
+
+
+def test_only_comments_and_empty_lines():
+    # File with only comments and empty lines should be skipped
+    content = """# This is a comment
+
+# Another comment
+
