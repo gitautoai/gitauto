@@ -174,3 +174,27 @@ def test_partial_matches_should_not_match():
     assert is_type_file("constant_loader.py") is False  # Contains "constant" but not in pattern
     assert is_type_file("enum_parser.py") is False  # Contains "enum" but not in pattern
     assert is_type_file("model_factory.py") is False  # Contains "model" but not in pattern
+
+
+def test_boundary_conditions():
+    # Test boundary conditions for regex patterns
+    assert is_type_file("type") is False  # Just the word "type" without extension
+    assert is_type_file("types") is False  # Just the word "types" without extension
+    assert is_type_file("type.") is True  # Matches "types?." pattern
+    assert is_type_file("types.") is True  # Matches "types?." pattern
+    assert is_type_file("_type.py") is True  # Matches "_types?." pattern
+    assert is_type_file("_types.js") is True  # Matches "_types?." pattern
+    assert is_type_file("type_") is False  # Doesn't match any pattern
+    assert is_type_file("types_") is False  # Doesn't match any pattern
+
+
+def test_specific_model_file_restrictions():
+    # Test that only Python model files match the model pattern
+    assert is_type_file("models/user.py") is True
+    assert is_type_file("model/api.py") is True
+    assert is_type_file("models/config.js") is False  # Not Python
+    assert is_type_file("model/types.ts") is False  # Not Python
+    assert is_type_file("models/data.java") is False  # Not Python
+    assert is_type_file("models/service.rb") is False  # Not Python
+    assert is_type_file("model/handler.php") is False  # Not Python
+    assert is_type_file("models/component.tsx") is False  # Not Python
