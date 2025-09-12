@@ -555,3 +555,75 @@ class TestInitializeRepo:
             # Verify all git commands use the correct cwd
             for call_args in mock_run_command.call_args_list:
                 assert call_args[1]["cwd"] == test_repo_path
+
+    def test_initialize_repo_with_special_characters_in_path(
+        self,
+        mock_config_constants,
+        mock_url_constants,
+        test_remote_url,
+        test_token,
+    ):
+        """Test initialization with special characters in path."""
+        special_path = "/tmp/test-repo with spaces & symbols"
+        
+        with patch("os.path.exists", return_value=True), patch(
+            "builtins.open", mock_open()
+        ) as mock_file, patch(
+            "services.github.repositories.initialize_repo.run_command"
+        ) as mock_run_command:
+
+            initialize_repo(special_path, test_remote_url, test_token)
+
+            # Verify README.md path construction with special characters
+            expected_readme_path = os.path.join(special_path, "README.md")
+            mock_file.assert_called_once_with(expected_readme_path, "w", encoding="utf-8")
+
+            # Verify all git commands use the special path
+            for call_args in mock_run_command.call_args_list:
+                assert call_args[1]["cwd"] == special_path
+
+    def test_initialize_repo_with_special_characters_in_token(
+        self,
+        mock_config_constants,
+        mock_url_constants,
+        test_repo_path,
+        test_remote_url,
+    ):
+        """Test initialization with special characters in token."""
+        special_token = "ghp_token_with_special_chars!@#$%^&*()"
+        
+        with patch("os.path.exists", return_value=True), patch(
+            "builtins.open", mock_open()
+        ), patch(
+            "services.github.repositories.initialize_repo.run_command"
+        ) as mock_run_command:
+
+            initialize_repo(test_repo_path, test_remote_url, special_token)
+
+            # Verify token is correctly injected even with special characters
+            expected_auth_url = f"https://x-access-token:{special_token}@github.com/test-owner/test-repo.git"
+            remote_add_call = call(
+                command=f"git remote add origin {expected_auth_url}",
+                cwd=test_repo_path,
+            )
+            assert remote_add_call in mock_run_command.call_args_list
+
+    def test_initialize_repo_command_execution_order(
+        self,
+        mock_config_constants,
+        mock_url_constants,
+        test_repo_path,
+        test_remote_url,
+        test_token,
+    ):
+        """Test that git commands are executed in the correct order."""
+        with patch("os.path.exists", return_value=True), patch(
+            "builtins.open", mock_open()
+        ), patch(
+            "services.github.repositories.initialize_repo.run_command"
+        ) as mock_run_command:
+
+            initialize_repo(test_repo_path, test_remote_url, test_token)
+
+            # Verify the exact order of git commands
+            call_commands = [call.args[1]["command"] for call in mock_run_command.call_args_list]
