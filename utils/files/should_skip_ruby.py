@@ -54,14 +54,6 @@ def should_skip_ruby(content: str) -> bool:
         # Skip autoload
         if line.startswith("autoload "):
             continue
-        # Skip constants (Ruby constants are UPPERCASE)
-        if re.match(r"^[A-Z_][A-Z0-9_]*\s*=", line):
-            # Check if constant has function calls (like Pathname.new or ENV[])
-            if "(" in line and ")" in line:
-                return False
-            if "[" in line and "]" in line:
-                return False
-            continue
         # Handle empty class/module definitions
         if line.startswith("class ") or line.startswith("module "):
             in_empty_class = True
@@ -75,6 +67,14 @@ def should_skip_ruby(content: str) -> bool:
                 continue
             # If there's any other content inside the class/module, it's not empty
             return False
+        # Skip constants (Ruby constants are UPPERCASE)
+        if re.match(r"^[A-Z_][A-Z0-9_]*\s*=", line):
+            # Check if constant has function calls (like Pathname.new or ENV[])
+            if "(" in line and ")" in line:
+                return False
+            if "[" in line and "]" in line:
+                return False
+            continue
         # If we find any other code, it's not export-only
         return False
 
