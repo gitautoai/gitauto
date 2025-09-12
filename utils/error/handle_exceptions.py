@@ -42,8 +42,8 @@ def handle_exceptions(
                         raise
                     return default_return_value
 
-                reason: str | Any = err.response.reason
-                text: str | Any = err.response.text
+                reason: str | Any = str(err.response.reason) if err.response.reason is not None else "Unknown"
+                text: str | Any = str(err.response.text) if err.response.text is not None else "Unknown"
                 print(f"reason: {reason}, text: {text}, status_code: {status_code}")
 
                 if api_type == "github" and status_code in {403, 429}:
