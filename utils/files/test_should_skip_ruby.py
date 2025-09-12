@@ -305,3 +305,9 @@ def test_only_comments_and_empty_lines():
 
 # Another comment
 
+
+
+def test_executable_code():
+    # File with executable code should not be skipped
+    content = """puts 'Hello World'
+x = 1 + 2"""
