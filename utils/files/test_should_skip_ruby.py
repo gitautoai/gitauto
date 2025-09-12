@@ -281,3 +281,12 @@ def test_heredoc_end_marker_non_alpha():
   This is content
   123"""
     assert should_skip_ruby(content) is True
+
+
+def test_constants_with_complex_regex():
+    # Test constants that match the regex pattern
+    content = """MY_CONSTANT = 'value'
+ANOTHER_CONST_123 = 42
+_PRIVATE_CONST = true
+A = 'simple'"""
+    assert should_skip_ruby(content) is True
