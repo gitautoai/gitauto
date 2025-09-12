@@ -644,6 +644,16 @@ def test_get_review_thread_comments_non_dict_comment_objects(
             "author": {"login": "user1"},
             "body": "Valid comment",
             "createdAt": "2023-01-01T10:00:00Z",
+        },
+        {
+            "id": "AnotherValidComment",
+            "author": {"login": "user2"},
+            "body": "Another valid comment",
+            "createdAt": "2023-01-01T11:00:00Z",
+        },
+    ]
+    assert result == expected_comments
+    mock_graphql_client.execute.assert_called_once()
 
 
 def test_get_review_thread_comments_empty_comment_id_in_thread(
@@ -709,6 +719,8 @@ def test_get_review_thread_comments_empty_comment_id_in_thread(
             "createdAt": "2023-01-01T12:00:00Z",
         },
     ]
+    assert result == expected_comments
+    mock_graphql_client.execute.assert_called_once()
 
 
 def test_get_review_thread_comments_parameter_types():
@@ -792,8 +804,6 @@ def test_get_review_thread_comments_with_various_parameter_combinations(
     assert variable_values["owner"] == owner
     assert variable_values["repo"] == repo
     assert variable_values["pull_number"] == pull_number
-
-
 
 
 def test_get_review_thread_comments_decorator_configuration():
