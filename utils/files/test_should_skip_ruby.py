@@ -233,3 +233,19 @@ def test_constants_with_parentheses_no_function():
     content = """MATH_EXPR = (1 + 2) * 3
 GROUPED = (value)"""
     assert should_skip_ruby(content) is False  # Parentheses are treated as function calls
+
+
+def test_mixed_comments_and_constants():
+    # Mix of comments, constants, and requires
+    content = """# This is a configuration file
+require 'logger'
+
+# Maximum retries
+MAX_RETRIES = 5
+
+=begin
+API configuration
+=end
+API_URL = 'https://example.com'
+
+# Debug flag
