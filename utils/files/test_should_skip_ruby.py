@@ -306,6 +306,7 @@ def test_only_comments_and_empty_lines():
 
 # Another comment
 
+# Final comment"""
 
 
 def test_executable_code():
