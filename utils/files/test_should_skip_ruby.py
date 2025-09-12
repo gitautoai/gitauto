@@ -257,3 +257,12 @@ def test_class_with_content_inside():
   CONSTANT = 'value'
 end"""
     assert should_skip_ruby(content) is False
+
+
+def test_nested_heredoc_markers():
+    # Test heredoc with nested << markers
+    content = """TEMPLATE = <<~TEXT
+  This has << inside
+  and more << markers
+TEXT"""
+    assert should_skip_ruby(content) is True
