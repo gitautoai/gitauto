@@ -197,3 +197,14 @@ def test_heredoc_without_proper_end():
   that continues
   without proper end"""
     assert should_skip_ruby(content) is True
+
+
+def test_multiline_comment_complete():
+    # Complete multi-line comment should be skipped
+    content = """=begin
+This is a multi-line comment
+that spans several lines
+=end
+
+MAX_SIZE = 100"""
+    assert should_skip_ruby(content) is True
