@@ -128,7 +128,6 @@ def test_whitespace_only():
 
 
 
-
     """
     assert should_skip_ruby(content) is True
 
@@ -249,6 +248,8 @@ API configuration
 API_URL = 'https://example.com'
 
 # Debug flag
+DEBUG = false"""
+    assert should_skip_ruby(content) is True
 
 
 def test_class_with_content_inside():
@@ -273,6 +274,7 @@ def test_heredoc_end_marker_with_spaces():
     content = """TEMPLATE = <<~TEXT
   This is content
   TEXT"""
+    assert should_skip_ruby(content) is True
 
 
 def test_heredoc_end_marker_non_alpha():
@@ -298,6 +300,8 @@ def test_module_with_multiple_attr_types():
   attr_accessor :name, :age
   attr_reader :id
   attr_writer :status
+end"""
+    assert should_skip_ruby(content) is True
 
 
 def test_only_comments_and_empty_lines():
@@ -307,15 +311,18 @@ def test_only_comments_and_empty_lines():
 # Another comment
 
 # Final comment"""
+    assert should_skip_ruby(content) is True
 
 
 def test_executable_code():
     # File with executable code should not be skipped
     content = """puts 'Hello World'
 x = 1 + 2"""
+    assert should_skip_ruby(content) is False
 
 
 def test_lowercase_variable_assignment():
     # Lowercase variable assignment should not be skipped
     content = """my_variable = 'value'
 another_var = 42"""
+    assert should_skip_ruby(content) is False
