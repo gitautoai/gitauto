@@ -218,3 +218,11 @@ that doesn't end properly
 
 MAX_SIZE = 100"""
     assert should_skip_ruby(content) is True
+
+
+def test_constants_with_brackets_no_function():
+    # Constants with brackets but no function calls should be skipped
+    content = """ARRAY_CONST = [1, 2, 3]
+HASH_CONST = {key: 'value'}
+STRING_CONST = 'simple string'"""
+    assert should_skip_ruby(content) is False  # Brackets are treated as function calls
