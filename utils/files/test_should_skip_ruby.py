@@ -249,3 +249,11 @@ API configuration
 API_URL = 'https://example.com'
 
 # Debug flag
+
+
+def test_class_with_content_inside():
+    # Class with non-attr content should not be skipped
+    content = """class MyClass
+  CONSTANT = 'value'
+end"""
+    assert should_skip_ruby(content) is False
