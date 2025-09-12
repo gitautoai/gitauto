@@ -257,7 +257,7 @@ def test_get_review_thread_comments_handles_graphql_exception_returns_empty_list
     with patch(
         "services.github.pulls.get_review_thread_comments.get_graphql_client"
     ) as mock_get_client:
-        mock_get_client.side_effect = TransportQueryError("GraphQL transport error")
+        mock_get_client.side_effect = Exception("GraphQL transport error")
 
         # Act
         result = get_review_thread_comments(**sample_params)
