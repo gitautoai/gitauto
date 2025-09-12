@@ -273,3 +273,11 @@ def test_heredoc_end_marker_with_spaces():
     content = """TEMPLATE = <<~TEXT
   This is content
   TEXT"""
+
+
+def test_heredoc_end_marker_non_alpha():
+    # Test heredoc end marker that is not alphabetic (should not end heredoc)
+    content = """TEMPLATE = <<~TEXT
+  This is content
+  123"""
+    assert should_skip_ruby(content) is True
