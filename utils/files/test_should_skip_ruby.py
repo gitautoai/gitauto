@@ -226,3 +226,10 @@ def test_constants_with_brackets_no_function():
 HASH_CONST = {key: 'value'}
 STRING_CONST = 'simple string'"""
     assert should_skip_ruby(content) is False  # Brackets are treated as function calls
+
+
+def test_constants_with_parentheses_no_function():
+    # Constants with parentheses but no actual function calls
+    content = """MATH_EXPR = (1 + 2) * 3
+GROUPED = (value)"""
+    assert should_skip_ruby(content) is False  # Parentheses are treated as function calls
