@@ -1,8 +1,11 @@
+# Standard imports
 import os
-import tempfile
 from unittest.mock import patch, mock_open, MagicMock, call
+
+# Third-party imports
 import pytest
 
+# Local imports
 from services.github.repositories.initialize_repo import initialize_repo
 
 
@@ -139,7 +142,7 @@ class TestInitializeRepo:
             "builtins.open", mock_open()
         ), patch(
             "services.github.repositories.initialize_repo.run_command"
-        ) as mock_run_command:
+        ) as mock_run_command, patch("builtins.print") as mock_print:
 
             # Make remote add command fail
             def side_effect(command, cwd):
@@ -157,6 +160,14 @@ class TestInitializeRepo:
                 cwd=test_repo_path,
             )
             assert set_url_call in mock_run_command.call_args_list
+
+            # Verify print statements for failed remote add and successful set-url
+            expected_print_calls = [
+                call(f"Adding remote: {test_remote_url}"),
+                call(f"Setting remote: {test_remote_url}"),
+                call("Remote set successfully"),
+            ]
+            mock_print.assert_has_calls(expected_print_calls)
 
     def test_initialize_repo_with_different_remote_url_formats(
         self,
@@ -351,7 +362,7 @@ class TestInitializeRepo:
             )
             assert remote_add_call in mock_run_command.call_args_list
 
-    def test_initialize_repo_print_statements(
+    def test_initialize_repo_print_statements_success(
         self,
         mock_config_constants,
         mock_url_constants,
@@ -359,7 +370,7 @@ class TestInitializeRepo:
         test_remote_url,
         test_token,
     ):
-        """Test that print statements are called correctly."""
+        """Test that print statements are called correctly for successful remote add."""
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
         ), patch(
@@ -374,3 +385,173 @@ class TestInitializeRepo:
                 call("Remote added successfully"),
             ]
             mock_print.assert_has_calls(expected_calls)
+
+    def test_initialize_repo_directory_already_exists(
+        self,
+        mock_config_constants,
+        mock_url_constants,
+        test_repo_path,
+        test_remote_url,
+        test_token,
+    ):
+        """Test that no directory creation occurs when directory already exists."""
+        with patch("os.path.exists", return_value=True), patch(
+            "os.makedirs"
+        ) as mock_makedirs, patch("builtins.open", mock_open()), patch(
+            "services.github.repositories.initialize_repo.run_command"
+        ):
+
+            initialize_repo(test_repo_path, test_remote_url, test_token)
+
+            # Verify makedirs was not called since directory exists
+            mock_makedirs.assert_not_called()
+
+    def test_initialize_repo_git_init_command_format(
+        self,
+        mock_config_constants,
+        mock_url_constants,
+        test_repo_path,
+        test_remote_url,
+        test_token,
+    ):
+        """Test that git init command uses main branch."""
+        with patch("os.path.exists", return_value=True), patch(
+            "builtins.open", mock_open()
+        ), patch(
+            "services.github.repositories.initialize_repo.run_command"
+        ) as mock_run_command:
+
+            initialize_repo(test_repo_path, test_remote_url, test_token)
+
+            # Verify git init command uses main branch
+            init_call = call(command="git init -b main", cwd=test_repo_path)
+            assert init_call in mock_run_command.call_args_list
+
+    def test_initialize_repo_commit_message_format(
+        self,
+        mock_config_constants,
+        mock_url_constants,
+        test_repo_path,
+        test_remote_url,
+        test_token,
+    ):
+        """Test that commit message is correctly formatted."""
+        with patch("os.path.exists", return_value=True), patch(
+            "builtins.open", mock_open()
+        ), patch(
+            "services.github.repositories.initialize_repo.run_command"
+        ) as mock_run_command:
+
+            initialize_repo(test_repo_path, test_remote_url, test_token)
+
+            # Verify commit command with correct message
+            commit_call = call(
+                command='git commit -m "Initial commit with README"',
+                cwd=test_repo_path,
+            )
+            assert commit_call in mock_run_command.call_args_list
+
+    def test_initialize_repo_push_command_format(
+        self,
+        mock_config_constants,
+        mock_url_constants,
+        test_repo_path,
+        test_remote_url,
+        test_token,
+    ):
+        """Test that push command uses correct format."""
+        with patch("os.path.exists", return_value=True), patch(
+            "builtins.open", mock_open()
+        ), patch(
+            "services.github.repositories.initialize_repo.run_command"
+        ) as mock_run_command:
+
+            initialize_repo(test_repo_path, test_remote_url, test_token)
+
+            # Verify push command format
+            push_call = call(command="git push -u origin main", cwd=test_repo_path)
+            assert push_call in mock_run_command.call_args_list
+
+    def test_initialize_repo_exception_in_remote_add_fallback(
+        self,
+        mock_config_constants,
+        mock_url_constants,
+        test_repo_path,
+        test_remote_url,
+        test_token,
+    ):
+        """Test exception handling in remote add with fallback to set-url."""
+        with patch("os.path.exists", return_value=True), patch(
+            "builtins.open", mock_open()
+        ), patch(
+            "services.github.repositories.initialize_repo.run_command"
+        ) as mock_run_command:
+
+            # Make only the remote add command fail
+            def side_effect(command, cwd):
+                if "git remote add origin" in command:
+                    raise ValueError("Remote add failed")
+                return MagicMock()
+
+            mock_run_command.side_effect = side_effect
+
+            result = initialize_repo(test_repo_path, test_remote_url, test_token)
+
+            # Should still return None (successful execution with fallback)
+            assert result is None
+
+            # Verify both remote add and set-url were attempted
+            add_call = call(
+                command=f"git remote add origin https://x-access-token:{test_token}@github.com/test-owner/test-repo.git",
+                cwd=test_repo_path,
+            )
+            set_url_call = call(
+                command=f"git remote set-url origin https://x-access-token:{test_token}@github.com/test-owner/test-repo.git",
+                cwd=test_repo_path,
+            )
+
+            assert add_call in mock_run_command.call_args_list
+            assert set_url_call in mock_run_command.call_args_list
+
+    def test_initialize_repo_readme_file_path_construction(
+        self,
+        mock_config_constants,
+        mock_url_constants,
+        test_remote_url,
+        test_token,
+    ):
+        """Test that README.md file path is constructed correctly."""
+        custom_path = "/custom/path/to/repo"
+        
+        with patch("os.path.exists", return_value=True), patch(
+            "builtins.open", mock_open()
+        ) as mock_file, patch(
+            "services.github.repositories.initialize_repo.run_command"
+        ):
+
+            initialize_repo(custom_path, test_remote_url, test_token)
+
+            # Verify README.md path construction
+            expected_readme_path = os.path.join(custom_path, "README.md")
+            mock_file.assert_called_once_with(expected_readme_path, "w", encoding="utf-8")
+
+    def test_initialize_repo_all_git_commands_use_correct_cwd(
+        self,
+        mock_config_constants,
+        mock_url_constants,
+        test_repo_path,
+        test_remote_url,
+        test_token,
+    ):
+        """Test that all git commands use the correct working directory."""
+        with patch("os.path.exists", return_value=True), patch(
+            "builtins.open", mock_open()
+        ), patch(
+            "services.github.repositories.initialize_repo.run_command"
+        ) as mock_run_command:
+
+            initialize_repo(test_repo_path, test_remote_url, test_token)
+
+            # Verify all git commands use the correct cwd
+            for call_args in mock_run_command.call_args_list:
+                assert call_args[1]["cwd"] == test_repo_path
