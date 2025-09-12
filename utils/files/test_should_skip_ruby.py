@@ -175,3 +175,16 @@ def test_autoload_statements():
 autoload :AnotherClass, 'another_class'
 require 'json'"""
     assert should_skip_ruby(content) is True
+
+
+def test_heredoc_with_end_marker():
+    # Heredoc with proper end marker should be skipped
+    content = """TEMPLATE = <<~EOF
+  This is a template
+  with multiple lines
+EOF
+
+ANOTHER = <<~MARKER
+  Another template
+MARKER"""
+    assert should_skip_ruby(content) is True
