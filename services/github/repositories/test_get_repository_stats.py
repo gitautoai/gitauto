@@ -1,4 +1,3 @@
-# Placeholder to check file content
 import subprocess
 from unittest.mock import Mock, patch
 
