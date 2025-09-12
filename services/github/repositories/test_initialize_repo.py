@@ -421,6 +421,70 @@ class TestInitializeRepo:
             "services.github.repositories.initialize_repo.run_command"
         ) as mock_run_command:
 
+
+    @pytest.mark.parametrize(
+        "repo_path,remote_url,token",
+        [
+            ("", "https://github.com/owner/repo.git", "token123"),
+            ("/tmp/repo", "", "token123"),
+            ("/tmp/repo", "https://github.com/owner/repo.git", ""),
+            ("", "", ""),
+        ],
+    )
+    def test_initialize_repo_with_empty_parameters_parametrized(
+        self,
+        mock_config_constants,
+        mock_url_constants,
+        repo_path,
+        remote_url,
+        token,
+    ):
+        """Test initialization with various empty parameter combinations."""
+        with patch("os.path.exists", return_value=True), patch(
+            "builtins.open", mock_open()
+        ), patch(
+            "services.github.repositories.initialize_repo.run_command"
+        ):
+
+            result = initialize_repo(repo_path, remote_url, token)
+            # Should return None regardless of empty parameters
+            assert result is None
+
+    @pytest.mark.parametrize(
+        "remote_url,expected_auth_url",
+        [
+            (
+                "https://github.com/owner/repo.git",
+                "https://x-access-token:token123@github.com/owner/repo.git",
+            ),
+            (
+                "https://github.com/owner/repo",
+                "https://x-access-token:token123@github.com/owner/repo",
+            ),
+            (
+                "https://github.com/org-name/repo-name.git",
+                "https://x-access-token:token123@github.com/org-name/repo-name.git",
+            ),
+            (
+                "https://custom-domain.com/owner/repo.git",
+                "https://x-access-token:token123@custom-domain.com/owner/repo.git",
+            ),
+        ],
+    )
+    def test_initialize_repo_token_injection_parametrized(
+        self,
+        mock_config_constants,
+        mock_url_constants,
+        test_repo_path,
+        remote_url,
+        expected_auth_url,
+    ):
+        """Test token injection with various URL formats."""
+        token = "token123"
+        
+        with patch("os.path.exists", return_value=True), patch(
+            "builtins.open", mock_open()
+        ), patch(
             initialize_repo(test_repo_path, test_remote_url, test_token)
 
             # Verify git init command uses main branch
