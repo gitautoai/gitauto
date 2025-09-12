@@ -266,3 +266,10 @@ def test_nested_heredoc_markers():
   and more << markers
 TEXT"""
     assert should_skip_ruby(content) is True
+
+
+def test_heredoc_end_marker_with_spaces():
+    # Test heredoc end marker that starts with spaces (should not end heredoc)
+    content = """TEMPLATE = <<~TEXT
+  This is content
+  TEXT"""
