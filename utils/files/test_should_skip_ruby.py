@@ -188,3 +188,12 @@ ANOTHER = <<~MARKER
   Another template
 MARKER"""
     assert should_skip_ruby(content) is True
+
+
+def test_heredoc_without_proper_end():
+    # Heredoc that doesn't end properly should still be handled
+    content = """TEMPLATE = <<~TEXT
+  This is a template
+  that continues
+  without proper end"""
+    assert should_skip_ruby(content) is True
