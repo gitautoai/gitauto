@@ -56,6 +56,9 @@ def should_skip_ruby(content: str) -> bool:
             continue
         # Handle empty class/module definitions
         if line.startswith("class ") or line.startswith("module "):
+            # Check if it's a single-line class/module definition
+            if line.endswith("; end") or line.endswith(";end"):
+                continue  # Single-line empty class/module, skip it
             in_empty_class = True
             continue
         if in_empty_class and line == "end":
