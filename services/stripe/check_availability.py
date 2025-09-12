@@ -6,6 +6,7 @@ from services.stripe.get_paid_subscription import get_paid_subscription
 from services.stripe.check_subscription_limit import check_subscription_limit
 from services.supabase.owners.get_stripe_customer_id import get_stripe_customer_id
 from services.supabase.owners.get_owner import get_owner
+from services.vercel.trigger_auto_reload import trigger_auto_reload
 from utils.text.get_subscription_limit_message import get_subscription_limit_message
 from utils.text.get_insufficient_credits_message import get_insufficient_credits_message
 from utils.error.handle_exceptions import handle_exceptions
@@ -94,6 +95,16 @@ def check_availability(
         credit_balance = owner["credit_balance_usd"] if owner else 0
         availability_status["credit_balance_usd"] = credit_balance
         availability_status["can_proceed"] = credit_balance > 0
+
+        # Check if credits are low but still available, and trigger auto-reload
+        if availability_status["can_proceed"] and owner:
+            auto_reload_enabled = owner.get("auto_reload_enabled", False)
+            auto_reload_threshold = owner.get("auto_reload_threshold_usd", 0)
+
+            # Trigger auto-reload if enabled and balance is at or below threshold
+            if auto_reload_enabled and credit_balance <= auto_reload_threshold:
+                trigger_auto_reload()
+
         if not availability_status["can_proceed"]:
             availability_status["user_message"] = get_insufficient_credits_message(
                 user_name=sender_name
