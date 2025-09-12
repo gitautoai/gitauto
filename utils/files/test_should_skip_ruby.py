@@ -208,3 +208,13 @@ that spans several lines
 
 MAX_SIZE = 100"""
     assert should_skip_ruby(content) is True
+
+
+def test_multiline_comment_incomplete():
+    # Incomplete multi-line comment (missing =end) should be handled
+    content = """=begin
+This is a multi-line comment
+that doesn't end properly
+
+MAX_SIZE = 100"""
+    assert should_skip_ruby(content) is True
