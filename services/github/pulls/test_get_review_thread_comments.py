@@ -709,3 +709,88 @@ def test_get_review_thread_comments_empty_comment_id_in_thread(
             "createdAt": "2023-01-01T12:00:00Z",
         },
     ]
+
+
+def test_get_review_thread_comments_parameter_types():
+    """Test that the function has the correct parameter type annotations."""
+    import inspect
+
+    # Get the function signature
+    sig = inspect.signature(get_review_thread_comments)
+
+    # Check parameter annotations
+    params = sig.parameters
+    assert params["owner"].annotation is str
+    assert params["repo"].annotation is str
+    assert params["pull_number"].annotation is int
+    assert params["comment_node_id"].annotation is str
+    assert params["token"].annotation is str
+
+
+def test_get_review_thread_comments_return_type_annotation():
+    """Test that the function has the correct return type annotation."""
+    import inspect
+
+    # Get the function signature
+    sig = inspect.signature(get_review_thread_comments)
+
+    # Check return annotation - should be list
+    return_annotation = sig.return_annotation
+    assert return_annotation is list
+
+
+def test_get_review_thread_comments_with_empty_string_parameters(mock_graphql_client):
+    """Test that the function handles empty string parameters."""
+    # Arrange
+    mock_graphql_client.execute.return_value = {
+        "repository": {"pullRequest": {"reviewThreads": {"nodes": []}}}
+    }
+
+    # Act
+    result = get_review_thread_comments("", "", 0, "", "")
+
+    # Assert
+    assert result == []
+    mock_graphql_client.execute.assert_called_once()
+
+    # Verify empty strings were passed correctly
+    call_args = mock_graphql_client.execute.call_args
+    variable_values = call_args[1]["variable_values"]
+    assert variable_values["owner"] == ""
+    assert variable_values["repo"] == ""
+    assert variable_values["pull_number"] == 0
+
+
+@pytest.mark.parametrize(
+    "owner,repo,pull_number,comment_node_id,token",
+    [
+        ("owner1", "repo1", 1, "comment1", "token1"),
+        ("test-org", "test-project", 999, "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==", "ghp_token123"),
+        ("user", "my-repo", 42, "PR_kwDOABCDEF4ABCDEFG", "personal_access_token"),
+        ("company", "product", 2023, "IC_kwDOABCDEF4ABCDEFG", "bot_token_xyz"),
+    ],
+)
+def test_get_review_thread_comments_with_various_parameter_combinations(
+    mock_graphql_client, owner, repo, pull_number, comment_node_id, token
+):
+    """Test that the function works with various parameter combinations."""
+    # Arrange
+    mock_graphql_client.execute.return_value = {
+        "repository": {"pullRequest": {"reviewThreads": {"nodes": []}}}
+    }
+
+    # Act
+    result = get_review_thread_comments(owner, repo, pull_number, comment_node_id, token)
+
+    # Assert
+    assert result == []
+    mock_graphql_client.execute.assert_called_once()
+
+    # Verify correct parameters were passed
+    call_args = mock_graphql_client.execute.call_args
+    variable_values = call_args[1]["variable_values"]
+    assert variable_values["owner"] == owner
+    assert variable_values["repo"] == repo
+    assert variable_values["pull_number"] == pull_number
+
+
