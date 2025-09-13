@@ -481,6 +481,17 @@ WHERE id = ?
 
 
 def test_edge_case_empty_braces():
+    # Edge case with various empty brace patterns
+    content = """struct Empty1 {};
+class Empty2 {};
+
+struct WithMembers {
+    int x;
+    string name;
+};
+
+enum SimpleEnum {};"""
+    assert should_skip_cpp(content) is True
 
 
 def test_nested_raw_strings():
