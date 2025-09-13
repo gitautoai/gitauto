@@ -58,6 +58,9 @@ def should_skip_cpp(content: str) -> bool:
         if re.match(r"^(struct|class)\s+\w+(\s*:\s*[^{]+)?\s*{", line):
             in_struct_or_class = True
             continue
+        # Handle single-line enum declarations
+        if re.match(r"^enum(\s+class)?\s+\w+\s*{\s*};", line):
+            continue
         if re.match(r"^enum(\s+class)?\s+\w+\s*{", line):
             in_enum = True
             continue
