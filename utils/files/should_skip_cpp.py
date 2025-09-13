@@ -109,7 +109,7 @@ def should_skip_cpp(content: str) -> bool:
         # Skip constants (C/C++ const are truly constant - compile-time immutable values)
         if line.startswith("const ") or line.startswith("static const "):
             # Check if the constant is initialized with a function call
-            if "(" in line and ")" in line and not line.endswith(";"):
+            if "(" in line and ")" in line:
                 return False
             continue
         if line.startswith("extern const ") or line.startswith("static "):
