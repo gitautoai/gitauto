@@ -666,7 +666,9 @@ def test_get_build_logs_http_error_raises_for_status(mock_get):
 
     mock_response = Mock()
     mock_response.status_code = 500
-    mock_response.raise_for_status.side_effect = requests.HTTPError("Server Error")
+    http_error = requests.HTTPError("Server Error")
+    http_error.response = mock_response
+    mock_response.raise_for_status.side_effect = http_error
     mock_get.return_value = mock_response
 
     # The handle_exceptions decorator should re-raise this since raise_on_error=True
