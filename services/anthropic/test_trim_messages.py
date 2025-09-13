@@ -448,7 +448,7 @@ def test_no_removable_messages_scenario(mock_client):
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
 
-    # Should keep all messages since system can't be removed and user is first
+    # Should keep the single user message since it's the first user message
     assert trimmed == messages
 
 
