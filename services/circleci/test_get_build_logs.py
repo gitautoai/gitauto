@@ -669,7 +669,7 @@ def test_get_build_logs_http_error_raises_for_status(mock_get):
     mock_response.raise_for_status.side_effect = requests.HTTPError("Server Error")
     mock_get.return_value = mock_response
 
-    # The handle_exceptions decorator should catch this and return None
+    # The handle_exceptions decorator should re-raise this since raise_on_error=True
     result = get_circleci_build_logs(project_slug, build_number, token)
 
     assert result is None
