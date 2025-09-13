@@ -78,12 +78,15 @@ def should_skip_cpp(content: str) -> bool:
             continue
 
         # Handle namespace blocks
-        # More specific namespace regex
-        if re.match(r"^namespace\s+[a-zA-Z_][a-zA-Z0-9_]*\s*{", line):
+        if line.startswith("namespace ") and line.endswith("{"):
             in_namespace = True
             continue
         if in_namespace:
-            if line == "}" or line.endswith("}"):
+            if line == "}":
+                in_namespace = False
+                continue
+            # Handle closing brace with optional content after it
+            if line.endswith("}") and not line.endswith("};"):
                 in_namespace = False
                 continue
             # Continue processing namespace content with normal rules
