@@ -481,3 +481,83 @@ WHERE id = ?
 
 
 def test_edge_case_empty_braces():
+
+
+def test_nested_raw_strings():
+    # Test nested or complex raw string scenarios
+    content = """const char* NESTED = R"(
+This contains R"( but not a real nested raw string
+)";
+
+const char* WITH_QUOTES = R"(
+String with "quotes" and 'apostrophes'
+)";"""
+    assert should_skip_cpp(content) is True
+
+
+def test_multiline_comment_edge_cases():
+    # Test multiline comment edge cases
+    content = """/* Start comment
+   continues here
+   */ const int VALUE = 42;
+
+/* Another /* nested-looking */ comment */
+static const bool FLAG = true;"""
+    assert should_skip_cpp(content) is True
+
+
+def test_class_with_constructor_only():
+    # Class with only constructor/destructor declarations (no implementation)
+    content = """class MyClass {
+public:
+    MyClass();
+    ~MyClass();
+    
+private:
+    int value;
+    std::string name;
+};"""
+    assert should_skip_cpp(content) is True
+
+
+def test_class_with_inline_constructor():
+    # Class with inline constructor implementation should NOT be skipped
+    content = """class MyClass {
+public:
+    MyClass() : value(0) {
+        // initialization code
+    }
+    
+private:
+    int value;
+};"""
+    assert should_skip_cpp(content) is False
+
+
+def test_typedef_complex():
+    # Complex typedef declarations
+    content = """typedef int (*FunctionPtr)(int, int);
+typedef struct {
+    int x, y;
+} Point;
+
+typedef enum {
+    RED, GREEN, BLUE
+} Color;"""
+    assert should_skip_cpp(content) is True
+
+
+def test_function_pointer_declarations():
+    # Function pointer declarations should be skipped
+    content = """extern int (*operation)(int, int);
+typedef void (*Callback)(const std::string&);
+
+const Callback default_callback = nullptr;"""
+    assert should_skip_cpp(content) is True
+
+
+def test_variable_with_function_call():
+    # Variables initialized with function calls should NOT be skipped
+    content = """const int SIZE = calculateSize();
+static bool initialized = initialize();"""
+    assert should_skip_cpp(content) is False
