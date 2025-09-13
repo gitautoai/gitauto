@@ -422,8 +422,8 @@ def test_complex_tool_chain_trimming(mock_client):
         length = len(messages)
         if length >= 6:
             return Mock(input_tokens=6000)  # Over limit
-        elif length >= 5:
-            return Mock(input_tokens=2500)  # Under limit
+        elif length >= 4:
+            return Mock(input_tokens=4000)  # Still over limit
         else:
             return Mock(input_tokens=2000)  # Under limit
 
