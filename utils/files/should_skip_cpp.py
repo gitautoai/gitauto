@@ -56,6 +56,20 @@ def should_skip_cpp(content: str) -> bool:
         if not line:
             continue
 
+        # Handle typedef declarations
+        if line.startswith("typedef "):
+            if line.endswith(";"):
+                # Single-line typedef
+                continue
+            else:
+                # Multi-line typedef (typedef struct/enum/etc.)
+                in_typedef = True
+                continue
+        if in_typedef:
+            if line.endswith(";"):
+                in_typedef = False
+            continue
+
         # Handle struct/class definitions (without implementation)
         # Handle single-line struct/class declarations
         if re.match(r"^(struct|class)\s+\w+(\s*:\s*[^{]+)?\s*{.*};\s*$", line):
