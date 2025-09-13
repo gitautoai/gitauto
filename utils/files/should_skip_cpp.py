@@ -20,6 +20,7 @@ def should_skip_cpp(content: str) -> bool:
     lines = content.split("\n")
     in_struct_or_class = False
     in_enum = False
+    in_namespace = False
     in_raw_string = False
     in_multiline_comment = False
 
