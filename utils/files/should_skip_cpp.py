@@ -120,11 +120,18 @@ def should_skip_cpp(content: str) -> bool:
                     return False
             continue
         if line.startswith("static const "):
+            # Check if the constant is initialized with a function call
+            if " = " in line and "(" in line and ")" in line:
+                if re.search(r'=\s*[a-zA-Z_][a-zA-Z0-9_]*\s*\(', line):
+                    return False
             continue
-        if line.startswith("extern const ") or line.startswith("static "):
-            # TODO: Check if the variable is initialized with a function call
-            # if re.search(r'=\s*[a-zA-Z_][a-zA-Z0-9_]*\s*\(', line):
-            #     return False
+        if line.startswith("static "):
+            # Check if the variable is initialized with a function call
+            if " = " in line and "(" in line and ")" in line:
+                if re.search(r'=\s*[a-zA-Z_][a-zA-Z0-9_]*\s*\(', line):
+                    return False
+            continue
+        if line.startswith("extern const "):
             continue
         # Skip enum declarations
         if line.startswith("enum ") and line.endswith(";"):
