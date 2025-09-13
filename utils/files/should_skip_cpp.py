@@ -116,9 +116,6 @@ def should_skip_cpp(content: str) -> bool:
             continue
         if line.startswith("struct ") and line.endswith(";"):
             continue
-        # Skip typedef forward declarations
-        if line.startswith("typedef ") and line.endswith(";"):
-            continue
         # Skip using statements (C++)
         if line.startswith("using "):
             continue
