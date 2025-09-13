@@ -659,7 +659,7 @@ def test_get_build_logs_missing_step_name(mock_get):
 
 @patch("services.circleci.get_build_logs.get")
 def test_get_build_logs_http_error_raises_for_status(mock_get):
-    """Test that HTTP errors are handled by the decorator."""
+    """Test that HTTP errors are raised when raise_on_error=True."""
     project_slug = "test/project/slug"
     build_number = 16
     token = "test-token"
