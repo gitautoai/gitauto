@@ -670,9 +670,8 @@ def test_get_build_logs_http_error_raises_for_status(mock_get):
     mock_get.return_value = mock_response
 
     # The handle_exceptions decorator should re-raise this since raise_on_error=True
-    result = get_circleci_build_logs(project_slug, build_number, token)
-
-    assert result is None
+    with pytest.raises(requests.HTTPError, match="Server Error"):
+        get_circleci_build_logs(project_slug, build_number, token)
 
 
 @patch("services.circleci.get_build_logs.get")
