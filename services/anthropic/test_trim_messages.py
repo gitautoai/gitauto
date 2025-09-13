@@ -407,7 +407,7 @@ def test_messages_list_is_copied(mock_client):
 
 
 def test_complex_tool_chain_trimming(mock_client):
-    """Test trimming with multiple tool_use/tool_result pairs."""
+    """Test trimming removes both tool_use/tool_result pairs when over token limit."""
     messages = [
         make_message("user", "initial"),
         make_tool_use_message("assistant", "tool1"),
