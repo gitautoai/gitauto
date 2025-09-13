@@ -84,6 +84,7 @@ def should_skip_cpp(content: str) -> bool:
         if in_namespace:
             if line == "}" or line.endswith("}"):
                 in_namespace = False
+                continue
             # Continue processing namespace content with normal rules
             # Don't skip here, let it fall through to other checks
             pass
