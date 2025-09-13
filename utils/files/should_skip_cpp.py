@@ -67,7 +67,10 @@ def should_skip_cpp(content: str) -> bool:
                 continue
         if in_typedef:
             if line.endswith(";"):
-                in_typedef = False
+                # Check if this is the end of the typedef (should start with } or be a simple line)
+                if line.startswith("}") or not line.strip().endswith(","):
+                    in_typedef = False
+                # Continue regardless - we're still in typedef processing
             continue
 
         # Handle struct/class definitions (without implementation)
