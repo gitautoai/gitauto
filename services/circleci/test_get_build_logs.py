@@ -665,6 +665,8 @@ def test_get_build_logs_http_error_raises_for_status(mock_get):
     token = "test-token"
 
     mock_response = Mock()
+    mock_response.reason = "Internal Server Error"
+    mock_response.text = "Server Error"
     mock_response.status_code = 500
     http_error = requests.HTTPError("Server Error")
     http_error.response = mock_response
