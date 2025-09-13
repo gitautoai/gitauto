@@ -23,6 +23,7 @@ def should_skip_cpp(content: str) -> bool:
     in_namespace = False
     in_raw_string = False
     in_multiline_comment = False
+    in_typedef = False
 
     for line in lines:
         line = line.strip()
