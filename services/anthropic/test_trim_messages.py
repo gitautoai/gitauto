@@ -440,7 +440,6 @@ def test_complex_tool_chain_trimming(mock_client):
 def test_no_removable_messages_scenario(mock_client):
     """Test scenario where no messages can be removed."""
     messages = [
-        make_message("system", "system prompt"),
         make_message("user", "only user message"),
     ]
 
