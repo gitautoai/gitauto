@@ -181,3 +181,303 @@ class MyComponent {};
 
 struct MyStruct {};"""
     assert should_skip_cpp(content) is True
+
+
+def test_raw_string_literals():
+    # Raw string literals should be skipped
+    content = """const char* SQL_QUERY = R"(
+SELECT * FROM users 
+WHERE id = ?
+AND status = 'active'
+)";
+
+const char* JSON_TEMPLATE = R"(
+{
+    "name": "test",
+    "value": 123
+}
+)";"""
+    assert should_skip_cpp(content) is True
+
+
+def test_raw_string_with_parentheses():
+    # Raw string with complex content including parentheses
+    content = """const char* COMPLEX_STRING = R"(
+This string contains (parentheses) and other symbols
+function() { return true; }
+)";"""
+    assert should_skip_cpp(content) is True
+
+
+def test_multiline_comments():
+    # File with multiline comments should be skipped
+    content = """/*
+This is a multiline comment
+that spans multiple lines
+*/
+
+/* Another comment */
+const int VALUE = 42;"""
+    assert should_skip_cpp(content) is True
+
+
+def test_multiline_comment_with_code():
+    # Multiline comment followed by actual code
+    content = """/*
+Header comment
+*/
+
+int calculate() {
+    return 42;
+}"""
+    assert should_skip_cpp(content) is False
+
+
+def test_single_line_comments():
+    # File with only single-line comments and constants
+    content = """// Configuration constants
+const int MAX_CONNECTIONS = 100;
+// API endpoint
+const char* API_URL = "https://api.example.com";
+// Debug flag
+const bool DEBUG_MODE = false;"""
+    assert should_skip_cpp(content) is True
+
+
+def test_struct_with_inheritance():
+    # Struct with inheritance should be skipped if no implementation
+    content = """struct Base {
+    int id;
+    std::string name;
+};
+
+struct Derived : public Base {
+    int value;
+    double score;
+};"""
+    assert should_skip_cpp(content) is True
+
+
+def test_class_with_inheritance():
+    # Class with inheritance should be skipped if no implementation
+    content = """class Animal {
+public:
+    std::string name;
+    int age;
+};
+
+class Dog : public Animal {
+public:
+    std::string breed;
+};"""
+    assert should_skip_cpp(content) is True
+
+
+def test_enum_declarations():
+    # Enum declarations should be skipped
+    content = """enum Color {
+    RED,
+    GREEN,
+    BLUE
+};
+
+enum class Status {
+    PENDING,
+    APPROVED,
+    REJECTED
+};"""
+    assert should_skip_cpp(content) is True
+
+
+def test_enum_forward_declaration():
+    # Enum forward declarations should be skipped
+    content = """enum Color;
+enum class Status;
+
+const int DEFAULT_COLOR = 1;"""
+    assert should_skip_cpp(content) is True
+
+
+def test_class_with_method_implementation():
+    # Class with method implementation should NOT be skipped
+    content = """class Calculator {
+private:
+    int value;
+
+public:
+    int getValue() {
+        return value;
+    }
+};"""
+    assert should_skip_cpp(content) is False
+
+
+def test_struct_with_method_implementation():
+    # Struct with method implementation should NOT be skipped
+    content = """struct Point {
+    int x, y;
+    
+    double distance() {
+        return sqrt(x*x + y*y);
+    }
+};"""
+    assert should_skip_cpp(content) is False
+
+
+def test_extern_declarations():
+    # Extern declarations should be skipped
+    content = """extern int global_counter;
+extern const char* version_string;
+extern void external_function();
+
+const int LOCAL_CONSTANT = 42;"""
+    assert should_skip_cpp(content) is True
+
+
+def test_forward_declarations():
+    # Forward declarations should be skipped
+    content = """class Database;
+struct Configuration;
+class Logger;
+
+typedef int UserId;
+typedef std::string UserName;"""
+    assert should_skip_cpp(content) is True
+
+
+def test_using_statements():
+    # Using statements should be skipped
+    content = """using std::string;
+using std::vector;
+using namespace std;
+
+using UserId = int;
+using UserMap = std::map<int, std::string>;"""
+    assert should_skip_cpp(content) is True
+
+
+def test_namespace_declarations():
+    # Namespace declarations should be skipped
+    content = """namespace utils {
+    const int MAX_SIZE = 1000;
+}
+
+namespace config {
+    const char* VERSION = "1.0.0";
+}"""
+    assert should_skip_cpp(content) is True
+
+
+def test_template_declarations():
+    # Template declarations should be skipped
+    content = """template<typename T>
+class Container;
+
+template<class T, int N>
+struct Array {
+    T data[N];
+};"""
+    assert should_skip_cpp(content) is True
+
+
+def test_static_declarations():
+    # Static declarations should be skipped
+    content = """static const int MAX_BUFFER = 1024;
+static int counter = 0;
+static const char* DEFAULT_NAME = "unknown";"""
+    assert should_skip_cpp(content) is True
+
+
+def test_preprocessor_directives():
+    # Various preprocessor directives should be skipped
+    content = """#ifndef HEADER_H
+#define HEADER_H
+
+#include <iostream>
+#include <vector>
+
+#define MAX_SIZE 100
+#define API_VERSION "1.0"
+
+#ifdef DEBUG
+#define LOG(x) std::cout << x << std::endl
+#else
+#define LOG(x)
+#endif
+
+#endif // HEADER_H"""
+    assert should_skip_cpp(content) is True
+
+
+def test_macro_definitions():
+    # Macro definitions should be skipped
+    content = """#define PI 3.14159
+#define MAX_RETRIES 5
+#define API_ENDPOINT "https://api.com"
+#define BUFFER_SIZE 1024"""
+    assert should_skip_cpp(content) is True
+
+
+def test_complex_mixed_declarations():
+    # Complex mix of declarations that should be skipped
+    content = """#include <iostream>
+#include <memory>
+
+// Forward declarations
+class Database;
+struct Config;
+
+// Using statements
+using std::string;
+using std::shared_ptr;
+
+// Constants
+const int MAX_CONNECTIONS = 100;
+static const char* VERSION = "2.0.0";
+
+// Extern declarations
+extern Database* g_database;
+
+// Template declarations
+template<typename T>
+class Repository;
+
+// Namespace
+namespace utils {
+    const bool DEBUG = true;
+}
+
+// Empty structs
+struct Point {
+    int x, y;
+};
+
+// Enums
+enum Status {
+    ACTIVE,
+    INACTIVE
+};"""
+    assert should_skip_cpp(content) is True
+
+
+def test_mixed_comments_and_raw_strings():
+    # Mix of comments and raw strings
+    content = """/*
+Configuration file
+*/
+
+// SQL queries
+const char* SELECT_QUERY = R"(
+SELECT id, name FROM users
+WHERE active = 1
+)";
+
+/* Another comment */
+const char* UPDATE_QUERY = R"(
+UPDATE users SET last_login = NOW()
+WHERE id = ?
+)";"""
+    assert should_skip_cpp(content) is True
+
+
+def test_edge_case_empty_braces():
