@@ -303,4 +303,7 @@ def test_pull_request_completed_empty_names():
     is_automation = False
 
     result = pull_request_completed(issuer_name, sender_name, pr_url, is_automation)
+    # Empty names should be treated as same issuer and sender
+    expected = f"@ {COMPLETED_PR} {pr_url} 🚀\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+
     assert result == expected
