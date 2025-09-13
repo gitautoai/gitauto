@@ -486,7 +486,14 @@ def test_tool_use_at_end_of_messages(mock_client):
     ]
 
     # Force trimming
-    mock_client.messages.count_tokens.return_value = Mock(input_tokens=5000)
+    def count_tokens_progressive(messages, model):
+        # Return tokens based on message count to simulate realistic behavior
+        if len(messages) >= 2:
+            return Mock(input_tokens=5000)  # Over limit, needs trimming
+        else:
+            return Mock(input_tokens=800)   # Under limit, stop trimming
+    
+    mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
 
