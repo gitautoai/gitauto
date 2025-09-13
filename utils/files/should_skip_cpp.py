@@ -102,9 +102,6 @@ def should_skip_cpp(content: str) -> bool:
         # Skip using statements (C++)
         if line.startswith("using "):
             continue
-        # Skip namespace declarations
-        if line.startswith("namespace "):
-            continue
         # Skip template declarations
         if line.startswith("template"):
             continue
