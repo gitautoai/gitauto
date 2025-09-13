@@ -78,7 +78,8 @@ def should_skip_cpp(content: str) -> bool:
             continue
 
         # Handle namespace blocks
-        if re.match(r"^namespace\s+\w+\s*{", line):
+        # More specific namespace regex
+        if re.match(r"^namespace\s+[a-zA-Z_][a-zA-Z0-9_]*\s*{", line):
             in_namespace = True
             continue
         if in_namespace:
