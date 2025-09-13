@@ -108,11 +108,11 @@ def should_skip_cpp(content: str) -> bool:
             continue
         # Skip constants (C/C++ const are truly constant - compile-time immutable values)
         if line.startswith("const ") or line.startswith("static const "):
-            # Check if the constant is initialized with a function call
+            # TODO: Check if the constant is initialized with a function call
             # Look for pattern like "= functionName(" but not in string literals
             # More specific: function call should have identifier followed by opening paren
-            if re.search(r'=\s*[a-zA-Z_][a-zA-Z0-9_]*\s*\(', line):
-                return False
+            # if re.search(r'=\s*[a-zA-Z_][a-zA-Z0-9_]*\s*\(', line):
+            #     return False
             continue
         if line.startswith("extern const ") or line.startswith("static "):
             # Check if the variable is initialized with a function call
