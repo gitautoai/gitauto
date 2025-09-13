@@ -1,4 +1,5 @@
 # pylint: disable=redefined-outer-name
+# pylint: disable=too-many-public-methods
 """Unit tests for the should_test_file function."""
 
 from unittest.mock import patch
