@@ -25,7 +25,6 @@ def should_skip_cpp(content: str) -> bool:
     in_multiline_comment = False
     in_typedef = False
 
-    brace_count = 0
     for line in lines:
         line = line.strip()
 
@@ -64,7 +63,7 @@ def should_skip_cpp(content: str) -> bool:
                 continue
             else:
                 # Multi-line typedef (typedef struct/enum/etc.)
-                brace_count = line.count('{') - line.count('}')
+                typedef_brace_count = line.count('{') - line.count('}')
                 in_typedef = True
                 continue
         if in_typedef:
@@ -72,9 +71,9 @@ def should_skip_cpp(content: str) -> bool:
             brace_count += line.count('{') - line.count('}')
             if line.endswith(";"):
                 # Only end typedef if we're at brace level 0 (outside of struct/enum body)
-                if brace_count <= 0:
+                if typedef_brace_count <= 0:
                     in_typedef = False
-                    brace_count = 0
+                    typedef_brace_count = 0
                 # Continue regardless - we're still processing typedef content
                 continue
             continue
