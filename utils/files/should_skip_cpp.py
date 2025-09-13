@@ -77,6 +77,17 @@ def should_skip_cpp(content: str) -> bool:
                 return False
             continue
 
+        # Handle namespace blocks
+        if re.match(r"^namespace\s+\w+\s*{", line):
+            in_namespace = True
+            continue
+        if in_namespace:
+            if line == "}" or line.endswith("}"):
+                in_namespace = False
+            # Continue processing namespace content with normal rules
+            # Don't skip here, let it fall through to other checks
+            pass
+
         # Skip extern declarations
         if line.startswith("extern "):
             continue
