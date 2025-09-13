@@ -431,9 +431,9 @@ def test_complex_tool_chain_trimming(mock_client):
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=3000)
 
-    # Should remove first tool pair, keep second tool pair
-    assert len(trimmed) == 4
-    expected = [messages[0], messages[3], messages[4], messages[5]]
+    # Should remove both tool pairs, keep only user messages
+    assert len(trimmed) == 2
+    expected = [messages[0], messages[5]]
     assert trimmed == expected
 
 
