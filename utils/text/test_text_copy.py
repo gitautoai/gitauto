@@ -164,4 +164,89 @@ def test_request_issue_comment_zero_requests():
 
     expected = f"\n\n@{sender_name}, You have 0 requests left in this cycle which refreshes on {end_date}.\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
 
+
+
+def test_request_issue_comment_credit_user():
+    requests_left = 5  # This should be ignored when is_credit_user=True
+    sender_name = "test-user"
+    end_date = datetime(2025, 5, 1, tzinfo=timezone.utc)
+    is_credit_user = True
+    credit_balance_usd = 100
+
+    result = request_issue_comment(
+        requests_left, sender_name, end_date, is_credit_user, credit_balance_usd
+    )
+
+    expected = f"\n\n@{sender_name}, You have ${credit_balance_usd} in credits remaining. [View credits]({DASHBOARD_CREDITS_URL})\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
+
+    assert result == expected
+
+
+def test_request_issue_comment_credit_user_zero_balance():
+    requests_left = 10  # This should be ignored when is_credit_user=True
+    sender_name = "test-user"
+    end_date = datetime(2025, 5, 1, tzinfo=timezone.utc)
+    is_credit_user = True
+    credit_balance_usd = 0
+
+    result = request_issue_comment(
+        requests_left, sender_name, end_date, is_credit_user, credit_balance_usd
+    )
+
+    expected = f"\n\n@{sender_name}, You have ${credit_balance_usd} in credits remaining. [View credits]({DASHBOARD_CREDITS_URL})\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
+
+    assert result == expected
+
+
+def test_request_issue_comment_credit_user_default_balance():
+    requests_left = 5
+    sender_name = "test-user"
+    end_date = datetime(2025, 5, 1, tzinfo=timezone.utc)
+    is_credit_user = True
+    # credit_balance_usd defaults to 0
+
+    result = request_issue_comment(requests_left, sender_name, end_date, is_credit_user)
+
+    expected = f"\n\n@{sender_name}, You have $0 in credits remaining. [View credits]({DASHBOARD_CREDITS_URL})\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
+
+    assert result == expected
+
+
+def test_git_command_with_special_characters():
+    branch_name = "feature/fix-bug-#123"
+    result = git_command(branch_name)
+
+    expected = (
+        f"\n\n## Test these changes locally\n\n"
+        f"```\n"
+        f"git fetch origin\n"
+        f"git checkout {branch_name}\n"
+        f"git pull origin {branch_name}\n"
+        f"```"
+    )
+
+    assert result == expected
+
+
+def test_git_command_empty_branch_name():
+    branch_name = ""
+    result = git_command(branch_name)
+
+    expected = (
+        f"\n\n## Test these changes locally\n\n"
+        f"```\n"
+        f"git fetch origin\n"
+        f"git checkout {branch_name}\n"
+        f"git pull origin {branch_name}\n"
+        f"```"
+    )
+
+    assert result == expected
+
+
+def test_update_comment_constants():
+    # Test that the constants are properly formatted and contain expected content
+    assert EMAIL_LINK in UPDATE_COMMENT_FOR_422
+    assert "I'm a bit lost here!" in UPDATE_COMMENT_FOR_422
+    assert "feedback or need help?" in UPDATE_COMMENT_FOR_422
     assert result == expected
