@@ -164,6 +164,7 @@ def test_request_issue_comment_zero_requests():
 
     expected = f"\n\n@{sender_name}, You have 0 requests left in this cycle which refreshes on {end_date}.\nIf you have any questions or concerns, please contact us at {EMAIL_LINK}."
 
+    assert result == expected
 
 
 def test_request_issue_comment_credit_user():
