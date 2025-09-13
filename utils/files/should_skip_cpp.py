@@ -55,6 +55,9 @@ def should_skip_cpp(content: str) -> bool:
             continue
 
         # Handle struct/class definitions (without implementation)
+        # Handle single-line struct/class declarations
+        if re.match(r"^(struct|class)\s+\w+(\s*:\s*[^{]+)?\s*{.*};\s*$", line):
+            continue
         if re.match(r"^(struct|class)\s+\w+(\s*:\s*[^{]+)?\s*{", line):
             in_struct_or_class = True
             continue
