@@ -249,4 +249,54 @@ def test_update_comment_constants():
     assert EMAIL_LINK in UPDATE_COMMENT_FOR_422
     assert "I'm a bit lost here!" in UPDATE_COMMENT_FOR_422
     assert "feedback or need help?" in UPDATE_COMMENT_FOR_422
+
+
+def test_pull_request_completed_automation_bot_issuer_bot_sender():
+    issuer_name = "sentry-io[bot]"
+    sender_name = "gitauto-ai[bot]"
+    pr_url = "https://github.com/test/repo/pull/1"
+    is_automation = True
+
+    result = pull_request_completed(issuer_name, sender_name, pr_url, is_automation)
+
+    expected = f"{COMPLETED_PR} {pr_url} 🚀\n\nNote: I automatically create a pull request for an unassigned and open issue in order from oldest to newest once a day at 00:00 UTC, as long as you have remaining automation usage. Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+
+    assert result == expected
+
+
+def test_pull_request_completed_automation_different_users():
+    issuer_name = "test-user1"
+    sender_name = "test-user2"
+    pr_url = "https://github.com/test/repo/pull/1"
+    is_automation = True
+
+    result = pull_request_completed(issuer_name, sender_name, pr_url, is_automation)
+
+    expected = f"@{issuer_name} @{sender_name} {COMPLETED_PR} {pr_url} 🚀\n\nNote: I automatically create a pull request for an unassigned and open issue in order from oldest to newest once a day at 00:00 UTC, as long as you have remaining automation usage. Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+
+    assert result == expected
+
+
+def test_pull_request_completed_edge_case_product_id_in_issuer():
+    issuer_name = f"user-{PRODUCT_ID}-test"
+    sender_name = "different-user"
+    pr_url = "https://github.com/test/repo/pull/1"
+    is_automation = False
+
+    result = pull_request_completed(issuer_name, sender_name, pr_url, is_automation)
+
+    # Since PRODUCT_ID is in sender_name condition, but not in issuer_name condition,
+    # this should fall into the "different issuer and sender" case
+    expected = f"@{issuer_name} @{sender_name} {COMPLETED_PR} {pr_url} 🚀\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+
+    assert result == expected
+
+
+def test_pull_request_completed_empty_names():
+    issuer_name = ""
+    sender_name = ""
+    pr_url = "https://github.com/test/repo/pull/1"
+    is_automation = False
+
+    result = pull_request_completed(issuer_name, sender_name, pr_url, is_automation)
     assert result == expected
