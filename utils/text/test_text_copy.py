@@ -9,6 +9,7 @@ from utils.text.text_copy import (
 )
 from config import EMAIL_LINK, PRODUCT_ID
 from constants.messages import COMPLETED_PR
+from constants.urls import DASHBOARD_CREDITS_URL
 
 
 def test_git_command():
