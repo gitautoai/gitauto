@@ -585,3 +585,51 @@ def test_debug_simple_map():
 
 type User struct {
     Field map[string]int
+
+
+def test_debug_field_id():
+    # Debug test for ID field
+    content = """package main
+
+type User struct {
+    ID       int64
+}"""
+    assert should_skip_go(content) is True
+
+
+def test_debug_field_name():
+    # Debug test for Name field
+    content = """package main
+
+type User struct {
+    Name     string
+}"""
+    assert should_skip_go(content) is True
+
+
+def test_debug_field_email():
+    # Debug test for Email field
+    content = """package main
+
+type User struct {
+    Email    *string
+}"""
+    assert should_skip_go(content) is True
+
+
+def test_debug_field_tags():
+    # Debug test for Tags field
+    content = """package main
+
+type User struct {
+    Tags     []string
+}"""
+    assert should_skip_go(content) is True
+
+
+def test_debug_field_config():
+    # Debug test for Config field
+    content = """package main
+
+type User struct {
+    Config   *Config
