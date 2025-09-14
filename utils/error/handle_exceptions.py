@@ -5,26 +5,30 @@ from functools import wraps
 import json
 import logging
 import time
-from typing import Any, Callable, Tuple, TypeVar
+from typing import Any, Callable, Tuple
 
 # Third party imports
 import requests
-
-F = TypeVar("F", bound=Callable[..., Any])
 
 
 def handle_exceptions(
     default_return_value: Any = None,
     raise_on_error: bool = False,
     api_type: str = "github",  # "github" or "google"
-) -> Callable[[F], F]:
+) -> Callable[[Callable], Callable]:
     """https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#checking-the-status-of-your-rate-limit"""
 
-    def decorator(func: F) -> F:
+    def decorator(func: Callable) -> Callable:
         @wraps(wrapped=func)
         def wrapper(*args: Tuple[Any, ...], **kwargs: Any):
             log_args = list(args)
             log_kwargs = dict(kwargs)
+
+            # Determine what to return on error
+            if callable(default_return_value):
+                error_return = default_return_value(*args, **kwargs)
+            else:
+                error_return = default_return_value
 
             try:
                 return func(*args, **kwargs)
@@ -33,14 +37,14 @@ def handle_exceptions(
                 if err.response is None:
                     if raise_on_error:
                         raise
-                    return default_return_value
+                    return error_return
                 status_code: int = err.response.status_code
 
                 # Skip logging for 500 Internal Server Error as it's usually a temporary issue and no meaningful information is available
                 if status_code == 500:
                     if raise_on_error:
                         raise
-                    return default_return_value
+                    return error_return
 
                 reason: str | Any = (
                     str(err.response.reason)
@@ -124,7 +128,7 @@ def handle_exceptions(
                 logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
-            return default_return_value
+            return error_return
 
         return wrapper
 

@@ -13,6 +13,7 @@ from services.openai.functions.properties import FILE_PATH
 from utils.error.handle_exceptions import handle_exceptions
 from utils.text.strip_trailing_spaces import strip_trailing_spaces
 from utils.text.ensure_final_newline import ensure_final_newline
+from utils.text.sort_imports import sort_imports
 
 # Define the function for replacing remote file content
 REPLACE_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
@@ -55,7 +56,8 @@ def replace_remote_file_content(
     # Get the current file to retrieve its SHA (Secure Hash Algorithm)
     get_response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
 
-    # Strip trailing spaces and ensure final newline
+    # Sort imports, strip trailing spaces, and ensure final newline
+    file_content = sort_imports(file_content, file_path)
     file_content = strip_trailing_spaces(file_content)
     file_content = ensure_final_newline(file_content)
 

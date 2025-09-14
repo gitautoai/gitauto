@@ -291,6 +291,19 @@ aws lambda update-function-configuration --function-name pr-agent-prod --logging
 
 ## Architecture Overview
 
+### Execution Environment
+
+**CRITICAL**: GitAuto runs entirely on AWS Lambda, not in client environments. This means:
+
+- All code analysis, generation, and file processing happens on our Lambda instances
+- We can install tools via:
+  - Python packages in requirements.txt (e.g., isort, black, ruff)
+  - System packages via Dockerfile's dnf (e.g., patch, git)
+  - Node packages via Dockerfile's npm (e.g., prettier, eslint)
+- For Python tools, prefer direct imports over subprocess for better performance
+- Client repository configurations (.isort.cfg, .prettierrc, etc.) are not directly accessible
+- We should use neutral/default settings when formatting client code (no opinionated profiles)
+
 ### Core Application Structure
 
 - FastAPI Application: `main.py` - Entry point with webhook endpoints
