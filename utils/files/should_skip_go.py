@@ -56,7 +56,7 @@ def should_skip_go(content: str) -> bool:
             if "{" in line:
                 # Check if it's a single-line struct (e.g., "type MyStruct struct{}")
                 if line.endswith("}"):
-                    in_struct = False  # Single-line struct, don't set in_struct
+                    pass  # Single-line struct, don't increment brace count
                 else:
                     in_struct = True
             continue
