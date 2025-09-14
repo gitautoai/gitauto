@@ -25,7 +25,6 @@ def should_skip_go(content: str) -> bool:
 
     for line in lines:
         line = line.strip()
-        print(f"Processing line: '{line}', in_struct: {in_struct}, in_interface: {in_interface}")
         # Skip comments
         if line.startswith("//"):
             continue
