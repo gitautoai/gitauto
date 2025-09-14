@@ -31,12 +31,12 @@ echo -e "${GREEN}Virtual environment ready${NC}"
 # Generate TypedDict schemas directly from PostgreSQL
 echo -e "Generating TypedDict schemas..."
 PGPASSWORD="$SUPABASE_DB_PASSWORD_DEV" psql -h "aws-0-us-west-1.pooler.supabase.com" -U postgres.dkrxtcbaqzrodvsagwwn -d postgres -p 6543 -t -c "
-SELECT 
+SELECT
     table_name,
     column_name,
     data_type,
     is_nullable
-FROM information_schema.columns 
+FROM information_schema.columns
 WHERE table_schema = 'public' AND table_name NOT LIKE 'pg_%'
 ORDER BY table_name, ordinal_position;
 " | python3 -c "
@@ -51,12 +51,12 @@ for line in sys.stdin:
         parts = [p.strip() for p in line.split('|')]
         if len(parts) == 4:
             table_name, column_name, data_type, is_nullable = parts
-            
+
             # Convert PostgreSQL types to Python types
             type_mapping = {
                 'integer': 'int',
                 'bigint': 'int',
-                'text': 'str', 
+                'text': 'str',
                 'character varying': 'str',
                 'boolean': 'bool',
                 'timestamp with time zone': 'datetime.datetime',
@@ -69,11 +69,11 @@ for line in sys.stdin:
                 'double precision': 'float',
                 'numeric': 'float'
             }
-            
+
             python_type = type_mapping.get(data_type, 'Any')
             if is_nullable == 'YES':
                 python_type = f'{python_type} | None'
-                
+
             tables[table_name].append(f'    {column_name}: {python_type}')
 
 # Generate TypedDict file
@@ -82,13 +82,13 @@ with open('schemas/supabase/types.py', 'w') as f:
     f.write('from typing import Any\\n')
     f.write('from typing_extensions import TypedDict, NotRequired\\n')
     f.write('\\n\\n')
-    
+
     # Auto-generated fields to exclude from Insert types
     auto_fields = {'id', 'created_at', 'updated_at'}
-    
+
     for table_name in sorted(tables.keys()):
         class_name = ''.join(word.capitalize() for word in table_name.split('_'))
-        
+
         # Generate base TypedDict
         f.write(f'class {class_name}(TypedDict):\\n')
         if tables[table_name]:
@@ -96,7 +96,7 @@ with open('schemas/supabase/types.py', 'w') as f:
         else:
             f.write('    pass\\n')
         f.write('\\n\\n')  # Two blank lines after base class
-        
+
         # Generate Insert TypedDict (exclude auto-generated fields)
         insert_fields = []
         for field in tables[table_name]:
@@ -105,7 +105,7 @@ with open('schemas/supabase/types.py', 'w') as f:
                 # Make all fields in Insert type NotRequired for flexibility
                 field_type = ':'.join(field.strip().split(':')[1:]).strip()
                 insert_fields.append(f'    {field_name}: NotRequired[{field_type}]')
-        
+
         if insert_fields:
             f.write(f'class {class_name}Insert(TypedDict):\\n')
             f.write('\\n'.join(insert_fields) + '\\n')

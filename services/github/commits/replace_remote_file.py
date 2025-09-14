@@ -11,6 +11,7 @@ from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from services.openai.functions.properties import FILE_PATH
 from utils.error.handle_exceptions import handle_exceptions
+from utils.text.strip_trailing_spaces import strip_trailing_spaces
 
 # Define the function for replacing remote file content
 REPLACE_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
@@ -52,6 +53,9 @@ def replace_remote_file_content(
 
     # Get the current file to retrieve its SHA (Secure Hash Algorithm)
     get_response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
+
+    # Strip trailing spaces from file content
+    file_content = strip_trailing_spaces(file_content)
 
     # Set up the data for the PUT request
     message = (

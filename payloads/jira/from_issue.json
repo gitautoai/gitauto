@@ -3,7 +3,7 @@
   "projectId": "10001",
   "issue": {
     "id": "10123",
-    "key": "PROJ-456", 
+    "key": "PROJ-456",
     "title": "Fix authentication bug",
     "body": "## Description\n\nThe login system is not working properly...",
     "comments": [
@@ -17,7 +17,7 @@
     "email": "john.doe@company.com"
   },
   "reporter": {
-    "id": "5d2e8c12345678901234abcd", 
+    "id": "5d2e8c12345678901234abcd",
     "displayName": "John Doe",
     "email": "john.doe@company.com"
   },

@@ -116,7 +116,7 @@ source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https
 source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/ISSUE_ID/events/latest/" | python -m json.tool | grep -A 10 -B 5 "error_keyword"
 ```
 
-#### Investigating Token/Context Limit Errors (e.g., AGENT-146) 
+#### Investigating Token/Context Limit Errors (e.g., AGENT-146)
 
 When a Sentry issue shows a token limit error (e.g., "167,154 token context limit"), find the actual input that caused it:
 
@@ -183,6 +183,7 @@ AWS CLI is available and configured for us-west-1 region.
 #### IMPORTANT: CloudWatch Log Retrieval Issues
 
 **Known Issue:** The AWS CLI `get-log-events` command **will** return empty results even when logs exist in the CloudWatch console under these conditions:
+
 1. When called without `--start-from-head` (starts from end of stream by default)
 2. When at a page boundary with no events in that specific page
 3. When not using pagination with nextToken to retrieve subsequent pages
@@ -192,6 +193,7 @@ This is documented AWS API behavior, not a bug.
 **Solutions:**
 
 1. **Always use `--start-from-head` parameter:**
+
 ```bash
 aws logs get-log-events \
   --log-group-name "/aws/lambda/pr-agent-prod" \
@@ -200,6 +202,7 @@ aws logs get-log-events \
 ```
 
 2. **Implement pagination with nextToken:**
+
 ```python
 import boto3
 
@@ -215,7 +218,7 @@ while True:
     response = log_client.get_log_events(**params)
     events = response.get("events", [])
     all_events.extend(events)
-    
+
     next_token = response.get("nextForwardToken")
     # Stop when token repeats (no more events)
     if next_token == params.get("nextToken"):
@@ -224,6 +227,7 @@ while True:
 ```
 
 3. **Alternative: Use `filter-log-events` instead:**
+
 ```bash
 aws logs filter-log-events \
   --log-group-name "/aws/lambda/pr-agent-prod" \
@@ -450,7 +454,7 @@ When refactoring or replacing old systems, always be PROACTIVE and think compreh
    ```bash
    # Search for function imports
    grep -r "from.*function_name" .
-   # Search for function calls  
+   # Search for function calls
    grep -r "function_name(" .
    # Search for test files
    find . -name "*test*" -exec grep -l "function_name" {} \;
