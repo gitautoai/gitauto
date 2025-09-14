@@ -329,6 +329,7 @@ type User struct {
     Metadata map[string]interface{}
     Config   *Config
 }"""
+    print("Testing struct field definitions...")
     assert should_skip_go(content) is True
 
 
