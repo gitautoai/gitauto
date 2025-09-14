@@ -11,6 +11,7 @@ from config import UTF8
 from utils.files.get_file_content import get_file_content
 from utils.new_lines.detect_new_line import detect_line_break
 from utils.text.strip_trailing_spaces import strip_trailing_spaces
+from utils.text.ensure_final_newline import ensure_final_newline
 
 
 def apply_patch(original_text: str, diff_text: str):
@@ -86,6 +87,7 @@ def apply_patch(original_text: str, diff_text: str):
 
         modified_text = get_file_content(file_path=org_fname)
         modified_text = strip_trailing_spaces(modified_text)
+        modified_text = ensure_final_newline(modified_text)
         modified_text = modified_text.replace("\n", line_break)
 
     except subprocess.CalledProcessError as e:
@@ -102,6 +104,7 @@ def apply_patch(original_text: str, diff_text: str):
         # Get the original, diff, and reject file contents for debugging
         modified_text = get_file_content(file_path=org_fname)
         modified_text = strip_trailing_spaces(modified_text)
+        modified_text = ensure_final_newline(modified_text)
         modified_text = modified_text.replace("\n", line_break)
         diff_text = (
             get_file_content(file_path=diff_fname)
