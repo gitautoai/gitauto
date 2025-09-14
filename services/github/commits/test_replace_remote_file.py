@@ -583,7 +583,6 @@ def test_replace_file_json_decode_error_on_get(sample_base_args):
 
 def test_replace_remote_file_content_function_definition():
     """Test that the REPLACE_REMOTE_FILE_CONTENT function definition is properly structured."""
-    """Test that the REPLACE_REMOTE_FILE_CONTENT function definition is properly structured."""
     from services.github.commits.replace_remote_file import REPLACE_REMOTE_FILE_CONTENT
     
     # Verify function definition structure
@@ -608,4 +607,18 @@ def test_replace_remote_file_content_function_definition():
 
 def test_replace_file_with_extra_kwargs(
     mock_requests_get_existing_file,
-    from services.github.commits.replace_remote_file import REPLACE_REMOTE_FILE_CONTENT
+    mock_requests_put_success,
+    mock_create_headers,
+    sample_base_args,
+):
+    """Test that function handles extra kwargs properly (they should be ignored)."""
+    result = replace_remote_file_content(
+        file_content="content",
+        file_path="test.py",
+        base_args=sample_base_args,
+        extra_param="should_be_ignored",
+        another_param=123,
+    )
+
+    # Should work normally despite extra parameters
+    assert result == "Content replaced in the file: test.py successfully."
