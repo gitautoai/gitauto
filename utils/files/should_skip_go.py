@@ -54,7 +54,11 @@ def should_skip_go(content: str) -> bool:
         # Handle struct definitions (data types without methods)
         if line.startswith("type ") and "struct" in line:
             if "{" in line:
-                in_struct = True
+                # Check if it's a single-line struct (e.g., "type MyStruct struct{}")
+                if line.endswith("}"):
+                    in_struct = False  # Single-line struct, don't set in_struct
+                else:
+                    in_struct = True
             continue
         # Handle interface definitions
         if line.startswith("type ") and "interface" in line:
