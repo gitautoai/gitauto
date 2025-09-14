@@ -206,7 +206,9 @@ def test_get_installation_access_token_key_error(
     # Arrange
     installation_id = 12345
     mock_response = MagicMock()
-    mock_response.json.return_value = {"access_token": "wrong_key"}  # Missing "token" key
+    mock_response.json.return_value = {
+        "access_token": "wrong_key"
+    }  # Missing "token" key
     mock_requests_post.return_value = mock_response
 
     # Act
@@ -217,11 +219,13 @@ def test_get_installation_access_token_key_error(
     mock_requests_post.assert_called_once()
 
 
-def test_get_installation_access_token_get_jwt_exception(mock_create_headers, mock_requests_post):
+def test_get_installation_access_token_get_jwt_exception(
+    mock_create_headers, mock_requests_post
+):
     """Test handling of exception in get_jwt function"""
     # Arrange
     installation_id = 12345
-    
+
     with patch("services.github.token.get_installation_token.get_jwt") as mock_get_jwt:
         mock_get_jwt.side_effect = Exception("JWT generation failed")
 
@@ -233,12 +237,16 @@ def test_get_installation_access_token_get_jwt_exception(mock_create_headers, mo
         mock_requests_post.assert_not_called()
 
 
-def test_get_installation_access_token_create_headers_exception(mock_get_jwt, mock_requests_post):
+def test_get_installation_access_token_create_headers_exception(
+    mock_get_jwt, mock_requests_post
+):
     """Test handling of exception in create_headers function"""
     # Arrange
     installation_id = 12345
-    
-    with patch("services.github.token.get_installation_token.create_headers") as mock_create_headers:
+
+    with patch(
+        "services.github.token.get_installation_token.create_headers"
+    ) as mock_create_headers:
         mock_create_headers.side_effect = Exception("Header creation failed")
 
         # Act
@@ -255,7 +263,9 @@ def test_get_installation_access_token_requests_exception(
     """Test handling of general requests exception"""
     # Arrange
     installation_id = 12345
-    mock_requests_post.side_effect = requests.exceptions.RequestException("Network error")
+    mock_requests_post.side_effect = requests.exceptions.RequestException(
+        "Network error"
+    )
 
     # Act
     result = get_installation_access_token(installation_id)
@@ -298,7 +308,7 @@ def test_get_installation_access_token_rate_limit_403(
         "X-RateLimit-Limit": "5000",
         "X-RateLimit-Remaining": "100",  # Not rate limited, so no retry
         "X-RateLimit-Used": "5000",
-        "X-RateLimit-Reset": "1640995200"
+        "X-RateLimit-Reset": "1640995200",
     }
     mock_error = requests.exceptions.HTTPError(response=mock_response)
     mock_error.response = mock_response
@@ -327,7 +337,7 @@ def test_get_installation_access_token_rate_limit_429(
         "X-RateLimit-Limit": "5000",
         "X-RateLimit-Remaining": "100",  # Not rate limited, so no retry
         "X-RateLimit-Used": "5000",
-        "X-RateLimit-Reset": "1640995200"
+        "X-RateLimit-Reset": "1640995200",
     }
     mock_error = requests.exceptions.HTTPError(response=mock_response)
     mock_error.response = mock_response
@@ -523,7 +533,9 @@ def test_get_installation_access_token_suspended_with_partial_message(
     installation_id = 12345
     mock_response = MagicMock()
     mock_response.status_code = 403
-    mock_response.text = "Error: This installation has been suspended due to policy violation"
+    mock_response.text = (
+        "Error: This installation has been suspended due to policy violation"
+    )
     mock_response.reason = "Forbidden"
     mock_error = requests.exceptions.HTTPError(response=mock_response)
     mock_error.response = mock_response

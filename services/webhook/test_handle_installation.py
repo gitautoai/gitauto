@@ -56,81 +56,63 @@ def mock_get_installation_access_token():
 @pytest.fixture
 def mock_get_user_public_email():
     """Mock get_user_public_email function."""
-    with patch(
-        "services.webhook.handle_installation.get_user_public_email"
-    ) as mock:
+    with patch("services.webhook.handle_installation.get_user_public_email") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_check_owner_exists():
     """Mock check_owner_exists function."""
-    with patch(
-        "services.webhook.handle_installation.check_owner_exists"
-    ) as mock:
+    with patch("services.webhook.handle_installation.check_owner_exists") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_create_stripe_customer():
     """Mock create_stripe_customer function."""
-    with patch(
-        "services.webhook.handle_installation.create_stripe_customer"
-    ) as mock:
+    with patch("services.webhook.handle_installation.create_stripe_customer") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_insert_owner():
     """Mock insert_owner function."""
-    with patch(
-        "services.webhook.handle_installation.insert_owner"
-    ) as mock:
+    with patch("services.webhook.handle_installation.insert_owner") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_check_grant_exists():
     """Mock check_grant_exists function."""
-    with patch(
-        "services.webhook.handle_installation.check_grant_exists"
-    ) as mock:
+    with patch("services.webhook.handle_installation.check_grant_exists") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_insert_credit():
     """Mock insert_credit function."""
-    with patch(
-        "services.webhook.handle_installation.insert_credit"
-    ) as mock:
+    with patch("services.webhook.handle_installation.insert_credit") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_insert_installation():
     """Mock insert_installation function."""
-    with patch(
-        "services.webhook.handle_installation.insert_installation"
-    ) as mock:
+    with patch("services.webhook.handle_installation.insert_installation") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_upsert_user():
     """Mock upsert_user function."""
-    with patch(
-        "services.webhook.handle_installation.upsert_user"
-    ) as mock:
+    with patch("services.webhook.handle_installation.upsert_user") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_process_repositories():
     """Mock process_repositories function."""
-    with patch(
-        "services.webhook.handle_installation.process_repositories"
-    ) as mock:
+    with patch("services.webhook.handle_installation.process_repositories") as mock:
         yield mock
 
 
@@ -683,9 +665,7 @@ class TestHandleInstallationCreated:
         assert result is None
         all_mocks["process_repositories"].assert_called_once()
 
-    def test_handle_installation_created_with_missing_installation_id(
-        self, all_mocks
-    ):
+    def test_handle_installation_created_with_missing_installation_id(self, all_mocks):
         """Test handling when payload is missing installation ID."""
         # Setup
         incomplete_payload = {
@@ -707,9 +687,7 @@ class TestHandleInstallationCreated:
         assert result is None
         all_mocks["get_installation_access_token"].assert_not_called()
 
-    def test_handle_installation_created_with_missing_account_info(
-        self, all_mocks
-    ):
+    def test_handle_installation_created_with_missing_account_info(self, all_mocks):
         """Test handling when payload is missing account information."""
         # Setup
         incomplete_payload = {
@@ -724,9 +702,7 @@ class TestHandleInstallationCreated:
         # Verify function returns None due to handle_exceptions decorator
         assert result is None
 
-    def test_handle_installation_created_with_missing_sender_info(
-        self, all_mocks
-    ):
+    def test_handle_installation_created_with_missing_sender_info(self, all_mocks):
         """Test handling when payload is missing sender information."""
         # Setup
         incomplete_payload = {
@@ -747,9 +723,7 @@ class TestHandleInstallationCreated:
         # Verify function returns None due to handle_exceptions decorator
         assert result is None
 
-    def test_handle_installation_created_with_missing_repositories(
-        self, all_mocks
-    ):
+    def test_handle_installation_created_with_missing_repositories(self, all_mocks):
         """Test handling when payload is missing repositories."""
         # Setup
         incomplete_payload = {

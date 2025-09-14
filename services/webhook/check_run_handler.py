@@ -20,7 +20,6 @@ from services.github.comments.create_comment import create_comment
 from services.github.comments.has_comment_with_text import has_comment_with_text
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.files.get_remote_file_content import get_remote_file_content
 from services.github.installations.get_installation_permissions import (
     get_installation_permissions,
 )
@@ -38,7 +37,6 @@ from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
-from services.github.workflow_runs.get_workflow_run_path import get_workflow_run_path
 
 # Local imports (Slack)
 from services.slack.slack_notify import slack_notify
@@ -241,32 +239,6 @@ def handle_check_run(payload: CheckRunCompletedPayload):
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
-    # Get the CI/CD workflow file content
-    if is_circleci:
-        # CircleCI uses .circleci/config.yml
-        workflow_path = ".circleci/config.yml"
-        workflow_content = get_remote_file_content(
-            file_path=workflow_path, base_args=base_args
-        )
-    else:
-        # GitHub Actions workflow
-        workflow_path = get_workflow_run_path(
-            owner=owner_name, repo=repo_name, run_id=github_run_id, token=token
-        )
-
-        workflow_content = ""
-        if workflow_path != 404:
-            workflow_content = get_remote_file_content(
-                file_path=workflow_path, base_args=base_args
-            )
-
-    p += 5
-    log_messages.append(
-        f"Checked out the {'CircleCI' if is_circleci else 'GitHub Action'} workflow file. `{workflow_path}`"
-    )
-    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
-    update_comment(body=comment_body, base_args=base_args)
-
     # Get the error log from the workflow run
     if is_circleci:
         circleci_token = get_circleci_token(owner_id)
@@ -397,7 +369,6 @@ def handle_check_run(payload: CheckRunCompletedPayload):
         "pull_request_title": pull_title,
         "pull_request_body": pull_body,
         "pull_request_changes": json.dumps(obj=pull_changes),
-        "workflow_content": workflow_content,
         "error_log": minimized_log,
         "today": today,
     }
