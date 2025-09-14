@@ -69,11 +69,19 @@ def should_skip_go(content: str) -> bool:
                 else:
                     interface_brace_count += 1
             continue
-        if in_struct or in_interface:
-            # Check if this line closes the struct/interface
-            if line.strip() == "}" or (line.endswith("}") and "{" not in line[:-1]):
-                in_struct = False
-                in_interface = False
+        if struct_brace_count > 0 or interface_brace_count > 0:
+            # Handle nested braces within structs/interfaces
+            if "{" in line:
+                if struct_brace_count > 0:
+                    struct_brace_count += 1
+                if interface_brace_count > 0:
+                    interface_brace_count += 1
+            if "}" in line:
+                if struct_brace_count > 0:
+                    struct_brace_count -= line.count("}")
+                if interface_brace_count > 0:
+                    interface_brace_count -= line.count("}")
+            continue
             continue
 
         # Skip type aliases
