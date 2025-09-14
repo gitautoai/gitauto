@@ -347,7 +347,7 @@ class TestAddIssueTemplates:
             ".github/ISSUE_TEMPLATE/bug_report.yml",
             ".github/ISSUE_TEMPLATE/feature_request.yml"
         ]
-        actual_paths = [call[0][0] for call in call_args_list]
+        actual_paths = [call[1]['file_path'] for call in call_args_list]
         assert set(actual_paths) == set(expected_paths)
         
         # Verify correct content was used in file creation
