@@ -20,6 +20,14 @@ from utils.prompts.write_pr_body import WRITE_PR_BODY
 
 
 def write_pr_description(payload: dict):
+    # Handle None or empty payload
+    if not payload:
+        return
+    
+    # Check if required keys exist
+    if "pull_request" not in payload or "repository" not in payload or "installation" not in payload:
+        return
+    
     # Return if the author of the pull request is not GitAuto itself
     pull: dict = payload["pull_request"]
     if pull["user"]["login"] != GITHUB_APP_USER_NAME:
