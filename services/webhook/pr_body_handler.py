@@ -46,6 +46,10 @@ def write_pr_description(payload: dict):
         pull_title = pull_title[9:]  # Remove "GitAuto: " prefix
     pull_number: int = pull["number"]
     pull_body: str = pull["body"]
+    # Handle None pull_body
+    if pull_body is None:
+        pull_body = ""
+    
     pull_url: str = pull["url"]
     pull_files_url = pull_url + "/files"
     head_branch: str = pull["head"]["ref"]
