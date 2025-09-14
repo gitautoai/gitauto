@@ -474,7 +474,7 @@ def test_get_installation_access_token_function_signature_compliance():
     assert params == expected_params
 
     # Verify parameter type annotation
-    assert sig.parameters["installation_id"].annotation == int
+    assert sig.parameters["installation_id"].annotation is int
 
 
 @pytest.mark.parametrize(
