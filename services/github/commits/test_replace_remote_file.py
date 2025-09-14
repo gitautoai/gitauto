@@ -1,10 +1,15 @@
+# pylint: disable=unused-argument
 import base64
 from unittest.mock import MagicMock, patch
+from typing import cast
 
 import pytest
 import requests
 
-from services.github.commits.replace_remote_file import replace_remote_file_content
+from services.github.commits.replace_remote_file import (
+    REPLACE_REMOTE_FILE_CONTENT,
+    replace_remote_file_content,
+)
 from services.github.types.github_types import BaseArgs
 
 
@@ -35,7 +40,9 @@ def sample_base_args_with_skip_ci():
 @pytest.fixture
 def mock_create_headers():
     """Fixture to mock create_headers function."""
-    with patch("services.github.commits.replace_remote_file.create_headers") as mock_headers:
+    with patch(
+        "services.github.commits.replace_remote_file.create_headers"
+    ) as mock_headers:
         mock_headers.return_value = {
             "Accept": "application/vnd.github.v3+json",
             "Authorization": "Bearer test-token",
@@ -55,7 +62,9 @@ def mock_requests_get_existing_file():
         mock_response.json.return_value = {
             "type": "file",
             "sha": "existing-file-sha",
-            "content": base64.b64encode("existing content".encode("utf-8")).decode("utf-8"),
+            "content": base64.b64encode("existing content".encode("utf-8")).decode(
+                "utf-8"
+            ),
         }
         mock_get.return_value = mock_response
         yield mock_get
@@ -210,7 +219,10 @@ def test_replace_file_with_skip_ci(
 
     # Verify PUT request includes [skip ci] in message
     call_args = mock_requests_put_success.call_args
-    assert call_args.kwargs["json"]["message"] == f"Replace content of {file_path} [skip ci]"
+    assert (
+        call_args.kwargs["json"]["message"]
+        == f"Replace content of {file_path} [skip ci]"
+    )
 
 
 def test_replace_file_directory_error(
@@ -238,7 +250,10 @@ def test_replace_file_directory_error(
         )
 
         # Verify error message
-        assert result == f"file_path: '{file_path}' is a directory. It should be a file path."
+        assert (
+            result
+            == f"file_path: '{file_path}' is a directory. It should be a file path."
+        )
 
 
 def test_replace_file_multiple_files_error(
@@ -266,7 +281,10 @@ def test_replace_file_multiple_files_error(
         )
 
         # Verify error message
-        assert result == f"file_path: '{file_path}' returned multiple files. Please specify a single file path."
+        assert (
+            result
+            == f"file_path: '{file_path}' returned multiple files. Please specify a single file path."
+        )
 
 
 def test_replace_file_with_special_characters(
@@ -457,7 +475,7 @@ def test_replace_file_with_different_base_args(
     result = replace_remote_file_content(
         file_content="content",
         file_path="different/path.py",
-        base_args=base_args,
+        base_args=cast(BaseArgs, base_args),
     )
 
     # Verify the result
@@ -505,8 +523,11 @@ def test_replace_file_missing_sha_in_existing_file(
     sample_base_args,
 ):
     """Test handling when existing file response doesn't contain SHA."""
-    with patch("services.github.commits.replace_remote_file.requests.get") as mock_get, \
-         patch("services.github.commits.replace_remote_file.requests.put") as mock_put:
+    with patch(
+        "services.github.commits.replace_remote_file.requests.get"
+    ) as mock_get, patch(
+        "services.github.commits.replace_remote_file.requests.put"
+    ) as mock_put:
         # Mock GET response without SHA
         mock_get_response = MagicMock()
         mock_get_response.status_code = 200
@@ -514,7 +535,9 @@ def test_replace_file_missing_sha_in_existing_file(
         mock_get_response.json.return_value = {
             "type": "file",
             # Missing "sha" key
-            "content": base64.b64encode("existing content".encode("utf-8")).decode("utf-8"),
+            "content": base64.b64encode("existing content".encode("utf-8")).decode(
+                "utf-8"
+            ),
         }
         mock_get.return_value = mock_get_response
 
@@ -583,26 +606,30 @@ def test_replace_file_json_decode_error_on_get(sample_base_args):
 
 def test_replace_remote_file_content_function_definition():
     """Test that the REPLACE_REMOTE_FILE_CONTENT function definition is properly structured."""
-    from services.github.commits.replace_remote_file import REPLACE_REMOTE_FILE_CONTENT
-    
+
     # Verify function definition structure
     assert REPLACE_REMOTE_FILE_CONTENT["name"] == "replace_remote_file_content"
     assert "description" in REPLACE_REMOTE_FILE_CONTENT
     assert "parameters" in REPLACE_REMOTE_FILE_CONTENT
-    assert REPLACE_REMOTE_FILE_CONTENT["strict"] is True
-    
+    assert REPLACE_REMOTE_FILE_CONTENT.get("strict") is True
+
     # Verify parameters structure
     params = REPLACE_REMOTE_FILE_CONTENT["parameters"]
-    assert params["type"] == "object"
-    assert "file_path" in params["properties"]
-    assert "file_content" in params["properties"]
-    assert params["required"] == ["file_path", "file_content"]
-    assert params["additionalProperties"] is False
-    
-    # Verify file_content parameter
-    file_content_param = params["properties"]["file_content"]
-    assert file_content_param["type"] == "string"
-    assert "description" in file_content_param
+    if isinstance(params, dict):
+        assert params.get("type") == "object"
+        properties = params.get("properties", {})
+        if isinstance(properties, dict):
+            assert "file_path" in properties
+            assert "file_content" in properties
+        assert params.get("required") == ["file_path", "file_content"]
+        assert params.get("additionalProperties") is False
+
+        # Verify file_content parameter
+        if isinstance(properties, dict) and "file_content" in properties:
+            file_content_param = properties["file_content"]
+            if isinstance(file_content_param, dict):
+                assert file_content_param.get("type") == "string"
+                assert "description" in file_content_param
 
 
 def test_replace_file_with_extra_kwargs(

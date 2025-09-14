@@ -495,11 +495,11 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 
 1. Activate virtual environment: `source venv/bin/activate`
 2. Run black formatting: `black .`
-3. Run ruff linting: `ruff check . --fix`
+3. Run ruff linting: `ruff check . --fix` (fix ALL ruff errors, not just modified files - if any errors remain unfixed, STOP and fix them before continuing)
 4. Get list of modified files: `{ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u`
-5. Run pylint on modified Python files only: `PYFILES=$({ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u | grep "\.py$" | while read f; do [ -f "$f" ] && echo "$f"; done); [ -n "$PYFILES" ] && echo "$PYFILES" | xargs pylint --fail-under=10.0 || echo "No Python files to check"` (if no modified Python files, skip)
-6. Run pyright on modified Python files only: `PYFILES=$({ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u | grep "\.py$" | while read f; do [ -f "$f" ] && echo "$f"; done); [ -n "$PYFILES" ] && echo "$PYFILES" | xargs pyright || echo "No Python files to check"` (if no modified Python files, skip)
-7. Run pytest: `MODIFIED_TEST_FILES=$({ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u | grep "test_" | grep "\.py$"); [ -n "$MODIFIED_TEST_FILES" ] && echo "$MODIFIED_TEST_FILES" | xargs python -m pytest -v`
+5. Run pylint on modified Python files only: `PYFILES=$({ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u | grep "\.py$" | while read f; do [ -f "$f" ] && echo "$f"; done); [ -n "$PYFILES" ] && echo "$PYFILES" | xargs pylint --fail-under=10.0 || echo "No Python files to check"` - **IF ANY PYLINT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+6. Run pyright on modified Python files only: `PYFILES=$({ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u | grep "\.py$" | while read f; do [ -f "$f" ] && echo "$f"; done); [ -n "$PYFILES" ] && echo "$PYFILES" | xargs pyright || echo "No Python files to check"` - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+7. Run pytest: `MODIFIED_TEST_FILES=$({ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u | grep "test_" | grep "\.py$"); [ -n "$MODIFIED_TEST_FILES" ] && echo "$MODIFIED_TEST_FILES" | xargs python -m pytest -v` - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
 8. Check current branch is not main: `git branch --show-current`
 9. Merge latest main: `git fetch origin main && git merge origin/main`
 10. **CRITICAL**: Add ONLY the specific files that were modified: `git add file1.py file2.py file3.py` (**NEVER use `git add .`**)

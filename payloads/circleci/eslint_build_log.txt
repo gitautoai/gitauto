@@ -1,0 +1,152 @@
+CircleCI Build Log: Build and Test
+[2K[1G[1myarn run v1.22.22[22m
+[2K[1G[2m$ eslint --cache --ext .js,.ts,.tsx ./src[22m
+=============
+
+WARNING: You are currently running a version of TypeScript which is not officially supported by @typescript-eslint/typescript-estree.
+
+You may find that it works just fine, or you may not.
+
+SUPPORTED TYPESCRIPT VERSIONS: >=3.3.1 <4.5.0
+
+YOUR TYPESCRIPT VERSION: 4.9.3
+
+Please only submit bug reports when using the officially supported version.
+
+=============
+
+/home/circleci/project/src/models/graphql/cancellationdocument.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/coi.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/common.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/customerPortal.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/endorsement/Canada.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/endorsement/Ohio.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/endorsement/document.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/endorsement/endorsement.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/generateId.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/generateMultiSectionPDF.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/generatePDF.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/generatePolicyAttachmentsList.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/invoice.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/nonRenewalDocument.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/operation/payment/generateTAndC.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/operation/payment/paymentPlanOption.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/payment.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/policyCancellation.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/policydocument.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/quote.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/quote/munich.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/quote/quote.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/receipt.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/resolvers.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/models/graphql/scalars.ts
+  1:8  warning  Using exported name 'gql' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/resolvers.ts
+  28:8  warning  Using exported name 'generateAndSendPolicyDocumentResolver' as identifier for default export     import/no-named-as-default
+  30:8  warning  Using exported name 'generateCancellationDocumentResolver' as identifier for default export      import/no-named-as-default
+  33:8  warning  Using exported name 'generateIdResolver' as identifier for default export                        import/no-named-as-default
+  34:8  warning  Using exported name 'generateMultiSectionPDFResolver' as identifier for default export           import/no-named-as-default
+  35:8  warning  Using exported name 'generateMunichPolicyIdResolver' as identifier for default export            import/no-named-as-default
+  36:8  warning  Using exported name 'generateNonRenewalDocumentResolver' as identifier for default export        import/no-named-as-default
+  37:8  warning  Using exported name 'generatePDFResolver' as identifier for default export                       import/no-named-as-default
+  38:8  warning  Using exported name 'generatePolicyAttachmentsListResolver' as identifier for default export     import/no-named-as-default
+  40:8  warning  Using exported name 'generateUSCancellationSigningURLResolver' as identifier for default export  import/no-named-as-default
+  44:8  warning  Using exported name 'saveApplicationSummaryPdfResolver' as identifier for default export         import/no-named-as-default
+
+/home/circleci/project/src/services/UScancellationDocument/generateUSCancellationDocumentPDF.ts
+  66:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/circleci/project/src/services/UScertificateOfInsurance/generate.ts
+  65:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/circleci/project/src/services/USpolicydocument/utils/generateCheckboxPolicyChangePage.ts
+  65:8  warning  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/home/circleci/project/src/services/policyDocument/models/policyDocumentModel.ts
+  191:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  247:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  248:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/circleci/project/src/services/receipt/generateReceipt.ts
+  2:8  warning  Using exported name 'parsePhoneNumber' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/services/receipt/generateRefundAcknowledgement.ts
+  2:8  warning  Using exported name 'parsePhoneNumber' as identifier for default export  import/no-named-as-default
+
+/home/circleci/project/src/services/saveApplicationSummaryPdf.ts
+  220:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/circleci/project/src/services/utils/generateAttachments.ts
+  220:9  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  224:9  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/home/circleci/project/src/services/utils/getBrowserlessRetryParams.ts
+  3:16  warning  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/home/circleci/project/src/services/utils/getIsFoxquiltPolicy.ts
+   1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+  11:1  error  Delete `····`                       prettier/prettier
+  15:1  error  Delete `····`                       prettier/prettier
+  17:1  error  Delete `····`                       prettier/prettier
+  28:2  error  Insert `⏎`                          prettier/prettier
+
+/home/circleci/project/src/services/utils/setTimeoutWithDelay.ts
+  2:3   warning  Argument 'logger' should be typed with a non-any type  @typescript-eslint/explicit-module-boundary-types
+  2:11  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+
+✖ 54 problems (5 errors, 49 warnings)
+  5 errors and 0 warnings potentially fixable with the `--fix` option.
+
+[2K[1G[31merror[39m Command failed with exit code 1.
+[2K[1G[34minfo[39m Visit [1mhttps://yarnpkg.com/en/docs/cli/run[22m for documentation about this command.
+
+Exited with code exit status 1
