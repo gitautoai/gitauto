@@ -52,7 +52,7 @@ def should_skip_go(content: str) -> bool:
             continue
 
         # Handle struct definitions (data types without methods)
-        if line.startswith("type ") and " struct " in line:
+        if line.startswith("type ") and "struct" in line:
             if "{" in line:
                 in_struct = True
             continue
