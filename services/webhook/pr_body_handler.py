@@ -68,7 +68,8 @@ def write_pr_description(payload: dict):
         if line.startswith("Resolves #"):
             try:
                 if issue_number is None:  # Only process the first resolves statement
-                resolves_statement = line
+                    issue_number = int(line.split("#")[1])
+                    resolves_statement = line
             except (ValueError, IndexError):
                 # Skip invalid issue number format
                 pass
