@@ -67,7 +67,7 @@ def should_skip_go(content: str) -> bool:
                 if line.endswith("}"):
                     pass  # Single-line interface, don't increment brace count
                 else:
-                    interface_brace_count += 1
+                    interface_brace_count += line.count("{")
             continue
         if struct_brace_count > 0 or interface_brace_count > 0:
             # Handle nested braces within structs/interfaces
