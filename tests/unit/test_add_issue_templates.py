@@ -449,7 +449,7 @@ class TestAddIssueTemplates:
 
     def test_add_issue_templates_return_type_consistency(self, mock_github_setup):
         """Test that return type is consistent (always None)."""
-
+        # The function should always return None due to the decorator and explicit returns
     def test_add_issue_templates_with_special_characters_in_repo_name(self, mock_github_setup):
         """Test with repository names containing special characters."""
         mocks = mock_github_setup
