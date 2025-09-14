@@ -567,3 +567,21 @@ def test_debug_map_interface():
 type User struct {
     Metadata map[string]interface{}
 }"""
+
+
+def test_debug_simple_interface():
+    # Debug test for interface{} field
+    content = """package main
+
+type User struct {
+    Field interface{}
+}"""
+    assert should_skip_go(content) is True
+
+
+def test_debug_simple_map():
+    # Debug test for map field
+    content = """package main
+
+type User struct {
+    Field map[string]int
