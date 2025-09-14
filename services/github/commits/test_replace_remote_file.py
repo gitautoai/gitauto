@@ -498,3 +498,89 @@ def test_replace_file_handles_various_exceptions(
         # Function should return None due to handle_exceptions decorator
         assert result is None
         mock_get.assert_called_once()
+
+
+def test_replace_file_missing_sha_in_existing_file(
+    mock_create_headers,
+    sample_base_args,
+):
+    """Test handling when existing file response doesn't contain SHA."""
+    with patch("services.github.commits.replace_remote_file.requests.get") as mock_get, \
+         patch("services.github.commits.replace_remote_file.requests.put") as mock_put:
+        # Mock GET response without SHA
+        mock_get_response = MagicMock()
+        mock_get_response.status_code = 200
+        mock_get_response.raise_for_status.return_value = None
+        mock_get_response.json.return_value = {
+            "type": "file",
+            # Missing "sha" key
+            "content": base64.b64encode("existing content".encode("utf-8")).decode("utf-8"),
+        }
+        mock_get.return_value = mock_get_response
+
+        # Mock PUT response
+        mock_put_response = MagicMock()
+        mock_put_response.raise_for_status.return_value = None
+        mock_put.return_value = mock_put_response
+
+        result = replace_remote_file_content(
+            file_content="new content",
+            file_path="test.py",
+            base_args=sample_base_args,
+        )
+
+        # Should still succeed with empty SHA
+        assert result == "Content replaced in the file: test.py successfully."
+
+        # Verify PUT request includes empty SHA
+        call_args = mock_put.call_args
+        assert call_args.kwargs["json"]["sha"] == ""
+
+
+def test_replace_file_with_nested_file_path(
+    mock_requests_get_existing_file,
+    mock_requests_put_success,
+    mock_create_headers,
+    sample_base_args,
+):
+    """Test file replacement with nested file path."""
+    file_path = "src/utils/helpers/deep/nested/file.py"
+    file_content = "# Deeply nested file content"
+
+    result = replace_remote_file_content(
+        file_content=file_content,
+        file_path=file_path,
+        base_args=sample_base_args,
+    )
+
+    # Verify the result
+    assert result == f"Content replaced in the file: {file_path} successfully."
+
+    # Verify correct URL construction with nested path
+    get_call_args = mock_requests_get_existing_file.call_args
+    expected_url = f"https://api.github.com/repos/test-owner/test-repo/contents/{file_path}?ref=test-branch"
+    assert get_call_args.kwargs["url"] == expected_url
+
+
+def test_replace_file_json_decode_error_on_get(sample_base_args):
+    """Test handling of JSON decode error during GET request."""
+    with patch("services.github.commits.replace_remote_file.requests.get") as mock_get:
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.side_effect = ValueError("Invalid JSON response")
+        mock_get.return_value = mock_response
+
+        result = replace_remote_file_content(
+            file_content="content",
+            file_path="test.py",
+            base_args=sample_base_args,
+        )
+
+        # Function should return None due to handle_exceptions decorator
+        assert result is None
+
+
+def test_replace_remote_file_content_function_definition():
+    """Test that the REPLACE_REMOTE_FILE_CONTENT function definition is properly structured."""
+    from services.github.commits.replace_remote_file import REPLACE_REMOTE_FILE_CONTENT
