@@ -167,7 +167,6 @@ def test_whitespace_only():
 
 
 
-
     """
     assert should_skip_go(content) is True
 
@@ -549,3 +548,13 @@ const Timestamp = getCurrentTime()"""
 def test_go_directive_and_build_tags():
     # Go directives and build tags should be skipped
     content = """//go:build linux
+// +build linux
+
+package main
+
+const MaxRetries = 3
+
+type Config struct {
+    Timeout int
+}"""
+    assert should_skip_go(content) is True
