@@ -1,6 +1,7 @@
 # pylint: disable=redefined-outer-name
 """Unit tests for the should_test_file function."""
 
+import inspect
 from unittest.mock import patch
 
 import pytest
@@ -265,11 +266,13 @@ class DataProcessor:
         mock_evaluate_condition.return_value = False
 
         # Test with None file_path - should handle gracefully
-        result = should_test_file(None, "some content")
+        # Note: Intentionally passing None to test error handling behavior
+        result = should_test_file(None, "some content")  # type: ignore[arg-type]
         assert result is False
 
         # Test with None content - should handle gracefully
-        result = should_test_file("test.py", None)
+        # Note: Intentionally passing None to test error handling behavior
+        result = should_test_file("test.py", None)  # type: ignore[arg-type]
         assert result is False
 
     def test_should_test_file_with_very_long_content(
@@ -359,10 +362,8 @@ class DataProcessor:
     ):
         """Integration test to verify the decorator is properly applied."""
         # Test that the function has the decorator applied
-        from utils.files.should_test_file import should_test_file as original_function
-
         # Check that the function is wrapped (has __wrapped__ attribute)
-        assert hasattr(original_function, "__wrapped__")
+        assert hasattr(should_test_file, "__wrapped__")
 
         # Test that exceptions are handled according to decorator configuration
         mock_evaluate_condition.side_effect = Exception("Test exception")
@@ -382,17 +383,17 @@ class DataProcessor:
 class UserManager:
     def __init__(self, db_connection):
         self.db = db_connection
-        
+
     def create_user(self, username, email):
         if not username or not email:
             raise ValueError("Username and email are required")
-        
+
         if self.user_exists(username):
             return None
-            
+
         user_id = self.db.insert_user(username, email)
         return user_id
-        
+
     def user_exists(self, username):
         return self.db.query_user(username) is not None
 """
@@ -457,9 +458,7 @@ if __name__ == "__main__":
             content_arg = call_args[1]["content"]
             assert f"File path: {file_path}" in content_arg
 
-    def test_should_test_file_thread_safety_simulation(
-        self, mock_evaluate_condition, sample_file_path, sample_code_content
-    ):
+    def test_should_test_file_thread_safety_simulation(self, mock_evaluate_condition):
         """Test that function calls don't interfere with each other (simulating thread safety)."""
         # Simulate concurrent calls with different return values
         call_results = []
@@ -500,9 +499,6 @@ if __name__ == "__main__":
 
     def test_should_test_file_function_signature_validation(self):
         """Test that the function has the correct signature."""
-        import inspect
-        from utils.files.should_test_file import should_test_file
-
         sig = inspect.signature(should_test_file)
         params = list(sig.parameters.keys())
 

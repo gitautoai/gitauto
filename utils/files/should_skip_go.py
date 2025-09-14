@@ -53,16 +53,16 @@ def should_skip_go(content: str) -> bool:
 
         # Handle struct definitions (data types without methods)
         if line.startswith("type ") and "struct" in line:
-            if "{" in line:
-                in_struct = True
+            # Both single-line and multi-line struct declarations enter struct mode
+            in_struct = True
             continue
         # Handle interface definitions
         if line.startswith("type ") and "interface" in line:
-            if "{" in line:
-                in_interface = True
+            # Both single-line and multi-line interface declarations enter interface mode
+            in_interface = True
             continue
         if in_struct or in_interface:
-            if "}" in line:
+            if line == "}":  # Only end struct/interface on standalone closing brace
                 in_struct = False
                 in_interface = False
             continue
@@ -84,20 +84,26 @@ def should_skip_go(content: str) -> bool:
             or line.startswith("var ")
             or line == "var ("
         ):
-            # But NOT if they contain function calls
+            # But NOT if they contain function calls or array/map access (but allow slice literals)
             if "(" in line and ")" in line and not line.endswith("("):
                 return False
+            # Detect array/map access (variable[index]) but not slice literals ([]Type{...})
+            if "[" in line and "]" in line and not re.search(r"\[\]\w+\{", line):
+                return False
             continue
-        # Skip individual const/var declarations in blocks - but NOT if they contain function calls
+        # Skip individual const/var declarations in blocks - but NOT if they contain function calls or array access
         if re.match(r"^\w+(\s+\w+)?\s*=", line):
             if "(" in line and ")" in line:  # Contains function calls
+                return False
+            # Detect array/map access (variable[index]) but not slice literals ([]Type{...})
+            if "[" in line and "]" in line and not re.search(r"\[\]\w+\{", line):
                 return False
             continue
         # Skip bare const declarations without assignment (like StatusInactive)
         if re.match(r"^\w+$", line):
             continue
-        # Skip field definitions in structs (name Type format)
-        if re.match(r"^\w+\s+[\w\[\]\*\.]+$", line):
+        # Skip field definitions in structs (name Type format) - allow complex types
+        if re.match(r"^\w+\s+[\w\[\]\*\.\(\)\{\},\s]+$", line):
             continue
         # If we find any other code, it's not export-only
         return False

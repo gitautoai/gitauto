@@ -56,9 +56,6 @@ def should_skip_javascript(content: str) -> bool:
         # Skip import statements
         if line.startswith("import "):
             continue
-        # Skip type imports (TypeScript)
-        if line.startswith("import type ") or "import { type" in line:
-            continue
         # Skip CommonJS require statements (const/let/var with require)
         if re.match(r"^(const|let|var)\s+\w+\s*=\s*require\(", line):
             continue
@@ -74,16 +71,16 @@ def should_skip_javascript(content: str) -> bool:
         # Skip standalone object literals that are simple exports
         if re.match(r"^\w+,?$", line):  # Simple property names in objects
             continue
+
+        # Handle class closing FIRST before general closing brace handling
+        if in_class_definition and line == "}":
+            in_class_definition = False
+            continue
+        if in_class_definition:
+            # If there's anything inside the class, it's not empty
+            return False
+
         if line in ["{", "}", "};"]:  # Object literal braces
-            continue
-        # Skip export all statements
-        if re.match(r"export\s*\*\s*from", line):
-            continue
-        # Skip export with braces
-        if re.match(r"export\s*{.*}\s*from", line):
-            continue
-        # Skip default exports from other modules
-        if re.match(r"export\s*{.*default.*}\s*from", line):
             continue
 
         # First check for function definitions - these should NOT be skipped
@@ -98,12 +95,6 @@ def should_skip_javascript(content: str) -> bool:
         if re.match(r"^class\s+\w+(\s+extends\s+\w+)?\s*\{$", line):
             in_class_definition = True
             continue
-        if in_class_definition and line == "}":
-            in_class_definition = False
-            continue
-        if in_class_definition:
-            # If there's anything inside the class, it's not empty
-            return False
 
         # Handle TypeScript type definitions
         if line.startswith("type ") and "=" in line:
@@ -112,23 +103,17 @@ def should_skip_javascript(content: str) -> bool:
                 in_interface_or_type = True
             continue
         if line.startswith("interface "):
-            if "{" in line:
-                in_interface_or_type = True
+            in_interface_or_type = True
             continue
         if line.startswith("enum "):
-            if "{" in line:
-                in_enum = True
+            in_enum = True
             continue
+
         if in_interface_or_type or in_enum:
-            if "}" in line:
-                in_interface_or_type = False
-                in_enum = False
+            # Simply continue processing lines inside interface/enum/type definitions
             continue
         # Skip type annotations in interfaces/types (field: type format)
-        if re.match(r"^\w+\??\s*:\s*", line):
-            continue
-        # Skip closing braces followed by semicolon (end of type definitions)
-        if line in ("};", "}"):
+        if re.match(r"^\w+\??\s*:\s*\w+", line):
             continue
         # Skip constant declarations (primitive values, objects, arrays, template literals)
         # Note: JS const is not truly constant (prevents reassignment, but objects can mutate)
@@ -140,6 +125,7 @@ def should_skip_javascript(content: str) -> bool:
             )
             and "=>" not in line
             and "function" not in line
+            and not re.search(r"\w+\s*\(", line)  # Exclude function calls
         ):
             continue
         # Skip const with literal values, template literals, simple concatenations (but not functions)
@@ -149,6 +135,8 @@ def should_skip_javascript(content: str) -> bool:
             )
             and "=>" not in line
             and "function" not in line
+            and not re.search(r"\w+\s*\(", line)  # Exclude function calls
+            and not re.search(r"\$\{", line)  # Exclude template literal expressions
         ):
             continue
         # If we find any other code, it's not export-only

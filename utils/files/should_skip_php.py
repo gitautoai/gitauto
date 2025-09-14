@@ -92,11 +92,14 @@ def should_skip_php(content: str) -> bool:
         if in_class:
             if "}" in line:
                 in_class = False
+                continue
+            # Check for function definitions inside class BEFORE skipping
+            if re.match(
+                r"^\s*(public\s+|private\s+|protected\s+)?function\s+\w+", line
+            ):
+                return False
             # Skip property declarations in classes
             if re.match(r"^\s*(public\s+|private\s+|protected\s+)?\$\w+", line):
-                continue
-            # Skip constructor parameter promotion (PHP 8.0+)
-            if re.match(r"^\s*(public\s+|private\s+|protected\s+)?\$\w+\s*[,)]", line):
                 continue
             continue
 
@@ -125,7 +128,7 @@ def should_skip_php(content: str) -> bool:
         if re.match(r"^const\s+\w+\s*=", line):
             continue
         # Skip simple variable assignments (configuration arrays, etc.)
-        if re.match(r"^\$[A-Z_][A-Z0-9_]*\s*=\s*[\[\{\"'0-9]", line):
+        if re.match(r"^\$\w+\s*=\s*[\[\{\"']", line):
             if "[" in line and "]" not in line:
                 in_array_initialization = True
             continue

@@ -1,3 +1,4 @@
+from typing import Literal, cast
 from unittest.mock import patch, call
 
 import pytest
@@ -124,7 +125,10 @@ def test_get_mode_prompt_file_path_construction():
         mock_read_xml_file.return_value = "test content"
 
         for mode, expected_path in expected_paths.items():
-            get_mode_prompt(mode)
+            # Cast dict key to proper Literal type since we know it's valid
+            get_mode_prompt(
+                cast(Literal["comment", "commit", "explore", "get", "search"], mode)
+            )
             mock_read_xml_file.assert_called_with(expected_path)
             mock_read_xml_file.reset_mock()
 
@@ -174,11 +178,14 @@ def test_get_mode_prompt_base_path_consistency():
 
         modes = ["comment", "commit", "explore", "get", "search"]
         for mode in modes:
-            get_mode_prompt(mode)
+            # Cast string to proper Literal type since we know it's valid
+            get_mode_prompt(
+                cast(Literal["comment", "commit", "explore", "get", "search"], mode)
+            )
 
         # Verify all calls use the correct base path
-        for call in mock_read_xml_file.call_args_list:
-            file_path = call[0][0]
+        for call_args in mock_read_xml_file.call_args_list:
+            file_path = call_args[0][0]
             assert file_path.startswith(base_path)
 
 

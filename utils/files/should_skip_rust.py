@@ -100,6 +100,9 @@ def should_skip_rust(content: str) -> bool:
                 and not re.search(r"\w+\s*\{\}", line)
             ):
                 return False
+            # Check for array indexing which is runtime behavior (variable[index])
+            if re.search(r"\w+\[", line):
+                return False
             continue
         # Skip static variables (global variables with 'static lifetime)
         if line.startswith("pub static ") or line.startswith("static "):
@@ -109,6 +112,9 @@ def should_skip_rust(content: str) -> bool:
                 and ("(" in line and ")" in line)
                 and not re.search(r"\w+\s*\{\}", line)
             ):
+                return False
+            # Check for array indexing which is runtime behavior (variable[index])
+            if re.search(r"\w+\[", line):
                 return False
             continue
         # If we find any other code, it's not export-only
