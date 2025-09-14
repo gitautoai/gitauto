@@ -65,7 +65,7 @@ def should_skip_go(content: str) -> bool:
             if "{" in line:
                 # Check if it's a single-line interface
                 if line.endswith("}"):
-                    in_interface = False  # Single-line interface, don't set in_interface
+                    pass  # Single-line interface, don't increment brace count
                 else:
                     in_interface = True
             continue
