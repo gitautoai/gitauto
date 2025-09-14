@@ -11,7 +11,7 @@ from utils.files.should_skip_csharp import should_skip_csharp
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
-def should_skip_test(filename: str, content: str = None) -> bool:
+def should_skip_test(filename: str, content: str | None = None) -> bool:
     """
     Determines if a file should be skipped for test generation.
 

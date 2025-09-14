@@ -20,6 +20,7 @@ def should_skip_cpp(content: str) -> bool:
     lines = content.split("\n")
     in_struct_or_class = False
     in_enum = False
+    in_namespace = False
     in_raw_string = False
     in_multiline_comment = False
 
@@ -54,8 +55,18 @@ def should_skip_cpp(content: str) -> bool:
         if not line:
             continue
 
+        # Handle namespace blocks
+        if line.startswith("namespace "):
+            in_namespace = True
+            continue
+        if in_namespace and line == "}":
+            in_namespace = False
+            continue
+        if in_namespace:
+            continue
+
         # Handle struct/class definitions (without implementation)
-        if re.match(r"^(struct|class)\s+\w+(\s*:\s*[^{]+)?\s*{", line):
+        if re.match(r"^(\[\[.*\]\]\s*)?(struct|class)\s+\w+(\s*:\s*[^{]+)?\s*{", line):
             in_struct_or_class = True
             continue
         if re.match(r"^enum\s+\w+\s*{", line):
@@ -65,8 +76,10 @@ def should_skip_cpp(content: str) -> bool:
             if "};" in line or line == "};":
                 in_struct_or_class = False
                 in_enum = False
-            # Check for method implementations inside classes
-            if re.match(r"^\s*\w+.*\(.*\)\s*{", line):
+            # Check for method implementations inside classes (more precise regex)
+            if re.match(
+                r"^\s*\w+.*\(.*\)\s*(const\s*)?(noexcept\s*)?(override\s*)?\s*{", line
+            ):
                 return False
             continue
 
@@ -84,22 +97,19 @@ def should_skip_cpp(content: str) -> bool:
         # Skip using statements (C++)
         if line.startswith("using "):
             continue
-        # Skip namespace declarations
-        if line.startswith("namespace "):
-            continue
         # Skip template declarations
         if line.startswith("template"):
             continue
-        # Skip constants (C/C++ const are truly constant - compile-time immutable values)
+        # Check constants for function calls - reject if found
         if line.startswith("const ") or line.startswith("static const "):
+            # Check for function calls in const assignments
+            if re.search(r"\w+\s*\(.*\)", line):
+                return False
             continue
         if line.startswith("extern const ") or line.startswith("static "):
             continue
         # Skip enum declarations
         if line.startswith("enum ") and line.endswith(";"):
-            continue
-        # Skip macros (basic constants)
-        if re.match(r"^#define\s+[A-Z_][A-Z0-9_]*\s+", line):
             continue
         # If we find any other code, it's not export-only
         return False

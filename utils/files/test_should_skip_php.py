@@ -190,3 +190,459 @@ class MyComponent {}
 
 interface MyInterface {}"""
     assert should_skip_php(content) is True
+
+
+def test_single_line_triple_quote_constant():
+    # Single-line constant definition
+    content = """<?php
+const API_KEY = "abc123";
+const DEBUG_MODE = true;"""
+    assert should_skip_php(content) is True
+
+
+def test_namedtuple_class():
+    # Class definitions with properties
+    content = """<?php
+namespace Example;
+
+class Point {
+    public int $x;
+    public int $y;
+}
+
+class User {
+    public string $name;
+    public int $age;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_multiline_string_assignment_parentheses():
+    # Simple string constant
+    content = """<?php
+const TEMPLATE = "This is a template";
+
+const OTHER_CONSTANT = 42;"""
+    assert should_skip_php(content) is True
+
+
+def test_multiline_list_assignment():
+    # Simple constant definitions
+    content = """<?php
+const EXT_PHP = ".php";
+const EXT_JS = ".js";
+const EXT_TS = ".ts";
+
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_complex_class_transitions():
+    # Empty class definitions
+    content = """<?php
+class MyException extends Exception
+{
+}
+
+class DataClass {
+}
+
+const MAX_RETRIES = 5;"""
+    assert should_skip_php(content) is True
+
+
+def test_mixed_assignment_patterns():
+    # Test various assignment patterns that should be skipped
+    content = """<?php
+const SIMPLE_VAR = "value";
+const LIST_VAR = [1, 2, 3];
+const BOOL_VAR = true;
+const NUM_VAR = 42;
+const FLOAT_VAR = 3.14;
+const NULL_VAR = null;"""
+    assert should_skip_php(content) is True
+
+
+def test_bare_string_continuation():
+    # Test comments and documentation
+    content = """<?php
+/**
+ * This is a module documentation
+ * that spans multiple lines
+ */
+
+const CONSTANT = "value";"""
+    assert should_skip_php(content) is True
+
+
+def test_autoload_statements():
+    # Test require statements should be skipped
+    content = """<?php
+require_once "config.php";
+include "helper.php";
+const CONSTANT = "value";"""
+    assert should_skip_php(content) is True
+
+
+def test_constants_with_square_brackets():
+    # Test constants with square brackets should NOT be skipped
+    content = """<?php
+$ENV_VAR = $ENV["PATH"];
+const API_URL = "http://example.com";"""
+    assert should_skip_php(content) is False
+
+
+def test_assignment_function_call_detection():
+    # Test assignment with function calls should NOT be skipped
+    content = """<?php
+$config = loadConfig();
+const API_URL = "http://example.com";"""
+    assert should_skip_php(content) is False
+
+
+def test_field_definition_with_complex_types():
+    # Test class with methods should NOT be skipped
+    content = """<?php
+class Config {
+    public function handler(): string {
+        return "error";
+    }
+
+    public function processData(array $items): array {
+        return $items;
+    }
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_inside_exception_class_to_typeddict():
+    # Test class definitions should be skipped
+    content = """<?php
+class MyError extends Exception {
+}
+class Config {
+    public $name;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_inside_typeddict_class_to_exception():
+    # Test class definitions should be skipped
+    content = """<?php
+class Config {
+    public $name;
+}
+class MyError extends Exception {
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_inside_exception_class_to_namedtuple():
+    # Test class definitions should be skipped
+    content = """<?php
+class MyError extends Exception {
+}
+class Point {
+    public $x;
+    public $y;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_enum_declarations():
+    # Test constants and enums
+    content = """<?php
+const Status = [
+    'ACTIVE' => 'active',
+    'INACTIVE' => 'inactive',
+    'PENDING' => 'pending'
+];
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_extern_declarations():
+    # Test require/include statements
+    content = """<?php
+require_once 'utils.php';
+include 'config.php';
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_forward_declarations():
+    # Test class/interface declarations
+    content = """<?php
+class ForwardClass {}
+interface ForwardInterface {}
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_using_namespace_statements():
+    # Test namespace usage with logic - should NOT be skipped
+    content = """<?php
+use App\\Utils\\Helper;
+use App\\Services\\Processor;
+$result = Processor::process();"""
+    assert should_skip_php(content) is False
+
+
+def test_template_declarations():
+    # Test class with method - should NOT be skipped (has executable logic)
+    content = """<?php
+class Container {
+    private $items = [];
+
+    public function add($item) {
+        $this->items[] = $item;
+    }
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_static_extern_const():
+    # Test variables and constants - should NOT be skipped (variables are mutable)
+    content = """<?php
+$internalVar = 42;
+const VERSION = "1.0.0";
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is False
+
+
+def test_enum_and_macro_declarations():
+    # Test constants
+    content = """<?php
+const DEBUG_MODE = true;
+const BUFFER_SIZE = 1024;
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_macro_constants_only():
+    # Test constants only
+    content = """<?php
+const MAX_SIZE = 1024;
+const BUFFER_SIZE = 512;
+const VALUE = 42;"""
+    assert should_skip_php(content) is True
+
+
+def test_annotation_interface_definitions():
+    # Test interface definitions
+    content = """<?php
+interface MyInterface {
+    public function method(): string;
+}
+const CONSTANT = "value";"""
+    assert should_skip_php(content) is True
+
+
+def test_kotlin_data_class_definitions():
+    # Test class definitions
+    content = """<?php
+class User {
+    public $id;
+    public $name;
+    public $email;
+}
+const CONSTANT = "value";"""
+    assert should_skip_php(content) is True
+
+
+def test_scala_case_class_definitions():
+    # Test class definitions
+    content = """<?php
+class Point {
+    public $x;
+    public $y;
+}
+const CONSTANT = "value";"""
+    assert should_skip_php(content) is True
+
+
+def test_module_exports_only():
+    # Test require/namespace statements
+    content = """<?php
+namespace App\\Models;
+use App\\Contracts\\UserInterface;
+const CONSTANT = "value";"""
+    assert should_skip_php(content) is True
+
+
+def test_standalone_closing_brace_only():
+    # Test class with closing brace
+    content = """<?php
+class MyClass {
+    public $value;
+}
+const CONSTANT = "value";"""
+    assert should_skip_php(content) is True
+
+
+def test_abstract_function_declaration():
+    # Test line 74: abstract function declaration
+    content = """<?php
+interface UserInterface {
+    public function getName(): string;
+    protected function getId();
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_trait_definition():
+    # Test lines 79-81: trait opening
+    content = """<?php
+trait Loggable {
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_trait_closing():
+    # Test lines 83-85: trait closing logic
+    content = """<?php
+trait Configurable {
+    public $config = [];
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_constructor_parameter_promotion():
+    # Test line 100: constructor parameter promotion (PHP 8.0+) - should NOT be skipped (has constructor function)
+    content = """<?php
+class User {
+    public function __construct(
+        public string $name,
+        private int $id
+    ) {}
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_array_initialization():
+    # Test lines 129-131: array initialization detection
+    content = """<?php
+$CONFIG = [
+    'debug' => true,
+    'timeout' => 30
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_return_array_statement():
+    # Test lines 134-136: return statement with array
+    content = """<?php
+return [
+    'name' => 'test',
+    'version' => '1.0'
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_multiline_array_closing():
+    # Test lines 139-141: multi-line array closing
+    content = """<?php
+$settings = [
+    'debug' => true,
+    'cache' => false
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_nested_array_elements():
+    # Test line 147: nested array elements
+    content = """<?php
+$config = [
+    'database' => [
+        'host' => 'localhost'
+    ]
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_array_closing_comma():
+    # Test line 150: array closing with comma
+    content = """<?php
+$data = [
+    'key' => 'value'
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_control_structures():
+    # Test line 163: control structure detection (should return False)
+    content = """<?php
+if ($condition) {
+    echo "test";
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_constructor_parameter_promotion_exact():
+    # Test line 100: exact constructor parameter promotion pattern - should NOT be skipped (has constructor function)
+    content = """<?php
+class User {
+    public function __construct(
+        public $name,
+        private $id,
+    ) {}
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_nested_array_elements_exact():
+    # Test line 147: exact nested array elements pattern
+    content = """<?php
+$config = [
+    'database' => [
+        'host' => 'localhost',
+        'port' => 3306
+    ],
+    'cache' => [
+        'driver' => 'redis'
+    ]
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_array_closing_comma_exact():
+    # Test line 150: exact array closing with comma pattern
+    content = """<?php
+$data = [
+    'items' => [
+        'first',
+        'second'
+    ],
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_trait_without_opening_brace():
+    # Test trait without opening brace on same line - covers branch 79->81
+    content = """<?php
+trait MyTrait
+{
+}
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_variable_assignment_multiline_array():
+    # Test variable assignment with multiline array - covers branch 126->128
+    content = """<?php
+$config = [
+    'key1' => 'value1',
+    'key2' => 'value2'
+];
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_return_statement_multiline_array():
+    # Test return statement with multiline array - covers branch 131->133
+    content = """<?php
+return [
+    'config' => 'value',
+    'setting' => 'data'
+];"""
+    assert should_skip_php(content) is True

@@ -86,25 +86,44 @@ def should_skip_java(content: str) -> bool:
         ):
             in_interface_or_class = True
             continue
+        # Handle enum definitions (simple enums without methods are just constants)
+        if re.match(r"^(public\s+|private\s+|protected\s+)?enum\s+\w+", line):
+            in_interface_or_class = True
+            continue
 
         if in_interface_or_class:
             if "}" in line or (line.endswith(")") and not line.startswith("(")):
                 in_interface_or_class = False
             continue
 
-        # Skip module exports (Java 9+)
-        if line.startswith("exports ") or line.startswith("opens "):
+        # Skip module declarations (Java 9+)
+        if (
+            line.startswith("module ")
+            or line.startswith("exports ")
+            or line.startswith("opens ")
+        ):
             continue
-        # Skip constants (Java/Kotlin/Scala) - but NOT if they contain function calls
+        # Skip constants (Java/Kotlin/Scala) - but NOT if they contain function calls or array access
         if re.match(
             r"^(public\s+|private\s+|protected\s+)?(static\s+)?(final\s+)?(const\s+|val\s+)?[\w\<\>\[\],\s]+\s+[A-Z_][A-Z0-9_]*\s*=",
             line,
         ):
             if "(" in line and ")" in line:  # Contains function calls
                 return False
+            # Detect array access but not array literals
+            if "[" in line and "]" in line and not re.search(r"=\s*\{", line):
+                return False
             continue
         # Skip object declarations (Scala/Kotlin)
         if line.startswith("object ") and "{" in line:
+            in_interface_or_class = True
+            continue
+        # Skip static variable declarations (but not if they have function calls)
+        if re.match(
+            r"^(public\s+|private\s+|protected\s+)?static\s+\w+\s+\w+\s*=", line
+        ):
+            if "(" in line and ")" in line:
+                return False
             continue
         if line == "}":
             continue

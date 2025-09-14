@@ -175,3 +175,315 @@ struct MyComponent {}
 
 const _: MyComponent = MyComponent {};"""
     assert should_skip_rust(content) is True
+
+
+def test_single_line_triple_quote_constant():
+    # Single-line constant definition
+    content = """const API_KEY: &str = "abc123";
+const DEBUG_MODE: bool = true;"""
+    assert should_skip_rust(content) is True
+
+
+def test_namedtuple_class():
+    # Struct definitions
+    content = """struct Point {
+    x: i32,
+    y: i32,
+}
+
+struct User {
+    name: String,
+    age: u32,
+}"""
+    assert should_skip_rust(content) is True
+
+
+def test_multiline_string_assignment_parentheses():
+    # Simple string constant
+    content = """const TEMPLATE: &str = "This is a template";
+
+const OTHER_CONSTANT: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_multiline_list_assignment():
+    # Simple constant definitions
+    content = """const EXT_RS: &str = ".rs";
+const EXT_JS: &str = ".js";
+const EXT_TS: &str = ".ts";
+
+const MAX_SIZE: usize = 100;"""
+    assert should_skip_rust(content) is True
+
+
+def test_complex_class_transitions():
+    # Simple struct definitions and constants
+    content = """struct MyError {
+    message: String,
+}
+
+struct DataStruct {
+    id: u32,
+    name: String,
+}
+
+const MAX_RETRIES: u32 = 5;"""
+    assert should_skip_rust(content) is True
+
+
+def test_mixed_assignment_patterns():
+    # Test various assignment patterns that should be skipped
+    content = """const SIMPLE_VAR: &str = "value";
+const LIST_VAR: &[i32] = &[1, 2, 3];
+const BOOL_VAR: bool = true;
+const NUM_VAR: i32 = 42;
+const FLOAT_VAR: f64 = 3.14;
+static NULL_VAR: Option<()> = None;"""
+    assert should_skip_rust(content) is True
+
+
+def test_bare_string_continuation():
+    # Test comments and documentation
+    content = """/// This is a module documentation
+/// that spans multiple lines
+
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_autoload_statements():
+    # Test use statements should be skipped
+    content = """use std::collections::HashMap;
+use serde::Serialize;
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_constants_with_square_brackets():
+    # Test constants with array indexing should NOT be skipped - has executable logic
+    content = """const ENV_VAR: &str = &ENV_ARRAY[0];
+const API_URL: &str = "http://example.com";"""
+    assert should_skip_rust(content) is False
+
+
+def test_assignment_function_call_detection():
+    # Test assignment with function calls should NOT be skipped - contains executable logic
+    content = """static CONFIG: String = utils::load_config();
+const API_URL: &str = "http://example.com";"""
+    assert should_skip_rust(content) is False
+
+
+def test_field_definition_with_complex_types():
+    # Test impl blocks with methods should NOT be skipped
+    content = """struct Config {}
+
+impl Config {
+    fn handler(&self) -> &str {
+        "error"
+    }
+
+    fn process_data(&self, items: Vec<String>) -> Vec<String> {
+        items
+    }
+}"""
+    assert should_skip_rust(content) is False
+
+
+def test_inside_exception_class_to_typeddict():
+    # Test struct definitions should be skipped
+    content = """struct MyError {
+    message: String,
+}
+struct Config {
+    name: String,
+}"""
+    assert should_skip_rust(content) is True
+
+
+def test_inside_typeddict_class_to_exception():
+    # Test struct definitions should be skipped
+    content = """struct Config {
+    name: String,
+}
+struct MyError {
+    message: String,
+}"""
+    assert should_skip_rust(content) is True
+
+
+def test_inside_exception_class_to_namedtuple():
+    # Test struct definitions should be skipped
+    content = """struct MyError {
+    message: String,
+}
+struct Point {
+    x: i32,
+    y: i32,
+}"""
+    assert should_skip_rust(content) is True
+
+
+def test_enum_declarations():
+    # Test enum declarations
+    content = """enum Status {
+    Active,
+    Inactive,
+    Pending,
+}
+const MAX_SIZE: i32 = 100;"""
+    assert should_skip_rust(content) is True
+
+
+def test_extern_declarations():
+    # Test use statements
+    content = """use std::collections::HashMap;
+use crate::utils::helper;
+const MAX_SIZE: i32 = 100;"""
+    assert should_skip_rust(content) is True
+
+
+def test_forward_declarations():
+    # Test struct declarations
+    content = """struct ForwardStruct;
+trait ForwardTrait;
+const MAX_SIZE: i32 = 100;"""
+    assert should_skip_rust(content) is True
+
+
+def test_using_namespace_statements():
+    # Test use with logic - should NOT be skipped
+    content = """use std::collections::HashMap;
+use crate::utils::process;
+let result = process();"""
+    assert should_skip_rust(content) is False
+
+
+def test_template_declarations():
+    # Test generic structs - should NOT be skipped (has logic)
+    content = """struct Container<T> {
+    items: Vec<T>,
+}
+
+impl<T> Container<T> {
+    fn new() -> Self {
+        Container { items: Vec::new() }
+    }
+}"""
+    assert should_skip_rust(content) is False
+
+
+def test_static_extern_const():
+    # Test static variables and constants
+    content = """static INTERNAL_VAR: i32 = 42;
+const VERSION: &str = "1.0.0";
+const MAX_SIZE: i32 = 100;"""
+    assert should_skip_rust(content) is True
+
+
+def test_enum_and_macro_declarations():
+    # Test constants
+    content = """const DEBUG_MODE: bool = true;
+const BUFFER_SIZE: usize = 1024;
+const MAX_SIZE: i32 = 100;"""
+    assert should_skip_rust(content) is True
+
+
+def test_macro_constants_only():
+    # Test constants only
+    content = """const MAX_SIZE: usize = 1024;
+const BUFFER_SIZE: usize = 512;
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_annotation_interface_definitions():
+    # Test trait definitions
+    content = """trait MyTrait {
+    fn method(&self) -> String;
+}
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_kotlin_data_class_definitions():
+    # Test struct definitions
+    content = """#[derive(Debug, Clone)]
+struct User {
+    id: i64,
+    name: String,
+    email: String,
+}
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_scala_case_class_definitions():
+    # Test struct definitions
+    content = """struct Point {
+    x: i32,
+    y: i32,
+}
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_module_exports_only():
+    # Test use statements
+    content = """use std::collections::HashMap;
+pub use crate::exports::*;
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_standalone_closing_brace_only():
+    # Test struct with closing brace
+    content = """struct MyStruct {
+    value: i32,
+}
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_type_alias():
+    # Test type alias to hit line 83
+    content = """pub type MyString = String;
+type UserId = u64;
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_mod_statements():
+    # Test mod statements to hit line 90
+    content = """pub mod utils;
+mod internal;
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_extern_crate():
+    # Test extern crate to hit line 93
+    content = """extern crate serde;
+extern crate tokio;
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_const_with_function_calls():
+    # Test const with function calls to hit line 102
+    content = """const CONFIG: &str = env::var("CONFIG").unwrap_or("default");
+const PATH: PathBuf = Path::new("/tmp");"""
+    assert should_skip_rust(content) is False
+
+
+def test_static_with_function_calls():
+    # Test static with function calls to hit line 112
+    content = """static CONFIG: Lazy<String> = Lazy::new(|| env::var("CONFIG").unwrap());
+static INSTANCE: Arc<Mutex<State>> = Arc::new(Mutex::new(State::new()));"""
+    assert should_skip_rust(content) is False
+
+
+def test_static_with_array_indexing():
+    # Test static with array indexing to hit line 118
+    content = """static CONFIG: &str = &DEFAULT_CONFIG[0];
+static VERSION: &str = "1.0.0";"""
+    assert should_skip_rust(content) is False

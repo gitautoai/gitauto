@@ -52,7 +52,7 @@ def should_skip_python(content: str) -> bool:
                     continue
         else:
             # We're inside a multi-line string constant
-            if triple_quote_type in line:
+            if triple_quote_type and triple_quote_type in line:
                 # String ends
                 in_triple_quote_string = False
                 triple_quote_type = None
@@ -80,6 +80,16 @@ def should_skip_python(content: str) -> bool:
             in_class_definition = True
             continue
 
+        # Handle Protocol classes (should be treated like TypedDict)
+        if re.match(r"^class\s+\w+\(Protocol\):", line):
+            in_class_definition = True
+            continue
+
+        # Handle Enum classes
+        if re.match(r"^class\s+\w+\(Enum\):", line):
+            in_class_definition = True
+            continue
+
         # Handle single-line empty classes like: class Name: pass
         if re.match(r"^class\s+\w+\s*:\s*pass$", line):
             continue
@@ -94,6 +104,9 @@ def should_skip_python(content: str) -> bool:
             # Type annotations in TypedDict/NamedTuple
             if re.match(r"^\w+:\s+", line):
                 continue
+            # Simple assignments in Enum classes (e.g., ACTIVE = 1)
+            if re.match(r"^\w+\s*=\s*", line):
+                continue
             # Docstrings in exception classes
             if (
                 line.startswith('"""')
@@ -104,26 +117,9 @@ def should_skip_python(content: str) -> bool:
             # Empty pass statement
             if line == "pass":
                 continue
-            # Check if class definition ends (non-indented line that's not part of class)
-            if not line.startswith(" ") and not line.startswith("\t"):
-                in_class_definition = False
-                in_exception_class = False
-                # Re-process this line as it's outside the class
-                # But first check if it's another class definition
-                if re.match(r"^class\s+", line):
-                    if re.match(r"^class\s+\w+\(TypedDict\):", line):
-                        in_class_definition = True
-                        continue
-                    if re.match(r"^class\s+\w+\((Exception|Error|Warning)\):", line):
-                        in_exception_class = True
-                        continue
-                    if re.match(
-                        r"^class\s+\w+\((NamedTuple|typing\.NamedTuple)\):", line
-                    ):
-                        in_class_definition = True
-                        continue
-                    # Other class definitions are considered logic
-                    return False
+            # Check for function definitions inside classes (methods)
+            if line.startswith("def "):
+                return False
             continue
 
         # Handle multi-line imports
@@ -161,19 +157,27 @@ def should_skip_python(content: str) -> bool:
             continue
 
         # Skip ALL variable assignments that are just data (no function calls or logic)
-        # Allow list concatenation with * operator but exclude function calls
-        if re.match(r"^[A-Z_][A-Z0-9_]*\s*=\s*", line) and not re.search(
-            r"[a-z_]+\(", line
-        ):
+        # Allow list concatenation with * operator but exclude function calls and dictionary access
+        if (
+            re.match(r"^[A-Z_][A-Z0-9_]*\s*=\s*", line)
+            and not re.search(r"[a-z_]+\(", line)
+            and not re.search(r"\w+\[", line)
+        ):  # Check for dictionary/array access
             continue
-        # Skip any assignments with literals (but not function calls)
-        if re.match(
-            r"^\w+\s*=\s*[\(\[\{\"'`\d\-\+fTrueFalseNone\*]", line
-        ) and not re.search(r"[a-z_]+\(", line):
+        # Skip any assignments with literals (but not function calls or dictionary access)
+        if (
+            re.match(r"^\w+\s*=\s*[\(\[\{\"'`\d\-\+fTrueFalseNone\*]", line)
+            and not re.search(r"[a-z_]+\(", line)
+            and not re.search(r"\w+\[", line)
+        ):
             continue
 
         # Skip bare strings (continuation of multi-line strings)
         if re.match(r'^".*"$', line):
+            continue
+
+        # Handle standalone pass statement
+        if line == "pass":
             continue
 
         # If we find any other code, it's not export-only

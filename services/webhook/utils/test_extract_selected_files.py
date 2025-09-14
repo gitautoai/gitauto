@@ -164,11 +164,11 @@ class TestExtractSelectedFiles:
         """Test extracting files from comment with extra whitespace."""
         # Arrange
         comment_body = """
-        
+
         - [x] `src/file1.py`
-        
+
         - [x] `src/file2.py`
-        
+
         """
 
         # Act
@@ -182,13 +182,13 @@ class TestExtractSelectedFiles:
         # Arrange
         comment_body = """
         Here are the selected files:
-        
+
         - [x] `src/main.py`
         - [ ] `src/unused.py`
         - [x] `tests/test_main.py`
-        
+
         Please review these changes carefully.
-        
+
         Additional notes:
         - This is important
         - Don't forget to test
