@@ -24,7 +24,8 @@ class TestAddIssueTemplates:
         with patch('services.github.templates.add_issue_templates.Github') as mock_github_class, \
              patch('services.github.templates.add_issue_templates.get_latest_remote_commit_sha') as mock_get_sha, \
              patch('services.github.templates.add_issue_templates.get_file_content') as mock_get_content, \
-             patch('services.github.templates.add_issue_templates.uuid4') as mock_uuid:
+             patch('services.github.templates.add_issue_templates.uuid4') as mock_uuid, \
+             patch('services.github.templates.add_issue_templates.PRODUCT_ID', 'gitauto'):
             
             # Setup GitHub instance and repository
             mock_github = Mock(spec=Github)
