@@ -3,14 +3,14 @@ from utils.files.should_skip_go import should_skip_go
 
 def test_export_only():
     # File with only package and import statements
-    content = """package types
+    content = '''package types
 
 import (
     "fmt"
     "encoding/json"
 )
 
-import "net/http\""""
+import "net/http"'''
     assert should_skip_go(content) is True
 
 
