@@ -79,7 +79,7 @@ type AuthenticationError struct {
 
 def test_mixed_imports_and_constants():
     # Mixed imports and constants
-    content = """package main
+    content = '''package main
 
 import "os"
 import "fmt"
@@ -87,7 +87,7 @@ import "fmt"
 const MaxRetries = 3
 const ApiURL = "https://api.example.com"
 
-var Version = "1.0.0\""""
+var Version = "1.0.0"'''
     assert should_skip_go(content) is True
 
 
