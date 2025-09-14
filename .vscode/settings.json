@@ -10,7 +10,7 @@
   "editor.formatOnSave": true,
   "editor.wordWrap": "bounded",
   "editor.wordWrapColumn": 100,
-  
+
   // Which formatter or linter to use.
   // "blackFormatter.enabled": true,
   "eslint.enable": false,

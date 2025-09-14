@@ -9,7 +9,7 @@ on:
 permissions:
   pull-requests: read
   contents: read
-      
+
 jobs:
   post-sns:
     if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'sns')
@@ -17,7 +17,7 @@ jobs:
     steps:
       # https://github.com/actions/checkout
       - uses: actions/checkout@v4
-      
+
       # https://github.com/actions/setup-node
       - uses: actions/setup-node@v4
         with:
