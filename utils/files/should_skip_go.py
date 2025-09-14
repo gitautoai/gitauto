@@ -78,7 +78,7 @@ def should_skip_go(content: str) -> bool:
                     interface_brace_count += 1
             if "}" in line:
                 if struct_brace_count > 0:
-                    struct_brace_count -= line.count("}")
+                    struct_brace_count = max(0, struct_brace_count - line.count("}"))
                 if interface_brace_count > 0:
                     interface_brace_count -= line.count("}")
             continue
