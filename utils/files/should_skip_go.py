@@ -18,8 +18,8 @@ def should_skip_go(content: str) -> bool:
     - Any executable code beyond declarations
     """
     lines = content.split("\n")
-    in_struct = False
-    in_interface = False
+    struct_brace_count = 0
+    interface_brace_count = 0
     in_multiline_string = False
     in_multiline_comment = False
 
