@@ -62,7 +62,7 @@ def should_skip_go(content: str) -> bool:
                 in_interface = True
             continue
         if in_struct or in_interface:
-            if "}" in line:
+            if line == "}" or line.endswith("}") and not line.startswith(" "):
                 in_struct = False
                 in_interface = False
             continue
