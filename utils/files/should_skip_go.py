@@ -82,7 +82,6 @@ def should_skip_go(content: str) -> bool:
                 if interface_brace_count > 0:
                     interface_brace_count -= line.count("}")
             continue
-            continue
 
         # Skip type aliases
         if re.match(r"^type\s+\w+\s+", line) and "=" not in line:
