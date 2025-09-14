@@ -63,7 +63,11 @@ def should_skip_go(content: str) -> bool:
         # Handle interface definitions
         if line.startswith("type ") and "interface" in line:
             if "{" in line:
-                in_interface = True
+                # Check if it's a single-line interface
+                if line.endswith("}"):
+                    in_interface = False  # Single-line interface, don't set in_interface
+                else:
+                    in_interface = True
             continue
         if in_struct or in_interface:
             # Check if this line closes the struct/interface
