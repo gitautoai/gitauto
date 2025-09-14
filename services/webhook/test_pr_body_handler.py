@@ -618,7 +618,8 @@ class TestWritePrDescription:
         # Verify AI call with unicode title
         call_args = all_mocks["chat_with_ai"].call_args
         user_input = call_args.kwargs["user_input"]
-        assert "Fïx ïssüé wïth äüthéntïcätïön" in user_input
+        # Unicode characters are escaped in JSON, so check for escaped sequences
+        assert "F\\u00efx \\u00efss\\u00fc\\u00e9 w\\u00efth \\u00e4\\u00fcth\\u00e9nt\\u00efc\\u00e4t\\u00ef\\u00f6n" in user_input
 
     def test_write_pr_description_with_special_characters_in_branch(
         self, mock_pr_payload, all_mocks
