@@ -801,7 +801,6 @@ class TestWritePrDescription:
             "Generated PR description\n\n"
             "```\n"
             "git \n"
-            "git\n"
             "```"
         )
         all_mocks["update_pull_request_body"].assert_called_once_with(
