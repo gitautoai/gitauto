@@ -290,7 +290,7 @@ type Username = string"""
 
 def test_import_block_variations():
     # Various import block formats should be skipped
-    content = """package main
+    content = '''package main
 
 import (
     "fmt"
@@ -299,7 +299,7 @@ import (
 )
 
 import "net/http"
-import "encoding/json\""""
+import "encoding/json"'''
     assert should_skip_go(content) is True
 
 
