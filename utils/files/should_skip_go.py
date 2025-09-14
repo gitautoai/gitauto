@@ -97,7 +97,7 @@ def should_skip_go(content: str) -> bool:
         if re.match(r"^\w+$", line):
             continue
         # Skip field definitions in structs (name Type format)
-        if re.match(r"^\w+\s+[\w\[\]\*\.{}\(\)\s,]+$", line):
+        if re.match(r"^\w+\s+.*$", line) and not re.search(r"\bfunc\s*\(", line) and "=" not in line:
             continue
         # If we find any other code, it's not export-only
         return False
