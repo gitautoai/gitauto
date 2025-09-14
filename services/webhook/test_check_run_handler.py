@@ -155,8 +155,6 @@ def test_handle_check_run_skips_when_comment_exists(
 @patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
-@patch("services.webhook.check_run_handler.get_workflow_run_path")
-@patch("services.webhook.check_run_handler.get_remote_file_content")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
@@ -178,8 +176,6 @@ def test_handle_check_run_full_workflow(
     mock_get_retry_pairs,
     _mock_update_comment,
     mock_get_logs,
-    mock_get_remote_file,
-    mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
     _mock_cancel_workflow_runs,
@@ -211,8 +207,6 @@ def test_handle_check_run_full_workflow(
             "deletions": 5,
         }
     ]
-    mock_get_workflow_path.return_value = ".github/workflows/test.yml"
-    mock_get_remote_file.return_value = "workflow content"
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = True
@@ -275,8 +269,6 @@ def test_handle_check_run_full_workflow(
 @patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
-@patch("services.webhook.check_run_handler.get_workflow_run_path")
-@patch("services.webhook.check_run_handler.get_remote_file_content")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 @patch("services.webhook.check_run_handler.create_permission_url")
@@ -286,8 +278,6 @@ def test_handle_check_run_with_404_logs(
     mock_create_permission_url,
     mock_update_comment,
     mock_get_logs,
-    mock_get_remote_file,
-    mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
     _mock_cancel_workflow_runs,
@@ -319,8 +309,6 @@ def test_handle_check_run_with_404_logs(
             "deletions": 5,
         }
     ]
-    mock_get_workflow_path.return_value = ".github/workflows/test.yml"
-    mock_get_remote_file.return_value = "workflow content"
     mock_get_logs.return_value = 404
     mock_create_permission_url.return_value = "https://permission-url"
     mock_get_permissions.return_value = {"actions": "read"}
@@ -352,15 +340,11 @@ def test_handle_check_run_with_404_logs(
 @patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
-@patch("services.webhook.check_run_handler.get_workflow_run_path")
-@patch("services.webhook.check_run_handler.get_remote_file_content")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 def test_handle_check_run_with_none_logs(
     mock_update_comment,
     mock_get_logs,
-    mock_get_remote_file,
-    mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
     _mock_cancel_workflow_runs,
@@ -392,8 +376,6 @@ def test_handle_check_run_with_none_logs(
             "deletions": 5,
         }
     ]
-    mock_get_workflow_path.return_value = ".github/workflows/test.yml"
-    mock_get_remote_file.return_value = "workflow content"
     mock_get_logs.return_value = None
 
     # Execute
@@ -421,8 +403,6 @@ def test_handle_check_run_with_none_logs(
 @patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
-@patch("services.webhook.check_run_handler.get_workflow_run_path")
-@patch("services.webhook.check_run_handler.get_remote_file_content")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
@@ -436,8 +416,6 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_retry_pairs,
     mock_update_comment,
     mock_get_logs,
-    mock_get_remote_file,
-    mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
     _mock_cancel_workflow_runs,
@@ -469,8 +447,6 @@ def test_handle_check_run_with_existing_retry_pair(
             "deletions": 5,
         }
     ]
-    mock_get_workflow_path.return_value = ".github/workflows/test.yml"
-    mock_get_remote_file.return_value = "workflow content"
     mock_get_logs.return_value = "Test failure log content"
     mock_deduplicate_logs.return_value = "Deduplicated test failure log"
 
@@ -512,8 +488,6 @@ def test_handle_check_run_with_existing_retry_pair(
 @patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
-@patch("services.webhook.check_run_handler.get_workflow_run_path")
-@patch("services.webhook.check_run_handler.get_remote_file_content")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
@@ -525,8 +499,6 @@ def test_handle_check_run_with_closed_pr(
     mock_get_retry_pairs,
     mock_update_comment,
     mock_get_logs,
-    mock_get_remote_file,
-    mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
     _mock_cancel_workflow_runs,
@@ -558,8 +530,6 @@ def test_handle_check_run_with_closed_pr(
             "deletions": 5,
         }
     ]
-    mock_get_workflow_path.return_value = ".github/workflows/test.yml"
-    mock_get_remote_file.return_value = "workflow content"
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = False
@@ -590,8 +560,6 @@ def test_handle_check_run_with_closed_pr(
 @patch("services.webhook.check_run_handler.cancel_workflow_runs")
 @patch("services.webhook.check_run_handler.get_pull_request")
 @patch("services.webhook.check_run_handler.get_pull_request_file_changes")
-@patch("services.webhook.check_run_handler.get_workflow_run_path")
-@patch("services.webhook.check_run_handler.get_remote_file_content")
 @patch("services.webhook.check_run_handler.get_workflow_run_logs")
 @patch("services.webhook.check_run_handler.update_comment")
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
@@ -605,8 +573,6 @@ def test_handle_check_run_with_deleted_branch(
     mock_get_retry_pairs,
     mock_update_comment,
     mock_get_logs,
-    mock_get_remote_file,
-    mock_get_workflow_path,
     mock_get_changes,
     mock_get_pr,
     _mock_cancel_workflow_runs,
@@ -638,8 +604,6 @@ def test_handle_check_run_with_deleted_branch(
             "deletions": 5,
         }
     ]
-    mock_get_workflow_path.return_value = ".github/workflows/test.yml"
-    mock_get_remote_file.return_value = "workflow content"
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
     mock_is_pr_open.return_value = True

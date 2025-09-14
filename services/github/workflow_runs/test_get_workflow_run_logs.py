@@ -13,14 +13,29 @@ def mock_zip_content():
     """Fixture providing mock zip file content with log files."""
     # Create a mock zip file in memory
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         # Add various log files
-        zf.writestr("0_build.txt", "2024-10-18T23:27:40.6602932Z Build started\n2024-10-18T23:27:41.1234567Z Build completed")
-        zf.writestr("build/system.txt", "2024-10-18T23:27:40.6602932Z System info\n2024-10-18T23:27:41.1234567Z System ready")
-        zf.writestr("build/1_Set up job.txt", "2024-10-18T23:27:40.6602932Z Setting up job\n2024-10-18T23:27:41.1234567Z Job setup complete")
-        zf.writestr("build/2_Run actions_checkout@v4.txt", "2024-10-18T23:27:40.6602932Z Checking out code\n2024-10-18T23:27:41.1234567Z Checkout complete")
-        zf.writestr("build/6_Run pytest.txt", "2024-10-18T23:27:40.6602932Z Running pytest\n2024-10-18T23:27:41.1234567Z Test failed with error\n2024-10-18T23:27:42.1234567Z Exit code: 1")
-    
+        zf.writestr(
+            "0_build.txt",
+            "2024-10-18T23:27:40.6602932Z Build started\n2024-10-18T23:27:41.1234567Z Build completed",
+        )
+        zf.writestr(
+            "build/system.txt",
+            "2024-10-18T23:27:40.6602932Z System info\n2024-10-18T23:27:41.1234567Z System ready",
+        )
+        zf.writestr(
+            "build/1_Set up job.txt",
+            "2024-10-18T23:27:40.6602932Z Setting up job\n2024-10-18T23:27:41.1234567Z Job setup complete",
+        )
+        zf.writestr(
+            "build/2_Run actions_checkout@v4.txt",
+            "2024-10-18T23:27:40.6602932Z Checking out code\n2024-10-18T23:27:41.1234567Z Checkout complete",
+        )
+        zf.writestr(
+            "build/6_Run pytest.txt",
+            "2024-10-18T23:27:40.6602932Z Running pytest\n2024-10-18T23:27:41.1234567Z Test failed with error\n2024-10-18T23:27:42.1234567Z Exit code: 1",
+        )
+
     zip_buffer.seek(0)
     return zip_buffer.getvalue()
 
@@ -83,7 +98,7 @@ def test_get_workflow_run_logs_success(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_successful_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -119,7 +134,7 @@ def test_get_workflow_run_logs_404_not_found(
     ) as mock_get_failed_step:
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_404_response
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -130,7 +145,12 @@ def test_get_workflow_run_logs_404_not_found(
 
 
 def test_get_workflow_run_logs_404_without_not_found_text(
-    mock_404_response_without_not_found, mock_headers, test_owner, test_repo, test_token, mock_zip_content
+    mock_404_response_without_not_found,
+    mock_headers,
+    test_owner,
+    test_repo,
+    test_token,
+    mock_zip_content,
 ):
     """Test handling of 404 response without 'Not Found' in text."""
     # Arrange
@@ -150,7 +170,7 @@ def test_get_workflow_run_logs_404_without_not_found_text(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_404_response_without_not_found
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -181,7 +201,7 @@ def test_get_workflow_run_logs_failed_step_not_found(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_successful_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -212,7 +232,7 @@ def test_get_workflow_run_logs_failed_step_none(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_successful_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -228,7 +248,9 @@ def test_get_workflow_run_logs_failed_step_file_not_in_zip(
     """Test handling when failed step log file is not found in zip."""
     # Arrange
     run_id = 12345
-    failed_step_fname = "build/7_Nonexistent step.txt"  # This file doesn't exist in the zip
+    failed_step_fname = (
+        "build/7_Nonexistent step.txt"  # This file doesn't exist in the zip
+    )
 
     # Act
     with patch(
@@ -241,7 +263,7 @@ def test_get_workflow_run_logs_failed_step_file_not_in_zip(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_successful_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -260,13 +282,13 @@ def test_get_workflow_run_logs_empty_zip(
     # Arrange
     run_id = 12345
     failed_step_fname = "build/6_Run pytest.txt"
-    
+
     # Create empty zip content
     empty_zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(empty_zip_buffer, 'w', zipfile.ZIP_DEFLATED):
+    with zipfile.ZipFile(empty_zip_buffer, "w", zipfile.ZIP_DEFLATED):
         pass  # Create empty zip
     empty_zip_buffer.seek(0)
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.content = empty_zip_buffer.getvalue()
@@ -282,7 +304,7 @@ def test_get_workflow_run_logs_empty_zip(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -301,17 +323,20 @@ def test_get_workflow_run_logs_short_log_lines(
     # Arrange
     run_id = 12345
     failed_step_fname = "build/6_Run pytest.txt"
-    
+
     # Create zip with short log lines
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("build/6_Run pytest.txt", "Short line\nAnother short\n2024-10-18T23:27:40.6602932Z Normal line")
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(
+            "build/6_Run pytest.txt",
+            "Short line\nAnother short\n2024-10-18T23:27:40.6602932Z Normal line",
+        )
     zip_buffer.seek(0)
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.content = zip_buffer.getvalue()
-    
+
     expected_content = "```GitHub Check Run Log: build/6_Run pytest.txt\nShort line\nAnother short\nNormal line\n```"
 
     # Act
@@ -325,7 +350,7 @@ def test_get_workflow_run_logs_short_log_lines(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -339,17 +364,20 @@ def test_get_workflow_run_logs_exactly_29_char_lines(
     # Arrange
     run_id = 12345
     failed_step_fname = "build/6_Run pytest.txt"
-    
+
     # Create zip with exactly 29 character lines
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("build/6_Run pytest.txt", "2024-10-18T23:27:40.6602932Z \n2024-10-18T23:27:40.6602932Z Test line")
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(
+            "build/6_Run pytest.txt",
+            "2024-10-18T23:27:40.6602932Z \n2024-10-18T23:27:40.6602932Z Test line",
+        )
     zip_buffer.seek(0)
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.content = zip_buffer.getvalue()
-    
+
     expected_content = "```GitHub Check Run Log: build/6_Run pytest.txt\n2024-10-18T23:27:40.6602932Z \nTest line\n```"
 
     # Act
@@ -363,7 +391,7 @@ def test_get_workflow_run_logs_exactly_29_char_lines(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -377,19 +405,19 @@ def test_get_workflow_run_logs_timestamp_removal_verification(
     # Arrange
     run_id = 12345
     failed_step_fname = "build/6_Run pytest.txt"
-    
+
     # Create zip with specific timestamp format
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         # The timestamp format is exactly 29 characters: "2024-10-18T23:27:40.6602932Z "
         log_content = "2024-10-18T23:27:40.6602932Z This should remain\n2024-10-18T23:27:41.1234567Z This should also remain"
         zf.writestr("build/6_Run pytest.txt", log_content)
     zip_buffer.seek(0)
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.content = zip_buffer.getvalue()
-    
+
     expected_content = "```GitHub Check Run Log: build/6_Run pytest.txt\nThis should remain\nThis should also remain\n```"
 
     # Act
@@ -403,7 +431,7 @@ def test_get_workflow_run_logs_timestamp_removal_verification(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -435,7 +463,7 @@ def test_get_workflow_run_logs_url_construction(
         mock_create_headers.return_value = {"Authorization": f"Bearer {token}"}
         mock_get.return_value = mock_successful_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         get_workflow_run_logs(owner, repo, run_id, token)
 
     # Assert
@@ -467,7 +495,7 @@ def test_get_workflow_run_logs_timeout_parameter(
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_get.return_value = mock_successful_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -497,7 +525,7 @@ def test_get_workflow_run_logs_http_error_after_404_check(
     ) as mock_create_headers:
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_error_response
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert - should return default value from handle_exceptions decorator
@@ -513,7 +541,7 @@ def test_get_workflow_run_logs_invalid_zip_content(
     # Arrange
     run_id = 12345
     failed_step_fname = "build/6_Run pytest.txt"
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.content = b"invalid zip content"
@@ -529,7 +557,7 @@ def test_get_workflow_run_logs_invalid_zip_content(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert - should return default value from handle_exceptions decorator
@@ -548,19 +576,22 @@ def test_get_workflow_run_logs_different_log_file_names(
     # Arrange
     run_id = 12345
     failed_step_fname = "test/3_Custom step name.txt"
-    
+
     # Create zip with the specific log file
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("0_build.txt", "2024-10-18T23:27:40.6602932Z Build log")
         zf.writestr("test/system.txt", "2024-10-18T23:27:40.6602932Z System log")
-        zf.writestr("test/3_Custom step name.txt", "2024-10-18T23:27:40.6602932Z Custom step executed\n2024-10-18T23:27:41.1234567Z Step completed")
+        zf.writestr(
+            "test/3_Custom step name.txt",
+            "2024-10-18T23:27:40.6602932Z Custom step executed\n2024-10-18T23:27:41.1234567Z Step completed",
+        )
     zip_buffer.seek(0)
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.content = zip_buffer.getvalue()
-    
+
     expected_content = "```GitHub Check Run Log: test/3_Custom step name.txt\nCustom step executed\nStep completed\n```"
 
     # Act
@@ -574,7 +605,7 @@ def test_get_workflow_run_logs_different_log_file_names(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -588,18 +619,20 @@ def test_get_workflow_run_logs_unicode_content(
     # Arrange
     run_id = 12345
     failed_step_fname = "build/6_Run pytest.txt"
-    
+
     # Create zip with unicode content
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
-        unicode_content = "2024-10-18T23:27:40.6602932Z Test with unicode: 测试 🚀 ñáéíóú"
-        zf.writestr("build/6_Run pytest.txt", unicode_content.encode('utf-8'))
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        unicode_content = (
+            "2024-10-18T23:27:40.6602932Z Test with unicode: 测试 🚀 ñáéíóú"
+        )
+        zf.writestr("build/6_Run pytest.txt", unicode_content.encode("utf-8"))
     zip_buffer.seek(0)
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.content = zip_buffer.getvalue()
-    
+
     expected_content = "```GitHub Check Run Log: build/6_Run pytest.txt\nTest with unicode: 测试 🚀 ñáéíóú\n```"
 
     # Act
@@ -613,7 +646,7 @@ def test_get_workflow_run_logs_unicode_content(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -627,17 +660,17 @@ def test_get_workflow_run_logs_empty_log_file(
     # Arrange
     run_id = 12345
     failed_step_fname = "build/6_Run pytest.txt"
-    
+
     # Create zip with empty log file
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("build/6_Run pytest.txt", "")
     zip_buffer.seek(0)
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.content = zip_buffer.getvalue()
-    
+
     expected_content = "```GitHub Check Run Log: build/6_Run pytest.txt\n\n```"
 
     # Act
@@ -651,7 +684,7 @@ def test_get_workflow_run_logs_empty_log_file(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert
@@ -665,18 +698,22 @@ def test_get_workflow_run_logs_single_line_log(
     # Arrange
     run_id = 12345
     failed_step_fname = "build/6_Run pytest.txt"
-    
+
     # Create zip with single line log file
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("build/6_Run pytest.txt", "2024-10-18T23:27:40.6602932Z Single line log")
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(
+            "build/6_Run pytest.txt", "2024-10-18T23:27:40.6602932Z Single line log"
+        )
     zip_buffer.seek(0)
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.content = zip_buffer.getvalue()
-    
-    expected_content = "```GitHub Check Run Log: build/6_Run pytest.txt\nSingle line log\n```"
+
+    expected_content = (
+        "```GitHub Check Run Log: build/6_Run pytest.txt\nSingle line log\n```"
+    )
 
     # Act
     with patch(
@@ -689,7 +726,7 @@ def test_get_workflow_run_logs_single_line_log(
         mock_create_headers.return_value = mock_headers
         mock_get.return_value = mock_response
         mock_get_failed_step.return_value = failed_step_fname
-        
+
         result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
 
     # Assert

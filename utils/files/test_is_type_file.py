@@ -152,7 +152,9 @@ def test_invalid_input():
 
 def test_edge_cases_with_paths():
     # Test edge cases with different path separators and structures
-    assert is_type_file("src\\types\\user.py") is False  # Windows path separator not supported
+    assert (
+        is_type_file("src\\types\\user.py") is False
+    )  # Windows path separator not supported
     assert is_type_file("./types/config.js") is True
     assert is_type_file("../type/models.py") is True
     assert is_type_file("deeply/nested/types/complex/structure.ts") is True
@@ -160,20 +162,38 @@ def test_edge_cases_with_paths():
 
 def test_mixed_patterns():
     # Test files that might match multiple patterns
-    assert is_type_file("types/UserTypes.java") is True  # Both directory and naming pattern
-    assert is_type_file("schemas/user.schema.ts") is True  # Both directory and file pattern
-    assert is_type_file("interfaces/api.interface.js") is True  # Both directory and file pattern
-    assert is_type_file("constants/app.constants.py") is True  # Both directory and file pattern
+    assert (
+        is_type_file("types/UserTypes.java") is True
+    )  # Both directory and naming pattern
+    assert (
+        is_type_file("schemas/user.schema.ts") is True
+    )  # Both directory and file pattern
+    assert (
+        is_type_file("interfaces/api.interface.js") is True
+    )  # Both directory and file pattern
+    assert (
+        is_type_file("constants/app.constants.py") is True
+    )  # Both directory and file pattern
 
 
 def test_partial_matches_should_not_match():
     # Test files that contain type-related words but shouldn't match patterns
-    assert is_type_file("user_service_types_handler.py") is False  # Contains "types" but not in pattern
-    assert is_type_file("schema_validator.py") is False  # Contains "schema" but not in pattern
-    assert is_type_file("interface_manager.py") is False  # Contains "interface" but not in pattern
-    assert is_type_file("constant_loader.py") is False  # Contains "constant" but not in pattern
+    assert (
+        is_type_file("user_service_types_handler.py") is False
+    )  # Contains "types" but not in pattern
+    assert (
+        is_type_file("schema_validator.py") is False
+    )  # Contains "schema" but not in pattern
+    assert (
+        is_type_file("interface_manager.py") is False
+    )  # Contains "interface" but not in pattern
+    assert (
+        is_type_file("constant_loader.py") is False
+    )  # Contains "constant" but not in pattern
     assert is_type_file("enum_parser.py") is False  # Contains "enum" but not in pattern
-    assert is_type_file("model_factory.py") is False  # Contains "model" but not in pattern
+    assert (
+        is_type_file("model_factory.py") is False
+    )  # Contains "model" but not in pattern
 
 
 def test_boundary_conditions():
@@ -193,7 +213,9 @@ def test_specific_model_file_restrictions():
     assert is_type_file("models/user.py") is True
     assert is_type_file("model/api.py") is True
     assert is_type_file("models/config.js") is False  # Not Python
-    assert is_type_file("model/service.ts") is False  # Not Python, doesn't match type patterns
+    assert (
+        is_type_file("model/service.ts") is False
+    )  # Not Python, doesn't match type patterns
     assert is_type_file("models/data.java") is False  # Not Python
     assert is_type_file("models/service.rb") is False  # Not Python
     assert is_type_file("model/handler.php") is False  # Not Python

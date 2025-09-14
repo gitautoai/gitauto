@@ -76,7 +76,9 @@ class TestInitializeRepo:
 
             # Verify README.md was created with correct content
             expected_readme_path = os.path.join(test_repo_path, "README.md")
-            mock_file.assert_called_once_with(expected_readme_path, "w", encoding="utf-8")
+            mock_file.assert_called_once_with(
+                expected_readme_path, "w", encoding="utf-8"
+            )
 
             # Verify README content contains expected elements
             written_content = "".join(
@@ -142,7 +144,9 @@ class TestInitializeRepo:
             "builtins.open", mock_open()
         ), patch(
             "services.github.repositories.initialize_repo.run_command"
-        ) as mock_run_command, patch("builtins.print") as mock_print:
+        ) as mock_run_command, patch(
+            "builtins.print"
+        ) as mock_print:
 
             # Make remote add command fail
             def side_effect(command, cwd):
@@ -249,11 +253,19 @@ class TestInitializeRepo:
             assert written_content.startswith("## GitAuto resources")
             assert "Here are GitAuto resources." in written_content
             assert "- [GitAuto homepage](https://gitauto.ai)" in written_content
-            assert "- [GitAuto demo](https://www.youtube.com/watch?v=demo)" in written_content
+            assert (
+                "- [GitAuto demo](https://www.youtube.com/watch?v=demo)"
+                in written_content
+            )
             assert "- [GitAuto use cases](https://gitauto.ai/blog)" in written_content
-            assert "- [GitAuto LinkedIn](https://www.linkedin.com/company/gitauto/)" in written_content
+            assert (
+                "- [GitAuto LinkedIn](https://www.linkedin.com/company/gitauto/)"
+                in written_content
+            )
             assert "- [GitAuto Twitter](https://x.com/gitautoai)" in written_content
-            assert "- [GitAuto YouTube](https://youtube.com/@gitauto)" in written_content
+            assert (
+                "- [GitAuto YouTube](https://youtube.com/@gitauto)" in written_content
+            )
 
     def test_initialize_repo_git_config_commands(
         self,
@@ -316,7 +328,7 @@ class TestInitializeRepo:
     ):
         """Test token injection with various URL formats."""
         token = "token123"
-        
+
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
         ), patch(
