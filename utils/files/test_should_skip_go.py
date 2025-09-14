@@ -489,3 +489,63 @@ type ComplexStruct struct {
     SimpleField    string
     PointerField   *int
     SliceField     []string
+    MapField       map[string]int
+    ChanField      chan int
+    FuncField      func(int) string
+    InterfaceField interface{}
+}"""
+    assert should_skip_go(content) is True
+
+
+def test_multiline_comment_edge_cases():
+    # Multiline comment that starts and ends on same line
+    content = """package main
+
+/* single line comment */ const MaxRetries = 3
+
+type User struct {
+    ID int64
+}"""
+    assert should_skip_go(content) is True
+
+
+def test_function_keyword_in_comments():
+    # Function keyword in comments should not affect result
+    content = """package main
+
+// This function does something
+const MaxRetries = 3
+
+/*
+func example() {
+    // This is in a comment
+}
+*/
+
+type User struct {
+    ID int64
+}"""
+    assert should_skip_go(content) is True
+
+
+def test_executable_code_detection():
+    # Any executable code should cause function to return False
+    content = """package main
+
+const MaxRetries = 3
+
+x := 5  // This is executable code"""
+    assert should_skip_go(content) is False
+
+
+def test_function_call_in_const_assignment():
+    # Function call in const assignment should return False
+    content = """package main
+
+const Timestamp = getCurrentTime()"""
+    assert should_skip_go(content) is False
+
+
+def test_go_directive_and_build_tags():
+    # Go directives and build tags should be skipped
+    content = """//go:build linux
