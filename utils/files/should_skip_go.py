@@ -89,7 +89,7 @@ def should_skip_go(content: str) -> bool:
                 return False
             continue
         # Skip individual const/var declarations in blocks - but NOT if they contain function calls
-        if re.match(r"^\w+(\s+\w+)?\s*=", line):
+        if re.match(r"^\w+(\s+\w+)?\s*=", line) and not line.startswith("type "):
             if "(" in line and ")" in line:  # Contains function calls
                 return False
             continue
