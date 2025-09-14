@@ -778,12 +778,12 @@ class TestWritePrDescription:
     def test_write_pr_description_with_empty_git_commands(
         self, mock_pr_payload, all_mocks
     ):
-        """Test PR description generation with empty git commands."""
+        """Test PR description generation with git commands that have minimal content."""
         # Setup
         mock_pr_payload["pull_request"]["body"] = (
             "Resolves #456\n\n"
-            "git \n"
-            "git"
+            "git \n"  # This will be included (starts with 'git ')
+            "git"     # This will be skipped (doesn't start with 'git ')
         )
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
