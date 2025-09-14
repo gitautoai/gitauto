@@ -449,5 +449,90 @@ class TestAddIssueTemplates:
 
     def test_add_issue_templates_return_type_consistency(self, mock_github_setup):
         """Test that return type is consistent (always None)."""
+
+    def test_add_issue_templates_with_special_characters_in_repo_name(self, mock_github_setup):
+        """Test with repository names containing special characters."""
+        mocks = mock_github_setup
+        mock_repo = mocks['repo']
+        
+        # Mock no existing templates
+        mock_repo.get_contents.side_effect = UnknownObjectException(status=404, data={}, headers={})
+        
+        # Mock PR creation
+        mock_pr = Mock(spec=PullRequest)
+        mock_repo.create_pull.return_value = mock_pr
+        
+        # Call the function with special characters in repo name
+        result = add_issue_templates("test-org/repo-with-dashes_and_underscores", "installer", "test-token")
+        
+        # Verify it still works
+        assert result is None
+        mocks['github'].get_repo.assert_called_once_with(full_name_or_id="test-org/repo-with-dashes_and_underscores")
+
+    def test_add_issue_templates_with_empty_installer_name(self, mock_github_setup):
+        """Test with empty installer name."""
+        mocks = mock_github_setup
+        mock_repo = mocks['repo']
+        
+        # Mock no existing templates
+        mock_repo.get_contents.side_effect = UnknownObjectException(status=404, data={}, headers={})
+        
+        # Mock PR creation
+        mock_pr = Mock(spec=PullRequest)
+        mock_repo.create_pull.return_value = mock_pr
+        
+        # Call the function with empty installer name
+        result = add_issue_templates("test-owner/test-repo", "", "test-token")
+        
+        # Should still work, but reviewer assignment might fail gracefully
+        assert result is None
+        mock_pr.create_review_request.assert_called_once_with(reviewers=[""])
+
+    def test_add_issue_templates_with_long_repo_name(self, mock_github_setup):
+        """Test with very long repository name."""
+        mocks = mock_github_setup
+        mock_repo = mocks['repo']
+        
+        # Mock no existing templates
+        mock_repo.get_contents.side_effect = UnknownObjectException(status=404, data={}, headers={})
+        
+        # Mock PR creation
+        mock_pr = Mock(spec=PullRequest)
+        mock_repo.create_pull.return_value = mock_pr
+        
+        # Create very long repo name
+        long_owner = "a" * 100
+        long_repo = "b" * 100
+        full_name = f"{long_owner}/{long_repo}"
+        
+        # Call the function
+        result = add_issue_templates(full_name, "installer", "test-token")
+        
+        # Should still work
+        assert result is None
+        mocks['github'].get_repo.assert_called_once_with(full_name_or_id=full_name)
+
+    def test_add_issue_templates_github_api_error_handling(self):
+        """Test that GitHub API errors are handled gracefully."""
+        with patch('services.github.templates.add_issue_templates.Github') as mock_github_class:
+            # Mock Github to raise a GitHub-specific exception
+            from github.GithubException import GithubException
+            mock_github_class.side_effect = GithubException(status=500, data={}, headers={})
+            
+            # Call the function - should not raise exception due to decorator
+            result = add_issue_templates("test-owner/test-repo", "installer", "test-token")
+            
+            # Should return None due to decorator's default_return_value
+            assert result is None
+
+    def test_add_issue_templates_parameter_validation(self):
+        """Test function behavior with various parameter types."""
+        # Test with None parameters - should be handled by decorator
+        result = add_issue_templates(None, "installer", "test-token")
+        assert result is None
+        
+        result = add_issue_templates("test-owner/test-repo", None, "test-token")
+        assert result is None
+        
         # The function should always return None due to the decorator and explicit returns
         result = add_issue_templates("test-owner/test-repo", "installer", "test-token")
