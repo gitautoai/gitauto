@@ -280,7 +280,7 @@ type Config map[string]interface{}"""
 
 
 def test_type_aliases_with_assignment():
-    # Type aliases with assignment should be skipped
+    # Type aliases with assignment should NOT be skipped
     content = """package main
 
 type UserID = int64
