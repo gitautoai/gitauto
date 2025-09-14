@@ -20,6 +20,14 @@ from utils.prompts.write_pr_body import WRITE_PR_BODY
 
 
 def write_pr_description(payload: dict):
+    # Handle None or empty payload
+    if not payload:
+        return
+    
+    # Check if required keys exist
+    if "pull_request" not in payload or "repository" not in payload or "installation" not in payload:
+        return
+    
     # Return if the author of the pull request is not GitAuto itself
     pull: dict = payload["pull_request"]
     if pull["user"]["login"] != GITHUB_APP_USER_NAME:
@@ -38,6 +46,10 @@ def write_pr_description(payload: dict):
         pull_title = pull_title[9:]  # Remove "GitAuto: " prefix
     pull_number: int = pull["number"]
     pull_body: str = pull["body"]
+    # Handle None pull_body
+    if pull_body is None:
+        pull_body = ""
+    
     pull_url: str = pull["url"]
     pull_files_url = pull_url + "/files"
     head_branch: str = pull["head"]["ref"]
@@ -54,8 +66,13 @@ def write_pr_description(payload: dict):
     # Parse the body line by line
     for line in pull_body.split("\n"):
         if line.startswith("Resolves #"):
-            issue_number = int(line.split("#")[1])
-            resolves_statement = line
+            try:
+                if issue_number is None:  # Only process the first resolves statement
+                    issue_number = int(line.split("#")[1])
+                    resolves_statement = line
+            except (ValueError, IndexError):
+                # Skip invalid issue number format
+                pass
         elif line.startswith("git "):
             commands.append(line)
 
