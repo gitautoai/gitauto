@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name
 # Standard imports
 from unittest.mock import Mock, patch, MagicMock
 from uuid import uuid4
