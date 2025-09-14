@@ -583,4 +583,29 @@ def test_replace_file_json_decode_error_on_get(sample_base_args):
 
 def test_replace_remote_file_content_function_definition():
     """Test that the REPLACE_REMOTE_FILE_CONTENT function definition is properly structured."""
+    """Test that the REPLACE_REMOTE_FILE_CONTENT function definition is properly structured."""
+    from services.github.commits.replace_remote_file import REPLACE_REMOTE_FILE_CONTENT
+    
+    # Verify function definition structure
+    assert REPLACE_REMOTE_FILE_CONTENT["name"] == "replace_remote_file_content"
+    assert "description" in REPLACE_REMOTE_FILE_CONTENT
+    assert "parameters" in REPLACE_REMOTE_FILE_CONTENT
+    assert REPLACE_REMOTE_FILE_CONTENT["strict"] is True
+    
+    # Verify parameters structure
+    params = REPLACE_REMOTE_FILE_CONTENT["parameters"]
+    assert params["type"] == "object"
+    assert "file_path" in params["properties"]
+    assert "file_content" in params["properties"]
+    assert params["required"] == ["file_path", "file_content"]
+    assert params["additionalProperties"] is False
+    
+    # Verify file_content parameter
+    file_content_param = params["properties"]["file_content"]
+    assert file_content_param["type"] == "string"
+    assert "description" in file_content_param
+
+
+def test_replace_file_with_extra_kwargs(
+    mock_requests_get_existing_file,
     from services.github.commits.replace_remote_file import REPLACE_REMOTE_FILE_CONTENT
