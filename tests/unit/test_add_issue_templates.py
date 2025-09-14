@@ -246,6 +246,7 @@ class TestAddIssueTemplates:
         )
 
     @patch('services.github.templates.add_issue_templates.GITHUB_ISSUE_TEMPLATES', ["custom_template.yml"])
+    @patch('services.github.templates.add_issue_templates.PRODUCT_ID', 'gitauto')
     def test_add_issue_templates_with_custom_templates(self, mock_github_setup):
         """Test with custom issue templates configuration."""
         mocks = mock_github_setup
