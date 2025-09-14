@@ -66,8 +66,12 @@ def write_pr_description(payload: dict):
     # Parse the body line by line
     for line in pull_body.split("\n"):
         if line.startswith("Resolves #"):
-            issue_number = int(line.split("#")[1])
-            resolves_statement = line
+            try:
+                issue_number = int(line.split("#")[1])
+                resolves_statement = line
+            except (ValueError, IndexError):
+                # Skip invalid issue number format
+                pass
         elif line.startswith("git "):
             commands.append(line)
 
