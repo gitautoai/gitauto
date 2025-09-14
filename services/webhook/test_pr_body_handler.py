@@ -795,7 +795,7 @@ class TestWritePrDescription:
         # Execute
         write_pr_description(mock_pr_payload)
 
-        # Verify PR body update with empty git commands
+        # Verify PR body update with minimal git commands (only 'git ' is included)
         expected_body = (
             "Resolves #456\n\n"
             "Generated PR description\n\n"
