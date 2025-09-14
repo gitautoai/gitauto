@@ -67,7 +67,7 @@ def write_pr_description(payload: dict):
     for line in pull_body.split("\n"):
         if line.startswith("Resolves #"):
             try:
-                issue_number = int(line.split("#")[1])
+                if issue_number is None:  # Only process the first resolves statement
                 resolves_statement = line
             except (ValueError, IndexError):
                 # Skip invalid issue number format
