@@ -558,3 +558,12 @@ type Config struct {
     Timeout int
 }"""
     assert should_skip_go(content) is True
+
+
+def test_debug_map_interface():
+    # Debug test for map[string]interface{} field
+    content = """package main
+
+type User struct {
+    Metadata map[string]interface{}
+}"""
