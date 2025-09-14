@@ -23,11 +23,15 @@ def write_pr_description(payload: dict):
     # Handle None or empty payload
     if not payload:
         return
-    
+
     # Check if required keys exist
-    if "pull_request" not in payload or "repository" not in payload or "installation" not in payload:
+    if (
+        "pull_request" not in payload
+        or "repository" not in payload
+        or "installation" not in payload
+    ):
         return
-    
+
     # Return if the author of the pull request is not GitAuto itself
     pull: dict = payload["pull_request"]
     if pull["user"]["login"] != GITHUB_APP_USER_NAME:
@@ -38,7 +42,9 @@ def write_pr_description(payload: dict):
     owner: str = repo["owner"]["login"]
     repo_name: str = repo["name"]
     installation_id: int = payload["installation"]["id"]
-    token: str = get_installation_access_token(installation_id)
+    token = get_installation_access_token(installation_id)
+    if not token:
+        return
 
     # Get the pull request information
     pull_title: str = pull["title"]
@@ -49,7 +55,7 @@ def write_pr_description(payload: dict):
     # Handle None pull_body
     if pull_body is None:
         pull_body = ""
-    
+
     pull_url: str = pull["url"]
     pull_files_url = pull_url + "/files"
     head_branch: str = pull["head"]["ref"]

@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 import base64
 from typing import cast
 from unittest.mock import MagicMock, patch
@@ -87,7 +88,9 @@ def mock_apply_patch_success():
 @pytest.fixture
 def mock_create_headers():
     """Fixture to mock create_headers function."""
-    with patch("services.github.commits.apply_diff_to_file.create_headers") as mock_headers:
+    with patch(
+        "services.github.commits.apply_diff_to_file.create_headers"
+    ) as mock_headers:
         mock_headers.return_value = {
             "Accept": "application/vnd.github.v3+json",
             "Authorization": "Bearer test_token",
@@ -383,7 +386,9 @@ def test_http_error_on_get_request(sample_base_args, mock_create_headers):
     with patch("services.github.commits.apply_diff_to_file.requests.get") as mock_get:
         mock_response = MagicMock()
         mock_response.status_code = 403
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("403 Forbidden")
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "403 Forbidden"
+        )
         mock_get.return_value = mock_response
 
         result = apply_diff_to_file(
@@ -405,7 +410,9 @@ def test_http_error_on_put_request(
     """Test handling of HTTP error during PUT request."""
     with patch("services.github.commits.apply_diff_to_file.requests.put") as mock_put:
         mock_response = MagicMock()
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("422 Unprocessable Entity")
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "422 Unprocessable Entity"
+        )
         mock_put.return_value = mock_response
 
         result = apply_diff_to_file(
@@ -430,7 +437,9 @@ def test_base64_decoding_with_special_characters(
         mock_response.raise_for_status.return_value = None
         # Base64 encoded content with special characters: "print('héllo wörld 🌍')\n"
         special_content = "print('héllo wörld 🌍')\n"
-        encoded_content = base64.b64encode(special_content.encode('utf-8')).decode('utf-8')
+        encoded_content = base64.b64encode(special_content.encode("utf-8")).decode(
+            "utf-8"
+        )
         mock_response.json.return_value = {
             "content": encoded_content,
             "sha": "test_sha_special",
@@ -438,7 +447,9 @@ def test_base64_decoding_with_special_characters(
         }
         mock_get.return_value = mock_response
 
-        with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
+        with patch(
+            "services.github.commits.apply_diff_to_file.apply_patch"
+        ) as mock_patch:
             mock_patch.return_value = ("print('héllo modified wörld 🌍')\n", "")
 
             diff = """--- test.py
@@ -547,7 +558,10 @@ def test_url_construction_with_special_characters(
     )
 
     assert isinstance(result, str)
-    assert "diff applied to the file: src/utils/test_file-name_123.py successfully" in result
+    assert (
+        "diff applied to the file: src/utils/test_file-name_123.py successfully"
+        in result
+    )
 
     # Verify GET request URL construction
     mock_requests_get_existing_file.assert_called_once()
@@ -573,7 +587,9 @@ def test_base64_encoding_in_put_request(
         mock_response.raise_for_status.return_value = None
         mock_put.return_value = mock_response
 
-        with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
+        with patch(
+            "services.github.commits.apply_diff_to_file.apply_patch"
+        ) as mock_patch:
             modified_content = "print('modified content with special chars: éñ 🚀')\n"
             mock_patch.return_value = (modified_content, "")
 
@@ -590,9 +606,9 @@ def test_base64_encoding_in_put_request(
             mock_put.assert_called_once()
             put_call_args = mock_put.call_args
             encoded_content = put_call_args.kwargs["json"]["content"]
-            
+
             # Decode and verify it matches the modified content
-            decoded_content = base64.b64decode(encoded_content).decode('utf-8')
+            decoded_content = base64.b64decode(encoded_content).decode("utf-8")
             assert decoded_content == modified_content
 
 
@@ -613,12 +629,16 @@ def test_kwargs_parameter_ignored():
         mock_response.status_code = 404
         mock_get.return_value = mock_response
 
-        with patch("services.github.commits.apply_diff_to_file.requests.put") as mock_put:
+        with patch(
+            "services.github.commits.apply_diff_to_file.requests.put"
+        ) as mock_put:
             mock_response = MagicMock()
             mock_response.raise_for_status.return_value = None
             mock_put.return_value = mock_response
 
-            with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
+            with patch(
+                "services.github.commits.apply_diff_to_file.apply_patch"
+            ) as mock_patch:
                 mock_patch.return_value = ("new content", "")
 
                 # Call with additional kwargs that should be ignored

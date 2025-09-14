@@ -1,4 +1,6 @@
+# pylint: disable=too-few-public-methods,unused-argument
 # Standard imports
+from typing import Any
 from unittest.mock import Mock
 
 # Third party imports
@@ -15,14 +17,16 @@ def make_message(role, content="test"):
 
 def make_tool_use_message(role, tool_id, tool_name="test_tool", text="test text"):
     """Create a message with tool_use content."""
-    content = [{"type": "text", "text": text}]
+    content: list[Any] = [{"type": "text", "text": text}]
     if role == "assistant":
-        content.append({
-            "type": "tool_use",
-            "id": tool_id,
-            "name": tool_name,
-            "input": {"param": "value"}
-        })
+        content.append(
+            {
+                "type": "tool_use",
+                "id": tool_id,
+                "name": tool_name,
+                "input": {"param": "value"},
+            }
+        )
     return {"role": role, "content": content}
 
 
@@ -30,16 +34,15 @@ def make_tool_result_message(tool_use_id, result="test result"):
     """Create a message with tool_result content."""
     return {
         "role": "user",
-        "content": [{
-            "type": "tool_result",
-            "tool_use_id": tool_use_id,
-            "content": result
-        }]
+        "content": [
+            {"type": "tool_result", "tool_use_id": tool_use_id, "content": result}
+        ],
     }
 
 
 class MessageObject:
     """Mock message object to test message_to_dict conversion."""
+
     def __init__(self, role, content):
         self.role = role
         self.content = content
@@ -63,7 +66,7 @@ def test_empty_messages(mock_client):
     """Test early return for empty message list."""
     messages = []
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
-    assert trimmed == []
+    assert len(trimmed) == 0
     # Should not call count_tokens for empty messages
     mock_client.messages.count_tokens.assert_not_called()
 
@@ -128,19 +131,18 @@ def test_preserves_first_user_message(mock_client):
         make_message("assistant", "response"),
         make_message("user", "second"),
     ]
-    
+
     # Force trimming by setting high token count
     def count_tokens_progressive(messages, model):
         # Return tokens based on message count to simulate realistic behavior
         if len(messages) >= 3:
             return Mock(input_tokens=5000)  # Over limit, needs trimming
-        else:
-            return Mock(input_tokens=800)   # Under limit, stop trimming
-    
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
-    
+
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
-    
+
     # Should keep first user message and remove assistant message
     assert len(trimmed) == 2
     assert trimmed[0] == make_message("user", "first")
@@ -184,9 +186,8 @@ def test_tool_use_without_matching_result(mock_client):
         # Return tokens based on message count to simulate realistic behavior
         if len(messages) >= 3:
             return Mock(input_tokens=5000)  # Over limit, needs trimming
-        else:
-            return Mock(input_tokens=800)   # Under limit, stop trimming
-    
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
@@ -209,9 +210,8 @@ def test_tool_use_with_non_matching_result(mock_client):
         # Return tokens based on message count to simulate realistic behavior
         if len(messages) >= 3:
             return Mock(input_tokens=5000)  # Over limit, needs trimming
-        else:
-            return Mock(input_tokens=800)   # Under limit, stop trimming
-    
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
@@ -234,9 +234,8 @@ def test_assistant_message_with_non_list_content(mock_client):
         # Return tokens based on message count to simulate realistic behavior
         if len(messages) >= 3:
             return Mock(input_tokens=5000)  # Over limit, needs trimming
-        else:
-            return Mock(input_tokens=800)   # Under limit, stop trimming
-    
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
@@ -254,8 +253,8 @@ def test_content_with_non_dict_blocks(mock_client):
             "role": "assistant",
             "content": [
                 "string block",  # Non-dict block
-                {"type": "text", "text": "normal block"}
-            ]
+                {"type": "text", "text": "normal block"},
+            ],
         },
         make_message("user", "follow up"),
     ]
@@ -265,9 +264,8 @@ def test_content_with_non_dict_blocks(mock_client):
         # Return tokens based on message count to simulate realistic behavior
         if len(messages) >= 3:
             return Mock(input_tokens=5000)  # Over limit, needs trimming
-        else:
-            return Mock(input_tokens=800)   # Under limit, stop trimming
-    
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
@@ -283,12 +281,14 @@ def test_tool_use_block_without_id(mock_client):
         make_message("user", "query"),
         {
             "role": "assistant",
-            "content": [{
-                "type": "tool_use",
-                "name": "test_tool",
-                # Missing "id" field
-                "input": {"param": "value"}
-            }]
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "test_tool",
+                    # Missing "id" field
+                    "input": {"param": "value"},
+                }
+            ],
         },
         make_message("user", "follow up"),
     ]
@@ -298,9 +298,8 @@ def test_tool_use_block_without_id(mock_client):
         # Return tokens based on message count to simulate realistic behavior
         if len(messages) >= 3:
             return Mock(input_tokens=5000)  # Over limit, needs trimming
-        else:
-            return Mock(input_tokens=800)   # Under limit, stop trimming
-    
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
@@ -317,11 +316,13 @@ def test_tool_result_without_tool_use_id(mock_client):
         make_tool_use_message("assistant", "tool123"),
         {
             "role": "user",
-            "content": [{
-                "type": "tool_result",
-                # Missing "tool_use_id" field
-                "content": "result"
-            }]
+            "content": [
+                {
+                    "type": "tool_result",
+                    # Missing "tool_use_id" field
+                    "content": "result",
+                }
+            ],
         },
     ]
 
@@ -330,9 +331,8 @@ def test_tool_result_without_tool_use_id(mock_client):
         # Return tokens based on message count to simulate realistic behavior
         if len(messages) >= 3:
             return Mock(input_tokens=5000)  # Over limit, needs trimming
-        else:
-            return Mock(input_tokens=800)   # Under limit, stop trimming
-    
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
@@ -388,9 +388,8 @@ def test_messages_list_is_copied(mock_client):
         # Return tokens based on message count to simulate realistic behavior
         if len(messages) >= 3:
             return Mock(input_tokens=5000)  # Over limit, needs trimming
-        else:
-            return Mock(input_tokens=800)   # Under limit, stop trimming
-    
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
     trimmed = trim_messages_to_token_limit(messages_copy, mock_client, max_input=1000)
@@ -417,10 +416,9 @@ def test_complex_tool_chain_trimming(mock_client):
         length = len(messages)
         if length >= 6:
             return Mock(input_tokens=6000)  # Over limit
-        elif length >= 4:
+        if length >= 4:
             return Mock(input_tokens=4000)  # Still over limit
-        else:
-            return Mock(input_tokens=2000)  # Under limit
+        return Mock(input_tokens=2000)  # Under limit
 
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
@@ -461,9 +459,8 @@ def test_edge_case_missing_role_attribute(mock_client):
         # Return tokens based on message count to simulate realistic behavior
         if len(messages) >= 3:
             return Mock(input_tokens=5000)  # Over limit, needs trimming
-        else:
-            return Mock(input_tokens=800)   # Under limit, stop trimming
-    
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
@@ -485,9 +482,8 @@ def test_tool_use_at_end_of_messages(mock_client):
         # Return tokens based on message count to simulate realistic behavior
         if len(messages) >= 2:
             return Mock(input_tokens=5000)  # Over limit, needs trimming
-        else:
-            return Mock(input_tokens=800)   # Under limit, stop trimming
-    
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
@@ -505,19 +501,9 @@ def test_multiple_tool_use_blocks_in_single_message(mock_client):
             "role": "assistant",
             "content": [
                 {"type": "text", "text": "response"},
-                {
-                    "type": "tool_use",
-                    "id": "tool1",
-                    "name": "first_tool",
-                    "input": {}
-                },
-                {
-                    "type": "tool_use",
-                    "id": "tool2",
-                    "name": "second_tool",
-                    "input": {}
-                }
-            ]
+                {"type": "tool_use", "id": "tool1", "name": "first_tool", "input": {}},
+                {"type": "tool_use", "id": "tool2", "name": "second_tool", "input": {}},
+            ],
         },
         {
             "role": "user",
@@ -525,9 +511,9 @@ def test_multiple_tool_use_blocks_in_single_message(mock_client):
                 {
                     "type": "tool_result",
                     "tool_use_id": "tool1",  # Only matches first tool_use
-                    "content": "result1"
+                    "content": "result1",
                 }
-            ]
+            ],
         },
     ]
 
@@ -536,9 +522,8 @@ def test_multiple_tool_use_blocks_in_single_message(mock_client):
         # Return tokens based on message count to simulate realistic behavior
         if len(messages) >= 3:
             return Mock(input_tokens=5000)  # Over limit, needs trimming
-        else:
-            return Mock(input_tokens=800)   # Under limit, stop trimming
-    
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)

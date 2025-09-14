@@ -131,14 +131,20 @@ def test_get_build_logs_infrastructure_fail_status(mock_get):
                 "actions": [
                     {
                         "status": "infrastructure_fail",
-                        "output_url": "https://example.com/logs"
+                        "output_url": "https://example.com/logs",
                     }
-                ]
+                ],
             }
-        ]
+        ],
     }
 
-    mock_log_data = [{"message": "Infrastructure failure occurred", "time": "2025-01-01T00:00:00Z", "type": "out"}]
+    mock_log_data = [
+        {
+            "message": "Infrastructure failure occurred",
+            "time": "2025-01-01T00:00:00Z",
+            "type": "out",
+        }
+    ]
 
     def mock_get_side_effect(url, **_kwargs):
         mock_response = Mock()
@@ -173,16 +179,15 @@ def test_get_build_logs_timedout_status(mock_get):
             {
                 "name": "Timeout Step",
                 "actions": [
-                    {
-                        "status": "timedout",
-                        "output_url": "https://example.com/logs"
-                    }
-                ]
+                    {"status": "timedout", "output_url": "https://example.com/logs"}
+                ],
             }
-        ]
+        ],
     }
 
-    mock_log_data = [{"message": "Build timed out", "time": "2025-01-01T00:00:00Z", "type": "out"}]
+    mock_log_data = [
+        {"message": "Build timed out", "time": "2025-01-01T00:00:00Z", "type": "out"}
+    ]
 
     def mock_get_side_effect(url, **_kwargs):
         mock_response = Mock()
@@ -210,11 +215,7 @@ def test_get_build_logs_no_steps(mock_get):
     build_number = 16
     token = "test-token"
 
-    mock_build_data = {
-        "status": "failed",
-        "failed": True,
-        "steps": []
-    }
+    mock_build_data = {"status": "failed", "failed": True, "steps": []}
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -236,12 +237,7 @@ def test_get_build_logs_no_actions(mock_get):
     mock_build_data = {
         "status": "failed",
         "failed": True,
-        "steps": [
-            {
-                "name": "Empty Step",
-                "actions": []
-            }
-        ]
+        "steps": [{"name": "Empty Step", "actions": []}],
     }
 
     mock_response = Mock()
@@ -268,13 +264,10 @@ def test_get_build_logs_no_failed_actions(mock_get):
             {
                 "name": "Success Step",
                 "actions": [
-                    {
-                        "status": "success",
-                        "output_url": "https://example.com/logs"
-                    }
-                ]
+                    {"status": "success", "output_url": "https://example.com/logs"}
+                ],
             }
-        ]
+        ],
     }
 
     mock_response = Mock()
@@ -300,14 +293,9 @@ def test_get_build_logs_no_output_url(mock_get):
         "steps": [
             {
                 "name": "Failed Step",
-                "actions": [
-                    {
-                        "status": "failed",
-                        "output_url": None
-                    }
-                ]
+                "actions": [{"status": "failed", "output_url": None}],
             }
-        ]
+        ],
     }
 
     mock_response = Mock()
@@ -334,13 +322,10 @@ def test_get_build_logs_log_request_failed(mock_get):
             {
                 "name": "Failed Step",
                 "actions": [
-                    {
-                        "status": "failed",
-                        "output_url": "https://example.com/logs"
-                    }
-                ]
+                    {"status": "failed", "output_url": "https://example.com/logs"}
+                ],
             }
-        ]
+        ],
     }
 
     def mock_get_side_effect(url, **_kwargs):
@@ -373,13 +358,10 @@ def test_get_build_logs_non_list_log_data(mock_get):
             {
                 "name": "Failed Step",
                 "actions": [
-                    {
-                        "status": "failed",
-                        "output_url": "https://example.com/logs"
-                    }
-                ]
+                    {"status": "failed", "output_url": "https://example.com/logs"}
+                ],
             }
-        ]
+        ],
     }
 
     mock_log_data = "This is a string log instead of list"
@@ -417,16 +399,17 @@ def test_get_build_logs_non_dict_log_entries(mock_get):
             {
                 "name": "Failed Step",
                 "actions": [
-                    {
-                        "status": "failed",
-                        "output_url": "https://example.com/logs"
-                    }
-                ]
+                    {"status": "failed", "output_url": "https://example.com/logs"}
+                ],
             }
-        ]
+        ],
     }
 
-    mock_log_data = ["string entry", 123, {"message": "dict entry", "time": "2025-01-01T00:00:00Z", "type": "out"}]
+    mock_log_data = [
+        "string entry",
+        123,
+        {"message": "dict entry", "time": "2025-01-01T00:00:00Z", "type": "out"},
+    ]
 
     def mock_get_side_effect(url, **_kwargs):
         mock_response = Mock()
@@ -463,20 +446,17 @@ def test_get_build_logs_carriage_return_cleanup(mock_get):
             {
                 "name": "Failed Step",
                 "actions": [
-                    {
-                        "status": "failed",
-                        "output_url": "https://example.com/logs"
-                    }
-                ]
+                    {"status": "failed", "output_url": "https://example.com/logs"}
+                ],
             }
-        ]
+        ],
     }
 
     mock_log_data = [
         {
             "message": "Line 1\r\nLine 2\rLine 3",
             "time": "2025-01-01T00:00:00Z",
-            "type": "out"
+            "type": "out",
         }
     ]
 
@@ -513,17 +493,11 @@ def test_get_build_logs_multiple_failed_actions_only_first_processed(mock_get):
             {
                 "name": "Multi-Action Step",
                 "actions": [
-                    {
-                        "status": "failed",
-                        "output_url": "https://example.com/logs1"
-                    },
-                    {
-                        "status": "failed",
-                        "output_url": "https://example.com/logs2"
-                    }
-                ]
+                    {"status": "failed", "output_url": "https://example.com/logs1"},
+                    {"status": "failed", "output_url": "https://example.com/logs2"},
+                ],
             }
-        ]
+        ],
     }
 
     call_count = 0
@@ -538,7 +512,11 @@ def test_get_build_logs_multiple_failed_actions_only_first_processed(mock_get):
             call_count += 1
             mock_response.status_code = 200
             mock_response.json.return_value = [
-                {"message": f"Log from action {call_count}", "time": "2025-01-01T00:00:00Z", "type": "out"}
+                {
+                    "message": f"Log from action {call_count}",
+                    "time": "2025-01-01T00:00:00Z",
+                    "type": "out",
+                }
             ]
         return mock_response
 
@@ -567,22 +545,16 @@ def test_get_build_logs_multiple_steps_with_logs(mock_get):
             {
                 "name": "Step 1",
                 "actions": [
-                    {
-                        "status": "failed",
-                        "output_url": "https://example.com/logs1"
-                    }
-                ]
+                    {"status": "failed", "output_url": "https://example.com/logs1"}
+                ],
             },
             {
                 "name": "Step 2",
                 "actions": [
-                    {
-                        "status": "failed",
-                        "output_url": "https://example.com/logs2"
-                    }
-                ]
-            }
-        ]
+                    {"status": "failed", "output_url": "https://example.com/logs2"}
+                ],
+            },
+        ],
     }
 
     call_count = 0
@@ -597,7 +569,11 @@ def test_get_build_logs_multiple_steps_with_logs(mock_get):
             call_count += 1
             mock_response.status_code = 200
             mock_response.json.return_value = [
-                {"message": f"Log from step {call_count}", "time": "2025-01-01T00:00:00Z", "type": "out"}
+                {
+                    "message": f"Log from step {call_count}",
+                    "time": "2025-01-01T00:00:00Z",
+                    "type": "out",
+                }
             ]
         return mock_response
 
@@ -627,16 +603,15 @@ def test_get_build_logs_missing_step_name(mock_get):
         "steps": [
             {
                 "actions": [
-                    {
-                        "status": "failed",
-                        "output_url": "https://example.com/logs"
-                    }
+                    {"status": "failed", "output_url": "https://example.com/logs"}
                 ]
             }
-        ]
+        ],
     }
 
-    mock_log_data = [{"message": "Log message", "time": "2025-01-01T00:00:00Z", "type": "out"}]
+    mock_log_data = [
+        {"message": "Log message", "time": "2025-01-01T00:00:00Z", "type": "out"}
+    ]
 
     def mock_get_side_effect(url, **_kwargs):
         mock_response = Mock()
@@ -687,7 +662,7 @@ def test_get_build_logs_missing_steps_key(mock_get):
 
     mock_build_data = {
         "status": "failed",
-        "failed": True
+        "failed": True,
         # Missing "steps" key
     }
 
@@ -716,7 +691,7 @@ def test_get_build_logs_missing_actions_key(mock_get):
                 "name": "Step without actions"
                 # Missing "actions" key
             }
-        ]
+        ],
     }
 
     mock_response = Mock()
@@ -743,26 +718,19 @@ def test_get_build_logs_empty_log_message(mock_get):
             {
                 "name": "Failed Step",
                 "actions": [
-                    {
-                        "status": "failed",
-                        "output_url": "https://example.com/logs"
-                    }
-                ]
+                    {"status": "failed", "output_url": "https://example.com/logs"}
+                ],
             }
-        ]
+        ],
     }
 
     mock_log_data = [
-        {
-            "message": "",
-            "time": "2025-01-01T00:00:00Z",
-            "type": "out"
-        },
+        {"message": "", "time": "2025-01-01T00:00:00Z", "type": "out"},
         {
             "time": "2025-01-01T00:00:00Z",
-            "type": "out"
+            "type": "out",
             # Missing "message" key
-        }
+        },
     ]
 
     def mock_get_side_effect(url, **_kwargs):

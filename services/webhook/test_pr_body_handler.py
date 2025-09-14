@@ -105,6 +105,15 @@ def mock_update_pull_request_body():
 
 
 @pytest.fixture
+def mock_github_app_user_name():
+    """Mock GITHUB_APP_USER_NAME."""
+    with patch(
+        "services.webhook.pr_body_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]"
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
 def all_mocks(
     mock_get_installation_access_token,
     mock_get_pull_request_file_changes,
@@ -113,6 +122,7 @@ def all_mocks(
     mock_check_branch_exists,
     mock_chat_with_ai,
     mock_update_pull_request_body,
+    mock_github_app_user_name,
 ):
     """Fixture providing all mocked dependencies."""
     return {
@@ -123,6 +133,7 @@ def all_mocks(
         "check_branch_exists": mock_check_branch_exists,
         "chat_with_ai": mock_chat_with_ai,
         "update_pull_request_body": mock_update_pull_request_body,
+        "github_app_user_name": mock_github_app_user_name,
     }
 
 
@@ -163,7 +174,10 @@ class TestWritePrDescription:
 
         # Verify safety checks
         all_mocks["is_pull_request_open"].assert_called_once_with(
-            owner="test-owner", repo="test-repo", pull_number=123, token="ghs_test_token"
+            owner="test-owner",
+            repo="test-repo",
+            pull_number=123,
+            token="ghs_test_token",
         )
         all_mocks["check_branch_exists"].assert_called_once_with(
             owner="test-owner",
@@ -248,12 +262,7 @@ class TestWritePrDescription:
         all_mocks["get_issue_body"].assert_not_called()
 
         # Verify PR body update without resolves statement
-        expected_body = (
-            "Generated PR description\n\n"
-            "```\n"
-            "\n"
-            "```"
-        )
+        expected_body = "Generated PR description\n\n```\n\n```"
         all_mocks["update_pull_request_body"].assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/pulls/123",
             token="ghs_test_token",
@@ -500,9 +509,7 @@ class TestWritePrDescription:
             body=expected_body,
         )
 
-    def test_write_pr_description_with_empty_pr_body(
-        self, mock_pr_payload, all_mocks
-    ):
+    def test_write_pr_description_with_empty_pr_body(self, mock_pr_payload, all_mocks):
         """Test PR description generation with empty PR body."""
         # Setup
         mock_pr_payload["pull_request"]["body"] = ""
@@ -519,21 +526,14 @@ class TestWritePrDescription:
         all_mocks["get_issue_body"].assert_not_called()
 
         # Verify PR body update without resolves statement or commands
-        expected_body = (
-            "Generated PR description\n\n"
-            "```\n"
-            "\n"
-            "```"
-        )
+        expected_body = "Generated PR description\n\n```\n\n```"
         all_mocks["update_pull_request_body"].assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/pulls/123",
             token="ghs_test_token",
             body=expected_body,
         )
 
-    def test_write_pr_description_with_none_pr_body(
-        self, mock_pr_payload, all_mocks
-    ):
+    def test_write_pr_description_with_none_pr_body(self, mock_pr_payload, all_mocks):
         """Test PR description generation with None PR body."""
         # Setup
         mock_pr_payload["pull_request"]["body"] = None
@@ -567,7 +567,10 @@ class TestWritePrDescription:
 
         # Verify safety checks with string number
         all_mocks["is_pull_request_open"].assert_called_once_with(
-            owner="test-owner", repo="test-repo", pull_number="123", token="ghs_test_token"
+            owner="test-owner",
+            repo="test-repo",
+            pull_number="123",
+            token="ghs_test_token",
         )
 
     def test_write_pr_description_with_string_installation_id(
@@ -594,7 +597,9 @@ class TestWritePrDescription:
     ):
         """Test PR description generation with unicode characters."""
         # Setup
-        mock_pr_payload["pull_request"]["title"] = "GitAuto: Fïx ïssüé wïth äüthéntïcätïön"
+        mock_pr_payload["pull_request"][
+            "title"
+        ] = "GitAuto: Fïx ïssüé wïth äüthéntïcätïön"
         mock_pr_payload["repository"]["owner"]["login"] = "tëst-öwnér"
         mock_pr_payload["repository"]["name"] = "tëst-rëpö"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
@@ -619,7 +624,10 @@ class TestWritePrDescription:
         call_args = all_mocks["chat_with_ai"].call_args
         user_input = call_args.kwargs["user_input"]
         # Unicode characters are escaped in JSON, so check for escaped sequences
-        assert "F\\u00efx \\u00efss\\u00fc\\u00e9 w\\u00efth \\u00e4\\u00fcth\\u00e9nt\\u00efc\\u00e4t\\u00ef\\u00f6n" in user_input
+        assert (
+            "F\\u00efx \\u00efss\\u00fc\\u00e9 w\\u00efth \\u00e4\\u00fcth\\u00e9nt\\u00efc\\u00e4t\\u00ef\\u00f6n"
+            in user_input
+        )
 
     def test_write_pr_description_with_special_characters_in_branch(
         self, mock_pr_payload, all_mocks
@@ -721,7 +729,9 @@ class TestWritePrDescription:
         """Test PR description generation with large issue number."""
         # Setup
         large_number = 999999999
-        mock_pr_payload["pull_request"]["body"] = f"Resolves #{large_number}\n\ngit commit -m 'Fix'"
+        mock_pr_payload["pull_request"][
+            "body"
+        ] = f"Resolves #{large_number}\n\ngit commit -m 'Fix'"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
         all_mocks["get_issue_body"].return_value = "Issue description"
@@ -783,7 +793,7 @@ class TestWritePrDescription:
         mock_pr_payload["pull_request"]["body"] = (
             "Resolves #456\n\n"
             "git \n"  # This will be included (starts with 'git ')
-            "git"     # This will be skipped (doesn't start with 'git ')
+            "git"  # This will be skipped (doesn't start with 'git ')
         )
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
@@ -796,13 +806,7 @@ class TestWritePrDescription:
         write_pr_description(mock_pr_payload)
 
         # Verify PR body update with minimal git commands (only 'git ' is included)
-        expected_body = (
-            "Resolves #456\n\n"
-            "Generated PR description\n\n"
-            "```\n"
-            "git \n"
-            "```"
-        )
+        expected_body = "Resolves #456\n\nGenerated PR description\n\n```\ngit \n```"
         all_mocks["update_pull_request_body"].assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/pulls/123",
             token="ghs_test_token",
@@ -863,8 +867,8 @@ class TestWritePrDescription:
 
     def test_write_pr_description_with_none_payload(self, all_mocks):
         """Test PR description generation with None payload."""
-        # Execute - should handle None gracefully
-        write_pr_description(None)
+        # Execute - should handle empty dict gracefully
+        write_pr_description({})
 
         # Verify no functions are called
         all_mocks["get_installation_access_token"].assert_not_called()
@@ -919,7 +923,7 @@ class TestWritePrDescription:
         all_mocks["chat_with_ai"].assert_called_once()
         call_args = all_mocks["chat_with_ai"].call_args
         user_input = call_args.kwargs["user_input"]
-        
+
         # Verify JSON is properly escaped
         assert 'test"owner' in user_input or 'test\\"owner' in user_input
         assert "test\\repo" in user_input or "test\\\\repo" in user_input

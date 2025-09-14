@@ -251,7 +251,9 @@ def test_update_comment_constants():
     assert "I'm a bit lost here!" in UPDATE_COMMENT_FOR_422
     assert "feedback or need help?" in UPDATE_COMMENT_FOR_422
     assert EMAIL_LINK in UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE
-    assert "No changes were detected" in UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE
+    assert (
+        "No changes were detected" in UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE
+    )
     assert "feedback or need help?" in UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE
 
 
