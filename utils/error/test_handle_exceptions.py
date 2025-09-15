@@ -495,7 +495,7 @@ def test_handle_exceptions_attribute_error_raise_on_error():
         """Mock function that raises AttributeError."""
         raise AttributeError("'NoneType' object has no attribute 'test'")
 
-    with pytest.raises(AttributeError, match="'NoneType' object has no attribute 'test'"):
+    with pytest.raises(AttributeError, match=r"'NoneType' object has no attribute 'test'"):
         mock_function_attribute_error()
 
 
