@@ -464,7 +464,7 @@ def test_handle_exceptions_github_rate_limit_with_raise_on_error():
         http_error.response = mock_response
         raise http_error
 
-    with pytest.raises(requests.exceptions.HTTPError, match="403 Forbidden"):
+    with pytest.raises(requests.HTTPError, match="403 Forbidden"):
         mock_function_github_rate_limit()
 
 
