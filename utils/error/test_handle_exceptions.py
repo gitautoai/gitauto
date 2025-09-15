@@ -28,7 +28,7 @@ def mock_function_with_raise_on_error():
 
 def test_handle_exceptions_returns_none_on_error():
     """Test that decorator returns None when an error occurs."""
-    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get:
+    with patch("requests.get") as mock_get:
         mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
 
         result = mock_function_for_testing()
