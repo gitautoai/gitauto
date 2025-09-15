@@ -251,3 +251,18 @@ def test_sort_imports_with_isort_failure():
     # Either sorted or original, but never None or empty (unless input was empty)
     assert result is not None
     assert len(result) > 0
+def test_sort_imports_whitespace_only():
+    """Test with whitespace-only content"""
+    whitespace_content = "   \n  \t  \n   "
+    result = sort_imports(whitespace_content, "test.py")
+    # Should return original content for whitespace-only
+    assert result == whitespace_content
+
+
+def test_sort_imports_javascript_extensions():
+    """Test all JavaScript/TypeScript file extensions return unchanged"""
+    js_content = "import React from 'react';\nimport { useState } from 'react';"
+
+    # Test .js extension
+    result = sort_imports(js_content, "component.js")
+    assert result == js_content
