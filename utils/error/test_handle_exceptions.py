@@ -507,5 +507,5 @@ def test_handle_exceptions_key_error_raise_on_error():
         """Mock function that raises KeyError."""
         raise KeyError("'missing_key' not found")
 
-    with pytest.raises(KeyError, match="'missing_key' not found"):
+    with pytest.raises(KeyError, match=r"'missing_key' not found"):
         mock_function_key_error()
