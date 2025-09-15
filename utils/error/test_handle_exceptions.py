@@ -104,7 +104,7 @@ def test_handle_exceptions_primary_rate_limit_retry():
 
 def test_handle_exceptions_secondary_rate_limit_retry():
     """Test that secondary rate limit (403 with retry-after) errors trigger retry with sleep."""
-    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "utils.error.handle_exceptions.time.sleep"
     ) as mock_sleep:
 
