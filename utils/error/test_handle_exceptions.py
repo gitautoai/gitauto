@@ -87,7 +87,7 @@ def test_handle_exceptions_primary_rate_limit_retry():
         mock_response_success.json.return_value = {"success": True}
 
         # Configure HTTP error for first response
-        http_error = requests.exceptions.HTTPError("403 Forbidden")
+        http_error = requests.HTTPError("403 Forbidden")
         http_error.response = mock_response_error
         mock_response_error.raise_for_status.side_effect = http_error
 
