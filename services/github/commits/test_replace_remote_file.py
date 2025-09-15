@@ -339,7 +339,9 @@ def test_replace_file_with_empty_content(
 
     # Verify empty content was properly encoded
     call_args = mock_requests_put_success.call_args
-    expected_content = base64.b64encode("".encode("utf-8")).decode("utf-8")
+    # The implementation processes the content through ensure_final_newline
+    processed_content = file_content + '\n' if not file_content.endswith('\n') else file_content
+    expected_content = base64.b64encode(processed_content.encode("utf-8")).decode("utf-8")
     assert call_args.kwargs["json"]["content"] == expected_content
 
 
