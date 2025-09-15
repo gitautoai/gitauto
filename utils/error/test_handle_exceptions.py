@@ -541,3 +541,7 @@ def test_handle_exceptions_attribute_error_no_raise():
     @handle_exceptions(default_return_value="attr_fallback", raise_on_error=False)
     def mock_function_attribute_error_no_raise():
         """Mock function that raises AttributeError."""
+        raise AttributeError("'NoneType' object has no attribute 'test'")
+
+    result = mock_function_attribute_error_no_raise()
+    assert result == "attr_fallback"
