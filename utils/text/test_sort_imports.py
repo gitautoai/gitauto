@@ -1,6 +1,7 @@
-import tempfile
 import os
+import tempfile
 from unittest.mock import patch
+
 from utils.text.sort_imports import sort_imports
 
 
@@ -251,6 +252,8 @@ def test_sort_imports_with_isort_failure():
     # Either sorted or original, but never None or empty (unless input was empty)
     assert result is not None
     assert len(result) > 0
+
+
 def test_sort_imports_whitespace_only():
     """Test with whitespace-only content"""
     whitespace_content = "   \n  \t  \n   "
@@ -266,6 +269,7 @@ def test_sort_imports_javascript_extensions():
     # Test .js extension
     result = sort_imports(js_content, "component.js")
     assert result == js_content
+
     # Test .jsx extension
     result = sort_imports(js_content, "component.jsx")
     assert result == js_content
@@ -304,6 +308,9 @@ def test_sort_imports_unknown_extension():
     result = sort_imports(content, "file.txt")
     assert result == content
 
+    result = sort_imports(content, "file")  # No extension
+    assert result == content
+
 
 def test_sort_imports_comments_only():
     """Test Python file with only comments"""
@@ -313,12 +320,17 @@ def test_sort_imports_comments_only():
     result = sort_imports(comments_only, "test.py")
     assert result == comments_only
 
-    result = sort_imports(content, "file")  # No extension
-    assert result == content
 
 def test_sort_imports_mixed_content_no_imports():
     """Test Python file with mixed content but no imports"""
-    content = "#!/usr/bin/env python3\n\ndef function_one():\n    return 'hello'\n\nclass MyClass:\n    def __init__(self):\n        self.value = 42"
+    content = """#!/usr/bin/env python3
+
+def function_one():
+    return 'hello'
+
+class MyClass:
+    def __init__(self):
+        self.value = 42"""
     result = sort_imports(content, "test.py")
     assert result == content
 
@@ -326,4 +338,30 @@ def test_sort_imports_mixed_content_no_imports():
 def test_sort_imports_case_sensitivity():
     """Test file extension case sensitivity"""
     content = "import os\nimport sys"
-    # Test uppercase extensions
+
+    # Test uppercase extensions - should not sort
+    result = sort_imports(content, "test.PY")
+    assert result == content  # Should not sort uppercase .PY
+
+    result = sort_imports(content, "test.JAVA")
+    assert result == content  # Should not sort uppercase .JAVA
+
+
+def test_sort_imports_edge_cases():
+    """Test various edge cases"""
+    # Test with only newlines
+    newlines_only = "\n\n\n"
+    result = sort_imports(newlines_only, "test.py")
+    assert result == newlines_only
+
+    # Test with shebang only
+    shebang_only = "#!/usr/bin/env python3"
+    result = sort_imports(shebang_only, "test.py")
+    assert result == shebang_only
+
+    # Test with encoding declaration
+    encoding_content = "# -*- coding: utf-8 -*-\nimport os"
+    result = sort_imports(encoding_content, "test.py")
+    # Should sort the import but preserve encoding
+    assert "import os" in result
+    assert "# -*- coding: utf-8 -*-" in result
