@@ -175,10 +175,8 @@ def test_different_file_extensions():
     """Test different supported file extensions."""
     log = """/path/to/file.js
   10:5  error  JS Error  rule1
-
 /path/to/file.ts
   15:3  error  TS Error  rule2
-
 /path/to/file.tsx
   20:1  error  TSX Error  rule3"""
 
