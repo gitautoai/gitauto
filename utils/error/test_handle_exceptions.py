@@ -479,7 +479,7 @@ def test_handle_exceptions_other_http_error_codes():
         mock_response.reason = "Not Found"
         mock_response.text = "Resource not found"
 
-        http_error = requests.exceptions.HTTPError("404 Not Found")
+        http_error = requests.HTTPError("404 Not Found")
         http_error.response = mock_response
         raise http_error
 
