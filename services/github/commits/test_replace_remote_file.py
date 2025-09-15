@@ -310,7 +310,8 @@ def test_replace_file_with_special_characters(
 
     # Verify content was properly encoded
     call_args = mock_requests_put_success.call_args
-    expected_content = base64.b64encode(file_content.encode("utf-8")).decode("utf-8")
+    # Account for ensure_final_newline processing
+    expected_content = base64.b64encode((file_content + "\n").encode("utf-8")).decode("utf-8")
     assert call_args.kwargs["json"]["content"] == expected_content
 
 
@@ -335,7 +336,8 @@ def test_replace_file_with_empty_content(
 
     # Verify empty content was properly encoded
     call_args = mock_requests_put_success.call_args
-    expected_content = base64.b64encode("".encode("utf-8")).decode("utf-8")
+    # Account for ensure_final_newline processing (empty string becomes "\n")
+    expected_content = base64.b64encode("\n".encode("utf-8")).decode("utf-8")
     assert call_args.kwargs["json"]["content"] == expected_content
 
 
@@ -360,6 +362,7 @@ def test_replace_file_with_large_content(
 
     # Verify large content was properly encoded
     call_args = mock_requests_put_success.call_args
+    # Account for ensure_final_newline processing (content already ends with \n, so no change)
     expected_content = base64.b64encode(file_content.encode("utf-8")).decode("utf-8")
     assert call_args.kwargs["json"]["content"] == expected_content
 
