@@ -65,3 +65,21 @@ def test_ensure_final_newline_multiple_trailing_newlines():
     text = "line1\nline2\n\n"
     expected = "line1\nline2\n\n"
     assert ensure_final_newline(text) == expected
+
+
+def test_ensure_final_newline_carriage_return_only():
+    # Test with just \r (not \r\n) - should add \n
+    text = "line1\rline2"
+    expected = "line1\rline2\n"
+    assert ensure_final_newline(text) == expected
+
+
+def test_ensure_final_newline_ends_with_carriage_return():
+    # Test text ending with \r only (not \r\n) - should add \n
+    text = "line1\nline2\r"
+    expected = "line1\nline2\r\n"
+    assert ensure_final_newline(text) == expected
+
+
+def test_ensure_final_newline_unicode_content():
+    text = "Hello 世界! 🌍"
