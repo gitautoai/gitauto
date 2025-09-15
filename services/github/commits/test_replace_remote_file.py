@@ -123,7 +123,8 @@ def test_replace_existing_file_success(
     )
 
     # Verify PUT request was made with correct data
-    expected_content = base64.b64encode(file_content.encode("utf-8")).decode("utf-8")
+    # Account for ensure_final_newline processing
+    expected_content = base64.b64encode((file_content + "\n").encode("utf-8")).decode("utf-8")
     expected_data = {
         "message": f"Replace content of {file_path}",
         "content": expected_content,
