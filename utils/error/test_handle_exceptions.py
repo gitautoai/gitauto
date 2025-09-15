@@ -509,3 +509,35 @@ def test_handle_exceptions_key_error_raise_on_error():
 
     with pytest.raises(KeyError, match=r"'missing_key' not found"):
         mock_function_key_error()
+
+
+def test_handle_exceptions_type_error_raise_on_error():
+    """Test TypeError with raise_on_error=True."""
+
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def mock_function_type_error():
+        """Mock function that raises TypeError."""
+        raise TypeError("unsupported operand type(s)")
+
+    with pytest.raises(TypeError, match="unsupported operand type"):
+        mock_function_type_error()
+
+
+def test_handle_exceptions_generic_exception_no_raise():
+    """Test generic Exception with raise_on_error=False."""
+
+    @handle_exceptions(default_return_value="generic_fallback", raise_on_error=False)
+    def mock_function_generic_exception():
+        """Mock function that raises generic Exception."""
+        raise Exception("Something went wrong")
+
+    result = mock_function_generic_exception()
+    assert result == "generic_fallback"
+
+
+def test_handle_exceptions_attribute_error_no_raise():
+    """Test AttributeError with raise_on_error=False."""
+
+    @handle_exceptions(default_return_value="attr_fallback", raise_on_error=False)
+    def mock_function_attribute_error_no_raise():
+        """Mock function that raises AttributeError."""
