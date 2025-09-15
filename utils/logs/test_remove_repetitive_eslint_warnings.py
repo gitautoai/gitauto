@@ -82,6 +82,11 @@ def test_multiple_files_with_errors():
   5:1  error  Error 3  rule3"""
 
     result = remove_repetitive_eslint_warnings(log)
+    # Debug: print what we actually get
+    print("Expected:")
+    print(repr(expected))
+    print("Actual:")
+    print(repr(result))
     assert result == expected
 
 
