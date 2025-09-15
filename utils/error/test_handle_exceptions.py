@@ -206,7 +206,7 @@ def test_handle_exceptions_non_callable_default():
 
 def test_handle_exceptions_429_rate_limit_retry():
     """Test that 429 rate limit errors trigger retry with sleep."""
-    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "utils.error.handle_exceptions.time.sleep"
     ) as mock_sleep:
 
