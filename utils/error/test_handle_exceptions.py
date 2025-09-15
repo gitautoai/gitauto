@@ -326,7 +326,7 @@ def test_handle_exceptions_http_error_no_response_raise_on_error():
         http_error.response = None  # No response object
         raise http_error
 
-    with pytest.raises(requests.exceptions.HTTPError, match="Connection failed"):
+    with pytest.raises(requests.HTTPError, match="Connection failed"):
         mock_function_raise_on_error()
 
 
