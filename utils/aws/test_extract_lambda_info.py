@@ -36,7 +36,7 @@ def test_extract_lambda_info_without_aws_scope():
 def test_extract_lambda_info_with_aws_scope_no_context():
     """Test extracting Lambda info when AWS scope exists but no context"""
     request = Mock(spec=Request)
-    request.scope = {"aws": {}}
+    request.scope = {"aws": "some_value"}  # aws.context key doesn't exist
 
     result = extract_lambda_info(request)
 
