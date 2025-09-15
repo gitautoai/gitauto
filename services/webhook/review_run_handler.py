@@ -33,7 +33,9 @@ from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approachi
 from utils.time.get_timeout_message import get_timeout_message
 
 
-def handle_review_run(payload: dict[str, Any]):
+def handle_review_run(
+    payload: dict[str, Any], lambda_info: dict[str, str | None] | None = None
+):
     current_time = time.time()
     trigger = "review_comment"
 
@@ -161,6 +163,7 @@ def handle_review_run(payload: dict[str, Any]):
         source="github",
         trigger="review_comment",
         email=None,
+        lambda_info=lambda_info,
     )
 
     # Greeting

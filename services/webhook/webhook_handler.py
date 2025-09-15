@@ -188,7 +188,7 @@ async def handle_webhook_event(
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
     if event_name == "issue_comment" and action == "edited":
         await handle_pr_checkbox_trigger(
-            payload=cast(IssueCommentWebhookPayload, payload)
+            payload=cast(IssueCommentWebhookPayload, payload), lambda_info=lambda_info
         )
 
         search_text = "- [x] Generate PR"
@@ -223,7 +223,9 @@ async def handle_webhook_event(
     if event_name == "check_run" and action in ("completed"):
         conclusion: str = payload["check_run"]["conclusion"]
         if conclusion in GITHUB_CHECK_RUN_FAILURES:
-            handle_check_run(payload=cast(CheckRunCompletedPayload, payload))
+            handle_check_run(
+                payload=cast(CheckRunCompletedPayload, payload), lambda_info=lambda_info
+            )
         return
 
     # Write a PR description to the issue when GitAuto opened the PR
@@ -290,7 +292,7 @@ async def handle_webhook_event(
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_comment
     # Do nothing when action is "deleted"
     if event_name == "pull_request_review_comment" and action in ("created", "edited"):
-        handle_review_run(payload=payload)
+        handle_review_run(payload=payload, lambda_info=lambda_info)
         return
 
     # Add workflow_run event handler (GitHub Actions)
