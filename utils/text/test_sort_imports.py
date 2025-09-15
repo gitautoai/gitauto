@@ -304,5 +304,14 @@ def test_sort_imports_unknown_extension():
     result = sort_imports(content, "file.txt")
     assert result == content
 
+
+def test_sort_imports_comments_only():
+    """Test Python file with only comments"""
+    comments_only = """# This is a comment
+# Another comment
+# Yet another comment"""
+    result = sort_imports(comments_only, "test.py")
+    assert result == comments_only
+
     result = sort_imports(content, "file")  # No extension
     assert result == content
