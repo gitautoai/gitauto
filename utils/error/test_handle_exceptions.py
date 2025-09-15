@@ -294,7 +294,7 @@ def test_handle_exceptions_json_decode_error():
     with patch("utils.error.test_handle_exceptions.requests.get") as mock_get:
         mock_response = MagicMock()
         mock_response.json.side_effect = requests.exceptions.JSONDecodeError(
-            "Invalid JSON", "", 0
+            "Invalid JSON", doc="", pos=0
         )
         mock_get.return_value = mock_response
 
