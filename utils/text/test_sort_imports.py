@@ -266,3 +266,15 @@ def test_sort_imports_javascript_extensions():
     # Test .js extension
     result = sort_imports(js_content, "component.js")
     assert result == js_content
+    # Test .jsx extension
+    result = sort_imports(js_content, "component.jsx")
+    assert result == js_content
+
+    # Test .ts extension
+    result = sort_imports(js_content, "component.ts")
+    assert result == js_content
+
+    # Test .tsx extension
+    result = sort_imports(js_content, "component.tsx")
+    assert result == js_content
+
