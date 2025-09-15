@@ -52,7 +52,7 @@ def test_extract_lambda_info_with_missing_attributes():
     # Configure side_effect to return None for missing attributes
     mock_context.configure_mock(**{"log_stream_name": None, "aws_request_id": None})
 
-    request.scope = {"aws": {"context": mock_context}}
+    request.scope = {"aws.context": mock_context}
 
     result = extract_lambda_info(request)
 
