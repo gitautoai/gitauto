@@ -66,6 +66,6 @@ def remove_repetitive_eslint_warnings(error_log: str):
 
     result = "\n".join(result_lines)
     # Match the input's trailing newline behavior
-    if not error_log.endswith("\n") and result.endswith("\n"):
+    if error_log.endswith("\n") and not result.endswith("\n"):
         result = result.rstrip("\n")
     return result
