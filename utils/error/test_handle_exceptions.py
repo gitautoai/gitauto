@@ -254,7 +254,7 @@ def test_handle_exceptions_http_error_no_retry():
         mock_response.reason = "Not Found"
         mock_response.text = "Not Found"
 
-        http_error = requests.exceptions.HTTPError("404 Not Found")
+        http_error = requests.HTTPError("404 Not Found")
         http_error.response = mock_response
         mock_response.raise_for_status.side_effect = http_error
         mock_get.return_value = mock_response
