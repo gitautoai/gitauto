@@ -51,7 +51,7 @@ def test_handle_exceptions_raises_when_raise_on_error_true():
 
 def test_handle_exceptions_success_case():
     """Test that decorator doesn't interfere with successful function calls."""
-    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get:
+    with patch("requests.get") as mock_get:
         mock_response = MagicMock()
         mock_response.json.return_value = {"success": True}
         mock_get.return_value = mock_response
