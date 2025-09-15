@@ -27,6 +27,9 @@ def test_update_usage_success_with_all_parameters():
             retry_workflow_id_hash_pairs=["hash1", "hash2"],
             original_error_log="Original error log content",
             minimized_error_log="Minimized error log content",
+            lambda_log_group="/aws/lambda/pr-agent-prod",
+            lambda_log_stream="2025/09/04/pr-agent-prod[$LATEST]841315c5",
+            lambda_request_id="17921070-5cb6-43ee-8d2e-b5161ae89729",
         )
 
         assert result is None
@@ -41,6 +44,9 @@ def test_update_usage_success_with_all_parameters():
                 "retry_workflow_id_hash_pairs": ["hash1", "hash2"],
                 "original_error_log": "Original error log content",
                 "minimized_error_log": "Minimized error log content",
+                "lambda_log_group": "/aws/lambda/pr-agent-prod",
+                "lambda_log_stream": "2025/09/04/pr-agent-prod[$LATEST]841315c5",
+                "lambda_request_id": "17921070-5cb6-43ee-8d2e-b5161ae89729",
             }
         )
         mock_table.eq.assert_called_once_with(column="id", value=123)

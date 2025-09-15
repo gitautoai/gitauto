@@ -251,7 +251,10 @@ class TestHandleWebhookEvent:
         await handle_webhook_event(event_name="issues", payload=payload)
 
         mock_create_pr_from_issue.assert_called_once_with(
-            payload=payload, trigger="issue_label", input_from="github"
+            payload=payload,
+            trigger="issue_label",
+            input_from="github",
+            lambda_info=None,
         )
 
     @pytest.mark.asyncio
@@ -280,7 +283,10 @@ class TestHandleWebhookEvent:
 
             mock_handle_pr_checkbox_trigger.assert_called_once_with(payload=payload)
             mock_create_pr_from_issue.assert_called_once_with(
-                payload=payload, trigger="issue_comment", input_from="github"
+                payload=payload,
+                trigger="issue_comment",
+                input_from="github",
+                lambda_info=None,
             )
 
     @pytest.mark.asyncio
@@ -298,7 +304,10 @@ class TestHandleWebhookEvent:
 
             mock_handle_pr_checkbox_trigger.assert_called_once_with(payload=payload)
             mock_create_pr_from_issue.assert_called_once_with(
-                payload=payload, trigger="issue_comment", input_from="github"
+                payload=payload,
+                trigger="issue_comment",
+                input_from="github",
+                lambda_info=None,
             )
 
     @pytest.mark.asyncio

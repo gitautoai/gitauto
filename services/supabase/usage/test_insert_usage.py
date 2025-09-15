@@ -42,6 +42,9 @@ def test_insert_usage_success_with_all_parameters():
                 "source": "test",
                 "trigger": "issue_label",
                 "pr_number": 6,
+                "lambda_log_group": None,
+                "lambda_log_stream": None,
+                "lambda_request_id": None,
             }
         )
         mock_table.execute.assert_called_once()
@@ -82,6 +85,9 @@ def test_insert_usage_success_without_pr_number():
                 "source": "test",
                 "trigger": "issue_label",
                 "pr_number": None,
+                "lambda_log_group": None,
+                "lambda_log_stream": None,
+                "lambda_request_id": None,
             }
         )
 
@@ -109,6 +115,24 @@ def test_insert_usage_with_zero_values():
         )
 
         assert result == 0
+        mock_table.insert.assert_called_once_with(
+            json={
+                "owner_id": 0,
+                "owner_type": "Organization",
+                "owner_name": "test_org",
+                "repo_id": 0,
+                "repo_name": "test_repo",
+                "issue_number": 0,
+                "user_id": 0,
+                "installation_id": 0,
+                "source": "test",
+                "trigger": "issue_label",
+                "pr_number": 0,
+                "lambda_log_group": None,
+                "lambda_log_stream": None,
+                "lambda_request_id": None,
+            }
+        )
 
 
 def test_insert_usage_with_different_triggers():

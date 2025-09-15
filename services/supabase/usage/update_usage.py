@@ -13,6 +13,9 @@ def update_usage(
     retry_workflow_id_hash_pairs: list[str] | None = None,
     original_error_log: str | None = None,
     minimized_error_log: str | None = None,
+    lambda_log_group: str | None = None,
+    lambda_log_stream: str | None = None,
+    lambda_request_id: str | None = None,
 ):
     """Add agent information to usage record and set is_completed to True."""
     update_data = {
@@ -31,6 +34,15 @@ def update_usage(
 
     if minimized_error_log is not None:
         update_data["minimized_error_log"] = minimized_error_log
+
+    if lambda_log_group is not None:
+        update_data["lambda_log_group"] = lambda_log_group
+
+    if lambda_log_stream is not None:
+        update_data["lambda_log_stream"] = lambda_log_stream
+
+    if lambda_request_id is not None:
+        update_data["lambda_request_id"] = lambda_request_id
 
     supabase.table(table_name="usage").update(json=update_data).eq(
         column="id", value=usage_id

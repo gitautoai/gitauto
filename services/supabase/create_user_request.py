@@ -20,6 +20,7 @@ def create_user_request(
     trigger: Trigger,
     email: str | None,
     pr_number: int | None = None,
+    lambda_info: dict[str, str | None] | None = None,
 ):
     existing_issue = get_issue(
         owner_type=owner_type,
@@ -39,6 +40,11 @@ def create_user_request(
             installation_id=installation_id,
         )
 
+    # Extract Lambda context info if provided
+    lambda_log_group = lambda_info.get("log_group") if lambda_info else None
+    lambda_log_stream = lambda_info.get("log_stream") if lambda_info else None
+    lambda_request_id = lambda_info.get("request_id") if lambda_info else None
+
     usage_id = insert_usage(
         owner_id=owner_id,
         owner_type=owner_type,
@@ -51,6 +57,9 @@ def create_user_request(
         source=source,
         trigger=trigger,
         pr_number=pr_number,
+        lambda_log_group=lambda_log_group,
+        lambda_log_stream=lambda_log_stream,
+        lambda_request_id=lambda_request_id,
     )
 
     upsert_user(user_id=user_id, user_name=user_name, email=email)

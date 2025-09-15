@@ -18,6 +18,7 @@ from services.slack.slack_notify import slack_notify
 from services.webhook.issue_handler import create_pr_from_issue
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.webhook_handler import handle_webhook_event
+from utils.aws.extract_lambda_info import extract_lambda_info
 
 # https://us-west-1.console.aws.amazon.com/lambda/home?region=us-west-1#/functions/pr-agent-prod?subtab=envVars&tab=configure
 if ENV == "prod":
@@ -63,6 +64,9 @@ def handler(event, context):
 async def handle_webhook(request: Request) -> dict[str, str]:
     event_name: str = request.headers.get("X-GitHub-Event", "Event not specified")
 
+    # Extract Lambda context information if available
+    lambda_info = extract_lambda_info(request)
+
     # Validate if the webhook signature comes from GitHub
     await verify_webhook_signature(request=request, secret=GITHUB_WEBHOOK_SECRET)
 
@@ -87,15 +91,23 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     except Exception as e:  # pylint: disable=broad-except
         print(f"Error in parsing JSON payload: {e}")
 
-    await handle_webhook_event(event_name=event_name, payload=payload)
+    await handle_webhook_event(
+        event_name=event_name, payload=payload, lambda_info=lambda_info
+    )
     return {"message": "Webhook processed successfully"}
 
 
 @app.post(path="/jira-webhook")
 async def handle_jira_webhook(request: Request):
+    # Extract Lambda context information if available
+    lambda_info = extract_lambda_info(request)
+
     payload = await verify_jira_webhook(request)
-    await create_pr_from_issue(
-        payload=payload, trigger="issue_comment", input_from="jira"
+    create_pr_from_issue(
+        payload=payload,
+        trigger="issue_comment",
+        input_from="jira",
+        lambda_info=lambda_info,
     )
     return {"message": "Jira webhook processed successfully"}
 
