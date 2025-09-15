@@ -356,7 +356,7 @@ def test_handle_exceptions_google_api_rate_limit():
         mock_response.text = "Rate limit exceeded"
         mock_response.headers = {"Retry-After": "60"}
 
-        http_error = requests.exceptions.HTTPError("429 Too Many Requests")
+        http_error = requests.HTTPError("429 Too Many Requests")
         http_error.response = mock_response
         raise http_error
 
