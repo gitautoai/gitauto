@@ -123,7 +123,11 @@ def test_replace_existing_file_success(
     )
 
     # Verify PUT request was made with correct data
-    expected_content = base64.b64encode(file_content.encode("utf-8")).decode("utf-8")
+    # Content is processed: sort_imports + strip_trailing_spaces + ensure_final_newline
+    processed_content = file_content + "\n"  # ensure_final_newline adds newline
+    expected_content = base64.b64encode(processed_content.encode("utf-8")).decode(
+        "utf-8"
+    )
     expected_data = {
         "message": f"Replace content of {file_path}",
         "content": expected_content,
@@ -179,7 +183,11 @@ def test_replace_nonexistent_file_success(
     )
 
     # Verify PUT request was made without SHA (new file)
-    expected_content = base64.b64encode(file_content.encode("utf-8")).decode("utf-8")
+    # Content is processed: sort_imports + strip_trailing_spaces + ensure_final_newline
+    processed_content = file_content + "\n"  # ensure_final_newline adds newline
+    expected_content = base64.b64encode(processed_content.encode("utf-8")).decode(
+        "utf-8"
+    )
     expected_data = {
         "message": f"Replace content of {file_path}",
         "content": expected_content,
@@ -308,7 +316,11 @@ def test_replace_file_with_special_characters(
 
     # Verify content was properly encoded
     call_args = mock_requests_put_success.call_args
-    expected_content = base64.b64encode(file_content.encode("utf-8")).decode("utf-8")
+    # Content is processed: sort_imports + strip_trailing_spaces + ensure_final_newline
+    processed_content = file_content + "\n"  # ensure_final_newline adds newline
+    expected_content = base64.b64encode(processed_content.encode("utf-8")).decode(
+        "utf-8"
+    )
     assert call_args.kwargs["json"]["content"] == expected_content
 
 
@@ -358,7 +370,14 @@ def test_replace_file_with_large_content(
 
     # Verify large content was properly encoded
     call_args = mock_requests_put_success.call_args
-    expected_content = base64.b64encode(file_content.encode("utf-8")).decode("utf-8")
+    # Content is processed: sort_imports + strip_trailing_spaces + ensure_final_newline
+    # Large content already ends with \n, so ensure_final_newline doesn't add another
+    processed_content = (
+        file_content  # No additional newline since it already ends with \n
+    )
+    expected_content = base64.b64encode(processed_content.encode("utf-8")).decode(
+        "utf-8"
+    )
     assert call_args.kwargs["json"]["content"] == expected_content
 
 

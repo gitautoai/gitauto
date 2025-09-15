@@ -1,5 +1,6 @@
-import isort
 from utils.error.handle_exceptions import handle_exceptions
+from utils.text.sort_imports_py import sort_python_imports
+from utils.text.sort_imports_js import sort_js_ts_imports
 
 
 @handle_exceptions(
@@ -11,13 +12,11 @@ def sort_imports(content: str, file_path: str):
 
     # Python files
     if file_path.endswith(".py"):
-        # Use isort directly (faster than subprocess)
-        return isort.code(content)
+        return sort_python_imports(content)
 
-    # JavaScript/TypeScript files (future enhancement)
+    # JavaScript/TypeScript files
     if file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
-        # Could use tools like import-sort or organize-imports-cli
-        pass
+        return sort_js_ts_imports(content)
 
     # Java files (future enhancement)
     if file_path.endswith(".java"):
