@@ -417,7 +417,7 @@ def test_handle_exceptions_500_error_raise_on_error():
         mock_response.reason = "Internal Server Error"
         mock_response.text = "Server error"
 
-        http_error = requests.exceptions.HTTPError("500 Internal Server Error")
+        http_error = requests.HTTPError("500 Internal Server Error")
         http_error.response = mock_response
         raise http_error
 
