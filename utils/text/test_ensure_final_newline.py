@@ -35,3 +35,33 @@ def test_ensure_final_newline_single_line():
     text = "single line"
     expected = "single line\n"
     assert ensure_final_newline(text) == expected
+
+
+def test_ensure_final_newline_whitespace_only():
+    text = "   \t  "
+    expected = "   \t  \n"
+    assert ensure_final_newline(text) == expected
+
+
+def test_ensure_final_newline_only_newline():
+    text = "\n"
+    expected = "\n"
+    assert ensure_final_newline(text) == expected
+
+
+def test_ensure_final_newline_only_crlf():
+    text = "\r\n"
+    expected = "\r\n"
+    assert ensure_final_newline(text) == expected
+
+
+def test_ensure_final_newline_mixed_line_endings():
+    text = "line1\nline2\r\nline3"
+    expected = "line1\nline2\r\nline3\n"
+    assert ensure_final_newline(text) == expected
+
+
+def test_ensure_final_newline_multiple_trailing_newlines():
+    text = "line1\nline2\n\n"
+    expected = "line1\nline2\n\n"
+    assert ensure_final_newline(text) == expected
