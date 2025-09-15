@@ -83,3 +83,10 @@ def test_ensure_final_newline_ends_with_carriage_return():
 
 def test_ensure_final_newline_unicode_content():
     text = "Hello 世界! 🌍"
+
+
+def test_ensure_final_newline_long_text():
+    # Test with a longer text to ensure performance is reasonable
+    text = "line\n" * 1000 + "final line without newline"
+    result = ensure_final_newline(text)
+    assert result.endswith("\n")
