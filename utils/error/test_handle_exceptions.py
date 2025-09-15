@@ -483,7 +483,7 @@ def test_handle_exceptions_other_http_error_codes():
         http_error.response = mock_response
         raise http_error
 
-    with pytest.raises(requests.exceptions.HTTPError, match="404 Not Found"):
+    with pytest.raises(requests.HTTPError, match="404 Not Found"):
         mock_function_other_error()
 
 
