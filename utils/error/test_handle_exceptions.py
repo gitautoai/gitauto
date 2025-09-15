@@ -336,7 +336,7 @@ def test_handle_exceptions_http_error_no_response_no_raise():
     @handle_exceptions(default_return_value="fallback", raise_on_error=False)
     def mock_function_no_raise():
         """Mock function that raises HTTPError with no response."""
-        http_error = requests.exceptions.HTTPError("Connection failed")
+        http_error = requests.HTTPError("Connection failed")
         http_error.response = None  # No response object
         raise http_error
 
