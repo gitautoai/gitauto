@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from utils.text.sort_imports_js import sort_js_ts_imports
 
 
@@ -93,3 +94,16 @@ function {"""
     result = sort_js_ts_imports(content)
     # Should return original content unchanged
     assert result == content
+
+
+def test_sort_js_imports_cleanup_error():
+    """Test that OSError during cleanup is handled gracefully."""
+    content = "import React from 'react';"
+
+    # Mock os.unlink to raise OSError to test cleanup error handling
+    with patch(
+        "utils.text.sort_imports_js.os.unlink", side_effect=OSError("Permission denied")
+    ):
+        result = sort_js_ts_imports(content)
+        # Should still return result despite cleanup error
+        assert result == content or "import React from 'react';" in result
