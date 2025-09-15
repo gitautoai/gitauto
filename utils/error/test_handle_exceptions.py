@@ -269,7 +269,7 @@ def test_handle_exceptions_http_error_no_retry():
 
 def test_handle_exceptions_connection_error():
     """Test that connection errors are handled without retry."""
-    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get:
+    with patch("requests.get") as mock_get:
         mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
 
         result = mock_function_for_testing()
