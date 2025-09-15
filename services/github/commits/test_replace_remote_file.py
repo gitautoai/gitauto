@@ -181,7 +181,9 @@ def test_replace_nonexistent_file_success(
     )
 
     # Verify PUT request was made without SHA (new file)
-    expected_content = base64.b64encode(file_content.encode("utf-8")).decode("utf-8")
+    # The implementation processes the content through ensure_final_newline
+    processed_content = file_content + '\n' if not file_content.endswith('\n') else file_content
+    expected_content = base64.b64encode(processed_content.encode("utf-8")).decode("utf-8")
     expected_data = {
         "message": f"Replace content of {file_path}",
         "content": expected_content,
