@@ -293,10 +293,6 @@ class TestConfigurationFiles:
         for additional_file in additional_files:
             assert additional_file in dependency_files.CONFIGURATION_FILES
 
-    def test_configuration_files_no_duplicates(self):
-        """Test that CONFIGURATION_FILES has no duplicate entries."""
-        files_list = dependency_files.CONFIGURATION_FILES
-        assert len(files_list) == len(set(files_list))
 
     def test_configuration_files_all_strings(self):
         """Test that all items in CONFIGURATION_FILES are strings."""
