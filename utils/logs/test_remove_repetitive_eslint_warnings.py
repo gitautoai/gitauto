@@ -232,7 +232,6 @@ def test_complex_real_world_scenario():
     expected = """
 /src/components/Header.tsx
   25:10  error    Missing return type on function      @typescript-eslint/explicit-function-return-type
-
 /src/types/index.ts
   15:5  error    Type annotation missing               @typescript-eslint/no-explicit-any
   20:1  error    Export not found                      import/no-unresolved
