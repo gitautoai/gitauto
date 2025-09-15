@@ -50,7 +50,10 @@ from utils.time.get_timeout_message import get_timeout_message
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
+async def handle_pr_checkbox_trigger(
+    payload: IssueCommentWebhookPayload,
+    lambda_info: dict[str, str | None] | None = None,
+):
     current_time = time.time()
     trigger = "pr_checkbox"
 
@@ -164,6 +167,7 @@ async def handle_pr_checkbox_trigger(payload: IssueCommentWebhookPayload):
         source="github",
         trigger="pr_checkbox",
         email=None,
+        lambda_info=lambda_info,
     )
 
     # Cancel existing workflow runs since we'll be making new commits

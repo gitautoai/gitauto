@@ -62,7 +62,10 @@ from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approachi
 from utils.time.get_timeout_message import get_timeout_message
 
 
-def handle_check_run(payload: CheckRunCompletedPayload):
+def handle_check_run(
+    payload: CheckRunCompletedPayload,
+    lambda_info: dict[str, str | None] | None = None,
+):
     current_time = time.time()
     trigger = "test_failure"
 
@@ -222,6 +225,7 @@ def handle_check_run(payload: CheckRunCompletedPayload):
         trigger="test_failure",
         email=None,
         pr_number=pull_number,
+        lambda_info=lambda_info,
     )
 
     # Cancel other in_progress check runs before proceeding with the fix
