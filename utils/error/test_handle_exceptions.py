@@ -313,3 +313,152 @@ def test_handle_exceptions_generic_exception():
 
         assert result is None
         mock_get.assert_called_once()
+
+
+def test_handle_exceptions_http_error_no_response_raise_on_error():
+    """Test HTTPError with no response object and raise_on_error=True."""
+
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def mock_function_raise_on_error():
+        """Mock function that raises HTTPError with no response."""
+        http_error = requests.exceptions.HTTPError("Connection failed")
+        http_error.response = None  # No response object
+        raise http_error
+
+    with pytest.raises(requests.exceptions.HTTPError, match="Connection failed"):
+        mock_function_raise_on_error()
+
+
+def test_handle_exceptions_http_error_no_response_no_raise():
+    """Test HTTPError with no response object and raise_on_error=False."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def mock_function_no_raise():
+        """Mock function that raises HTTPError with no response."""
+        http_error = requests.exceptions.HTTPError("Connection failed")
+        http_error.response = None  # No response object
+        raise http_error
+
+    result = mock_function_no_raise()
+    assert result == "fallback"
+
+
+def test_handle_exceptions_google_api_rate_limit():
+    """Test Google API rate limit handling (429 status code)."""
+
+    @handle_exceptions(default_return_value=None, raise_on_error=False, api_type="google")
+    def mock_google_function():
+        """Mock function for Google API."""
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+        mock_response.reason = "Too Many Requests"
+        mock_response.text = "Rate limit exceeded"
+        mock_response.headers = {"Retry-After": "60"}
+
+        http_error = requests.exceptions.HTTPError("429 Too Many Requests")
+        http_error.response = mock_response
+        raise http_error
+
+    # Google API rate limit should raise the exception (lines 96-99)
+    with pytest.raises(requests.exceptions.HTTPError, match="429 Too Many Requests"):
+        mock_google_function()
+
+
+def test_handle_exceptions_json_decode_error_with_doc():
+    """Test JSONDecodeError with doc attribute."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def mock_function_json_error_with_doc():
+        """Mock function that raises JSONDecodeError with doc."""
+        json_error = json.JSONDecodeError("Invalid JSON", "bad json content", 0)
+        # JSONDecodeError has doc attribute by default
+        raise json_error
+
+    result = mock_function_json_error_with_doc()
+    assert result == "fallback"
+
+
+def test_handle_exceptions_json_decode_error_without_doc():
+    """Test JSONDecodeError without doc attribute (line 118)."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def mock_function_json_error_no_doc():
+        """Mock function that raises JSONDecodeError without doc."""
+        json_error = json.JSONDecodeError("Invalid JSON", "", 0)
+        # Remove doc attribute to test the else branch
+        delattr(json_error, "doc")
+        raise json_error
+
+    result = mock_function_json_error_no_doc()
+    assert result == "fallback"
+
+
+def test_handle_exceptions_json_decode_error_raise_on_error():
+    """Test JSONDecodeError with raise_on_error=True."""
+
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def mock_function_json_error_raise():
+        """Mock function that raises JSONDecodeError."""
+        raise json.JSONDecodeError("Invalid JSON", "bad content", 0)
+
+    with pytest.raises(json.JSONDecodeError, match="Invalid JSON"):
+        mock_function_json_error_raise()
+
+
+def test_handle_exceptions_500_error_raise_on_error():
+    """Test 500 Internal Server Error with raise_on_error=True."""
+
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def mock_function_500_error():
+        """Mock function that raises 500 error."""
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.reason = "Internal Server Error"
+        mock_response.text = "Server error"
+
+        http_error = requests.exceptions.HTTPError("500 Internal Server Error")
+        http_error.response = mock_response
+        raise http_error
+
+    with pytest.raises(requests.exceptions.HTTPError, match="500 Internal Server Error"):
+        mock_function_500_error()
+
+
+def test_handle_exceptions_500_error_no_raise():
+    """Test 500 Internal Server Error with raise_on_error=False."""
+
+    @handle_exceptions(default_return_value="server_error", raise_on_error=False)
+    def mock_function_500_no_raise():
+        """Mock function that raises 500 error."""
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.reason = "Internal Server Error"
+        mock_response.text = "Server error"
+
+        http_error = requests.exceptions.HTTPError("500 Internal Server Error")
+        http_error.response = mock_response
+        raise http_error
+
+    result = mock_function_500_no_raise()
+    assert result == "server_error"
+
+
+def test_handle_exceptions_github_rate_limit_with_raise_on_error():
+    """Test GitHub rate limit error with raise_on_error=True (non-retryable case)."""
+
+    @handle_exceptions(default_return_value=None, raise_on_error=True, api_type="github")
+    def mock_function_github_rate_limit():
+        """Mock function that raises GitHub rate limit error."""
+        mock_response = MagicMock()
+        mock_response.status_code = 403
+        mock_response.reason = "Forbidden"
+        mock_response.text = "Rate limit exceeded"
+        mock_response.headers = {
+            "X-RateLimit-Limit": "5000",
+            "X-RateLimit-Remaining": "100",  # Not zero, so won't retry
+            "X-RateLimit-Used": "4900",
+        }
+
+        http_error = requests.exceptions.HTTPError("403 Forbidden")
+        http_error.response = mock_response
+        raise http_error
