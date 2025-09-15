@@ -78,6 +78,7 @@ def test_multiple_files_with_errors():
     expected = """/path/to/file1.ts
   10:5  error  Error 1  rule1
   15:3  error  Error 2  rule2
+
 /path/to/file2.js
   5:1  error  Error 3  rule3"""
 
