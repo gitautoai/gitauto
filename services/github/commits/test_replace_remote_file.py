@@ -1,15 +1,12 @@
 # pylint: disable=unused-argument
 import base64
-from unittest.mock import MagicMock, patch
 from typing import cast
+from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
-
 from services.github.commits.replace_remote_file import (
-    REPLACE_REMOTE_FILE_CONTENT,
-    replace_remote_file_content,
-)
+    REPLACE_REMOTE_FILE_CONTENT, replace_remote_file_content)
 from services.github.types.github_types import BaseArgs
 
 
@@ -113,12 +110,7 @@ def test_replace_existing_file_success(
     expected_get_url = f"https://api.github.com/repos/test-owner/test-repo/contents/{file_path}?ref=test-branch"
     mock_requests_get_existing_file.assert_called_once_with(
         url=expected_get_url,
-        headers={
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": "Bearer test-token",
-            "User-Agent": "GitAuto",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
+        headers=mock_create_headers.return_value,
         timeout=120,
     )
 
@@ -134,12 +126,7 @@ def test_replace_existing_file_success(
     mock_requests_put_success.assert_called_once_with(
         url=expected_get_url,
         json=expected_data,
-        headers={
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": "Bearer test-token",
-            "User-Agent": "GitAuto",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
+        headers=mock_create_headers.return_value,
         timeout=120,
     )
 
@@ -170,12 +157,7 @@ def test_replace_nonexistent_file_success(
     expected_get_url = f"https://api.github.com/repos/test-owner/test-repo/contents/{file_path}?ref=test-branch"
     mock_requests_get_nonexistent_file.assert_called_once_with(
         url=expected_get_url,
-        headers={
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": "Bearer test-token",
-            "User-Agent": "GitAuto",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
+        headers=mock_create_headers.return_value,
         timeout=120,
     )
 
@@ -190,12 +172,7 @@ def test_replace_nonexistent_file_success(
     mock_requests_put_success.assert_called_once_with(
         url=expected_get_url,
         json=expected_data,
-        headers={
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": "Bearer test-token",
-            "User-Agent": "GitAuto",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
+        headers=mock_create_headers.return_value,
         timeout=120,
     )
 
