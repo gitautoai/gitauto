@@ -291,6 +291,7 @@ public class MyClass {
     }
 }"""
     result = sort_imports(java_content, "MyClass.java")
+    assert result == java_content
 
 
 def test_sort_imports_unknown_extension():
