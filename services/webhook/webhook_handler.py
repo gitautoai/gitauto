@@ -63,7 +63,11 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=True)
-async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
+async def handle_webhook_event(
+    event_name: str,
+    payload: dict[str, Any],
+    lambda_info: dict[str, str | None] | None = None,
+):
     """
     Determine the event type and call the appropriate handler.
     Check the type of webhook event and handle accordingly.
@@ -173,6 +177,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
                 payload=cast(GitHubLabeledPayload, payload),
                 trigger="issue_label",
                 input_from="github",
+                lambda_info=lambda_info,
             )
             return
         if action == "opened":
@@ -198,6 +203,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
                 payload=cast(GitHubLabeledPayload, payload),
                 trigger="issue_comment",
                 input_from="github",
+                lambda_info=lambda_info,
             )
             return
 
@@ -208,6 +214,7 @@ async def handle_webhook_event(event_name: str, payload: dict[str, Any]):
                 payload=cast(GitHubLabeledPayload, payload),
                 trigger="issue_comment",
                 input_from="github",
+                lambda_info=lambda_info,
             )
         return
 

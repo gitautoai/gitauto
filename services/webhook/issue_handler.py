@@ -70,6 +70,7 @@ def create_pr_from_issue(
     payload: GitHubLabeledPayload | JiraPayload,
     trigger: Trigger,
     input_from: Literal["github", "jira"],
+    lambda_info: dict[str, str | None] | None = None,
 ) -> None:
     current_time: float = time.time()
 
@@ -220,6 +221,7 @@ def create_pr_from_issue(
         source=input_from,
         trigger=trigger,
         email=sender_email,
+        lambda_info=lambda_info,
     )
 
     if input_from == "github":

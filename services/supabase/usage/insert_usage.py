@@ -28,6 +28,9 @@ def insert_usage(
     source: str,
     trigger: Trigger,
     pr_number: int | None = None,
+    lambda_log_group: str | None = None,
+    lambda_log_stream: str | None = None,
+    lambda_request_id: str | None = None,
 ):
     data, _ = (
         supabase.table(table_name="usage")
@@ -44,6 +47,9 @@ def insert_usage(
                 "source": source,
                 "trigger": trigger,
                 "pr_number": pr_number,
+                "lambda_log_group": lambda_log_group,
+                "lambda_log_stream": lambda_log_stream,
+                "lambda_request_id": lambda_request_id,
             }
         )
         .execute()

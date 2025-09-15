@@ -394,6 +394,9 @@ class Usage(TypedDict):
     trigger: str
     original_error_log: str | None
     minimized_error_log: str | None
+    lambda_log_group: str | None
+    lambda_log_stream: str | None
+    lambda_request_id: str | None
 
 
 class UsageInsert(TypedDict):
@@ -418,6 +421,9 @@ class UsageInsert(TypedDict):
     trigger: NotRequired[str]
     original_error_log: NotRequired[str | None]
     minimized_error_log: NotRequired[str | None]
+    lambda_log_group: NotRequired[str | None]
+    lambda_log_stream: NotRequired[str | None]
+    lambda_request_id: NotRequired[str | None]
 
 
 class UsageWithIssues(TypedDict):

@@ -85,6 +85,9 @@ class TestCreateUserRequest:
             source="github",
             trigger="issue_comment",
             pr_number=456,
+            lambda_log_group=None,
+            lambda_log_stream=None,
+            lambda_request_id=None,
         )
 
         # Verify upsert_user was called with correct parameters
@@ -161,6 +164,9 @@ class TestCreateUserRequest:
             source="github",
             trigger="issue_comment",
             pr_number=None,
+            lambda_log_group=None,
+            lambda_log_stream=None,
+            lambda_request_id=None,
         )
 
     def test_create_user_request_without_email(self, sample_params, mock_dependencies):

@@ -56,6 +56,8 @@ uvicorn main:app --reload --port 8000 --log-level warning
 
 ### Database Access
 
+**IMPORTANT: You are PROHIBITED from running ANY database schema changes (ALTER TABLE, CREATE TABLE, DROP TABLE, etc.) without explicit user consent. You may only run SELECT queries for reading data.**
+
 ```bash
 # Connect to Supabase PostgreSQL database (Development)
 source .env && psql "postgresql://postgres.dkrxtcbaqzrodvsagwwn:$SUPABASE_DB_PASSWORD_DEV@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
