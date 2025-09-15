@@ -280,7 +280,7 @@ def test_handle_exceptions_connection_error():
 
 def test_handle_exceptions_timeout_error():
     """Test that timeout errors are handled without retry."""
-    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get:
+    with patch("requests.get") as mock_get:
         mock_get.side_effect = requests.exceptions.Timeout("Request timed out")
 
         result = mock_function_for_testing()
