@@ -83,6 +83,9 @@ def test_ensure_final_newline_ends_with_carriage_return():
 
 def test_ensure_final_newline_unicode_content():
     text = "Hello 世界! 🌍"
+    expected = "Hello 世界! 🌍\n"
+    result = ensure_final_newline(text)
+    assert result == expected
 
 
 def test_ensure_final_newline_long_text():
