@@ -5,7 +5,6 @@ from unittest.mock import Mock
 
 # Third party imports
 import pytest
-
 # Local imports
 from services.anthropic.trim_messages import trim_messages_to_token_limit
 
@@ -531,3 +530,186 @@ def test_multiple_tool_use_blocks_in_single_message(mock_client):
     # Should find the first tool_use and match it with tool_result
     assert len(trimmed) == 1
     assert trimmed == [messages[0]]
+
+
+def test_assistant_message_without_next_message_boundary(mock_client):
+    """Test assistant message at end of list when checking for tool_use."""
+    messages = [
+        make_message("user", "query"),
+        make_message("assistant", "response"),  # No next message to check
+    ]
+
+    # Force trimming
+    def count_tokens_progressive(messages, model):
+        if len(messages) >= 2:
+            return Mock(input_tokens=5000)  # Over limit, needs trimming
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
+    mock_client.messages.count_tokens.side_effect = count_tokens_progressive
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should remove the assistant message normally
+    assert len(trimmed) == 1
+    assert trimmed == [messages[0]]
+
+
+def test_assistant_message_with_empty_content_list(mock_client):
+    """Test assistant message with empty content list."""
+    messages = [
+        make_message("user", "query"),
+        {"role": "assistant", "content": []},  # Empty content list
+        make_message("user", "follow up"),
+    ]
+
+    # Force trimming
+    def count_tokens_progressive(messages, model):
+        if len(messages) >= 3:
+            return Mock(input_tokens=5000)  # Over limit, needs trimming
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
+    mock_client.messages.count_tokens.side_effect = count_tokens_progressive
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should handle empty content list gracefully
+    assert len(trimmed) == 2
+    assert trimmed == [messages[0], messages[2]]
+
+
+def test_tool_result_with_empty_content_list(mock_client):
+    """Test tool_result checking with empty content list in next message."""
+    messages = [
+        make_message("user", "query"),
+        make_tool_use_message("assistant", "tool123"),
+        {"role": "user", "content": []},  # Empty content list
+    ]
+
+    # Force trimming
+    def count_tokens_progressive(messages, model):
+        if len(messages) >= 3:
+            return Mock(input_tokens=5000)  # Over limit, needs trimming
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
+    mock_client.messages.count_tokens.side_effect = count_tokens_progressive
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should not find matching tool_result and remove assistant message
+    assert len(trimmed) == 2
+    assert trimmed == [messages[0], messages[2]]
+
+
+def test_non_assistant_role_with_tool_use_content(mock_client):
+    """Test non-assistant message with tool_use-like content."""
+    messages = [
+        make_message("user", "query"),
+        {
+            "role": "user",  # Not assistant
+            "content": [
+                {"type": "tool_use", "id": "tool123", "name": "test_tool", "input": {}}
+            ],
+        },
+        make_message("user", "follow up"),
+    ]
+
+    # Force trimming
+    def count_tokens_progressive(messages, model):
+        if len(messages) >= 3:
+            return Mock(input_tokens=5000)  # Over limit, needs trimming
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
+    mock_client.messages.count_tokens.side_effect = count_tokens_progressive
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should not treat user message as tool_use and remove it normally
+    assert len(trimmed) == 2
+    assert trimmed == [messages[0], messages[2]]
+
+
+def test_missing_content_attribute(mock_client):
+    """Test message with missing content attribute."""
+    messages = [
+        make_message("user", "query"),
+        {"role": "assistant"},  # Missing content
+        make_message("user", "follow up"),
+    ]
+
+    # Force trimming
+    def count_tokens_progressive(messages, model):
+        if len(messages) >= 3:
+            return Mock(input_tokens=5000)  # Over limit, needs trimming
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
+    mock_client.messages.count_tokens.side_effect = count_tokens_progressive
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should handle missing content gracefully (defaults to empty list)
+    assert len(trimmed) == 2
+    assert trimmed == [messages[0], messages[2]]
+
+
+def test_tool_use_id_is_none(mock_client):
+    """Test tool_use block where id is None."""
+    messages = [
+        make_message("user", "query"),
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": None,  # Explicitly None
+                    "name": "test_tool",
+                    "input": {"param": "value"},
+                }
+            ],
+        },
+        make_message("user", "follow up"),
+    ]
+
+    # Force trimming
+    def count_tokens_progressive(messages, model):
+        if len(messages) >= 3:
+            return Mock(input_tokens=5000)  # Over limit, needs trimming
+        return Mock(input_tokens=800)  # Under limit, stop trimming
+
+    mock_client.messages.count_tokens.side_effect = count_tokens_progressive
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should handle None id gracefully and not try to match
+    assert len(trimmed) == 2
+    assert trimmed == [messages[0], messages[2]]
+
+
+def test_single_system_message_over_limit(mock_client):
+    """Test single system message that's over token limit."""
+    messages = [make_message("system", "very long system prompt")]
+
+    # Force high token count
+    mock_client.messages.count_tokens.return_value = Mock(input_tokens=10000)
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should keep the system message even if over limit (can't remove it)
+    assert len(trimmed) == 1
+    assert trimmed == messages
+
+
+def test_only_system_messages_over_limit(mock_client):
+    """Test multiple system messages over token limit."""
+    messages = [
+        make_message("system", "first system"),
+        make_message("system", "second system"),
+    ]
+
+    # Force high token count
+    mock_client.messages.count_tokens.return_value = Mock(input_tokens=10000)
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should keep all system messages (can't remove them)
+    assert len(trimmed) == 2
+    assert trimmed == messages
