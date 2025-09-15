@@ -228,7 +228,7 @@ def test_handle_exceptions_429_rate_limit_retry():
         mock_response_success.json.return_value = {"success": True}
 
         # Configure HTTP error for first response
-        http_error = requests.exceptions.HTTPError("429 Too Many Requests")
+        http_error = requests.HTTPError("429 Too Many Requests")
         http_error.response = mock_response_error
         mock_response_error.raise_for_status.side_effect = http_error
 
