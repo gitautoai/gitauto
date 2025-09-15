@@ -361,7 +361,7 @@ def test_handle_exceptions_google_api_rate_limit():
         raise http_error
 
     # Google API rate limit should raise the exception (lines 96-99)
-    with pytest.raises(requests.exceptions.HTTPError, match="429 Too Many Requests"):
+    with pytest.raises(requests.HTTPError, match="429 Too Many Requests"):
         mock_google_function()
 
 
