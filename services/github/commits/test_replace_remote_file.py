@@ -362,8 +362,8 @@ def test_replace_file_with_large_content(
 
     # Verify large content was properly encoded
     call_args = mock_requests_put_success.call_args
-    # Account for ensure_final_newline processing
-    expected_content = base64.b64encode((file_content + "\n").encode("utf-8")).decode("utf-8")
+    # Large content already ends with \n, so ensure_final_newline won't add another
+    expected_content = base64.b64encode(file_content.encode("utf-8")).decode("utf-8")
     assert call_args.kwargs["json"]["content"] == expected_content
 
 
