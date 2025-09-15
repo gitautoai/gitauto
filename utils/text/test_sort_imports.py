@@ -278,3 +278,16 @@ def test_sort_imports_javascript_extensions():
     result = sort_imports(js_content, "component.tsx")
     assert result == js_content
 
+
+def test_sort_imports_java_extension():
+    """Test Java file extension returns unchanged"""
+    java_content = """import java.util.List;
+import java.io.File;
+import java.util.ArrayList;
+
+public class MyClass {
+    public static void main(String[] args) {
+        System.out.println("Hello World");
+    }
+}"""
+    result = sort_imports(java_content, "MyClass.java")
