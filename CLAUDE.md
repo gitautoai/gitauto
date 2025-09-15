@@ -291,12 +291,25 @@ aws lambda update-function-configuration --function-name pr-agent-prod --logging
 
 ## Architecture Overview
 
-### Execution Environment
+### Lambda Runtime Environment
 
-**CRITICAL**: GitAuto runs entirely on AWS Lambda, not in client environments. This means:
+**CRITICAL**: GitAuto runs entirely on AWS Lambda using Docker containers, not in client environments.
 
-- All code analysis, generation, and file processing happens on our Lambda instances
-- We can install tools via:
+#### Container Configuration
+- **Base Image**: `public.ecr.aws/lambda/python:3.12` (Amazon Linux 2023)
+- **Node.js Runtime**: LTS version (20.x) installed via nodesource repository  
+- **Package Manager**: npm/npx available for JavaScript/TypeScript tooling
+- **Memory**: 512MB allocated, timeout: 900 seconds (15 minutes)
+- **Storage**: `/tmp` directory (2GB) for temporary file operations
+
+#### JavaScript/TypeScript Support
+- **ESLint**: Available via `npx --yes eslint@latest` (downloads on-demand)
+- **Import Sorting**: Full support for JS/TS via ESLint sort-imports rule
+- **Cold Start**: First ESLint download adds ~5-10 seconds per container instance
+- **Caching**: Downloaded npm packages persist per Lambda container
+
+#### Tool Installation
+All code analysis, generation, and file processing happens on our Lambda instances. We can install tools via:
   - Python packages in requirements.txt (e.g., isort, black, ruff)
   - System packages via Dockerfile's dnf (e.g., patch, git)
   - Node packages via Dockerfile's npm (e.g., prettier, eslint)
