@@ -464,3 +464,38 @@ def test_handle_exceptions_github_rate_limit_with_raise_on_error():
         raise http_error
 
     with pytest.raises(requests.exceptions.HTTPError, match="403 Forbidden"):
+
+
+def test_handle_exceptions_other_http_error_codes():
+    """Test other HTTP error codes (not 403, 429, or 500) with raise_on_error=True."""
+
+    @handle_exceptions(default_return_value=None, raise_on_error=True, api_type="github")
+    def mock_function_other_error():
+        """Mock function that raises other HTTP error."""
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_response.reason = "Not Found"
+        mock_response.text = "Resource not found"
+
+        http_error = requests.exceptions.HTTPError("404 Not Found")
+        http_error.response = mock_response
+        raise http_error
+
+    with pytest.raises(requests.exceptions.HTTPError, match="404 Not Found"):
+        mock_function_other_error()
+
+
+def test_handle_exceptions_attribute_error_raise_on_error():
+    """Test AttributeError with raise_on_error=True."""
+
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def mock_function_attribute_error():
+        """Mock function that raises AttributeError."""
+        raise AttributeError("'NoneType' object has no attribute 'test'")
+
+    with pytest.raises(AttributeError, match="'NoneType' object has no attribute 'test'"):
+        mock_function_attribute_error()
+
+
+def test_handle_exceptions_key_error_raise_on_error():
+    """Test KeyError with raise_on_error=True."""
