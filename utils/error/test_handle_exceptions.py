@@ -460,7 +460,7 @@ def test_handle_exceptions_github_rate_limit_with_raise_on_error():
             "X-RateLimit-Used": "4900",
         }
 
-        http_error = requests.exceptions.HTTPError("403 Forbidden")
+        http_error = requests.HTTPError("403 Forbidden")
         http_error.response = mock_response
         raise http_error
 
