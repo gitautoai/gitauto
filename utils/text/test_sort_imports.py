@@ -315,3 +315,15 @@ def test_sort_imports_comments_only():
 
     result = sort_imports(content, "file")  # No extension
     assert result == content
+
+def test_sort_imports_mixed_content_no_imports():
+    """Test Python file with mixed content but no imports"""
+    content = "#!/usr/bin/env python3\n\ndef function_one():\n    return 'hello'\n\nclass MyClass:\n    def __init__(self):\n        self.value = 42"
+    result = sort_imports(content, "test.py")
+    assert result == content
+
+
+def test_sort_imports_case_sensitivity():
+    """Test file extension case sensitivity"""
+    content = "import os\nimport sys"
+    # Test uppercase extensions
