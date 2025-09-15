@@ -421,7 +421,7 @@ def test_handle_exceptions_500_error_raise_on_error():
         http_error.response = mock_response
         raise http_error
 
-    with pytest.raises(requests.exceptions.HTTPError, match="500 Internal Server Error"):
+    with pytest.raises(requests.HTTPError, match="500 Internal Server Error"):
         mock_function_500_error()
 
 
