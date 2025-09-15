@@ -1,5 +1,6 @@
-from unittest.mock import patch, MagicMock
 import json
+from unittest.mock import MagicMock, patch
+
 import pytest
 import requests
 from utils.error.handle_exceptions import handle_exceptions
@@ -464,6 +465,7 @@ def test_handle_exceptions_github_rate_limit_with_raise_on_error():
         raise http_error
 
     with pytest.raises(requests.exceptions.HTTPError, match="403 Forbidden"):
+        mock_function_github_rate_limit()
 
 
 def test_handle_exceptions_other_http_error_codes():
@@ -499,3 +501,11 @@ def test_handle_exceptions_attribute_error_raise_on_error():
 
 def test_handle_exceptions_key_error_raise_on_error():
     """Test KeyError with raise_on_error=True."""
+
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def mock_function_key_error():
+        """Mock function that raises KeyError."""
+        raise KeyError("'missing_key' not found")
+
+    with pytest.raises(KeyError, match="'missing_key' not found"):
+        mock_function_key_error()
