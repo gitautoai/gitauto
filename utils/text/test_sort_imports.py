@@ -291,3 +291,17 @@ public class MyClass {
     }
 }"""
     result = sort_imports(java_content, "MyClass.java")
+
+
+def test_sort_imports_unknown_extension():
+    """Test unknown file extension returns unchanged"""
+    content = "some random content\nwith multiple lines"
+
+    result = sort_imports(content, "file.unknown")
+    assert result == content
+
+    result = sort_imports(content, "file.txt")
+    assert result == content
+
+    result = sort_imports(content, "file")  # No extension
+    assert result == content
