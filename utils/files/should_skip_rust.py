@@ -70,6 +70,8 @@ def should_skip_rust(content: str) -> bool:
                 in_struct_or_enum = True
             continue
         if in_struct_or_enum:
+            if line == "{":
+                continue  # Just the opening brace on its own line
             if "}" in line:
                 in_struct_or_enum = False
             continue
