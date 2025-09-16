@@ -5,7 +5,7 @@ from openai import OpenAIError
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 from openai.types.chat.chat_completion import Choice
 
-from config import OPENAI_MODEL_ID_GPT_4O, OPENAI_TEMPERATURE
+from config import OPENAI_MODEL_ID_GPT_5
 from services.openai.vision import describe_image
 from utils.prompts.describe_image import DESCRIBE_IMAGE
 
@@ -111,9 +111,8 @@ def test_describe_image_success_without_context(
                 ],
             },
         ],
-        model=OPENAI_MODEL_ID_GPT_4O,
+        model=OPENAI_MODEL_ID_GPT_5,
         n=1,
-        temperature=OPENAI_TEMPERATURE,
     )
 
 
@@ -153,9 +152,8 @@ def test_describe_image_success_with_context(
                 ],
             },
         ],
-        model=OPENAI_MODEL_ID_GPT_4O,
+        model=OPENAI_MODEL_ID_GPT_5,
         n=1,
-        temperature=OPENAI_TEMPERATURE,
     )
 
 

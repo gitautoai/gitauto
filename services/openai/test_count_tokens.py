@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument,import-outside-toplevel
+
 from unittest.mock import MagicMock, patch
 import pytest
 import tiktoken
@@ -22,7 +24,7 @@ def mock_tiktoken_encoding_for_model(mock_encoding):
         yield mock
 
 
-def test_count_tokens_empty_messages(mock_tiktoken_encoding_for_model, mock_encoding):
+def test_count_tokens_empty_messages(mock_tiktoken_encoding_for_model):
     """Test count_tokens with empty message list"""
     messages = []
     result = count_tokens(messages)
@@ -393,13 +395,13 @@ def test_count_tokens_uses_correct_model(
     mock_tiktoken_encoding_for_model, mock_encoding
 ):
     """Test that count_tokens uses the correct OpenAI model"""
-    from config import OPENAI_MODEL_ID_GPT_4O
+    from config import OPENAI_MODEL_ID_FOR_TIKTOKEN
 
     messages = [{"role": "user", "content": "test"}]
     count_tokens(messages)
 
     mock_tiktoken_encoding_for_model.assert_called_once_with(
-        model_name=OPENAI_MODEL_ID_GPT_4O
+        model_name=OPENAI_MODEL_ID_FOR_TIKTOKEN
     )
 
 

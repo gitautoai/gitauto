@@ -5,7 +5,7 @@ from typing import Any, Literal
 from schemas.supabase.types import Repositories
 
 # Local imports
-from config import OPENAI_MODEL_ID_O3_MINI
+from config import OPENAI_MODEL_ID_GPT_5
 from services.anthropic.chat_with_functions import chat_with_claude
 from services.github.comments.update_comment import update_comment
 from services.github.types.github_types import BaseArgs
@@ -69,7 +69,7 @@ def chat_with_agent(
         current_model = get_model()
         provider = (
             chat_with_openai
-            if current_model == OPENAI_MODEL_ID_O3_MINI
+            if current_model == OPENAI_MODEL_ID_GPT_5
             else chat_with_claude
         )
         print(f"Using model: {current_model}")

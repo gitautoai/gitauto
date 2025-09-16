@@ -3,14 +3,14 @@ from openai.types.chat.chat_completion_message_param import ChatCompletionMessag
 import tiktoken
 
 # Local imports
-from config import OPENAI_MODEL_ID_GPT_4O
+from config import OPENAI_MODEL_ID_FOR_TIKTOKEN
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=0, raise_on_error=False)
 def count_tokens(messages: list[ChatCompletionMessageParam]) -> int:
     encoding: tiktoken.Encoding = tiktoken.encoding_for_model(
-        model_name=OPENAI_MODEL_ID_GPT_4O
+        model_name=OPENAI_MODEL_ID_FOR_TIKTOKEN
     )
     num_tokens = 0
     for message in messages:

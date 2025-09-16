@@ -1,11 +1,11 @@
 from unittest.mock import MagicMock, patch
-from openai import OpenAIError
 
-import pytest
+from openai import OpenAIError
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 from openai.types.chat.chat_completion import Choice
+import pytest
 
-from config import OPENAI_MODEL_ID_O3_MINI
+from config import OPENAI_MODEL_ID_GPT_5
 from services.openai.chat import chat_with_ai
 
 
@@ -73,7 +73,7 @@ def test_chat_with_ai_success(
                 "content": "truncated user input",
             },
         ],
-        model=OPENAI_MODEL_ID_O3_MINI,
+        model=OPENAI_MODEL_ID_GPT_5,
     )
 
 
@@ -108,7 +108,7 @@ def test_chat_with_ai_empty_truncated_message(
                 "content": user_input,  # Should use original user_input when truncated is empty
             },
         ],
-        model=OPENAI_MODEL_ID_O3_MINI,
+        model=OPENAI_MODEL_ID_GPT_5,
     )
 
 
@@ -172,7 +172,7 @@ def test_chat_with_ai_with_long_inputs(
                 "content": truncated_input,
             },
         ],
-        model=OPENAI_MODEL_ID_O3_MINI,
+        model=OPENAI_MODEL_ID_GPT_5,
     )
 
 
@@ -201,7 +201,7 @@ def test_chat_with_ai_empty_inputs(
             {"role": "developer", "content": ""},
             {"role": "user", "content": ""},  # Uses original empty user_input
         ],
-        model=OPENAI_MODEL_ID_O3_MINI,
+        model=OPENAI_MODEL_ID_GPT_5,
     )
 
 
@@ -317,7 +317,7 @@ def test_chat_with_ai_model_configuration(
 
     # Verify the model parameter
     call_args = mock_openai_client.chat.completions.create.call_args[1]
-    assert call_args["model"] == OPENAI_MODEL_ID_O3_MINI
+    assert call_args["model"] == OPENAI_MODEL_ID_GPT_5
 
 
 @patch("services.openai.chat.create_openai_client")

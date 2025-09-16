@@ -3,7 +3,7 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletion
 
 # Local imports
-from config import OPENAI_MODEL_ID_O3_MINI
+from config import OPENAI_MODEL_ID_GPT_5
 from services.openai.init import create_openai_client
 from services.openai.truncate import truncate_message
 from utils.error.handle_exceptions import handle_exceptions
@@ -25,7 +25,7 @@ def chat_with_ai(system_input: str, user_input: str) -> str:
                 "content": truncated_msg if truncated_msg else user_input,
             },
         ],
-        model=OPENAI_MODEL_ID_O3_MINI,
+        model=OPENAI_MODEL_ID_GPT_5,
     )
     content: str | None = completion.choices[0].message.content
     response: str = content if content else ""
