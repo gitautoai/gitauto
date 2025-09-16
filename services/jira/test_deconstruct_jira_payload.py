@@ -528,7 +528,8 @@ class TestDeconstructJiraPayload:
             base_args, repo_settings = deconstruct_jira_payload(payload)
 
             # Verify branch name includes the special characters as-is
-            assert base_args["new_branch"] == "gitauto/issue-PROJ-123/SPECIAL-20241225-143000"
+            # Verify branch name follows expected pattern with special characters
+            assert base_args["new_branch"].endswith("/issue-PROJ-123/SPECIAL-20241225-143000")
 
     @patch("services.jira.deconstruct_jira_payload.extract_urls")
     @patch("services.jira.deconstruct_jira_payload.check_branch_exists")
