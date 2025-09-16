@@ -27,7 +27,7 @@ def should_skip_rust(content: str) -> bool:
         line = line.strip()
 
         # Handle multiline comments (/* ... */)
-        if not in_multiline_comment and "/*" in line and "*/" not in line:
+        # Count opening and closing comment markers
             in_multiline_comment = True
             continue
         if in_multiline_comment:
