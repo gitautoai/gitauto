@@ -439,49 +439,6 @@ class TestChatWithClaude:
     def test_chat_with_claude_multiple_tool_use_blocks(
         self, mock_claude, mock_trim_messages, sample_messages, sample_tools
     ):
-    @patch('services.anthropic.chat_with_functions.trim_messages_to_token_limit')
-    @patch('services.anthropic.chat_with_functions.claude')
-    def test_chat_with_claude_multiple_text_blocks(
-        self, mock_claude, mock_trim_messages, sample_messages, sample_tools
-    ):
-        """Test Claude response with multiple text blocks that should be concatenated."""
-        # Setup mocks
-        mock_trim_messages.return_value = sample_messages
-
-        # Mock response with multiple text blocks
-        mock_response = Mock()
-        mock_response.content = [
-            Mock(type="text", text="First part of the response. "),
-            Mock(type="text", text="Second part of the response. "),
-            Mock(type="text", text="Third part of the response.")
-        ]
-        mock_claude.messages.create.return_value = mock_response
-
-        mock_token_response = Mock()
-        mock_token_response.input_tokens = 1100
-        mock_claude.messages.count_tokens.return_value = mock_token_response
-
-        # Call function
-        result = chat_with_claude(
-            messages=sample_messages,
-            system_content="You are a helpful assistant",
-            tools=sample_tools
-        )
-
-        # Verify result structure - text should be concatenated
-        assistant_message, tool_call_id, tool_name, tool_args, token_input, token_output = result
-
-        assert assistant_message["role"] == "assistant"
-        assert len(assistant_message["content"]) == 1
-        assert assistant_message["content"][0]["type"] == "text"
-        assert assistant_message["content"][0]["text"] == "First part of the response. Second part of the response. Third part of the response."
-
-        # No tool use
-        assert tool_call_id is None
-        assert tool_name is None
-        assert tool_args is None
-        assert token_input == 1100
-        assert token_output == 0
         """Test Claude response with multiple tool use blocks (only first should be processed)."""
         # Setup mocks
         mock_trim_messages.return_value = sample_messages
@@ -528,6 +485,50 @@ class TestChatWithClaude:
         assert tool_call_id == "toolu_first"
         assert tool_name == "first_tool"
         assert tool_args == {"param": "first"}
+
+    @patch('services.anthropic.chat_with_functions.trim_messages_to_token_limit')
+    @patch('services.anthropic.chat_with_functions.claude')
+    def test_chat_with_claude_multiple_text_blocks(
+        self, mock_claude, mock_trim_messages, sample_messages, sample_tools
+    ):
+        """Test Claude response with multiple text blocks that should be concatenated."""
+        # Setup mocks
+        mock_trim_messages.return_value = sample_messages
+
+        # Mock response with multiple text blocks
+        mock_response = Mock()
+        mock_response.content = [
+            Mock(type="text", text="First part of the response. "),
+            Mock(type="text", text="Second part of the response. "),
+            Mock(type="text", text="Third part of the response.")
+        ]
+        mock_claude.messages.create.return_value = mock_response
+
+        mock_token_response = Mock()
+        mock_token_response.input_tokens = 1100
+        mock_claude.messages.count_tokens.return_value = mock_token_response
+
+        # Call function
+        result = chat_with_claude(
+            messages=sample_messages,
+            system_content="You are a helpful assistant",
+            tools=sample_tools
+        )
+
+        # Verify result structure - text should be concatenated
+        assistant_message, tool_call_id, tool_name, tool_args, token_input, token_output = result
+
+        assert assistant_message["role"] == "assistant"
+        assert len(assistant_message["content"]) == 1
+        assert assistant_message["content"][0]["type"] == "text"
+        assert assistant_message["content"][0]["text"] == "First part of the response. Second part of the response. Third part of the response."
+
+        # No tool use
+        assert tool_call_id is None
+        assert tool_name is None
+        assert tool_args is None
+        assert token_input == 1100
+        assert token_output == 0
 
     @patch('services.anthropic.chat_with_functions.trim_messages_to_token_limit')
     def test_trim_messages_called_with_correct_parameters(self, mock_trim_messages, sample_messages, sample_tools):
