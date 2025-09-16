@@ -66,7 +66,7 @@ mypy-boto3-logs==1.40.0
 mypy-boto3-scheduler==1.40.0
 mypy-extensions==1.0.0
 nodeenv==1.9.1
-openai==1.60.2
+openai==1.107.3
 orjson==3.10.15
 packaging==24.1
 pathspec==0.12.1
@@ -117,7 +117,7 @@ StrEnum==0.4.15
 stripe==10.6.0
 supabase==2.6.0
 supafunc==0.5.1
-tiktoken==0.8.0
+tiktoken==0.11.0
 toml==0.10.2
 tomlkit==0.13.0
 tqdm==4.66.5

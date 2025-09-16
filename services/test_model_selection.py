@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 import sys
 from unittest.mock import patch
 
@@ -7,7 +8,7 @@ from config import (
     ANTHROPIC_MODEL_ID_35,
     ANTHROPIC_MODEL_ID_37,
     ANTHROPIC_MODEL_ID_40,
-    OPENAI_MODEL_ID_O3_MINI,
+    OPENAI_MODEL_ID_GPT_5,
 )
 from services import model_selection
 from services.model_selection import MODEL_CHAIN, get_model, try_next_model
@@ -49,7 +50,7 @@ def test_model_chain_contains_expected_models():
         ANTHROPIC_MODEL_ID_40,
         ANTHROPIC_MODEL_ID_37,
         ANTHROPIC_MODEL_ID_35,
-        OPENAI_MODEL_ID_O3_MINI,
+        OPENAI_MODEL_ID_GPT_5,
     ]
     assert MODEL_CHAIN == expected_models
     assert len(MODEL_CHAIN) == 4
@@ -60,7 +61,7 @@ def test_model_chain_order():
     assert MODEL_CHAIN[0] == ANTHROPIC_MODEL_ID_40  # Highest priority
     assert MODEL_CHAIN[1] == ANTHROPIC_MODEL_ID_37
     assert MODEL_CHAIN[2] == ANTHROPIC_MODEL_ID_35
-    assert MODEL_CHAIN[3] == OPENAI_MODEL_ID_O3_MINI  # Lowest priority
+    assert MODEL_CHAIN[3] == OPENAI_MODEL_ID_GPT_5  # Lowest priority
 
 
 def test_get_model_returns_current_model(_):
@@ -124,13 +125,11 @@ def test_try_next_model_from_third_model(_, mock_colorize, mock_print):
     success, new_model = try_next_model()
 
     assert success is True
-    assert new_model == OPENAI_MODEL_ID_O3_MINI
-    assert get_model() == OPENAI_MODEL_ID_O3_MINI
+    assert new_model == OPENAI_MODEL_ID_GPT_5
+    assert get_model() == OPENAI_MODEL_ID_GPT_5
 
     # Verify colorize was called with correct message
-    expected_msg = (
-        f"Switching from {ANTHROPIC_MODEL_ID_35} to {OPENAI_MODEL_ID_O3_MINI}"
-    )
+    expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_35} to {OPENAI_MODEL_ID_GPT_5}"
     mock_colorize.assert_called_once_with(expected_msg, "yellow")
     mock_print.assert_called_once_with("mocked_colored_text")
 
@@ -140,13 +139,13 @@ def test_try_next_model_from_last_model(_, mock_colorize, mock_print):
     # Use already imported model_selection
 
     # Set current model to last model
-    model_selection._current_model = OPENAI_MODEL_ID_O3_MINI
+    model_selection._current_model = OPENAI_MODEL_ID_GPT_5
 
     success, current_model = try_next_model()
 
     assert success is False
-    assert current_model == OPENAI_MODEL_ID_O3_MINI
-    assert get_model() == OPENAI_MODEL_ID_O3_MINI
+    assert current_model == OPENAI_MODEL_ID_GPT_5
+    assert get_model() == OPENAI_MODEL_ID_GPT_5
 
     # Verify no colorize or print calls were made
     mock_colorize.assert_not_called()
@@ -173,14 +172,14 @@ def test_try_next_model_sequential_calls(_, mock_colorize, mock_print):
     # Third call: switch to fourth model
     success3, model3 = try_next_model()
     assert success3 is True
-    assert model3 == OPENAI_MODEL_ID_O3_MINI
-    assert get_model() == OPENAI_MODEL_ID_O3_MINI
+    assert model3 == OPENAI_MODEL_ID_GPT_5
+    assert get_model() == OPENAI_MODEL_ID_GPT_5
 
     # Fourth call: no more models available
     success4, model4 = try_next_model()
     assert success4 is False
-    assert model4 == OPENAI_MODEL_ID_O3_MINI
-    assert get_model() == OPENAI_MODEL_ID_O3_MINI
+    assert model4 == OPENAI_MODEL_ID_GPT_5
+    assert get_model() == OPENAI_MODEL_ID_GPT_5
 
     # Verify colorize was called 3 times (for successful switches)
     assert mock_colorize.call_count == 3
