@@ -64,6 +64,24 @@ class TestChatWithClaude:
             }
         ]
 
+    @pytest.fixture
+    def mock_http_response(self):
+        """Mock HTTP response for exception testing."""
+        mock_response = Mock()
+        mock_response.status_code = 529
+        mock_response.headers = {}
+        mock_response.content = b'{"error": "API overloaded"}'
+        return mock_response
+
+    @pytest.fixture
+    def mock_auth_http_response(self):
+        """Mock HTTP response for authentication error testing."""
+        mock_response = Mock()
+        mock_response.status_code = 401
+        mock_response.headers = {}
+        mock_response.content = b'{"error": "Invalid API key"}'
+        return mock_response
+
     @patch('services.anthropic.chat_with_functions.trim_messages_to_token_limit')
     @patch('services.anthropic.chat_with_functions.claude')
     def test_chat_with_claude_successful_response(
@@ -147,12 +165,17 @@ class TestChatWithClaude:
     @patch('services.anthropic.chat_with_functions.trim_messages_to_token_limit')
     @patch('services.anthropic.chat_with_functions.claude')
     def test_chat_with_claude_overloaded_error(
-        self, mock_claude, mock_trim_messages, sample_messages, sample_tools
+        self, mock_claude, mock_trim_messages, sample_messages, sample_tools, mock_http_response
     ):
         """Test Claude API overloaded error handling."""
         # Setup mocks
         mock_trim_messages.return_value = sample_messages
-        mock_claude.messages.create.side_effect = OverloadedError("API overloaded")
+
+        # Create proper OverloadedError with required parameters
+        mock_body = {"error": "API overloaded"}
+        mock_claude.messages.create.side_effect = OverloadedError(
+            "API overloaded", response=mock_http_response, body=mock_body
+        )
 
         # Call function and expect ClaudeOverloadedError
         with pytest.raises(ClaudeOverloadedError, match="Claude API is overloaded \\(529\\)"):
@@ -165,12 +188,17 @@ class TestChatWithClaude:
     @patch('services.anthropic.chat_with_functions.trim_messages_to_token_limit')
     @patch('services.anthropic.chat_with_functions.claude')
     def test_chat_with_claude_authentication_error(
-        self, mock_claude, mock_trim_messages, sample_messages, sample_tools
+        self, mock_claude, mock_trim_messages, sample_messages, sample_tools, mock_auth_http_response
     ):
         """Test Claude API authentication error handling."""
         # Setup mocks
         mock_trim_messages.return_value = sample_messages
-        mock_claude.messages.create.side_effect = AuthenticationError("Invalid API key")
+
+        # Create proper AuthenticationError with required parameters
+        mock_body = {"error": "Invalid API key"}
+        mock_claude.messages.create.side_effect = AuthenticationError(
+            "Invalid API key", response=mock_auth_http_response, body=mock_body
+        )
 
         # Call function and expect ClaudeAuthenticationError
         with pytest.raises(ClaudeAuthenticationError, match="Claude API authentication failed \\(401\\)"):
