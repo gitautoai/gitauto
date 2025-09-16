@@ -86,7 +86,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
         decoded_body: dict[str, list[str]] = urllib.parse.parse_qs(
             qs=request_body.decode(encoding=UTF8)
         )
-        if "payload" in decoded_body:
+        if "payload" in decoded_body and decoded_body["payload"]:
             try:
                 payload = json.loads(s=decoded_body["payload"][0])
             except json.JSONDecodeError:
