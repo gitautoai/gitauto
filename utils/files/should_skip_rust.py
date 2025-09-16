@@ -33,8 +33,11 @@ def should_skip_rust(content: str) -> bool:
 
         # If we're in a multiline comment, skip this line
         if multiline_comment_depth > 0:
-            if "*/" in line:
-                in_multiline_comment = False
+            continue
+
+        # If the line had both /* and */ and we're not in a comment anymore,
+        # it means it was a single-line multiline comment, so we skip it
+        if "/*" in line and "*/" in line and multiline_comment_depth == 0:
             continue
 
         # Handle multiline raw strings (r#"..."#)
