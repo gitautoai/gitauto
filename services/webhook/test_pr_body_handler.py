@@ -1,4 +1,3 @@
-# Placeholder to check existing content
 # pylint: disable=too-many-lines,too-many-public-methods
 """Unit tests for pr_body_handler.py"""
 
