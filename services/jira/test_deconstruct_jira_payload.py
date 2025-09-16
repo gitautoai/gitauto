@@ -558,7 +558,7 @@ class TestDeconstructJiraPayload:
         base_args, repo_settings = deconstruct_jira_payload(sample_jira_payload)
 
         # Verify sender fields match issuer fields
-        assert base_args["sender_id"] == base_args["issuer_name"]  # Note: sender_id uses issuer_id which is "jira-user-123"
+        assert base_args["sender_id"] == "jira-user-123"  # sender_id uses issuer_id
         assert base_args["sender_name"] == base_args["issuer_name"]
         assert base_args["sender_email"] == base_args["issuer_email"]
         assert base_args["sender_id"] == "jira-user-123"
