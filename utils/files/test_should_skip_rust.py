@@ -687,3 +687,83 @@ spanning lines */
 const TEMPLATE: &str = r#"
 Multiline raw string
 "#;
+
+
+def test_function_definition_should_not_skip():
+    # Test function definition - should NOT be skipped (hits line 121)
+    content = """const VALUE: i32 = 42;
+fn my_function() {
+    println!("Hello");
+}"""
+    assert should_skip_rust(content) is False
+
+
+def test_impl_block_should_not_skip():
+    # Test impl block - should NOT be skipped (hits line 121)
+    content = """struct MyStruct;
+impl MyStruct {
+    fn new() -> Self {
+        MyStruct
+    }
+}"""
+    assert should_skip_rust(content) is False
+
+
+def test_macro_definition_should_not_skip():
+    # Test macro definition - should NOT be skipped (hits line 121)
+    content = """const VALUE: i32 = 42;
+macro_rules! my_macro {
+    () => {
+        println!("Hello");
+    };
+}"""
+    assert should_skip_rust(content) is False
+
+
+def test_let_statement_should_not_skip():
+    # Test let statement - should NOT be skipped (hits line 121)
+    content = """const VALUE: i32 = 42;
+let x = 10;"""
+    assert should_skip_rust(content) is False
+
+
+def test_match_statement_should_not_skip():
+    # Test match statement - should NOT be skipped (hits line 121)
+    content = """enum Status { Active, Inactive }
+match status {
+    Status::Active => println!("Active"),
+    Status::Inactive => println!("Inactive"),
+}"""
+    assert should_skip_rust(content) is False
+
+
+def test_if_statement_should_not_skip():
+    # Test if statement - should NOT be skipped (hits line 121)
+    content = """const DEBUG: bool = true;
+if DEBUG {
+    println!("Debug mode");
+}"""
+    assert should_skip_rust(content) is False
+
+
+def test_loop_statement_should_not_skip():
+    # Test loop statement - should NOT be skipped (hits line 121)
+    content = """const MAX: i32 = 10;
+for i in 0..MAX {
+    println!("{}", i);
+}"""
+    assert should_skip_rust(content) is False
+
+
+def test_return_statement_should_not_skip():
+    # Test return statement - should NOT be skipped (hits line 121)
+    content = """const VALUE: i32 = 42;
+return VALUE;"""
+    assert should_skip_rust(content) is False
+
+
+def test_expression_statement_should_not_skip():
+    # Test expression statement - should NOT be skipped (hits line 121)
+    content = """const VALUE: i32 = 42;
+println!("Value: {}", VALUE);"""
+    assert should_skip_rust(content) is False
