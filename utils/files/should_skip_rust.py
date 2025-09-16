@@ -57,7 +57,9 @@ def should_skip_rust(content: str) -> bool:
         # Handle struct/enum definitions (data types without implementation)
         if re.match(r"^(pub\s+)?struct\s+\w+", line):
             if "{" in line:
-                in_struct_or_enum = True
+                # Only set flag if struct is not complete on same line
+                if "}" not in line:
+                    in_struct_or_enum = True
             elif not line.endswith(";"):
                 # Opening brace might be on next line
                 in_struct_or_enum = True
