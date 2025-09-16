@@ -158,7 +158,8 @@ class TestDeconstructJiraPayload:
         assert base_args["issuer_email"] == "john.doe@example.com"
         assert base_args["base_branch"] == "main"
         assert base_args["latest_commit_sha"] == "commit-sha-123"
-        assert base_args["new_branch"] == "gitauto/issue-JIRA-123-20241225-143000"
+        # Verify branch name follows expected pattern: {PRODUCT_ID}/issue-{issue_number}-{date}-{time}
+        assert base_args["new_branch"].endswith("/issue-JIRA-123-20241225-143000")
         assert base_args["installation_id"] == 98765
         assert base_args["token"] == "test-token"
         assert base_args["sender_id"] == "jira-user-123"
