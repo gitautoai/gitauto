@@ -25,16 +25,11 @@ class TestChatWithClaude:
         """Mock Claude API response with tool use."""
         mock_response = Mock()
         mock_text_block = Mock(type="text", text="I'll help you with that.")
-        mock_tool_block = Mock(
-            type="tool_use",
-            id="toolu_01M3mtjuKhyQptQh5ASmQCFY",
-        )
+        mock_tool_block = Mock()
         mock_tool_block.type = "tool_use"
         mock_tool_block.id = "toolu_01M3mtjuKhyQptQh5ASmQCFY"
-        mock_tool_block = Mock(
-            name="get_file_content",
-            input={"file_path": "test.py"}
-        )
+        mock_tool_block.name = "get_file_content"
+        mock_tool_block.input = {"file_path": "test.py"}
         mock_response.content = [mock_text_block, mock_tool_block]
         return mock_response
 
