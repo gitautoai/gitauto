@@ -827,3 +827,53 @@ def test_empty_lines_and_whitespace_mixed():
     # Test file with various empty lines and whitespace
     content = """
 
+
+
+def test_struct_without_opening_brace():
+    # Test struct declaration without opening brace on same line
+    content = """struct MyStruct;
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_enum_without_opening_brace():
+    # Test enum declaration without opening brace on same line
+    content = """enum Status;
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_trait_without_opening_brace():
+    # Test trait declaration without opening brace on same line
+    content = """trait MyTrait;
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_pub_struct_without_opening_brace():
+    # Test pub struct declaration without opening brace on same line
+    content = """pub struct MyStruct;
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_pub_enum_without_opening_brace():
+    # Test pub enum declaration without opening brace on same line
+    content = """pub enum Status;
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_pub_trait_without_opening_brace():
+    # Test pub trait declaration without opening brace on same line
+    content = """pub trait MyTrait;
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_comprehensive_mixed_file():
+    # Test comprehensive file with all allowed constructs
+    content = """//! Crate documentation
+#![allow(dead_code)]
+
+/* Multi-line comment
