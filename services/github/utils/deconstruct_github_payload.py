@@ -11,6 +11,7 @@ from services.github.issues.get_parent_issue import get_parent_issue
 from services.github.types.github_types import BaseArgs, GitHubLabeledPayload
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.users.get_user_public_email import get_user_public_email
+from services.github.commits.get_latest_remote_commit_sha import get_latest_remote_commit_sha
 from services.supabase.repositories.get_repository import get_repository
 from utils.error.handle_exceptions import handle_exceptions
 from utils.urls.extract_urls import extract_urls
