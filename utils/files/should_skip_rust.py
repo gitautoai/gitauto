@@ -26,21 +26,13 @@ def should_skip_rust(content: str) -> bool:
     for line in lines:
         line = line.strip()
 
-        # Handle multiline comments (/* ... */)
-        # Check if we were in a comment at the start of this line
-        was_in_comment = multiline_comment_depth > 0
-
-        # Update comment depth
+        # Handle multiline comments (/* ... */) with proper nesting support
+        # Update comment depth first
         multiline_comment_depth += line.count("/*")
         multiline_comment_depth -= line.count("*/")
 
-        # If we were in a multiline comment at the start of this line, skip it
-        if was_in_comment or multiline_comment_depth > 0:
-            continue
-
-        # If the line had both /* and */ and we're not in a comment anymore,
-        # it means it was a single-line multiline comment, so we skip it
-        if "/*" in line and "*/" in line and multiline_comment_depth == 0:
+        # If we're in a multiline comment or this line contains only comment markers, skip it
+        if multiline_comment_depth > 0 or (multiline_comment_depth == 0 and "/*" in line and "*/" in line):
             continue
 
         # Handle multiline raw strings (r#"..."#)
