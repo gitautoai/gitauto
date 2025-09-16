@@ -15,9 +15,10 @@ class TestChatWithClaude:
     def mock_claude_response(self):
         """Mock Claude API response."""
         mock_response = Mock()
-        mock_response.content = [
-            Mock(type="text", text="Hello, how can I help you?")
-        ]
+        mock_text_block = Mock()
+        mock_text_block.type = "text"
+        mock_text_block.text = "Hello, how can I help you?"
+        mock_response.content = [mock_text_block]
         return mock_response
 
     @pytest.fixture
@@ -199,3 +200,16 @@ class TestChatWithClaude:
             tools=[]
         )
 
+        # Verify response structure
+        assert result is not None
+        assert len(result) == 6
+        assistant_message, tool_call_id, tool_name, tool_args, token_input, token_output = result
+        assert assistant_message["role"] == "assistant"
+        assert len(assistant_message["content"]) == 1
+        assert assistant_message["content"][0]["type"] == "text"
+        assert assistant_message["content"][0]["text"] == "Hello, how can I help you?"
+        assert tool_call_id is None
+        assert tool_name is None
+        assert tool_args is None
+        assert token_input == 800
+        assert token_output == 0
