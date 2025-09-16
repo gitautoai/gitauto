@@ -465,10 +465,10 @@ class TestDeconstructJiraPayload:
 
     @patch("services.jira.deconstruct_jira_payload.extract_urls")
     @patch("services.jira.deconstruct_jira_payload.check_branch_exists")
-    @patch("services.jira.deconstruct_jira_payload.get_repository")
-    @patch("services.jira.deconstruct_jira_payload.get_default_branch")
     @patch("services.jira.deconstruct_jira_payload.PRODUCT_ID", "gitauto")
     @patch("services.jira.deconstruct_jira_payload.ISSUE_NUMBER_FORMAT", "/issue-")
+    @patch("services.jira.deconstruct_jira_payload.get_repository")
+    @patch("services.jira.deconstruct_jira_payload.get_default_branch")
     @patch("services.jira.deconstruct_jira_payload.is_repo_forked")
     @patch("services.jira.deconstruct_jira_payload.get_installation_access_token")
     @patch("services.jira.deconstruct_jira_payload.get_installation")
