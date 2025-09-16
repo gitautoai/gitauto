@@ -28,6 +28,10 @@ class TestChatWithClaude:
         mock_tool_block = Mock(
             type="tool_use",
             id="toolu_01M3mtjuKhyQptQh5ASmQCFY",
+        )
+        mock_tool_block.type = "tool_use"
+        mock_tool_block.id = "toolu_01M3mtjuKhyQptQh5ASmQCFY"
+        mock_tool_block = Mock(
             name="get_file_content",
             input={"file_path": "test.py"}
         )
