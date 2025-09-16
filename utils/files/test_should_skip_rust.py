@@ -487,3 +487,203 @@ def test_static_with_array_indexing():
     content = """static CONFIG: &str = &DEFAULT_CONFIG[0];
 static VERSION: &str = "1.0.0";"""
     assert should_skip_rust(content) is False
+
+
+def test_multiline_comment_spanning_lines():
+    # Test multiline comment that spans multiple lines
+    content = """/* This is a multiline comment
+that spans multiple lines
+and should be ignored */
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_multiline_comment_with_code():
+    # Test multiline comment mixed with code
+    content = """const BEFORE: i32 = 1;
+/* This is a multiline comment
+that spans multiple lines */
+const AFTER: i32 = 2;"""
+    assert should_skip_rust(content) is True
+
+
+def test_multiline_raw_string_spanning_lines():
+    # Test multiline raw string that spans multiple lines
+    content = """const TEMPLATE: &str = r#"
+This is a multiline
+raw string template
+that spans multiple lines
+"#;
+const OTHER: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_multiline_raw_string_with_code():
+    # Test multiline raw string mixed with other code
+    content = """const BEFORE: i32 = 1;
+const TEMPLATE: &str = r#"
+This is a multiline template
+"#;
+const AFTER: i32 = 2;"""
+    assert should_skip_rust(content) is True
+
+
+def test_crate_level_attributes():
+    # Test crate-level attributes with #![
+    content = """#![allow(dead_code)]
+#![warn(missing_docs)]
+const VALUE: i32 = 42;
+struct MyStruct {
+    field: String,
+}"""
+    assert should_skip_rust(content) is True
+
+
+def test_struct_with_opening_brace_on_next_line():
+    # Test struct where opening brace is on next line
+    content = """struct MyStruct
+{
+    field1: i32,
+    field2: String,
+}
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_enum_with_opening_brace_on_next_line():
+    # Test enum where opening brace is on next line
+    content = """enum Status
+{
+    Active,
+    Inactive,
+    Pending,
+}
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_trait_with_opening_brace_on_next_line():
+    # Test trait where opening brace is on next line
+    content = """trait MyTrait
+{
+    fn method(&self) -> String;
+}
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_pub_struct_with_opening_brace_on_next_line():
+    # Test pub struct where opening brace is on next line
+    content = """pub struct MyStruct
+{
+    field: i32,
+}
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_pub_enum_with_opening_brace_on_next_line():
+    # Test pub enum where opening brace is on next line
+    content = """pub enum Status
+{
+    Active,
+    Inactive,
+}
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_pub_trait_with_opening_brace_on_next_line():
+    # Test pub trait where opening brace is on next line
+    content = """pub trait MyTrait
+{
+    fn method(&self) -> String;
+}
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_const_with_struct_constructor():
+    # Test const with struct constructor (should be allowed)
+    content = """struct Point { x: i32, y: i32 }
+const ORIGIN: Point = Point { x: 0, y: 0 };
+const DEFAULT_CONFIG: Config = Config {};"""
+    assert should_skip_rust(content) is True
+
+
+def test_static_with_struct_constructor():
+    # Test static with struct constructor (should be allowed)
+    content = """struct Config { debug: bool }
+static DEFAULT_CONFIG: Config = Config { debug: false };
+static EMPTY_CONFIG: Config = Config {};"""
+    assert should_skip_rust(content) is True
+
+
+def test_const_with_function_call_and_struct_constructor():
+    # Test const with both function call and struct constructor - function call should make it return False
+    content = """struct Config { value: String }
+const CONFIG: Config = Config { value: env::var("VALUE").unwrap() };"""
+    assert should_skip_rust(content) is False
+
+
+def test_single_line_comment_with_multiline_marker():
+    # Test single line comment that looks like multiline but isn't
+    content = """/* This is actually a single line comment */
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_nested_multiline_comments():
+    # Test nested multiline comments
+    content = """/* Outer comment start
+/* Inner comment */
+Still in outer comment */
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_multiline_comment_with_closing_on_same_line():
+    # Test multiline comment that starts and ends on different lines
+    content = """const BEFORE: i32 = 1;
+/* Start of comment
+End of comment */
+const AFTER: i32 = 2;"""
+    assert should_skip_rust(content) is True
+
+
+def test_raw_string_ending_without_semicolon():
+    # Test raw string that doesn't end with semicolon
+    content = """const TEMPLATE: &str = r#"
+This is a template
+"#"""
+    assert should_skip_rust(content) is True
+
+
+def test_complex_const_with_double_colon_but_no_function_call():
+    # Test const with :: but no function call (should be allowed)
+    content = """const TYPE_NAME: &str = "std::collections::HashMap";
+const PATH_SEP: &str = "::";"""
+    assert should_skip_rust(content) is True
+
+
+def test_complex_static_with_double_colon_but_no_function_call():
+    # Test static with :: but no function call (should be allowed)
+    content = """static TYPE_NAME: &str = "std::collections::HashMap";
+static NAMESPACE: &str = "crate::module::submodule";"""
+    assert should_skip_rust(content) is True
+
+
+def test_const_with_array_access_pattern_in_string():
+    # Test const with array-like pattern in string (should be allowed)
+    content = """const TEMPLATE: &str = "array[index] access pattern";
+const EXAMPLE: &str = "variable[0] in string";"""
+    assert should_skip_rust(content) is True
+
+
+def test_mixed_multiline_constructs():
+    # Test file with multiple multiline constructs
+    content = """/* Multiline comment
+spanning lines */
+const TEMPLATE: &str = r#"
+Multiline raw string
+"#;
