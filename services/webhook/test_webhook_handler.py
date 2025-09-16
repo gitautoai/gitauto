@@ -346,7 +346,9 @@ class TestHandleWebhookEvent:
         ):
             await handle_webhook_event(event_name="check_run", payload=payload)
 
-            mock_handle_check_run.assert_called_once_with(payload=payload)
+            mock_handle_check_run.assert_called_once_with(
+                payload=payload, lambda_info=None
+            )
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_check_run_completed_success(
