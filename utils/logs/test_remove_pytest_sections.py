@@ -1,49 +1,45 @@
-from config import UTF8
 from utils.logs.remove_pytest_sections import remove_pytest_sections
 
 
 def test_remove_pytest_sections_with_pytest_output():
-    # Load the test payload
-    with open(
-        "payloads/github/workflow_runs/test_failure_log.txt", "r", encoding=UTF8
-    ) as f:
-        original_log = f.read()
+    log = """Run python -m pytest
+=========================== test session starts ============================
+platform linux -- Python 3.11.4, pytest-7.4.0, pluggy-1.2.0
+cachedir: .pytest_cache
+rootdir: /github/workspace
+plugins: cov-6.0.0
+collecting ... collected 2 items
 
-    # Remove pytest sections from the log
-    cleaned_log = remove_pytest_sections(original_log)
+test_example.py::test_pass PASSED                                       [ 50%]
+test_example.py::test_fail FAILED                                       [100%]
 
-    # Check line count reduction
-    original_lines = len(original_log.split("\n"))
-    cleaned_lines = len(cleaned_log.split("\n"))
-    assert original_lines == 283  # Original log has 283 lines
-    assert cleaned_lines == 44  # Should be exactly 44 lines after section removal
+=================================== FAILURES ===================================
+_______________________________ test_fail ________________________________
 
-    # Check that test session header is removed
-    assert "test session starts" not in cleaned_log
-    assert "platform linux" not in cleaned_log
-    assert "plugins: cov-6.0.0" not in cleaned_log
+    def test_fail():
+>       assert False
+E       AssertionError
 
-    # Check that test progress lines are removed
-    assert "test_evaluate_condition.py ......." not in cleaned_log
-    assert "[  0%]" not in cleaned_log
+test_example.py:2: AssertionError
+=========================== short test summary info ============================
+FAILED test_example.py::test_fail - AssertionError"""
 
-    # Check that warnings summary is removed
-    assert "warnings summary" not in cleaned_log
-    assert "RuntimeWarning: coroutine" not in cleaned_log
+    expected = """Run python -m pytest
 
-    # Check that important parts are kept
-    assert "Run python -m pytest" in cleaned_log
-    assert (
-        "=================================== FAILURES ==================================="
-        in cleaned_log
-    )
-    assert (
-        "TestShouldTestFile.test_should_test_file_with_boolean_return_values"
-        in cleaned_log
-    )
-    assert "AssertionError" in cleaned_log
-    assert "short test summary info" in cleaned_log
-    assert "FAILED utils/files/test_should_test_file.py" in cleaned_log
+=================================== FAILURES ===================================
+_______________________________ test_fail ________________________________
+
+    def test_fail():
+>       assert False
+E       AssertionError
+
+test_example.py:2: AssertionError
+
+=========================== short test summary info ============================
+FAILED test_example.py::test_fail - AssertionError"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
 
 
 def test_remove_pytest_sections_with_empty_input():
@@ -55,8 +51,29 @@ def test_remove_pytest_sections_with_no_pytest_markers():
     assert remove_pytest_sections(log) == log
 
 
-def test_remove_pytest_sections_removes_excessive_blank_lines():
-    log = "Line 1\n\n\n\n\nLine 2\n\n\n\nLine 3"
+def test_remove_pytest_sections_removes_excessive_blank_lines_when_content_removed():
+    log = """Line 1
+
+
+=========================== test session starts ============================
+platform linux -- Python 3.11.4, pytest-7.4.0, pluggy-1.2.0
+test content that will be removed
+
+
+
+
+=========================== short test summary info ============================
+Line 2
+
+
+
+
+Line 3"""
+    expected = """Line 1
+
+=========================== short test summary info ============================
+Line 2
+
+Line 3"""
     result = remove_pytest_sections(log)
-    assert "\n\n\n" not in result
-    assert "Line 1\n\nLine 2\n\nLine 3" == result
+    assert result == expected

@@ -1,6 +1,6 @@
 CircleCI Build Log: Build and Test
-[2K[1G[1myarn run v1.22.22[22m
-[2K[1G[2m$ eslint --cache --ext .js,.ts,.tsx ./src[22m
+yarn run v1.22.22
+$ eslint --cache --ext .js,.ts,.tsx ./src
 =============
 
 WARNING: You are currently running a version of TypeScript which is not officially supported by @typescript-eslint/typescript-estree.
@@ -25,7 +25,7 @@ Please only submit bug reports when using the officially supported version.
 ✖ 54 problems (5 errors, 49 warnings)
   5 errors and 0 warnings potentially fixable with the `--fix` option.
 
-[2K[1G[31merror[39m Command failed with exit code 1.
-[2K[1G[34minfo[39m Visit [1mhttps://yarnpkg.com/en/docs/cli/run[22m for documentation about this command.
+error Command failed with exit code 1.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
 
 Exited with code exit status 1

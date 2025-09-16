@@ -52,11 +52,7 @@ from services.supabase.usage.update_retry_pairs import (
 from services.supabase.usage.update_usage import update_usage
 
 # Local imports (Others)
-from utils.logs.deduplicate_logs import deduplicate_logs
-from utils.logs.remove_pytest_sections import remove_pytest_sections
-from utils.logs.remove_repetitive_eslint_warnings import (
-    remove_repetitive_eslint_warnings,
-)
+from utils.logs.clean_logs import clean_logs
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 from utils.time.get_timeout_message import get_timeout_message
@@ -325,10 +321,8 @@ def handle_check_run(
     print(f"Error log content for {owner_name}/{repo_name} PR #{pull_number}:")
     print(error_log)
 
-    # Remove pytest sections first, then ESLint noise, then deduplicate repetitive patterns
-    sections_removed_log = remove_pytest_sections(error_log)
-    eslint_cleaned_log = remove_repetitive_eslint_warnings(sections_removed_log)
-    minimized_log = deduplicate_logs(eslint_cleaned_log)
+    # Clean logs using the complete pipeline
+    minimized_log = clean_logs(error_log)
 
     # Check if this exact pair exists
     existing_pairs = get_retry_workflow_id_hash_pairs(

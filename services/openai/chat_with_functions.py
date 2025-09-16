@@ -73,10 +73,13 @@ def chat_with_openai(
                 )
             else:
                 openai_messages.append(
-                    cast(ChatCompletionMessageParam, {
-                        "role": msg.get("role", ""),
-                        "content": content,
-                    })
+                    cast(
+                        ChatCompletionMessageParam,
+                        {
+                            "role": msg.get("role", ""),
+                            "content": content,
+                        },
+                    )
                 )
             continue
 
@@ -104,10 +107,20 @@ def chat_with_openai(
         elif any(block.get("type") == "tool_result" for block in content):
             for block in content:
                 if block.get("type") == "tool_result":
-                    openai_messages.append(cast(ChatCompletionMessageParam, convert_tool_result(cast(dict, block), cast(list[dict], openai_messages))))
+                    openai_messages.append(
+                        cast(
+                            ChatCompletionMessageParam,
+                            convert_tool_result(
+                                cast(dict, block), cast(list[dict], openai_messages)
+                            ),
+                        )
+                    )
 
     # Prepare messages with system message
-    system_message: ChatCompletionDeveloperMessageParam = {"role": "developer", "content": system_content}
+    system_message: ChatCompletionDeveloperMessageParam = {
+        "role": "developer",
+        "content": system_content,
+    }
     all_messages: list[ChatCompletionMessageParam] = [system_message] + openai_messages
 
     # https://platform.openai.com/docs/api-reference/chat/create?lang=python

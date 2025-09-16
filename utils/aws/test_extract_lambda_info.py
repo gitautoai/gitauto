@@ -12,7 +12,7 @@ def test_extract_lambda_info_with_aws_context():
     mock_context.log_stream_name = "2025/09/04/pr-agent-prod[$LATEST]841315c5"
     mock_context.aws_request_id = "17921070-5cb6-43ee-8d2e-b5161ae89729"
 
-    request.scope = {"aws": {"context": mock_context}}
+    request.scope = {"aws.context": mock_context}
 
     result = extract_lambda_info(request)
 
@@ -52,7 +52,7 @@ def test_extract_lambda_info_with_missing_attributes():
     # Configure side_effect to return None for missing attributes
     mock_context.configure_mock(**{"log_stream_name": None, "aws_request_id": None})
 
-    request.scope = {"aws": {"context": mock_context}}
+    request.scope = {"aws.context": mock_context}
 
     result = extract_lambda_info(request)
 
