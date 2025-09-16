@@ -671,3 +671,70 @@ class TestEdgeCases:
         )
         assert mock_slack_notify.call_count == 2
         assert result is None
+
+class TestPrintStatements:
+    @patch("main.schedule_handler")
+    @patch("main.slack_notify")
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_handler_schedule_event_prints_message(
+        self, mock_stdout, mock_slack_notify, mock_schedule_handler, mock_event_bridge_event
+    ):
+        """Test handler function prints AWS EventBridge Scheduler invoked message."""
+        # Setup
+        mock_slack_notify.return_value = "thread-123"
+        mock_schedule_handler.return_value = {"status": "success"}
+
+        # Execute
+        handler(event=mock_event_bridge_event, context={})
+
+        # Verify print statement was called
+        assert "AWS EventBridge Scheduler invoked" in mock_stdout.getvalue()
+
+    @patch("main.extract_lambda_info")
+    @patch("main.verify_webhook_signature", new_callable=AsyncMock)
+    @patch("main.handle_webhook_event", new_callable=AsyncMock)
+    @patch("sys.stdout", new_callable=StringIO)
+    @pytest.mark.asyncio
+    async def test_handle_webhook_prints_body_error(
+        self,
+        mock_stdout,
+        mock_handle_webhook_event,
+        mock_verify_signature,
+        mock_extract_lambda_info,
+        mock_github_request,
+    ):
+        """Test handle_webhook function prints error when request.body() fails."""
+        # Setup
+        mock_verify_signature.return_value = None
+        mock_github_request.body.side_effect = Exception("Body error")
+        mock_extract_lambda_info.return_value = {}
+
+        # Execute
+        await handle_webhook(request=mock_github_request)
+
+        # Verify print statement was called
+        assert "Error in reading request body: Body error" in mock_stdout.getvalue()
+
+    @patch("main.extract_lambda_info")
+    @patch("main.verify_webhook_signature", new_callable=AsyncMock)
+    @patch("main.handle_webhook_event", new_callable=AsyncMock)
+    @patch("sys.stdout", new_callable=StringIO)
+    @pytest.mark.asyncio
+    async def test_handle_webhook_prints_json_parsing_error(
+        self,
+        mock_stdout,
+        mock_handle_webhook_event,
+        mock_verify_signature,
+        mock_extract_lambda_info,
+    ):
+        """Test handle_webhook function prints error when JSON parsing fails with general exception."""
+        # Setup
+        mock_req = MagicMock(spec=Request)
+        mock_req.headers = {"X-GitHub-Event": "push"}
+        mock_req.body = AsyncMock(return_value=b"\xff\xfe")  # Invalid UTF-8
+
+        mock_verify_signature.return_value = None
+        mock_handle_webhook_event.return_value = None
+        mock_extract_lambda_info.return_value = {}
+
+        # Execute
