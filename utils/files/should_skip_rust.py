@@ -85,6 +85,8 @@ def should_skip_rust(content: str) -> bool:
                 in_trait = True
             continue
         if in_trait:
+            if line == "{":
+                continue  # Just the opening brace on its own line
             if "}" in line:
                 in_trait = False
             continue
