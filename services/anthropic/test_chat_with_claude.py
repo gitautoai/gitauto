@@ -3,7 +3,6 @@ from unittest.mock import Mock, patch
 import pytest
 from anthropic import AuthenticationError
 from anthropic._exceptions import OverloadedError
-from config import ANTHROPIC_MODEL_ID_40
 from services.anthropic.chat_with_functions import chat_with_claude
 from services.anthropic.exceptions import (ClaudeAuthenticationError,
                                            ClaudeOverloadedError)
