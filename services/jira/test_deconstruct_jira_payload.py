@@ -648,3 +648,105 @@ class TestDeconstructJiraPayload:
                 "title": "Title",
                 "body": "",
                 "comments": [],
+            },
+            "creator": {
+                "id": "creator-1",
+                "displayName": "Creator",
+                "email": "creator@example.com",
+            },
+            "reporter": {
+                "id": "reporter-1",
+                "displayName": "Reporter",
+                "email": "reporter@example.com",
+            },
+            "owner": {"id": 1, "name": "owner"},
+            "repo": {"id": 1, "name": "repo"},
+        }
+
+        with patch("services.jira.deconstruct_jira_payload.get_installation") as mock_get_installation:
+            mock_get_installation.return_value = None
+
+            # This will raise ValueError due to no installation, but payload structure is valid
+            with pytest.raises(ValueError):
+                deconstruct_jira_payload(minimal_payload)
+
+            # Verify the function was called, meaning payload structure was accepted
+            mock_get_installation.assert_called_once_with(owner_id=1)
+
+    @patch("services.jira.deconstruct_jira_payload.extract_urls")
+    @patch("services.jira.deconstruct_jira_payload.check_branch_exists")
+    @patch("services.jira.deconstruct_jira_payload.get_repository")
+    @patch("services.jira.deconstruct_jira_payload.get_default_branch")
+    @patch("services.jira.deconstruct_jira_payload.is_repo_forked")
+    @patch("services.jira.deconstruct_jira_payload.get_installation_access_token")
+    @patch("services.jira.deconstruct_jira_payload.get_installation")
+    def test_return_tuple_structure(
+        self,
+        mock_get_installation,
+        mock_get_token,
+        mock_is_forked,
+        mock_get_default_branch,
+        mock_get_repository,
+        mock_check_branch_exists,
+        mock_extract_urls,
+        sample_jira_payload,
+        mock_installation,
+        mock_repo_settings,
+        mock_datetime,
+    ):
+        """Test that the function returns a tuple with correct structure."""
+        # Setup mocks
+        mock_get_installation.return_value = mock_installation
+        mock_get_token.return_value = "test-token"
+        mock_is_forked.return_value = False
+        mock_get_default_branch.return_value = ("main", "commit-sha-123")
+        mock_get_repository.return_value = mock_repo_settings
+        mock_check_branch_exists.return_value = True
+        mock_extract_urls.return_value = ([], [])
+
+        # Execute
+        result = deconstruct_jira_payload(sample_jira_payload)
+
+        # Verify return type and structure
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+
+        base_args, repo_settings = result
+        assert isinstance(base_args, dict)
+        assert repo_settings == mock_repo_settings
+
+        # Verify base_args has all required BaseArgs fields
+        required_fields = [
+            "input_from", "owner_type", "owner_id", "owner", "repo_id", "repo",
+            "clone_url", "is_fork", "issue_number", "issue_title", "issue_body",
+            "issue_comments", "latest_commit_sha", "issuer_name", "base_branch",
+            "new_branch", "installation_id", "token", "sender_id", "sender_name",
+            "sender_email", "is_automation", "reviewers", "github_urls", "other_urls"
+        ]
+
+        for field in required_fields:
+            assert field in base_args, f"Missing required field: {field}"
+
+    @patch("services.jira.deconstruct_jira_payload.get_installation")
+    def test_exception_handling_with_raise_on_error_true(
+        self, mock_get_installation, sample_jira_payload
+    ):
+        """Test that exceptions are re-raised when raise_on_error=True in decorator."""
+        # Setup mock to raise an exception
+        mock_get_installation.side_effect = Exception("Test exception")
+
+        # Execute and verify exception is re-raised
+        with pytest.raises(Exception) as exc_info:
+            deconstruct_jira_payload(sample_jira_payload)
+
+        assert str(exc_info.value) == "Test exception"
+
+    @patch("services.jira.deconstruct_jira_payload.get_installation")
+    def test_exception_handling_returns_default_on_error(
+        self, mock_get_installation, sample_jira_payload
+    ):
+        """Test that default return value is returned when exception occurs."""
+        # Setup mock to raise an exception
+        mock_get_installation.side_effect = KeyError("Test key error")
+
+        # The function is decorated with @handle_exceptions(default_return_value=(None, None), raise_on_error=True)
