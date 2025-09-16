@@ -136,7 +136,6 @@ def test_whitespace_only():
 
 
 
-
     """
     assert should_skip_rust(content) is True
 
@@ -687,6 +686,8 @@ spanning lines */
 const TEMPLATE: &str = r#"
 Multiline raw string
 "#;
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
 
 
 def test_function_definition_should_not_skip():
@@ -829,6 +830,10 @@ def test_empty_lines_and_whitespace_mixed():
 
 
 
+const VALUE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
 def test_struct_without_opening_brace():
     # Test struct declaration without opening brace on same line
     content = """struct MyStruct;
@@ -877,6 +882,31 @@ def test_comprehensive_mixed_file():
 #![allow(dead_code)]
 
 /* Multi-line comment
+spanning multiple lines */
+
+use std::collections::HashMap;
+pub use crate::module::*;
+
+pub type MyString = String;
+type UserId = u64;
+
+pub struct User {
+    id: u64,
+    name: String,
+}
+
+pub enum Status {
+    Active,
+    Inactive,
+}
+
+pub trait MyTrait {
+    fn method(&self) -> String;
+}
+
+const MAX_SIZE: i32 = 100;
+static VERSION: &str = "1.0.0";"""
+    assert should_skip_rust(content) is True
 
 
 def test_function_docstring_behavior():
