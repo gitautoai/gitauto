@@ -1,33 +1,34 @@
-#!/usr/bin/env python3
-
-import os
-
-from remove_repetitive_eslint_warnings import remove_repetitive_eslint_warnings
-
-from config import UTF8
+from utils.logs.remove_repetitive_eslint_warnings import (
+    remove_repetitive_eslint_warnings,
+)
 
 
 def test_remove_repetitive_eslint_warnings():
-    payload_path = os.path.join(
-        os.path.dirname(__file__), "../../payloads/circleci/eslint_build_log.txt"
-    )
+    # This function filters ESLint output - keeps files only if they have errors (not just warnings)
+    log = """/path/to/file1.js
+  1:1  error  Unexpected token
+  2:1  warning  'var' is deprecated
 
-    with open(payload_path, "r", encoding=UTF8) as f:
-        test_log = f.read()
+/path/to/file2.js  
+  1:1  warning  Missing semicolon
+  2:1  warning  'var' is deprecated
 
-    cleaned_path = os.path.join(
-        os.path.dirname(__file__),
-        "../../payloads/circleci/eslint_build_log_cleaned.txt",
-    )
-    with open(cleaned_path, "r", encoding=UTF8) as f:
-        expected_output = f.read()  # Expected output with collapsed repetitive warnings
+✖ 4 problems (1 error, 3 warnings)"""
 
-    result = remove_repetitive_eslint_warnings(test_log)
+    # Only file1.js should remain because it has errors; file2.js has only warnings
+    expected = """/path/to/file1.js
+  1:1  error  Unexpected token
 
-    assert result == expected_output, f"Expected:\n{expected_output}\n\nGot:\n{result}"
+✖ 4 problems (1 error, 3 warnings)"""
 
-    print("✅ Test passed!")
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
 
 
-if __name__ == "__main__":
-    test_remove_repetitive_eslint_warnings()
+def test_remove_repetitive_eslint_warnings_no_repetition():
+    log = """src/file1.js:1:1: warning: 'var' is deprecated (no-var)
+src/file2.js:1:1: warning: Missing semicolon (semi)
+src/file3.js:1:1: warning: Unused variable (no-unused-vars)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == log

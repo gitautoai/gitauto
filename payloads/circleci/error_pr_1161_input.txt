@@ -1,0 +1,223 @@
+```CircleCI Build Log: yarn tsc --noEmit
+[2K[1G[1myarn run v1.22.22[22m
+[2K[1G[2m$ /home/circleci/project/node_modules/.bin/tsc --noEmit[22m
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m34[0m:[93m13[0m - [91merror[0m[90m TS2322: [0mType '{ invoiceNumber: string; amount: number; currency: "USD"; }' is not assignable to type 'InvoiceData'.
+  Object literal may only specify known properties, and 'amount' does not exist in type 'InvoiceData'.
+
+[7m34[0m             amount: 100,
+[7m  [0m [91m            ~~~~~~~~~~~[0m
+
+  [96msrc/models/mongodb/FoxcomObject.ts[0m:[93m35[0m:[93m3[0m
+    [7m35[0m   data: T;
+    [7m  [0m [96m  ~~~~[0m
+    The expected type comes from property 'data' which is declared here on type 'OptionalId<InvoiceObject>'
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m43[0m:[93m28[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m43[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m43[0m:[93m28[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m43[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m62[0m:[93m15[0m - [91merror[0m[90m TS2322: [0mType '{ invoiceNumber: string; amount: number; currency: "USD"; }' is not assignable to type 'InvoiceData'.
+  Object literal may only specify known properties, and 'amount' does not exist in type 'InvoiceData'.
+
+[7m62[0m               amount: 100,
+[7m  [0m [91m              ~~~~~~~~~~~[0m
+
+  [96msrc/models/mongodb/FoxcomObject.ts[0m:[93m35[0m:[93m3[0m
+    [7m35[0m   data: T;
+    [7m  [0m [96m  ~~~~[0m
+    The expected type comes from property 'data' which is declared here on type 'OptionalId<InvoiceObject>'
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m73[0m:[93m15[0m - [91merror[0m[90m TS2322: [0mType '{ invoiceNumber: string; amount: number; currency: "CAD"; }' is not assignable to type 'InvoiceData'.
+  Object literal may only specify known properties, and 'amount' does not exist in type 'InvoiceData'.
+
+[7m73[0m               amount: 200,
+[7m  [0m [91m              ~~~~~~~~~~~[0m
+
+  [96msrc/models/mongodb/FoxcomObject.ts[0m:[93m35[0m:[93m3[0m
+    [7m35[0m   data: T;
+    [7m  [0m [96m  ~~~~[0m
+    The expected type comes from property 'data' which is declared here on type 'OptionalId<InvoiceObject>'
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m83[0m:[93m28[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m83[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m83[0m:[93m28[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m83[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m97[0m:[93m28[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m97[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m97[0m:[93m28[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m97[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m109[0m:[93m28[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m109[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m109[0m:[93m28[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m109[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m124[0m:[93m13[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m124[0m       await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m124[0m:[93m13[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m124[0m       await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m146[0m:[93m13[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m146[0m       await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m146[0m:[93m13[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m146[0m       await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m164[0m:[93m9[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m164[0m         isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m164[0m:[93m9[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m164[0m         isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m178[0m:[93m28[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m178[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m178[0m:[93m28[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m178[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m191[0m:[93m28[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m191[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m191[0m:[93m28[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m191[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m204[0m:[93m28[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m204[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m204[0m:[93m28[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m204[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m223[0m:[93m13[0m - [91merror[0m[90m TS2322: [0mType '{ invoiceNumber: string; amount: number; currency: "USD"; }' is not assignable to type 'InvoiceData'.
+  Object literal may only specify known properties, and 'amount' does not exist in type 'InvoiceData'.
+
+[7m223[0m             amount: 100,
+[7m   [0m [91m            ~~~~~~~~~~~[0m
+
+  [96msrc/models/mongodb/FoxcomObject.ts[0m:[93m35[0m:[93m3[0m
+    [7m35[0m   data: T;
+    [7m  [0m [96m  ~~~~[0m
+    The expected type comes from property 'data' which is declared here on type 'OptionalId<InvoiceObject>'
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m232[0m:[93m28[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m232[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m232[0m:[93m28[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m232[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m244[0m:[93m28[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m244[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m244[0m:[93m28[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m244[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m261[0m:[93m13[0m - [91merror[0m[90m TS2322: [0mType '{ invoiceNumber: string; amount: number; currency: "USD"; }' is not assignable to type 'InvoiceData'.
+  Object literal may only specify known properties, and 'amount' does not exist in type 'InvoiceData'.
+
+[7m261[0m             amount: 100,
+[7m   [0m [91m            ~~~~~~~~~~~[0m
+
+  [96msrc/models/mongodb/FoxcomObject.ts[0m:[93m35[0m:[93m3[0m
+    [7m35[0m   data: T;
+    [7m  [0m [96m  ~~~~[0m
+    The expected type comes from property 'data' which is declared here on type 'OptionalId<InvoiceObject>'
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m270[0m:[93m28[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Not all constituents of type 'Resolver<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' are callable.
+    Type 'ResolverWithResolve<ResolverTypeWrapper<boolean>, {}, GraphqlContext, RequireFields<QueryIsInvoiceNumberRegisteredArgs, "invoiceNumber">>' has no call signatures.
+
+[7m270[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/resolvers/isInvoiceNumberRegisteredResolver.test.ts[0m:[93m270[0m:[93m28[0m - [91merror[0m[90m TS2722: [0mCannot invoke an object which is possibly 'undefined'.
+
+[7m270[0m       const result = await isInvoiceNumberRegisteredResolver(
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+Found 31 errors in the same file, starting at: src/resolvers/isInvoiceNumberRegisteredResolver.test.ts[90m:34[0m
+
+[2K[1G[31merror[39m Command failed with exit code 2.
+[2K[1G[34minfo[39m Visit [1mhttps://yarnpkg.com/en/docs/cli/run[22m for documentation about this command.
+
+Exited with code exit status 2
+
+```

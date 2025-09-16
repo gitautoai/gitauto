@@ -281,7 +281,9 @@ class TestHandleWebhookEvent:
 
             await handle_webhook_event(event_name="issue_comment", payload=payload)
 
-            mock_handle_pr_checkbox_trigger.assert_called_once_with(payload=payload, lambda_info=None)
+            mock_handle_pr_checkbox_trigger.assert_called_once_with(
+                payload=payload, lambda_info=None
+            )
             mock_create_pr_from_issue.assert_called_once_with(
                 payload=payload,
                 trigger="issue_comment",
@@ -302,7 +304,9 @@ class TestHandleWebhookEvent:
 
             await handle_webhook_event(event_name="issue_comment", payload=payload)
 
-            mock_handle_pr_checkbox_trigger.assert_called_once_with(payload=payload, lambda_info=None)
+            mock_handle_pr_checkbox_trigger.assert_called_once_with(
+                payload=payload, lambda_info=None
+            )
             mock_create_pr_from_issue.assert_called_once_with(
                 payload=payload,
                 trigger="issue_comment",
@@ -322,7 +326,9 @@ class TestHandleWebhookEvent:
 
         await handle_webhook_event(event_name="issue_comment", payload=payload)
 
-        mock_handle_pr_checkbox_trigger.assert_called_once_with(payload=payload, lambda_info=None)
+        mock_handle_pr_checkbox_trigger.assert_called_once_with(
+            payload=payload, lambda_info=None
+        )
         mock_create_pr_from_issue.assert_not_called()
 
     @pytest.mark.asyncio
@@ -340,7 +346,9 @@ class TestHandleWebhookEvent:
         ):
             await handle_webhook_event(event_name="check_run", payload=payload)
 
-            mock_handle_check_run.assert_called_once_with(payload=payload, lambda_info=None)
+            mock_handle_check_run.assert_called_once_with(
+                payload=payload, lambda_info=None
+            )
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_check_run_completed_success(
@@ -530,7 +538,9 @@ class TestHandleWebhookEvent:
             event_name="pull_request_review_comment", payload=payload
         )
 
-        mock_handle_review_run.assert_called_once_with(payload=payload, lambda_info=None)
+        mock_handle_review_run.assert_called_once_with(
+            payload=payload, lambda_info=None
+        )
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_pull_request_review_comment_edited(
@@ -543,7 +553,9 @@ class TestHandleWebhookEvent:
             event_name="pull_request_review_comment", payload=payload
         )
 
-        mock_handle_review_run.assert_called_once_with(payload=payload, lambda_info=None)
+        mock_handle_review_run.assert_called_once_with(
+            payload=payload, lambda_info=None
+        )
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_pull_request_review_comment_deleted(

@@ -12,7 +12,10 @@ def mock_subscription():
     return mock_sub
 
 
-@patch("services.stripe.get_billing_type.EXCEPTION_OWNERS", ["exception_owner", "test_owner"])
+@patch(
+    "services.stripe.get_billing_type.EXCEPTION_OWNERS",
+    ["exception_owner", "test_owner"],
+)
 def test_get_billing_type_returns_exception_for_exception_owner():
     """Test that get_billing_type returns 'exception' for owners in EXCEPTION_OWNERS."""
     # Test with first exception owner
@@ -73,7 +76,9 @@ def test_get_billing_type_returns_credit_as_default():
 
 
 @patch("services.stripe.get_billing_type.EXCEPTION_OWNERS", ["exception_owner"])
-def test_get_billing_type_exception_owner_takes_precedence_over_subscription(mock_subscription):
+def test_get_billing_type_exception_owner_takes_precedence_over_subscription(
+    mock_subscription,
+):
     """Test that exception owner status takes precedence over having a paid subscription."""
     result = get_billing_type(
         owner_name="exception_owner",
@@ -114,7 +119,7 @@ def test_get_billing_type_handles_exceptions_gracefully(mock_exception_owners):
 def test_get_billing_type_function_signature():
     """Test that the function maintains its original signature after decoration."""
     # Verify the function is properly decorated but maintains its interface
-    assert get_billing_type.__name__ == 'get_billing_type'
+    assert get_billing_type.__name__ == "get_billing_type"
     assert callable(get_billing_type)
 
 

@@ -408,13 +408,9 @@ def test_handle_check_run_with_none_logs(
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_run_handler.update_usage")
-@patch("services.webhook.check_run_handler.remove_repetitive_eslint_warnings")
-@patch("services.webhook.check_run_handler.remove_pytest_sections")
-@patch("services.webhook.check_run_handler.deduplicate_logs")
+@patch("services.webhook.check_run_handler.clean_logs")
 def test_handle_check_run_with_existing_retry_pair(
-    mock_deduplicate_logs,
-    mock_remove_pytest_sections,
-    mock_remove_repetitive_eslint_warnings,
+    mock_clean_logs,
     mock_update_usage,
     _mock_update_retry_pairs,
     mock_get_retry_pairs,
@@ -452,9 +448,7 @@ def test_handle_check_run_with_existing_retry_pair(
         }
     ]
     mock_get_logs.return_value = "Test failure log content"
-    mock_remove_pytest_sections.return_value = "Pytest sections removed log"
-    mock_remove_repetitive_eslint_warnings.return_value = "ESLint cleaned log"
-    mock_deduplicate_logs.return_value = "Deduplicated test failure log"
+    mock_clean_logs.return_value = "Cleaned test failure log"
 
     # Mock that this workflow/error pair has been seen before
     # Calculate the expected hash: workflow_id is "runs" from URL, error_log is "Test failure log content"
@@ -473,17 +467,13 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
     mock_get_retry_pairs.assert_called_once()
-    mock_remove_pytest_sections.assert_called_once_with("Test failure log content")
-    mock_remove_repetitive_eslint_warnings.assert_called_once_with(
-        "Pytest sections removed log"
-    )
-    mock_deduplicate_logs.assert_called_once_with("ESLint cleaned log")
+    mock_clean_logs.assert_called_once_with("Test failure log content")
 
     # Verify update_usage was called with error logs
     mock_update_usage.assert_called_once()
     call_args = mock_update_usage.call_args[1]
     assert call_args["original_error_log"] == "Test failure log content"
-    assert call_args["minimized_error_log"] == "Deduplicated test failure log"
+    assert call_args["minimized_error_log"] == "Cleaned test failure log"
 
     # Verify skip message in comment
     mock_update_comment.assert_called()
