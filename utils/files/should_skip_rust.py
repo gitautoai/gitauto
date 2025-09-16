@@ -80,6 +80,9 @@ def should_skip_rust(content: str) -> bool:
         if re.match(r"^(pub\s+)?trait\s+\w+", line):
             if "{" in line:
                 in_trait = True
+            elif not line.endswith(";"):
+                # Opening brace might be on next line
+                in_trait = True
             continue
         if in_trait:
             if "}" in line:
