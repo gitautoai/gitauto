@@ -767,3 +767,63 @@ def test_expression_statement_should_not_skip():
     content = """const VALUE: i32 = 42;
 println!("Value: {}", VALUE);"""
     assert should_skip_rust(content) is False
+
+
+def test_multiline_comment_starting_mid_line():
+    # Test multiline comment that starts in the middle of a line
+    content = """const VALUE: i32 = 42; /* This comment starts mid-line
+and continues on next line */
+const OTHER: i32 = 24;"""
+    assert should_skip_rust(content) is True
+
+
+def test_multiline_raw_string_starting_mid_line():
+    # Test multiline raw string that starts in the middle of a line
+    content = """const TEMPLATE: &str = r#"
+This is a template
+"#;
+const OTHER: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_raw_string_with_ending_pattern_in_middle():
+    # Test raw string that has "#; pattern in middle but not at end
+    content = """const TEMPLATE: &str = r#"
+This template has "#; in the middle
+but continues here
+"#;"""
+    assert should_skip_rust(content) is True
+
+
+def test_const_with_parentheses_but_no_double_colon():
+    # Test const with parentheses but no :: (should be allowed)
+    content = """const TUPLE: (i32, i32) = (1, 2);
+const ARRAY: [i32; 3] = [1, 2, 3];"""
+    assert should_skip_rust(content) is True
+
+
+def test_static_with_parentheses_but_no_double_colon():
+    # Test static with parentheses but no :: (should be allowed)
+    content = """static TUPLE: (i32, i32) = (1, 2);
+static ARRAY: [i32; 3] = [1, 2, 3];"""
+    assert should_skip_rust(content) is True
+
+
+def test_const_with_double_colon_but_no_parentheses():
+    # Test const with :: but no parentheses (should be allowed)
+    content = """const TYPE_PATH: &str = "std::collections::HashMap";
+const MODULE_PATH: &str = "crate::utils::helper";"""
+    assert should_skip_rust(content) is True
+
+
+def test_static_with_double_colon_but_no_parentheses():
+    # Test static with :: but no parentheses (should be allowed)
+    content = """static TYPE_PATH: &str = "std::collections::HashMap";
+static MODULE_PATH: &str = "crate::utils::helper";"""
+    assert should_skip_rust(content) is True
+
+
+def test_empty_lines_and_whitespace_mixed():
+    # Test file with various empty lines and whitespace
+    content = """
+
