@@ -553,7 +553,9 @@ class TestHandleWebhookEvent:
             event_name="pull_request_review_comment", payload=payload
         )
 
-        mock_handle_review_run.assert_called_once_with(payload=payload)
+        mock_handle_review_run.assert_called_once_with(
+            payload=payload, lambda_info=None
+        )
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_pull_request_review_comment_deleted(
