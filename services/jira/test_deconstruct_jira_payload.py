@@ -750,3 +750,6 @@ class TestDeconstructJiraPayload:
         mock_get_installation.side_effect = KeyError("Test key error")
 
         # The function is decorated with @handle_exceptions(default_return_value=(None, None), raise_on_error=True)
+        # So it should re-raise the exception
+        with pytest.raises(KeyError) as exc_info:
+            deconstruct_jira_payload(sample_jira_payload)
