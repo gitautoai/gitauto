@@ -24,7 +24,10 @@ class TestChatWithClaude:
     def mock_claude_response_with_tool_use(self):
         """Mock Claude API response with tool use."""
         mock_response = Mock()
-        mock_text_block = Mock(type="text", text="I'll help you with that.")
+        mock_text_block = Mock()
+        mock_text_block.type = "text"
+        mock_text_block.text = "I'll help you with that."
+
         mock_tool_block = Mock()
         mock_tool_block.type = "tool_use"
         mock_tool_block.id = "toolu_01M3mtjuKhyQptQh5ASmQCFY"
