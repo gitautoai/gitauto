@@ -437,7 +437,8 @@ class TestChatWithClaude:
     @patch('services.anthropic.chat_with_functions.trim_messages_to_token_limit')
     @patch('services.anthropic.chat_with_functions.claude')
     def test_chat_with_claude_multiple_tool_use_blocks(
-
+        self, mock_claude, mock_trim_messages, sample_messages, sample_tools
+    ):
     @patch('services.anthropic.chat_with_functions.trim_messages_to_token_limit')
     @patch('services.anthropic.chat_with_functions.claude')
     def test_chat_with_claude_multiple_text_blocks(
