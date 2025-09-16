@@ -5,7 +5,7 @@ import pytest
 from services.openai.chat_with_functions import chat_with_openai
 
 
-@pytest.mark.skipif(os.getenv("CI"), reason="Skip integration tests in CI")
+@pytest.mark.skipif(bool(os.getenv("CI")), reason="Skip integration tests in CI")
 def test_chat_with_openai_gpt5_integration():
     """Test chat_with_openai function with real GPT-5 API call"""
     messages = [{"role": "user", "content": "Say exactly: function test"}]
@@ -23,7 +23,7 @@ def test_chat_with_openai_gpt5_integration():
     print(f"GPT-5 function response: {response['content']}")
 
 
-@pytest.mark.skipif(os.getenv("CI"), reason="Skip integration tests in CI")
+@pytest.mark.skipif(bool(os.getenv("CI")), reason="Skip integration tests in CI")
 def test_chat_with_openai_gpt5_with_tools():
     """Test chat_with_openai with tools using GPT-5"""
     messages = [{"role": "user", "content": "What's 2+2? Use the calculator."}]
