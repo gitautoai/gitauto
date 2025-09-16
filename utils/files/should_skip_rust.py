@@ -106,12 +106,9 @@ def should_skip_rust(content: str) -> bool:
             continue
         # Skip constants (Rust const is truly constant - compile-time immutable values)
         if line.startswith("pub const ") or line.startswith("const "):
-            # Check if constant has function calls (like env::var() or Path::new()) but not struct constructors
-            if (
-                "::" in line
-                and ("(" in line and ")" in line)
-                and not re.search(r"\w+\s*\{\}", line)
-            ):
+            # Check if constant has function calls (like env::var() or Path::new())
+            # Function calls are indicated by :: followed by parentheses
+            if "::" in line and ("(" in line and ")" in line):
                 return False
             # Check for array indexing which is runtime behavior (variable[index])
             if re.search(r"\w+\[", line):
@@ -119,12 +116,9 @@ def should_skip_rust(content: str) -> bool:
             continue
         # Skip static variables (global variables with 'static lifetime)
         if line.startswith("pub static ") or line.startswith("static "):
-            # Check if static has function calls (like env::var() or Path::new()) but not struct constructors
-            if (
-                "::" in line
-                and ("(" in line and ")" in line)
-                and not re.search(r"\w+\s*\{\}", line)
-            ):
+            # Check if static has function calls (like env::var() or Path::new())
+            # Function calls are indicated by :: followed by parentheses
+            if "::" in line and ("(" in line and ")" in line):
                 return False
             # Check for array indexing which is runtime behavior (variable[index])
             if re.search(r"\w+\[", line):
