@@ -83,7 +83,9 @@ def should_skip_rust(content: str) -> bool:
         # Handle trait definitions (interfaces without implementation)
         if re.match(r"^(pub\s+)?trait\s+\w+", line):
             if "{" in line:
-                in_trait = True
+                # Only set flag if trait is not complete on same line
+                if "}" not in line:
+                    in_trait = True
             elif not line.endswith(";"):
                 # Opening brace might be on next line
                 in_trait = True
