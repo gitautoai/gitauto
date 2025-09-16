@@ -7,9 +7,9 @@ from unittest.mock import AsyncMock, MagicMock, call, patch
 
 # Third-party imports
 import pytest
+# Local imports
 from config import GITHUB_WEBHOOK_SECRET, PRODUCT_NAME
 from fastapi import Request
-# Local imports
 from main import app, handle_jira_webhook, handle_webhook, handler, root
 from payloads.aws.event_bridge_scheduler.event_types import \
     EventBridgeSchedulerEvent
@@ -672,6 +672,31 @@ class TestEdgeCases:
         assert mock_slack_notify.call_count == 2
         assert result is None
 
+    def test_handler_with_schedule_event_missing_result_message(self):
+        """Test handler with schedule event where result doesn't have message key."""
+        # Setup
+        event = {
+            "triggerType": "schedule",
+            "ownerName": "test-owner",
+            "repoName": "test-repo",
+        }
+
+        with patch("main.schedule_handler") as mock_schedule_handler, \
+             patch("main.slack_notify") as mock_slack_notify:
+            mock_slack_notify.return_value = "thread-789"
+            mock_schedule_handler.return_value = {"status": "error"}  # No message key
+
+            # Execute
+            result = handler(event=event, context={})
+
+            # Verify - should handle missing message gracefully
+            mock_slack_notify.assert_has_calls([
+                call("Event Scheduler started for test-owner/test-repo"),
+                call("@channel Failed: ", "thread-789"),  # Empty message
+            ])
+            assert result is None
+
+
 class TestPrintStatements:
     @patch("main.schedule_handler")
     @patch("main.slack_notify")
@@ -738,3 +763,100 @@ class TestPrintStatements:
         mock_extract_lambda_info.return_value = {}
 
         # Execute
+        await handle_webhook(request=mock_req)
+
+        # Verify print statement was called
+        output = mock_stdout.getvalue()
+        assert "Error in parsing JSON payload:" in output
+
+
+class TestComprehensiveCoverage:
+    @patch("main.extract_lambda_info")
+    @patch("main.verify_webhook_signature", new_callable=AsyncMock)
+    @patch("main.handle_webhook_event", new_callable=AsyncMock)
+    @pytest.mark.asyncio
+    async def test_handle_webhook_url_encoded_with_json_error_in_payload(
+        self,
+        mock_handle_webhook_event,
+        mock_verify_signature,
+        mock_extract_lambda_info,
+    ):
+        """Test handle_webhook with URL-encoded body that has invalid JSON in payload."""
+        # Setup
+        mock_req = MagicMock(spec=Request)
+        mock_req.headers = {"X-GitHub-Event": "push"}
+        # URL-encoded body with invalid JSON in payload
+        mock_req.body = AsyncMock(return_value=b"payload=invalid%20json%20data")
+
+        mock_verify_signature.return_value = None
+        mock_handle_webhook_event.return_value = None
+        mock_extract_lambda_info.return_value = {}
+
+        # Execute
+        response = await handle_webhook(request=mock_req)
+
+        # Verify
+        mock_handle_webhook_event.assert_called_once_with(
+            event_name="push", payload={}, lambda_info={}
+        )
+        assert response == {"message": "Webhook processed successfully"}
+
+    @patch("main.extract_lambda_info")
+    @patch("main.verify_webhook_signature", new_callable=AsyncMock)
+    @patch("main.handle_webhook_event", new_callable=AsyncMock)
+    @pytest.mark.asyncio
+    async def test_handle_webhook_url_encoded_empty_payload_list(
+        self,
+        mock_handle_webhook_event,
+        mock_verify_signature,
+        mock_extract_lambda_info,
+    ):
+        """Test handle_webhook with URL-encoded body where payload list is empty."""
+        # Setup
+        mock_req = MagicMock(spec=Request)
+        mock_req.headers = {"X-GitHub-Event": "push"}
+        # URL-encoded body with empty payload list
+        mock_req.body = AsyncMock(return_value=b"payload=")
+
+        mock_verify_signature.return_value = None
+        mock_handle_webhook_event.return_value = None
+        mock_extract_lambda_info.return_value = {}
+
+        # Execute
+        response = await handle_webhook(request=mock_req)
+
+        # Verify
+        mock_handle_webhook_event.assert_called_once_with(
+            event_name="push", payload={}, lambda_info={}
+        )
+        assert response == {"message": "Webhook processed successfully"}
+
+    def test_handler_schedule_event_cast_functionality(self):
+        """Test that EventBridge event is properly cast to EventBridgeSchedulerEvent."""
+        # Setup
+        event_dict = {
+            "triggerType": "schedule",
+            "ownerName": "test-owner",
+            "repoName": "test-repo",
+            "ownerId": 123456,
+            "ownerType": "Organization",
+            "repoId": 789012,
+            "userId": 345678,
+            "userName": "test-user",
+            "installationId": 901234,
+        }
+
+        with patch("main.schedule_handler") as mock_schedule_handler, \
+             patch("main.slack_notify") as mock_slack_notify:
+            mock_slack_notify.return_value = "thread-cast"
+            mock_schedule_handler.return_value = {"status": "success"}
+
+            # Execute
+            result = handler(event=event_dict, context={})
+
+            # Verify that the event was passed to schedule_handler
+            # The cast should work transparently
+            mock_schedule_handler.assert_called_once()
+            called_event = mock_schedule_handler.call_args[1]['event']
+            assert called_event == event_dict
+            assert result is None
