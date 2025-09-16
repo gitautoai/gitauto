@@ -84,8 +84,8 @@ def deconstruct_github_payload(
     github_urls, other_urls = extract_urls(text=issue_body)
     sender_email = get_user_public_email(username=sender_name, token=token)
 
-    # Get latest commit SHA and issue comments (empty for GitHub as they're fetched separately)
-    latest_commit_sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=None)
+    # Set latest commit SHA to empty (fetched later in handler) and issue comments (empty for GitHub as they're fetched separately)
+    latest_commit_sha = ""
     issue_comments: list[str] = []  # GitHub comments are fetched separately in the handler
 
     # Extract its parent issue
