@@ -58,6 +58,9 @@ def should_skip_rust(content: str) -> bool:
         if re.match(r"^(pub\s+)?struct\s+\w+", line):
             if "{" in line:
                 in_struct_or_enum = True
+            elif not line.endswith(";"):
+                # Opening brace might be on next line
+                in_struct_or_enum = True
             continue
         if re.match(r"^(pub\s+)?enum\s+\w+", line):
             if "{" in line:
