@@ -176,3 +176,24 @@ class TestChatWithClaude:
                 system_content="You are a helpful assistant",
                 tools=sample_tools
             )
+
+    @patch('services.anthropic.chat_with_functions.trim_messages_to_token_limit')
+    @patch('services.anthropic.chat_with_functions.claude')
+    def test_chat_with_claude_no_tools(
+        self, mock_claude, mock_trim_messages, mock_claude_response, sample_messages
+    ):
+        """Test successful chat with Claude with no tools provided."""
+        # Setup mocks
+        mock_trim_messages.return_value = sample_messages
+        mock_claude.messages.create.return_value = mock_claude_response
+        mock_token_response = Mock()
+        mock_token_response.input_tokens = 800
+        mock_claude.messages.count_tokens.return_value = mock_token_response
+
+        # Call function with empty tools list
+        result = chat_with_claude(
+            messages=sample_messages,
+            system_content="You are a helpful assistant",
+            tools=[]
+        )
+
