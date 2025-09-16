@@ -115,6 +115,7 @@ def deconstruct_github_payload(
         "issue_body": issue_body,
         "issuer_name": issuer_name,
         "issue_comments": issue_comments,
+        "issuer_email": issuer_email,
         "latest_commit_sha": latest_commit_sha,
         "parent_issue_number": parent_issue_number,
         "parent_issue_title": parent_issue_title,
