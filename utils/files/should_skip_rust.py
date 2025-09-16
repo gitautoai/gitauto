@@ -122,6 +122,7 @@ def should_skip_rust(content: str) -> bool:
             # But exclude patterns inside string literals
             # Remove string literals first, then check for array indexing
             line_without_strings = re.sub(r'"[^"]*"', '', line)
+            line_without_strings = re.sub(r'r#"[^"]*"#', '', line_without_strings)
             line_without_strings = re.sub(r"'[^']*'", '', line_without_strings)
             if re.search(r"\w+\[", line_without_strings):
                 return False
