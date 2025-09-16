@@ -326,7 +326,9 @@ class TestHandleWebhookEvent:
 
         await handle_webhook_event(event_name="issue_comment", payload=payload)
 
-        mock_handle_pr_checkbox_trigger.assert_called_once_with(payload=payload)
+        mock_handle_pr_checkbox_trigger.assert_called_once_with(
+            payload=payload, lambda_info=None
+        )
         mock_create_pr_from_issue.assert_not_called()
 
     @pytest.mark.asyncio
