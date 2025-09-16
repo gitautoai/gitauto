@@ -119,7 +119,11 @@ def should_skip_rust(content: str) -> bool:
             if "::" in line and ("(" in line and ")" in line):
                 return False
             # Check for array indexing which is runtime behavior (variable[index])
-            if re.search(r"\w+\[", line):
+            # But exclude patterns inside string literals
+            # Remove string literals first, then check for array indexing
+            line_without_strings = re.sub(r'"[^"]*"', '', line)
+            line_without_strings = re.sub(r"'[^']*'", '', line_without_strings)
+            if re.search(r"\w+\[", line_without_strings):
                 return False
             continue
         # Skip static variables (global variables with 'static lifetime)
@@ -129,7 +133,11 @@ def should_skip_rust(content: str) -> bool:
             if "::" in line and ("(" in line and ")" in line):
                 return False
             # Check for array indexing which is runtime behavior (variable[index])
-            if re.search(r"\w+\[", line):
+            # But exclude patterns inside string literals
+            # Remove string literals first, then check for array indexing
+            line_without_strings = re.sub(r'"[^"]*"', '', line)
+            line_without_strings = re.sub(r"'[^']*'", '', line_without_strings)
+            if re.search(r"\w+\[", line_without_strings):
                 return False
             continue
         # If we find any other code, it's not export-only
