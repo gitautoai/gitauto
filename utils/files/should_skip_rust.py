@@ -27,7 +27,9 @@ def should_skip_rust(content: str) -> bool:
         line = line.strip()
 
         # Handle multiline comments (/* ... */) with proper nesting support
-        # Update comment depth first
+        # Check if we were in a comment at the start of this line
+        was_in_comment = multiline_comment_depth > 0
+        # Update comment depth
         multiline_comment_depth += line.count("/*")
         multiline_comment_depth -= line.count("*/")
 
