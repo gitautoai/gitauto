@@ -877,3 +877,18 @@ def test_comprehensive_mixed_file():
 #![allow(dead_code)]
 
 /* Multi-line comment
+
+
+def test_function_docstring_behavior():
+    # Test that the function has proper docstring
+    from utils.files.should_skip_rust import should_skip_rust
+
+    assert should_skip_rust.__doc__ is not None
+    assert "Determines if a Rust file should be skipped" in should_skip_rust.__doc__
+    assert "Returns True if the file contains only:" in should_skip_rust.__doc__
+    assert "Returns False if the file contains:" in should_skip_rust.__doc__
+
+    # Test that function signature is correct
+    import inspect
+    sig = inspect.signature(should_skip_rust)
+    assert len(sig.parameters) == 1
