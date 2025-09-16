@@ -51,7 +51,7 @@ def handler(event, context):
             slack_notify("Completed", thread_ts)
         else:
             slack_notify(
-                f"@channel Failed: {result['message']}",
+                f"@channel Failed: {result.get('message', '')}",
                 thread_ts,
             )
         return None
