@@ -40,7 +40,7 @@ def should_skip_rust(content: str) -> bool:
             in_multiline_string = True
             continue
         if in_multiline_string:
-            if line.endswith('"#;'):
+            if line.endswith('"#;') or line.endswith('"#'):
                 in_multiline_string = False
             continue
 
