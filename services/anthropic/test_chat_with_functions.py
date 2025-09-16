@@ -482,8 +482,6 @@ class TestChatWithClaude:
         assert tool_args is None
         assert token_input == 1100
         assert token_output == 0
-        self, mock_claude, mock_trim_messages, sample_messages, sample_tools
-    ):
         """Test Claude response with multiple tool use blocks (only first should be processed)."""
         # Setup mocks
         mock_trim_messages.return_value = sample_messages
