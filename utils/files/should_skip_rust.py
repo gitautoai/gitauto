@@ -123,7 +123,7 @@ def should_skip_rust(content: str) -> bool:
             if (
                 "::" in line
                 and ("(" in line and ")" in line)
-                and not re.search(r"\w+\s*\{\}", line)
+                and not re.search(r"\w+\s*\{", line)
             ):
                 return False
             # Check for array indexing which is runtime behavior (variable[index])
