@@ -82,6 +82,7 @@ def deconstruct_github_payload(
     # Extract other information
     github_urls, other_urls = extract_urls(text=issue_body)
     sender_email = get_user_public_email(username=sender_name, token=token)
+    issuer_email = get_user_public_email(username=issuer_name, token=token)
 
     # Set latest commit SHA to empty (fetched later in handler) and issue comments (empty for GitHub as they're fetched separately)
     latest_commit_sha = ""
