@@ -44,6 +44,12 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
+        # If we're currently skipping and encounter an unrecognized section header, stop skipping
+        if skip and "===" in line:
+            # This is a section header we don't recognize, so stop skipping
+            skip = False
+            # Fall through to add this line
+
         # Keep line if not skipping
         if not skip:
             filtered_lines.append(line)
