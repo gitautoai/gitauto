@@ -100,7 +100,10 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("src/test.py", base_args)
 
-        assert "Opened file: 'src/test.py' with line numbers for your information." in result
+        assert (
+            "Opened file: 'src/test.py' with line numbers for your information."
+            in result
+        )
         assert "```src/test.py" in result
         assert "1:def hello():" in result
         assert "2:    print('Hello, World!')" in result
@@ -125,7 +128,10 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("nonexistent/file.py", base_args)
 
-        assert "get_remote_file_content encountered an HTTPError: 404 Client Error: Not Found" in result
+        assert (
+            "get_remote_file_content encountered an HTTPError: 404 Client Error: Not Found"
+            in result
+        )
         assert "Check the file path, correct it, and try again." in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -159,7 +165,12 @@ class TestGetRemoteFileContent:
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
     def test_image_file_handling(
-        self, mock_create_headers, mock_get, mock_describe_image, base_args, mock_image_response
+        self,
+        mock_create_headers,
+        mock_get,
+        mock_describe_image,
+        base_args,
+        mock_image_response,
     ):
         """Test handling of image files using vision API."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
@@ -168,7 +179,9 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("images/test.png", base_args)
 
-        assert "Opened image file: 'images/test.png' and described the content." in result
+        assert (
+            "Opened image file: 'images/test.png' and described the content." in result
+        )
         assert "This is a test image description." in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -178,13 +191,13 @@ class TestGetRemoteFileContent:
     # Test line number parameter
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
-    def test_line_number_parameter(
-        self, mock_create_headers, mock_get, base_args
-    ):
+    def test_line_number_parameter(self, mock_create_headers, mock_get, base_args):
         """Test file retrieval with specific line number."""
         # Create a large file content for testing line number functionality
         large_content = "\n".join([f"line {i}" for i in range(1, 201)])  # 200 lines
-        encoded_content = base64.b64encode(large_content.encode("utf-8")).decode("utf-8")
+        encoded_content = base64.b64encode(large_content.encode("utf-8")).decode(
+            "utf-8"
+        )
 
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -198,8 +211,13 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("large_file.py", base_args, line_number=100)
 
-        assert "Opened file: 'large_file.py' with line numbers for your information." in result
-        assert "```large_file.py#L51-L151" in result  # Should show lines around line 100
+        assert (
+            "Opened file: 'large_file.py' with line numbers for your information."
+            in result
+        )
+        assert (
+            "```large_file.py#L51-L151" in result
+        )  # Should show lines around line 100
         assert "100:line 100" in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -208,23 +226,23 @@ class TestGetRemoteFileContent:
     # Test keyword search
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
-    def test_keyword_search(
-        self, mock_create_headers, mock_get, base_args
-    ):
+    def test_keyword_search(self, mock_create_headers, mock_get, base_args):
         """Test file retrieval with keyword search."""
-        test_content = "\n".join([
-            "def function1():",
-            "    pass",
-            "",
-            "def target_function():",
-            "    print('This is the target')",
-            "",
-            "def another_function():",
-            "    pass",
-            "",
-            "def target_helper():",
-            "    return 'target found'",
-        ])
+        test_content = "\n".join(
+            [
+                "def function1():",
+                "    pass",
+                "",
+                "def target_function():",
+                "    print('This is the target')",
+                "",
+                "def another_function():",
+                "    pass",
+                "",
+                "def target_helper():",
+                "    return 'target found'",
+            ]
+        )
         encoded_content = base64.b64encode(test_content.encode("utf-8")).decode("utf-8")
 
         mock_response = MagicMock()
@@ -239,7 +257,10 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("test.py", base_args, keyword="target")
 
-        assert "Opened file: 'test.py' and found multiple occurrences of 'target'." in result
+        assert (
+            "Opened file: 'test.py' and found multiple occurrences of 'target'."
+            in result
+        )
         assert "target_function" in result
         assert "target_helper" in result
 
@@ -256,7 +277,9 @@ class TestGetRemoteFileContent:
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_get.return_value = mock_file_response
 
-        result = get_remote_file_content("src/test.py", base_args, keyword="nonexistent")
+        result = get_remote_file_content(
+            "src/test.py", base_args, keyword="nonexistent"
+        )
 
         assert "Keyword 'nonexistent' not found in the file 'src/test.py'." in result
 
@@ -270,7 +293,10 @@ class TestGetRemoteFileContent:
             "test.py", base_args, line_number=10, keyword="test"
         )
 
-        assert "Error: You can only specify either line_number or keyword, not both." in result
+        assert (
+            "Error: You can only specify either line_number or keyword, not both."
+            in result
+        )
 
     # Test invalid line_number string
     def test_invalid_line_number_string(self, base_args):
@@ -291,7 +317,10 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("src/test.py", base_args, line_number="1")
 
-        assert "Opened file: 'src/test.py' with line numbers for your information." in result
+        assert (
+            "Opened file: 'src/test.py' with line numbers for your information."
+            in result
+        )
 
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_get.assert_called_once()
@@ -393,21 +422,28 @@ class TestGetRemoteFileContent:
             "src/test.py", base_args, extra_param="ignored", another_param=123
         )
 
-        assert "Opened file: 'src/test.py' with line numbers for your information." in result
+        assert (
+            "Opened file: 'src/test.py' with line numbers for your information."
+            in result
+        )
 
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_get.assert_called_once()
 
     # Test different image file extensions
     @pytest.mark.parametrize(
-        "file_extension",
-        [".png", ".jpeg", ".jpg", ".webp", ".gif"]
+        "file_extension", [".png", ".jpeg", ".jpg", ".webp", ".gif"]
     )
     @patch("services.github.files.get_remote_file_content.describe_image")
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
     def test_various_image_extensions(
-        self, mock_create_headers, mock_get, mock_describe_image, base_args, file_extension
+        self,
+        mock_create_headers,
+        mock_get,
+        mock_describe_image,
+        base_args,
+        file_extension,
     ):
         """Test handling of various image file extensions."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
@@ -464,14 +500,14 @@ class TestGetRemoteFileContent:
     # Test empty file content
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
-    def test_empty_file_content(
-        self, mock_create_headers, mock_get, base_args
-    ):
+    def test_empty_file_content(self, mock_create_headers, mock_get, base_args):
         """Test handling of empty file content."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
         empty_content = ""
-        encoded_content = base64.b64encode(empty_content.encode("utf-8")).decode("utf-8")
+        encoded_content = base64.b64encode(empty_content.encode("utf-8")).decode(
+            "utf-8"
+        )
 
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -483,7 +519,9 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("empty.txt", base_args)
 
-        assert "Opened file: 'empty.txt' with line numbers for your information." in result
+        assert (
+            "Opened file: 'empty.txt' with line numbers for your information." in result
+        )
         assert "```empty.txt" in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -492,14 +530,14 @@ class TestGetRemoteFileContent:
     # Test Unicode content handling
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
-    def test_unicode_content_handling(
-        self, mock_create_headers, mock_get, base_args
-    ):
+    def test_unicode_content_handling(self, mock_create_headers, mock_get, base_args):
         """Test proper handling of Unicode content."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
         unicode_content = "# 测试文件\nprint('Hello, 世界!')\n"
-        encoded_content = base64.b64encode(unicode_content.encode("utf-8")).decode("utf-8")
+        encoded_content = base64.b64encode(unicode_content.encode("utf-8")).decode(
+            "utf-8"
+        )
 
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -561,7 +599,9 @@ class TestGetRemoteFileContent:
 
         # Create small file content (less than 100 lines)
         small_content = "\n".join([f"line {i}" for i in range(1, 51)])  # 50 lines
-        encoded_content = base64.b64encode(small_content.encode("utf-8")).decode("utf-8")
+        encoded_content = base64.b64encode(small_content.encode("utf-8")).decode(
+            "utf-8"
+        )
 
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -574,7 +614,10 @@ class TestGetRemoteFileContent:
         result = get_remote_file_content("small_file.py", base_args, line_number=25)
 
         # Should show entire file since it's small
-        assert "Opened file: 'small_file.py' with line numbers for your information." in result
+        assert (
+            "Opened file: 'small_file.py' with line numbers for your information."
+            in result
+        )
         assert "```small_file.py" in result
         assert "25:line 25" in result
         assert "1:line 1" in result  # Should include first line
@@ -594,7 +637,9 @@ class TestGetRemoteFileContent:
 
         # Create large file content
         large_content = "\n".join([f"line {i}" for i in range(1, 201)])  # 200 lines
-        encoded_content = base64.b64encode(large_content.encode("utf-8")).decode("utf-8")
+        encoded_content = base64.b64encode(large_content.encode("utf-8")).decode(
+            "utf-8"
+        )
 
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -607,7 +652,10 @@ class TestGetRemoteFileContent:
         result = get_remote_file_content("large_file.py", base_args, line_number=1)
 
         # Should show entire file since line_number <= 1
-        assert "Opened file: 'large_file.py' with line numbers for your information." in result
+        assert (
+            "Opened file: 'large_file.py' with line numbers for your information."
+            in result
+        )
         assert "```large_file.py" in result
         assert "1:line 1" in result
         assert "200:line 200" in result
@@ -634,7 +682,10 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("src/test.py", custom_base_args)
 
-        assert "Opened file: 'src/test.py' with line numbers for your information." in result
+        assert (
+            "Opened file: 'src/test.py' with line numbers for your information."
+            in result
+        )
 
         mock_create_headers.assert_called_once_with(token="different-token")
         mock_get.assert_called_once_with(
@@ -656,7 +707,10 @@ class TestGetRemoteFileContent:
         file_path = "src/files with spaces/test-file.py"
         result = get_remote_file_content(file_path, base_args)
 
-        assert f"Opened file: '{file_path}' with line numbers for your information." in result
+        assert (
+            f"Opened file: '{file_path}' with line numbers for your information."
+            in result
+        )
 
         mock_create_headers.assert_called_once_with(token="test-token")
         expected_url = f"https://api.github.com/repos/test-owner/test-repo/contents/{file_path}?ref=test-branch"
@@ -678,7 +732,7 @@ class TestGetRemoteFileContent:
         # Create content with multiple occurrences of keyword far apart
         lines = []
         for i in range(1, 201):  # 200 lines
-            if i == 50 or i == 150:
+            if i in (50, 150):
                 lines.append(f"line {i} with target keyword")
             else:
                 lines.append(f"line {i}")
@@ -696,7 +750,10 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("test.py", base_args, keyword="target")
 
-        assert "Opened file: 'test.py' and found multiple occurrences of 'target'." in result
+        assert (
+            "Opened file: 'test.py' and found multiple occurrences of 'target'."
+            in result
+        )
         assert "50:line 50 with target keyword" in result
         assert "150:line 150 with target keyword" in result
         # Should contain segment separators
@@ -710,7 +767,12 @@ class TestGetRemoteFileContent:
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
     def test_vision_api_error_handling(
-        self, mock_create_headers, mock_get, mock_describe_image, base_args, mock_image_response
+        self,
+        mock_create_headers,
+        mock_get,
+        mock_describe_image,
+        base_args,
+        mock_image_response,
     ):
         """Test handling of vision API errors."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
@@ -744,10 +806,7 @@ class TestGetRemoteFileContent:
         mock_get.assert_not_called()
 
     # Test parametrized HTTP error codes
-    @pytest.mark.parametrize(
-        "status_code",
-        [400, 401, 403, 422, 500, 502, 503]
-    )
+    @pytest.mark.parametrize("status_code", [400, 401, 403, 422, 500, 502, 503])
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
     def test_various_http_error_codes(
@@ -784,7 +843,7 @@ class TestGetRemoteFileContent:
             (".json", '{"message": "Hello, World!"}'),
             (".txt", "Hello, World!\nThis is a text file."),
             (".yml", "version: '3'\nservices:\n  app:\n    image: nginx"),
-        ]
+        ],
     )
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
@@ -807,10 +866,13 @@ class TestGetRemoteFileContent:
         file_path = f"test{file_extension}"
         result = get_remote_file_content(file_path, base_args)
 
-        assert f"Opened file: '{file_path}' with line numbers for your information." in result
+        assert (
+            f"Opened file: '{file_path}' with line numbers for your information."
+            in result
+        )
         assert f"```{file_path}" in result
         # Check that content is properly decoded and formatted
-        for line_num, line in enumerate(content.split('\n'), 1):
+        for line_num, line in enumerate(content.split("\n"), 1):
             assert f"{line_num}:{line}" in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -827,7 +889,9 @@ class TestGetRemoteFileContent:
 
         # Create large file content
         large_content = "\n".join([f"line {i}" for i in range(1, 201)])  # 200 lines
-        encoded_content = base64.b64encode(large_content.encode("utf-8")).decode("utf-8")
+        encoded_content = base64.b64encode(large_content.encode("utf-8")).decode(
+            "utf-8"
+        )
 
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -840,7 +904,10 @@ class TestGetRemoteFileContent:
         result = get_remote_file_content("large_file.py", base_args, line_number=200)
 
         # Should show lines around line 200 (150-200)
-        assert "Opened file: 'large_file.py' with line numbers for your information." in result
+        assert (
+            "Opened file: 'large_file.py' with line numbers for your information."
+            in result
+        )
         assert "```large_file.py#L151-L201" in result
         assert "200:line 200" in result
         assert "151:line 151" in result

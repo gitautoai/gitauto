@@ -1,5 +1,6 @@
 # Standard imports
 import json
+import time
 from typing import Any, Optional, cast
 
 # Third-party imports
@@ -15,8 +16,8 @@ from openai.types.chat import ChatCompletionDeveloperMessageParam
 
 # Local imports
 from config import OPENAI_MODEL_ID_GPT_5, TIMEOUT
-from services.openai.count_tokens import count_tokens
 from services.openai.init import create_openai_client
+from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -51,6 +52,7 @@ def chat_with_openai(
     system_content: str,
     tools: list[ChatCompletionToolParam],
     model_id: str = OPENAI_MODEL_ID_GPT_5,
+    usage_id: int | None = None,
 ) -> tuple[
     dict[str, Any],  # Response message
     Optional[str],  # Tool call ID
@@ -125,6 +127,7 @@ def chat_with_openai(
 
     # https://platform.openai.com/docs/api-reference/chat/create?lang=python
     client: OpenAI = create_openai_client()
+    start_time = time.time()
     completion: ChatCompletion = client.chat.completions.create(
         messages=all_messages,
         model=model_id,
@@ -133,19 +136,33 @@ def chat_with_openai(
         tools=tools,
         tool_choice="auto",  # DO NOT USE "required" and allow GitAuto not to call any tools.
     )
+    response_time_ms = int((time.time() - start_time) * 1000)
 
     choice: Choice = completion.choices[0]
     tool_calls = choice.message.tool_calls
 
-    # Calculate tokens
-    token_input = count_tokens(messages=messages)
-    token_output = count_tokens(messages=[choice.message])
+    # Get actual token counts from OpenAI response
+    token_input = completion.usage.prompt_tokens if completion.usage else 0
+    token_output = completion.usage.completion_tokens if completion.usage else 0
 
     # Handle tool calls and create response message
     response_message = {
         "role": choice.message.role,
         "content": choice.message.content or "",
     }
+
+    # Log the request history
+    full_messages = [{"role": "system", "content": system_content}] + messages
+    insert_llm_request(
+        usage_id=usage_id,
+        provider="openai",
+        model_id=model_id,
+        input_messages=full_messages,
+        input_tokens=token_input,
+        output_message=response_message,
+        output_tokens=token_output,
+        response_time_ms=response_time_ms,
+    )
 
     if not tool_calls:
         return (

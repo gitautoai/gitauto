@@ -1,5 +1,6 @@
 # Standard imports
-from typing import Any
+import time
+from typing import Any, cast
 
 # Third party imports
 from anthropic import AuthenticationError
@@ -15,6 +16,7 @@ from services.anthropic.exceptions import (
 )
 from services.anthropic.message_to_dict import message_to_dict
 from services.anthropic.trim_messages import trim_messages_to_token_limit
+from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 from utils.error.handle_exceptions import handle_exceptions
 from utils.objects.safe_get_attribute import safe_get_attribute
 
@@ -25,6 +27,7 @@ def chat_with_claude(
     system_content: str,
     tools: list[dict[str, Any]],
     model_id: str = ANTHROPIC_MODEL_ID_40,
+    usage_id: int | None = None,
 ):
     # https://docs.anthropic.com/en/api/client-sdks
     # Check token count and delete messages if necessary
@@ -51,14 +54,18 @@ def chat_with_claude(
 
         if name and description:
             anthropic_tools.append(
-                {
-                    "name": name,
-                    "description": description,
-                    "input_schema": input_schema,
-                }
+                cast(
+                    ToolUnionParam,
+                    {
+                        "name": name,
+                        "description": description,
+                        "input_schema": input_schema,
+                    },
+                )
             )
 
     # https://docs.anthropic.com/en/api/messages
+    start_time = time.time()
     try:
         response = claude.messages.create(
             model=model_id,
@@ -69,6 +76,7 @@ def chat_with_claude(
             max_tokens=max_tokens,
             temperature=0.0,
         )
+        response_time_ms = int((time.time() - start_time) * 1000)
     except OverloadedError as e:
         raise ClaudeOverloadedError("Claude API is overloaded (529)") from e
     except AuthenticationError as e:
@@ -120,10 +128,25 @@ def chat_with_claude(
             }
         )
 
-    token_output = 0
-    # token_output = claude.messages.count_tokens(
-    #     messages=[assistant_message], model=model_id
-    # )
+    # Get actual output tokens from response
+    token_output = (
+        response.usage.output_tokens
+        if hasattr(response, "usage") and response.usage
+        else 0
+    )
+
+    # Combine system message with user messages for logging
+    full_messages = [{"role": "system", "content": system_content}] + messages
+    insert_llm_request(
+        usage_id=usage_id,
+        provider="claude",
+        model_id=model_id,
+        input_messages=full_messages,
+        input_tokens=token_input,
+        output_message=assistant_message,
+        output_tokens=token_output,
+        response_time_ms=response_time_ms,
+    )
 
     return (
         assistant_message,
