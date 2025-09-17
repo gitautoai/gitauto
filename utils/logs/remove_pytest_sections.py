@@ -82,6 +82,10 @@ def _is_application_content(line: str) -> bool:
     if not stripped:
         return False  # Empty lines are not application content
 
+    # Lines that start with spaces are often part of pytest output (stack traces, warnings, etc.)
+    if line.startswith("  "):
+        return False
+
     # Check if this line contains pytest-specific patterns
     pytest_patterns = [
         "platform ", "cachedir:", "rootdir:", "plugins:", "collecting", "collected",
