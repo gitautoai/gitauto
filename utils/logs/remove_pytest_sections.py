@@ -99,5 +99,5 @@ def _is_application_content(line: str) -> bool:
         return False
 
     # For now, be very conservative and only consider lines that look like actual error messages
-    # This is a conservative approach to avoid false positives
+    # or application logs, not test-related content
     return "content" in stripped.lower()
