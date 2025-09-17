@@ -61,14 +61,14 @@ def remove_pytest_sections(error_log: str):
         if not skip:
             filtered_lines.append(line)
         else:
-            # Check if this line looks like pytest output
-            if _is_pytest_line(line):
-                # We're skipping and this looks like pytest output, so continue skipping
-                content_removed = True
-            else:
-                # We're skipping but this doesn't look like pytest output, so stop skipping
+            # We're skipping - check if this line looks like pytest output
+            if not _is_pytest_line(line):
+                # This doesn't look like pytest output, so stop skipping
                 skip = False
                 filtered_lines.append(line)
+            else:
+                # This looks like pytest output, continue skipping
+                content_removed = True
 
     # Join and only clean up excessive blank lines if we actually removed content
     result = "\n".join(filtered_lines)
