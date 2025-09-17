@@ -45,8 +45,13 @@ def remove_pytest_sections(error_log: str):
             continue
 
         # If we're currently skipping and encounter an unrecognized section header, stop skipping
-        if skip and "===" in line:
+        if skip and "===" in line and not any(keyword in line for keyword in ["test session starts", "warnings summary"]):
             # This is a section header we don't recognize, so stop skipping
+            skip = False
+            # Fall through to add this line
+
+        # If we're skipping and encounter a line that doesn't look like pytest output, stop skipping
+        if skip and "===" not in line and not line.strip().startswith(("platform ", "cachedir:", "rootdir:", "plugins:", "collecting", "test_", "PASSED", "FAILED", "SKIPPED", "ERROR", "::", "[ ", "%]")):
             skip = False
             # Fall through to add this line
 
