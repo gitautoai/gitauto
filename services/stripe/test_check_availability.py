@@ -435,6 +435,101 @@ class TestCheckAvailability:
         assert result["requests_left"] is None
             paid_subscription=None,
             installation_id=456,
+
+    def test_function_signature_and_return_type_structure(self, mock_dependencies):
+        """Test that function signature and return structure are correct."""
+        # Arrange
+        mock_dependencies["get_stripe_customer_id"].return_value = None
+        mock_dependencies["get_billing_type"].return_value = "credit"
+        mock_dependencies["get_owner"].return_value = {"credit_balance_usd": 10}
+
+        # Act
+        result = check_availability(
+            owner_id=123,
+            owner_name="test_owner",
+            repo_name="test_repo",
+            installation_id=456,
+            sender_name="test_sender",
+        )
+
+        # Assert return type structure
+        assert isinstance(result, dict)
+        assert isinstance(result["can_proceed"], bool)
+        assert isinstance(result["billing_type"], str)
+        assert result["requests_left"] is None or isinstance(result["requests_left"], int)
+        assert isinstance(result["credit_balance_usd"], int)
+        assert result["period_end_date"] is None or isinstance(result["period_end_date"], datetime)
+        assert isinstance(result["user_message"], str)
+        assert isinstance(result["log_message"], str)
+
+    def test_subscription_with_complex_subscription_limit_data(self, mock_dependencies):
+        """Test subscription billing with complex subscription limit data."""
+        # Arrange
+        period_end = datetime(2024, 12, 31, 23, 59, 59)
+        mock_dependencies["get_stripe_customer_id"].return_value = "cus_complex123"
+        mock_dependencies["get_paid_subscription"].return_value = {
+            "id": "sub_complex123",
+            "status": "active",
+            "current_period_end": period_end.timestamp(),
+        }
+        mock_dependencies["get_billing_type"].return_value = "subscription"
+        mock_dependencies["check_subscription_limit"].return_value = {
+            "can_proceed": True,
+            "requests_left": 999,
+            "period_end_date": period_end,
+            "request_limit": 1000,
+        }
+
+        # Act
+        result = check_availability(
+            owner_id=999,
+            owner_name="complex_owner",
+            repo_name="complex_repo",
+            installation_id=888,
+            sender_name="complex_sender",
+        )
+
+        # Assert
+        assert result["can_proceed"] is True
+        assert result["billing_type"] == "subscription"
+        assert result["requests_left"] == 999
+        assert result["period_end_date"] == period_end
+        assert "999 requests left" in result["log_message"]
+        assert result["user_message"] == ""
+
+    def test_credit_billing_with_edge_case_balances(self, mock_dependencies):
+        """Test credit billing with various edge case balance values."""
+        test_cases = [
+            (1, True, "Checked credit balance. $1 remaining."),
+            (0, False, "Insufficient credits for test_owner/test_repo"),
+            (-1, False, "Insufficient credits for test_owner/test_repo"),
+        ]
+
+        for balance, expected_can_proceed, expected_log_message in test_cases:
+            # Arrange
+            mock_dependencies["get_stripe_customer_id"].return_value = None
+            mock_dependencies["get_billing_type"].return_value = "credit"
+            mock_dependencies["get_owner"].return_value = {"credit_balance_usd": balance}
+            if not expected_can_proceed:
+                mock_dependencies["get_insufficient_credits_message"].return_value = "Insufficient credits"
+
+            # Act
+            result = check_availability(
+                owner_id=123,
+                owner_name="test_owner",
+                repo_name="test_repo",
+                installation_id=456,
+                sender_name="test_sender",
+            )
+
+            # Assert
+            assert result["can_proceed"] is expected_can_proceed, f"Failed for balance {balance}"
+            assert result["credit_balance_usd"] == balance, f"Failed for balance {balance}"
+            assert result["log_message"] == expected_log_message, f"Failed for balance {balance}"
+
+            # Reset mocks for next iteration
+            mock_dependencies["get_insufficient_credits_message"].reset_mock()
+
         )
 
     def test_subscription_with_stripe_customer_id_but_no_subscription(self, mock_dependencies):
