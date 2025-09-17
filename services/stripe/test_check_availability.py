@@ -387,6 +387,92 @@ class TestCheckAvailability:
         assert result["billing_type"] == "subscription"
         mock_dependencies["get_paid_subscription"].assert_not_called()
         mock_dependencies["check_subscription_limit"].assert_called_once_with(
+            paid_subscription=None,
+            installation_id=456,
+        )
+
+    def test_subscription_with_stripe_customer_id_but_no_subscription(self, mock_dependencies):
+        """Test subscription billing with stripe customer ID but no active subscription."""
+        # Arrange
+        mock_dependencies["get_stripe_customer_id"].return_value = "cus_123"
+        mock_dependencies["get_paid_subscription"].return_value = None
+        mock_dependencies["get_billing_type"].return_value = "subscription"
+        mock_dependencies["check_subscription_limit"].return_value = {
+            "can_proceed": False,
+            "requests_left": 0,
+            "period_end_date": None,
+            "request_limit": 0,
+        }
+        mock_dependencies["get_subscription_limit_message"].return_value = "No active subscription"
+
+        # Act
+        result = check_availability(
+            owner_id=123,
+            owner_name="test_owner",
+            repo_name="test_repo",
+            installation_id=456,
+            sender_name="test_sender",
+        )
+
+        # Assert
+        assert result["can_proceed"] is False
+        assert result["billing_type"] == "subscription"
+        mock_dependencies["get_paid_subscription"].assert_called_once_with(customer_id="cus_123")
+        mock_dependencies["check_subscription_limit"].assert_called_once_with(
+            paid_subscription=None,
+            installation_id=456,
+        )
+
+    def test_get_billing_type_called_with_correct_parameters(self, mock_dependencies):
+        """Test that get_billing_type is called with correct parameters."""
+        # Arrange
+        mock_dependencies["get_stripe_customer_id"].return_value = "cus_123"
+        mock_dependencies["get_paid_subscription"].return_value = {"id": "sub_123"}
+        mock_dependencies["get_billing_type"].return_value = "exception"
+
+        # Act
+        check_availability(
+            owner_id=123,
+            owner_name="test_owner",
+            repo_name="test_repo",
+            installation_id=456,
+            sender_name="test_sender",
+        )
+
+        # Assert
+        mock_dependencies["get_billing_type"].assert_called_once_with(
+            owner_name="test_owner",
+            stripe_customer_id="cus_123",
+            paid_subscription={"id": "sub_123"},
+        )
+
+    def test_all_return_fields_are_present(self, mock_dependencies):
+        """Test that all required fields are present in the return value."""
+        # Arrange
+        mock_dependencies["get_stripe_customer_id"].return_value = None
+        mock_dependencies["get_billing_type"].return_value = "exception"
+
+        # Act
+        result = check_availability(
+            owner_id=123,
+            owner_name="test_owner",
+            repo_name="test_repo",
+            installation_id=456,
+            sender_name="test_sender",
+        )
+
+        # Assert
+        required_fields = [
+            "can_proceed",
+            "billing_type",
+            "requests_left",
+            "credit_balance_usd",
+            "period_end_date",
+            "user_message",
+            "log_message",
+        ]
+        for field in required_fields:
+            assert field in result
 
     def test_credit_billing_with_zero_threshold_and_positive_balance(self, mock_dependencies):
         """Test auto-reload behavior when threshold is 0 and balance is positive."""
@@ -433,8 +519,10 @@ class TestCheckAvailability:
         assert result["can_proceed"] is False
         assert result["billing_type"] == "unknown_type"
         assert result["requests_left"] is None
-            paid_subscription=None,
-            installation_id=456,
+        assert result["credit_balance_usd"] == 0
+        assert result["period_end_date"] is None
+        assert result["user_message"] == ""
+        assert result["log_message"] == ""
 
     def test_function_signature_and_return_type_structure(self, mock_dependencies):
         """Test that function signature and return structure are correct."""
@@ -530,46 +618,19 @@ class TestCheckAvailability:
             # Reset mocks for next iteration
             mock_dependencies["get_insufficient_credits_message"].reset_mock()
 
-        )
-
-    def test_subscription_with_stripe_customer_id_but_no_subscription(self, mock_dependencies):
-        """Test subscription billing with stripe customer ID but no active subscription."""
+    def test_all_external_dependencies_are_called_correctly(self, mock_dependencies):
+        """Test that all external dependencies are called with correct parameters."""
         # Arrange
-        mock_dependencies["get_stripe_customer_id"].return_value = "cus_123"
-        mock_dependencies["get_paid_subscription"].return_value = None
+        mock_dependencies["get_stripe_customer_id"].return_value = "cus_test"
+        mock_dependencies["get_paid_subscription"].return_value = {"id": "sub_test"}
         mock_dependencies["get_billing_type"].return_value = "subscription"
         mock_dependencies["check_subscription_limit"].return_value = {
             "can_proceed": False,
             "requests_left": 0,
-            "period_end_date": None,
-            "request_limit": 0,
+            "period_end_date": datetime(2024, 12, 31),
+            "request_limit": 100,
         }
-        mock_dependencies["get_subscription_limit_message"].return_value = "No active subscription"
-
-        # Act
-        result = check_availability(
-            owner_id=123,
-            owner_name="test_owner",
-            repo_name="test_repo",
-            installation_id=456,
-            sender_name="test_sender",
-        )
-
-        # Assert
-        assert result["can_proceed"] is False
-        assert result["billing_type"] == "subscription"
-        mock_dependencies["get_paid_subscription"].assert_called_once_with(customer_id="cus_123")
-        mock_dependencies["check_subscription_limit"].assert_called_once_with(
-            paid_subscription=None,
-            installation_id=456,
-        )
-
-    def test_get_billing_type_called_with_correct_parameters(self, mock_dependencies):
-        """Test that get_billing_type is called with correct parameters."""
-        # Arrange
-        mock_dependencies["get_stripe_customer_id"].return_value = "cus_123"
-        mock_dependencies["get_paid_subscription"].return_value = {"id": "sub_123"}
-        mock_dependencies["get_billing_type"].return_value = "exception"
+        mock_dependencies["get_subscription_limit_message"].return_value = "Limit reached"
 
         # Act
         check_availability(
@@ -580,40 +641,51 @@ class TestCheckAvailability:
             sender_name="test_sender",
         )
 
-        # Assert
+        # Assert all dependencies were called correctly
+        mock_dependencies["get_stripe_customer_id"].assert_called_once_with(123)
+        mock_dependencies["get_paid_subscription"].assert_called_once_with(customer_id="cus_test")
         mock_dependencies["get_billing_type"].assert_called_once_with(
             owner_name="test_owner",
-            stripe_customer_id="cus_123",
-            paid_subscription={"id": "sub_123"},
+            stripe_customer_id="cus_test",
+            paid_subscription={"id": "sub_test"},
         )
-
-    def test_all_return_fields_are_present(self, mock_dependencies):
-        """Test that all required fields are present in the return value."""
-        # Arrange
-        mock_dependencies["get_stripe_customer_id"].return_value = None
-        mock_dependencies["get_billing_type"].return_value = "exception"
-
-        # Act
-        result = check_availability(
-            owner_id=123,
-            owner_name="test_owner",
-            repo_name="test_repo",
+        mock_dependencies["check_subscription_limit"].assert_called_once_with(
+            paid_subscription={"id": "sub_test"},
             installation_id=456,
-            sender_name="test_sender",
+        )
+        mock_dependencies["get_subscription_limit_message"].assert_called_once_with(
+            user_name="test_sender",
+            request_limit=100,
+            period_end_date=datetime(2024, 12, 31),
         )
 
-        # Assert
-        required_fields = [
-            "can_proceed",
-            "billing_type",
-            "requests_left",
-            "credit_balance_usd",
-            "period_end_date",
-            "user_message",
-            "log_message",
-        ]
-        for field in required_fields:
-            assert field in result
+    def test_exception_handling_returns_default_on_error(self):
+        """Test that exceptions are handled and default values are returned."""
+        # This test verifies the decorator behavior by causing an exception
+        with patch("services.stripe.check_availability.get_stripe_customer_id") as mock_get_stripe_customer_id:
+            # Make the first dependency call raise an exception
+            mock_get_stripe_customer_id.side_effect = Exception("Test exception")
+
+            # Act
+            result = check_availability(
+                owner_id=123,
+                owner_name="test_owner",
+                repo_name="test_repo",
+                installation_id=456,
+                sender_name="test_sender",
+            )
+
+            # Assert that default values are returned
+            expected_default = {
+                "can_proceed": False,
+                "billing_type": "credit",
+                "requests_left": None,
+                "credit_balance_usd": 0,
+                "period_end_date": None,
+                "user_message": "Error checking availability",
+                "log_message": "Error checking availability",
+            }
+            assert result == expected_default
 
     @patch("services.stripe.check_availability.handle_exceptions")
     def test_function_has_exception_handling_decorator(self, mock_handle_exceptions):
