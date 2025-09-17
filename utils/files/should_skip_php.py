@@ -91,6 +91,10 @@ def should_skip_php(content: str) -> bool:
             else:
                 pending_class = True
                 in_class = True
+        if pending_class and re.match(r"^\{", line):
+            in_class = True
+            pending_class = False
+            continue
             continue
         if in_class:
             if "}" in line:
