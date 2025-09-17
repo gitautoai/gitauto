@@ -620,6 +620,8 @@ def test_deconstruct_github_payload_handle_exceptions_decorator():
     )
 
     with patch(
+        "services.github.utils.deconstruct_github_payload.PRODUCT_ID", "gitauto"
+    ), patch(
         "services.github.utils.deconstruct_github_payload.get_installation_access_token",
         return_value=None  # This will trigger the ValueError
     ):
