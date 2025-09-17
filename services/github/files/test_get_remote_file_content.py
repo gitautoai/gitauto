@@ -841,7 +841,7 @@ class TestGetRemoteFileContent:
 
         # Should show lines around line 200 (150-200)
         assert "Opened file: 'large_file.py' with line numbers for your information." in result
-        assert "```large_file.py#L150-L200" in result
+        assert "```large_file.py#L151-L200" in result
         assert "200:line 200" in result
         assert "150:line 150" in result
 
