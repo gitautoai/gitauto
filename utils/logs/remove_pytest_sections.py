@@ -26,6 +26,12 @@ def remove_pytest_sections(error_log: str):
             content_removed = True
             continue
 
+        # Start skipping at coverage section
+        if "coverage:" in line and "----------" in line:
+            skip = True
+            content_removed = True
+            continue
+
         # Stop skipping and keep failures section
         if "===" in line and "FAILURES" in line:
             skip = False
