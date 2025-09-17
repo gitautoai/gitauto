@@ -10,6 +10,7 @@ def remove_pytest_sections(error_log: str):
     lines = error_log.split("\n")
     filtered_lines = []
     skip = False
+    just_stopped_skipping = False
     content_removed = False
 
     for line in lines:
