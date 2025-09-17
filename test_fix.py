@@ -23,3 +23,9 @@ print(f"Result: {repr(result)}")
 print(f"Expected: {repr(expected)}")
 print(f"Match: {result == expected}")
 print("Test passed!" if result == expected else "Test failed!")
+
+# Test _is_pytest_line function
+from utils.logs.remove_pytest_sections import _is_pytest_line
+print(f"\n_is_pytest_line('After content'): {_is_pytest_line('After content')}")
+print(f"_is_pytest_line('test_example.py::test_pass PASSED'): {_is_pytest_line('test_example.py::test_pass PASSED')}")
+print(f"_is_pytest_line('platform linux -- Python 3.11.4'): {_is_pytest_line('platform linux -- Python 3.11.4')}")
