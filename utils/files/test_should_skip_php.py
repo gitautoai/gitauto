@@ -147,7 +147,6 @@ def test_whitespace_only():
 
 
 
-
     """
     assert should_skip_php(content) is True
 
@@ -846,3 +845,279 @@ $stringVar = "double quotes";
 $singleVar = 'single quotes';
 $arrayVar = ['array', 'values'];
 $objectVar = {'key': 'value'};"""
+    assert should_skip_php(content) is True
+
+
+def test_return_with_quotes():
+    # Test return statement with different quote types - covers line 136
+    content = """<?php
+return "simple string";
+return 'another string';
+return ['array', 'return'];
+return {'object': 'return'};"""
+    assert should_skip_php(content) is True
+
+
+def test_array_closing_with_semicolon():
+    # Test array closing with semicolon - covers line 142
+    content = """<?php
+$config = [
+    'key' => 'value'
+};"""
+    assert should_skip_php(content) is True
+
+
+def test_array_element_patterns():
+    # Test various array element patterns - covers line 146
+    content = """<?php
+$config = [
+    'simple' => 'value',
+    "double" => "quotes",
+    key => value,
+    'number' => 42,
+    'boolean' => true,
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_nested_array_pattern():
+    # Test nested array pattern - covers line 149
+    content = """<?php
+$config = [
+    'database' => [
+        'host' => 'localhost'
+    ],
+    "cache" => [
+        "driver" => "redis"
+    ]
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_closing_statements():
+    # Test various closing statements - covers line 155
+    content = """<?php
+class MyClass {
+    public $prop;
+}
+
+$array = [
+    'value'
+];
+
+function_call();
+
+?>"""
+    assert should_skip_php(content) is True
+
+
+def test_for_loop_detection():
+    # Test for loop detection - covers line 163-165
+    content = """<?php
+for ($i = 0; $i < 10; $i++) {
+    echo $i;
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_while_loop_detection():
+    # Test while loop detection - covers line 163-165
+    content = """<?php
+while ($condition) {
+    doSomething();
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_unknown_code_detection():
+    # Test unknown code detection - covers line 169
+    content = """<?php
+echo "Hello World";"""
+    assert should_skip_php(content) is False
+
+
+def test_complex_mixed_content():
+    # Test complex mixed content that should be skipped
+    content = """<?php
+namespace App\\Models;
+
+use App\\Contracts\\UserInterface;
+use App\\Traits\\Timestampable;
+
+/* Multi-line comment
+   with documentation */
+
+// Single line comment
+
+const MAX_USERS = 1000;
+const API_VERSION = '2.0';
+
+define('DEBUG_MODE', false);
+
+interface UserRepositoryInterface
+{
+    public function findById(int $id): ?User;
+    public function save(User $user): bool;
+}
+
+trait Loggable
+{
+    public $logLevel = 'info';
+}
+
+class User
+{
+    public string $name;
+    private int $id;
+    protected string $email;
+}
+
+class UserNotFoundException extends Exception
+{
+}
+
+$config = [
+    'database' => [
+        'host' => 'localhost',
+        'port' => 3306
+    ],
+    'cache' => [
+        'driver' => 'redis'
+    ]
+];
+
+return [
+    'settings' => $config,
+    'version' => API_VERSION
+];
+?>"""
+    assert should_skip_php(content) is True
+
+
+def test_complex_mixed_content_with_logic():
+    # Test complex mixed content with logic that should NOT be skipped
+    content = """<?php
+namespace App\\Services;
+
+use App\\Models\\User;
+
+const MAX_RETRIES = 3;
+
+class UserService
+{
+    private $repository;
+
+    public function __construct(UserRepository $repo)
+    {
+        $this->repository = $repo;
+    }
+
+    public function createUser(array $data): User
+    {
+        if (empty($data['name'])) {
+            throw new InvalidArgumentException('Name is required');
+        }
+
+        return $this->repository->create($data);
+    }
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_heredoc_with_starting_marker():
+    # Test heredoc detection with starting marker - edge case for line 33
+    content = """<?php
+const TEMPLATE = <<<EOT
+This line starts with <<<INNER but should not trigger new heredoc
+EOT;"""
+    assert should_skip_php(content) is True
+
+
+def test_multiline_comment_start_end_same_line():
+    # Test multiline comment that starts and ends on same line
+    content = """<?php
+/* single line multiline comment */ const VALUE = 42;
+const ANOTHER = 24;"""
+    assert should_skip_php(content) is True
+
+
+def test_interface_method_with_private_protected():
+    # Test interface method with private/protected modifiers - covers line 71
+    content = """<?php
+interface TestInterface
+{
+    private function privateMethod(): void;
+    protected function protectedMethod(): string;
+    public function publicMethod(): int;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_trait_with_opening_brace_same_line():
+    # Test trait with opening brace on same line - covers line 79
+    content = """<?php
+trait MyTrait {
+    public $property;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_class_without_opening_brace_same_line():
+    # Test class without opening brace on same line - covers line 88-91
+    content = """<?php
+class MyClass
+{
+    public $property;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_variable_assignment_without_array_bracket():
+    # Test variable assignment that doesn't trigger array detection - covers line 131-134
+    content = """<?php
+$stringVar = "simple string";
+$numberVar = 42;
+$boolVar = true;"""
+    assert should_skip_php(content) is True
+
+
+def test_return_statement_without_array_bracket():
+    # Test return statement that doesn't trigger array detection - covers line 136-139
+    content = """<?php
+return "simple string";
+return 42;
+return true;"""
+    assert should_skip_php(content) is True
+
+
+def test_array_initialization_without_closing_bracket():
+    # Test array initialization that spans multiple lines - covers line 132-133
+    content = """<?php
+$config = [
+    'key1' => 'value1',
+    'key2' => 'value2'
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_return_array_without_closing_bracket():
+    # Test return array that spans multiple lines - covers line 137-138
+    content = """<?php
+return [
+    'status' => 'success',
+    'data' => 'result'
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_edge_case_empty_lines_and_comments():
+    # Test file with only empty lines, comments, and PHP tags
+    content = """<?php
+
+// Comment only
+
+/* Another comment */
+
+
+?>"""
+    assert should_skip_php(content) is True
