@@ -85,7 +85,9 @@ def _is_pytest_line(line: str) -> bool:
         "UserWarning", ".py:", "AssertionError", "def test_",
         "> ", "E ", "assert ", "-- Docs:", "https://docs.pytest.org/",
         "Coverage LCOV written to file", "Enable tracemalloc",
-        "See https://docs.pytest.org/", "RuntimeWarning:"
+        "See https://docs.pytest.org/", "RuntimeWarning:",
+        "handle_coverage_report", "coroutine", "was never awaited",
+        "traceback where the object was allocated", "resource-warnings"
     ]
 
     return any(pattern in stripped for pattern in pytest_patterns)
