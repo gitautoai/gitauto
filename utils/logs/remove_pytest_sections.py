@@ -44,6 +44,21 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
+        # If we're skipping and encounter a line that doesn't look like a pytest section,
+        # we've probably moved past the pytest content, so stop skipping
+        if skip and not ("===" in line and any(keyword in line for keyword in [
+            "test session starts", "warnings summary", "FAILURES", "short test summary info",
+            "passed", "failed", "error", "skipped", "collected", "platform", "cachedir",
+            "rootdir", "plugins", "collecting"
+        ])):
+            # Check if this line looks like regular content (not pytest output)
+            # Pytest output lines often have specific patterns
+            if not (line.strip().endswith(("PASSED", "FAILED", "SKIPPED", "ERROR")) or
+                    line.strip().startswith(("test_", "::")) or
+                    "%" in line and ("[" in line and "]" in line) or
+                    line.strip() == ""):
+                skip = False
+
         # Keep line if not skipping
         if not skip:
             filtered_lines.append(line)
