@@ -1,5 +1,5 @@
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from services.stripe.check_availability import check_availability
@@ -11,14 +11,23 @@ class TestCheckAvailability:
     @pytest.fixture
     def mock_dependencies(self):
         """Mock all external dependencies."""
-        with patch("services.stripe.check_availability.get_stripe_customer_id") as mock_get_stripe_customer_id, \
-             patch("services.stripe.check_availability.get_paid_subscription") as mock_get_paid_subscription, \
-             patch("services.stripe.check_availability.get_billing_type") as mock_get_billing_type, \
-             patch("services.stripe.check_availability.check_subscription_limit") as mock_check_subscription_limit, \
-             patch("services.stripe.check_availability.get_owner") as mock_get_owner, \
-             patch("services.stripe.check_availability.trigger_auto_reload") as mock_trigger_auto_reload, \
-             patch("services.stripe.check_availability.get_subscription_limit_message") as mock_get_subscription_limit_message, \
-             patch("services.stripe.check_availability.get_insufficient_credits_message") as mock_get_insufficient_credits_message:
+        with patch(
+            "services.stripe.check_availability.get_stripe_customer_id"
+        ) as mock_get_stripe_customer_id, patch(
+            "services.stripe.check_availability.get_paid_subscription"
+        ) as mock_get_paid_subscription, patch(
+            "services.stripe.check_availability.get_billing_type"
+        ) as mock_get_billing_type, patch(
+            "services.stripe.check_availability.check_subscription_limit"
+        ) as mock_check_subscription_limit, patch(
+            "services.stripe.check_availability.get_owner"
+        ) as mock_get_owner, patch(
+            "services.stripe.check_availability.trigger_auto_reload"
+        ) as mock_trigger_auto_reload, patch(
+            "services.stripe.check_availability.get_subscription_limit_message"
+        ) as mock_get_subscription_limit_message, patch(
+            "services.stripe.check_availability.get_insufficient_credits_message"
+        ) as mock_get_insufficient_credits_message:
 
             yield {
                 "get_stripe_customer_id": mock_get_stripe_customer_id,
@@ -104,7 +113,9 @@ class TestCheckAvailability:
             "period_end_date": period_end,
             "request_limit": 100,
         }
-        mock_dependencies["get_subscription_limit_message"].return_value = "Subscription limit reached"
+        mock_dependencies["get_subscription_limit_message"].return_value = (
+            "Subscription limit reached"
+        )
 
         # Act
         result = check_availability(
@@ -161,7 +172,9 @@ class TestCheckAvailability:
         mock_dependencies["get_stripe_customer_id"].return_value = None
         mock_dependencies["get_billing_type"].return_value = "credit"
         mock_dependencies["get_owner"].return_value = {"credit_balance_usd": 0}
-        mock_dependencies["get_insufficient_credits_message"].return_value = "Insufficient credits"
+        mock_dependencies["get_insufficient_credits_message"].return_value = (
+            "Insufficient credits"
+        )
 
         # Act
         result = check_availability(
@@ -188,7 +201,9 @@ class TestCheckAvailability:
         mock_dependencies["get_stripe_customer_id"].return_value = None
         mock_dependencies["get_billing_type"].return_value = "credit"
         mock_dependencies["get_owner"].return_value = None
-        mock_dependencies["get_insufficient_credits_message"].return_value = "Insufficient credits"
+        mock_dependencies["get_insufficient_credits_message"].return_value = (
+            "Insufficient credits"
+        )
 
         # Act
         result = check_availability(
@@ -281,7 +296,9 @@ class TestCheckAvailability:
         assert result["credit_balance_usd"] == 5
         mock_dependencies["trigger_auto_reload"].assert_not_called()
 
-    def test_auto_reload_not_triggered_when_insufficient_credits(self, mock_dependencies):
+    def test_auto_reload_not_triggered_when_insufficient_credits(
+        self, mock_dependencies
+    ):
         """Test that auto-reload is not triggered when credits are insufficient."""
         # Arrange
         mock_dependencies["get_stripe_customer_id"].return_value = None
@@ -291,7 +308,9 @@ class TestCheckAvailability:
             "auto_reload_enabled": True,
             "auto_reload_threshold_usd": 10,
         }
-        mock_dependencies["get_insufficient_credits_message"].return_value = "Insufficient credits"
+        mock_dependencies["get_insufficient_credits_message"].return_value = (
+            "Insufficient credits"
+        )
 
         # Act
         result = check_availability(
@@ -332,7 +351,9 @@ class TestCheckAvailability:
         assert result["credit_balance_usd"] == 10
         mock_dependencies["trigger_auto_reload"].assert_called_once()
 
-    def test_auto_reload_with_missing_threshold_defaults_to_zero(self, mock_dependencies):
+    def test_auto_reload_with_missing_threshold_defaults_to_zero(
+        self, mock_dependencies
+    ):
         """Test that auto-reload uses default threshold of 0 when not specified."""
         # Arrange
         mock_dependencies["get_stripe_customer_id"].return_value = None
@@ -342,7 +363,9 @@ class TestCheckAvailability:
             "auto_reload_enabled": True,
             # auto_reload_threshold_usd not specified, should default to 0
         }
-        mock_dependencies["get_insufficient_credits_message"].return_value = "Insufficient credits"
+        mock_dependencies["get_insufficient_credits_message"].return_value = (
+            "Insufficient credits"
+        )
 
         # Act
         result = check_availability(
@@ -371,7 +394,9 @@ class TestCheckAvailability:
             "period_end_date": None,
             "request_limit": 0,
         }
-        mock_dependencies["get_subscription_limit_message"].return_value = "No subscription found"
+        mock_dependencies["get_subscription_limit_message"].return_value = (
+            "No subscription found"
+        )
 
         # Act
         result = check_availability(
@@ -391,7 +416,9 @@ class TestCheckAvailability:
             installation_id=456,
         )
 
-    def test_subscription_with_stripe_customer_id_but_no_subscription(self, mock_dependencies):
+    def test_subscription_with_stripe_customer_id_but_no_subscription(
+        self, mock_dependencies
+    ):
         """Test subscription billing with stripe customer ID but no active subscription."""
         # Arrange
         mock_dependencies["get_stripe_customer_id"].return_value = "cus_123"
@@ -403,7 +430,9 @@ class TestCheckAvailability:
             "period_end_date": None,
             "request_limit": 0,
         }
-        mock_dependencies["get_subscription_limit_message"].return_value = "No active subscription"
+        mock_dependencies["get_subscription_limit_message"].return_value = (
+            "No active subscription"
+        )
 
         # Act
         result = check_availability(
@@ -417,7 +446,9 @@ class TestCheckAvailability:
         # Assert
         assert result["can_proceed"] is False
         assert result["billing_type"] == "subscription"
-        mock_dependencies["get_paid_subscription"].assert_called_once_with(customer_id="cus_123")
+        mock_dependencies["get_paid_subscription"].assert_called_once_with(
+            customer_id="cus_123"
+        )
         mock_dependencies["check_subscription_limit"].assert_called_once_with(
             paid_subscription=None,
             installation_id=456,
@@ -474,7 +505,9 @@ class TestCheckAvailability:
         for field in required_fields:
             assert field in result
 
-    def test_credit_billing_with_zero_threshold_and_positive_balance(self, mock_dependencies):
+    def test_credit_billing_with_zero_threshold_and_positive_balance(
+        self, mock_dependencies
+    ):
         """Test auto-reload behavior when threshold is 0 and balance is positive."""
         # Arrange
         mock_dependencies["get_stripe_customer_id"].return_value = None
@@ -544,9 +577,13 @@ class TestCheckAvailability:
         assert isinstance(result, dict)
         assert isinstance(result["can_proceed"], bool)
         assert isinstance(result["billing_type"], str)
-        assert result["requests_left"] is None or isinstance(result["requests_left"], int)
+        assert result["requests_left"] is None or isinstance(
+            result["requests_left"], int
+        )
         assert isinstance(result["credit_balance_usd"], int)
-        assert result["period_end_date"] is None or isinstance(result["period_end_date"], datetime)
+        assert result["period_end_date"] is None or isinstance(
+            result["period_end_date"], datetime
+        )
         assert isinstance(result["user_message"], str)
         assert isinstance(result["log_message"], str)
 
@@ -597,9 +634,13 @@ class TestCheckAvailability:
             # Arrange
             mock_dependencies["get_stripe_customer_id"].return_value = None
             mock_dependencies["get_billing_type"].return_value = "credit"
-            mock_dependencies["get_owner"].return_value = {"credit_balance_usd": balance}
+            mock_dependencies["get_owner"].return_value = {
+                "credit_balance_usd": balance
+            }
             if not expected_can_proceed:
-                mock_dependencies["get_insufficient_credits_message"].return_value = "Insufficient credits"
+                mock_dependencies["get_insufficient_credits_message"].return_value = (
+                    "Insufficient credits"
+                )
 
             # Act
             result = check_availability(
@@ -611,9 +652,15 @@ class TestCheckAvailability:
             )
 
             # Assert
-            assert result["can_proceed"] is expected_can_proceed, f"Failed for balance {balance}"
-            assert result["credit_balance_usd"] == balance, f"Failed for balance {balance}"
-            assert result["log_message"] == expected_log_message, f"Failed for balance {balance}"
+            assert (
+                result["can_proceed"] is expected_can_proceed
+            ), f"Failed for balance {balance}"
+            assert (
+                result["credit_balance_usd"] == balance
+            ), f"Failed for balance {balance}"
+            assert (
+                result["log_message"] == expected_log_message
+            ), f"Failed for balance {balance}"
 
             # Reset mocks for next iteration
             mock_dependencies["get_insufficient_credits_message"].reset_mock()
@@ -630,7 +677,9 @@ class TestCheckAvailability:
             "period_end_date": datetime(2024, 12, 31),
             "request_limit": 100,
         }
-        mock_dependencies["get_subscription_limit_message"].return_value = "Limit reached"
+        mock_dependencies["get_subscription_limit_message"].return_value = (
+            "Limit reached"
+        )
 
         # Act
         check_availability(
@@ -643,7 +692,9 @@ class TestCheckAvailability:
 
         # Assert all dependencies were called correctly
         mock_dependencies["get_stripe_customer_id"].assert_called_once_with(123)
-        mock_dependencies["get_paid_subscription"].assert_called_once_with(customer_id="cus_test")
+        mock_dependencies["get_paid_subscription"].assert_called_once_with(
+            customer_id="cus_test"
+        )
         mock_dependencies["get_billing_type"].assert_called_once_with(
             owner_name="test_owner",
             stripe_customer_id="cus_test",
@@ -662,7 +713,9 @@ class TestCheckAvailability:
     def test_exception_handling_returns_default_on_error(self):
         """Test that exceptions are handled and default values are returned."""
         # This test verifies the decorator behavior by causing an exception
-        with patch("services.stripe.check_availability.get_stripe_customer_id") as mock_get_stripe_customer_id:
+        with patch(
+            "services.stripe.check_availability.get_stripe_customer_id"
+        ) as mock_get_stripe_customer_id:
             # Make the first dependency call raise an exception
             mock_get_stripe_customer_id.side_effect = Exception("Test exception")
 
@@ -686,4 +739,3 @@ class TestCheckAvailability:
                 "log_message": "Error checking availability",
             }
             assert result == expected_default
-

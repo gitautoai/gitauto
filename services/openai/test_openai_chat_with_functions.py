@@ -139,3 +139,43 @@ def test_claude_error_fallback_to_openai():
             assert "tool_call_id" in tool_msg
             assert "name" in tool_msg
             assert "content" in tool_msg
+
+
+@mock.patch("services.openai.chat_with_functions.insert_llm_request")
+def test_chat_with_openai_logs_request(mock_insert_llm_request):
+    mock_client = mock.MagicMock()
+    mock_completion = mock.MagicMock()
+    mock_choice = mock.MagicMock()
+    mock_message = mock.MagicMock()
+    mock_usage = mock.MagicMock()
+
+    mock_message.role = "assistant"
+    mock_message.content = "Test response"
+    mock_message.tool_calls = None
+    mock_choice.message = mock_message
+    mock_completion.choices = [mock_choice]
+    mock_completion.usage = mock_usage
+    mock_usage.prompt_tokens = 15
+    mock_usage.completion_tokens = 10
+    mock_client.chat.completions.create.return_value = mock_completion
+
+    with mock.patch(
+        "services.openai.chat_with_functions.create_openai_client",
+        return_value=mock_client,
+    ):
+        result = chat_with_openai(
+            messages=[{"role": "user", "content": "Hello"}],
+            system_content="You are helpful",
+            tools=[],
+            usage_id=456,
+        )
+
+        assert result[4] == 15  # input tokens
+        assert result[5] == 10  # output tokens
+
+        mock_insert_llm_request.assert_called_once()
+        call_args = mock_insert_llm_request.call_args[1]
+        assert call_args["usage_id"] == 456
+        assert call_args["provider"] == "openai"
+        assert call_args["input_tokens"] == 15
+        assert call_args["output_tokens"] == 10

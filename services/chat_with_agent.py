@@ -40,6 +40,7 @@ def chat_with_agent(
     recursion_count: int = 1,
     p: int = 0,
     log_messages: list[str] | None = None,
+    usage_id: int | None = None,
 ):
     if previous_calls is None:
         previous_calls = []
@@ -87,6 +88,7 @@ def chat_with_agent(
                 system_content=system_message,
                 tools=tools,
                 model_id=current_model,
+                usage_id=usage_id,
             )
             break
 
@@ -278,6 +280,7 @@ def chat_with_agent(
             recursion_count=recursion_count + 1,
             p=p + 5,
             log_messages=log_messages,
+            usage_id=usage_id,
         )
 
     # Return

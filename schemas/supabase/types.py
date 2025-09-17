@@ -212,6 +212,47 @@ class JiraGithubLinksInsert(TypedDict):
     updated_by: NotRequired[int | None]
 
 
+class LlmRequests(TypedDict):
+    id: int
+    usage_id: int | None
+    provider: str
+    model_id: str
+    input_content: str
+    input_length: int
+    input_tokens: int
+    input_cost_usd: float
+    output_content: str
+    output_length: int
+    output_tokens: int
+    output_cost_usd: float
+    total_cost_usd: float
+    response_time_ms: int | None
+    error_message: str | None
+    created_at: datetime.datetime
+    created_by: str | None
+    updated_at: datetime.datetime
+    updated_by: str | None
+
+
+class LlmRequestsInsert(TypedDict):
+    usage_id: NotRequired[int | None]
+    provider: NotRequired[str]
+    model_id: NotRequired[str]
+    input_content: NotRequired[str]
+    input_length: NotRequired[int]
+    input_tokens: NotRequired[int]
+    input_cost_usd: NotRequired[float]
+    output_content: NotRequired[str]
+    output_length: NotRequired[int]
+    output_tokens: NotRequired[int]
+    output_cost_usd: NotRequired[float]
+    total_cost_usd: NotRequired[float]
+    response_time_ms: NotRequired[int | None]
+    error_message: NotRequired[str | None]
+    created_by: NotRequired[str | None]
+    updated_by: NotRequired[str | None]
+
+
 class OauthTokens(TypedDict):
     id: int
     user_id: int
