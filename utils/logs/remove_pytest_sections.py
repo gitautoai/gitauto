@@ -98,6 +98,6 @@ def _is_application_content(line: str) -> bool:
     if any(pattern in stripped for pattern in pytest_patterns):
         return False
 
-    # For now, only consider lines that contain "content" as application content
+    # For now, be very conservative and only consider lines that look like actual error messages
     # This is a conservative approach to avoid false positives
     return "content" in stripped.lower()
