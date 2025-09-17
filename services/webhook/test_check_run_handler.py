@@ -219,8 +219,8 @@ def test_handle_check_run_full_workflow(
             [],
             None,
             None,
-            None,
-            None,
+            50,  # token_input
+            25,  # token_output
             False,
             50,
         ),  # First call (get mode) - no exploration
@@ -229,8 +229,8 @@ def test_handle_check_run_full_workflow(
             [],
             None,
             None,
-            None,
-            None,
+            30,  # token_input
+            20,  # token_output
             False,
             75,
         ),  # Second call (commit mode) - no commit, loop exits
@@ -624,3 +624,100 @@ def test_handle_check_run_with_deleted_branch(
 
     # Verify deleted branch message in comment
     mock_update_comment.assert_called()
+
+
+@patch("services.webhook.check_run_handler.get_installation_access_token")
+@patch("services.webhook.check_run_handler.get_repository")
+@patch("services.webhook.check_run_handler.slack_notify")
+@patch("services.webhook.check_run_handler.has_comment_with_text")
+@patch("services.webhook.check_run_handler.create_comment")
+@patch("services.webhook.check_run_handler.create_user_request")
+@patch("services.webhook.check_run_handler.cancel_workflow_runs")
+@patch("services.webhook.check_run_handler.get_pull_request")
+@patch("services.webhook.check_run_handler.get_pull_request_file_changes")
+@patch("services.webhook.check_run_handler.get_workflow_run_logs")
+@patch("services.webhook.check_run_handler.update_comment")
+@patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_run_handler.is_pull_request_open")
+@patch("services.webhook.check_run_handler.check_branch_exists")
+@patch("services.webhook.check_run_handler.chat_with_agent")
+@patch("services.webhook.check_run_handler.create_empty_commit")
+@patch("services.webhook.check_run_handler.update_usage")
+@patch("services.webhook.check_run_handler.is_lambda_timeout_approaching")
+def test_check_run_handler_token_accumulation(
+    mock_timeout_check,
+    mock_update_usage,
+    _mock_create_empty_commit,
+    mock_chat_agent,
+    mock_check_branch_exists,
+    mock_is_pr_open,
+    _mock_update_retry_pairs,
+    mock_get_retry_pairs,
+    _mock_update_comment,
+    mock_get_logs,
+    mock_get_changes,
+    mock_get_pr,
+    _mock_cancel_workflow_runs,
+    mock_create_user_request,
+    mock_create_comment,
+    mock_has_comment,
+    _mock_slack_notify,
+    mock_get_repo,
+    mock_get_token,
+    mock_check_run_payload,
+):
+    """Test that check run handler accumulates tokens correctly and calls update_usage"""
+    # Setup mocks
+    mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_has_comment.return_value = False
+    mock_create_comment.return_value = "http://comment-url"
+    mock_create_user_request.return_value = 888
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
+    mock_get_logs.return_value = "Test failure log content"
+    mock_get_retry_pairs.return_value = []
+    mock_is_pr_open.return_value = True
+    mock_check_branch_exists.return_value = True
+    mock_timeout_check.return_value = (False, 0)
+
+    # Mock chat_with_agent to return token counts and break loop
+    mock_chat_agent.return_value = (
+        [
+            {"role": "user", "content": "test"},
+            {"role": "assistant", "content": "AI response"},
+        ],
+        [],
+        "no_action",
+        {},
+        80,  # input tokens
+        45,  # output tokens
+        False,  # is_explored/is_committed=False (breaks loop)
+        90,
+    )
+
+    # Execute
+    handle_check_run(mock_check_run_payload)
+
+    # Verify chat_with_agent was called twice (get + commit modes)
+    assert mock_chat_agent.call_count == 2
+
+    # Verify update_usage was called with accumulated tokens
+    mock_update_usage.assert_called_once()
+    call_kwargs = mock_update_usage.call_args.kwargs
+
+    assert call_kwargs["usage_id"] == 888
+    assert call_kwargs["token_input"] == 160  # Two calls: 80 + 80
+    assert call_kwargs["token_output"] == 90  # Two calls: 45 + 45

@@ -163,7 +163,7 @@ def test_issue_handler_token_accumulation(
     mock_get_remote_file_content_by_url.return_value = ""
     mock_get_latest_remote_commit_sha.return_value = "abc123"
     mock_create_remote_branch.return_value = None
-    
+
     mock_create_pull_request.return_value = "https://github.com/test/repo/pull/123"
     mock_create_empty_commit.return_value = None
     mock_check_branch_exists.return_value = True
@@ -186,11 +186,14 @@ def test_issue_handler_token_accumulation(
 
     # Mock chat_with_agent - return False for both is_explored and is_committed to break loop
     mock_chat_with_agent.return_value = (
-        [{"role": "user", "content": "test"}, {"role": "assistant", "content": "AI response"}],
+        [
+            {"role": "user", "content": "test"},
+            {"role": "assistant", "content": "AI response"},
+        ],
         [],
         "no_action",
         {},
-        75,  # input tokens 
+        75,  # input tokens
         35,  # output tokens
         False,  # is_explored=False (breaks loop when both are False)
         90,
@@ -226,5 +229,5 @@ def test_issue_handler_token_accumulation(
 
     assert call_kwargs["usage_id"] == 999
     # chat_with_agent is called twice (explore + commit), each returns 75/35 tokens
-    assert call_kwargs["token_input"] == 150  # Two calls: 75 + 75 
+    assert call_kwargs["token_input"] == 150  # Two calls: 75 + 75
     assert call_kwargs["token_output"] == 70  # Two calls: 35 + 35
