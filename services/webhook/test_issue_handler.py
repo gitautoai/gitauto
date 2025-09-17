@@ -80,6 +80,10 @@ def test_create_pr_from_issue_signature():
     assert lambda_info_param.default is None  # Optional parameter with None default
 
 
+@patch("services.webhook.issue_handler.insert_credit")
+@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.create_empty_commit")
+@patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
@@ -113,6 +117,10 @@ def test_issue_handler_token_accumulation(
     mock_get_remote_file_content_by_url,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
+    mock_create_pull_request,
+    mock_create_empty_commit,
+    mock_check_branch_exists,
+    mock_insert_credit,
 ):
     """Test that issue handler accumulates tokens correctly and calls update_usage"""
 
@@ -155,6 +163,11 @@ def test_issue_handler_token_accumulation(
     mock_get_remote_file_content_by_url.return_value = ""
     mock_get_latest_remote_commit_sha.return_value = "abc123"
     mock_create_remote_branch.return_value = None
+    
+    mock_create_pull_request.return_value = "https://github.com/test/repo/pull/123"
+    mock_create_empty_commit.return_value = None
+    mock_check_branch_exists.return_value = True
+    mock_insert_credit.return_value = None
 
     # Mock availability check to allow proceeding
     mock_check_availability.return_value = {
@@ -168,14 +181,19 @@ def test_issue_handler_token_accumulation(
     }
 
     mock_create_comment.return_value = "https://api.github.com/repos/test/comment/123"
-    mock_get_owner.return_value = {"id": 456}
-    mock_create_user_request.return_value = {"id": 999}
+    mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 100}
+    mock_create_user_request.return_value = 999
 
-    # Mock chat_with_agent to return specific token counts
+    # Mock chat_with_agent - return False for both is_explored and is_committed to break loop
     mock_chat_with_agent.return_value = (
-        {"role": "assistant", "content": "AI response"},
-        150,  # input_tokens
-        75,  # output_tokens
+        [{"role": "user", "content": "test"}, {"role": "assistant", "content": "AI response"}],
+        [],
+        "no_action",
+        {},
+        75,  # input tokens 
+        35,  # output tokens
+        False,  # is_explored=False (breaks loop when both are False)
+        90,
     )
 
     # Create test payload
@@ -207,5 +225,6 @@ def test_issue_handler_token_accumulation(
     call_kwargs = mock_update_usage.call_args.kwargs
 
     assert call_kwargs["usage_id"] == 999
-    assert call_kwargs["token_input"] == 150  # Total accumulated input tokens
-    assert call_kwargs["token_output"] == 75  # Total accumulated output tokens
+    # chat_with_agent is called twice (explore + commit), each returns 75/35 tokens
+    assert call_kwargs["token_input"] == 150  # Two calls: 75 + 75 
+    assert call_kwargs["token_output"] == 70  # Two calls: 35 + 35
