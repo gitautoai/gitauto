@@ -12,7 +12,7 @@ def mock_issue_comment_payload():
         "action": "created",
         "comment": {
             "id": 12345,
-            "body": "- [x] Generate Tests - gitauto-wes\n- [x] `src/test.py`\n- [x] `src/main.py`\n- [ ] Some other task",
+            "body": "- [x] Generate Tests\n- [x] `src/test.py`\n- [x] `src/main.py`\n- [ ] Some other task",
             "user": {
                 "id": 33333,
                 "login": "gitauto-ai[bot]",
@@ -61,7 +61,8 @@ def mock_issue_comment_payload():
 @patch("services.webhook.pr_checkbox_handler.update_usage")
 @patch("services.webhook.pr_checkbox_handler.extract_selected_files")
 @patch("services.webhook.pr_checkbox_handler.slack_notify")
-@patch("services.webhook.pr_checkbox_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
+@patch("services.webhook.pr_checkbox_handler.PRODUCT_ID", new="gitauto")
+@patch("services.webhook.pr_checkbox_handler.GITHUB_APP_USER_NAME", new="gitauto-ai[bot]")
 @patch("services.webhook.pr_checkbox_handler.create_comment")
 @patch("services.webhook.pr_checkbox_handler.cancel_workflow_runs")
 @pytest.mark.asyncio
