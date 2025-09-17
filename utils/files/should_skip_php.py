@@ -25,6 +25,8 @@ def should_skip_php(content: str) -> bool:
     in_class = False
     in_array_initialization = False
     in_heredoc = False
+    pending_interface = False
+    pending_trait = False
     pending_class = False
 
     for line in lines:
@@ -57,11 +59,30 @@ def should_skip_php(content: str) -> bool:
         if not line:
             continue
 
+        # Handle opening braces for pending declarations
+        if re.match(r"^\{", line):
+            if pending_interface:
+                in_interface = True
+                pending_interface = False
+                continue
+            elif pending_trait:
+                in_trait = True
+                pending_trait = False
+                continue
+            elif pending_class:
+                in_class = True
+                pending_class = False
+                continue
+            else:
+                # Generic opening brace - just continue
+                continue
+
         # Handle interface definitions (no implementation)
         if re.match(r"^(abstract\s+|final\s+)?interface\s+\w+", line):
-        if re.match(r"^\{", line):
-            continue
-            in_interface = True
+            if "{" in line:
+                in_interface = True
+            else:
+                pending_interface = True
             continue
         if in_interface:
             if "}" in line:
@@ -79,6 +100,8 @@ def should_skip_php(content: str) -> bool:
         if re.match(r"^trait\s+\w+", line):
             if "{" in line:
                 in_trait = True
+            else:
+                pending_trait = True
             continue
         if in_trait:
             if "}" in line:
@@ -91,10 +114,6 @@ def should_skip_php(content: str) -> bool:
                 in_class = True
             else:
                 pending_class = True
-            continue
-        if pending_class and re.match(r"^\{", line):
-            in_class = True
-            pending_class = False
             continue
         if in_class:
             if "}" in line:
