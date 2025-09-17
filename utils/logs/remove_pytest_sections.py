@@ -82,6 +82,10 @@ def _is_pytest_line(line: str) -> bool:
     if not stripped:
         return True  # Empty lines are part of pytest output
 
+    # Lines that start with spaces are often part of pytest output (stack traces, warnings, etc.)
+    if line.startswith("  "):
+        return True
+
     # Very simple check - if it contains common pytest keywords, it's probably pytest output
     pytest_keywords = ["test_", "PASSED", "FAILED", "SKIPPED", "::", "platform", "collecting", "collected", "DeprecationWarning", ".py:"]
     return any(keyword in stripped for keyword in pytest_keywords)
