@@ -401,7 +401,7 @@ class Container {
 
 
 def test_static_extern_const():
-    # Test variables and constants - should NOT be skipped (variables are mutable)
+    # Test simple variable assignments and constants - should be skipped (configuration-like)
     content = """<?php
 $internalVar = 42;
 const VERSION = "1.0.0";
