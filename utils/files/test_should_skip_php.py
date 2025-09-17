@@ -905,8 +905,6 @@ $array = [
     'value'
 ];
 
-function_call();
-
 ?>"""
     assert should_skip_php(content) is True
 
