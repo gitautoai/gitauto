@@ -843,7 +843,7 @@ class TestGetRemoteFileContent:
         assert "Opened file: 'large_file.py' with line numbers for your information." in result
         assert "```large_file.py#L151-L200" in result
         assert "200:line 200" in result
-        assert "150:line 150" in result
+        assert "151:line 151" in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_get.assert_called_once()
