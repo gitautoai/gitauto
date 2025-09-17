@@ -154,8 +154,10 @@ def should_skip_php(content: str) -> bool:
         if re.match(r"^const\s+\w+\s*=", line):
             continue
         # Variable assignments indicate mutable state - don't skip
-        if re.match(r"^\$\w+\s*=", line):
-            return False
+        if re.match(r"^\$\w+\s*=\s*([\[\{\"']|-?\d+(?:\.\d+)?|true|false|null)", line):
+            if "[" in line and "]" not in line:
+                in_array_initialization = True
+            continue
         # Skip return statements with simple values (for config files)
         if re.match(r"^return\s+([\[\{\"']|-?\d+(?:\.\d+)?|true|false|null)", line):
             if "[" in line and "]" not in line:
