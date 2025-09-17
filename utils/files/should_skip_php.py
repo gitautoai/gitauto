@@ -88,6 +88,8 @@ def should_skip_php(content: str) -> bool:
         # Handle simple class definitions (data classes, DTOs)
         if re.match(r"^(abstract\s+|final\s+)?class\s+\w+", line):
             if "{" in line:
+            else:
+                pending_class = True
                 in_class = True
             continue
         if in_class:
