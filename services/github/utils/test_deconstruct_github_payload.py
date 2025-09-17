@@ -662,6 +662,8 @@ def test_deconstruct_github_payload_random_string_generation():
     )
 
     with patch(
+        "services.github.utils.deconstruct_github_payload.PRODUCT_ID", "gitauto"
+    ), patch(
         "services.github.utils.deconstruct_github_payload.get_installation_access_token",
         return_value="test-token"
     ), patch(
