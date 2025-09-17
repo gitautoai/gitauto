@@ -98,15 +98,6 @@ def _is_application_content(line: str) -> bool:
     if any(pattern in stripped for pattern in pytest_patterns):
         return False
 
-    # Only consider it application content if it looks like a real log message
-    # Look for patterns that suggest this is application content
-    application_patterns = [
-        "Error:", "Warning:", "INFO:", "DEBUG:", "FATAL:", "Exception:",
-        "Traceback", "File \"", "line ", "in ", "def ", "class ",
-        "import ", "from ", "return ", "if ", "for ", "while ",
-        "try:", "except:", "finally:", "with ", "as ", "lambda ",
-        "content", "log", "message", "output", "result", "data"
-    ]
-
-    # If it contains application patterns, it's likely application content
-    return any(pattern in stripped for pattern in application_patterns)
+    # For now, only consider lines that contain "content" as application content
+    # This is a conservative approach to avoid false positives
+    return "content" in stripped.lower()
