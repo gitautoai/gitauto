@@ -61,8 +61,6 @@ def should_skip_php(content: str) -> bool:
         if re.match(r"^(abstract\s+|final\s+)?interface\s+\w+", line):
             in_interface = True
             continue
-        if re.match(r"^\{", line):
-            continue
         if in_interface:
             if "}" in line:
                 in_interface = False
