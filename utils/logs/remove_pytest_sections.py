@@ -44,19 +44,20 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # If we're skipping and encounter a line that doesn't look like a pytest section,
-        # we've probably moved past the pytest content, so stop skipping
-        if skip and not ("===" in line and any(keyword in line for keyword in [
-            "test session starts", "warnings summary", "FAILURES", "short test summary info",
-            "passed", "failed", "error", "skipped", "collected", "platform", "cachedir",
-            "rootdir", "plugins", "collecting"
-        ])):
-            # Check if this line looks like regular content (not pytest output)
-            # Pytest output lines often have specific patterns
-            if not (line.strip().endswith(("PASSED", "FAILED", "SKIPPED", "ERROR")) or
-                    line.strip().startswith(("test_", "::")) or
-                    "%" in line and ("[" in line and "]" in line) or
-                    line.strip() == ""):
+        # If we're currently skipping, check if this line looks like it's outside of pytest sections
+        if skip:
+            # If the line doesn't contain pytest-specific patterns, stop skipping
+            is_pytest_line = (
+                "===" in line or  # Section headers
+                line.strip().endswith(("PASSED", "FAILED", "SKIPPED", "ERROR")) or  # Test results
+                line.strip().startswith(("test_", "::")) or  # Test names
+                "%" in line and "[" in line and "]" in line or  # Progress indicators like [100%]
+                line.strip().startswith(("platform", "cachedir", "rootdir", "plugins", "collecting")) or  # Session info
+                line.strip() == "" or  # Empty lines within pytest sections
+                "collected" in line and "items" in line  # Collection info
+            )
+
+            if not is_pytest_line:
                 skip = False
 
         # Keep line if not skipping
