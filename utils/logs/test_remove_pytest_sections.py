@@ -46,6 +46,10 @@ def test_remove_pytest_sections_with_empty_input():
     assert remove_pytest_sections("") == ""
 
 
+def test_remove_pytest_sections_with_none_input():
+    assert remove_pytest_sections(None) is None
+
+
 def test_remove_pytest_sections_with_no_pytest_markers():
     log = "Some regular error log\nwithout pytest markers\nshould remain unchanged"
     assert remove_pytest_sections(log) == log
