@@ -44,16 +44,19 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # If we're currently skipping and encounter an unrecognized section header, stop skipping
-        if skip and "===" in line and not any(keyword in line for keyword in ["test session starts", "warnings summary"]):
-            # This is a section header we don't recognize, so stop skipping
+        # If we're currently skipping and encounter any other section header, stop skipping
+        if skip and "===" in line:
+            # This is a section header we don't recognize as pytest-specific, so stop skipping
             skip = False
-            # Fall through to add this line
+            filtered_lines.append(line)
+            continue
 
         # If we're skipping and encounter a line that doesn't look like pytest output, stop skipping
-        if skip and "===" not in line and not line.strip().startswith(("platform ", "cachedir:", "rootdir:", "plugins:", "collecting", "test_", "PASSED", "FAILED", "SKIPPED", "ERROR", "::", "[ ", "%]")):
+        if skip and "===" not in line and not _is_pytest_line(line):
             skip = False
-            # Fall through to add this line
+            # Add this line since it's not pytest output
+            filtered_lines.append(line)
+            continue
 
         # Keep line if not skipping
         if not skip:
@@ -67,3 +70,21 @@ def remove_pytest_sections(error_log: str):
         result = re.sub(r"\n{3,}", "\n\n", result)
 
     return result
+
+
+def _is_pytest_line(line: str) -> bool:
+    """Check if a line looks like pytest output."""
+    stripped = line.strip()
+    if not stripped:
+        return True  # Empty lines are part of pytest output
+
+    # Common pytest output patterns
+    pytest_patterns = [
+        "platform ", "cachedir:", "rootdir:", "plugins:", "collecting",
+        "test_", "PASSED", "FAILED", "SKIPPED", "ERROR", "::", "[ ", "%]",
+        "collected ", " items", "warnings.warn", "DeprecationWarning",
+        "UserWarning", "/", ".py:", "AssertionError", "def test_",
+        ">", "E ", "assert ", "in ", "s ="
+    ]
+
+    return any(pattern in stripped for pattern in pytest_patterns)
