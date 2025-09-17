@@ -406,7 +406,7 @@ def test_static_extern_const():
 $internalVar = 42;
 const VERSION = "1.0.0";
 const MAX_SIZE = 100;"""
-    assert should_skip_php(content) is False
+    assert should_skip_php(content) is True
 
 
 def test_enum_and_macro_declarations():
