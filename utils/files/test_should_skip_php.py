@@ -646,3 +646,203 @@ return [
     'setting' => 'data'
 ];"""
     assert should_skip_php(content) is True
+
+
+def test_heredoc_multiline_detection():
+    # Test heredoc string detection - covers lines 33-39
+    content = """<?php
+const TEMPLATE = <<<EOT
+This is a heredoc string
+with multiple lines
+and special characters
+EOT;
+
+const ANOTHER = "simple string";"""
+    assert should_skip_php(content) is True
+
+
+def test_heredoc_without_semicolon():
+    # Test heredoc without ending semicolon - edge case for line 37
+    content = """<?php
+const TEMPLATE = <<<EOT
+This is a heredoc string
+without ending semicolon
+EOT
+
+const ANOTHER = "simple string";"""
+    assert should_skip_php(content) is True
+
+
+def test_multiline_comment_detection():
+    # Test multiline comment detection - covers lines 42-47
+    content = """<?php
+/* This is a multiline comment
+   that spans several lines
+   and contains various text */
+const MAX_SIZE = 100;
+
+/* Another comment */
+const MIN_SIZE = 10;"""
+    assert should_skip_php(content) is True
+
+
+def test_multiline_comment_with_asterisk_in_middle():
+    # Test multiline comment with asterisk in content
+    content = """<?php
+/* This comment has * asterisks * in the middle
+   but should still be handled correctly */
+const VALUE = 42;"""
+    assert should_skip_php(content) is True
+
+
+def test_single_line_comments():
+    # Test single line comment detection - covers lines 50-51
+    content = """<?php
+// This is a single line comment
+# This is also a comment
+const MAX_SIZE = 100;
+// Another comment
+const MIN_SIZE = 10;"""
+    assert should_skip_php(content) is True
+
+
+def test_php_tags_detection():
+    # Test PHP tag detection - covers lines 53-54
+    content = """<?php
+const VALUE = 42;
+?>
+<?
+const ANOTHER = 24;
+?>"""
+    assert should_skip_php(content) is True
+
+
+def test_abstract_interface():
+    # Test abstract interface - covers line 60
+    content = """<?php
+abstract interface BaseInterface
+{
+    public function method(): string;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_final_interface():
+    # Test final interface - covers line 60
+    content = """<?php
+final interface ConfigInterface
+{
+    public function getValue(): int;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_opening_brace_detection():
+    # Test opening brace detection - covers line 63-64
+    content = """<?php
+class MyClass
+{
+    public $property;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_abstract_class():
+    # Test abstract class - covers line 88
+    content = """<?php
+abstract class BaseClass
+{
+    public $property;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_final_class():
+    # Test final class - covers line 88
+    content = """<?php
+final class FinalClass
+{
+    public $property;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_class_with_opening_brace_same_line():
+    # Test class with opening brace on same line - covers line 89-90
+    content = """<?php
+class MyClass {
+    public $property;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_private_property_in_class():
+    # Test private property detection - covers line 102
+    content = """<?php
+class MyClass
+{
+    private $privateProperty;
+    protected $protectedProperty;
+    public $publicProperty;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_include_statements():
+    # Test include statements - covers lines 107-117
+    content = """<?php
+include 'file1.php';
+include_once 'file2.php';
+require 'file3.php';
+require_once 'file4.php';
+use App\\Models\\User;
+use App\\Services\\Logger;"""
+    assert should_skip_php(content) is True
+
+
+def test_namespace_declaration():
+    # Test namespace declaration - covers lines 119-120
+    content = """<?php
+namespace App\\Controllers;
+namespace App\\Models\\User;
+const VALUE = 42;"""
+    assert should_skip_php(content) is True
+
+
+def test_private_const():
+    # Test private const - covers line 123
+    content = """<?php
+class MyClass
+{
+    private const PRIVATE_CONST = 'value';
+    protected const PROTECTED_CONST = 42;
+    public const PUBLIC_CONST = true;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_define_function():
+    # Test define function - covers line 123
+    content = """<?php
+define('CONSTANT_NAME', 'value');
+define('ANOTHER_CONSTANT', 42);
+define('BOOL_CONSTANT', true);"""
+    assert should_skip_php(content) is True
+
+
+def test_global_const_any_case():
+    # Test global const with any case - covers line 128
+    content = """<?php
+const myConstant = 'value';
+const AnotherConstant = 42;
+const UPPER_CASE = true;"""
+    assert should_skip_php(content) is True
+
+
+def test_variable_assignment_with_quotes():
+    # Test variable assignment with different quote types - covers line 131
+    content = """<?php
+$stringVar = "double quotes";
+$singleVar = 'single quotes';
+$arrayVar = ['array', 'values'];
+$objectVar = {'key': 'value'};"""
