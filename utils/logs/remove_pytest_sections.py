@@ -77,15 +77,17 @@ def remove_pytest_sections(error_log: str):
 
 
 def _is_pytest_line(line: str) -> bool:
-    """Check if a line looks like pytest output - simplified version."""
+    """Check if a line looks like pytest output."""
     stripped = line.strip()
     if not stripped:
         return True  # Empty lines are part of pytest output
 
-    # Lines that start with spaces are often part of pytest output (stack traces, warnings, etc.)
-    if line.startswith("  "):
-        return True
+    # Check for common pytest patterns
+    pytest_patterns = [
+        "platform ", "cachedir:", "rootdir:", "plugins:", "collecting", "collected",
+        "test_", "PASSED", "FAILED", "SKIPPED", "ERROR", "::", ".py:",
+        "DeprecationWarning", "UserWarning", "warnings.warn", "AssertionError",
+        "> ", "E ", "def test_", "assert ", "[ ", "%]", " items"
+    ]
 
-    # Very simple check - if it contains common pytest keywords, it's probably pytest output
-    pytest_keywords = ["test_", "PASSED", "FAILED", "SKIPPED", "::", "platform", "collecting", "collected", "DeprecationWarning", ".py:"]
-    return any(keyword in stripped for keyword in pytest_keywords)
+    return any(pattern in stripped for pattern in pytest_patterns)
