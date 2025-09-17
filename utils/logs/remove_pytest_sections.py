@@ -83,5 +83,5 @@ def _is_pytest_line(line: str) -> bool:
         return True  # Empty lines are part of pytest output
 
     # Very simple check - if it contains common pytest keywords, it's probably pytest output
-    pytest_keywords = ["test_", "PASSED", "FAILED", "SKIPPED", "::", "platform", "collecting", "collected"]
+    pytest_keywords = ["test_", "PASSED", "FAILED", "SKIPPED", "::", "platform", "collecting", "collected", "DeprecationWarning", ".py:"]
     return any(keyword in stripped for keyword in pytest_keywords)
