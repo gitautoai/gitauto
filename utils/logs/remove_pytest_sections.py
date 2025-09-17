@@ -44,21 +44,27 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # If we're currently skipping, check if this line looks like it's outside of pytest sections
+        # If we're currently skipping, check if we've encountered a new section or regular content
         if skip:
-            # If the line doesn't contain pytest-specific patterns, stop skipping
-            is_pytest_line = (
-                "===" in line or  # Section headers
-                line.strip().endswith(("PASSED", "FAILED", "SKIPPED", "ERROR")) or  # Test results
-                line.strip().startswith(("test_", "::")) or  # Test names
-                "%" in line and "[" in line and "]" in line or  # Progress indicators like [100%]
-                line.strip().startswith(("platform", "cachedir", "rootdir", "plugins", "collecting")) or  # Session info
-                line.strip() == "" or  # Empty lines within pytest sections
-                "collected" in line and "items" in line  # Collection info
-            )
-
-            if not is_pytest_line:
+            # Check if this is a new pytest section header (but not one we want to skip)
+            if "===" in line:
+                # This is a section header we don't recognize, so stop skipping
                 skip = False
+            else:
+                # Check if this line looks like regular application content (not pytest output)
+                is_pytest_output = (
+                    line.strip().endswith(("PASSED", "FAILED", "SKIPPED", "ERROR")) or  # Test results
+                    line.strip().startswith(("test_", "::")) or  # Test names
+                    "%" in line and "[" in line and "]" in line or  # Progress indicators
+                    line.strip().startswith(("platform", "cachedir", "rootdir", "plugins", "collecting")) or  # Session info
+                    "collected" in line and "items" in line or  # Collection info
+                    line.strip().startswith(("/", "  ")) or  # File paths or indented content (common in warnings)
+                    line.strip() == ""  # Empty lines within pytest sections
+                )
+
+                # If this doesn't look like pytest output, stop skipping
+                if not is_pytest_output:
+                    skip = False
 
         # Keep line if not skipping
         if not skip:
