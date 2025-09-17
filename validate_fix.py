@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append('.')
 from utils.files.should_skip_php import should_skip_php
 
@@ -42,6 +43,18 @@ class MyClass {
     public $property;
 }""",
         'expected': True
+    },
+    # Class with method (should NOT be skipped)
+    {
+        'name': 'test_class_with_method',
+        'content': """<?php
+class MyClass
+{
+    public function doSomething() {
+        return true;
+    }
+}""",
+        'expected': False
     }
 ]
 
