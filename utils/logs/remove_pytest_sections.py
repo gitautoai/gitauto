@@ -3,7 +3,7 @@ import re
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value="")
+@handle_exceptions(default_return_value=lambda error_log: error_log)
 def remove_pytest_sections(error_log: str):
     if not error_log:
         return error_log
