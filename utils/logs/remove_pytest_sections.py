@@ -90,7 +90,9 @@ def _is_pytest_line(line: str) -> bool:
         "test_", "PASSED", "FAILED", "SKIPPED", "ERROR", "::", "[ ", "%]",
         "collected ", " items", "warnings.warn", "DeprecationWarning",
         "UserWarning", ".py:", "AssertionError", "def test_",
-        "> ", "E ", "assert "
+        "> ", "E ", "assert ", "-- Docs:", "https://docs.pytest.org/",
+        "Coverage LCOV written to file", "Enable tracemalloc",
+        "See https://docs.pytest.org/", "RuntimeWarning:"
     ]
 
     return any(pattern in stripped for pattern in pytest_patterns)
