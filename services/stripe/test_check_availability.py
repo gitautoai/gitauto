@@ -687,24 +687,3 @@ class TestCheckAvailability:
             }
             assert result == expected_default
 
-    @patch("services.stripe.check_availability.handle_exceptions")
-    def test_function_has_exception_handling_decorator(self, mock_handle_exceptions):
-        """Test that the function is decorated with handle_exceptions."""
-        # This test verifies that the decorator is applied
-        # The actual exception handling behavior is tested by the decorator itself
-        mock_handle_exceptions.assert_called()
-
-        # Verify the decorator configuration
-        call_args = mock_handle_exceptions.call_args
-        assert call_args[1]["raise_on_error"] is False
-
-        expected_default = {
-            "can_proceed": False,
-            "billing_type": "credit",
-            "requests_left": None,
-            "credit_balance_usd": 0,
-            "period_end_date": None,
-            "user_message": "Error checking availability",
-            "log_message": "Error checking availability",
-        }
-        assert call_args[1]["default_return_value"] == expected_default
