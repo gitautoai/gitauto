@@ -202,6 +202,8 @@ async def handle_pr_checkbox_trigger(
 
     previous_calls = []
     retry_count = 0
+    total_token_input = 0
+    total_token_output = 0
     while True:
         # Timeout check: Stop if we're approaching Lambda limit
         is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
@@ -236,8 +238,8 @@ async def handle_pr_checkbox_trigger(
             previous_calls,
             _tool_name,
             _tool_args,
-            _token_input,
-            _token_output,
+            token_input,
+            token_output,
             is_explored,
             p,
         ) = chat_with_agent(
@@ -249,15 +251,18 @@ async def handle_pr_checkbox_trigger(
             previous_calls=previous_calls,
             p=p,
             log_messages=log_messages,
+            usage_id=usage_id,
         )
+        total_token_input += token_input
+        total_token_output += token_output
 
         (
             messages,
             previous_calls,
             _tool_name,
             _tool_args,
-            _token_input,
-            _token_output,
+            token_input,
+            token_output,
             is_committed,
             p,
         ) = chat_with_agent(
@@ -269,7 +274,10 @@ async def handle_pr_checkbox_trigger(
             previous_calls=previous_calls,
             p=p,
             log_messages=log_messages,
+            usage_id=usage_id,
         )
+        total_token_input += token_input
+        total_token_output += token_output
 
         if not is_explored and not is_committed:
             break
@@ -303,8 +311,8 @@ async def handle_pr_checkbox_trigger(
     end_time = time.time()
     update_usage(
         usage_id=usage_id,
-        token_input=0,
-        token_output=0,
+        token_input=total_token_input,
+        token_output=total_token_output,
         total_seconds=int(end_time - current_time),
         pr_number=issue_number,
         is_completed=True,

@@ -382,6 +382,8 @@ def handle_check_run(
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
     retry_count = 0
+    total_token_input = 0
+    total_token_output = 0
     while True:
         # Timeout check: Stop if we're approaching Lambda limit
         is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
@@ -418,8 +420,8 @@ def handle_check_run(
             previous_calls,
             _tool_name,
             _tool_args,
-            _token_input,
-            _token_output,
+            token_input,
+            token_output,
             is_explored,
             p,
         ) = chat_with_agent(
@@ -431,7 +433,10 @@ def handle_check_run(
             previous_calls=previous_calls,
             p=p,
             log_messages=log_messages,
+            usage_id=usage_id,
         )
+        total_token_input += token_input
+        total_token_output += token_output
 
         # Commit changes based on the exploration information
         (
@@ -439,8 +444,8 @@ def handle_check_run(
             previous_calls,
             _tool_name,
             _tool_args,
-            _token_input,
-            _token_output,
+            token_input,
+            token_output,
             is_committed,
             p,
         ) = chat_with_agent(
@@ -452,7 +457,10 @@ def handle_check_run(
             previous_calls=previous_calls,
             p=p,
             log_messages=log_messages,
+            usage_id=usage_id,
         )
+        total_token_input += token_input
+        total_token_output += token_output
 
         # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
         if not is_explored and not is_committed:
@@ -488,8 +496,8 @@ def handle_check_run(
     end_time = time.time()
     update_usage(
         usage_id=usage_id,
-        token_input=0,
-        token_output=0,
+        token_input=total_token_input,
+        token_output=total_token_output,
         total_seconds=int(end_time - current_time),
         pr_number=pull_number,
         is_completed=True,

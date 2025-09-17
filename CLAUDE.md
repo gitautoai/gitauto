@@ -442,6 +442,38 @@ All code analysis, generation, and file processing happens on our Lambda instanc
 - NO CAST: Do not use typing.cast() to suppress type errors. Fix the underlying type issues instead.
 - NO ANY: Do not use Any type. Fix the specific type issues instead.
 
+## Testing Anti-Patterns to Avoid
+
+### CRITICAL: Do NOT prioritize passing tests over meaningful tests
+
+**BAD HABIT**: Creating tests that pass but don't verify actual functionality:
+- Tests that only check if functions can be imported
+- Tests that mock everything and never exercise real logic
+- Tests that verify string presence in source code instead of behavior
+- Tests designed to pass rather than catch bugs
+
+**CORRECT APPROACH**: Create meaningful tests that verify actual behavior:
+- Integration tests that exercise real code paths with minimal mocking
+- Tests that verify the actual business logic works correctly
+- Tests that would fail if the implementation is broken
+- Tests that provide confidence the feature actually works
+
+**Example of BAD test**:
+```python
+def test_function_has_variables():
+    source = inspect.getsource(function)
+    assert "variable_name" in source  # Meaningless - just checks text
+```
+
+**Example of GOOD test**:
+```python
+def test_function_accumulates_tokens():
+    result = function(input_with_tokens)
+    assert result.total_tokens == expected_sum  # Verifies actual behavior
+```
+
+**Remember**: Tests should provide confidence that the code works, not just that it compiles.
+
 ## Proactive Code Cleanup
 
 When refactoring or replacing old systems, always be PROACTIVE and think comprehensively. Don't wait for the user to point out every piece of old code that needs cleanup.
