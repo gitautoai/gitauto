@@ -25,6 +25,7 @@ def should_skip_php(content: str) -> bool:
     in_class = False
     in_array_initialization = False
     in_heredoc = False
+    pending_class = False
 
     for line in lines:
         line = line.strip()
