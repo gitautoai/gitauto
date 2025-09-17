@@ -78,13 +78,13 @@ def _is_pytest_line(line: str) -> bool:
     if not stripped:
         return True  # Empty lines are part of pytest output
 
-    # Common pytest output patterns
+    # Common pytest output patterns - be more specific to avoid false positives
     pytest_patterns = [
         "platform ", "cachedir:", "rootdir:", "plugins:", "collecting",
         "test_", "PASSED", "FAILED", "SKIPPED", "ERROR", "::", "[ ", "%]",
         "collected ", " items", "warnings.warn", "DeprecationWarning",
-        "UserWarning", "/", ".py:", "AssertionError", "def test_",
-        ">", "E ", "assert ", "in ", "s ="
+        "UserWarning", ".py:", "AssertionError", "def test_",
+        "> ", "E ", "assert "
     ]
 
     return any(pattern in stripped for pattern in pytest_patterns)
