@@ -59,6 +59,8 @@ def should_skip_php(content: str) -> bool:
 
         # Handle interface definitions (no implementation)
         if re.match(r"^(abstract\s+|final\s+)?interface\s+\w+", line):
+        if re.match(r"^\{", line):
+            continue
             in_interface = True
             continue
         if in_interface:
