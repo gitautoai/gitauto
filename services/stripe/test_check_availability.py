@@ -387,6 +387,52 @@ class TestCheckAvailability:
         assert result["billing_type"] == "subscription"
         mock_dependencies["get_paid_subscription"].assert_not_called()
         mock_dependencies["check_subscription_limit"].assert_called_once_with(
+
+    def test_credit_billing_with_zero_threshold_and_positive_balance(self, mock_dependencies):
+        """Test auto-reload behavior when threshold is 0 and balance is positive."""
+        # Arrange
+        mock_dependencies["get_stripe_customer_id"].return_value = None
+        mock_dependencies["get_billing_type"].return_value = "credit"
+        mock_dependencies["get_owner"].return_value = {
+            "credit_balance_usd": 1,
+            "auto_reload_enabled": True,
+            "auto_reload_threshold_usd": 0,
+        }
+
+        # Act
+        result = check_availability(
+            owner_id=123,
+            owner_name="test_owner",
+            repo_name="test_repo",
+            installation_id=456,
+            sender_name="test_sender",
+        )
+
+        # Assert
+        assert result["can_proceed"] is True
+        assert result["credit_balance_usd"] == 1
+        # Should not trigger auto-reload because balance (1) > threshold (0)
+        mock_dependencies["trigger_auto_reload"].assert_not_called()
+
+    def test_unknown_billing_type_fallback_behavior(self, mock_dependencies):
+        """Test behavior when an unknown billing type is returned."""
+        # Arrange
+        mock_dependencies["get_stripe_customer_id"].return_value = None
+        mock_dependencies["get_billing_type"].return_value = "unknown_type"
+
+        # Act
+        result = check_availability(
+            owner_id=123,
+            owner_name="test_owner",
+            repo_name="test_repo",
+            installation_id=456,
+            sender_name="test_sender",
+        )
+
+        # Assert - should maintain default values when no billing type matches
+        assert result["can_proceed"] is False
+        assert result["billing_type"] == "unknown_type"
+        assert result["requests_left"] is None
             paid_subscription=None,
             installation_id=456,
         )
