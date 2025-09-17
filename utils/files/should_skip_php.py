@@ -153,7 +153,7 @@ def should_skip_php(content: str) -> bool:
         # Skip global constants (any case for PHP)
         if re.match(r"^const\s+\w+\s*=", line):
             continue
-        # Skip simple variable assignments (configuration arrays, etc.)
+        # Variable assignments indicate mutable state - don't skip
         if re.match(r"^\$\w+\s*=", line):
             return False
         # Skip return statements with simple values (for config files)
