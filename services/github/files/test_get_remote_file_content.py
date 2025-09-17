@@ -199,7 +199,7 @@ class TestGetRemoteFileContent:
         result = get_remote_file_content("large_file.py", base_args, line_number=100)
 
         assert "Opened file: 'large_file.py' with line numbers for your information." in result
-        assert "```large_file.py#L50-L150" in result  # Should show lines around line 100
+        assert "```large_file.py#L51-L151" in result  # Should show lines around line 100
         assert "100:line 100" in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
