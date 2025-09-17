@@ -76,13 +76,13 @@ def remove_pytest_sections(error_log: str):
     return result
 
 
-def _is_pytest_line(line: str) -> bool:
-    """Check if a line looks like pytest output."""
+def _is_application_content(line: str) -> bool:
+    """Check if a line looks like application content (not pytest output)."""
     stripped = line.strip()
     if not stripped:
-        return True  # Empty lines are part of pytest output
+        return False  # Empty lines are not application content
 
-    # Check for common pytest patterns
+    # Check if this line contains pytest-specific patterns
     pytest_patterns = [
         "platform ", "cachedir:", "rootdir:", "plugins:", "collecting", "collected",
         "test_", "PASSED", "FAILED", "SKIPPED", "ERROR", "::", ".py:",
@@ -90,4 +90,10 @@ def _is_pytest_line(line: str) -> bool:
         "> ", "E ", "def test_", "assert ", "[ ", "%]", " items"
     ]
 
-    return any(pattern in stripped for pattern in pytest_patterns)
+    # If it contains pytest patterns, it's not application content
+    if any(pattern in stripped for pattern in pytest_patterns):
+        return False
+
+    # If it doesn't contain pytest patterns, it might be application content
+    # For now, let's consider any line that doesn't contain pytest patterns as application content
+    return True
