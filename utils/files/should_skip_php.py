@@ -153,7 +153,7 @@ def should_skip_php(content: str) -> bool:
         # Skip global constants (any case for PHP)
         if re.match(r"^const\s+\w+\s*=", line):
             continue
-        # Variable assignments indicate mutable state - don't skip
+        # Skip simple variable assignments (configuration arrays, etc.)
         if re.match(r"^\$\w+\s*=\s*([\[\{\"']|-?\d+(?:\.\d+)?|true|false|null)", line):
             if "[" in line and "]" not in line:
                 in_array_initialization = True
