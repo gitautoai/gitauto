@@ -1,12 +1,10 @@
-# Placeholder to check existing content
 # pylint: disable=redefined-outer-name
 
 # Standard imports
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 # Third-party imports
 import pytest
-
 # Local imports
 from services.supabase.coverages.get_coverages import get_coverages
 
@@ -597,14 +595,198 @@ class TestGetCoverages:
         assert mock_chain.execute.call_count == 1
         assert isinstance(result, dict)
 
+    def test_get_coverages_single_very_long_filename_exceeds_limit(self, mock_supabase):
+        """Test edge case where a single filename exceeds the character limit."""
+        # Create a filename that exceeds MAX_CHARS (20,000)
+        very_long_filename = "src/" + "x" * 25000 + ".py"
+
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+        mock_result = Mock()
+        mock_result.data = []
+        mock_chain.execute.return_value = mock_result
+
+        # Execute
+        result = get_coverages(repo_id=123, filenames=[very_long_filename])
+
+        # Verify - should still process the single file
+        assert mock_chain.execute.call_count == 1
+        assert isinstance(result, dict)
+        mock_chain.in_.assert_called_once_with("full_path", [very_long_filename])
+
+    def test_get_coverages_empty_batch_condition(self, mock_supabase):
+        """Test the edge case where current_chars + filename_chars > MAX_CHARS but batch is empty."""
+        # This tests the condition on line 31: if current_chars + filename_chars > MAX_CHARS and batch:
+        # We want to test when the condition is true but batch is empty (should not enter the if block)
+
+        # Create a scenario where the first filename itself is very long
+        long_filename = "src/" + "x" * 19950 + ".py"  # Just under limit
+        normal_filename = "src/normal.py"
+
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+        mock_result = Mock()
+        mock_result.data = []
+        mock_chain.execute.return_value = mock_result
+
+        # Execute with the long filename first, then normal filename
+        result = get_coverages(repo_id=123, filenames=[long_filename, normal_filename])
+
+        # Should make 2 calls - one for each filename due to character limit
+        assert mock_chain.execute.call_count == 2
+        assert isinstance(result, dict)
+
+    def test_get_coverages_batch_reset_after_processing(self, mock_supabase):
+        """Test that batch is properly reset after processing a batch."""
+        # Create filenames that will trigger multiple batches
+        # First batch: files that together exceed the limit
+        batch1_files = ["src/" + "x" * 9990 + f"_{i}.py" for i in range(2)]  # ~20k chars
+        batch2_files = ["src/small.py"]
+
+        all_files = batch1_files + batch2_files
+
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+        mock_result = Mock()
+        mock_result.data = []
+        mock_chain.execute.return_value = mock_result
+
+        # Execute
+        result = get_coverages(repo_id=123, filenames=all_files)
+
+        # Should make 2 calls due to batching
+        assert mock_chain.execute.call_count == 2
+        assert isinstance(result, dict)
+
+        # Verify the batches were called correctly
+        first_batch_call = mock_chain.in_.call_args_list[0][0][1]
+        second_batch_call = mock_chain.in_.call_args_list[1][0][1]
+
+        # First batch should have the large files
+        assert len(first_batch_call) == 2
+        # Second batch should have the small file
+        assert len(second_batch_call) == 1
+        assert second_batch_call[0] == "src/small.py"
+
+    def test_get_coverages_final_batch_processing(self, mock_supabase):
+        """Test that the final batch is processed correctly when it exists."""
+        # Create a scenario where we have files that don't trigger mid-loop batching
+        # but still need final batch processing
+        filenames = [f"src/file_{i}.py" for i in range(10)]  # Small files, single batch
+
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+        mock_result = Mock()
+        mock_result.data = []
+        mock_chain.execute.return_value = mock_result
+
+        # Execute
+        result = get_coverages(repo_id=123, filenames=filenames)
+
+        # Should make 1 call for the final batch
+        assert mock_chain.execute.call_count == 1
+        assert isinstance(result, dict)
+        mock_chain.in_.assert_called_once_with("full_path", filenames)
+
+    def test_get_coverages_multiple_batches_with_data(self, mock_supabase, sample_coverage_data):
+        """Test that data from multiple batches is correctly combined."""
+        # Create filenames that will require multiple batches
+        long_filenames = [
+            f"src/very/long/path/to/deeply/nested/component/with/many/extra/folders/to/exceed/the/character/limit/easily/file{i:04d}.tsx"
+            for i in range(180)
+        ]
+
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+
+        # Setup different data for each batch
+        batch1_data = [sample_coverage_data[0]]
+        batch2_data = [sample_coverage_data[1]]
+
+        mock_results = [Mock(), Mock()]
+        mock_results[0].data = batch1_data
+        mock_results[1].data = batch2_data
+        mock_chain.execute.side_effect = mock_results
+
+        # Execute
+        result = get_coverages(repo_id=123, filenames=long_filenames)
+
+        # Should make 2 calls and combine data from both
+        assert mock_chain.execute.call_count == 2
+        assert len(result) == 2
+        assert "src/main.py" in result
+        assert "src/utils.py" in result
+
+    def test_get_coverages_character_counting_accuracy(self, mock_supabase):
+        """Test that character counting includes quotes and commas correctly."""
+        # Each filename needs quotes and comma: "filename",
+        # So a filename of length N contributes N + 3 characters
+
+        # Create filenames where we can predict the exact character count
+        filenames = ["a" * 100 for _ in range(190)]  # 190 files × 103 chars = 19,570 + 100 overhead = 19,670
+
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+        mock_result = Mock()
+        mock_result.data = []
+        mock_chain.execute.return_value = mock_result
+
+        # Execute
+        result = get_coverages(repo_id=123, filenames=filenames)
+
+        # Should fit in single batch (under 20,000 limit)
+        assert mock_chain.execute.call_count == 1
+        assert isinstance(result, dict)
+
+    def test_get_coverages_overhead_calculation(self, mock_supabase):
+        """Test that the OVERHEAD constant is properly accounted for in batching."""
+        # Test with filenames that would exceed limit only when overhead is considered
+        # 199 files × 100 chars = 19,900 + 100 overhead = 20,000 (exactly at limit)
+        filenames = ["x" * 97 for _ in range(199)]  # 97 + 3 = 100 chars per file
+
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+        mock_result = Mock()
+        mock_result.data = []
+        mock_chain.execute.return_value = mock_result
+
+        # Execute
+        result = get_coverages(repo_id=123, filenames=filenames)
+
+        # Should fit in single batch (exactly at limit)
+        assert mock_chain.execute.call_count == 1
+        assert isinstance(result, dict)
+
 
 class TestGetCoveragesIntegration:
     """Integration tests that hit the actual Supabase database."""
 
     def test_find_exact_character_limit(self):
         """Integration test to find the exact character limit for Supabase queries."""
-        from services.supabase.client import supabase
         import logging
+
+        from services.supabase.client import supabase
 
         # Suppress error logging for this test
         logging.disable(logging.ERROR)
