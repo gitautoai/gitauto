@@ -243,6 +243,21 @@ def test_empty_file_sections():
 /path/to/file2.js
   1:1  error  Actual error
 
+
+def test_original_scenario_backward_compatibility():
+    """Test the original scenario from the existing test for backward compatibility."""
+    log = """/path/to/file1.js
+  1:1  error  Unexpected token
+  2:1  warning  'var' is deprecated
+
+/path/to/file2.js
+  1:1  warning  Missing semicolon
+  2:1  warning  'var' is deprecated
+
+✖ 4 problems (1 error, 3 warnings)"""
+
+    # Only file1.js should remain because it has errors; file2.js has only warnings
+
 ✖ 1 problem (1 error, 0 warnings)"""
 
     expected = """/path/to/file2.js
