@@ -1,5 +1,4 @@
 from unittest.mock import patch
-
 from utils.logs.remove_pytest_sections import remove_pytest_sections
 
 
