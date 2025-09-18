@@ -646,7 +646,8 @@ class TestGetCoverages:
         """Test that batch is properly reset after processing a batch."""
         # Create filenames that will trigger multiple batches
         # First batch: files that together exceed the limit
-        batch1_files = ["src/" + "x" * 9990 + f"_{i}.py" for i in range(2)]  # ~20k chars
+        # Each file: 4 + 9900 + 5 = 9909 chars, +3 for quotes/comma = 9912 chars
+        batch1_files = ["src/" + "x" * 9900 + f"_{i}.py" for i in range(2)]  # 2 * 9912 + 100 overhead = 19924 chars
         batch2_files = ["src/small.py"]
 
         all_files = batch1_files + batch2_files
