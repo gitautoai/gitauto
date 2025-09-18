@@ -1,6 +1,7 @@
 """Unit tests for remove_repetitive_eslint_warnings module."""
-from utils.logs.remove_repetitive_eslint_warnings import \
-    remove_repetitive_eslint_warnings
+from utils.logs.remove_repetitive_eslint_warnings import (
+    remove_repetitive_eslint_warnings,
+)
 
 
 def test_empty_input():
