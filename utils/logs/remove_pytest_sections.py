@@ -43,6 +43,23 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
+        # If we're skipping, check if this line looks like it's outside of pytest sections
+        if skip and line.strip():
+            # Check if this line looks like regular log content (not pytest-specific)
+            is_pytest_content = (
+                line.startswith(" ") or  # Indented content (stack traces, etc.)
+                line.startswith("/") or  # File paths
+                "::" in line or  # Test names like test_file.py::test_name
+                " PASSED " in line or " FAILED " in line or " SKIPPED " in line or " ERROR " in line or  # Test results
+                "platform " in line or  # Platform info
+                "cachedir:" in line or "rootdir:" in line or "plugins:" in line or  # Pytest config
+                "collecting" in line or "collected" in line or  # Collection info
+                line.startswith("E ") or  # Error lines
+                ">" in line and line.strip().startswith(">") or  # Code context lines
+                "%" in line and ("[" in line and "]" in line) or  # Progress indicators like [ 50%]
+                line.startswith("asyncio:") or line.startswith("plugins:")  # Additional pytest-specific lines
+            )
+
         # Keep line if not skipping
         if not skip:
             filtered_lines.append(line)
