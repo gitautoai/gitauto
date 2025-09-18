@@ -67,6 +67,19 @@ def remove_pytest_sections(error_log: str):
                 if content_removed and filtered_lines and filtered_lines[-1] != "":
                     filtered_lines.append("")
 
+        # If we're skipping and encounter a line that clearly looks like non-pytest content,
+        # stop skipping. Be very conservative here - only for truly obvious cases.
+        if skip and line.strip():
+            # Only stop skipping for lines that are clearly regular content
+            # This is very conservative - we only stop for simple text lines
+            looks_like_regular_content = (
+                not line.startswith(" ") and  # Not indented
+                not line.startswith("/") and  # Not a file path
+                "::" not in line and "%" not in line and "=" not in line and  # No pytest markers
+                "platform" not in line and "cachedir" not in line and "rootdir" not in line and
+                "plugins" not in line and "collecting" not in line and "collected" not in line and
+                "asyncio" not in line and " PASSED " not in line and " FAILED " not in line and
+                " SKIPPED " not in line and " ERROR " not in line and not line.startswith("E ") and
         # Keep line if not skipping
         if not skip:
             filtered_lines.append(line)
