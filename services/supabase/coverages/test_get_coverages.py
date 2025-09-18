@@ -707,11 +707,9 @@ class TestGetCoverages:
     def test_get_coverages_multiple_batches_with_data(self, mock_supabase, sample_coverage_data):
         """Test that data from multiple batches is correctly combined."""
         # Create filenames that will require multiple batches
-        # Each filename is ~120 chars, +3 for quotes/comma = 123 chars
-        # First batch: ~161 files, second batch: remaining files
         long_filenames = [
             f"src/very/long/path/to/deeply/nested/component/with/many/extra/folders/to/exceed/the/character/limit/easily/file{i:04d}.tsx"
-            for i in range(165)  # Will require exactly 2 batches
+            for i in range(180)
         ]
 
         mock_chain = Mock()
