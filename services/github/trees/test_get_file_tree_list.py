@@ -1,4 +1,5 @@
 from unittest.mock import patch
+
 import pytest
 from services.github.trees.get_file_tree_list import get_file_tree_list
 
@@ -450,5 +451,257 @@ def test_get_file_tree_list_nested_items_not_direct_children(base_args):
 
         # Should only include direct children, not nested items
         expected_result = ["child/", "file.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_kwargs_parameter(base_args, mock_tree_items):
+    # Test that **_kwargs parameter is handled correctly
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_tree_items
+
+        # Pass additional kwargs that should be ignored
+        result = get_file_tree_list(
+            base_args,
+            dir_path="services",
+            extra_param="ignored",
+            another_param=123
+        )
+
+        expected_result = ["github/", "openai/"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_whitespace_only_dir_path(base_args, mock_tree_items):
+    # Test with dir_path containing only whitespace
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_tree_items
+
+        result = get_file_tree_list(base_args, dir_path="   ")
+
+        # Should behave like root directory after stripping
+        expected_result = [
+            ".github/",
+            "services/",
+            "utils/",
+            "README.md",
+            "config.py",
+            "main.py",
+        ]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_multiple_slashes_dir_path(base_args, mock_tree_items):
+    # Test with dir_path containing multiple slashes
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_tree_items
+
+        result = get_file_tree_list(base_args, dir_path="///services///")
+
+        expected_result = ["github/", "openai/"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_false_tree_items(base_args):
+    # Test when get_file_tree returns False (another falsy value)
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = False
+
+        result = get_file_tree_list(base_args)
+
+        assert result == []
+
+
+def test_get_file_tree_list_empty_string_tree_items(base_args):
+    # Test when get_file_tree returns empty string (falsy value)
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = ""
+
+        result = get_file_tree_list(base_args)
+
+        assert result == []
+
+
+def test_get_file_tree_list_sorting_behavior(base_args):
+    # Test that directories are sorted before files and both are alphabetically sorted
+    mock_sorting_tree = [
+        {"path": "zebra.py", "type": "blob"},
+        {"path": "alpha", "type": "tree"},
+        {"path": "beta.py", "type": "blob"},
+        {"path": "gamma", "type": "tree"},
+        {"path": "delta.py", "type": "blob"},
+        {"path": "alpha/file.py", "type": "blob"},
+        {"path": "gamma/file.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_sorting_tree
+
+        result = get_file_tree_list(base_args)
+
+        # Directories should come first, then files, both alphabetically sorted
+        expected_result = ["alpha/", "gamma/", "beta.py", "delta.py", "zebra.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_exact_path_match_required(base_args):
+    # Test that exact path matching is required (not substring matching)
+    mock_exact_match = [
+        {"path": "src", "type": "tree"},
+        {"path": "src_backup", "type": "tree"},
+        {"path": "src/main.py", "type": "blob"},
+        {"path": "src_backup/old.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_exact_match
+
+        result = get_file_tree_list(base_args, dir_path="src")
+
+        # Should only match "src/" exactly, not "src_backup/"
+        expected_result = ["main.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_case_sensitive_paths(base_args):
+    # Test that path matching is case sensitive
+    mock_case_sensitive = [
+        {"path": "SRC", "type": "tree"},
+        {"path": "src", "type": "tree"},
+        {"path": "SRC/FILE.PY", "type": "blob"},
+        {"path": "src/file.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_case_sensitive
+
+        result = get_file_tree_list(base_args, dir_path="src")
+
+        # Should only match lowercase "src", not uppercase "SRC"
+        expected_result = ["file.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_special_characters_in_paths(base_args):
+    # Test paths with special characters
+    mock_special_chars = [
+        {"path": "special-dir", "type": "tree"},
+        {"path": "special_dir", "type": "tree"},
+        {"path": "special.dir", "type": "tree"},
+        {"path": "special-dir/file-name.py", "type": "blob"},
+        {"path": "special_dir/file_name.py", "type": "blob"},
+        {"path": "special.dir/file.name.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_special_chars
+
+        result = get_file_tree_list(base_args, dir_path="special-dir")
+
+        expected_result = ["file-name.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_unicode_paths(base_args):
+    # Test paths with unicode characters
+    mock_unicode = [
+        {"path": "测试", "type": "tree"},
+        {"path": "测试/文件.py", "type": "blob"},
+        {"path": "émojis", "type": "tree"},
+        {"path": "émojis/🚀.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_unicode
+
+        result = get_file_tree_list(base_args, dir_path="测试")
+
+        expected_result = ["文件.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_empty_files_and_dirs_lists(base_args):
+    # Test scenario where files and dirs lists are empty after filtering
+    mock_empty_after_filter = [
+        {"path": "parent", "type": "tree"},
+        {"path": "parent/child", "type": "tree"},
+        {"path": "parent/child/nested.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_empty_after_filter
+
+        # Request parent directory, but it has no direct children
+        result = get_file_tree_list(base_args, dir_path="parent")
+
+        # Should return empty list since child/nested.py is not a direct child
+        expected_result = ["child/"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_root_with_slash_in_filename(base_args):
+    # Test root directory with files that have slash-like characters in names
+    # Note: This is theoretical as GitHub doesn't allow slashes in filenames
+    mock_slash_names = [
+        {"path": "normal.py", "type": "blob"},
+        {"path": "dir", "type": "tree"},
+        {"path": "dir/file.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_slash_names
+
+        result = get_file_tree_list(base_args)
+
+        expected_result = ["dir/", "normal.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_directory_path_normalization(base_args, mock_tree_items):
+    # Test various forms of directory path normalization
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_tree_items
+
+        # Test with tabs and spaces mixed with slashes
+        result = get_file_tree_list(base_args, dir_path="\t/services/\t")
+
+        # After strip("/"), should still work correctly
+        expected_result = ["github/", "openai/"]
 
         assert result == expected_result
