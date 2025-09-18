@@ -46,6 +46,7 @@ def remove_pytest_sections(error_log: str):
         # If we're skipping, check if this line looks like it's outside of pytest sections
         if skip and line.strip():
             # Check if this line looks like regular log content (not pytest-specific)
+            # Be very conservative - only stop skipping for clearly non-pytest content
             is_pytest_content = (
                 line.startswith(" ") or  # Indented content (stack traces, etc.)
                 line.startswith("/") or  # File paths
@@ -57,10 +58,16 @@ def remove_pytest_sections(error_log: str):
                 line.startswith("E ") or  # Error lines
                 ">" in line and line.strip().startswith(">") or  # Code context lines
                 "%" in line and ("[" in line and "]" in line) or  # Progress indicators like [ 50%]
-                line.startswith("asyncio:") or line.startswith("plugins:")  # Additional pytest-specific lines
+                line.startswith("asyncio:") or  # Asyncio configuration
+                "=" in line and len([c for c in line if c == "="]) > 10 or  # Lines with many equals (section headers)
+                line.strip().startswith(".") or  # Test progress dots
+                line.strip() == "" or  # Empty lines within pytest sections
+                "warnings.warn" in line or "DeprecationWarning" in line or "UserWarning" in line  # Warning content
             )
 
-            if not is_pytest_content:
+            # Only stop skipping if this looks like clearly non-pytest content
+            # AND it doesn't look like it could be part of a pytest section
+            if not is_pytest_content and not line.startswith("="):
                 skip = False
                 # Add blank line if we just removed content and last line isn't blank
                 if content_removed and filtered_lines and filtered_lines[-1] != "":
