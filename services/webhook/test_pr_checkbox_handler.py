@@ -62,7 +62,9 @@ def mock_issue_comment_payload():
 @patch("services.webhook.pr_checkbox_handler.extract_selected_files")
 @patch("services.webhook.pr_checkbox_handler.slack_notify")
 @patch("services.webhook.pr_checkbox_handler.PRODUCT_ID", new="gitauto")
-@patch("services.webhook.pr_checkbox_handler.GITHUB_APP_USER_NAME", new="gitauto-ai[bot]")
+@patch(
+    "services.webhook.pr_checkbox_handler.GITHUB_APP_USER_NAME", new="gitauto-ai[bot]"
+)
 @patch("services.webhook.pr_checkbox_handler.create_comment")
 @patch("services.webhook.pr_checkbox_handler.cancel_workflow_runs")
 @pytest.mark.asyncio

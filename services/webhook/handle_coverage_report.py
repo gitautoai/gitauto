@@ -37,10 +37,19 @@ def handle_coverage_report(
     repo_name: str,
     installation_id: int,
     run_id: int,
-    head_branch: str,
+    head_branch: str | None,
     user_name: str,
     source: str = "github",
 ):
+    # Default to "detached" for builds without branch context (tag builds, API triggers, etc.)
+    if head_branch is None:
+        head_branch = "detached"
+        logging.info(
+            "No branch context for coverage report (run_id: %s, source: %s). Using 'detached'.",
+            run_id,
+            source,
+        )
+
     github_token = get_installation_access_token(installation_id=installation_id)
     circle_token = None
     if source == "github":
