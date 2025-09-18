@@ -1,28 +1,32 @@
 from utils.logs.remove_pytest_sections import remove_pytest_sections
 
-# Test case 1: warnings summary only
-test_input1 = """Initial content
+# Test case from the failing test
+test_input = """Initial content
 =========================== warnings summary ============================
 /path/to/file.py:10: DeprecationWarning: deprecated function
   deprecated_function()
 
 Final content"""
 
-expected1 = """Initial content
+expected = """Initial content
 
 Final content"""
 
-result1 = remove_pytest_sections(test_input1)
-print("TEST 1 - Warnings summary only:")
+result = remove_pytest_sections(test_input)
+print("TEST - Warnings summary only:")
 print("Expected:")
-print(repr(expected1))
+print(repr(expected))
 print("Got:")
-print(repr(result1))
-print("Match:", result1 == expected1)
+print(repr(result))
+print("Match:", result == expected)
 print("=" * 50)
 
-# Test case 2: test session starts
-test_input2 = """Run python -m pytest
+# Test the actual failing case from the log
+test_input2 = """Run python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
+/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:217: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
 ============================= test session starts ==============================
 platform linux -- Python 3.12.11, pytest-8.3.3, pluggy-1.5.0
 rootdir: /home/runner/work/gitauto/gitauto
@@ -39,7 +43,11 @@ self = <test_should_test_file.TestShouldTestFile object at 0x7f44e0106780>
 FAILED utils/files/test_should_test_file.py::TestShouldTestFile::test_should_test_file_with_boolean_return_values - assert False
 Error: Process completed with exit code 1."""
 
-expected2 = """Run python -m pytest
+expected2 = """Run python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
+/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:217: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
 
 =================================== FAILURES ===================================
 _____ TestShouldTestFile.test_should_test_file_with_boolean_return_values ______
@@ -51,7 +59,7 @@ FAILED utils/files/test_should_test_file.py::TestShouldTestFile::test_should_tes
 Error: Process completed with exit code 1."""
 
 result2 = remove_pytest_sections(test_input2)
-print("TEST 2 - Test session starts:")
+print("TEST 2 - Real failing case:")
 print("Expected:")
 print(repr(expected2))
 print("Got:")
