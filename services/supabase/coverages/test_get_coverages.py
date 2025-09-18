@@ -648,7 +648,7 @@ class TestGetCoverages:
         # First batch: files that together exceed the limit
         # Each file: 4 + 9800 + 5 = 9809 chars, +3 for quotes/comma = 9812 chars
         # Two files: 2 * 9812 + 100 overhead = 19724 chars (under limit)
-        batch1_files = ["src/" + "x" * 9940 + f"_{i}.py" for i in range(2)]  # 2 * 9952 + 100 overhead = 20004 chars
+        batch1_files = ["src/" + "x" * 9800 + f"_{i}.py" for i in range(2)]  # Should fit in first batch
         batch2_files = ["src/small.py"]
 
         all_files = batch1_files + batch2_files
