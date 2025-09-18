@@ -263,6 +263,16 @@ def test_original_scenario_backward_compatibility():
     expected = """/path/to/file2.js
   1:1  error  Actual error
 
+
+if __name__ == "__main__":
+    # Run all test functions
+    test_functions = [name for name in globals() if name.startswith('test_')]
+    for test_func_name in test_functions:
+        globals()[test_func_name]()
+        print(f"✓ {test_func_name} passed")
+
+    print(f"\nAll {len(test_functions)} tests passed!")
+
 ✖ 1 problem (1 error, 0 warnings)"""
 
     result = remove_repetitive_eslint_warnings(log)
