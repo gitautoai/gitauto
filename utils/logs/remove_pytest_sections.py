@@ -57,6 +57,16 @@ def remove_pytest_sections(error_log: str):
                 "platform" not in line and "cachedir" not in line and "rootdir" not in line and
                 "plugins" not in line and "collecting" not in line and "collected" not in line and
                 "asyncio:" not in line and "=" not in line and
+                " PASSED " not in line and " FAILED " not in line and " SKIPPED " not in line and " ERROR " not in line and
+                not line.startswith("E ") and
+                not (line.strip().startswith(".") and len(line.strip()) < 100)  # Not test progress dots
+            )
+
+            if looks_like_regular_content:
+                skip = False
+                if content_removed and filtered_lines and filtered_lines[-1] != "":
+                    filtered_lines.append("")
+
         # Keep line if not skipping
         if not skip:
             filtered_lines.append(line)
