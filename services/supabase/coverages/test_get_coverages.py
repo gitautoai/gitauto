@@ -2,6 +2,7 @@
 
 # Standard imports
 import logging
+import os
 from unittest.mock import Mock, patch
 
 # Third-party imports
@@ -797,6 +798,7 @@ class TestGetCoverages:
 class TestGetCoveragesIntegration:
     """Integration tests that hit the actual Supabase database."""
 
+    @pytest.mark.skipif(bool(os.getenv("CI")), reason="Skip integration tests in CI")
     def test_find_exact_character_limit(self):
         """Integration test to find the exact character limit for Supabase queries."""
         # Suppress error logging for this test
@@ -821,15 +823,12 @@ class TestGetCoveragesIntegration:
                     ).execute()
                     max_working = mid
                     low = mid + 1
-                except (
-                    ValueError,
-                    TypeError,
-                    KeyError,
-                ) as e:
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     if (
                         "400" in str(e)
                         or "Bad Request" in str(e)
                         or "JSON could not be generated" in str(e)
+                        or "APIError" in str(e)
                     ):
                         high = mid - 1
                     else:
@@ -844,6 +843,7 @@ class TestGetCoveragesIntegration:
         finally:
             logging.disable(logging.NOTSET)
 
+    @pytest.mark.skipif(bool(os.getenv("CI")), reason="Skip integration tests in CI")
     def test_get_coverages_with_realistic_large_batch(self):
         """Test that get_coverages can handle realistic large batches from real repos."""
         # Create filenames similar to the AGENT-ZX error case
