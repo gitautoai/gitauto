@@ -1,11 +1,14 @@
 # pylint: disable=redefined-outer-name
 
 # Standard imports
+import logging
 from unittest.mock import Mock, patch
 
 # Third-party imports
 import pytest
+
 # Local imports
+from services.supabase.client import supabase
 from services.supabase.coverages.get_coverages import get_coverages
 
 
@@ -648,8 +651,12 @@ class TestGetCoverages:
         # First batch: files that together exceed the limit
         # Each file: 4 + 9950 + 5 = 9959 chars, +3 for quotes/comma = 9962 chars
         # First file: 100 + 9962 = 10062, Second file would make: 10062 + 9962 = 20024 > 20000
-        batch1_files = ["src/" + "x" * 9950 + f"_{i}.py" for i in range(2)]  # Will trigger batching
-        batch2_files = ["src/small.py"]  # Will be in second batch with second large file
+        batch1_files = [
+            "src/" + "x" * 9950 + f"_{i}.py" for i in range(2)
+        ]  # Will trigger batching
+        batch2_files = [
+            "src/small.py"
+        ]  # Will be in second batch with second large file
 
         all_files = batch1_files + batch2_files
 
@@ -704,7 +711,9 @@ class TestGetCoverages:
         assert isinstance(result, dict)
         mock_chain.in_.assert_called_once_with("full_path", filenames)
 
-    def test_get_coverages_multiple_batches_with_data(self, mock_supabase, sample_coverage_data):
+    def test_get_coverages_multiple_batches_with_data(
+        self, mock_supabase, sample_coverage_data
+    ):
         """Test that data from multiple batches is correctly combined."""
         # Create filenames that will require multiple batches
         long_filenames = [
@@ -742,7 +751,9 @@ class TestGetCoverages:
         # So a filename of length N contributes N + 3 characters
 
         # Create filenames where we can predict the exact character count
-        filenames = ["a" * 100 for _ in range(190)]  # 190 files × 103 chars = 19,570 + 100 overhead = 19,670
+        filenames = [
+            "a" * 100 for _ in range(190)
+        ]  # 190 files × 103 chars = 19,570 + 100 overhead = 19,670
 
         mock_chain = Mock()
         mock_supabase.table.return_value = mock_chain
@@ -788,10 +799,6 @@ class TestGetCoveragesIntegration:
 
     def test_find_exact_character_limit(self):
         """Integration test to find the exact character limit for Supabase queries."""
-        import logging
-
-        from services.supabase.client import supabase
-
         # Suppress error logging for this test
         logging.disable(logging.ERROR)
 
@@ -814,7 +821,7 @@ class TestGetCoveragesIntegration:
                     ).execute()
                     max_working = mid
                     low = mid + 1
-                except Exception as e:
+                except (ValueError, TypeError, KeyError, Exception) as e:  # pylint: disable=broad-exception-caught
                     if (
                         "400" in str(e)
                         or "Bad Request" in str(e)
