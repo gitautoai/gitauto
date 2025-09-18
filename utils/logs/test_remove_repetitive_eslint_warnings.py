@@ -1,7 +1,5 @@
-from utils.logs.remove_repetitive_eslint_warnings import \
 """Unit tests for remove_repetitive_eslint_warnings module."""
-
-
+from utils.logs.remove_repetitive_eslint_warnings import \
     remove_repetitive_eslint_warnings
 
 
@@ -243,6 +241,16 @@ def test_empty_file_sections():
 /path/to/file2.js
   1:1  error  Actual error
 
+✖ 1 problem (1 error, 0 warnings)"""
+
+    expected = """/path/to/file2.js
+  1:1  error  Actual error
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
 
 def test_original_scenario_backward_compatibility():
     """Test the original scenario from the existing test for backward compatibility."""
@@ -257,23 +265,10 @@ def test_original_scenario_backward_compatibility():
 ✖ 4 problems (1 error, 3 warnings)"""
 
     # Only file1.js should remain because it has errors; file2.js has only warnings
+    expected = """/path/to/file1.js
+  1:1  error  Unexpected token
 
-✖ 1 problem (1 error, 0 warnings)"""
-
-    expected = """/path/to/file2.js
-  1:1  error  Actual error
-
-
-if __name__ == "__main__":
-    # Run all test functions
-    test_functions = [name for name in globals() if name.startswith('test_')]
-    for test_func_name in test_functions:
-        globals()[test_func_name]()
-        print(f"✓ {test_func_name} passed")
-
-    print(f"\nAll {len(test_functions)} tests passed!")
-
-✖ 1 problem (1 error, 0 warnings)"""
+✖ 4 problems (1 error, 3 warnings)"""
 
     result = remove_repetitive_eslint_warnings(log)
     assert result == expected
@@ -330,3 +325,13 @@ def test_complex_real_world_scenario():
 
     result = remove_repetitive_eslint_warnings(log)
     assert result == expected
+
+
+if __name__ == "__main__":
+    # Run all test functions
+    test_functions = [name for name in globals() if name.startswith('test_')]
+    for test_func_name in test_functions:
+        globals()[test_func_name]()
+        print(f"✓ {test_func_name} passed")
+
+    print(f"\nAll {len(test_functions)} tests passed!")
