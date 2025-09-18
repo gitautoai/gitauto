@@ -647,7 +647,8 @@ class TestGetCoverages:
         # Create filenames that will trigger multiple batches
         # First batch: files that together exceed the limit
         # Each file: 4 + 9900 + 5 = 9909 chars, +3 for quotes/comma = 9912 chars
-        batch1_files = ["src/" + "x" * 9900 + f"_{i}.py" for i in range(2)]  # 2 * 9912 + 100 overhead = 19924 chars
+        # Each file: 4 + 9940 + 5 = 9949 chars, +3 for quotes/comma = 9952 chars
+        batch1_files = ["src/" + "x" * 9940 + f"_{i}.py" for i in range(2)]  # 2 * 9952 + 100 overhead = 20004 chars
         batch2_files = ["src/small.py"]
 
         all_files = batch1_files + batch2_files
