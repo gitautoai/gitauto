@@ -1,4 +1,7 @@
 from utils.logs.remove_repetitive_eslint_warnings import \
+"""Unit tests for remove_repetitive_eslint_warnings module."""
+
+
     remove_repetitive_eslint_warnings
 
 
