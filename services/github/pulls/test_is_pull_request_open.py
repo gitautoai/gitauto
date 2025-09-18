@@ -87,7 +87,7 @@ def test_is_pull_request_open_returns_false_when_repository_not_found(
     result = is_pull_request_open(**sample_params)
 
     # Assert
-    assert result is False
+    assert result is False  # Repository not found means PR doesn't exist
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -102,7 +102,7 @@ def test_is_pull_request_open_returns_false_when_pull_request_not_found(
     result = is_pull_request_open(**sample_params)
 
     # Assert
-    assert result is False
+    assert result is False  # PR not found means it doesn't exist
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -164,8 +164,8 @@ def test_is_pull_request_open_creates_graphql_client_with_token(sample_params):
         mock_get_client.assert_called_once_with(token="test-token")
 
 
-def test_is_pull_request_open_handles_exception_returns_false(sample_params):
-    """Test that function returns False when an exception occurs (due to @handle_exceptions decorator)."""
+def test_is_pull_request_open_handles_exception_returns_true(sample_params):
+    """Test that function returns True when an exception occurs (fail-open due to @handle_exceptions decorator)."""
     with patch(
         "services.github.pulls.is_pull_request_open.get_graphql_client"
     ) as mock_get_client:
@@ -175,4 +175,4 @@ def test_is_pull_request_open_handles_exception_returns_false(sample_params):
         result = is_pull_request_open(**sample_params)
 
         # Assert
-        assert result is False
+        assert result is True  # Network errors return True (fail-open)
