@@ -708,10 +708,10 @@ class TestGetCoverages:
         """Test that data from multiple batches is correctly combined."""
         # Create filenames that will require multiple batches
         # Each filename is ~120 chars, +3 for quotes/comma = 123 chars
-        # 320 files would be too many, let's use fewer to ensure exactly 2 batches
+        # First batch: ~161 files, second batch: remaining files
         long_filenames = [
             f"src/very/long/path/to/deeply/nested/component/with/many/extra/folders/to/exceed/the/character/limit/easily/file{i:04d}.tsx"
-            for i in range(320)  # Will require multiple batches
+            for i in range(165)  # Will require exactly 2 batches
         ]
 
         mock_chain = Mock()
