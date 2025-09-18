@@ -1,4 +1,5 @@
 import re
+
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -10,6 +11,7 @@ def remove_pytest_sections(error_log: str):
     lines = error_log.split("\n")
     filtered_lines = []
     skip = False
+    in_section = False
     content_removed = False
 
     for line in lines:
@@ -17,17 +19,20 @@ def remove_pytest_sections(error_log: str):
         if "===" in line and "test session starts" in line:
             skip = True
             content_removed = True
+            in_section = True
             continue
 
         # Start skipping at warnings summary
         if "===" in line and "warnings summary" in line:
             skip = True
             content_removed = True
+            in_section = True
             continue
 
         # Stop skipping and keep failures section
         if "===" in line and "FAILURES" in line:
             skip = False
+            in_section = False
             # Add blank line before FAILURES if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
                 filtered_lines.append("")
@@ -37,17 +42,25 @@ def remove_pytest_sections(error_log: str):
         # Stop skipping and keep short test summary
         if "===" in line and "short test summary info" in line:
             skip = False
+            in_section = False
             # Add blank line before summary if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
                 filtered_lines.append("")
             filtered_lines.append(line)
             continue
 
+        # If we're skipping and encounter a line that doesn't look like pytest section content,
+        # we've likely reached the end of the section
+        if skip and in_section and line.strip() and not line.startswith(" ") and "===" not in line:
+            skip = False
+            in_section = False
+            # Add blank line if we just removed content and last line isn't blank
+            if content_removed and filtered_lines and filtered_lines[-1] != "":
+                filtered_lines.append("")
+
         # Keep line if not skipping
         if not skip:
             filtered_lines.append(line)
-        else:
-            content_removed = True
 
     # Join and only clean up excessive blank lines if we actually removed content
     result = "\n".join(filtered_lines)
