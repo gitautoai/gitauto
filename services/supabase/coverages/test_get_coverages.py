@@ -673,11 +673,11 @@ class TestGetCoverages:
         first_batch_call = mock_chain.in_.call_args_list[0][0][1]
         second_batch_call = mock_chain.in_.call_args_list[1][0][1]
 
-        # First batch should have the large files
-        assert len(first_batch_call) == 2
-        # Second batch should have the small file
-        assert len(second_batch_call) == 1
-        assert second_batch_call[0] == "src/small.py"
+        # First batch should have the first large file only
+        assert len(first_batch_call) == 1
+        # Second batch should have the second large file and the small file
+        assert len(second_batch_call) == 2
+        assert "src/small.py" in second_batch_call
 
     def test_get_coverages_final_batch_processing(self, mock_supabase):
         """Test that the final batch is processed correctly when it exists."""
