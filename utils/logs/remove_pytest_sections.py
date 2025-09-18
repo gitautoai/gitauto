@@ -60,6 +60,12 @@ def remove_pytest_sections(error_log: str):
                 line.startswith("asyncio:") or line.startswith("plugins:")  # Additional pytest-specific lines
             )
 
+            if not is_pytest_content:
+                skip = False
+                # Add blank line if we just removed content and last line isn't blank
+                if content_removed and filtered_lines and filtered_lines[-1] != "":
+                    filtered_lines.append("")
+
         # Keep line if not skipping
         if not skip:
             filtered_lines.append(line)
