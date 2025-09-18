@@ -36,7 +36,6 @@ GITHUB_CHECK_RUN_FAILURES = [
     "startup_failure",
     "failure",
     "timed_out",
-    "action_required",
 ]
 GITHUB_ISSUE_DIR = ".github/ISSUE_TEMPLATE"
 GITHUB_ISSUE_TEMPLATES = ["bug_report.yml", "feature_request.yml"]

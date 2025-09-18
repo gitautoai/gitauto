@@ -821,7 +821,11 @@ class TestGetCoveragesIntegration:
                     ).execute()
                     max_working = mid
                     low = mid + 1
-                except (ValueError, TypeError, KeyError, Exception) as e:  # pylint: disable=broad-exception-caught
+                except (
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                ) as e:
                     if (
                         "400" in str(e)
                         or "Bad Request" in str(e)
