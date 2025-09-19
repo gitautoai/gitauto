@@ -64,25 +64,30 @@ def remove_pytest_sections(error_log: str):
         if not skip:
             filtered_lines.append(line)
         else:
-            # Check if this line looks like it's no longer pytest output
-            # This helps handle cases where pytest sections don't have explicit end markers
+            # When skipping, check if we've encountered a line that looks like regular content
+            # rather than pytest output. This handles cases where pytest sections don't have
+            # explicit end markers like FAILURES or short test summary.
             stripped_line = line.strip()
 
-            # Check if line looks like regular content that's not part of pytest output
-            # We need to be careful not to stop skipping too early
-            looks_like_regular_content = (
-                stripped_line and
-                not stripped_line.startswith(('platform ', 'cachedir:', 'rootdir:', 'plugins:', 'asyncio:', 'collecting', 'collected')) and
-                '::' not in stripped_line and
-                not any(pattern in stripped_line for pattern in ['PASSED', 'FAILED', 'SKIPPED', 'ERROR', '%]']) and
-                not any(word in stripped_line.lower() for word in ['test', 'pytest', 'warning', 'coverage', 'item']) and
-                len(stripped_line.split()) <= 3  # Simple heuristic: regular content is usually short phrases
-            )
+            if stripped_line:
+                # Identify lines that are clearly pytest output and should continue to be skipped
+                is_pytest_output = (
+                    stripped_line.startswith(('platform ', 'cachedir:', 'rootdir:', 'plugins:', 'asyncio:', 'collecting')) or
+                    'collected' in stripped_line.lower() or
+                    '::' in stripped_line or
+                    any(pattern in stripped_line for pattern in ['PASSED', 'FAILED', 'SKIPPED', 'ERROR', '%]', 'warnings']) or
+                    stripped_line.lower().startswith(('test ', 'tests ')) or
+                    re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*\.py::', stripped_line)  # test file patterns
+                )
 
-            if looks_like_regular_content:
-                skip = False
-                filtered_lines.append(line)
+                # If it doesn't look like pytest output, stop skipping
+                if not is_pytest_output:
+                    skip = False
+                    filtered_lines.append(line)
+                else:
+                    content_removed = True
             else:
+                # Empty lines during skipping are also removed
                 content_removed = True
 
     # Join and only clean up excessive blank lines if we actually removed content
