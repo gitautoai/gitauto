@@ -758,8 +758,6 @@ def test_progressive_token_reduction(mock_client):
         nonlocal call_count
         call_count += 1
         # First call: over limit, subsequent calls: under limit
-        if call_count == 1:
-
 
 def test_tool_use_with_empty_string_id(mock_client):
     """Test tool_use block with empty string as id value."""
