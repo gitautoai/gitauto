@@ -10,6 +10,7 @@ def update_usage(
     total_seconds: int,
     is_completed: bool = True,
     pr_number: int | None = None,
+    is_test_passed: bool | None = None,
     retry_workflow_id_hash_pairs: list[str] | None = None,
     original_error_log: str | None = None,
     minimized_error_log: str | None = None,
@@ -25,6 +26,9 @@ def update_usage(
         "token_output": token_output,
         "total_seconds": total_seconds,
     }
+
+    if is_test_passed is not None:
+        update_data["is_test_passed"] = is_test_passed
 
     if retry_workflow_id_hash_pairs is not None:
         update_data["retry_workflow_id_hash_pairs"] = retry_workflow_id_hash_pairs
