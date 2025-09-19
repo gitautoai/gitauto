@@ -50,23 +50,6 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # Simple heuristic: if we're skipping and encounter a line that looks like regular content
-        # (not pytest output), stop skipping
-        if skip and line.strip():
-            # Very simple check: if the line doesn't contain common pytest keywords
-            # and doesn't start with whitespace, it's probably regular content
-            pytest_keywords = ['platform', 'collected', 'items', 'PASSED', 'FAILED', 'ERROR', 'SKIPPED',
-                             'warning', 'test_', '.py', '::', '[', '%]', 'cachedir', 'rootdir', 'plugins', 'results',
-                             'session', 'coverage', 'docs:', 'pytest.org']
-
-            line_lower = line.lower()
-            has_pytest_keyword = any(keyword.lower() in line_lower for keyword in pytest_keywords)
-            is_indented = line.startswith((' ', '\t'))
-
-            # If it doesn't have pytest keywords and isn't indented, it's probably regular content
-            if not has_pytest_keyword and not is_indented:
-                skip = False
-
         # Keep line if not skipping
         if not skip:
             filtered_lines.append(line)
