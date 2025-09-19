@@ -64,7 +64,21 @@ def remove_pytest_sections(error_log: str):
         if not skip:
             filtered_lines.append(line)
         else:
-            content_removed = True
+            # When skipping, check if we've encountered a line that clearly indicates
+            # we've moved out of the pytest section (very conservative approach)
+            stripped_line = line.strip()
+
+            if stripped_line:
+                # Only stop skipping if this looks like clearly non-pytest content
+                # We're very conservative here to avoid false positives
+                looks_like_non_pytest_content = (
+                    # Must not contain any pytest-related patterns
+                    not any(pattern in stripped_line.lower() for pattern in [
+                        'warning', 'error', 'deprecation', '.py:', 'test', 'pytest', 'platform',
+                        'cachedir', 'rootdir', 'plugins', 'asyncio', 'collecting', 'collected',
+                        'passed', 'failed', 'skipped', 'coverage', 'lcov', 'docs'
+                    ]) and
+                    # Must not contain common pytest patterns
 
     # Join and only clean up excessive blank lines if we actually removed content
     result = "\n".join(filtered_lines)
