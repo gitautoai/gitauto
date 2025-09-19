@@ -617,5 +617,83 @@ def test_get_review_thread_comments_non_dict_comments_in_nodes(
                             }
                         }
                     ]
+
+
+def test_get_review_thread_comments_empty_string_comment_id(
+    mock_graphql_client, sample_params
+):
+    """Test handling when comment has empty string id."""
+    response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {
+                    "nodes": [
+                        {
+                            "comments": {
+                                "nodes": [
+                                    {
+                                        "id": "",  # Empty string id
+                                        "author": {"login": "user1"},
+                                        "body": "Comment with empty id",
+                                        "createdAt": "2023-01-01T10:00:00Z",
+                                    },
+                                    {
+                                        "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+                                        "author": {"login": "user2"},
+                                        "body": "Comment with valid id",
+                                        "createdAt": "2023-01-01T11:00:00Z",
+                                    },
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+    mock_graphql_client.execute.return_value = response
+
+    result = get_review_thread_comments(**sample_params)
+
+    expected_comments = [
+        {
+            "id": "",
+            "author": {"login": "user1"},
+            "body": "Comment with empty id",
+            "createdAt": "2023-01-01T10:00:00Z",
+        },
+        {
+            "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+            "author": {"login": "user2"},
+            "body": "Comment with valid id",
+            "createdAt": "2023-01-01T11:00:00Z",
+        },
+    ]
+    assert result == expected_comments
+    mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_first_thread_matches(
+    mock_graphql_client, sample_params
+):
+    """Test that function returns comments from first matching thread."""
+    response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {
+                    "nodes": [
+                        {
+                            "comments": {
+                                "nodes": [
+                                    {
+                                        "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+                                        "author": {"login": "user1"},
+                                        "body": "First thread comment",
+                                        "createdAt": "2023-01-01T10:00:00Z",
+                                    }
+                                ]
+                            }
+                        },
+                        {
                 }
     mock_graphql_client.execute.assert_called_once()
