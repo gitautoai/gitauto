@@ -40,7 +40,7 @@ def trim_messages_to_token_limit(
                 continue
 
             # Check if this is an assistant message with tool_use
-            tool_use_id = None
+            tool_use_ids = []
             if role == "assistant" and i + 1 < len(messages):
                 content = safe_get_attribute(msg_dict, "content", [])
                 if isinstance(content, list):
