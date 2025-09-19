@@ -875,3 +875,4 @@ def test_no_removable_messages_scenario(mock_client):
 
     # Should keep the only message even if over limit
     assert len(trimmed) == 1
+    assert trimmed == messages
