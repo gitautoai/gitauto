@@ -67,9 +67,16 @@ def remove_pytest_sections(error_log: str):
             # Check if this line looks like it's no longer pytest output
             # This helps handle cases where pytest sections don't have explicit end markers
             stripped_line = line.strip()
-            if (stripped_line and
-                not stripped_line.startswith(('platform ', 'cachedir:', 'rootdir:', 'plugins:', 'collecting', 'collected', 'asyncio:', '::')) and
-                not any(keyword in stripped_line.lower() for keyword in ['test', 'pytest', 'passed', 'failed', 'skipped', 'error', '%]', 'warnings', 'coverage'])):
+
+            # Be more conservative - only skip lines that clearly look like pytest output
+            looks_like_pytest = (
+                stripped_line.startswith(('platform ', 'cachedir:', 'rootdir:', 'plugins:', 'asyncio:')) or
+                ('collected' in stripped_line.lower() and ('item' in stripped_line.lower() or 'test' in stripped_line.lower())) or
+                '::' in stripped_line or
+                any(pattern in stripped_line for pattern in ['PASSED', 'FAILED', 'SKIPPED', 'ERROR', '%]'])
+            )
+
+            if stripped_line and not looks_like_pytest:
                 skip = False
                 filtered_lines.append(line)
             else:
