@@ -1110,3 +1110,150 @@ class TestCreatePrCheckboxComment:
             # The @handle_exceptions decorator should catch the exception and return None
             assert result is None
             mock_get_repo.assert_called_once_with(repo_id=789)
+
+    def test_handles_empty_file_changes_list(
+        self,
+        mock_logging,
+        mock_get_repository,
+        mock_get_installation_access_token,
+        mock_get_pull_request_files,
+        mock_is_code_file,
+        mock_is_test_file,
+        mock_is_type_file,
+        mock_get_coverages,
+        mock_create_file_checklist,
+        mock_create_test_selection_comment,
+        mock_delete_comments_by_identifiers,
+        mock_combine_and_create_comment,
+    ):
+        """Test handling when get_pull_request_files returns empty list."""
+        # Arrange
+        payload = create_payload()
+        mock_get_repository.return_value = create_repository_settings()
+        mock_get_pull_request_files.return_value = []  # Empty list
+
+        # Act
+        result = create_pr_checkbox_comment(payload)
+
+        # Assert
+        assert result is None
+        mock_logging.info.assert_called_once_with(
+            "Skipping PR test selection for repo testrepo because no code files were changed"
+        )
+        mock_get_repository.assert_called_once_with(repo_id=789)
+        mock_get_installation_access_token.assert_called_once_with(installation_id=12345)
+        mock_get_pull_request_files.assert_called_once()
+        mock_is_code_file.assert_not_called()
+        mock_is_test_file.assert_not_called()
+        mock_is_type_file.assert_not_called()
+        mock_get_coverages.assert_not_called()
+        mock_create_file_checklist.assert_not_called()
+        mock_create_test_selection_comment.assert_not_called()
+        mock_delete_comments_by_identifiers.assert_not_called()
+        mock_combine_and_create_comment.assert_not_called()
+
+    def test_handles_different_pr_numbers(
+        self,
+        mock_logging,
+        mock_get_repository,
+        mock_get_installation_access_token,
+        mock_get_pull_request_files,
+        mock_is_code_file,
+        mock_is_test_file,
+        mock_is_type_file,
+        mock_get_coverages,
+        mock_create_file_checklist,
+        mock_create_test_selection_comment,
+        mock_delete_comments_by_identifiers,
+        mock_combine_and_create_comment,
+    ):
+        """Test handling of different PR numbers."""
+        # Arrange
+        payload = create_payload(pull_number=999)
+        mock_get_repository.return_value = create_repository_settings()
+        mock_get_pull_request_files.return_value = [
+            create_file_change("src/main.py", "modified"),
+        ]
+        mock_is_code_file.return_value = True
+        mock_is_test_file.return_value = False
+        mock_is_type_file.return_value = False
+        mock_get_coverages.return_value = {}
+        mock_create_file_checklist.return_value = []
+
+        # Act
+        create_pr_checkbox_comment(payload)
+
+        # Assert
+        expected_base_args = {
+            "owner": "testowner",
+            "repo": "testrepo",
+            "issue_number": 999,  # Should use the PR number from payload
+            "token": "test_token",
+        }
+        mock_delete_comments_by_identifiers.assert_called_once_with(
+            base_args=expected_base_args,
+            identifiers=[TEST_SELECTION_COMMENT_IDENTIFIER]
+        )
+        mock_combine_and_create_comment.assert_called_once_with(
+            base_comment="Test selection comment",
+            installation_id=12345,
+            owner_id=456,
+            owner_name="testowner",
+            sender_name="testuser",
+            base_args=expected_base_args,
+        )
+
+    def test_handles_different_installation_ids(
+        self,
+        mock_logging,
+        mock_get_repository,
+        mock_get_installation_access_token,
+        mock_get_pull_request_files,
+        mock_is_code_file,
+        mock_is_test_file,
+        mock_is_type_file,
+        mock_get_coverages,
+        mock_create_file_checklist,
+        mock_create_test_selection_comment,
+        mock_delete_comments_by_identifiers,
+        mock_combine_and_create_comment,
+    ):
+        """Test handling of different installation IDs."""
+        # Arrange
+        payload = create_payload(installation_id=54321)
+        mock_get_repository.return_value = create_repository_settings()
+        mock_get_pull_request_files.return_value = [
+            create_file_change("src/main.py", "modified"),
+        ]
+        mock_is_code_file.return_value = True
+        mock_is_test_file.return_value = False
+        mock_is_type_file.return_value = False
+        mock_get_coverages.return_value = {}
+        mock_create_file_checklist.return_value = []
+
+        # Act
+        create_pr_checkbox_comment(payload)
+
+        # Assert
+        mock_get_installation_access_token.assert_called_once_with(installation_id=54321)
+        mock_combine_and_create_comment.assert_called_once_with(
+            base_comment="Test selection comment",
+            installation_id=54321,  # Should use the installation ID from payload
+            owner_id=456,
+            owner_name="testowner",
+            sender_name="testuser",
+            base_args={
+                "owner": "testowner",
+                "repo": "testrepo",
+                "issue_number": 1,
+                "token": "test_token",
+            },
+        )
+
+    def test_handles_different_repo_and_owner_combinations(
+        self,
+        mock_logging,
+        mock_get_repository,
+        mock_get_installation_access_token,
+        mock_get_pull_request_files,
+        mock_is_code_file,
