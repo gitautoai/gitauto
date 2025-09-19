@@ -3,8 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 from gql.transport.exceptions import TransportQueryError
-from services.github.pulls.get_review_thread_comments import \
-    get_review_thread_comments
+from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 
 
 @pytest.fixture
@@ -685,11 +684,7 @@ def test_get_review_thread_comments_mixed_valid_invalid_threads(
                     "nodes": [
                         None,  # Invalid thread
                         {"comments": "invalid"},  # Invalid comments structure
-                        {
-                            "comments": {
-                                "nodes": "invalid"  # Invalid nodes structure
-                            }
-                        },
+                        {"comments": {"nodes": "invalid"}},  # Invalid nodes structure
                         {
                             "comments": {
                                 "nodes": [
@@ -923,7 +918,9 @@ def test_get_review_thread_comments_handles_json_decode_error_returns_empty_list
     ) as mock_get_client:
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
-        mock_client.execute.side_effect = json.JSONDecodeError("JSON decode error", "doc", 0)
+        mock_client.execute.side_effect = json.JSONDecodeError(
+            "JSON decode error", "doc", 0
+        )
 
         # Act
         result = get_review_thread_comments(**sample_params)

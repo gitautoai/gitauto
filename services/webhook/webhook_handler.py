@@ -43,6 +43,8 @@ from services.supabase.installations.unsuspend_installation import (
     unsuspend_installation,
 )
 from services.supabase.issues.update_issue_merged import update_issue_merged
+from services.supabase.usage.get_usage_by_pr import get_usage_by_pr
+from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 
 # Local imports (Webhooks)
@@ -284,6 +286,15 @@ async def handle_webhook_event(
             issue_number=issue_number,
             merged=True,
         )
+
+        # Update usage records for this PR to mark as merged
+        pr_number = pull_request["number"]
+        repo_id = repository["id"]
+        owner_id = repository["owner"]["id"]
+
+        usage_records = get_usage_by_pr(owner_id, repo_id, pr_number)
+        for record in usage_records:
+            update_usage(usage_id=record["id"], is_merged=True)
 
         # Notify Slack
         sender_name: str = payload["sender"]["login"]
