@@ -468,3 +468,53 @@ failure content
 =========================== short test summary info ============================
 summary content"""
 
+
+def test_remove_pytest_sections_with_coverage_section():
+    """Test that coverage sections with dashes are properly removed."""
+    log = """Some content
+=========================== warnings summary ============================
+warning content
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform linux, python 3.12.11-final-0 ----------
+Coverage LCOV written to file coverage/lcov.info
+
+=========================== short test summary info ============================
+summary content"""
+
+    expected = """Some content
+
+=========================== short test summary info ============================
+summary content"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_coverage_section_only():
+    """Test that standalone coverage sections are properly removed."""
+    log = """Before content
+---------- coverage: platform linux, python 3.12.11-final-0 ----------
+Coverage LCOV written to file coverage/lcov.info
+After content"""
+
+    expected = """Before content
+After content"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_docs_line():
+    """Test that docs lines are properly removed."""
+    log = """Before content
+=========================== warnings summary ============================
+warning content
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+After content"""
+
+    expected = """Before content
+After content"""
+
+    result = remove_pytest_sections(log)
