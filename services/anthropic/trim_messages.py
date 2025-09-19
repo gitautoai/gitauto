@@ -3,7 +3,6 @@ from typing import Any
 
 # Third party imports
 from anthropic import Anthropic
-
 # Local imports
 from config import ANTHROPIC_MODEL_ID_40
 from services.anthropic.message_to_dict import message_to_dict
@@ -46,28 +45,32 @@ def trim_messages_to_token_limit(
                 if isinstance(content, list):
                     for block in content:
                         if isinstance(block, dict) and block.get("type") == "tool_use":
-                            tool_use_id = block.get("id")
-                            break
+                            tool_id = block.get("id")
+                            if tool_id:  # Only add non-empty, non-None ids
+                                tool_use_ids.append(tool_id)
 
-            # If this message has a tool_use, check if next message has the matching tool_result
-            if tool_use_id and i + 1 < len(messages):
+            # If this message has tool_use blocks, check if ALL have matching tool_results
+            if tool_use_ids and i + 1 < len(messages):
                 next_msg = message_to_dict(messages[i + 1])
                 next_content = safe_get_attribute(next_msg, "content", [])
-                has_matching_tool_result = False
+                matched_tool_ids = set()
 
-                # Check if next message has a matching tool_result
+                # Collect all tool_result ids from next message
                 if isinstance(next_content, list):
                     for block in next_content:
                         if (
                             isinstance(block, dict)
                             and block.get("type") == "tool_result"
-                            and block.get("tool_use_id") == tool_use_id
                         ):
-                            has_matching_tool_result = True
-                            break
+                            result_id = block.get("tool_use_id")
+                            if result_id:  # Only add non-empty, non-None ids
+                                matched_tool_ids.add(result_id)
 
-                # If there's a matching tool_result, remove both messages together
-                if has_matching_tool_result:
+                # Check if ALL tool_use ids have matching tool_results
+                all_tools_matched = all(tool_id in matched_tool_ids for tool_id in tool_use_ids)
+
+                # If ALL tool_use blocks have matching tool_results, remove both messages together
+                if all_tools_matched:
                     del messages[i : i + 2]
                     break
 
