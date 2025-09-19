@@ -528,9 +528,9 @@ def test_multiple_tool_use_blocks_in_single_message(mock_client):
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
 
-    # Should find the first tool_use and match it with tool_result
-    assert len(trimmed) == 1
-    assert trimmed == [messages[0]]
+    # Should remove assistant message since second tool_use has no matching result
+    assert len(trimmed) == 2
+    assert trimmed == [messages[0], messages[2]]
 def test_system_message_at_different_positions(mock_client):
     """Test system messages at various positions in the message list."""
     messages = [
