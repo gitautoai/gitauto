@@ -48,26 +48,60 @@ def parse_lcov_coverage(lcov_content: str):
 
         elif line.startswith("FN:"):  # FN: Function name
             # Format could be either:
-            parts = [part.strip() for part in line[3:].split(",")]
+            # FN:<line number>,<function name>  (Jest/Vitest, Flutter format)
+            # FN:<start_line>,<end_line>,<function name>  (Python format)
+            # FN:<line number>,<function name with commas>  (.NET format)
 
-            if len(parts) == 2:
-                # FN:<line number>,<function name>  (Jest/Vitest, Flutter format)
-                line_num, func_name = parts
-                current_stats["uncovered_functions"].add((int(line_num), func_name))
-
-            elif len(parts) == 3:
-                # FN:<start_line>,<end_line>,<function name>  (Python format)
-                start_line, end_line, func_name = parts
-                current_stats["uncovered_functions"].add(
-                    (int(start_line), int(end_line), func_name)
-                )
-            else:
+            # Find the first comma to split line number from function name
+            fn_content = line[3:]
+            first_comma = fn_content.find(",")
+            if first_comma == -1:
                 continue  # Skip malformed lines
+
+            try:
+                first_part = fn_content[:first_comma].strip()
+                remaining = fn_content[first_comma + 1 :].strip()
+
+                # Try to parse first part as line number
+                line_num = int(first_part)
+
+                # Check if remaining part contains another comma (Python 3-part format)
+                second_comma = remaining.find(",")
+                if second_comma != -1:
+                    # Potential Python format: FN:<start_line>,<end_line>,<function name>
+                    try:
+                        end_line_part = remaining[:second_comma].strip()
+                        end_line = int(end_line_part)
+                        func_name = remaining[second_comma + 1 :].strip()
+                        current_stats["uncovered_functions"].add(
+                            (int(first_part), end_line, func_name)
+                        )
+                        continue
+                    except ValueError:
+                        # Not a valid end_line, treat as function name with comma
+                        pass
+
+                # Default format: FN:<line number>,<function name>
+                func_name = remaining
+                current_stats["uncovered_functions"].add((line_num, func_name))
+
+            except ValueError:
+                # Skip lines where first part is not a valid line number
+                continue
 
         elif line.startswith("FNDA:"):  # FNDA: Function execution counts
             # Format: FNDA:<execution count>,<function name>
-            execution_count, function_name = line[5:].split(",")
-            execution_count = int(execution_count)
+            # Handle function names with commas by splitting only on first comma
+            fnda_content = line[5:]
+            first_comma = fnda_content.find(",")
+            if first_comma == -1:
+                continue  # Skip malformed lines
+
+            try:
+                execution_count = int(fnda_content[:first_comma].strip())
+                function_name = fnda_content[first_comma + 1 :].strip()
+            except ValueError:
+                continue  # Skip malformed lines
             if execution_count > 0:
                 current_stats["functions_covered"] += 1
                 # Remove function from uncovered set by matching function name
