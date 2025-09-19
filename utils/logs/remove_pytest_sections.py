@@ -65,23 +65,28 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
         else:
             # When skipping, check if we've encountered a line that looks like regular content
-            # rather than pytest output. This handles cases where pytest sections don't have
-            # explicit end markers like FAILURES or short test summary.
+            # This handles cases where pytest sections don't have explicit end markers
             stripped_line = line.strip()
 
             if stripped_line:
-                # Identify lines that are clearly pytest output and should continue to be skipped
-                is_pytest_output = (
-                    stripped_line.startswith(('platform ', 'cachedir:', 'rootdir:', 'plugins:', 'asyncio:', 'collecting')) or
-                    'collected' in stripped_line.lower() or
-                    '::' in stripped_line or
-                    any(pattern in stripped_line for pattern in ['PASSED', 'FAILED', 'SKIPPED', 'ERROR', '%]', 'warnings']) or
-                    stripped_line.lower().startswith(('test ', 'tests ')) or
-                    re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*\.py::', stripped_line)  # test file patterns
+                # Check if this looks like regular log content (not pytest output)
+                # We look for simple phrases that don't contain pytest-specific terms
+                looks_like_regular_content = (
+                    # Must not contain pytest-specific keywords
+                    not any(keyword in stripped_line.lower() for keyword in [
+                        'platform', 'cachedir', 'rootdir', 'plugins', 'asyncio', 'collecting', 'collected',
+                        'test', 'pytest', 'passed', 'failed', 'skipped', 'error', 'warning', 'coverage'
+                    ]) and
+                    # Must not contain test patterns
+                    '::' not in stripped_line and
+                    '%]' not in stripped_line and
+                    # Should be a simple phrase (not too complex)
+                    len(stripped_line.split()) <= 4 and
+                    # Should not start with common pytest prefixes
+                    not stripped_line.startswith(('  ', '\t'))
                 )
 
-                # If it doesn't look like pytest output, stop skipping
-                if not is_pytest_output:
+                if looks_like_regular_content:
                     skip = False
                     filtered_lines.append(line)
                 else:
