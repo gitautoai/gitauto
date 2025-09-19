@@ -523,4 +523,99 @@ def test_get_review_thread_comments_thread_with_missing_comments_structure(
 
     # Assert
     assert result == []
+
+
+def test_get_review_thread_comments_non_dict_result_from_client(
+    mock_graphql_client, sample_params
+):
+    """Test handling when client.execute returns non-dict result."""
+    non_dict_results = [
+        None,
+        "string_result",
+        123,
+        [],
+        True,
+    ]
+
+    for non_dict_result in non_dict_results:
+        mock_graphql_client.reset_mock()
+        mock_graphql_client.execute.return_value = non_dict_result
+
+        result = get_review_thread_comments(**sample_params)
+
+        assert result == []
+        mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_non_dict_threads_in_nodes(
+    mock_graphql_client, sample_params
+):
+    """Test handling when threads contain non-dict items."""
+    response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {
+                    "nodes": [
+                        "string_thread",  # Non-dict thread
+                        123,  # Non-dict thread
+                        None,  # Non-dict thread
+                        {
+                            "comments": {
+                                "nodes": [
+                                    {
+                                        "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+                                        "author": {"login": "user1"},
+                                        "body": "Valid comment",
+                                        "createdAt": "2023-01-01T10:00:00Z",
+                                    }
+                                ]
+                            }
+                        },
+                    ]
+                }
+            }
+        }
+    }
+    mock_graphql_client.execute.return_value = response
+
+    result = get_review_thread_comments(**sample_params)
+
+    expected_comments = [
+        {
+            "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+            "author": {"login": "user1"},
+            "body": "Valid comment",
+            "createdAt": "2023-01-01T10:00:00Z",
+        }
+    ]
+    assert result == expected_comments
+    mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_non_dict_comments_in_nodes(
+    mock_graphql_client, sample_params
+):
+    """Test handling when comments contain non-dict items."""
+    response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {
+                    "nodes": [
+                        {
+                            "comments": {
+                                "nodes": [
+                                    "string_comment",  # Non-dict comment
+                                    123,  # Non-dict comment
+                                    None,  # Non-dict comment
+                                    {
+                                        "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+                                        "author": {"login": "user1"},
+                                        "body": "Valid comment",
+                                        "createdAt": "2023-01-01T10:00:00Z",
+                                    },
+                                ]
+                            }
+                        }
+                    ]
+                }
     mock_graphql_client.execute.assert_called_once()
