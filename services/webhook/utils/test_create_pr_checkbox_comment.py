@@ -14,6 +14,7 @@ from services.github.types.installation import Installation
 from services.github.types.ref import Ref
 from services.github.pulls.get_pull_request_files import FileChange
 from services.webhook.utils.create_pr_checkbox_comment import create_pr_checkbox_comment
+from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
 
 
 def create_user(login: str = "testuser", user_id: int = 123) -> User:
