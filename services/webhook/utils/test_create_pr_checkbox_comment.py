@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import cast
 from unittest.mock import patch
 
-import pytest
 from schemas.supabase.types import Repositories
 from services.github.pulls.get_pull_request_files import FileChange
 from services.github.types.installation import Installation
