@@ -68,15 +68,18 @@ def remove_pytest_sections(error_log: str):
             # This helps handle cases where pytest sections don't have explicit end markers
             stripped_line = line.strip()
 
-            # Be more conservative - only skip lines that clearly look like pytest output
-            looks_like_pytest = (
-                stripped_line.startswith(('platform ', 'cachedir:', 'rootdir:', 'plugins:', 'asyncio:')) or
-                ('collected' in stripped_line.lower() and ('item' in stripped_line.lower() or 'test' in stripped_line.lower())) or
-                '::' in stripped_line or
-                any(pattern in stripped_line for pattern in ['PASSED', 'FAILED', 'SKIPPED', 'ERROR', '%]'])
+            # Check if line looks like regular content that's not part of pytest output
+            # We need to be careful not to stop skipping too early
+            looks_like_regular_content = (
+                stripped_line and
+                not stripped_line.startswith(('platform ', 'cachedir:', 'rootdir:', 'plugins:', 'asyncio:', 'collecting', 'collected')) and
+                '::' not in stripped_line and
+                not any(pattern in stripped_line for pattern in ['PASSED', 'FAILED', 'SKIPPED', 'ERROR', '%]']) and
+                not any(word in stripped_line.lower() for word in ['test', 'pytest', 'warning', 'coverage', 'item']) and
+                len(stripped_line.split()) <= 3  # Simple heuristic: regular content is usually short phrases
             )
 
-            if stripped_line and not looks_like_pytest:
+            if looks_like_regular_content:
                 skip = False
                 filtered_lines.append(line)
             else:
