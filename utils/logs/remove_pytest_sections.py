@@ -15,7 +15,7 @@ def remove_pytest_sections(error_log: str):
 
     for line in lines:
         # Start skipping at test session header
-        if "===" in line and "test session starts" in line:
+        if "=" in line and "test session starts" in line:
             skip = True
             content_removed = True
             continue
