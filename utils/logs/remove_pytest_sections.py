@@ -75,6 +75,7 @@ def _looks_like_pytest_output(line: str) -> bool:
         'platform ', 'cachedir:', 'rootdir:', 'plugins:', 'collecting', 'collected',
         'PASSED', 'FAILED', 'ERROR', 'SKIPPED', '[', '%]', '::',
         'warnings.warn', 'DeprecationWarning', 'UserWarning', 'PytestWarning',
+        'test results', 'results', 'items',
         'items', 'test_', '.py::', 'AssertionError', 'Traceback'
     ]
 
