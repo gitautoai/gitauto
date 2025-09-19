@@ -13,7 +13,7 @@ def remove_pytest_sections(error_log: str):
     skip = False
     content_removed = False
 
-    for line in lines:
+    for i, line in enumerate(lines):
         # Start skipping at test session header
         if "===" in line and "test session starts" in line:
             skip = True
@@ -44,11 +44,10 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # If we're skipping, check if this line looks like it's outside of pytest output
+        # If we're skipping, check if we should stop based on context
         if skip and line.strip():
-            # Look for lines that clearly don't belong to pytest sections
-            # These are typically error messages, stack traces, or other log content
-            if not _looks_like_pytest_output(line):
+            # Look ahead and behind to see if this looks like the end of a pytest section
+            if _should_stop_skipping(lines, i):
                 skip = False
                 # Add blank line if we just removed content and last line isn't blank
                 if content_removed and filtered_lines and filtered_lines[-1] != "":
@@ -68,28 +67,58 @@ def remove_pytest_sections(error_log: str):
     return result
 
 
-def _looks_like_pytest_output(line: str) -> bool:
-    """Check if a line looks like it belongs to pytest output."""
-    # Common pytest output patterns
-    pytest_patterns = [
-        'platform ', 'cachedir:', 'rootdir:', 'plugins:', 'collecting', 'collected',
-        'PASSED', 'FAILED', 'ERROR', 'SKIPPED', '[', '%]', '::',
-        'warnings.warn', 'DeprecationWarning', 'UserWarning', 'PytestWarning',
-        'test results', 'results', 'items', 'test_', '.py::', 'AssertionError', 'Traceback'
+def _should_stop_skipping(lines: list, current_index: int) -> bool:
+    """Determine if we should stop skipping based on the current line and context."""
+    if current_index >= len(lines):
+        return True
+
+    current_line = lines[current_index].strip()
+
+    # If we're at the last line, stop skipping
+    if current_index == len(lines) - 1:
+        return True
+
+    # Look for clear indicators that we're no longer in a pytest section
+    non_pytest_indicators = [
+        # Common error/log patterns that aren't pytest
+        'Error:', 'Exception:', 'Traceback (most recent call last):',
+        'INFO:', 'DEBUG:', 'WARNING:', 'ERROR:', 'CRITICAL:',
+        # File paths that aren't test files
+        'File "', 'line ', 'in ',
+        # Other common log patterns
+        'HTTP', 'GET', 'POST', 'PUT', 'DELETE',
     ]
 
-    # Check if line starts with common pytest prefixes (indented content)
-    if line.startswith((' ', '\t')):
-        return True
-
-    # Check for pytest-specific patterns
-    line_lower = line.lower()
-    for pattern in pytest_patterns:
-        if pattern.lower() in line_lower:
+    # Check if current line has clear non-pytest indicators
+    for indicator in non_pytest_indicators:
+        if indicator in current_line:
             return True
 
-    # Lines that are very short or just contain common words are likely pytest output
-    if len(line.strip()) < 3:
-        return True
+    # If the line doesn't contain common pytest patterns and isn't indented,
+    # and it's not empty, it might be regular content
+    pytest_patterns = [
+        'platform', 'cachedir', 'rootdir', 'plugins', 'collecting', 'collected',
+        'PASSED', 'FAILED', 'ERROR', 'SKIPPED', '[', '%]', '::',
+        'warnings.warn', 'DeprecationWarning', 'UserWarning', 'PytestWarning',
+        'test_', '.py', 'AssertionError', 'items', 'results'
+    ]
+
+    # If line doesn't start with whitespace and doesn't contain pytest patterns
+    if (not current_line.startswith((' ', '\t')) and
+        current_line and
+        not any(pattern.lower() in current_line.lower() for pattern in pytest_patterns)):
+
+        # Look at the next few lines to see if they also don't look like pytest
+        look_ahead = 2
+        non_pytest_count = 1  # Current line
+
+        for j in range(1, min(look_ahead + 1, len(lines) - current_index)):
+            next_line = lines[current_index + j].strip()
+            if next_line and not any(pattern.lower() in next_line.lower() for pattern in pytest_patterns):
+                non_pytest_count += 1
+
+        # If multiple consecutive lines don't look like pytest, stop skipping
+        if non_pytest_count >= 2:
+            return True
 
     return False
