@@ -48,7 +48,7 @@ def remove_pytest_sections(error_log: str):
         if skip and line.strip():
             # Look for lines that clearly don't belong to pytest sections
             # These are typically error messages, stack traces, or other log content
-            if not self._looks_like_pytest_output(line):
+            if not _looks_like_pytest_output(line):
                 skip = False
                 # Add blank line if we just removed content and last line isn't blank
                 if content_removed and filtered_lines and filtered_lines[-1] != "":
