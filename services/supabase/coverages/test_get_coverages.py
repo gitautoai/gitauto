@@ -7,9 +7,7 @@ from unittest.mock import Mock, patch
 
 # Third-party imports
 import pytest
-
 # Local imports
-from services.supabase.client import supabase
 from services.supabase.coverages.get_coverages import get_coverages
 
 
@@ -89,6 +87,8 @@ def mock_supabase_chain(mock_supabase):
 
 
 class TestGetCoverages:
+    """Test cases for get_coverages function."""
+
     def test_get_coverages_success_with_data(
         self, mock_supabase_chain, sample_coverage_data
     ):
@@ -128,7 +128,8 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=filenames)
 
         # Verify
-        assert not result
+        assert result == {}
+        assert isinstance(result, dict)
 
         # Verify no database query was made
         mock_supabase_chain.execute.assert_not_called()
@@ -147,7 +148,7 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=filenames)
 
         # Verify
-        assert not result
+        assert result == {}
         mock_supabase_chain.execute.assert_called_once()
 
     def test_get_coverages_none_data(self, mock_supabase_chain):
@@ -164,7 +165,7 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=filenames)
 
         # Verify
-        assert not result
+        assert result == {}
         mock_supabase_chain.execute.assert_called_once()
 
     def test_get_coverages_single_file(self, mock_supabase_chain, sample_coverage_data):
@@ -331,7 +332,7 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=filenames)
 
         # Verify - should return empty dict due to handle_exceptions decorator
-        assert not result
+        assert result == {}
 
     def test_get_coverages_supabase_table_exception(self, mock_supabase):
         """Test that supabase.table exceptions are handled gracefully."""
@@ -345,7 +346,7 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=filenames)
 
         # Verify - should return empty dict due to handle_exceptions decorator
-        assert not result
+        assert result == {}
 
     @pytest.mark.parametrize(
         "repo_id,filenames",
@@ -369,7 +370,7 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=filenames)
 
         # Verify
-        assert not result
+        assert result == {}
         mock_supabase_chain.eq.assert_called_once_with("repo_id", repo_id)
         mock_supabase_chain.in_.assert_called_once_with("full_path", filenames)
 
@@ -444,8 +445,8 @@ class TestGetCoverages:
         result = get_coverages(repo_id=repo_id, filenames=large_filenames)
 
         # Verify
-        assert not result
-        # With new character-based batching, this should be called once (small filenames fit in one batch)
+        assert result == {}
+        # With character-based batching, this should be called once (small filenames fit in one batch)
         mock_supabase_chain.in_.assert_called_once_with("full_path", large_filenames)
 
     def test_get_coverages_duplicate_filenames(
@@ -506,7 +507,7 @@ class TestGetCoverages:
         assert set(first_batch + second_batch) == set(long_filenames)
 
     def test_get_coverages_exact_character_limit(self, mock_supabase):
-        """Test that we correctly handle queries near the 25,036 character limit."""
+        """Test that we correctly handle queries near the character limit."""
         # Setup mock
         mock_chain = Mock()
         mock_supabase.table.return_value = mock_chain
@@ -794,6 +795,178 @@ class TestGetCoverages:
         assert mock_chain.execute.call_count == 1
         assert isinstance(result, dict)
 
+    def test_get_coverages_falsy_filenames_list(self, mock_supabase_chain):
+        """Test that falsy filenames list (None, False) returns empty dictionary."""
+        # Test with None
+        result = get_coverages(repo_id=123, filenames=None)
+        assert result == {}
+        mock_supabase_chain.execute.assert_not_called()
+
+        # Reset mock
+        mock_supabase_chain.reset_mock()
+
+        # Test with False (though unlikely in practice)
+        result = get_coverages(repo_id=123, filenames=False)
+        assert result == {}
+        mock_supabase_chain.execute.assert_not_called()
+
+    def test_get_coverages_negative_repo_id(self, mock_supabase_chain):
+        """Test coverage retrieval with negative repo_id."""
+        # Setup
+        mock_result = Mock()
+        mock_result.data = []
+        mock_supabase_chain.execute.return_value = mock_result
+
+        repo_id = -1
+        filenames = ["src/test.py"]
+
+        # Execute
+        result = get_coverages(repo_id=repo_id, filenames=filenames)
+
+        # Verify
+        assert result == {}
+        mock_supabase_chain.eq.assert_called_once_with("repo_id", repo_id)
+
+    def test_get_coverages_zero_repo_id(self, mock_supabase_chain):
+        """Test coverage retrieval with zero repo_id."""
+        # Setup
+        mock_result = Mock()
+        mock_result.data = []
+        mock_supabase_chain.execute.return_value = mock_result
+
+        repo_id = 0
+        filenames = ["src/test.py"]
+
+        # Execute
+        result = get_coverages(repo_id=repo_id, filenames=filenames)
+
+        # Verify
+        assert result == {}
+        mock_supabase_chain.eq.assert_called_once_with("repo_id", repo_id)
+
+    def test_get_coverages_large_repo_id(self, mock_supabase_chain):
+        """Test coverage retrieval with very large repo_id."""
+        # Setup
+        mock_result = Mock()
+        mock_result.data = []
+        mock_supabase_chain.execute.return_value = mock_result
+
+        repo_id = 2147483647  # Max 32-bit integer
+        filenames = ["src/test.py"]
+
+        # Execute
+        result = get_coverages(repo_id=repo_id, filenames=filenames)
+
+        # Verify
+        assert result == {}
+        mock_supabase_chain.eq.assert_called_once_with("repo_id", repo_id)
+
+    def test_get_coverages_unicode_filenames(self, mock_supabase_chain):
+        """Test coverage retrieval with unicode characters in filenames."""
+        # Setup
+        unicode_data = [
+            {
+                "id": 1,
+                "full_path": "src/测试文件.py",
+                "repo_id": 123,
+                "line_coverage": 75.0,
+            }
+        ]
+        mock_result = Mock()
+        mock_result.data = unicode_data
+        mock_supabase_chain.execute.return_value = mock_result
+
+        repo_id = 123
+        filenames = ["src/测试文件.py", "src/файл.py", "src/ファイル.py"]
+
+        # Execute
+        result = get_coverages(repo_id=repo_id, filenames=filenames)
+
+        # Verify
+        assert len(result) == 1
+        assert "src/测试文件.py" in result
+        assert result["src/测试文件.py"]["line_coverage"] == 75.0
+
+    def test_get_coverages_empty_string_filename(self, mock_supabase_chain):
+        """Test coverage retrieval with empty string filename."""
+        # Setup
+        mock_result = Mock()
+        mock_result.data = []
+        mock_supabase_chain.execute.return_value = mock_result
+
+        repo_id = 123
+        filenames = ["", "src/valid.py", ""]
+
+        # Execute
+        result = get_coverages(repo_id=repo_id, filenames=filenames)
+
+        # Verify
+        assert result == {}
+        mock_supabase_chain.in_.assert_called_once_with("full_path", filenames)
+
+    def test_get_coverages_whitespace_only_filename(self, mock_supabase_chain):
+        """Test coverage retrieval with whitespace-only filename."""
+        # Setup
+        mock_result = Mock()
+        mock_result.data = []
+        mock_supabase_chain.execute.return_value = mock_result
+
+        repo_id = 123
+        filenames = ["   ", "\t", "\n", "src/valid.py"]
+
+        # Execute
+        result = get_coverages(repo_id=repo_id, filenames=filenames)
+
+        # Verify
+        assert result == {}
+        mock_supabase_chain.in_.assert_called_once_with("full_path", filenames)
+
+    def test_get_coverages_batch_boundary_exact_limit(self, mock_supabase):
+        """Test batching behavior when exactly hitting the character limit."""
+        # Create filenames that exactly hit the 20,000 character limit
+        # 100 overhead + 19,900 for filenames = 20,000 exactly
+        # Each filename: 97 chars + 3 (quotes/comma) = 100 chars
+        # 199 files × 100 = 19,900 + 100 overhead = 20,000
+        filenames = ["x" * 97 for _ in range(199)]
+
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+        mock_result = Mock()
+        mock_result.data = []
+        mock_chain.execute.return_value = mock_result
+
+        # Execute
+        result = get_coverages(repo_id=123, filenames=filenames)
+
+        # Should fit in exactly one batch
+        assert mock_chain.execute.call_count == 1
+        assert isinstance(result, dict)
+
+    def test_get_coverages_batch_boundary_over_limit_by_one(self, mock_supabase):
+        """Test batching behavior when going over the character limit by one character."""
+        # Create filenames that exceed the 20,000 character limit by 1
+        # 100 overhead + 19,901 for filenames = 20,001 (over by 1)
+        filenames = ["x" * 97 for _ in range(199)] + ["y"]  # 199×100 + 4 = 19,904 + 100 = 20,004
+
+        mock_chain = Mock()
+        mock_supabase.table.return_value = mock_chain
+        mock_chain.select.return_value = mock_chain
+        mock_chain.eq.return_value = mock_chain
+        mock_chain.in_.return_value = mock_chain
+        mock_result = Mock()
+        mock_result.data = []
+        mock_chain.execute.return_value = mock_result
+
+        # Execute
+        result = get_coverages(repo_id=123, filenames=filenames)
+
+        # Should require 2 batches
+        assert mock_chain.execute.call_count == 2
+        assert isinstance(result, dict)
+
 
 class TestGetCoveragesIntegration:
     """Integration tests that hit the actual Supabase database."""
@@ -818,6 +991,7 @@ class TestGetCoveragesIntegration:
                 filename = "x" * filename_length
 
                 try:
+                    from services.supabase.client import supabase
                     supabase.table("coverages").select("*").eq("repo_id", 999999).in_(
                         "full_path", [filename]
                     ).execute()
