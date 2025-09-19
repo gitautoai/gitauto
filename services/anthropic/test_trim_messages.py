@@ -872,3 +872,6 @@ def test_no_removable_messages_scenario(mock_client):
     mock_client.messages.count_tokens.return_value = Mock(input_tokens=10000)
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should keep the only message even if over limit
+    assert len(trimmed) == 1
