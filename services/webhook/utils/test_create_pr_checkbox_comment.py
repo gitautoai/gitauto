@@ -1,3 +1,6 @@
+# pylint: disable=redefined-outer-name
+"""Unit tests for create_pr_checkbox_comment.py"""
+
 from unittest.mock import patch, MagicMock
 from datetime import datetime
 from typing import cast
