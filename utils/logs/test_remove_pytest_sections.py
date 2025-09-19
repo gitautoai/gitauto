@@ -413,3 +413,28 @@ def test_remove_pytest_sections_with_falsy_values():
 
     # Test with False (though not typical input, should be handled)
     assert remove_pytest_sections(False) is False
+
+def test_remove_pytest_sections_with_coverage_line():
+    """Test that coverage lines are properly removed."""
+    log = """Initial content
+=========================== warnings summary ============================
+warning content
+Coverage LCOV written to file coverage/lcov.info
+=========================== short test summary info ============================
+summary content"""
+
+    expected = """Initial content
+
+=========================== short test summary info ============================
+summary content"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_with_coverage_line_after_session():
+    """Test that coverage lines are properly removed when they appear after test session."""
+    log = """Initial content
+=========================== test session starts ============================
+platform info
+collected items
