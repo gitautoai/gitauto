@@ -1,6 +1,5 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-import pytest
 from utils.logs.remove_pytest_sections import remove_pytest_sections
 
 
@@ -390,11 +389,27 @@ Final log content"""
     assert result == expected
 
 
-@patch('utils.logs.remove_pytest_sections.handle_exceptions')
-def test_remove_pytest_sections_exception_handling(mock_handle_exceptions):
-    # Test that the function is decorated with handle_exceptions
-    mock_handle_exceptions.assert_called_once()
+def test_remove_pytest_sections_exception_handling():
+    """Test that the function handles exceptions and returns default value."""
+    # Test with a function that would cause an exception if not handled
+    with patch('utils.logs.remove_pytest_sections.re.sub') as mock_re_sub:
+        # Make re.sub raise an exception
+        mock_re_sub.side_effect = Exception("Test exception")
 
-    # Verify the decorator was called with the correct default return value
-    args, kwargs = mock_handle_exceptions.call_args
-    assert kwargs.get('default_return_value') == ""
+        # The function should still return the default value due to the decorator
+        result = remove_pytest_sections("test content with session starts")
+
+        # Due to the handle_exceptions decorator, it should return the default value ""
+        assert result == ""
+
+
+def test_remove_pytest_sections_with_falsy_values():
+    """Test function behavior with various falsy values."""
+    # Test with None
+    assert remove_pytest_sections(None) is None
+
+    # Test with empty string
+    assert remove_pytest_sections("") == ""
+
+    # Test with False (though not typical input, should be handled)
+    assert remove_pytest_sections(False) is False
