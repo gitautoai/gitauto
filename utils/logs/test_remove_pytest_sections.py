@@ -1,4 +1,24 @@
 from unittest.mock import MagicMock, patch
+def test_coverage_line_removal():
+    """Test that the specific coverage line is removed."""
+    from utils.logs.remove_pytest_sections import remove_pytest_sections
+
+    test_log = """Before content
+=========================== warnings summary ============================
+warning content
+Coverage LCOV written to file coverage/lcov.info
+=========================== short test summary info ============================
+summary content"""
+
+    result = remove_pytest_sections(test_log)
+    expected = """Before content
+
+=========================== short test summary info ============================
+summary content"""
+
+    print(f"Result: {repr(result)}")
+    print(f"Expected: {repr(expected)}")
+    assert result == expected, f"Expected {repr(expected)}, got {repr(result)}"
 
 from utils.logs.remove_pytest_sections import remove_pytest_sections
 
