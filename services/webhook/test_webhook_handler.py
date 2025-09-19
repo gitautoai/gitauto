@@ -351,8 +351,9 @@ class TestHandleWebhookEvent:
             )
 
     @pytest.mark.asyncio
+    @patch("services.webhook.webhook_handler.handle_successful_check_run")
     async def test_handle_webhook_event_check_run_completed_success(
-        self, mock_handle_check_run
+        self, mock_handle_successful_check_run, mock_handle_check_run
     ):
         """Test handling of check run completed event with success."""
         payload = {
@@ -363,6 +364,7 @@ class TestHandleWebhookEvent:
         await handle_webhook_event(event_name="check_run", payload=payload)
 
         mock_handle_check_run.assert_not_called()
+        mock_handle_successful_check_run.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_pull_request_opened(

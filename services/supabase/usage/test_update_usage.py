@@ -81,6 +81,64 @@ def test_update_usage_success_with_default_parameters():
         )
 
 
+def test_update_usage_with_is_test_passed():
+    """Test usage update with is_test_passed parameter"""
+    mock_response = Mock()
+    mock_response.data = [{"id": 1}]
+
+    with patch("services.supabase.usage.update_usage.supabase") as mock_supabase:
+        mock_table = Mock()
+        mock_supabase.table.return_value = mock_table
+        mock_table.update.return_value = mock_table
+        mock_table.eq.return_value = mock_table
+        mock_table.execute.return_value = mock_response
+
+        # Test with is_test_passed=True
+        result = update_usage(
+            usage_id=123,
+            token_input=100,
+            token_output=200,
+            total_seconds=300,
+            is_test_passed=True,
+        )
+
+        assert result is None
+        mock_table.update.assert_called_once_with(
+            json={
+                "is_completed": True,
+                "pr_number": None,
+                "token_input": 100,
+                "token_output": 200,
+                "total_seconds": 300,
+                "is_test_passed": True,
+            }
+        )
+
+        # Reset mocks
+        mock_table.update.reset_mock()
+
+        # Test with is_test_passed=False
+        result = update_usage(
+            usage_id=123,
+            token_input=100,
+            token_output=200,
+            total_seconds=300,
+            is_test_passed=False,
+        )
+
+        assert result is None
+        mock_table.update.assert_called_once_with(
+            json={
+                "is_completed": True,
+                "pr_number": None,
+                "token_input": 100,
+                "token_output": 200,
+                "total_seconds": 300,
+                "is_test_passed": False,
+            }
+        )
+
+
 def test_update_usage_with_is_completed_false():
     """Test usage update with is_completed set to False"""
     mock_response = Mock()

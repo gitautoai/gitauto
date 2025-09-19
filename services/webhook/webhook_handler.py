@@ -52,6 +52,7 @@ from services.webhook.issue_handler import create_pr_from_issue
 from services.webhook.pr_body_handler import write_pr_description
 from services.webhook.review_run_handler import handle_review_run
 from services.webhook.screenshot_handler import handle_screenshot_comparison
+from services.webhook.successful_check_run_handler import handle_successful_check_run
 from services.webhook.handle_installation import handle_installation_created
 from services.webhook.handle_installation_repos import handle_installation_repos_added
 from services.webhook.merge_handler import handle_pr_merged
@@ -218,7 +219,7 @@ async def handle_webhook_event(
             )
         return
 
-    # Monitor check_run failure and re-run agent with failure reason
+    # Monitor check_run completion and handle both success and failure
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#check_run
     if event_name == "check_run" and action in ("completed"):
         conclusion: str = payload["check_run"]["conclusion"]
@@ -226,6 +227,8 @@ async def handle_webhook_event(
             handle_check_run(
                 payload=cast(CheckRunCompletedPayload, payload), lambda_info=lambda_info
             )
+        elif conclusion == "success":
+            handle_successful_check_run(payload=cast(CheckRunCompletedPayload, payload))
         return
 
     # Write a PR description to the issue when GitAuto opened the PR
