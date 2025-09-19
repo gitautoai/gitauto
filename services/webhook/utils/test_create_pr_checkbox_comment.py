@@ -337,3 +337,59 @@ class TestCreatePrCheckboxComment:
                 base_args=expected_base_args,
                 identifiers=[TEST_SELECTION_COMMENT_IDENTIFIER]
             )
+
+    def test_combine_and_create_comment_called_with_correct_args(self):
+        """Test that combine_and_create_comment is called with correct arguments."""
+        payload = self.create_minimal_payload()
+
+        with patch("services.webhook.utils.create_pr_checkbox_comment.get_repository") as mock_get_repo, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.get_installation_access_token") as mock_get_token, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.get_pull_request_files") as mock_get_files, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.is_code_file") as mock_is_code, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.is_test_file") as mock_is_test, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.is_type_file") as mock_is_type, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.get_coverages") as mock_get_cov, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.create_file_checklist") as mock_checklist, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.create_test_selection_comment") as mock_comment, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.delete_comments_by_identifiers") as mock_delete, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.combine_and_create_comment") as mock_create:
+
+            mock_get_repo.return_value = self.create_repository_settings()
+            mock_get_token.return_value = "test_token"
+            mock_get_files.return_value = [self.create_file_change("src/main.py", "modified")]
+            mock_is_code.return_value = True
+            mock_is_test.return_value = False
+            mock_is_type.return_value = False
+            mock_get_cov.return_value = {}
+            mock_checklist.return_value = []
+            mock_comment.return_value = "Test selection comment"
+
+            create_pr_checkbox_comment(payload)
+
+            expected_base_args = {
+                "owner": "testowner",
+                "repo": "testrepo",
+                "issue_number": 1,
+                "token": "test_token",
+            }
+            mock_create.assert_called_once_with(
+                base_comment="Test selection comment",
+                installation_id=12345,
+                owner_id=456,
+                owner_name="testowner",
+                sender_name="testuser",
+                base_args=expected_base_args,
+            )
+
+    def test_handles_mixed_file_types(self):
+        """Test handling of mixed file types (code, test, type files)."""
+        payload = self.create_minimal_payload()
+
+        with patch("services.webhook.utils.create_pr_checkbox_comment.get_repository") as mock_get_repo, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.get_installation_access_token") as mock_get_token, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.get_pull_request_files") as mock_get_files, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.is_code_file") as mock_is_code, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.is_test_file") as mock_is_test, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.is_type_file") as mock_is_type, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.get_coverages") as mock_get_cov, \
+             patch("services.webhook.utils.create_pr_checkbox_comment.logging") as mock_logging:
