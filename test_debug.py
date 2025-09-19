@@ -30,11 +30,18 @@ print('\nTesting each line:')
 test_lines = ['platform linux', 'collected items', 'test results', 'After content']
 for line in test_lines:
     stripped_line = line.strip()
-    is_pytest_output = (
-        stripped_line.startswith(('platform ', 'cachedir:', 'rootdir:', 'plugins:', 'asyncio:', 'collecting')) or
-        'collected' in stripped_line.lower() or
-        '::' in stripped_line or
-        any(pattern in stripped_line for pattern in ['PASSED', 'FAILED', 'SKIPPED', 'ERROR', '%]', 'warnings']) or
-        stripped_line.lower().startswith(('test ', 'tests '))
+    looks_like_regular_content = (
+        # Must not contain pytest-specific keywords
+        not any(keyword in stripped_line.lower() for keyword in [
+            'platform', 'cachedir', 'rootdir', 'plugins', 'asyncio', 'collecting', 'collected',
+            'test', 'pytest', 'passed', 'failed', 'skipped', 'error', 'warning', 'coverage'
+        ]) and
+        # Must not contain test patterns
+        '::' not in stripped_line and
+        '%]' not in stripped_line and
+        # Should be a simple phrase (not too complex)
+        len(stripped_line.split()) <= 4 and
+        # Should not start with common pytest prefixes
+        not stripped_line.startswith(('  ', '\t'))
     )
-    print(f"'{line}' -> is_pytest_output: {is_pytest_output}")
+    print(f"'{line}' -> looks_like_regular_content: {looks_like_regular_content}")
