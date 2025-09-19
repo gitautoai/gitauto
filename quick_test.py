@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append('/home/runner/work/gitauto/gitauto')
 
 from utils.logs.remove_pytest_sections import remove_pytest_sections
@@ -28,3 +29,23 @@ print("\nEXPECTED:")
 print(repr(expected))
 
 print(f"\nMATCH: {result == expected}")
+
+# Test the "After content" case
+print("\n" + "="*50)
+log2 = """Before content
+=========================== warnings summary ============================
+warning 1
+warning 2
+After content"""
+
+result2 = remove_pytest_sections(log2)
+print("RESULT2:")
+print(repr(result2))
+
+expected2 = """Before content
+After content"""
+
+print("\nEXPECTED2:")
+print(repr(expected2))
+
+print(f"\nMATCH2: {result2 == expected2}")
