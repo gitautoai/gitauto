@@ -72,7 +72,7 @@ def remove_pytest_sections(error_log: str):
                 # Only stop skipping for very simple, clear content that doesn't look like pytest output
                 is_simple_non_pytest_content = (
                     # Must be short (1-3 words max)
-                    len(stripped_line.split()) <= 1 and
+                    len(stripped_line.split()) <= 3 and
                     # Must not contain file paths, function calls, or pytest patterns
                     not any(char in stripped_line for char in [':', '(', ')', '.py', '/', '\\', '%', '[', ']']) and
                     # Must not contain pytest-related keywords
