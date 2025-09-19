@@ -488,10 +488,18 @@ class TestHandleWebhookEvent:
                     mock_slack_notify.assert_not_called()
 
     @pytest.mark.asyncio
+    @patch("services.webhook.webhook_handler.get_usage_by_pr")
+    @patch("services.webhook.webhook_handler.update_usage")
     async def test_handle_webhook_event_pull_request_closed_gitauto_branch_success(
-        self, mock_update_issue_merged, mock_slack_notify
+        self,
+        mock_update_usage,
+        mock_get_usage_by_pr,
+        mock_update_issue_merged,
+        mock_slack_notify,
     ):
         """Test handling of pull request closed event from GitAuto branch with success."""
+        mock_get_usage_by_pr.return_value = [{"id": 1}, {"id": 2}]
+
         with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
             with patch(
                 "services.webhook.webhook_handler.ISSUE_NUMBER_FORMAT", "/issue-"
@@ -506,9 +514,15 @@ class TestHandleWebhookEvent:
                             "head": {"ref": "gitauto/issue-123"},
                             "body": "Resolves #123",
                             "user": {"login": "author-name"},
+                            "number": 456,
                         },
                         "repository": {
-                            "owner": {"type": "Organization", "login": "owner-name"},
+                            "id": 789,
+                            "owner": {
+                                "type": "Organization",
+                                "login": "owner-name",
+                                "id": 111,
+                            },
                             "name": "repo-name",
                         },
                         "sender": {"login": "sender-name"},
@@ -525,6 +539,10 @@ class TestHandleWebhookEvent:
                         issue_number=123,
                         merged=True,
                     )
+                    mock_get_usage_by_pr.assert_called_once_with(111, 789, 456)
+                    assert mock_update_usage.call_count == 2
+                    mock_update_usage.assert_any_call(usage_id=1, is_merged=True)
+                    mock_update_usage.assert_any_call(usage_id=2, is_merged=True)
                     mock_slack_notify.assert_called_once_with(
                         "🎉 PR created by `author-name` was merged by `sender-name` for `owner-name/repo-name`"
                     )
@@ -753,9 +771,17 @@ class TestHandleWebhookEvent:
         assert casted_payload["installation"]["id"] == 60314628
 
     @pytest.mark.asyncio
+    @patch("services.webhook.webhook_handler.get_usage_by_pr")
+    @patch("services.webhook.webhook_handler.update_usage")
     async def test_pull_request_closed_type_checking_with_real_payload(
-        self, mock_update_issue_merged, mock_slack_notify
+        self,
+        mock_update_usage,
+        mock_get_usage_by_pr,
+        mock_update_issue_merged,
+        mock_slack_notify,
     ):
+        mock_get_usage_by_pr.return_value = [{"id": 123}]
+
         with open("payloads/github/pull_request/closed.json", "r", encoding=UTF8) as f:
             payload = json.load(f)
 
@@ -767,6 +793,8 @@ class TestHandleWebhookEvent:
 
             mock_update_issue_merged.assert_called_once()
             mock_slack_notify.assert_called_once()
+            mock_get_usage_by_pr.assert_called_once()
+            mock_update_usage.assert_called_once_with(usage_id=123, is_merged=True)
 
             call_args = mock_update_issue_merged.call_args[1]
             assert call_args["owner_type"] == "Organization"

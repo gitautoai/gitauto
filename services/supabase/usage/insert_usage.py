@@ -48,6 +48,7 @@ def insert_usage(
                 "trigger": trigger,
                 "pr_number": pr_number,
                 "is_test_passed": False,
+                "is_merged": False,
                 "lambda_log_group": lambda_log_group,
                 "lambda_log_stream": lambda_log_stream,
                 "lambda_request_id": lambda_request_id,
