@@ -753,7 +753,7 @@ class TestCreatePrCheckboxComment:
         }
         mock_delete_comments_by_identifiers.assert_called_once_with(
             base_args=expected_base_args,
-            identifiers=["<!-- TEST_SELECTION_COMMENT -->"]
+            identifiers=["## 🧪 Manage Tests?"]
         )
 
     def test_combine_and_create_comment_called_with_correct_args(
