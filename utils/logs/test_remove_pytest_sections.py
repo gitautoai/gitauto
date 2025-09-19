@@ -1,24 +1,4 @@
 from unittest.mock import MagicMock, patch
-def test_coverage_line_removal():
-    """Test that the specific coverage line is removed."""
-    from utils.logs.remove_pytest_sections import remove_pytest_sections
-
-    test_log = """Before content
-=========================== warnings summary ============================
-warning content
-Coverage LCOV written to file coverage/lcov.info
-=========================== short test summary info ============================
-summary content"""
-
-    result = remove_pytest_sections(test_log)
-    expected = """Before content
-
-=========================== short test summary info ============================
-summary content"""
-
-    print(f"Result: {repr(result)}")
-    print(f"Expected: {repr(expected)}")
-    assert result == expected, f"Expected {repr(expected)}, got {repr(result)}"
 
 from utils.logs.remove_pytest_sections import remove_pytest_sections
 
@@ -434,6 +414,7 @@ def test_remove_pytest_sections_with_falsy_values():
     # Test with False (though not typical input, should be handled)
     assert remove_pytest_sections(False) is False
 
+
 def test_remove_pytest_sections_with_coverage_line():
     """Test that coverage lines are properly removed."""
     log = """Initial content
@@ -458,6 +439,18 @@ def test_remove_pytest_sections_with_coverage_line_after_session():
 =========================== test session starts ============================
 platform info
 collected items
+Coverage LCOV written to file coverage/lcov.info
+=========================== short test summary info ============================
+summary content"""
+
+    expected = """Initial content
+
+=========================== short test summary info ============================
+summary content"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
+
 
 def test_remove_pytest_sections_real_world_scenario():
     """Test with a real-world scenario similar to the failing test."""
@@ -487,6 +480,21 @@ Coverage LCOV written to file coverage/lcov.info
 failure content
 =========================== short test summary info ============================
 summary content"""
+
+    expected = """Run python -m pytest -r fE -x --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
+/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:217: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+
+=================================== FAILURES ===================================
+failure content
+
+=========================== short test summary info ============================
+summary content"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
 
 
 def test_remove_pytest_sections_with_coverage_section():
@@ -538,3 +546,4 @@ After content"""
 After content"""
 
     result = remove_pytest_sections(log)
+    assert result == expected
