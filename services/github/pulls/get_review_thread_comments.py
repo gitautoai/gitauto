@@ -69,6 +69,7 @@ def get_review_thread_comments(
         for comment in comments:
             if isinstance(comment, dict) and comment.get("id") == comment_node_id:
                 # print(f"get_review_thread_comments: {dumps(obj=comments, indent=2)}")
-                return comments
+                # Filter out non-dict comments and return only valid comment dictionaries
+                return [c for c in comments if isinstance(c, dict)]
 
     return []
