@@ -33,7 +33,7 @@ def remove_pytest_sections(error_log: str):
             continue
 
         # Stop skipping and keep failures section
-        if "===" in line and "FAILURES" in line:
+        if "=" in line and "FAILURES" in line:
             skip = False
             # Add blank line before FAILURES if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
