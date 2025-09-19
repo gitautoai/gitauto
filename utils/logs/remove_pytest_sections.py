@@ -42,7 +42,7 @@ def remove_pytest_sections(error_log: str):
             continue
 
         # Stop skipping and keep short test summary
-        if "===" in line and "short test summary info" in line:
+        if "=" in line and "short test summary info" in line:
             skip = False
             # Add blank line before summary if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
