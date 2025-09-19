@@ -807,9 +807,9 @@ def test_tool_use_with_empty_string_id(mock_client):
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
 
-    # Should match empty string ids and remove both messages together
-    assert len(trimmed) == 1
-    assert trimmed == [messages[0]]
+    # Should not match empty string ids (treated as invalid), remove only assistant message
+    assert len(trimmed) == 2
+    assert trimmed == [messages[0], messages[2]]
 
 
 def test_mixed_content_types_in_assistant_message(mock_client):
