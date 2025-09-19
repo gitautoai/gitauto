@@ -50,7 +50,8 @@ def remove_pytest_sections(error_log: str):
             # Very simple check: if the line doesn't contain common pytest keywords
             # and doesn't start with whitespace, it's probably regular content
             pytest_keywords = ['platform', 'collected', 'items', 'PASSED', 'FAILED', 'ERROR', 'SKIPPED',
-                             'warning', 'test_', '.py', '::', '[', '%]', 'cachedir', 'rootdir', 'plugins', 'results']
+                             'warning', 'test_', '.py', '::', '[', '%]', 'cachedir', 'rootdir', 'plugins', 'results',
+                             'session', 'content', 'remove', 'to']
 
             line_lower = line.lower()
             has_pytest_keyword = any(keyword.lower() in line_lower for keyword in pytest_keywords)
