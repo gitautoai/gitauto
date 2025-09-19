@@ -831,6 +831,13 @@ def test_mixed_content_types_in_assistant_message(mock_client):
     def count_tokens_progressive(messages, model):
         if len(messages) >= 3:
             return Mock(input_tokens=5000)  # Over limit
+        return Mock(input_tokens=800)  # Under limit
+
+    mock_client.messages.count_tokens.side_effect = count_tokens_progressive
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should remove assistant message since second tool_use has no matching result
 
 
 def test_aggressive_trimming_until_one_message_remains(mock_client):
