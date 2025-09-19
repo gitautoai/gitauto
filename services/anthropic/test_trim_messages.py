@@ -843,6 +843,7 @@ def test_mixed_content_types_in_assistant_message(mock_client):
 
     assert trimmed == [messages[0], messages[2]]
 
+
 def test_aggressive_trimming_until_one_message_remains(mock_client):
     """Test aggressive trimming that continues until only one message remains."""
     messages = [
