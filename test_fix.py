@@ -2,6 +2,7 @@
 
 from utils.logs.remove_pytest_sections import remove_pytest_sections
 
+
 def test_warnings_summary():
     log = """Initial content
 =========================== warnings summary ============================
@@ -26,5 +27,24 @@ Test failure content here"""
     print(repr(expected))
     print(f"\nMatch: {result == expected}")
 
+def test_preserve_after_content():
+    log = """Before content
+=========================== warnings summary ============================
+warning 1
+warning 2
+After content"""
+
+    expected = """Before content
+After content"""
+
+    result = remove_pytest_sections(log)
+    print("\n--- Test preserve after content ---")
+    print("Result:")
+    print(repr(result))
+    print("\nExpected:")
+    print(repr(expected))
+    print(f"\nMatch: {result == expected}")
+
 if __name__ == "__main__":
     test_warnings_summary()
+    test_preserve_after_content()
