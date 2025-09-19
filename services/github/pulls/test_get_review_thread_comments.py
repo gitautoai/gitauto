@@ -783,3 +783,53 @@ def test_get_review_thread_comments_handles_http_error_returns_empty_list(
     ) as mock_get_client:
         mock_response = MagicMock()
         mock_response.status_code = 404
+
+
+def test_get_review_thread_comments_with_none_comment_node_id(
+    mock_graphql_client, sample_params, sample_review_threads_response
+):
+    """Test handling when comment_node_id is None."""
+    # Arrange
+    mock_graphql_client.execute.return_value = sample_review_threads_response
+    sample_params["comment_node_id"] = None
+
+    # Act
+    result = get_review_thread_comments(**sample_params)
+
+    # Assert - should return empty list since None won't match any comment id
+    assert result == []
+    mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_with_empty_comment_node_id(
+    mock_graphql_client, sample_params
+):
+    """Test handling when comment_node_id is empty string."""
+    # Arrange
+    response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {
+                    "nodes": [
+                        {
+                            "comments": {
+                                "nodes": [
+                                    {
+                                        "id": "",  # Empty string id that matches empty comment_node_id
+                                        "author": {"login": "user1"},
+                                        "body": "Comment with empty id",
+                                        "createdAt": "2023-01-01T10:00:00Z",
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+    mock_graphql_client.execute.return_value = response
+    sample_params["comment_node_id"] = ""
+
+    # Act
+    result = get_review_thread_comments(**sample_params)
