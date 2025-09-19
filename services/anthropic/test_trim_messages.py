@@ -769,6 +769,7 @@ def test_progressive_token_reduction(mock_client):
     # Should verify that count_tokens was called multiple times
     assert call_count > 1
 
+
 def test_tool_use_with_empty_string_id(mock_client):
     """Test tool_use block with empty string as id value."""
     messages = [
