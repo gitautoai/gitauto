@@ -20,7 +20,7 @@ def remove_pytest_sections(error_log: str):
             pytest_indicators = [
                 'platform ', 'cachedir:', 'rootdir:', 'plugins:', 'collecting', 'collected',
                 'PASSED', 'FAILED', 'ERROR', 'SKIPPED', '[', '%]', '::',
-                'warnings.warn', 'DeprecationWarning', 'UserWarning', 'PytestWarning'
+                'warnings.warn', 'DeprecationWarning', 'UserWarning', 'PytestWarning', 'test results', 'items'
             ]
 
             if not any(indicator in line for indicator in pytest_indicators) and not line.startswith((' ', '\t')):
