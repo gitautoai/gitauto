@@ -79,7 +79,7 @@ def remove_pytest_sections(error_log: str):
                     not any(keyword in stripped_line.lower() for keyword in [
                         'warning', 'error', 'test', 'pytest', 'deprecation', 'platform',
                         'cachedir', 'rootdir', 'plugins', 'asyncio', 'collecting', 'collected',
-                        'passed', 'failed', 'skipped', 'coverage', 'lcov', 'docs', 'content'
+                        'passed', 'failed', 'skipped', 'coverage', 'lcov', 'docs'
                     ]) and
                     # Must not be indented (pytest output is often indented)
                     not stripped_line.startswith(('  ', '\t'))
