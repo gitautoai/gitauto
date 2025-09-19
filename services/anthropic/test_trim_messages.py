@@ -759,3 +759,67 @@ def test_progressive_token_reduction(mock_client):
         call_count += 1
         # First call: over limit, subsequent calls: under limit
         if call_count == 1:
+
+
+def test_tool_use_with_empty_string_id(mock_client):
+    """Test tool_use block with empty string as id value."""
+    messages = [
+        make_message("user", "query"),
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "",  # Empty string id
+                    "name": "test_tool",
+                    "input": {"param": "value"},
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "",  # Empty string tool_use_id
+                    "content": "result",
+                }
+            ],
+        },
+    ]
+
+    # Force trimming
+    def count_tokens_progressive(messages, model):
+        if len(messages) >= 3:
+            return Mock(input_tokens=5000)  # Over limit
+        return Mock(input_tokens=800)  # Under limit
+
+    mock_client.messages.count_tokens.side_effect = count_tokens_progressive
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should match empty string ids and remove both messages together
+    assert len(trimmed) == 1
+    assert trimmed == [messages[0]]
+
+
+def test_mixed_content_types_in_assistant_message(mock_client):
+    """Test assistant message with mixed content types including tool_use."""
+    messages = [
+        make_message("user", "query"),
+        {
+            "role": "assistant",
+            "content": [
+                {"type": "text", "text": "Here's the result:"},
+                {"type": "tool_use", "id": "tool1", "name": "search", "input": {}},
+                {"type": "text", "text": "Additional text"},
+                {"type": "tool_use", "id": "tool2", "name": "analyze", "input": {}},  # Second tool_use
+            ],
+        },
+        make_tool_result_message("tool1"),  # Only matches first tool_use
+    ]
+
+    # Force trimming
+    def count_tokens_progressive(messages, model):
+        if len(messages) >= 3:
+            return Mock(input_tokens=5000)  # Over limit
