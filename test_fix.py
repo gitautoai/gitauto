@@ -35,12 +35,12 @@ After content"""
 def test_debug():
     # Test the specific lines
     print("Testing 'warning 1':")
-    print(f"  Contains 'warnings': {'warnings' in 'warning 1'.lower()}")
+    print(f"  Contains 'warning': {'warning' in 'warning 1'.lower()}")
     print(f"  Starts with space: {'warning 1'.startswith((' ', '\t'))}")
 
     print("Testing 'After content':")
     pytest_keywords = ['platform', 'collected', 'items', 'PASSED', 'FAILED', 'ERROR', 'SKIPPED',
-                      'warnings', 'test_', '.py', '::', '[', '%]', 'cachedir', 'rootdir', 'plugins', 'results']
+                      'warning', 'test_', '.py', '::', '[', '%]', 'cachedir', 'rootdir', 'plugins', 'results']
     print(f"  Contains pytest keywords: {any(kw in 'After content'.lower() for kw in pytest_keywords)}")
     print(f"  Starts with space: {'After content'.startswith((' ', '\t'))}")
 
