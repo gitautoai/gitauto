@@ -59,9 +59,6 @@ def remove_pytest_sections(error_log: str):
             # If it doesn't have pytest keywords and isn't indented, it's probably regular content
             if not has_pytest_keyword and not is_indented:
                 skip = False
-                # Add blank line if we just removed content and last line isn't blank
-                if content_removed and filtered_lines and filtered_lines[-1] != "":
-                    filtered_lines.append("")
 
         # Keep line if not skipping
         if not skip:
