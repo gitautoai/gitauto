@@ -13,6 +13,15 @@ def remove_pytest_sections(error_log: str):
     content_removed = False
 
     for line in lines:
+        # Check if we're in skip mode and this line doesn't look like pytest output
+        # This helps detect the end of pytest sections that don't have FAILURES or summary
+        if skip and line.strip() and not line.startswith((' ', '\t')) and '===' not in line:
+            # This looks like regular content, stop skipping
+            if not any(keyword in line.lower() for keyword in ['collected', 'platform', 'cachedir', 'rootdir', 'plugins', 'passed', 'failed', 'error', 'skipped', '%]']):
+                skip = False
+                if content_removed and filtered_lines and filtered_lines[-1] != "":
+                    filtered_lines.append("")
+
         # Start skipping at test session header
         if "===" in line and "test session starts" in line:
             skip = True
