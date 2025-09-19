@@ -674,3 +674,88 @@ def test_default_model_parameter_usage(mock_client):
     # Call without specifying model parameter
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=5000)
     assert trimmed == messages
+
+
+def test_assistant_message_at_index_zero(mock_client):
+    """Test assistant message at index 0 (edge case)."""
+    messages = [
+        make_message("assistant", "first message"),
+        make_message("user", "user message"),
+    ]
+
+    # Force trimming
+    def count_tokens_progressive(messages, model):
+        if len(messages) >= 2:
+            return Mock(input_tokens=5000)  # Over limit
+        return Mock(input_tokens=800)  # Under limit
+
+    mock_client.messages.count_tokens.side_effect = count_tokens_progressive
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should remove assistant message at index 0
+    assert len(trimmed) == 1
+    assert trimmed == [messages[1]]
+
+
+def test_tool_use_message_at_last_index(mock_client):
+    """Test tool_use message at the last index with no following message."""
+    messages = [
+        make_message("user", "query"),
+        make_tool_use_message("assistant", "tool123"),  # Last message, no tool_result follows
+    ]
+
+    # Force trimming
+    def count_tokens_progressive(messages, model):
+        if len(messages) >= 2:
+            return Mock(input_tokens=5000)  # Over limit
+        return Mock(input_tokens=800)  # Under limit
+
+    mock_client.messages.count_tokens.side_effect = count_tokens_progressive
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should remove the tool_use message since no tool_result follows
+    assert len(trimmed) == 1
+    assert trimmed == [messages[0]]
+
+
+def test_content_attribute_missing(mock_client):
+    """Test message with missing content attribute."""
+    messages = [
+        make_message("user", "query"),
+        {"role": "assistant"},  # Missing content attribute
+        make_message("user", "follow up"),
+    ]
+
+    # Force trimming
+    def count_tokens_progressive(messages, model):
+        if len(messages) >= 3:
+            return Mock(input_tokens=5000)  # Over limit
+        return Mock(input_tokens=800)  # Under limit
+
+    mock_client.messages.count_tokens.side_effect = count_tokens_progressive
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should handle missing content gracefully (defaults to empty list)
+    assert len(trimmed) == 2
+    assert trimmed == [messages[0], messages[2]]
+
+
+def test_progressive_token_reduction(mock_client):
+    """Test that token count is recalculated after each message removal."""
+    messages = [
+        make_message("user", "first"),
+        make_message("assistant", "second"),
+        make_message("user", "third"),
+        make_message("assistant", "fourth"),
+    ]
+
+    # Simulate progressive token reduction
+    call_count = 0
+    def count_tokens_decreasing(messages, model):
+        nonlocal call_count
+        call_count += 1
+        # First call: over limit, subsequent calls: under limit
+        if call_count == 1:
