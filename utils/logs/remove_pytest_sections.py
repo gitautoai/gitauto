@@ -64,21 +64,34 @@ def remove_pytest_sections(error_log: str):
         if not skip:
             filtered_lines.append(line)
         else:
-            # When skipping, check if we've encountered a line that clearly indicates
-            # we've moved out of the pytest section (very conservative approach)
+            # When skipping, only stop if we encounter content that clearly looks like
+            # regular log content (not pytest output) - very restrictive approach
             stripped_line = line.strip()
 
             if stripped_line:
-                # Only stop skipping if this looks like clearly non-pytest content
-                # We're very conservative here to avoid false positives
-                looks_like_non_pytest_content = (
-                    # Must not contain any pytest-related patterns
-                    not any(pattern in stripped_line.lower() for pattern in [
-                        'warning', 'error', 'deprecation', '.py:', 'test', 'pytest', 'platform',
+                # Only stop skipping for very simple, clear content that doesn't look like pytest output
+                is_simple_non_pytest_content = (
+                    # Must be very short (1-2 words max)
+                    len(stripped_line.split()) <= 2 and
+                    # Must not contain file paths, function calls, or pytest patterns
+                    not any(char in stripped_line for char in [':', '(', ')', '.py', '/', '\\', '%', '[', ']']) and
+                    # Must not contain pytest-related keywords
+                    not any(keyword in stripped_line.lower() for keyword in [
+                        'warning', 'error', 'test', 'pytest', 'deprecation', 'platform',
                         'cachedir', 'rootdir', 'plugins', 'asyncio', 'collecting', 'collected',
                         'passed', 'failed', 'skipped', 'coverage', 'lcov', 'docs'
                     ]) and
-                    # Must not contain common pytest patterns
+                    # Must not be indented (pytest output is often indented)
+                    not stripped_line.startswith(('  ', '\t'))
+                )
+
+                if is_simple_non_pytest_content:
+                    skip = False
+                    filtered_lines.append(line)
+                else:
+                    content_removed = True
+            else:
+                content_removed = True
 
     # Join and only clean up excessive blank lines if we actually removed content
     result = "\n".join(filtered_lines)
