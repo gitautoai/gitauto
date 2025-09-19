@@ -838,6 +838,7 @@ def test_mixed_content_types_in_assistant_message(mock_client):
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
 
     # Should remove assistant message since second tool_use has no matching result
+    assert len(trimmed) == 2
 
 
 def test_aggressive_trimming_until_one_message_remains(mock_client):
