@@ -14,22 +14,6 @@ def remove_pytest_sections(error_log: str):
     content_removed = False
 
     for line in lines:
-        # If we're skipping and encounter a line that doesn't look like pytest output, stop skipping
-        if skip and line.strip():
-            # Check if this line looks like regular content (not pytest output)
-            pytest_indicators = [
-                'platform ', 'cachedir:', 'rootdir:', 'plugins:', 'collecting', 'collected',
-                'PASSED', 'FAILED', 'ERROR', 'SKIPPED', '[', '%]', '::',
-                'warnings.warn', 'DeprecationWarning', 'UserWarning', 'PytestWarning', 'test results', 'items'
-            ]
-
-            if not any(indicator in line for indicator in pytest_indicators) and not line.startswith((' ', '\t')):
-                # This looks like regular content, stop skipping
-                skip = False
-                # Add blank line if we just removed content and last line isn't blank
-                if content_removed and filtered_lines and filtered_lines[-1] != "":
-                    filtered_lines.append("")
-
         # Start skipping at test session header
         if "===" in line and "test session starts" in line:
             skip = True
@@ -60,6 +44,16 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
+        # If we're skipping, check if this line looks like it's outside of pytest output
+        if skip and line.strip():
+            # Look for lines that clearly don't belong to pytest sections
+            # These are typically error messages, stack traces, or other log content
+            if not self._looks_like_pytest_output(line):
+                skip = False
+                # Add blank line if we just removed content and last line isn't blank
+                if content_removed and filtered_lines and filtered_lines[-1] != "":
+                    filtered_lines.append("")
+
         # Keep line if not skipping
         if not skip:
             filtered_lines.append(line)
@@ -72,3 +66,30 @@ def remove_pytest_sections(error_log: str):
         result = re.sub(r"\n{3,}", "\n\n", result)
 
     return result
+
+
+def _looks_like_pytest_output(line: str) -> bool:
+    """Check if a line looks like it belongs to pytest output."""
+    # Common pytest output patterns
+    pytest_patterns = [
+        'platform ', 'cachedir:', 'rootdir:', 'plugins:', 'collecting', 'collected',
+        'PASSED', 'FAILED', 'ERROR', 'SKIPPED', '[', '%]', '::',
+        'warnings.warn', 'DeprecationWarning', 'UserWarning', 'PytestWarning',
+        'items', 'test_', '.py::', 'AssertionError', 'Traceback'
+    ]
+
+    # Check if line starts with common pytest prefixes (indented content)
+    if line.startswith((' ', '\t')):
+        return True
+
+    # Check for pytest-specific patterns
+    line_lower = line.lower()
+    for pattern in pytest_patterns:
+        if pattern.lower() in line_lower:
+            return True
+
+    # Lines that are very short or just contain common words are likely pytest output
+    if len(line.strip()) < 3:
+        return True
+
+    return False
