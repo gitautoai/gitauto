@@ -393,3 +393,30 @@ class TestCreatePrCheckboxComment:
              patch("services.webhook.utils.create_pr_checkbox_comment.is_type_file") as mock_is_type, \
              patch("services.webhook.utils.create_pr_checkbox_comment.get_coverages") as mock_get_cov, \
              patch("services.webhook.utils.create_pr_checkbox_comment.logging") as mock_logging:
+
+            mock_get_repo.return_value = self.create_repository_settings()
+            mock_get_token.return_value = "test_token"
+            mock_get_files.return_value = [
+                self.create_file_change("src/main.py", "modified"),
+                self.create_file_change("test_main.py", "added"),
+                self.create_file_change("types.py", "modified"),
+                self.create_file_change("README.md", "modified"),
+            ]
+
+            def is_code_file_side_effect(filename):
+                return filename.endswith('.py')
+
+            def is_test_file_side_effect(filename):
+                return filename.startswith('test_')
+
+            def is_type_file_side_effect(filename):
+                return filename == 'types.py'
+
+            mock_is_code.side_effect = is_code_file_side_effect
+            mock_is_test.side_effect = is_test_file_side_effect
+            mock_is_type.side_effect = is_type_file_side_effect
+            mock_get_cov.return_value = {}
+
+            result = create_pr_checkbox_comment(payload)
+
+            assert result is None
