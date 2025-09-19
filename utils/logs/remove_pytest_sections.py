@@ -32,6 +32,16 @@ def remove_pytest_sections(error_log: str):
             content_removed = True
             continue
 
+        # Skip docs lines
+        if line.strip().startswith("-- Docs:"):
+            content_removed = True
+            continue
+
+        # Skip coverage LCOV lines
+        if "Coverage LCOV written to file" in line:
+            content_removed = True
+            continue
+
         # Stop skipping and keep failures section
         if "=" * 3 in line and "FAILURES" in line:
             skip = False
