@@ -823,3 +823,35 @@ def test_mixed_content_types_in_assistant_message(mock_client):
     def count_tokens_progressive(messages, model):
         if len(messages) >= 3:
             return Mock(input_tokens=5000)  # Over limit
+
+
+def test_aggressive_trimming_until_one_message_remains(mock_client):
+    """Test aggressive trimming that continues until only one message remains."""
+    messages = [
+        make_message("user", "first"),
+        make_message("assistant", "second"),
+        make_message("user", "third"),
+        make_message("assistant", "fourth"),
+        make_message("user", "fifth"),
+    ]
+
+    # Always return high token count to force aggressive trimming
+    mock_client.messages.count_tokens.return_value = Mock(input_tokens=10000)
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+
+    # Should trim down to just one message (the first user message)
+    assert len(trimmed) == 1
+    assert trimmed == [messages[0]]
+
+
+def test_no_removable_messages_scenario(mock_client):
+    """Test scenario where no messages can be removed (all system or first user)."""
+    messages = [
+        make_message("user", "only user message"),  # First user message, can't be removed
+    ]
+
+    # Force high token count
+    mock_client.messages.count_tokens.return_value = Mock(input_tokens=10000)
+
+    trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
