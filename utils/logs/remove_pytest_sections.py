@@ -63,6 +63,15 @@ def remove_pytest_sections(error_log: str):
         # Keep line if not skipping
         if not skip:
             filtered_lines.append(line)
+        elif skip:
+            # Check if this line looks like it's no longer pytest output
+            # This helps handle cases where pytest sections don't have explicit end markers
+            stripped_line = line.strip()
+            if (stripped_line and
+                not stripped_line.startswith(('platform ', 'cachedir:', 'rootdir:', 'plugins:', 'collecting', 'collected', 'asyncio:', '::')) and
+                not any(keyword in stripped_line.lower() for keyword in ['test', 'pytest', 'passed', 'failed', 'skipped', 'error', '%]', 'warnings', 'coverage'])):
+                skip = False
+                filtered_lines.append(line)
         else:
             content_removed = True
 
