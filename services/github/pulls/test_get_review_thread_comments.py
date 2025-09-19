@@ -697,3 +697,88 @@ def test_get_review_thread_comments_first_thread_matches(
                         {
                 }
     mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_handles_attribute_error_returns_empty_list(
+    sample_params,
+):
+    """Test that function returns empty list when AttributeError occurs (due to @handle_exceptions decorator)."""
+    with patch(
+        "services.github.pulls.get_review_thread_comments.get_graphql_client"
+    ) as mock_get_client:
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        mock_client.execute.side_effect = AttributeError("Attribute error")
+
+        # Act
+        result = get_review_thread_comments(**sample_params)
+
+        # Assert
+        assert result == []
+
+
+def test_get_review_thread_comments_handles_key_error_returns_empty_list(
+    sample_params,
+):
+    """Test that function returns empty list when KeyError occurs (due to @handle_exceptions decorator)."""
+    with patch(
+        "services.github.pulls.get_review_thread_comments.get_graphql_client"
+    ) as mock_get_client:
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        mock_client.execute.side_effect = KeyError("Key error")
+
+        # Act
+        result = get_review_thread_comments(**sample_params)
+
+        # Assert
+        assert result == []
+
+
+def test_get_review_thread_comments_handles_type_error_returns_empty_list(
+    sample_params,
+):
+    """Test that function returns empty list when TypeError occurs (due to @handle_exceptions decorator)."""
+    with patch(
+        "services.github.pulls.get_review_thread_comments.get_graphql_client"
+    ) as mock_get_client:
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        mock_client.execute.side_effect = TypeError("Type error")
+
+        # Act
+        result = get_review_thread_comments(**sample_params)
+
+        # Assert
+        assert result == []
+
+
+def test_get_review_thread_comments_handles_json_decode_error_returns_empty_list(
+    sample_params,
+):
+    """Test that function returns empty list when JSONDecodeError occurs (due to @handle_exceptions decorator)."""
+    import json
+
+    with patch(
+        "services.github.pulls.get_review_thread_comments.get_graphql_client"
+    ) as mock_get_client:
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        mock_client.execute.side_effect = json.JSONDecodeError("JSON decode error", "doc", 0)
+
+        # Act
+        result = get_review_thread_comments(**sample_params)
+
+        # Assert
+        assert result == []
+
+
+def test_get_review_thread_comments_handles_http_error_returns_empty_list(
+    sample_params,
+):
+    """Test that function returns empty list when HTTPError occurs (due to @handle_exceptions decorator)."""
+    with patch(
+        "services.github.pulls.get_review_thread_comments.get_graphql_client"
+    ) as mock_get_client:
+        mock_response = MagicMock()
+        mock_response.status_code = 404
