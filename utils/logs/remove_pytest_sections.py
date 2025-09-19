@@ -1,4 +1,5 @@
 import re
+
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -13,12 +14,19 @@ def remove_pytest_sections(error_log: str):
     content_removed = False
 
     for line in lines:
-        # Check if we're in skip mode and this line doesn't look like pytest output
-        # This helps detect the end of pytest sections that don't have FAILURES or summary
-        if skip and line.strip() and not line.startswith((' ', '\t')) and '===' not in line:
-            # This looks like regular content, stop skipping
-            if not any(keyword in line.lower() for keyword in ['collected', 'platform', 'cachedir', 'rootdir', 'plugins', 'passed', 'failed', 'error', 'skipped', '%]']):
+        # If we're skipping and encounter a line that doesn't look like pytest output, stop skipping
+        if skip and line.strip():
+            # Check if this line looks like regular content (not pytest output)
+            pytest_indicators = [
+                'platform ', 'cachedir:', 'rootdir:', 'plugins:', 'collecting', 'collected',
+                'PASSED', 'FAILED', 'ERROR', 'SKIPPED', '[', '%]', '::',
+                'warnings.warn', 'DeprecationWarning', 'UserWarning', 'PytestWarning'
+            ]
+
+            if not any(indicator in line for indicator in pytest_indicators) and not line.startswith((' ', '\t')):
+                # This looks like regular content, stop skipping
                 skip = False
+                # Add blank line if we just removed content and last line isn't blank
                 if content_removed and filtered_lines and filtered_lines[-1] != "":
                     filtered_lines.append("")
 
