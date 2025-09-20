@@ -51,7 +51,7 @@ def handler(event, context):
             slack_notify("Completed", thread_ts)
         else:
             slack_notify(
-                f"@channel Failed: {result['message']}",
+                f"@channel Failed: {result.get('message', 'Unknown error')}",
                 thread_ts,
             )
         return None
@@ -87,7 +87,11 @@ async def handle_webhook(request: Request) -> dict[str, str]:
             qs=request_body.decode(encoding=UTF8)
         )
         if "payload" in decoded_body:
-            payload = json.loads(s=decoded_body["payload"][0])
+            try:
+                payload = json.loads(s=decoded_body["payload"][0])
+            except json.JSONDecodeError:
+                # If URL-encoded payload contains invalid JSON, use empty payload
+                payload = {}
     except Exception as e:  # pylint: disable=broad-except
         print(f"Error in parsing JSON payload: {e}")
 
