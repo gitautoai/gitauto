@@ -1,12 +1,12 @@
 # pylint: disable=too-many-lines,too-many-public-methods
 """Unit tests for pr_body_handler.py"""
 
+from io import StringIO
 # Standard imports
 from unittest.mock import patch
 
 # Third-party imports
 import pytest
-
 # Local imports
 from services.webhook.pr_body_handler import write_pr_description
 
@@ -927,3 +927,136 @@ class TestWritePrDescription:
         # Verify JSON is properly escaped
         assert 'test"owner' in user_input or 'test\\"owner' in user_input
         assert "test\\repo" in user_input or "test\\\\repo" in user_input
+
+    def test_write_pr_description_with_none_payload_explicit(self, all_mocks):
+        """Test PR description generation with explicit None payload."""
+        # Execute - should handle None payload gracefully
+        write_pr_description(None)
+
+        # Verify no functions are called
+        all_mocks["get_installation_access_token"].assert_not_called()
+        all_mocks["get_pull_request_file_changes"].assert_not_called()
+        all_mocks["get_issue_body"].assert_not_called()
+        all_mocks["is_pull_request_open"].assert_not_called()
+        all_mocks["check_branch_exists"].assert_not_called()
+
+    def test_write_pr_description_token_retrieval_failure(
+        self, mock_pr_payload, all_mocks
+    ):
+        """Test PR description generation when token retrieval fails."""
+        # Setup
+        all_mocks["get_installation_access_token"].return_value = None
+
+        # Execute
+        write_pr_description(mock_pr_payload)
+
+        # Verify token retrieval was attempted
+        all_mocks["get_installation_access_token"].assert_called_once_with(12345)
+
+        # Verify no further functions are called after token failure
+        all_mocks["get_pull_request_file_changes"].assert_not_called()
+        all_mocks["get_issue_body"].assert_not_called()
+        all_mocks["is_pull_request_open"].assert_not_called()
+
+    def test_write_pr_description_token_retrieval_empty_string(
+        self, mock_pr_payload, all_mocks
+    ):
+        """Test PR description generation when token retrieval returns empty string."""
+        # Setup
+        all_mocks["get_installation_access_token"].return_value = ""
+
+        # Execute
+        write_pr_description(mock_pr_payload)
+
+        # Verify token retrieval was attempted
+        all_mocks["get_installation_access_token"].assert_called_once_with(12345)
+
+        # Verify no further functions are called after empty token
+        all_mocks["get_pull_request_file_changes"].assert_not_called()
+        all_mocks["get_issue_body"].assert_not_called()
+        all_mocks["is_pull_request_open"].assert_not_called()
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_write_pr_description_pr_closed_prints_message(
+        self, mock_stdout, mock_pr_payload, all_mocks
+    ):
+        """Test that closing PR prints appropriate message."""
+        # Setup
+        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
+        all_mocks["get_pull_request_file_changes"].return_value = []
+        all_mocks["get_issue_body"].return_value = "Issue description"
+        all_mocks["is_pull_request_open"].return_value = False
+        all_mocks["check_branch_exists"].return_value = True
+
+        # Execute
+        write_pr_description(mock_pr_payload)
+
+        # Verify print message
+        output = mock_stdout.getvalue()
+        assert "Skipping AI call: PR #123 has been closed" in output
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_write_pr_description_branch_deleted_prints_message(
+        self, mock_stdout, mock_pr_payload, all_mocks
+    ):
+        """Test that deleted branch prints appropriate message."""
+        # Setup
+        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
+        all_mocks["get_pull_request_file_changes"].return_value = []
+        all_mocks["get_issue_body"].return_value = "Issue description"
+        all_mocks["is_pull_request_open"].return_value = True
+        all_mocks["check_branch_exists"].return_value = False
+
+        # Execute
+        write_pr_description(mock_pr_payload)
+
+        # Verify print message
+        output = mock_stdout.getvalue()
+        assert "Skipping AI call: Branch 'feature-branch' has been deleted" in output
+
+    def test_write_pr_description_with_falsy_token_values(
+        self, mock_pr_payload, all_mocks
+    ):
+        """Test PR description generation with various falsy token values."""
+        falsy_values = [None, "", 0, False, []]
+
+        for falsy_value in falsy_values:
+            # Setup
+            all_mocks["get_installation_access_token"].return_value = falsy_value
+            all_mocks["get_installation_access_token"].reset_mock()
+            all_mocks["get_pull_request_file_changes"].reset_mock()
+
+            # Execute
+            write_pr_description(mock_pr_payload)
+
+            # Verify token retrieval was attempted
+            all_mocks["get_installation_access_token"].assert_called_once_with(12345)
+
+            # Verify no further functions are called after falsy token
+            all_mocks["get_pull_request_file_changes"].assert_not_called()
+            all_mocks["get_issue_body"].assert_not_called()
+
+    def test_write_pr_description_with_malformed_resolves_statement(
+        self, mock_pr_payload, all_mocks
+    ):
+        """Test PR description generation with malformed resolves statement."""
+        # Setup with malformed resolves statement (no issue number after #)
+        mock_pr_payload["pull_request"]["body"] = "Resolves #\n\ngit commit -m 'Fix'"
+        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
+        all_mocks["get_pull_request_file_changes"].return_value = []
+        all_mocks["is_pull_request_open"].return_value = True
+        all_mocks["check_branch_exists"].return_value = True
+        all_mocks["chat_with_ai"].return_value = "Generated PR description"
+
+        # Execute - should handle IndexError gracefully
+        write_pr_description(mock_pr_payload)
+
+        # Verify issue body is not retrieved due to malformed resolves statement
+        all_mocks["get_issue_body"].assert_not_called()
+
+        # Verify AI call still proceeds
+        all_mocks["chat_with_ai"].assert_called_once()
+        all_mocks["update_pull_request_body"].assert_called_once()
+
+    # pylint: disable=redefined-outer-name
+    # This is needed because pytest fixtures can have the same name as test parameters
