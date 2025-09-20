@@ -189,10 +189,10 @@ Final content"""
 
 def test_remove_pytest_sections_partial_matches_not_removed():
     log = """This line has === but no test session starts
-This line has test session starts but no ===
-This line has === and warnings but not warnings summary
-This line has === and FAILED but not FAILURES
-This line has === and short test but not summary info"""
+This line has test session starts but no equals
+This line has equals and warnings but not warnings summary
+This line has equals and FAILED but not FAILURES
+This line has equals and short test but not summary info"""
 
     # Should remain unchanged since none match the exact patterns
     result = remove_pytest_sections(log)
