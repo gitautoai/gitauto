@@ -738,3 +738,18 @@ const VALUE = "test"'''
 def test_interface_with_non_standalone_closing_brace():
     # Test interface with closing brace not on standalone line
 }'''
+
+
+def test_type_declaration_without_struct_or_interface():
+    # Test type declaration that doesn't contain struct or interface - covers line 71-72
+    content = '''package main
+
+type MyString string
+type MyInt int
+type MyFloat float64
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_type_alias_with_equals_sign():
