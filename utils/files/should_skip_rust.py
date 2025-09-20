@@ -18,8 +18,8 @@ def should_skip_rust(content: str) -> bool:
     - Any executable code beyond declarations
     """
     lines = content.split("\n")
-    in_struct_or_enum = False
-    in_trait = False
+    struct_enum_brace_depth = 0
+    trait_brace_depth = 0
     in_multiline_string = False
     in_multiline_comment = False
     expecting_struct_enum_brace = False
@@ -66,39 +66,39 @@ def should_skip_rust(content: str) -> bool:
         # Handle struct/enum definitions (data types without implementation)
         if re.match(r"^(pub\s+)?struct\s+\w+", line):
             if "{" in line:
-                in_struct_or_enum = True
+                struct_enum_brace_depth = 1
             else:
                 expecting_struct_enum_brace = True
             continue
         if re.match(r"^(pub\s+)?enum\s+\w+", line):
             if "{" in line:
-                in_struct_or_enum = True
+                struct_enum_brace_depth = 1
             else:
                 expecting_struct_enum_brace = True
             continue
         if expecting_struct_enum_brace and line == "{":
-            in_struct_or_enum = True
+            struct_enum_brace_depth = 1
             expecting_struct_enum_brace = False
             continue
-        if in_struct_or_enum:
-            if "}" in line:
-                in_struct_or_enum = False
+        if struct_enum_brace_depth > 0:
+            # Count opening and closing braces
+            struct_enum_brace_depth += line.count("{") - line.count("}")
             continue
 
         # Handle trait definitions (interfaces without implementation)
         if re.match(r"^(pub\s+)?trait\s+\w+", line):
             if "{" in line:
-                in_trait = True
+                trait_brace_depth = 1
             else:
                 expecting_trait_brace = True
             continue
         if expecting_trait_brace and line == "{":
-            in_trait = True
+            trait_brace_depth = 1
             expecting_trait_brace = False
             continue
-        if in_trait:
-            if "}" in line:
-                in_trait = False
+        if trait_brace_depth > 0:
+            # Count opening and closing braces
+            trait_brace_depth += line.count("{") - line.count("}")
             continue
 
         # Skip type aliases
