@@ -719,7 +719,7 @@ class TestEdgeCases:
         mock_slack_notify.assert_has_calls(
             [
                 call("Event Scheduler started for test-owner/test-repo"),
-                # This should handle the KeyError gracefully
+                call("@channel Failed: Unknown error", "thread-999"),
             ]
         )
         # The second call should still happen, but might have different behavior
