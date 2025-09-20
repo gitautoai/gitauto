@@ -237,8 +237,10 @@ def test_remove_pytest_sections_handles_single_line_input():
 def test_remove_pytest_sections_with_exception_handling():
     """Test that the decorator handles exceptions properly"""
     with patch('utils.logs.remove_pytest_sections.re.sub', side_effect=Exception("Test exception")):
-        # Should return empty string (default_return_value) when exception occurs
-        result = remove_pytest_sections("test input")
+        # Use input that will trigger content removal and thus call re.sub
+        # This will cause re.sub to raise an exception, which should be caught by the decorator
+        test_input = "=========================== test session starts ============================\nremoved content"
+        result = remove_pytest_sections(test_input)
         assert result == ""
 
 
