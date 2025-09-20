@@ -677,4 +677,64 @@ def test_complex_struct_field_types():
     Items     []*Item
     Callback  func() (int, error)
     Channel   chan<- string
+
+
+def test_multiline_string_with_const_not_starting():
+    # Test multiline string detection when const is not at start of line
+    content = '''package main
+
+var template = `multiline
+string content
+continues here`
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_multiline_string_ending():
+    # Test multiline string ending detection - covers line 44-46
+    content = '''package main
+
+const TEMPLATE = `start of multiline
+string content
+end of string`
+
+const OTHER = "value"'''
+    assert should_skip_go(content) is True
+
+
+def test_closing_paren_only():
+    # Test standalone closing parenthesis - covers line 75
+    content = '''package main
+
+import (
+    "fmt"
+    "os"
+)
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_non_matching_regex_line():
+    # Test line that doesn't match any pattern - should NOT be skipped (line 109)
+    content = '''package main
+
+const VALUE = "test"
+
+func() { println("hello") }()'''
+    assert should_skip_go(content) is False
+
+
+def test_struct_with_non_standalone_closing_brace():
+    # Test struct with closing brace not on standalone line - covers line 65
+    content = '''type Config struct {
+    Name string }
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_interface_with_non_standalone_closing_brace():
+    # Test interface with closing brace not on standalone line
 }'''
