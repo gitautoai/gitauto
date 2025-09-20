@@ -1,3 +1,5 @@
+import sys
+sys.path.append('.')
 from utils.files.should_skip_rust import should_skip_rust
 
 
@@ -287,6 +289,12 @@ impl Config {
 }"""
     assert should_skip_rust(content) is False
 
+def test_debug_struct_config():
+    # Debug test for the specific failing case
+    content = """struct Config {}"""
+    result = should_skip_rust(content)
+    print(f"Debug: struct Config {{}} returned {result}")
+    assert result is True
 
 def test_inside_exception_class_to_typeddict():
     # Test struct definitions should be skipped
