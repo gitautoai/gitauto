@@ -928,3 +928,15 @@ class TestWritePrDescription:
         # Verify JSON is properly escaped
         assert 'test"owner' in user_input or 'test\\"owner' in user_input
         assert "test\\repo" in user_input or "test\\\\repo" in user_input
+
+    def test_write_pr_description_with_none_payload_explicit(self, all_mocks):
+        """Test PR description generation with explicit None payload."""
+        # Execute - should handle None payload gracefully
+        write_pr_description(None)
+
+        # Verify no functions are called
+        all_mocks["get_installation_access_token"].assert_not_called()
+        all_mocks["get_pull_request_file_changes"].assert_not_called()
+        all_mocks["get_issue_body"].assert_not_called()
+        all_mocks["is_pull_request_open"].assert_not_called()
+        all_mocks["check_branch_exists"].assert_not_called()
