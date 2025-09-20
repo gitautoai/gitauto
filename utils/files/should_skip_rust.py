@@ -53,6 +53,7 @@ def should_skip_rust(content: str) -> bool:
             comment_end = line.find("*/") + 2
             line = line[comment_end:].strip()
             if not line:
+                continue
         # Skip attributes
         if line.startswith("#[") or line.startswith("#!["):
             continue
