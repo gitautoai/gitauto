@@ -47,13 +47,12 @@ def should_skip_rust(content: str) -> bool:
         # Skip comments
         if line.startswith("//"):
             continue
-                continue
         # Handle inline multiline comments /* ... */ on same line
         if line.startswith("/*") and "*/" in line:
             # Extract code after the comment
             comment_end = line.find("*/") + 2
             line = line[comment_end:].strip()
-            continue
+            if not line:
         # Skip attributes
         if line.startswith("#[") or line.startswith("#!["):
             continue
