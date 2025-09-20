@@ -167,7 +167,6 @@ def test_whitespace_only():
 
 
 
-
     """
     assert should_skip_go(content) is True
 
@@ -582,7 +581,7 @@ const OTHER = "value"'''
 
 
 def test_type_alias_with_equals():
-    # Test type alias that contains equals sign - should NOT be skipped (line 71-72)
+    # Test type alias that contains equals sign - should be skipped (line 71-72)
     content = '''type MyType = string
 const VALUE = "test"'''
     assert should_skip_go(content) is True
@@ -677,6 +676,8 @@ def test_complex_struct_field_types():
     Items     []*Item
     Callback  func() (int, error)
     Channel   chan<- string
+}'''
+    assert should_skip_go(content) is True
 
 
 def test_multiline_string_with_const_not_starting():
@@ -737,7 +738,11 @@ const VALUE = "test"'''
 
 def test_interface_with_non_standalone_closing_brace():
     # Test interface with closing brace not on standalone line
-}'''
+    content = '''type Reader interface {
+    Read() error }
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
 
 
 def test_type_declaration_without_struct_or_interface():
@@ -753,3 +758,25 @@ const VALUE = "test"'''
 
 
 def test_type_alias_with_equals_sign():
+    # Test type alias with equals sign - should still be skipped
+    content = '''package main
+
+type MyType = string
+type AnotherType = int
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_single_line_comments():
+    # Test single line comments - covers line 29-30
+    content = '''package main
+
+// This is a single line comment
+// Another comment line
+
+const VALUE = "test"
+
+// Final comment
+const OTHER = "value"'''
+    assert should_skip_go(content) is True
