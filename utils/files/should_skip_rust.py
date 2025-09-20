@@ -140,6 +140,9 @@ def should_skip_rust(content: str) -> bool:
             if re.search(r"\w+\[", line):
                 return False
             continue
+        # Skip impl blocks (implementation blocks contain executable code)
+        if re.match(r"^(pub\s+)?impl\s+", line):
+            return False
         # If we find any other code, it's not export-only
         return False
 
