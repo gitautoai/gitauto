@@ -651,7 +651,7 @@ def test_var_ending_with_opening_paren():
         Name: "test",
     }
 )'''
-    assert should_skip_go(content) is True
+    assert should_skip_go(content) is False
 
 
 def test_individual_var_with_array_access():
