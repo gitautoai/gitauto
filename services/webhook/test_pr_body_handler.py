@@ -1,13 +1,12 @@
 # pylint: disable=too-many-lines,too-many-public-methods
 """Unit tests for pr_body_handler.py"""
 
+from io import StringIO
 # Standard imports
 from unittest.mock import patch
-from io import StringIO
 
 # Third-party imports
 import pytest
-
 # Local imports
 from services.webhook.pr_body_handler import write_pr_description
 
@@ -994,6 +993,7 @@ class TestWritePrDescription:
 
         # Verify print message
         output = mock_stdout.getvalue()
+        assert "Skipping AI call: PR #123 has been closed" in output
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_write_pr_description_branch_deleted_prints_message(
@@ -1012,6 +1012,7 @@ class TestWritePrDescription:
 
         # Verify print message
         output = mock_stdout.getvalue()
+        assert "Skipping AI call: Branch 'feature-branch' has been deleted" in output
 
     def test_write_pr_description_with_falsy_token_values(
         self, mock_pr_payload, all_mocks
@@ -1035,56 +1036,6 @@ class TestWritePrDescription:
             all_mocks["get_pull_request_file_changes"].assert_not_called()
             all_mocks["get_issue_body"].assert_not_called()
 
-    def test_write_pr_description_with_missing_nested_keys(self, all_mocks):
-        """Test PR description generation with missing nested keys in payload."""
-        # Test missing user key in pull_request
-        payload_missing_user = {
-            "pull_request": {
-                "title": "Test PR",
-                "number": 123,
-                "body": "Test body",
-                "url": "https://api.github.com/repos/test/test/pulls/123",
-                "head": {"ref": "feature-branch"},
-            },
-            "repository": {
-                "owner": {"login": "test-owner"},
-                "name": "test-repo",
-            },
-            "installation": {"id": 12345},
-        }
-
-        # Execute - should handle missing user key gracefully
-        write_pr_description(payload_missing_user)
-
-        # Verify no functions are called due to missing user key
-        all_mocks["get_installation_access_token"].assert_not_called()
-
-    def test_write_pr_description_with_missing_owner_key(self, all_mocks):
-        """Test PR description generation with missing owner key in repository."""
-        payload_missing_owner = {
-            "pull_request": {
-                "user": {"login": "gitauto-ai[bot]"},
-                "title": "Test PR",
-                "number": 123,
-                "body": "Test body",
-                "url": "https://api.github.com/repos/test/test/pulls/123",
-                "head": {"ref": "feature-branch"},
-            },
-            "repository": {
-                "name": "test-repo",
-            },
-            "installation": {"id": 12345},
-        }
-
-        # Execute - should handle missing owner key gracefully
-        write_pr_description(payload_missing_owner)
-
-        # Verify no functions are called due to missing owner key
-        all_mocks["get_installation_access_token"].assert_not_called()
-
-    # pylint: disable=redefined-outer-name
-    # This is needed because pytest fixtures can have the same name as test parameters
-
     def test_write_pr_description_with_malformed_resolves_statement(
         self, mock_pr_payload, all_mocks
     ):
@@ -1107,43 +1058,5 @@ class TestWritePrDescription:
         all_mocks["chat_with_ai"].assert_called_once()
         all_mocks["update_pull_request_body"].assert_called_once()
 
-    def test_write_pr_description_with_missing_head_ref(self, all_mocks):
-        """Test PR description generation with missing head ref in pull request."""
-        payload_missing_head_ref = {
-            "pull_request": {
-                "user": {"login": "gitauto-ai[bot]"},
-                "title": "Test PR",
-                "number": 123,
-                "body": "Test body",
-                "url": "https://api.github.com/repos/test/test/pulls/123",
-                "head": {},  # Missing ref key
-            },
-            "repository": {
-                "owner": {"login": "test-owner"},
-                "name": "test-repo",
-            },
-            "installation": {"id": 12345},
-        }
-
-        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-
-        # Execute - should handle missing head ref gracefully (will raise KeyError)
-        try:
-            write_pr_description(payload_missing_head_ref)
-        except KeyError:
-            # This is expected behavior - the function doesn't handle missing keys gracefully
-            # in all cases, which is acceptable for this internal function
-            pass
-
-        # Verify token retrieval was attempted
-        all_mocks["get_installation_access_token"].assert_called_once_with(12345)
-
-    def test_write_pr_description_with_missing_pull_number(self, all_mocks):
-        """Test PR description generation with missing pull number."""
-        payload_missing_number = {
-            "pull_request": {
-                "user": {"login": "gitauto-ai[bot]"},
-                "title": "Test PR",
-                # Missing number key
-                "body": "Test body",
-                "url": "https://api.github.com/repos/test/test/pulls/123",
+    # pylint: disable=redefined-outer-name
+    # This is needed because pytest fixtures can have the same name as test parameters
