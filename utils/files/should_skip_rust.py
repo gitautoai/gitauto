@@ -90,7 +90,8 @@ def should_skip_rust(content: str) -> bool:
         # Handle trait definitions (interfaces without implementation)
         if re.match(r"^(pub\s+)?trait\s+\w+", line):
             if "{" in line:
-                trait_brace_depth = 1
+                # Handle brace counting for the same line
+                trait_brace_depth = line.count("{") - line.count("}")
             else:
                 expecting_trait_brace = True
             continue
