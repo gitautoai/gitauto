@@ -1084,3 +1084,25 @@ class TestWritePrDescription:
 
     # pylint: disable=redefined-outer-name
     # This is needed because pytest fixtures can have the same name as test parameters
+
+    def test_write_pr_description_with_malformed_resolves_statement(
+        self, mock_pr_payload, all_mocks
+    ):
+        """Test PR description generation with malformed resolves statement."""
+        # Setup with malformed resolves statement (no issue number after #)
+        mock_pr_payload["pull_request"]["body"] = "Resolves #\n\ngit commit -m 'Fix'"
+        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
+        all_mocks["get_pull_request_file_changes"].return_value = []
+        all_mocks["is_pull_request_open"].return_value = True
+        all_mocks["check_branch_exists"].return_value = True
+        all_mocks["chat_with_ai"].return_value = "Generated PR description"
+
+        # Execute - should handle IndexError gracefully
+        write_pr_description(mock_pr_payload)
+
+        # Verify issue body is not retrieved due to malformed resolves statement
+        all_mocks["get_issue_body"].assert_not_called()
+
+        # Verify AI call still proceeds
+        all_mocks["chat_with_ai"].assert_called_once()
+        all_mocks["update_pull_request_body"].assert_called_once()
