@@ -67,10 +67,18 @@ def should_skip_rust(content: str) -> bool:
         if re.match(r"^(pub\s+)?struct\s+\w+", line):
             if "{" in line:
                 in_struct_or_enum = True
+            else:
+                expecting_struct_enum_brace = True
             continue
         if re.match(r"^(pub\s+)?enum\s+\w+", line):
             if "{" in line:
                 in_struct_or_enum = True
+            else:
+                expecting_struct_enum_brace = True
+            continue
+        if expecting_struct_enum_brace and line == "{":
+            in_struct_or_enum = True
+            expecting_struct_enum_brace = False
             continue
         if in_struct_or_enum:
             if "}" in line:
@@ -81,6 +89,12 @@ def should_skip_rust(content: str) -> bool:
         if re.match(r"^(pub\s+)?trait\s+\w+", line):
             if "{" in line:
                 in_trait = True
+            else:
+                expecting_trait_brace = True
+            continue
+        if expecting_trait_brace and line == "{":
+            in_trait = True
+            expecting_trait_brace = False
             continue
         if in_trait:
             if "}" in line:
