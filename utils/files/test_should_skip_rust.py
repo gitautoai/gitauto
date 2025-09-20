@@ -136,7 +136,6 @@ def test_whitespace_only():
 
 
 
-
     """
     assert should_skip_rust(content) is True
 
@@ -487,3 +486,232 @@ def test_static_with_array_indexing():
     content = """static CONFIG: &str = &DEFAULT_CONFIG[0];
 static VERSION: &str = "1.0.0";"""
     assert should_skip_rust(content) is False
+
+
+# Additional tests for 100% coverage
+
+
+def test_multiline_comment_handling():
+    # Test multiline comment handling (lines 30-36)
+    content = """/* This is a multiline comment
+that spans multiple lines
+and should be ignored */
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_multiline_comment_incomplete():
+    # Test incomplete multiline comment (starts but doesn't end in same line)
+    content = """/* This is a multiline comment
+that continues on next line
+const CONSTANT: &str = "value";
+and ends here */
+const ANOTHER: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_multiline_raw_string_handling():
+    # Test multiline raw string handling (lines 39-45)
+    content = """const TEMPLATE: &str = r#"
+This is a multiline raw string
+that spans multiple lines
+"#;
+const ANOTHER: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_multiline_raw_string_incomplete():
+    # Test incomplete multiline raw string (starts but doesn't end properly)
+    content = """const TEMPLATE: &str = r#"
+This is a multiline raw string
+that continues
+const HIDDEN: &str = "hidden";
+and ends here
+"#;
+const VISIBLE: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_single_line_multiline_comment():
+    # Test single-line multiline comment (line 48)
+    content = """/* single line comment */ const CONSTANT: &str = "value";
+const ANOTHER: i32 = 42;"""
+    assert should_skip_rust(content) is True
+
+
+def test_attributes_handling():
+    # Test attributes handling (lines 51-52)
+    content = """#[derive(Debug, Clone)]
+#![allow(dead_code)]
+struct MyStruct {
+    value: i32,
+}
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_struct_with_braces_on_same_line():
+    # Test struct with opening brace on same line (line 59)
+    content = """pub struct Config {
+    timeout: u32,
+}
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_struct_without_braces_on_same_line():
+    # Test struct without opening brace on same line
+    content = """pub struct Config
+{
+    timeout: u32,
+}
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_enum_with_braces_on_same_line():
+    # Test enum with opening brace on same line (line 63)
+    content = """pub enum Status {
+    Active,
+    Inactive,
+}
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_enum_without_braces_on_same_line():
+    # Test enum without opening brace on same line
+    content = """pub enum Status
+{
+    Active,
+    Inactive,
+}
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_trait_with_braces_on_same_line():
+    # Test trait with opening brace on same line (line 73)
+    content = """pub trait MyTrait {
+    fn method(&self) -> String;
+}
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_trait_without_braces_on_same_line():
+    # Test trait without opening brace on same line
+    content = """pub trait MyTrait
+{
+    fn method(&self) -> String;
+}
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_const_with_struct_constructor():
+    # Test const with struct constructor (should be allowed - line 100)
+    content = """const DEFAULT_CONFIG: Config = Config {};
+const ANOTHER: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_static_with_struct_constructor():
+    # Test static with struct constructor (should be allowed - line 113)
+    content = """static DEFAULT_STATE: State = State {};
+const ANOTHER: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_const_with_array_indexing():
+    # Test const with array indexing (line 104)
+    content = """const VALUE: &str = &ARRAY[0];
+const ANOTHER: &str = "value";"""
+    assert should_skip_rust(content) is False
+
+
+def test_unknown_code_line():
+    # Test unknown code that should cause function to return False (line 121)
+    content = """const CONSTANT: &str = "value";
+let variable = 42;  // This is executable code
+const ANOTHER: &str = "value";"""
+    assert should_skip_rust(content) is False
+
+
+def test_nested_struct_enum_handling():
+    # Test nested struct/enum state tracking
+    content = """struct Outer {
+    inner: Inner,
+}
+
+enum Status {
+    Active {
+        timestamp: u64,
+    },
+    Inactive,
+}
+
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_nested_trait_handling():
+    # Test nested trait state tracking
+    content = """trait OuterTrait {
+    type AssociatedType;
+
+    fn method(&self) -> Self::AssociatedType;
+}
+
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_mixed_comments_and_strings():
+    # Test combination of comments and multiline strings
+    content = """// Single line comment
+/* Multiline comment */
+const TEMPLATE: &str = r#"
+Raw string content
+"#;
+#[derive(Debug)]
+struct Config {}
+const CONSTANT: &str = "value";"""
+    assert should_skip_rust(content) is True
+
+
+def test_complex_multiline_scenarios():
+    # Test complex multiline comment and string scenarios
+    content = """/*
+ * Complex multiline comment
+ * with multiple lines
+ */
+const FIRST: &str = r#"
+First multiline string
+"#;
+
+/* Another comment */
+const SECOND: &str = r#"
+Second multiline string
+with more content
+"#;
+
+struct SimpleStruct {
+    field: i32,
+}"""
+    assert should_skip_rust(content) is True
+
+
+def test_edge_case_empty_lines_and_whitespace():
+    # Test edge cases with empty lines and whitespace
+    content = """
+
+    // Comment with leading whitespace
+
+    const CONSTANT: &str = "value";
+
+
+    struct EmptyStruct {}
+
+    """
+    assert should_skip_rust(content) is True
