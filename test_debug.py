@@ -1,0 +1,20 @@
+import sys
+sys.path.append('.')
+from utils.files.should_skip_rust import should_skip_rust
+
+# Test the specific failing case
+content = """struct Config {}
+
+impl Config {
+    fn handler(&self) -> &str {
+        "error"
+    }
+
+    fn process_data(&self, items: Vec<String>) -> Vec<String> {
+        items
+    }
+}"""
+
+result = should_skip_rust(content)
+print(f"Result: {result}")
+print("Expected: False")
