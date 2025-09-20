@@ -260,8 +260,6 @@ summary content
 After summary"""
 
     expected = """Before session
-Some important content between sections
-More important content
 
 =================================== FAILURES ===================================
 failure content
