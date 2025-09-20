@@ -994,3 +994,21 @@ class TestWritePrDescription:
 
         # Verify print message
         output = mock_stdout.getvalue()
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_write_pr_description_branch_deleted_prints_message(
+        self, mock_stdout, mock_pr_payload, all_mocks
+    ):
+        """Test that deleted branch prints appropriate message."""
+        # Setup
+        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
+        all_mocks["get_pull_request_file_changes"].return_value = []
+        all_mocks["get_issue_body"].return_value = "Issue description"
+        all_mocks["is_pull_request_open"].return_value = True
+        all_mocks["check_branch_exists"].return_value = False
+
+        # Execute
+        write_pr_description(mock_pr_payload)
+
+        # Verify print message
+        output = mock_stdout.getvalue()
