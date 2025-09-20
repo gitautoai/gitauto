@@ -244,7 +244,7 @@ def test_remove_pytest_sections_with_exception_handling():
         assert result == ""
 
 
-def test_remove_pytest_sections_preserves_content_between_sections():
+def test_remove_pytest_sections_removes_content_between_sections():
     log = """Before session
 =========================== test session starts ============================
 removed session content
