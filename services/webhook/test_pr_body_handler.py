@@ -3,6 +3,7 @@
 
 # Standard imports
 from unittest.mock import patch
+from io import StringIO
 
 # Third-party imports
 import pytest
