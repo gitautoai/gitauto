@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+import pytest
 from utils.logs.remove_pytest_sections import remove_pytest_sections
 
 
@@ -46,6 +49,10 @@ def test_remove_pytest_sections_with_empty_input():
     assert remove_pytest_sections("") == ""
 
 
+def test_remove_pytest_sections_with_none_input():
+    assert remove_pytest_sections(None) is None
+
+
 def test_remove_pytest_sections_with_no_pytest_markers():
     log = "Some regular error log\nwithout pytest markers\nshould remain unchanged"
     assert remove_pytest_sections(log) == log
@@ -75,5 +82,211 @@ Line 3"""
 Line 2
 
 Line 3"""
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_with_warnings_summary():
+    log = """Some initial content
+=========================== warnings summary ============================
+/path/to/file.py:10: DeprecationWarning: deprecated function
+  deprecated_function()
+
+-- Docs: https://docs.pytest.org/en/stable/how.html#warnings
+=================================== FAILURES ===================================
+Test failure content"""
+
+    expected = """Some initial content
+
+=================================== FAILURES ===================================
+Test failure content"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_with_failures_no_previous_content():
+    log = """=================================== FAILURES ===================================
+Test failure content"""
+
+    expected = """=================================== FAILURES ===================================
+Test failure content"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_with_failures_last_line_already_blank():
+    log = """Some content
+
+=========================== test session starts ============================
+removed content
+=================================== FAILURES ===================================
+Test failure content"""
+
+    expected = """Some content
+
+=================================== FAILURES ===================================
+Test failure content"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_with_summary_no_previous_content():
+    log = """=========================== short test summary info ============================
+Summary content"""
+
+    expected = """=========================== short test summary info ============================
+Summary content"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_with_summary_last_line_already_blank():
+    log = """Some content
+
+=========================== test session starts ============================
+removed content
+=========================== short test summary info ============================
+Summary content"""
+
+    expected = """Some content
+
+=========================== short test summary info ============================
+Summary content"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_with_multiple_sections():
+    log = """Initial content
+=========================== test session starts ============================
+platform info
+collected items
+=========================== warnings summary ============================
+warning content
+=================================== FAILURES ===================================
+failure content
+=========================== short test summary info ============================
+summary content
+Final content"""
+
+    expected = """Initial content
+
+=================================== FAILURES ===================================
+failure content
+
+=========================== short test summary info ============================
+summary content
+Final content"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_partial_matches_not_removed():
+    log = """This line has === but no test session starts
+This line has test session starts but no ===
+This line has === and warnings but not warnings summary
+This line has === and FAILURE but not FAILURES
+This line has === and short test but not short test summary info"""
+
+    # Should remain unchanged since none match the exact patterns
+    result = remove_pytest_sections(log)
+    assert result == log
+
+
+def test_remove_pytest_sections_case_sensitive():
+    log = """=========================== test session starts ============================
+should be removed
+=================================== failures ===================================
+should NOT be removed (lowercase)
+=========================== short test summary info ============================
+should be removed"""
+
+    expected = """should NOT be removed (lowercase)
+
+=========================== short test summary info ============================
+should be removed"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_only_removes_excessive_blank_lines_when_content_removed():
+    log = """Line 1
+
+
+
+
+Line 2"""
+
+    # Should remain unchanged since no content was removed
+    result = remove_pytest_sections(log)
+    assert result == log
+
+
+def test_remove_pytest_sections_handles_single_line_input():
+    log = "=========================== test session starts ============================"
+    expected = ""
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_with_exception_handling():
+    """Test that the decorator handles exceptions properly"""
+    with patch('utils.logs.remove_pytest_sections.re.sub', side_effect=Exception("Test exception")):
+        # Should return empty string (default_return_value) when exception occurs
+        result = remove_pytest_sections("test input")
+        assert result == ""
+
+
+def test_remove_pytest_sections_preserves_content_between_sections():
+    log = """Before session
+=========================== test session starts ============================
+removed session content
+Some important content between sections
+=========================== warnings summary ============================
+removed warnings content
+More important content
+=================================== FAILURES ===================================
+failure content
+Content after failures
+=========================== short test summary info ============================
+summary content
+After summary"""
+
+    expected = """Before session
+Some important content between sections
+More important content
+
+=================================== FAILURES ===================================
+failure content
+Content after failures
+
+=========================== short test summary info ============================
+summary content
+After summary"""
+
+    result = remove_pytest_sections(log)
+    assert result == expected
+
+
+def test_remove_pytest_sections_with_empty_lines_only():
+    log = """
+
+
+"""
+    result = remove_pytest_sections(log)
+    assert result == log
+
+
+def test_remove_pytest_sections_mixed_line_endings():
+    """Test with different line ending scenarios"""
+    log = "Line 1\n=========================== test session starts ============================\nremoved\n=================================== FAILURES ===================================\nfailure"
+    expected = "Line 1\n\n=================================== FAILURES ===================================\nfailure"
     result = remove_pytest_sections(log)
     assert result == expected
