@@ -1012,3 +1012,25 @@ class TestWritePrDescription:
 
         # Verify print message
         output = mock_stdout.getvalue()
+
+    def test_write_pr_description_with_falsy_token_values(
+        self, mock_pr_payload, all_mocks
+    ):
+        """Test PR description generation with various falsy token values."""
+        falsy_values = [None, "", 0, False, []]
+
+        for falsy_value in falsy_values:
+            # Setup
+            all_mocks["get_installation_access_token"].return_value = falsy_value
+            all_mocks["get_installation_access_token"].reset_mock()
+            all_mocks["get_pull_request_file_changes"].reset_mock()
+
+            # Execute
+            write_pr_description(mock_pr_payload)
+
+            # Verify token retrieval was attempted
+            all_mocks["get_installation_access_token"].assert_called_once_with(12345)
+
+            # Verify no further functions are called after falsy token
+            all_mocks["get_pull_request_file_changes"].assert_not_called()
+            all_mocks["get_issue_body"].assert_not_called()
