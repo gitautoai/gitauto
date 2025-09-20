@@ -167,7 +167,6 @@ def test_whitespace_only():
 
 
 
-
     """
     assert should_skip_go(content) is True
 
@@ -557,4 +556,227 @@ def test_interface_without_opening_brace():
     Read() error
 }
 const CONSTANT = "value"'''
+    assert should_skip_go(content) is True
+
+
+def test_multiline_comment_handling():
+    # Test multiline comment handling - covers lines 32-37
+    content = '''package main
+
+/* This is a multiline comment
+   that spans multiple lines
+   and should be ignored */
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_multiline_comment_with_closing_on_same_line():
+    # Test multiline comment that starts and ends on same line
+    content = '''package main
+
+/* single line comment */ const VALUE = "test"
+const OTHER = "value"'''
+    assert should_skip_go(content) is True
+
+
+def test_type_alias_with_equals():
+    # Test type alias that contains equals sign - should be skipped (line 71-72)
+    content = '''type MyType = string
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_import_variations():
+    # Test various import statement formats - covers lines 75-79
+    content = '''package main
+
+import (
+    "fmt"
+    "os"
+)
+
+import "net/http"
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_quoted_import_in_block():
+    # Test individual quoted imports in import block - covers line 78-79
+    content = '''package main
+
+import (
+    "fmt"
+    "encoding/json"
+    "net/http"
+)
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_const_with_array_access():
+    # Test const with array access - should NOT be skipped (lines 88-92)
+    content = '''const (
+    VALUE = config["key"]
+    OTHER = "test"
+)'''
+    assert should_skip_go(content) is False
+
+
+def test_const_with_slice_literal():
+    # Test const with slice literal - should be skipped (allows []Type{...})
+    content = '''const (
+    VALUES = []string{"a", "b", "c"}
+    OTHER  = "test"
+)'''
+    assert should_skip_go(content) is True
+
+
+def test_var_with_function_call_in_block():
+    # Test var with function call in block - should NOT be skipped (lines 88-92)
+    content = '''var (
+    config = loadConfig()
+    value  = "test"
+)'''
+    assert should_skip_go(content) is False
+
+
+def test_var_ending_with_opening_paren():
+    # Test var with struct initialization - should NOT be skipped (contains executable code)
+    content = '''var (
+    values = []int{1, 2, 3}
+    config = Config{
+        Name: "test",
+    }
+)'''
+    assert should_skip_go(content) is False
+
+
+def test_individual_var_with_array_access():
+    # Test individual var declaration with array access - should NOT be skipped (lines 95-101)
+    content = '''var envPath = os.Environ()["PATH"]
+const VALUE = "test"'''
+    assert should_skip_go(content) is False
+
+
+def test_individual_var_with_slice_literal():
+    # Test individual var with slice literal - should be skipped (allows []Type{...})
+    content = '''var items = []string{"item1", "item2"}
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_complex_struct_field_types():
+    # Test complex struct field definitions - covers line 106-107
+    content = '''type ComplexStruct struct {
+    Handler   func(string) error
+    Data      map[string]interface{}
+    Items     []*Item
+    Callback  func() (int, error)
+    Channel   chan<- string
+}'''
+    assert should_skip_go(content) is True
+
+
+def test_multiline_string_with_const_not_starting():
+    # Test multiline string detection when const is not at start of line
+    content = '''package main
+
+var template = `multiline
+string content
+continues here`
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_multiline_string_ending():
+    # Test multiline string ending detection - covers line 44-46
+    content = '''package main
+
+const TEMPLATE = `start of multiline
+string content
+end of string`
+
+const OTHER = "value"'''
+    assert should_skip_go(content) is True
+
+
+def test_closing_paren_only():
+    # Test standalone closing parenthesis - covers line 75
+    content = '''package main
+
+import (
+    "fmt"
+    "os"
+)
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_non_matching_regex_line():
+    # Test line that doesn't match any pattern - should NOT be skipped (line 109)
+    content = '''package main
+
+const VALUE = "test"
+
+func() { println("hello") }()'''
+    assert should_skip_go(content) is False
+
+
+def test_struct_with_non_standalone_closing_brace():
+    # Test struct with closing brace not on standalone line - covers line 65
+    content = '''type Config struct {
+    Name string }
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_interface_with_non_standalone_closing_brace():
+    # Test interface with closing brace not on standalone line
+    content = '''type Reader interface {
+    Read() error }
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_type_declaration_without_struct_or_interface():
+    # Test type declaration that doesn't contain struct or interface - covers line 71-72
+    content = '''package main
+
+type MyString string
+type MyInt int
+type MyFloat float64
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_type_alias_with_equals_sign():
+    # Test type alias with equals sign - should still be skipped
+    content = '''package main
+
+type MyType = string
+type AnotherType = int
+
+const VALUE = "test"'''
+    assert should_skip_go(content) is True
+
+
+def test_single_line_comments():
+    # Test single line comments - covers line 29-30
+    content = '''package main
+
+// This is a single line comment
+// Another comment line
+
+const VALUE = "test"
+
+// Final comment
+const OTHER = "value"'''
     assert should_skip_go(content) is True

@@ -36,7 +36,7 @@ def should_skip_go(content: str) -> bool:
                 in_multiline_comment = False
             continue
         # Handle multiline string literals (backticks)
-        if not in_multiline_string and "const " in line and "`" in line:
+        if not in_multiline_string and ("const " in line or "var " in line) and "`" in line:
             if line.count("`") == 1:  # String starts
                 in_multiline_string = True
                 continue
