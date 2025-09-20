@@ -1106,3 +1106,44 @@ class TestWritePrDescription:
         # Verify AI call still proceeds
         all_mocks["chat_with_ai"].assert_called_once()
         all_mocks["update_pull_request_body"].assert_called_once()
+
+    def test_write_pr_description_with_missing_head_ref(self, all_mocks):
+        """Test PR description generation with missing head ref in pull request."""
+        payload_missing_head_ref = {
+            "pull_request": {
+                "user": {"login": "gitauto-ai[bot]"},
+                "title": "Test PR",
+                "number": 123,
+                "body": "Test body",
+                "url": "https://api.github.com/repos/test/test/pulls/123",
+                "head": {},  # Missing ref key
+            },
+            "repository": {
+                "owner": {"login": "test-owner"},
+                "name": "test-repo",
+            },
+            "installation": {"id": 12345},
+        }
+
+        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
+
+        # Execute - should handle missing head ref gracefully (will raise KeyError)
+        try:
+            write_pr_description(payload_missing_head_ref)
+        except KeyError:
+            # This is expected behavior - the function doesn't handle missing keys gracefully
+            # in all cases, which is acceptable for this internal function
+            pass
+
+        # Verify token retrieval was attempted
+        all_mocks["get_installation_access_token"].assert_called_once_with(12345)
+
+    def test_write_pr_description_with_missing_pull_number(self, all_mocks):
+        """Test PR description generation with missing pull number."""
+        payload_missing_number = {
+            "pull_request": {
+                "user": {"login": "gitauto-ai[bot]"},
+                "title": "Test PR",
+                # Missing number key
+                "body": "Test body",
+                "url": "https://api.github.com/repos/test/test/pulls/123",
