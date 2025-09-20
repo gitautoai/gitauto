@@ -22,6 +22,8 @@ def should_skip_rust(content: str) -> bool:
     in_trait = False
     in_multiline_string = False
     in_multiline_comment = False
+    expecting_struct_enum_brace = False
+    expecting_trait_brace = False
 
     for line in lines:
         line = line.strip()
