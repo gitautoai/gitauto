@@ -18,10 +18,12 @@ def should_skip_rust(content: str) -> bool:
     - Any executable code beyond declarations
     """
     lines = content.split("\n")
-    in_struct_or_enum = False
-    in_trait = False
+    struct_enum_brace_depth = 0
+    trait_brace_depth = 0
     in_multiline_string = False
     in_multiline_comment = False
+    expecting_struct_enum_brace = False
+    expecting_trait_brace = False
 
     for line in lines:
         line = line.strip()
@@ -45,8 +47,15 @@ def should_skip_rust(content: str) -> bool:
             continue
 
         # Skip comments
-        if line.startswith("//") or (line.startswith("/*") and line.endswith("*/")):
+        if line.startswith("//"):
             continue
+        # Handle inline multiline comments /* ... */ on same line
+        if line.startswith("/*") and "*/" in line:
+            # Extract code after the comment
+            comment_end = line.find("*/") + 2
+            line = line[comment_end:].strip()
+            if not line:
+                continue
         # Skip attributes
         if line.startswith("#[") or line.startswith("#!["):
             continue
@@ -57,25 +66,42 @@ def should_skip_rust(content: str) -> bool:
         # Handle struct/enum definitions (data types without implementation)
         if re.match(r"^(pub\s+)?struct\s+\w+", line):
             if "{" in line:
-                in_struct_or_enum = True
+                # Handle brace counting for the same line
+                struct_enum_brace_depth = line.count("{") - line.count("}")
+            else:
+                expecting_struct_enum_brace = True
             continue
         if re.match(r"^(pub\s+)?enum\s+\w+", line):
             if "{" in line:
-                in_struct_or_enum = True
+                # Handle brace counting for the same line
+                struct_enum_brace_depth = line.count("{") - line.count("}")
+            else:
+                expecting_struct_enum_brace = True
             continue
-        if in_struct_or_enum:
-            if "}" in line:
-                in_struct_or_enum = False
+        if expecting_struct_enum_brace and line == "{":
+            struct_enum_brace_depth = 1
+            expecting_struct_enum_brace = False
+            continue
+        if struct_enum_brace_depth > 0:
+            # Count opening and closing braces
+            struct_enum_brace_depth += line.count("{") - line.count("}")
             continue
 
         # Handle trait definitions (interfaces without implementation)
         if re.match(r"^(pub\s+)?trait\s+\w+", line):
             if "{" in line:
-                in_trait = True
+                # Handle brace counting for the same line
+                trait_brace_depth = line.count("{") - line.count("}")
+            else:
+                expecting_trait_brace = True
             continue
-        if in_trait:
-            if "}" in line:
-                in_trait = False
+        if expecting_trait_brace and line == "{":
+            trait_brace_depth = 1
+            expecting_trait_brace = False
+            continue
+        if trait_brace_depth > 0:
+            # Count opening and closing braces
+            trait_brace_depth += line.count("{") - line.count("}")
             continue
 
         # Skip type aliases
@@ -117,6 +143,15 @@ def should_skip_rust(content: str) -> bool:
             if re.search(r"\w+\[", line):
                 return False
             continue
+        # Skip impl blocks (implementation blocks contain executable code)
+        if re.match(r"^(pub\s+)?impl\s+", line):
+            return False
+        # Skip function definitions (executable code)
+        if re.match(r"^(pub\s+)?fn\s+", line):
+            return False
+        # Skip macro definitions (contain logic)
+        if line.startswith("macro_rules!"):
+            return False
         # If we find any other code, it's not export-only
         return False
 
