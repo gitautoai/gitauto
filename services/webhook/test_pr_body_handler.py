@@ -958,3 +958,21 @@ class TestWritePrDescription:
         all_mocks["get_pull_request_file_changes"].assert_not_called()
         all_mocks["get_issue_body"].assert_not_called()
         all_mocks["is_pull_request_open"].assert_not_called()
+
+    def test_write_pr_description_token_retrieval_empty_string(
+        self, mock_pr_payload, all_mocks
+    ):
+        """Test PR description generation when token retrieval returns empty string."""
+        # Setup
+        all_mocks["get_installation_access_token"].return_value = ""
+
+        # Execute
+        write_pr_description(mock_pr_payload)
+
+        # Verify token retrieval was attempted
+        all_mocks["get_installation_access_token"].assert_called_once_with(12345)
+
+        # Verify no further functions are called after empty token
+        all_mocks["get_pull_request_file_changes"].assert_not_called()
+        all_mocks["get_issue_body"].assert_not_called()
+        all_mocks["is_pull_request_open"].assert_not_called()
