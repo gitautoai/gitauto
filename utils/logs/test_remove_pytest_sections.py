@@ -188,7 +188,7 @@ Final content"""
 
 
 def test_remove_pytest_sections_partial_matches_not_removed():
-    log = """This line has === but no test session starts
+    log = """This line has equals but no test session starts
 This line has test session starts but no equals
 This line has equals and warnings but not warnings summary
 This line has equals and FAILED but not FAILURES
