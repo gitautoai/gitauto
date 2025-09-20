@@ -976,3 +976,21 @@ class TestWritePrDescription:
         all_mocks["get_pull_request_file_changes"].assert_not_called()
         all_mocks["get_issue_body"].assert_not_called()
         all_mocks["is_pull_request_open"].assert_not_called()
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_write_pr_description_pr_closed_prints_message(
+        self, mock_stdout, mock_pr_payload, all_mocks
+    ):
+        """Test that closing PR prints appropriate message."""
+        # Setup
+        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
+        all_mocks["get_pull_request_file_changes"].return_value = []
+        all_mocks["get_issue_body"].return_value = "Issue description"
+        all_mocks["is_pull_request_open"].return_value = False
+        all_mocks["check_branch_exists"].return_value = True
+
+        # Execute
+        write_pr_description(mock_pr_payload)
+
+        # Verify print message
+        output = mock_stdout.getvalue()
