@@ -1034,3 +1034,44 @@ class TestWritePrDescription:
             # Verify no further functions are called after falsy token
             all_mocks["get_pull_request_file_changes"].assert_not_called()
             all_mocks["get_issue_body"].assert_not_called()
+
+    def test_write_pr_description_with_missing_nested_keys(self, all_mocks):
+        """Test PR description generation with missing nested keys in payload."""
+        # Test missing user key in pull_request
+        payload_missing_user = {
+            "pull_request": {
+                "title": "Test PR",
+                "number": 123,
+                "body": "Test body",
+                "url": "https://api.github.com/repos/test/test/pulls/123",
+                "head": {"ref": "feature-branch"},
+            },
+            "repository": {
+                "owner": {"login": "test-owner"},
+                "name": "test-repo",
+            },
+            "installation": {"id": 12345},
+        }
+
+        # Execute - should handle missing user key gracefully
+        write_pr_description(payload_missing_user)
+
+        # Verify no functions are called due to missing user key
+        all_mocks["get_installation_access_token"].assert_not_called()
+
+    def test_write_pr_description_with_missing_owner_key(self, all_mocks):
+        """Test PR description generation with missing owner key in repository."""
+        payload_missing_owner = {
+            "pull_request": {
+                "user": {"login": "gitauto-ai[bot]"},
+                "title": "Test PR",
+                "number": 123,
+                "body": "Test body",
+                "url": "https://api.github.com/repos/test/test/pulls/123",
+                "head": {"ref": "feature-branch"},
+            },
+            "repository": {
+                "name": "test-repo",
+            },
+            "installation": {"id": 12345},
+        }
