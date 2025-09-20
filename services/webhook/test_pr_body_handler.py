@@ -1075,3 +1075,12 @@ class TestWritePrDescription:
             },
             "installation": {"id": 12345},
         }
+
+        # Execute - should handle missing owner key gracefully
+        write_pr_description(payload_missing_owner)
+
+        # Verify no functions are called due to missing owner key
+        all_mocks["get_installation_access_token"].assert_not_called()
+
+    # pylint: disable=redefined-outer-name
+    # This is needed because pytest fixtures can have the same name as test parameters
