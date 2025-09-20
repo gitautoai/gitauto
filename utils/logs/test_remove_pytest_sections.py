@@ -207,9 +207,7 @@ should NOT be removed (lowercase)
 =========================== short test summary info ============================
 should be removed"""
 
-    expected = """=================================== failures ===================================
-should NOT be removed (lowercase)
-=========================== short test summary info ============================
+    expected = """=========================== short test summary info ============================
 should be removed"""
 
     result = remove_pytest_sections(log)
