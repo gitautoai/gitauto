@@ -722,8 +722,7 @@ class TestEdgeCases:
                 call("@channel Failed: Unknown error", "thread-999"),
             ]
         )
-        # The second call should still happen, but might have different behavior
-        assert mock_slack_notify.call_count >= 1
+        assert mock_slack_notify.call_count == 2
         assert result is None
 
 
