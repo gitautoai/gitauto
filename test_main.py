@@ -795,3 +795,50 @@ class TestPrintStatements:
 
         # Verify
         mock_print.assert_called_once_with("Error in parsing JSON payload: JSON parsing error")
+
+
+class TestModuleImports:
+    def test_required_imports_available(self):
+        """Test that all required modules and functions are properly imported."""
+        # Test that main module imports are accessible
+        import main
+
+        # Test FastAPI app
+        assert hasattr(main, 'app')
+        assert hasattr(main, 'mangum_handler')
+
+        # Test handler functions
+        assert hasattr(main, 'handler')
+        assert hasattr(main, 'handle_webhook')
+        assert hasattr(main, 'handle_jira_webhook')
+        assert hasattr(main, 'root')
+
+        # Test that functions are callable
+        assert callable(main.handler)
+        assert callable(main.handle_webhook)
+        assert callable(main.handle_jira_webhook)
+        assert callable(main.root)
+
+
+class TestTypeAnnotations:
+    @pytest.mark.asyncio
+    async def test_handle_webhook_return_type(self, mock_github_request):
+        """Test that handle_webhook returns the correct type."""
+        with patch("main.extract_lambda_info"), \
+             patch("main.verify_webhook_signature", new_callable=AsyncMock), \
+             patch("main.handle_webhook_event", new_callable=AsyncMock):
+
+            result = await handle_webhook(request=mock_github_request)
+
+            # Should return a dictionary with string keys and values
+            assert isinstance(result, dict)
+            assert all(isinstance(k, str) for k in result.keys())
+            assert all(isinstance(v, str) for v in result.values())
+
+    @pytest.mark.asyncio
+    async def test_root_return_type(self):
+        """Test that root endpoint returns the correct type."""
+        result = await root()
+
+        assert isinstance(result, dict)
+        assert all(isinstance(k, str) for k in result.keys())
