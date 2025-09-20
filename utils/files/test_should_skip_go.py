@@ -644,7 +644,7 @@ def test_var_with_function_call_in_block():
 
 
 def test_var_ending_with_opening_paren():
-    # Test var ending with opening parenthesis - should be skipped (line 88)
+    # Test var with struct initialization - should NOT be skipped (contains executable code)
     content = '''var (
     values = []int{1, 2, 3}
     config = Config{
