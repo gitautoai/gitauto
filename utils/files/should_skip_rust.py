@@ -146,6 +146,9 @@ def should_skip_rust(content: str) -> bool:
         # Skip function definitions (executable code)
         if re.match(r"^(pub\s+)?fn\s+", line):
             return False
+        # Skip macro definitions (contain logic)
+        if line.startswith("macro_rules!"):
+            return False
         # If we find any other code, it's not export-only
         return False
 
