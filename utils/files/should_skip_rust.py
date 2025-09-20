@@ -66,17 +66,15 @@ def should_skip_rust(content: str) -> bool:
         # Handle struct/enum definitions (data types without implementation)
         if re.match(r"^(pub\s+)?struct\s+\w+", line):
             if "{" in line:
-                struct_enum_brace_depth = 1
                 # Handle brace counting for the same line
-                struct_enum_brace_depth += line.count("{") - line.count("}")
+                struct_enum_brace_depth = line.count("{") - line.count("}")
             else:
                 expecting_struct_enum_brace = True
             continue
         if re.match(r"^(pub\s+)?enum\s+\w+", line):
             if "{" in line:
-                struct_enum_brace_depth = 1
                 # Handle brace counting for the same line
-                struct_enum_brace_depth += line.count("{") - line.count("}")
+                struct_enum_brace_depth = line.count("{") - line.count("}")
             else:
                 expecting_struct_enum_brace = True
             continue
