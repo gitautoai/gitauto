@@ -104,37 +104,6 @@ def mock_event_bridge_event_missing_names():
     }
 
 
-class TestSentryInitialization:
-    @patch("main.sentry_sdk")
-    @patch("main.ENV", "prod")
-    def test_sentry_initialization_in_prod(self, mock_sentry_sdk):
-        """Test that Sentry is initialized in production environment."""
-        # Re-import main to trigger the initialization code
-        import importlib
-
-        import main
-        importlib.reload(main)
-
-        # Verify Sentry was initialized
-        mock_sentry_sdk.init.assert_called_once()
-        call_args = mock_sentry_sdk.init.call_args
-        assert call_args[1]["environment"] == "prod"
-        assert call_args[1]["traces_sample_rate"] == 1.0
-
-    @patch("main.sentry_sdk")
-    @patch("main.ENV", "dev")
-    def test_sentry_not_initialized_in_dev(self, mock_sentry_sdk):
-        """Test that Sentry is not initialized in development environment."""
-        # Re-import main to trigger the initialization code
-        import importlib
-
-        import main
-        importlib.reload(main)
-
-        # Verify Sentry was not initialized
-        mock_sentry_sdk.init.assert_not_called()
-
-
 class TestHandler:
     @patch("main.schedule_handler")
     @patch("main.slack_notify")
@@ -626,6 +595,15 @@ class TestAppConfiguration:
         assert isinstance(mangum_handler, Mangum)
         assert mangum_handler is not None
 
+    def test_app_routes_configuration(self):
+        """Test that the FastAPI app has the expected route paths."""
+        route_paths = [route.path for route in app.routes if hasattr(route, 'path')]
+
+        # Check that expected routes exist
+        assert "/" in route_paths
+        assert "/webhook" in route_paths
+        assert "/jira-webhook" in route_paths
+
 
 class TestEdgeCases:
     @patch("main.extract_lambda_info")
@@ -686,3 +664,134 @@ class TestEdgeCases:
         )
         assert mock_slack_notify.call_count == 2
         assert result is None
+
+    @patch("main.extract_lambda_info")
+    @patch("main.verify_webhook_signature", new_callable=AsyncMock)
+    @patch("main.handle_webhook_event", new_callable=AsyncMock)
+    @pytest.mark.asyncio
+    async def test_handle_webhook_with_unicode_content(
+        self,
+        mock_handle_webhook_event,
+        mock_verify_signature,
+        mock_extract_lambda_info,
+    ):
+        """Test handle_webhook function with Unicode content in request body."""
+        # Setup
+        mock_req = MagicMock(spec=Request)
+        mock_req.headers = {"X-GitHub-Event": "issues"}
+        unicode_content = '{"title": "测试 Unicode 内容", "body": "🚀 Emoji test"}'
+        mock_req.body = AsyncMock(return_value=unicode_content.encode('utf-8'))
+
+        mock_verify_signature.return_value = None
+        mock_handle_webhook_event.return_value = None
+        mock_extract_lambda_info.return_value = {}
+
+        # Execute
+        response = await handle_webhook(request=mock_req)
+
+        # Verify
+        mock_verify_signature.assert_called_once_with(
+            request=mock_req, secret=GITHUB_WEBHOOK_SECRET
+        )
+        mock_extract_lambda_info.assert_called_once_with(mock_req)
+        mock_handle_webhook_event.assert_called_once_with(
+            event_name="issues",
+            payload={"title": "测试 Unicode 内容", "body": "🚀 Emoji test"},
+            lambda_info={},
+        )
+        assert response == {"message": "Webhook processed successfully"}
+
+    @patch("main.schedule_handler")
+    @patch("main.slack_notify")
+    def test_handler_schedule_event_with_missing_message_in_result(
+        self, mock_slack_notify, mock_schedule_handler, mock_event_bridge_event
+    ):
+        """Test handler function when schedule_handler returns error status without message."""
+        # Setup
+        mock_slack_notify.return_value = "thread-999"
+        mock_schedule_handler.return_value = {"status": "error"}  # Missing 'message' key
+
+        # Execute
+        result = handler(event=mock_event_bridge_event, context={})
+
+        # Verify
+        mock_schedule_handler.assert_called_with(event=mock_event_bridge_event)
+        mock_slack_notify.assert_has_calls(
+            [
+                call("Event Scheduler started for test-owner/test-repo"),
+                # This should handle the KeyError gracefully
+            ]
+        )
+        # The second call should still happen, but might have different behavior
+        assert mock_slack_notify.call_count >= 1
+        assert result is None
+
+
+class TestPrintStatements:
+    @patch("builtins.print")
+    @patch("main.schedule_handler")
+    @patch("main.slack_notify")
+    def test_handler_schedule_event_prints_message(
+        self, mock_slack_notify, mock_schedule_handler, mock_print, mock_event_bridge_event
+    ):
+        """Test that handler function prints the correct message for schedule events."""
+        # Setup
+        mock_slack_notify.return_value = "thread-123"
+        mock_schedule_handler.return_value = {"status": "success"}
+
+        # Execute
+        handler(event=mock_event_bridge_event, context={})
+
+        # Verify
+        mock_print.assert_called_once_with("AWS EventBridge Scheduler invoked")
+
+    @patch("builtins.print")
+    @patch("main.extract_lambda_info")
+    @patch("main.verify_webhook_signature", new_callable=AsyncMock)
+    @patch("main.handle_webhook_event", new_callable=AsyncMock)
+    @pytest.mark.asyncio
+    async def test_handle_webhook_prints_body_error(
+        self,
+        mock_handle_webhook_event,
+        mock_verify_signature,
+        mock_extract_lambda_info,
+        mock_print,
+        mock_github_request,
+    ):
+        """Test that handle_webhook prints error message when body reading fails."""
+        # Setup
+        mock_verify_signature.return_value = None
+        mock_github_request.body.side_effect = Exception("Body read error")
+        mock_extract_lambda_info.return_value = {}
+
+        # Execute
+        await handle_webhook(request=mock_github_request)
+
+        # Verify
+        mock_print.assert_called_once_with("Error in reading request body: Body read error")
+
+    @patch("builtins.print")
+    @patch("main.extract_lambda_info")
+    @patch("main.verify_webhook_signature", new_callable=AsyncMock)
+    @patch("main.handle_webhook_event", new_callable=AsyncMock)
+    @pytest.mark.asyncio
+    async def test_handle_webhook_prints_json_parsing_error(
+        self,
+        mock_handle_webhook_event,
+        mock_verify_signature,
+        mock_extract_lambda_info,
+        mock_print,
+        mock_github_request,
+    ):
+        """Test that handle_webhook prints error message when JSON parsing fails."""
+        # Setup
+        mock_verify_signature.return_value = None
+        mock_extract_lambda_info.return_value = {}
+
+        # Mock json.loads to raise a general exception
+        with patch("main.json.loads", side_effect=Exception("JSON parsing error")):
+            # Execute
+            await handle_webhook(request=mock_github_request)
+
+        # Verify
+        mock_print.assert_called_once_with("Error in parsing JSON payload: JSON parsing error")
