@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 # Standard imports
 import base64
 import json
@@ -294,7 +296,7 @@ class TestGetRemoteFileContent:
         )
 
         assert (
-            "Error: You can only specify either line_number or keyword, not both."
+            "Error: You can only specify one of: line_number, keyword, or start_line/end_line range."
             in result
         )
 
@@ -914,3 +916,196 @@ class TestGetRemoteFileContent:
 
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_get.assert_called_once()
+
+    # Tests for start_line and end_line parameters
+    @patch("services.github.files.get_remote_file_content.requests.get")
+    @patch("services.github.files.get_remote_file_content.create_headers")
+    def test_start_line_end_line_range(self, mock_create_headers, mock_get, base_args):
+        """Test retrieving specific line range with start_line and end_line."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+
+        # Create test content with 10 lines
+        test_content = "\n".join([f"line {i}" for i in range(1, 11)])
+        encoded_content = base64.b64encode(test_content.encode("utf-8")).decode("utf-8")
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "content": encoded_content,
+            "encoding": "base64",
+        }
+        mock_get.return_value = mock_response
+
+        result = get_remote_file_content("test.py", base_args, start_line=3, end_line=7)
+
+        assert (
+            "Opened file: 'test.py' with line numbers for your information." in result
+        )
+        assert "```test.py#L3-L7" in result
+        assert "3:line 3" in result
+        assert "7:line 7" in result
+        assert "2:line 2" not in result  # Should not include line before range
+        assert "8:line 8" not in result  # Should not include line after range
+
+    def test_start_line_end_line_validation_errors(self, base_args):
+        """Test validation errors for start_line and end_line parameters."""
+        # Test start_line > end_line
+        result = get_remote_file_content(
+            "test.py", base_args, start_line=10, end_line=5
+        )
+        assert "Error: start_line must be less than or equal to end_line." in result
+
+    def test_start_line_with_line_number_error(self, base_args):
+        """Test error when both start_line and line_number are provided."""
+        result = get_remote_file_content(
+            "test.py", base_args, line_number=5, start_line=1, end_line=10
+        )
+        assert (
+            "Error: You can only specify one of: line_number, keyword, or start_line/end_line range."
+            in result
+        )
+
+    def test_start_line_with_keyword_error(self, base_args):
+        """Test error when both start_line and keyword are provided."""
+        result = get_remote_file_content(
+            "test.py", base_args, keyword="test", start_line=1, end_line=10
+        )
+        assert (
+            "Error: You can only specify one of: line_number, keyword, or start_line/end_line range."
+            in result
+        )
+
+    def test_start_line_end_line_string_conversion(self, base_args):
+        """Test string to integer conversion for start_line and end_line."""
+        # Test invalid start_line string
+        result = get_remote_file_content(
+            "test.py", base_args, start_line="abc", end_line="5"
+        )
+        assert "Error: start_line 'abc' is not a valid integer." in result
+
+        # Test invalid end_line string
+        result = get_remote_file_content(
+            "test.py", base_args, start_line="1", end_line="xyz"
+        )
+        assert "Error: end_line 'xyz' is not a valid integer." in result
+
+    @patch("services.github.files.get_remote_file_content.requests.get")
+    @patch("services.github.files.get_remote_file_content.create_headers")
+    def test_start_line_end_line_boundary_conditions(
+        self, mock_create_headers, mock_get, base_args
+    ):
+        """Test boundary conditions for start_line and end_line."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+
+        # Create test content with 5 lines
+        test_content = "\n".join([f"line {i}" for i in range(1, 6)])
+        encoded_content = base64.b64encode(test_content.encode("utf-8")).decode("utf-8")
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "content": encoded_content,
+            "encoding": "base64",
+        }
+        mock_get.return_value = mock_response
+
+        # Test range starting before file start (should clamp to 1)
+        result = get_remote_file_content("test.py", base_args, start_line=0, end_line=3)
+        assert "1:line 1" in result
+        assert "3:line 3" in result
+
+        # Test range extending beyond file end (should clamp to last line)
+        result = get_remote_file_content(
+            "test.py", base_args, start_line=3, end_line=10
+        )
+        assert "3:line 3" in result
+        assert "5:line 5" in result
+
+    @patch("services.github.files.get_remote_file_content.requests.get")
+    @patch("services.github.files.get_remote_file_content.create_headers")
+    def test_start_line_end_line_same_line(
+        self, mock_create_headers, mock_get, base_args
+    ):
+        """Test when start_line equals end_line (single line)."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+
+        test_content = "\n".join([f"line {i}" for i in range(1, 6)])
+        encoded_content = base64.b64encode(test_content.encode("utf-8")).decode("utf-8")
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "content": encoded_content,
+            "encoding": "base64",
+        }
+        mock_get.return_value = mock_response
+
+        result = get_remote_file_content("test.py", base_args, start_line=3, end_line=3)
+
+        assert (
+            "Opened file: 'test.py' with line numbers for your information." in result
+        )
+        assert "```test.py#L3-L3" in result
+        assert "3:line 3" in result
+        assert "2:line 2" not in result
+        assert "4:line 4" not in result
+
+    @patch("services.github.files.get_remote_file_content.requests.get")
+    @patch("services.github.files.get_remote_file_content.create_headers")
+    def test_start_line_only_defaults_to_end(
+        self, mock_create_headers, mock_get, base_args
+    ):
+        """Test that start_line without end_line goes to end of file."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+
+        # Create test content with 5 lines
+        test_content = "\n".join([f"line {i}" for i in range(1, 6)])
+        encoded_content = base64.b64encode(test_content.encode("utf-8")).decode("utf-8")
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "content": encoded_content,
+            "encoding": "base64",
+        }
+        mock_get.return_value = mock_response
+
+        result = get_remote_file_content("test.py", base_args, start_line=3)
+
+        assert (
+            "Opened file: 'test.py' with line numbers for your information." in result
+        )
+        assert "```test.py#L3-L5" in result  # Should go from line 3 to end (line 5)
+        assert "3:line 3" in result
+        assert "5:line 5" in result
+        assert "2:line 2" not in result  # Should not include lines before start
+
+    @patch("services.github.files.get_remote_file_content.requests.get")
+    @patch("services.github.files.get_remote_file_content.create_headers")
+    def test_end_line_only_defaults_to_start(
+        self, mock_create_headers, mock_get, base_args
+    ):
+        """Test that end_line without start_line starts from beginning of file."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+
+        # Create test content with 5 lines
+        test_content = "\n".join([f"line {i}" for i in range(1, 6)])
+        encoded_content = base64.b64encode(test_content.encode("utf-8")).decode("utf-8")
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "content": encoded_content,
+            "encoding": "base64",
+        }
+        mock_get.return_value = mock_response
+
+        result = get_remote_file_content("test.py", base_args, end_line=3)
+
+        assert (
+            "Opened file: 'test.py' with line numbers for your information." in result
+        )
+        assert "```test.py#L1-L3" in result  # Should go from start (line 1) to line 3
+        assert "1:line 1" in result
+        assert "3:line 3" in result
+        assert "4:line 4" not in result  # Should not include lines after end

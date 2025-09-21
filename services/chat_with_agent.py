@@ -196,6 +196,10 @@ def chat_with_agent(
             msg = f"Read `{tool_args['file_path']}`{line_info}."
         elif "keyword" in tool_args:
             msg = f"Read `{tool_args['file_path']}` around keyword `{tool_args['keyword']}`."
+        elif "start_line" in tool_args or "end_line" in tool_args:
+            start = tool_args.get("start_line", "start")
+            end = tool_args.get("end_line", "end")
+            msg = f"Read `{tool_args['file_path']}` lines {start}-{end}."
         else:
             msg = f"Read `{tool_args['file_path']}`."
 
