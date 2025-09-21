@@ -10,6 +10,7 @@ from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 # Local imports
 from config import ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40
 from services.anthropic.client import claude
+from services.anthropic.deduplicate_messages import deduplicate_file_content
 from services.anthropic.exceptions import (
     ClaudeAuthenticationError,
     ClaudeOverloadedError,
@@ -30,6 +31,9 @@ def chat_with_claude(
     usage_id: int | None = None,
 ):
     # https://docs.anthropic.com/en/api/client-sdks
+    # First deduplicate messages to save tokens
+    messages = deduplicate_file_content(messages)
+
     # Check token count and delete messages if necessary
     max_tokens = (
         64000 if model_id in [ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40] else 8192
