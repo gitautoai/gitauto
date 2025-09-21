@@ -90,3 +90,29 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
 
     assert result[5] == 0  # output tokens should be 0 when no usage info
     mock_insert_llm_request.assert_called_once()
+
+
+@patch("services.anthropic.chat_with_functions.deduplicate_file_content")
+@patch("services.anthropic.chat_with_functions.insert_llm_request")
+@patch("services.anthropic.chat_with_functions.claude")
+def test_chat_with_claude_calls_deduplication(
+    mock_claude, _mock_insert_llm_request, mock_deduplicate
+):
+    # Setup mocks
+    mock_response = Mock()
+    mock_response.content = [Mock(type="text", text="Response")]
+    mock_response.usage = Mock(output_tokens=10)
+    mock_claude.messages.create.return_value = mock_response
+    mock_claude.messages.count_tokens.return_value = Mock(input_tokens=15)
+
+    # Mock deduplication to return the same messages
+    original_messages = [{"role": "user", "content": "test"}]
+    mock_deduplicate.return_value = original_messages
+
+    # Call the function
+    chat_with_claude(
+        messages=original_messages, system_content="You are helpful", tools=[]
+    )
+
+    # Verify deduplication was called with the original messages
+    mock_deduplicate.assert_called_once_with(original_messages)
