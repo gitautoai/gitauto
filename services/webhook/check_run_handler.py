@@ -24,9 +24,7 @@ from services.github.installations.get_installation_permissions import (
     get_installation_permissions,
 )
 from services.github.pulls.get_pull_request import get_pull_request
-from services.github.pulls.get_pull_request_file_changes import (
-    get_pull_request_file_changes,
-)
+from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.types.github_types import BaseArgs, CheckRunCompletedPayload
 from services.github.utils.create_permission_url import create_permission_url
@@ -229,16 +227,16 @@ def handle_check_run(
         owner=owner_name, repo=repo_name, branch=head_branch, token=token
     )
 
-    # Get title, body, and code changes in the PR
+    # Get title and changed files in the PR
     pr_data = get_pull_request(
         owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
     )
     pull_title = pr_data["title"]
-    pull_body = pr_data["body"]
     pull_file_url = f"{pull_url}/files"
-    pull_changes = get_pull_request_file_changes(url=pull_file_url, token=token)
+    changed_files = get_pull_request_files(url=pull_file_url, token=token)
+
     p += 5
-    log_messages.append("Checked out the pull request title, body, and code changes.")
+    log_messages.append("Checked out the pull request title and changed files.")
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
@@ -369,8 +367,7 @@ def handle_check_run(
 
     input_message: dict[str, str] = {
         "pull_request_title": pull_title,
-        "pull_request_body": pull_body,
-        "pull_request_changes": json.dumps(obj=pull_changes),
+        "changed_files": json.dumps(obj=changed_files),
         "error_log": minimized_log,
         "today": today,
     }
