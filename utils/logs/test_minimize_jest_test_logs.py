@@ -16,21 +16,20 @@ FAIL test/components/NewAccount.test.tsx (22.052 s)
   <NewAccount />
     ✓ renders without crashing (100 ms)
     ✕ should handle click events
-    
+
 --------------------------------|---------|----------|---------|---------|-------
 File                            | % Stmts | % Branch | % Funcs | % Lines | Uncov
 --------------------------------|---------|----------|---------|---------|-------
-All files                       |   61.12 |    56.36 |   54.63 |   61.05 |      
-  src/App.tsx                   |     100 |      100 |     100 |     100 |      
+All files                       |   61.12 |    56.36 |   54.63 |   61.05 |
+  src/App.tsx                   |     100 |      100 |     100 |     100 |
 --------------------------------|---------|----------|---------|---------|-------
 
 Summary of all failing tests
 FAIL test/components/NewAccount.test.tsx (22.052 s)
   ● should handle click events
-  
+
     Expected: true
     Received: false
-    
 Test Suites: 1 failed, 1 passed, 2 total
 Tests:       1 failed, 2 passed, 3 total"""
 
@@ -41,10 +40,9 @@ $ craco test --watchAll=false --coverage=true
 Summary of all failing tests
 FAIL test/components/NewAccount.test.tsx (22.052 s)
   ● should handle click events
-  
+
     Expected: true
     Received: false
-    
 Test Suites: 1 failed, 1 passed, 2 total
 Tests:       1 failed, 2 passed, 3 total"""
 
