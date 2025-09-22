@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Testing Workflow
 
 When modifying a file, follow this test-driven approach:
+
 1. Run the test file first - it should fail if your change affects behavior
 2. If tests don't fail, the test coverage is insufficient - add new test cases
 3. Update the implementation to fix the failing tests
@@ -455,18 +456,21 @@ All code analysis, generation, and file processing happens on our Lambda instanc
 ### CRITICAL: Do NOT prioritize passing tests over meaningful tests
 
 **BAD HABIT**: Creating tests that pass but don't verify actual functionality:
+
 - Tests that only check if functions can be imported
 - Tests that mock everything and never exercise real logic
 - Tests that verify string presence in source code instead of behavior
 - Tests designed to pass rather than catch bugs
 
 **CORRECT APPROACH**: Create meaningful tests that verify actual behavior:
+
 - Integration tests that exercise real code paths with minimal mocking
 - Tests that verify the actual business logic works correctly
 - Tests that would fail if the implementation is broken
 - Tests that provide confidence the feature actually works
 
 **Example of BAD test**:
+
 ```python
 def test_function_has_variables():
     source = inspect.getsource(function)
@@ -474,6 +478,7 @@ def test_function_has_variables():
 ```
 
 **Example of GOOD test**:
+
 ```python
 def test_function_accumulates_tokens():
     result = function(input_with_tokens)
@@ -558,18 +563,20 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
    - Store this list and use it for all subsequent steps
    - Extract Python files from this list: filter for `.py` files
    - Extract test files from this list: filter for `test_*.py` files
-6. Run pylint on the Python files identified in step 5 - **IF ANY PYLINT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
-7. Run pyright on the Python files identified in step 5 - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
-8. Run pytest on the test files identified in step 5 - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
-9. Check current branch is not main: `git branch --show-current`
-10. Merge latest main: `git fetch origin main && git merge origin/main`
-11. **CRITICAL**: Review `git status` again to ensure ALL changes are staged:
+   - **CRITICAL**: For pylint, pyright, flake8, and pytest, filter out deleted files that no longer exist
+6. Run flake8 on the Python files identified in step 5 (excluding deleted files): `ls <files> 2>/dev/null | xargs flake8` - **IF ANY FLAKE8 ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+7. Run pylint on the Python files identified in step 5 (excluding deleted files): `ls <files> 2>/dev/null | xargs pylint` - **IF ANY PYLINT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+8. Run pyright on the Python files identified in step 5 (excluding deleted files): `ls <files> 2>/dev/null | xargs pyright` - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+9. Run pytest on the test files identified in step 5 (excluding deleted files): `ls <test_files> 2>/dev/null | xargs python -m pytest` - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
+10. Check current branch is not main: `git branch --show-current`
+11. Merge latest main: `git fetch origin main && git merge origin/main`
+12. **CRITICAL**: Review `git status` again to ensure ALL changes are staged:
     - Add all modified/new files identified in step 5
     - Ensure deleted files are staged (they should already be if renamed with `mv`)
     - Use specific file names: `git add file1.py file2.py file3.py` (**NEVER use `git add .`**)
     - For deleted files already staged, they'll be included automatically in the commit
-12. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
-13. Push to remote: `git push`
+13. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
+14. Push to remote: `git push`
 
 **CRITICAL GIT RULES:**
 
