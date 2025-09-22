@@ -1,0 +1,1533 @@
+```CircleCI Build Log: yarn test
+[2K[1G[1myarn run v1.22.22[22m
+[2K[1G[2m$ craco test --watchAll=false --coverage=true --verbose=true[22m
+PASS test/utils/timeout.test.ts (10.698 s)
+  timeout
+    when timeout has not occurred
+      ✓ should return false when start time equals current time (19 ms)
+      ✓ should return false when elapsed time is less than time limit (1 ms)
+      ✓ should return false when elapsed time equals time limit (1 ms)
+      ✓ should return false for very recent start time (1 ms)
+      ✓ should handle edge case with startTime in the future
+    when timeout has occurred
+      ✓ should return true when elapsed time exceeds time limit by 1ms
+      ✓ should return true when elapsed time significantly exceeds time limit (1 ms)
+      ✓ should return true for very old start times
+    edge cases
+      ✓ should handle zero start time correctly (1 ms)
+      ✓ should use the correct time limit of 28.9 seconds (1 ms)
+      ✓ should work with real timestamps without mocking
+
+PASS test/utils/wrapEmails.test.ts (10.9 s)
+  wrapEmails
+    ✓ should not adjust strings without the @ symbol (3 ms)
+    ✓ should wrap an email with escaped double quotes
+    ✓ should wrap just the part of the string with an @ in double quotes (1 ms)
+    ✓ should wrap multiple strings with @ in double quotes and nothing else (1 ms)
+
+PASS test/utils/getEnv.test.ts (12.388 s)
+  getEnv
+    Jest environment setup
+      ✓ should configure dotenv when Jest is running (1077 ms)
+      ✓ should not configure dotenv when Jest is not running (4 ms)
+    environment variable validation
+      ✓ should throw error when required environment variable is missing (287 ms)
+      ✓ should throw error when environment variable is empty string (83 ms)
+      ✓ should not throw error when all required environment variables are set (16 ms)
+      ✓ should validate all required environment variables (281 ms)
+    getEnv function
+      ✓ should return environment variables as Env type (24 ms)
+      ✓ should return the same values as process.env for required variables (90 ms)
+      ✓ should cast process.env to Env type with non-nullable fields (6 ms)
+
+PASS test/components/Modal/Modal.test.tsx (13.202 s)
+  Modal
+    ✓ Basic Render (296 ms)
+    ✓ if no children, return null (70 ms)
+    ✓ handle close (100 ms)
+    ✓ It should pass custom classname to modal (16 ms)
+
+PASS test/components/Header/UserSetting.test.tsx (13.492 s)
+  <UserSetting />
+    ✓ should render username (496 ms)
+    ✓ should display and hide logout button whenever username on Header component clicked (123 ms)
+    ✓ should call logout function whenever 'Log Out' button is clicked (97 ms)
+
+PASS test/components/Header/NavBarItems.test.tsx (14.209 s)
+  <NavBarItems />
+    ✓ should render no navbar items (183 ms)
+    ✓ should render one navbar item (600 ms)
+    ✓ should render two items (106 ms)
+
+PASS test/components/Loading/Loading.test.tsx
+  <Loading />
+    ✓ should render loading (292 ms)
+
+PASS test/components/Tabs/Tabs.test.tsx (14.1 s)
+  Tabs
+    ✓ Basic Render (608 ms)
+    ✓ Test active tab (26 ms)
+    ✓ Test setActiveTab function (298 ms)
+
+PASS test/pages/Error/Error.test.tsx (14.409 s)
+  <Error />
+    ✓ should render normal error message when no errorcode is provided (1019 ms)
+    ✓ should render normal error message when errorcode is not "1" (303 ms)
+    ✓ should render SSO missing attributes message when errorcode is "1" (88 ms)
+    ✓ should handle empty errorcode parameter (98 ms)
+    ✓ should handle multiple query parameters (11 ms)
+
+PASS test/components/SearchBox/SearchBox.test.tsx (15.111 s)
+  SearchBox
+    ✓ should have a search icon and input box (1604 ms)
+    ✓ should present value (73 ms)
+    ✓ should present place holder (21 ms)
+    ✓ should trigger onClick when click icon (103 ms)
+    ✓ should trigger onChange and onKeyPress in input (95 ms)
+    ✓ should pass new value to onChange function (7 ms)
+
+PASS test/components/Sidebar/SidebarItem.test.tsx (14.931 s)
+  <SidebarItem />
+    ✓ should render sidebar item title with icon (633 ms)
+    ✓ should render only sidebar icon without title (82 ms)
+    ✓ should render no icon with no title (30 ms)
+
+PASS test/components/TableTitle/TableTitle.test.tsx
+  <TableTitle />
+    ✓ should render table title (401 ms)
+
+  console.error
+    Warning: An update to AuthProvider inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at AuthProvider (/home/circleci/project/src/pages/Login/AuthProvider.tsx:42:32)
+        at TestWrapper (/home/circleci/project/test/pages/Login/AuthProvider.test.tsx:47:65)
+
+      56 |         setisLoading(false);
+      57 |       } catch (error) {
+    > 58 |         setError(error);
+         |         ^
+      59 |       }
+      60 |     };
+      61 |     getAuthInfo();
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at setError (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at getAuthInfo (src/pages/Login/AuthProvider.tsx:58:9)
+
+  console.error
+    Warning: An update to AuthProvider inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at AuthProvider (/home/circleci/project/src/pages/Login/AuthProvider.tsx:42:32)
+        at TestWrapper (/home/circleci/project/test/pages/Login/AuthProvider.test.tsx:47:65)
+
+      56 |         setisLoading(false);
+      57 |       } catch (error) {
+    > 58 |         setError(error);
+         |         ^
+      59 |       }
+      60 |     };
+      61 |     getAuthInfo();
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at setError (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at getAuthInfo (src/pages/Login/AuthProvider.tsx:58:9)
+
+PASS test/components/Info/Info.test.tsx (15.99 s)
+  <Info />
+    ✓ should render items with appropriate border lines between each rows (230 ms)
+    ✓ should render loading (484 ms)
+    ✓ should render error message and refetch button (20 ms)
+    ✓ should call callback function when refetch button is clicked (99 ms)
+
+PASS src/components/Summary/Info/index.test.tsx (16.194 s)
+  Info Component
+    Basic Rendering
+      ✓ should render the title correctly (316 ms)
+      ✓ should render data entries with formatted labels (13 ms)
+      ✓ should render data values (93 ms)
+      ✓ should wrap values in Tooltip components (94 ms)
+    Loading State
+      ✓ should render spinner when loading and no error (7 ms)
+      ✓ should not render data when loading (89 ms)
+    Error State
+      ✓ should render error message when there is an error and not loading (80 ms)
+      ✓ should not render data when there is an error (4 ms)
+      ✓ should call refetch function when reload button is clicked (24 ms)
+      ✓ should not call refetch if it is not a function (90 ms)
+    Data Filtering
+      ✓ should filter out falsy values from data (181 ms)
+    Styled Config
+      ✓ should apply styled config when provided (29 ms)
+      ✓ should render normal values when no styled config is provided (87 ms)
+    Border Logic
+      ✓ should apply border classes correctly based on row number and data length (10 ms)
+
+PASS test/Routes.test.tsx (15.796 s)
+  <Routes />
+    Public routes
+      ✓ should render Login page for root path (208 ms)
+      ✓ should render Error page for /Error path (87 ms)
+      ✓ should render NotFound page for unknown paths (8 ms)
+    AuthenticatedRoute - Loading state
+      ✓ should render Loading component when authentication is loading (72 ms)
+      ✓ should render Loading for account route when authentication is loading (33 ms)
+      ✓ should render Loading for policy route when authentication is loading (70 ms)
+    AuthenticatedRoute - Unauthenticated state
+      ✓ should redirect to root when accessing dashboard without authentication (24 ms)
+      ✓ should redirect to root when accessing account without authentication (7 ms)
+      ✓ should redirect to root when accessing policy without authentication (88 ms)
+    AuthenticatedRoute - Authenticated state
+      ✓ should render Dashboard page when authenticated and accessing dashboard (6 ms)
+      ✓ should render Account page when authenticated and accessing account route (5 ms)
+      ✓ should render Policy page when authenticated and accessing policy route (85 ms)
+    Route path matching
+      ✓ should match exact dashboard path (6 ms)
+      ✓ should not match dashboard path with additional segments (4 ms)
+      ✓ should match account path with accountId parameter (3 ms)
+      ✓ should match policy path with both accountId and policyId parameters (68 ms)
+    Route priority
+      ✓ should prioritize specific routes over NotFound route (20 ms)
+      ✓ should render NotFound as fallback for unmatched routes (4 ms)
+
+PASS test/App.test.tsx (16.667 s)
+  <App />
+    ✓ should render with key components (930 ms)
+
+  console.error
+    Warning: An update to AuthProvider inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at AuthProvider (/home/circleci/project/src/pages/Login/AuthProvider.tsx:42:32)
+
+      56 |         setisLoading(false);
+      57 |       } catch (error) {
+    > 58 |         setError(error);
+         |         ^
+      59 |       }
+      60 |     };
+      61 |     getAuthInfo();
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at setError (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at getAuthInfo (src/pages/Login/AuthProvider.tsx:58:9)
+
+  console.error
+    Warning: An update to AuthProvider inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at AuthProvider (/home/circleci/project/src/pages/Login/AuthProvider.tsx:42:32)
+        at TestWrapper (/home/circleci/project/test/pages/Login/AuthProvider.test.tsx:47:65)
+
+      56 |         setisLoading(false);
+      57 |       } catch (error) {
+    > 58 |         setError(error);
+         |         ^
+      59 |       }
+      60 |     };
+      61 |     getAuthInfo();
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at setError (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at getAuthInfo (src/pages/Login/AuthProvider.tsx:58:9)
+
+  console.error
+    Warning: An update to AuthProvider inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at AuthProvider (/home/circleci/project/src/pages/Login/AuthProvider.tsx:42:32)
+        at TestWrapper (/home/circleci/project/test/pages/Login/AuthProvider.test.tsx:47:65)
+
+      56 |         setisLoading(false);
+      57 |       } catch (error) {
+    > 58 |         setError(error);
+         |         ^
+      59 |       }
+      60 |     };
+      61 |     getAuthInfo();
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at setError (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at getAuthInfo (src/pages/Login/AuthProvider.tsx:58:9)
+
+PASS test/components/Sidebar/AccountDetails.test.tsx (16.894 s)
+  <AccountDetails />
+    ✓ should render all account details (legacy) (169 ms)
+    ✓ should display loading spinner when sidebarDataLoading in Sidebar Context Provider is true (legacy) (3 ms)
+    ✓ should render error if there is an error (legacy) (2 ms)
+    when sidebar is expanded
+      ✓ should render all account details with complete data (391 ms)
+      ✓ should render without assignee when assignee is not provided (105 ms)
+      ✓ should render without partner when currentAgency is not provided (90 ms)
+      ✓ should render without agency user when agencyUser is not provided (8 ms)
+      ✓ should hide agency section border when no agency data is present (91 ms)
+      ✓ should show agency section border when agency data is present (8 ms)
+    when sidebar is collapsed
+      ✓ should render only icons when collapsed (392 ms)
+      ✓ should have proper styling for collapsed icons (8 ms)
+    loading state
+      ✓ should display loading spinner when sidebarDataLoading is true (72 ms)
+      ✓ should display loading spinner in proper container (18 ms)
+    error state
+      ✓ should render error message when sidebarError is present (4 ms)
+      ✓ should render error in proper container (7 ms)
+    empty data scenarios
+      ✓ should render empty fragment when sidebarData is null and no loading/error (3 ms)
+      ✓ should render empty fragment when context is null (69 ms)
+    data destructuring edge cases
+      ✓ should handle partial data gracefully (19 ms)
+      ✓ should handle missing email when agencyUser is present (10 ms)
+    CSS classes and styling
+      ✓ should apply correct CSS classes for expanded view (91 ms)
+      ✓ should apply correct CSS classes for collapsed view (9 ms)
+
+PASS src/context/UserContext.test.tsx (16.899 s)
+  UserProvider
+    Loading States
+      ✓ should show loading when auth is loading (203 ms)
+      ✓ should show loading when getUser query is loading (8 ms)
+      ✓ should show loading when both auth and getUser are loading (71 ms)
+      ✓ should show loading with correct CSS classes (19 ms)
+    Error States
+      ✓ should show error message when getUser query fails (79 ms)
+      ✓ should show error with correct CSS classes (28 ms)
+      ✓ should handle different types of Apollo errors (4 ms)
+    Authentication Flow
+      ✓ should call getUser when user is authenticated (86 ms)
+      ✓ should not call getUser when user is not authenticated (6 ms)
+      ✓ should clear user data when user becomes unauthenticated (94 ms)
+      ✓ should handle authentication state changes correctly (5 ms)
+      ✓ should handle user with anonymous flag correctly (4 ms)
+    User Data Management
+      ✓ should provide user data when getUser query succeeds (3 ms)
+      ✓ should handle null user data from getUser query (3 ms)
+      ✓ should provide undefined user data when not authenticated (66 ms)
+      ✓ should handle undefined data from getUser query (19 ms)
+      ✓ should handle empty data object from getUser query (3 ms)
+      ✓ should update user data when query data changes (8 ms)
+      ✓ should handle different UserInfo properties (20 ms)
+    Context Provider
+      ✓ should provide UserContext with correct value (3 ms)
+      ✓ should render children correctly (3 ms)
+      ✓ should handle multiple children (6 ms)
+    useEffect Dependencies
+      ✓ should call getUser only when isAuthenticated changes (91 ms)
+      ✓ should update userData when getUserData changes (8 ms)
+    Edge Cases
+      ✓ should handle rapid authentication state changes (5 ms)
+      ✓ should handle component unmounting during loading (15 ms)
+      ✓ should handle component unmounting during error state (4 ms)
+
+PASS test/pages/Login/AuthProvider.test.tsx (16.903 s)
+  AuthProvider
+    Initial state
+      ✓ should provide initial loading state (597 ms)
+      ✓ should provide login and logout functions (99 ms)
+    Authentication flow
+      ✓ should fetch user data on mount and set authenticated user (105 ms)
+      ✓ should set anonymous user as not authenticated (76 ms)
+      ✓ should handle fetch error and set error state (25 ms)
+      ✓ should handle user with undefined optional fields correctly (89 ms)
+      ✓ should handle null user response (6 ms)
+    Login function
+      ✓ should redirect to auth service login URL (11 ms)
+      ✓ should use current window origin in redirect URL (89 ms)
+    Logout function
+      ✓ should redirect to auth service logout URL (6 ms)
+    Authentication status calculation
+      ✓ should return false for null user (73 ms)
+      ✓ should return false for anonymous user (21 ms)
+      ✓ should return true for non-anonymous user (97 ms)
+      ✓ should handle user with false anonymous flag (9 ms)
+    Component rendering
+      ✓ should render children components (88 ms)
+      ✓ should provide context to child components (9 ms)
+      ✓ should handle multiple children (74 ms)
+    Error handling
+      ✓ should handle JSON parsing errors (20 ms)
+      ✓ should handle network errors (7 ms)
+      ✓ should handle HTTP error responses (6 ms)
+    useAuth hook
+      ✓ should return AuthContext when used within AuthProvider (87 ms)
+      ✓ should provide consistent context values (8 ms)
+    Context value memoization
+      ✓ should update context when user state changes (89 ms)
+      ✓ should handle state transitions correctly (8 ms)
+    Edge cases
+      ✓ should handle component unmounting during fetch (5 ms)
+      ✓ should handle empty response object (87 ms)
+      ✓ should handle malformed user data (7 ms)
+    Fetch request configuration
+      ✓ should make fetch request with correct parameters (74 ms)
+      ✓ should include credentials in fetch request (21 ms)
+
+PASS test/utils/calTotalPayable.test.ts (17.212 s)
+  calTotalPayable
+    Credit Card payments
+      CAD currency (Canada)
+        ✓ should calculate credit card fee at 2.5% rate for CAD currency (3 ms)
+        ✓ should handle decimal precision correctly (1 ms)
+        ✓ should handle zero values (1 ms)
+        ✓ should handle large amounts (66 ms)
+      USD currency (US)
+        ✓ should have zero credit card fee for USD currency (1 ms)
+      Other currencies
+        ✓ should treat non-CAD currencies as US (zero fee)
+    Non-Credit Card payments
+      ✓ should have zero fees for non-credit card payments (1 ms)
+      ✓ should handle rounding for non-credit card payments (17 ms)
+  calTotalPayableWithPaymentPlan
+    Credit Card payments
+      CAD currency (Canada)
+        ✓ should calculate credit card fee with payment plan for CAD currency (1 ms)
+        ✓ should handle different number of payments (1 ms)
+        ✓ should handle zero transaction fee (1 ms)
+        ✓ should handle single payment
+        ✓ should handle decimal precision correctly (1 ms)
+      USD currency (US)
+        ✓ should have zero credit card fee for USD currency with payment plan (1 ms)
+        ✓ should ignore transaction fee for USD currency
+      Other currencies
+        ✓ should treat non-CAD currencies as US (zero fee) with payment plan
+    Non-Credit Card payments
+      ✓ should have zero fees for non-credit card payments with payment plan (1 ms)
+      ✓ should handle rounding for non-credit card payments with payment plan
+    Edge cases
+      ✓ should handle zero values with payment plan (4 ms)
+      ✓ should handle large amounts with payment plan (1 ms)
+  Integration tests
+    ✓ should produce different results between regular and payment plan calculations for CAD (1 ms)
+    ✓ should produce same results between regular and payment plan calculations for USD (1 ms)
+
+PASS test/pages/Login/login.test.tsx (17.29 s)
+  <Login />
+    Loading state
+      ✓ should render Loading component when isLoading is true (197 ms)
+    Error state
+      ✓ should render error modal when error exists (377 ms)
+      ✓ should call logout when CLOSE button is clicked in error modal (302 ms)
+      ✓ should render error modal with correct CSS classes (25 ms)
+    Unauthenticated state
+      ✓ should render login form when not authenticated (74 ms)
+      ✓ should call login when Login button is clicked (128 ms)
+      ✓ should render login form with correct CSS classes (90 ms)
+    Authenticated state
+      ✓ should redirect to dashboard when authenticated (8 ms)
+    State combinations
+      ✓ should prioritize loading state over other states (6 ms)
+      ✓ should prioritize error state over unauthenticated state (85 ms)
+
+PASS test/components/Table/Pagination.test.tsx (17.2 s)
+  <Pagination />
+    Rendering behavior
+      ✓ should render nothing when currentPage is 0 (99 ms)
+      ✓ should render nothing when paginationRange length is less than 2 (91 ms)
+      ✓ should render nothing when dataSize is 0 (4 ms)
+      ✓ should render nothing when pageSize is larger than dataSize (4 ms)
+    Basic pagination scenarios
+      ✓ should render [<, 1, 2, 3, 4, >] for simple pagination (100 ms)
+      ✓ should render single page correctly (3 ms)
+      ✓ should render two pages correctly (93 ms)
+    Complex pagination scenarios
+      ✓ should render [<, 1, 2, 3, 4, 5, ..., 12, >] - right dots only (74 ms)
+      ✓ should render [<, 1, ..., 8, 9, 10, 11, 12, >] - left dots only (126 ms)
+      ✓ should render [<, 1, ..., 4, 5, 6, ..., 12, >] - both dots (93 ms)
+    Navigation functionality
+      ✓ should handle previous and next buttons correctly (15 ms)
+      ✓ should not navigate beyond last page with next button (91 ms)
+      ✓ should not navigate before first page with previous button (5 ms)
+      ✓ should handle dots click correctly (should not trigger onPageChange) (93 ms)
+      ✓ should handle page number click correctly (8 ms)
+    Different siblingCount values
+      ✓ should handle siblingCount = 0 (71 ms)
+      ✓ should handle siblingCount = 2 (19 ms)
+      ✓ should handle large siblingCount (8 ms)
+    Edge cases and boundary conditions
+      ✓ should handle very large datasets (4 ms)
+      ✓ should handle pageSize = 1 (66 ms)
+      ✓ should handle fractional page calculations (18 ms)
+      ✓ should handle currentPage at the beginning with dots (9 ms)
+      ✓ should handle currentPage at the end with dots (72 ms)
+    CSS classes and styling
+      ✓ should apply correct CSS classes to current page (17 ms)
+      ✓ should apply correct CSS classes to non-current pages (5 ms)
+      ✓ should apply correct CSS classes to dots (7 ms)
+      ✓ should apply correct CSS classes to arrow buttons (70 ms)
+      ✓ should apply correct CSS classes to pagination container (21 ms)
+    Integration scenarios
+      ✓ should handle page navigation correctly (9 ms)
+      ✓ should handle navigation with arrow keys and page clicks combined (13 ms)
+
+PASS test/components/Sidebar/Sidebar.test.tsx (17.49 s)
+  <Sidebar />
+    ✓ should be hidden on non broker portal pages (393 ms)
+    ✓ should render dashboard items on dashboard page (14 ms)
+    ✓ should render account items on account page (81 ms)
+    ✓ should items are hidden when collapse button is clicked (95 ms)
+
+  console.error
+    Warning: An update to Header inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at Header (/home/circleci/project/src/components/Header/index.tsx:23:51)
+        at ApolloProvider (/home/circleci/project/node_modules/@apollo/client/react/context/ApolloProvider.js:5:21)
+        at MockedProvider (/home/circleci/project/node_modules/@apollo/client/utilities/testing/mocking/MockedProvider.js:10:28)
+        at Router (/home/circleci/project/node_modules/react-router/cjs/react-router.js:99:30)
+        at MemoryRouter (/home/circleci/project/node_modules/react-router/cjs/react-router.js:187:35)
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at dispatchAction (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at node_modules/@apollo/client/react/hooks/utils/useBaseQuery.js:17:85
+
+PASS test/components/AutoComplete/AutoComplete.test.tsx (18.498 s)
+  AutoComplete
+    ✓ should toggle option list whenever input box focused and unfocused (1093 ms)
+    ✓ should toggle option list whenever toggle button is clicked (180 ms)
+    ✓ should update prop.value to the option user clicked (225 ms)
+    ✓ should focus on items on options list whenever press tab key from input box (502 ms)
+    ✓ should update prop.value to the focused option when enter key is pressed on focused option (205 ms)
+    ✓ should hide option list when tab is pressed more than options number (195 ms)
+    ✓ should filter option list based on user input (194 ms)
+    ✓ should show no options text when there is no option to choose (79 ms)
+    ✓ should be able to search partner irrespective of text case if caseSensitive is not passed in and uses default value of false (98 ms)
+    ✓ should be able to search partner irrespective of text case if caseSensitive is passed in with a value of false (104 ms)
+    ✓ should be able to search only partners with correct case if caseSensitive is passed in with a value of true (118 ms)
+
+PASS test/styles/styledConfig.test.tsx (18.21 s)
+  styledConfig tests
+    formatPolicyStatus()
+      ✓ should return correct status text (Active) (90 ms)
+      ✓ should return correct status text (FutureActive) (6 ms)
+      ✓ should return correct status text (FutureCancel) (78 ms)
+      ✓ should return correct status text (Cancelled) (5 ms)
+      ✓ should return correct status text (Expired) (6 ms)
+      ✓ should return correct status text (NotBound) (4 ms)
+      ✓ should return correct status text (PendingRenewal) (4 ms)
+      ✓ should return correct status text (RenewedActive) (4 ms)
+      ✓ should return correct status text (RenewedFutureActive) (4 ms)
+      ✓ should return correct status text (NotTaken) (57 ms)
+      ✓ should return empty span (non-String type) (26 ms)
+    formatPremium()
+      ✓ should return correct premium number (Object) (4 ms)
+      ✓ should return correct premium number (String) (3 ms)
+      ✓ should return correct premium number (Number) (3 ms)
+      ✓ should return empty span (non-Object / String / Number type) (3 ms)
+    formatDate()
+      ✓ should return formatted date (59 ms)
+      ✓ should return "No date found" (non-String or empty String) (19 ms)
+    formatPhoneNumber()
+      ✓ should return formatted date (String) (3 ms)
+      ✓ should return formatted date (Number) (4 ms)
+      ✓ should return empty span (non-String / Number type) (8 ms)
+    formatDownload()
+      ✓ should return a download icon (String) (104 ms)
+      ✓ should return empty Fragment (non-String type) (81 ms)
+    formatPolicyNumber()
+      ✓ should return policy number with renewal suffix if policy status is pending renewal (single digit) (4 ms)
+      ✓ should return policy number with renewal suffix if policy status is pending renewal (double digit) (3 ms)
+      ✓ should return "TBD: Application NOT signed" if T&C is not signed (2 ms)
+      ✓ should return policy link (3 ms)
+      ✓ should return empty span (non-String type) (5 ms)
+
+  console.error
+    Warning: An update to Header inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at Header (/home/circleci/project/src/components/Header/index.tsx:23:51)
+        at ApolloProvider (/home/circleci/project/node_modules/@apollo/client/react/context/ApolloProvider.js:5:21)
+        at MockedProvider (/home/circleci/project/node_modules/@apollo/client/utilities/testing/mocking/MockedProvider.js:10:28)
+        at Router (/home/circleci/project/node_modules/react-router/cjs/react-router.js:99:30)
+        at MemoryRouter (/home/circleci/project/node_modules/react-router/cjs/react-router.js:187:35)
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at dispatchAction (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at node_modules/@apollo/client/react/hooks/utils/useBaseQuery.js:17:85
+
+  console.error
+    Warning: An update to Header inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at Header (/home/circleci/project/src/components/Header/index.tsx:23:51)
+        at ApolloProvider (/home/circleci/project/node_modules/@apollo/client/react/context/ApolloProvider.js:5:21)
+        at MockedProvider (/home/circleci/project/node_modules/@apollo/client/utilities/testing/mocking/MockedProvider.js:10:28)
+        at Router (/home/circleci/project/node_modules/react-router/cjs/react-router.js:99:30)
+        at MemoryRouter (/home/circleci/project/node_modules/react-router/cjs/react-router.js:187:35)
+
+      23 |   const [modalContent, setModalContent] = useState<React.ReactNode>();
+      24 |   const onClickItem = useCallback(
+    > 25 |     (content: React.ReactElement | null) => () => setModalContent(content),
+         |                                                   ^
+      26 |     []
+      27 |   );
+      28 |
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at setModalContent (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at Object.handleClose (src/components/Header/index.tsx:25:51)
+      at Object.<anonymous> (test/components/Header/Header.test.tsx:398:18)
+
+PASS test/components/Table/Table.test.tsx (18.097 s)
+  <Table />
+    Basic rendering
+      ✓ should render table with data (268 ms)
+      ✓ should render with no data (4 ms)
+      ✓ should render with null data (3 ms)
+      ✓ should render with undefined data (3 ms)
+    Loading and error states
+      ✓ should render loading status (294 ms)
+      ✓ should render with error message (5 ms)
+      ✓ should render loading state with proper structure (7 ms)
+      ✓ should render error state with proper structure (5 ms)
+      ✓ should prioritize error message over loading state (4 ms)
+    Column exclusion
+      ✓ should render table with specified columns removed (76 ms)
+      ✓ should render table with specified empty columns removed from data (7 ms)
+      ✓ should render table with unspecified empty columns present data (8 ms)
+      ✓ should handle multiple excluded columns (79 ms)
+      ✓ should handle both excludeColumns and excludeColumnsIfEmpty (6 ms)
+    Data filtering and processing
+      ✓ should filter out __typename from data (7 ms)
+      ✓ should handle data without __typename (5 ms)
+      ✓ should handle empty columns with different empty values (68 ms)
+      ✓ should handle columns that are missing from some rows (18 ms)
+      ✓ should handle data with only __typename field (2 ms)
+    Header formatting
+      ✓ should format camelCase headers correctly (7 ms)
+      ✓ should format single word headers correctly (5 ms)
+      ✓ should format headers with multiple capital letters (81 ms)
+      ✓ should handle headers starting with lowercase (5 ms)
+    Styled configuration
+      ✓ should apply styled config to specific columns (7 ms)
+      ✓ should pass row data to styled config functions (5 ms)
+      ✓ should handle styled config with different data types (6 ms)
+      ✓ should render without styled config (58 ms)
+      ✓ should handle styled config with column order mismatch (20 ms)
+    Multiple rows handling
+      ✓ should render multiple rows correctly (8 ms)
+      ✓ should handle rows with different column structures (8 ms)
+      ✓ should maintain correct row keys (5 ms)
+    CSS classes and structure
+      ✓ should apply correct CSS classes to table elements (76 ms)
+    Edge cases
+      ✓ should handle empty string values (5 ms)
+      ✓ should handle null and undefined values (7 ms)
+      ✓ should handle boolean values (6 ms)
+      ✓ should handle numeric values (6 ms)
+      ✓ should handle array and object values (59 ms)
+      ✓ should handle single row data (18 ms)
+    Utility functions behavior
+      removeColumns function
+        ✓ should remove specified columns from data (5 ms)
+        ✓ should handle empty excludeColumns array (3 ms)
+        ✓ should handle undefined excludeColumns (3 ms)
+        ✓ should handle non-existent column names in excludeColumns (4 ms)
+        ✓ should handle removing all columns (2 ms)
+      getEmptyColumns function
+        ✓ should identify columns with empty string values (62 ms)
+        ✓ should identify columns with null values (17 ms)
+        ✓ should identify columns with undefined values (4 ms)
+        ✓ should identify columns missing from objects (4 ms)
+        ✓ should not remove columns that have values in some rows (5 ms)
+        ✓ should handle undefined columnsToCheck parameter (3 ms)
+        ✓ should handle empty columnsToCheck array (4 ms)
+        ✓ should handle mixed empty value types (4 ms)
+      joinArrays function
+        ✓ should combine excludeColumns and empty columns (57 ms)
+        ✓ should handle when both arrays are undefined (4 ms)
+        ✓ should handle when one array is undefined (17 ms)
+        ✓ should handle when the other array is undefined (3 ms)
+        ✓ should handle overlapping columns in both arrays (3 ms)
+        ✓ should handle empty arrays (3 ms)
+      Data processing integration
+        ✓ should handle complex data processing scenario (5 ms)
+        ✓ should maintain data integrity after processing (4 ms)
+  Additional Table edge cases
+    ✓ should handle data with zero-length after column removal (3 ms)
+    ✓ should handle empty error message (1 ms)
+    ✓ should handle data where first row has no keys after processing (2 ms)
+    ✓ should handle data with only falsy values (55 ms)
+
+  console.error
+    Warning: An update to Header inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at Header (/home/circleci/project/src/components/Header/index.tsx:23:51)
+        at ApolloProvider (/home/circleci/project/node_modules/@apollo/client/react/context/ApolloProvider.js:5:21)
+        at MockedProvider (/home/circleci/project/node_modules/@apollo/client/utilities/testing/mocking/MockedProvider.js:10:28)
+        at Router (/home/circleci/project/node_modules/react-router/cjs/react-router.js:99:30)
+        at MemoryRouter (/home/circleci/project/node_modules/react-router/cjs/react-router.js:187:35)
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at dispatchAction (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at node_modules/@apollo/client/react/hooks/utils/useBaseQuery.js:17:85
+
+  console.error
+    Warning: An update to Header inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at Header (/home/circleci/project/src/components/Header/index.tsx:23:51)
+        at ApolloProvider (/home/circleci/project/node_modules/@apollo/client/react/context/ApolloProvider.js:5:21)
+        at MockedProvider (/home/circleci/project/node_modules/@apollo/client/utilities/testing/mocking/MockedProvider.js:10:28)
+        at Router (/home/circleci/project/node_modules/react-router/cjs/react-router.js:99:30)
+        at MemoryRouter (/home/circleci/project/node_modules/react-router/cjs/react-router.js:187:35)
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at dispatchAction (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at node_modules/@apollo/client/react/hooks/utils/useBaseQuery.js:17:85
+
+  console.error
+    Warning: An update to Header inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at Header (/home/circleci/project/src/components/Header/index.tsx:23:51)
+        at ApolloProvider (/home/circleci/project/node_modules/@apollo/client/react/context/ApolloProvider.js:5:21)
+        at MockedProvider (/home/circleci/project/node_modules/@apollo/client/utilities/testing/mocking/MockedProvider.js:10:28)
+        at Router (/home/circleci/project/node_modules/react-router/cjs/react-router.js:99:30)
+        at MemoryRouter (/home/circleci/project/node_modules/react-router/cjs/react-router.js:187:35)
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at dispatchAction (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at node_modules/@apollo/client/react/hooks/utils/useBaseQuery.js:17:85
+
+PASS test/components/Header/Header.test.tsx (18.317 s)
+  <Header />
+    Basic rendering
+      ✓ should render header with logo and basic structure (141 ms)
+      ✓ should render correct logo link for admin portal (135 ms)
+      ✓ should render correct logo link for broker portal (64 ms)
+    Authentication states
+      ✓ should not render user setting when not authenticated (21 ms)
+      ✓ should render user setting when authenticated (6 ms)
+      ✓ should handle user with no given name (5 ms)
+      ✓ should handle null user (5 ms)
+    Navigation based on routes
+      ✓ should render "Go to Updated Site" link on admin portal (85 ms)
+      ✓ should render NavBarItems on dashboard page (8 ms)
+      ✓ should render NavBarItems on account page (not policy) (8 ms)
+      ✓ should not render NavBarItems on policy page (5 ms)
+      ✓ should not render NavBarItems on other pages (58 ms)
+    New Account button functionality
+      ✓ should call isInternalUser query when no cache exists (314 ms)
+      ✓ should call getUnderwritingUrl for external user (82 ms)
+    Modal functionality
+      ✓ should close modal when handleClose is called (25 ms)
+    useEffect for underwriting URL
+      ✓ should open window when getUnderwritingUrlData is available (73 ms)
+      ✓ should not open window when getUnderwritingUrlData is undefined (4 ms)
+    Error handling
+      ✓ should handle GraphQL errors gracefully (18 ms)
+      ✓ should handle missing user data gracefully (6 ms)
+    Button interactions
+      ✓ should handle New Account button click without errors (10 ms)
+    Component integration
+      ✓ should pass correct props to Modal component (3 ms)
+      ✓ should pass correct props to NavBarItems component on dashboard (4 ms)
+      ✓ should pass correct props to NavBarItems component on account page (75 ms)
+      ✓ should render empty navbar component when no conditions are met (3 ms)
+    Route-specific behavior
+      ✓ should handle admin portal route correctly (7 ms)
+      ✓ should handle account page with policy correctly (5 ms)
+
+PASS test/components/Tooltip/Tooltip.test.tsx (17.903 s)
+  <Tooltip />
+    ✓ should display tooltip below value when mouse over on value (274 ms)
+    ✓ should hide tooltip when mouse out from value (19 ms)
+    ✓ should display 'Copied!' message on tooltip when it is clicked and copy tooltip content to clipboard (85 ms)
+
+PASS test/components/ToggleButton/ToggleButton.test.tsx (18.812 s)
+  <ToggleButton />
+    ✓ should render left and right buttons (236 ms)
+    ✓ should change buttons styles based on which button is clicked (Clicked button has its bg color) (103 ms)
+
+PASS test/components/Boolean/Boolean.test.tsx (19.44 s)
+  <Boolean />
+    ✓ should render 'Yes' button with navy colored text, 'No' button with white colored text when value is true (183 ms)
+    ✓ should render 'Yes' button with white colored text, 'No' button with navy colored text when value is false (26 ms)
+    ✓ should call callback function whenever 'Yes' or 'No' button is clicked (24 ms)
+
+  console.error
+    Warning: An update to Dashboard inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at Dashboard (/home/circleci/project/src/pages/Dashboard/index.tsx:14:49)
+        at Router (/home/circleci/project/node_modules/react-router/cjs/react-router.js:99:30)
+        at MemoryRouter (/home/circleci/project/node_modules/react-router/cjs/react-router.js:187:35)
+        at ApolloProvider (/home/circleci/project/node_modules/@apollo/client/react/context/ApolloProvider.js:5:21)
+        at MockedProvider (/home/circleci/project/node_modules/@apollo/client/utilities/testing/mocking/MockedProvider.js:10:28)
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at dispatchAction (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at node_modules/@apollo/client/react/hooks/utils/useBaseQuery.js:17:85
+
+  console.warn
+    Material-UI: You have provided an out-of-range value `nonexistent` for the select component.
+    Consider providing a value that matches one of the available options or ''.
+    The available values are `1`, `2`, `3`.
+
+      at node_modules/@material-ui/core/Select/SelectInput.js:366:17
+      at invokePassiveEffectCreate (node_modules/react-dom/cjs/react-dom.development.js:23487:20)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+
+  console.warn
+    Material-UI: You have provided an out-of-range value `nonexistent` for the select component.
+    Consider providing a value that matches one of the available options or ''.
+    The available values are `1`, `2`, `3`.
+
+      at node_modules/@material-ui/core/Select/SelectInput.js:366:17
+      at invokePassiveEffectCreate (node_modules/react-dom/cjs/react-dom.development.js:23487:20)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+
+PASS test/pages/Dashboard/index.test.tsx (19.807 s)
+  Dashboard
+    Initial render
+      ✓ should render search box with correct placeholder (162 ms)
+      ✓ should render with empty search input initially (8 ms)
+      ✓ should not render table or pagination initially (7 ms)
+    Search functionality
+      ✓ should update search input value when typing (294 ms)
+      ✓ should navigate with search query when Enter key is pressed (118 ms)
+      ✓ should navigate with search query when search button is clicked (156 ms)
+      ✓ should not navigate when search button is clicked with empty input (31 ms)
+      ✓ should handle special characters in search input (212 ms)
+    URL search parameter handling
+      ✓ should initialize search input from URL parameter (122 ms)
+      ✓ should call wrapEmails utility for email searches (51 ms)
+    Error state
+      ✓ should show error table when query has error (22 ms)
+    Integration scenarios
+      ✓ should handle search input change and URL navigation together (198 ms)
+    Edge cases
+      ✓ should handle undefined search input gracefully (4 ms)
+      ✓ should handle malformed URL parameters (4 ms)
+      ✓ should handle empty string search input from URL (3 ms)
+      ✓ should handle URL decoding correctly (45 ms)
+    useEffect dependency behavior
+      ✓ should trigger query when searchInputFromPath changes (24 ms)
+
+  console.error
+    Warning: An update to Dashboard inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at Dashboard (/home/circleci/project/src/pages/Dashboard/index.tsx:14:49)
+        at Router (/home/circleci/project/node_modules/react-router/cjs/react-router.js:99:30)
+        at MemoryRouter (/home/circleci/project/node_modules/react-router/cjs/react-router.js:187:35)
+        at ApolloProvider (/home/circleci/project/node_modules/@apollo/client/react/context/ApolloProvider.js:5:21)
+        at MockedProvider (/home/circleci/project/node_modules/@apollo/client/utilities/testing/mocking/MockedProvider.js:10:28)
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at dispatchAction (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at node_modules/@apollo/client/react/hooks/utils/useBaseQuery.js:17:85
+
+  console.error
+    Warning: An update to Dashboard inside a test was not wrapped in act(...).
+    
+    When testing, code that causes React state updates should be wrapped into act(...):
+    
+    act(() => {
+      /* fire events that update state */
+    });
+    /* assert on the output */
+    
+    This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+        at Dashboard (/home/circleci/project/src/pages/Dashboard/index.tsx:14:49)
+        at Router (/home/circleci/project/node_modules/react-router/cjs/react-router.js:99:30)
+        at MemoryRouter (/home/circleci/project/node_modules/react-router/cjs/react-router.js:187:35)
+        at ApolloProvider (/home/circleci/project/node_modules/@apollo/client/react/context/ApolloProvider.js:5:21)
+        at MockedProvider (/home/circleci/project/node_modules/@apollo/client/utilities/testing/mocking/MockedProvider.js:10:28)
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnIfNotCurrentlyActingUpdatesInDEV (node_modules/react-dom/cjs/react-dom.development.js:24064:9)
+      at dispatchAction (node_modules/react-dom/cjs/react-dom.development.js:16135:9)
+      at node_modules/@apollo/client/react/hooks/utils/useBaseQuery.js:17:85
+
+PASS test/pages/Policy/ActionButtons.test.tsx (19.972 s)
+  ActionButtons
+    ✓ renders EndorsementButton, RenewalButton, CancellationButton, and COI components when policy is active and eligible to renew (30 ms)
+    ✓ should hide renewal button when policy is renewed (active) (9 ms)
+    ✓ should hide renewal button when policy is renewed (future active) (9 ms)
+    ✓ should hide renewal button when policy is future cancel (7 ms)
+    ✓ returns null if inputData is not provided (5 ms)
+    ✓ returns null if user is not a platform admin (3 ms)
+    ✓ returns null if policy is cancelled (17 ms)
+
+  console.error
+    Could not find icon { prefix: 'fas', iconName: 'icon' }
+
+      at log (node_modules/@fortawesome/react-fontawesome/index.js:285:34)
+      at node_modules/@fortawesome/react-fontawesome/index.js:359:7
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateForwardRef (node_modules/react-dom/cjs/react-dom.development.js:17044:20)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19098:16)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23940:14)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+
+  console.error
+    Could not find icon { prefix: 'fas', iconName: 'icon' }
+
+      at log (node_modules/@fortawesome/react-fontawesome/index.js:285:34)
+      at node_modules/@fortawesome/react-fontawesome/index.js:359:7
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateForwardRef (node_modules/react-dom/cjs/react-dom.development.js:17044:20)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19098:16)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23940:14)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+
+  console.error
+    Could not find icon { prefix: 'fas', iconName: 'icon' }
+
+      at log (node_modules/@fortawesome/react-fontawesome/index.js:285:34)
+      at node_modules/@fortawesome/react-fontawesome/index.js:359:7
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateForwardRef (node_modules/react-dom/cjs/react-dom.development.js:17044:20)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19098:16)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23940:14)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+
+  console.error
+    Could not find icon { prefix: 'fas', iconName: 'icon' }
+
+      at log (node_modules/@fortawesome/react-fontawesome/index.js:285:34)
+      at node_modules/@fortawesome/react-fontawesome/index.js:359:7
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateForwardRef (node_modules/react-dom/cjs/react-dom.development.js:17044:20)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19098:16)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23940:14)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+
+  console.error
+    Could not find icon { prefix: 'fas', iconName: 'icon' }
+
+      at log (node_modules/@fortawesome/react-fontawesome/index.js:285:34)
+      at node_modules/@fortawesome/react-fontawesome/index.js:359:7
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateForwardRef (node_modules/react-dom/cjs/react-dom.development.js:17044:20)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19098:16)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23940:14)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+
+  console.error
+    Could not find icon { prefix: 'fas', iconName: 'icon' }
+
+      at log (node_modules/@fortawesome/react-fontawesome/index.js:285:34)
+      at node_modules/@fortawesome/react-fontawesome/index.js:359:7
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateForwardRef (node_modules/react-dom/cjs/react-dom.development.js:17044:20)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19098:16)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23940:14)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+
+PASS test/pages/Policy/GoToUnderwriting.test.tsx (19.647 s)
+  GoToUnderwriting
+    ✓ renders without crashing (83 ms)
+    ✓ displays loading overlay when loading is true (9 ms)
+    ✓ displays error modal when error is present (12 ms)
+    ✓ shows correct transaction type lable in button (6 ms)
+    ✓ calls fetch with correct parameters on button click (71 ms)
+    ✓ handles fetch function being undefined (10 ms)
+
+  console.error
+    Could not find icon { prefix: 'fas', iconName: 'icon' }
+
+      at log (node_modules/@fortawesome/react-fontawesome/index.js:285:34)
+      at node_modules/@fortawesome/react-fontawesome/index.js:359:7
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at updateForwardRef (node_modules/react-dom/cjs/react-dom.development.js:17044:20)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19098:16)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23940:14)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+
+  console.error
+    Material-UI: The `fade` color utility was renamed to `alpha` to better describe its functionality.
+    
+    You should use `import { alpha } from '@material-ui/core/styles'`
+
+      at Object.fade (node_modules/@material-ui/core/styles/colorManipulator.js:259:15)
+      at Object.<anonymous>.styles$5.makeStyles.name (node_modules/@material-ui/src/_shared/ToolbarText.tsx:21:16)
+      at Object.create (node_modules/@material-ui/styles/getStylesCreator/getStylesCreator.js:32:35)
+      at attach (node_modules/@material-ui/styles/makeStyles/makeStyles.js:113:32)
+      at node_modules/@material-ui/styles/makeStyles/makeStyles.js:258:7
+      at useSynchronousEffect (node_modules/@material-ui/styles/makeStyles/makeStyles.js:211:14)
+      at useStyles (node_modules/@material-ui/styles/makeStyles/makeStyles.js:250:5)
+
+PASS test/pages/Policy/Cancellation.test.tsx (19.999 s)
+  <Cancellation />
+    ✓ should render cancellation modal for cancel type (203 ms)
+    ✓ for non-renewal type, should disaplay non-renewal reasons (53 ms)
+    ✓ isCancellationButtonActive returns true (1 ms)
+
+  console.error
+    Warning: Encountered two children with the same key, `.$.$.$1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+        at ul
+        at List (/home/circleci/project/node_modules/@material-ui/core/List/List.js:51:24)
+        at WithStyles (/home/circleci/project/node_modules/@material-ui/styles/withStyles/withStyles.js:67:31)
+        at MenuList (/home/circleci/project/node_modules/@material-ui/core/MenuList/MenuList.js:117:23)
+        at div
+        at Paper (/home/circleci/project/node_modules/@material-ui/core/Paper/Paper.js:55:23)
+        at WithStyles (/home/circleci/project/node_modules/@material-ui/styles/withStyles/withStyles.js:67:31)
+        at Transition (/home/circleci/project/node_modules/@material-ui/core/node_modules/react-transition-group/cjs/Transition.js:133:30)
+        at Grow (/home/circleci/project/node_modules/@material-ui/core/Grow/Grow.js:51:24)
+        at Unstable_TrapFocus (/home/circleci/project/node_modules/@material-ui/core/Unstable_TrapFocus/Unstable_TrapFocus.js:30:24)
+        at div
+        at Portal (/home/circleci/project/node_modules/@material-ui/core/Portal/Portal.js:39:24)
+        at Modal (/home/circleci/project/node_modules/@material-ui/core/Modal/Modal.js:94:36)
+        at Popover (/home/circleci/project/node_modules/@material-ui/core/Popover/Popover.js:118:22)
+        at WithStyles (/home/circleci/project/node_modules/@material-ui/styles/withStyles/withStyles.js:67:31)
+        at Menu (/home/circleci/project/node_modules/@material-ui/core/Menu/Menu.js:67:32)
+        at WithStyles (/home/circleci/project/node_modules/@material-ui/styles/withStyles/withStyles.js:67:31)
+        at SelectInput (/home/circleci/project/node_modules/@material-ui/core/Select/SelectInput.js:59:24)
+        at div
+        at InputBase (/home/circleci/project/node_modules/@material-ui/core/InputBase/InputBase.js:219:30)
+        at WithStyles (/home/circleci/project/node_modules/@material-ui/styles/withStyles/withStyles.js:67:31)
+        at Input (/home/circleci/project/node_modules/@material-ui/core/Input/Input.js:137:32)
+        at WithStyles (/home/circleci/project/node_modules/@material-ui/styles/withStyles/withStyles.js:67:31)
+        at Select (/home/circleci/project/node_modules/@material-ui/core/Select/Select.js:50:32)
+        at WithStyles (/home/circleci/project/node_modules/@material-ui/styles/withStyles/withStyles.js:67:31)
+        at div
+        at SelectInput (/home/circleci/project/src/components/SelectInput/index.tsx:21:3)
+
+      at printWarning (node_modules/react-dom/cjs/react-dom.development.js:67:30)
+      at error (node_modules/react-dom/cjs/react-dom.development.js:43:5)
+      at warnOnInvalidKey (node_modules/react-dom/cjs/react-dom.development.js:13620:11)
+      at reconcileChildrenArray (node_modules/react-dom/cjs/react-dom.development.js:13651:21)
+      at reconcileChildFibers (node_modules/react-dom/cjs/react-dom.development.js:14125:14)
+      at reconcileChildren (node_modules/react-dom/cjs/react-dom.development.js:16990:28)
+      at updateFragment (node_modules/react-dom/cjs/react-dom.development.js:17294:3)
+
+PASS test/components/DatePicker/DatePicker.test.tsx (21.362 s)
+  CustomDatePicker
+    Basic Rendering
+      ✓ should render the DatePicker component (197 ms)
+      ✓ should render with custom id (73 ms)
+      ✓ should render without id when not provided (90 ms)
+      ✓ should render KeyboardDatePicker with correct CSS classes (34 ms)
+    Value Handling
+      ✓ should initialize with empty value when no value is provided (147 ms)
+      ✓ should initialize with provided value (40 ms)
+      ✓ should handle null value (64 ms)
+      ✓ should handle undefined value (38 ms)
+      ✓ should call onChange when date is changed (100 ms)
+      ✓ should call onChange with null when invalid date is entered (68 ms)
+    Date Constraints
+      ✓ should accept minDate prop (25 ms)
+      ✓ should accept maxDate prop (22 ms)
+      ✓ should work with both minDate and maxDate (41 ms)
+      ✓ should handle null minDate (26 ms)
+      ✓ should handle null maxDate (17 ms)
+    ReadOnly Mode
+      ✓ should render in readOnly mode when specified (28 ms)
+      ✓ should not be readOnly by default (53 ms)
+      ✓ should handle readOnly false explicitly (35 ms)
+    Date Picker Interaction
+      ✓ should handle click events (263 ms)
+      ✓ should handle keyboard events (34 ms)
+      ✓ should handle focus events (35 ms)
+    Custom Date Validation
+      ✓ should accept shouldDisableDate function (15 ms)
+      ✓ should work without shouldDisableDate function (17 ms)
+      ✓ should handle shouldDisableDate that returns true (18 ms)
+      ✓ should handle null shouldDisableDate (15 ms)
+    Date Format
+      ✓ should use yyyy-MM-dd format (31 ms)
+      ✓ should handle different date formats in input (62 ms)
+    Theme Integration
+      ✓ should render with Material-UI theme provider (16 ms)
+      ✓ should render with MuiPickersUtilsProvider (24 ms)
+    Component State Management
+      ✓ should maintain internal state when value changes (27 ms)
+      ✓ should handle rapid prop changes (37 ms)
+    Edge Cases
+      ✓ should handle component unmounting gracefully (15 ms)
+      ✓ should handle invalid Date objects (15 ms)
+      ✓ should handle extreme dates (27 ms)
+      ✓ should handle future dates (25 ms)
+    Accessibility
+      ✓ should have proper role attribute (26 ms)
+      ✓ should be keyboard accessible (27 ms)
+      ✓ should support tab navigation (26 ms)
+    Error Handling
+      ✓ should handle onChange callback without errors (31 ms)
+      ✓ should handle missing required props gracefully (15 ms)
+    Performance
+      ✓ should handle multiple re-renders efficiently (126 ms)
+      ✓ should not cause memory leaks with frequent prop changes (210 ms)
+
+FAIL test/components/NewAccount/NewAccount.test.tsx (22.052 s)
+  <NewAccount />
+    Initial Rendering
+      ✓ should render initial UI elements correctly (207 ms)
+      ✓ should export AgencyType enum correctly (1 ms)
+    Boolean Toggle Functionality
+      ✓ should toggle between Yes and No correctly (312 ms)
+    Agency Selection Flow
+      ✓ should render agency selection when partner is selected (70 ms)
+      ✓ should handle agency selection and trigger user query for non-enterprise agency (187 ms)
+      ✓ should not show user selection for enterprise agency (147 ms)
+    User Selection Flow
+      ✓ should handle user selection correctly (196 ms)
+    Loading States
+      ✓ should show spinner when agencies are loading (111 ms)
+      ✓ should show spinner when users are loading (190 ms)
+    Button Functionality
+      ✓ should open underwriting URL when Start Application is clicked (93 ms)
+      ✓ should not open URL when Start Application is clicked without URL (34 ms)
+      ✕ should copy URL to clipboard when copy button is clicked (85 ms)
+      ✓ should not copy when copy button is clicked without URL (34 ms)
+    State Management and Effects
+      ✓ should reset selected user when agency changes (259 ms)
+      ✓ should clear URL when agency changes (224 ms)
+      ✓ should clear selections when toggling from partner to no partner (184 ms)
+    Edge Cases and Error Scenarios
+      ✓ should handle empty agency list (46 ms)
+      ✓ should handle empty user list (113 ms)
+      ✓ should handle missing underwriting URL data (55 ms)
+    Complete User Flows
+      ✕ should complete full B2B2C flow with agency and user selection (212 ms)
+      ✕ should complete full B2C flow without agency selection (115 ms)
+      ✕ should complete enterprise agency flow without user selection (126 ms)
+
+  ● <NewAccount /> › Button Functionality › should copy URL to clipboard when copy button is clicked
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "https://test-underwriting-url.com"
+
+    Number of calls: 0
+
+      614 |       await user.click(copyButton);
+      615 |
+    > 616 |       expect(mockWriteText).toHaveBeenCalledWith(testUrl);
+          |                             ^
+      617 |       expect(mockAlert).toHaveBeenCalledWith('Application URL copied to clipboard.');
+      618 |     });
+      619 |
+
+      at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:616:29)
+
+  ● <NewAccount /> › Complete User Flows › should complete full B2B2C flow with agency and user selection
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "https://b2b2c-underwriting-url.com"
+
+    Number of calls: 0
+
+      1106 |       // Test Copy URL
+      1107 |       await user.click(screen.getByTitle('Copy Application URL'));
+    > 1108 |       expect(mockWriteText).toHaveBeenCalledWith(testUrl);
+           |                             ^
+      1109 |       expect(mockAlert).toHaveBeenCalledWith('Application URL copied to clipboard.');
+      1110 |     });
+      1111 |
+
+      at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:1108:29)
+
+  ● <NewAccount /> › Complete User Flows › should complete full B2C flow without agency selection
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "https://b2c-underwriting-url.com"
+
+    Number of calls: 0
+
+      1165 |
+      1166 |       await user.click(screen.getByTitle('Copy Application URL'));
+    > 1167 |       expect(mockWriteText).toHaveBeenCalledWith(testUrl);
+           |                             ^
+      1168 |       expect(mockAlert).toHaveBeenCalledWith('Application URL copied to clipboard.');
+      1169 |     });
+      1170 |
+
+      at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:1167:29)
+
+  ● <NewAccount /> › Complete User Flows › should complete enterprise agency flow without user selection
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "https://enterprise-underwriting-url.com"
+
+    Number of calls: 0
+
+      1241 |
+      1242 |       await user.click(screen.getByTitle('Copy Application URL'));
+    > 1243 |       expect(mockWriteText).toHaveBeenCalledWith(testUrl);
+           |                             ^
+      1244 |       expect(mockAlert).toHaveBeenCalledWith('Application URL copied to clipboard.');
+      1245 |     });
+      1246 |   });
+
+      at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:1243:29)
+
+PASS test/components/SelectInput/SelectInput.test.tsx (27.108 s)
+  SelectInput
+    Basic Rendering
+      ✓ should render with required props (208 ms)
+      ✓ should render with custom className (20 ms)
+      ✓ should render with custom id (62 ms)
+    Component Exports
+      ✓ should export SelectInput as default (1 ms)
+      ✓ should export Choice interface type
+    Value Handling
+      ✓ should render with default empty value when no value prop is provided (26 ms)
+      ✓ should render with provided value (57 ms)
+      ✓ should handle empty string value (29 ms)
+      ✓ should handle value that does not match any option (84 ms)
+    Options Rendering
+      ✓ should render all provided options (214 ms)
+      ✓ should render options with correct values (123 ms)
+      ✓ should render MenuItem components with correct inline styles (168 ms)
+      ✓ should render with empty options array (40 ms)
+      ✓ should handle null options gracefully (72 ms)
+    User Interactions
+      ✓ should call onChange when an option is selected (84 ms)
+      ✓ should call onChange with correct value for different options (133 ms)
+      ✓ should open dropdown when clicked (92 ms)
+      ✓ should close dropdown after selection (68 ms)
+    ReadOnly Functionality
+      ✓ should not open dropdown when readOnly is true (18 ms)
+      ✓ should not call onChange when readOnly is true (11 ms)
+      ✓ should work normally when readOnly is false (55 ms)
+      ✓ should have disabled attribute when readOnly is true (24 ms)
+    Edge Cases
+      ✓ should handle options with empty text (76 ms)
+      ✓ should handle options with zero value (57 ms)
+      ✓ should handle single option (70 ms)
+      ✓ should handle options with special characters (67 ms)
+    Accessibility
+      ✓ should have proper ARIA attributes (22 ms)
+      ✓ should update ARIA attributes when opened (44 ms)
+      ✓ should have proper role attributes for options (77 ms)
+      ✓ should support keyboard navigation (45 ms)
+      ✓ should maintain focus management (43 ms)
+    Integration with Controlled Components
+      ✓ should work with controlled components (47 ms)
+      ✓ should handle rapid value changes (22 ms)
+    Error Handling
+      ✓ should handle malformed option objects (41 ms)
+      ✓ should handle undefined options gracefully (35 ms)
+      ✓ should handle options with duplicate values (107 ms)
+      ✓ should handle extremely long option text (47 ms)
+    CSS and Styling
+      ✓ should apply default CSS classes (10 ms)
+      ✓ should combine default classes with custom className (9 ms)
+      ✓ should handle undefined className gracefully (11 ms)
+    Material-UI Integration
+      ✓ should work with Material-UI ThemeProvider (42 ms)
+      ✓ should render Select component with disableUnderline prop (16 ms)
+    Performance and Memory
+      ✓ should handle large number of options efficiently (5776 ms)
+      ✓ should not cause memory leaks with frequent re-renders (140 ms)
+
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks.
+[999D[K--------------------------------|---------|----------|---------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+File                            | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                                                                                                                         
+--------------------------------|---------|----------|---------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+All files                       |   61.12 |    56.36 |   54.63 |   61.05 |                                                                                                                                                                           
+ src                            |      30 |    11.11 |   17.39 |   27.94 |                                                                                                                                                                           
+  App.tsx                       |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  Routes.tsx                    |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |       0 |      100 |       0 |       0 | 21-68                                                                                                                                                                     
+  sentry.ts                     |       0 |      100 |     100 |       0 | 5-7                                                                                                                                                                       
+  serviceWorker.ts              |       0 |        0 |       0 |       0 | 13-146                                                                                                                                                                    
+ src/components                 |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  Spinner.tsx                   |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/components/AutoComplete    |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/components/Boolean         |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/components/DatePicker      |   88.88 |      100 |      75 |   88.88 |                                                                                                                                                                           
+  index.tsx                     |   88.88 |      100 |      75 |   88.88 | 65                                                                                                                                                                        
+ src/components/Header          |   90.24 |       75 |     100 |      90 |                                                                                                                                                                           
+  NavBarItems.tsx               |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  UserSetting.tsx               |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |   87.87 |    70.58 |     100 |    87.5 | 75-80                                                                                                                                                                     
+ src/components/Loading         |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/components/Modal           |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/components/NewAccount      |     100 |    93.02 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |     100 |    93.02 |     100 |     100 | 103,182-188                                                                                                                                                               
+ src/components/SearchBox       |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/components/SelectInput     |     100 |     87.5 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |     100 |     87.5 |     100 |     100 | 39                                                                                                                                                                        
+ src/components/Sidebar         |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  AccountDetails.tsx            |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  SidebarItem.tsx               |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/components/Summary/Info    |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/components/Table           |   97.75 |    89.39 |     100 |   97.72 |                                                                                                                                                                           
+  Pagination.tsx                |     100 |     92.3 |     100 |     100 | 21,102                                                                                                                                                                    
+  index.tsx                     |   95.34 |     87.5 |     100 |   95.34 | 64,109                                                                                                                                                                    
+ src/components/TableTitle      |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/components/Tabs            |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/components/ToggleButton    |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  index.tsx                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/components/Tooltip         |   93.33 |      100 |      80 |     100 |                                                                                                                                                                           
+  index.tsx                     |   93.33 |      100 |      80 |     100 |                                                                                                                                                                           
+ src/context                    |   96.29 |      100 |      80 |   96.29 |                                                                                                                                                                           
+  ContactBarContext.ts          |   66.66 |      100 |       0 |   66.66 | 11                                                                                                                                                                        
+  SidebarContext.tsx            |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  UserContext.tsx               |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/generated                  |   42.55 |      100 |      25 |   42.55 |                                                                                                                                                                           
+  graphql.ts                    |   42.55 |      100 |      25 |   42.55 | 1399-1404,1450-1451,1484-1489,1523-1524,1589-1594,1630-1631,1737-1742,1781-1786,1822-1827,1893-1898,1938-1943,1975-1976,2009-2014,2045-2046,2077-2078,2117-2118,2192-2197 
+ src/graphql                    |       0 |      100 |     100 |       0 |                                                                                                                                                                           
+  getAccountDetail.ts           |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  getAccountsByPartialSearch.ts |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  getAdminPortalDocument.ts     |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  getApplications.ts            |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  getPolicies.ts                |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  getPolicyDocuments.ts         |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  getPolicyInfo.ts              |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  getQuotes.ts                  |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  getUnderwritingUrl.ts         |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  getUser.ts                    |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  getUsersByAgency.ts           |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  isInternalUser.ts             |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  listAgencies.ts               |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+  updateNonRenewalReasons.ts    |       0 |        0 |       0 |       0 |                                                                                                                                                                           
+  viewPolicyChanges.ts          |       0 |      100 |     100 |       0 | 3                                                                                                                                                                         
+ src/pages/Account              |       0 |        0 |       0 |       0 |                                                                                                                                                                           
+  index.tsx                     |       0 |        0 |       0 |       0 | 27-284                                                                                                                                                                    
+ src/pages/Dashboard            |   86.36 |    83.33 |   71.42 |   86.36 |                                                                                                                                                                           
+  index.tsx                     |   86.36 |    83.33 |   71.42 |   86.36 | 87-109                                                                                                                                                                    
+ src/pages/Error                |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  Error.tsx                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/pages/Login                |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  AuthProvider.tsx              |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  login.tsx                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/pages/NotFound             |       0 |      100 |       0 |       0 |                                                                                                                                                                           
+  NotFound.tsx                  |       0 |      100 |       0 |       0 | 3-4                                                                                                                                                                       
+ src/pages/Policy               |   34.86 |    28.38 |   27.58 |      35 |                                                                                                                                                                           
+  ActionButtons.tsx             |   85.71 |       95 |      50 |   85.71 | 38,58                                                                                                                                                                     
+  COI.tsx                       |    4.16 |        0 |       0 |    4.16 | 16-175                                                                                                                                                                    
+  Cancellation.tsx              |   45.77 |    34.23 |   34.37 |   45.77 | 37,139-145,176-185,198-204,225-227,238-260,271-309,320-331,337-353,359-369,375-396,406-419,425,432-435,457-513,539-540                                                    
+  GoToUnderwriting.tsx          |    92.3 |      100 |      75 |    92.3 | 68                                                                                                                                                                        
+  index.tsx                     |    1.47 |        0 |       0 |    1.49 | 35-299                                                                                                                                                                    
+ src/styles                     |   58.44 |    68.51 |      30 |   58.44 |                                                                                                                                                                           
+  styledConfig.tsx              |   58.44 |    68.51 |      30 |   58.44 | 116,139-211,218                                                                                                                                                           
+ src/utils                      |   98.07 |      100 |     100 |   98.07 |                                                                                                                                                                           
+  calTotalPayable.ts            |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  currencyFormat.ts             |       0 |      100 |     100 |       0 | 1                                                                                                                                                                         
+  getEnv.ts                     |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  isJestRunning.ts              |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  timeout.ts                    |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+  wrapEmails.ts                 |     100 |      100 |     100 |     100 |                                                                                                                                                                           
+ src/utils/hooks                |       0 |      100 |       0 |       0 |                                                                                                                                                                           
+  useContactBarHook.ts          |       0 |      100 |       0 |       0 | 5-14                                                                                                                                                                      
+--------------------------------|---------|----------|---------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Summary of all failing tests
+FAIL test/components/NewAccount/NewAccount.test.tsx (22.052 s)
+  ● <NewAccount /> › Button Functionality › should copy URL to clipboard when copy button is clicked
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "https://test-underwriting-url.com"
+
+    Number of calls: 0
+
+      614 |       await user.click(copyButton);
+      615 |
+    > 616 |       expect(mockWriteText).toHaveBeenCalledWith(testUrl);
+          |                             ^
+      617 |       expect(mockAlert).toHaveBeenCalledWith('Application URL copied to clipboard.');
+      618 |     });
+      619 |
+
+      at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:616:29)
+
+  ● <NewAccount /> › Complete User Flows › should complete full B2B2C flow with agency and user selection
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "https://b2b2c-underwriting-url.com"
+
+    Number of calls: 0
+
+      1106 |       // Test Copy URL
+      1107 |       await user.click(screen.getByTitle('Copy Application URL'));
+    > 1108 |       expect(mockWriteText).toHaveBeenCalledWith(testUrl);
+           |                             ^
+      1109 |       expect(mockAlert).toHaveBeenCalledWith('Application URL copied to clipboard.');
+      1110 |     });
+      1111 |
+
+      at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:1108:29)
+
+  ● <NewAccount /> › Complete User Flows › should complete full B2C flow without agency selection
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "https://b2c-underwriting-url.com"
+
+    Number of calls: 0
+
+      1165 |
+      1166 |       await user.click(screen.getByTitle('Copy Application URL'));
+    > 1167 |       expect(mockWriteText).toHaveBeenCalledWith(testUrl);
+           |                             ^
+      1168 |       expect(mockAlert).toHaveBeenCalledWith('Application URL copied to clipboard.');
+      1169 |     });
+      1170 |
+
+      at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:1167:29)
+
+  ● <NewAccount /> › Complete User Flows › should complete enterprise agency flow without user selection
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "https://enterprise-underwriting-url.com"
+
+    Number of calls: 0
+
+      1241 |
+      1242 |       await user.click(screen.getByTitle('Copy Application URL'));
+    > 1243 |       expect(mockWriteText).toHaveBeenCalledWith(testUrl);
+           |                             ^
+      1244 |       expect(mockAlert).toHaveBeenCalledWith('Application URL copied to clipboard.');
+      1245 |     });
+      1246 |   });
+
+      at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:1243:29)
+
+
+Test Suites: 1 failed, 36 passed, 37 total
+Tests:       4 failed, 505 passed, 509 total
+Snapshots:   0 total
+Time:        37.513 s
+Ran all test suites.
+[2K[1G[31merror[39m Command failed with exit code 1.
+[2K[1G[34minfo[39m Visit [1mhttps://yarnpkg.com/en/docs/cli/run[22m for documentation about this command.
+
+Exited with code exit status 1
+
+```

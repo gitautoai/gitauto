@@ -48,6 +48,20 @@ def test_clean_logs_with_eslint_warnings():
     assert result == expected_output
 
 
+def test_clean_logs_jest_with_summary_section():
+    """Test that Jest logs with 'Summary of all failing tests' are minimized correctly."""
+    with open("payloads/circleci/error_usage_9744_raw.txt", "r", encoding=UTF8) as f:
+        raw_input = f.read()
+
+    with open(
+        "payloads/circleci/error_usage_9744_minimized.txt", "r", encoding=UTF8
+    ) as f:
+        expected_output = f.read()
+
+    result = clean_logs(raw_input)
+    assert result == expected_output
+
+
 if __name__ == "__main__":
     test_clean_logs_circleci_pipeline()
     print("Clean logs test passed!")

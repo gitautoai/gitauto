@@ -558,9 +558,10 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
    - Store this list and use it for all subsequent steps
    - Extract Python files from this list: filter for `.py` files
    - Extract test files from this list: filter for `test_*.py` files
-6. Run pylint on the Python files identified in step 5 - **IF ANY PYLINT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
-7. Run pyright on the Python files identified in step 5 - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
-8. Run pytest on the test files identified in step 5 - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
+   - **CRITICAL**: For pylint, pyright, and pytest, filter out deleted files that no longer exist
+6. Run pylint on the Python files identified in step 5 (excluding deleted files): `ls <files> 2>/dev/null | xargs pylint` - **IF ANY PYLINT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+7. Run pyright on the Python files identified in step 5 (excluding deleted files): `ls <files> 2>/dev/null | xargs pyright` - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+8. Run pytest on the test files identified in step 5 (excluding deleted files): `ls <test_files> 2>/dev/null | xargs python -m pytest` - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
 9. Check current branch is not main: `git branch --show-current`
 10. Merge latest main: `git fetch origin main && git merge origin/main`
 11. **CRITICAL**: Review `git status` again to ensure ALL changes are staged:

@@ -4,7 +4,7 @@ from utils.logs.remove_pytest_sections import remove_pytest_sections
 from utils.logs.remove_repetitive_eslint_warnings import (
     remove_repetitive_eslint_warnings,
 )
-from utils.logs.deduplicate_logs import deduplicate_logs
+from utils.logs.minimize_jest_test_logs import minimize_jest_test_logs
 
 
 @handle_exceptions(
@@ -14,5 +14,5 @@ def clean_logs(error_log: str):
     sections_removed_log = remove_pytest_sections(error_log)
     eslint_cleaned_log = remove_repetitive_eslint_warnings(sections_removed_log)
     ansi_cleaned_log = remove_ansi_escape_codes(eslint_cleaned_log)
-    minimized_log = deduplicate_logs(ansi_cleaned_log)
+    minimized_log = minimize_jest_test_logs(ansi_cleaned_log)
     return minimized_log
