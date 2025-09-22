@@ -551,19 +551,25 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 1. Activate virtual environment: `source venv/bin/activate`
 2. Run black formatting: `black .`
 3. Run ruff linting: `ruff check . --fix` (fix ALL ruff errors, not just modified files - if any errors remain unfixed, STOP and fix them before continuing)
-4. Get list of modified AND created files ONCE: `{ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u`
+4. **CRITICAL**: Check `git status` FIRST to see ALL changes including deleted/renamed files
+5. Get list of modified, created, AND deleted files ONCE: `{ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u`
    - This command captures: modified files, staged files, and newly created untracked files
+   - NOTE: Deleted files that are already staged won't appear in this list but MUST be included in the commit
    - Store this list and use it for all subsequent steps
    - Extract Python files from this list: filter for `.py` files
    - Extract test files from this list: filter for `test_*.py` files
-5. Run pylint on the Python files identified in step 4 - **IF ANY PYLINT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
-6. Run pyright on the Python files identified in step 4 - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
-7. Run pytest on the test files identified in step 4 - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
-8. Check current branch is not main: `git branch --show-current`
-9. Merge latest main: `git fetch origin main && git merge origin/main`
-10. **CRITICAL**: Add ALL the specific files identified in step 4 (including those modified by black/ruff): `git add file1.py file2.py file3.py` (**NEVER use `git add .`** and **NEVER exclude files that were formatted**)
-11. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
-12. Push to remote: `git push`
+6. Run pylint on the Python files identified in step 5 - **IF ANY PYLINT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+7. Run pyright on the Python files identified in step 5 - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+8. Run pytest on the test files identified in step 5 - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
+9. Check current branch is not main: `git branch --show-current`
+10. Merge latest main: `git fetch origin main && git merge origin/main`
+11. **CRITICAL**: Review `git status` again to ensure ALL changes are staged:
+    - Add all modified/new files identified in step 5
+    - Ensure deleted files are staged (they should already be if renamed with `mv`)
+    - Use specific file names: `git add file1.py file2.py file3.py` (**NEVER use `git add .`**)
+    - For deleted files already staged, they'll be included automatically in the commit
+12. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
+13. Push to remote: `git push`
 
 **CRITICAL GIT RULES:**
 

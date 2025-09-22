@@ -97,13 +97,19 @@ def test_preserve_system_messages():
 
 
 def test_with_real_agent_input():
-    # Load actual data
-    with open("payloads/anthropic/agent_pc_large_input.json", "r", encoding=UTF8) as f:
+    # Load actual data (formatted/prettified version for readability)
+    with open(
+        "payloads/anthropic/llm_request_2816_input_content_formatted.json",
+        "r",
+        encoding=UTF8,
+    ) as f:
         original_messages = json.load(f)
 
     # Load expected result
     with open(
-        "payloads/anthropic/agent_pc_large_expected.json", "r", encoding=UTF8
+        "payloads/anthropic/llm_request_2816_input_content_formatted_expected.json",
+        "r",
+        encoding=UTF8,
     ) as f:
         expected_messages = json.load(f)
 
@@ -112,3 +118,44 @@ def test_with_real_agent_input():
 
     # Should match expected output
     assert result == expected_messages
+
+
+def test_with_production_minified_json():
+    # Test with real minified JSON from production database (llm_request ID 2816)
+    # This is the actual format used in production - not prettified
+    with open(
+        "payloads/anthropic/llm_request_2816_input_content_raw.json", "r", encoding=UTF8
+    ) as f:
+        messages = json.load(f)
+
+    # Should have 52 messages
+    assert len(messages) == 52
+
+    # Apply deduplication
+    result = deduplicate_file_content(messages)
+
+    # Should still have 52 messages
+    assert len(result) == 52
+
+    # Check that deduplication occurred
+    original_size = len(json.dumps(messages))
+    deduplicated_size = len(json.dumps(result))
+
+    # Should reduce size significantly (by ~50%)
+    assert deduplicated_size < original_size
+    assert (
+        deduplicated_size < original_size * 0.6
+    )  # Should be less than 60% of original
+
+    # Count replaced file contents
+    replaced_count = 0
+    for msg in result:
+        if msg.get("role") == "user" and isinstance(msg.get("content"), list):
+            for item in msg["content"]:
+                if isinstance(item, dict) and "[Outdated" in str(
+                    item.get("content", "")
+                ):
+                    replaced_count += 1
+
+    # Should have replaced 4 outdated file contents
+    assert replaced_count == 4
