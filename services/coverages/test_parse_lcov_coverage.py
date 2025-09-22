@@ -270,3 +270,52 @@ end_of_record"""
     # C# file (commas in function names)
     cs_file = next(f for f in files if "testcommas.cs" in f["full_path"])
     assert cs_file["function_coverage"] == 50.0
+
+
+def test_parse_lcov_gitauto_real_exact_counts():
+    """Test parsing GitAuto repository LCOV file with exact file counts.
+
+    This test verifies that the parser correctly filters out test files
+    and produces the expected number of reports. It will fail if there's
+    a bug in production causing incorrect file extraction.
+    """
+    with open("payloads/lcov/lcov-gitauto-20250922.info", "r", encoding=UTF8) as f:
+        lcov_content = f.read()
+
+    result = parse_lcov_coverage(lcov_content)
+
+    # Total reports should be: files + directories + repository
+    # Expected: 282 files + 77 directories + 1 repository = 360 total
+    assert len(result) == 360
+
+    repo_level = [r for r in result if r["level"] == "repository"]
+    assert len(repo_level) == 1
+
+    file_level = [r for r in result if r["level"] == "file"]
+    assert len(file_level) == 282  # Non-test files only
+
+    directory_level = [r for r in result if r["level"] == "directory"]
+    assert len(directory_level) == 77  # Unique directories
+
+    # Verify repository level exists
+    repo_coverage = repo_level[0]
+    assert repo_coverage["full_path"] == "All"
+    assert isinstance(repo_coverage["statement_coverage"], float)
+    assert isinstance(repo_coverage["line_coverage"], float)
+
+    # Verify specific test files are correctly filtered out
+    config_file = next((f for f in file_level if f["full_path"] == "config.py"), None)
+    assert config_file is not None, "config.py should be included as a non-test file"
+
+    # Verify legitimate files containing 'test' are kept (they're not actual test files)
+    legitimate_files = [
+        "conftest.py",  # pytest configuration file
+        "services/webhook/utils/create_test_selection_comment.py",  # utility for test selection
+        "utils/files/is_test_file.py",  # utility to detect test files
+    ]
+
+    for file_path in legitimate_files:
+        file_found = next((f for f in file_level if f["full_path"] == file_path), None)
+        assert (
+            file_found is not None
+        ), f"{file_path} should be included as a legitimate non-test file"
