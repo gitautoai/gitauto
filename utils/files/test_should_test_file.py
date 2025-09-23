@@ -556,7 +556,28 @@ if __name__ == "__main__":
         assert result == ""  # Should return the actual value
 
     def test_should_test_file_with_extremely_long_file_path(
+        self, mock_evaluate_condition, sample_code_content
 
+    ):
+        """Test function behavior with extremely long file path."""
+        # Create a very long file path
+        long_path = "very/long/path/" * 50 + "file.py"
+        mock_evaluate_condition.return_value = True
+
+        result = should_test_file(long_path, sample_code_content)
+
+        assert result is True
+        mock_evaluate_condition.assert_called_once()
+
+        # Verify long path is passed correctly
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert f"File path: {long_path}" in content_arg
+
+    def test_should_test_file_system_prompt_content_verification(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that the system prompt contains all expected content."""
     def test_should_test_file_system_prompt_content_verification(
         self, mock_evaluate_condition, sample_file_path, sample_code_content
     ):
