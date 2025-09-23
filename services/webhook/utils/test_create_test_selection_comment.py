@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from unittest import TestCase
 import pytest
 from config import PRODUCT_NAME
 from constants.messages import SETTINGS_LINKS
@@ -492,3 +493,149 @@ def test_create_test_selection_comment_with_large_checklist():
     assert TEST_SELECTION_COMMENT_IDENTIFIER in result
     assert "- [ ] Yes, manage tests" in result
     assert SETTINGS_LINKS in result
+def test_file_checklist_item_type_validation():
+    """Test that FileChecklistItem TypedDict structure is correctly defined."""
+    # This test validates the TypedDict structure
+    valid_item: FileChecklistItem = {
+        "path": "src/test.py",
+        "checked": True,
+        "coverage_info": " (Coverage: 50%)",
+        "status": "modified",
+    }
+
+    # Verify all required keys are present
+    assert "path" in valid_item
+    assert "checked" in valid_item
+    assert "coverage_info" in valid_item
+    assert "status" in valid_item
+
+    # Verify types
+    assert isinstance(valid_item["path"], str)
+    assert isinstance(valid_item["checked"], bool)
+    assert isinstance(valid_item["coverage_info"], str)
+    assert valid_item["status"] in ["added", "modified", "removed"]
+
+
+def test_create_test_selection_comment_with_none_branch_name():
+    """Test creating a comment with None branch name (edge case)."""
+    # This tests robustness when branch_name might be None
+    checklist: list[FileChecklistItem] = []
+
+    # This should not crash even with None branch name
+    with patch(
+        "services.webhook.utils.create_test_selection_comment.create_reset_command_message"
+    ) as mock_reset:
+        mock_reset.return_value = "MOCK_RESET_COMMAND"
+        result = create_test_selection_comment(checklist, None)  # type: ignore
+
+        # Verify the reset command was called with None
+        mock_reset.assert_called_once_with(None)
+        assert "MOCK_RESET_COMMAND" in result
+
+
+def test_create_test_selection_comment_with_empty_string_branch_name():
+    """Test creating a comment with empty string branch name."""
+    checklist: list[FileChecklistItem] = []
+
+    with patch(
+        "services.webhook.utils.create_test_selection_comment.create_reset_command_message"
+    ) as mock_reset:
+        mock_reset.return_value = "MOCK_RESET_COMMAND"
+        result = create_test_selection_comment(checklist, "")
+
+        # Verify the reset command was called with empty string
+        mock_reset.assert_called_once_with("")
+        assert "MOCK_RESET_COMMAND" in result
+
+
+def test_create_test_selection_comment_with_whitespace_in_coverage():
+    """Test creating a comment with various whitespace patterns in coverage info."""
+    branch_name = "whitespace-test"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/file1.py",
+            "checked": True,
+            "coverage_info": "   (Coverage: 50%)   ",  # Leading and trailing spaces
+            "status": "modified",
+        },
+        {
+            "path": "src/file2.py",
+            "checked": False,
+            "coverage_info": "\t(Coverage: 75%)\t",  # Tabs
+            "status": "added",
+        },
+        {
+            "path": "src/file3.py",
+            "checked": True,
+            "coverage_info": "\n(Coverage: 25%)\n",  # Newlines
+            "status": "modified",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify whitespace is preserved as-is (no trimming in the function)
+    assert "- [x] modified `src/file1.py`   (Coverage: 50%)   " in result
+    assert "- [ ] added `src/file2.py`\t(Coverage: 75%)\t" in result
+    assert "- [x] modified `src/file3.py`\n(Coverage: 25%)\n" in result
+
+
+def test_create_test_selection_comment_with_very_long_branch_name():
+    """Test creating a comment with a very long branch name."""
+    # Create a very long branch name (common in some workflows)
+    long_branch_name = "feature/very-long-branch-name-that-might-be-generated-by-automated-systems-" + "x" * 100
+    checklist: list[FileChecklistItem] = []
+
+    with patch(
+        "services.webhook.utils.create_test_selection_comment.create_reset_command_message"
+    ) as mock_reset:
+        mock_reset.return_value = "MOCK_RESET_COMMAND"
+        result = create_test_selection_comment(checklist, long_branch_name)
+
+        # Verify the reset command was called with the long branch name
+        mock_reset.assert_called_once_with(long_branch_name)
+        assert "MOCK_RESET_COMMAND" in result
+
+
+def test_create_test_selection_comment_with_special_branch_characters():
+    """Test creating a comment with special characters in branch name."""
+    special_branch_names = [
+        "feature/issue-#123",
+        "hotfix/bug@urgent",
+        "release/v1.2.3-beta",
+        "feature/user&admin",
+        "bugfix/fix%encoding",
+    ]
+
+    for branch_name in special_branch_names:
+        checklist: list[FileChecklistItem] = []
+
+        with patch(
+            "services.webhook.utils.create_test_selection_comment.create_reset_command_message"
+        ) as mock_reset:
+            mock_reset.return_value = f"MOCK_RESET_COMMAND_{branch_name}"
+            result = create_test_selection_comment(checklist, branch_name)
+
+            # Verify the reset command was called with the special branch name
+            mock_reset.assert_called_once_with(branch_name)
+            assert f"MOCK_RESET_COMMAND_{branch_name}" in result
+
+
+def test_create_test_selection_comment_return_type():
+    """Test that the function returns a string."""
+    branch_name = "test-branch"
+    checklist: list[FileChecklistItem] = []
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify return type
+    assert isinstance(result, str)
+    assert len(result) > 0
+
+
+def test_create_test_selection_comment_immutability():
+    """Test that the function doesn't modify the input checklist."""
+    branch_name = "immutability-test"
+    original_checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/test.py",
