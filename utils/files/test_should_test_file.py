@@ -636,3 +636,63 @@ if __name__ == "__main__":
 
             # Verify newlines are preserved
             call_args = mock_evaluate_condition.call_args
+
+    def test_should_test_file_with_tab_characters(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with tab characters in content."""
+        tab_content = "def function():\n\tif True:\n\t\treturn 'tabbed'"
+        mock_evaluate_condition.return_value = True
+
+        result = should_test_file(sample_file_path, tab_content)
+
+        assert result is True
+        mock_evaluate_condition.assert_called_once()
+
+        # Verify tabs are preserved
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert tab_content in content_arg
+        assert "\t" in content_arg
+
+    def test_should_test_file_return_value_when_none_explicitly(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test explicit None return from evaluate_condition is handled correctly."""
+        mock_evaluate_condition.return_value = None
+
+        result = should_test_file(sample_file_path, sample_code_content)
+
+        # Should explicitly return False when evaluate_condition returns None
+        assert result is False
+        assert result is not None
+        mock_evaluate_condition.assert_called_once()
+
+    def test_should_test_file_with_mixed_content_types(
+        self, mock_evaluate_condition
+    ):
+        """Test function with various mixed content scenarios."""
+        test_cases = [
+            ("config.json", '{"key": "value", "nested": {"array": [1, 2, 3]}}'),
+            ("style.css", "body { margin: 0; padding: 0; }"),
+            ("script.js", "function test() { return true; }"),
+            ("README.md", "# Title\n\nThis is **bold** text."),
+            ("Dockerfile", "FROM python:3.9\nRUN pip install requirements.txt"),
+        ]
+
+        mock_evaluate_condition.return_value = True
+
+        for file_path, content in test_cases:
+            mock_evaluate_condition.reset_mock()
+            result = should_test_file(file_path, content)
+
+            assert result is True
+            mock_evaluate_condition.assert_called_once()
+
+            # Verify content is passed correctly for each file type
+            call_args = mock_evaluate_condition.call_args
+            content_arg = call_args[1]["content"]
+            assert f"File path: {file_path}" in content_arg
+            assert content in content_arg
+
+    def test_should_test_file_function_docstring_preservation(self):
