@@ -639,3 +639,85 @@ def test_create_test_selection_comment_immutability():
     original_checklist: list[FileChecklistItem] = [
         {
             "path": "src/test.py",
+
+
+def test_create_test_selection_comment_with_malformed_coverage_info():
+    """Test creating a comment with malformed coverage info strings."""
+    branch_name = "malformed-test"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/file1.py",
+            "checked": True,
+            "coverage_info": "(Coverage: 50%",  # Missing closing parenthesis
+            "status": "modified",
+        },
+        {
+            "path": "src/file2.py",
+            "checked": False,
+            "coverage_info": "Coverage: 75%)",  # Missing opening parenthesis
+            "status": "added",
+        },
+        {
+            "path": "src/file3.py",
+            "checked": True,
+            "coverage_info": " Coverage 25% ",  # No parentheses
+            "status": "removed",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify malformed coverage info is preserved as-is
+    assert "- [x] modified `src/file1.py`(Coverage: 50%" in result
+    assert "- [ ] added `src/file2.py`Coverage: 75%)" in result
+    assert "- [x] removed `src/file3.py` Coverage 25% " in result
+
+
+def test_create_test_selection_comment_with_numeric_coverage_variations():
+    """Test creating a comment with various numeric coverage formats."""
+    branch_name = "numeric-test"
+    checklist: list[FileChecklistItem] = [
+        {
+            "path": "src/file1.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 0%)",
+            "status": "modified",
+        },
+        {
+            "path": "src/file2.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 100%)",
+            "status": "added",
+        },
+        {
+            "path": "src/file3.py",
+            "checked": True,
+            "coverage_info": " (Coverage: 50.5%)",
+            "status": "removed",
+        },
+        {
+            "path": "src/file4.py",
+            "checked": False,
+            "coverage_info": " (Coverage: 99.99%)",
+            "status": "modified",
+        },
+    ]
+
+    result = create_test_selection_comment(checklist, branch_name)
+
+    # Verify all numeric formats are handled correctly
+    assert "- [x] modified `src/file1.py` (Coverage: 0%)" in result
+    assert "- [ ] added `src/file2.py` (Coverage: 100%)" in result
+    assert "- [x] removed `src/file3.py` (Coverage: 50.5%)" in result
+    assert "- [ ] modified `src/file4.py` (Coverage: 99.99%)" in result
+
+
+def test_create_test_selection_comment_performance_with_large_data():
+    """Test performance with a very large checklist (stress test)."""
+    branch_name = "performance-test"
+
+    # Create a large checklist (100 items)
+    checklist: list[FileChecklistItem] = []
+    for i in range(100):
+        checklist.append({
+            "path": f"src/module_{i//10}/submodule_{i%10}/file_{i:03d}.py",
