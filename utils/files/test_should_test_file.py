@@ -578,10 +578,6 @@ if __name__ == "__main__":
         self, mock_evaluate_condition, sample_file_path, sample_code_content
     ):
         """Test that the system prompt contains all expected content."""
-    def test_should_test_file_system_prompt_content_verification(
-        self, mock_evaluate_condition, sample_file_path, sample_code_content
-    ):
-        """Test that the system prompt contains all expected content."""
         mock_evaluate_condition.return_value = True
 
         should_test_file(sample_file_path, sample_code_content)
