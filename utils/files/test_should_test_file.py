@@ -50,6 +50,9 @@ def validate_input(value):
 
         result = should_test_file(sample_file_path, sample_code_content)
 
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+
 
     def test_should_test_file_returns_false_when_evaluate_condition_returns_false(
         self, mock_evaluate_condition, sample_file_path, sample_code_content
@@ -80,5 +83,5 @@ def validate_input(value):
 
         # Check that system_prompt parameter is provided
         system_prompt_arg = call_args[1]["system_prompt"]
-        assert result is False
-        mock_evaluate_condition.assert_called_once()
+        assert system_prompt_arg is not None
+        assert len(system_prompt_arg) > 0
