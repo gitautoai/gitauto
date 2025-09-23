@@ -634,22 +634,6 @@ def test_create_test_selection_comment_return_type():
 
 
 def test_create_test_selection_comment_immutability():
-def test_create_test_selection_comment_immutability():
-    """Test that the function doesn't modify the input checklist."""
-    original_checklist = [
-        {
-            "path": "src/main.py",
-            "checked": True,
-            "coverage_info": " (85% coverage)",
-            "status": "modified"
-        }
-    ]
-    checklist_copy = original_checklist.copy()
-
-    create_test_selection_comment(checklist_copy, "feature/test-branch")
-
-    assert checklist_copy == original_checklist
-    """Test that the function doesn't modify the input checklist."""
     branch_name = "immutability-test"
     original_checklist: list[FileChecklistItem] = [
         {
