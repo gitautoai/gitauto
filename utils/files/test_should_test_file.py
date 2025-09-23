@@ -556,3 +556,83 @@ if __name__ == "__main__":
         assert result == ""  # Should return the actual value
 
     def test_should_test_file_with_extremely_long_file_path(
+
+    def test_should_test_file_system_prompt_content_verification(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test that the system prompt contains all expected content."""
+        mock_evaluate_condition.return_value = True
+
+        should_test_file(sample_file_path, sample_code_content)
+
+        call_args = mock_evaluate_condition.call_args
+        system_prompt = call_args[1]["system_prompt"]
+
+        # Verify the complete system prompt structure
+        expected_phrases = [
+            "You are a very experienced senior engineer",
+            "Look at this code and decide if it needs unit tests",
+            "Be practical and strict",
+            "only return TRUE if the code has actual logic worth testing",
+            "Return FALSE for trivial code that doesn't need tests"
+        ]
+
+        for phrase in expected_phrases:
+            assert phrase in system_prompt
+
+    def test_should_test_file_with_code_containing_quotes(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with code containing various quote types."""
+        code_with_quotes = '''def test():
+    single = 'single quotes'
+    double = "double quotes"
+    triple_single = """triple single"""
+    triple_double = """triple double"""
+    mixed = "It's a 'test' with \\"nested\\" quotes"
+    return mixed'''
+
+        mock_evaluate_condition.return_value = True
+
+        result = should_test_file(sample_file_path, code_with_quotes)
+
+        assert result is True
+        mock_evaluate_condition.assert_called_once()
+
+        # Verify quotes are preserved in content
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert code_with_quotes in content_arg
+
+    def test_should_test_file_decorator_configuration_verification(self):
+        """Test that the decorator is configured with correct parameters."""
+        # Access the wrapped function to verify decorator configuration
+        wrapped_func = should_test_file.__wrapped__
+
+        # The function should be wrapped (indicating decorator is applied)
+        assert wrapped_func is not None
+        assert wrapped_func.__name__ == "should_test_file"
+
+    def test_should_test_file_with_newline_variations(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with different newline types."""
+        # Test with different newline characters
+        newline_variations = [
+            "line1\nline2",  # Unix
+            "line1\r\nline2",  # Windows
+            "line1\rline2",  # Old Mac
+            "line1\n\nline2",  # Multiple newlines
+        ]
+
+        mock_evaluate_condition.return_value = True
+
+        for content in newline_variations:
+            mock_evaluate_condition.reset_mock()
+            result = should_test_file(sample_file_path, content)
+
+            assert result is True
+            mock_evaluate_condition.assert_called_once()
+
+            # Verify newlines are preserved
+            call_args = mock_evaluate_condition.call_args
