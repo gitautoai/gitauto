@@ -752,3 +752,4 @@ def test_create_test_selection_comment_performance_with_large_data():
     # Should complete within reasonable time (less than 1 second for 100 items)
     assert end_time - start_time < 1.0
     assert isinstance(result, str)
+    assert len(result) > 0
