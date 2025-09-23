@@ -48,6 +48,9 @@ from services.supabase.usage.update_retry_pairs import (
     update_retry_workflow_id_hash_pairs,
 )
 from services.supabase.usage.update_usage import update_usage
+from services.supabase.usage.check_older_active_test_failure import (
+    check_older_active_test_failure_request,
+)
 
 # Local imports (Others)
 from utils.logs.clean_logs import clean_logs
@@ -178,21 +181,15 @@ def handle_check_run(
 
     # Check if permission comment or stumbled comment already exists
     if has_comment_with_text(base_args, [CHECK_RUN_STUMBLED_MESSAGE]):
-        logging.info(
-            "Check run stumbled comment already exists for PR #%s in %s/%s. Another GitAuto instance is processing.",
-            pull_number,
-            owner_name,
-            repo_name,
-        )
+        msg = f"Skipped - stumbled comment exists for PR #{pull_number} in `{owner_name}/{repo_name}`"
+        logging.info(msg)
+        slack_notify(msg, thread_ts)
         return
 
     if has_comment_with_text(base_args, [PERMISSION_DENIED_MESSAGE]):
-        logging.info(
-            "Permission request comment already exists for PR #%s in %s/%s. Waiting for user approval.",
-            pull_number,
-            owner_name,
-            repo_name,
-        )
+        msg = f"Skipped - permission request pending for PR #{pull_number} in `{owner_name}/{repo_name}`"
+        logging.info(msg)
+        slack_notify(msg, thread_ts)
         return
 
     # Create the first comment
@@ -296,8 +293,9 @@ def handle_check_run(
         permissions = get_installation_permissions(installation_id)
 
         # Early return notification
-        early_return_msg = f"error_log is 404. Permission denied for workflow run id `{circleci_workflow_id if is_circleci else github_run_id}` in `{owner_name}/{repo_name}` - Permissions: `{permissions}`"
-        slack_notify(early_return_msg, thread_ts)
+        msg = f"Skipped - permission denied for workflow run id `{circleci_workflow_id if is_circleci else github_run_id}` in `{owner_name}/{repo_name}` - Permissions: `{permissions}`"
+        logging.info(msg)
+        slack_notify(msg, thread_ts)
         return
 
     if error_log is None:
@@ -306,8 +304,9 @@ def handle_check_run(
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
         # Early return notification
-        early_return_msg = f"Error log not found for {owner_name}/{repo_name}"
-        slack_notify(early_return_msg, thread_ts)
+        msg = f"Skipped - error log not found for `{owner_name}/{repo_name}`"
+        logging.info(msg)
+        slack_notify(msg, thread_ts)
         return
 
     # Create a pair of workflow ID and error log hash
@@ -345,10 +344,9 @@ def handle_check_run(
         )
 
         # Early return notification
-        early_return_msg = (
-            f"Already attempted fix for {owner_name}/{repo_name} - {check_run_name}"
-        )
-        slack_notify(early_return_msg, thread_ts)
+        msg = f"Skipped - already attempted fix for `{check_run_name}` in `{owner_name}/{repo_name}`"
+        logging.info(msg)
+        slack_notify(msg, thread_ts)
         return
 
     # Save the pair to avoid infinite loops
@@ -376,6 +374,30 @@ def handle_check_run(
     # Create messages
     messages = [{"role": "user", "content": user_input}]
 
+    # Check for older active requests to avoid duplicate processing
+    older_active_request = check_older_active_test_failure_request(
+        owner_id=owner_id,
+        repo_id=repo_id,
+        pr_number=pull_number,
+        current_usage_id=usage_id,
+    )
+    if older_active_request:
+        msg = f"Older active request found for PR #{pull_number} in {owner_name}/{repo_name}. Killing this duplicate request."
+        logging.info(msg)
+
+        # Mark current request as completed and exit
+        update_usage(
+            usage_id=usage_id,
+            token_input=0,
+            token_output=0,
+            total_seconds=int(time.time() - current_time),
+            is_completed=True,
+            pr_number=pull_number,
+        )
+
+        slack_notify(msg, thread_ts)
+        return
+
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
     retry_count = 0
@@ -390,6 +412,9 @@ def handle_check_run(
             timeout_msg = get_timeout_message(elapsed_time, "Check run processing")
             if comment_url:
                 update_comment(body=timeout_msg, base_args=base_args)
+            msg = f"Timeout - check run processing for PR #{pull_number} in `{owner_name}/{repo_name}`"
+            logging.info(msg)
+            slack_notify(msg, thread_ts)
             break
 
         # Safety check: Stop if PR is closed or branch is deleted
@@ -400,6 +425,9 @@ def handle_check_run(
             print(body)
             if comment_url:
                 update_comment(body=body, base_args=base_args)
+            msg = f"Stopped - pull request #{pull_number} was closed while GitAuto was processing check run failure in `{owner_name}/{repo_name}`"
+            logging.info(msg)
+            slack_notify(msg, thread_ts)
             break
 
         if not check_branch_exists(
@@ -409,6 +437,9 @@ def handle_check_run(
             print(body)
             if comment_url:
                 update_comment(body=body, base_args=base_args)
+            msg = f"Stopped - branch '{head_branch}' was deleted while GitAuto was processing check run failure in `{owner_name}/{repo_name}`"
+            logging.info(msg)
+            slack_notify(msg, thread_ts)
             break
 
         # Explore repo

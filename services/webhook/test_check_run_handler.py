@@ -721,3 +721,94 @@ def test_check_run_handler_token_accumulation(
     assert call_kwargs["usage_id"] == 888
     assert call_kwargs["token_input"] == 160  # Two calls: 80 + 80
     assert call_kwargs["token_output"] == 90  # Two calls: 45 + 45
+
+
+@patch("services.webhook.check_run_handler.get_installation_access_token")
+@patch("services.webhook.check_run_handler.get_repository")
+@patch("services.webhook.check_run_handler.slack_notify")
+@patch("services.webhook.check_run_handler.has_comment_with_text")
+@patch("services.webhook.check_run_handler.create_comment")
+@patch("services.webhook.check_run_handler.create_user_request")
+@patch("services.webhook.check_run_handler.cancel_workflow_runs")
+@patch("services.webhook.check_run_handler.get_pull_request")
+@patch("services.webhook.check_run_handler.get_pull_request_files")
+@patch("services.webhook.check_run_handler.get_workflow_run_logs")
+@patch("services.webhook.check_run_handler.update_comment")
+@patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_run_handler.clean_logs")
+@patch("services.webhook.check_run_handler.check_older_active_test_failure_request")
+@patch("services.webhook.check_run_handler.update_usage")
+def test_handle_check_run_skips_duplicate_older_request(
+    mock_update_usage,
+    mock_check_older_active,
+    mock_clean_logs,
+    mock_get_retry_pairs,
+    _mock_update_comment,
+    mock_get_logs,
+    mock_get_changes,
+    mock_get_pr,
+    _mock_cancel_workflow_runs,
+    mock_create_user_request,
+    mock_create_comment,
+    mock_has_comment,
+    mock_slack_notify,
+    mock_get_repo,
+    mock_get_token,
+    mock_check_run_payload,
+):
+    """Test that handler skips when older active request is found."""
+    # Setup mocks
+    mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_has_comment.return_value = False
+    mock_create_comment.return_value = "http://comment-url"
+    mock_slack_notify.return_value = "thread-123"
+    mock_create_user_request.return_value = 999
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
+    mock_get_logs.return_value = "Test failure log content"
+    mock_get_retry_pairs.return_value = []
+    mock_clean_logs.return_value = "Cleaned test failure log"
+    mock_check_older_active.return_value = {
+        "id": 888,
+        "created_at": "2025-09-23T10:00:00Z",
+    }
+
+    # Execute
+    handle_check_run(mock_check_run_payload)
+
+    # Verify
+    mock_get_token.assert_called_once()
+    mock_get_repo.assert_called_once()
+    mock_create_comment.assert_called_once()
+    mock_create_user_request.assert_called_once()
+    mock_check_older_active.assert_called_once_with(
+        owner_id=11111, repo_id=98765, pr_number=1, current_usage_id=999
+    )
+
+    # Verify duplicate handling
+    mock_update_usage.assert_called_once()
+    call_kwargs = mock_update_usage.call_args.kwargs
+    assert call_kwargs["usage_id"] == 999
+    assert call_kwargs["is_completed"] is True
+    assert call_kwargs["token_input"] == 0
+    assert call_kwargs["token_output"] == 0
+
+    # Verify Slack notification for duplicate
+    assert (
+        mock_slack_notify.call_count == 2
+    )  # Start notification + duplicate notification
+    duplicate_call = mock_slack_notify.call_args_list[1]
+    assert "Older active request found" in duplicate_call[0][0]
+    assert duplicate_call[0][1] == "thread-123"  # Uses thread_ts
