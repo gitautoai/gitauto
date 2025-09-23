@@ -744,3 +744,13 @@ if __name__ == "__main__":
         assert result is False
 
         # Test when result is a truthy non-boolean value
+        mock_evaluate_condition.return_value = "some_string"
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert result == "some_string"
+
+        # Test when result is a falsy non-boolean value
+        mock_evaluate_condition.return_value = ""
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert result == ""
+
+        mock_evaluate_condition.assert_called()
