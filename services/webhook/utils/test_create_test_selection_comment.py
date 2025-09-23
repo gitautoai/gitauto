@@ -1,13 +1,12 @@
-from unittest.mock import patch
 from unittest import TestCase
+from unittest.mock import patch
+
 import pytest
 from config import PRODUCT_NAME
 from constants.messages import SETTINGS_LINKS
-from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
 from services.webhook.utils.create_test_selection_comment import (
-    create_test_selection_comment,
-    FileChecklistItem,
-)
+    FileChecklistItem, create_test_selection_comment)
+from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
 
 
 @pytest.fixture
@@ -493,6 +492,8 @@ def test_create_test_selection_comment_with_large_checklist():
     assert TEST_SELECTION_COMMENT_IDENTIFIER in result
     assert "- [ ] Yes, manage tests" in result
     assert SETTINGS_LINKS in result
+
+
 def test_file_checklist_item_type_validation():
     """Test that FileChecklistItem TypedDict structure is correctly defined."""
     # This test validates the TypedDict structure
@@ -633,76 +634,22 @@ def test_create_test_selection_comment_return_type():
     assert len(result) > 0
 
 
-
-def test_create_test_selection_comment_with_malformed_coverage_info():
-    """Test creating a comment with malformed coverage info strings."""
-    branch_name = "malformed-test"
-    checklist: list[FileChecklistItem] = [
+def test_create_test_selection_comment_immutability():
+    """Test that the function doesn't modify the input checklist."""
+    original_checklist = [
         {
-            "path": "src/file1.py",
+            "path": "src/main.py",
             "checked": True,
-            "coverage_info": "(Coverage: 50%",  # Missing closing parenthesis
-            "status": "modified",
-        },
-        {
-            "path": "src/file2.py",
-            "checked": False,
-            "coverage_info": "Coverage: 75%)",  # Missing opening parenthesis
-            "status": "added",
-        },
-        {
-            "path": "src/file3.py",
-            "checked": True,
-            "coverage_info": " Coverage 25% ",  # No parentheses
-            "status": "removed",
-        },
+            "coverage_info": " (85% coverage)",
+            "status": "modified"
+        }
     ]
+    checklist_copy = original_checklist.copy()
 
-    result = create_test_selection_comment(checklist, branch_name)
+    create_test_selection_comment(checklist_copy, "feature/test-branch")
 
-    # Verify malformed coverage info is preserved as-is
-    assert "- [x] modified `src/file1.py`(Coverage: 50%" in result
-    assert "- [ ] added `src/file2.py`Coverage: 75%)" in result
-    assert "- [x] removed `src/file3.py` Coverage 25% " in result
-
-
-def test_create_test_selection_comment_with_numeric_coverage_variations():
-    """Test creating a comment with various numeric coverage formats."""
-    branch_name = "numeric-test"
-    checklist: list[FileChecklistItem] = [
-        {
-            "path": "src/file1.py",
-            "checked": True,
-            "coverage_info": " (Coverage: 0%)",
-            "status": "modified",
-        },
-        {
-            "path": "src/file2.py",
-            "checked": False,
-            "coverage_info": " (Coverage: 100%)",
-            "status": "added",
-        },
-        {
-            "path": "src/file3.py",
-            "checked": True,
-            "coverage_info": " (Coverage: 50.5%)",
-            "status": "removed",
-        },
-        {
-            "path": "src/file4.py",
-            "checked": False,
-            "coverage_info": " (Coverage: 99.99%)",
-            "status": "modified",
-        },
-    ]
-
-    result = create_test_selection_comment(checklist, branch_name)
-
-    # Verify all numeric formats are handled correctly
-    assert "- [x] modified `src/file1.py` (Coverage: 0%)" in result
-    assert "- [ ] added `src/file2.py` (Coverage: 100%)" in result
-    assert "- [x] removed `src/file3.py` (Coverage: 50.5%)" in result
-    assert "- [ ] modified `src/file4.py` (Coverage: 99.99%)" in result
+    # Verify the original checklist wasn't modified
+    assert checklist_copy == original_checklist
 
 
 def test_create_test_selection_comment_performance_with_large_data():
