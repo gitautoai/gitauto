@@ -1,16 +1,21 @@
+# pylint: disable=unused-argument
+
 # Standard imports
+import asyncio
 import json
 import urllib.parse
 from unittest.mock import AsyncMock, MagicMock, call, patch
 
 # Third-party imports
+from fastapi import FastAPI, Request
+from mangum import Mangum
 import pytest
-from config import GITHUB_WEBHOOK_SECRET, PRODUCT_NAME
-from fastapi import Request
+
 # Local imports
-from main import app, handle_jira_webhook, handle_webhook, handler, root
-from payloads.aws.event_bridge_scheduler.event_types import \
-    EventBridgeSchedulerEvent
+from config import GITHUB_WEBHOOK_SECRET, PRODUCT_NAME
+import main
+from main import app, mangum_handler, handle_jira_webhook, handle_webhook, handler, root
+from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 
 
 @pytest.fixture
@@ -159,7 +164,10 @@ class TestHandler:
     @patch("main.schedule_handler")
     @patch("main.slack_notify")
     def test_handler_schedule_event_missing_owner_repo_names(
-        self, mock_slack_notify, mock_schedule_handler, mock_event_bridge_event_missing_names
+        self,
+        mock_slack_notify,
+        mock_schedule_handler,
+        mock_event_bridge_event_missing_names,
     ):
         """Test handler function with schedule event missing owner/repo names."""
         # Setup
@@ -170,7 +178,9 @@ class TestHandler:
         result = handler(event=mock_event_bridge_event_missing_names, context={})
 
         # Verify
-        mock_schedule_handler.assert_called_with(event=mock_event_bridge_event_missing_names)
+        mock_schedule_handler.assert_called_with(
+            event=mock_event_bridge_event_missing_names
+        )
         mock_slack_notify.assert_has_calls(
             [
                 call("Event Scheduler started for /"),  # Empty owner/repo names
@@ -276,7 +286,9 @@ class TestHandleWebhook:
         mock_verify_signature.assert_called_once_with(
             request=mock_github_request_no_event_header, secret=GITHUB_WEBHOOK_SECRET
         )
-        mock_extract_lambda_info.assert_called_once_with(mock_github_request_no_event_header)
+        mock_extract_lambda_info.assert_called_once_with(
+            mock_github_request_no_event_header
+        )
         mock_handle_webhook_event.assert_called_once_with(
             event_name="Event not specified",  # Default value when header is missing
             payload={"key": "value"},
@@ -529,7 +541,11 @@ class TestHandleJiraWebhook:
     @patch("main.create_pr_from_issue")
     @pytest.mark.asyncio
     async def test_handle_jira_webhook_success(
-        self, mock_create_pr, mock_verify_jira, mock_extract_lambda_info, mock_jira_request
+        self,
+        mock_create_pr,
+        mock_verify_jira,
+        mock_extract_lambda_info,
+        mock_jira_request,
     ):
         """Test handle_jira_webhook function with successful execution."""
         # Setup
@@ -575,29 +591,23 @@ class TestAppConfiguration:
         assert len(app.routes) > 0
 
         # Test that we can access the root endpoint
-        import asyncio
 
         result = asyncio.run(root())
         assert result == {"message": PRODUCT_NAME}
 
     def test_app_instance(self):
         """Test that the FastAPI app instance is properly configured."""
-        from fastapi import FastAPI
-
         assert isinstance(app, FastAPI)
         assert app is not None
 
     def test_mangum_handler_instance(self):
         """Test that the Mangum handler is properly configured."""
-        from main import mangum_handler
-        from mangum import Mangum
-
         assert isinstance(mangum_handler, Mangum)
         assert mangum_handler is not None
 
     def test_app_routes_configuration(self):
         """Test that the FastAPI app has the expected route paths."""
-        route_paths = [route.path for route in app.routes if hasattr(route, 'path')]
+        route_paths = [route.path for route in app.routes if hasattr(route, "path")]
 
         # Check that expected routes exist
         assert "/" in route_paths
@@ -649,7 +659,10 @@ class TestEdgeCases:
         """Test handler function when schedule_handler returns None status."""
         # Setup
         mock_slack_notify.return_value = "thread-789"
-        mock_schedule_handler.return_value = {"status": None, "message": "Unknown status"}
+        mock_schedule_handler.return_value = {
+            "status": None,
+            "message": "Unknown status",
+        }
 
         # Execute
         result = handler(event=mock_event_bridge_event, context={})
@@ -680,7 +693,7 @@ class TestEdgeCases:
         mock_req = MagicMock(spec=Request)
         mock_req.headers = {"X-GitHub-Event": "issues"}
         unicode_content = '{"title": "测试 Unicode 内容", "body": "🚀 Emoji test"}'
-        mock_req.body = AsyncMock(return_value=unicode_content.encode('utf-8'))
+        mock_req.body = AsyncMock(return_value=unicode_content.encode("utf-8"))
 
         mock_verify_signature.return_value = None
         mock_handle_webhook_event.return_value = None
@@ -709,7 +722,9 @@ class TestEdgeCases:
         """Test handler function when schedule_handler returns error status without message."""
         # Setup
         mock_slack_notify.return_value = "thread-999"
-        mock_schedule_handler.return_value = {"status": "error"}  # Missing 'message' key
+        mock_schedule_handler.return_value = {
+            "status": "error"
+        }  # Missing 'message' key
 
         # Execute
         result = handler(event=mock_event_bridge_event, context={})
@@ -731,7 +746,11 @@ class TestPrintStatements:
     @patch("main.schedule_handler")
     @patch("main.slack_notify")
     def test_handler_schedule_event_prints_message(
-        self, mock_slack_notify, mock_schedule_handler, mock_print, mock_event_bridge_event
+        self,
+        mock_slack_notify,
+        mock_schedule_handler,
+        mock_print,
+        mock_event_bridge_event,
     ):
         """Test that handler function prints the correct message for schedule events."""
         # Setup
@@ -767,7 +786,9 @@ class TestPrintStatements:
         await handle_webhook(request=mock_github_request)
 
         # Verify
-        mock_print.assert_called_once_with("Error in reading request body: Body read error")
+        mock_print.assert_called_once_with(
+            "Error in reading request body: Body read error"
+        )
 
     @patch("builtins.print")
     @patch("main.extract_lambda_info")
@@ -793,24 +814,23 @@ class TestPrintStatements:
             await handle_webhook(request=mock_github_request)
 
         # Verify
-        mock_print.assert_called_once_with("Error in parsing JSON payload: JSON parsing error")
+        mock_print.assert_called_once_with(
+            "Error in parsing JSON payload: JSON parsing error"
+        )
 
 
 class TestModuleImports:
     def test_required_imports_available(self):
         """Test that all required modules and functions are properly imported."""
-        # Test that main module imports are accessible
-        import main
-
         # Test FastAPI app
-        assert hasattr(main, 'app')
-        assert hasattr(main, 'mangum_handler')
+        assert hasattr(main, "app")
+        assert hasattr(main, "mangum_handler")
 
         # Test handler functions
-        assert hasattr(main, 'handler')
-        assert hasattr(main, 'handle_webhook')
-        assert hasattr(main, 'handle_jira_webhook')
-        assert hasattr(main, 'root')
+        assert hasattr(main, "handler")
+        assert hasattr(main, "handle_webhook")
+        assert hasattr(main, "handle_jira_webhook")
+        assert hasattr(main, "root")
 
         # Test that functions are callable
         assert callable(main.handler)
@@ -823,9 +843,9 @@ class TestTypeAnnotations:
     @pytest.mark.asyncio
     async def test_handle_webhook_return_type(self, mock_github_request):
         """Test that handle_webhook returns the correct type."""
-        with patch("main.extract_lambda_info"), \
-             patch("main.verify_webhook_signature", new_callable=AsyncMock), \
-             patch("main.handle_webhook_event", new_callable=AsyncMock):
+        with patch("main.extract_lambda_info"), patch(
+            "main.verify_webhook_signature", new_callable=AsyncMock
+        ), patch("main.handle_webhook_event", new_callable=AsyncMock):
 
             result = await handle_webhook(request=mock_github_request)
 

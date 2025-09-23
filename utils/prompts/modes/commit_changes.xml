@@ -17,13 +17,4 @@
     <rule>NEVER EVER place import statements in the body of the function</rule>
   </coding_rules>
 
-  <code_quality_requirement>
-    <instruction>Before committing, review your code as if you ran standard linting/formatting tools for that language and fix any issues they would detect.</instruction>
-    <examples>
-      <typescript>Issues that tsc --noEmit or eslint --fix would catch (unused imports, syntax errors, type issues)</typescript>
-      <python>Issues that pylint, pyright, black, or ruff check --fix would catch (unused imports, formatting, style violations)</python>
-      <other_languages>Apply the same principle - fix issues that standard linters/formatters for that language would detect</other_languages>
-    </examples>
-    <rationale>We cannot run these tools in our environment, but you have the knowledge to identify and fix these common issues manually. This prevents CI/CD failures and expensive fix cycles.</rationale>
-  </code_quality_requirement>
 </mode_instruction> 

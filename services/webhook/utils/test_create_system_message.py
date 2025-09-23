@@ -123,16 +123,44 @@ class TestCreateSystemMessage:
 
         # Assert
         expected_content = (
-            "<test_rules>Common test rules</test_rules>\n\n"
             "<trigger_instruction>Issue trigger</trigger_instruction>\n\n"
             "<mode_instruction>Comment mode</mode_instruction>"
         )
         assert result == expected_content
-        mock_read_xml_file.assert_called_once_with(
-            "utils/prompts/common_test_rules.xml"
-        )
+        mock_read_xml_file.assert_not_called()
         mock_get_trigger_prompt.assert_called_once_with("issue_comment")
         mock_get_mode_prompt.assert_called_once_with("comment")
+
+    def test_commit_mode_includes_quality_rules(
+        self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
+    ):
+        """Test that commit mode includes quality rules."""
+        # Arrange
+        mock_read_xml_file.return_value = (
+            "<commit_quality_rules>Quality rules</commit_quality_rules>"
+        )
+        mock_get_trigger_prompt.return_value = (
+            "<trigger_instruction>Issue trigger</trigger_instruction>"
+        )
+        mock_get_mode_prompt.return_value = (
+            "<mode_instruction>Commit mode</mode_instruction>"
+        )
+
+        # Act
+        result = create_system_message("issue_comment", "commit")
+
+        # Assert
+        expected_content = (
+            "<trigger_instruction>Issue trigger</trigger_instruction>\n\n"
+            "<mode_instruction>Commit mode</mode_instruction>\n\n"
+            "<commit_quality_rules>Quality rules</commit_quality_rules>"
+        )
+        assert result == expected_content
+        mock_read_xml_file.assert_called_once_with(
+            "utils/prompts/commit_quality_rules.xml"
+        )
+        mock_get_trigger_prompt.assert_called_once_with("issue_comment")
+        mock_get_mode_prompt.assert_called_once_with("commit")
 
     def test_all_trigger_types(
         self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
@@ -348,11 +376,10 @@ class TestCreateSystemMessage:
         assert "<freeform_repository_rules>" not in result
 
     def test_trigger_prompt_returns_none(
-        self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
+        self, mock_get_trigger_prompt, mock_get_mode_prompt
     ):
         """Test creating system message when trigger prompt returns None."""
         # Arrange
-        mock_read_xml_file.return_value = "<test_rules>Rules</test_rules>"
         mock_get_trigger_prompt.return_value = None
         mock_get_mode_prompt.return_value = "<mode>Mode</mode>"
 
@@ -360,15 +387,14 @@ class TestCreateSystemMessage:
         result = create_system_message("issue_comment", "comment")
 
         # Assert
-        expected_content = "<test_rules>Rules</test_rules>\n\n<mode>Mode</mode>"
+        expected_content = "<mode>Mode</mode>"
         assert result == expected_content
 
     def test_mode_prompt_returns_none(
-        self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
+        self, mock_get_trigger_prompt, mock_get_mode_prompt
     ):
         """Test creating system message when mode prompt returns None."""
         # Arrange
-        mock_read_xml_file.return_value = "<test_rules>Rules</test_rules>"
         mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
         mock_get_mode_prompt.return_value = None
 
@@ -376,17 +402,14 @@ class TestCreateSystemMessage:
         result = create_system_message("issue_comment", "comment")
 
         # Assert
-        expected_content = (
-            "<test_rules>Rules</test_rules>\n\n<trigger>Trigger</trigger>"
-        )
+        expected_content = "<trigger>Trigger</trigger>"
         assert result == expected_content
 
     def test_both_prompts_return_none(
-        self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
+        self, mock_get_trigger_prompt, mock_get_mode_prompt
     ):
         """Test creating system message when both prompts return None."""
         # Arrange
-        mock_read_xml_file.return_value = "<test_rules>Rules</test_rules>"
         mock_get_trigger_prompt.return_value = None
         mock_get_mode_prompt.return_value = None
 
@@ -394,7 +417,7 @@ class TestCreateSystemMessage:
         result = create_system_message("issue_comment", "comment")
 
         # Assert
-        assert result == "<test_rules>Rules</test_rules>"
+        assert result == ""
 
     def test_structured_rules_with_various_data_types(
         self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
@@ -451,11 +474,10 @@ class TestCreateSystemMessage:
         assert "  \n  Use clean code principles  \n  " not in result
 
     def test_content_parts_joining(
-        self, mock_read_xml_file, mock_get_trigger_prompt, mock_get_mode_prompt
+        self, mock_get_trigger_prompt, mock_get_mode_prompt
     ):
         """Test that content parts are joined correctly with double newlines."""
         # Arrange
-        mock_read_xml_file.return_value = "COMMON_RULES"
         mock_get_trigger_prompt.return_value = "TRIGGER_CONTENT"
         mock_get_mode_prompt.return_value = "MODE_CONTENT"
 
@@ -470,16 +492,15 @@ class TestCreateSystemMessage:
 
         # Assert
         parts = result.split("\n\n")
-        assert len(parts) == 5
-        assert parts[0] == "COMMON_RULES"
-        assert parts[1] == "TRIGGER_CONTENT"
-        assert parts[2] == "MODE_CONTENT"
+        assert len(parts) == 4
+        assert parts[0] == "TRIGGER_CONTENT"
+        assert parts[1] == "MODE_CONTENT"
         assert (
-            parts[3]
+            parts[2]
             == "<structured_repository_rules>\nrule: value\n</structured_repository_rules>"
         )
         assert (
-            parts[4]
+            parts[3]
             == "<freeform_repository_rules>\nFree form rule\n</freeform_repository_rules>"
         )
 
@@ -528,8 +549,8 @@ class TestCreateSystemMessage:
         mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
         mock_get_mode_prompt.return_value = "<mode>Mode</mode>"
 
-        # Act
-        result = create_system_message("issue_comment", "comment")
+        # Act - use commit mode to trigger read_xml_file call
+        result = create_system_message("issue_comment", "commit")
 
         # Assert
         # Due to handle_exceptions decorator with default_return_value="", should return empty string
@@ -544,8 +565,8 @@ class TestCreateSystemMessage:
         mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
         mock_get_mode_prompt.return_value = "<mode>Mode</mode>"
 
-        # Act
-        result = create_system_message("issue_comment", "comment")
+        # Act - use commit mode to trigger read_xml_file call
+        result = create_system_message("issue_comment", "commit")
 
         # Assert
         assert result == ""

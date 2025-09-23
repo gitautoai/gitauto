@@ -2,11 +2,13 @@
 """Unit tests for pr_body_handler.py"""
 
 from io import StringIO
+
 # Standard imports
 from unittest.mock import patch
 
 # Third-party imports
 import pytest
+
 # Local imports
 from services.webhook.pr_body_handler import write_pr_description
 
