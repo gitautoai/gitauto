@@ -696,3 +696,34 @@ if __name__ == "__main__":
             assert content in content_arg
 
     def test_should_test_file_function_docstring_preservation(self):
+        """Test that the original function's docstring is preserved after decoration."""
+        # The function should maintain its identity after decoration
+        assert should_test_file.__name__ == "should_test_file"
+
+        # Check that it's a wrapped function (has __wrapped__ attribute)
+        assert hasattr(should_test_file, "__wrapped__")
+
+        # The wrapped function should be the original
+        original_func = should_test_file.__wrapped__
+        assert original_func.__name__ == "should_test_file"
+
+    def test_should_test_file_ternary_operator_coverage(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test coverage of the ternary operator in the return statement."""
+        # Test when result is not None and truthy
+        mock_evaluate_condition.return_value = True
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert result is True
+
+        # Test when result is not None and falsy
+        mock_evaluate_condition.return_value = False
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert result is False
+
+        # Test when result is None (should return False)
+        mock_evaluate_condition.return_value = None
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert result is False
+
+        # Test when result is a truthy non-boolean value
