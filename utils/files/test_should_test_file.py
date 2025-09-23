@@ -506,3 +506,53 @@ if __name__ == "__main__":
         assert len(params) == 2
         assert "file_path" in params
         assert "content" in params
+
+    def test_should_test_file_with_whitespace_only_content(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with whitespace-only content."""
+        whitespace_content = "   \n\t\r\n   "
+        mock_evaluate_condition.return_value = False
+
+        result = should_test_file(sample_file_path, whitespace_content)
+
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+
+        # Verify whitespace content is preserved
+        call_args = mock_evaluate_condition.call_args
+        content_arg = call_args[1]["content"]
+        assert whitespace_content in content_arg
+
+    def test_should_test_file_with_binary_like_content(
+        self, mock_evaluate_condition, sample_file_path
+    ):
+        """Test function behavior with binary-like content."""
+        binary_content = "\x00\x01\x02\x03\xff\xfe"
+        mock_evaluate_condition.return_value = False
+
+        result = should_test_file(sample_file_path, binary_content)
+
+        assert result is False
+        mock_evaluate_condition.assert_called_once()
+
+    def test_should_test_file_evaluate_condition_returns_non_boolean(
+        self, mock_evaluate_condition, sample_file_path, sample_code_content
+    ):
+        """Test function behavior when evaluate_condition returns non-boolean values."""
+        # Test with string return value
+        mock_evaluate_condition.return_value = "true"
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert result == "true"  # Should return the actual value
+
+        # Test with integer return value
+        mock_evaluate_condition.return_value = 1
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert result == 1  # Should return the actual value
+
+        # Test with empty string return value
+        mock_evaluate_condition.return_value = ""
+        result = should_test_file(sample_file_path, sample_code_content)
+        assert result == ""  # Should return the actual value
+
+    def test_should_test_file_with_extremely_long_file_path(
