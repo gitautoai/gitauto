@@ -10,7 +10,15 @@ from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 # Local imports
 from config import ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40
 from services.anthropic.client import claude
-from services.anthropic.deduplicate_messages import deduplicate_file_content
+from services.anthropic.remove_duplicate_get_remote_file_content_results import (
+    remove_duplicate_get_remote_file_content_results,
+)
+from services.anthropic.remove_get_remote_file_content_before_replace_remote_file_content import (
+    remove_get_remote_file_content_before_replace_remote_file_content,
+)
+from services.anthropic.remove_outdated_apply_diff_to_file_attempts_and_results import (
+    remove_outdated_apply_diff_to_file_attempts_and_results,
+)
 from services.anthropic.exceptions import (
     ClaudeAuthenticationError,
     ClaudeOverloadedError,
@@ -31,8 +39,12 @@ def chat_with_claude(
     usage_id: int | None = None,
 ):
     # https://docs.anthropic.com/en/api/client-sdks
-    # First deduplicate messages to save tokens
-    messages = deduplicate_file_content(messages)
+    # Apply all message deduplication functions to save tokens
+    messages = remove_duplicate_get_remote_file_content_results(messages)
+    messages = remove_get_remote_file_content_before_replace_remote_file_content(
+        messages
+    )
+    messages = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
 
     # Check token count and delete messages if necessary
     max_tokens = (

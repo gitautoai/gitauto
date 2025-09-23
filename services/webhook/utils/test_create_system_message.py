@@ -473,9 +473,7 @@ class TestCreateSystemMessage:
         # Should not contain the extra whitespace
         assert "  \n  Use clean code principles  \n  " not in result
 
-    def test_content_parts_joining(
-        self, mock_get_trigger_prompt, mock_get_mode_prompt
-    ):
+    def test_content_parts_joining(self, mock_get_trigger_prompt, mock_get_mode_prompt):
         """Test that content parts are joined correctly with double newlines."""
         # Arrange
         mock_get_trigger_prompt.return_value = "TRIGGER_CONTENT"
