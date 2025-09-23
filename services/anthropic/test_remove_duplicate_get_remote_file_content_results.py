@@ -1,13 +1,16 @@
 # Standard imports
 import json
 from copy import deepcopy
+from unittest.mock import patch
 
 # Local imports
 from config import UTF8
-from services.anthropic.deduplicate_messages import deduplicate_file_content
+from services.anthropic.remove_duplicate_get_remote_file_content_results import (
+    remove_duplicate_get_remote_file_content_results,
+)
 
 
-def test_deduplicate_file_content_only():
+def test_remove_duplicate_get_remote_file_content_results_only():
     # Function only deduplicates get_remote_file_content, not generic messages
     messages = [
         {"role": "system", "content": "You are a helpful assistant"},
@@ -20,13 +23,13 @@ def test_deduplicate_file_content_only():
         },  # Not deduplicated - not file content
     ]
 
-    result = deduplicate_file_content(messages)
+    result = remove_duplicate_get_remote_file_content_results(messages)
 
     # Should NOT deduplicate non-file content
     assert result == messages  # Should be unchanged
 
 
-def test_deduplicate_file_snapshots():
+def test_remove_duplicate_get_remote_file_content_results_snapshots():
     messages = [
         {"role": "system", "content": "You are a helpful assistant"},
         {
@@ -52,7 +55,7 @@ def test_deduplicate_file_snapshots():
         },
     ]
 
-    result = deduplicate_file_content(messages)
+    result = remove_duplicate_get_remote_file_content_results(messages)
 
     # Should deduplicate file content, keeping latest
     assert len(result) == 4
@@ -74,7 +77,7 @@ def test_no_duplicates():
     ]
 
     original = deepcopy(messages)
-    result = deduplicate_file_content(messages)
+    result = remove_duplicate_get_remote_file_content_results(messages)
 
     # Should return messages unchanged
     assert result == original
@@ -87,7 +90,7 @@ def test_preserve_system_messages():
         {"role": "user", "content": "Hello"},
     ]
 
-    result = deduplicate_file_content(messages)
+    result = remove_duplicate_get_remote_file_content_results(messages)
 
     # System messages should never be deduplicated
     assert len(result) == 3
@@ -114,7 +117,7 @@ def test_with_real_agent_input():
         expected_messages = json.load(f)
 
     # Deduplicate using our function
-    result = deduplicate_file_content(original_messages)
+    result = remove_duplicate_get_remote_file_content_results(original_messages)
 
     # Should match expected output
     assert result == expected_messages
@@ -132,7 +135,7 @@ def test_with_production_minified_json():
     assert len(messages) == 52
 
     # Apply deduplication
-    result = deduplicate_file_content(messages)
+    result = remove_duplicate_get_remote_file_content_results(messages)
 
     # Should still have 52 messages
     assert len(result) == 52
@@ -159,3 +162,31 @@ def test_with_production_minified_json():
 
     # Should have replaced 4 outdated file contents
     assert replaced_count == 4
+
+
+def test_handles_exception_gracefully():
+    # Test by mocking deepcopy to raise an exception
+
+    messages = [{"role": "user", "content": []}]
+
+    with patch("copy.deepcopy", side_effect=RuntimeError("Simulated failure")):
+        result = remove_duplicate_get_remote_file_content_results(messages)
+        # Should return original messages unchanged when exception occurs
+        assert result == messages
+
+
+def test_handles_runtime_exception():
+    # Test by making dict access fail
+    class BadDict:
+        def get(self, key, default=None):
+            if key == "role":
+                return "user"
+            if key == "content":
+                raise KeyError("Simulated KeyError")
+            return default
+
+    messages = [BadDict()]
+
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    # Should return original messages unchanged when exception occurs
+    assert result == messages
