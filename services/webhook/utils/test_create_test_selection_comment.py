@@ -633,12 +633,6 @@ def test_create_test_selection_comment_return_type():
     assert len(result) > 0
 
 
-def test_create_test_selection_comment_immutability():
-    branch_name = "immutability-test"
-    original_checklist: list[FileChecklistItem] = [
-        {
-            "path": "src/test.py",
-
 
 def test_create_test_selection_comment_with_malformed_coverage_info():
     """Test creating a comment with malformed coverage info strings."""
