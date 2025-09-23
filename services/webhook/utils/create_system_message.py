@@ -19,9 +19,6 @@ def create_system_message(
 ):
     content_parts = []
 
-    # Add common test rules
-    content_parts.append(read_xml_file("utils/prompts/common_test_rules.xml"))
-
     # Add trigger instruction
     trigger_content = get_trigger_prompt(trigger)
     if trigger_content:
@@ -31,6 +28,10 @@ def create_system_message(
     mode_content = get_mode_prompt(mode)
     if mode_content:
         content_parts.append(mode_content)
+
+    # Add quality rules only for commit mode
+    if mode == "commit":
+        content_parts.append(read_xml_file("utils/prompts/commit_quality_rules.xml"))
 
     # Repository rules
     if repo_settings:
