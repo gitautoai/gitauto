@@ -736,3 +736,19 @@ def test_create_test_selection_comment_performance_with_large_data():
     for i in range(100):
         checklist.append({
             "path": f"src/module_{i//10}/submodule_{i%10}/file_{i:03d}.py",
+            "checked": i % 3 == 0,
+            "coverage_info": f" ({50 + i % 50}% coverage)",
+            "status": "modified" if i % 2 == 0 else "added"
+        })
+
+    branch_name = "feature/performance-test"
+
+    # Measure execution time
+    import time
+    start_time = time.time()
+    result = create_test_selection_comment(checklist, branch_name)
+    end_time = time.time()
+
+    # Should complete within reasonable time (less than 1 second for 100 items)
+    assert end_time - start_time < 1.0
+    assert isinstance(result, str)
