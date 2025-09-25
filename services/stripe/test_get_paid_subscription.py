@@ -101,7 +101,7 @@ def test_get_paid_subscription_with_single_paid_subscription(
     """Test get_paid_subscription when there is a single paid subscription."""
     # Arrange
     customer_id = "cus_test123"
-    paid_subscription = create_mock_subscription("sub_paid", "price_paid_tier", 2000)
+    paid_subscription = create_mock_subscription("sub_paid", "price_paid_tier", 3000)
     mock_subscription_list_response.data = [paid_subscription]
     mock_stripe.Subscription.list.return_value = mock_subscription_list_response
 
@@ -126,7 +126,7 @@ def test_get_paid_subscription_with_multiple_paid_subscriptions(
     customer_id = "cus_test123"
 
     paid_subscription1 = create_mock_subscription("sub_paid1", "price_paid_tier1", 1000)
-    paid_subscription2 = create_mock_subscription("sub_paid2", "price_paid_tier2", 2000)
+    paid_subscription2 = create_mock_subscription("sub_paid2", "price_paid_tier2", 3000)
     paid_subscription3 = create_mock_subscription("sub_paid3", "price_paid_tier3", 500)
 
     mock_subscription_list_response.data = [
@@ -155,7 +155,7 @@ def test_get_paid_subscription_with_mixed_subscriptions(
 
     free_subscription = create_mock_subscription("sub_free", "price_free_tier", 0)
     paid_subscription1 = create_mock_subscription("sub_paid1", "price_paid_tier1", 1000)
-    paid_subscription2 = create_mock_subscription("sub_paid2", "price_paid_tier2", 2000)
+    paid_subscription2 = create_mock_subscription("sub_paid2", "price_paid_tier2", 3000)
 
     mock_subscription_list_response.data = [
         free_subscription,
@@ -210,7 +210,7 @@ def test_get_paid_subscription_with_pagination(mock_stripe):
     second_page_response = MagicMock()
     second_page_response.has_more = False
 
-    paid_subscription2 = create_mock_subscription("sub_paid2", "price_paid_tier2", 2000)
+    paid_subscription2 = create_mock_subscription("sub_paid2", "price_paid_tier2", 3000)
     second_page_response.data = [paid_subscription2]
 
     # Configure mock to return different responses for each call
