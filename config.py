@@ -96,7 +96,7 @@ ENV = get_env_var(name="ENV")
 EXCEPTION_OWNERS = ["gitautoai", "Suchica", "hiroshinishio"]
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
 CREDIT_AMOUNTS_USD = {
-    "usage": -2,
+    "usage": -3,
     "grant": 10,
 }
 ISSUE_NUMBER_FORMAT = "/issue-"  # DO NOT USE "#" as it is a special character and has to be encoded in URL, like in GitHub API URL

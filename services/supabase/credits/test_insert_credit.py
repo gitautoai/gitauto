@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+
 from unittest.mock import patch, MagicMock
 import pytest
 from services.supabase.credits.insert_credit import insert_credit
@@ -14,7 +16,7 @@ def mock_supabase():
 def mock_credit_amounts():
     """Fixture to provide mocked credit amounts configuration."""
     return {
-        "usage": -2,
+        "usage": -3,
         "grant": 10,
         "bonus": 5,
         "refund": 3,
@@ -72,7 +74,7 @@ def test_insert_credit_success_with_usage_id(mock_supabase, mock_query_chain):
     usage_id = 456
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"usage": -2}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"usage": -3}
     ):
         # Act
         result = insert_credit(
@@ -85,7 +87,7 @@ def test_insert_credit_success_with_usage_id(mock_supabase, mock_query_chain):
         mock_query_chain["table"].insert.assert_called_once_with(
             {
                 "owner_id": owner_id,
-                "amount_usd": -2,
+                "amount_usd": -3,
                 "transaction_type": transaction_type,
                 "usage_id": usage_id,
             }
@@ -147,7 +149,7 @@ def test_insert_credit_handles_insert_exception(mock_supabase, mock_query_chain)
     mock_query_chain["table"].insert.side_effect = Exception("Insert error")
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"usage": -2}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"usage": -3}
     ):
         # Act
         result = insert_credit(owner_id=owner_id, transaction_type=transaction_type)
@@ -232,7 +234,7 @@ def test_insert_credit_with_various_usage_ids(
     transaction_type = "usage"
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"usage": -2}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"usage": -3}
     ):
         # Act
         result = insert_credit(
@@ -244,7 +246,7 @@ def test_insert_credit_with_various_usage_ids(
         mock_query_chain["table"].insert.assert_called_once_with(
             {
                 "owner_id": owner_id,
-                "amount_usd": -2,
+                "amount_usd": -3,
                 "transaction_type": transaction_type,
                 "usage_id": usage_id,
             }
@@ -254,7 +256,7 @@ def test_insert_credit_with_various_usage_ids(
 @pytest.mark.parametrize(
     "transaction_type,expected_amount",
     [
-        ("usage", -2),
+        ("usage", -3),
         ("grant", 10),
         ("bonus", 5),
         ("refund", 3),
@@ -267,7 +269,7 @@ def test_insert_credit_with_different_transaction_types(
     # Arrange
     owner_id = 123456
     credit_amounts = {
-        "usage": -2,
+        "usage": -3,
         "grant": 10,
         "bonus": 5,
         "refund": 3,
@@ -335,13 +337,13 @@ def test_insert_credit_data_structure_with_usage_id(mock_supabase, mock_query_ch
     usage_id = 789
     expected_data = {
         "owner_id": owner_id,
-        "amount_usd": -2,
+        "amount_usd": -3,
         "transaction_type": transaction_type,
         "usage_id": usage_id,
     }
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"usage": -2}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"usage": -3}
     ):
         # Act
         insert_credit(
