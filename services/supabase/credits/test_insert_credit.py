@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+
 from unittest.mock import patch, MagicMock
 import pytest
 from services.supabase.credits.insert_credit import insert_credit
