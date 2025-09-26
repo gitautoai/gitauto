@@ -1,5 +1,7 @@
 from unittest.mock import patch
 import os
+from config import UTF8
+import os
 from constants import UTF8
 
 import pytest
