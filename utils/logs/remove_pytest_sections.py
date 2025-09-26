@@ -21,6 +21,25 @@ def _is_pytest_section_content(line: str) -> bool:
         r'^\s*warnings\.warn\(',
         r'^/.*:\d+:.*Warning:',
 
+def _is_pytest_section_content(line: str) -> bool:
+    """Check if a line looks like pytest section content that should be removed."""
+    if not line.strip():
+        return True  # Empty lines within pytest sections should be removed
+
+    # Common pytest section content patterns
+    pytest_patterns = [
+        r'^platform\s+',
+        r'^cachedir:',
+        r'^rootdir:',
+        r'^plugins:',
+        r'^collecting\s+',
+        r'collected\s+\d+\s+items?',
+        r'\.py::\w+\s+(PASSED|FAILED|SKIPPED)',
+        r'^\s*\[\s*\d+%\s*\]',
+    ]
+
+    return any(re.match(pattern, line) for pattern in pytest_patterns)
+
 @handle_exceptions(default_return_value="")
 def remove_pytest_sections(error_log: str):
     if not error_log:
