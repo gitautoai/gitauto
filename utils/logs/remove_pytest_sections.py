@@ -41,8 +41,6 @@ def remove_pytest_sections(log: str) -> str:
             should_add_blank = False
             if content_was_removed and result_lines and result_lines[-1] != "":
                 should_add_blank = True
-            elif "short test summary info" in line and result_lines and result_lines[-1] != "":
-                should_add_blank = True
 
             if should_add_blank:
                 result_lines.append("")
