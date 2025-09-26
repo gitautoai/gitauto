@@ -1,5 +1,35 @@
 import re
+
 from utils.error.handle_exceptions import handle_exceptions
+
+
+def _is_pytest_section_content(line):
+    """Check if a line looks like pytest section content that should be skipped."""
+    # Empty lines are part of pytest sections
+    if not line.strip():
+        return True
+
+    # Lines with === are pytest section headers
+    if "===" in line:
+        return True
+
+    # Common pytest output patterns
+    pytest_patterns = [
+        "platform ",
+        "cachedir:",
+        "rootdir:",
+        "plugins:",
+        "collecting",
+        "collected",
+        "PASSED",
+        "FAILED",
+        "SKIPPED",
+        "ERROR",
+        "[ ",  # Progress indicators like [100%]
+        "-- Docs:",  # Documentation links in warnings
+    ]
+
+    return any(pattern in line for pattern in pytest_patterns)
 
 
 @handle_exceptions(default_return_value="")
@@ -13,12 +43,6 @@ def remove_pytest_sections(error_log: str):
     content_removed = False
 
     for line in lines:
-        # Check if this line is a pytest section marker
-        is_pytest_section = ("===" in line and
-                           ("test session starts" in line or
-                            "warnings summary" in line or
-                            "FAILURES" in line or
-                            "short test summary info" in line))
         # Start skipping at test session header
         if "===" in line and "test session starts" in line:
             skip = True
@@ -53,7 +77,13 @@ def remove_pytest_sections(error_log: str):
         if not skip:
             filtered_lines.append(line)
         else:
-            content_removed = True
+            # If we're skipping and encounter a line that doesn't look like pytest output,
+            # stop skipping and include this line
+            if not _is_pytest_section_content(line):
+                skip = False
+                filtered_lines.append(line)
+            else:
+                content_removed = True
 
     # Join and only clean up excessive blank lines if we actually removed content
     result = "\n".join(filtered_lines)
