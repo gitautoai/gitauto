@@ -20,6 +20,7 @@ def minimize_jest_test_logs(error_log: str) -> str:
     for i, line in enumerate(lines):
         # Keep command/header lines
         if any(
+    last_was_command = False
             cmd in line
             for cmd in [
                 "CircleCI Build Log",
@@ -34,6 +35,7 @@ def minimize_jest_test_logs(error_log: str) -> str:
             ]
         ):
             result_lines.append(line.lstrip())
+            last_was_command = True
         elif "Summary of all failing tests" in line:
             # Found the summary section, keep everything from here onwards
             # Strip leading whitespace only from the summary line itself
@@ -41,8 +43,11 @@ def minimize_jest_test_logs(error_log: str) -> str:
             # Keep the rest of the lines as-is to preserve test failure indentation
             result_lines.extend(lines[i+1:])
             break
-        elif line.strip() == "" and result_lines:
+        elif line.strip() == "" and last_was_command:
             result_lines.append("")
+            last_was_command = False
+        else:
+            last_was_command = False
         elif result_lines and not header_complete:
             # After we have header lines, we're done with the header
             header_complete = True
