@@ -50,7 +50,9 @@ def remove_pytest_sections(log: str) -> str:
                 filtered_lines.append("")
 
         # Skip coverage output lines
-        if line.strip().startswith("---------- coverage:") or line.strip().startswith("Coverage LCOV written"):
+        if (line.strip().startswith("---------- coverage:") or
+            line.strip().startswith("Coverage LCOV written") or
+            line.strip() == "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html"):
             content_was_removed = True
             continue
 
