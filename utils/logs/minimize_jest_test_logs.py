@@ -1,4 +1,8 @@
 def minimize_jest_test_logs(log_content):
+from utils.error.handle_exceptions import handle_exceptions
+
+
+@handle_exceptions(default_return_value=lambda error_log: error_log, raise_on_error=False)
     """
     Minimize Jest test logs by keeping only command lines and test failure summaries.
 
