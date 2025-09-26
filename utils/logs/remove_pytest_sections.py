@@ -16,9 +16,12 @@ def is_pytest_section_content(line: str) -> bool:
         r'^plugins:',     # plugins: cov-6.0.0
         r'^collecting\s+', # collecting ... collected 2 items
         r'^collected\s+\d+\s+items?',  # collected 2 items
-        r'.*::\w+\s+(PASSED|FAILED|SKIPPED)',  # test results
-        r'^\s*\[\s*\d+%\]',  # progress indicators [50%]
+        r'.*::\w+\s+(PASSED|FAILED|SKIPPED)',  # test results with ::
+        r'.*\.py\s+[.\sF]*\s+\[\s*\d+%\]',  # test progress lines with percentage
+        r'^\s*[.\sF]+\s+\[\s*\d+%\]',  # standalone progress indicators
         r'^/.*:\d+:.*Warning',  # warning file paths
+        r'^asyncio:',  # asyncio configuration lines
+        r'^\s*[.\sF]+\s*$',  # lines with only dots, spaces, and F characters
         r'^--\s+Docs:',  # documentation links
         r'^\s*warnings\.warn',  # warning code
         r'^\s*$',  # empty lines
