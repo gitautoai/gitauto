@@ -395,13 +395,6 @@ failure content"""
     assert result == expected
 
 
-@patch('utils.logs.remove_pytest_sections.handle_exceptions')
-def test_remove_pytest_sections_exception_handling(mock_handle_exceptions):
-    """Test that the function is decorated with handle_exceptions."""
-    # The decorator should be applied to the function
-    mock_handle_exceptions.assert_called_once_with(default_return_value="")
-
-
 def test_remove_pytest_sections_with_exception_returns_empty_string():
     """Test that exceptions are handled and return empty string as default."""
     # This test verifies the decorator behavior by causing an exception
