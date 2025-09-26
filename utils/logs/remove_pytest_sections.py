@@ -19,6 +19,7 @@ def is_pytest_section_content(line: str) -> bool:
         r'.*::\w+\s+(PASSED|FAILED|SKIPPED)',  # test results with ::
         r'.*\.py\s+[.\sFsE]*\s+\[\s*\d+%\]',  # test progress lines with percentage
         r'^\s*[.\sFsE]+\s+\[\s*\d+%\]',  # standalone progress indicators with percentage
+        r'^[.\sFsE\s]*\[\s*\d+%\]',  # any line ending with percentage
         r'.*\.py\s+[.\sFsE]*$',  # test progress lines without percentage (ending with dots/F/s/E)
         r'^/.*:\d+:.*Warning',  # warning file paths
         r'^asyncio:',  # asyncio configuration lines
@@ -29,6 +30,8 @@ def is_pytest_section_content(line: str) -> bool:
         r'^--\s+Docs:',  # documentation links
         r'^\s*warnings\.warn',  # warning code
         r'^\s*$',  # empty lines
+        r'^[a-zA-Z0-9_/.-]+\.py\s+[.\sFsE\s]*\s+\[\s*\d+%\]',  # test file with progress and percentage
+        r'^[a-zA-Z0-9_/.-]+\.py\s+[.\sFsE\s]*$',  # test file with progress but no percentage
     ]
 
     for pattern in pytest_patterns:
