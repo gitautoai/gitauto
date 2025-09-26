@@ -17,13 +17,15 @@ def is_pytest_section_content(line: str) -> bool:
         r'^collecting\s+', # collecting ... collected 2 items
         r'^collected\s+\d+\s+items?',  # collected 2 items
         r'.*::\w+\s+(PASSED|FAILED|SKIPPED)',  # test results with ::
-        r'.*\.py\s+[.\sF]*\s+\[\s*\d+%\]',  # test progress lines with percentage
-        r'^\s*[.\sF]+\s+\[\s*\d+%\]',  # standalone progress indicators with percentage
-        r'.*\.py\s+[.\sF]*$',  # test progress lines without percentage (ending with dots/F)
+        r'.*\.py\s+[.\sFsE]*\s+\[\s*\d+%\]',  # test progress lines with percentage
+        r'^\s*[.\sFsE]+\s+\[\s*\d+%\]',  # standalone progress indicators with percentage
+        r'.*\.py\s+[.\sFsE]*$',  # test progress lines without percentage (ending with dots/F/s/E)
         r'^/.*:\d+:.*Warning',  # warning file paths
         r'^asyncio:',  # asyncio configuration lines
-        r'^\s*[.\sF]+\s*$',  # lines with only dots, spaces, and F characters (no filename)
-        r'^[.\s]*\[\s*\d+%\]$',  # lines with just dots/spaces and progress
+        r'^\s*[.\sFsE]+\s*$',  # lines with only dots, spaces, F, s, E characters (no filename)
+        r'^[.\sFsE\s]*\[\s*\d+%\]$',  # lines with just dots/spaces and progress
+        r'^\s*[.\sFsE]+\s+\[\s*\d+%\]\s*$',  # progress lines with dots/F/s/E and percentage
+        r'^\s*[.\sFsE\s]+\s*$',  # lines with only test result characters and spaces
         r'^--\s+Docs:',  # documentation links
         r'^\s*warnings\.warn',  # warning code
         r'^\s*$',  # empty lines
