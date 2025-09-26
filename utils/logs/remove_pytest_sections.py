@@ -72,7 +72,7 @@ def remove_pytest_sections(error_log: str):
             ]
 
             # Check if line matches very specific pytest patterns
-            is_pytest_line = any(pattern in line for pattern in pytest_patterns)
+            is_pytest_line = any(pattern in line for pattern in very_specific_patterns)
 
             # Also check for progress indicators like [100%]
             if re.search(r'\[\s*\d+%\s*\]', line):
