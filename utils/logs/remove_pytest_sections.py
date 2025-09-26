@@ -31,13 +31,13 @@ def remove_pytest_sections(log: str) -> str:
 
     for line in lines:
         # Start skipping from test session starts until we hit a major section
-        if "=== test session starts ===" in line:
+        if "test session starts" in line and "===" in line:
             skip_until_section = True
             content_was_removed = True
             continue
 
         # Start skipping from warnings summary until we hit a major section
-        if "=== warnings summary ===" in line:
+        if "warnings summary" in line and "===" in line:
             skip_until_section = True
             content_was_removed = True
             continue
