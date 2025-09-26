@@ -403,6 +403,33 @@ FAIL test/example.test.ts"""
 
 
 def test_minimize_jest_test_logs_debug_real_payload():
+
+
+def test_debug_actual_payload():
+    """Debug test to see what the function produces with actual payload data."""
+    # Simplified version of the actual payload after ANSI codes are removed
+    input_log = """```CircleCI Build Log: yarn test
+yarn run v1.22.22
+$ craco test --watchAll=false --coverage=true --verbose=true
+PASS test/utils/timeout.test.ts (10.698 s)
+  timeout
+    when timeout has not occurred
+      ✓ should return false when start time equals current time (19 ms)
+
+Summary of all failing tests
+FAIL test/components/NewAccount/NewAccount.test.tsx (22.052 s)
+  ● <NewAccount /> › Button Functionality › should copy URL to clipboard when copy button is clicked
+
+Test Suites: 1 failed, 36 passed, 37 total"""
+
+    expected = """```CircleCI Build Log: yarn test
+yarn run v1.22.22
+$ craco test --watchAll=false --coverage=true --verbose=true
+
+Summary of all failing tests
+FAIL test/components/NewAccount/NewAccount.test.tsx (22.052 s)
+  ● <NewAccount /> › Button Functionality › should copy URL to clipboard when copy button is clicked
+
     """Debug test to see what the function actually produces with real payload."""
     # Read the actual raw input
     with open("payloads/circleci/error_usage_9744_raw.txt", "r", encoding="utf-8") as f:
