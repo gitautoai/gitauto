@@ -1,4 +1,6 @@
 from unittest.mock import patch
+import os
+from constants import UTF8
 
 import pytest
 from utils.logs.remove_pytest_sections import remove_pytest_sections
