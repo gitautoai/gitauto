@@ -3,42 +3,33 @@ import re
 from utils.error.handle_exceptions import handle_exceptions
 
 
-def _is_pytest_section_content(line: str) -> bool:
-    """Check if a line looks like pytest section content that should be skipped."""
-    if not line.strip():
-        return True  # Empty lines in pytest sections should be skipped
-
-    # Common pytest section content patterns
-    pytest_patterns = [
-        r'^platform\s+',
-        r'^cachedir:',
-        r'^rootdir:',
-        r'^plugins:',
-        r'^collecting\s+',
-        r'.*::\w+\s+(PASSED|FAILED|SKIPPED)',
-        r'^\s*\[\s*\d+%\]',
-        r'^-- Docs:',
-        r'^\s*warnings\.warn\(',
-        r'^/.*:\d+:.*Warning:',
-
-def _is_pytest_section_content(line: str) -> bool:
+def is_pytest_section_content(line: str) -> bool:
     """Check if a line looks like pytest section content that should be removed."""
     if not line.strip():
-        return True  # Empty lines within pytest sections should be removed
+        return True  # Empty lines within sections should be removed
 
     # Common pytest section content patterns
     pytest_patterns = [
-        r'^platform\s+',
-        r'^cachedir:',
-        r'^rootdir:',
-        r'^plugins:',
-        r'^collecting\s+',
-        r'collected\s+\d+\s+items?',
-        r'\.py::\w+\s+(PASSED|FAILED|SKIPPED)',
-        r'^\s*\[\s*\d+%\s*\]',
+        r'^platform\s+',  # platform linux -- Python 3.11.4
+        r'^cachedir:',    # cachedir: .pytest_cache
+        r'^rootdir:',     # rootdir: /github/workspace
+        r'^plugins:',     # plugins: cov-6.0.0
+        r'^collecting\s+', # collecting ... collected 2 items
+        r'^collected\s+\d+\s+items?',  # collected 2 items
+        r'.*::\w+\s+(PASSED|FAILED|SKIPPED)',  # test results
+        r'^\s*\[\s*\d+%\]',  # progress indicators [50%]
+        r'^/.*:\d+:.*Warning',  # warning file paths
+        r'^--\s+Docs:',  # documentation links
+        r'^\s*warnings\.warn',  # warning code
+        r'^\s*$',  # empty lines
     ]
 
-    return any(re.match(pattern, line) for pattern in pytest_patterns)
+    for pattern in pytest_patterns:
+        if re.match(pattern, line):
+            return True
+
+    return False
+
 
 @handle_exceptions(default_return_value="")
 def remove_pytest_sections(error_log: str):
@@ -90,10 +81,17 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # If we're skipping, skip everything until we hit a section we want to keep
+        # If we're skipping, check if this line looks like pytest content
         if skip:
-            content_removed = True
-            continue
+            if is_pytest_section_content(line):
+                content_removed = True
+                continue
+            else:
+                # This line doesn't look like pytest content, stop skipping
+                skip = False
+                # Add blank line before this content if we just removed content and last line isn't blank
+                if content_removed and filtered_lines and filtered_lines[-1] != "":
+                    filtered_lines.append("")
 
         # Keep line if not skipping
         filtered_lines.append(line)
