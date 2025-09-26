@@ -1,5 +1,4 @@
 # pylint: disable=redefined-outer-name
-from unittest.mock import patch
 
 from utils.logs.minimize_jest_test_logs import minimize_jest_test_logs
 
