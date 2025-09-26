@@ -45,7 +45,7 @@ def remove_pytest_sections(log: str) -> str:
             if should_add_blank:
                 result_lines.append("")
 
-            if content_was_removed and "FAILURES" in line:
+            if content_was_removed:
                 content_was_removed = False
 
             result_lines.append(line)
