@@ -26,41 +26,53 @@ def remove_pytest_sections(log: str) -> str:
 
     lines = log.split('\n')
     filtered_lines = []
-    skip_until_section = False
+    skip_mode = False
     content_was_removed = False
 
-    for line in lines:
-        # Start skipping from test session starts until we hit a major section
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+
+        # Check for test session starts - skip everything until FAILURES or short test summary
         if "test session starts" in line and "===" in line:
-            skip_until_section = True
+            skip_mode = True
             content_was_removed = True
+            i += 1
             continue
 
-        # Start skipping from warnings summary until we hit a major section
+        # Check for warnings summary - skip everything until next major section
         if "warnings summary" in line and "===" in line:
-            skip_until_section = True
+            skip_mode = True
             content_was_removed = True
+            i += 1
             continue
 
-        # Stop skipping when we hit FAILURES or short test summary
-        if skip_until_section and ("=== FAILURES ===" in line or "=== short test summary info ===" in line):
-            skip_until_section = False
-            # Add blank line before the section if content was removed
-            if content_was_removed and filtered_lines and filtered_lines[-1] != "":
-                filtered_lines.append("")
+        # Check if we should stop skipping
+        if skip_mode:
+            if ("=== FAILURES ===" in line or
+                "=== short test summary info ===" in line or
+                "!!!!!!!!!!!!!!!!!!!!!!!!!" in line):
+                skip_mode = False
+                # Add blank line before the section if content was removed
+                if content_was_removed and filtered_lines and filtered_lines[-1] != "":
+                    filtered_lines.append("")
+                # Don't skip this line, process it normally
+            else:
+                # Still in skip mode, skip this line
+                i += 1
+                continue
 
         # Skip coverage output lines
         if (line.strip().startswith("---------- coverage:") or
             line.strip().startswith("Coverage LCOV written") or
             line.strip() == "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html"):
             content_was_removed = True
+            i += 1
             continue
 
-        # If we're in skip mode, continue skipping
-        if skip_until_section:
-            continue
-
+        # Add the line to output
         filtered_lines.append(line)
+        i += 1
 
     # Clean up excessive blank lines at the end
     while filtered_lines and filtered_lines[-1] == "":
