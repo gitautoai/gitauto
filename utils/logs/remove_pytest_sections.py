@@ -33,12 +33,12 @@ def remove_pytest_sections(log: str) -> str:
             content_was_removed = True
             continue
 
-        # Check if we're exiting the test session starts section (blank line or new section)
+        # Check if we're exiting the test session starts section
         if in_test_session_starts:
             if line.strip() == "" or "===" in line:
                 in_test_session_starts = False
                 if "===" in line:
-                    # This line starts a new section, so we should include it
+                    # This line starts a new section, we'll process it below
                     pass
                 else:
                     # This is a blank line, skip it since we'll add our own spacing
@@ -58,16 +58,10 @@ def remove_pytest_sections(log: str) -> str:
             continue
 
         # Handle spacing after removed content
-        # We want to add a blank line before significant sections if:
-        # 1. Content was removed and this line starts a new section (contains "===")
-        # 2. This is "short test summary info" and the previous line isn't blank
-        should_add_blank = False
         if content_was_removed and result_lines and result_lines[-1] != "":
-            should_add_blank = True
-
-        if should_add_blank:
             result_lines.append("")
 
+        # Reset the flag after handling spacing
         if content_was_removed:
             content_was_removed = False
 
