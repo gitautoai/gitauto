@@ -71,6 +71,11 @@ def remove_pytest_sections(log: str) -> str:
             content_was_removed = True
             continue
 
+        # Skip test file lines with progress (like "services/anthropic/test_evaluate_condition.py ....... [  0%]")
+        if re.match(r'^[a-zA-Z_/]+\.py.*\[.*\]$', line.strip()):
+            content_was_removed = True
+            continue
+
         # Skip collection lines
         if re.match(r'^collecting.*collected \d+ items?$', line.strip()):
             content_was_removed = True
@@ -78,6 +83,16 @@ def remove_pytest_sections(log: str) -> str:
 
         # Skip standalone progress lines (like "..........                                                               [  4%]")
         if re.match(r'^[.\sF]*\s*\[\s*\d+%\]$', line.strip()):
+            content_was_removed = True
+            continue
+
+        # Skip asyncio mode lines
+        if line.strip().startswith('asyncio: mode='):
+            content_was_removed = True
+            continue
+
+        # Skip platform/plugin lines
+        if line.strip().startswith('platform ') or line.strip().startswith('rootdir: ') or line.strip().startswith('plugins: '):
             content_was_removed = True
             continue
 
