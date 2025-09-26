@@ -1,6 +1,6 @@
 """Remove pytest sections from logs while preserving important information."""
 
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value="")
