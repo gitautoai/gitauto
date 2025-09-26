@@ -461,7 +461,7 @@ FAIL test/components/NewAccount/NewAccount.test.tsx (22.052 s)
       at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:616:29)
 
 Test Suites: 1 failed, 36 passed, 37 total
-Tests:       4 failed, 505 passes, 509 total
+Tests:       4 failed, 505 passed, 509 total
 Snapshots:   0 total
 Time:        37.513 s
 Ran all test suites.
