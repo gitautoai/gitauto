@@ -13,6 +13,12 @@ def remove_pytest_sections(error_log: str):
     content_removed = False
 
     for line in lines:
+        # Check if this line is a pytest section marker
+        is_pytest_section = ("===" in line and
+                           ("test session starts" in line or
+                            "warnings summary" in line or
+                            "FAILURES" in line or
+                            "short test summary info" in line))
         # Start skipping at test session header
         if "===" in line and "test session starts" in line:
             skip = True
