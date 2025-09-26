@@ -11,6 +11,7 @@ def remove_pytest_sections(log: str) -> str:
 
     lines = log.split("\n")
     result_lines = []
+    blank_line_added = False
     content_was_removed = False
 
     i = 0
