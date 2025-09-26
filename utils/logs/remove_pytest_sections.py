@@ -12,23 +12,27 @@ def remove_pytest_sections(error_log: str):
     filtered_lines = []
     skip = False
     content_removed = False
+    skip_reason = None  # Track why we're skipping
 
     for line in lines:
         # Start skipping at test session header
         if "===" in line and "test session starts" in line:
             skip = True
+            skip_reason = "test_session"
             content_removed = True
             continue
 
         # Start skipping at warnings summary
         if "===" in line and "warnings summary" in line:
             skip = True
+            skip_reason = "warnings"
             content_removed = True
             continue
 
         # Stop skipping and keep failures section
         if "===" in line and "FAILURES" in line:
             skip = False
+            skip_reason = None
             # Add blank line before FAILURES if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
                 filtered_lines.append("")
@@ -38,54 +42,66 @@ def remove_pytest_sections(error_log: str):
         # Stop skipping and keep short test summary
         if "===" in line and "short test summary info" in line:
             skip = False
+            skip_reason = None
             # Add blank line before summary if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
                 filtered_lines.append("")
             filtered_lines.append(line)
             continue
 
-        # If we're skipping, be very selective about what to skip
-        if skip:
+        # If we encounter any other === line while skipping, stop skipping
+        if skip and "===" in line:
+            skip = False
+            skip_reason = None
+            # Add blank line before this section if we just removed content and last line isn't blank
+            if content_removed and filtered_lines and filtered_lines[-1] != "":
+                filtered_lines.append("")
+            filtered_lines.append(line)
+            continue
+
+        # If we're skipping due to test session, be more selective
+        if skip and skip_reason == "test_session":
             line_stripped = line.strip()
 
-            # Always skip empty lines when in skip mode
+            # Skip empty lines
             if not line_stripped:
                 content_removed = True
                 continue
 
-            # Only skip lines that very clearly look like pytest session output
-            # Be very restrictive here to avoid skipping user content
-            very_specific_patterns = [
-                "platform linux",
-                "platform darwin",
-                "platform win32",
-                "cachedir:",
-                "rootdir:",
-                "plugins:",
-                "collecting ...",
-                "collected ",
-                " PASSED ",
-                " FAILED ",
-                " SKIPPED ",
-                " ERROR ",
-                "::",  # Test names like test_file.py::test_name
+            # Skip lines that contain common pytest session keywords
+            pytest_session_keywords = [
+                "platform",
+                "cachedir",
+                "rootdir",
+                "plugins",
+                "collecting",
+                "collected",
+                "PASSED",
+                "FAILED",
+                "SKIPPED",
+                "ERROR",
             ]
 
-            # Check if line matches very specific pytest patterns
-            is_pytest_line = any(pattern in line for pattern in very_specific_patterns)
+            # Check if line contains pytest session keywords
+            contains_pytest_keyword = any(keyword in line_stripped for keyword in pytest_session_keywords)
 
-            # Also check for progress indicators like [100%]
-            if re.search(r'\[\s*\d+%\s*\]', line):
-                is_pytest_line = True
+            # Also check for test names (contain ::) or progress indicators
+            has_test_indicator = "::" in line or re.search(r'\[\s*\d+%\s*\]', line)
 
-            if is_pytest_line:
+            if contains_pytest_keyword or has_test_indicator:
                 content_removed = True
                 continue
             else:
-                # This doesn't look like pytest output, stop skipping and include this line
+                # This line doesn't look like pytest session output, stop skipping
                 skip = False
+                skip_reason = None
                 filtered_lines.append(line)
                 continue
+
+        # If we're skipping due to warnings, skip everything until we hit a section
+        if skip and skip_reason == "warnings":
+            content_removed = True
+            continue
 
         # Keep line if not skipping
         filtered_lines.append(line)
