@@ -66,6 +66,8 @@ def remove_pytest_sections(error_log: str):
             pytest_patterns = [
                 "platform",
                 "cachedir",
+                "asyncio:",
+                "asyncio_default_fixture_loop_scope",
                 "rootdir",
                 "plugins",
                 "collecting",
