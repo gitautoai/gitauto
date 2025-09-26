@@ -1,26 +1,23 @@
-from utils.error.handle_exceptions import handle_exceptions
+def minimize_jest_test_logs(log_content):
+    """
+    Minimize Jest test logs by keeping only command lines and test failure summaries.
 
+    Args:
+        log_content (str): The full log content
 
-@handle_exceptions(
-    default_return_value=lambda error_log: error_log, raise_on_error=False
-)
-def minimize_jest_test_logs(error_log: str) -> str:
-    if not error_log:
-        return error_log
+    Returns:
+        str: Minimized log content with only essential information
+    """
+    if not log_content:
+        return ""
 
-    # Check if this is Jest output with the summary section
-    if "Summary of all failing tests" not in error_log:
-        return error_log
-
-    lines = error_log.split("\n")
+    lines = log_content.strip().split('\n')
     result_lines = []
+    last_was_command = False
 
-    # Keep the header (build commands at the beginning)
-    header_complete = False
     for i, line in enumerate(lines):
         # Keep command/header lines
         if any(
-    last_was_command = False
             cmd in line
             for cmd in [
                 "CircleCI Build Log",
@@ -48,9 +45,5 @@ def minimize_jest_test_logs(error_log: str) -> str:
             last_was_command = False
         else:
             last_was_command = False
-        elif result_lines and not header_complete:
-            # After we have header lines, we're done with the header
-            header_complete = True
 
-    result = "\n".join(result_lines)
-    return result.strip()
+    return '\n'.join(result_lines)
