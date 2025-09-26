@@ -12,27 +12,23 @@ def remove_pytest_sections(error_log: str):
     filtered_lines = []
     skip = False
     content_removed = False
-    skip_reason = None  # Track why we're skipping
 
     for line in lines:
         # Start skipping at test session header
         if "===" in line and "test session starts" in line:
             skip = True
-            skip_reason = "test_session"
             content_removed = True
             continue
 
         # Start skipping at warnings summary
         if "===" in line and "warnings summary" in line:
             skip = True
-            skip_reason = "warnings"
             content_removed = True
             continue
 
         # Stop skipping and keep failures section
         if "===" in line and "FAILURES" in line:
             skip = False
-            skip_reason = None
             # Add blank line before FAILURES if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
                 filtered_lines.append("")
@@ -42,7 +38,6 @@ def remove_pytest_sections(error_log: str):
         # Stop skipping and keep short test summary
         if "===" in line and "short test summary info" in line:
             skip = False
-            skip_reason = None
             # Add blank line before summary if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
                 filtered_lines.append("")
@@ -52,15 +47,14 @@ def remove_pytest_sections(error_log: str):
         # If we encounter any other === line while skipping, stop skipping
         if skip and "===" in line:
             skip = False
-            skip_reason = None
             # Add blank line before this section if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
                 filtered_lines.append("")
             filtered_lines.append(line)
             continue
 
-        # If we're skipping due to test session, be more selective
-        if skip and skip_reason == "test_session":
+        # If we're skipping, be selective about what to skip
+        if skip:
             line_stripped = line.strip()
 
             # Skip empty lines
@@ -68,8 +62,8 @@ def remove_pytest_sections(error_log: str):
                 content_removed = True
                 continue
 
-            # Skip lines that contain common pytest session keywords
-            pytest_session_keywords = [
+            # Define patterns that indicate pytest output that should be skipped
+            pytest_patterns = [
                 "platform",
                 "cachedir",
                 "rootdir",
@@ -80,28 +74,27 @@ def remove_pytest_sections(error_log: str):
                 "FAILED",
                 "SKIPPED",
                 "ERROR",
+                "warning",  # For warnings summary content
+                "-- Docs:",  # Documentation links in warnings
             ]
 
-            # Check if line contains pytest session keywords
-            contains_pytest_keyword = any(keyword in line_stripped for keyword in pytest_session_keywords)
+            # Check if line contains pytest patterns
+            contains_pytest_pattern = any(pattern in line_stripped.lower() for pattern in pytest_patterns)
 
             # Also check for test names (contain ::) or progress indicators
             has_test_indicator = "::" in line or re.search(r'\[\s*\d+%\s*\]', line)
 
-            if contains_pytest_keyword or has_test_indicator:
+            # Check if line looks like a file path (common in warnings)
+            looks_like_path = "/" in line and (":" in line or ".py" in line)
+
+            if contains_pytest_pattern or has_test_indicator or looks_like_path:
                 content_removed = True
                 continue
             else:
-                # This line doesn't look like pytest session output, stop skipping
+                # This line doesn't look like pytest output, stop skipping
                 skip = False
-                skip_reason = None
                 filtered_lines.append(line)
                 continue
-
-        # If we're skipping due to warnings, skip everything until we hit a section
-        if skip and skip_reason == "warnings":
-            content_removed = True
-            continue
 
         # Keep line if not skipping
         filtered_lines.append(line)
