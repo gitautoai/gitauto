@@ -33,7 +33,7 @@ def minimize_jest_test_logs(error_log: str) -> str:
                 "$ yarn test",
             ]
         ):
-            result_lines.append(line)
+            result_lines.append(line.lstrip())
         elif "Summary of all failing tests" in line:
             # Found the summary section, keep everything from here onwards
             result_lines.append("")  # Add blank line before summary
