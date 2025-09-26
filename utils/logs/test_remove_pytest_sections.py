@@ -1,10 +1,8 @@
+import os
 from unittest.mock import patch
-import os
-from config import UTF8
-import os
-from constants import UTF8
 
 import pytest
+from config import UTF8
 from utils.logs.remove_pytest_sections import remove_pytest_sections
 
 
@@ -448,3 +446,19 @@ summary content"""
 summary content"""
     result = remove_pytest_sections(log)
     assert result == expected
+
+
+def test_remove_pytest_sections_with_real_pytest_output():
+    """Test with real pytest output from payload files."""
+    with open(
+        "payloads/github/workflow_runs/test_failure_log.txt", "r", encoding=UTF8
+    ) as f:
+        original_log = f.read()
+
+    with open(
+        "payloads/github/workflow_runs/test_failure_log_cleaned.txt", "r", encoding=UTF8
+    ) as f:
+        expected_output = f.read()
+
+    result = remove_pytest_sections(original_log)
+    assert result == expected_output
