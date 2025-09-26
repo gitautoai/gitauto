@@ -74,7 +74,7 @@ def remove_pytest_sections(error_log: str):
             if any(keyword in line_stripped for keyword in pytest_keywords):
                 should_skip = True
 
-            # Check for test progress lines (contain :: and percentage)
+            # Check for test progress lines (contain :: and percentage, or just percentage)
             if "::" in line and re.search(r'\[\s*\d+%\s*\]', line):
                 should_skip = True
 
@@ -82,7 +82,10 @@ def remove_pytest_sections(error_log: str):
             if re.search(r'^[.\sF]*\[\s*\d+%\s*\]$', line_stripped):
                 should_skip = True
 
-            # Check for test file paths at start of line
+            # Check for test file paths at start of line (with or without progress indicators)
+            if re.search(r'\[\s*\d+%\s*\]', line):
+                should_skip = True
+
             if re.match(r'^(services|utils|tests?)/.*\.(py|js|ts)', line_stripped):
                 should_skip = True
 
