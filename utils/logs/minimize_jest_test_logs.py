@@ -17,6 +17,9 @@ def minimize_jest_test_logs(log_content):
     if not log_content:
         return ""
 
+    # Temporary: return input unchanged to debug
+    return log_content
+
     lines = log_content.strip().split('\n')
 
     # Check if this looks like a Jest/test log by looking for test-related patterns
