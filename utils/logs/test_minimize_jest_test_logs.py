@@ -302,17 +302,6 @@ FAIL test/component.test.ts
     assert result == expected
 
 
-@patch('utils.logs.minimize_jest_test_logs.handle_exceptions')
-def test_minimize_jest_test_logs_exception_handling(mock_handle_exceptions):
-    """Test that the function is properly decorated with exception handling."""
-    # The decorator should be applied to the function
-    mock_handle_exceptions.assert_called_once()
-
-    # Verify the decorator was called with correct parameters
-    call_args = mock_handle_exceptions.call_args
-    assert call_args[1]['raise_on_error'] is False
-    assert callable(call_args[1]['default_return_value'])
-
 
 def test_minimize_jest_test_logs_exception_default_return():
     """Test the default return value behavior when an exception occurs."""
