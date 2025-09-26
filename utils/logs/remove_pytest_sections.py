@@ -38,6 +38,7 @@ def remove_pytest_sections(log: str) -> str:
             # Add a blank line before the section if content was removed and the last line isn't blank
             if content_was_removed and result_lines and result_lines[-1] != "":
                 result_lines.append("")
+            content_was_removed = False
             result_lines.append(line)
         else:
             result_lines.append(line)
