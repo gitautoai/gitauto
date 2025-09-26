@@ -24,6 +24,7 @@ def minimize_jest_test_logs(log_content):
     lines = log_content.strip().split('\n')
     result_lines = []
     last_was_command = False
+    header_complete = False
 
     for i, line in enumerate(lines):
         # Keep command/header lines
@@ -43,6 +44,10 @@ def minimize_jest_test_logs(log_content):
         ):
             result_lines.append(line.lstrip())
             last_was_command = True
+        elif line.strip() == "" and last_was_command and not header_complete:
+            # Keep blank lines immediately after command lines
+            result_lines.append("")
+            last_was_command = False
         elif "Summary of all failing tests" in line:
             # Found the summary section, keep everything from here onwards
             # Strip leading whitespace only from the summary line itself
@@ -50,10 +55,14 @@ def minimize_jest_test_logs(log_content):
             # Keep the rest of the lines as-is to preserve test failure indentation
             result_lines.extend(lines[i+1:])
             break
-        elif line.strip() == "" and last_was_command:
-            result_lines.append("")
+        elif last_was_command and line.strip() != "":
+            # Non-empty line after command means header section is complete
+            header_complete = True
             last_was_command = False
         else:
+            # Skip all other lines until we reach the summary
             last_was_command = False
+            if not header_complete and line.strip() != "":
+                header_complete = True
 
     return '\n'.join(result_lines)
