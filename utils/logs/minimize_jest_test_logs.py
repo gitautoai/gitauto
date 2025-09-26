@@ -24,6 +24,7 @@ from utils.error.handle_exceptions import handle_exceptions
         if any(
             cmd in line
             for cmd in [
+                "$ ",
                 "CircleCI Build Log",
                 "yarn run v",
                 "npm run",
