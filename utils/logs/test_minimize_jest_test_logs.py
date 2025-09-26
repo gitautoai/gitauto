@@ -388,3 +388,15 @@ FAIL test/example.test.ts
 
     result = minimize_jest_test_logs(input_log)
     assert result == expected
+
+
+def test_minimize_jest_test_logs_decorator_integration():
+    """Test that the decorator integration works correctly."""
+    # This test ensures the function works normally without exceptions
+    input_log = """$ npm test
+Summary of all failing tests
+FAIL test/example.test.ts"""
+
+    result = minimize_jest_test_logs(input_log)
+    expected = """$ npm test\n\nSummary of all failing tests\nFAIL test/example.test.ts"""
+    assert result == expected
