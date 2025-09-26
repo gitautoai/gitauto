@@ -44,7 +44,7 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # If we're skipping, only continue skipping for lines that clearly look like pytest output
+        # If we're skipping, be very selective about what to skip
         if skip:
             line_stripped = line.strip()
 
@@ -53,23 +53,25 @@ def remove_pytest_sections(error_log: str):
                 content_removed = True
                 continue
 
-            # Skip lines that clearly look like pytest output
-            pytest_patterns = [
-                "platform ",
+            # Only skip lines that very clearly look like pytest session output
+            # Be very restrictive here to avoid skipping user content
+            very_specific_patterns = [
+                "platform linux",
+                "platform darwin",
+                "platform win32",
                 "cachedir:",
                 "rootdir:",
                 "plugins:",
-                "collecting",
-                "collected",
+                "collecting ...",
+                "collected ",
                 " PASSED ",
                 " FAILED ",
                 " SKIPPED ",
                 " ERROR ",
                 "::",  # Test names like test_file.py::test_name
-                "-- Docs:",  # Documentation links
             ]
 
-            # Check if line matches pytest patterns
+            # Check if line matches very specific pytest patterns
             is_pytest_line = any(pattern in line for pattern in pytest_patterns)
 
             # Also check for progress indicators like [100%]
