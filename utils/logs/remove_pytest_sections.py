@@ -53,54 +53,10 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # If we're skipping, check what to skip
+        # If we're skipping, skip everything until we hit a section we want to keep
         if skip:
-            line_stripped = line.strip()
-
-            # Skip empty lines
-            if not line_stripped:
-                content_removed = True
-                continue
-
-            # Skip lines that are clearly pytest output
-            should_skip = False
-
-            # Check for pytest configuration and status lines
-            pytest_keywords = [
-                "platform", "cachedir", "rootdir", "plugins", "collecting", "collected",
-                "asyncio:", "PASSED", "FAILED", "SKIPPED", "ERROR", "warning", "-- Docs:"
-            ]
-
-            if any(keyword in line_stripped for keyword in pytest_keywords):
-                should_skip = True
-
-            # Check for test progress lines (contain :: and percentage, or just percentage)
-            if "::" in line and re.search(r'\[\s*\d+%\s*\]', line):
-                should_skip = True
-
-            # Check for lines that are just dots/symbols with percentage
-            if re.search(r'^[.\sF]*\[\s*\d+%\s*\]$', line_stripped):
-                should_skip = True
-
-            # Check for test file paths at start of line (with or without progress indicators)
-            if re.search(r'\[\s*\d+%\s*\]', line):
-                should_skip = True
-
-            if re.match(r'^(services|utils|tests?)/.*\.(py|js|ts)', line_stripped):
-                should_skip = True
-
-            # Check for warning file paths
-            if "/" in line and (":" in line or ".py" in line) and ("warning" in line.lower() or line_stripped.startswith("/")):
-                should_skip = True
-
-            if should_skip:
-                content_removed = True
-                continue
-            else:
-                # This line doesn't look like pytest output, stop skipping
-                skip = False
-                filtered_lines.append(line)
-                continue
+            content_removed = True
+            continue
 
         # Keep line if not skipping
         filtered_lines.append(line)
