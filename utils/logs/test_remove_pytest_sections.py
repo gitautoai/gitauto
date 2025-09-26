@@ -459,3 +459,20 @@ def test_remove_pytest_sections_with_real_pytest_output():
     except FileNotFoundError:
         # Skip this test if payload files are not available
         pytest.skip("Payload files not found")
+
+def test_debug_remove_pytest_sections():
+    """Debug test to check what's happening with the function."""
+    sample_log = """Run python -m pytest
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.3.3, pluggy-1.5.0
+services/anthropic/test_evaluate_condition.py .......                    [  0%]
+=== FAILURES ===
+Some failure content
+"""
+
+    result = remove_pytest_sections(sample_log)
+    expected = """Run python -m pytest
+
+=== FAILURES ===
+Some failure content"""
+    assert result == expected
