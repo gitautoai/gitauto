@@ -41,6 +41,8 @@ def minimize_jest_test_logs(error_log: str) -> str:
             # Keep the rest of the lines as-is to preserve test failure indentation
             result_lines.extend(lines[i+1:])
             break
+        elif line.strip() == "" and result_lines:
+            result_lines.append("")
         elif result_lines and not header_complete:
             # After we have header lines, we're done with the header
             header_complete = True
