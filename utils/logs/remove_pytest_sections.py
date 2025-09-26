@@ -24,55 +24,44 @@ def remove_pytest_sections(log: str) -> str:
     if not log:
         return log
 
+    # Split into lines for processing
     lines = log.split('\n')
     filtered_lines = []
     skip_mode = False
-    content_was_removed = False
 
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-
+    for line in lines:
         # Check for test session starts - skip everything until FAILURES or short test summary
-        if "test session starts" in line and "===" in line:
+        if re.search(r'=+\s*test session starts\s*=+', line):
             skip_mode = True
-            content_was_removed = True
-            i += 1
             continue
 
         # Check for warnings summary - skip everything until next major section
-        if "warnings summary" in line and "===" in line:
+        if re.search(r'=+\s*warnings summary\s*=+', line):
             skip_mode = True
-            content_was_removed = True
-            i += 1
             continue
 
         # Check if we should stop skipping
         if skip_mode:
-            if ("=== FAILURES ===" in line or
-                "=== short test summary info ===" in line or
-                "!!!!!!!!!!!!!!!!!!!!!!!!!" in line):
+            if (re.search(r'=+\s*FAILURES\s*=+', line) or
+                re.search(r'=+\s*short test summary info\s*=+', line) or
+                line.strip().startswith('!!!!!!!!!!!!!!!!!!!!!!!!!')):
                 skip_mode = False
-                # Add blank line before the section if content was removed
-                if content_was_removed and filtered_lines and filtered_lines[-1] != "":
+                # Add blank line before the section if we removed content
+                if filtered_lines and filtered_lines[-1] != "":
                     filtered_lines.append("")
                 # Don't skip this line, process it normally
             else:
                 # Still in skip mode, skip this line
-                i += 1
                 continue
 
         # Skip coverage output lines
         if (line.strip().startswith("---------- coverage:") or
             line.strip().startswith("Coverage LCOV written") or
             line.strip() == "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html"):
-            content_was_removed = True
-            i += 1
             continue
 
         # Add the line to output
         filtered_lines.append(line)
-        i += 1
 
     # Clean up excessive blank lines at the end
     while filtered_lines and filtered_lines[-1] == "":
