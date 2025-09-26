@@ -3,6 +3,47 @@ import re
 from utils.error.handle_exceptions import handle_exceptions
 
 
+def _looks_like_pytest_output(line):
+    """Check if a line looks like it's part of pytest output that should be skipped."""
+    line = line.strip()
+
+    # Empty lines are part of pytest sections
+    if not line:
+        return True
+
+    # Lines with === are pytest section headers
+    if "===" in line:
+        return True
+
+    # Common pytest output patterns
+    pytest_indicators = [
+        "platform ",
+        "cachedir:",
+        "rootdir:",
+        "plugins:",
+        "collecting",
+        "collected",
+        " PASSED ",
+        " FAILED ",
+        " SKIPPED ",
+        " ERROR ",
+        "[ ",  # Progress indicators like [100%]
+        "-- Docs:",  # Documentation links in warnings
+        "::",  # Test names like test_file.py::test_name
+    ]
+
+    # Check if line contains any pytest indicators
+    for indicator in pytest_indicators:
+        if indicator in line:
+            return True
+
+    # Check if line looks like a test result (ends with percentage)
+    if re.search(r'\[\s*\d+%\s*\]$', line):
+        return True
+
+    return False
+
+
 @handle_exceptions(default_return_value="")
 def remove_pytest_sections(error_log: str):
     if not error_log:
@@ -44,20 +85,20 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # If we're skipping and encounter any other === line, stop skipping
-        if skip and "===" in line:
-            skip = False
-            # Add blank line before this section if we just removed content and last line isn't blank
-            if content_removed and filtered_lines and filtered_lines[-1] != "":
-                filtered_lines.append("")
-            filtered_lines.append(line)
-            continue
+        # If we're skipping, check if this line looks like pytest output
+        if skip:
+            if _looks_like_pytest_output(line):
+                # Skip this line as it's part of pytest output
+                content_removed = True
+                continue
+            else:
+                # This doesn't look like pytest output, stop skipping
+                skip = False
+                filtered_lines.append(line)
+                continue
 
         # Keep line if not skipping
-        if not skip:
-            filtered_lines.append(line)
-        else:
-            content_removed = True
+        filtered_lines.append(line)
 
     # Join and only clean up excessive blank lines if we actually removed content
     result = "\n".join(filtered_lines)
