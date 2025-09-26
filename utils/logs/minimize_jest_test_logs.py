@@ -14,6 +14,8 @@ def minimize_jest_test_logs(log_content):
     Returns:
         str: Minimized log content with only essential information
     """
+    if log_content is None:
+        return None
     if not log_content:
         return ""
 
