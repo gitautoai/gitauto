@@ -9,16 +9,35 @@ def remove_pytest_sections(log: str) -> str:
     if not log:
         return log
 
-    # Remove test session content: from "test session starts" line to just before "FAILURES"
-    # This pattern captures everything from the test session start line through all test progress
-    # until it reaches a line with "FAILURES" or "short test summary info"
+    lines = log.split("\n")
+    result_lines = []
+    content_was_removed = False
 
-    # First, handle the main test session
-    pattern = r'={3,}.*?test session starts.*?={3,}\n.*?(?=={3,}.*?(?:FAILURES|short test summary info).*?={3,})'
-    result = re.sub(pattern, '\n', log, flags=re.DOTALL)
+    i = 0
+    while i < len(lines):
+        line = lines[i]
 
-    # Also remove warnings summary sections if they appear before failures
-    warnings_pattern = r'={3,}.*?warnings summary.*?={3,}\n.*?(?=={3,}.*?(?:FAILURES|short test summary info).*?={3,})'
-    result = re.sub(warnings_pattern, '\n', result, flags=re.DOTALL)
+        # Check if this is the start of a test session or warnings summary
+        if (("test session starts" in line and "===" in line) or
+            ("warnings summary" in line and "===" in line)):
+            content_was_removed = True
+            # Skip all lines until we find FAILURES or short test summary
+            i += 1
+            while i < len(lines):
+                current_line = lines[i]
+                if (("FAILURES" in current_line and "===" in current_line) or
+                    ("short test summary info" in current_line and "===" in current_line)):
+                    # Add a blank line before the section if the last line isn't blank
+                    if result_lines and result_lines[-1] != "":
+                        result_lines.append("")
+                    result_lines.append(current_line)
+                    i += 1
+                    break
+                i += 1
+            continue
+        else:
+            result_lines.append(line)
 
-    return result
+        i += 1
+
+    return "\n".join(result_lines)
