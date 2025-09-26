@@ -39,7 +39,8 @@ def remove_pytest_sections(log: str) -> str:
             # 1. Content was removed and this is the first kept section, OR
             # 2. This is "short test summary info" and the previous line isn't blank
             should_add_blank = False
-            if content_was_removed and result_lines and result_lines[-1] != "":
+            if (content_was_removed and result_lines and result_lines[-1] != "") or \
+               ("short test summary info" in line and result_lines and result_lines[-1] != ""):
                 should_add_blank = True
 
             if should_add_blank:
