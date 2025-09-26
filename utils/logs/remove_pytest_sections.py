@@ -9,45 +9,31 @@ def remove_pytest_sections(log: str) -> str:
     if not log:
         return log
 
+    # Split into lines
     lines = log.split("\n")
-    filtered_lines = []
-    in_test_session = False
-    content_was_removed = False
+    result_lines = []
 
-    for line in lines:
-        # Start of test session - start removing content
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+
+        # Check if this is the start of a test session
         if "test session starts" in line and "===" in line:
-            in_test_session = True
-            continue
+            # Skip all lines until we find FAILURES or short test summary
+            i += 1
+            while i < len(lines):
+                current_line = lines[i]
+                if (("FAILURES" in current_line and "===" in current_line) or
+                    ("short test summary info" in current_line and "===" in current_line)):
+                    # Add a blank line before the section if the last line isn't blank
+                    if result_lines and result_lines[-1] != "":
+                        result_lines.append("")
+                    result_lines.append(current_line)
+                    break
+                i += 1
+        else:
+            result_lines.append(line)
 
-        # Start of warnings summary - start removing content
-        if "warnings summary" in line and "===" in line:
-            in_test_session = True
-            continue
+        i += 1
 
-        # End of removable sections - stop removing content
-        if (("FAILURES" in line and "===" in line) or
-            ("short test summary info" in line and "===" in line)):
-            in_test_session = False
-            # Add blank line before this section if we removed content and last line isn't blank
-            if content_was_removed and filtered_lines and filtered_lines[-1] != "":
-                filtered_lines.append("")
-            filtered_lines.append(line)
-            continue
-
-        # If we're in a test session, remove the content
-        if in_test_session:
-            content_was_removed = True
-            continue
-
-        # Keep all other lines
-        filtered_lines.append(line)
-
-    # Join the lines back together
-    result = "\n".join(filtered_lines)
-
-    # Clean up excessive blank lines if we removed content
-    if content_was_removed:
-        result = re.sub(r"\n{3,}", "\n\n", result)
-
-    return result
+    return "\n".join(result_lines)
