@@ -242,8 +242,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         logging.info(msg)
         return {"status": "skipped", "message": msg}
 
-    target_path = cast(str, target_item["full_path"])
-    statement_coverage = cast(float, target_item["statement_coverage"])
+    target_path = target_item["full_path"]
 
     # Create issue title and body
     title = get_issue_title(target_path)
@@ -252,7 +251,13 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         repo=repo_name,
         branch=default_branch,
         file_path=target_path,
-        statement_coverage=statement_coverage,
+        statement_coverage=target_item["statement_coverage"],
+        function_coverage=target_item["function_coverage"],
+        branch_coverage=target_item["branch_coverage"],
+        line_coverage=target_item["line_coverage"],
+        uncovered_lines=target_item["uncovered_lines"],
+        uncovered_functions=target_item["uncovered_functions"],
+        uncovered_branches=target_item["uncovered_branches"],
     )
 
     # Create the issue with gitauto label and assign to the user
