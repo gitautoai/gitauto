@@ -1,8 +1,10 @@
-def minimize_jest_test_logs(log_content):
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=lambda error_log: error_log, raise_on_error=False)
+@handle_exceptions(
+    default_return_value=lambda error_log: error_log, raise_on_error=False
+)
+def minimize_jest_test_logs(log_content):
     """
     Minimize Jest test logs by keeping only command lines and test failure summaries.
 
@@ -16,6 +18,31 @@ from utils.error.handle_exceptions import handle_exceptions
         return ""
 
     lines = log_content.strip().split('\n')
+
+    # Check if this looks like a Jest/test log by looking for test-related patterns
+    jest_indicators = [
+        "Summary of all failing tests",
+        "Test Suites:",
+        "Tests:",
+        "PASS ",
+        "FAIL ",
+        "$ craco test",
+        "$ react-scripts test",
+        "$ jest",
+        "$ vitest",
+        "$ npm test",
+        "$ yarn test",
+    ]
+
+    has_jest_indicators = any(
+        any(indicator in line for indicator in jest_indicators)
+        for line in lines
+    )
+
+    # If this doesn't look like a Jest log, return unchanged
+    if not has_jest_indicators:
+        return log_content
+
     result_lines = []
     last_was_command = False
 
@@ -24,7 +51,6 @@ from utils.error.handle_exceptions import handle_exceptions
         if any(
             cmd in line
             for cmd in [
-                "$ ",
                 "CircleCI Build Log",
                 "yarn run v",
                 "npm run",
