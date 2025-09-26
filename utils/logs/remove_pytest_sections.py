@@ -66,12 +66,11 @@ def remove_pytest_sections(error_log: str):
             pytest_patterns = [
                 "platform",
                 "cachedir",
-                "asyncio:",
-                "asyncio_default_fixture_loop_scope",
                 "rootdir",
                 "plugins",
                 "collecting",
                 "collected",
+                "asyncio:",  # New asyncio configuration line
                 "PASSED",
                 "FAILED",
                 "SKIPPED",
@@ -89,7 +88,10 @@ def remove_pytest_sections(error_log: str):
             # Check if line looks like a file path (common in warnings)
             looks_like_path = "/" in line and (":" in line or ".py" in line)
 
-            if contains_pytest_pattern or has_test_indicator or looks_like_path:
+            # Check for lines that start with test file paths (common pattern in pytest output)
+            starts_with_test_path = line_stripped.startswith(("services/", "utils/", "test_"))
+
+            if contains_pytest_pattern or has_test_indicator or looks_like_path or starts_with_test_path:
                 content_removed = True
                 continue
             else:
