@@ -37,7 +37,7 @@ def minimize_jest_test_logs(error_log: str) -> str:
         elif "Summary of all failing tests" in line:
             # Found the summary section, keep everything from here onwards
             result_lines.append("")  # Add blank line before summary
-            result_lines.extend(lines[i:])  # Keep everything from summary to end
+            result_lines.extend([line.lstrip() for line in lines[i:]])  # Keep everything from summary to end, stripped
             break
         elif result_lines and not header_complete:
             # After we have header lines, we're done with the header
