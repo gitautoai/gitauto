@@ -22,6 +22,7 @@ def is_pytest_section_content(line: str) -> bool:
         r'^/.*:\d+:.*Warning',  # warning file paths
         r'^asyncio:',  # asyncio configuration lines
         r'^\s*[.\sF]+\s*$',  # lines with only dots, spaces, and F characters
+        r'^[.\s]*\[\s*\d+%\]$',  # lines with just dots and progress
         r'^--\s+Docs:',  # documentation links
         r'^\s*warnings\.warn',  # warning code
         r'^\s*$',  # empty lines
