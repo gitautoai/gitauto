@@ -29,8 +29,11 @@ def remove_pytest_sections(log: str) -> str:
                     if result_lines and result_lines[-1] != "":
                         result_lines.append("")
                     result_lines.append(current_line)
+                    i += 1  # Move to next line after adding this one
                     break
                 i += 1
+            # Don't increment i again since we already did it in the inner loop
+            continue
         else:
             result_lines.append(line)
 
