@@ -53,7 +53,7 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # If we're skipping, be selective about what to skip
+        # If we're skipping, check what to skip
         if skip:
             line_stripped = line.strip()
 
@@ -62,36 +62,35 @@ def remove_pytest_sections(error_log: str):
                 content_removed = True
                 continue
 
-            # Define patterns that indicate pytest output that should be skipped
-            pytest_patterns = [
-                "platform",
-                "cachedir",
-                "rootdir",
-                "plugins",
-                "collecting",
-                "collected",
-                "asyncio:",  # New asyncio configuration line
-                "PASSED",
-                "FAILED",
-                "SKIPPED",
-                "ERROR",
-                "warning",  # For warnings summary content
-                "-- Docs:",  # Documentation links in warnings
+            # Skip lines that are clearly pytest output
+            should_skip = False
+
+            # Check for pytest configuration and status lines
+            pytest_keywords = [
+                "platform", "cachedir", "rootdir", "plugins", "collecting", "collected",
+                "asyncio:", "PASSED", "FAILED", "SKIPPED", "ERROR", "warning", "-- Docs:"
             ]
 
-            # Check if line contains pytest patterns
-            contains_pytest_pattern = any(pattern in line_stripped.lower() for pattern in pytest_patterns)
+            if any(keyword in line_stripped for keyword in pytest_keywords):
+                should_skip = True
 
-            # Also check for test names (contain ::) or progress indicators
-            has_test_indicator = "::" in line or re.search(r'\[\s*\d+%\s*\]', line)
+            # Check for test progress lines (contain :: and percentage)
+            if "::" in line and re.search(r'\[\s*\d+%\s*\]', line):
+                should_skip = True
 
-            # Check if line looks like a file path (common in warnings)
-            looks_like_path = "/" in line and (":" in line or ".py" in line)
+            # Check for lines that are just dots/symbols with percentage
+            if re.search(r'^[.\sF]*\[\s*\d+%\s*\]$', line_stripped):
+                should_skip = True
 
-            # Check for lines that start with test file paths (common pattern in pytest output)
-            starts_with_test_path = line_stripped.startswith(("services/", "utils/", "test_"))
+            # Check for test file paths at start of line
+            if re.match(r'^(services|utils|tests?)/.*\.(py|js|ts)', line_stripped):
+                should_skip = True
 
-            if contains_pytest_pattern or has_test_indicator or looks_like_path or starts_with_test_path:
+            # Check for warning file paths
+            if "/" in line and (":" in line or ".py" in line) and ("warning" in line.lower() or line_stripped.startswith("/")):
+                should_skip = True
+
+            if should_skip:
                 content_removed = True
                 continue
             else:
