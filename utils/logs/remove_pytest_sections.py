@@ -9,34 +9,18 @@ def remove_pytest_sections(log: str) -> str:
     if not log:
         return log
 
-    # Split into lines
-    lines = log.split("\n")
-    result_lines = []
+    # Use regex to remove the test session content
+    # Pattern: from "test session starts" to just before "FAILURES" or "short test summary info"
+    pattern = r'(={3,}.*?test session starts.*?={3,}\n)(.*?)(?=(={3,}.*?(?:FAILURES|short test summary info).*?={3,}))'
 
-    i = 0
-    while i < len(lines):
-        line = lines[i]
+    def replacement(match):
+        # Return just a newline to replace the removed content
+        return "\n"
 
-        # Check if this is the start of a test session
-        if "test session starts" in line and "===" in line:
-            # Skip all lines until we find FAILURES or short test summary
-            i += 1
-            while i < len(lines):
-                current_line = lines[i]
-                if (("FAILURES" in current_line and "===" in current_line) or
-                    ("short test summary info" in current_line and "===" in current_line)):
-                    # Add a blank line before the section if the last line isn't blank
-                    if result_lines and result_lines[-1] != "":
-                        result_lines.append("")
-                    result_lines.append(current_line)
-                    i += 1  # Move to next line after adding this one
-                    break
-                i += 1
-            # Don't increment i again since we already did it in the inner loop
-            continue
-        else:
-            result_lines.append(line)
+    result = re.sub(pattern, replacement, log, flags=re.DOTALL)
 
-        i += 1
+    # Also handle warnings summary sections that might appear after failures
+    warnings_pattern = r'(={3,}.*?warnings summary.*?={3,}\n)(.*?)(?=(={3,}.*?(?:short test summary info|Docs:).*?))'
+    result = re.sub(warnings_pattern, replacement, result, flags=re.DOTALL)
 
-    return "\n".join(result_lines)
+    return result
