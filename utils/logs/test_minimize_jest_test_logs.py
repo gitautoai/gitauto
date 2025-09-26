@@ -400,3 +400,25 @@ FAIL test/example.test.ts"""
     result = minimize_jest_test_logs(input_log)
     expected = """$ npm test\n\nSummary of all failing tests\nFAIL test/example.test.ts"""
     assert result == expected
+
+
+def test_minimize_jest_test_logs_debug_real_payload():
+    """Debug test to see what the function actually produces with real payload."""
+    # Read the actual raw input
+    with open("payloads/circleci/error_usage_9744_raw.txt", "r", encoding="utf-8") as f:
+        raw_input = f.read()
+
+    # Read the expected output
+    with open("payloads/circleci/error_usage_9744_minimized.txt", "r", encoding="utf-8") as f:
+        expected_output = f.read()
+
+    # First remove ANSI codes like the clean_logs function does
+    from utils.logs.remove_ansi_escape_codes import remove_ansi_escape_codes
+    ansi_cleaned = remove_ansi_escape_codes(raw_input)
+
+    # Then minimize
+    result = minimize_jest_test_logs(ansi_cleaned)
+
+    print("EXPECTED:")
+    print(repr(expected_output))
+    print("\nACTUAL:")
