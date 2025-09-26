@@ -3,47 +3,6 @@ import re
 from utils.error.handle_exceptions import handle_exceptions
 
 
-def _looks_like_pytest_output(line):
-    """Check if a line looks like it's part of pytest output that should be skipped."""
-    line = line.strip()
-
-    # Empty lines are part of pytest sections
-    if not line:
-        return True
-
-    # Lines with === are pytest section headers
-    if "===" in line:
-        return True
-
-    # Common pytest output patterns
-    pytest_indicators = [
-        "platform ",
-        "cachedir:",
-        "rootdir:",
-        "plugins:",
-        "collecting",
-        "collected",
-        " PASSED ",
-        " FAILED ",
-        " SKIPPED ",
-        " ERROR ",
-        "[ ",  # Progress indicators like [100%]
-        "-- Docs:",  # Documentation links in warnings
-        "::",  # Test names like test_file.py::test_name
-    ]
-
-    # Check if line contains any pytest indicators
-    for indicator in pytest_indicators:
-        if indicator in line:
-            return True
-
-    # Check if line looks like a test result (ends with percentage)
-    if re.search(r'\[\s*\d+%\s*\]$', line):
-        return True
-
-    return False
-
-
 @handle_exceptions(default_return_value="")
 def remove_pytest_sections(error_log: str):
     if not error_log:
@@ -85,14 +44,43 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # If we're skipping, check if this line looks like pytest output
+        # If we're skipping, only continue skipping for lines that clearly look like pytest output
         if skip:
-            if _looks_like_pytest_output(line):
-                # Skip this line as it's part of pytest output
+            line_stripped = line.strip()
+
+            # Always skip empty lines when in skip mode
+            if not line_stripped:
+                content_removed = True
+                continue
+
+            # Skip lines that clearly look like pytest output
+            pytest_patterns = [
+                "platform ",
+                "cachedir:",
+                "rootdir:",
+                "plugins:",
+                "collecting",
+                "collected",
+                " PASSED ",
+                " FAILED ",
+                " SKIPPED ",
+                " ERROR ",
+                "::",  # Test names like test_file.py::test_name
+                "-- Docs:",  # Documentation links
+            ]
+
+            # Check if line matches pytest patterns
+            is_pytest_line = any(pattern in line for pattern in pytest_patterns)
+
+            # Also check for progress indicators like [100%]
+            if re.search(r'\[\s*\d+%\s*\]', line):
+                is_pytest_line = True
+
+            if is_pytest_line:
                 content_removed = True
                 continue
             else:
-                # This doesn't look like pytest output, stop skipping
+                # This doesn't look like pytest output, stop skipping and include this line
                 skip = False
                 filtered_lines.append(line)
                 continue
