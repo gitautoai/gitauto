@@ -1,5 +1,7 @@
+# Standard imports
 from unittest.mock import patch
 
+# Local imports
 from services.anthropic.remove_get_remote_file_content_before_replace_remote_file_content import \
     remove_get_remote_file_content_before_replace_remote_file_content
 
@@ -619,3 +621,195 @@ def test_non_list_content():
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
     # Should remain unchanged since no replace operations
     assert result == messages
+
+
+def test_content_tracking_with_later_file_content():
+    """Test that later file content for same file is tracked correctly"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('first')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "test.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('later')",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+
+    expected = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "[Outdated content removed]",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "test.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "[Outdated content removed]",
+                }
+            ],
+        },
+    ]
+    assert result == expected
+
+
+def test_input_data_none():
+    """Test when input_data is None"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": None,  # None input
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should remain unchanged since invalid input is skipped
+    assert result == messages
+
+
+def test_content_str_conversion():
+    """Test content conversion to string with various types"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": 123,  # Non-string content that gets converted
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": ["list", "content"],  # List content
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should remain unchanged since content doesn't match file pattern
+    assert result == messages
+
+
+def test_no_content_key():
+    """Test when tool_result has no content key"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    # No content key
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should remain unchanged
+    assert result == messages
+
+
+def test_complex_filename_with_special_characters():
+    """Test filename extraction with special characters"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'path/to/file-with_special.chars.py' with line numbers for your information.\n1: print('hello')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "path/to/file-with_special.chars.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+
+    expected = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "[Outdated content removed]",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "path/to/file-with_special.chars.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+        },
+    ]
+    assert result == expected
