@@ -400,10 +400,14 @@ class TestScheduleHandler:
                 "statement_coverage": 0.0,
                 "function_coverage": 0.0,
                 "branch_coverage": 0.0,
+                "line_coverage": 0.0,
                 "created_at": "2024-01-01",
                 "updated_at": "2024-01-01",
                 "github_issue_url": None,
                 "is_excluded_from_testing": False,
+                "uncovered_lines": None,
+                "uncovered_functions": None,
+                "uncovered_branches": None,
             }
         ]
         mock_is_code_file.return_value = True
