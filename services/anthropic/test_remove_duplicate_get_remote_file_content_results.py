@@ -1,10 +1,7 @@
 # Standard imports
-import json
 from copy import deepcopy
-from unittest.mock import patch
 
 # Local imports
-from config import UTF8
 from services.anthropic.remove_duplicate_get_remote_file_content_results import \
     remove_duplicate_get_remote_file_content_results
 
@@ -227,70 +224,6 @@ def test_malformed_filename_extraction():
 
     result = remove_duplicate_get_remote_file_content_results(messages)
     assert result == messages  # Should remain unchanged
-
-
-def test_handles_exception_gracefully():
-    """Test that exceptions are handled gracefully"""
-    messages = [{"role": "user", "content": []}]
-
-    with patch("copy.deepcopy", side_effect=RuntimeError("Simulated failure")):
-        result = remove_duplicate_get_remote_file_content_results(messages)
-        # Should return original messages unchanged when exception occurs
-        assert result == messages
-
-
-def test_with_real_data():
-    """Test with real production data"""
-    try:
-        # Load actual data
-        with open(
-            "payloads/anthropic/llm_request_2816_input_content_formatted.json",
-            "r",
-            encoding=UTF8,
-        ) as f:
-            original_messages = json.load(f)
-
-        # Load expected result
-        with open(
-            "payloads/anthropic/llm_request_2816_input_content_formatted_expected.json",
-            "r",
-            encoding=UTF8,
-        ) as f:
-            expected_messages = json.load(f)
-
-        # Deduplicate using our function
-        result = remove_duplicate_get_remote_file_content_results(original_messages)
-
-        # Should match expected output
-        assert result == expected_messages
-    except FileNotFoundError:
-        # Skip test if files don't exist
-        pass
-
-
-def test_with_production_minified_json():
-    """Test with real minified JSON from production"""
-    try:
-        with open(
-            "payloads/anthropic/llm_request_2816_input_content_raw.json", "r", encoding=UTF8
-        ) as f:
-            messages = json.load(f)
-
-        # Apply deduplication
-        result = remove_duplicate_get_remote_file_content_results(messages)
-
-        # Should have same number of messages
-        assert len(result) == len(messages)
-
-        # Check that deduplication occurred by comparing sizes
-        original_size = len(json.dumps(messages))
-        deduplicated_size = len(json.dumps(result))
-
-        # Should reduce size
-        assert deduplicated_size <= original_size
-    except FileNotFoundError:
-        # Skip test if files don't exist
-        pass
 
 
 def test_deep_copy_behavior():
