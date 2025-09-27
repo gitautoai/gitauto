@@ -392,6 +392,126 @@ def test_content_with_search_phrase():
     assert "another_term" in result[1]["content"][0]["content"]
 
 
+def test_malformed_filename_extraction_in_second_pass():
+    """Test malformed filename extraction during second pass (lines 71-73)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id1",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent here",
+                },
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id2",
+                    "content": "Opened file: ' with line numbers for your information.\nContent here",  # Missing closing quote
+                }
+            ],
+        }
+    ]
+
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # Should preserve both items since second one has malformed filename
+    assert len(result[0]["content"]) == 2
+    assert "test.py" in result[0]["content"][0]["content"]
+    assert "Opened file: '" in result[0]["content"][1]["content"]
+
+
+def test_edge_case_quote_positions():
+    """Test edge cases for quote position calculations (lines 40-41, 71-73)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id1",
+                    "content": "Opened file: '' with line numbers for your information.\nContent",  # Empty filename
+                },
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id2",
+                    "content": "Opened file: 'file with line numbers for your information.\nContent",  # No closing quote
+                }
+            ],
+        }
+    ]
+
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # Both should be preserved as-is due to malformed filenames
+    assert len(result[0]["content"]) == 2
+    assert result[0]["content"][0]["content"] == messages[0]["content"][0]["content"]
+    assert result[0]["content"][1]["content"] == messages[0]["content"][1]["content"]
+
+
+def test_non_dict_content_items_in_second_pass():
+    """Test non-dict items in content during second pass (lines 53-55)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                "string_item",  # Non-dict item
+                123,  # Non-dict item
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id1",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent",
+                }
+            ],
+        }
+    ]
+
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # All items should be preserved
+    assert len(result[0]["content"]) == 3
+    assert result[0]["content"][0] == "string_item"
+    assert result[0]["content"][1] == 123
+    assert result[0]["content"][2]["content"] == messages[0]["content"][2]["content"]
+
+
+def test_non_tool_result_items_in_second_pass():
+    """Test non-tool_result items during second pass (lines 53-55)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Some text content"
+                },
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id1",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent",
+                }
+            ],
+        }
+    ]
+
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # Both items should be preserved
+    assert len(result[0]["content"]) == 2
+    assert result[0]["content"][0]["type"] == "text"
+    assert result[0]["content"][1]["content"] == messages[0]["content"][1]["content"]
+
+
+def test_content_without_required_phrases_second_pass():
+    """Test content without required phrases during second pass (lines 62-67)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id1",
+
+
 def test_mixed_content_types():
     """Test with mixed content types in the same message"""
     messages = [
