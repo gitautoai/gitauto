@@ -688,7 +688,7 @@ def test_content_tracking_with_later_file_content():
             "content": [
                 {
                     "type": "tool_result",
-                    "content": "[Outdated content removed]",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('later')",
                 }
             ],
         },
