@@ -496,6 +496,56 @@ def test_mixed_content_types():
                         "file_path": "test.py",
                         "content": "print('replaced')",
                     },
+
+
+def test_assistant_role_with_non_replace_tool_use():
+    """Test assistant role with tool_use that's not replace_remote_file_content"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "other_function",  # Not replace_remote_file_content
+                    "input": {
+                        "file_path": "test.py",
+                        "content": "some content",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should remain unchanged since it's not a replace operation
+    assert result == messages
+
+
+def test_non_user_role_with_tool_result():
+    """Test non-user role with tool_result (should be skipped)"""
+    messages = [
+        {
+            "role": "assistant",  # Not user role
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should remain unchanged since assistant role tool_result is not processed
+    assert result == messages
+
+
+def test_item_without_type_key():
+    """Test item dict without type key"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    # No type key
                 }
             ],
         },
