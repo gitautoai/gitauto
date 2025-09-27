@@ -496,56 +496,6 @@ def test_mixed_content_types():
                         "file_path": "test.py",
                         "content": "print('replaced')",
                     },
-
-
-def test_assistant_role_with_non_replace_tool_use():
-    """Test assistant role with tool_use that's not replace_remote_file_content"""
-    messages = [
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "tool_use",
-                    "name": "other_function",  # Not replace_remote_file_content
-                    "input": {
-                        "file_path": "test.py",
-                        "content": "some content",
-                    },
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since it's not a replace operation
-    assert result == messages
-
-
-def test_non_user_role_with_tool_result():
-    """Test non-user role with tool_result (should be skipped)"""
-    messages = [
-        {
-            "role": "assistant",  # Not user role
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since assistant role tool_result is not processed
-    assert result == messages
-
-
-def test_item_without_type_key():
-    """Test item dict without type key"""
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    # No type key
                 }
             ],
         },
@@ -596,56 +546,6 @@ def test_item_without_type_key():
     ]
     assert result == expected
 
-
-
-def test_assistant_role_with_non_tool_use():
-    """Test assistant role with non-tool_use content"""
-    messages = [
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "I'll help you with that file.",
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged
-    assert result == messages
-
-
-def test_tool_use_with_different_name():
-    """Test tool_use with name other than replace_remote_file_content"""
-    messages = [
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "tool_use",
-                    "name": "apply_diff_to_file",
-                    "input": {
-                        "file_path": "test.py",
-                        "diff": "some diff",
-                    },
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since it's not replace_remote_file_content
-    assert result == messages
-
-
-def test_system_role_with_tool_result():
-    """Test system role with tool_result (should be ignored)"""
-    messages = [
-        {
-            "role": "system",
-            "content": [
-                {
-                    "type": "tool_result",
 
 def test_edge_case_empty_filename():
     """Test edge case where filename extraction results in empty string"""
@@ -913,3 +813,136 @@ def test_complex_filename_with_special_characters():
         },
     ]
     assert result == expected
+
+
+def test_system_role_with_tool_result():
+    """Test system role with tool_result (should be ignored in first pass)"""
+    messages = [
+        {
+            "role": "system",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('system')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "test.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # System role tool_result should remain unchanged since it's not tracked
+    assert result == messages
+
+
+def test_assistant_role_with_non_replace_tool_use():
+    """Test assistant role with tool_use that's not replace_remote_file_content"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "other_function",  # Not replace_remote_file_content
+                    "input": {
+                        "file_path": "test.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should remain unchanged since no replace operation
+    assert result == messages
+
+
+def test_content_modification_detection():
+    """Test that content modification is properly detected (line 114-115)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Some text that won't change",
+                },
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "test.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+
+    # Verify that the content was actually modified
+    assert result[0]["content"][0]["text"] == "Some text that won't change"  # Unchanged
+    assert result[0]["content"][1]["content"] == "[Outdated content removed]"  # Changed
+
+    # Verify that the original messages object was not modified (deep copy worked)
+    assert messages[0]["content"][1]["content"] != "[Outdated content removed]"
+
+
+def test_no_modification_needed():
+    """Test case where no content modification is needed"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Just some text",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "some_other_function",
+                    "input": {"param": "value"},
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+
+    # Should be identical (no modifications needed)
+    assert result == messages
+    # But should still be a deep copy
+    assert result is not messages
