@@ -597,6 +597,56 @@ def test_item_without_type_key():
     assert result == expected
 
 
+
+def test_assistant_role_with_non_tool_use():
+    """Test assistant role with non-tool_use content"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "I'll help you with that file.",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should remain unchanged
+    assert result == messages
+
+
+def test_tool_use_with_different_name():
+    """Test tool_use with name other than replace_remote_file_content"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "apply_diff_to_file",
+                    "input": {
+                        "file_path": "test.py",
+                        "diff": "some diff",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should remain unchanged since it's not replace_remote_file_content
+    assert result == messages
+
+
+def test_system_role_with_tool_result():
+    """Test system role with tool_result (should be ignored)"""
+    messages = [
+        {
+            "role": "system",
+            "content": [
+                {
+                    "type": "tool_result",
+
 def test_edge_case_empty_filename():
     """Test edge case where filename extraction results in empty string"""
     messages = [
