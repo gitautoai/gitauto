@@ -192,6 +192,303 @@ def test_handles_runtime_exception():
     assert result == messages
 
 
+
+
+def test_empty_messages_list():
+    """Test with empty messages list - covers line 11"""
+    messages = []
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == []
+
+
+def test_non_dict_item_in_content():
+    """Test with non-dict item in content list - covers line 26"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                "string_item",  # Non-dict item
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent"
+                }
+            ]
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert len(result) == 1
+    assert len(result[0]["content"]) == 2
+    assert result[0]["content"][0] == "string_item"
+
+
+def test_item_without_tool_result_type():
+    """Test with dict item that doesn't have type='tool_result' - covers line 26"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",  # Not tool_result
+                    "content": "Some text"
+                },
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent"
+                }
+            ]
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert len(result) == 1
+    assert len(result[0]["content"]) == 2
+    assert result[0]["content"][0]["type"] == "text"
+
+
+def test_content_without_required_phrases():
+    """Test content that starts with 'Opened file:' but lacks required phrases - covers line 36"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' but missing required phrase"
+                }
+            ]
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages  # Should remain unchanged
+
+
+def test_malformed_filename_extraction():
+    """Test cases where filename extraction fails - covers line 41"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: with line numbers for your information.\nContent"  # Missing quotes
+                }
+            ]
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py with line numbers for your information.\nContent"  # Missing closing quote
+                }
+            ]
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages  # Should remain unchanged
+
+
+def test_second_pass_non_dict_item():
+    """Test second pass with non-dict item - covers lines 54, 55"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                "string_item",  # Non-dict item
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent"
+                }
+            ]
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert len(result[0]["content"]) == 2
+    assert result[0]["content"][0] == "string_item"
+
+
+def test_second_pass_non_tool_result():
+    """Test second pass with non-tool_result type - covers lines 54, 55"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "content": "Some text"
+                },
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent"
+                }
+            ]
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert len(result[0]["content"]) == 2
+    assert result[0]["content"][0]["type"] == "text"
+
+
+def test_second_pass_content_without_required_phrases():
+    """Test second pass content without required phrases - covers lines 66, 67"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' but missing required phrase"
+                }
+            ]
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
+
+
+def test_second_pass_malformed_filename():
+    """Test second pass with malformed filename - covers lines 72, 73"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: with line numbers for your information.\nContent"  # Missing quotes
+                }
+            ]
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
+
+
+def test_content_with_search_phrase():
+    """Test content with 'and found multiple occurrences of' phrase"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' and found multiple occurrences of 'search_term'"
+                }
+            ]
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' and found multiple occurrences of 'another_term'"
+                }
+            ]
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert len(result) == 2
+    # First occurrence should be replaced
+    assert "[Outdated 'test.py' content removed]" in result[0]["content"][0]["content"]
+    # Second occurrence should remain
+    assert "another_term" in result[1]["content"][0]["content"]
+
+
+def test_mixed_content_types():
+    """Test with mixed content types in the same message"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                "text_item",
+                {
+                    "type": "image",
+                    "content": "image_data"
+                },
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent"
+                },
+                123,  # Non-dict, non-string item
+                {
+                    "type": "tool_result",
+                    "content": "Some other tool result"
+                }
+            ]
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert len(result[0]["content"]) == 5
+    assert result[0]["content"][0] == "text_item"
+    assert result[0]["content"][1]["type"] == "image"
+    assert result[0]["content"][3] == 123
+
+
+def test_none_content_in_tool_result():
+    """Test with None content in tool_result"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": None
+                }
+            ]
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
+
+
+def test_empty_content_in_tool_result():
+    """Test with empty content in tool_result"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": ""
+                }
+            ]
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
+
+
+def test_multiple_files_complex_scenario():
+    """Test complex scenario with multiple files and edge cases"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'file1.py' with line numbers for your information.\nFirst content"
+                }
+            ]
+        },
+        {
+            "role": "user",
+            "content": [
+                "text_item",  # Non-dict item
+                {
+                    "type": "text",  # Non-tool_result
+                    "content": "Some text"
+                },
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'file2.py' with line numbers for your information.\nSecond content"
+                }
+            ]
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'file1.py' with line numbers for your information.\nUpdated first content"
+                }
 def test_empty_messages_list():
     """Test with empty messages list - covers line 11"""
     messages = []
