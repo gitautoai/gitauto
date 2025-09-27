@@ -430,6 +430,153 @@ def test_none_content_in_tool_result():
             "content": [
                 {
                     "type": "tool_result",
+
+
+def test_content_without_required_phrases():
+    """Test content that starts with 'Opened file:' but lacks required phrases"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id1",
+                    "content": "Opened file: 'test.py' but this doesn't have the required phrase",
+                }
+            ],
+        }
+    ]
+
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # Should not modify content when required phrases are missing
+    assert result == messages
+    assert result is not messages  # Should be a deep copy
+
+
+def test_content_without_required_phrases_second_pass():
+    """Test second pass with content that lacks required phrases"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id1",
+                    "content": "Opened file: 'test.py' without required phrase",
+                }
+            ],
+        }
+    ]
+
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # Should not modify content when required phrases are missing in second pass
+    assert result == messages
+    assert result is not messages  # Should be a deep copy
+
+
+def test_mixed_content_types_in_user_message():
+    """Test user message with mixed content types (dict and non-dict)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                "text content",  # Non-dict item
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id1",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent here",
+                },
+                42,  # Non-dict item
+                {
+                    "type": "other_type",  # Not tool_result
+                    "content": "some content",
+                }
+            ],
+        }
+    ]
+
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # Should preserve non-dict items and non-tool_result items
+    assert len(result[0]["content"]) == 4
+    assert result[0]["content"][0] == "text content"
+    assert result[0]["content"][2] == 42
+    assert result[0]["content"][3]["type"] == "other_type"
+    assert result is not messages  # Should be a deep copy
+
+
+def test_edge_case_filename_extraction_boundaries():
+    """Test edge cases in filename extraction with boundary conditions"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id1",
+                    "content": "Opened file: '' with line numbers for your information.\nEmpty filename",
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id2",
+                    "content": "Opened file: 'a' with line numbers for your information.\nSingle char filename",
+                }
+            ],
+        }
+    ]
+
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # Empty filename should be skipped, single char should work
+    assert result[0]["content"][0]["content"] == "Opened file: '' with line numbers for your information.\nEmpty filename"
+    assert "Single char filename" in result[1]["content"][0]["content"]
+    assert result is not messages  # Should be a deep copy
+
+
+def test_complex_scenario_with_all_edge_cases():
+    """Test a complex scenario that exercises multiple edge cases"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                "text item",  # Non-dict
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id1",
+                    "content": "Opened file: 'valid.py' with line numbers for your information.\nFirst content",
+                },
+                {
+                    "type": "other",  # Not tool_result
+                    "content": "other content",
+                },
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id2",
+                    "content": "Opened file: 'invalid' without required phrase",  # Missing phrase
+                },
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id3",
+                    "content": "Opened file: 'valid.py' with line numbers for your information.\nSecond content",
+                },
+            ],
+        }
+    ]
+
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
                     "content": None
                 }
             ]
