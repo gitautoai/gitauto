@@ -430,6 +430,53 @@ def test_edge_case_quote_positions():
                     "type": "tool_result",
                     "tool_use_id": "id1",
                     "content": "Opened file: '' with line numbers for your information.\nContent",  # Empty filename
+
+
+def test_content_modification_detection():
+    """Test that content modification is properly detected and applied."""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id1",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nOld content",
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "id2",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nNew content",
+                }
+            ],
+        },
+    ]
+
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # First message should be modified
+    assert result[0]["content"][0]["content"] == "[Outdated 'test.py' content removed]"
+    # Second message should remain unchanged
+    assert "New content" in result[1]["content"][0]["content"]
+    # Should trigger line 84-85 (content modification detection)
+    assert result[0]["content"] != messages[0]["content"]
+
+
+def test_no_content_modification_needed():
+    """Test case where no content modification is needed."""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Some text content"}
+            ],
+        }
+    ]
                 },
                 {
                     "type": "tool_result",
