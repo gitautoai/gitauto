@@ -1189,7 +1189,7 @@ def test_get_issue_body_only_function_coverage():
 
 
 @patch("utils.issue_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS")
-def test_get_issue_body_only_branch_coverage(mock_settings_links):
+def test_get_issue_body_only_branch_coverage():
     """Test with only branch_coverage provided (covers line 54 branch)."""
     result = get_issue_body(
         owner="test_owner",
@@ -1211,11 +1211,11 @@ def test_get_issue_body_only_branch_coverage(mock_settings_links):
     assert "Line Coverage" not in result
     assert "Statement Coverage" not in result
     assert "Function Coverage" not in result
-    assert SETTINGS_LINKS in result
+    assert "MOCK_SETTINGS_LINKS" in result
 
 
 @patch("utils.issue_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS")
-def test_get_issue_body_empty_string_uncovered_items(mock_settings_links):
+def test_get_issue_body_empty_string_uncovered_items():
     """Test with empty strings for uncovered items (edge case)."""
     result = get_issue_body(
         owner="test_owner",
@@ -1255,7 +1255,7 @@ def test_get_issue_body_line_coverage_only_with_empty_uncovered_lines():
     assert "- Function Coverage:" not in result
     assert "- Branch Coverage:" not in result
     assert "Focus on covering the uncovered areas" in result
-    assert SETTINGS_LINKS in result
+    assert "MOCK_SETTINGS_LINKS" in result
 
 
 @patch("utils.issue_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS")
@@ -1280,4 +1280,4 @@ def test_get_issue_body_statement_coverage_only(mock_settings_links):
     assert "- Function Coverage:" not in result
     assert "- Branch Coverage:" not in result
     assert "Focus on covering the uncovered areas" in result
-    assert SETTINGS_LINKS in result
+    assert "MOCK_SETTINGS_LINKS" in result
