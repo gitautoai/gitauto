@@ -1213,6 +1213,7 @@ def test_get_issue_body_only_branch_coverage():
     assert SETTINGS_LINKS in result
 
 
+@patch("utils.issue_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS")
 def test_get_issue_body_empty_string_uncovered_items():
     """Test with empty strings for uncovered items (edge case)."""
     result = get_issue_body(
