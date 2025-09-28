@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from constants.messages import SETTINGS_LINKS
 import pytest
 
 from utils.issue_templates.schedule import get_issue_title, get_issue_body
