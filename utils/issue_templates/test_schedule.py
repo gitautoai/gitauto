@@ -1136,6 +1136,7 @@ def test_get_issue_body_only_line_coverage(mock_gh_url, mock_settings):
     assert "MOCK_SETTINGS_LINKS" in result
 
 
+@patch("utils.issue_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS")
 def test_get_issue_body_only_statement_coverage():
     """Test with only statement_coverage provided (covers line 41 branch)."""
     result = get_issue_body(
