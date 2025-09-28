@@ -550,6 +550,321 @@ class TestGetIssueBody:
         )
         assert "Statement Coverage: 999%" in result
 
+    def test_get_issue_body_only_line_coverage_with_uncovered_lines(self, _):
+        """Test generating issue body with only line coverage and uncovered lines."""
+        owner = "owner"
+        repo = "repo"
+        branch = "main"
+        file_path = "test.py"
+        line_coverage = 75.0
+        uncovered_lines = "10,15,20"
+
+        result = get_issue_body(
+            owner,
+            repo,
+            branch,
+            file_path,
+            None,  # statement_coverage
+            None,  # function_coverage
+            None,  # branch_coverage
+            line_coverage,
+            uncovered_lines,
+            None,  # uncovered_functions
+            None,  # uncovered_branches
+        )
+
+        expected_url = "https://github.com/owner/repo/blob/main/test.py"
+        assert f"Add unit tests for [test.py]({expected_url})" in result
+        assert "Line Coverage: 75% (Uncovered Lines: 10,15,20)" in result
+        assert "Statement Coverage:" not in result
+        assert "Function Coverage:" not in result
+        assert "Branch Coverage:" not in result
+        assert "MOCK_SETTINGS_LINKS" in result
+
+    def test_get_issue_body_only_line_coverage_without_uncovered_lines(self, _):
+        """Test generating issue body with only line coverage and no uncovered lines."""
+        owner = "owner"
+        repo = "repo"
+        branch = "main"
+        file_path = "test.py"
+        line_coverage = 100.0
+
+        result = get_issue_body(
+            owner,
+            repo,
+            branch,
+            file_path,
+            None,  # statement_coverage
+            None,  # function_coverage
+            None,  # branch_coverage
+            line_coverage,
+            None,  # uncovered_lines
+            None,  # uncovered_functions
+            None,  # uncovered_branches
+        )
+
+        expected_url = "https://github.com/owner/repo/blob/main/test.py"
+        assert f"Add unit tests for [test.py]({expected_url})" in result
+        assert "Line Coverage: 100%" in result
+        assert "(Uncovered Lines:" not in result
+        assert "Statement Coverage:" not in result
+        assert "Function Coverage:" not in result
+        assert "Branch Coverage:" not in result
+        assert "MOCK_SETTINGS_LINKS" in result
+
+    def test_get_issue_body_only_line_coverage_with_empty_uncovered_lines(self, _):
+        """Test generating issue body with only line coverage and empty uncovered lines."""
+        owner = "owner"
+        repo = "repo"
+        branch = "main"
+        file_path = "test.py"
+        line_coverage = 90.0
+        uncovered_lines = ""  # Empty string
+
+        result = get_issue_body(
+            owner,
+            repo,
+            branch,
+            file_path,
+            None,  # statement_coverage
+            None,  # function_coverage
+            None,  # branch_coverage
+            line_coverage,
+            uncovered_lines,
+            None,  # uncovered_functions
+            None,  # uncovered_branches
+        )
+
+        expected_url = "https://github.com/owner/repo/blob/main/test.py"
+        assert f"Add unit tests for [test.py]({expected_url})" in result
+        assert "Line Coverage: 90%" in result
+        assert "(Uncovered Lines:" not in result
+        assert "Statement Coverage:" not in result
+        assert "Function Coverage:" not in result
+        assert "Branch Coverage:" not in result
+        assert "MOCK_SETTINGS_LINKS" in result
+
+    def test_get_issue_body_only_statement_coverage(self, _):
+        """Test generating issue body with only statement coverage."""
+        owner = "owner"
+        repo = "repo"
+        branch = "main"
+        file_path = "test.py"
+        statement_coverage = 85.0
+
+        result = get_issue_body(
+            owner,
+            repo,
+            branch,
+            file_path,
+            statement_coverage,
+            None,  # function_coverage
+            None,  # branch_coverage
+            None,  # line_coverage
+            None,  # uncovered_lines
+            None,  # uncovered_functions
+            None,  # uncovered_branches
+        )
+
+        expected_url = "https://github.com/owner/repo/blob/main/test.py"
+        assert f"Add unit tests for [test.py]({expected_url})" in result
+        assert "Statement Coverage: 85%" in result
+        assert "Line Coverage:" not in result
+        assert "Function Coverage:" not in result
+        assert "Branch Coverage:" not in result
+        assert "MOCK_SETTINGS_LINKS" in result
+
+    def test_get_issue_body_only_function_coverage_with_uncovered_functions(self, _):
+        """Test generating issue body with only function coverage and uncovered functions."""
+        owner = "owner"
+        repo = "repo"
+        branch = "main"
+        file_path = "test.py"
+        function_coverage = 60.0
+        uncovered_functions = "func1,func2,func3"
+
+        result = get_issue_body(
+            owner,
+            repo,
+            branch,
+            file_path,
+            None,  # statement_coverage
+            function_coverage,
+            None,  # branch_coverage
+            None,  # line_coverage
+            None,  # uncovered_lines
+            uncovered_functions,
+            None,  # uncovered_branches
+        )
+
+        expected_url = "https://github.com/owner/repo/blob/main/test.py"
+        assert f"Add unit tests for [test.py]({expected_url})" in result
+        assert "Function Coverage: 60% (Uncovered Functions: func1,func2,func3)" in result
+        assert "Line Coverage:" not in result
+        assert "Statement Coverage:" not in result
+        assert "Branch Coverage:" not in result
+        assert "MOCK_SETTINGS_LINKS" in result
+
+    def test_get_issue_body_only_function_coverage_without_uncovered_functions(self, _):
+        """Test generating issue body with only function coverage and no uncovered functions."""
+        owner = "owner"
+        repo = "repo"
+        branch = "main"
+        file_path = "test.py"
+        function_coverage = 100.0
+
+        result = get_issue_body(
+            owner,
+            repo,
+            branch,
+            file_path,
+            None,  # statement_coverage
+            function_coverage,
+            None,  # branch_coverage
+            None,  # line_coverage
+            None,  # uncovered_lines
+            None,  # uncovered_functions
+            None,  # uncovered_branches
+        )
+
+        expected_url = "https://github.com/owner/repo/blob/main/test.py"
+        assert f"Add unit tests for [test.py]({expected_url})" in result
+        assert "Function Coverage: 100%" in result
+        assert "(Uncovered Functions:" not in result
+        assert "Line Coverage:" not in result
+        assert "Statement Coverage:" not in result
+        assert "Branch Coverage:" not in result
+        assert "MOCK_SETTINGS_LINKS" in result
+
+    def test_get_issue_body_only_function_coverage_with_empty_uncovered_functions(self, _):
+        """Test generating issue body with only function coverage and empty uncovered functions."""
+        owner = "owner"
+        repo = "repo"
+        branch = "main"
+        file_path = "test.py"
+        function_coverage = 80.0
+        uncovered_functions = ""  # Empty string
+
+        result = get_issue_body(
+            owner,
+            repo,
+            branch,
+            file_path,
+            None,  # statement_coverage
+            function_coverage,
+            None,  # branch_coverage
+            None,  # line_coverage
+            None,  # uncovered_lines
+            uncovered_functions,
+            None,  # uncovered_branches
+        )
+
+        expected_url = "https://github.com/owner/repo/blob/main/test.py"
+        assert f"Add unit tests for [test.py]({expected_url})" in result
+        assert "Function Coverage: 80%" in result
+        assert "(Uncovered Functions:" not in result
+        assert "Line Coverage:" not in result
+        assert "Statement Coverage:" not in result
+        assert "Branch Coverage:" not in result
+        assert "MOCK_SETTINGS_LINKS" in result
+
+    def test_get_issue_body_only_branch_coverage_with_uncovered_branches(self, _):
+        """Test generating issue body with only branch coverage and uncovered branches."""
+        owner = "owner"
+        repo = "repo"
+        branch = "main"
+        file_path = "test.py"
+        branch_coverage = 45.0
+        uncovered_branches = "branch1,branch2"
+
+        result = get_issue_body(
+            owner,
+            repo,
+            branch,
+            file_path,
+            None,  # statement_coverage
+            None,  # function_coverage
+            branch_coverage,
+            None,  # line_coverage
+            None,  # uncovered_lines
+            None,  # uncovered_functions
+            uncovered_branches,
+        )
+
+        expected_url = "https://github.com/owner/repo/blob/main/test.py"
+        assert f"Add unit tests for [test.py]({expected_url})" in result
+        assert "Branch Coverage: 45% (Uncovered Branches: branch1,branch2)" in result
+        assert "Line Coverage:" not in result
+        assert "Statement Coverage:" not in result
+        assert "Function Coverage:" not in result
+        assert "MOCK_SETTINGS_LINKS" in result
+
+    def test_get_issue_body_only_branch_coverage_without_uncovered_branches(self, _):
+        """Test generating issue body with only branch coverage and no uncovered branches."""
+        owner = "owner"
+        repo = "repo"
+        branch = "main"
+        file_path = "test.py"
+        branch_coverage = 100.0
+
+        result = get_issue_body(
+            owner,
+            repo,
+            branch,
+            file_path,
+            None,  # statement_coverage
+            None,  # function_coverage
+            branch_coverage,
+            None,  # line_coverage
+            None,  # uncovered_lines
+            None,  # uncovered_functions
+            None,  # uncovered_branches
+        )
+
+        expected_url = "https://github.com/owner/repo/blob/main/test.py"
+        assert f"Add unit tests for [test.py]({expected_url})" in result
+        assert "Branch Coverage: 100%" in result
+        assert "(Uncovered Branches:" not in result
+        assert "Line Coverage:" not in result
+        assert "Statement Coverage:" not in result
+        assert "Function Coverage:" not in result
+        assert "MOCK_SETTINGS_LINKS" in result
+
+    def test_get_issue_body_only_branch_coverage_with_empty_uncovered_branches(self, _):
+        """Test generating issue body with only branch coverage and empty uncovered branches."""
+        owner = "owner"
+        repo = "repo"
+        branch = "main"
+        file_path = "test.py"
+        branch_coverage = 70.0
+        uncovered_branches = ""  # Empty string
+
+        result = get_issue_body(
+            owner,
+            repo,
+            branch,
+            file_path,
+            None,  # statement_coverage
+            None,  # function_coverage
+            branch_coverage,
+            None,  # line_coverage
+            None,  # uncovered_lines
+            None,  # uncovered_functions
+            uncovered_branches,
+        )
+
+        expected_url = "https://github.com/owner/repo/blob/main/test.py"
+        assert f"Add unit tests for [test.py]({expected_url})" in result
+        assert "Branch Coverage: 70%" in result
+        assert "(Uncovered Branches:" not in result
+        assert "Line Coverage:" not in result
+        assert "Statement Coverage:" not in result
+        assert "Function Coverage:" not in result
+        assert "MOCK_SETTINGS_LINKS" in result
+
+    def test_get_issue_body_mixed_coverage_combinations(self, _):
+        """Test various combinations of coverage types to ensure all branches are covered."""
+
     def test_get_issue_body_partial_coverage_line_only(self, _):
         """Test generating issue body with only line coverage provided."""
         owner = "owner"
