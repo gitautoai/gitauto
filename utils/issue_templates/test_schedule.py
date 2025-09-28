@@ -1106,3 +1106,123 @@ class TestGetIssueBody:
     def test_get_issue_body_whitespace_uncovered_strings(self, _):
         """Test generating issue body with whitespace-only uncovered strings."""
         owner = "owner"
+
+
+def test_get_issue_body_only_line_coverage():
+    """Test with only line_coverage provided (covers line 33 branch)."""
+    result = get_issue_body(
+        owner="test_owner",
+        repo="test_repo",
+        branch="main",
+        file_path="test/file.py",
+        statement_coverage=None,
+        function_coverage=None,
+        branch_coverage=None,
+        line_coverage=85.5,
+        uncovered_lines="10, 20, 30",
+        uncovered_functions=None,
+        uncovered_branches=None,
+    )
+
+    expected_url = "https://github.com/test_owner/test_repo/blob/main/test/file.py"
+    assert f"Add unit tests for [test/file.py]({expected_url})" in result
+    assert "- Line Coverage: 85% (Uncovered Lines: 10, 20, 30)" in result
+    assert "Statement Coverage" not in result
+    assert "Function Coverage" not in result
+    assert "Branch Coverage" not in result
+    assert SETTINGS_LINKS in result
+
+
+def test_get_issue_body_only_statement_coverage():
+    """Test with only statement_coverage provided (covers line 41 branch)."""
+    result = get_issue_body(
+        owner="test_owner",
+        repo="test_repo",
+        branch="main",
+        file_path="test/file.py",
+        statement_coverage=92.3,
+        function_coverage=None,
+        branch_coverage=None,
+        line_coverage=None,
+        uncovered_lines=None,
+        uncovered_functions=None,
+        uncovered_branches=None,
+    )
+
+    expected_url = "https://github.com/test_owner/test_repo/blob/main/test/file.py"
+    assert f"Add unit tests for [test/file.py]({expected_url})" in result
+    assert "- Statement Coverage: 92%" in result
+    assert "Line Coverage" not in result
+    assert "Function Coverage" not in result
+    assert "Branch Coverage" not in result
+    assert SETTINGS_LINKS in result
+
+
+def test_get_issue_body_only_function_coverage():
+    """Test with only function_coverage provided (covers line 44 branch)."""
+    result = get_issue_body(
+        owner="test_owner",
+        repo="test_repo",
+        branch="main",
+        file_path="test/file.py",
+        statement_coverage=None,
+        function_coverage=78.9,
+        branch_coverage=None,
+        line_coverage=None,
+        uncovered_lines=None,
+        uncovered_functions="func1, func2",
+        uncovered_branches=None,
+    )
+
+    expected_url = "https://github.com/test_owner/test_repo/blob/main/test/file.py"
+    assert f"Add unit tests for [test/file.py]({expected_url})" in result
+    assert "- Function Coverage: 78% (Uncovered Functions: func1, func2)" in result
+    assert "Line Coverage" not in result
+    assert "Statement Coverage" not in result
+    assert "Branch Coverage" not in result
+    assert SETTINGS_LINKS in result
+
+
+def test_get_issue_body_only_branch_coverage():
+    """Test with only branch_coverage provided (covers line 54 branch)."""
+    result = get_issue_body(
+        owner="test_owner",
+        repo="test_repo",
+        branch="main",
+        file_path="test/file.py",
+        statement_coverage=None,
+        function_coverage=None,
+        branch_coverage=65.4,
+        line_coverage=None,
+        uncovered_lines=None,
+        uncovered_functions=None,
+        uncovered_branches="line 33, block 0",
+    )
+
+    expected_url = "https://github.com/test_owner/test_repo/blob/main/test/file.py"
+    assert f"Add unit tests for [test/file.py]({expected_url})" in result
+    assert "- Branch Coverage: 65% (Uncovered Branches: line 33, block 0)" in result
+    assert "Line Coverage" not in result
+    assert "Statement Coverage" not in result
+    assert "Function Coverage" not in result
+    assert SETTINGS_LINKS in result
+
+
+def test_get_issue_body_empty_string_uncovered_items():
+    """Test with empty strings for uncovered items (edge case)."""
+    result = get_issue_body(
+        owner="test_owner",
+        repo="test_repo",
+        branch="main",
+        file_path="test/file.py",
+        statement_coverage=100.0,
+        function_coverage=100.0,
+        branch_coverage=100.0,
+        line_coverage=100.0,
+        uncovered_lines="",
+        uncovered_functions="",
+        uncovered_branches="",
+    )
+
+    # Empty strings should be treated as falsy, so no uncovered text should appear
+    assert "- Line Coverage: 100%" in result
