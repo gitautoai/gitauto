@@ -865,6 +865,7 @@ class TestGetIssueBody:
 
     def test_get_issue_body_mixed_coverage_combinations(self, _):
         """Test various combinations of coverage types to ensure all branches are covered."""
+        pass
 
     def test_get_issue_body_partial_coverage_line_only(self, _):
         """Test generating issue body with only line coverage provided."""
