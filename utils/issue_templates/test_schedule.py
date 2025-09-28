@@ -1109,7 +1109,9 @@ class TestGetIssueBody:
         owner = "owner"
 
 
-def test_get_issue_body_only_line_coverage():
+@patch("utils.issue_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS")
+@patch("utils.issue_templates.schedule.GH_BASE_URL", "https://github.com")
+def test_get_issue_body_only_line_coverage(mock_gh_url, mock_settings):
     """Test with only line_coverage provided (covers line 33 branch)."""
     result = get_issue_body(
         owner="test_owner",
@@ -1131,7 +1133,7 @@ def test_get_issue_body_only_line_coverage():
     assert "Statement Coverage" not in result
     assert "Function Coverage" not in result
     assert "Branch Coverage" not in result
-    assert SETTINGS_LINKS in result
+    assert "MOCK_SETTINGS_LINKS" in result
 
 
 def test_get_issue_body_only_statement_coverage():
