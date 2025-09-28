@@ -1215,7 +1215,7 @@ def test_get_issue_body_only_branch_coverage(mock_settings_links):
 
 
 @patch("utils.issue_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS")
-def test_get_issue_body_empty_string_uncovered_items():
+def test_get_issue_body_empty_string_uncovered_items(mock_settings_links):
     """Test with empty strings for uncovered items (edge case)."""
     result = get_issue_body(
         owner="test_owner",
