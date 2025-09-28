@@ -1163,7 +1163,7 @@ def test_get_issue_body_only_statement_coverage():
 
 
 @patch("utils.issue_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS")
-def test_get_issue_body_only_function_coverage(mock_settings_links):
+def test_get_issue_body_only_function_coverage():
     """Test with only function_coverage provided (covers line 44 branch)."""
     result = get_issue_body(
         owner="test_owner",
