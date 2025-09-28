@@ -1159,7 +1159,7 @@ def test_get_issue_body_only_statement_coverage():
     assert "Line Coverage" not in result
     assert "Function Coverage" not in result
     assert "Branch Coverage" not in result
-    assert SETTINGS_LINKS in result
+    assert "MOCK_SETTINGS_LINKS" in result
 
 
 @patch("utils.issue_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS")
