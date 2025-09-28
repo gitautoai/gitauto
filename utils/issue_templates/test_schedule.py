@@ -1107,7 +1107,7 @@ class TestGetIssueBody:
 
     def test_get_issue_body_whitespace_uncovered_strings(self, _):
         """Test generating issue body with whitespace-only uncovered strings."""
-        owner = "owner"
+        pass
 
 
 @patch("utils.issue_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS")
