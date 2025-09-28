@@ -1226,3 +1226,50 @@ def test_get_issue_body_empty_string_uncovered_items():
 
     # Empty strings should be treated as falsy, so no uncovered text should appear
     assert "- Line Coverage: 100%" in result
+def test_get_issue_body_line_coverage_only_with_empty_uncovered_lines():
+    """Test with only line_coverage provided and empty uncovered_lines string."""
+    result = get_issue_body(
+        owner="test_owner",
+        repo="test_repo",
+        branch="main",
+        file_path="test/file.py",
+        statement_coverage=None,
+        function_coverage=None,
+        branch_coverage=None,
+        line_coverage=85.0,
+        uncovered_lines="",  # Empty string instead of None
+        uncovered_functions=None,
+        uncovered_branches=None,
+    )
+
+    assert "- Line Coverage: 85%" in result
+    assert "(Uncovered Lines:" not in result  # Should not include empty uncovered lines
+    assert "- Statement Coverage:" not in result
+    assert "- Function Coverage:" not in result
+    assert "- Branch Coverage:" not in result
+    assert "Focus on covering the uncovered areas" in result
+    assert SETTINGS_LINKS in result
+
+
+def test_get_issue_body_statement_coverage_only():
+    """Test with only statement_coverage provided."""
+    result = get_issue_body(
+        owner="test_owner",
+        repo="test_repo",
+        branch="main",
+        file_path="test/file.py",
+        statement_coverage=92.5,
+        function_coverage=None,
+        branch_coverage=None,
+        line_coverage=None,
+        uncovered_lines=None,
+        uncovered_functions=None,
+        uncovered_branches=None,
+    )
+
+    assert "- Statement Coverage: 92%" in result
+    assert "- Line Coverage:" not in result
+    assert "- Function Coverage:" not in result
+    assert "- Branch Coverage:" not in result
+    assert "Focus on covering the uncovered areas" in result
+    assert SETTINGS_LINKS in result
