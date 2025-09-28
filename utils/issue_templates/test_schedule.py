@@ -1234,6 +1234,7 @@ def test_get_issue_body_empty_string_uncovered_items():
 
     # Empty strings should be treated as falsy, so no uncovered text should appear
     assert "- Line Coverage: 100%" in result
+
 @patch("utils.issue_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS")
 def test_get_issue_body_line_coverage_only_with_empty_uncovered_lines():
     """Test with only line_coverage provided and empty uncovered_lines string."""
