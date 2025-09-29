@@ -278,7 +278,7 @@ class TestHandler:
         with patch("main.slack_notify") as mock_slack_notify, patch(
             "services.webhook.schedule_handler.schedule_handler"
         ) as mock_schedule_handler, patch("services.aws.delete_scheduler.delete_scheduler") as mock_delete_scheduler, \
-             patch("constants.general.IS_PRD", True), patch("services.slack.slack_notify.SLACK_BOT_TOKEN", "test-token"):
+             patch("services.slack.slack_notify.IS_PRD", True), patch("services.slack.slack_notify.SLACK_BOT_TOKEN", "test-token"):
 
             mock_slack_notify.return_value = "thread_ts_123"
             mock_schedule_handler.return_value = {
