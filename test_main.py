@@ -254,8 +254,7 @@ class TestHandler:
             yield mock
 
     def test_handler_with_schedule_event_success(
-        self, mock_schedule_handler, mock_slack_notify
-    ):
+        self):
         """Test handler with successful schedule event."""
         # Ensure mocks are configured correctly
         mock_schedule_handler.return_value = {"status": "success"}
@@ -282,8 +281,7 @@ class TestHandler:
         mock_schedule_handler.assert_called_once_with(event=event)
 
     def test_handler_with_schedule_event_failure(
-        self, mock_schedule_handler, mock_slack_notify
-    ):
+        self):
         """Test handler with failed schedule event."""
         event = {
             "triggerType": "schedule",
