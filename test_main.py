@@ -33,7 +33,7 @@ class TestHandleWebhook:
     def mock_handle_webhook_event(self):
         """Mock the handle_webhook_event function."""
         with patch("main.handle_webhook_event") as mock:
-            mock.return_value = AsyncMock(return_value=None)
+            mock = AsyncMock(return_value=None)
             yield mock
 
     @pytest.fixture
