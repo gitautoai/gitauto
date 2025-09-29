@@ -133,8 +133,9 @@ class TestSentryInitialization:
 
     @patch("sentry_sdk.init")
     @patch("config.ENV", "dev")
-    def test_sentry_init_not_called_in_non_prod_environment(self, mock_env, mock_sentry_init):
+    def test_sentry_init_not_called_in_non_prod_environment(self, mock_sentry_init):
         """Test that Sentry is not initialized when ENV is not 'prod'."""
+        # Clear any existing modules to ensure clean import
         # Force reimport of main module to trigger the initialization code
         import importlib
         importlib.reload(main)
