@@ -6,15 +6,15 @@ import json
 import urllib.parse
 from unittest.mock import AsyncMock, MagicMock, call, patch
 
-import main
-import pytest
-# Local imports
-from config import GITHUB_WEBHOOK_SECRET, PRODUCT_NAME
 # Third-party imports
 from fastapi import FastAPI, Request
-from main import (app, handle_jira_webhook, handle_webhook, handler,
-                  mangum_handler, root)
 from mangum import Mangum
+import pytest
+
+# Local imports
+import main
+from config import GITHUB_WEBHOOK_SECRET, PRODUCT_NAME
+from main import app, mangum_handler, handle_jira_webhook, handle_webhook, handler, root
 from payloads.aws.event_bridge_scheduler.event_types import \
     EventBridgeSchedulerEvent
 
