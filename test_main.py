@@ -243,7 +243,9 @@ class TestHandler:
         self):
         """Test handler with successful schedule event."""
         with patch("main.schedule_handler") as mock_schedule_handler, \
-             patch("main.slack_notify") as mock_slack_notify:
+             patch("main.slack_notify") as mock_slack_notify, \
+             patch("services.slack.slack_notify.SLACK_BOT_TOKEN", "test-token"), \
+             patch("services.slack.slack_notify.IS_PRD", True):
             # Ensure mocks are configured correctly
             mock_schedule_handler.return_value = {"status": "success"}
             mock_slack_notify.return_value = "thread_ts_123"
