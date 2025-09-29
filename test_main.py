@@ -318,7 +318,7 @@ class TestHandler:
     ):
         """Test handler with schedule event that raises an exception."""
         with patch("main.slack_notify") as mock_slack_notify, \
-             patch("main.schedule_handler") as mock_schedule_handler, \
+             patch("services.webhook.schedule_handler.schedule_handler") as mock_schedule_handler, \
              patch("constants.general.IS_PRD", True), \
              patch("services.slack.slack_notify.SLACK_BOT_TOKEN", "test-token"):
             mock_slack_notify.return_value = "thread_ts_123"
