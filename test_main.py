@@ -26,8 +26,7 @@ class TestHandleWebhook:
     def mock_verify_webhook_signature(self):
         """Mock the verify_webhook_signature function."""
         with patch("main.verify_webhook_signature") as mock:
-            mock.return_value = None
-            mock.side_effect = AsyncMock(return_value=None)
+            mock.return_value = AsyncMock(return_value=None)()
             yield mock
 
     @pytest.fixture
