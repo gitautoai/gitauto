@@ -281,27 +281,33 @@ class TestHandler:
         mock_schedule_handler.assert_called_once_with(event=event)
 
     def test_handler_with_schedule_event_failure(
-        self):
+        self
+    ):
         """Test handler with failed schedule event."""
-        event = {
-            "triggerType": "schedule",
-            "ownerName": "test-owner",
-            "repoName": "test-repo",
-        }
-        context = {}
-        mock_schedule_handler.return_value = {
-            "status": "error",
-            "message": "Test error message",
-        }
+        with patch("main.slack_notify") as mock_slack_notify, patch(
+            "main.schedule_handler"
+        ) as mock_schedule_handler:
+            mock_slack_notify.return_value = "thread_ts_123"
+            mock_schedule_handler.return_value = {
+                "status": "error",
+                "message": "Test error message",
+            }
 
-        result = main.handler(event, context)
+            event = {
+                "triggerType": "schedule",
+                "ownerName": "test-owner",
+                "repoName": "test-repo",
+            }
+            context = {}
 
-        assert result is None
-        mock_slack_notify.assert_any_call("Event Scheduler started for test-owner/test-repo")
-        mock_slack_notify.assert_any_call(
-            "@channel Failed: Test error message", "thread_ts_123"
-        )
-        mock_schedule_handler.assert_called_once_with(event=event)
+            result = main.handler(event, context)
+
+            assert result is None
+            mock_slack_notify.assert_any_call("Event Scheduler started for test-owner/test-repo")
+            mock_slack_notify.assert_any_call(
+                "@channel Failed: Test error message", "thread_ts_123"
+            )
+            mock_schedule_handler.assert_called_once_with(event=event)
 
     def test_handler_with_non_schedule_event(self, mock_mangum_handler):
         """Test handler with non-schedule event."""
