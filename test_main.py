@@ -337,6 +337,7 @@ class TestHandler:
             mock_slack_notify.assert_any_call("Event Scheduler started for test-owner/test-repo")
             mock_slack_notify.assert_any_call("@channel Failed: Test exception", "thread_ts_123")
 
+
 class TestRoot:
     """Test the root endpoint."""
 
