@@ -257,6 +257,10 @@ class TestHandler:
         self, mock_schedule_handler, mock_slack_notify
     ):
         """Test handler with successful schedule event."""
+        # Ensure mocks are configured correctly
+        mock_schedule_handler.return_value = {"status": "success"}
+        mock_slack_notify.return_value = "thread_ts_123"
+
         event = {
             "triggerType": "schedule",
             "ownerName": "test-owner",
