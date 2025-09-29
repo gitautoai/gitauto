@@ -131,9 +131,9 @@ class TestSentryInitialization:
         assert "dsn" in call_args[1]
         assert "integrations" in call_args[1]
 
-    @patch("main.sentry_sdk.init")
-    @patch("main.ENV", "dev")
-    def test_sentry_init_not_called_in_non_prod_environment(self, mock_sentry_init):
+    @patch("sentry_sdk.init")
+    @patch("config.ENV", "dev")
+    def test_sentry_init_not_called_in_non_prod_environment(self, mock_env, mock_sentry_init):
         """Test that Sentry is not initialized when ENV is not 'prod'."""
         # Force reimport of main module to trigger the initialization code
         import importlib
