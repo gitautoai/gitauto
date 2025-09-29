@@ -128,7 +128,7 @@ class TestHandleJiraWebhook:
     def mock_verify_jira_webhook(self):
         """Mock the verify_jira_webhook function."""
         with patch("main.verify_jira_webhook") as mock:
-            mock.return_value = asyncio.coroutine(lambda: {"test": "payload"})()
+            mock = AsyncMock(return_value={"test": "payload"})
             yield mock
 
     @pytest.fixture
