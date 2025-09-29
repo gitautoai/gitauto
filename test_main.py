@@ -127,11 +127,10 @@ class TestHandleJiraWebhook:
     @pytest.fixture
     def mock_verify_jira_webhook(self):
         """Mock the verify_jira_webhook function."""
-        with patch("main.verify_jira_webhook") as mock:
-            mock = AsyncMock(return_value={"test": "payload"})
+        with patch("main.verify_jira_webhook", new_callable=AsyncMock) as mock:
+            mock.return_value = {"test": "payload"}
             yield mock
 
-    @pytest.fixture
     def mock_create_pr_from_issue(self):
         """Mock the create_pr_from_issue function."""
         with patch("main.create_pr_from_issue") as mock:
