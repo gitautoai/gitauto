@@ -132,6 +132,7 @@ class TestHandleJiraWebhook:
             mock.return_value = {"test": "payload"}
             yield mock
 
+    @pytest.fixture
     def mock_create_pr_from_issue(self):
         """Mock the create_pr_from_issue function."""
         with patch("main.create_pr_from_issue") as mock:
