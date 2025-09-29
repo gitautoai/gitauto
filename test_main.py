@@ -145,7 +145,7 @@ class TestSentryInitialization:
 
     @patch("main.sentry_sdk.init")
     @patch("main.ENV", "staging")
-    def test_sentry_init_not_called_in_staging_environment(self, mock_sentry_init):
+    def test_sentry_init_not_called_in_staging_environment(self, mock_env, mock_sentry_init):
         """Test that Sentry is not initialized when ENV is 'staging'."""
         # Force reimport of main module to trigger the initialization code
         import importlib
