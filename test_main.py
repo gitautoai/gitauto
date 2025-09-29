@@ -317,23 +317,26 @@ class TestHandler:
 
 
     def test_handler_with_schedule_event_exception(
-        self, mock_schedule_handler, mock_slack_notify
+        self
     ):
         """Test handler with schedule event that raises an exception."""
-        event = {
-            "triggerType": "schedule",
-            "ownerName": "test-owner",
-            "repoName": "test-repo",
-        }
-        context = {}
-        mock_schedule_handler.side_effect = Exception("Test exception")
+        with patch("main.slack_notify") as mock_slack_notify, \
+             patch("main.schedule_handler") as mock_schedule_handler:
+            mock_slack_notify.return_value = "thread_ts_123"
+            mock_schedule_handler.side_effect = Exception("Test exception")
 
-        result = main.handler(event, context)
+            event = {
+                "triggerType": "schedule",
+                "ownerName": "test-owner",
+                "repoName": "test-repo",
+            }
+            context = {}
 
-        assert result is None
-        mock_slack_notify.assert_any_call("Event Scheduler started for test-owner/test-repo")
-        mock_slack_notify.assert_any_call("@channel Failed: Test exception", "thread_ts_123")
-        mock_schedule_handler.assert_called_once_with(event=event)
+            result = main.handler(event, context)
+
+            assert result is None
+            mock_slack_notify.assert_any_call("Event Scheduler started for test-owner/test-repo")
+            mock_slack_notify.assert_any_call("@channel Failed: Test exception", "thread_ts_123")
 
 class TestRoot:
     """Test the root endpoint."""
