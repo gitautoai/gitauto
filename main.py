@@ -46,12 +46,18 @@ def handler(event, context):
             f"Event Scheduler started for {owner_name}/{repo_name}"
         )
 
-        result = schedule_handler(event=event)
-        if result["status"] == "success":
-            slack_notify("Completed", thread_ts)
-        else:
+        try:
+            result = schedule_handler(event=event)
+            if result["status"] == "success":
+                slack_notify("Completed", thread_ts)
+            else:
+                slack_notify(
+                    f"@channel Failed: {result.get('message', 'Unknown error')}",
+                    thread_ts,
+                )
+        except Exception as e:
             slack_notify(
-                f"@channel Failed: {result.get('message', 'Unknown error')}",
+                f"@channel Failed: {str(e)}",
                 thread_ts,
             )
         return None
