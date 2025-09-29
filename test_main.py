@@ -233,20 +233,6 @@ class TestHandler:
     """Test the main handler function."""
 
     @pytest.fixture
-    def mock_schedule_handler(self):
-        """Mock the schedule_handler function."""
-        with patch("main.schedule_handler") as mock:
-            mock.return_value = {"status": "success"}
-            yield mock
-
-    @pytest.fixture
-    def mock_slack_notify(self):
-        """Mock the slack_notify function."""
-        with patch("main.slack_notify") as mock:
-            mock.return_value = "thread_ts_123"
-            yield mock
-
-    @pytest.fixture
     def mock_mangum_handler(self):
         """Mock the mangum_handler."""
         with patch("main.mangum_handler") as mock:
