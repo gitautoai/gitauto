@@ -242,9 +242,10 @@ class TestHandler:
     def test_handler_with_schedule_event_success(
         self):
         """Test handler with successful schedule event."""
-        with patch("main.schedule_handler") as mock_schedule_handler, \
+        with patch("services.webhook.schedule_handler.schedule_handler") as mock_schedule_handler, \
              patch("main.slack_notify") as mock_slack_notify, \
              patch("services.slack.slack_notify.SLACK_BOT_TOKEN", "test-token"), \
+             patch("services.aws.delete_scheduler.delete_scheduler") as mock_delete_scheduler, \
              patch("constants.general.IS_PRD", True):
             # Ensure mocks are configured correctly
             mock_schedule_handler.return_value = {"status": "success"}
@@ -275,7 +276,8 @@ class TestHandler:
     ):
         """Test handler with failed schedule event."""
         with patch("main.slack_notify") as mock_slack_notify, patch(
-            "main.schedule_handler"
+            "services.webhook.schedule_handler.schedule_handler"
+        ) as mock_schedule_handler, patch("services.aws.delete_scheduler.delete_scheduler") as mock_delete_scheduler, patch(
         ) as mock_schedule_handler, patch("constants.general.IS_PRD", True), \
              patch("services.slack.slack_notify.SLACK_BOT_TOKEN", "test-token"):
 
