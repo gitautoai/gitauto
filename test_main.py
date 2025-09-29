@@ -242,8 +242,8 @@ class TestHandler:
     def test_handler_with_schedule_event_success(
         self):
         """Test handler with successful schedule event."""
-        with patch("main.schedule_handler") as mock_schedule_handler, \
-             patch("main.slack_notify") as mock_slack_notify:
+        with patch("services.webhook.schedule_handler.schedule_handler") as mock_schedule_handler, \
+             patch("services.slack.slack_notify.slack_notify") as mock_slack_notify:
 
             # Ensure mocks are configured correctly
             mock_schedule_handler.return_value = {"status": "success"}
