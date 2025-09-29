@@ -261,6 +261,12 @@ class TestHandler:
             "triggerType": "schedule",
             "ownerName": "test-owner",
             "repoName": "test-repo",
+            "ownerId": 12345,
+            "ownerType": "User",
+            "repoId": 67890,
+            "userId": 11111,
+            "userName": "test-user",
+            "installationId": 22222,
         }
         context = {}
 
