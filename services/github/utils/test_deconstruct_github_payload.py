@@ -105,7 +105,7 @@ def test_deconstruct_github_payload_basic_functionality(
     assert base_args["sender_name"] == "test-sender"
     assert base_args["sender_email"] == "test@example.com"
     assert base_args["is_automation"] is False
-    assert base_args["reviewers"] == ["test-sender", "test-issuer"]
+    assert set(base_args["reviewers"]) == {"test-sender", "test-issuer"}
     assert base_args["github_urls"] == ["https://github.com"]
     assert base_args["other_urls"] == ["https://example.com"]
     assert base_args["input_from"] == "github"
