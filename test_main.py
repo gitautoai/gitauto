@@ -156,14 +156,15 @@ class TestSentryInitialization:
 
     @patch("main.sentry_sdk.init")
     @patch("main.ENV", "test")
-    def test_sentry_init_not_called_in_test_environment(self, mock_sentry_init):
+    def test_sentry_init_not_called_in_test_environment(self):
         """Test that Sentry is not initialized when ENV is 'test'."""
-        # Force reimport of main module to trigger the initialization code
-        import importlib
-        importlib.reload(main)
+        with patch("main.ENV", "test"), patch("main.sentry_sdk.init") as mock_sentry_init:
+            # Force reimport of main module to trigger the initialization code
+            import importlib
+            importlib.reload(main)
 
-        # Verify Sentry initialization was not called
-        mock_sentry_init.assert_not_called()
+            # Verify Sentry initialization was not called
+            mock_sentry_init.assert_not_called()
 
 
 class TestHandler:
