@@ -1,10 +1,5 @@
-# Standard imports
-from unittest.mock import MagicMock
-from unittest import mock
-from unittest.mock import MagicMock
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-# Local imports
 from services.anthropic.remove_get_remote_file_content_before_replace_remote_file_content import \
     remove_get_remote_file_content_before_replace_remote_file_content
 
@@ -123,8 +118,6 @@ def test_remove_get_remote_file_content_before_replace_remote_file_content_no_la
 
 
 def test_handles_exception_gracefully():
-    # Test by mocking deepcopy to raise an exception
-
     messages = [{"role": "user", "content": []}]
 
     with patch("copy.deepcopy", side_effect=RuntimeError("Simulated failure")):
@@ -135,30 +128,13 @@ def test_handles_exception_gracefully():
         assert result == messages
 
 
-def test_handles_runtime_exception():
-    # Test by making dict access fail
-    class BadDict:
-        def get(self, key, default=None):
-            if key == "role":
-                return "user"
-            if key == "content":
-                raise KeyError("Simulated KeyError")
-            return default
-
-    messages = [BadDict()]
-
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should return original messages unchanged when exception occurs
-    assert result == messages
-
-
 def test_non_dict_items_in_content_first_pass():
     """Test line 27-28: when item is not a dict in first pass"""
     messages = [
         {
             "role": "user",
             "content": [
-                "not a dict",  # This should be skipped
+                "not a dict",
                 {
                     "type": "tool_result",
                     "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
@@ -167,7 +143,6 @@ def test_non_dict_items_in_content_first_pass():
         },
     ]
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since no later operation
     assert result == messages
 
 
@@ -177,7 +152,7 @@ def test_non_dict_items_in_content_second_pass():
         {
             "role": "user",
             "content": [
-                "not a dict",  # This should be preserved
+                "not a dict",
                 {
                     "type": "tool_result",
                     "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
@@ -204,7 +179,7 @@ def test_non_dict_items_in_content_second_pass():
         {
             "role": "user",
             "content": [
-                "not a dict",  # Non-dict item preserved
+                "not a dict",
                 {
                     "type": "tool_result",
                     "content": "[Outdated content removed]",
@@ -237,7 +212,7 @@ def test_invalid_input_data_in_replace_operation():
                 {
                     "type": "tool_use",
                     "name": "replace_remote_file_content",
-                    "input": "not a dict",  # Invalid input
+                    "input": "not a dict",
                 }
             ],
         },
@@ -247,13 +222,12 @@ def test_invalid_input_data_in_replace_operation():
                 {
                     "type": "tool_use",
                     "name": "replace_remote_file_content",
-                    "input": {"content": "some content"},  # Missing file_path
+                    "input": {"content": "some content"},
                 }
             ],
         },
     ]
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since invalid operations are skipped
     assert result == messages
 
 
@@ -265,7 +239,7 @@ def test_malformed_file_content_markers_first_pass():
             "content": [
                 {
                     "type": "tool_result",
-                    "content": "Opened file: 'test.py' but missing end marker",  # Missing end marker
+                    "content": "Opened file: 'test.py' but missing end marker",
                 }
             ],
         },
@@ -274,13 +248,12 @@ def test_malformed_file_content_markers_first_pass():
             "content": [
                 {
                     "type": "tool_result",
-                    "content": "Missing start marker with line numbers",  # Missing start marker
+                    "content": "Missing start marker with line numbers",
                 }
             ],
         },
     ]
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since malformed content is skipped
     assert result == messages
 
 
@@ -292,7 +265,7 @@ def test_malformed_file_content_markers_second_pass():
             "content": [
                 {
                     "type": "tool_result",
-                    "content": "Opened file: 'test.py' but missing end marker",  # Missing end marker
+                    "content": "Opened file: 'test.py' but missing end marker",
                 }
             ],
         },
@@ -301,7 +274,7 @@ def test_malformed_file_content_markers_second_pass():
             "content": [
                 {
                     "type": "tool_result",
-                    "content": "Missing start marker with line numbers",  # Missing start marker
+                    "content": "Missing start marker with line numbers",
                 }
             ],
         },
@@ -320,7 +293,6 @@ def test_malformed_file_content_markers_second_pass():
         },
     ]
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since malformed content is preserved
     assert result == messages
 
 
@@ -343,7 +315,7 @@ def test_file_not_in_latest_positions():
                     "type": "tool_use",
                     "name": "replace_remote_file_content",
                     "input": {
-                        "file_path": "different.py",  # Different file
+                        "file_path": "different.py",
                         "content": "print('world')",
                     },
                 }
@@ -351,7 +323,6 @@ def test_file_not_in_latest_positions():
         },
     ]
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since untracked.py has no later operation
     assert result == messages
 
 
@@ -455,7 +426,6 @@ def test_file_content_after_replace_operation():
         },
     ]
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since file content comes after replace operation
     assert result == messages
 
 
@@ -622,7 +592,6 @@ def test_non_list_content():
         },
     ]
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since no replace operations
     assert result == messages
 
 
@@ -674,283 +643,6 @@ def test_content_tracking_with_later_file_content():
             ],
         },
         {
-
-
-def test_force_line_61_with_custom_string():
-    """Force line 61 to be hit using custom string class"""
-
-    class TrickyString(str):
-        def find(self, sub, start=None, end=None):
-            return -1
-
-
-
-def test_defensive_check_line_61_first_pass():
-    """Test line 61: defensive check in first pass when find() returns -1"""
-    # Create a custom string-like object that passes initial checks but fails find()
-    class TrickyString:
-        def __init__(self, value):
-            self.value = value
-            self.find_call_count = 0
-
-        def __str__(self):
-            return self.value
-
-        def startswith(self, prefix):
-            return self.value.startswith(prefix)
-
-        def __contains__(self, item):
-            return item in self.value
-
-        def find(self, substring):
-
-
-def test_force_find_returns_minus_one_first_pass():
-    """Test line 61: Force find() to return -1 in first pass using mock"""
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
-                }
-            ],
-        },
-    ]
-
-    # Mock str.find to return -1 for the first call
-    original_find = str.find
-    call_count = [0]
-
-    def mock_find(self, sub, *args):
-        call_count[0] += 1
-        # Return -1 for the first find() call in first pass (line 58)
-        if call_count[0] == 1:
-            return -1
-        return original_find(self, sub, *args)
-
-    with mock.patch.object(str, 'find', mock_find):
-        result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-
-    # Should remain unchanged since find returned -1
-    assert result == messages
-
-
-def test_force_find_returns_minus_one_second_pass():
-    """Test lines 96-97: Force find() to return -1 in second pass using mock"""
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
-                }
-            ],
-        },
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "tool_use",
-                    "name": "replace_remote_file_content",
-                    "input": {
-                        "file_path": "test.py",
-                        "content": "print('replaced')",
-                    },
-                }
-            ],
-        },
-    ]
-
-    # Mock str.find to return -1 for specific calls
-    original_find = str.find
-    call_count = [0]
-
-    def mock_find(self, sub, *args):
-        call_count[0] += 1
-        # Skip first pass calls (calls 1-2), return -1 for second pass (calls 3-4)
-        if call_count[0] == 3:  # First find() in second pass (line 93)
-            return -1
-        return original_find(self, sub, *args)
-
-    with mock.patch.object(str, 'find', mock_find):
-        result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-
-    # Should remain unchanged since find returned -1 in second pass
-    assert result == messages
-
-
-def test_latest_info_none_branch():
-    """Test line 112: Explicitly test the else branch when latest_info is None"""
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'orphan.py' with line numbers for your information.\n1: print('orphan')",
-                }
-            ],
-        },
-    ]
-
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-
-    # File is not tracked, so should remain unchanged (hits line 112)
-            # Return -1 to trigger the defensive check
-            return -1
-
-    tricky_content = TrickyString(
-        "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')"
-    )
-
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": tricky_content,
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since the defensive check catches the issue
-    assert len(result) == 1
-
-
-def test_defensive_check_lines_96_97_second_pass():
-    """Test lines 96-97: defensive check in second pass when find() returns -1"""
-    # Create a custom string-like object that passes initial checks but fails find()
-    class TrickyString:
-        def __init__(self, value):
-            self.value = value
-
-        def __str__(self):
-            return self.value
-
-        def startswith(self, prefix):
-            return self.value.startswith(prefix)
-
-        def __contains__(self, item):
-            return item in self.value
-
-        def find(self, substring):
-            # Return -1 to trigger the defensive check
-            return -1
-
-    tricky_content = TrickyString(
-        "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')"
-    )
-
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": tricky_content,
-                }
-            ],
-        },
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "tool_use",
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": TrickyString("Opened file: 'test.py' with line numbers for your information.\n1: print('hello')"),
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    assert len(result) == 1
-
-
-def test_force_lines_96_97_with_custom_string():
-    """Force lines 96-97 to be hit using custom string class"""
-
-    class TrickyString(str):
-        def find(self, sub, start=None, end=None):
-            return -1
-
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": TrickyString("Opened file: 'test.py' with line numbers for your information.\n1: print('hello')"),
-                }
-            ],
-        },
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "tool_use",
-                    "name": "replace_remote_file_content",
-                    "input": {
-                        "file_path": "test.py",
-                        "content": "print('replaced')",
-                    },
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    assert len(result) == 2
-
-
-def test_force_line_112_explicitly():
-    """Explicitly test line 112: file not in latest_positions"""
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'orphan.py' with line numbers for your information.\n1: print('orphan')",
-                }
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'another.py' with line numbers for your information.\n1: print('another')",
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    assert result == messages
-
-
-def test_line_103_false_branch():
-    """Test the false branch of line 103 (latest_info is None)"""
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'no_tracking.py' with line numbers for your information.\n1: print('no tracking')",
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
             "role": "assistant",
             "content": [
                 {
@@ -985,40 +677,12 @@ def test_input_data_none():
                 {
                     "type": "tool_use",
                     "name": "replace_remote_file_content",
-                    "input": None,  # None input
+                    "input": None,
                 }
             ],
         },
     ]
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since invalid input is skipped
-    assert result == messages
-
-
-def test_content_str_conversion():
-    """Test content conversion to string with various types"""
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": 123,  # Non-string content that gets converted
-                }
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": ["list", "content"],  # List content
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since content doesn't match file pattern
     assert result == messages
 
 
@@ -1030,13 +694,11 @@ def test_no_content_key():
             "content": [
                 {
                     "type": "tool_result",
-                    # No content key
                 }
             ],
         },
     ]
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged
     assert result == messages
 
 
@@ -1122,7 +784,6 @@ def test_system_role_with_tool_result():
         },
     ]
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # System role tool_result should remain unchanged since it's not tracked
     assert result == messages
 
 
@@ -1143,7 +804,7 @@ def test_assistant_role_with_non_replace_tool_use():
             "content": [
                 {
                     "type": "tool_use",
-                    "name": "other_function",  # Not replace_remote_file_content
+                    "name": "other_function",
                     "input": {
                         "file_path": "test.py",
                         "content": "print('replaced')",
@@ -1153,7 +814,6 @@ def test_assistant_role_with_non_replace_tool_use():
         },
     ]
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since no replace operation
     assert result == messages
 
 
@@ -1190,8 +850,8 @@ def test_content_modification_detection():
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
 
     # Verify that the content was actually modified
-    assert result[0]["content"][0]["text"] == "Some text that won't change"  # Unchanged
-    assert result[0]["content"][1]["content"] == "[Outdated content removed]"  # Changed
+    assert result[0]["content"][0]["text"] == "Some text that won't change"
+    assert result[0]["content"][1]["content"] == "[Outdated content removed]"
 
     # Verify that the original messages object was not modified (deep copy worked)
     assert messages[0]["content"][1]["content"] != "[Outdated content removed]"
@@ -1226,128 +886,6 @@ def test_no_modification_needed():
     assert result == messages
     # But should still be a deep copy
     assert result is not messages
-
-
-def test_first_pass_malformed_content_with_start_marker_only():
-    """Test line 61: first pass with content that has start marker but malformed end"""
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'test.py' with line numbers",  # Missing quote before "with"
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since malformed content is skipped in first pass
-    assert result == messages
-
-
-def test_second_pass_malformed_content_preserves_item():
-    """Test lines 96-97: second pass with malformed content preserves the item"""
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'test.py' with line numbers",  # Missing quote before "with"
-                }
-            ],
-        },
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "tool_use",
-                    "name": "replace_remote_file_content",
-                    "input": {
-                        "file_path": "other.py",
-                        "content": "print('world')",
-                    },
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged - malformed content is preserved in second pass
-    assert result == messages
-
-
-def test_file_content_not_tracked_in_latest_positions():
-    """Test line 112: when file is not in latest_positions during second pass"""
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'standalone.py' with line numbers for your information.\n1: print('standalone')",
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged - file has no later operations
-    assert result == messages
-
-
-def test_edge_case_marker_at_boundary():
-    """Test edge case where markers are at string boundaries"""
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'x' with line numbers for your information.\n",
-                }
-            ],
-        },
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "tool_use",
-                    "name": "replace_remote_file_content",
-                    "input": {
-                        "file_path": "x",
-                        "content": "new content",
-                    },
-                }
-            ],
-        },
-    ]
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-
-    expected = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "[Outdated content removed]",
-                }
-            ],
-        },
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "tool_use",
-                    "name": "replace_remote_file_content",
-                    "input": {
-                        "file_path": "x",
-                        "content": "new content",
-                    },
-                }
-            ],
-        },
-    ]
-    assert result == expected
 
 
 def test_multiple_tool_results_in_single_message():
@@ -1427,127 +965,3 @@ def test_multiple_tool_results_in_single_message():
         },
     ]
     assert result == expected
-
-
-def test_force_line_61_with_mock():
-    """Force line 61 to be hit using a mock object that behaves differently for startswith and find"""
-
-    class TrickyString:
-        """A string-like object that passes initial checks but fails find()"""
-        def __init__(self, value):
-            self.value = value
-
-        def __str__(self):
-            return self.value
-
-        def startswith(self, prefix):
-            # Always return True for the check
-            if prefix == "Opened file: '":
-                return True
-            return self.value.startswith(prefix)
-
-        def __contains__(self, item):
-            # Always return True for the check
-            if item == "' with line numbers":
-                return True
-            return item in self.value
-
-        def find(self, substring):
-            # Return -1 to trigger the defensive check
-            return -1
-
-    tricky_content = TrickyString("Opened file: 'test.py' with line numbers for your information.\n1: print('hello')")
-
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": tricky_content,
-                }
-            ],
-        },
-    ]
-
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since the defensive check catches the issue
-    assert len(result) == 1
-    assert result[0]["role"] == "user"
-
-
-def test_force_lines_96_97_with_mock():
-    """Force lines 96-97 to be hit using a mock object in second pass"""
-
-    class TrickyString:
-        """A string-like object that passes initial checks but fails find()"""
-        def __init__(self, value):
-            self.value = value
-
-        def __str__(self):
-            return self.value
-
-        def startswith(self, prefix):
-            # Always return True for the check
-            if prefix == "Opened file: '":
-                return True
-            return self.value.startswith(prefix)
-
-        def __contains__(self, item):
-            # Always return True for the check
-            if item == "' with line numbers":
-                return True
-            return item in self.value
-
-        def find(self, substring):
-            # Return -1 to trigger the defensive check
-            return -1
-
-    tricky_content = TrickyString("Opened file: 'test.py' with line numbers for your information.\n1: print('hello')")
-
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": tricky_content,
-                }
-            ],
-        },
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "tool_use",
-                    "name": "replace_remote_file_content",
-                    "input": {
-                        "file_path": "test.py",
-                        "content": "print('replaced')",
-                    },
-                }
-            ],
-        },
-    ]
-
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # Should remain unchanged since the defensive check catches the issue in second pass
-    assert len(result) == 2
-
-
-def test_force_line_112_explicitly():
-    """Explicitly test line 112: when latest_info is None in second pass"""
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'orphan.py' with line numbers for your information.\n1: print('orphan')",
-                }
-            ],
-        },
-    ]
-
-    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
-    # File has no later operations, so latest_info will be None, hitting line 112
