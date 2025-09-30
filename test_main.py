@@ -860,4 +860,34 @@ class TestTypeAnnotations:
         result = await root()
 
         assert isinstance(result, dict)
+
+
+class TestSentryInitialization:
+    @patch("main.sentry_sdk.init")
+    @patch("main.ENV", "prod")
+    def test_sentry_initialization_in_prod_environment(self, mock_sentry_init):
+        """Test that Sentry is initialized when ENV is 'prod'."""
+        # We need to reload the module to trigger the initialization code
+        import importlib
+        import sys
+
+        # Remove main from sys.modules to force reimport
+        if "main" in sys.modules:
+            del sys.modules["main"]
+
+        # Mock the ENV before importing
+        with patch("config.ENV", "prod"):
+            # Reimport main to trigger the if ENV == "prod" block
+            import main as reloaded_main
+
+            # Verify Sentry was initialized with correct parameters
+            mock_sentry_init.assert_called_once()
+            call_kwargs = mock_sentry_init.call_args[1]
+            assert call_kwargs["environment"] == "prod"
+            assert call_kwargs["traces_sample_rate"] == 1.0
+            assert "dsn" in call_kwargs
+            assert "integrations" in call_kwargs
+
+            # Clean up
+            sys.modules["main"] = main
         assert all(isinstance(k, str) for k in result.keys())
