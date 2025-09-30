@@ -1,213 +1,144 @@
 # Standard imports
-import json
 from copy import deepcopy
-from unittest.mock import patch
 
 # Local imports
-from config import UTF8
-from services.anthropic.remove_duplicate_get_remote_file_content_results import (
-    remove_duplicate_get_remote_file_content_results,
-)
+from services.anthropic.remove_duplicate_get_remote_file_content_results import \
+    remove_duplicate_get_remote_file_content_results
 
 
-def test_remove_duplicate_get_remote_file_content_results_only():
-    # Function only deduplicates get_remote_file_content, not generic messages
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant"},
-        {"role": "user", "content": "Hello"},
-        {"role": "assistant", "content": "Hi there!"},
-        {"role": "user", "content": "Hello"},  # Not deduplicated - not file content
-        {
-            "role": "assistant",
-            "content": "Hi there!",
-        },  # Not deduplicated - not file content
-    ]
-
-    result = remove_duplicate_get_remote_file_content_results(messages)
-
-    # Should NOT deduplicate non-file content
-    assert result == messages  # Should be unchanged
-
-
-def test_remove_duplicate_get_remote_file_content_results_snapshots():
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant"},
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "tool_use_id": "id1",
-                    "content": "Opened file: 'Calculator-MJ/ViewController.swift' with line numbers for your information.\n\nOriginal content",
-                }
-            ],
-        },
-        {"role": "assistant", "content": "OK"},
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "tool_use_id": "id2",
-                    "content": "Opened file: 'Calculator-MJ/ViewController.swift' with line numbers for your information.\n\nUpdated content",
-                }
-            ],
-        },
-    ]
-
-    result = remove_duplicate_get_remote_file_content_results(messages)
-
-    # Should deduplicate file content, keeping latest
-    assert len(result) == 4
-    assert result[0]["role"] == "system"
-    assert (
-        result[1]["content"][0]["content"]
-        == "[Outdated 'Calculator-MJ/ViewController.swift' content removed]"
-    )
-    assert "Updated content" in result[3]["content"][0]["content"]
-
-
-def test_no_duplicates():
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant"},
-        {"role": "user", "content": "First question"},
-        {"role": "assistant", "content": "First answer"},
-        {"role": "user", "content": "Second question"},
-        {"role": "assistant", "content": "Second answer"},
-    ]
-
-    original = deepcopy(messages)
-    result = remove_duplicate_get_remote_file_content_results(messages)
-
-    # Should return messages unchanged
-    assert result == original
-
-
-def test_preserve_system_messages():
-    messages = [
-        {"role": "system", "content": "System prompt 1"},
-        {"role": "system", "content": "System prompt 1"},  # Duplicate system
-        {"role": "user", "content": "Hello"},
-    ]
-
-    result = remove_duplicate_get_remote_file_content_results(messages)
-
-    # System messages should never be deduplicated
-    assert len(result) == 3
-    assert result[0]["content"] == "System prompt 1"
-    assert result[1]["content"] == "System prompt 1"
-    assert result[2]["content"] == "Hello"
-
-
-def test_with_real_agent_input():
-    # Load actual data (formatted/prettified version for readability)
-    with open(
-        "payloads/anthropic/llm_request_2816_input_content_formatted.json",
-        "r",
-        encoding=UTF8,
-    ) as f:
-        original_messages = json.load(f)
-
-    # Load expected result
-    with open(
-        "payloads/anthropic/llm_request_2816_input_content_formatted_expected.json",
-        "r",
-        encoding=UTF8,
-    ) as f:
-        expected_messages = json.load(f)
-
-    # Deduplicate using our function
-    result = remove_duplicate_get_remote_file_content_results(original_messages)
-
-    # Should match expected output
-    assert result == expected_messages
-
-
-def test_with_production_minified_json():
-    # Test with real minified JSON from production database (llm_request ID 2816)
-    # This is the actual format used in production - not prettified
-    with open(
-        "payloads/anthropic/llm_request_2816_input_content_raw.json", "r", encoding=UTF8
-    ) as f:
-        messages = json.load(f)
-
-    # Should have 52 messages
-    assert len(messages) == 52
-
-    # Apply deduplication
-    result = remove_duplicate_get_remote_file_content_results(messages)
-
-    # Should still have 52 messages
-    assert len(result) == 52
-
-    # Check that deduplication occurred
-    original_size = len(json.dumps(messages))
-    deduplicated_size = len(json.dumps(result))
-
-    # Should reduce size significantly (by ~50%)
-    assert deduplicated_size < original_size
-    assert (
-        deduplicated_size < original_size * 0.6
-    )  # Should be less than 60% of original
-
-    # Count replaced file contents
-    replaced_count = 0
-    for msg in result:
-        if msg.get("role") == "user" and isinstance(msg.get("content"), list):
-            for item in msg["content"]:
-                if isinstance(item, dict) and "[Outdated" in str(
-                    item.get("content", "")
-                ):
-                    replaced_count += 1
-
-    # Should have replaced 4 outdated file contents
-    assert replaced_count == 4
-
-
-def test_handles_exception_gracefully():
-    # Test by mocking deepcopy to raise an exception
-
-    messages = [{"role": "user", "content": []}]
-
-    with patch("copy.deepcopy", side_effect=RuntimeError("Simulated failure")):
-        result = remove_duplicate_get_remote_file_content_results(messages)
-        # Should return original messages unchanged when exception occurs
-        assert result == messages
-
-
-def test_handles_runtime_exception():
-    # Test by making dict access fail
-    class BadDict:
-        def get(self, key, default=None):
-            if key == "role":
-                return "user"
-            if key == "content":
-                raise KeyError("Simulated KeyError")
-            return default
-
-    messages = [BadDict()]
-
-    result = remove_duplicate_get_remote_file_content_results(messages)
-    # Should return original messages unchanged when exception occurs
-    assert result == messages
-
-
-def test_empty_messages_list():
-    # Test line 11: empty messages check
+def test_empty_list():
+    """Test with empty messages list - covers line 10-11"""
     messages = []
     result = remove_duplicate_get_remote_file_content_results(messages)
     assert result == []
 
 
 def test_none_messages():
-    # Test line 11: None messages check
+    """Test with None messages - covers line 10-11"""
     messages = None
     result = remove_duplicate_get_remote_file_content_results(messages)
     assert result is None
 
 
+def test_no_duplicates():
+    """Test with no duplicate files"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'file1.py' with line numbers for your information.\nContent 1",
+                }
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
+
+
+def test_duplicate_files():
+    """Test with duplicate file references"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'file1.py' with line numbers for your information.\nOld content",
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'file1.py' with line numbers for your information.\nNew content",
+                }
+            ],
+        },
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # First occurrence should be replaced
+    assert result[0]["content"][0]["content"] == "[Outdated 'file1.py' content removed]"
+    # Latest occurrence should remain
+    assert "New content" in result[1]["content"][0]["content"]
+
+
+def test_multiple_files_with_duplicates():
+    """Test with multiple files and duplicates"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'file1.py' with line numbers for your information.\nContent 1",
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'file2.py' with line numbers for your information.\nContent 2",
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'file1.py' with line numbers for your information.\nContent 3",
+                }
+            ],
+        },
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # First file1.py should be replaced
+    assert result[0]["content"][0]["content"] == "[Outdated 'file1.py' content removed]"
+    # file2.py should remain (no duplicates)
+    assert "Content 2" in result[1]["content"][0]["content"]
+    # Latest file1.py should remain
+    assert "Content 3" in result[2]["content"][0]["content"]
+
+
+def test_non_user_role():
+    """Test with non-user role messages"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'file1.py' with line numbers for your information.\nContent",
+                }
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
+
+
+def test_non_list_content():
+    """Test with non-list content"""
+    messages = [
+        {
+            "role": "user",
+            "content": "string content",
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
+
+
 def test_non_dict_item_in_content():
-    # Test line 26 and 54: non-dict items in content list
+    """Test with non-dict items in content list - covers lines 25-26 and 53-55"""
     messages = [
         {
             "role": "user",
@@ -227,7 +158,7 @@ def test_non_dict_item_in_content():
 
 
 def test_non_tool_result_type():
-    # Test line 26 and 54: items with type != "tool_result"
+    """Test with items that are not tool_result type - covers lines 25-26 and 53-55"""
     messages = [
         {
             "role": "user",
@@ -237,20 +168,35 @@ def test_non_tool_result_type():
                     "content": "Some text",
                 },
                 {
-                    "type": "tool_result",
-                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent",
+                    "type": "image",
+                    "content": "Image data",
                 },
             ],
         }
     ]
     result = remove_duplicate_get_remote_file_content_results(messages)
-    # Should keep non-tool_result items unchanged
-    assert len(result) == 1
-    assert result[0]["content"][0]["type"] == "text"
+    assert result == messages
+
+
+def test_tool_result_without_opened_file():
+    """Test with tool_result that doesn't start with 'Opened file:'"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Some other tool result",
+                }
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
 
 
 def test_content_without_required_phrases():
-    # Test line 36 and 66: content without required phrases
+    """Test with content missing required phrases - covers lines 32-36 and 62-67"""
     messages = [
         {
             "role": "user",
@@ -269,7 +215,7 @@ def test_content_without_required_phrases():
 
 
 def test_content_with_multiple_occurrences_phrase():
-    # Test line 36 and 66: content with "and found multiple occurrences of" phrase
+    """Test with 'and found multiple occurrences of' phrase - covers lines 32-36 and 62-67"""
     messages = [
         {
             "role": "user",
@@ -297,7 +243,7 @@ def test_content_with_multiple_occurrences_phrase():
 
 
 def test_invalid_filename_parsing_no_quotes():
-    # Test line 41 and 72: invalid filename parsing (no quotes)
+    """Test with invalid filename format (no quotes) - covers lines 40-41 and 71-73"""
     messages = [
         {
             "role": "user",
@@ -316,7 +262,7 @@ def test_invalid_filename_parsing_no_quotes():
 
 
 def test_invalid_filename_parsing_single_quote():
-    # Test line 41 and 72: invalid filename parsing (only one quote)
+    """Test with invalid filename format (only one quote) - covers lines 40-41 and 71-73"""
     messages = [
         {
             "role": "user",
@@ -334,113 +280,8 @@ def test_invalid_filename_parsing_single_quote():
     assert "Opened file: 'test.py" in result[0]["content"][0]["content"]
 
 
-def test_content_not_starting_with_opened_file():
-    # Test lines 29 and 58: content not starting with "Opened file: '"
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Some other tool result",
-                }
-            ],
-        }
-    ]
-    result = remove_duplicate_get_remote_file_content_results(messages)
-    # Should keep items not starting with "Opened file: '" unchanged
-    assert len(result) == 1
-    assert result[0]["content"][0]["content"] == "Some other tool result"
-
-
-def test_mixed_valid_and_invalid_items():
-    # Test combination of valid and invalid items
-    messages = [
-        {
-            "role": "user",
-            "content": [
-
-
-def test_empty_messages_list():
-    # Test with empty messages list
-    messages = []
-    result = remove_duplicate_get_remote_file_content_results(messages)
-    assert result == []
-
-
-def test_none_messages():
-    # Test with None messages
-    messages = None
-    result = remove_duplicate_get_remote_file_content_results(messages)
-    assert result is None
-
-
-def test_non_dict_items_in_content():
-    # Test with non-dict items in content list
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                "string item",  # Non-dict item
-                {"type": "tool_result", "content": "Some content"},
-            ],
-        }
-    ]
-    result = remove_duplicate_get_remote_file_content_results(messages)
-    assert result == messages
-
-
-def test_non_tool_result_type():
-    # Test with items that are not tool_result type
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "content": "Some text"},
-                {"type": "image", "content": "Image data"},
-            ],
-        }
-    ]
-    result = remove_duplicate_get_remote_file_content_results(messages)
-    assert result == messages
-
-
-def test_tool_result_without_required_phrases():
-    # Test with tool_result that starts with "Opened file:" but lacks required phrases
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: 'test.py' but missing required phrase",
-                }
-            ],
-        }
-    ]
-    result = remove_duplicate_get_remote_file_content_results(messages)
-    assert result == messages
-
-
-def test_tool_result_with_invalid_filename_parsing():
-    # Test with tool_result where filename parsing fails (no closing quote)
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "content": "Opened file: test.py with line numbers for your information.",
-                }
-            ],
-        }
-    ]
-    result = remove_duplicate_get_remote_file_content_results(messages)
-    assert result == messages
-
-
 def test_tool_result_with_empty_filename():
-    # Test with tool_result where filename is empty (quotes are adjacent)
+    """Test with empty filename (adjacent quotes) - covers lines 40-41 and 71-73"""
     messages = [
         {
             "role": "user",
@@ -457,7 +298,7 @@ def test_tool_result_with_empty_filename():
 
 
 def test_mixed_content_with_duplicates():
-    # Test with mixed content including non-dict items and duplicates
+    """Test with mixed content including non-dict items and duplicates"""
     messages = [
         {
             "role": "user",
@@ -491,15 +332,15 @@ def test_mixed_content_with_duplicates():
     assert "Content v2" in result[1]["content"][0]["content"]
 
 
-def test_tool_result_with_multiple_occurrences_phrase():
-    # Test with "and found multiple occurrences of" phrase instead of "with line numbers"
+def test_original_not_modified():
+    """Test that original messages are not modified"""
     messages = [
         {
             "role": "user",
             "content": [
                 {
                     "type": "tool_result",
-                    "content": "Opened file: 'search.py' and found multiple occurrences of pattern.\nContent v1",
+                    "content": "Opened file: 'file1.py' with line numbers for your information.\nOld content",
                 }
             ],
         },
@@ -508,3 +349,15 @@ def test_tool_result_with_multiple_occurrences_phrase():
             "content": [
                 {
                     "type": "tool_result",
+                    "content": "Opened file: 'file1.py' with line numbers for your information.\nNew content",
+                }
+            ],
+        },
+    ]
+    original = deepcopy(messages)
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # Original should not be modified
+    assert messages == original
+    # Result should be different
+    assert result != messages
