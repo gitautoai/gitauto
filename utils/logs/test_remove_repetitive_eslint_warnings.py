@@ -54,8 +54,7 @@ def test_file_with_only_warnings():
 ✖ 2 problems (0 errors, 2 warnings)"""
 
     # File should be excluded since it has no errors
-    expected = """
-✖ 2 problems (0 errors, 2 warnings)"""
+    expected = """✖ 2 problems (0 errors, 2 warnings)"""
 
     result = remove_repetitive_eslint_warnings(log)
     assert result == expected
