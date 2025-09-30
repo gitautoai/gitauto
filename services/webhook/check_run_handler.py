@@ -374,30 +374,6 @@ def handle_check_run(
     # Create messages
     messages = [{"role": "user", "content": user_input}]
 
-    # Check for older active requests to avoid duplicate processing
-    older_active_request = check_older_active_test_failure_request(
-        owner_id=owner_id,
-        repo_id=repo_id,
-        pr_number=pull_number,
-        current_usage_id=usage_id,
-    )
-    if older_active_request:
-        msg = f"Older active request found for PR #{pull_number} in {owner_name}/{repo_name}. Killing this duplicate request."
-        logging.info(msg)
-
-        # Mark current request as completed and exit
-        update_usage(
-            usage_id=usage_id,
-            token_input=0,
-            token_output=0,
-            total_seconds=int(time.time() - current_time),
-            is_completed=True,
-            pr_number=pull_number,
-        )
-
-        slack_notify(msg, thread_ts)
-        return
-
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
     retry_count = 0
@@ -440,6 +416,33 @@ def handle_check_run(
             msg = f"Stopped - branch '{head_branch}' was deleted while GitAuto was processing check run failure in `{owner_name}/{repo_name}`"
             logging.info(msg)
             slack_notify(msg, thread_ts)
+            break
+
+        # Safety check: Stop if older active request exists (race condition prevention)
+        older_active_request = check_older_active_test_failure_request(
+            owner_id=owner_id,
+            repo_id=repo_id,
+            pr_number=pull_number,
+            current_usage_id=usage_id,
+        )
+        if older_active_request:
+            body = f"Process stopped: Older active request found for PR #{pull_number}. Avoiding race condition."
+            print(body)
+            if comment_url:
+                update_comment(body=body, base_args=base_args)
+            msg = f"Stopped - older active test failure request found for PR #{pull_number} in `{owner_name}/{repo_name}`. Avoiding race condition."
+            logging.info(msg)
+            slack_notify(msg, thread_ts)
+
+            # Mark current request as completed and exit
+            update_usage(
+                usage_id=usage_id,
+                token_input=total_token_input,
+                token_output=total_token_output,
+                total_seconds=int(time.time() - current_time),
+                is_completed=True,
+                pr_number=pull_number,
+            )
             break
 
         # Explore repo
