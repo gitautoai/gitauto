@@ -149,3 +149,113 @@ def test_get_remote_file_content_start_line_end_line_logging(
     assert (
         found_message
     ), f"Expected message not found in update_comment calls: {[call.kwargs.get('body', '') for call in call_args]}"
+
+
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.update_comment")
+def test_delete_file_logging(mock_update_comment, mock_chat_with_claude, mock_get_model):
+    """Test that delete_file function calls are properly logged in chat_with_agent."""
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "delete_file",
+                    "input": {"file_path": "test_file.py"},
+                }
+            ],
+        },
+        "test_id",
+        "delete_file",
+        {"file_path": "test_file.py"},
+        15,
+        10,
+    )
+
+    base_args = Mock()
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        mock_tools.__getitem__.return_value = Mock(return_value="File deleted successfully")
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=base_args,
+            mode="commit",
+            repo_settings=None,
+        )
+
+    # Check that update_comment was called with the correct message
+    call_args = mock_update_comment.call_args_list
+    assert len(call_args) > 0
+
+    # Find the call with our expected message
+    found_message = False
+    for call in call_args:
+        body_arg = call.kwargs.get("body", "")
+        if "Deleted file `test_file.py`." in body_arg:
+            found_message = True
+            break
+
+    assert (
+        found_message
+    ), f"Expected delete message not found in update_comment calls: {[call.kwargs.get('body', '') for call in call_args]}"
+
+
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.update_comment")
+def test_move_file_logging(mock_update_comment, mock_chat_with_claude, mock_get_model):
+    """Test that move_file function calls are properly logged in chat_with_agent."""
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "move_file",
+                    "input": {"old_file_path": "old_file.py", "new_file_path": "new_file.py"},
+                }
+            ],
+        },
+        "test_id",
+        "move_file",
+        {"old_file_path": "old_file.py", "new_file_path": "new_file.py"},
+        15,
+        10,
+    )
+
+    base_args = Mock()
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        mock_tools.__getitem__.return_value = Mock(return_value="File moved successfully")
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=base_args,
+            mode="commit",
+            repo_settings=None,
+        )
+
+    # Check that update_comment was called with the correct message
+    call_args = mock_update_comment.call_args_list
+    assert len(call_args) > 0
+
+    # Find the call with our expected message
+    found_message = False
+    for call in call_args:
+        body_arg = call.kwargs.get("body", "")
+        if "Moved file from `old_file.py` to `new_file.py`." in body_arg:
+            found_message = True
+            break
+
+    assert (
+        found_message
+    ), f"Expected move message not found in update_comment calls: {[call.kwargs.get('body', '') for call in call_args]}"
