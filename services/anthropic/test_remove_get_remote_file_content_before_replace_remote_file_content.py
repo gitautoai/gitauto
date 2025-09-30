@@ -1,4 +1,5 @@
 # Standard imports
+from unittest.mock import MagicMock
 from unittest import mock
 from unittest.mock import MagicMock
 from unittest.mock import patch, MagicMock
