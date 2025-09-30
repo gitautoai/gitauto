@@ -948,6 +948,156 @@ def test_no_modification_needed():
     assert result is not messages
 
 
+def test_uncovered_line_28_non_dict_item_first_pass():
+    """Test line 28: continue when item is not a dict in first pass"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                "string_item",  # This triggers line 27->28
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {"file_path": "test.py", "content": "content"},
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should work normally, non-dict item is skipped
+    assert result == messages
+
+
+def test_uncovered_line_39_invalid_input_data():
+    """Test line 39: continue when input_data is invalid"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": "not_a_dict",  # This triggers line 38->39
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should work normally, invalid input is skipped
+    assert result == messages
+
+
+def test_uncovered_line_61_malformed_markers_first_pass():
+    """Test line 61: continue when markers are malformed in first pass"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' missing end marker",  # This triggers line 60->61
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should work normally, malformed content is skipped
+    assert result == messages
+
+
+def test_uncovered_lines_75_76_non_dict_item_second_pass():
+    """Test lines 75-76: append non-dict item and continue in second pass"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                "string_item",  # This triggers line 74->75->76
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {"file_path": "test.py", "content": "new content"},
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+
+    expected = [
+        {
+            "role": "user",
+            "content": [
+                "string_item",  # Non-dict preserved
+                {
+                    "type": "tool_result",
+                    "content": "[Outdated content removed]",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {"file_path": "test.py", "content": "new content"},
+                }
+            ],
+        },
+    ]
+    assert result == expected
+
+
+def test_uncovered_lines_96_97_malformed_markers_second_pass():
+    """Test lines 96-97: append item and continue when markers malformed in second pass"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' missing end marker",  # This triggers line 95->96->97
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {"file_path": "test.py", "content": "new content"},
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should remain unchanged since malformed content is preserved
+    assert result == messages
+
+
+def test_uncovered_line_112_file_not_tracked():
+    """Test line 112: append item when file is not in latest_positions (latest_info is None)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'untracked.py' with line numbers for your information.\n1: print('hello')",  # This triggers line 103->112
+                }
+            ],
+        },
+
+
 def test_line_28_non_dict_item_in_first_pass():
     """Test line 28: continue when item is not a dict in first pass"""
     messages = [
