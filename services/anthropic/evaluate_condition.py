@@ -24,7 +24,7 @@ Respond with ONLY the word TRUE or FALSE. Nothing else.""",
 
     # Parse the response
     first_content = response.content[0]
-    response_text = getattr(first_content, 'text', '').strip().lower()
+    response_text = getattr(first_content, "text", "").strip().lower()
 
     # Simple parsing - just check for true or false
     if "true" in response_text:

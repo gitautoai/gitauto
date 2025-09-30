@@ -154,7 +154,9 @@ def test_get_remote_file_content_start_line_end_line_logging(
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
 @patch("services.chat_with_agent.update_comment")
-def test_delete_file_logging(mock_update_comment, mock_chat_with_claude, mock_get_model):
+def test_delete_file_logging(
+    mock_update_comment, mock_chat_with_claude, mock_get_model
+):
     """Test that delete_file function calls are properly logged in chat_with_agent."""
     mock_get_model.return_value = "claude-sonnet-4-0"
     mock_chat_with_claude.return_value = (
@@ -179,7 +181,9 @@ def test_delete_file_logging(mock_update_comment, mock_chat_with_claude, mock_ge
     base_args = Mock()
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
-        mock_tools.__getitem__.return_value = Mock(return_value="File deleted successfully")
+        mock_tools.__getitem__.return_value = Mock(
+            return_value="File deleted successfully"
+        )
 
         chat_with_agent(
             messages=[{"role": "user", "content": "test"}],
@@ -220,7 +224,10 @@ def test_move_file_logging(mock_update_comment, mock_chat_with_claude, mock_get_
                     "type": "tool_use",
                     "id": "test_id",
                     "name": "move_file",
-                    "input": {"old_file_path": "old_file.py", "new_file_path": "new_file.py"},
+                    "input": {
+                        "old_file_path": "old_file.py",
+                        "new_file_path": "new_file.py",
+                    },
                 }
             ],
         },
@@ -234,7 +241,9 @@ def test_move_file_logging(mock_update_comment, mock_chat_with_claude, mock_get_
     base_args = Mock()
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
-        mock_tools.__getitem__.return_value = Mock(return_value="File moved successfully")
+        mock_tools.__getitem__.return_value = Mock(
+            return_value="File moved successfully"
+        )
 
         chat_with_agent(
             messages=[{"role": "user", "content": "test"}],
