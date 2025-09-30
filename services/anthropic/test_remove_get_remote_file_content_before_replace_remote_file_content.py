@@ -1,4 +1,5 @@
 # Standard imports
+from unittest.mock import MagicMock
 from unittest.mock import patch, MagicMock
 
 # Local imports
@@ -680,6 +681,88 @@ def test_force_line_61_with_custom_string():
         def find(self, sub, start=None, end=None):
             return -1
 
+
+
+def test_defensive_check_line_61_first_pass():
+    """Test line 61: defensive check in first pass when find() returns -1"""
+    # Create a custom string-like object that passes initial checks but fails find()
+    class TrickyString:
+        def __init__(self, value):
+            self.value = value
+            self.find_call_count = 0
+
+        def __str__(self):
+            return self.value
+
+        def startswith(self, prefix):
+            return self.value.startswith(prefix)
+
+        def __contains__(self, item):
+            return item in self.value
+
+        def find(self, substring):
+            # Return -1 to trigger the defensive check
+            return -1
+
+    tricky_content = TrickyString(
+        "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')"
+    )
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": tricky_content,
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should remain unchanged since the defensive check catches the issue
+    assert len(result) == 1
+
+
+def test_defensive_check_lines_96_97_second_pass():
+    """Test lines 96-97: defensive check in second pass when find() returns -1"""
+    # Create a custom string-like object that passes initial checks but fails find()
+    class TrickyString:
+        def __init__(self, value):
+            self.value = value
+
+        def __str__(self):
+            return self.value
+
+        def startswith(self, prefix):
+            return self.value.startswith(prefix)
+
+        def __contains__(self, item):
+            return item in self.value
+
+        def find(self, substring):
+            # Return -1 to trigger the defensive check
+            return -1
+
+    tricky_content = TrickyString(
+        "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')"
+    )
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": tricky_content,
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
     messages = [
         {
             "role": "user",
