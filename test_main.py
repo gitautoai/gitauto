@@ -839,6 +839,42 @@ class TestModuleImports:
         assert callable(main.root)
 
 
+class TestSentryInitialization:
+    def test_sentry_initialization_in_prod_env(self):
+        """Test that Sentry is initialized when ENV is 'prod'."""
+        # This test covers the missing branch coverage for line 24-25
+        # We need to test the module-level code that initializes Sentry
+
+        # Save original ENV value
+        import os
+        original_env = os.environ.get("ENV")
+
+        try:
+            # Set ENV to prod
+            os.environ["ENV"] = "prod"
+
+            # Mock sentry_sdk.init to verify it's called
+            with patch("sentry_sdk.init") as mock_sentry_init:
+                # Re-import the module to trigger the initialization code
+                import importlib
+                importlib.reload(main)
+
+                # Verify sentry_sdk.init was called with correct parameters
+                mock_sentry_init.assert_called_once()
+                call_kwargs = mock_sentry_init.call_args[1]
+                assert call_kwargs["environment"] == "prod"
+                assert call_kwargs["traces_sample_rate"] == 1.0
+                assert "dsn" in call_kwargs
+                assert "integrations" in call_kwargs
+        finally:
+            # Restore original ENV value
+            if original_env is not None:
+                os.environ["ENV"] = original_env
+            else:
+                os.environ.pop("ENV", None)
+            # Reload module to restore original state
+            importlib.reload(main)
+
 class TestTypeAnnotations:
     @pytest.mark.asyncio
     async def test_handle_webhook_return_type(self, mock_github_request):
