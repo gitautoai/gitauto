@@ -193,6 +193,175 @@ def test_handles_runtime_exception():
 
 
 def test_empty_messages_list():
+    # Test line 11: empty messages check
+    messages = []
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == []
+
+
+def test_none_messages():
+    # Test line 11: None messages check
+    messages = None
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result is None
+
+
+def test_non_dict_item_in_content():
+    # Test line 26 and 54: non-dict items in content list
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                "string item",  # Non-dict item
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent",
+                },
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    # Should handle non-dict items gracefully
+    assert len(result) == 1
+    assert result[0]["content"][0] == "string item"
+
+
+def test_non_tool_result_type():
+    # Test line 26 and 54: items with type != "tool_result"
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "content": "Some text",
+                },
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent",
+                },
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    # Should keep non-tool_result items unchanged
+    assert len(result) == 1
+    assert result[0]["content"][0]["type"] == "text"
+
+
+def test_content_without_required_phrases():
+    # Test line 36 and 66: content without required phrases
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' but missing required phrase",
+                }
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    # Should keep items without required phrases unchanged
+    assert len(result) == 1
+    assert result[0]["content"][0]["content"] == "Opened file: 'test.py' but missing required phrase"
+
+
+def test_content_with_multiple_occurrences_phrase():
+    # Test line 36 and 66: content with "and found multiple occurrences of" phrase
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' and found multiple occurrences of pattern",
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' and found multiple occurrences of pattern",
+                }
+            ],
+        },
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    # Should deduplicate with "multiple occurrences" phrase
+    assert len(result) == 2
+    assert "[Outdated 'test.py' content removed]" in result[0]["content"][0]["content"]
+
+
+def test_invalid_filename_parsing_no_quotes():
+    # Test line 41 and 72: invalid filename parsing (no quotes)
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: test.py with line numbers for your information.\nContent",
+                }
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    # Should keep items with invalid filename format unchanged
+    assert len(result) == 1
+    assert "Opened file: test.py" in result[0]["content"][0]["content"]
+
+
+def test_invalid_filename_parsing_single_quote():
+    # Test line 41 and 72: invalid filename parsing (only one quote)
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py with line numbers for your information.\nContent",
+                }
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    # Should keep items with invalid filename format unchanged
+    assert len(result) == 1
+    assert "Opened file: 'test.py" in result[0]["content"][0]["content"]
+
+
+def test_content_not_starting_with_opened_file():
+    # Test lines 29 and 58: content not starting with "Opened file: '"
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Some other tool result",
+                }
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    # Should keep items not starting with "Opened file: '" unchanged
+    assert len(result) == 1
+    assert result[0]["content"][0]["content"] == "Some other tool result"
+
+
+def test_mixed_valid_and_invalid_items():
+    # Test combination of valid and invalid items
+    messages = [
+        {
+            "role": "user",
+            "content": [
+
+
+def test_empty_messages_list():
     # Test with empty messages list
     messages = []
     result = remove_duplicate_get_remote_file_content_results(messages)
