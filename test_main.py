@@ -1,4 +1,3 @@
-import os
 import json
 import urllib.parse
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -98,14 +97,35 @@ def mock_api_gateway_event():
 
 
 class TestSentryInitialization:
+    """Tests for Sentry initialization in main.py."""
+
     @patch("main.ENV", "prod")
     @patch("main.sentry_sdk.init")
     def test_sentry_initialized_in_prod(self, mock_sentry_init):
-        """Test that Sentry is initialized when ENV is prod."""
+        """Test that Sentry is initialized when ENV is prod.
+
+        Note: This test may be unreliable as it depends on module import behavior.
+        See test_sentry_initialized_in_prod_with_config_patch for a more reliable test.
+        """
         import importlib
 
         import main
         importlib.reload(main)
+        mock_sentry_init.assert_called_once()
+
+    @patch("config.ENV", "prod")
+    @patch("sentry_sdk.init")
+    def test_sentry_initialized_in_prod_with_config_patch(self, mock_sentry_init):
+        """Test that Sentry is initialized when ENV is prod by patching config.ENV."""
+        # Clear any existing modules to ensure clean import
+        import sys
+        if "main" in sys.modules:
+            del sys.modules["main"]
+
+        # Now import main, which should trigger Sentry initialization
+        import main  # noqa
+
+        # Verify Sentry was initialized
         mock_sentry_init.assert_called_once()
 
 
