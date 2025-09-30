@@ -1,4 +1,5 @@
 # Standard imports
+from unittest import mock
 from unittest.mock import MagicMock
 from unittest.mock import patch, MagicMock
 
@@ -701,6 +702,102 @@ def test_defensive_check_line_61_first_pass():
             return item in self.value
 
         def find(self, substring):
+
+
+def test_force_find_returns_minus_one_first_pass():
+    """Test line 61: Force find() to return -1 in first pass using mock"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
+                }
+            ],
+        },
+    ]
+
+    # Mock str.find to return -1 for the first call
+    original_find = str.find
+    call_count = [0]
+
+    def mock_find(self, sub, *args):
+        call_count[0] += 1
+        # Return -1 for the first find() call in first pass (line 58)
+        if call_count[0] == 1:
+            return -1
+        return original_find(self, sub, *args)
+
+    with mock.patch.object(str, 'find', mock_find):
+        result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+
+    # Should remain unchanged since find returned -1
+    assert result == messages
+
+
+def test_force_find_returns_minus_one_second_pass():
+    """Test lines 96-97: Force find() to return -1 in second pass using mock"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "test.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+        },
+    ]
+
+    # Mock str.find to return -1 for specific calls
+    original_find = str.find
+    call_count = [0]
+
+    def mock_find(self, sub, *args):
+        call_count[0] += 1
+        # Skip first pass calls (calls 1-2), return -1 for second pass (calls 3-4)
+        if call_count[0] == 3:  # First find() in second pass (line 93)
+            return -1
+        return original_find(self, sub, *args)
+
+    with mock.patch.object(str, 'find', mock_find):
+        result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+
+    # Should remain unchanged since find returned -1 in second pass
+    assert result == messages
+
+
+def test_latest_info_none_branch():
+    """Test line 112: Explicitly test the else branch when latest_info is None"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'orphan.py' with line numbers for your information.\n1: print('orphan')",
+                }
+            ],
+        },
+    ]
+
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+
+    # File is not tracked, so should remain unchanged (hits line 112)
             # Return -1 to trigger the defensive check
             return -1
 
