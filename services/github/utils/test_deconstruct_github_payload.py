@@ -1,11 +1,10 @@
 """Unit tests for deconstruct_github_payload function."""
 
-from datetime import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
-from services.github.utils.deconstruct_github_payload import \
-    deconstruct_github_payload
+from config import GITHUB_APP_USER_ID, ISSUE_NUMBER_FORMAT, PRODUCT_ID
+from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
 
 
 def create_mock_payload(
@@ -83,7 +82,7 @@ def test_deconstruct_github_payload_basic_functionality(
     payload = create_mock_payload(issue_body="Test issue body")
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify the result
     assert base_args is not None
@@ -113,8 +112,8 @@ def test_deconstruct_github_payload_basic_functionality(
     assert base_args["parent_issue_title"] is None
     assert base_args["parent_issue_body"] is None
 
-    # Verify repo_settings
-    assert repo_settings == {"target_branch": None}
+    # Verify _
+    assert _ == {"target_branch": None}
 
 
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
@@ -131,7 +130,9 @@ def test_deconstruct_github_payload_no_token_raises_error(
     # Call the function and expect ValueError
     with pytest.raises(ValueError) as excinfo:
         deconstruct_github_payload(payload)
-    assert "Installation access token is not found for test-owner/test-repo" in str(excinfo.value)
+    assert "Installation access token is not found for test-owner/test-repo" in str(
+        excinfo.value
+    )
 
 
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
@@ -167,7 +168,7 @@ def test_deconstruct_github_payload_with_empty_issue_body(
     payload = create_mock_payload(issue_body=None)
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify empty issue body is converted to empty string
     assert base_args["issue_body"] == ""
@@ -206,7 +207,7 @@ def test_deconstruct_github_payload_with_fork_repository(
     payload = create_mock_payload(fork=True)
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify fork flag is set correctly
     assert base_args["is_fork"] is True
@@ -243,15 +244,14 @@ def test_deconstruct_github_payload_with_bot_users(
 
     # Create test payload with bot users
     payload = create_mock_payload(
-        issuer_name="test-issuer[bot]",
-        sender_name="test-sender[bot]"
+        issuer_name="test-issuer[bot]", sender_name="test-sender[bot]"
     )
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify bot users are filtered out from reviewers
-    assert base_args["reviewers"] == []
+    assert not base_args["reviewers"]
 
 
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
@@ -287,7 +287,7 @@ def test_deconstruct_github_payload_with_target_branch_exists(
     payload = create_mock_payload()
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify target branch is used as base branch
     assert base_args["base_branch"] == "develop"
@@ -326,7 +326,7 @@ def test_deconstruct_github_payload_with_target_branch_not_exists(
     payload = create_mock_payload()
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify default branch is used when target branch doesn't exist
     assert base_args["base_branch"] == "main"
@@ -370,7 +370,7 @@ def test_deconstruct_github_payload_with_parent_issue_data(
     payload = create_mock_payload()
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify parent issue data is extracted correctly
     assert base_args["parent_issue_number"] == 456
@@ -408,11 +408,10 @@ def test_deconstruct_github_payload_with_automation_user(
     mock_choices.return_value = ["A", "B", "C", "D"]
 
     # Create test payload with automation user (using GITHUB_APP_USER_ID from config)
-    from config import GITHUB_APP_USER_ID
     payload = create_mock_payload(sender_id=GITHUB_APP_USER_ID)
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify automation is detected
     assert base_args["is_automation"] is True
@@ -426,7 +425,7 @@ def test_deconstruct_github_payload_with_automation_user(
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
 @patch("services.github.utils.deconstruct_github_payload.datetime")
 @patch("services.github.utils.deconstruct_github_payload.choices")
-def test_deconstruct_github_payload_no_repo_settings(
+def test_deconstruct_github_payload_no__(
     mock_choices,
     mock_datetime,
     mock_get_parent_issue,
@@ -451,11 +450,11 @@ def test_deconstruct_github_payload_no_repo_settings(
     payload = create_mock_payload()
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify the result
     assert base_args["base_branch"] == "main"  # Should use default branch
-    assert repo_settings is None
+    assert _ is None
 
 
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
@@ -491,7 +490,7 @@ def test_deconstruct_github_payload_no_target_branch_in_settings(
     payload = create_mock_payload()
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify the result
     assert base_args["base_branch"] == "main"  # Should use default branch
@@ -534,10 +533,9 @@ def test_deconstruct_github_payload_branch_name_generation(
     payload = create_mock_payload(issue_number=456)
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify branch name generation
-    from config import ISSUE_NUMBER_FORMAT, PRODUCT_ID
     expected_branch = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}456-20241225-143000-XYZW"
     assert base_args["new_branch"] == expected_branch
 
@@ -572,13 +570,10 @@ def test_deconstruct_github_payload_duplicate_reviewers(
     mock_choices.return_value = ["A", "B", "C", "D"]
 
     # Create test payload where sender and issuer are the same
-    payload = create_mock_payload(
-        issuer_name="same-user",
-        sender_name="same-user"
-    )
+    payload = create_mock_payload(issuer_name="same-user", sender_name="same-user")
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify duplicate reviewers are handled (set removes duplicates)
     assert base_args["reviewers"] == ["same-user"]
@@ -618,7 +613,7 @@ def test_deconstruct_github_payload_missing_fork_key(
     del payload["repository"]["fork"]  # Remove fork key to test .get() default
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify fork defaults to False when key is missing
     assert base_args["is_fork"] is False
@@ -659,7 +654,7 @@ def test_deconstruct_github_payload_target_branch_print_statement(
     payload = create_mock_payload()
 
     # Call the function
-    base_args, repo_settings = deconstruct_github_payload(payload)
+    base_args, _ = deconstruct_github_payload(payload)
 
     # Verify print statement was called
     mock_print.assert_called_once_with("Using target branch: develop")

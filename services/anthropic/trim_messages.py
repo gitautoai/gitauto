@@ -69,9 +69,11 @@ def trim_messages_to_token_limit(
 
             has_matching_tool_result = False
             for block in next_content:
-                if (isinstance(block, dict)
+                if (
+                    isinstance(block, dict)
                     and block.get("type") == "tool_result"
-                    and block.get("tool_use_id") == tool_use_id):
+                    and block.get("tool_use_id") == tool_use_id
+                ):
                     has_matching_tool_result = True
                     break
 
