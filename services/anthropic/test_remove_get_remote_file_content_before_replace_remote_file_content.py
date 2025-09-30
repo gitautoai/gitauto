@@ -948,6 +948,108 @@ def test_no_modification_needed():
     assert result is not messages
 
 
+def test_first_pass_malformed_start_marker_only():
+    """Test line 60-61: first pass with only start marker present"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' without proper ending",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_first_pass_malformed_end_marker_only():
+    """Test line 60-61: first pass with only end marker present"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Some content ' with line numbers for your information.",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_second_pass_malformed_start_marker_with_later_operation():
+    """Test line 95-97: second pass with malformed start marker and later operation"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Some content ' with line numbers for your information.",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "other.py",
+                        "content": "print('world')",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_second_pass_malformed_end_marker_with_later_operation():
+    """Test line 95-97: second pass with malformed end marker and later operation"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' without proper ending",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "other.py",
+                        "content": "print('world')",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_second_pass_file_not_tracked_with_operation():
+    """Test line 103->112: file content not tracked but other operations exist"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+
+
 def test_malformed_markers_first_pass_start_not_found():
     """Test line 60-61: when start marker is -1 in first pass (continue branch)"""
     messages = [
