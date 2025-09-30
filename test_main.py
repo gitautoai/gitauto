@@ -2,6 +2,7 @@
 
 # Standard imports
 import asyncio
+import os
 import json
 import sys
 import urllib.parse
