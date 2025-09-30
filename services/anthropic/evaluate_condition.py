@@ -1,4 +1,4 @@
-from config import ANTHROPIC_MODEL_ID_40
+from config import ANTHROPIC_MODEL_ID_45
 from services.anthropic.client import claude
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -13,7 +13,7 @@ def evaluate_condition(
         return False
 
     response = claude.messages.create(
-        model=ANTHROPIC_MODEL_ID_40,
+        model=ANTHROPIC_MODEL_ID_45,
         max_tokens=max_tokens,
         temperature=0,
         system=f"""{system_prompt}
@@ -23,7 +23,8 @@ Respond with ONLY the word TRUE or FALSE. Nothing else.""",
     )
 
     # Parse the response
-    response_text = response.content[0].text.strip().lower()
+    first_content = response.content[0]
+    response_text = getattr(first_content, 'text', '').strip().lower()
 
     # Simple parsing - just check for true or false
     if "true" in response_text:

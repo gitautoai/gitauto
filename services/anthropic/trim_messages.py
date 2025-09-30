@@ -5,7 +5,7 @@ from typing import Any
 from anthropic import Anthropic
 
 # Local imports
-from config import ANTHROPIC_MODEL_ID_40
+from config import ANTHROPIC_MODEL_ID_45
 from services.anthropic.message_to_dict import message_to_dict
 from utils.objects.safe_get_attribute import safe_get_attribute
 
@@ -14,7 +14,7 @@ def trim_messages_to_token_limit(
     messages: list[Any],
     client: Anthropic,
     max_input: int,
-    model: str = ANTHROPIC_MODEL_ID_40,
+    model: str = ANTHROPIC_MODEL_ID_45,
 ):
     messages = list(messages)  # Make a copy to avoid mutating the original
 
@@ -43,36 +43,43 @@ def trim_messages_to_token_limit(
             tool_use_id = None
             if role == "assistant" and i + 1 < len(messages):
                 content = safe_get_attribute(msg_dict, "content", [])
-                if isinstance(content, list):
-                    for block in content:
-                        if isinstance(block, dict) and block.get("type") == "tool_use":
-                            tool_use_id = block.get("id")
-                            break
-
-            # If this message has a tool_use, check if next message has the matching tool_result
-            if tool_use_id and i + 1 < len(messages):
-                next_msg = message_to_dict(messages[i + 1])
-                next_content = safe_get_attribute(next_msg, "content", [])
-                has_matching_tool_result = False
-
-                # Check if next message has a matching tool_result
-                if isinstance(next_content, list):
-                    for block in next_content:
-                        if (
-                            isinstance(block, dict)
-                            and block.get("type") == "tool_result"
-                            and block.get("tool_use_id") == tool_use_id
-                        ):
-                            has_matching_tool_result = True
-                            break
-
-                # If there's a matching tool_result, remove both messages together
-                if has_matching_tool_result:
-                    del messages[i : i + 2]
+                if not isinstance(content, list):
+                    # Not a list, can safely remove
+                    del messages[i]
                     break
 
-            # Regular message (no tool use) or no matching tool result found
-            del messages[i]
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "tool_use":
+                        tool_use_id = block.get("id")
+                        break
+
+            # If no tool_use_id, safe to remove this message
+            if not tool_use_id or i + 1 >= len(messages):
+                del messages[i]
+                break
+
+            # Check if next message has matching tool_result
+            next_msg = message_to_dict(messages[i + 1])
+            next_content = safe_get_attribute(next_msg, "content", [])
+
+            if not isinstance(next_content, list):
+                # Next message content not a list, remove current message only
+                del messages[i]
+                break
+
+            has_matching_tool_result = False
+            for block in next_content:
+                if (isinstance(block, dict)
+                    and block.get("type") == "tool_result"
+                    and block.get("tool_use_id") == tool_use_id):
+                    has_matching_tool_result = True
+                    break
+
+            # If there's a matching tool_result, remove both messages together
+            if has_matching_tool_result:
+                del messages[i : i + 2]
+            else:
+                del messages[i]
             break
 
         # Recalculate token count after removal

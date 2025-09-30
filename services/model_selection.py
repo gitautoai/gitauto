@@ -2,17 +2,17 @@
 # pylint: disable=invalid-name
 
 from config import (
-    ANTHROPIC_MODEL_ID_35,
     ANTHROPIC_MODEL_ID_37,
     ANTHROPIC_MODEL_ID_40,
+    ANTHROPIC_MODEL_ID_45,
     OPENAI_MODEL_ID_GPT_5,
 )
 from utils.colors.colorize_log import colorize
 
 MODEL_CHAIN = [
+    ANTHROPIC_MODEL_ID_45,
     ANTHROPIC_MODEL_ID_40,
     ANTHROPIC_MODEL_ID_37,
-    ANTHROPIC_MODEL_ID_35,
     OPENAI_MODEL_ID_GPT_5,
 ]
 

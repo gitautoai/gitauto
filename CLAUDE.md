@@ -281,6 +281,90 @@ cat /tmp/cloudwatch_logs.txt | python3 -c "import sys, json; data = json.load(sy
 aws lambda update-function-configuration --function-name pr-agent-prod --logging-config LogFormat=Text,LogGroup=/aws/lambda/pr-agent-prod
 ```
 
+## GitHub API Access for Production Customer Repository Investigation
+
+### Getting Installation Access Token for Production
+
+When investigating customer repository issues in production, you can access their repositories via the GitHub API:
+
+```python
+import time
+import jwt
+import requests
+
+# 1. Create JWT token for GitHub App authentication
+# Use production private key: /Users/rwest/Downloads/gitauto-ai.2024-12-11.private-key.pem
+with open('/Users/rwest/Downloads/gitauto-ai.2024-12-11.private-key.pem', 'r') as f:
+    private_key = f.read()
+
+app_id = '844909'  # GitAuto production app ID
+now = int(time.time())
+payload = {
+    'iat': now,
+    'exp': now + 600,  # JWT expires in 10 minutes
+    'iss': app_id
+}
+jwt_token = jwt.encode(payload=payload, key=private_key, algorithm='RS256')
+
+# 2. Find the customer's installation ID
+headers = {
+    'Authorization': f'Bearer {jwt_token}',
+    'Accept': 'application/vnd.github.v3+json'
+}
+response = requests.get('https://api.github.com/app/installations', headers=headers)
+installations = response.json()
+
+# Search for customer (e.g., 'Foxquilt')
+for install in installations:
+    if 'fox' in install['account']['login'].lower():
+        installation_id = install['id']
+        print(f"Found: {install['account']['login']} - ID: {installation_id}")
+
+# 3. Get installation access token for the customer
+response = requests.post(
+    f'https://api.github.com/app/installations/{installation_id}/access_tokens',
+    headers=headers
+)
+access_token = response.json()['token']
+
+# 4. Now use the access token to access customer repositories
+headers = {'Authorization': f'token {access_token}', 'Accept': 'application/vnd.github.v3+json'}
+
+# List repositories GitAuto has access to
+response = requests.get('https://api.github.com/installation/repositories', headers=headers)
+repos = response.json()
+for repo in repos['repositories']:
+    print(f"  - {repo['full_name']}")
+
+# Get repository settings
+response = requests.get('https://api.github.com/repos/OWNER/REPO', headers=headers)
+repo_settings = response.json()
+```
+
+### Common Investigation Tasks
+
+1. **Check Repository Settings**:
+   - Default branch, merge settings, delete branch on merge
+   - Permissions GitAuto has for the repository
+
+2. **List Accessible Repositories**:
+   - Shows which repositories GitAuto can access in the customer's organization
+   - Useful for verifying if GitAuto is installed on specific repos
+
+3. **Check GitAuto Permissions**:
+
+   ```python
+   response = requests.get(f'https://api.github.com/app/installations/{installation_id}', headers=jwt_headers)
+   permissions = response.json().get('permissions', {})
+   ```
+
+### Security Notes
+
+- GitAuto may not have access to all repositories in an organization
+- Branch protection rules and webhook settings require admin permissions (usually not available)
+- The installation access token expires after 1 hour
+- Always use production app ID (844909) and production private key for customer investigations
+
 ## Architecture Overview
 
 ### Lambda Runtime Environment
