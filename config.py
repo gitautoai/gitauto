@@ -66,9 +66,9 @@ OPENAI_TEMPERATURE = 0.0
 # Anthropic Credentials from environment variables
 # https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases
 ANTHROPIC_API_KEY = get_env_var(name="ANTHROPIC_API_KEY")
-ANTHROPIC_MODEL_ID_35 = "claude-3-5-sonnet-latest"
-ANTHROPIC_MODEL_ID_37 = "claude-3-7-sonnet-latest"
+ANTHROPIC_MODEL_ID_45 = "claude-sonnet-4-5"
 ANTHROPIC_MODEL_ID_40 = "claude-sonnet-4-0"
+ANTHROPIC_MODEL_ID_37 = "claude-3-7-sonnet-latest"
 
 # Resend Credentials
 RESEND_API_KEY = get_env_var(name="RESEND_API_KEY")

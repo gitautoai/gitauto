@@ -5,9 +5,9 @@ from unittest.mock import patch
 import pytest
 
 from config import (
-    ANTHROPIC_MODEL_ID_35,
     ANTHROPIC_MODEL_ID_37,
     ANTHROPIC_MODEL_ID_40,
+    ANTHROPIC_MODEL_ID_45,
     OPENAI_MODEL_ID_GPT_5,
 )
 from services import model_selection
@@ -47,9 +47,9 @@ def mock_print():
 def test_model_chain_contains_expected_models():
     """Test that MODEL_CHAIN contains the expected models in correct order."""
     expected_models = [
+        ANTHROPIC_MODEL_ID_45,
         ANTHROPIC_MODEL_ID_40,
         ANTHROPIC_MODEL_ID_37,
-        ANTHROPIC_MODEL_ID_35,
         OPENAI_MODEL_ID_GPT_5,
     ]
     assert MODEL_CHAIN == expected_models
@@ -58,16 +58,16 @@ def test_model_chain_contains_expected_models():
 
 def test_model_chain_order():
     """Test that models are in the expected priority order."""
-    assert MODEL_CHAIN[0] == ANTHROPIC_MODEL_ID_40  # Highest priority
-    assert MODEL_CHAIN[1] == ANTHROPIC_MODEL_ID_37
-    assert MODEL_CHAIN[2] == ANTHROPIC_MODEL_ID_35
+    assert MODEL_CHAIN[0] == ANTHROPIC_MODEL_ID_45  # Highest priority
+    assert MODEL_CHAIN[1] == ANTHROPIC_MODEL_ID_40
+    assert MODEL_CHAIN[2] == ANTHROPIC_MODEL_ID_37
     assert MODEL_CHAIN[3] == OPENAI_MODEL_ID_GPT_5  # Lowest priority
 
 
 def test_get_model_returns_current_model(_):
     """Test that get_model returns the current model."""
     result = get_model()
-    assert result == ANTHROPIC_MODEL_ID_40  # Initial model
+    assert result == ANTHROPIC_MODEL_ID_45  # Initial model
 
 
 def test_get_model_returns_string():
@@ -80,16 +80,16 @@ def test_get_model_returns_string():
 def test_try_next_model_from_first_model(_, mock_colorize, mock_print):
     """Test switching from first model to second model."""
     # Ensure we start with the first model
-    assert get_model() == ANTHROPIC_MODEL_ID_40
+    assert get_model() == ANTHROPIC_MODEL_ID_45
 
     success, new_model = try_next_model()
 
     assert success is True
-    assert new_model == ANTHROPIC_MODEL_ID_37
-    assert get_model() == ANTHROPIC_MODEL_ID_37
+    assert new_model == ANTHROPIC_MODEL_ID_40
+    assert get_model() == ANTHROPIC_MODEL_ID_40
 
     # Verify colorize was called with correct message and color
-    expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_40} to {ANTHROPIC_MODEL_ID_37}"
+    expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_45} to {ANTHROPIC_MODEL_ID_40}"
     mock_colorize.assert_called_once_with(expected_msg, "yellow")
 
     # Verify print was called with colorized message
@@ -101,16 +101,16 @@ def test_try_next_model_from_second_model(_, mock_colorize, mock_print):
     # Use already imported model_selection
 
     # Set current model to second model
-    model_selection._current_model = ANTHROPIC_MODEL_ID_37
+    model_selection._current_model = ANTHROPIC_MODEL_ID_40
 
     success, new_model = try_next_model()
 
     assert success is True
-    assert new_model == ANTHROPIC_MODEL_ID_35
-    assert get_model() == ANTHROPIC_MODEL_ID_35
+    assert new_model == ANTHROPIC_MODEL_ID_37
+    assert get_model() == ANTHROPIC_MODEL_ID_37
 
     # Verify colorize was called with correct message
-    expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_37} to {ANTHROPIC_MODEL_ID_35}"
+    expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_40} to {ANTHROPIC_MODEL_ID_37}"
     mock_colorize.assert_called_once_with(expected_msg, "yellow")
     mock_print.assert_called_once_with("mocked_colored_text")
 
@@ -120,7 +120,7 @@ def test_try_next_model_from_third_model(_, mock_colorize, mock_print):
     # Use already imported model_selection
 
     # Set current model to third model
-    model_selection._current_model = ANTHROPIC_MODEL_ID_35
+    model_selection._current_model = ANTHROPIC_MODEL_ID_37
 
     success, new_model = try_next_model()
 
@@ -129,7 +129,7 @@ def test_try_next_model_from_third_model(_, mock_colorize, mock_print):
     assert get_model() == OPENAI_MODEL_ID_GPT_5
 
     # Verify colorize was called with correct message
-    expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_35} to {OPENAI_MODEL_ID_GPT_5}"
+    expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_37} to {OPENAI_MODEL_ID_GPT_5}"
     mock_colorize.assert_called_once_with(expected_msg, "yellow")
     mock_print.assert_called_once_with("mocked_colored_text")
 
@@ -155,19 +155,19 @@ def test_try_next_model_from_last_model(_, mock_colorize, mock_print):
 def test_try_next_model_sequential_calls(_, mock_colorize, mock_print):
     """Test sequential calls to try_next_model through all models."""
     # Start with first model
-    assert get_model() == ANTHROPIC_MODEL_ID_40
+    assert get_model() == ANTHROPIC_MODEL_ID_45
 
     # First call: switch to second model
     success1, model1 = try_next_model()
     assert success1 is True
-    assert model1 == ANTHROPIC_MODEL_ID_37
-    assert get_model() == ANTHROPIC_MODEL_ID_37
+    assert model1 == ANTHROPIC_MODEL_ID_40
+    assert get_model() == ANTHROPIC_MODEL_ID_40
 
     # Second call: switch to third model
     success2, model2 = try_next_model()
     assert success2 is True
-    assert model2 == ANTHROPIC_MODEL_ID_35
-    assert get_model() == ANTHROPIC_MODEL_ID_35
+    assert model2 == ANTHROPIC_MODEL_ID_37
+    assert get_model() == ANTHROPIC_MODEL_ID_37
 
     # Third call: switch to fourth model
     success3, model3 = try_next_model()
@@ -198,21 +198,21 @@ def test_try_next_model_return_types():
 def test_model_selection_state_persistence(_):
     """Test that model state persists between function calls."""
     # Initial state
-    assert get_model() == ANTHROPIC_MODEL_ID_40
+    assert get_model() == ANTHROPIC_MODEL_ID_45
 
     # Switch model
     try_next_model()
-    assert get_model() == ANTHROPIC_MODEL_ID_37
+    assert get_model() == ANTHROPIC_MODEL_ID_40
 
     # State should persist
-    assert get_model() == ANTHROPIC_MODEL_ID_37
+    assert get_model() == ANTHROPIC_MODEL_ID_40
 
     # Switch again
     try_next_model()
-    assert get_model() == ANTHROPIC_MODEL_ID_35
+    assert get_model() == ANTHROPIC_MODEL_ID_37
 
     # State should still persist
-    assert get_model() == ANTHROPIC_MODEL_ID_35
+    assert get_model() == ANTHROPIC_MODEL_ID_37
 
 
 def test_try_next_model_with_invalid_current_model(_):

@@ -360,7 +360,7 @@ def test_message_object_conversion(mock_client):
 def test_custom_model_parameter(mock_client):
     """Test using a custom model parameter."""
     messages = [make_message("user"), make_message("assistant")]
-    custom_model = "claude-3-sonnet-20240229"
+    custom_model = "claude-sonnet-4-5"
 
     def count_tokens_custom(messages, model):
         assert model == custom_model

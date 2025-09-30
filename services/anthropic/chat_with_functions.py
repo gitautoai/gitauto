@@ -8,7 +8,7 @@ from anthropic._exceptions import OverloadedError
 from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 
 # Local imports
-from config import ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40
+from config import ANTHROPIC_MODEL_ID_45
 from services.anthropic.client import claude
 from services.anthropic.remove_duplicate_get_remote_file_content_results import (
     remove_duplicate_get_remote_file_content_results,
@@ -35,7 +35,7 @@ def chat_with_claude(
     messages: list[MessageParam],
     system_content: str,
     tools: list[dict[str, Any]],
-    model_id: str = ANTHROPIC_MODEL_ID_40,
+    model_id: str = ANTHROPIC_MODEL_ID_45,
     usage_id: int | None = None,
 ):
     # https://docs.anthropic.com/en/api/client-sdks
@@ -47,9 +47,7 @@ def chat_with_claude(
     messages = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
 
     # Check token count and delete messages if necessary
-    max_tokens = (
-        64000 if model_id in [ANTHROPIC_MODEL_ID_37, ANTHROPIC_MODEL_ID_40] else 8192
-    )
+    max_tokens = 64000
     buffer = 4096
     max_input = 200_000 - max_tokens - buffer
     messages = trim_messages_to_token_limit(
