@@ -190,3 +190,152 @@ def test_handles_runtime_exception():
     result = remove_duplicate_get_remote_file_content_results(messages)
     # Should return original messages unchanged when exception occurs
     assert result == messages
+
+
+def test_empty_messages_list():
+    # Test with empty messages list
+    messages = []
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == []
+
+
+def test_none_messages():
+    # Test with None messages
+    messages = None
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result is None
+
+
+def test_non_dict_items_in_content():
+    # Test with non-dict items in content list
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                "string item",  # Non-dict item
+                {"type": "tool_result", "content": "Some content"},
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
+
+
+def test_non_tool_result_type():
+    # Test with items that are not tool_result type
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "content": "Some text"},
+                {"type": "image", "content": "Image data"},
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
+
+
+def test_tool_result_without_required_phrases():
+    # Test with tool_result that starts with "Opened file:" but lacks required phrases
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' but missing required phrase",
+                }
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
+
+
+def test_tool_result_with_invalid_filename_parsing():
+    # Test with tool_result where filename parsing fails (no closing quote)
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: test.py with line numbers for your information.",
+                }
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
+
+
+def test_tool_result_with_empty_filename():
+    # Test with tool_result where filename is empty (quotes are adjacent)
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: '' with line numbers for your information.",
+                }
+            ],
+        }
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+    assert result == messages
+
+
+def test_mixed_content_with_duplicates():
+    # Test with mixed content including non-dict items and duplicates
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                "text item",  # Non-dict
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent v1",
+                },
+                {"type": "text", "content": "Some text"},  # Non-tool_result
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' with line numbers for your information.\nContent v2",
+                },
+            ],
+        },
+    ]
+    result = remove_duplicate_get_remote_file_content_results(messages)
+
+    # First message should have outdated content replaced
+    assert result[0]["content"][0] == "text item"
+    assert "[Outdated 'test.py' content removed]" in result[0]["content"][1]["content"]
+    assert result[0]["content"][2]["type"] == "text"
+
+    # Second message should keep the latest content
+    assert "Content v2" in result[1]["content"][0]["content"]
+
+
+def test_tool_result_with_multiple_occurrences_phrase():
+    # Test with "and found multiple occurrences of" phrase instead of "with line numbers"
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'search.py' and found multiple occurrences of pattern.\nContent v1",
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
