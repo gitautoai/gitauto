@@ -1,3 +1,4 @@
+import os
 import json
 import urllib.parse
 from unittest.mock import AsyncMock, MagicMock, patch
