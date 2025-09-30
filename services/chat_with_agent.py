@@ -262,6 +262,21 @@ def chat_with_agent(
                 base_args=base_args,
             )
 
+    elif (
+        tool_name == "delete_file"
+        and isinstance(tool_args, dict)
+        and "file_path" in tool_args
+    ):
+        msg = f"Deleted file `{tool_args['file_path']}`."
+
+    elif (
+        tool_name == "move_file"
+        and isinstance(tool_args, dict)
+        and "old_file_path" in tool_args
+        and "new_file_path" in tool_args
+    ):
+        msg = f"Moved file from `{tool_args['old_file_path']}` to `{tool_args['new_file_path']}`."
+
     else:
         msg = f"Calling `{tool_name}()` with `{tool_args}`."
 

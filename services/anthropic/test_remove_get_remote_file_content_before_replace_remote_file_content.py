@@ -2,8 +2,9 @@
 from unittest.mock import patch
 
 # Local imports
-from services.anthropic.remove_get_remote_file_content_before_replace_remote_file_content import \
-    remove_get_remote_file_content_before_replace_remote_file_content
+from services.anthropic.remove_get_remote_file_content_before_replace_remote_file_content import (
+    remove_get_remote_file_content_before_replace_remote_file_content,
+)
 
 
 def test_remove_get_remote_file_content_before_replace_remote_file_content_empty_list():
@@ -159,7 +160,7 @@ def test_non_dict_items_in_content_first_pass():
                 {
                     "type": "tool_result",
                     "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
-                }
+                },
             ],
         },
     ]
@@ -178,7 +179,7 @@ def test_non_dict_items_in_content_second_pass():
                 {
                     "type": "tool_result",
                     "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
-                }
+                },
             ],
         },
         {
@@ -205,7 +206,7 @@ def test_non_dict_items_in_content_second_pass():
                 {
                     "type": "tool_result",
                     "content": "[Outdated content removed]",
-                }
+                },
             ],
         },
         {
@@ -478,7 +479,7 @@ def test_mixed_content_types():
                 {
                     "type": "tool_result",
                     "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('user')",
-                }
+                },
             ],
         },
         {
@@ -496,7 +497,7 @@ def test_mixed_content_types():
                         "file_path": "test.py",
                         "content": "print('replaced')",
                     },
-                }
+                },
             ],
         },
     ]
@@ -522,7 +523,7 @@ def test_mixed_content_types():
                 {
                     "type": "tool_result",
                     "content": "[Outdated content removed]",
-                }
+                },
             ],
         },
         {
@@ -540,7 +541,7 @@ def test_mixed_content_types():
                         "file_path": "test.py",
                         "content": "print('replaced')",
                     },
-                }
+                },
             ],
         },
     ]
@@ -890,7 +891,7 @@ def test_content_modification_detection():
                 {
                     "type": "tool_result",
                     "content": "Opened file: 'test.py' with line numbers for your information.\n1: print('hello')",
-                }
+                },
             ],
         },
         {
