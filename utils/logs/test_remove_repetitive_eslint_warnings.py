@@ -196,3 +196,137 @@ def test_result_with_trailing_newline_when_input_has_none():
     result = remove_repetitive_eslint_warnings(log)
     assert result == expected
     assert not result.endswith("\n")
+
+
+def test_multiple_empty_lines():
+    # Test with multiple empty lines in the input
+    log = """/path/to/file1.js
+  1:1  error  Unexpected token
+
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    expected = """/path/to/file1.js
+  1:1  error  Unexpected token
+
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_empty_lines_between_files():
+    # Test with empty lines between file entries
+    log = """/path/to/file1.js
+  1:1  error  Unexpected token
+
+/path/to/file2.js
+  2:1  error  Another error
+
+✖ 2 problems (2 errors, 0 warnings)"""
+
+    expected = """/path/to/file1.js
+  1:1  error  Unexpected token
+/path/to/file2.js
+  2:1  error  Another error
+
+✖ 2 problems (2 errors, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_file_with_no_errors_or_warnings():
+    # Test file path with no errors or warnings following it
+    log = """/path/to/file1.js
+
+✖ 0 problems (0 errors, 0 warnings)"""
+
+    expected = """
+✖ 0 problems (0 errors, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_summary_without_blank_line_before():
+    # Test that blank line is added before summary when needed
+    log = """/path/to/file1.js
+  1:1  error  Unexpected token
+✖ 1 problem (1 error, 0 warnings)"""
+
+    expected = """/path/to/file1.js
+  1:1  error  Unexpected token
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_summary_with_file_path_before():
+    # Test that blank line is NOT added when previous line is a file path
+    log = """/path/to/file1.js
+✖ 1 problem (1 error, 0 warnings)"""
+
+    expected = """/path/to/file1.js
+✖ 1 problem (1 error, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_summary_with_empty_line_before():
+    # Test that blank line is NOT added when previous line is already empty
+    log = """/path/to/file1.js
+  1:1  error  Unexpected token
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    expected = """/path/to/file1.js
+  1:1  error  Unexpected token
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_jsx_file_extension():
+    # Test that .tsx files are recognized
+    log = """/path/to/component.tsx
+  1:1  error  Type error
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    expected = """/path/to/component.tsx
+  1:1  error  Type error
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_file_path_not_starting_with_slash():
+    # Test that relative paths (not starting with /) are not treated as file paths
+    log = """path/to/file.js
+  1:1  error  Some error"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == log
+
+
+def test_whitespace_in_error_lines():
+    # Test that error lines with various whitespace are handled correctly
+    log = """/path/to/file1.js
+    10:5  error  Unexpected token
+  2:1  error  Another error
+
+✖ 2 problems (2 errors, 0 warnings)"""
+
+    expected = """/path/to/file1.js
+    10:5  error  Unexpected token
+  2:1  error  Another error
+
