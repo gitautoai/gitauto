@@ -148,6 +148,14 @@ def chat_with_agent(
             if similar_name := similar_functions.get(tool_name):
                 corrected_tool = (similar_name, tool_args)
 
+        # Case 3: Function exists with wrong argument name
+        if (
+            tool_name == "replace_remote_file_content"
+            and isinstance(tool_args, dict)
+            and "new_content" in tool_args
+        ):
+            tool_args["file_content"] = tool_args.pop("new_content")
+
         # Execute the appropriate function
         if corrected_tool:
             print(

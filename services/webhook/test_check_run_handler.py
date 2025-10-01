@@ -190,7 +190,9 @@ def test_handle_check_run_race_condition_prevention(
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
-    mock_create_comment.return_value = "https://github.com/test/test/issues/1#issuecomment-123"
+    mock_create_comment.return_value = (
+        "https://github.com/test/test/issues/1#issuecomment-123"
+    )
     mock_create_user_request.return_value = 12345
     mock_cancel_workflows.return_value = None
     mock_get_pr.return_value = {"title": "Test PR"}
@@ -199,39 +201,39 @@ def test_handle_check_run_race_condition_prevention(
     mock_clean_logs.return_value = "Cleaned error log"
     mock_get_retry_pairs.return_value = []
     mock_update_retry_pairs.return_value = None
-    
+
     # Setup safety checks to pass
     mock_is_pull_request_open.return_value = True
     mock_check_branch_exists.return_value = True
-    
+
     # Setup race condition detection - older active request found
-    mock_check_older_active.return_value = {"id": 11111, "created_at": "2025-09-28T14:19:01.247+00:00"}
-    
+    mock_check_older_active.return_value = {
+        "id": 11111,
+        "created_at": "2025-09-28T14:19:01.247+00:00",
+    }
+
     handle_check_run(mock_check_run_payload)
-    
+
     # Verify race prevention logic was triggered
     mock_check_older_active.assert_called_with(
-        owner_id=11111,
-        repo_id=98765,
-        pr_number=1,
-        current_usage_id=12345
+        owner_id=11111, repo_id=98765, pr_number=1, current_usage_id=12345
     )
-    
+
     # Verify proper cleanup when race detected
     # Check that update_usage was called with correct parameters
     call_args = mock_update_usage.call_args
     assert call_args is not None
     kwargs = call_args.kwargs
-    assert kwargs['usage_id'] == 12345
-    assert kwargs['token_input'] == 0  # Should be 0 since no LLM calls made yet
-    assert kwargs['token_output'] == 0
-    assert kwargs['is_completed'] == True
-    assert kwargs['pr_number'] == 1
-    assert isinstance(kwargs['total_seconds'], int)  # Should be small integer
-    assert 'retry_workflow_id_hash_pairs' in kwargs
-    assert 'original_error_log' in kwargs
-    assert 'minimized_error_log' in kwargs
-    
+    assert kwargs["usage_id"] == 12345
+    assert kwargs["token_input"] == 0  # Should be 0 since no LLM calls made yet
+    assert kwargs["token_output"] == 0
+    assert kwargs["is_completed"] is True
+    assert kwargs["pr_number"] == 1
+    assert isinstance(kwargs["total_seconds"], int)  # Should be small integer
+    assert "retry_workflow_id_hash_pairs" in kwargs
+    assert "original_error_log" in kwargs
+    assert "minimized_error_log" in kwargs
+
     # Verify notification was sent
     mock_slack_notify.assert_called()
     mock_update_comment.assert_called()
