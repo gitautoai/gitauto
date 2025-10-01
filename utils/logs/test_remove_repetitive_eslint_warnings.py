@@ -141,6 +141,24 @@ def test_input_with_trailing_newline():
     result = remove_repetitive_eslint_warnings(log)
     assert result.endswith("\n")
 
+
+def test_result_with_trailing_newline_input_without():
+    # Test line 71-72: input doesn't end with newline but result does
+    # This is a contrived scenario to cover the edge case
+    log = """/path/to/file.js
+  1:1  error  Some error
+
+"""
+    # Remove the trailing newline from input
+    log = log.rstrip("\n")
+
+    result = remove_repetitive_eslint_warnings(log)
+    # Result should not have trailing newline to match input
+    assert not result.endswith("\n")
+    assert "/path/to/file.js" in result
+    assert "1:1  error  Some error" in result
+
+
 def test_result_with_trailing_newline_but_input_without():
     # Test line 71-72: input without trailing newline but result has one
     # This happens when we add blank lines during processing
