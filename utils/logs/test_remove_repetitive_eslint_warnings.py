@@ -141,6 +141,26 @@ def test_input_with_trailing_newline():
     result = remove_repetitive_eslint_warnings(log)
     assert result.endswith("\n")
 
+def test_result_with_trailing_newline_but_input_without():
+    # Test line 71-72: input without trailing newline but result has one
+    # This happens when we add blank lines during processing
+    log = """/path/to/file1.js
+  1:1  error  Unexpected token
+✖ 1 problem (1 error, 0 warnings)"""
+
+    # The function adds a blank line before ✖, so result_lines becomes:
+    # ["/path/to/file1.js", "  1:1  error  Unexpected token", "", "✖ 1 problem..."]
+    # After join, this creates a trailing newline scenario that needs to be stripped
+    expected = """/path/to/file1.js
+  1:1  error  Unexpected token
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+    assert not result.endswith("\n")
+
+
 
 def test_result_with_trailing_newline_when_input_has_none():
     # Test line 71-72: input without trailing newline but result has one
