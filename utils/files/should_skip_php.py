@@ -25,6 +25,9 @@ def should_skip_php(content: str) -> bool:
     in_class = False
     in_array_initialization = False
     in_heredoc = False
+    expecting_brace_for_interface = False
+    expecting_brace_for_trait = False
+    expecting_brace_for_class = False
 
     for line in lines:
         line = line.strip()
@@ -56,11 +59,25 @@ def should_skip_php(content: str) -> bool:
         if not line:
             continue
 
+        # Handle standalone opening brace for interface/trait/class
+        if re.match(r"^\{", line):
+            if expecting_brace_for_interface:
+                in_interface = True
+                expecting_brace_for_interface = False
+            elif expecting_brace_for_trait:
+                in_trait = True
+                expecting_brace_for_trait = False
+            elif expecting_brace_for_class:
+                in_class = True
+                expecting_brace_for_class = False
+            continue
+
         # Handle interface definitions (no implementation)
         if re.match(r"^(abstract\s+|final\s+)?interface\s+\w+", line):
-            in_interface = True
-            continue
-        if re.match(r"^\{", line):
+            if "{" in line:
+                in_interface = True
+            else:
+                expecting_brace_for_interface = True
             continue
         if in_interface:
             if "}" in line:
@@ -78,6 +95,8 @@ def should_skip_php(content: str) -> bool:
         if re.match(r"^trait\s+\w+", line):
             if "{" in line:
                 in_trait = True
+            else:
+                expecting_brace_for_trait = True
             continue
         if in_trait:
             if "}" in line:
@@ -88,6 +107,8 @@ def should_skip_php(content: str) -> bool:
         if re.match(r"^(abstract\s+|final\s+)?class\s+\w+", line):
             if "{" in line:
                 in_class = True
+            else:
+                expecting_brace_for_class = True
             continue
         if in_class:
             if "}" in line:
@@ -98,74 +119,59 @@ def should_skip_php(content: str) -> bool:
                 r"^\s*(public\s+|private\s+|protected\s+)?function\s+\w+", line
             ):
                 return False
-            # Skip property declarations in classes
-            if re.match(r"^\s*(public\s+|private\s+|protected\s+)?\$\w+", line):
+            # Skip property declarations
+            if re.match(
+                r"^\s*(public\s+|private\s+|protected\s+)?\s*\$\w+", line
+            ):
+                continue
+            # Skip property declarations with type hints
+            if re.match(
+                r"^\s*(public\s+|private\s+|protected\s+)?\s*\w+\s+\$\w+", line
+            ):
+                continue
+            # Skip const declarations inside class
+            if re.match(r"^\s*const\s+\w+", line):
                 continue
             continue
 
-        # Skip require/include statements
-        if any(
-            line.startswith(x)
-            for x in [
-                "require ",
-                "require_once ",
-                "include ",
-                "include_once ",
-                "use ",
-            ]
-        ):
+        # Skip namespace declarations
+        if re.match(r"^namespace\s+[\w\\]+\s*;", line):
             continue
-        # Skip namespace declaration
-        if line.startswith("namespace "):
+        # Skip use statements
+        if re.match(r"^use\s+[\w\\]+", line):
             continue
-        # Skip constants (comprehensive pattern)
-        if re.match(
-            r"^(public\s+|private\s+|protected\s+)?(const\s+[A-Z_][A-Z0-9_]*\s*=|define\s*\()",
-            line,
-        ):
+        # Skip include/require statements
+        if re.match(r"^(include|require)(_once)?\s*\(", line):
             continue
-        # Skip global constants (any case for PHP)
-        if re.match(r"^const\s+\w+\s*=", line):
+        if re.match(r"^(include|require)(_once)?\s+['\"]", line):
             continue
-        # Skip simple variable assignments (configuration arrays, etc.)
-        if re.match(r"^\$\w+\s*=\s*[\[\{\"']", line):
-            if ("[" in line and "]" not in line) or ("{" in line and "}" not in line):
-                in_array_initialization = True
+        # Skip const declarations
+        if re.match(r"^const\s+\w+", line):
             continue
-        # Skip return statements with simple values (for config files)
-        if re.match(r"^return\s+[\[\{\"']", line):
-            if ("[" in line and "]" not in line) or ("{" in line and "}" not in line):
-                in_array_initialization = True
+        # Skip define() calls
+        if re.match(r"^define\s*\(", line):
             continue
-        # Handle multi-line array initializations
+
+        # Handle array initialization
+        if re.match(r"^\$\w+\s*=\s*\[", line):
+            in_array_initialization = True
+            continue
         if in_array_initialization:
-            if "]" in line or "};" in line:
+            if "];" in line:
                 in_array_initialization = False
             continue
-        # Skip array elements in multi-line arrays (values)
-        if re.match(r"^\s*['\"]?\w+['\"]?\s*=>\s*['\"]?[\w\-\.]+['\"]?,?\s*$", line):
+
+        # Skip variable assignments with string literals
+        if re.match(r"^\$\w+\s*=\s*['\"]", line):
             continue
-        # Skip nested array elements (array as value)
-        if re.match(r"^\s*['\"]?\w+['\"]?\s*=>\s*\[", line):
+        # Skip return statements with string literals
+        if re.match(r"^return\s+['\"]", line):
             continue
-        # Skip array closing with comma
-        if re.match(r"^\s*\],?\s*$", line):
-            continue
-        # Skip closing statements
-        if line in ["}", "];", ");", "?>"]:
+        # Skip closing parenthesis with semicolon (end of function calls)
+        if re.match(r"^\)\s*;", line):
             continue
 
-        # If we find function definitions or other logic, don't skip
-        if re.match(r"^(public\s+|private\s+|protected\s+)?function\s+\w+", line):
-            return False
-        if (
-            line.startswith("if ")
-            or line.startswith("for ")
-            or line.startswith("while ")
-        ):
-            return False
-
-        # If we find any other code, it's not export-only
+        # If we reach here, there's executable code
         return False
 
     return True
