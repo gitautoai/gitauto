@@ -43,12 +43,25 @@ def remove_repetitive_eslint_warnings(error_log: str):
                 if re.match(r"^\s+\d+:\d+\s+error", next_line):
                     file_errors.append(next_line)
 
+
+            # Collect any empty lines that follow the file's content
+            while j < len(lines) and lines[j] == "":
+                j += 1
+
+            # Count empty lines before next content
+            empty_line_count = 0
+            temp_j = j - 1
+            while temp_j >= i and lines[temp_j] == "":
+                empty_line_count += 1
+                temp_j -= 1
                 j += 1
 
             # Only include files that have actual errors
             if file_errors:
                 result_lines.append(file_path)
                 result_lines.extend(file_errors)
+                # Add the empty lines that were after the file's content
+                result_lines.extend([""] * empty_line_count)
 
             i = j  # Skip to after this file's content
         else:
