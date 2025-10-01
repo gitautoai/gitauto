@@ -425,6 +425,10 @@ def test_double_trailing_newline():
 
 """
 
+    result = remove_repetitive_eslint_warnings(log)
+    # Result should preserve the double trailing newline
+    assert result.endswith("\n\n")
+
 
 def test_error_command_failed_marker():
     log = """/path/to/file1.js
