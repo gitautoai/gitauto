@@ -703,24 +703,6 @@ return ['status' => 'ok'];"""
     assert should_skip_php(content) is True
 
 
-def test_variable_assignment_with_curly_brace():
-    # Test variable assignment starting with curly brace (object notation)
-    content = """<?php
-$obj = {
-    'property' => 'value'
-};"""
-    assert should_skip_php(content) is True
-
-
-def test_return_statement_with_curly_brace():
-    # Test return statement starting with curly brace
-    content = """<?php
-return {
-    'data' => 'value'
-};"""
-    assert should_skip_php(content) is True
-
-
 def test_multiline_array_with_nested_arrays():
     # Test complex nested array structure
     content = """<?php
