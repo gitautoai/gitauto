@@ -441,6 +441,9 @@ def handle_check_run(
                 token_output=total_token_output,
                 total_seconds=int(time.time() - current_time),
                 is_completed=True,
+                retry_workflow_id_hash_pairs=existing_pairs,
+                original_error_log=error_log,
+                minimized_error_log=minimized_log,
                 pr_number=pull_number,
             )
             return
