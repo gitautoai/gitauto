@@ -1007,6 +1007,88 @@ class MyClass {
 $array = [];
 function_call();
 ?>"""
+
+
+def test_branch_coverage_variable_assignment_multiline_array_start():
+    # Explicitly test line 132 branch: variable assignment with [ but no ] on same line
+    # This ensures in_array_initialization is set to True
+    content = """<?php
+$data = [
+    'item1',
+    'item2'
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_branch_coverage_return_multiline_array_start():
+    # Explicitly test line 137 branch: return statement with [ but no ] on same line
+    # This ensures in_array_initialization is set to True
+    content = """<?php
+return [
+    'value1',
+    'value2'
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_branch_coverage_variable_assignment_with_curly_multiline():
+    # Test variable assignment with { but no closing on same line
+    content = """<?php
+$obj = {
+    'prop' => 'value'
+};"""
+    assert should_skip_php(content) is True
+
+
+def test_branch_coverage_return_with_curly_multiline():
+    # Test return statement with { but no closing on same line
+    content = """<?php
+return {
+    'prop' => 'value'
+};"""
+    assert should_skip_php(content) is True
+
+
+def test_branch_coverage_array_closing_with_brace_semicolon():
+    # Test line 142: array closing with }; pattern
+    content = """<?php
+$config = [
+    'key' => 'value'
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_branch_coverage_in_array_initialization_flag():
+    # Test that in_array_initialization flag works correctly across multiple lines
+    content = """<?php
+$config = [
+    'database' => [
+        'host' => 'localhost',
+        'port' => 3306,
+        'name' => 'mydb'
+    ],
+    'cache' => [
+        'driver' => 'redis',
+        'host' => 'localhost'
+    ]
+];
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_branch_coverage_return_array_initialization_flag():
+    # Test that in_array_initialization flag works correctly for return statements
+    content = """<?php
+return [
+    'users' => [
+        'admin' => 'John',
+        'guest' => 'Jane'
+    ],
+    'settings' => [
+        'theme' => 'dark',
+        'lang' => 'en'
+    ]
+];"""
     assert should_skip_php(content) is True
 
 
