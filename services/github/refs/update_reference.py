@@ -22,4 +22,8 @@ def update_reference(base_args: BaseArgs, new_commit_sha: str):
 
     response = requests.patch(url=url, json=data, headers=headers, timeout=TIMEOUT)
 
+    print(
+        f"update_reference: owner={owner}, repo={repo}, branch={branch}, new_commit_sha={new_commit_sha}, status={response.status_code}"
+    )
+
     response.raise_for_status()
