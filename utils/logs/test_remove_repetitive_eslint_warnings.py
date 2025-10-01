@@ -425,3 +425,140 @@ def test_double_trailing_newline():
 
 """
 
+
+def test_error_command_failed_marker():
+    log = """/path/to/file1.js
+  1:1  error  Unexpected token
+error Command failed with exit code 1."""
+
+    expected = """/path/to/file1.js
+  1:1  error  Unexpected token
+error Command failed with exit code 1."""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_file_with_colon_in_path():
+    log = """/path/to/file.js:10:5
+  1:1  error  Some error"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == log
+
+
+def test_non_js_ts_tsx_file():
+    log = """/path/to/file.py
+  1:1  error  Some error"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == log
+
+
+def test_complex_scenario_with_multiple_edge_cases():
+    log = """/path/to/file1.js
+  1:1  warning  Warning 1
+  2:1  error  Error 1
+  3:1  warning  Warning 2
+
+/path/to/file2.tsx
+  1:1  error  Error 2
+  2:1  error  Error 3
+
+/path/to/file3.js
+  1:1  warning  Only warnings here
+
+✖ 6 problems (3 errors, 3 warnings)"""
+
+    expected = """/path/to/file1.js
+  2:1  error  Error 1
+/path/to/file2.tsx
+  1:1  error  Error 2
+  2:1  error  Error 3
+
+✖ 6 problems (3 errors, 3 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_trailing_newline_preservation_complex():
+    log = """/path/to/file1.js
+  1:1  error  Error 1
+
+✖ 1 problem (1 error, 0 warnings)
+"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result.endswith("\n")
+    assert result.count("\n") == log.count("\n")
+
+
+def test_no_trailing_newline_complex():
+    log = """/path/to/file1.js
+  1:1  error  Error 1
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert not result.endswith("\n")
+
+
+def test_empty_result_lines_with_only_warnings():
+    log = """/path/to/file1.js
+  1:1  warning  Warning 1
+  2:1  warning  Warning 2
+
+/path/to/file2.js
+  1:1  warning  Warning 3
+
+✖ 3 problems (0 errors, 3 warnings)"""
+
+    expected = """✖ 3 problems (0 errors, 3 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_file_path_with_spaces():
+    log = """/path/to/my file.js
+  1:1  error  Error 1
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    expected = """/path/to/my file.js
+  1:1  error  Error 1
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_multiple_consecutive_empty_lines():
+    log = """/path/to/file1.js
+  1:1  error  Error 1
+
+
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    expected = """/path/to/file1.js
+  1:1  error  Error 1
+
+
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_edge_case_result_with_trailing_newline():
+    log = """/path/to/file1.js
+  1:1  error  Error 1
+"""
+    log = log.rstrip("\n")
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert not result.endswith("\n")
