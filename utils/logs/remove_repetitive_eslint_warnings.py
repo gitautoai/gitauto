@@ -1,18 +1,18 @@
 import re
 
 
-def remove_repetitive_eslint_warnings(error_log: str):
+def remove_repetitive_eslint_warnings(error_log: str | None) -> str | None:
     if not error_log:
         return error_log
 
     lines = error_log.split("\n")
     result_lines = []
-
     i = 0
+
     while i < len(lines):
         line = lines[i]
 
-        # Check if this is an ESLint file path
+        # Check if this is a file path line (ESLint format)
         if (
             line.startswith("/")
             and re.match(r".*\.(ts|js|tsx)$", line)
@@ -43,24 +43,22 @@ def remove_repetitive_eslint_warnings(error_log: str):
                 if re.match(r"^\s+\d+:\d+\s+error", next_line):
                     file_errors.append(next_line)
 
-
-            # Collect any empty lines that follow the file's content
-            while j < len(lines) and lines[j] == "":
                 j += 1
 
-            # Count empty lines before next content
+            # Count empty lines between last error and next content
             empty_line_count = 0
-            temp_j = j - 1
-            while temp_j >= i and lines[temp_j] == "":
+            k = j - 1
+            while k > i and lines[k] == "":
                 empty_line_count += 1
-                temp_j -= 1
+                k -= 1
 
             # Only include files that have actual errors
             if file_errors:
                 result_lines.append(file_path)
                 result_lines.extend(file_errors)
                 # Add the empty lines that were after the file's content
-                result_lines.extend([""] * empty_line_count)
+                for _ in range(empty_line_count):
+                    result_lines.append("")
 
             i = j  # Skip to after this file's content
         else:
@@ -73,13 +71,17 @@ def remove_repetitive_eslint_warnings(error_log: str):
                 and not result_lines[-1].startswith("/")
             ):
                 result_lines.append("")
+
             result_lines.append(line)
             i += 1
 
+    # Join result and handle trailing newline
     result = "\n".join(result_lines)
-    # Match the input's trailing newline behavior
+
+    # Preserve trailing newline behavior from input
     if error_log.endswith("\n") and not result.endswith("\n"):
         result += "\n"
     elif not error_log.endswith("\n") and result.endswith("\n"):
         result = result.rstrip("\n")
+
     return result
