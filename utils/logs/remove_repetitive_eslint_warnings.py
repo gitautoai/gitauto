@@ -54,7 +54,6 @@ def remove_repetitive_eslint_warnings(error_log: str):
             while temp_j >= i and lines[temp_j] == "":
                 empty_line_count += 1
                 temp_j -= 1
-                j += 1
 
             # Only include files that have actual errors
             if file_errors:
