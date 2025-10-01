@@ -330,3 +330,98 @@ def test_whitespace_in_error_lines():
     10:5  error  Unexpected token
   2:1  error  Another error
 
+
+
+def test_file_with_only_warnings():
+    # Test that files with only warnings are filtered out
+    log = """/path/to/file1.js
+  1:1  warning  Missing semicolon
+  2:1  warning  'var' is deprecated
+
+✖ 2 problems (0 errors, 2 warnings)"""
+
+    expected = """✖ 2 problems (0 errors, 2 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_error_command_failed_marker():
+    # Test that "error Command failed" stops file processing
+    log = """/path/to/file1.js
+  1:1  error  Unexpected token
+error Command failed with exit code 1."""
+
+    expected = """/path/to/file1.js
+  1:1  error  Unexpected token
+
+error Command failed with exit code 1."""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_file_path_with_colon():
+    # Test that file paths with colons are not treated as file paths
+    log = """/path/to/file.js:10:5
+  1:1  error  Some error"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == log
+
+
+def test_non_js_file_extension():
+    # Test that non-JS/TS files are not treated as file paths
+    log = """/path/to/file.py
+  1:1  error  Some error"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == log
+
+
+def test_multiple_files_with_mixed_content():
+    # Test multiple files with errors, warnings, and empty lines
+    log = """/path/to/file1.js
+  1:1  warning  Warning 1
+  2:1  error  Error 1
+  3:1  warning  Warning 2
+
+/path/to/file2.ts
+  4:1  error  Error 2
+  5:1  error  Error 3
+
+/path/to/file3.tsx
+  6:1  warning  Warning 3
+
+✖ 6 problems (3 errors, 3 warnings)"""
+
+    expected = """/path/to/file1.js
+  2:1  error  Error 1
+/path/to/file2.ts
+  4:1  error  Error 2
+  5:1  error  Error 3
+
+✖ 6 problems (3 errors, 3 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_trailing_newline_edge_case():
+    # Test edge case: input without trailing newline, result processing
+    log = """/path/to/file1.js
+  1:1  error  Unexpected token"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    # Result should not end with newline since input doesn't
+    assert not result.endswith("\n")
+    assert result == log
+
+
+def test_double_trailing_newline():
+    # Test input with double trailing newline
+    log = """/path/to/file1.js
+  1:1  error  Unexpected token
+
+"""
+
