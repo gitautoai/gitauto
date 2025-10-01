@@ -147,7 +147,6 @@ def test_whitespace_only():
 
 
 
-
     """
     assert should_skip_php(content) is True
 
@@ -646,3 +645,547 @@ return [
     'setting' => 'data'
 ];"""
     assert should_skip_php(content) is True
+
+
+def test_variable_assignment_opening_bracket_no_closing():
+    # Test line 132: variable assignment with opening bracket but no closing on same line
+    # This covers the uncovered branch: line 132, block 0, if branch: 132 -> 134
+    content = """<?php
+$config = [
+    'key1' => 'value1',
+    'key2' => 'value2',
+    'key3' => 'value3'
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_return_statement_opening_bracket_no_closing():
+    # Test line 137: return statement with opening bracket but no closing on same line
+    # This covers the uncovered branch: line 137, block 0, if branch: 137 -> 139
+    content = """<?php
+return [
+    'status' => 'success',
+    'data' => [
+        'id' => 1,
+        'name' => 'test'
+    ]
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_variable_assignment_with_string_opening_bracket():
+    # Test variable assignment starting with string (not array)
+    content = """<?php
+$message = "Hello World";
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_return_statement_with_string_opening_bracket():
+    # Test return statement starting with string (not array)
+    content = """<?php
+return "success";"""
+    assert should_skip_php(content) is True
+
+
+def test_variable_assignment_single_line_array():
+    # Test variable assignment with single-line array (opening and closing on same line)
+    content = """<?php
+$config = ['key' => 'value'];
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_return_statement_single_line_array():
+    # Test return statement with single-line array (opening and closing on same line)
+    content = """<?php
+return ['status' => 'ok'];"""
+    assert should_skip_php(content) is True
+
+
+def test_variable_assignment_with_curly_brace():
+    # Test variable assignment starting with curly brace (object notation)
+    content = """<?php
+$obj = {
+    'property' => 'value'
+};"""
+    assert should_skip_php(content) is True
+
+
+def test_return_statement_with_curly_brace():
+    # Test return statement starting with curly brace
+    content = """<?php
+return {
+    'data' => 'value'
+};"""
+    assert should_skip_php(content) is True
+
+
+def test_multiline_array_with_nested_arrays():
+    # Test complex nested array structure
+    content = """<?php
+$config = [
+    'database' => [
+        'connections' => [
+            'mysql' => [
+                'host' => 'localhost',
+                'port' => 3306
+            ],
+            'pgsql' => [
+                'host' => 'localhost',
+                'port' => 5432
+            ]
+        ]
+    ],
+    'cache' => [
+        'default' => 'redis'
+    ]
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_return_multiline_array_with_nested_arrays():
+    # Test return with complex nested array structure
+    content = """<?php
+return [
+    'users' => [
+        'admin' => [
+            'name' => 'Admin',
+            'role' => 'administrator'
+        ],
+        'guest' => [
+            'name' => 'Guest',
+            'role' => 'viewer'
+        ]
+    ],
+    'settings' => [
+        'theme' => 'dark'
+    ]
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_variable_assignment_empty_array():
+    # Test variable assignment with empty array
+    content = """<?php
+$empty = [];
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_return_statement_empty_array():
+    # Test return statement with empty array
+    content = """<?php
+return [];"""
+    assert should_skip_php(content) is True
+
+
+def test_for_loop_detection():
+    # Test for loop detection - should NOT be skipped
+    content = """<?php
+for ($i = 0; $i < 10; $i++) {
+    echo $i;
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_while_loop_detection():
+    # Test while loop detection - should NOT be skipped
+    content = """<?php
+while ($condition) {
+    doSomething();
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_heredoc_multiline():
+    # Test heredoc string handling
+    content = """<?php
+const TEMPLATE = <<<EOT
+Line 1
+Line 2
+Line 3
+EOT;
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_heredoc_with_semicolon():
+    # Test heredoc ending detection
+    content = """<?php
+const SQL = <<<SQL
+SELECT * FROM users
+WHERE active = 1
+SQL;
+const VERSION = "1.0";"""
+    assert should_skip_php(content) is True
+
+
+def test_multiline_comment_handling():
+    # Test multi-line comment handling
+    content = """<?php
+/*
+ * This is a multi-line comment
+ * that spans several lines
+ * and should be ignored
+ */
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_single_line_comment_hash():
+    # Test single-line comment with hash
+    content = """<?php
+# This is a comment
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_single_line_comment_double_slash():
+    # Test single-line comment with double slash
+    content = """<?php
+// This is a comment
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_php_tags_handling():
+    # Test PHP tags handling
+    content = """<?php
+const MAX_SIZE = 100;
+?>"""
+    assert should_skip_php(content) is True
+
+
+def test_short_php_tag():
+    # Test short PHP tag
+    content = """<?
+const MAX_SIZE = 100;
+?>"""
+    assert should_skip_php(content) is True
+
+
+def test_interface_with_abstract_modifier():
+    # Test interface with abstract modifier
+    content = """<?php
+abstract interface MyInterface {
+    public function method(): void;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_interface_with_final_modifier():
+    # Test interface with final modifier
+    content = """<?php
+final interface MyInterface {
+    public function method(): void;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_class_with_abstract_modifier():
+    # Test class with abstract modifier
+    content = """<?php
+abstract class MyClass {
+    public $property;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_class_with_final_modifier():
+    # Test class with final modifier
+    content = """<?php
+final class MyClass {
+    public $property;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_class_property_with_visibility():
+    # Test class property with different visibility modifiers
+    content = """<?php
+class MyClass {
+    public $publicProp;
+    private $privateProp;
+    protected $protectedProp;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_class_property_without_visibility():
+    # Test class property without visibility modifier
+    content = """<?php
+class MyClass {
+    $property;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_constant_with_visibility():
+    # Test constant with visibility modifiers
+    content = """<?php
+class MyClass {
+    public const PUBLIC_CONST = 1;
+    private const PRIVATE_CONST = 2;
+    protected const PROTECTED_CONST = 3;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_define_function():
+    # Test define function for constants
+    content = """<?php
+define('MAX_SIZE', 100);
+define('API_URL', 'https://api.example.com');"""
+    assert should_skip_php(content) is True
+
+
+def test_uppercase_constant():
+    # Test uppercase constant pattern
+    content = """<?php
+const MAX_SIZE = 100;
+const API_KEY = 'secret';"""
+    assert should_skip_php(content) is True
+
+
+def test_lowercase_constant():
+    # Test lowercase constant (any case for PHP)
+    content = """<?php
+const maxSize = 100;
+const apiKey = 'secret';"""
+    assert should_skip_php(content) is True
+
+
+def test_array_element_with_arrow():
+    # Test array element with arrow notation
+    content = """<?php
+$config = [
+    'key1' => 'value1',
+    'key2' => 'value2'
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_array_element_with_quotes():
+    # Test array element with various quote styles
+    content = """<?php
+$config = [
+    "key1" => "value1",
+    'key2' => 'value2',
+    key3 => value3
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_nested_array_element_pattern():
+    # Test nested array element pattern
+    content = """<?php
+$config = [
+    'database' => [
+        'host' => 'localhost'
+    ]
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_closing_bracket_with_comma():
+    # Test closing bracket with comma
+    content = """<?php
+$config = [
+    'key' => [
+        'nested' => 'value'
+    ],
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_closing_statements():
+    # Test various closing statements
+    content = """<?php
+class MyClass {
+}
+$array = [];
+function_call();
+?>"""
+    assert should_skip_php(content) is True
+
+
+def test_function_detection_with_visibility():
+    # Test function detection with visibility modifiers - should NOT be skipped
+    content = """<?php
+class MyClass {
+    public function publicMethod() {
+        return true;
+    }
+
+    private function privateMethod() {
+        return false;
+    }
+
+    protected function protectedMethod() {
+        return null;
+    }
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_function_detection_without_visibility():
+    # Test function detection without visibility modifier - should NOT be skipped
+    content = """<?php
+function myFunction() {
+    return true;
+}"""
+    assert should_skip_php(content) is False
+
+
+def test_edge_case_empty_lines_and_comments():
+    # Test edge case with empty lines and comments
+    content = """<?php
+
+// Comment 1
+
+/* Multi-line
+   comment */
+
+const MAX_SIZE = 100;
+
+"""
+    assert should_skip_php(content) is True
+
+
+def test_edge_case_mixed_php_tags():
+    # Test edge case with mixed PHP tags
+    content = """<?php
+const MAX_SIZE = 100;
+?>
+<?php
+const MIN_SIZE = 10;
+?>"""
+    assert should_skip_php(content) is True
+
+
+def test_edge_case_trait_with_opening_brace_on_same_line():
+    # Test trait with opening brace on same line
+    content = """<?php
+trait MyTrait {
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_edge_case_class_with_opening_brace_on_same_line():
+    # Test class with opening brace on same line
+    content = """<?php
+class MyClass {
+    public $property;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_edge_case_interface_method_with_private_visibility():
+    # Test interface method with private visibility
+    content = """<?php
+interface MyInterface {
+    private function method();
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_edge_case_interface_method_with_protected_visibility():
+    # Test interface method with protected visibility
+    content = """<?php
+interface MyInterface {
+    protected function method();
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_edge_case_standalone_opening_brace():
+    # Test standalone opening brace
+    content = """<?php
+class MyClass
+{
+    public $property;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_corner_case_variable_assignment_with_double_quote():
+    # Test variable assignment starting with double quote
+    content = """<?php
+$message = "Hello";
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_corner_case_variable_assignment_with_single_quote():
+    # Test variable assignment starting with single quote
+    content = """<?php
+$message = 'Hello';
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_corner_case_return_with_double_quote():
+    # Test return statement starting with double quote
+    content = """<?php
+return "success";"""
+    assert should_skip_php(content) is True
+
+
+def test_corner_case_return_with_single_quote():
+    # Test return statement starting with single quote
+    content = """<?php
+return 'success';"""
+    assert should_skip_php(content) is True
+
+
+def test_corner_case_multiline_array_with_closing_brace_semicolon():
+    # Test multiline array with closing brace and semicolon
+    content = """<?php
+$config = [
+    'key' => 'value'
+];"""
+    assert should_skip_php(content) is True
+
+
+def test_corner_case_closing_parenthesis_semicolon():
+    # Test closing parenthesis with semicolon
+    content = """<?php
+define('MAX_SIZE', 100);"""
+    assert should_skip_php(content) is True
+
+
+def test_error_case_unmatched_heredoc():
+    # Test error case with unmatched heredoc (should still process)
+    content = """<?php
+const TEMPLATE = <<<EOT
+This is a template
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_error_case_unmatched_multiline_comment():
+    # Test error case with unmatched multiline comment (should still process)
+    content = """<?php
+/*
+This is a comment
+const MAX_SIZE = 100;"""
+    assert should_skip_php(content) is True
+
+
+def test_error_case_function_in_interface():
+    # Test function in interface (should be skipped as it's just a signature)
+    content = """<?php
+interface MyInterface {
+    public function method(): void;
+}"""
+    assert should_skip_php(content) is True
+
+
+def test_error_case_function_outside_class():
+    # Test function outside class - should NOT be skipped
+    content = """<?php
+function myFunction() {
+    return true;
+}"""
+    assert should_skip_php(content) is False
