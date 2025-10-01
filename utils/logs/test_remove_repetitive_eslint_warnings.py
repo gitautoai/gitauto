@@ -560,5 +560,28 @@ def test_edge_case_result_with_trailing_newline():
 """
     log = log.rstrip("\n")
 
+
+
+def test_file_followed_by_empty_lines_and_summary():
+    log = """/path/to/file1.js
+  1:1  error  Error 1
+
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    expected = """/path/to/file1.js
+  1:1  error  Error 1
+
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+
+
+def test_error_command_failed_marker():
+    log = """/path/to/file1.js
+  1:1  error  Error 1
+error Command failed with exit code 1."""
     result = remove_repetitive_eslint_warnings(log)
     assert not result.endswith("\n")
