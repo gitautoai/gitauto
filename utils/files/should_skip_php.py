@@ -129,7 +129,7 @@ def should_skip_php(content: str) -> bool:
             continue
         # Skip simple variable assignments (configuration arrays, etc.)
         if re.match(r"^\$\w+\s*=\s*[\[\{\"']", line):
-            if "[" in line and "]" not in line:
+            if ("[" in line and "]" not in line) or ("{" in line and "}" not in line):
                 in_array_initialization = True
             continue
         # Skip return statements with simple values (for config files)
