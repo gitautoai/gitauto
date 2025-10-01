@@ -179,7 +179,6 @@ def test_result_with_trailing_newline_but_input_without():
     assert not result.endswith("\n")
 
 
-
 def test_result_with_trailing_newline_when_input_has_none():
     # Test line 71-72: input without trailing newline but result has one
     # This happens when the last line in result_lines is empty
@@ -330,9 +329,13 @@ def test_whitespace_in_error_lines():
     10:5  error  Unexpected token
   2:1  error  Another error
 
+✖ 2 problems (2 errors, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
 
 
-def test_file_with_only_warnings():
+def test_file_with_only_warnings_variant():
     # Test that files with only warnings are filtered out
     log = """/path/to/file1.js
   1:1  warning  Missing semicolon
@@ -346,7 +349,7 @@ def test_file_with_only_warnings():
     assert result == expected
 
 
-def test_error_command_failed_marker():
+def test_error_command_failed_marker_variant():
     # Test that "error Command failed" stops file processing
     log = """/path/to/file1.js
   1:1  error  Unexpected token
@@ -361,7 +364,7 @@ error Command failed with exit code 1."""
     assert result == expected
 
 
-def test_file_path_with_colon():
+def test_file_path_with_colon_variant():
     # Test that file paths with colons are not treated as file paths
     log = """/path/to/file.js:10:5
   1:1  error  Some error"""
@@ -430,17 +433,12 @@ def test_double_trailing_newline():
     assert result.endswith("\n\n")
 
 
-def test_error_command_failed_marker():
+def test_error_command_failed_no_trailing_newline():
     log = """/path/to/file1.js
-  1:1  error  Unexpected token
+  1:1  error  Error 1
 error Command failed with exit code 1."""
-
-    expected = """/path/to/file1.js
-  1:1  error  Unexpected token
-error Command failed with exit code 1."""
-
     result = remove_repetitive_eslint_warnings(log)
-    assert result == expected
+    assert not result.endswith("\n")
 
 
 def test_file_with_colon_in_path():
@@ -585,11 +583,3 @@ def test_file_followed_by_empty_lines_and_summary():
 
     result = remove_repetitive_eslint_warnings(log)
     assert result == expected
-
-
-def test_error_command_failed_marker():
-    log = """/path/to/file1.js
-  1:1  error  Error 1
-error Command failed with exit code 1."""
-    result = remove_repetitive_eslint_warnings(log)
-    assert not result.endswith("\n")
