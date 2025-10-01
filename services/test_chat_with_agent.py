@@ -268,3 +268,53 @@ def test_move_file_logging(mock_update_comment, mock_chat_with_claude, mock_get_
     assert (
         found_message
     ), f"Expected move message not found in update_comment calls: {[call.kwargs.get('body', '') for call in call_args]}"
+
+
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+def test_replace_remote_file_content_handles_new_content_arg_name(
+    mock_chat_with_claude, mock_get_model
+):
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "test.py",
+                        "new_content": "updated content",
+                    },
+                }
+            ],
+        },
+        "test_id",
+        "replace_remote_file_content",
+        {"file_path": "test.py", "new_content": "updated content"},
+        15,
+        10,
+    )
+
+    base_args = Mock()
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        mock_function = Mock(return_value="Content replaced successfully")
+        mock_tools.__getitem__.return_value = mock_function
+        mock_tools.__contains__.return_value = True
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=base_args,
+            mode="commit",
+            repo_settings=None,
+        )
+
+        mock_function.assert_called_once()
+        call_kwargs = mock_function.call_args[1]
+        assert "file_content" in call_kwargs
+        assert call_kwargs["file_content"] == "updated content"
+        assert "new_content" not in call_kwargs

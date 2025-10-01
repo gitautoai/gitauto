@@ -1,4 +1,4 @@
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines,unused-argument
 from unittest.mock import patch
 
 import pytest
@@ -74,7 +74,9 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        expected = f"Add unit tests for [src/main.py]({expected_url}).\n\nMOCK_SETTINGS_LINKS"
+        expected = (
+            f"Add unit tests for [src/main.py]({expected_url}).\n\nMOCK_SETTINGS_LINKS"
+        )
         assert result == expected
 
     def test_get_issue_body_line_coverage_with_uncovered_lines(self, mock_constants):
@@ -123,7 +125,9 @@ class TestGetIssueBody:
         assert "(Uncovered Lines:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_line_coverage_with_empty_uncovered_lines(self, mock_constants):
+    def test_get_issue_body_line_coverage_with_empty_uncovered_lines(
+        self, mock_constants
+    ):
         """Test line coverage branch (line 33) with empty uncovered lines string."""
         result = get_issue_body(
             owner="testowner",
@@ -169,7 +173,9 @@ class TestGetIssueBody:
         assert "Branch Coverage" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_function_coverage_with_uncovered_functions(self, mock_constants):
+    def test_get_issue_body_function_coverage_with_uncovered_functions(
+        self, mock_constants
+    ):
         """Test function coverage branch (line 44) with uncovered functions."""
         result = get_issue_body(
             owner="testowner",
@@ -193,7 +199,9 @@ class TestGetIssueBody:
         assert "Branch Coverage" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_function_coverage_without_uncovered_functions(self, mock_constants):
+    def test_get_issue_body_function_coverage_without_uncovered_functions(
+        self, mock_constants
+    ):
         """Test function coverage branch (line 44) without uncovered functions."""
         result = get_issue_body(
             owner="testowner",
@@ -215,7 +223,9 @@ class TestGetIssueBody:
         assert "(Uncovered Functions:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_function_coverage_with_empty_uncovered_functions(self, mock_constants):
+    def test_get_issue_body_function_coverage_with_empty_uncovered_functions(
+        self, mock_constants
+    ):
         """Test function coverage branch (line 44) with empty uncovered functions string."""
         result = get_issue_body(
             owner="testowner",
@@ -237,7 +247,9 @@ class TestGetIssueBody:
         assert "(Uncovered Functions:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_branch_coverage_with_uncovered_branches(self, mock_constants):
+    def test_get_issue_body_branch_coverage_with_uncovered_branches(
+        self, mock_constants
+    ):
         """Test branch coverage branch (line 54) with uncovered branches."""
         result = get_issue_body(
             owner="testowner",
@@ -261,7 +273,9 @@ class TestGetIssueBody:
         assert "Function Coverage" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_branch_coverage_without_uncovered_branches(self, mock_constants):
+    def test_get_issue_body_branch_coverage_without_uncovered_branches(
+        self, mock_constants
+    ):
         """Test branch coverage branch (line 54) without uncovered branches."""
         result = get_issue_body(
             owner="testowner",
@@ -283,7 +297,9 @@ class TestGetIssueBody:
         assert "(Uncovered Branches:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_branch_coverage_with_empty_uncovered_branches(self, mock_constants):
+    def test_get_issue_body_branch_coverage_with_empty_uncovered_branches(
+        self, mock_constants
+    ):
         """Test branch coverage branch (line 54) with empty uncovered branches string."""
         result = get_issue_body(
             owner="testowner",
@@ -305,7 +321,9 @@ class TestGetIssueBody:
         assert "(Uncovered Branches:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_all_coverage_types_with_uncovered_items(self, mock_constants):
+    def test_get_issue_body_all_coverage_types_with_uncovered_items(
+        self, mock_constants
+    ):
         """Test with all coverage types and uncovered items."""
         result = get_issue_body(
             owner="testowner",
@@ -327,10 +345,15 @@ class TestGetIssueBody:
         assert "- Statement Coverage: 75%" in result
         assert "- Function Coverage: 80% (Uncovered Functions: func1,func2)" in result
         assert "- Branch Coverage: 65% (Uncovered Branches: branch1,branch2)" in result
-        assert "Focus on covering the uncovered areas, including both happy paths, error cases, edge cases, and corner cases." in result
+        assert (
+            "Focus on covering the uncovered areas, including both happy paths, error cases, edge cases, and corner cases."
+            in result
+        )
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_all_coverage_types_without_uncovered_items(self, mock_constants):
+    def test_get_issue_body_all_coverage_types_without_uncovered_items(
+        self, mock_constants
+    ):
         """Test with all coverage types but no uncovered items."""
         result = get_issue_body(
             owner="testowner",
@@ -375,8 +398,14 @@ class TestGetIssueBody:
         assert f"Add unit tests for [utils/helper.py]({expected_url})" in result
         assert "- Line Coverage: 0% (Uncovered Lines: 1,2,3,4,5)" in result
         assert "- Statement Coverage: 0%" in result
-        assert "- Function Coverage: 0% (Uncovered Functions: helper_func1,helper_func2)" in result
-        assert "- Branch Coverage: 0% (Uncovered Branches: if_branch1,else_branch1)" in result
+        assert (
+            "- Function Coverage: 0% (Uncovered Functions: helper_func1,helper_func2)"
+            in result
+        )
+        assert (
+            "- Branch Coverage: 0% (Uncovered Branches: if_branch1,else_branch1)"
+            in result
+        )
         assert "MOCK_SETTINGS_LINKS" in result
 
     def test_get_issue_body_decimal_coverage_values(self, mock_constants):
@@ -416,8 +445,8 @@ class TestGetIssueBody:
             uncovered_branches="branch1",
         )
 
-        lines = result.split('\n')
-        coverage_lines = [line for line in lines if 'Coverage:' in line]
+        lines = result.split("\n")
+        coverage_lines = [line for line in lines if "Coverage:" in line]
 
         assert len(coverage_lines) == 4
         assert "Line Coverage:" in coverage_lines[0]
@@ -467,7 +496,9 @@ class TestGetIssueBody:
                 uncovered_functions=None,
                 uncovered_branches=None,
             )
-            expected_url = f"https://github.com/test-owner/test_repo/blob/main/{file_path}"
+            expected_url = (
+                f"https://github.com/test-owner/test_repo/blob/main/{file_path}"
+            )
             assert f"[{file_path}]({expected_url})" in result
             assert "- Statement Coverage: 42%" in result
 
@@ -585,7 +616,9 @@ class TestGetIssueBody:
 
         # Verify the structure without mocking constants
         assert "Add unit tests for [src/example.py]" in result
-        assert "https://github.com/testowner/testrepo/blob/main/src/example.py" in result
+        assert (
+            "https://github.com/testowner/testrepo/blob/main/src/example.py" in result
+        )
         assert "- Statement Coverage: 60%" in result
         # The actual SETTINGS_LINKS should be present
         assert "You can [turn off triggers]" in result
