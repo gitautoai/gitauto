@@ -560,6 +560,10 @@ def test_edge_case_result_with_trailing_newline():
 """
     log = log.rstrip("\n")
 
+    result = remove_repetitive_eslint_warnings(log)
+    # Result should not end with newline since input doesn't
+    assert not result.endswith("\n")
+    assert "/path/to/file1.js" in result
 
 
 def test_file_followed_by_empty_lines_and_summary():
