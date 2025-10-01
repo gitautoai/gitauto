@@ -140,3 +140,21 @@ def test_input_with_trailing_newline():
 
     result = remove_repetitive_eslint_warnings(log)
     assert result.endswith("\n")
+
+
+def test_result_with_trailing_newline_when_input_has_none():
+    # Test line 71-72: input without trailing newline but result has one
+    # This happens when the last line in result_lines is empty
+    log = """/path/to/file1.js
+  1:1  error  Unexpected token
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    expected = """/path/to/file1.js
+  1:1  error  Unexpected token
+
+✖ 1 problem (1 error, 0 warnings)"""
+
+    result = remove_repetitive_eslint_warnings(log)
+    assert result == expected
+    assert not result.endswith("\n")
