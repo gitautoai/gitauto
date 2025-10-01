@@ -134,7 +134,7 @@ def should_skip_php(content: str) -> bool:
             continue
         # Skip return statements with simple values (for config files)
         if re.match(r"^return\s+[\[\{\"']", line):
-            if "[" in line and "]" not in line:
+            if ("[" in line and "]" not in line) or ("{" in line and "}" not in line):
                 in_array_initialization = True
             continue
         # Handle multi-line array initializations
