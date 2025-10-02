@@ -864,7 +864,9 @@ def test_handle_check_run_skips_duplicate_older_request(
     mock_get_pr.return_value = {
         "title": "Test PR",
         "body": "Test PR description",
-
+        "user": {"login": "test-user"},
+    }
+    mock_is_pull_request_open.return_value = True
     mock_get_changes.return_value = [
         {
             "filename": "src/main.py",
