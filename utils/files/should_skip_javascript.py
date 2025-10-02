@@ -53,6 +53,10 @@ def should_skip_javascript(content: str) -> bool:
             code_lines.append(line)
 
     # Check if only export/import/constant/type statements
+    # Track brackets and braces for multi-line arrays/objects
+    bracket_count = 0
+    brace_count = 0
+
     for line in code_lines:
         # Skip import statements
         if line.startswith("import "):
