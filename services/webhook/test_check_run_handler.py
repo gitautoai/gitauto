@@ -831,9 +831,13 @@ def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_run_handler.clean_logs")
 @patch("services.webhook.check_run_handler.check_older_active_test_failure_request")
 @patch("services.webhook.check_run_handler.update_usage")
+@patch("services.webhook.check_run_handler.is_pull_request_open")
+@patch("services.webhook.check_run_handler.check_branch_exists")
 def test_handle_check_run_skips_duplicate_older_request(
     mock_update_usage,
     mock_check_older_active,
+    mock_check_branch_exists,
+    mock_is_pull_request_open,
     mock_clean_logs,
     mock_get_retry_pairs,
     _mock_update_comment,
@@ -860,6 +864,10 @@ def test_handle_check_run_skips_duplicate_older_request(
     mock_get_pr.return_value = {
         "title": "Test PR",
         "body": "Test PR description",
+
+    # Mock branch and PR checks to allow code to reach the older active request check
+    mock_is_pull_request_open.return_value = True
+    mock_check_branch_exists.return_value = True
         "user": {"login": "test-user"},
     }
     mock_get_changes.return_value = [
