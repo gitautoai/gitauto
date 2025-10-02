@@ -391,7 +391,7 @@ def handle_check_run(
             msg = f"Timeout - check run processing for PR #{pull_number} in `{owner_name}/{repo_name}`"
             logging.info(msg)
             slack_notify(msg, thread_ts)
-            break
+            return
 
         # Safety check: Stop if PR is closed or branch is deleted
         if not is_pull_request_open(
