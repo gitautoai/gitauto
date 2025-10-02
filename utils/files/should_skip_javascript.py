@@ -25,6 +25,7 @@ def should_skip_javascript(content: str) -> bool:
     in_interface_or_type = False
     in_enum = False
     in_template_literal = False
+    in_const_literal = False
     in_class_definition = False
 
     for line in lines:
