@@ -895,13 +895,17 @@ def test_handle_check_run_skips_duplicate_older_request(
         owner_id=11111, repo_id=98765, pr_number=1, current_usage_id=999
     )
 
-    # Verify duplicate handling
-    mock_update_usage.assert_called_once()
-    call_kwargs = mock_update_usage.call_args.kwargs
-    assert call_kwargs["usage_id"] == 999
-    assert call_kwargs["is_completed"] is True
-    assert call_kwargs["token_input"] == 0
-    assert call_kwargs["token_output"] == 0
+    # Verify duplicate handling - update_usage is called twice:
+    # 1. When older active request is found (early exit)
+    # 2. At the end of the function with additional details
+    assert mock_update_usage.call_count == 2
+
+    # Verify the second (final) call has the expected parameters
+    final_call_kwargs = mock_update_usage.call_args.kwargs
+    assert final_call_kwargs["usage_id"] == 999
+    assert final_call_kwargs["is_completed"] is True
+    assert final_call_kwargs["token_input"] == 0
+    assert final_call_kwargs["token_output"] == 0
 
     # Verify Slack notification for duplicate
     assert (
