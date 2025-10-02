@@ -416,7 +416,7 @@ def handle_check_run(
             msg = f"Stopped - branch '{head_branch}' was deleted while GitAuto was processing check run failure in `{owner_name}/{repo_name}`"
             logging.info(msg)
             slack_notify(msg, thread_ts)
-            break
+            return
 
         # Safety check: Stop if older active request exists (race condition prevention)
         older_active_request = check_older_active_test_failure_request(
