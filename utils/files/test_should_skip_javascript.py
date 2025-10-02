@@ -131,7 +131,6 @@ def test_whitespace_only():
 
 
 
-
     """
     assert should_skip_javascript(content) is True
 
@@ -886,4 +885,603 @@ def test_enum_multiline_closing():
     PENDING
 }
 const MAX_SIZE = 100;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_template_literal_edge_case_empty_line():
+    # Edge case: template literal starting line that could theoretically be empty
+    # This tests the branch at line 44 where line could be falsy
+    content = """const TEMPLATE = `
+`;
+const OTHER = "value";"""
+    assert should_skip_javascript(content) is True
+
+
+def test_multiline_comment_handling():
+    # Test multiline comment handling - lines 32-37
+    content = """/* This is a
+multiline comment
+that spans several lines */
+const CONSTANT = "value";"""
+    assert should_skip_javascript(content) is True
+
+
+def test_multiline_comment_inline():
+    # Test inline multiline comment - lines 32-37
+    content = """const VALUE = 42; /* inline comment */
+const OTHER = "test";"""
+    assert should_skip_javascript(content) is True
+
+
+def test_template_literal_ending_variations():
+    # Test template literal ending detection - line 48
+    content = """const TEMPLATE = `
+multiline
+content
+`;
+const OTHER = "value";"""
+    assert should_skip_javascript(content) is True
+
+
+def test_template_literal_ending_with_semicolon_inline():
+    # Test template literal ending with semicolon inline - line 48
+    content = """const TEMPLATE = `start
+middle`;
+const OTHER = "value";"""
+    assert should_skip_javascript(content) is True
+
+
+def test_arrow_function_detection():
+    # Test arrow function detection - should NOT be skipped
+    content = """const handler = () => {
+    return "value";
+};"""
+    assert should_skip_javascript(content) is False
+
+
+def test_arrow_function_inline():
+    # Test inline arrow function - should NOT be skipped
+    content = """const add = (a, b) => a + b;"""
+    assert should_skip_javascript(content) is False
+
+
+def test_function_expression():
+    # Test function expression - should NOT be skipped
+    content = """const myFunc = function() {
+    return 42;
+};"""
+    assert should_skip_javascript(content) is False
+
+
+def test_const_with_new_keyword():
+    # Test const with new keyword - should NOT be skipped
+    content = """const instance = new MyClass();"""
+    assert should_skip_javascript(content) is False
+
+
+def test_uppercase_const_with_array():
+    # Test uppercase constant with array - lines 122-130
+    content = """const API_ENDPOINTS = [
+    "/api/users",
+    "/api/posts"
+];"""
+    assert should_skip_javascript(content) is True
+
+
+def test_uppercase_const_with_object():
+    # Test uppercase constant with object - lines 122-130
+    content = """const CONFIG_OPTIONS = {
+    timeout: 5000
+};"""
+    assert should_skip_javascript(content) is True
+
+
+def test_uppercase_const_with_string():
+    # Test uppercase constant with string - lines 122-130
+    content = """const API_KEY = "secret-key-123";"""
+    assert should_skip_javascript(content) is True
+
+
+def test_uppercase_const_with_number():
+    # Test uppercase constant with number - lines 122-130
+    content = """const MAX_RETRIES = 5;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_uppercase_const_with_negative_number():
+    # Test uppercase constant with negative number - lines 122-130
+    content = """const MIN_VALUE = -100;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_uppercase_const_with_positive_number():
+    # Test uppercase constant with positive number - lines 122-130
+    content = """const MAX_VALUE = +100;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_const_with_undefined():
+    # Test const with undefined - lines 132-141
+    content = """const value = undefined;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_const_with_null():
+    # Test const with null - lines 132-141
+    content = """const value = null;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_const_with_boolean_true():
+    # Test const with boolean true - lines 132-141
+    content = """const flag = true;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_const_with_boolean_false():
+    # Test const with boolean false - lines 132-141
+    content = """const flag = false;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_const_with_single_quote_string():
+    # Test const with single quote string - lines 132-141
+    content = """const message = 'hello';"""
+    assert should_skip_javascript(content) is True
+
+
+def test_const_with_double_quote_string():
+    # Test const with double quote string - lines 132-141
+    content = """const message = "hello";"""
+    assert should_skip_javascript(content) is True
+
+
+def test_const_with_backtick_single_line():
+    # Test const with backtick single line - lines 132-141
+    content = """const message = `hello world`;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_let_variable_with_function_call():
+    # Test let variable with function call - should NOT be skipped
+    content = """let result = calculate();"""
+    assert should_skip_javascript(content) is False
+
+
+def test_var_variable_with_function_call():
+    # Test var variable with function call - should NOT be skipped
+    content = """var result = process();"""
+    assert should_skip_javascript(content) is False
+
+
+def test_commonjs_require_with_const():
+    # Test CommonJS require with const - line 60
+    content = """const fs = require('fs');"""
+    assert should_skip_javascript(content) is True
+
+
+def test_commonjs_require_with_let():
+    # Test CommonJS require with let - line 60
+    content = """let path = require('path');"""
+    assert should_skip_javascript(content) is True
+
+
+def test_commonjs_require_with_var():
+    # Test CommonJS require with var - line 60
+    content = """var http = require('http');"""
+    assert should_skip_javascript(content) is True
+
+
+def test_destructured_require_with_let():
+    # Test destructured require with let - line 63
+    content = """let { readFile } = require('fs');"""
+    assert should_skip_javascript(content) is True
+
+
+def test_destructured_require_with_var():
+    # Test destructured require with var - line 63
+    content = """var { join } = require('path');"""
+    assert should_skip_javascript(content) is True
+
+
+def test_export_default_class():
+    # Test export default class - line 66
+    content = """export default class MyClass {}"""
+    assert should_skip_javascript(content) is True
+
+
+def test_export_const():
+    # Test export const - line 66
+    content = """export const API_URL = "http://example.com";"""
+    assert should_skip_javascript(content) is True
+
+
+def test_export_function():
+    # Test export function - line 66
+    content = """export function myFunc() {
+    return 42;
+}"""
+    assert should_skip_javascript(content) is False
+
+
+def test_module_exports_object():
+    # Test module.exports with object - line 69
+    content = """module.exports = {
+    value: 42
+};"""
+    assert should_skip_javascript(content) is True
+
+
+def test_exports_property():
+    # Test exports.property - line 69
+    content = """exports.myFunc = function() {};"""
+    assert should_skip_javascript(content) is True
+
+
+def test_simple_property_name():
+    # Test simple property name - line 72
+    content = """development,"""
+    assert should_skip_javascript(content) is True
+
+
+def test_class_extends_single_line():
+    # Test class extends single line - line 92
+    content = """class MyError extends Error {}"""
+    assert should_skip_javascript(content) is True
+
+
+def test_class_extends_multiline():
+    # Test class extends multiline - line 95
+    content = """class MyError extends Error {
+}"""
+    assert should_skip_javascript(content) is True
+
+
+def test_type_definition_single_line():
+    # Test type definition single line - line 100
+    content = """type Status = 'active' | 'inactive';"""
+    assert should_skip_javascript(content) is True
+
+
+def test_type_definition_multiline():
+    # Test type definition multiline - lines 100-103
+    content = """type User = {
+    id: number;
+    name: string;
+}"""
+    assert should_skip_javascript(content) is True
+
+
+def test_interface_single_line():
+    # Test interface single line - line 105
+    content = """interface Config { timeout: number; }"""
+    assert should_skip_javascript(content) is True
+
+
+def test_enum_single_line():
+    # Test enum single line - line 108
+    content = """enum Status { Active, Inactive }"""
+    assert should_skip_javascript(content) is True
+
+
+def test_type_annotation_optional():
+    # Test type annotation with optional - line 116
+    content = """interface User {
+    email?: string;
+}"""
+    assert should_skip_javascript(content) is True
+
+
+def test_type_annotation_required():
+    # Test type annotation required - line 116
+    content = """interface User {
+    id: number;
+}"""
+    assert should_skip_javascript(content) is True
+
+
+def test_function_starting_with_function_keyword():
+    # Test function starting with function keyword - line 87
+    content = """function myFunc() {
+    return 42;
+}"""
+    assert should_skip_javascript(content) is False
+
+
+def test_named_function_expression():
+    # Test named function expression - line 87
+    content = """myFunc() {
+    return 42;
+}"""
+    assert should_skip_javascript(content) is False
+
+
+def test_class_with_single_method():
+    # Test class with single method - line 79-81
+    content = """class MyClass {
+    method() {}
+}"""
+    assert should_skip_javascript(content) is False
+
+
+def test_empty_class_no_extends():
+    # Test empty class without extends - line 92
+    content = """class MyClass {}"""
+    assert should_skip_javascript(content) is True
+
+
+def test_empty_class_with_extends():
+    # Test empty class with extends - line 92
+    content = """class MyClass extends BaseClass {}"""
+    assert should_skip_javascript(content) is True
+
+
+def test_multiline_comment_start_and_end():
+    # Test multiline comment start and end on same line - lines 32-37
+    content = """/* comment */ const VALUE = 42;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_single_line_comment_with_code():
+    # Test single line comment with code - line 38-39
+    content = """const VALUE = 42; // comment"""
+    assert should_skip_javascript(content) is True
+
+
+def test_template_literal_with_only_backticks():
+    # Test template literal with only backticks - lines 41-46
+    content = """const EMPTY = ``;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_const_with_template_literal_expression():
+    # Test const with template literal expression - line 139
+    content = """const message = `Hello ${name}`;"""
+    assert should_skip_javascript(content) is False
+
+
+def test_uppercase_const_with_arrow_function():
+    # Test uppercase const with arrow function - should NOT be skipped - line 126
+    content = """const HANDLER = () => {};"""
+    assert should_skip_javascript(content) is False
+
+
+def test_uppercase_const_with_function_keyword():
+    # Test uppercase const with function keyword - should NOT be skipped - line 127
+    content = """const HANDLER = function() {};"""
+    assert should_skip_javascript(content) is False
+
+
+def test_uppercase_const_with_function_call():
+    # Test uppercase const with function call - should NOT be skipped - line 128
+    content = """const CONFIG = loadConfig();"""
+    assert should_skip_javascript(content) is False
+
+
+def test_lowercase_const_with_arrow_function():
+    # Test lowercase const with arrow function - should NOT be skipped - line 136
+    content = """const handler = () => {};"""
+    assert should_skip_javascript(content) is False
+
+
+def test_lowercase_const_with_function_keyword():
+    # Test lowercase const with function keyword - should NOT be skipped - line 137
+    content = """const handler = function() {};"""
+    assert should_skip_javascript(content) is False
+
+
+def test_lowercase_const_with_function_call():
+    # Test lowercase const with function call - should NOT be skipped - line 138
+    content = """const config = loadConfig();"""
+    assert should_skip_javascript(content) is False
+
+
+def test_lowercase_const_with_template_expression():
+    # Test lowercase const with template expression - should NOT be skipped - line 139
+    content = """const greeting = `Hello ${name}`;"""
+    assert should_skip_javascript(content) is False
+
+
+def test_all_declaration_types():
+    # Test all declaration types together
+    content = """import { Component } from 'react';
+const fs = require('fs');
+const { readFile } = require('fs');
+
+export const API_URL = "http://example.com";
+export * from './utils';
+
+interface User {
+    id: number;
+}
+
+type Status = 'active' | 'inactive';
+
+enum Priority {
+    High,
+    Low
+}
+
+class EmptyClass {}
+
+const MAX_SIZE = 100;
+const flag = true;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_mixed_declarations_with_logic():
+    # Test mixed declarations with logic - should NOT be skipped
+    content = """import { Component } from 'react';
+const MAX_SIZE = 100;
+
+function calculate() {
+    return MAX_SIZE * 2;
+}"""
+    assert should_skip_javascript(content) is False
+
+
+def test_edge_case_only_comments():
+    # Edge case: file with only comments
+    content = """// Comment 1
+// Comment 2
+/* Multiline
+   comment */"""
+    assert should_skip_javascript(content) is True
+
+
+def test_edge_case_only_braces():
+    # Edge case: file with only braces
+    content = """{
+}
+};"""
+    assert should_skip_javascript(content) is True
+
+
+def test_edge_case_only_imports():
+    # Edge case: file with only imports
+    content = """import { A } from './a';
+import { B } from './b';
+import { C } from './c';"""
+    assert should_skip_javascript(content) is True
+
+
+def test_edge_case_only_exports():
+    # Edge case: file with only exports
+    content = """export { A };
+export { B };
+export * from './c';"""
+    assert should_skip_javascript(content) is True
+
+
+def test_edge_case_only_types():
+    # Edge case: file with only type definitions
+    content = """type A = string;
+type B = number;
+interface C {
+    value: string;
+}
+enum D {
+    One,
+    Two
+}"""
+    assert should_skip_javascript(content) is True
+
+
+def test_edge_case_only_empty_classes():
+    # Edge case: file with only empty classes
+    content = """class A {}
+class B extends Error {}
+class C {
+}"""
+    assert should_skip_javascript(content) is True
+
+
+def test_corner_case_nested_template_literals():
+    # Corner case: nested template literals (not really nested, but multiple)
+    content = """const TEMPLATE1 = `
+first template
+`;
+const TEMPLATE2 = `
+second template
+`;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_corner_case_mixed_comment_styles():
+    # Corner case: mixed comment styles
+    content = """// Single line comment
+/* Multiline
+   comment */
+const VALUE = 42;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_corner_case_export_with_rename():
+    # Corner case: export with rename
+    content = """export { default as MyClass } from './MyClass';
+export { A as B } from './module';"""
+    assert should_skip_javascript(content) is True
+
+
+def test_corner_case_type_with_union():
+    # Corner case: type with union
+    content = """type Status = 'active' | 'inactive' | 'pending';"""
+    assert should_skip_javascript(content) is True
+
+
+def test_corner_case_type_with_intersection():
+    # Corner case: type with intersection
+    content = """type Combined = TypeA & TypeB;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_corner_case_interface_with_extends():
+    # Corner case: interface with extends
+    content = """interface User extends BaseUser {
+    role: string;
+}"""
+    assert should_skip_javascript(content) is True
+
+
+def test_corner_case_enum_with_string_values():
+    # Corner case: enum with string values
+    content = """enum Status {
+    Active = 'ACTIVE',
+    Inactive = 'INACTIVE'
+}"""
+    assert should_skip_javascript(content) is True
+
+
+def test_corner_case_const_with_computed_property():
+    # Corner case: const with computed property - should NOT be skipped
+    content = """const value = obj[key];"""
+    assert should_skip_javascript(content) is False
+
+
+def test_corner_case_const_with_method_call():
+    # Corner case: const with method call - should NOT be skipped
+    content = """const result = obj.method();"""
+    assert should_skip_javascript(content) is False
+
+
+def test_corner_case_const_with_chained_calls():
+    # Corner case: const with chained calls - should NOT be skipped
+    content = """const result = obj.method1().method2();"""
+    assert should_skip_javascript(content) is False
+
+
+def test_error_case_malformed_class():
+    # Error case: malformed class (missing closing brace)
+    content = """class MyClass {
+    method() {}"""
+    assert should_skip_javascript(content) is False
+
+
+def test_error_case_malformed_interface():
+    # Error case: malformed interface (missing closing brace)
+    content = """interface User {
+    id: number;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_error_case_malformed_enum():
+    # Error case: malformed enum (missing closing brace)
+    content = """enum Status {
+    Active,
+    Inactive"""
+    assert should_skip_javascript(content) is True
+
+
+def test_error_case_unclosed_multiline_comment():
+    # Error case: unclosed multiline comment
+    content = """/* This comment is not closed
+const VALUE = 42;"""
+    assert should_skip_javascript(content) is True
+
+
+def test_error_case_unclosed_template_literal():
+    # Error case: unclosed template literal
+    content = """const TEMPLATE = `
+This template is not closed
+const OTHER = "value";"""
     assert should_skip_javascript(content) is True
