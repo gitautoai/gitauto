@@ -299,7 +299,7 @@ def test_apply_patch_failed_without_reject_file():
                 with patch("utils.files.apply_patch.sort_imports", side_effect=lambda x, y: x):
                     with patch("utils.files.apply_patch.strip_trailing_spaces", side_effect=lambda x: x):
                         with patch("utils.files.apply_patch.ensure_final_newline", side_effect=lambda x: x):
-                            with patch("os.path.exists", side_effect=lambda path=None, **kwargs: not (path or kwargs.get('path', '')).endswith(".rej")):
+                            with patch("os.path.exists", side_effect=lambda path: not path.endswith(".rej")):
                                 with patch("os.remove"):
                                     with patch("os.listdir", return_value=[]):
                                         mock_get_content.side_effect = [
