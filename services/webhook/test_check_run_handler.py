@@ -865,11 +865,6 @@ def test_handle_check_run_skips_duplicate_older_request(
         "title": "Test PR",
         "body": "Test PR description",
 
-    # Mock branch and PR checks to allow code to reach the older active request check
-    mock_is_pull_request_open.return_value = True
-    mock_check_branch_exists.return_value = True
-        "user": {"login": "test-user"},
-    }
     mock_get_changes.return_value = [
         {
             "filename": "src/main.py",
