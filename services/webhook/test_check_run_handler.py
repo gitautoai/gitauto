@@ -908,10 +908,10 @@ def test_handle_check_run_skips_duplicate_older_request(
     assert final_call_kwargs["token_input"] == 0
     assert final_call_kwargs["token_output"] == 0
 
-    # Verify Slack notification for duplicate
+    # Verify Slack notifications: start + duplicate + completed
     assert (
-        mock_slack_notify.call_count == 2
-    )  # Start notification + duplicate notification
+        mock_slack_notify.call_count == 3
+    )  # Start notification + duplicate notification + completed notification
     duplicate_call = mock_slack_notify.call_args_list[1]
     assert "Older active request found" in duplicate_call[0][0]
     assert duplicate_call[0][1] == "thread-123"  # Uses thread_ts
