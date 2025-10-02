@@ -501,7 +501,7 @@ def handle_check_run(
         if not is_explored and is_committed:
             retry_count += 1
             if retry_count > 3:
-                break
+                return
             continue
 
         # If files are found but no changes are made, it means that the agent found files but didn't think it's necessary to commit changes or fell into an infinite-like loop (e.g. slightly different searches)
