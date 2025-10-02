@@ -544,9 +544,9 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_clean_logs.return_value = "Cleaned test failure log"
 
     # Mock that this workflow/error pair has been seen before
-    # Calculate the expected hash: workflow_id is "runs" from URL, error_log is "Test failure log content"
+    # Calculate the expected hash: workflow_id is "11393174689" from URL, error_log is "Test failure log content"
     expected_hash = hashlib.sha256("Test failure log content".encode(UTF8)).hexdigest()
-    mock_get_retry_pairs.return_value = [f"runs:{expected_hash}"]
+    mock_get_retry_pairs.return_value = [f"11393174689:{expected_hash}"]
 
     # Execute
     handle_check_run(mock_check_run_payload)
@@ -831,7 +831,11 @@ def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_run_handler.clean_logs")
 @patch("services.webhook.check_run_handler.check_older_active_test_failure_request")
 @patch("services.webhook.check_run_handler.update_usage")
+@patch("services.webhook.check_run_handler.is_pull_request_open")
+@patch("services.webhook.check_run_handler.check_branch_exists")
 def test_handle_check_run_skips_duplicate_older_request(
+    mock_check_branch_exists,
+    mock_is_pull_request_open,
     mock_update_usage,
     mock_check_older_active,
     mock_clean_logs,
@@ -850,6 +854,7 @@ def test_handle_check_run_skips_duplicate_older_request(
     mock_check_run_payload,
 ):
     """Test that handler skips when older active request is found."""
+    mock_check_branch_exists.return_value = True
     # Setup mocks
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
@@ -862,6 +867,7 @@ def test_handle_check_run_skips_duplicate_older_request(
         "body": "Test PR description",
         "user": {"login": "test-user"},
     }
+    mock_is_pull_request_open.return_value = True
     mock_get_changes.return_value = [
         {
             "filename": "src/main.py",
@@ -890,8 +896,10 @@ def test_handle_check_run_skips_duplicate_older_request(
         owner_id=11111, repo_id=98765, pr_number=1, current_usage_id=999
     )
 
-    # Verify duplicate handling
-    mock_update_usage.assert_called_once()
+    # Verify duplicate handling - update_usage is called once when older active request is found (early exit)
+    assert mock_update_usage.call_count == 1
+
+    # Verify the call has the expected parameters
     call_kwargs = mock_update_usage.call_args.kwargs
     assert call_kwargs["usage_id"] == 999
     assert call_kwargs["is_completed"] is True
@@ -903,5 +911,5 @@ def test_handle_check_run_skips_duplicate_older_request(
         mock_slack_notify.call_count == 2
     )  # Start notification + duplicate notification
     duplicate_call = mock_slack_notify.call_args_list[1]
-    assert "Older active request found" in duplicate_call[0][0]
+    assert "older active test failure request found" in duplicate_call[0][0]
     assert duplicate_call[0][1] == "thread-123"  # Uses thread_ts

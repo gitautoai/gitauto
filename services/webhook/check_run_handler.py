@@ -391,7 +391,7 @@ def handle_check_run(
             msg = f"Timeout - check run processing for PR #{pull_number} in `{owner_name}/{repo_name}`"
             logging.info(msg)
             slack_notify(msg, thread_ts)
-            break
+            return
 
         # Safety check: Stop if PR is closed or branch is deleted
         if not is_pull_request_open(
@@ -404,7 +404,7 @@ def handle_check_run(
             msg = f"Stopped - pull request #{pull_number} was closed while GitAuto was processing check run failure in `{owner_name}/{repo_name}`"
             logging.info(msg)
             slack_notify(msg, thread_ts)
-            break
+            return
 
         if not check_branch_exists(
             owner=owner_name, repo=repo_name, branch_name=head_branch, token=token
@@ -416,7 +416,7 @@ def handle_check_run(
             msg = f"Stopped - branch '{head_branch}' was deleted while GitAuto was processing check run failure in `{owner_name}/{repo_name}`"
             logging.info(msg)
             slack_notify(msg, thread_ts)
-            break
+            return
 
         # Safety check: Stop if older active request exists (race condition prevention)
         older_active_request = check_older_active_test_failure_request(
@@ -442,8 +442,11 @@ def handle_check_run(
                 total_seconds=int(time.time() - current_time),
                 is_completed=True,
                 pr_number=pull_number,
+                retry_workflow_id_hash_pairs=existing_pairs,
+                original_error_log=error_log,
+                minimized_error_log=minimized_log,
             )
-            break
+            return
 
         # Explore repo
         (
@@ -501,7 +504,7 @@ def handle_check_run(
         if not is_explored and is_committed:
             retry_count += 1
             if retry_count > 3:
-                break
+                return
             continue
 
         # If files are found but no changes are made, it means that the agent found files but didn't think it's necessary to commit changes or fell into an infinite-like loop (e.g. slightly different searches)

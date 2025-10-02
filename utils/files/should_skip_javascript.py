@@ -25,6 +25,7 @@ def should_skip_javascript(content: str) -> bool:
     in_interface_or_type = False
     in_enum = False
     in_template_literal = False
+    in_const_literal = False
     in_class_definition = False
 
     for line in lines:
@@ -52,6 +53,10 @@ def should_skip_javascript(content: str) -> bool:
             code_lines.append(line)
 
     # Check if only export/import/constant/type statements
+    # Track brackets and braces for multi-line arrays/objects
+    bracket_count = 0
+    brace_count = 0
+
     for line in code_lines:
         # Skip import statements
         if line.startswith("import "):
@@ -127,6 +132,14 @@ def should_skip_javascript(content: str) -> bool:
             and "function" not in line
             and not re.search(r"\w+\s*\(", line)  # Exclude function calls
         ):
+            # Track brackets and braces for multi-line arrays/objects
+            bracket_count += line.count('[') - line.count(']')
+            brace_count += line.count('{') - line.count('}')
+            continue
+        # Skip lines inside multi-line arrays or objects
+        if bracket_count > 0 or brace_count > 0:
+            bracket_count += line.count('[') - line.count(']')
+            brace_count += line.count('{') - line.count('}')
             continue
         # Skip const with literal values, template literals, simple concatenations (but not functions)
         if (
