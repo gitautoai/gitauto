@@ -854,6 +854,7 @@ def test_handle_check_run_skips_duplicate_older_request(
     mock_check_run_payload,
 ):
     """Test that handler skips when older active request is found."""
+    mock_check_branch_exists.return_value = True
     # Setup mocks
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
