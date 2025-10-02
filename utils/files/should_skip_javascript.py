@@ -127,6 +127,7 @@ def should_skip_javascript(content: str) -> bool:
             and "=>" not in line
             and "function" not in line
             and not re.search(r"\w+\s*\(", line)  # Exclude function calls
+        ):
             # Track brackets and braces for multi-line arrays/objects
             bracket_count += line.count('[') - line.count(']')
             brace_count += line.count('{') - line.count('}')
@@ -135,8 +136,6 @@ def should_skip_javascript(content: str) -> bool:
         if bracket_count > 0 or brace_count > 0:
             bracket_count += line.count('[') - line.count(']')
             brace_count += line.count('{') - line.count('}')
-            continue
-        ):
             continue
         # Skip const with literal values, template literals, simple concatenations (but not functions)
         if (
