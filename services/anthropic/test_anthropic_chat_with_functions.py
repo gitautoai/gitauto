@@ -170,7 +170,7 @@ def test_chat_with_claude_calls_deduplication(
 def test_chat_with_claude_tool_function_not_dict(
     mock_claude, mock_insert_llm_request, mock_trim_messages, mock_deduplication_functions
 ):
-    """Test when tool function is not a dict and needs conversion (line 63)"""
+    """Test when tool function is not a dict - should be skipped if attributes not extractable"""
     mock_response = Mock()
     mock_response.content = [Mock(type="text", text="Response")]
     mock_response.usage = Mock(output_tokens=10)
