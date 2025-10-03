@@ -553,4 +553,18 @@ def test_handle_exceptions_google_api_429_rate_limit():
 
 def test_handle_exceptions_json_decode_error_without_doc_attribute():
     """Test JSONDecodeError without doc attribute (line 118)."""
+    # Create a JSONDecodeError without doc attribute
+    json_error = json.JSONDecodeError("Expecting value", "", 0)
+    # Remove the doc attribute if it exists
+    if hasattr(json_error, "doc"):
+        delattr(json_error, "doc")
 
+    @handle_exceptions(default_return_value="default")
+    def test_func():
+        raise json_error
+
+    result = test_func()
+
+    # Should return default value
+    assert result == "default"
+    # Verify the error was logged with "Raw response not available"
