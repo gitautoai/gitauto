@@ -445,6 +445,7 @@ def handle_check_run(
             )
             break
 
+            return
         # Explore repo
         (
             messages,
