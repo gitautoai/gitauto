@@ -440,3 +440,71 @@ def test_handle_exceptions_github_403_with_raise_on_error_true():
         mock_response = MagicMock()
         mock_response.status_code = 403
         mock_get.assert_called_once()
+
+
+def test_handle_exceptions_http_error_no_response_with_raise_on_error():
+    @handle_exceptions(default_return_value="default", raise_on_error=True)
+    def test_func():
+        http_error = requests.HTTPError("No response error")
+        http_error.response = None
+        raise http_error
+
+    with pytest.raises(requests.HTTPError):
+        test_func()
+
+
+def test_handle_exceptions_google_api_429_rate_limit():
+    @handle_exceptions(default_return_value="default", api_type="google")
+    def test_func():
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+        mock_response.reason = "Too Many Requests"
+        mock_response.text = "Rate limit exceeded"
+        mock_response.headers = {"Retry-After": "60"}
+        http_error = requests.HTTPError("Rate limit")
+        http_error.response = mock_response
+        raise http_error
+
+    with pytest.raises(requests.HTTPError):
+        test_func()
+
+
+def test_handle_exceptions_json_decode_error_without_doc_attribute():
+    @handle_exceptions(default_return_value="default")
+    def test_func():
+        json_error = json.JSONDecodeError("Invalid JSON", "", 0)
+        if hasattr(json_error, "doc"):
+            delattr(json_error, "doc")
+        raise json_error
+
+    result = test_func()
+    assert result == "default"
+
+
+def test_handle_exceptions_json_decode_error_without_doc_attribute_raise_on_error():
+    @handle_exceptions(default_return_value="default", raise_on_error=True)
+    def test_func():
+        json_error = json.JSONDecodeError("Invalid JSON", "", 0)
+        if hasattr(json_error, "doc"):
+            delattr(json_error, "doc")
+        raise json_error
+
+    with pytest.raises(json.JSONDecodeError):
+        test_func()
+
+
+def test_handle_exceptions_json_decode_error_with_doc_attribute():
+    @handle_exceptions(default_return_value="default")
+    def test_func():
+        json_error = json.JSONDecodeError("Invalid JSON", "bad json data", 0)
+        raise json_error
+
+    result = test_func()
+    assert result == "default"
+
+
+def test_handle_exceptions_json_decode_error_with_doc_attribute_raise_on_error():
+    @handle_exceptions(default_return_value="default", raise_on_error=True)
+    def test_func():
+        json_error = json.JSONDecodeError("Invalid JSON", "bad json data", 0)
+        raise json_error
