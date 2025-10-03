@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch, MagicMock
 import pytest
 import requests
@@ -311,4 +312,260 @@ def test_handle_exceptions_generic_exception():
         result = mock_function_for_testing()
 
         assert result is None
+
+
+def test_handle_exceptions_http_error_no_response_raise_on_error_false():
+    """Test HTTPError without response object when raise_on_error=False."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def function_with_http_error_no_response():
+        http_error = requests.exceptions.HTTPError("Connection error")
+        http_error.response = None
+        raise http_error
+
+    result = function_with_http_error_no_response()
+    assert result == "fallback"
+
+
+def test_handle_exceptions_http_error_no_response_raise_on_error_true():
+    """Test HTTPError without response object when raise_on_error=True."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=True)
+    def function_with_http_error_no_response():
+        http_error = requests.exceptions.HTTPError("Connection error")
+        http_error.response = None
+        raise http_error
+
+    with pytest.raises(requests.exceptions.HTTPError, match="Connection error"):
+        function_with_http_error_no_response()
+
+
+def test_handle_exceptions_google_api_429_rate_limit():
+    """Test Google API 429 rate limit error handling."""
+
+    @handle_exceptions(default_return_value=None, raise_on_error=False, api_type="google")
+    def function_with_google_rate_limit():
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+        mock_response.reason = "Too Many Requests"
+        mock_response.text = "Rate limit exceeded"
+        mock_response.headers = {
+            "Retry-After": "60"
+        }
+
+        http_error = requests.exceptions.HTTPError("429 Too Many Requests")
+        http_error.response = mock_response
+        raise http_error
+
+    with pytest.raises(requests.exceptions.HTTPError, match="429 Too Many Requests"):
+        function_with_google_rate_limit()
+
+
+def test_handle_exceptions_json_decode_error_with_doc():
+    """Test JSONDecodeError with doc attribute."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def function_with_json_error_with_doc():
+        raise json.JSONDecodeError("Invalid JSON", doc="{'bad': json}", pos=0)
+
+    result = function_with_json_error_with_doc()
+    assert result == "fallback"
+
+
+def test_handle_exceptions_json_decode_error_without_doc():
+    """Test JSONDecodeError without doc attribute."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def function_with_json_error_without_doc():
+        err = json.JSONDecodeError("Invalid JSON", doc="", pos=0)
+        delattr(err, "doc")
+        raise err
+
+    result = function_with_json_error_without_doc()
+    assert result == "fallback"
+
+
+def test_handle_exceptions_json_decode_error_raise_on_error_true():
+    """Test JSONDecodeError when raise_on_error=True."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=True)
+    def function_with_json_error():
+        raise json.JSONDecodeError("Invalid JSON", doc="{'bad': json}", pos=0)
+
+    with pytest.raises(json.JSONDecodeError, match="Invalid JSON"):
+        function_with_json_error()
+
+
+def test_handle_exceptions_http_500_error_raise_on_error_false():
+    """Test 500 Internal Server Error when raise_on_error=False."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def function_with_500_error():
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.reason = "Internal Server Error"
+        mock_response.text = "Server error"
+
+        http_error = requests.exceptions.HTTPError("500 Internal Server Error")
+        http_error.response = mock_response
+        raise http_error
+
+    result = function_with_500_error()
+    assert result == "fallback"
+
+
+def test_handle_exceptions_http_500_error_raise_on_error_true():
+    """Test 500 Internal Server Error when raise_on_error=True."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=True)
+    def function_with_500_error():
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.reason = "Internal Server Error"
+        mock_response.text = "Server error"
+
+        http_error = requests.exceptions.HTTPError("500 Internal Server Error")
+        http_error.response = mock_response
+        raise http_error
+
+    with pytest.raises(requests.exceptions.HTTPError, match="500 Internal Server Error"):
+        function_with_500_error()
+
+
+def test_handle_exceptions_github_403_with_raise_on_error_true():
+    """Test GitHub 403 error with raise_on_error=True (non-rate-limit case)."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=True, api_type="github")
+    def function_with_403_error():
+        mock_response = MagicMock()
+        mock_response.status_code = 403
         mock_get.assert_called_once()
+
+
+def test_handle_exceptions_http_error_no_response_with_raise_on_error():
+    @handle_exceptions(default_return_value="default", raise_on_error=True)
+    def test_func():
+        http_error = requests.HTTPError("No response error")
+        http_error.response = None
+        raise http_error
+
+    with pytest.raises(requests.HTTPError):
+        test_func()
+
+
+def test_handle_exceptions_google_api_429_rate_limit():
+    @handle_exceptions(default_return_value="default", api_type="google")
+    def test_func():
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+        mock_response.reason = "Too Many Requests"
+        mock_response.text = "Rate limit exceeded"
+        mock_response.headers = {"Retry-After": "60"}
+        http_error = requests.HTTPError("Rate limit")
+        http_error.response = mock_response
+        raise http_error
+
+    with pytest.raises(requests.HTTPError):
+        test_func()
+
+
+def test_handle_exceptions_json_decode_error_without_doc_attribute():
+    @handle_exceptions(default_return_value="default")
+    def test_func():
+        json_error = json.JSONDecodeError("Invalid JSON", "", 0)
+        if hasattr(json_error, "doc"):
+            delattr(json_error, "doc")
+        raise json_error
+
+    result = test_func()
+    assert result == "default"
+
+
+def test_handle_exceptions_json_decode_error_without_doc_attribute_raise_on_error():
+    @handle_exceptions(default_return_value="default", raise_on_error=True)
+    def test_func():
+        json_error = json.JSONDecodeError("Invalid JSON", "", 0)
+        if hasattr(json_error, "doc"):
+            delattr(json_error, "doc")
+        raise json_error
+
+    with pytest.raises(json.JSONDecodeError):
+        test_func()
+
+
+def test_handle_exceptions_json_decode_error_with_doc_attribute():
+    @handle_exceptions(default_return_value="default")
+    def test_func():
+        json_error = json.JSONDecodeError("Invalid JSON", "bad json data", 0)
+        raise json_error
+
+    result = test_func()
+    assert result == "default"
+
+
+def test_handle_exceptions_json_decode_error_with_doc_attribute_raise_on_error():
+    @handle_exceptions(default_return_value="default", raise_on_error=True)
+    def test_func():
+        json_error = json.JSONDecodeError("Invalid JSON", "bad json data", 0)
+        raise json_error
+
+def test_handle_exceptions_http_error_no_response_with_raise_on_error():
+    """Test HTTPError with no response object and raise_on_error=True (line 39)."""
+
+    @handle_exceptions(default_return_value="default", raise_on_error=True)
+    def test_func():
+        # Create an HTTPError without a response object
+        http_error = requests.HTTPError("Connection failed")
+        http_error.response = None
+        raise http_error
+
+    # Should raise the HTTPError since raise_on_error=True and response is None
+    with pytest.raises(requests.HTTPError) as exc_info:
+        test_func()
+
+    # Verify it's the correct error
+    assert exc_info.value.response is None
+    assert "Connection failed" in str(exc_info.value)
+
+
+def test_handle_exceptions_google_api_429_rate_limit():
+    """Test Google API 429 rate limit handling (lines 95-99)."""
+    mock_response = MagicMock()
+    mock_response.status_code = 429
+    mock_response.reason = "Too Many Requests"
+    mock_response.text = "Rate limit exceeded"
+    mock_response.headers = {"Retry-After": "60"}
+
+    @handle_exceptions(default_return_value="default", api_type="google")
+    def test_func():
+        http_error = requests.HTTPError("Rate limit exceeded")
+        http_error.response = mock_response
+        raise http_error
+
+    # Should raise the HTTPError for Google API 429
+    with pytest.raises(requests.HTTPError) as exc_info:
+        test_func()
+
+    # Verify it's the correct error
+    assert exc_info.value.response.status_code == 429
+    assert "Rate limit exceeded" in str(exc_info.value)
+
+
+def test_handle_exceptions_json_decode_error_without_doc_attribute(caplog):
+    """Test JSONDecodeError without doc attribute (line 118)."""
+    # Create a JSONDecodeError without doc attribute
+    json_error = json.JSONDecodeError("Expecting value", "", 0)
+    # Remove the doc attribute if it exists
+    if hasattr(json_error, "doc"):
+        delattr(json_error, "doc")
+
+    @handle_exceptions(default_return_value="default")
+    def test_func():
+        raise json_error
+
+    result = test_func()
+
+    # Should return default value
+    assert result == "default"
+    # Verify the error was logged with "Raw response not available"
+    assert "Raw response not available" in caplog.text

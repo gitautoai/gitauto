@@ -816,6 +816,8 @@ def test_check_run_handler_token_accumulation(
     assert call_kwargs["token_output"] == 90  # Two calls: 45 + 45
 
 
+@patch("services.webhook.check_run_handler.check_branch_exists")
+@patch("services.webhook.check_run_handler.is_pull_request_open")
 @patch("services.webhook.check_run_handler.get_installation_access_token")
 @patch("services.webhook.check_run_handler.get_repository")
 @patch("services.webhook.check_run_handler.slack_notify")
@@ -847,10 +849,14 @@ def test_handle_check_run_skips_duplicate_older_request(
     mock_slack_notify,
     mock_get_repo,
     mock_get_token,
+    mock_is_pr_open,
+    mock_check_branch,
     mock_check_run_payload,
 ):
     """Test that handler skips when older active request is found."""
     # Setup mocks
+    mock_is_pr_open.return_value = True
+    mock_check_branch.return_value = True
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
@@ -903,5 +909,5 @@ def test_handle_check_run_skips_duplicate_older_request(
         mock_slack_notify.call_count == 2
     )  # Start notification + duplicate notification
     duplicate_call = mock_slack_notify.call_args_list[1]
-    assert "Older active request found" in duplicate_call[0][0]
+    assert "older active test failure request found" in duplicate_call[0][0]
     assert duplicate_call[0][1] == "thread-123"  # Uses thread_ts
