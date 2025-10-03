@@ -551,7 +551,7 @@ def test_handle_exceptions_google_api_429_rate_limit():
     assert "Rate limit exceeded" in str(exc_info.value)
 
 
-def test_handle_exceptions_json_decode_error_without_doc_attribute():
+def test_handle_exceptions_json_decode_error_without_doc_attribute(caplog):
     """Test JSONDecodeError without doc attribute (line 118)."""
     # Create a JSONDecodeError without doc attribute
     json_error = json.JSONDecodeError("Expecting value", "", 0)
