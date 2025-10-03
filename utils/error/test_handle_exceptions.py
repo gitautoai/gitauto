@@ -508,3 +508,23 @@ def test_handle_exceptions_json_decode_error_with_doc_attribute_raise_on_error()
     def test_func():
         json_error = json.JSONDecodeError("Invalid JSON", "bad json data", 0)
         raise json_error
+
+def test_handle_exceptions_http_error_no_response_with_raise_on_error():
+    """Test HTTPError with no response object and raise_on_error=True (line 39)."""
+
+    @handle_exceptions(default_return_value="default", raise_on_error=True)
+    def test_func():
+        # Create an HTTPError without a response object
+        http_error = requests.HTTPError("Connection failed")
+        http_error.response = None
+        raise http_error
+
+    # Should raise the HTTPError since raise_on_error=True and response is None
+    with pytest.raises(requests.HTTPError) as exc_info:
+        test_func()
+
+    # Verify it's the correct error
+    assert exc_info.value.response is None
+    assert "Connection failed" in str(exc_info.value)
+
+
