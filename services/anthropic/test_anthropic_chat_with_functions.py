@@ -8,12 +8,35 @@ from services.anthropic.exceptions import (ClaudeAuthenticationError,
                                            ClaudeOverloadedError)
 
 
-@patch("services.anthropic.chat_with_functions.trim_messages_to_token_limit")
+@pytest.fixture
+def mock_trim_messages():
+    with patch(
+        "services.anthropic.chat_with_functions.trim_messages_to_token_limit"
+    ) as mock:
+        mock.side_effect = lambda messages, **kwargs: messages
+        yield mock
+
+
+@pytest.fixture
+def mock_deduplication_functions():
+    with patch(
+        "services.anthropic.chat_with_functions.remove_duplicate_get_remote_file_content_results"
+    ) as mock1, patch(
+        "services.anthropic.chat_with_functions.remove_get_remote_file_content_before_replace_remote_file_content"
+    ) as mock2, patch(
+        "services.anthropic.chat_with_functions.remove_outdated_apply_diff_to_file_attempts_and_results"
+    ) as mock3:
+        mock1.side_effect = lambda messages: messages
+        mock2.side_effect = lambda messages: messages
+        mock3.side_effect = lambda messages: messages
+        yield mock1, mock2, mock3
+
+
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
-def test_chat_with_claude_success(
-    mock_trim_messages, mock_claude, mock_insert_llm_request
 @patch("services.anthropic.chat_with_functions.claude")
-def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
+def test_chat_with_claude_success(
+    mock_claude, mock_insert_llm_request, mock_trim_messages, mock_deduplication_functions
+):
     mock_response = Mock()
     mock_response.content = [Mock(type="text", text="Hello! How can I help you?")]
     mock_response.usage = Mock(output_tokens=15)
@@ -44,7 +67,9 @@ def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
 
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
 @patch("services.anthropic.chat_with_functions.claude")
-def test_chat_with_claude_with_tool_use(mock_claude, mock_insert_llm_request):
+def test_chat_with_claude_with_tool_use(
+    mock_claude, mock_insert_llm_request, mock_trim_messages, mock_deduplication_functions
+):
     mock_tool_use = Mock()
     mock_tool_use.type = "tool_use"
     mock_tool_use.id = "tool_123"
@@ -83,7 +108,9 @@ def test_chat_with_claude_with_tool_use(mock_claude, mock_insert_llm_request):
 
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
 @patch("services.anthropic.chat_with_functions.claude")
-def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request):
+def test_chat_with_claude_no_usage_response(
+    mock_claude, mock_insert_llm_request, mock_trim_messages, mock_deduplication_functions
+):
     mock_response = Mock()
     mock_response.content = [Mock(type="text", text="Response")]
     mock_response.usage = None
@@ -101,23 +128,10 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
     mock_insert_llm_request.assert_called_once()
 
 
-@patch(
-    "services.anthropic.chat_with_functions.remove_duplicate_get_remote_file_content_results"
-)
-@patch(
-    "services.anthropic.chat_with_functions.remove_get_remote_file_content_before_replace_remote_file_content"
-)
-@patch(
-    "services.anthropic.chat_with_functions.remove_outdated_apply_diff_to_file_attempts_and_results"
-)
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
 @patch("services.anthropic.chat_with_functions.claude")
 def test_chat_with_claude_calls_deduplication(
-    mock_claude,
-    _mock_insert_llm_request,
-    mock_remove_duplicate_get_remote_file_content_results,
-    mock_remove_get_remote_file_content_before_replace_remote_file_content,
-    mock_remove_outdated_apply_diff_to_file_attempts_and_results,
+    mock_claude, mock_insert_llm_request, mock_trim_messages
 ):
     # Setup mocks
     mock_response = Mock()
@@ -128,36 +142,34 @@ def test_chat_with_claude_calls_deduplication(
 
     # Mock all three functions to return the same messages
     original_messages = [{"role": "user", "content": "test"}]
-    mock_remove_duplicate_get_remote_file_content_results.return_value = (
-        original_messages
-    )
-    mock_remove_get_remote_file_content_before_replace_remote_file_content.return_value = (
-        original_messages
-    )
-    mock_remove_outdated_apply_diff_to_file_attempts_and_results.return_value = (
-        original_messages
-    )
 
-    # Call the function
-    chat_with_claude(
-        messages=original_messages, system_content="You are helpful", tools=[]
-    )
+    with patch(
+        "services.anthropic.chat_with_functions.remove_duplicate_get_remote_file_content_results"
+    ) as mock_remove_duplicate, patch(
+        "services.anthropic.chat_with_functions.remove_get_remote_file_content_before_replace_remote_file_content"
+    ) as mock_remove_get_remote, patch(
+        "services.anthropic.chat_with_functions.remove_outdated_apply_diff_to_file_attempts_and_results"
+    ) as mock_remove_outdated:
+        mock_remove_duplicate.return_value = original_messages
+        mock_remove_get_remote.return_value = original_messages
+        mock_remove_outdated.return_value = original_messages
 
-    # Verify all three functions were called
-    mock_remove_duplicate_get_remote_file_content_results.assert_called_once_with(
-        original_messages
-    )
-    mock_remove_get_remote_file_content_before_replace_remote_file_content.assert_called_once_with(
-        original_messages
-    )
-    mock_remove_outdated_apply_diff_to_file_attempts_and_results.assert_called_once_with(
-        original_messages
-    )
+        # Call the function
+        chat_with_claude(
+            messages=original_messages, system_content="You are helpful", tools=[]
+        )
+
+        # Verify all three functions were called
+        mock_remove_duplicate.assert_called_once_with(original_messages)
+        mock_remove_get_remote.assert_called_once_with(original_messages)
+        mock_remove_outdated.assert_called_once_with(original_messages)
 
 
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
 @patch("services.anthropic.chat_with_functions.claude")
-def test_chat_with_claude_tool_function_not_dict(mock_claude, mock_insert_llm_request):
+def test_chat_with_claude_tool_function_not_dict(
+    mock_claude, mock_insert_llm_request, mock_trim_messages, mock_deduplication_functions
+):
     """Test when tool function is not a dict and needs conversion (line 63)"""
     mock_response = Mock()
     mock_response.content = [Mock(type="text", text="Response")]
@@ -191,7 +203,7 @@ def test_chat_with_claude_tool_function_not_dict(mock_claude, mock_insert_llm_re
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
 @patch("services.anthropic.chat_with_functions.claude")
 def test_chat_with_claude_tool_missing_name_or_description(
-    mock_claude, mock_insert_llm_request
+    mock_claude, mock_insert_llm_request, mock_trim_messages, mock_deduplication_functions
 ):
     """Test when tool is missing name or description (line 69 false branch)"""
     mock_response = Mock()
@@ -243,7 +255,9 @@ def test_chat_with_claude_tool_missing_name_or_description(
 
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
 @patch("services.anthropic.chat_with_functions.claude")
-def test_chat_with_claude_overloaded_error(mock_claude, mock_insert_llm_request):
+def test_chat_with_claude_overloaded_error(
+    mock_claude, mock_insert_llm_request, mock_trim_messages, mock_deduplication_functions
+):
     """Test handling of OverloadedError (lines 94-95)"""
     mock_claude.messages.create.side_effect = OverloadedError(
         "Service overloaded", response=Mock(), body=None
@@ -263,7 +277,9 @@ def test_chat_with_claude_overloaded_error(mock_claude, mock_insert_llm_request)
 
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
 @patch("services.anthropic.chat_with_functions.claude")
-def test_chat_with_claude_authentication_error(mock_claude, mock_insert_llm_request):
+def test_chat_with_claude_authentication_error(
+    mock_claude, mock_insert_llm_request, mock_trim_messages, mock_deduplication_functions
+):
     """Test handling of AuthenticationError (lines 96-97)"""
     mock_claude.messages.create.side_effect = AuthenticationError(
         "Invalid API key", response=Mock(), body=None
@@ -283,7 +299,9 @@ def test_chat_with_claude_authentication_error(mock_claude, mock_insert_llm_requ
 
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
 @patch("services.anthropic.chat_with_functions.claude")
-def test_chat_with_claude_tool_use_only_no_text(mock_claude, mock_insert_llm_request):
+def test_chat_with_claude_tool_use_only_no_text(
+    mock_claude, mock_insert_llm_request, mock_trim_messages, mock_deduplication_functions
+):
     """Test when response has only tool_use without text (line 126 false branch)"""
     mock_tool_use = Mock()
     mock_tool_use.type = "tool_use"
@@ -327,7 +345,9 @@ def test_chat_with_claude_tool_use_only_no_text(mock_claude, mock_insert_llm_req
 
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
 @patch("services.anthropic.chat_with_functions.claude")
-def test_chat_with_claude_empty_text_content(mock_claude, mock_insert_llm_request):
+def test_chat_with_claude_empty_text_content(
+    mock_claude, mock_insert_llm_request, mock_trim_messages, mock_deduplication_functions
+):
     """Test when text content is empty string (line 126 false branch)"""
     mock_tool_use = Mock()
     mock_tool_use.type = "tool_use"
@@ -361,7 +381,9 @@ def test_chat_with_claude_empty_text_content(mock_claude, mock_insert_llm_reques
 
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
 @patch("services.anthropic.chat_with_functions.claude")
-def test_chat_with_claude_unknown_content_type(mock_claude, mock_insert_llm_request):
+def test_chat_with_claude_unknown_content_type(
+    mock_claude, mock_insert_llm_request, mock_trim_messages, mock_deduplication_functions
+):
     """Test when content block has unknown type (line 117 false branch)"""
     mock_unknown = Mock()
     mock_unknown.type = "unknown_type"
@@ -397,7 +419,9 @@ def test_chat_with_claude_unknown_content_type(mock_claude, mock_insert_llm_requ
 
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
 @patch("services.anthropic.chat_with_functions.claude")
-def test_chat_with_claude_multiple_tool_uses(mock_claude, mock_insert_llm_request):
+def test_chat_with_claude_multiple_tool_uses(
+    mock_claude, mock_insert_llm_request, mock_trim_messages, mock_deduplication_functions
+):
     """Test when response has multiple tool_use blocks (only first should be used)"""
     mock_tool_use_1 = Mock()
     mock_tool_use_1.type = "tool_use"
