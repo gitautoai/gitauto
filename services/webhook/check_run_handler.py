@@ -446,7 +446,6 @@ def handle_check_run(
                 original_error_log=error_log,
                 minimized_error_log=minimized_log,
             )
-            return
 
             return
         # Explore repo
