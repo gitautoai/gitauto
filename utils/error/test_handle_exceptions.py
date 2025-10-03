@@ -528,3 +528,29 @@ def test_handle_exceptions_http_error_no_response_with_raise_on_error():
     assert "Connection failed" in str(exc_info.value)
 
 
+def test_handle_exceptions_google_api_429_rate_limit():
+    """Test Google API 429 rate limit handling (lines 95-99)."""
+    mock_response = MagicMock()
+    mock_response.status_code = 429
+    mock_response.reason = "Too Many Requests"
+    mock_response.text = "Rate limit exceeded"
+    mock_response.headers = {"Retry-After": "60"}
+
+    @handle_exceptions(default_return_value="default", api_type="google")
+    def test_func():
+        http_error = requests.HTTPError("Rate limit exceeded")
+        http_error.response = mock_response
+        raise http_error
+
+    # Should raise the HTTPError for Google API 429
+    with pytest.raises(requests.HTTPError) as exc_info:
+        test_func()
+
+    # Verify it's the correct error
+    assert exc_info.value.response.status_code == 429
+    assert "Rate limit exceeded" in str(exc_info.value)
+
+
+def test_handle_exceptions_json_decode_error_without_doc_attribute():
+    """Test JSONDecodeError without doc attribute (line 118)."""
+
