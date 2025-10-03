@@ -8,7 +8,10 @@ from services.anthropic.exceptions import (ClaudeAuthenticationError,
                                            ClaudeOverloadedError)
 
 
+@patch("services.anthropic.chat_with_functions.trim_messages_to_token_limit")
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
+def test_chat_with_claude_success(
+    mock_trim_messages, mock_claude, mock_insert_llm_request
 @patch("services.anthropic.chat_with_functions.claude")
 def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
     mock_response = Mock()
