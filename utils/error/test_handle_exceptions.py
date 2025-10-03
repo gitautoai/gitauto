@@ -568,3 +568,4 @@ def test_handle_exceptions_json_decode_error_without_doc_attribute():
     # Should return default value
     assert result == "default"
     # Verify the error was logged with "Raw response not available"
+    assert "Raw response not available" in caplog.text
