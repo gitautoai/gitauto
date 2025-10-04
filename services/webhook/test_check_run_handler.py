@@ -807,7 +807,7 @@ def test_check_run_handler_token_accumulation(
     # Verify chat_with_agent was called twice (get + commit modes)
     assert mock_chat_agent.call_count == 2
 
-    # Verify update_usage was called once with accumulated tokens
+    # Verify update_usage was called once at the end with accumulated tokens
     assert mock_update_usage.call_count == 1
     call_kwargs = mock_update_usage.call_args.kwargs
 
