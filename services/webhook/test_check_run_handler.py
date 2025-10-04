@@ -880,6 +880,8 @@ def test_handle_check_run_skips_duplicate_older_request(
     mock_check_older_active.return_value = {
         "id": 888,
         "created_at": "2025-09-23T10:00:00Z",
+    mock_is_pull_request_open.return_value = True
+    mock_check_branch_exists.return_value = True
     }
 
     # Execute
