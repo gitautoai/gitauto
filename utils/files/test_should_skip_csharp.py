@@ -1193,3 +1193,4 @@ def test_static_variable_with_function_call():
 public const int MAX_SIZE = 100;"""
     assert should_skip_csharp(content) is False
 
+
