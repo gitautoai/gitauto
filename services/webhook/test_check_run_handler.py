@@ -830,6 +830,8 @@ def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_run_handler.clean_logs")
 @patch("services.webhook.check_run_handler.check_older_active_test_failure_request")
+@patch("services.webhook.check_run_handler.is_pull_request_open")
+@patch("services.webhook.check_run_handler.check_branch_exists")
 @patch("services.webhook.check_run_handler.update_usage")
 def test_handle_check_run_skips_duplicate_older_request(
     mock_update_usage,
