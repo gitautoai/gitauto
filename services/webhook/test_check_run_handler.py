@@ -807,24 +807,14 @@ def test_check_run_handler_token_accumulation(
     # Verify chat_with_agent was called twice (get + commit modes)
     assert mock_chat_agent.call_count == 2
 
-    # Verify update_usage was called with accumulated tokens
-    assert mock_update_usage.call_count == 2
-    # First call: when older active request is detected
-    first_call = mock_update_usage.call_args_list[0]
-    assert first_call.kwargs["usage_id"] == 999
-    assert first_call.kwargs["is_completed"] is True
-    assert first_call.kwargs["pr_number"] == 1
-
-    # Second call: final update with retry pairs and logs
-    second_call = mock_update_usage.call_args_list[1]
-    assert second_call.kwargs["usage_id"] == 999
-    assert second_call.kwargs["is_completed"] is True
-    assert "retry_workflow_id_hash_pairs" in second_call.kwargs
+    # Verify update_usage was called once with accumulated tokens
+    assert mock_update_usage.call_count == 1
     call_kwargs = mock_update_usage.call_args.kwargs
 
     assert call_kwargs["usage_id"] == 888
     assert call_kwargs["token_input"] == 160  # Two calls: 80 + 80
     assert call_kwargs["token_output"] == 90  # Two calls: 45 + 45
+    assert call_kwargs["is_completed"] is True
 
 
 @patch("services.webhook.check_run_handler.get_installation_access_token")
