@@ -807,13 +807,14 @@ def test_check_run_handler_token_accumulation(
     # Verify chat_with_agent was called twice (get + commit modes)
     assert mock_chat_agent.call_count == 2
 
-    # Verify update_usage was called with accumulated tokens
-    mock_update_usage.assert_called_once()
+    # Verify update_usage was called once at the end with accumulated tokens
+    assert mock_update_usage.call_count == 1
     call_kwargs = mock_update_usage.call_args.kwargs
 
     assert call_kwargs["usage_id"] == 888
     assert call_kwargs["token_input"] == 160  # Two calls: 80 + 80
     assert call_kwargs["token_output"] == 90  # Two calls: 45 + 45
+    assert call_kwargs["is_completed"] is True
 
 
 @patch("services.webhook.check_run_handler.get_installation_access_token")
@@ -830,9 +831,13 @@ def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_run_handler.clean_logs")
 @patch("services.webhook.check_run_handler.check_older_active_test_failure_request")
+@patch("services.webhook.check_run_handler.is_pull_request_open")
+@patch("services.webhook.check_run_handler.check_branch_exists")
 @patch("services.webhook.check_run_handler.update_usage")
 def test_handle_check_run_skips_duplicate_older_request(
     mock_update_usage,
+    mock_check_branch_exists,
+    mock_is_pull_request_open,
     mock_check_older_active,
     mock_clean_logs,
     mock_get_retry_pairs,
@@ -877,6 +882,8 @@ def test_handle_check_run_skips_duplicate_older_request(
         "id": 888,
         "created_at": "2025-09-23T10:00:00Z",
     }
+    mock_is_pull_request_open.return_value = True
+    mock_check_branch_exists.return_value = True
 
     # Execute
     handle_check_run(mock_check_run_payload)
@@ -891,7 +898,7 @@ def test_handle_check_run_skips_duplicate_older_request(
     )
 
     # Verify duplicate handling
-    mock_update_usage.assert_called_once()
+    assert mock_update_usage.call_count == 2
     call_kwargs = mock_update_usage.call_args.kwargs
     assert call_kwargs["usage_id"] == 999
     assert call_kwargs["is_completed"] is True
