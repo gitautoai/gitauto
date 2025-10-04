@@ -1,6 +1,6 @@
 # Standard imports
 import json
-from unittest import mock
+from unittest.mock import MagicMock, patch
 
 import pytest
 # Local imports
@@ -15,10 +15,10 @@ def test_claude_to_openai_message_conversion():
     with open("services/anthropic/test_messages.json", "r", encoding=UTF8) as f:
         claude_messages = json.load(f)
 
-    mock_client = mock.MagicMock()
-    mock_completion = mock.MagicMock()
-    mock_choice = mock.MagicMock()
-    mock_message = mock.MagicMock()
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_message = MagicMock()
 
     mock_message.role = "assistant"
     mock_message.content = "Test response"
@@ -27,7 +27,7 @@ def test_claude_to_openai_message_conversion():
     mock_completion.choices = [mock_choice]
     mock_client.chat.completions.create.return_value = mock_completion
 
-    with mock.patch(
+    with patch(
         "services.openai.chat_with_functions.create_openai_client",
         return_value=mock_client,
     ):
@@ -78,10 +78,10 @@ def test_claude_error_fallback_to_openai():
     with open("services/anthropic/test_messages.json", "r", encoding=UTF8) as f:
         claude_messages = json.load(f)
 
-    mock_client = mock.MagicMock()
-    mock_completion = mock.MagicMock()
-    mock_choice = mock.MagicMock()
-    mock_message = mock.MagicMock()
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_message = MagicMock()
 
     mock_message.role = "assistant"
     mock_message.content = "Test response"
@@ -90,7 +90,7 @@ def test_claude_error_fallback_to_openai():
     mock_completion.choices = [mock_choice]
     mock_client.chat.completions.create.return_value = mock_completion
 
-    with mock.patch(
+    with patch(
         "services.openai.chat_with_functions.create_openai_client",
         return_value=mock_client,
     ):
@@ -129,14 +129,14 @@ def test_claude_error_fallback_to_openai():
             assert "content" in tool_msg
 
 
-@mock.patch("services.openai.chat_with_functions.insert_llm_request")
+@patch("services.openai.chat_with_functions.insert_llm_request")
 def test_chat_with_openai_logs_request(mock_insert_llm_request):
     """Test that LLM requests are properly logged"""
-    mock_client = mock.MagicMock()
-    mock_completion = mock.MagicMock()
-    mock_choice = mock.MagicMock()
-    mock_message = mock.MagicMock()
-    mock_usage = mock.MagicMock()
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_message = MagicMock()
+    mock_usage = MagicMock()
 
     mock_message.role = "assistant"
     mock_message.content = "Test response"
@@ -148,7 +148,7 @@ def test_chat_with_openai_logs_request(mock_insert_llm_request):
     mock_usage.completion_tokens = 10
     mock_client.chat.completions.create.return_value = mock_completion
 
-    with mock.patch(
+    with patch(
         "services.openai.chat_with_functions.create_openai_client",
         return_value=mock_client,
     ):
@@ -235,15 +235,15 @@ def test_convert_tool_result():
     assert result["content"] == "Tool result content"
 
 
-@mock.patch("services.openai.chat_with_functions.insert_llm_request")
+@patch("services.openai.chat_with_functions.insert_llm_request")
 def test_chat_with_openai_with_tool_calls(mock_insert_llm_request):
     """Test chat with tool calls - covers lines 177-184, 193-194, 196"""
-    mock_client = mock.MagicMock()
-    mock_completion = mock.MagicMock()
-    mock_choice = mock.MagicMock()
-    mock_message = mock.MagicMock()
-    mock_usage = mock.MagicMock()
-    mock_tool_call = mock.MagicMock()
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_message = MagicMock()
+    mock_usage = MagicMock()
+    mock_tool_call = MagicMock()
 
     mock_message.role = "assistant"
     mock_message.content = ""
@@ -258,7 +258,7 @@ def test_chat_with_openai_with_tool_calls(mock_insert_llm_request):
     mock_usage.completion_tokens = 15
     mock_client.chat.completions.create.return_value = mock_completion
 
-    with mock.patch(
+    with patch(
         "services.openai.chat_with_functions.create_openai_client",
         return_value=mock_client,
     ):
@@ -290,15 +290,15 @@ def test_chat_with_openai_with_tool_calls(mock_insert_llm_request):
         assert "content" not in response_message
 
 
-@mock.patch("services.openai.chat_with_functions.insert_llm_request")
+@patch("services.openai.chat_with_functions.insert_llm_request")
 def test_chat_with_openai_with_tool_calls_and_content(mock_insert_llm_request):
     """Test chat with tool calls and content - covers lines 177-184, 196"""
-    mock_client = mock.MagicMock()
-    mock_completion = mock.MagicMock()
-    mock_choice = mock.MagicMock()
-    mock_message = mock.MagicMock()
-    mock_usage = mock.MagicMock()
-    mock_tool_call = mock.MagicMock()
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_message = MagicMock()
+    mock_usage = MagicMock()
+    mock_tool_call = MagicMock()
 
     mock_message.role = "assistant"
     mock_message.content = "Let me get that file for you"
@@ -313,7 +313,7 @@ def test_chat_with_openai_with_tool_calls_and_content(mock_insert_llm_request):
     mock_usage.completion_tokens = 18
     mock_client.chat.completions.create.return_value = mock_completion
 
-    with mock.patch(
+    with patch(
         "services.openai.chat_with_functions.create_openai_client",
         return_value=mock_client,
     ):
@@ -344,14 +344,14 @@ def test_chat_with_openai_with_tool_calls_and_content(mock_insert_llm_request):
         assert response_message["content"] == "Let me get that file for you"
 
 
-@mock.patch("services.openai.chat_with_functions.insert_llm_request")
+@patch("services.openai.chat_with_functions.insert_llm_request")
 def test_chat_with_openai_message_with_tool_calls_field(mock_insert_llm_request):
     """Test message with tool_calls field - covers line 73"""
-    mock_client = mock.MagicMock()
-    mock_completion = mock.MagicMock()
-    mock_choice = mock.MagicMock()
-    mock_message = mock.MagicMock()
-    mock_usage = mock.MagicMock()
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_message = MagicMock()
+    mock_usage = MagicMock()
 
     mock_message.role = "assistant"
     mock_message.content = "Response"
@@ -363,7 +363,7 @@ def test_chat_with_openai_message_with_tool_calls_field(mock_insert_llm_request)
     mock_usage.completion_tokens = 5
     mock_client.chat.completions.create.return_value = mock_completion
 
-    with mock.patch(
+    with patch(
         "services.openai.chat_with_functions.create_openai_client",
         return_value=mock_client,
     ):
@@ -392,16 +392,16 @@ def test_chat_with_openai_message_with_tool_calls_field(mock_insert_llm_request)
         assert "tool_calls" in actual_messages[2]
 
 
-@mock.patch("services.openai.chat_with_functions.insert_llm_request")
+@patch("services.openai.chat_with_functions.insert_llm_request")
 def test_chat_with_openai_content_list_without_tool_use_or_result(
     mock_insert_llm_request,
 ):
     """Test content list without tool_use or tool_result - covers line 109"""
-    mock_client = mock.MagicMock()
-    mock_completion = mock.MagicMock()
-    mock_choice = mock.MagicMock()
-    mock_message = mock.MagicMock()
-    mock_usage = mock.MagicMock()
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_message = MagicMock()
+    mock_usage = MagicMock()
 
     mock_message.role = "assistant"
     mock_message.content = "Response"
@@ -413,7 +413,7 @@ def test_chat_with_openai_content_list_without_tool_use_or_result(
     mock_usage.completion_tokens = 5
     mock_client.chat.completions.create.return_value = mock_completion
 
-    with mock.patch(
+    with patch(
         "services.openai.chat_with_functions.create_openai_client",
         return_value=mock_client,
     ):
@@ -434,14 +434,14 @@ def test_chat_with_openai_content_list_without_tool_use_or_result(
         assert len(actual_messages) == 1
 
 
-@mock.patch("services.openai.chat_with_functions.insert_llm_request")
+@patch("services.openai.chat_with_functions.insert_llm_request")
 def test_chat_with_openai_tool_use_with_non_text_block(mock_insert_llm_request):
     """Test tool_use with non-text block - covers line 95"""
-    mock_client = mock.MagicMock()
-    mock_completion = mock.MagicMock()
-    mock_choice = mock.MagicMock()
-    mock_message = mock.MagicMock()
-    mock_usage = mock.MagicMock()
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_message = MagicMock()
+    mock_usage = MagicMock()
 
     mock_message.role = "assistant"
     mock_message.content = "Response"
@@ -453,7 +453,7 @@ def test_chat_with_openai_tool_use_with_non_text_block(mock_insert_llm_request):
     mock_usage.completion_tokens = 5
     mock_client.chat.completions.create.return_value = mock_completion
 
-    with mock.patch(
+    with patch(
         "services.openai.chat_with_functions.create_openai_client",
         return_value=mock_client,
     ):
@@ -483,14 +483,14 @@ def test_chat_with_openai_tool_use_with_non_text_block(mock_insert_llm_request):
         assert "tool_calls" in actual_messages[1]
 
 
-@mock.patch("services.openai.chat_with_functions.insert_llm_request")
+@patch("services.openai.chat_with_functions.insert_llm_request")
 def test_chat_with_openai_tool_result_with_non_result_block(mock_insert_llm_request):
     """Test tool_result with non-result block - covers line 111"""
-    mock_client = mock.MagicMock()
-    mock_completion = mock.MagicMock()
-    mock_choice = mock.MagicMock()
-    mock_message = mock.MagicMock()
-    mock_usage = mock.MagicMock()
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_message = MagicMock()
+    mock_usage = MagicMock()
 
     mock_message.role = "assistant"
     mock_message.content = "Response"
@@ -502,7 +502,7 @@ def test_chat_with_openai_tool_result_with_non_result_block(mock_insert_llm_requ
     mock_usage.completion_tokens = 5
     mock_client.chat.completions.create.return_value = mock_completion
 
-    with mock.patch(
+    with patch(
         "services.openai.chat_with_functions.create_openai_client",
         return_value=mock_client,
     ):
@@ -541,13 +541,13 @@ def test_chat_with_openai_tool_result_with_non_result_block(mock_insert_llm_requ
         assert len(tool_messages) == 1
 
 
-@mock.patch("services.openai.chat_with_functions.insert_llm_request")
+@patch("services.openai.chat_with_functions.insert_llm_request")
 def test_chat_with_openai_no_usage_info(mock_insert_llm_request):
     """Test when usage info is None"""
-    mock_client = mock.MagicMock()
-    mock_completion = mock.MagicMock()
-    mock_choice = mock.MagicMock()
-    mock_message = mock.MagicMock()
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_message = MagicMock()
 
     mock_message.role = "assistant"
     mock_message.content = "Response"
@@ -557,7 +557,7 @@ def test_chat_with_openai_no_usage_info(mock_insert_llm_request):
     mock_completion.usage = None
     mock_client.chat.completions.create.return_value = mock_completion
 
-    with mock.patch(
+    with patch(
         "services.openai.chat_with_functions.create_openai_client",
         return_value=mock_client,
     ):
@@ -571,14 +571,14 @@ def test_chat_with_openai_no_usage_info(mock_insert_llm_request):
         assert result[5] == 0
 
 
-@mock.patch("services.openai.chat_with_functions.insert_llm_request")
+@patch("services.openai.chat_with_functions.insert_llm_request")
 def test_chat_with_openai_tool_use_with_text_block(mock_insert_llm_request):
     """Test tool_use with text block"""
-    mock_client = mock.MagicMock()
-    mock_completion = mock.MagicMock()
-    mock_choice = mock.MagicMock()
-    mock_message = mock.MagicMock()
-    mock_usage = mock.MagicMock()
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_message = MagicMock()
+    mock_usage = MagicMock()
 
     mock_message.role = "assistant"
     mock_message.content = "Response"
@@ -590,7 +590,7 @@ def test_chat_with_openai_tool_use_with_text_block(mock_insert_llm_request):
     mock_usage.completion_tokens = 5
     mock_client.chat.completions.create.return_value = mock_completion
 
-    with mock.patch(
+    with patch(
         "services.openai.chat_with_functions.create_openai_client",
         return_value=mock_client,
     ):
@@ -621,14 +621,14 @@ def test_chat_with_openai_tool_use_with_text_block(mock_insert_llm_request):
         assert "tool_calls" in actual_messages[1]
 
 
-@mock.patch("services.openai.chat_with_functions.insert_llm_request")
+@patch("services.openai.chat_with_functions.insert_llm_request")
 def test_convert_tool_result_unknown_function(mock_insert_llm_request):
     """Test convert_tool_result when function name is not found"""
-    mock_client = mock.MagicMock()
-    mock_completion = mock.MagicMock()
-    mock_choice = mock.MagicMock()
-    mock_message = mock.MagicMock()
-    mock_usage = mock.MagicMock()
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_message = MagicMock()
+    mock_usage = MagicMock()
 
     mock_message.role = "assistant"
     mock_message.content = "Response"
@@ -640,7 +640,7 @@ def test_convert_tool_result_unknown_function(mock_insert_llm_request):
     mock_usage.completion_tokens = 5
     mock_client.chat.completions.create.return_value = mock_completion
 
-    with mock.patch(
+    with patch(
         "services.openai.chat_with_functions.create_openai_client",
         return_value=mock_client,
     ):
