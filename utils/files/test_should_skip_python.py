@@ -1,4 +1,3 @@
-# check
 from utils.files.should_skip_python import should_skip_python
 
 
