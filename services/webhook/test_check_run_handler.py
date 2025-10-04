@@ -808,7 +808,18 @@ def test_check_run_handler_token_accumulation(
     assert mock_chat_agent.call_count == 2
 
     # Verify update_usage was called with accumulated tokens
-    mock_update_usage.assert_called_once()
+    assert mock_update_usage.call_count == 2
+    # First call: when older active request is detected
+    first_call = mock_update_usage.call_args_list[0]
+    assert first_call.kwargs["usage_id"] == 999
+    assert first_call.kwargs["is_completed"] is True
+    assert first_call.kwargs["pr_number"] == 1
+
+    # Second call: final update with retry pairs and logs
+    second_call = mock_update_usage.call_args_list[1]
+    assert second_call.kwargs["usage_id"] == 999
+    assert second_call.kwargs["is_completed"] is True
+    assert "retry_workflow_id_hash_pairs" in second_call.kwargs
     call_kwargs = mock_update_usage.call_args.kwargs
 
     assert call_kwargs["usage_id"] == 888
