@@ -1192,3 +1192,4 @@ def test_static_variable_with_function_call():
     content = """private static int config = LoadConfig();
 public const int MAX_SIZE = 100;"""
     assert should_skip_csharp(content) is False
+
