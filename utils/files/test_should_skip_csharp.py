@@ -861,3 +861,334 @@ def test_internal_interface_method():
     void Process();
 }"""
     assert should_skip_csharp(content) is True
+
+
+def test_verbatim_string_with_zero_quotes():
+    content = """public const string NoQuotes = @;
+public const int Value = 42;"""
+    assert should_skip_csharp(content) is False
+
+
+def test_verbatim_string_with_three_quotes():
+    content = """public const string ThreeQuotes = @"test"extra";
+public const int Value = 42;"""
+    assert should_skip_csharp(content) is False
+
+
+def test_preprocessor_with_double_slash_comment():
+    content = """#define DEBUG
+// This is a comment
+#if DEBUG
+public const int LogLevel = 1;
+#endif"""
+    assert should_skip_csharp(content) is True
+
+
+def test_line_with_only_hash():
+    content = """#
+public const int Value = 42;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_line_with_only_double_slash():
+    content = """//
+public const int Value = 42;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_verbatim_string_multiline_start():
+    content = """public const string Template = @"
+Line 1
+Line 2
+";
+public const int Value = 42;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_verbatim_string_multiline_middle():
+    content = """public const string Template = @"
+Line 1
+Line 2
+Line 3
+";"""
+    assert should_skip_csharp(content) is True
+
+
+def test_verbatim_string_multiline_end():
+    content = """public const string Template = @"
+Line 1
+Line 2
+";
+public const int Value = 42;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_multiline_comment_start_and_end_same_line():
+    content = """/* Comment */ public const int Value = 42;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_multiline_comment_multiple_lines():
+    content = """/* Start
+Middle
+End */
+public const int Value = 42;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_static_readonly_with_only_opening_paren():
+    content = """public static readonly string Value = GetValue(;"""
+    assert should_skip_csharp(content) is False
+
+
+def test_static_readonly_with_only_closing_paren():
+    content = """public static readonly string Value = GetValue);"""
+    assert should_skip_csharp(content) is False
+
+
+def test_field_declaration_with_only_opening_paren():
+    content = """private string value = GetValue(;"""
+    assert should_skip_csharp(content) is False
+
+
+def test_field_declaration_with_only_closing_paren():
+    content = """private string value = GetValue);"""
+    assert should_skip_csharp(content) is False
+
+
+def test_return_statement_with_array_literal():
+    content = """return [1, 2, 3];"""
+    assert should_skip_csharp(content) is False
+
+
+def test_return_statement_with_object_literal():
+    content = """return { Name = "Test" };"""
+    assert should_skip_csharp(content) is False
+
+
+def test_return_statement_with_string_literal():
+    content = """return "test";"""
+    assert should_skip_csharp(content) is False
+
+
+def test_return_statement_with_numeric_literal():
+    content = """return 42;"""
+    assert should_skip_csharp(content) is False
+
+
+def test_return_statement_with_single_quote_string():
+    content = """return 'c';"""
+    assert should_skip_csharp(content) is False
+
+
+def test_assignment_with_equals_in_const():
+    content = """public const int Value = 42;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_assignment_with_equals_not_const():
+    content = """value = 42;"""
+    assert should_skip_csharp(content) is False
+
+
+def test_method_call_pattern():
+    content = """MethodName();"""
+    assert should_skip_csharp(content) is False
+
+
+def test_method_call_with_params():
+    content = """MethodName(param1, param2);"""
+    assert should_skip_csharp(content) is False
+
+
+def test_method_call_without_semicolon_pattern():
+    content = """MethodName()"""
+    assert should_skip_csharp(content) is False
+
+
+def test_executable_code_not_starting_with_hash_or_slash():
+    content = """SomeStatement;"""
+    assert should_skip_csharp(content) is False
+
+
+def test_executable_code_starting_with_letter():
+    content = """statement;"""
+    assert should_skip_csharp(content) is False
+
+
+def test_all_control_flow_keywords():
+    content = """if (condition) { }
+for (int i = 0; i < 10; i++) { }
+while (true) { }
+foreach (var item in items) { }
+switch (value) { }
+try { } catch { }"""
+    assert should_skip_csharp(content) is False
+
+
+def test_mixed_imports_and_constants():
+    content = """using System;
+using System.Collections.Generic;
+
+public const int MaxRetries = 3;
+private const string ApiUrl = "https://api.example.com";"""
+    assert should_skip_csharp(content) is True
+
+
+def test_empty_init_file():
+    content = ""
+    assert should_skip_csharp(content) is True
+
+
+def test_comment_with_simple_class():
+    content = """/**
+ * Base class for application components
+ */
+public class BaseComponent
+{
+}"""
+    assert should_skip_csharp(content) is True
+
+
+def test_single_line_constant():
+    content = """public const string API_KEY = "abc123";"""
+    assert should_skip_csharp(content) is True
+
+
+def test_complex_class_transitions():
+    content = """public class MyException : Exception
+{
+}
+
+public record DataClass(int Id, string Name);
+
+public const int MAX_RETRIES = 5;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_mixed_assignment_patterns():
+    content = """public const string SIMPLE_VAR = "value";
+public const int NUM_VAR = 42;
+public const bool BOOL_VAR = true;
+public const double FLOAT_VAR = 3.14;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_bare_string_continuation():
+    content = """/**
+ * This is a module documentation
+ * that spans multiple lines
+ */
+
+public const string CONSTANT = "value";"""
+    assert should_skip_csharp(content) is True
+
+
+def test_autoload_statements():
+    content = """using System;
+using System.Collections.Generic;
+public const string CONSTANT = "value";"""
+    assert should_skip_csharp(content) is True
+
+
+def test_field_definition_with_complex_types():
+    content = """public class Config
+{
+    public string Handler()
+    {
+        return "error";
+    }
+
+    public List<string> ProcessData(List<string> items)
+    {
+        return items;
+    }
+}"""
+    assert should_skip_csharp(content) is False
+
+
+def test_inside_exception_class_to_typeddict():
+    content = """public class MyError : Exception
+{
+}
+public interface IConfig
+{
+    string Name { get; }
+}"""
+    assert should_skip_csharp(content) is True
+
+
+def test_inside_typeddict_class_to_exception():
+    content = """public interface IConfig
+{
+    string Name { get; }
+}
+public class MyError : Exception
+{
+}"""
+    assert should_skip_csharp(content) is True
+
+
+def test_inside_exception_class_to_namedtuple():
+    content = """public class MyError : Exception
+{
+}
+public record Point(int X, int Y);"""
+    assert should_skip_csharp(content) is True
+
+
+def test_extern_declarations():
+    content = """using System;
+using System.Collections.Generic;
+public const int MAX_SIZE = 100;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_static_extern_const():
+    content = """private static int internalVar = 42;
+public static readonly string VERSION = "1.0.0";
+public const int MAX_SIZE = 100;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_enum_and_macro_declarations():
+    content = """public const bool DEBUG_MODE = true;
+public const int BUFFER_SIZE = 1024;
+public const int MAX_SIZE = 100;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_macro_constants_only():
+    content = """public const int MAX_SIZE = 1024;
+public const int BUFFER_SIZE = 512;
+public const int VALUE = 42;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_standalone_closing_braces():
+    content = """public class MyClass
+{
+    public const int VALUE = 42;
+}
+public const int MAX_SIZE = 100;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_standalone_closing_brace_only():
+    content = """}
+public const int MAX_SIZE = 100;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_class_without_opening_brace():
+    content = """public class Config
+{
+}
+public const int MAX_SIZE = 100;"""
+    assert should_skip_csharp(content) is True
+
+
+def test_static_variable_with_function_call():
+    content = """private static int config = LoadConfig();
+public const int MAX_SIZE = 100;"""
+    assert should_skip_csharp(content) is False
