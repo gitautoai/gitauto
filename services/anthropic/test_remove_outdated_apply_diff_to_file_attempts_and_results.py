@@ -2,9 +2,8 @@
 
 from unittest.mock import patch
 
-from services.anthropic.remove_outdated_apply_diff_to_file_attempts_and_results import (
-    remove_outdated_apply_diff_to_file_attempts_and_results,
-)
+from services.anthropic.remove_outdated_apply_diff_to_file_attempts_and_results import \
+    remove_outdated_apply_diff_to_file_attempts_and_results
 
 
 def test_remove_outdated_apply_diff_to_file_attempts_and_results_empty_list():
@@ -1119,4 +1118,530 @@ def test_handles_runtime_exception():
 
     result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
     # Should return original messages unchanged when exception occurs
+    assert result == messages
+
+
+def test_content_item_not_dict_in_first_pass():
+    """Test when content contains non-dict items in first pass (line 25-26)"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                "string item",  # Not a dict
+                {"type": "text", "text": "normal item"},
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    assert result == messages
+
+
+def test_apply_diff_to_file_input_not_dict():
+    """Test when apply_diff_to_file input is not a dict (line 36-37)"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "apply_diff_to_file",
+                    "input": "not a dict",  # Invalid input
+                }
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    assert result == messages
+
+
+def test_apply_diff_to_file_missing_file_path():
+    """Test when apply_diff_to_file input missing file_path (line 36-37)"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "apply_diff_to_file",
+                    "input": {
+                        "diff": "some diff",
+                        # Missing file_path
+                    },
+                }
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    assert result == messages
+
+
+def test_replace_remote_file_content_input_not_dict():
+    """Test when replace_remote_file_content input is not a dict (line 51-52)"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": "not a dict",  # Invalid input
+                }
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    assert result == messages
+
+
+def test_replace_remote_file_content_missing_file_path():
+    """Test when replace_remote_file_content input missing file_path (line 51-52)"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_content": "some content",
+                        # Missing file_path
+                    },
+                }
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    assert result == messages
+
+
+def test_failed_diff_malformed_missing_start_marker():
+    """Test failed diff with missing start marker (line 74-75)"""
+    # Missing the start marker
+    malformed_diff = "But, some changes were rejected. Review rejected changes."
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": malformed_diff,
+                }
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    assert result == messages
+
+
+def test_failed_diff_malformed_missing_end_marker():
+    """Test failed diff with missing end marker (line 74-75)"""
+    # Missing the end marker
+    malformed_diff = "diff partially applied to the file: test.py. Some other text."
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": malformed_diff,
+                }
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    assert result == messages
+
+
+def test_successful_diff_malformed_missing_start_marker():
+    """Test successful diff with missing start marker (line 92-93)"""
+    # Missing the start marker
+    malformed_diff = "successfully by apply_diff_to_file()."
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": malformed_diff,
+                }
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    assert result == messages
+
+
+def test_successful_diff_malformed_missing_end_marker():
+    """Test successful diff with missing end marker (line 92-93)"""
+    # Missing the end marker
+    malformed_diff = "diff applied to the file: test.py some other text."
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": malformed_diff,
+                }
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    assert result == messages
+
+
+def test_content_item_not_dict_in_second_pass():
+    """Test when content contains non-dict items in second pass (line 107-109)"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                "string item",  # Not a dict
+                123,  # Number
+                None,  # None
+                {"type": "text", "text": "normal item"},
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    assert result == messages
+
+
+def test_second_pass_apply_diff_input_not_dict():
+    """Test second pass when apply_diff_to_file input is not a dict (line 118-120)"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "apply_diff_to_file",
+                    "input": "not a dict",  # Invalid input
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "apply_diff_to_file",
+                    "input": {
+                        "file_path": "test.py",
+                        "diff": "some diff",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    # First message should remain unchanged
+    assert result[0] == messages[0]
+
+
+def test_second_pass_apply_diff_missing_file_path():
+    """Test second pass when apply_diff_to_file input missing file_path (line 118-120)"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "apply_diff_to_file",
+                    "input": {
+                        "diff": "some diff",
+                        # Missing file_path
+                    },
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "apply_diff_to_file",
+                    "input": {
+                        "file_path": "test.py",
+                        "diff": "some diff",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    # First message should remain unchanged
+    assert result[0] == messages[0]
+
+
+def test_second_pass_failed_diff_missing_start_marker():
+    """Test second pass failed diff with missing start marker (line 152-154)"""
+    # Missing the start marker
+    malformed_diff = "But, some changes were rejected."
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "diff partially applied to the file: test.py. But, some changes were rejected.",
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": malformed_diff,
+                }
+            ],
+        },
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    # Second message should remain unchanged
+    assert result[1] == messages[1]
+
+
+def test_second_pass_failed_diff_missing_end_marker():
+    """Test second pass failed diff with missing end marker (line 152-154)"""
+    # Missing the end marker
+    malformed_diff = "diff partially applied to the file: test.py. Some other text."
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "diff partially applied to the file: test.py. But, some changes were rejected.",
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": malformed_diff,
+                }
+            ],
+        },
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    # Second message should remain unchanged
+    assert result[1] == messages[1]
+
+
+def test_second_pass_failed_diff_start_greater_than_end():
+    """Test second pass failed diff when start >= end (line 157-159)"""
+    # Create a malformed diff where the markers are in wrong order
+    malformed_diff = ". But, some changes were rejected diff partially applied to the file: test.py"
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "diff partially applied to the file: test.py. But, some changes were rejected.",
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": malformed_diff,
+                }
+            ],
+        },
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    # Second message should remain unchanged
+    assert result[1] == messages[1]
+
+
+def test_replace_remote_file_content_tracking():
+    """Test that replace_remote_file_content is tracked properly"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "apply_diff_to_file",
+                    "input": {
+                        "file_path": "test.py",
+                        "diff": "old diff",
+                    },
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "test.py",
+                        "file_content": "new content",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+
+    # First apply_diff should be outdated because replace_remote_file_content comes later
+    expected = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "apply_diff_to_file",
+                    "input": {
+                        "file_path": "test.py",
+                        "diff": "[Outdated diff input removed]",
+                    },
+                }
+            ],
+        },
+        messages[1],  # replace_remote_file_content unchanged
+    ]
+    assert result == expected
+
+
+def test_replace_remote_file_content_then_apply_diff():
+    """Test replace_remote_file_content followed by apply_diff_to_file"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "test.py",
+                        "file_content": "content",
+                    },
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "apply_diff_to_file",
+                    "input": {
+                        "file_path": "test.py",
+                        "diff": "new diff",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+
+    # Both should be kept as they are in order
+    assert result == messages
+
+
+def test_empty_file_path_in_input():
+    """Test when file_path is empty string"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "apply_diff_to_file",
+                    "input": {
+                        "file_path": "",  # Empty string
+                        "diff": "some diff",
+                    },
+                }
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    # Should still process it (empty string is a valid key)
+    assert result == messages
+
+
+def test_multiple_content_types_mixed():
+    """Test message with multiple content types including non-dicts"""
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                "text string",
+                123,
+                {"type": "text", "text": "hello"},
+                None,
+                {
+                    "type": "tool_use",
+                    "name": "apply_diff_to_file",
+                    "input": {
+                        "file_path": "test.py",
+                        "diff": "diff content",
+                    },
+                },
+                ["list", "item"],
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    # Should handle all types gracefully
+    assert result == messages
+
+
+def test_failed_diff_with_empty_filename():
+    """Test failed diff where filename extraction results in empty string"""
+    # Markers are adjacent, resulting in empty filename
+    malformed_diff = "diff partially applied to the file: . But, some changes were rejected."
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": malformed_diff,
+                }
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    # Should still process it (empty filename is technically valid)
+    assert result == messages
+
+
+def test_successful_diff_with_empty_filename():
+    """Test successful diff where filename extraction results in empty string"""
+    # Markers are adjacent, resulting in empty filename
+    malformed_diff = "diff applied to the file:  successfully by apply_diff_to_file()."
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": malformed_diff,
+                }
+            ],
+        }
+    ]
+    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    # Should still process it
     assert result == messages
