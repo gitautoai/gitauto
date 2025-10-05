@@ -848,6 +848,8 @@ def test_handle_check_run_skips_duplicate_older_request(
     mock_has_comment,
     mock_slack_notify,
     mock_get_repo,
+    mock_check_branch_exists,
+    mock_is_pr_open,
     mock_get_token,
     mock_check_run_payload,
 ):
