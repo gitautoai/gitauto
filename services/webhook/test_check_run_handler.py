@@ -835,9 +835,9 @@ def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_run_handler.update_usage")
 def test_handle_check_run_skips_duplicate_older_request(
     mock_update_usage,
-    mock_check_branch,
-    mock_is_pr_open,
     mock_check_older_active,
+    mock_clean_logs,
+    mock_get_retry_pairs,
     mock_clean_logs,
     mock_get_retry_pairs,
     _mock_update_comment,
