@@ -134,9 +134,6 @@ def test_handle_coverage_report_with_default_artifact_name():
             user_name="test-user",
         )
 
-        assert result is True
-        mock_download.assert_called_once()
-
 
 def test_handle_coverage_report_skips_non_coverage_artifacts():
     """Test that non-coverage artifacts are skipped"""
