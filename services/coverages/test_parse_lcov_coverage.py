@@ -381,7 +381,7 @@ end_of_record"""
 def test_malformed_fnda_line_no_comma():
     """Test FNDA line without comma"""
     test_lcov = """TN:
-SF:/test.py
+SF:/source.py
 FN:10,testFunc
 FNDA:5NoCommaHere
 FNF:1
