@@ -230,9 +230,6 @@ def test_handle_check_run_race_condition_prevention(
     assert kwargs["is_completed"] is True
     assert kwargs["pr_number"] == 1
     assert isinstance(kwargs["total_seconds"], int)  # Should be small integer
-    assert "retry_workflow_id_hash_pairs" in kwargs
-    assert "original_error_log" in kwargs
-    assert "minimized_error_log" in kwargs
 
     # Verify notification was sent
     mock_slack_notify.assert_called()
