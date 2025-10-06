@@ -294,7 +294,7 @@ def test_parse_lcov_gitauto_real_exact_counts():
 def test_brda_parsing_function_exit():
     """Test BRDA parsing for 'jump to the function exit' branch description"""
     test_lcov = """TN:
-SF:/test_func_exit.py
+SF:/func_exit.py
 BRDA:10,0,jump to the function exit,5
 BRDA:20,0,jump to the function exit,0
 BRF:2
