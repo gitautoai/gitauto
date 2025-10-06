@@ -894,7 +894,9 @@ def test_handle_check_run_skips_duplicate_older_request(
         owner_id=11111, repo_id=98765, pr_number=1, current_usage_id=999
     )
 
-    # Verify duplicate handling
+    # Verify duplicate handling - update_usage is called twice:
+    # 1. When older active request is found (early exit)
+    # 2. At the end of the function (after break from while loop)
     mock_update_usage.assert_called_once()
     call_kwargs = mock_update_usage.call_args.kwargs
     assert call_kwargs["usage_id"] == 999
