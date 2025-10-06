@@ -783,7 +783,6 @@ def test_check_run_handler_token_accumulation(
     ]
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
-    mock_is_pr_open.return_value = True
     mock_check_branch_exists.return_value = True
     mock_timeout_check.return_value = (False, 0)
 
