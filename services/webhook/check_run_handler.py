@@ -444,6 +444,7 @@ def handle_check_run(
                 pr_number=pull_number,
             )
             break
+            return
 
         # Explore repo
         (
