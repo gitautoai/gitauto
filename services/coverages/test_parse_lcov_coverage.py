@@ -363,7 +363,7 @@ end_of_record"""
 def test_malformed_fn_line_invalid_line_number():
     """Test FN line with invalid line number"""
     test_lcov = """TN:
-SF:/test.py
+SF:/source.py
 FN:notanumber,functionName
 FNF:0
 FNH:0
