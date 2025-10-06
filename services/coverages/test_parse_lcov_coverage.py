@@ -315,7 +315,7 @@ end_of_record"""
 def test_brda_parsing_module_exit():
     """Test BRDA parsing for 'exit the module' branch description"""
     test_lcov = """TN:
-SF:/test_module_exit.py
+SF:/module_exit.py
 BRDA:15,0,exit the module,3
 BRDA:25,0,exit the module,0
 BRF:2
