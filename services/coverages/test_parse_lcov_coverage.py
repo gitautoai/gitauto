@@ -321,6 +321,255 @@ def test_parse_lcov_gitauto_real_exact_counts():
         ), f"{file_path} should be included as a legitimate non-test file"
 
 
+
+def test_malformed_fn_line_no_comma():
+    """Test FN line without comma (line 58-59)"""
+    test_lcov = """TN:
+SF:/test.py
+FN:10NoCommaHere
+FNF:0
+FNH:0
+LF:0
+LH:0
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    assert len(result) > 0
+    repo = [r for r in result if r["level"] == "repository"][0]
+    assert repo["function_coverage"] == 100.0
+
+
+def test_malformed_fn_line_invalid_line_number():
+    """Test FN line with invalid line number (line 88-90)"""
+    test_lcov = """TN:
+SF:/test.py
+FN:notanumber,functionName
+FNF:0
+FNH:0
+LF:0
+LH:0
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    assert len(result) > 0
+    repo = [r for r in result if r["level"] == "repository"][0]
+    assert repo["function_coverage"] == 100.0
+
+
+def test_malformed_fnda_line_no_comma():
+    """Test FNDA line without comma (line 97-98)"""
+    test_lcov = """TN:
+SF:/test.py
+FNDA:5NoCommaHere
+FNF:0
+FNH:0
+LF:0
+LH:0
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    assert len(result) > 0
+    repo = [r for r in result if r["level"] == "repository"][0]
+    assert repo["function_coverage"] == 100.0
+
+
+def test_malformed_fnda_line_invalid_execution_count():
+    """Test FNDA line with invalid execution count (line 103-104)"""
+    test_lcov = """TN:
+SF:/test.py
+FNDA:notanumber,functionName
+FNF:0
+FNH:0
+LF:0
+LH:0
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    assert len(result) > 0
+    repo = [r for r in result if r["level"] == "repository"][0]
+    assert repo["function_coverage"] == 100.0
+
+
+def test_brda_jump_to_function_exit():
+    """Test BRDA with 'jump to the function exit' (line 131-133)"""
+    test_lcov = """TN:
+SF:/test.py
+BRDA:10,0,jump to the function exit,0
+BRF:1
+BRH:0
+LF:1
+LH:1
+DA:10,1
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    assert len(result) > 0
+    files = [r for r in result if r["level"] == "file"]
+    assert len(files) == 1
+    assert "function exit" in files[0]["uncovered_branches"]
+
+
+def test_brda_exit_the_module():
+    """Test BRDA with 'exit the module' (line 142-144)"""
+    test_lcov = """TN:
+SF:/test.py
+BRDA:20,0,exit the module,0
+BRF:1
+BRH:0
+LF:1
+LH:1
+DA:20,1
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    assert len(result) > 0
+    files = [r for r in result if r["level"] == "file"]
+    assert len(files) == 1
+    assert "module exit" in files[0]["uncovered_branches"]
+
+
+def test_malformed_brda_line():
+    """Test malformed BRDA line (line 158-160)"""
+    test_lcov = """TN:
+SF:/test.py
+BRDA:invalid,data,here
+BRF:0
+BRH:0
+LF:1
+LH:1
+DA:10,1
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    assert len(result) > 0
+    repo = [r for r in result if r["level"] == "repository"][0]
+    assert repo["branch_coverage"] == 100.0
+
+
+def test_end_of_record_without_current_file():
+    """Test end_of_record when current_file is None (line 186-187)"""
+    test_lcov = """TN:
+SF:tests/test_file.py
+FN:10,testFunction
+FNDA:1,testFunction
+FNF:1
+FNH:1
+DA:10,1
+LF:1
+LH:1
+end_of_record
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    # Should skip test files and handle extra end_of_record
+    assert len(result) > 0
+    files = [r for r in result if r["level"] == "file"]
+    assert len(files) == 0  # Test file should be skipped
+
+
+def test_end_of_record_with_empty_stats():
+    """Test end_of_record when current_stats is empty (line 188-189)"""
+    test_lcov = """TN:
+SF:/test.py
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    # Should handle file with no stats
+    assert len(result) > 0
+    files = [r for r in result if r["level"] == "file"]
+    # File with no stats should still be included
+    assert len(files) == 1
+
+
+def test_skip_test_files_with_test_prefix():
+    """Test skipping files with test_ prefix"""
+    test_lcov = """TN:
+SF:/test_something.py
+FN:10,testFunction
+FNDA:1,testFunction
+FNF:1
+FNH:1
+DA:10,1
+LF:1
+LH:1
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    files = [r for r in result if r["level"] == "file"]
+    assert len(files) == 0  # Test file should be skipped
+
+
+def test_skip_test_files_with_test_suffix():
+    """Test skipping files with _test.py suffix"""
+    test_lcov = """TN:
+SF:/something_test.py
+FN:10,testFunction
+FNDA:1,testFunction
+FNF:1
+FNH:1
+DA:10,1
+LF:1
+LH:1
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    files = [r for r in result if r["level"] == "file"]
+    assert len(files) == 0  # Test file should be skipped
+
+
+def test_skip_test_files_in_tests_directory():
+    """Test skipping files in tests directory"""
+    test_lcov = """TN:
+SF:/tests/something.py
+FN:10,testFunction
+FNDA:1,testFunction
+FNF:1
+FNH:1
+DA:10,1
+LF:1
+LH:1
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    files = [r for r in result if r["level"] == "file"]
+    assert len(files) == 0  # Test file should be skipped
+
+
+def test_brda_with_dash_taken():
+    """Test BRDA with dash as taken value"""
+    test_lcov = """TN:
+SF:/test.py
+BRDA:10,0,0,-
+BRF:1
+BRH:0
+LF:1
+LH:1
+DA:10,1
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    assert len(result) > 0
+    files = [r for r in result if r["level"] == "file"]
+    assert len(files) == 1
+    assert files[0]["branch_coverage"] == 0.0
+
+
+def test_empty_lcov_content():
+    """Test with empty LCOV content"""
+    test_lcov = ""
+
+    result = parse_lcov_coverage(test_lcov)
+    assert len(result) == 1  # Only repository level
+    repo = [r for r in result if r["level"] == "repository"][0]
+    assert repo["full_path"] == "All"
+    assert repo["line_coverage"] == 100.0
+
+
+def test_complex_branch_scenarios():
+    """Test complex branch scenarios with multiple branch types"""
+    test_lcov = """TN:
+SF:/test.py
+
 def test_malformed_fn_line_no_comma():
     """Test FN line without comma (line 58-59)"""
     test_lcov = """TN:
