@@ -897,7 +897,7 @@ def test_handle_check_run_skips_duplicate_older_request(
     # Verify duplicate handling - update_usage is called twice:
     # 1. When older active request is found (early exit)
     # 2. At the end of the function (after break from while loop)
-    mock_update_usage.assert_called_once()
+    assert mock_update_usage.call_count == 2
     call_kwargs = mock_update_usage.call_args.kwargs
     assert call_kwargs["usage_id"] == 999
     assert call_kwargs["is_completed"] is True
