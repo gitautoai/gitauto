@@ -325,6 +325,54 @@ def test_malformed_fn_line_no_comma():
     """Test FN line without comma (line 58-59)"""
     test_lcov = """TN:
 SF:/test.py
+
+def test_brda_parsing_function_exit():
+    """Test BRDA parsing for 'jump to the function exit' branch description"""
+    test_lcov = """TN:
+SF:/test_func_exit.py
+BRDA:10,0,jump to the function exit,5
+BRDA:20,0,jump to the function exit,0
+BRF:2
+BRH:1
+DA:10,5
+DA:20,0
+LH:1
+LF:2
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    files = [r for r in result if r["level"] == "file"]
+    assert len(files) == 1
+    assert files[0]["branch_coverage"] == 50.0
+    assert "line 20, block 0, function exit" in files[0]["uncovered_branches"]
+
+
+def test_brda_parsing_module_exit():
+    """Test BRDA parsing for 'exit the module' branch description"""
+    test_lcov = """TN:
+SF:/test_module_exit.py
+BRDA:15,0,exit the module,3
+BRDA:25,0,exit the module,0
+BRF:2
+BRH:1
+DA:15,3
+DA:25,0
+LH:1
+LF:2
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov)
+    files = [r for r in result if r["level"] == "file"]
+    assert len(files) == 1
+    assert files[0]["branch_coverage"] == 50.0
+    assert "line 25, block 0, module exit" in files[0]["uncovered_branches"]
+
+
+def test_empty_file_handling():
+    """Test handling of empty file (no current_file or no current_stats at end_of_record)"""
+    test_lcov = """TN:
+end_of_record"""
+
 FN:10NoCommaHere
 FNDA:1,someFunction
 FNF:1
