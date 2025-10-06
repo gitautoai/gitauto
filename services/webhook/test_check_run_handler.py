@@ -894,27 +894,17 @@ def test_handle_check_run_skips_duplicate_older_request(
         owner_id=11111, repo_id=98765, pr_number=1, current_usage_id=999
     )
 
-    # Verify duplicate handling - update_usage is called twice:
-    # 1. When older active request is found (early exit)
-    # 2. At the end of the function (after break from while loop)
-    assert mock_update_usage.call_count == 2
+    # Verify duplicate handling - update_usage is called once when older active request is found
+    assert mock_update_usage.call_count == 1
 
-    # Verify first call (early exit when older active request found)
-    first_call_kwargs = mock_update_usage.call_args_list[0].kwargs
-    assert first_call_kwargs["usage_id"] == 999
-    assert first_call_kwargs["is_completed"] is True
-    assert first_call_kwargs["pr_number"] == 1
-
-    # Verify second call (final update after break)
-    second_call_kwargs = mock_update_usage.call_args_list[1].kwargs
-    assert second_call_kwargs["usage_id"] == 999
-    assert second_call_kwargs["is_completed"] is True
-    assert second_call_kwargs["pr_number"] == 1
+    # Verify the call (early exit when older active request found)
+    call_kwargs = mock_update_usage.call_args.kwargs
+    assert call_kwargs["usage_id"] == 999
+    assert call_kwargs["is_completed"] is True
+    assert call_kwargs["pr_number"] == 1
 
     # Verify Slack notification for duplicate
-    assert (
-        mock_slack_notify.call_count == 2
-    )  # Start notification + duplicate notification
+    assert mock_slack_notify.call_count == 2  # Start notification + duplicate notification
     duplicate_call = mock_slack_notify.call_args_list[1]
     assert "Older active request found" in duplicate_call[0][0]
     assert duplicate_call[0][1] == "thread-123"  # Uses thread_ts
