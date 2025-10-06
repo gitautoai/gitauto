@@ -1,3 +1,5 @@
+# pylint: disable=redefined-outer-name
+
 from unittest.mock import patch
 
 from config import UTF8
