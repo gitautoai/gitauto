@@ -327,6 +327,7 @@ async def test_handle_pr_checkbox_trigger_credits_depleted(
 
 @pytest.mark.asyncio
 async def test_handle_pr_checkbox_trigger_success(
+    mock_github_app_user_name,
     mock_product_id,
     base_payload,
     lambda_info,
