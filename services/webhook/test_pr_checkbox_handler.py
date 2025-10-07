@@ -619,5 +619,87 @@ async def test_settings_links_removed_from_comment_body(base_payload):
 
         mock_extract.return_value = ["src/test.py"]
 
+
+
+@pytest.mark.asyncio
+async def test_both_explored_and_committed_resets_retry(base_payload, mock_dependencies):
+    """Test that both explored and committed resets retry counter (line 297)."""
+    mock_dependencies["availability"].return_value = {
+        "can_proceed": True,
+        "billing_type": "subscription",
+        "user_message": "",
+        "log_message": "Proceeding",
+    }
+    mock_dependencies["timeout"].return_value = (False, 0)
+    mock_dependencies["pr_open"].return_value = True
+    mock_dependencies["branch_exists"].return_value = True
+
+    mock_dependencies["chat"].side_effect = [
+        ([], [], "tool", {}, 10, 5, True, 10),
+        ([], [], "tool", {}, 10, 5, False, 20),
+        ([], [], "tool", {}, 10, 5, True, 30),
+        ([], [], "tool", {}, 10, 5, False, 40),
+        ([], [], "tool", {}, 10, 5, True, 50),
+        ([], [], "tool", {}, 10, 5, True, 60),
+        ([], [], "tool", {}, 10, 5, False, 70),
+        ([], [], "tool", {}, 10, 5, False, 80),
+    ]
+
+    await handle_pr_checkbox_trigger(base_payload)
+
+    assert mock_dependencies["chat"].call_count == 8
+
+
+@pytest.mark.asyncio
+async def test_neither_explored_nor_committed_exits_loop(base_payload, mock_dependencies):
+    """Test that neither explored nor committed exits the loop (line 282-283)."""
+    mock_dependencies["availability"].return_value = {
+        "can_proceed": True,
+        "billing_type": "subscription",
+        "user_message": "",
+        "log_message": "Proceeding",
+    }
+    mock_dependencies["timeout"].return_value = (False, 0)
+    mock_dependencies["pr_open"].return_value = True
+    mock_dependencies["branch_exists"].return_value = True
+
+    mock_dependencies["chat"].side_effect = [
+        ([], [], "tool", {}, 10, 5, False, 10),
+        ([], [], "tool", {}, 10, 5, False, 20),
+    ]
+
+    await handle_pr_checkbox_trigger(base_payload)
+
+    assert mock_dependencies["chat"].call_count == 2
+    mock_dependencies["empty_commit"].assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_credit_billing_with_no_sender_id(base_payload, mock_dependencies):
+    """Test credit billing when sender_id is None or 0."""
+    base_payload["sender"]["id"] = 0
+
+    mock_dependencies["availability"].return_value = {
+        "can_proceed": True,
+        "billing_type": "credit",
+        "user_message": "",
+        "log_message": "Proceeding",
+    }
+    mock_dependencies["timeout"].return_value = (False, 0)
+    mock_dependencies["pr_open"].return_value = True
+    mock_dependencies["branch_exists"].return_value = True
+    mock_dependencies["chat"].side_effect = [
+        ([], [], "tool", {}, 10, 5, False, 10),
+        ([], [], "tool", {}, 10, 5, False, 20),
+    ]
+
+    mock_dependencies["get_owner"].return_value = {
+        "id": 11111,
+        "credit_balance_usd": 0,
+    }
+
+    await handle_pr_checkbox_trigger(base_payload)
+
+    mock_dependencies["get_user"].assert_not_called()
         await handle_pr_checkbox_trigger(base_payload)
 
