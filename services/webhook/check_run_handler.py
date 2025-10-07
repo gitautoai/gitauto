@@ -404,7 +404,7 @@ def handle_check_run(
             msg = f"Stopped - pull request #{pull_number} was closed while GitAuto was processing check run failure in `{owner_name}/{repo_name}`"
             logging.info(msg)
             slack_notify(msg, thread_ts)
-            break
+            return
 
         if not check_branch_exists(
             owner=owner_name, repo=repo_name, branch_name=head_branch, token=token
