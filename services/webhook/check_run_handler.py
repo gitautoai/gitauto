@@ -443,7 +443,7 @@ def handle_check_run(
                 is_completed=True,
                 pr_number=pull_number,
             )
-            break
+            return
 
         # Explore repo
         (
