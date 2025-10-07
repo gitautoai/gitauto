@@ -831,6 +831,8 @@ def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_run_handler.clean_logs")
 @patch("services.webhook.check_run_handler.check_older_active_test_failure_request")
 @patch("services.webhook.check_run_handler.update_usage")
+@patch("services.webhook.check_run_handler.is_pull_request_open")
+@patch("services.webhook.check_run_handler.check_branch_exists")
 def test_handle_check_run_skips_duplicate_older_request(
     mock_update_usage,
     mock_check_older_active,
@@ -877,6 +879,8 @@ def test_handle_check_run_skips_duplicate_older_request(
         "id": 888,
         "created_at": "2025-09-23T10:00:00Z",
     }
+    mock_check_branch_exists,
+    mock_is_pull_request_open,
 
     # Execute
     handle_check_run(mock_check_run_payload)
