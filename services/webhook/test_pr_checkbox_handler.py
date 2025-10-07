@@ -259,11 +259,19 @@ async def test_handle_pr_checkbox_trigger_no_generate_tests_checkbox(
     assert result is None
 
 
+@pytest.fixture
+def mock_product_id():
+    """Mock PRODUCT_ID"""
+    with patch("services.webhook.pr_checkbox_handler.PRODUCT_ID", "gitauto"):
+        yield
+
+
 @pytest.mark.asyncio
 async def test_handle_pr_checkbox_trigger_no_files_selected(
-    base_payload, lambda_info, mock_extract_selected_files
+    base_payload, lambda_info, mock_product_id, mock_extract_selected_files
 ):
     """Test early return when no files are selected"""
+    # mock_product_id ensures PRODUCT_ID is "gitauto" so search_text matches
     mock_extract_selected_files.return_value = []
 
     result = await handle_pr_checkbox_trigger(
