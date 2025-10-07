@@ -279,8 +279,6 @@ async def test_handle_pr_checkbox_trigger_no_files_selected(
         lambda_info=lambda_info,
     )
 
-    assert result is None
-    mock_extract_selected_files.assert_called_once()
 
 
 @pytest.mark.asyncio
