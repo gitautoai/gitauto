@@ -165,7 +165,8 @@ def mock_insert_credit():
         yield mock
 
 
-def test_handle_pr_checkbox_trigger_not_gitauto_pr(
+@pytest.mark.asyncio
+async def test_handle_pr_checkbox_trigger_not_gitauto_pr(
     base_payload,
     lambda_info,
     mock_get_installation_access_token,
@@ -178,7 +179,7 @@ def test_handle_pr_checkbox_trigger_not_gitauto_pr(
         "head": {"ref": "test-branch"},
     }
 
-    result = handle_pr_checkbox_trigger(
+    result = await handle_pr_checkbox_trigger(
         payload=base_payload,
         lambda_info=lambda_info,
     )
@@ -188,7 +189,8 @@ def test_handle_pr_checkbox_trigger_not_gitauto_pr(
     mock_get_pull_request.assert_called_once()
 
 
-def test_handle_pr_checkbox_trigger_pr_closed(
+@pytest.mark.asyncio
+async def test_handle_pr_checkbox_trigger_pr_closed(
     base_payload,
     lambda_info,
     mock_get_installation_access_token,
@@ -198,7 +200,7 @@ def test_handle_pr_checkbox_trigger_pr_closed(
     """Test early return when PR is closed"""
     mock_is_pull_request_open.return_value = False
 
-    result = handle_pr_checkbox_trigger(
+    result = await handle_pr_checkbox_trigger(
         payload=base_payload,
         lambda_info=lambda_info,
     )
@@ -209,7 +211,8 @@ def test_handle_pr_checkbox_trigger_pr_closed(
     mock_is_pull_request_open.assert_called_once()
 
 
-def test_handle_pr_checkbox_trigger_no_checkboxes(
+@pytest.mark.asyncio
+async def test_handle_pr_checkbox_trigger_no_checkboxes(
     base_payload,
     lambda_info,
     mock_get_installation_access_token,
@@ -219,7 +222,7 @@ def test_handle_pr_checkbox_trigger_no_checkboxes(
     """Test early return when comment has no checkboxes"""
     base_payload["comment"]["body"] = "Just a regular comment"
 
-    result = handle_pr_checkbox_trigger(
+    result = await handle_pr_checkbox_trigger(
         payload=base_payload,
         lambda_info=lambda_info,
     )
@@ -230,7 +233,8 @@ def test_handle_pr_checkbox_trigger_no_checkboxes(
     mock_is_pull_request_open.assert_called_once()
 
 
-def test_handle_pr_checkbox_trigger_no_checked_boxes(
+@pytest.mark.asyncio
+async def test_handle_pr_checkbox_trigger_no_checked_boxes(
     base_payload,
     lambda_info,
     mock_get_installation_access_token,
@@ -240,7 +244,7 @@ def test_handle_pr_checkbox_trigger_no_checked_boxes(
     """Test early return when no checkboxes are checked"""
     base_payload["comment"]["body"] = "- [ ] Task 1\n- [ ] Task 2"
 
-    result = handle_pr_checkbox_trigger(
+    result = await handle_pr_checkbox_trigger(
         payload=base_payload,
         lambda_info=lambda_info,
     )
@@ -251,7 +255,8 @@ def test_handle_pr_checkbox_trigger_no_checked_boxes(
     mock_is_pull_request_open.assert_called_once()
 
 
-def test_handle_pr_checkbox_trigger_no_repository_found(
+@pytest.mark.asyncio
+async def test_handle_pr_checkbox_trigger_no_repository_found(
     base_payload,
     lambda_info,
     mock_get_installation_access_token,
@@ -262,7 +267,7 @@ def test_handle_pr_checkbox_trigger_no_repository_found(
     """Test early return when repository is not found"""
     mock_get_repository.return_value = None
 
-    result = handle_pr_checkbox_trigger(
+    result = await handle_pr_checkbox_trigger(
         payload=base_payload,
         lambda_info=lambda_info,
     )
@@ -274,7 +279,8 @@ def test_handle_pr_checkbox_trigger_no_repository_found(
     mock_get_repository.assert_called_once()
 
 
-def test_handle_pr_checkbox_trigger_no_owner_found(
+@pytest.mark.asyncio
+async def test_handle_pr_checkbox_trigger_no_owner_found(
     base_payload,
     lambda_info,
     mock_get_installation_access_token,
@@ -286,7 +292,7 @@ def test_handle_pr_checkbox_trigger_no_owner_found(
     """Test early return when owner is not found"""
     mock_get_owner.return_value = None
 
-    result = handle_pr_checkbox_trigger(
+    result = await handle_pr_checkbox_trigger(
         payload=base_payload,
         lambda_info=lambda_info,
     )
@@ -299,7 +305,8 @@ def test_handle_pr_checkbox_trigger_no_owner_found(
     mock_get_owner.assert_called_once()
 
 
-def test_handle_pr_checkbox_trigger_no_user_found(
+@pytest.mark.asyncio
+async def test_handle_pr_checkbox_trigger_no_user_found(
     base_payload,
     lambda_info,
     mock_get_installation_access_token,
@@ -312,7 +319,7 @@ def test_handle_pr_checkbox_trigger_no_user_found(
     """Test early return when user is not found"""
     mock_get_user.return_value = None
 
-    result = handle_pr_checkbox_trigger(
+    result = await handle_pr_checkbox_trigger(
         payload=base_payload,
         lambda_info=lambda_info,
     )
@@ -326,7 +333,8 @@ def test_handle_pr_checkbox_trigger_no_user_found(
     mock_get_user.assert_called_once()
 
 
-def test_handle_pr_checkbox_trigger_credits_depleted(
+@pytest.mark.asyncio
+async def test_handle_pr_checkbox_trigger_credits_depleted(
     base_payload,
     lambda_info,
     mock_get_installation_access_token,
@@ -341,7 +349,7 @@ def test_handle_pr_checkbox_trigger_credits_depleted(
     """Test behavior when credits are depleted"""
     mock_check_availability.return_value = {"available": False, "credits_remaining": 0}
 
-    result = handle_pr_checkbox_trigger(
+    result = await handle_pr_checkbox_trigger(
         payload=base_payload,
         lambda_info=lambda_info,
     )
@@ -357,7 +365,8 @@ def test_handle_pr_checkbox_trigger_credits_depleted(
     mock_create_comment.assert_called_once()
 
 
-def test_handle_pr_checkbox_trigger_success(
+@pytest.mark.asyncio
+async def test_handle_pr_checkbox_trigger_success(
     base_payload,
     lambda_info,
     mock_get_installation_access_token,
@@ -376,7 +385,7 @@ def test_handle_pr_checkbox_trigger_success(
     mock_insert_credit,
 ):
     """Test successful execution of handle_pr_checkbox_trigger"""
-    result = handle_pr_checkbox_trigger(
+    result = await handle_pr_checkbox_trigger(
         payload=base_payload,
         lambda_info=lambda_info,
     )
