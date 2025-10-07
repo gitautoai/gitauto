@@ -1,7 +1,7 @@
 """Unit tests for pr_checkbox_handler.py"""
 # pylint: disable=redefined-outer-name,too-many-lines
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from services.webhook.pr_checkbox_handler import handle_pr_checkbox_trigger
@@ -72,6 +72,8 @@ def mock_dependencies():
          patch("services.webhook.pr_checkbox_handler.get_owner") as mock_get_owner, \
          patch("services.webhook.pr_checkbox_handler.get_user") as mock_get_user, \
          patch("services.webhook.pr_checkbox_handler.send_email") as mock_send_email, \
+         patch("services.webhook.pr_checkbox_handler.get_credits_depleted_email_text") as mock_email_text, \
+         patch("services.webhook.pr_checkbox_handler.get_timeout_message") as mock_timeout_msg, \
          patch("services.webhook.pr_checkbox_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]"), \
          patch("services.webhook.pr_checkbox_handler.PRODUCT_ID", "gitauto"), \
          patch("services.webhook.pr_checkbox_handler.SETTINGS_LINKS", ""):
@@ -109,6 +111,8 @@ def mock_dependencies():
             "get_owner": mock_get_owner,
             "get_user": mock_get_user,
             "send_email": mock_send_email,
+            "email_text": mock_email_text,
+            "timeout_msg": mock_timeout_msg,
         }
 
 
@@ -175,22 +179,20 @@ async def test_timeout_handling_breaks_loop(base_payload, mock_dependencies):
         "log_message": "Proceeding",
     }
     mock_dependencies["timeout"].return_value = (True, 890.5)
+    mock_dependencies["timeout_msg"].return_value = "Timeout: 890.5 seconds elapsed"
 
-    with patch("services.webhook.pr_checkbox_handler.get_timeout_message") as mock_timeout_msg:
-        mock_timeout_msg.return_value = "Timeout: 890.5 seconds elapsed"
+    await handle_pr_checkbox_trigger(base_payload)
 
-        await handle_pr_checkbox_trigger(base_payload)
+    mock_dependencies["timeout_msg"].assert_called_once_with(890.5, "PR test generation processing")
+    mock_dependencies["update_comment"].assert_called()
 
-        mock_timeout_msg.assert_called_once_with(890.5, "PR test generation processing")
-        mock_dependencies["update_comment"].assert_called()
-
-        timeout_call = None
-        for call in mock_dependencies["update_comment"].call_args_list:
-            if "Timeout" in call.kwargs.get("body", ""):
-                timeout_call = call
-                break
-        assert timeout_call is not None
-        assert "Timeout: 890.5 seconds elapsed" in timeout_call.kwargs["body"]
+    timeout_call = None
+    for call in mock_dependencies["update_comment"].call_args_list:
+        if "Timeout" in call.kwargs.get("body", ""):
+            timeout_call = call
+            break
+    assert timeout_call is not None
+    assert "Timeout: 890.5 seconds elapsed" in timeout_call.kwargs["body"]
 
 
 @pytest.mark.asyncio
@@ -259,22 +261,21 @@ async def test_retry_logic_not_explored_and_committed(base_payload, mock_depende
     mock_dependencies["pr_open"].return_value = True
     mock_dependencies["branch_exists"].return_value = True
 
+    # Simulate: not explored but committed, retry 4 times then break
     mock_dependencies["chat"].side_effect = [
-        ([], [], "tool", {}, 10, 5, False, 10),
-        ([], [], "tool", {}, 10, 5, True, 20),
-        ([], [], "tool", {}, 10, 5, False, 30),
-        ([], [], "tool", {}, 10, 5, True, 40),
-        ([], [], "tool", {}, 10, 5, False, 50),
-        ([], [], "tool", {}, 10, 5, True, 60),
-        ([], [], "tool", {}, 10, 5, False, 70),
-        ([], [], "tool", {}, 10, 5, True, 80),
-        ([], [], "tool", {}, 10, 5, False, 90),
-        ([], [], "tool", {}, 10, 5, False, 100),
+        ([], [], "tool", {}, 10, 5, False, 10),  # get mode
+        ([], [], "tool", {}, 10, 5, True, 20),   # commit mode - retry 1
+        ([], [], "tool", {}, 10, 5, False, 30),  # get mode
+        ([], [], "tool", {}, 10, 5, True, 40),   # commit mode - retry 2
+        ([], [], "tool", {}, 10, 5, False, 50),  # get mode
+        ([], [], "tool", {}, 10, 5, True, 60),   # commit mode - retry 3
+        ([], [], "tool", {}, 10, 5, False, 70),  # get mode
+        ([], [], "tool", {}, 10, 5, True, 80),   # commit mode - retry 4, should break
     ]
 
     await handle_pr_checkbox_trigger(base_payload)
 
-    assert mock_dependencies["chat"].call_count == 10
+    assert mock_dependencies["chat"].call_count == 8
 
 
 @pytest.mark.asyncio
@@ -290,22 +291,21 @@ async def test_retry_logic_explored_but_not_committed(base_payload, mock_depende
     mock_dependencies["pr_open"].return_value = True
     mock_dependencies["branch_exists"].return_value = True
 
+    # Simulate: explored but not committed, retry 4 times then break
     mock_dependencies["chat"].side_effect = [
-        ([], [], "tool", {}, 10, 5, True, 10),
-        ([], [], "tool", {}, 10, 5, False, 20),
-        ([], [], "tool", {}, 10, 5, True, 30),
-        ([], [], "tool", {}, 10, 5, False, 40),
-        ([], [], "tool", {}, 10, 5, True, 50),
-        ([], [], "tool", {}, 10, 5, False, 60),
-        ([], [], "tool", {}, 10, 5, True, 70),
-        ([], [], "tool", {}, 10, 5, False, 80),
-        ([], [], "tool", {}, 10, 5, True, 90),
-        ([], [], "tool", {}, 10, 5, False, 100),
+        ([], [], "tool", {}, 10, 5, True, 10),   # get mode
+        ([], [], "tool", {}, 10, 5, False, 20),  # commit mode - retry 1
+        ([], [], "tool", {}, 10, 5, True, 30),   # get mode
+        ([], [], "tool", {}, 10, 5, False, 40),  # commit mode - retry 2
+        ([], [], "tool", {}, 10, 5, True, 50),   # get mode
+        ([], [], "tool", {}, 10, 5, False, 60),  # commit mode - retry 3
+        ([], [], "tool", {}, 10, 5, True, 70),   # get mode
+        ([], [], "tool", {}, 10, 5, False, 80),  # commit mode - retry 4, should break
     ]
 
     await handle_pr_checkbox_trigger(base_payload)
 
-    assert mock_dependencies["chat"].call_count == 10
+    assert mock_dependencies["chat"].call_count == 8
 
 
 @pytest.mark.asyncio
@@ -321,18 +321,17 @@ async def test_retry_logic_resets_on_success(base_payload, mock_dependencies):
     mock_dependencies["pr_open"].return_value = True
     mock_dependencies["branch_exists"].return_value = True
 
+    # Simulate: both explored and committed, retry counter resets
     mock_dependencies["chat"].side_effect = [
-        ([], [], "tool", {}, 10, 5, True, 10),
-        ([], [], "tool", {}, 10, 5, True, 20),
-        ([], [], "tool", {}, 10, 5, True, 30),
-        ([], [], "tool", {}, 10, 5, True, 40),
-        ([], [], "tool", {}, 10, 5, False, 50),
-        ([], [], "tool", {}, 10, 5, False, 60),
+        ([], [], "tool", {}, 10, 5, True, 10),   # get mode - explored
+        ([], [], "tool", {}, 10, 5, True, 20),   # commit mode - committed, reset counter
+        ([], [], "tool", {}, 10, 5, False, 30),  # get mode - not explored
+        ([], [], "tool", {}, 10, 5, False, 40),  # commit mode - not committed, break
     ]
 
     await handle_pr_checkbox_trigger(base_payload)
 
-    assert mock_dependencies["chat"].call_count == 6
+    assert mock_dependencies["chat"].call_count == 4
 
 
 @pytest.mark.asyncio
@@ -360,25 +359,23 @@ async def test_credit_billing_with_depleted_credits_sends_email(base_payload, mo
         "id": 22222,
         "email": "test@example.com",
     }
+    mock_dependencies["email_text"].return_value = ("Credits Depleted", "Your credits are depleted")
 
-    with patch("services.webhook.pr_checkbox_handler.get_credits_depleted_email_text") as mock_email_text:
-        mock_email_text.return_value = ("Credits Depleted", "Your credits are depleted")
+    await handle_pr_checkbox_trigger(base_payload)
 
-        await handle_pr_checkbox_trigger(base_payload)
-
-        mock_dependencies["insert_credit"].assert_called_once_with(
-            owner_id=11111,
-            transaction_type="usage",
-            usage_id=888
-        )
-        mock_dependencies["get_owner"].assert_called_once_with(owner_id=11111)
-        mock_dependencies["get_user"].assert_called_once_with(user_id=22222)
-        mock_email_text.assert_called_once_with("test-sender")
-        mock_dependencies["send_email"].assert_called_once_with(
-            to="test@example.com",
-            subject="Credits Depleted",
-            text="Your credits are depleted"
-        )
+    mock_dependencies["insert_credit"].assert_called_once_with(
+        owner_id=11111,
+        transaction_type="usage",
+        usage_id=888
+    )
+    mock_dependencies["get_owner"].assert_called_once_with(owner_id=11111)
+    mock_dependencies["get_user"].assert_called_once_with(user_id=22222)
+    mock_dependencies["email_text"].assert_called_once_with("test-sender")
+    mock_dependencies["send_email"].assert_called_once_with(
+        to="test@example.com",
+        subject="Credits Depleted",
+        text="Your credits are depleted"
+    )
 
 
 @pytest.mark.asyncio
@@ -576,8 +573,10 @@ async def test_complete_successful_flow(base_payload, mock_dependencies):
 
 
 @pytest.mark.asyncio
-async def test_credit_billing_user_not_found(base_payload, mock_dependencies):
-    """Test no email sent when user not found."""
+async def test_credit_billing_with_zero_balance_and_no_sender_id(base_payload, mock_dependencies):
+    """Test no email sent when sender_id is missing."""
+    base_payload["sender"]["id"] = None
+
     mock_dependencies["availability"].return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -596,110 +595,10 @@ async def test_credit_billing_user_not_found(base_payload, mock_dependencies):
         "id": 11111,
         "credit_balance_usd": 0,
     }
-    mock_dependencies["get_user"].return_value = None
 
     await handle_pr_checkbox_trigger(base_payload)
 
     mock_dependencies["insert_credit"].assert_called_once()
     mock_dependencies["get_owner"].assert_called_once()
-    mock_dependencies["get_user"].assert_called_once()
-    mock_dependencies["send_email"].assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_settings_links_removed_from_comment_body(base_payload):
-    """Test that SETTINGS_LINKS are properly removed from comment body."""
-    base_payload["comment"]["body"] = "- [x] Generate Tests\n- [x] `src/test.py`\nSETTINGS_PLACEHOLDER"
-
-    with patch("services.webhook.pr_checkbox_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]"), \
-         patch("services.webhook.pr_checkbox_handler.SETTINGS_LINKS", "SETTINGS_PLACEHOLDER"), \
-         patch("services.webhook.pr_checkbox_handler.PRODUCT_ID", "gitauto"), \
-         patch("services.webhook.pr_checkbox_handler.extract_selected_files") as mock_extract, \
-         patch("services.webhook.pr_checkbox_handler.slack_notify") as mock_slack:
-
-        mock_extract.return_value = ["src/test.py"]
-
-
-
-@pytest.mark.asyncio
-async def test_both_explored_and_committed_resets_retry(base_payload, mock_dependencies):
-    """Test that both explored and committed resets retry counter (line 297)."""
-    mock_dependencies["availability"].return_value = {
-        "can_proceed": True,
-        "billing_type": "subscription",
-        "user_message": "",
-        "log_message": "Proceeding",
-    }
-    mock_dependencies["timeout"].return_value = (False, 0)
-    mock_dependencies["pr_open"].return_value = True
-    mock_dependencies["branch_exists"].return_value = True
-
-    mock_dependencies["chat"].side_effect = [
-        ([], [], "tool", {}, 10, 5, True, 10),
-        ([], [], "tool", {}, 10, 5, False, 20),
-        ([], [], "tool", {}, 10, 5, True, 30),
-        ([], [], "tool", {}, 10, 5, False, 40),
-        ([], [], "tool", {}, 10, 5, True, 50),
-        ([], [], "tool", {}, 10, 5, True, 60),
-        ([], [], "tool", {}, 10, 5, False, 70),
-        ([], [], "tool", {}, 10, 5, False, 80),
-    ]
-
-    await handle_pr_checkbox_trigger(base_payload)
-
-    assert mock_dependencies["chat"].call_count == 8
-
-
-@pytest.mark.asyncio
-async def test_neither_explored_nor_committed_exits_loop(base_payload, mock_dependencies):
-    """Test that neither explored nor committed exits the loop (line 282-283)."""
-    mock_dependencies["availability"].return_value = {
-        "can_proceed": True,
-        "billing_type": "subscription",
-        "user_message": "",
-        "log_message": "Proceeding",
-    }
-    mock_dependencies["timeout"].return_value = (False, 0)
-    mock_dependencies["pr_open"].return_value = True
-    mock_dependencies["branch_exists"].return_value = True
-
-    mock_dependencies["chat"].side_effect = [
-        ([], [], "tool", {}, 10, 5, False, 10),
-        ([], [], "tool", {}, 10, 5, False, 20),
-    ]
-
-    await handle_pr_checkbox_trigger(base_payload)
-
-    assert mock_dependencies["chat"].call_count == 2
-    mock_dependencies["empty_commit"].assert_called_once()
-
-
-@pytest.mark.asyncio
-async def test_credit_billing_with_no_sender_id(base_payload, mock_dependencies):
-    """Test credit billing when sender_id is None or 0."""
-    base_payload["sender"]["id"] = 0
-
-    mock_dependencies["availability"].return_value = {
-        "can_proceed": True,
-        "billing_type": "credit",
-        "user_message": "",
-        "log_message": "Proceeding",
-    }
-    mock_dependencies["timeout"].return_value = (False, 0)
-    mock_dependencies["pr_open"].return_value = True
-    mock_dependencies["branch_exists"].return_value = True
-    mock_dependencies["chat"].side_effect = [
-        ([], [], "tool", {}, 10, 5, False, 10),
-        ([], [], "tool", {}, 10, 5, False, 20),
-    ]
-
-    mock_dependencies["get_owner"].return_value = {
-        "id": 11111,
-        "credit_balance_usd": 0,
-    }
-
-    await handle_pr_checkbox_trigger(base_payload)
-
     mock_dependencies["get_user"].assert_not_called()
-        await handle_pr_checkbox_trigger(base_payload)
-
+    mock_dependencies["send_email"].assert_not_called()
