@@ -1,4 +1,5 @@
 """Unit tests for pr_checkbox_handler.py"""
+# pylint: disable=redefined-outer-name,too-many-lines
 
 from unittest.mock import MagicMock, patch
 
