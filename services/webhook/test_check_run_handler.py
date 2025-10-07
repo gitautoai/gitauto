@@ -544,9 +544,9 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_clean_logs.return_value = "Cleaned test failure log"
 
     # Mock that this workflow/error pair has been seen before
-    # Calculate the expected hash: workflow_id is "runs" from URL, error_log is "Test failure log content"
+    # Calculate the expected hash: workflow_id is 11393174689 from URL, error_log is "Test failure log content"
     expected_hash = hashlib.sha256("Test failure log content".encode(UTF8)).hexdigest()
-    mock_get_retry_pairs.return_value = [f"runs:{expected_hash}"]
+    mock_get_retry_pairs.return_value = [f"11393174689:{expected_hash}"]
 
     # Execute
     handle_check_run(mock_check_run_payload)
