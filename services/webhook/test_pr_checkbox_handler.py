@@ -286,6 +286,7 @@ async def test_handle_pr_checkbox_trigger_no_files_selected(
 async def test_handle_pr_checkbox_trigger_credits_depleted(
     base_payload,
     lambda_info,
+    mock_product_id,
     mock_get_installation_access_token,
     mock_extract_selected_files,
     mock_slack_notify,
