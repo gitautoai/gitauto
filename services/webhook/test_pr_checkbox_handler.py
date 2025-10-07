@@ -263,6 +263,14 @@ async def test_handle_pr_checkbox_trigger_no_generate_tests_checkbox(
 def mock_product_id():
     """Mock PRODUCT_ID"""
     with patch("services.webhook.pr_checkbox_handler.PRODUCT_ID", "gitauto"):
+
+
+@pytest.fixture
+def mock_github_app_user_name():
+    """Mock GITHUB_APP_USER_NAME"""
+    with patch(
+        "services.webhook.pr_checkbox_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]"
+    ):
         yield
 
 
