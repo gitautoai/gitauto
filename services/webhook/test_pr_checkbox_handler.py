@@ -573,3 +573,51 @@ async def test_complete_successful_flow(base_payload, mock_dependencies):
 
     final_update_call = mock_dependencies["update_comment"].call_args_list[-1]
     assert "Finished generating tests" in final_update_call.kwargs["body"]
+
+
+@pytest.mark.asyncio
+async def test_credit_billing_user_not_found(base_payload, mock_dependencies):
+    """Test no email sent when user not found."""
+    mock_dependencies["availability"].return_value = {
+        "can_proceed": True,
+        "billing_type": "credit",
+        "user_message": "",
+        "log_message": "Proceeding",
+    }
+    mock_dependencies["timeout"].return_value = (False, 0)
+    mock_dependencies["pr_open"].return_value = True
+    mock_dependencies["branch_exists"].return_value = True
+    mock_dependencies["chat"].side_effect = [
+        ([], [], "tool", {}, 10, 5, False, 10),
+        ([], [], "tool", {}, 10, 5, False, 20),
+    ]
+
+    mock_dependencies["get_owner"].return_value = {
+        "id": 11111,
+        "credit_balance_usd": 0,
+    }
+    mock_dependencies["get_user"].return_value = None
+
+    await handle_pr_checkbox_trigger(base_payload)
+
+    mock_dependencies["insert_credit"].assert_called_once()
+    mock_dependencies["get_owner"].assert_called_once()
+    mock_dependencies["get_user"].assert_called_once()
+    mock_dependencies["send_email"].assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_settings_links_removed_from_comment_body(base_payload):
+    """Test that SETTINGS_LINKS are properly removed from comment body."""
+    base_payload["comment"]["body"] = "- [x] Generate Tests\n- [x] `src/test.py`\nSETTINGS_PLACEHOLDER"
+
+    with patch("services.webhook.pr_checkbox_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]"), \
+         patch("services.webhook.pr_checkbox_handler.SETTINGS_LINKS", "SETTINGS_PLACEHOLDER"), \
+         patch("services.webhook.pr_checkbox_handler.PRODUCT_ID", "gitauto"), \
+         patch("services.webhook.pr_checkbox_handler.extract_selected_files") as mock_extract, \
+         patch("services.webhook.pr_checkbox_handler.slack_notify") as mock_slack:
+
+        mock_extract.return_value = ["src/test.py"]
+
+        await handle_pr_checkbox_trigger(base_payload)
+
