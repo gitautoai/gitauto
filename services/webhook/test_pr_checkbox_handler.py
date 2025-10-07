@@ -279,6 +279,7 @@ async def test_handle_pr_checkbox_trigger_no_files_selected(
         lambda_info=lambda_info,
     )
 
+    assert result is None
 
 
 @pytest.mark.asyncio
