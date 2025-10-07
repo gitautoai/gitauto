@@ -3,6 +3,8 @@
 
 from unittest.mock import AsyncMock, patch
 
+
+from services.webhook.pr_checkbox_handler import handle_pr_checkbox_trigger
 import pytest
 
 
