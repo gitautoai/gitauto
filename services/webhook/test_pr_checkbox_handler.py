@@ -317,6 +317,7 @@ async def test_handle_pr_checkbox_trigger_credits_depleted(
 
 @pytest.mark.asyncio
 async def test_handle_pr_checkbox_trigger_success(
+    mock_product_id,
     base_payload,
     lambda_info,
     mock_get_installation_access_token,
@@ -336,6 +337,7 @@ async def test_handle_pr_checkbox_trigger_success(
     mock_update_usage,
     mock_insert_credit,
     mock_get_owner,
+    # pylint: disable=redefined-outer-name
 ):
     """Test successful execution of handle_pr_checkbox_trigger"""
     result = await handle_pr_checkbox_trigger(
