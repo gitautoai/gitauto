@@ -881,6 +881,8 @@ def test_handle_check_run_skips_duplicate_older_request(
         "id": 888,
         "created_at": "2025-09-23T10:00:00Z",
     }
+    mock_is_pr_open.return_value = True
+    mock_check_branch.return_value = True
 
     # Execute
     handle_check_run(mock_check_run_payload)
