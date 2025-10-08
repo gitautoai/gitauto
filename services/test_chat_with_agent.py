@@ -1835,6 +1835,6 @@ def test_move_file_without_paths(
             repo_settings=None,
         )
 
-        # Should use fallback logging
-    assert len(call_args) > 0
         call_args = mock_update_comment.call_args_list
+        # Should use fallback logging
+        assert len(call_args) > 0
