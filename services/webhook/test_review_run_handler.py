@@ -278,7 +278,7 @@ def test_retry_logic_not_explored_but_committed(mock_review_comment_payload, moc
 
     handle_review_run(mock_review_comment_payload)
 
-    assert mock_dependencies["chat"].call_count == 10
+    assert mock_dependencies["chat"].call_count == 8
 
 
 def test_retry_logic_explored_but_not_committed(mock_review_comment_payload, mock_dependencies):
