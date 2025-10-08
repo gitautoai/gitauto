@@ -396,13 +396,18 @@ def test_chat_with_agent_corrects_similar_function_names(
     mock_tools_to_call.__contains__.side_effect = mock_contains
 
     with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
-        mock_claude.return_value = (
-            {"role": "assistant", "content": "response"},
-            "test_id",
-            "create_remote_file",
-            {"file_path": "test.py", "file_content": "content"},
-            15,
-            10,
+        # First call returns create_remote_file, subsequent calls return no tool
+        mock_claude.side_effect = [
+            (
+                {"role": "assistant", "content": "response"},
+                "test_id",
+                "create_remote_file",
+                {"file_path": "test.py", "file_content": "content"},
+                15,
+                10,
+            ),
+            # Subsequent calls return no tool to stop recursion
+            ({"role": "assistant", "content": "done"}, "test_id", None, None, 5, 5),
         )
 
         chat_with_agent(
