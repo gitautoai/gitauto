@@ -1826,3 +1826,5 @@ def test_move_file_without_paths(
 
         # Should use fallback logging
         call_args = mock_update_comment.call_args_list
+    # Verify that the function completed without errors
+    assert result is not None
