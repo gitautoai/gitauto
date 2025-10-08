@@ -884,6 +884,7 @@ def test_handle_check_run_skips_duplicate_older_request(
         "created_at": "2025-09-23T10:00:00Z",
     }
     mock_is_pr_open.return_value = True
+    mock_create_empty_commit.return_value = True
     mock_check_branch.return_value = True
 
     # Execute
