@@ -502,6 +502,8 @@ def test_chat_with_agent_tool_with_non_dict_args(
             None,
             15,
             10,
+            False,
+            5,
         )
 
         mock_function = Mock(return_value=["file1.py", "file2.py"])
