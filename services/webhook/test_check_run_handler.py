@@ -815,6 +815,7 @@ def test_check_run_handler_token_accumulation(
     assert call_kwargs["token_input"] == 160  # Two calls: 80 + 80
     assert call_kwargs["token_output"] == 90  # Two calls: 45 + 45
 
+@patch("services.webhook.check_run_handler.create_empty_commit")
 
 @patch("services.webhook.check_run_handler.check_branch_exists")
 @patch("services.webhook.check_run_handler.is_pull_request_open")
@@ -834,6 +835,7 @@ def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_run_handler.check_older_active_test_failure_request")
 @patch("services.webhook.check_run_handler.update_usage")
 def test_handle_check_run_skips_duplicate_older_request(
+    mock_create_empty_commit,
     mock_update_usage,
     mock_check_older_active,
     mock_clean_logs,
