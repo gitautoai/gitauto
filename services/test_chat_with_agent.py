@@ -1,5 +1,4 @@
 # pylint: disable=redefined-outer-name
-# pylint: disable=too-many-lines
 from unittest.mock import Mock, patch
 
 import pytest
@@ -10,6 +9,7 @@ from services.chat_with_agent import chat_with_agent
 def mock_base_args():
     """Fixture to create a mock BaseArgs object."""
     return Mock()
+
 
 
 @pytest.fixture
