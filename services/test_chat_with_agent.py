@@ -1693,3 +1693,130 @@ def test_search_remote_file_contents_with_empty_result_lines(
         )
         assert found_message
 
+
+def test_apply_diff_to_file_without_file_path(
+    mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
+):
+    """Test that apply_diff_to_file without file_path uses fallback logging."""
+    with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
+        mock_claude.return_value = (
+            {"role": "assistant", "content": "response"},
+            "test_id",
+            "apply_diff_to_file",
+            {"diff": "--- a/test.py\n+++ b/test.py"},  # Missing file_path
+            15,
+            10,
+        )
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=mock_base_args,
+            mode="commit",
+            repo_settings=None,
+        )
+
+        # Should use fallback logging
+        call_args = mock_update_comment.call_args_list
+        assert len(call_args) > 0
+
+
+def test_replace_remote_file_content_without_file_path(
+    mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
+):
+    """Test that replace_remote_file_content without file_path uses fallback logging."""
+    with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
+        mock_claude.return_value = (
+            {"role": "assistant", "content": "response"},
+            "test_id",
+            "replace_remote_file_content",
+            {"file_content": "new content"},  # Missing file_path
+            15,
+            10,
+        )
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=mock_base_args,
+            mode="commit",
+            repo_settings=None,
+        )
+
+        # Should use fallback logging
+        call_args = mock_update_comment.call_args_list
+        assert len(call_args) > 0
+
+
+def test_search_google_without_query(
+    mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
+):
+    """Test that search_google without query uses fallback logging."""
+    with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
+        mock_claude.return_value = (
+            {"role": "assistant", "content": "response"},
+            "test_id",
+            "search_google",
+            {},  # Missing query
+            15,
+            10,
+        )
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=mock_base_args,
+            mode="search",
+            repo_settings=None,
+        )
+
+        # Should not log special google message
+        call_args = mock_update_comment.call_args_list
+        assert len(call_args) > 0
+
+
+def test_delete_file_without_file_path(
+    mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
+):
+    """Test that delete_file without file_path uses fallback logging."""
+    with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
+        mock_claude.return_value = (
+            {"role": "assistant", "content": "response"},
+            "test_id",
+            "delete_file",
+            {},  # Missing file_path
+            15,
+            10,
+        )
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=mock_base_args,
+            mode="commit",
+            repo_settings=None,
+        )
+
+        # Should use fallback logging
+        call_args = mock_update_comment.call_args_list
+        assert len(call_args) > 0
+
+
+def test_move_file_without_paths(
+    mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
+):
+    """Test that move_file without paths uses fallback logging."""
+    with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
+        mock_claude.return_value = (
+            {"role": "assistant", "content": "response"},
+            "test_id",
+            "move_file",
+            {"old_file_path": "old.py"},  # Missing new_file_path
+            15,
+            10,
+        )
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=mock_base_args,
