@@ -375,6 +375,8 @@ def test_chat_with_agent_corrects_replace_content_to_apply_diff(
             {"file_path": "test.py", "diff": "--- a/test.py\n+++ b/test.py"},
             15,
             10,
+            False,
+            5,
         )
 
         chat_with_agent(
