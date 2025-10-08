@@ -247,6 +247,8 @@ def test_chat_with_agent_provider_exception_tries_next_model(
                 None,
                 15,
                 10,
+                False,
+                5,
             ),
         ]
         mock_try_next_model.return_value = (True, "next-model")
