@@ -1462,3 +1462,234 @@ def test_corrects_modify_remote_file_to_replace_content(
         mock_tools_to_call.__getitem__.assert_called_with(
             "replace_remote_file_content"
         )
+
+def test_get_remote_file_content_with_non_dict_args_no_logging(
+    mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
+):
+    """Test that get_remote_file_content with non-dict args doesn't create specific log."""
+    with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
+        mock_claude.return_value = (
+            {"role": "assistant", "content": "response"},
+            "test_id",
+            "get_remote_file_content",
+            None,  # Non-dict args
+            15,
+            10,
+        )
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=mock_base_args,
+            mode="explore",
+            repo_settings=None,
+        )
+
+        # Should use fallback logging
+        call_args = mock_update_comment.call_args_list
+        assert len(call_args) > 0
+
+
+def test_get_file_tree_list_with_empty_list_result(
+    mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
+):
+    """Test logging for get_file_tree_list with empty list result."""
+    with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
+        mock_claude.return_value = (
+            {"role": "assistant", "content": "response"},
+            "test_id",
+            "get_file_tree_list",
+            {"dir_path": "empty_dir"},
+            15,
+            10,
+        )
+
+        mock_function = Mock(return_value=[])
+        mock_tools_to_call.__getitem__.return_value = mock_function
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=mock_base_args,
+            mode="explore",
+            repo_settings=None,
+        )
+
+        # Empty list should be treated as falsy
+        call_args = mock_update_comment.call_args_list
+        assert len(call_args) > 0
+        found_message = any(
+            "Directory 'empty_dir' not found or is empty." in call.kwargs.get("body", "")
+            for call in call_args
+        )
+        assert found_message
+
+
+def test_get_file_tree_list_with_false_result(
+    mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
+):
+    """Test logging for get_file_tree_list with False result."""
+    with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
+        mock_claude.return_value = (
+            {"role": "assistant", "content": "response"},
+            "test_id",
+            "get_file_tree_list",
+            {},
+            15,
+            10,
+        )
+
+        mock_function = Mock(return_value=False)
+        mock_tools_to_call.__getitem__.return_value = mock_function
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=mock_base_args,
+            mode="explore",
+            repo_settings=None,
+        )
+
+        # False should be treated as falsy
+        call_args = mock_update_comment.call_args_list
+        assert len(call_args) > 0
+        found_message = any(
+            "Root directory is empty or not found." in call.kwargs.get("body", "")
+            for call in call_args
+        )
+        assert found_message
+
+
+def test_search_remote_file_contents_with_non_string_result(
+    mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
+):
+    """Test logging for search_remote_file_contents with non-string result."""
+    with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
+        mock_claude.return_value = (
+            {"role": "assistant", "content": "response"},
+            "test_id",
+            "search_remote_file_contents",
+            {"query": "test"},
+            15,
+            10,
+        )
+
+        mock_function = Mock(return_value=None)  # Non-string result
+        mock_tools_to_call.__getitem__.return_value = mock_function
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=mock_base_args,
+            mode="explore",
+            repo_settings=None,
+        )
+
+        # Should handle non-string result gracefully
+        call_args = mock_update_comment.call_args_list
+        assert len(call_args) > 0
+        found_message = any(
+            "Searched repository for `test` but found no matching files." in call.kwargs.get("body", "")
+            for call in call_args
+        )
+        assert found_message
+
+
+def test_get_remote_file_content_with_start_line_only(
+    mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
+):
+    """Test logging for get_remote_file_content with only start_line."""
+    with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
+        mock_claude.return_value = (
+            {"role": "assistant", "content": "response"},
+            "test_id",
+            "get_remote_file_content",
+            {"file_path": "test.py", "start_line": 10},
+            15,
+            10,
+        )
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=mock_base_args,
+            mode="explore",
+            repo_settings=None,
+        )
+
+        # Check that update_comment was called with correct message
+        call_args = mock_update_comment.call_args_list
+        assert len(call_args) > 0
+        found_message = any(
+            "Read `test.py` lines 10-end." in call.kwargs.get("body", "")
+            for call in call_args
+        )
+        assert found_message
+
+
+def test_get_remote_file_content_with_end_line_only(
+    mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
+):
+    """Test logging for get_remote_file_content with only end_line."""
+    with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
+        mock_claude.return_value = (
+            {"role": "assistant", "content": "response"},
+            "test_id",
+            "get_remote_file_content",
+            {"file_path": "test.py", "end_line": 20},
+            15,
+            10,
+        )
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=mock_base_args,
+            mode="explore",
+            repo_settings=None,
+        )
+
+        # Check that update_comment was called with correct message
+        call_args = mock_update_comment.call_args_list
+        assert len(call_args) > 0
+        found_message = any(
+            "Read `test.py` lines start-20." in call.kwargs.get("body", "")
+            for call in call_args
+        )
+        assert found_message
+
+
+def test_search_remote_file_contents_with_empty_result_lines(
+    mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
+):
+    """Test logging for search_remote_file_contents with empty result."""
+    with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
+        mock_claude.return_value = (
+            {"role": "assistant", "content": "response"},
+            "test_id",
+            "search_remote_file_contents",
+            {"query": "test"},
+            15,
+            10,
+        )
+
+        mock_function = Mock(return_value="")  # Empty string
+        mock_tools_to_call.__getitem__.return_value = mock_function
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=mock_base_args,
+            mode="explore",
+            repo_settings=None,
+        )
+
+        # Should handle empty string result
+        call_args = mock_update_comment.call_args_list
+        assert len(call_args) > 0
+        found_message = any(
+            "Searched repository for `test` but found no matching files." in call.kwargs.get("body", "")
+            for call in call_args
+        )
+        assert found_message
+
