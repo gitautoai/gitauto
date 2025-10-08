@@ -1,4 +1,5 @@
 # pylint: disable=redefined-outer-name
+# pylint: disable=too-many-lines
 from unittest.mock import Mock, patch
 
 import pytest
