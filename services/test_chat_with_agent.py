@@ -311,6 +311,8 @@ def test_chat_with_agent_duplicate_function_call_returns_error(
             {"file_path": "test.py"},
             15,
             10,
+            False,
+            5,
         )
 
         previous_calls = [
