@@ -835,7 +835,6 @@ def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_run_handler.check_older_active_test_failure_request")
 @patch("services.webhook.check_run_handler.update_usage")
 def test_handle_check_run_skips_duplicate_older_request(
-    mock_create_empty_commit,
     mock_update_usage,
     mock_check_older_active,
     mock_clean_logs,
@@ -853,6 +852,7 @@ def test_handle_check_run_skips_duplicate_older_request(
     mock_get_token,
     mock_is_pr_open,
     mock_check_branch,
+    mock_create_empty_commit,
     mock_check_run_payload,
 ):
     """Test that handler skips when older active request is found."""
