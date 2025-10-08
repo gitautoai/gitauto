@@ -389,6 +389,12 @@ def test_chat_with_agent_corrects_similar_function_names(
     mock_get_model, mock_base_args, mock_tools_to_call, mock_update_comment
 ):
     """Test correction of similar function names like create_remote_file."""
+    # Configure mock to return False for create_remote_file but True for replace_remote_file_content
+    def mock_contains(key):
+        return key == "replace_remote_file_content"
+
+    mock_tools_to_call.__contains__.side_effect = mock_contains
+
     with patch("services.chat_with_agent.chat_with_claude") as mock_claude:
         mock_claude.return_value = (
             {"role": "assistant", "content": "response"},
