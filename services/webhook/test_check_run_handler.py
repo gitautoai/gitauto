@@ -831,7 +831,11 @@ def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_run_handler.clean_logs")
 @patch("services.webhook.check_run_handler.check_older_active_test_failure_request")
 @patch("services.webhook.check_run_handler.update_usage")
+@patch("services.webhook.check_run_handler.is_pull_request_open")
+@patch("services.webhook.check_run_handler.check_branch_exists")
 def test_handle_check_run_skips_duplicate_older_request(
+    mock_branch_exists,
+    mock_is_pr_open,
     mock_update_usage,
     mock_check_older_active,
     mock_clean_logs,
@@ -873,6 +877,8 @@ def test_handle_check_run_skips_duplicate_older_request(
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
     mock_clean_logs.return_value = "Cleaned test failure log"
+    mock_is_pr_open.return_value = True
+    mock_branch_exists.return_value = True
     mock_check_older_active.return_value = {
         "id": 888,
         "created_at": "2025-09-23T10:00:00Z",
@@ -898,10 +904,10 @@ def test_handle_check_run_skips_duplicate_older_request(
     assert call_kwargs["token_input"] == 0
     assert call_kwargs["token_output"] == 0
 
-    # Verify Slack notification for duplicate
+    # Verify Slack notifications
     assert (
-        mock_slack_notify.call_count == 2
-    )  # Start notification + duplicate notification
+        mock_slack_notify.call_count == 3
+    )  # Start notification + duplicate notification + completion notification
     duplicate_call = mock_slack_notify.call_args_list[1]
-    assert "Older active request found" in duplicate_call[0][0]
+    assert "older active test failure request found" in duplicate_call[0][0]
     assert duplicate_call[0][1] == "thread-123"  # Uses thread_ts

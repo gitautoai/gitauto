@@ -433,16 +433,6 @@ def handle_check_run(
             msg = f"Stopped - older active test failure request found for PR #{pull_number} in `{owner_name}/{repo_name}`. Avoiding race condition."
             logging.info(msg)
             slack_notify(msg, thread_ts)
-
-            # Mark current request as completed and exit
-            update_usage(
-                usage_id=usage_id,
-                token_input=total_token_input,
-                token_output=total_token_output,
-                total_seconds=int(time.time() - current_time),
-                is_completed=True,
-                pr_number=pull_number,
-            )
             break
 
         # Explore repo
