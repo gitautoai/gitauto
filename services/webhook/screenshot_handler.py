@@ -115,7 +115,7 @@ def find_all_html_pages(repo_dir: str) -> list[str]:
                 elif "app/" in rel_path and file.endswith((".tsx", ".jsx")):
                     path = (
                         rel_path.rsplit("app/", maxsplit=1)[-1]
-                    )
+                        .replace("/page.tsx", "")
                         .replace("/page.jsx", "")
                         .replace("/layout.tsx", "")
                         .replace("/layout.jsx", "")
