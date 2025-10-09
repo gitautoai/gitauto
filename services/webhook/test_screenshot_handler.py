@@ -18,7 +18,7 @@ from services.webhook.screenshot_handler import (
 def test_get_url_filename_with_http_url():
     """Test get_url_filename with HTTP URL"""
     result = get_url_filename("http://example.com/path/to/page")
-    assert result == "path%2Fto%2Fpage.png"
+    assert result == "path/to/page.png"
 
 
 def test_get_url_filename_with_https_url():
