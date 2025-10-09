@@ -268,7 +268,7 @@ def test_upload_to_s3_success(mock_boto_client):
     mock_boto_client.assert_called_once_with("s3")
     mock_s3.upload_file.assert_called_once()
     assert "test-bucket" in result
-    assert "screenshots%2Ftest.png" in result
+    assert "screenshots/test.png" in result
 
 
 @patch("services.webhook.screenshot_handler.boto3.client")
