@@ -1119,3 +1119,150 @@ def test_find_all_html_pages_with_multiple_app_directories(mock_walk):
 
     # Should find both
     assert len(result) >= 1
+
+
+# Additional edge cases for better coverage
+def test_get_url_filename_with_port_number():
+    """Test get_url_filename with URL containing port number"""
+    result = get_url_filename("http://localhost:3000/dashboard")
+    assert result == "dashboard.png"
+
+
+def test_get_url_filename_with_multiple_slashes():
+    """Test get_url_filename with multiple consecutive slashes"""
+    result = get_url_filename("https://example.com///path///page")
+    assert ".png" in result
+
+
+@patch("services.webhook.screenshot_handler.os.walk")
+def test_find_all_html_pages_with_tsx_and_jsx_mixed(mock_walk):
+    """Test find_all_html_pages with both TSX and JSX files"""
+    mock_walk.return_value = [
+        ("/repo/app", [], ["page.tsx"]),
+        ("/repo/app/about", [], ["page.jsx"]),
+        ("/repo/pages", [], ["index.tsx"]),
+        ("/repo/pages/contact", [], ["index.jsx"]),
+    ]
+
+    result = find_all_html_pages("/repo")
+
+    assert "/" in result
+    assert "/about" in result
+    assert "/contact" in result
+
+
+def test_get_target_paths_with_mixed_css_extensions():
+    """Test get_target_paths with multiple CSS file types"""
+    file_changes = [
+        {"filename": "styles/main.css"},
+        {"filename": "styles/theme.scss"},
+        {"filename": "styles/variables.sass"},
+        {"filename": "styles/mixins.less"},
+    ]
+
+    # Without repo_dir, should return empty
+    result = get_target_paths(file_changes, repo_dir=None)
+    assert result == []
+
+
+@patch("services.webhook.screenshot_handler.find_all_html_pages")
+def test_get_target_paths_css_with_other_files(mock_find_all):
+    """Test get_target_paths with CSS and other file changes"""
+    mock_find_all.return_value = ["/", "/about"]
+
+    file_changes = [
+        {"filename": "styles.css"},
+        {"filename": "app/page.tsx"},
+    ]
+
+    result = get_target_paths(file_changes, repo_dir="/repo")
+
+    # Should return all pages due to CSS change
+    assert result == ["/", "/about"]
+
+
+def test_get_target_paths_with_app_router_deeply_nested():
+    """Test get_target_paths with deeply nested App Router structure"""
+    file_changes = [
+        {"filename": "app/dashboard/settings/profile/page.tsx"},
+    ]
+
+    result = get_target_paths(file_changes)
+
+    assert "/dashboard/settings/profile" in result
+
+
+def test_get_target_paths_with_pages_router_api_routes():
+    """Test get_target_paths ignores API routes in Pages Router"""
+    file_changes = [
+        {"filename": "pages/api/users.ts"},
+    ]
+
+    result = get_target_paths(file_changes)
+
+    # API routes should not be included (they're .ts, not .tsx/.jsx)
+    assert result == []
+
+
+@patch("services.webhook.screenshot_handler.boto3.client")
+@patch.dict(os.environ, {"AWS_S3_BUCKET_NAME": "my-test-bucket-123"})
+def test_upload_to_s3_bucket_name_in_url(mock_boto_client):
+    """Test upload_to_s3 includes bucket name in returned URL"""
+    mock_s3 = Mock()
+    mock_boto_client.return_value = mock_s3
+
+    file_path = "/tmp/screenshot.png"
+    s3_key = "test/screenshot.png"
+
+    result = upload_to_s3(file_path, s3_key)
+
+    assert "my-test-bucket-123" in result
+
+
+@pytest.mark.asyncio
+@patch("services.webhook.screenshot_handler.async_playwright")
+@patch("services.webhook.screenshot_handler.os.makedirs")
+async def test_capture_screenshots_multiple_urls(mock_makedirs, mock_playwright):
+    """Test capture_screenshots with multiple URLs"""
+    mock_browser = AsyncMock()
+    mock_context = AsyncMock()
+    mock_page = AsyncMock()
+
+    mock_context.new_page.return_value = mock_page
+    mock_browser.new_context.return_value = mock_context
+
+    mock_playwright_instance = AsyncMock()
+    mock_playwright_instance.chromium.launch.return_value = mock_browser
+    mock_playwright.return_value.__aenter__.return_value = mock_playwright_instance
+
+    urls = [
+        "http://localhost:8080/",
+        "http://localhost:8080/about",
+        "http://localhost:8080/contact",
+        "http://localhost:8080/blog",
+    ]
+    output_dir = "/tmp/screenshots"
+
+    # Execute
+    await capture_screenshots(urls, output_dir)
+
+    # Verify all URLs were processed
+    assert mock_page.goto.call_count == 4
+    assert mock_page.screenshot.call_count == 4
+    assert mock_page.wait_for_timeout.call_count == 4
+
+
+@patch("services.webhook.screenshot_handler.os.walk")
+def test_find_all_html_pages_ignores_non_page_tsx_files(mock_walk):
+    """Test find_all_html_pages ignores component files"""
+    mock_walk.return_value = [
+        ("/repo/app", [], ["page.tsx", "component.tsx"]),
+        ("/repo/components", [], ["Button.tsx", "Header.tsx"]),
+    ]
+
+    result = find_all_html_pages("/repo")
+
+    # Should only find the page.tsx, not component files
+    assert "/" in result
+    # Component files should not create paths
+    assert len([p for p in result if "component" in p.lower()]) == 0
