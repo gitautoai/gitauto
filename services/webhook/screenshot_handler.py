@@ -44,7 +44,7 @@ def get_url_filename(url_or_path: str) -> str:
     if not path:
         path = "index"
 
-    return f"{quote(path)}.png"
+    return f"{quote(path, safe='')}.png"
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
