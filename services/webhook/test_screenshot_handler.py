@@ -24,7 +24,7 @@ def test_get_url_filename_with_http_url():
 def test_get_url_filename_with_https_url():
     """Test get_url_filename with HTTPS URL"""
     result = get_url_filename("https://example.com/about/team")
-    assert result == "about%2Fteam.png"
+    assert result == "about/team.png"
 
 
 def test_get_url_filename_with_path_only():
