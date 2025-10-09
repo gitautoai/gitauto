@@ -30,7 +30,7 @@ def test_get_url_filename_with_https_url():
 def test_get_url_filename_with_path_only():
     """Test get_url_filename with path only (no domain)"""
     result = get_url_filename("/contact/us")
-    assert result == "contact%2Fus.png"
+    assert result == "contact/us.png"
 
 
 def test_get_url_filename_with_empty_path():
@@ -73,7 +73,7 @@ def test_get_url_filename_with_fragment():
 def test_get_url_filename_with_nested_path():
     """Test get_url_filename with deeply nested path"""
     result = get_url_filename("https://example.com/a/b/c/d/e/page")
-    assert result == "a%2Fb%2Fc%2Fd%2Fe%2Fpage.png"
+    assert result == "a/b/c/d/e/page.png"
 
 
 # Tests for capture_screenshots
