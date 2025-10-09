@@ -317,7 +317,7 @@ def test_upload_to_s3_returns_correct_url(mock_boto_client):
     # Verify URL format
     assert result.startswith("https://my-bucket.s3.")
     assert "amazonaws.com" in result
-    assert "path%2Fto%2Ffile.png" in result
+    assert "path/to/file.png" in result
 
 
 # Tests for find_all_html_pages
