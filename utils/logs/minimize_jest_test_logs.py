@@ -23,6 +23,9 @@ def minimize_jest_test_logs(input_log):
 
     for i, line in enumerate(lines):
         if "Summary of all failing tests" in line:
+            # Add a blank line before summary if needed
+            if result_lines and result_lines[-1].strip():
+                result_lines.append("")
             # Add remaining lines from summary onwards
             result_lines.extend(lines[i:])
             summary_found = True
@@ -56,11 +59,7 @@ def minimize_jest_test_logs(input_log):
 
         if is_command:
             result_lines.append(line)
-        elif not line.strip():  # Empty line
-            # Add empty lines only if we have some header content already
-            if result_lines:
-                result_lines.append(line)
-        else:  # Non-empty, non-command line
+        elif line.strip():  # Non-empty, non-command line
             # Header is complete once we see a non-command line
             header_complete = True
 
