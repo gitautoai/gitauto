@@ -299,7 +299,6 @@ def test_minimize_jest_test_logs_multiple_command_occurrences():
     """Test with multiple occurrences of command keywords in different contexts."""
     input_log = """yarn run v1.22.22
 $ npm test
-Running jest tests...
 $ jest --coverage
 Some output mentioning $ jest again
 
