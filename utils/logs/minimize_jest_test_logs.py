@@ -31,17 +31,27 @@ def minimize_jest_test_logs(input_log):
         # Keep command/header lines only if header is not complete
         if not header_complete:
             stripped_line = line.lstrip()
+            is_command = False
+
+            # Check for patterns that should be anywhere in the line
             if (
-                stripped_line.startswith("CircleCI Build Log")
-                or stripped_line.startswith("yarn run v")
-                or stripped_line.startswith("npm run")
-                or stripped_line.startswith("$ craco test")
+                "CircleCI Build Log" in line
+                or "yarn run v" in line
+                or "npm run" in line
+            ):
+                is_command = True
+            # Check for $ commands that must start the line (after stripping)
+            elif (
+                stripped_line.startswith("$ craco test")
                 or stripped_line.startswith("$ react-scripts test")
                 or stripped_line.startswith("$ jest")
                 or stripped_line.startswith("$ vitest")
                 or stripped_line.startswith("$ npm test")
                 or stripped_line.startswith("$ yarn test")
             ):
+                is_command = True
+
+            if is_command:
                 result_lines.append(line)
             # Mark header as complete when we encounter a non-command line
             elif result_lines:
