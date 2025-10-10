@@ -14,7 +14,6 @@ def return_input_on_exception(func):
 def minimize_jest_test_logs(input_log):
     """Minimize Jest test logs by keeping only headers and summary section."""
     if not input_log:
-    header_complete = False
         return input_log
 
     lines = input_log.split("\n")
