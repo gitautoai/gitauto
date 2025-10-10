@@ -35,10 +35,6 @@ def minimize_jest_test_logs(input_log):
         if not line.strip():
             continue
 
-        # If header is complete, skip all lines until summary
-        if header_complete:
-            continue
-
         # Check if this line is a command/header line
         stripped_line = line.lstrip()
         is_command = False
@@ -63,7 +59,7 @@ def minimize_jest_test_logs(input_log):
 
         if is_command:
             result_lines.append(line)
-        else:
+        elif not header_complete:
             # Non-command line encountered, header is complete
             header_complete = True
 
