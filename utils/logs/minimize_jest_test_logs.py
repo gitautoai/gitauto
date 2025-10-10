@@ -24,7 +24,8 @@ def minimize_jest_test_logs(input_log):
         # Check if we've found the summary section
         if "Summary of all failing tests" in line:
             # Add remaining lines from summary onwards
-            result_lines.append("")
+            if result_lines:
+                result_lines.append("")
             result_lines.extend(lines[i:])
             return "\n".join(result_lines)
 
