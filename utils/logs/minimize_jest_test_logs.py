@@ -59,8 +59,8 @@ def minimize_jest_test_logs(input_log):
 
         if is_command:
             result_lines.append(line)
-        else:
-            # Non-command line encountered, header is complete
+        elif line.strip():
+            # Non-empty, non-command line encountered, header is complete
             header_complete = True
 
     return "\n".join(result_lines) if summary_found else input_log
