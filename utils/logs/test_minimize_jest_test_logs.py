@@ -115,10 +115,14 @@ def test_minimize_jest_test_logs_header_complete_branch():
 
     This covers the uncovered branch at line 42-44 where:
     - result_lines has content (header lines were found)
+    - A non-command, non-summary line is encountered after header lines
     - header_complete becomes True
-    - But no summary section is found
+    - But no summary section is found in the entire log
+
+    The key is having: header command -> non-command line -> rest of log without summary
     """
     input_log = """yarn run v1.22.22
+Some non-command line that triggers header_complete
 $ npm test
 
 PASS test/file1.test.ts
@@ -126,6 +130,24 @@ PASS test/file2.test.ts
 FAIL test/file3.test.ts
 
 Test Suites: 1 failed, 2 passed, 3 total"""
+
+    # Should return unchanged since no summary section exists
+    result = minimize_jest_test_logs(input_log)
+    assert result == input_log
+
+
+def test_minimize_jest_test_logs_header_complete_branch_explicit():
+    """Explicit test for the header_complete branch (line 42-44).
+
+    This test ensures the elif branch at line 42-44 is executed:
+    - First line is a command (adds to result_lines)
+    - Second line is NOT a command and NOT summary (triggers elif at line 42)
+    - No summary section exists in the log
+    """
+    input_log = """$ jest
+This line is not a command
+PASS test/file1.test.ts
+Test Suites: 1 passed, 1 total"""
 
     # Should return unchanged since no summary section exists
     result = minimize_jest_test_logs(input_log)
@@ -460,3 +482,126 @@ FAIL test/file2.test.ts"""
     # Should return unchanged because it's not the exact keyword
     result = minimize_jest_test_logs(input_log)
     assert result == input_log
+
+
+def test_minimize_jest_test_logs_no_header_with_summary():
+    """Test when summary exists but no header commands are present."""
+    input_log = """Random output line 1
+Random output line 2
+Random output line 3
+
+Summary of all failing tests
+FAIL test/file1.test.ts
+  ● test failed"""
+
+    expected = """
+Summary of all failing tests
+FAIL test/file1.test.ts
+  ● test failed"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_header_then_non_command_then_summary():
+    """Test header -> non-command line -> summary pattern.
+
+    This ensures the header_complete flag works correctly when
+    summary appears after non-command lines.
+    """
+    input_log = """$ jest
+Non-command line here
+Another non-command line
+Summary of all failing tests
+FAIL test/file1.test.ts"""
+
+    expected = """$ jest
+
+Summary of all failing tests
+FAIL test/file1.test.ts"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_empty_lines_only():
+    """Test with only empty lines and summary."""
+    input_log = """
+
+Summary of all failing tests
+FAIL test/file1.test.ts"""
+
+    expected = """
+Summary of all failing tests
+FAIL test/file1.test.ts"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_command_after_non_command():
+    """Test when command appears after non-command lines.
+
+    This tests that once header_complete is True, subsequent command
+    lines are not added to result_lines.
+    """
+    input_log = """$ jest
+Non-command line
+$ npm test
+More output
+Summary of all failing tests
+FAIL test/file1.test.ts"""
+
+    expected = """$ jest
+
+Summary of all failing tests
+FAIL test/file1.test.ts"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_unicode_characters():
+    """Test with unicode characters in the log."""
+    input_log = """$ jest
+Test with unicode: ✓ ✗ ● ◯ 🎉
+
+Summary of all failing tests
+FAIL test/file1.test.ts
+  ● test failed with emoji 🔥"""
+
+    expected = """$ jest
+
+Summary of all failing tests
+FAIL test/file1.test.ts
+  ● test failed with emoji 🔥"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_newline_variations():
+    """Test with different newline variations."""
+    # Test with \r\n (Windows style)
+    input_log = "$ jest\r\nPASS test\r\n\r\nSummary of all failing tests\r\nFAIL test"
+    result = minimize_jest_test_logs(input_log)
+    assert "Summary of all failing tests" in result
+    assert "$ jest" in result
+
+
+def test_minimize_jest_test_logs_summary_as_substring():
+    """Test when summary keyword appears as part of another string."""
+    input_log = """$ jest
+This is not a Summary of all failing tests line
+PASS test/file1.test.ts
+
+Summary of all failing tests
+FAIL test/file2.test.ts"""
+
+    expected = """$ jest
+
+Summary of all failing tests
+FAIL test/file2.test.ts"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
