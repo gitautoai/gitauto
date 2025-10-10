@@ -19,6 +19,7 @@ def minimize_jest_test_logs(input_log):
     lines = input_log.split("\n")
     result_lines = []
     summary_found = False
+    header_complete = False
 
     for i, line in enumerate(lines):
         # Check if we've found the summary section
@@ -52,7 +53,11 @@ def minimize_jest_test_logs(input_log):
         ):
             is_command = True
 
-        if is_command:
+        # Only add command lines if we're still in the header section
+        if is_command and not header_complete:
             result_lines.append(line)
+        elif not is_command and result_lines:
+            # Once we encounter a non-command line after commands, header is complete
+            header_complete = True
 
     return "\n".join(result_lines) if summary_found else input_log
