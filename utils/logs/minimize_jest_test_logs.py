@@ -21,6 +21,8 @@ def minimize_jest_test_logs(input_log):
     summary_found = False
     last_was_command = False
 
+            # Add empty line before summary if needed
+            if result_lines and result_lines[-1].strip():
     for i, line in enumerate(lines):
         # Check if we've found the summary section
         if "Summary of all failing tests" in line:
