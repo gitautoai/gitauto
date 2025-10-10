@@ -18,7 +18,7 @@ def minimize_jest_test_logs(input_log):
 
     lines = input_log.split("\n")
     result_lines = []
-    header_complete = False
+    summary_found = False
 
     for i, line in enumerate(lines):
         # Check if we've found the summary section
@@ -27,36 +27,32 @@ def minimize_jest_test_logs(input_log):
             if result_lines:
                 result_lines.append("")
             result_lines.extend(lines[i:])
-            return "\n".join(result_lines)
+            summary_found = True
+            break
 
-        # Keep command/header lines only if header is not complete
-        if not header_complete:
-            stripped_line = line.lstrip()
-            is_command = False
+        # Check if this line is a command/header line
+        stripped_line = line.lstrip()
+        is_command = False
 
-            # Check for patterns that should be anywhere in the line
-            if (
-                "CircleCI Build Log" in line
-                or "yarn run v" in line
-                or "npm run" in line
-            ):
-                is_command = True
-            # Check for $ commands that must start the line (after stripping)
-            elif (
-                stripped_line.startswith("$ craco test")
-                or stripped_line.startswith("$ react-scripts test")
-                or stripped_line.startswith("$ jest")
-                or stripped_line.startswith("$ vitest")
-                or stripped_line.startswith("$ npm test")
-                or stripped_line.startswith("$ yarn test")
-            ):
-                is_command = True
+        # Check for patterns that should be anywhere in the line
+        if (
+            "CircleCI Build Log" in line
+            or "yarn run v" in line
+            or "npm run" in line
+        ):
+            is_command = True
+        # Check for $ commands that must start the line (after stripping)
+        elif (
+            stripped_line.startswith("$ craco test")
+            or stripped_line.startswith("$ react-scripts test")
+            or stripped_line.startswith("$ jest")
+            or stripped_line.startswith("$ vitest")
+            or stripped_line.startswith("$ npm test")
+            or stripped_line.startswith("$ yarn test")
+        ):
+            is_command = True
 
-            if is_command:
-                result_lines.append(line)
-            # Mark header as complete when we encounter a non-blank, non-command line
-            elif result_lines and line.strip():
-                header_complete = True
+        if is_command:
+            result_lines.append(line)
 
-    # If no summary section found, return original input
-    return input_log
+    return "\n".join(result_lines) if summary_found else input_log
