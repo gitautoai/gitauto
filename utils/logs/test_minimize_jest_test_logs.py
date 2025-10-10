@@ -333,8 +333,7 @@ FAIL test/file1.test.ts
 
 Test Suites: 1 failed, 1 total"""
 
-    expected = """
-Summary of all failing tests
+    expected = """Summary of all failing tests
 FAIL test/file1.test.ts
   ● test failed
 
