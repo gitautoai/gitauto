@@ -529,7 +529,6 @@ Summary of all failing tests
 FAIL test/file1.test.ts"""
 
     expected = """Summary of all failing tests
-Summary of all failing tests
 FAIL test/file1.test.ts"""
 
     result = minimize_jest_test_logs(input_log)
