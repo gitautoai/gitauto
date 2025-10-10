@@ -19,7 +19,6 @@ def minimize_jest_test_logs(input_log):
     lines = input_log.split("\n")
     result_lines = []
     summary_found = False
-    empty_line_added = False
 
     for i, line in enumerate(lines):
         if "Summary of all failing tests" in line:
@@ -55,10 +54,5 @@ def minimize_jest_test_logs(input_log):
 
         if is_command:
             result_lines.append(line)
-            empty_line_added = False
-        # Keep only one empty line after command lines
-        elif not line.strip() and result_lines and not empty_line_added:
-            result_lines.append(line)
-            empty_line_added = True
 
     return "\n".join(result_lines) if summary_found else input_log
