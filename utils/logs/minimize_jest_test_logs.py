@@ -19,7 +19,6 @@ def minimize_jest_test_logs(input_log):
     lines = input_log.split("\n")
     result_lines = []
     summary_found = False
-    header_complete = False
 
     for i, line in enumerate(lines):
         if "Summary of all failing tests" in line:
@@ -57,11 +56,7 @@ def minimize_jest_test_logs(input_log):
         ):
             is_command = True
 
-        if is_command and not header_complete:
+        if is_command:
             result_lines.append(line)
-        elif not header_complete:
-            # First non-command line encountered, header is complete
-            header_complete = True
-        # If header is complete and this is not a command, skip the line
 
     return "\n".join(result_lines) if summary_found else input_log
