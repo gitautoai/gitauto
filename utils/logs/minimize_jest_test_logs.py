@@ -21,29 +21,31 @@ def minimize_jest_test_logs(input_log):
     header_complete = False
 
     for i, line in enumerate(lines):
-        # Keep command/header lines
-        stripped_line = line.lstrip()
-        if (
-            stripped_line.startswith("CircleCI Build Log")
-            or stripped_line.startswith("yarn run v")
-            or stripped_line.startswith("npm run")
-            or stripped_line.startswith("$ craco test")
-            or stripped_line.startswith("$ react-scripts test")
-            or stripped_line.startswith("$ jest")
-            or stripped_line.startswith("$ vitest")
-            or stripped_line.startswith("$ npm test")
-            or stripped_line.startswith("$ yarn test")
-        ):
-            result_lines.append(line)
         # Check if we've found the summary section
-        elif "Summary of all failing tests" in line:
+        if "Summary of all failing tests" in line:
             # Add remaining lines from summary onwards
             result_lines.append("")
             result_lines.extend(lines[i:])
             return "\n".join(result_lines)
-        # Mark header as complete when we encounter a non-command line
-        elif result_lines and not header_complete:
-            header_complete = True
+
+        # Keep command/header lines only if header is not complete
+        if not header_complete:
+            stripped_line = line.lstrip()
+            if (
+                stripped_line.startswith("CircleCI Build Log")
+                or stripped_line.startswith("yarn run v")
+                or stripped_line.startswith("npm run")
+                or stripped_line.startswith("$ craco test")
+                or stripped_line.startswith("$ react-scripts test")
+                or stripped_line.startswith("$ jest")
+                or stripped_line.startswith("$ vitest")
+                or stripped_line.startswith("$ npm test")
+                or stripped_line.startswith("$ yarn test")
+            ):
+                result_lines.append(line)
+            # Mark header as complete when we encounter a non-command line
+            elif result_lines:
+                header_complete = True
 
     # If no summary section found, return original input
     return input_log
