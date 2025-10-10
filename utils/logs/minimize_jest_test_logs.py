@@ -53,8 +53,8 @@ def minimize_jest_test_logs(input_log):
 
             if is_command:
                 result_lines.append(line)
-            # Mark header as complete when we encounter a non-command line
-            elif result_lines:
+            # Mark header as complete when we encounter a non-blank, non-command line
+            elif result_lines and line.strip():
                 header_complete = True
 
     # If no summary section found, return original input
