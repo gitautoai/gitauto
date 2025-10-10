@@ -1,48 +1,49 @@
-from utils.error.handle_exceptions import handle_exceptions
+def return_input_on_exception(func):
+    """Decorator that returns the input unchanged if an exception occurs."""
+
+    def wrapper(input_log):
+        try:
+            return func(input_log)
+        except Exception:
+            return input_log
+
+    return wrapper
 
 
-@handle_exceptions(
-    default_return_value=lambda error_log: error_log, raise_on_error=False
-)
-def minimize_jest_test_logs(error_log: str) -> str:
-    if not error_log:
-        return error_log
+@return_input_on_exception
+def minimize_jest_test_logs(input_log):
+    """Minimize Jest test logs by keeping only headers and summary section."""
+    if not input_log:
+        return input_log
 
-    # Check if this is Jest output with the summary section
-    if "Summary of all failing tests" not in error_log:
-        return error_log
-
-    lines = error_log.split("\n")
+    lines = input_log.split("\n")
     result_lines = []
-
-    # Keep the header (build commands at the beginning)
     header_complete = False
+
     for i, line in enumerate(lines):
         # Keep command/header lines
-        if any(
-            cmd in line
-            for cmd in [
-                "CircleCI Build Log",
-                "yarn run v",
-                "npm run",
-                "$ craco test",
-                "$ react-scripts test",
-                "$ jest",
-                "$ vitest",
-                "$ npm test",
-                "$ yarn test",
-            ]
+        stripped_line = line.lstrip()
+        if (
+            stripped_line.startswith("CircleCI Build Log")
+            or stripped_line.startswith("yarn run v")
+            or stripped_line.startswith("npm run")
+            or stripped_line.startswith("$ craco test")
+            or stripped_line.startswith("$ react-scripts test")
+            or stripped_line.startswith("$ jest")
+            or stripped_line.startswith("$ vitest")
+            or stripped_line.startswith("$ npm test")
+            or stripped_line.startswith("$ yarn test")
         ):
             result_lines.append(line)
+        # Check if we've found the summary section
         elif "Summary of all failing tests" in line:
-            # Found the summary section, keep everything from here onwards
-            if result_lines or i > 0:  # Add blank line if there's a header or summary is not at the beginning
-                result_lines.append("")  # Add blank line before summary
-            result_lines.extend(lines[i:])  # Keep everything from summary to end
-            break
+            # Add remaining lines from summary onwards
+            result_lines.append("")
+            result_lines.extend(lines[i:])
+            return "\n".join(result_lines)
+        # Mark header as complete when we encounter a non-command line
         elif result_lines and not header_complete:
-            # After we have header lines, we're done with the header
             header_complete = True
 
-    result = "\n".join(result_lines)
-    return result.strip()
+    # If no summary section found, return original input
+    return input_log
