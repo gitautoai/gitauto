@@ -21,11 +21,6 @@ def minimize_jest_test_logs(input_log):
     summary_found = False
     header_complete = False
 
-        # Once header is complete, skip all lines until summary
-        if header_complete:
-            continue
-
-
     for i, line in enumerate(lines):
         if "Summary of all failing tests" in line:
             # Add empty line before summary if needed
