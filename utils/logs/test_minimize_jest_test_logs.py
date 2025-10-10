@@ -493,7 +493,6 @@ FAIL test/file1.test.ts
   ● test failed"""
 
     expected = """Summary of all failing tests
-Summary of all failing tests
 FAIL test/file1.test.ts
   ● test failed"""
 
