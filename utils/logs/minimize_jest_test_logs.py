@@ -23,9 +23,6 @@ def minimize_jest_test_logs(input_log):
 
     for i, line in enumerate(lines):
         if "Summary of all failing tests" in line:
-            # Add empty line before summary if needed
-            if result_lines and result_lines[-1].strip():
-                result_lines.append("")
             # Add remaining lines from summary onwards
             result_lines.extend(lines[i:])
             summary_found = True
