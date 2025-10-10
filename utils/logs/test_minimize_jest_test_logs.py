@@ -311,6 +311,7 @@ FAIL test/file2.test.ts
 
     expected = """yarn run v1.22.22
 $ npm test
+$ jest --coverage
 Summary of all failing tests
 FAIL test/file2.test.ts
   ● test failed"""
