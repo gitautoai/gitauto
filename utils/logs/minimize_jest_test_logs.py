@@ -19,19 +19,12 @@ def minimize_jest_test_logs(input_log):
     lines = input_log.split("\n")
     result_lines = []
     summary_found = False
-    last_command_index = -1
 
-    # First pass: identify command lines and find summary
     for i, line in enumerate(lines):
         if "Summary of all failing tests" in line:
-            # Add command lines collected so far
-            for j in range(last_command_index + 1):
-                result_lines.append(lines[j])
-
-            # Add empty line before summary if the last command line is not followed by empty line
+            # Add empty line before summary if needed
             if result_lines and result_lines[-1].strip():
                 result_lines.append("")
-
             # Add remaining lines from summary onwards
             result_lines.extend(lines[i:])
             summary_found = True
@@ -60,6 +53,9 @@ def minimize_jest_test_logs(input_log):
             is_command = True
 
         if is_command:
-            last_command_index = i
+            result_lines.append(line)
+        # Keep empty lines that come after command lines
+        elif not line.strip() and result_lines:
+            result_lines.append(line)
 
     return "\n".join(result_lines) if summary_found else input_log
