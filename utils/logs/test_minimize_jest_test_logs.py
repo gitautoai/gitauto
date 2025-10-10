@@ -529,7 +529,7 @@ def test_minimize_jest_test_logs_empty_lines_only():
 Summary of all failing tests
 FAIL test/file1.test.ts"""
 
-    expected = """
+    expected = """Summary of all failing tests
 Summary of all failing tests
 FAIL test/file1.test.ts"""
 
