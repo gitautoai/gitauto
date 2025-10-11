@@ -452,3 +452,169 @@ def test_deconstruct_jira_payload_url_extraction(
     mock_extract_urls.assert_called_once_with(
         text="Check https://github.com/owner/repo and https://example.com"
     )
+
+
+@patch("services.jira.deconstruct_jira_payload.get_installation")
+@patch("services.jira.deconstruct_jira_payload.get_installation_access_token")
+@patch("services.jira.deconstruct_jira_payload.is_repo_forked")
+@patch("services.jira.deconstruct_jira_payload.get_default_branch")
+@patch("services.jira.deconstruct_jira_payload.get_repository")
+@patch("services.jira.deconstruct_jira_payload.check_branch_exists")
+@patch("services.jira.deconstruct_jira_payload.extract_urls")
+@patch("services.jira.deconstruct_jira_payload.datetime")
+def test_deconstruct_jira_payload_different_owner_types(
+    mock_datetime,
+    mock_extract_urls,
+    mock_check_branch_exists,
+    mock_get_repository,
+    mock_get_default_branch,
+    mock_is_repo_forked,
+    mock_get_installation_access_token,
+    mock_get_installation,
+):
+    """Test handling of different owner types (User vs Organization)."""
+    mock_get_installation.return_value = {
+        "installation_id": 67890,
+        "owner_type": "User",
+    }
+    mock_get_installation_access_token.return_value = "test_token"
+    mock_is_repo_forked.return_value = False
+    mock_get_default_branch.return_value = ("main", "abc123def456")
+    mock_get_repository.return_value = {"target_branch": None}
+    mock_check_branch_exists.return_value = False
+    mock_extract_urls.return_value = ([], [])
+    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
+
+    payload = create_mock_jira_payload()
+
+    base_args, _ = deconstruct_jira_payload(payload)
+
+    assert base_args["owner_type"] == "User"
+
+
+@patch("services.jira.deconstruct_jira_payload.get_installation")
+@patch("services.jira.deconstruct_jira_payload.get_installation_access_token")
+@patch("services.jira.deconstruct_jira_payload.is_repo_forked")
+@patch("services.jira.deconstruct_jira_payload.get_default_branch")
+@patch("services.jira.deconstruct_jira_payload.get_repository")
+@patch("services.jira.deconstruct_jira_payload.check_branch_exists")
+@patch("services.jira.deconstruct_jira_payload.extract_urls")
+@patch("services.jira.deconstruct_jira_payload.datetime")
+def test_deconstruct_jira_payload_empty_issue_body(
+    mock_datetime,
+    mock_extract_urls,
+    mock_check_branch_exists,
+    mock_get_repository,
+    mock_get_default_branch,
+    mock_is_repo_forked,
+    mock_get_installation_access_token,
+    mock_get_installation,
+):
+    """Test handling of empty issue body."""
+    mock_get_installation.return_value = {
+        "installation_id": 67890,
+        "owner_type": "Organization",
+    }
+    mock_get_installation_access_token.return_value = "test_token"
+    mock_is_repo_forked.return_value = False
+    mock_get_default_branch.return_value = ("main", "abc123def456")
+    mock_get_repository.return_value = {"target_branch": None}
+    mock_check_branch_exists.return_value = False
+    mock_extract_urls.return_value = ([], [])
+    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
+
+    payload = create_mock_jira_payload(issue_body="")
+
+    base_args, _ = deconstruct_jira_payload(payload)
+
+    assert base_args["issue_body"] == ""
+    mock_extract_urls.assert_called_once_with(text="")
+
+
+@patch("services.jira.deconstruct_jira_payload.get_installation")
+@patch("services.jira.deconstruct_jira_payload.get_installation_access_token")
+@patch("services.jira.deconstruct_jira_payload.is_repo_forked")
+@patch("services.jira.deconstruct_jira_payload.get_default_branch")
+@patch("services.jira.deconstruct_jira_payload.get_repository")
+@patch("services.jira.deconstruct_jira_payload.check_branch_exists")
+@patch("services.jira.deconstruct_jira_payload.extract_urls")
+@patch("services.jira.deconstruct_jira_payload.datetime")
+def test_deconstruct_jira_payload_different_default_branches(
+    mock_datetime,
+    mock_extract_urls,
+    mock_check_branch_exists,
+    mock_get_repository,
+    mock_get_default_branch,
+    mock_is_repo_forked,
+    mock_get_installation_access_token,
+    mock_get_installation,
+):
+    """Test handling of different default branch names."""
+    mock_get_installation.return_value = {
+        "installation_id": 67890,
+        "owner_type": "Organization",
+    }
+    mock_get_installation_access_token.return_value = "test_token"
+    mock_is_repo_forked.return_value = False
+    mock_get_default_branch.return_value = ("master", "xyz789abc123")
+    mock_get_repository.return_value = {"target_branch": None}
+    mock_check_branch_exists.return_value = False
+    mock_extract_urls.return_value = ([], [])
+    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
+
+    payload = create_mock_jira_payload()
+
+    base_args, _ = deconstruct_jira_payload(payload)
+
+    assert base_args["base_branch"] == "master"
+    assert base_args["latest_commit_sha"] == "xyz789abc123"
+
+
+@patch("services.jira.deconstruct_jira_payload.get_installation")
+@patch("services.jira.deconstruct_jira_payload.get_installation_access_token")
+@patch("services.jira.deconstruct_jira_payload.is_repo_forked")
+@patch("services.jira.deconstruct_jira_payload.get_default_branch")
+@patch("services.jira.deconstruct_jira_payload.get_repository")
+@patch("services.jira.deconstruct_jira_payload.check_branch_exists")
+@patch("services.jira.deconstruct_jira_payload.extract_urls")
+@patch("services.jira.deconstruct_jira_payload.datetime")
+def test_deconstruct_jira_payload_all_fields_populated(
+    mock_datetime,
+    mock_extract_urls,
+    mock_check_branch_exists,
+    mock_get_repository,
+    mock_get_default_branch,
+    mock_is_repo_forked,
+    mock_get_installation_access_token,
+    mock_get_installation,
+):
+    """Test with all fields populated to ensure complete coverage."""
+    mock_get_installation.return_value = {
+        "installation_id": 12345,
+        "owner_type": "Organization",
+    }
+    mock_get_installation_access_token.return_value = "access_token_xyz"
+    mock_is_repo_forked.return_value = True
+    mock_get_default_branch.return_value = ("develop", "commit_sha_123")
+    mock_get_repository.return_value = {"target_branch": "staging"}
+    mock_check_branch_exists.return_value = True
+    mock_extract_urls.return_value = (
+        ["https://github.com/test/repo"],
+        ["https://docs.example.com"],
+    )
+    mock_datetime.now.return_value.strftime.side_effect = ["20250315", "093045"]
+
+    payload = create_mock_jira_payload(
+        issue_id="PROJ-456",
+        issue_key="PROJ-456",
+        issue_title="Complex Issue Title",
+        issue_body="Detailed issue description with URLs",
+        issue_comments=["Comment A", "Comment B"],
+        creator_id="user-abc-123",
+        creator_display_name="Jane Smith",
+        creator_email="jane.smith@company.com",
+        owner_id=999,
+        owner_name="complex-owner",
+        repo_id=888,
+        repo_name="complex-repo",
+    )
