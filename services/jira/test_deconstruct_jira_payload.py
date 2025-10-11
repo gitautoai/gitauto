@@ -1026,6 +1026,34 @@ def test_deconstruct_jira_payload_clone_url_is_empty(
 
     payload = create_mock_jira_payload()
 
+    mock_get_installation_access_token.return_value = "test_token"
+    mock_is_repo_forked.return_value = False
+    mock_get_default_branch.return_value = "main"
+    mock_get_repository.return_value = {
+        "owner": {"login": "test-owner"},
+        "name": "test-repo",
+    }
+    mock_check_branch_exists.return_value = False
+    mock_extract_urls.return_value = []
+    mock_datetime.now.return_value.isoformat.return_value = "2025-10-11T00:00:00"
+
+    payload = {
+        "issue": {
+            "key": "TEST-123",
+            "fields": {
+                "summary": "Test Issue",
+                "description": "Test Description https://github.com/test-owner/test-repo",
+            },
+        },
+        "user": {"accountId": "test-user"},
+        "changelog": {"items": []},
+    }
+
+    base_args = deconstruct_jira_payload(payload)
+
+    # Verify clone_url is empty string
+    assert base_args is not None
+    assert base_args["clone_url"] == ""
     base_args, repo_settings = deconstruct_jira_payload(payload)
 
     assert base_args is not None
