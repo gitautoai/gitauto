@@ -1012,6 +1012,7 @@ def test_deconstruct_jira_payload_clone_url_is_empty(
     mock_get_installation,
 ):
     """Test that clone_url is always empty string for Jira payloads."""
+    payload = create_mock_jira_payload()
     mock_get_installation.return_value = {
         "installation_id": 67890,
         "owner_type": "Organization",
