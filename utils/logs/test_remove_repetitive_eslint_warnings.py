@@ -143,6 +143,27 @@ def test_input_with_trailing_newline():
 
 
 def test_result_trailing_newline_strip():
+
+
+def test_trailing_newline_strip_when_result_has_extra():
+    # Test line 71-72: This tests the case where input doesn't end with \n
+    # but result ends with \n after processing
+    # This happens when we have a non-file line at the end that's empty
+    # and gets added to result_lines, causing the join to add a trailing \n
+
+    # Create a case where we have a header, then a file with errors,
+    # then a summary, and the processing adds an empty line
+    # The key is that the input string itself doesn't end with \n
+    # but after split and processing, result_lines ends with ""
+
+    # Input with trailing empty line but constructed to not end with \n
+    # This is a bit artificial but tests the defensive code
+    log = "Header\n"  # This ends with \n
+    # After split: ["Header", ""]
+    # After processing: result_lines = ["Header", ""]
+    # After join: "Header\n"
+    # Both input and result end with \n, so this doesn't trigger line 71-72
+
     # Test line 71-72: input does NOT end with newline but result does
     # This can happen when processing adds empty lines that create trailing newline
     # Create input where last line is empty (from split) but input doesn't conceptually end with newline
