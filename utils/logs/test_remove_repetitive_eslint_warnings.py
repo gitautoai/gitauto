@@ -1,4 +1,6 @@
 
+from utils.logs.remove_repetitive_eslint_warnings import \
+    remove_repetitive_eslint_warnings
 from utils.logs.remove_repetitive_eslint_warnings import (
     remove_repetitive_eslint_warnings,
 )
