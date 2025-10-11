@@ -1,4 +1,7 @@
 
+from utils.logs.remove_repetitive_eslint_warnings import (
+    remove_repetitive_eslint_warnings,
+)
 
 def test_edge_case_trailing_newline_strip():
     # Edge case: file with only warnings gets removed, leaving only summary
