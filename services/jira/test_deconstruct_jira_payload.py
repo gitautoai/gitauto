@@ -618,3 +618,128 @@ def test_deconstruct_jira_payload_all_fields_populated(
         repo_id=888,
         repo_name="complex-repo",
     )
+
+
+@patch("services.jira.deconstruct_jira_payload.get_installation")
+@patch("services.jira.deconstruct_jira_payload.get_installation_access_token")
+@patch("services.jira.deconstruct_jira_payload.is_repo_forked")
+@patch("services.jira.deconstruct_jira_payload.get_default_branch")
+@patch("services.jira.deconstruct_jira_payload.get_repository")
+@patch("services.jira.deconstruct_jira_payload.check_branch_exists")
+@patch("services.jira.deconstruct_jira_payload.extract_urls")
+@patch("services.jira.deconstruct_jira_payload.datetime")
+def test_deconstruct_jira_payload_with_empty_issue_comments(
+    mock_datetime,
+    mock_extract_urls,
+    mock_check_branch_exists,
+    mock_get_repository,
+    mock_get_default_branch,
+    mock_is_repo_forked,
+    mock_get_installation_access_token,
+    mock_get_installation,
+):
+    """Test handling of empty issue comments list."""
+    mock_get_installation.return_value = {
+        "installation_id": 67890,
+        "owner_type": "Organization",
+    }
+    mock_get_installation_access_token.return_value = "test_token"
+    mock_is_repo_forked.return_value = False
+    mock_get_default_branch.return_value = ("main", "abc123")
+    mock_get_repository.return_value = {"target_branch": None}
+    mock_check_branch_exists.return_value = False
+    mock_extract_urls.return_value = ([], [])
+    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
+
+    payload = create_mock_jira_payload(issue_comments=[])
+
+    base_args, _ = deconstruct_jira_payload(payload)
+
+    assert base_args["issue_comments"] == []
+
+
+@patch("services.jira.deconstruct_jira_payload.get_installation")
+@patch("services.jira.deconstruct_jira_payload.get_installation_access_token")
+@patch("services.jira.deconstruct_jira_payload.is_repo_forked")
+@patch("services.jira.deconstruct_jira_payload.get_default_branch")
+@patch("services.jira.deconstruct_jira_payload.get_repository")
+@patch("services.jira.deconstruct_jira_payload.check_branch_exists")
+@patch("services.jira.deconstruct_jira_payload.extract_urls")
+@patch("services.jira.deconstruct_jira_payload.datetime")
+def test_deconstruct_jira_payload_with_multiple_issue_comments(
+    mock_datetime,
+    mock_extract_urls,
+    mock_check_branch_exists,
+    mock_get_repository,
+    mock_get_default_branch,
+    mock_is_repo_forked,
+    mock_get_installation_access_token,
+    mock_get_installation,
+):
+    """Test handling of multiple issue comments."""
+    mock_get_installation.return_value = {
+        "installation_id": 67890,
+        "owner_type": "Organization",
+    }
+    mock_get_installation_access_token.return_value = "test_token"
+    mock_is_repo_forked.return_value = False
+    mock_get_default_branch.return_value = ("main", "abc123")
+    mock_get_repository.return_value = {"target_branch": None}
+    mock_check_branch_exists.return_value = False
+    mock_extract_urls.return_value = ([], [])
+    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
+
+    comments = ["Comment 1", "Comment 2", "Comment 3"]
+    payload = create_mock_jira_payload(issue_comments=comments)
+
+    base_args, _ = deconstruct_jira_payload(payload)
+
+    assert base_args["issue_comments"] == comments
+
+
+@patch("services.jira.deconstruct_jira_payload.get_installation")
+@patch("services.jira.deconstruct_jira_payload.get_installation_access_token")
+@patch("services.jira.deconstruct_jira_payload.is_repo_forked")
+@patch("services.jira.deconstruct_jira_payload.get_default_branch")
+@patch("services.jira.deconstruct_jira_payload.get_repository")
+@patch("services.jira.deconstruct_jira_payload.check_branch_exists")
+@patch("services.jira.deconstruct_jira_payload.extract_urls")
+@patch("services.jira.deconstruct_jira_payload.datetime")
+def test_deconstruct_jira_payload_with_special_characters_in_issue_body(
+    mock_datetime,
+    mock_extract_urls,
+    mock_check_branch_exists,
+    mock_get_repository,
+    mock_get_default_branch,
+    mock_is_repo_forked,
+    mock_get_installation_access_token,
+    mock_get_installation,
+):
+    """Test handling of special characters in issue body."""
+    mock_get_installation.return_value = {
+        "installation_id": 67890,
+        "owner_type": "Organization",
+    }
+    mock_get_installation_access_token.return_value = "test_token"
+    mock_is_repo_forked.return_value = False
+    mock_get_default_branch.return_value = ("main", "abc123")
+    mock_get_repository.return_value = {"target_branch": None}
+    mock_check_branch_exists.return_value = False
+    mock_extract_urls.return_value = ([], [])
+    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
+
+    special_body = "Test with special chars: @#$%^&*()[]{}|\\<>?/~`"
+    payload = create_mock_jira_payload(issue_body=special_body)
+
+    base_args, _ = deconstruct_jira_payload(payload)
+
+    assert base_args["issue_body"] == special_body
+
+
+@patch("services.jira.deconstruct_jira_payload.get_installation")
+def test_deconstruct_jira_payload_installation_not_found_error_message(
+    mock_get_installation,
+):
+    """Test that the error message includes the owner_id when installation is not found."""
+    mock_get_installation.return_value = None
+
