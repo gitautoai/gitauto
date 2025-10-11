@@ -1016,5 +1016,18 @@ def test_deconstruct_jira_payload_clone_url_is_empty(
         "installation_id": 67890,
         "owner_type": "Organization",
     }
-    # Verify specific values
+    mock_get_installation_access_token.return_value = "test_token"
+    mock_is_repo_forked.return_value = False
+    mock_get_default_branch.return_value = ("main", "abc123def456")
+    mock_get_repository.return_value = {"target_branch": None}
+    mock_check_branch_exists.return_value = False
+    mock_extract_urls.return_value = (["https://github.com"], ["https://example.com"])
+    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
+
+    payload = create_mock_jira_payload()
+
+    base_args, repo_settings = deconstruct_jira_payload(payload)
+
+    assert base_args is not None
     assert base_args["input_from"] == "jira"
+    assert base_args["clone_url"] == ""
