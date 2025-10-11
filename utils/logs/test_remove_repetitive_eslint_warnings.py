@@ -1,3 +1,12 @@
+
+
+def test_edge_case_trailing_newline_strip():
+    # Edge case: file with only warnings followed by non-file content with trailing newline
+    # This tests the scenario where result might end with newline but input doesn't
+    log = "/path/file.js\n  1:1  warning  Warning\nFooter line"
+    result = remove_repetitive_eslint_warnings(log)
+    # Input doesn't end with newline, result shouldn't either
+    assert not result.endswith("\n")
 from utils.logs.remove_repetitive_eslint_warnings import \
     remove_repetitive_eslint_warnings
 
