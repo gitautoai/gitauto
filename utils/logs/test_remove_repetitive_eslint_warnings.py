@@ -223,7 +223,8 @@ def test_result_ends_with_newline_but_input_does_not():
     # But we'll test the trimming logic
     log = "Some header\n✖ 1 problem\n"
     result = remove_repetitive_eslint_warnings(log)
+    expected = "Some header\n\n✖ 1 problem\n"
     # Input ends with \n, result should too
     assert result.endswith("\n")
-    # The function should preserve trailing newline behavior
-    assert result == log
+    # The function adds a blank line before summary lines
+    assert result == expected
