@@ -1049,13 +1049,9 @@ def test_deconstruct_jira_payload_clone_url_is_empty(
         "changelog": {"items": []},
     }
 
-    base_args = deconstruct_jira_payload(payload)
-
-    # Verify clone_url is empty string
-    assert base_args is not None
-    assert base_args["clone_url"] == ""
     base_args, repo_settings = deconstruct_jira_payload(payload)
 
+    # Verify clone_url is empty string
     assert base_args is not None
     assert base_args["input_from"] == "jira"
     assert base_args["clone_url"] == ""
