@@ -1,4 +1,5 @@
 import re
+"""Module for removing pytest sections from error logs."""
 
 from utils.error.handle_exceptions import handle_exceptions
 
