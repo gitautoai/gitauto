@@ -79,7 +79,7 @@ def remove_pytest_sections(error_log: str):
         if skip:
             # If this line doesn't look like pytest output and we haven't seen pytest output recently,
             # then we've probably exited the pytest section
-            if not looks_like_pytest and i > last_pytest_line_index + 1:
+            if not looks_like_pytest and i > last_pytest_line_index:
                 # Stop skipping
                 skip = False
                 filtered_lines.append(line)
