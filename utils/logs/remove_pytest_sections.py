@@ -12,6 +12,7 @@ def remove_pytest_sections(error_log: str):
     filtered_lines = []
     skip = False
     content_removed = False
+    in_pytest_output = False
 
     for line in lines:
         # Check if this is a section marker line (contains ===)
@@ -20,18 +21,21 @@ def remove_pytest_sections(error_log: str):
         # Start skipping at test session header
         if is_marker_line and "test session starts" in line:
             skip = True
+            in_pytest_output = True
             content_removed = True
             continue
 
         # Start skipping at warnings summary
         if is_marker_line and "warnings summary" in line:
             skip = True
+            in_pytest_output = True
             content_removed = True
             continue
 
         # Stop skipping and keep failures section
         if is_marker_line and "FAILURES" in line:
             skip = False
+            in_pytest_output = True
             # Add blank line before FAILURES if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
                 filtered_lines.append("")
@@ -41,52 +45,33 @@ def remove_pytest_sections(error_log: str):
         # Stop skipping and keep short test summary info
         if is_marker_line and "short test summary info" in line:
             skip = False
+            in_pytest_output = True
             # Add blank line before summary if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
                 filtered_lines.append("")
             filtered_lines.append(line)
             continue
 
-        # If we're skipping and hit another marker line (that we don't recognize), stop skipping
+        # If we're skipping and hit another marker line, check what it is
         if skip and is_marker_line:
-            skip = False
-            filtered_lines.append(line)
-            continue
-
-        # If we're skipping, check if this line looks like it's outside the pytest section
-        if skip:
-            # Check if line looks like it's not part of pytest output
-            # Pytest output typically contains: test paths (::), indentation, specific keywords, or is blank
-            is_pytest_content = (
-                not line.strip() or  # blank line
-                line.startswith(" ") or  # indented
-                "::" in line or  # test path
-                line.startswith("platform ") or
-                line.startswith("cachedir:") or
-                line.startswith("rootdir:") or
-                line.startswith("plugins:") or
-                line.startswith("collected ") or
-                line.startswith("--") or  # docs link
-                "PASSED" in line or
-                "FAILED" in line or
-                "SKIPPED" in line or
-                "ERROR" in line or
-                "[" in line and "]" in line  # progress indicators like [100%]
-            )
-
-            if not is_pytest_content:
-                # This line doesn't look like pytest output, stop skipping
+            # If it's a final summary line (e.g., "=== 1 passed in 0.01s ==="), stop skipping
+            # These lines typically contain "passed", "failed", "in", "warnings"
+            if any(keyword in line for keyword in [" passed", " failed", " skipped", " error", " in "]):
                 skip = False
-                filtered_lines.append(line)
-                continue
-            else:
-                # Still looks like pytest content, continue skipping
+                in_pytest_output = False
                 content_removed = True
                 continue
+            # Otherwise, it's another section marker, continue skipping
+            content_removed = True
+            continue
 
-        # Keep line if not skipping
-        if not skip:
-            filtered_lines.append(line)
+        # If we're skipping, continue skipping
+        if skip:
+            content_removed = True
+            continue
+
+        # If we're not skipping, add the line
+        filtered_lines.append(line)
 
     # Join and only clean up excessive blank lines if we actually removed content
     result = "\n".join(filtered_lines)
