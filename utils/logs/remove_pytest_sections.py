@@ -9,36 +9,20 @@ def remove_pytest_sections(error_log: str):
         return error_log
 
     lines = error_log.split("\n")
+
+    # First pass: find all === marker positions
+    marker_positions = []
+    for i, line in enumerate(lines):
+        if "===" in line:
+            marker_positions.append(i)
+
     filtered_lines = []
     skip = False
     content_removed = False
-    last_pytest_line_index = -1  # Track the last line that looked like pytest output
 
     for i, line in enumerate(lines):
         # Check if this is a section marker line (contains ===)
         is_marker_line = "===" in line
-
-        # Track if this line looks like pytest output
-        looks_like_pytest = (
-            is_marker_line or
-            not line.strip() or  # blank line
-            line.startswith(" ") or  # indented
-            "::" in line or  # test path
-            line.startswith("platform ") or
-            line.startswith("cachedir:") or
-            line.startswith("rootdir:") or
-            line.startswith("plugins:") or
-            line.startswith("collected ") or
-            line.startswith("--") or  # docs link
-            "PASSED" in line or
-            "FAILED" in line or
-            "SKIPPED" in line or
-            "ERROR" in line or
-            ("[" in line and "]" in line and "%" in line)  # progress like [100%]
-        )
-
-        if looks_like_pytest:
-            last_pytest_line_index = i
 
         # Start skipping at test session header
         if is_marker_line and "test session starts" in line:
@@ -77,15 +61,39 @@ def remove_pytest_sections(error_log: str):
 
         # If we're skipping, check if we should stop
         if skip:
-            # If this line doesn't look like pytest output and we haven't seen pytest output recently,
-            # then we've probably exited the pytest section
-            if not looks_like_pytest and i > last_pytest_line_index:
-                # Stop skipping
-                skip = False
-                filtered_lines.append(line)
-                continue
+            # Check if this line looks like pytest output
+            looks_like_pytest = (
+                not line.strip() or  # blank line
+                line.startswith(" ") or  # indented
+                "::" in line or  # test path
+                line.startswith("platform ") or
+                line.startswith("cachedir:") or
+                line.startswith("rootdir:") or
+                line.startswith("plugins:") or
+                line.startswith("collected ") or
+                line.startswith("--") or  # docs link
+                "PASSED" in line or
+                "FAILED" in line or
+                "SKIPPED" in line or
+                "ERROR" in line or
+                ("[" in line and "]" in line and "%" in line)  # progress like [100%]
+            )
+
+            if not looks_like_pytest:
+                # Check if there are any more === markers after this line
+                has_more_markers = any(pos > i for pos in marker_positions)
+
+                if not has_more_markers:
+                    # No more markers, stop skipping
+                    skip = False
+                    filtered_lines.append(line)
+                    continue
+                else:
+                    # More markers ahead, continue skipping
+                    content_removed = True
+                    continue
             else:
-                # Continue skipping
+                # Looks like pytest output, continue skipping
                 content_removed = True
                 continue
 
