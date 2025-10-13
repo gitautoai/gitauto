@@ -1,4 +1,5 @@
 import re
+
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -13,20 +14,23 @@ def remove_pytest_sections(error_log: str):
     content_removed = False
 
     for line in lines:
+        # Check if this is a section marker line (contains ===)
+        is_marker_line = "===" in line
+
         # Start skipping at test session header
-        if "===" in line and "test session starts" in line:
+        if is_marker_line and "test session starts" in line:
             skip = True
             content_removed = True
             continue
 
         # Start skipping at warnings summary
-        if "===" in line and "warnings summary" in line:
+        if is_marker_line and "warnings summary" in line:
             skip = True
             content_removed = True
             continue
 
         # Stop skipping and keep failures section
-        if "===" in line and "FAILURES" in line:
+        if is_marker_line and "FAILURES" in line:
             skip = False
             # Add blank line before FAILURES if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
@@ -34,12 +38,18 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # Stop skipping and keep short test summary
-        if "===" in line and "short test summary info" in line:
+        # Stop skipping and keep short test summary info
+        if is_marker_line and "short test summary info" in line:
             skip = False
             # Add blank line before summary if we just removed content and last line isn't blank
             if content_removed and filtered_lines and filtered_lines[-1] != "":
                 filtered_lines.append("")
+            filtered_lines.append(line)
+            continue
+
+        # If we're skipping and hit another marker line (that we don't recognize), stop skipping
+        if skip and is_marker_line:
+            skip = False
             filtered_lines.append(line)
             continue
 
