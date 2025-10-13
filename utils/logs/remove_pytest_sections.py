@@ -53,11 +53,40 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
+        # If we're skipping, check if this line looks like it's outside the pytest section
+        if skip:
+            # Check if line looks like it's not part of pytest output
+            # Pytest output typically contains: test paths (::), indentation, specific keywords, or is blank
+            is_pytest_content = (
+                not line.strip() or  # blank line
+                line.startswith(" ") or  # indented
+                "::" in line or  # test path
+                line.startswith("platform ") or
+                line.startswith("cachedir:") or
+                line.startswith("rootdir:") or
+                line.startswith("plugins:") or
+                line.startswith("collected ") or
+                line.startswith("--") or  # docs link
+                "PASSED" in line or
+                "FAILED" in line or
+                "SKIPPED" in line or
+                "ERROR" in line or
+                "[" in line and "]" in line  # progress indicators like [100%]
+            )
+
+            if not is_pytest_content:
+                # This line doesn't look like pytest output, stop skipping
+                skip = False
+                filtered_lines.append(line)
+                continue
+            else:
+                # Still looks like pytest content, continue skipping
+                content_removed = True
+                continue
+
         # Keep line if not skipping
         if not skip:
             filtered_lines.append(line)
-        else:
-            content_removed = True
 
     # Join and only clean up excessive blank lines if we actually removed content
     result = "\n".join(filtered_lines)
