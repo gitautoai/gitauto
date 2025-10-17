@@ -540,8 +540,8 @@ def test_all_messages_protected_infinite_loop_prevention(mock_client):
     This tests the uncovered branch at line 32 -> 88.
     """
     messages = [
-        make_message("system", "system prompt"),
         make_message("user", "first user message"),
+        make_message("system", "system prompt"),
     ]
 
     # Force high token count that stays high even after iterations
