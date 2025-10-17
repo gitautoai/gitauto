@@ -634,11 +634,11 @@ def test_multiple_system_messages(mock_client):
 
     trimmed = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
 
-    # Should keep both system messages and remove assistant
+    # Should keep both system messages and assistant, remove user (oldest non-system)
     assert len(trimmed) == 3
     assert make_message("system", "system prompt 1") in trimmed
     assert make_message("system", "system prompt 2") in trimmed
-    assert make_message("user", "query") in trimmed
+    assert make_message("assistant", "response") in trimmed
 
 
 def test_empty_content_list(mock_client):
