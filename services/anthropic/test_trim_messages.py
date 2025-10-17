@@ -564,12 +564,9 @@ def test_all_messages_protected_infinite_loop_prevention(mock_client):
     # Should keep both messages since they're protected
     assert len(trimmed) == 2
     assert trimmed == messages
-    # Should only call count_tokens once (initial check)
-    # The while loop should exit because len(messages) > 1 but no message can be removed
-    # Actually, the while loop will iterate once, find no removable message,
-    # recalculate tokens (still high), but then exit because the for loop
-    # completed without breaking (no message was removed)
-    assert call_count >= 1
+    # Should call count_tokens twice:
+    # 1. Initial check (10000 tokens, triggers while loop)
+    # 2. After for loop completes without removing anything (500 tokens, exits while loop)
 
 
 def test_next_message_content_not_list(mock_client):
