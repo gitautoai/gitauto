@@ -555,7 +555,7 @@ def test_all_messages_protected_infinite_loop_prevention(mock_client):
         # Second call: low token count (exits while loop to prevent infinite loop)
         if call_count == 1:
             return Mock(input_tokens=10000)
-        return Mock(input_tokens=10000)
+        return Mock(input_tokens=500)
 
     mock_client.messages.count_tokens.side_effect = count_tokens_always_high
 
