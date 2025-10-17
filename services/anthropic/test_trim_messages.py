@@ -551,8 +551,10 @@ def test_all_messages_protected_infinite_loop_prevention(mock_client):
     def count_tokens_always_high(messages, model):
         nonlocal call_count
         call_count += 1
-        # Always return high token count to trigger the while condition
-        # But since all messages are protected, the for loop won't remove anything
+        # First call: high token count (triggers while loop)
+        # Second call: low token count (exits while loop to prevent infinite loop)
+        if call_count == 1:
+            return Mock(input_tokens=10000)
         return Mock(input_tokens=10000)
 
     mock_client.messages.count_tokens.side_effect = count_tokens_always_high
