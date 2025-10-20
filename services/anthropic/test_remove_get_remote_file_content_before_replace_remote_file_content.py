@@ -1349,4 +1349,61 @@ def test_all_uncovered_branches_combined():
                 {
                     "type": "tool_result",
                     "content": "No start marker here",
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_edge_case_empty_filename_extraction():
+    """Test edge case where filename extraction results in empty string"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: '' with line numbers for your information.\n1: content",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_edge_case_special_characters_in_filename():
+    """Test edge case with special characters in filename"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'path/to/file-with-special_chars.py' with line numbers for your information.\n1: content",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "path/to/file-with-special_chars.py",
+                        "file_content": "new content",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result[0]["content"][0]["content"] == "[Outdated content removed]"
+
+
+def test_corner_case_multiple_files_no_replacement():
+    """Test corner case with multiple files but no replacement operations"""
+    messages = [
                 },
