@@ -947,3 +947,130 @@ def test_no_modification_needed():
     assert result == messages
     # But should still be a deep copy
     assert result is not messages
+
+
+def test_first_pass_start_marker_not_found():
+    """Test line 60-61: when start marker is -1 in first pass (exact branch coverage)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "No start marker with line numbers for your information.\n1: print('hello')",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_first_pass_end_marker_not_found():
+    """Test line 60-61: when end marker is -1 in first pass (exact branch coverage)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' without proper ending\n1: print('hello')",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_second_pass_start_marker_not_found():
+    """Test line 95-97: when start marker is -1 in second pass (exact branch coverage)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "No start marker with line numbers for your information.\n1: print('hello')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "other.py",
+                        "content": "print('world')",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_second_pass_end_marker_not_found():
+    """Test line 95-97: when end marker is -1 in second pass (exact branch coverage)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' without proper ending\n1: print('hello')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "other.py",
+                        "content": "print('world')",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_latest_info_none_branch():
+    """Test line 103->112: when latest_info is None (exact branch coverage)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'standalone.py' with line numbers for your information.\n1: print('standalone')",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_all_uncovered_branches_combined():
+    """Test combining multiple uncovered branches in one scenario"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'file1.py' with line numbers for your information.\n1: print('file1')",
+                },
+                {
+                    "type": "tool_result",
+                    "content": "No start marker here",
+                },
