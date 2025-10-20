@@ -949,6 +949,155 @@ def test_no_modification_needed():
     assert result is not messages
 
 
+
+def test_first_pass_start_marker_not_found():
+    """Test line 60-61: when start marker is -1 in first pass (exact branch coverage)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "No start marker with line numbers for your information.",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_first_pass_end_marker_not_found():
+    """Test line 60-61: when end marker is -1 in first pass (exact branch coverage)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' without proper ending",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_second_pass_start_marker_not_found_with_replace():
+    """Test line 95-97: when start marker is -1 in second pass (exact branch coverage)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "No start marker with line numbers for your information.",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "test.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Content should remain unchanged because markers are invalid
+    assert result == messages
+
+
+def test_second_pass_end_marker_not_found_with_replace():
+    """Test line 95-97: when end marker is -1 in second pass (exact branch coverage)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' without proper ending",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "test.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Content should remain unchanged because markers are invalid
+    assert result == messages
+
+
+def test_file_content_not_tracked_in_latest_positions():
+    """Test line 103->112: when latest_info is None (exact branch coverage)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'standalone.py' with line numbers for your information.\n1: print('standalone')",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    # Should remain unchanged since no replace operation for this file
+    assert result == messages
+
+
+def test_multiple_files_with_one_untracked():
+    """Test line 112: file content that has no corresponding replace operation"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'tracked.py' with line numbers for your information.\n1: print('tracked')",
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'untracked.py' with line numbers for your information.\n1: print('untracked')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "tracked.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+
 def test_first_pass_missing_start_marker():
     """Test line 60-61: first pass when start marker is -1"""
     messages = [
