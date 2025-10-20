@@ -949,6 +949,133 @@ def test_no_modification_needed():
     assert result is not messages
 
 
+def test_first_pass_missing_start_marker():
+    """Test line 60-61: first pass when start marker is -1"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "No start marker with line numbers for your information.\n1: print('hello')",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_first_pass_missing_end_marker():
+    """Test line 60-61: first pass when end marker is -1"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' without proper ending\n1: print('hello')",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_second_pass_missing_start_marker_with_later_operation():
+    """Test line 95-97: second pass when start marker is -1 with later operation"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "No start marker with line numbers for your information.\n1: print('hello')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "test.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_second_pass_missing_end_marker_with_later_operation():
+    """Test line 95-97: second pass when end marker is -1 with later operation"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'test.py' without proper ending\n1: print('hello')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "test.py",
+                        "content": "print('replaced')",
+                    },
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_file_content_not_tracked_in_latest_positions():
+    """Test line 103->112: when file is not in file_latest_positions (latest_info is None)"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'standalone.py' with line numbers for your information.\n1: print('standalone')",
+                }
+            ],
+        },
+    ]
+    result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
+    assert result == messages
+
+
+def test_file_content_with_unrelated_replace_operation():
+    """Test line 103->112: file content exists but different file is replaced"""
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "content": "Opened file: 'file_a.py' with line numbers for your information.\n1: print('file a')",
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+
+
 def test_first_pass_start_marker_not_found():
     """Test line 60-61: when start marker is -1 in first pass (exact branch coverage)"""
     messages = [
