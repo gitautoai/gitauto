@@ -1406,4 +1406,3 @@ def test_edge_case_special_characters_in_filename():
 def test_corner_case_multiple_files_no_replacement():
     """Test corner case with multiple files but no replacement operations"""
     messages = [
-                },
