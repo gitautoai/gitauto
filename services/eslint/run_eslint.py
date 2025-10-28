@@ -70,6 +70,8 @@ def run_eslint(
 
         if packages_to_install:
             logging.info("ESLint: Installing packages via npm...")
+            npm_env = os.environ.copy()
+            npm_env["npm_config_cache"] = os.path.join(temp_dir, ".npm")
             npm_result = subprocess.run(
                 ["npm", "install", "--no-save", "--prefix", temp_dir]
                 + packages_to_install,
@@ -78,6 +80,7 @@ def run_eslint(
                 timeout=120,
                 check=False,
                 cwd=temp_dir,
+                env=npm_env,
             )
             if npm_result.returncode != 0:
                 logging.error(
