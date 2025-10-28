@@ -67,7 +67,7 @@ def run_eslint(
         if packages_to_install:
             print("ESLint: Installing packages via npm...")
             npm_env = os.environ.copy()
-            npm_env["npm_config_cache"] = os.path.join(temp_dir, ".npm")
+            npm_env["npm_config_cache"] = "/tmp/.npm"
             npm_result = subprocess.run(
                 ["npm", "install", "--no-save", "--prefix", temp_dir]
                 + packages_to_install,
