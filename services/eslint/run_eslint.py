@@ -16,11 +16,11 @@ def run_eslint(
     package_json_content: str | None = None,
 ):
     if not file_content.strip():
-        logging.info("ESLint: Skipping %s - empty content", file_path)
+        print(f"ESLint: Skipping {file_path} - empty content")
         return {"success": True, "fixed_content": file_content, "errors": []}
 
     if not file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
-        logging.info("ESLint: Skipping %s - not a JS/TS file", file_path)
+        print(f"ESLint: Skipping {file_path} - not a JS/TS file")
         return {"success": True, "fixed_content": file_content, "errors": []}
 
     extension = os.path.splitext(file_path)[1]
@@ -42,16 +42,12 @@ def run_eslint(
                 elif "eslint" in pkg.lower():
                     packages_to_install.append(f"{pkg}@{version.lstrip('^~>=')}")
 
-            logging.info(
-                "ESLint: Running for %s with version %s", file_path, eslint_version
-            )
-            logging.info("ESLint: Installing %d packages", len(packages_to_install))
+            print(f"ESLint: Running for {file_path} with version {eslint_version}")
+            print(f"ESLint: Installing {len(packages_to_install)} packages")
         except json.JSONDecodeError as e:
             logging.warning("ESLint: Failed to parse package.json: %s", e)
     else:
-        logging.info(
-            "ESLint: Running for %s with latest version (no package.json)", file_path
-        )
+        print(f"ESLint: Running for {file_path} with latest version (no package.json)")
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_file_path = os.path.join(temp_dir, f"temp{extension}")
@@ -69,7 +65,7 @@ def run_eslint(
             f.write(eslint_config_content)
 
         if packages_to_install:
-            logging.info("ESLint: Installing packages via npm...")
+            print("ESLint: Installing packages via npm...")
             npm_env = os.environ.copy()
             npm_env["npm_config_cache"] = os.path.join(temp_dir, ".npm")
             npm_result = subprocess.run(
@@ -88,9 +84,9 @@ def run_eslint(
                 )
                 logging.error("ESLint: npm stderr: %s", npm_result.stderr[:500])
             else:
-                logging.info("ESLint: npm install completed successfully")
+                print("ESLint: npm install completed successfully")
 
-        logging.info("ESLint: Running eslint@%s with --fix...", eslint_version)
+        print(f"ESLint: Running eslint@{eslint_version} with --fix...")
         result = subprocess.run(
             [
                 "npx",
@@ -147,9 +143,7 @@ def run_eslint(
                             err["ruleId"],
                         )
                 else:
-                    logging.info(
-                        "ESLint: Successfully fixed %s with no errors", file_path
-                    )
+                    print(f"ESLint: Successfully fixed {file_path} with no errors")
 
                 return {
                     "success": len(errors) == 0,
@@ -160,9 +154,7 @@ def run_eslint(
                 logging.error("ESLint: Failed to parse JSON output: %s", e)
                 logging.error("ESLint: stdout: %s", result.stdout[:500])
 
-        logging.info(
-            "ESLint: Completed for %s (return code: %d)", file_path, result.returncode
-        )
+        print(f"ESLint: Completed for {file_path} (return code: {result.returncode})")
         return {
             "success": result.returncode == 0,
             "fixed_content": fixed_content,
