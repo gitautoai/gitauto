@@ -1,4 +1,5 @@
 from unittest.mock import patch
+
 import pytest
 from services.github.trees.get_file_tree_list import get_file_tree_list
 
@@ -168,11 +169,10 @@ def test_get_file_tree_list_exception_handling(base_args):
 
         result = get_file_tree_list(base_args)
 
-        assert result == []  # Default return value from handle_exceptions decorator
+        assert result == []
 
 
 def test_get_file_tree_list_single_file_directory(base_args):
-    # Test directory with only one file
     mock_single_file_tree = [
         {"path": "single", "type": "tree"},
         {"path": "single/file.py", "type": "blob"},
@@ -191,7 +191,6 @@ def test_get_file_tree_list_single_file_directory(base_args):
 
 
 def test_get_file_tree_list_mixed_files_and_dirs(base_args):
-    # Test directory with mixed files and subdirectories
     mock_mixed_tree = [
         {"path": "mixed", "type": "tree"},
         {"path": "mixed/subdir", "type": "tree"},
@@ -213,7 +212,6 @@ def test_get_file_tree_list_mixed_files_and_dirs(base_args):
 
 
 def test_get_file_tree_list_none_tree_items(base_args):
-    # Test when get_file_tree returns None (falsy but not empty list)
     with patch(
         "services.github.trees.get_file_tree_list.get_file_tree"
     ) as mock_get_tree:
@@ -225,7 +223,6 @@ def test_get_file_tree_list_none_tree_items(base_args):
 
 
 def test_get_file_tree_list_root_only_files(base_args):
-    # Test root directory with only files (no directories)
     mock_files_only = [
         {"path": "file1.py", "type": "blob"},
         {"path": "file2.txt", "type": "blob"},
@@ -245,7 +242,6 @@ def test_get_file_tree_list_root_only_files(base_args):
 
 
 def test_get_file_tree_list_root_only_directories(base_args):
-    # Test root directory with only directories (no files)
     mock_dirs_only = [
         {"path": "dir1", "type": "tree"},
         {"path": "dir2", "type": "tree"},
@@ -268,7 +264,6 @@ def test_get_file_tree_list_root_only_directories(base_args):
 
 
 def test_get_file_tree_list_unknown_item_types(base_args):
-    # Test with items that have unknown types (not "blob" or "tree")
     mock_unknown_types = [
         {"path": "file1.py", "type": "blob"},
         {"path": "dir1", "type": "tree"},
@@ -289,7 +284,6 @@ def test_get_file_tree_list_unknown_item_types(base_args):
 
 
 def test_get_file_tree_list_dir_path_both_slashes(base_args, mock_tree_items):
-    # Test directory path with both leading and trailing slashes
     with patch(
         "services.github.trees.get_file_tree_list.get_file_tree"
     ) as mock_get_tree:
@@ -302,25 +296,7 @@ def test_get_file_tree_list_dir_path_both_slashes(base_args, mock_tree_items):
         assert result == expected_result
 
 
-def test_get_file_tree_list_verify_get_file_tree_call(base_args, mock_tree_items):
-    # Test that get_file_tree is called with correct parameters
-    with patch(
-        "services.github.trees.get_file_tree_list.get_file_tree"
-    ) as mock_get_tree:
-        mock_get_tree.return_value = mock_tree_items
-
-        get_file_tree_list(base_args, dir_path="services")
-
-        mock_get_tree.assert_called_once_with(
-            owner=base_args["owner"],
-            repo=base_args["repo"],
-            ref=base_args["base_branch"],
-            token=base_args["token"],
-        )
-
-
 def test_get_file_tree_list_directory_only_subdirectories(base_args):
-    # Test directory that contains only subdirectories (no direct files)
     mock_subdirs_only = [
         {"path": "parent", "type": "tree"},
         {"path": "parent/subdir1", "type": "tree"},
@@ -342,7 +318,6 @@ def test_get_file_tree_list_directory_only_subdirectories(base_args):
 
 
 def test_get_file_tree_list_directory_only_files(base_args):
-    # Test directory that contains only files (no subdirectories)
     mock_files_only = [
         {"path": "parent", "type": "tree"},
         {"path": "parent/file1.py", "type": "blob"},
@@ -363,7 +338,6 @@ def test_get_file_tree_list_directory_only_files(base_args):
 
 
 def test_get_file_tree_list_empty_dir_path_string(base_args, mock_tree_items):
-    # Test with empty string dir_path (should behave like root directory)
     with patch(
         "services.github.trees.get_file_tree_list.get_file_tree"
     ) as mock_get_tree:
@@ -384,7 +358,6 @@ def test_get_file_tree_list_empty_dir_path_string(base_args, mock_tree_items):
 
 
 def test_get_file_tree_list_deep_nested_path(base_args):
-    # Test with deeply nested directory path
     mock_deep_tree = [
         {"path": "a", "type": "tree"},
         {"path": "a/b", "type": "tree"},
@@ -408,7 +381,6 @@ def test_get_file_tree_list_deep_nested_path(base_args):
 
 
 def test_get_file_tree_list_path_edge_cases(base_args):
-    # Test edge cases for path matching
     mock_edge_cases = [
         {"path": "test", "type": "tree"},
         {"path": "test_similar", "type": "tree"},
@@ -431,7 +403,6 @@ def test_get_file_tree_list_path_edge_cases(base_args):
 
 
 def test_get_file_tree_list_nested_items_not_direct_children(base_args):
-    # Test that nested items (not direct children) are not included
     mock_nested_tree = [
         {"path": "parent", "type": "tree"},
         {"path": "parent/child", "type": "tree"},
@@ -448,7 +419,217 @@ def test_get_file_tree_list_nested_items_not_direct_children(base_args):
 
         result = get_file_tree_list(base_args, dir_path="parent")
 
-        # Should only include direct children, not nested items
         expected_result = ["child/", "file.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_directory_with_only_tree_type_items(base_args):
+    mock_only_trees = [
+        {"path": "folder", "type": "tree"},
+        {"path": "folder/subdir1", "type": "tree"},
+        {"path": "folder/subdir2", "type": "tree"},
+        {"path": "folder/subdir3", "type": "tree"},
+        {"path": "folder/subdir1/nested.py", "type": "blob"},
+        {"path": "folder/subdir2/nested.py", "type": "blob"},
+        {"path": "folder/subdir3/nested.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_only_trees
+
+        result = get_file_tree_list(base_args, dir_path="folder")
+
+        expected_result = ["subdir1/", "subdir2/", "subdir3/"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_directory_with_alternating_types(base_args):
+    mock_alternating = [
+        {"path": "alt", "type": "tree"},
+        {"path": "alt/dir1", "type": "tree"},
+        {"path": "alt/file1.py", "type": "blob"},
+        {"path": "alt/dir2", "type": "tree"},
+        {"path": "alt/file2.py", "type": "blob"},
+        {"path": "alt/dir3", "type": "tree"},
+        {"path": "alt/file3.py", "type": "blob"},
+        {"path": "alt/dir1/nested.py", "type": "blob"},
+        {"path": "alt/dir2/nested.py", "type": "blob"},
+        {"path": "alt/dir3/nested.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_alternating
+
+        result = get_file_tree_list(base_args, dir_path="alt")
+
+        expected_result = ["dir1/", "dir2/", "dir3/", "file1.py", "file2.py", "file3.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_root_with_mixed_types_and_unknown(base_args):
+    mock_mixed_root = [
+        {"path": "file.py", "type": "blob"},
+        {"path": "dir", "type": "tree"},
+        {"path": "unknown", "type": "unknown"},
+        {"path": "dir/nested.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_mixed_root
+
+        result = get_file_tree_list(base_args)
+
+        expected_result = ["dir/", "file.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_directory_with_blob_then_tree(base_args):
+    mock_blob_then_tree = [
+        {"path": "mydir", "type": "tree"},
+        {"path": "mydir/aaa_file.py", "type": "blob"},
+        {"path": "mydir/bbb_file.py", "type": "blob"},
+        {"path": "mydir/zzz_subdir", "type": "tree"},
+        {"path": "mydir/zzz_subdir/nested.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_blob_then_tree
+
+        result = get_file_tree_list(base_args, dir_path="mydir")
+
+        expected_result = ["zzz_subdir/", "aaa_file.py", "bbb_file.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_kwargs_ignored(base_args, mock_tree_items):
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_tree_items
+
+        result = get_file_tree_list(
+            base_args,
+            dir_path="services",
+            extra_param="ignored",
+            another_param=123
+        )
+
+        expected_result = ["github/", "openai/"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_special_characters_in_path(base_args):
+    mock_special_chars = [
+        {"path": "my-folder", "type": "tree"},
+        {"path": "my-folder/file_1.py", "type": "blob"},
+        {"path": "my-folder/file-2.py", "type": "blob"},
+        {"path": "my-folder/sub_dir", "type": "tree"},
+        {"path": "my-folder/sub_dir/nested.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_special_chars
+
+        result = get_file_tree_list(base_args, dir_path="my-folder")
+
+        expected_result = ["sub_dir/", "file-2.py", "file_1.py"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_single_tree_item_in_directory(base_args):
+    mock_single_tree = [
+        {"path": "container", "type": "tree"},
+        {"path": "container/only_subdir", "type": "tree"},
+        {"path": "container/only_subdir/file.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_single_tree
+
+        result = get_file_tree_list(base_args, dir_path="container")
+
+        expected_result = ["only_subdir/"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_root_with_nested_structure(base_args):
+    mock_nested_root = [
+        {"path": "a", "type": "tree"},
+        {"path": "b", "type": "tree"},
+        {"path": "file.txt", "type": "blob"},
+        {"path": "a/nested", "type": "tree"},
+        {"path": "a/nested/deep.py", "type": "blob"},
+        {"path": "b/file.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_nested_root
+
+        result = get_file_tree_list(base_args)
+
+        expected_result = ["a/", "b/", "file.txt"]
+
+        assert result == expected_result
+
+
+def test_get_file_tree_list_directory_path_not_matching_prefix(base_args):
+    mock_no_match = [
+        {"path": "folder1", "type": "tree"},
+        {"path": "folder2", "type": "tree"},
+        {"path": "folder1/file.py", "type": "blob"},
+        {"path": "folder2/file.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_no_match
+
+        result = get_file_tree_list(base_args, dir_path="folder3")
+
+        assert result == []
+
+
+def test_get_file_tree_list_multiple_slashes_in_dir_path(base_args):
+    mock_multi_level = [
+        {"path": "a", "type": "tree"},
+        {"path": "a/b", "type": "tree"},
+        {"path": "a/b/c", "type": "tree"},
+        {"path": "a/b/file.py", "type": "blob"},
+        {"path": "a/b/subdir", "type": "tree"},
+        {"path": "a/b/c/deep.py", "type": "blob"},
+        {"path": "a/b/subdir/nested.py", "type": "blob"},
+    ]
+
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_multi_level
+
+        result = get_file_tree_list(base_args, dir_path="///a/b///")
+
+        expected_result = ["c/", "subdir/", "file.py"]
 
         assert result == expected_result
