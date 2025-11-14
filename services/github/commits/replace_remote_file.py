@@ -7,6 +7,9 @@ import requests
 
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
+from services.eslint.run_eslint import run_eslint
+from services.github.files.get_eslint_config import get_eslint_config
+from services.github.files.get_raw_content import get_raw_content
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from services.openai.functions.properties import FILE_PATH
@@ -60,6 +63,29 @@ def replace_remote_file_content(
     file_content = sort_imports(file_content, file_path)
     file_content = strip_trailing_spaces(file_content)
     file_content = ensure_final_newline(file_content)
+
+    if file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
+        eslint_config = get_eslint_config(base_args)
+        if eslint_config:
+            package_json_content = get_raw_content(
+                owner=owner,
+                repo=repo,
+                file_path="package.json",
+                ref=new_branch,
+                token=token,
+            )
+            eslint_result = run_eslint(
+                file_content=file_content,
+                file_path=file_path,
+                eslint_config_content=eslint_config["content"],
+                package_json_content=package_json_content,
+            )
+            if eslint_result and eslint_result["fixed_content"]:
+                file_content = eslint_result["fixed_content"]
+        else:
+            print(
+                f"No ESLint config found for {owner}/{repo}, skipping ESLint validation"
+            )
 
     # Set up the data for the PUT request
     message = (
