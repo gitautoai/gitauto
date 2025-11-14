@@ -95,9 +95,10 @@ EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
 ENV = get_env_var(name="ENV")
 EXCEPTION_OWNERS = ["gitautoai", "Suchica", "hiroshinishio"]
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
+CREDIT_USAGE_USD = 4
 CREDIT_AMOUNTS_USD = {
-    "usage": -3,
-    "grant": 10,
+    "usage": -CREDIT_USAGE_USD,
+    "grant": CREDIT_USAGE_USD * 3,
 }
 ISSUE_NUMBER_FORMAT = "/issue-"  # DO NOT USE "#" as it is a special character and has to be encoded in URL, like in GitHub API URL
 MAX_RETRIES = 3

@@ -3,6 +3,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## CRITICAL: Always Read Before Using
+
+**AFTER EVERY CONVERSATION COMPACTION/SUMMARY**: You MUST read the relevant script/function file BEFORE using it. You will forget how to use functions after compaction.
+
+**Example mistakes you keep making:**
+
+- Trying to use `scripts/github/update_file.py` without reading it first
+- Forgetting it needs to be called as a Python function from within a Python script, not as a standalone CLI command
+- Forgetting the correct parameter order and types
+
+**Correct workflow:**
+
+1. Read `scripts/README.md` to understand which script to use
+2. Read the actual script file (e.g., `scripts/github/update_file.py`) to see the function signature
+3. Write Python code that imports and calls the function correctly
+
 ## Testing Workflow
 
 When modifying a file, follow this test-driven approach:
@@ -535,6 +551,12 @@ All code analysis, generation, and file processing happens on our Lambda instanc
 - NO TYPE: IGNORE: Do not use # type: ignore comments to suppress type errors. Fix the underlying type issues instead.
 - NO CAST: Do not use typing.cast() to suppress type errors. Fix the underlying type issues instead.
 - NO ANY: Do not use Any type. Fix the specific type issues instead.
+- CRITICAL: When using `as any` in TypeScript/JavaScript, ALWAYS add a comment above explaining why it's needed. Example:
+  
+  ```typescript
+  // NOTE: Context type from require() is unknown, cast to any to access login_hint property
+  const context = React.useContext(require('./authContext').AuthContext) as any;
+  ```
 
 ## Testing Anti-Patterns to Avoid
 
