@@ -49,6 +49,11 @@ def handle_review_run(
     # review_position: int = review["position"]
     review_body: str = review["body"]
 
+    comment_author: dict[str, Any] = review["user"]
+    comment_author_type: str = comment_author["type"]
+    if comment_author_type == "Bot":
+        return
+
     # Extract repository related variables
     repo: Repository = payload["repository"]
     repo_id: int = repo["id"]

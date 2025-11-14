@@ -1,0 +1,39 @@
+name: Keep Supabase Dev Active
+
+on:
+  schedule:
+    # Run twice per week (Monday and Thursday at midnight UTC) to prevent Supabase dev database from pausing
+    # Supabase free tier pauses projects after 7 days of inactivity
+    # Cron format: minute hour day month day_of_week (1=Monday, 4=Thursday)
+    - cron: "0 0 * * 1,4"
+  workflow_dispatch:
+
+jobs:
+  query-database:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Query the installations table to keep the database connection active
+      # Supabase free tier pauses databases after periods of inactivity
+      - name: Query Supabase Dev Database
+        env:
+          SUPABASE_URL: ${{ secrets.STAGE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGE_SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          response=$(curl -w "\n%{http_code}" -X GET "${SUPABASE_URL}/rest/v1/installations?select=installation_id&limit=1" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "HTTP Status Code: $http_code"
+          echo "Response Body: $body"
+
+          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+            echo "✓ Supabase dev database queried successfully at $(date)"
+          else
+            echo "✗ Failed to query Supabase database. Status: $http_code"
+            exit 1
+          fi
