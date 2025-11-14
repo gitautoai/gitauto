@@ -668,3 +668,164 @@ def test_replace_file_with_extra_kwargs(
 
     # Should work normally despite extra parameters
     assert result == "Content replaced in the file: test.py successfully."
+
+
+def test_replace_file_with_eslint_integration(sample_base_args):
+    with patch(
+        "services.github.commits.replace_remote_file.requests.get"
+    ) as mock_get, patch(
+        "services.github.commits.replace_remote_file.requests.put"
+    ) as mock_put, patch(
+        "services.github.commits.replace_remote_file.get_eslint_config"
+    ) as mock_get_eslint, patch(
+        "services.github.commits.replace_remote_file.get_raw_content"
+    ) as mock_get_raw, patch(
+        "services.github.commits.replace_remote_file.run_eslint"
+    ) as mock_run_eslint:
+
+        mock_get_response = MagicMock()
+        mock_get_response.status_code = 200
+        mock_get_response.json.return_value = {"type": "file", "sha": "test_sha"}
+        mock_get.return_value = mock_get_response
+
+        mock_put_response = MagicMock()
+        mock_put_response.status_code = 200
+        mock_put_response.raise_for_status.return_value = None
+        mock_put.return_value = mock_put_response
+
+        mock_get_eslint.return_value = {
+            "filename": ".eslintrc",
+            "content": '{"rules": {"no-console": "warn"}}',
+        }
+        mock_get_raw.return_value = '{"devDependencies": {"eslint": "^7.22.0"}}'
+        mock_run_eslint.return_value = {
+            "success": True,
+            "fixed_content": "const foo = 'bar';\n",
+            "errors": [],
+        }
+
+        result = replace_remote_file_content(
+            file_content="const foo = 'bar';",
+            file_path="test.js",
+            base_args=sample_base_args,
+        )
+
+        assert result == "Content replaced in the file: test.js successfully."
+        mock_get_eslint.assert_called_once_with(sample_base_args)
+        mock_run_eslint.assert_called_once()
+
+
+def test_replace_file_with_eslint_no_config(sample_base_args):
+    with patch(
+        "services.github.commits.replace_remote_file.requests.get"
+    ) as mock_get, patch(
+        "services.github.commits.replace_remote_file.requests.put"
+    ) as mock_put, patch(
+        "services.github.commits.replace_remote_file.get_eslint_config"
+    ) as mock_get_eslint, patch(
+        "builtins.print"
+    ) as mock_print:
+
+        mock_get_response = MagicMock()
+        mock_get_response.status_code = 200
+        mock_get_response.json.return_value = {"type": "file", "sha": "test_sha"}
+        mock_get.return_value = mock_get_response
+
+        mock_put_response = MagicMock()
+        mock_put_response.status_code = 200
+        mock_put_response.raise_for_status.return_value = None
+        mock_put.return_value = mock_put_response
+
+        mock_get_eslint.return_value = None
+
+        result = replace_remote_file_content(
+            file_content="export const foo = 'bar';",
+            file_path="test.tsx",
+            base_args=sample_base_args,
+        )
+
+        assert result == "Content replaced in the file: test.tsx successfully."
+        mock_get_eslint.assert_called_once_with(sample_base_args)
+        mock_print.assert_called()
+        assert "No ESLint config found" in str(mock_print.call_args)
+
+
+def test_replace_file_skips_eslint_for_python(sample_base_args):
+    with patch(
+        "services.github.commits.replace_remote_file.requests.get"
+    ) as mock_get, patch(
+        "services.github.commits.replace_remote_file.requests.put"
+    ) as mock_put, patch(
+        "services.github.commits.replace_remote_file.get_eslint_config"
+    ) as mock_get_eslint:
+
+        mock_get_response = MagicMock()
+        mock_get_response.status_code = 200
+        mock_get_response.json.return_value = {"type": "file", "sha": "test_sha"}
+        mock_get.return_value = mock_get_response
+
+        mock_put_response = MagicMock()
+        mock_put_response.status_code = 200
+        mock_put_response.raise_for_status.return_value = None
+        mock_put.return_value = mock_put_response
+
+        result = replace_remote_file_content(
+            file_content="print('hello')",
+            file_path="test.py",
+            base_args=sample_base_args,
+        )
+
+        assert result == "Content replaced in the file: test.py successfully."
+        mock_get_eslint.assert_not_called()
+
+
+def test_replace_file_with_eslint_unfixable_errors(sample_base_args):
+    with patch(
+        "services.github.commits.replace_remote_file.requests.get"
+    ) as mock_get, patch(
+        "services.github.commits.replace_remote_file.requests.put"
+    ) as mock_put, patch(
+        "services.github.commits.replace_remote_file.get_eslint_config"
+    ) as mock_get_eslint, patch(
+        "services.github.commits.replace_remote_file.get_raw_content"
+    ) as mock_get_raw, patch(
+        "services.github.commits.replace_remote_file.run_eslint"
+    ) as mock_run_eslint:
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "type": "file",
+            "sha": "test_sha",
+        }
+        mock_get.return_value = mock_response
+
+        mock_put_response = MagicMock()
+        mock_put_response.status_code = 200
+        mock_put_response.raise_for_status.return_value = None
+        mock_put.return_value = mock_put_response
+
+        mock_get_eslint.return_value = {
+            "filename": ".eslintrc.json",
+            "content": '{"rules": {"no-unused-vars": "error"}}',
+        }
+        mock_get_raw.return_value = '{"devDependencies": {"eslint": "^7.0.0"}}'
+        mock_run_eslint.return_value = {
+            "success": False,
+            "fixed_content": "const a = 1;\nconst b = 2;\n",
+            "errors": [{"line": 2, "message": "'b' is assigned but never used"}],
+        }
+
+        result = replace_remote_file_content(
+            file_content="const a = 1;\nconst b = 2;\n",
+            file_path="test.js",
+            base_args=sample_base_args,
+        )
+
+        assert result == "Content replaced in the file: test.js successfully."
+        mock_run_eslint.assert_called_once()
+        put_call_args = mock_put.call_args[1]
+        decoded_content = base64.b64decode(put_call_args["json"]["content"]).decode(
+            "utf-8"
+        )
+        assert "const b = 2" in decoded_content
