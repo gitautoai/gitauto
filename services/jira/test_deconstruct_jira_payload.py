@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from unittest.mock import patch
 
 import pytest
@@ -113,7 +114,7 @@ def test_deconstruct_jira_payload_basic_functionality(
     assert base_args["sender_name"] == "John Doe"
     assert base_args["sender_email"] == "john.doe@example.com"
     assert base_args["is_automation"] is False
-    assert base_args["reviewers"] == []
+    assert not base_args["reviewers"]
     assert base_args["github_urls"] == ["https://github.com"]
     assert base_args["other_urls"] == ["https://example.com"]
     assert repo_settings == {"target_branch": None}
@@ -604,7 +605,7 @@ def test_deconstruct_jira_payload_all_fields_populated(
     )
     mock_datetime.now.return_value.strftime.side_effect = ["20250315", "093045"]
 
-    payload = create_mock_jira_payload(
+    create_mock_jira_payload(
         issue_id="PROJ-456",
         issue_key="PROJ-456",
         issue_title="Complex Issue Title",
@@ -903,17 +904,36 @@ def test_deconstruct_jira_payload_verifies_all_base_args_fields(
 
     # Verify all required fields are present
     required_fields = [
-        "input_from", "owner_type", "owner_id", "owner", "repo_id", "repo",
-        "clone_url", "is_fork", "issue_number", "issue_title", "issue_body",
-        "issue_comments", "issuer_name", "issuer_email", "base_branch",
-        "latest_commit_sha", "new_branch", "installation_id", "token",
-        "sender_id", "sender_name", "sender_email", "is_automation",
-        "reviewers", "github_urls", "other_urls"
+        "input_from",
+        "owner_type",
+        "owner_id",
+        "owner",
+        "repo_id",
+        "repo",
+        "clone_url",
+        "is_fork",
+        "issue_number",
+        "issue_title",
+        "issue_body",
+        "issue_comments",
+        "issuer_name",
+        "issuer_email",
+        "base_branch",
+        "latest_commit_sha",
+        "new_branch",
+        "installation_id",
+        "token",
+        "sender_id",
+        "sender_name",
+        "sender_email",
+        "is_automation",
+        "reviewers",
+        "github_urls",
+        "other_urls",
     ]
 
     for field in required_fields:
         assert field in base_args, f"Field {field} is missing from base_args"
-
 
 
 @patch("services.jira.deconstruct_jira_payload.get_installation")
@@ -1024,7 +1044,7 @@ def test_deconstruct_jira_payload_clone_url_is_empty(
     mock_check_branch_exists.return_value = False
     mock_extract_urls.return_value = (["https://github.com"], ["https://example.com"])
     mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    base_args, repo_settings = deconstruct_jira_payload(payload)
+    base_args, _ = deconstruct_jira_payload(payload)
 
     # Verify clone_url is empty string
     assert base_args is not None

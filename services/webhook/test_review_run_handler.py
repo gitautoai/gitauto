@@ -18,6 +18,7 @@ def mock_review_comment_payload():
             "line": 42,
             "side": "RIGHT",
             "body": "This function could be optimized. Consider using a more efficient algorithm.",
+            "user": {"login": "test-reviewer", "type": "User"},
         },
         "pull_request": {
             "number": 123,
