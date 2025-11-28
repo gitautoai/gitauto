@@ -1,3 +1,4 @@
+/scripts/
 .coverage*
 .env*
 .history
@@ -9,6 +10,5 @@ coverage/
 mcp.json
 ngrok.yml
 pylint_results.txt
-scripts/
 tmp
 venv
