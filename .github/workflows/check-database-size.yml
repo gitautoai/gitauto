@@ -1,0 +1,71 @@
+name: Check Database Size and Cleanup
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC to monitor database size
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  check-and-cleanup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client bc
+
+      - name: Check database size and cleanup if needed
+        env:
+          SUPABASE_DB_PASSWORD_PRD: ${{ secrets.PROD_SUPABASE_DB_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          THRESHOLD_MB=200
+          TABLE_NAME=llm_requests
+          RETENTION_DAYS=14
+
+          chmod +x .github/scripts/check_table_size.sh
+          chmod +x .github/scripts/vacuum_table.sh
+
+          SIZE_MB=$(.github/scripts/check_table_size.sh "$TABLE_NAME")
+          echo "Current $TABLE_NAME table size: $SIZE_MB MB"
+
+          if [ $(echo "$SIZE_MB > $THRESHOLD_MB" | bc -l) -eq 1 ]; then
+            echo "⚠️  Size exceeds threshold ($THRESHOLD_MB MB). Starting cleanup..."
+
+            SIZE_BEFORE=$SIZE_MB
+
+            echo "Clearing old content via Python..."
+            python3 << 'EOF'
+          from services.supabase.llm_requests.clear_old_content import clear_old_content
+          result = clear_old_content(retention_days=14)
+          print(f"✓ Cleared content from records older than 14 days")
+          EOF
+
+            .github/scripts/vacuum_table.sh "$TABLE_NAME"
+
+            SIZE_AFTER=$(.github/scripts/check_table_size.sh "$TABLE_NAME")
+            FREED=$(echo "$SIZE_BEFORE - $SIZE_AFTER" | bc)
+            echo "✓ New size: $SIZE_AFTER MB (freed $FREED MB)"
+
+            if [ $(echo "$SIZE_AFTER > $THRESHOLD_MB" | bc -l) -eq 1 ]; then
+              echo "❌ WARNING: Size still exceeds threshold after cleanup!"
+              exit 1
+            fi
+          else
+            echo "✓ Size is under threshold ($THRESHOLD_MB MB). No cleanup needed."
+          fi
