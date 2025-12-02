@@ -68,7 +68,12 @@ Test Suites: 1 passed, 1 total"""
 def test_minimize_jest_test_logs_empty():
     """Test that empty logs are returned unchanged."""
     assert minimize_jest_test_logs("") == ""
-    assert minimize_jest_test_logs(None) is None
+
+
+def test_minimize_jest_test_logs_none():
+    """Test that None input is handled gracefully by decorator."""
+    result = minimize_jest_test_logs(None)
+    assert result is None
 
 
 def test_minimize_jest_test_logs_not_jest():
@@ -111,7 +116,7 @@ Test Suites: 1 failed, 2 passed, 3 total"""
 
 
 def test_minimize_jest_test_logs_with_header_only_no_summary():
-    """Test logs with header commands but no summary section - covers uncovered branch."""
+    """Test logs with header commands but no summary - covers uncovered branch at line 20."""
     input_log = """CircleCI Build Log
 yarn run v1.22.22
 $ jest --coverage
@@ -388,8 +393,139 @@ def test_minimize_jest_test_logs_newline_variations():
     assert result == expected
 
 
-def test_minimize_jest_test_logs_exception_handling():
-    """Test that exceptions are handled gracefully by the decorator."""
-    # The decorator should handle any exceptions and return the input unchanged
-    result = minimize_jest_test_logs(None)
-    assert result is None
+def test_minimize_jest_test_logs_header_complete_flag():
+    """Test that header_complete flag logic works correctly."""
+    input_log = """$ jest
+Some non-command line after header
+Another non-command line
+
+Summary of all failing tests
+FAIL test/example.test.ts"""
+
+    expected = """$ jest
+
+Summary of all failing tests
+FAIL test/example.test.ts"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_no_header_no_summary():
+    """Test with neither header commands nor summary."""
+    input_log = """Just some random text
+No commands here
+No summary either"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == input_log
+
+
+def test_minimize_jest_test_logs_summary_keyword_in_other_context():
+    """Test that summary keyword in different context doesn't trigger minimization."""
+    input_log = """$ jest
+
+This is a summary of something else
+Not the failing tests summary
+
+Test Suites: 1 passed"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == input_log
+
+
+def test_minimize_jest_test_logs_multiple_summary_occurrences():
+    """Test behavior when summary text appears multiple times."""
+    input_log = """$ jest
+
+Some text mentioning Summary of all failing tests in a comment
+
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● test failed"""
+
+    expected = """$ jest
+
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● test failed"""
+
+    result = minimize_jest_test_logs(input_log)
+    # Should find the first occurrence
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_ansi_escape_codes():
+    """Test with ANSI escape codes in the log."""
+    input_log = """[2K[1G[1myarn run v1.22.22[22m
+[2K[1G[2m$ craco test[22m
+
+PASS test/file.test.ts
+
+Summary of all failing tests
+FAIL test/example.test.ts"""
+
+    expected = """[2K[1G[1myarn run v1.22.22[22m
+[2K[1G[2m$ craco test[22m
+
+Summary of all failing tests
+FAIL test/example.test.ts"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_very_long_log():
+    """Test with a very long log to ensure performance."""
+    # Create a log with many test results
+    header = "$ jest\n\n"
+    test_output = "\n".join([f"PASS test/file{i}.test.ts" for i in range(100)])
+    summary = "\n\nSummary of all failing tests\nFAIL test/example.test.ts"
+    input_log = header + test_output + summary
+
+    expected = header + summary
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_special_characters():
+    """Test with special characters in the log."""
+    input_log = """$ jest
+
+Test output with special chars: @#$%^&*()
+
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● Error: Expected "foo" but got "bar"
+  ● Stack trace with special chars: /path/to/file.ts:123:45"""
+
+    expected = """$ jest
+
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● Error: Expected "foo" but got "bar"
+  ● Stack trace with special chars: /path/to/file.ts:123:45"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_unicode_characters():
+    """Test with unicode characters in the log."""
+    input_log = """$ jest
+
+Test output with unicode: ✓ ✕ ●
+
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● test failed ✕"""
+
+    expected = """$ jest
+
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● test failed ✕"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
