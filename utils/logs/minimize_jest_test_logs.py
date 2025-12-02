@@ -40,7 +40,7 @@ def minimize_jest_test_logs(error_log: str) -> str:
             summary_index = i
             # Preserve blank lines before the summary
             if result_lines:
-                # Count blank lines before the summary
+                # Count consecutive blank lines immediately before the summary
                 blank_count = 0
                 for j in range(i - 1, -1, -1):
                     if lines[j].strip() == "":
@@ -51,12 +51,17 @@ def minimize_jest_test_logs(error_log: str) -> str:
                 for _ in range(blank_count):
                     result_lines.append("")
             elif i > 0:
+                # Summary is not at the beginning, add leading newline
                 result_lines.append("")
             result_lines.extend(lines[i:])  # Keep everything from summary to end
             break
         elif result_lines and not header_complete:
-            # After we have header lines, we're done with the header
-            header_complete = True
+            # After we have header lines, keep blank lines that follow
+            if line.strip() == "":
+                result_lines.append(line)
+            else:
+                # Once we hit non-blank content after header, we're done with header
+                header_complete = True
 
     result = "\n".join(result_lines)
     return result.rstrip()
