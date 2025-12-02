@@ -42,9 +42,10 @@ def minimize_jest_test_logs(error_log: str) -> str:
             ]
         ):
             header_end_index = i + 1
-        elif header_end_index > 0 and i < summary_index and line.strip() == "":
-            # Keep blank lines immediately after header commands
+        elif header_end_index > 0 and i < summary_index and line.strip() == "" and i == header_end_index:
+            # Keep only one blank line immediately after header commands
             header_end_index = i + 1
+            break
         elif header_end_index > 0:
             # We've hit a non-blank, non-header line, so we're done with the header
             break
