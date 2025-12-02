@@ -56,9 +56,9 @@ def minimize_jest_test_logs(error_log: str) -> str:
     for i in range(header_end_index):
         result_lines.append(lines[i])
 
-    # Count and add blank lines before the summary
+    # Count blank lines before the summary (but not the ones already in the header)
     blank_count = 0
-    for j in range(summary_index - 1, -1, -1):
+    for j in range(summary_index - 1, header_end_index - 1, -1):
         if lines[j].strip() == "":
             blank_count += 1
         else:
