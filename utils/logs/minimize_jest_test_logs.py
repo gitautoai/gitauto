@@ -44,4 +44,4 @@ def minimize_jest_test_logs(error_log: str) -> str:
             header_complete = True
 
     result = "\n".join(result_lines)
-    return result.strip()
+    return result.rstrip()
