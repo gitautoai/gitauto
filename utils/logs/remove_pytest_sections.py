@@ -86,7 +86,6 @@ def remove_pytest_sections(error_log: str):
             if line.startswith("-- Docs:"):
                 # Skip this line and stop skipping after it
                 in_warnings_section = False
-                skip = False
                 continue
 
             # Check if this is another section marker
