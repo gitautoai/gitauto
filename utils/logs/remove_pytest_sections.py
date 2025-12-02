@@ -72,6 +72,14 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 filtered_lines.append(line)
                 i += 1
                 continue
+            # Handle FAILURES marker
+            if "===" in line and "FAILURES" in line:
+                # Add blank line before FAILURES if content was removed and last line is not blank
+                if content_removed and filtered_lines and filtered_lines[-1].strip():
+                    filtered_lines.append("")
+                filtered_lines.append(line)
+                i += 1
+                continue
 
 
             # Detect start of coverage section
