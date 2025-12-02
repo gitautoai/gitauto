@@ -33,6 +33,7 @@ def remove_pytest_sections(error_log: str):
         if "===" in line and "warnings summary" in line:
             skip = True
             in_warnings_section = True
+            in_session_section = False
             content_removed = True
             continue
 
@@ -95,6 +96,11 @@ def remove_pytest_sections(error_log: str):
             if not any(warnings_patterns):
                 skip = False
                 in_warnings_section = False
+
+        # If we're in session section, continue skipping until we hit a section marker
+        # (FAILURES, short test summary, warnings summary are already handled above)
+        if in_session_section:
+            skip = True
 
         # Keep line if not skipping
         if not skip:
