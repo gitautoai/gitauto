@@ -35,7 +35,7 @@ def minimize_jest_test_logs(error_log: str) -> str:
             ]
         ):
             result_lines.append(line)
-        elif "Summary of all failing tests" in line:
+        elif line.strip() == "Summary of all failing tests":
             # Found the summary section, keep everything from here onwards
             summary_index = i
             if result_lines:  # Only add blank line if there are header lines
