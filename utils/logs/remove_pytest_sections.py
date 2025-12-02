@@ -79,6 +79,7 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 if filtered_lines and filtered_lines[-1].strip():
                     filtered_lines.append("")
                 filtered_lines.append(line)
+                just_exited_skip_mode = False
                 i += 1
                 continue
 
