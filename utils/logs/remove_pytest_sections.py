@@ -1,4 +1,6 @@
 import re
+
+
 def remove_pytest_sections(log: str | None) -> str | None:
     """
     Remove pytest test session and warnings sections from logs while keeping failures.
@@ -35,7 +37,6 @@ def remove_pytest_sections(log: str | None) -> str | None:
         # Check for test result lines (end with [X%])
         if "[" in line and "%" in line and "]" in line:
             # Make sure it looks like a percentage (e.g., [  0%], [ 50%], [100%])
-            import re
             if re.search(r'\[\s*\d+%\]', line):
                 return True
         return False
