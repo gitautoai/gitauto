@@ -64,6 +64,11 @@ def minimize_jest_test_logs(error_log: str) -> str:
         else:
             break
 
+    # Special logic: if there's only 1 blank line before the summary, and the header already has blank lines,
+    # then don't add it (to avoid duplication)
+    if blank_count == 1 and header_end_index > 0 and lines[header_end_index - 1].strip() == "":
+        blank_count = 0
+
     for _ in range(blank_count):
         result_lines.append("")
 
