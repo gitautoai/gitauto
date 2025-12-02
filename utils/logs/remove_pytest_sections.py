@@ -64,6 +64,15 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 content_removed = True
                 i += 1
                 continue
+            # Handle short test summary info marker
+            if "===" in line and "short test summary info" in line:
+                # Add blank line before summary if content was removed and last line is not blank
+                if content_removed and filtered_lines and filtered_lines[-1].strip():
+                    filtered_lines.append("")
+                filtered_lines.append(line)
+                i += 1
+                continue
+
 
             # Detect start of coverage section
             if "---------- coverage:" in line:
