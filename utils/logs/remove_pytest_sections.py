@@ -23,6 +23,22 @@ def remove_pytest_sections(log: str | None) -> str | None:
     skip_mode = None  # Can be 'session', 'warnings', 'coverage', or None
     content_removed = False
 
+    def is_session_content_line(line: str) -> bool:
+        """Check if a line is part of the test session content."""
+        stripped = line.strip()
+        if not stripped:
+            return True  # Blank lines are part of session
+        # Check for session info lines
+        if any(keyword in line for keyword in ["platform ", "rootdir:", "plugins:", "asyncio:", "collected "]):
+            return True
+        # Check for test result lines (end with [X%] or have test file paths with dots)
+        if "[" in line and "%" in line and "]" in line:
+            return True
+        # Check for lines with just dots/F/s (continuation of test results)
+        if stripped and all(c in ".Fsx " for c in stripped):
+            return True
+        return False
+
     i = 0
     while i < len(lines):
         line = lines[i]
@@ -63,7 +79,7 @@ def remove_pytest_sections(log: str | None) -> str | None:
 
         # Handle skipping modes
         if skip_mode == 'session':
-            # Session section ends at FAILURES, short test summary, or warnings summary
+            # Check for explicit end markers
             if "===" in line and ("FAILURES" in line or "short test summary info" in line):
                 skip_mode = None
                 # Add blank line before the marker if needed
@@ -78,8 +94,16 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 skip_mode = 'warnings'
                 i += 1
                 continue
-            else:
+            # Check if this line is part of session content
+            elif is_session_content_line(line):
                 # Still in session section, skip this line
+                i += 1
+                continue
+            else:
+                # This line is not part of session content, end session mode
+                skip_mode = None
+                # Don't add a blank line, just add this line
+                filtered_lines.append(line)
                 i += 1
                 continue
 
