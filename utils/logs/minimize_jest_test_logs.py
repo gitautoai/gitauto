@@ -13,13 +13,20 @@ def minimize_jest_test_logs(error_log: str) -> str:
         return error_log
 
     lines = error_log.split("\n")
-    result_lines = []
-    summary_index = None
 
-    # Keep the header (build commands at the beginning)
-    in_header = True
+    # Find the index of the summary line
+    summary_index = None
     for i, line in enumerate(lines):
-        # Keep command/header lines
+        if line.strip() == "Summary of all failing tests":
+            summary_index = i
+            break
+
+    if summary_index is None:
+        return error_log
+
+    # Keep header lines (commands at the beginning)
+    header_end_index = 0
+    for i, line in enumerate(lines):
         if any(
             cmd in line
             for cmd in [
@@ -34,34 +41,34 @@ def minimize_jest_test_logs(error_log: str) -> str:
                 "$ yarn test",
             ]
         ):
-            result_lines.append(line)
-            in_header = True
-        elif in_header and line.strip() == "":
+            header_end_index = i + 1
+        elif header_end_index > 0 and i < summary_index and line.strip() == "":
             # Keep blank lines immediately after header commands
-            result_lines.append("")
-        elif line.strip() == "Summary of all failing tests":
-            # Found the summary section, keep everything from here onwards
-            summary_index = i
-            # Preserve blank lines before the summary
-            if result_lines:
-                # Count consecutive blank lines immediately before the summary
-                blank_count = 0
-                for j in range(i - 1, -1, -1):
-                    if lines[j].strip() == "":
-                        blank_count += 1
-                    else:
-                        break
-                # Add the blank lines
-                for _ in range(blank_count):
-                    result_lines.append("")
-            elif i > 0:
-                # Summary is not at the beginning, add leading newline
-                result_lines.append("")
-            result_lines.extend(lines[i:])  # Keep everything from summary to end
+            header_end_index = i + 1
+        elif header_end_index > 0:
+            # We've hit a non-blank, non-header line, so we're done with the header
             break
+
+    # Build the result
+    result_lines = []
+
+    # Add header lines
+    for i in range(header_end_index):
+        result_lines.append(lines[i])
+
+    # Count and add blank lines before the summary
+    blank_count = 0
+    for j in range(summary_index - 1, -1, -1):
+        if lines[j].strip() == "":
+            blank_count += 1
         else:
-            # Non-blank, non-header line - we're past the header
-            in_header = False
+            break
+
+    for _ in range(blank_count):
+        result_lines.append("")
+
+    # Add summary and everything after
+    result_lines.extend(lines[summary_index:])
 
     result = "\n".join(result_lines)
     return result.rstrip()
