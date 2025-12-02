@@ -42,7 +42,6 @@ def remove_pytest_sections(log: str | None) -> str | None:
         # Check for test result lines without percentage (e.g., "test_file.py .....F")
         # These lines typically have a file path followed by dots/status indicators
         if re.search(r'\.py\s+[\.FEsxXP]+\s*$', line):
-    just_exited_skip_mode = False
             return True
         return False
 
