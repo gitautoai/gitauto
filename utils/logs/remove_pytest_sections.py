@@ -46,6 +46,7 @@ def remove_pytest_sections(log: str | None) -> str | None:
         return False
 
     i = 0
+    just_exited_skip_mode = False
     while i < len(lines):
         line = lines[i]
 
