@@ -44,6 +44,20 @@ def remove_pytest_sections(log: str | None) -> str | None:
         if re.search(r'\.py\s+[\.FEsxXP]+\s*$', line):
             return True
         return False
+    def is_warnings_content_line(line: str) -> bool:
+        """Check if a line is part of the warnings summary content."""
+        stripped = line.strip()
+        if not stripped:
+            return True  # Blank lines are part of warnings
+        # Check for Docs line
+        if "-- Docs:" in line:
+            return True
+        # Check for indented warning details (start with spaces)
+        if line.startswith("  ") or line.startswith("\t"):
+            return True
+        # Check for test file paths (typically end with .py or contain ::)
+        if ".py" in line or "::" in line:
+            return True
 
     i = 0
     just_exited_skip_mode = False
@@ -137,6 +151,14 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 continue
 
         elif skip_mode == 'warnings':
+            else:
+                # Check if this line is part of warnings content
+                if is_warnings_content_line(line):
+                    # Still in warnings section, skip this line
+                    i += 1
+                    continue
+                # This line is not part of warnings content, end warnings mode
+                just_exited_skip_mode = True
             # Check if this is a blank line - warnings section might end here
             if line.strip() == "":
                 # Peek ahead to see if next line is content or another section
@@ -159,12 +181,6 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 filtered_lines.append(line)
                 i += 1
                 continue
-            else:
-                # Still in warnings section, skip this line
-                i += 1
-                continue
-
-        elif skip_mode == 'coverage':
             # Coverage section ends at blank line or at a marker line
             if line.strip() == "":
                 skip_mode = None
