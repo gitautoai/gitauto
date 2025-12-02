@@ -31,12 +31,12 @@ def remove_pytest_sections(log: str | None) -> str | None:
         # Check for session info lines
         if any(keyword in line for keyword in ["platform ", "rootdir:", "plugins:", "asyncio:", "collected "]):
             return True
-        # Check for test result lines (end with [X%] or have test file paths with dots)
+        # Check for test result lines (end with [X%])
         if "[" in line and "%" in line and "]" in line:
-            return True
-        # Check for lines with just dots/F/s (continuation of test results)
-        if stripped and all(c in ".Fsx " for c in stripped):
-            return True
+            # Make sure it looks like a percentage (e.g., [  0%], [ 50%], [100%])
+            import re
+            if re.search(r'\[\s*\d+%\]', line):
+                return True
         return False
 
     i = 0
