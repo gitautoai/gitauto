@@ -56,8 +56,11 @@ def minimize_jest_test_logs(error_log: str) -> str:
     for i in range(header_end_index):
         result_lines.append(lines[i])
 
-    # Add a blank line between header and summary if the header doesn't already end with one
-    if header_end_index > 0 and lines[header_end_index - 1].strip() != "":
+    # Add a blank line between header and summary
+    # - If there's a header and it doesn't end with a blank line, add one
+    # - If there's no header but there's content before the summary, add one
+    if (header_end_index > 0 and lines[header_end_index - 1].strip() != "") or \
+       (header_end_index == 0 and summary_index > 0):
         result_lines.append("")
 
     # Add summary and everything after
