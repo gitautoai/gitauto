@@ -168,7 +168,7 @@ def test_remove_pytest_sections_summary_with_blank_line_before():
     """Test that blank line is added before short test summary when last line is not blank."""
     log = """Some content line
 =========================== test session starts ============================
-session content to remove
+collected 10 items
 =========================== short test summary info ============================
 Summary content"""
 
