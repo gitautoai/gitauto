@@ -38,11 +38,11 @@ def remove_pytest_sections(log: str | None) -> str | None:
         if "[" in line and "%" in line and "]" in line:
             # Make sure it looks like a percentage (e.g., [  0%], [ 50%], [100%])
             if re.search(r'\[\s*\d+%\]', line):
+                return True
         # Check for test result lines without percentage (e.g., "test_file.py .....F")
         # These lines typically have a file path followed by dots/status indicators
         if re.search(r'\.py\s+[\.FEsxX]+\s*$', line):
             return True
-                return True
         return False
 
     i = 0
@@ -153,24 +153,13 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 i += 1
                 continue
 
-    # Clean up excessive blank lines only if content was removed
+        i += 1
+
+    # Join the filtered lines
+    result = "\n".join(filtered_lines)
+
+    # If content was removed, reduce excessive blank lines (3+ consecutive) to 2
     if content_removed:
-        result_lines = []
-        blank_count = 0
+        result = re.sub(r'\n{3,}', '\n\n', result)
 
-        for line in filtered_lines:
-            if line.strip() == "":
-                blank_count += 1
-                if blank_count <= 1:  # Allow up to 1 blank line
-                    result_lines.append(line)
-            else:
-                blank_count = 0
-                result_lines.append(line)
-
-        # Remove trailing blank lines
-        while result_lines and result_lines[-1].strip() == "":
-            result_lines.pop()
-
-        return "\n".join(result_lines)
-
-    return "\n".join(filtered_lines)
+    return result
