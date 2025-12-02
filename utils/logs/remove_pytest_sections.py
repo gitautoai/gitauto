@@ -63,10 +63,10 @@ def remove_pytest_sections(error_log: str):
                 line.startswith("collecting "),
                 line.startswith("collected "),
                 "::" in line,  # Test results with :: separator
-                re.search(r'\.py\s+\.+\s+\[\s*\d+%\s*\]', line) is not None,  # Test progress lines like "test_file.py .......... [100%]"
-                line.strip() and all(c in ".FEsxXpP[]% " or c.isdigit() for c in line.strip()),  # Progress indicators
+                ".py" in line and any(indicator in line for indicator in [".", "F", "E", "s", "x", "X", "p", "P", "[", "%"]),  # Test result lines
                 "===" in line,  # Section markers
                 line.strip() == "",  # Blank lines
+                "passed" in line.lower() or "failed" in line.lower() or "skipped" in line.lower(),  # Summary lines
             ]
 
             # If line doesn't match any session pattern, stop skipping
@@ -74,31 +74,44 @@ def remove_pytest_sections(error_log: str):
                 skip = False
                 in_session_section = False
 
-        # Detect end of warnings section (ends with Docs line or another section)
+        # Detect end of warnings section
         if in_warnings_section:
-            if line.startswith("-- Docs:") or ("===" in line):
-                if not ("===" in line and "warnings summary" in line):
-                    # This is the end of warnings section
-                    if "===" in line:
-                        # This is another section, process it normally
-                        in_warnings_section = False
-                        skip = False
-                        # Re-process this line
-                        if "FAILURES" in line:
-                            if content_removed and filtered_lines and filtered_lines[-1] != "":
-                                filtered_lines.append("")
-                            filtered_lines.append(line)
-                            continue
-                        elif "short test summary info" in line:
-                            if content_removed and filtered_lines and filtered_lines[-1] != "":
-                                filtered_lines.append("")
-                            filtered_lines.append(line)
-                            continue
-                    else:
-                        # Skip the Docs line and stop skipping after it
-                        in_warnings_section = False
-                        skip = False
-                        continue
+            # Check if this is the Docs line (end of warnings)
+            if line.startswith("-- Docs:"):
+                # Skip this line and stop skipping after it
+                in_warnings_section = False
+                skip = False
+                continue
+
+            # Check if this is another section marker
+            if "===" in line:
+                # This is another section, stop warnings and process normally
+                in_warnings_section = False
+                skip = False
+                # Re-process this line
+                if "FAILURES" in line:
+                    if content_removed and filtered_lines and filtered_lines[-1] != "":
+                        filtered_lines.append("")
+                    filtered_lines.append(line)
+                    continue
+                elif "short test summary info" in line:
+                    if content_removed and filtered_lines and filtered_lines[-1] != "":
+                        filtered_lines.append("")
+                    filtered_lines.append(line)
+                    continue
+
+            # Warnings section typically contains these patterns
+            warnings_patterns = [
+                line.strip().endswith(".py") or line.strip().endswith(".py::"),  # Test file references
+                line.startswith("  "),  # Indented warning details
+                line.strip() == "",  # Blank lines
+                "Warning" in line,  # Warning messages
+            ]
+
+            # If line doesn't match any warnings pattern, stop skipping
+            if not any(warnings_patterns):
+                skip = False
+                in_warnings_section = False
 
         # Keep line if not skipping
         if not skip:
