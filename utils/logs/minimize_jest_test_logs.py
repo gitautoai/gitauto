@@ -26,6 +26,7 @@ def minimize_jest_test_logs(error_log: str) -> str:
 
     # Keep header lines (commands at the beginning)
     header_end_index = 0
+    found_blank_after_header = False
     for i, line in enumerate(lines):
         if any(
             cmd in line
@@ -42,10 +43,11 @@ def minimize_jest_test_logs(error_log: str) -> str:
             ]
         ):
             header_end_index = i + 1
-        elif header_end_index > 0 and i < summary_index and line.strip() == "" and i == header_end_index:
+        elif header_end_index > 0 and i < summary_index and line.strip() == "" and not found_blank_after_header:
             # Keep only one blank line immediately after header commands
             header_end_index = i + 1
-            break
+            found_blank_after_header = True
+            # Don't break here - continue to check for more header commands
         elif header_end_index > 0:
             # We've hit a non-blank, non-header line, so we're done with the header
             break
