@@ -206,7 +206,7 @@ FAIL test/example.test.ts
 def test_minimize_jest_test_logs_with_single_line():
     """Test with single line containing summary."""
     input_log = "Summary of all failing tests"
-    expected = "\nSummary of all failing tests"
+    expected = "Summary of all failing tests"
 
     result = minimize_jest_test_logs(input_log)
     assert result == expected
