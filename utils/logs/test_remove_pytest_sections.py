@@ -66,7 +66,6 @@ def test_remove_pytest_sections_removes_excessive_blank_lines_when_content_remov
 
 =========================== test session starts ============================
 platform linux -- Python 3.11.4, pytest-7.4.0, pluggy-1.2.0
-test content that will be removed
 
 
 
