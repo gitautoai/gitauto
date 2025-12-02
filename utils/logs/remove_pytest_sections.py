@@ -70,6 +70,7 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 # Add blank line before summary if content was removed and last line is not blank
                 if content_removed and filtered_lines and filtered_lines[-1].strip():
                     filtered_lines.append("")
+                just_exited_skip_mode = False
                 filtered_lines.append(line)
                 i += 1
                 continue
