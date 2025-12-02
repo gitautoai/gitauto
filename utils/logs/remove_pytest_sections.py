@@ -72,7 +72,6 @@ def remove_pytest_sections(error_log: str):
                 line.startswith("collected "),
                 "::" in line,  # Test results with :: separator
                 ".py" in line and any(indicator in line for indicator in [".", "F", "E", "s", "x", "X", "p", "P", "[", "%"]),  # Test result lines
-                "===" in line,  # Section markers
                 line.strip() == "",  # Blank lines
                 "passed" in line.lower() or "failed" in line.lower() or "skipped" in line.lower(),  # Summary lines
             ]
