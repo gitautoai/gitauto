@@ -25,6 +25,12 @@ def remove_pytest_sections(error_log: str):
             content_removed = True
             continue
 
+        # Stop skipping at final pytest summary line (e.g., "=== 1 failed, 2 passed in 1.23s ===")
+        if skip and "===" in line and (" in " in line or " passed" in line or " failed" in line or " skipped" in line):
+            skip = False
+            continue
+
+
         # Stop skipping and keep failures section
         if "===" in line and "FAILURES" in line:
             skip = False
