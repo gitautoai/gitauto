@@ -72,7 +72,7 @@ def minimize_jest_test_logs(error_log: str) -> str:
         # Also add an extra blank line if the summary section needs it
         # (to maintain the structure of header + summary)
         blank_lines_before_summary = summary_index - summary_start_index
-        if blank_lines_before_summary >= 2:
+        if blank_lines_before_summary >= 1:
             result_lines.append("")
     elif header_end_index == 0 and summary_start_index > 0:
         result_lines.append("")
