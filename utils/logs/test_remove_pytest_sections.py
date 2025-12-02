@@ -366,7 +366,7 @@ Failure content"""
 def test_remove_pytest_sections_empty_filtered_lines_before_summary():
     """Test short test summary when filtered_lines is empty."""
     log = """=========================== test session starts ============================
-session content
+collected 10 items
 =========================== short test summary info ============================
 Summary content"""
 
