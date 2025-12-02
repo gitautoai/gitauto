@@ -186,7 +186,7 @@ def test_remove_pytest_sections_summary_without_blank_line_when_last_is_blank():
     log = """Some content line
 
 =========================== test session starts ============================
-session content to remove
+collected 10 items
 =========================== short test summary info ============================
 Summary content"""
 
