@@ -352,7 +352,7 @@ Normal content should remain"""
 def test_remove_pytest_sections_empty_filtered_lines_before_failures():
     """Test FAILURES section when filtered_lines is empty (edge case for line 32)."""
     log = """=========================== test session starts ============================
-session content
+collected 10 items
 =================================== FAILURES ===================================
 Failure content"""
 
