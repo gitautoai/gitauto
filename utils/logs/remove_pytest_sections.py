@@ -73,7 +73,6 @@ def remove_pytest_sections(error_log: str):
                 "::" in line,  # Test results with :: separator
                 ".py" in line and any(indicator in line for indicator in [".", "F", "E", "s", "x", "X", "p", "P", "[", "%"]),  # Test result lines
                 line.strip() == "",  # Blank lines
-                "passed" in line.lower() or "failed" in line.lower() or "skipped" in line.lower(),  # Summary lines
             ]
 
             # If line doesn't match any session pattern, stop skipping
