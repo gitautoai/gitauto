@@ -4,7 +4,7 @@ def remove_pytest_sections(log: str | None) -> str | None:
 
     This function removes:
     - Test session header and test results (from "test session starts" until FAILURES/summary)
-    - Warnings summary section (can appear before or after FAILURES)
+    - Warnings summary section (can appear anywhere)
     - Coverage section
 
     But keeps:
@@ -23,83 +23,105 @@ def remove_pytest_sections(log: str | None) -> str | None:
     skip_mode = None  # Can be 'session', 'warnings', 'coverage', or None
     content_removed = False
 
-    for i, line in enumerate(lines):
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+
         # Check if we should start skipping
         if skip_mode is None:
             # Detect start of test session section
             if "test session starts" in line and "===" in line:
                 skip_mode = 'session'
                 content_removed = True
+                i += 1
                 continue
 
             # Detect start of warnings summary section
             if "warnings summary" in line and "===" in line:
                 skip_mode = 'warnings'
                 content_removed = True
+                i += 1
                 continue
 
             # Detect start of coverage section
             if "---------- coverage:" in line:
                 skip_mode = 'coverage'
                 content_removed = True
+                i += 1
                 continue
 
-            # Detect coverage LCOV line
+            # Detect coverage LCOV line (single line, not a section)
             if "Coverage LCOV written" in line:
                 content_removed = True
+                i += 1
                 continue
 
-        # Check if we should stop skipping
+            # If not skipping, add the line
+            filtered_lines.append(line)
+            i += 1
+            continue
+
+        # Handle skipping modes
         if skip_mode == 'session':
             # Session section ends at FAILURES, short test summary, or warnings summary
-            if "===" in line and ("FAILURES" in line or "short test summary info" in line or "warnings summary" in line):
+            if "===" in line and ("FAILURES" in line or "short test summary info" in line):
                 skip_mode = None
                 # Add blank line before the marker if needed
                 if filtered_lines and filtered_lines[-1].strip():
                     filtered_lines.append("")
-                # Don't skip this line - it's a marker we want to keep (unless it's warnings)
-                if "warnings summary" in line:
-                    skip_mode = 'warnings'
-                    content_removed = True
-                    continue
+                # Add this marker line
+                filtered_lines.append(line)
+                i += 1
+                continue
+            elif "===" in line and "warnings summary" in line:
+                # Transition from session to warnings
+                skip_mode = 'warnings'
+                i += 1
+                continue
             else:
                 # Still in session section, skip this line
+                i += 1
                 continue
 
         elif skip_mode == 'warnings':
             # Warnings section ends at the Docs line or at FAILURES/short test summary
             if "-- Docs:" in line:
                 skip_mode = None
+                i += 1
                 continue  # Skip the Docs line itself
             elif "===" in line and ("FAILURES" in line or "short test summary info" in line):
                 skip_mode = None
                 # Add blank line before the marker if needed
                 if filtered_lines and filtered_lines[-1].strip():
                     filtered_lines.append("")
-                # Don't skip this line - it's a marker we want to keep
+                # Add this marker line
+                filtered_lines.append(line)
+                i += 1
+                continue
             else:
                 # Still in warnings section, skip this line
+                i += 1
                 continue
 
         elif skip_mode == 'coverage':
             # Coverage section ends at blank line or at a marker line
             if line.strip() == "":
                 skip_mode = None
-                # Don't add the blank line yet, let normal processing handle it
-                continue
+                i += 1
+                continue  # Skip the blank line after coverage
             elif "===" in line:
                 skip_mode = None
                 # Add blank line before the marker if needed
                 if filtered_lines and filtered_lines[-1].strip():
                     filtered_lines.append("")
-                # Don't skip this line - it's a marker we want to keep
+                # Add this marker line
+                filtered_lines.append(line)
+                i += 1
+                continue
             else:
                 # Still in coverage section, skip this line
+                i += 1
                 continue
-
-        # If we get here and skip_mode is None, add the line
-        if skip_mode is None:
-            filtered_lines.append(line)
 
     # Clean up excessive blank lines only if content was removed
     if content_removed:
