@@ -97,12 +97,10 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 content_removed = True
                 i += 1
                 continue
-        # Reset just_exited_skip_mode since we're adding a regular line
-        just_exited_skip_mode = False
 
-            # If not skipping, add the line
-            filtered_lines.append(line)
-            just_exited_skip_mode = False
+        # If not skipping, add the line
+        filtered_lines.append(line)
+        just_exited_skip_mode = False
             i += 1
             continue
 
