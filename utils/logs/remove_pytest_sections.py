@@ -74,7 +74,7 @@ def remove_pytest_sections(error_log: str):
                 line.strip() == "",  # Blank lines
                 ".py::" in line or "PASSED" in line or "FAILED" in line or "SKIPPED" in line,  # Test results
                 "[" in line and "%" in line and "]" in line,  # Progress indicators like [100%]
-                line.strip() and not line[0].isalpha() or line.startswith("  "),  # Indented or non-alphabetic start
+                (line.strip() and not line[0].isalpha()) or line.startswith("  "),  # Indented or non-alphabetic start
             ]
 
             if any(session_patterns):
