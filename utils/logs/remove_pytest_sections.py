@@ -1,137 +1,129 @@
-import re
+def remove_pytest_sections(log: str | None) -> str | None:
+    """
+    Remove pytest test session and warnings sections from logs while keeping failures.
 
-from utils.error.handle_exceptions import handle_exceptions
+    This function removes:
+    - Test session header and test results (from "test session starts" until FAILURES/summary)
+    - Warnings summary section
+    - Coverage section
 
+    But keeps:
+    - FAILURES section
+    - short test summary info section
+    - Final summary line (e.g., "1 failed, 2616 passed...")
+    """
+    if log is None:
+        return None
 
-@handle_exceptions(default_return_value="")
-def remove_pytest_sections(error_log: str):
-    if not error_log:
-        return error_log
+    if not log:
+        return log
 
-    lines = error_log.split("\n")
+    lines = log.split("\n")
     filtered_lines = []
     skip = False
-    content_removed = False
     in_session_section = False
     in_warnings_section = False
+    in_coverage_section = False
+    content_removed = False
 
     for line in lines:
-        # Start skipping at test session header
-        if "===" in line and "test session starts" in line:
-            skip = True
+        # Detect start of test session section
+        if "test session starts" in line and "===" in line:
             in_session_section = True
-            content_removed = True
-            continue
-
-        # Check if this is a coverage section line
-        if "coverage:" in line or line.startswith("Coverage "):
             skip = True
             content_removed = True
             continue
 
-        # Start skipping at warnings summary
-        if "===" in line and "warnings summary" in line:
-            skip = True
+        # Detect start of warnings summary section
+        if "warnings summary" in line and "===" in line:
             in_warnings_section = True
-            in_session_section = False
+            skip = True
             content_removed = True
             continue
 
-        # Stop skipping and keep failures section
-        if "===" in line and "FAILURES" in line:
-            skip = False
-            in_session_section = False
-            in_warnings_section = False
-            # Add blank line before FAILURES if we just removed content and last line isn't blank
-            if content_removed and filtered_lines and filtered_lines[-1] != "":
-                filtered_lines.append("")
-            filtered_lines.append(line)
+        # Detect start of coverage section
+        if "---------- coverage:" in line or "Coverage LCOV written" in line:
+            in_coverage_section = True
+            skip = True
+            content_removed = True
             continue
 
-        # Stop skipping and keep short test summary
-        if "===" in line and "short test summary info" in line:
-            skip = False
+        # Detect FAILURES section - this ends session/warnings sections
+        if "FAILURES" in line and "===" in line:
             in_session_section = False
             in_warnings_section = False
-            # Add blank line before summary if we just removed content and last line isn't blank
-            if content_removed and filtered_lines and filtered_lines[-1] != "":
+            in_coverage_section = False
+            skip = False
+            # Add blank line before FAILURES if needed
+            if filtered_lines and filtered_lines[-1].strip():
                 filtered_lines.append("")
-            filtered_lines.append(line)
-            continue
 
-        # Handle session section content
+        # Detect short test summary info - this ends session/warnings/coverage sections
+        if "short test summary info" in line and "===" in line:
+            in_session_section = False
+            in_warnings_section = False
+            in_coverage_section = False
+            skip = False
+            # Add blank line before summary if needed
+            if filtered_lines and filtered_lines[-1].strip():
+                filtered_lines.append("")
+
+        # Handle session section content - skip everything until we hit a marker
         if in_session_section:
-            # Session section typically contains these patterns
-            session_patterns = [
-                "platform" in line,  # Platform info
-                "Python" in line and "--" in line,  # Python version
-                "pytest" in line,  # Pytest version
-                "pluggy" in line,  # Plugin info
-                "cachedir:" in line,  # Cache directory
-                "rootdir:" in line,  # Root directory
-                "plugins:" in line,  # Plugins list
-                "collecting" in line or "collected" in line,  # Collection info
-                line.strip() == "",  # Blank lines
-                ".py::" in line or "PASSED" in line or "FAILED" in line or "SKIPPED" in line,  # Test results
-                "[" in line and "%" in line and "]" in line,  # Progress indicators like [100%]
-                (line.strip() and not line[0].isalpha()) or line.startswith("  "),  # Indented or non-alphabetic start
-            ]
-
-            if any(session_patterns):
-                # This line looks like session content, keep skipping
-                skip = True
-            else:
-                # This line doesn't look like session content, stop skipping
-                skip = False
+            # Check if this line marks the end of session section
+            if ("===" in line and
+                ("FAILURES" in line or
+                 "short test summary info" in line or
+                 "warnings summary" in line)):
+                # This line will be handled in the next iteration
                 in_session_section = False
+                skip = False
+            else:
+                # Still in session section, keep skipping
+                skip = True
 
-        # Detect end of warnings section
+        # Handle warnings section content
         if in_warnings_section:
-            # Check if this is the Docs line (end of warnings)
-            if line.startswith("-- Docs:"):
-                # Skip this line and stop skipping after it
-                in_warnings_section = False
-                continue
-
-            # Check if this is another section marker
-            if "===" in line:
-                # This is another section, stop warnings and process normally
+            # Check for end markers
+            if "-- Docs:" in line or ("===" in line and ("FAILURES" in line or "short test summary info" in line)):
                 in_warnings_section = False
                 skip = False
-                # Re-process this line
-                if "FAILURES" in line:
-                    if content_removed and filtered_lines and filtered_lines[-1] != "":
-                        filtered_lines.append("")
-                    filtered_lines.append(line)
-                    continue
-                elif "short test summary info" in line:
-                    if content_removed and filtered_lines and filtered_lines[-1] != "":
-                        filtered_lines.append("")
-                    filtered_lines.append(line)
+                # Don't add the Docs line
+                if "-- Docs:" in line:
                     continue
 
-            # Warnings section typically contains these patterns
-            warnings_patterns = [
-                ".py::" in line or line.strip().endswith(".py"),  # Test file references
-                line.startswith("  "),  # Indented warning details
-                line.strip() == "",  # Blank lines
-                "Warning" in line,  # Warning messages
-            ]
-
-            # If line doesn't match any warnings pattern, stop skipping
-            if not any(warnings_patterns):
+        # Handle coverage section content
+        if in_coverage_section:
+            # Coverage section ends at FAILURES or short test summary or final summary line
+            if ("===" in line and ("FAILURES" in line or "short test summary info" in line)) or \
+               ("failed" in line and "passed" in line and "in" in line and "s" in line):
+                in_coverage_section = False
                 skip = False
-                in_warnings_section = False
+            else:
+                skip = True
 
-        # Keep line if not skipping
+        # Add line if not skipping
         if not skip:
             filtered_lines.append(line)
-        else:
-            content_removed = True
 
-    # Join and only clean up excessive blank lines if we actually removed content
-    result = "\n".join(filtered_lines)
+    # Clean up excessive blank lines only if content was removed
     if content_removed:
-        result = re.sub(r"\n{3,}", "\n\n", result)
+        result_lines = []
+        blank_count = 0
 
-    return result
+        for line in filtered_lines:
+            if line.strip() == "":
+                blank_count += 1
+                if blank_count <= 1:  # Allow up to 1 blank line
+                    result_lines.append(line)
+            else:
+                blank_count = 0
+                result_lines.append(line)
+
+        # Remove trailing blank lines
+        while result_lines and result_lines[-1].strip() == "":
+            result_lines.pop()
+
+        return "\n".join(result_lines)
+
+    return "\n".join(filtered_lines)
