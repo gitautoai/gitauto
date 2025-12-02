@@ -23,6 +23,12 @@ def remove_pytest_sections(error_log: str):
             content_removed = True
             continue
 
+        # Check if this is a coverage section line
+        if "coverage:" in line or line.startswith("Coverage "):
+            skip = True
+            content_removed = True
+            continue
+
         # Start skipping at warnings summary
         if "===" in line and "warnings summary" in line:
             skip = True
