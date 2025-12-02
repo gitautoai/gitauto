@@ -24,7 +24,7 @@ def minimize_jest_test_logs(error_log: str) -> str:
     if summary_index is None:
         return error_log
 
-    # Include blank lines before the summary
+    # Find the start of the summary section (including blank lines before it)
     summary_start_index = summary_index
     while summary_start_index > 0 and lines[summary_start_index - 1].strip() == "":
         summary_start_index -= 1
@@ -63,11 +63,10 @@ def minimize_jest_test_logs(error_log: str) -> str:
     for i in range(header_end_index):
         result_lines.append(lines[i])
 
-    # Add a blank line between header and summary
-    # - If there's a header and it doesn't end with a blank line, add one
-    # - If there's no header but there's content before the summary, add one
-    if (header_end_index > 0 and lines[header_end_index - 1].strip() != "") or \
-       (header_end_index == 0 and summary_start_index > 0):
+    # Add a blank line between header and summary if needed
+    if header_end_index > 0 and lines[header_end_index - 1].strip() != "":
+        result_lines.append("")
+    elif header_end_index == 0 and summary_start_index > 0:
         result_lines.append("")
 
     # Add summary and everything after (including blank lines before summary)
