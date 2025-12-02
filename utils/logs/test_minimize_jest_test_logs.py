@@ -482,7 +482,7 @@ def test_minimize_jest_test_logs_very_long_log():
     summary = "\n\nSummary of all failing tests\nFAIL test/example.test.ts"
     input_log = header + test_output + summary
 
-    expected = header + summary
+    expected = "$ jest\n\n\nSummary of all failing tests\nFAIL test/example.test.ts"
 
     result = minimize_jest_test_logs(input_log)
     assert result == expected
