@@ -58,30 +58,6 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
-        # Detect end of session section
-        if in_session_section:
-            # Session section typically contains these patterns
-            session_patterns = [
-                line.startswith("platform "),
-                line.startswith("rootdir:"),
-                line.startswith("cachedir:"),
-                line.startswith("asyncio:"),
-                line.startswith("plugins:"),
-                (line.startswith(".") or ("[" in line and "%" in line and "]" in line)),  # Test result lines
-                line.startswith("collecting "),
-                line.startswith("collected "),
-                "::" in line,  # Test results with :: separator
-                ".py" in line and any(indicator in line for indicator in [".", "F", "E", "s", "x", "X", "p", "P", "[", "%"]),  # Test result lines
-                line.strip() == "",  # Blank lines
-            ]
-
-            # If line doesn't match any session pattern, stop skipping
-            if not any(session_patterns):
-                # Only stop skipping if we're not in warnings section
-                if not in_warnings_section:
-                    skip = False
-                in_session_section = False
-
         # Detect end of warnings section
         if in_warnings_section:
             # Check if this is the Docs line (end of warnings)
