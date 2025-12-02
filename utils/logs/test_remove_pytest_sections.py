@@ -441,3 +441,28 @@ Should not be removed (lowercase)"""
 
     result = remove_pytest_sections(log)
     assert result == expected
+
+
+def test_remove_pytest_sections_test_result_line_without_percentage():
+    log = (
+        "Run python -m pytest\n"
+        "============================= test session starts ==============================\n"
+        "platform linux -- Python 3.12.11\n"
+        "collected 100 items\n"
+        "\n"
+        "test_file1.py .......... [10%]\n"
+        "test_file2.py .........................F\n"
+        "\n"
+        "=================================== FAILURES ===================================\n"
+        "Test failure details"
+    )
+
+    expected = (
+        "Run python -m pytest\n"
+        "\n"
+        "=================================== FAILURES ===================================\n"
+        "Test failure details"
+    )
+
+    result = remove_pytest_sections(log)
+    assert result == expected
