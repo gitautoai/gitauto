@@ -77,7 +77,9 @@ def remove_pytest_sections(error_log: str):
 
             # If line doesn't match any session pattern, stop skipping
             if not any(session_patterns):
-                skip = False
+                # Only stop skipping if we're not in warnings section
+                if not in_warnings_section:
+                    skip = False
                 in_session_section = False
 
         # Detect end of warnings section
