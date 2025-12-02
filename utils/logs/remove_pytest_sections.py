@@ -126,6 +126,7 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 continue
             else:
                 # This line is not part of session content, end session mode
+                just_exited_skip_mode = True
                 skip_mode = None
                 # Don't add a blank line, just add this line
                 filtered_lines.append(line)
