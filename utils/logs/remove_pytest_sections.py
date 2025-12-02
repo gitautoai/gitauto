@@ -137,6 +137,13 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 continue
 
         elif skip_mode == 'warnings':
+            # Check if this is a blank line - warnings section might end here
+            if line.strip() == "":
+                # Peek ahead to see if next line is content or another section
+                if i + 1 < len(lines):
+                    next_line = lines[i + 1]
+                    # If next line is not indented warning content and not empty, end warnings
+        elif skip_mode == 'warnings':
             # Warnings section ends at the Docs line or at FAILURES/short test summary
             if "-- Docs:" in line:
                 just_exited_skip_mode = True
