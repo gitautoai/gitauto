@@ -1,3 +1,4 @@
+import re
 def remove_pytest_sections(log: str | None) -> str | None:
     """
     Remove pytest test session and warnings sections from logs while keeping failures.
