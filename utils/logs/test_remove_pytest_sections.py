@@ -133,7 +133,7 @@ def test_remove_pytest_sections_failures_with_blank_line_before():
     """Test that blank line is added before FAILURES when last line is not blank (covers line 32 branch)."""
     log = """Some content line
 =========================== test session starts ============================
-session content to remove
+collected 5 items
 =================================== FAILURES ===================================
 Failure content"""
 
