@@ -62,7 +62,8 @@ def remove_pytest_sections(error_log: str):
                 line.startswith("plugins:"),
                 line.startswith("collecting "),
                 line.startswith("collected "),
-                "::" in line,  # Test results
+                "::" in line,  # Test results with :: separator
+                re.search(r'\.py\s+\.+\s+\[\s*\d+%\s*\]', line) is not None,  # Test progress lines like "test_file.py .......... [100%]"
                 line.strip() and all(c in ".FEsxXpP[]% " or c.isdigit() for c in line.strip()),  # Progress indicators
                 "===" in line,  # Section markers
                 line.strip() == "",  # Blank lines
