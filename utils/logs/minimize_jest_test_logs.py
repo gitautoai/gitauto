@@ -17,7 +17,7 @@ def minimize_jest_test_logs(error_log: str) -> str:
     summary_index = None
 
     # Keep the header (build commands at the beginning)
-    header_complete = False
+    in_header = True
     for i, line in enumerate(lines):
         # Keep command/header lines
         if any(
@@ -34,6 +34,10 @@ def minimize_jest_test_logs(error_log: str) -> str:
                 "$ yarn test",
             ]
         ):
+            result_lines.append(line)
+            in_header = True
+        elif in_header and line.strip() == "":
+            # Keep blank lines immediately after header commands
             result_lines.append(line)
         elif line.strip() == "Summary of all failing tests":
             # Found the summary section, keep everything from here onwards
@@ -55,13 +59,9 @@ def minimize_jest_test_logs(error_log: str) -> str:
                 result_lines.append("")
             result_lines.extend(lines[i:])  # Keep everything from summary to end
             break
-        elif result_lines and not header_complete:
-            # After we have header lines, keep blank lines that follow
-            if line.strip() == "":
-                result_lines.append(line)
-            else:
-                # Once we hit non-blank content after header, we're done with header
-                header_complete = True
+        else:
+            # Non-blank, non-header line - we're past the header
+            in_header = False
 
     result = "\n".join(result_lines)
     return result.rstrip()
