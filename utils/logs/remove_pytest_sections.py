@@ -65,6 +65,7 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 content_removed = True
                 i += 1
                 continue
+
             # Handle short test summary info marker
             if "===" in line and "short test summary info" in line:
                 # Add blank line before summary if content was removed and last line is not blank
@@ -74,6 +75,7 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 filtered_lines.append(line)
                 i += 1
                 continue
+
             # Handle FAILURES marker
             if just_exited_skip_mode and "===" in line and "FAILURES" in line:
                 # Add blank line before FAILURES if content was removed and last line is not blank
@@ -83,7 +85,6 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 just_exited_skip_mode = False
                 i += 1
                 continue
-
 
             # Detect start of coverage section
             if "---------- coverage:" in line:
@@ -98,11 +99,11 @@ def remove_pytest_sections(log: str | None) -> str | None:
                 i += 1
                 continue
 
-        # If not skipping, add the line
-        filtered_lines.append(line)
-        just_exited_skip_mode = False
-        i += 1
-        continue
+            # If not skipping, add the line
+            filtered_lines.append(line)
+            just_exited_skip_mode = False
+            i += 1
+            continue
 
         # Handle skipping modes
         if skip_mode == 'session':
