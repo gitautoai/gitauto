@@ -38,6 +38,10 @@ def remove_pytest_sections(log: str | None) -> str | None:
         if "[" in line and "%" in line and "]" in line:
             # Make sure it looks like a percentage (e.g., [  0%], [ 50%], [100%])
             if re.search(r'\[\s*\d+%\]', line):
+        # Check for test result lines without percentage (e.g., "test_file.py .....F")
+        # These lines typically have a file path followed by dots/status indicators
+        if re.search(r'\.py\s+[\.FEsxX]+\s*$', line):
+            return True
                 return True
         return False
 
