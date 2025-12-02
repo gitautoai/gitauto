@@ -59,6 +59,7 @@ def remove_pytest_sections(error_log: str):
                 line.startswith("platform "),
                 line.startswith("rootdir:"),
                 line.startswith("cachedir:"),
+                line.startswith("asyncio:"),
                 line.startswith("plugins:"),
                 line.startswith("collecting "),
                 line.startswith("collected "),
