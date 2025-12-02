@@ -38,9 +38,19 @@ def minimize_jest_test_logs(error_log: str) -> str:
         elif line.strip() == "Summary of all failing tests":
             # Found the summary section, keep everything from here onwards
             summary_index = i
-            if result_lines:  # Only add blank line if there are header lines
-                result_lines.append("")
-            elif i > 0:  # Summary is not at the beginning, add leading newline
+            # Preserve blank lines before the summary
+            if result_lines:
+                # Count blank lines before the summary
+                blank_count = 0
+                for j in range(i - 1, -1, -1):
+                    if lines[j].strip() == "":
+                        blank_count += 1
+                    else:
+                        break
+                # Add the blank lines
+                for _ in range(blank_count):
+                    result_lines.append("")
+            elif i > 0:
                 result_lines.append("")
             result_lines.extend(lines[i:])  # Keep everything from summary to end
             break
