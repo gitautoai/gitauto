@@ -108,3 +108,288 @@ Test Suites: 1 failed, 2 passed, 3 total"""
 
     result = minimize_jest_test_logs(input_log)
     assert result == expected
+
+
+def test_minimize_jest_test_logs_with_header_only_no_summary():
+    """Test logs with header commands but no summary section - covers uncovered branch."""
+    input_log = """CircleCI Build Log
+yarn run v1.22.22
+$ jest --coverage
+
+PASS test/file1.test.ts
+PASS test/file2.test.ts
+
+Test Suites: 2 passed, 2 total
+Tests: 10 passed, 10 total"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == input_log
+
+
+def test_minimize_jest_test_logs_all_command_variations():
+    """Test that all supported command variations are preserved."""
+    input_log = """CircleCI Build Log
+yarn run v1.22.22
+npm run test
+$ craco test
+$ react-scripts test
+$ jest
+$ vitest
+$ npm test
+$ yarn test
+
+Some test output here
+
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● test failed"""
+
+    expected = """CircleCI Build Log
+yarn run v1.22.22
+npm run test
+$ craco test
+$ react-scripts test
+$ jest
+$ vitest
+$ npm test
+$ yarn test
+
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● test failed"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_summary_at_beginning():
+    """Test when summary appears at the very beginning."""
+    input_log = """Summary of all failing tests
+FAIL test/example.test.ts
+  ● test failed
+
+Test Suites: 1 failed, 1 total"""
+
+    expected = """
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● test failed
+
+Test Suites: 1 failed, 1 total"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_summary_with_no_header():
+    """Test when summary exists but no header commands."""
+    input_log = """Some random output
+More random output
+
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● test failed"""
+
+    expected = """
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● test failed"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_with_single_line():
+    """Test with single line containing summary."""
+    input_log = "Summary of all failing tests"
+    expected = "\nSummary of all failing tests"
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_whitespace_only():
+    """Test with whitespace-only input."""
+    input_log = "   \n\n   \n"
+    result = minimize_jest_test_logs(input_log)
+    assert result == input_log
+
+
+def test_minimize_jest_test_logs_summary_in_middle_with_content_after():
+    """Test that everything after summary is preserved."""
+    input_log = """$ jest
+
+PASS test/file1.test.ts
+FAIL test/file2.test.ts
+
+Summary of all failing tests
+FAIL test/file2.test.ts
+  ● test case 1 failed
+  ● test case 2 failed
+
+Additional error details
+Stack trace information
+More debugging info"""
+
+    expected = """$ jest
+
+Summary of all failing tests
+FAIL test/file2.test.ts
+  ● test case 1 failed
+  ● test case 2 failed
+
+Additional error details
+Stack trace information
+More debugging info"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_partial_command_match():
+    """Test that partial command matches work correctly."""
+    input_log = """Running yarn run v1.22.22 in CI
+Executing $ npm test --coverage
+
+Test output here
+
+Summary of all failing tests
+FAIL test/example.test.ts"""
+
+    expected = """Running yarn run v1.22.22 in CI
+Executing $ npm test --coverage
+
+Summary of all failing tests
+FAIL test/example.test.ts"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_case_sensitive_summary():
+    """Test that summary detection is case-sensitive."""
+    input_log = """$ jest
+
+FAIL test/example.test.ts
+
+summary of all failing tests
+This should not trigger the summary detection"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == input_log
+
+
+def test_minimize_jest_test_logs_empty_lines_preserved():
+    """Test that empty lines in summary section are preserved."""
+    input_log = """$ jest
+
+Test output
+
+Summary of all failing tests
+
+FAIL test/example.test.ts
+
+  ● test failed
+
+Test Suites: 1 failed"""
+
+    expected = """$ jest
+
+Summary of all failing tests
+
+FAIL test/example.test.ts
+
+  ● test failed
+
+Test Suites: 1 failed"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_only_header_commands():
+    """Test with only header commands and no other content."""
+    input_log = """CircleCI Build Log
+yarn run v1.22.22
+$ jest"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == input_log
+
+
+def test_minimize_jest_test_logs_vitest_command():
+    """Test with vitest command specifically."""
+    input_log = """$ vitest run
+
+Running tests...
+
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● vitest test failed"""
+
+    expected = """$ vitest run
+
+Summary of all failing tests
+FAIL test/example.test.ts
+  ● vitest test failed"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_react_scripts_command():
+    """Test with react-scripts test command."""
+    input_log = """$ react-scripts test --coverage
+
+Test results...
+
+Summary of all failing tests
+FAIL test/App.test.tsx"""
+
+    expected = """$ react-scripts test --coverage
+
+Summary of all failing tests
+FAIL test/App.test.tsx"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_mixed_content_before_summary():
+    """Test with mixed content including commands and non-commands before summary."""
+    input_log = """CircleCI Build Log
+yarn run v1.22.22
+$ jest
+
+Random test output line 1
+Random test output line 2
+Random test output line 3
+
+Summary of all failing tests
+FAIL test/example.test.ts"""
+
+    expected = """CircleCI Build Log
+yarn run v1.22.22
+$ jest
+
+Summary of all failing tests
+FAIL test/example.test.ts"""
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_newline_variations():
+    """Test with various newline patterns."""
+    input_log = "$ jest\n\n\n\nSummary of all failing tests\nFAIL test/example.test.ts"
+    expected = "$ jest\n\nSummary of all failing tests\nFAIL test/example.test.ts"
+
+    result = minimize_jest_test_logs(input_log)
+    assert result == expected
+
+
+def test_minimize_jest_test_logs_exception_handling():
+    """Test that exceptions are handled gracefully by the decorator."""
+    # The decorator should handle any exceptions and return the input unchanged
+    result = minimize_jest_test_logs(None)
+    assert result is None
