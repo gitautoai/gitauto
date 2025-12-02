@@ -74,4 +74,4 @@ def minimize_jest_test_logs(error_log: str) -> str:
     result_lines.extend(lines[summary_start_index:])
 
     result = "\n".join(result_lines)
-    return result.rstrip()
+    return result
