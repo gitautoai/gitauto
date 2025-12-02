@@ -61,8 +61,7 @@ def remove_pytest_sections(error_log: str):
                 line.startswith("cachedir:"),
                 line.startswith("asyncio:"),
                 line.startswith("plugins:"),
-                line.startswith(".")  # Test result continuation lines
-                or "[" in line and "%" in line and "]" in line,  # Test result lines with percentage
+                (line.startswith(".") or ("[" in line and "%" in line and "]" in line)),  # Test result lines
                 line.startswith("collecting "),
                 line.startswith("collected "),
                 "::" in line,  # Test results with :: separator
