@@ -101,8 +101,8 @@ def remove_pytest_sections(log: str | None) -> str | None:
         # If not skipping, add the line
         filtered_lines.append(line)
         just_exited_skip_mode = False
-            i += 1
-            continue
+        i += 1
+        continue
 
         # Handle skipping modes
         if skip_mode == 'session':
