@@ -45,6 +45,19 @@ def remove_pytest_sections(log: str | None) -> str | None:
             return True
         return False
     def is_warnings_content_line(line: str) -> bool:
+        """Check if a line is part of the warnings summary section."""
+        stripped = line.strip()
+        if not stripped:
+            return True  # Blank lines are part of warnings
+        # Warning details are typically indented
+        if line.startswith("  ") or line.startswith("\t"):
+            return True
+        # Test file paths (e.g., "test_file.py" or "test_file.py::test_name")
+        if ".py" in line and ("::" in line or not line.startswith(" ")):
+            return True
+        return False
+
+    def is_warnings_content_line(line: str) -> bool:
         """Check if a line is part of the warnings summary content."""
         stripped = line.strip()
         if not stripped:
