@@ -134,6 +134,7 @@ def remove_pytest_sections(log: str | None) -> str | None:
         elif skip_mode == 'warnings':
             # Warnings section ends at the Docs line or at FAILURES/short test summary
             if "-- Docs:" in line:
+                just_exited_skip_mode = True
                 skip_mode = None
                 i += 1
                 continue  # Skip the Docs line itself
