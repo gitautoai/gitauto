@@ -404,7 +404,7 @@ def test_remove_pytest_sections_multiple_failures_sections():
     """Test with multiple FAILURES sections."""
     log = """Content before
 =========================== test session starts ============================
-session data
+collected 10 items
 =================================== FAILURES ===================================
 First failure
 =================================== FAILURES ===================================
