@@ -59,6 +59,32 @@ def remove_pytest_sections(error_log: str):
             filtered_lines.append(line)
             continue
 
+        # Handle session section content
+        if in_session_section:
+            # Session section typically contains these patterns
+            session_patterns = [
+                "platform" in line,  # Platform info
+                "Python" in line and "--" in line,  # Python version
+                "pytest" in line,  # Pytest version
+                "pluggy" in line,  # Plugin info
+                "cachedir:" in line,  # Cache directory
+                "rootdir:" in line,  # Root directory
+                "plugins:" in line,  # Plugins list
+                "collecting" in line or "collected" in line,  # Collection info
+                line.strip() == "",  # Blank lines
+                ".py::" in line or "PASSED" in line or "FAILED" in line or "SKIPPED" in line,  # Test results
+                "[" in line and "%" in line and "]" in line,  # Progress indicators like [100%]
+                line.strip() and not line[0].isalpha() or line.startswith("  "),  # Indented or non-alphabetic start
+            ]
+
+            if any(session_patterns):
+                # This line looks like session content, keep skipping
+                skip = True
+            else:
+                # This line doesn't look like session content, stop skipping
+                skip = False
+                in_session_section = False
+
         # Detect end of warnings section
         if in_warnings_section:
             # Check if this is the Docs line (end of warnings)
@@ -96,11 +122,6 @@ def remove_pytest_sections(error_log: str):
             if not any(warnings_patterns):
                 skip = False
                 in_warnings_section = False
-
-        # If we're in session section, continue skipping until we hit a section marker
-        # (FAILURES, short test summary, warnings summary are already handled above)
-        if in_session_section:
-            skip = True
 
         # Keep line if not skipping
         if not skip:
