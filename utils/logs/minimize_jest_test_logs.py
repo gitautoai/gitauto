@@ -22,6 +22,11 @@ def minimize_jest_test_logs(error_log: str) -> str:
             break
 
     if summary_index is None:
+    # Include blank lines before the summary
+    summary_start_index = summary_index
+    while summary_start_index > 0 and lines[summary_start_index - 1].strip() == "":
+        summary_start_index -= 1
+
         return error_log
 
     # Keep header lines (commands at the beginning)
