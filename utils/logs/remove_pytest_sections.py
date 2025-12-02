@@ -108,7 +108,7 @@ def remove_pytest_sections(error_log: str):
 
             # Warnings section typically contains these patterns
             warnings_patterns = [
-                line.strip().endswith(".py") or line.strip().endswith(".py::"),  # Test file references
+                ".py::" in line or line.strip().endswith(".py"),  # Test file references
                 line.startswith("  "),  # Indented warning details
                 line.strip() == "",  # Blank lines
                 "Warning" in line,  # Warning messages
