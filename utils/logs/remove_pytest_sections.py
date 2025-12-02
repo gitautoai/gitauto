@@ -32,7 +32,7 @@ def remove_pytest_sections(log: str | None) -> str | None:
         if not stripped:
             return True  # Blank lines are part of session
         # Check for session info lines
-        if any(keyword in line for keyword in ["platform ", "rootdir:", "plugins:", "asyncio:", "collected "]):
+        if any(keyword in line for keyword in ["platform ", "cachedir:", "rootdir:", "plugins:", "asyncio:", "collected ", "collecting "]):
             return True
         # Check for test result lines (end with [X%])
         if "[" in line and "%" in line and "]" in line:
