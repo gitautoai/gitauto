@@ -296,10 +296,8 @@ class TestCheckAvailability:
         assert result["credit_balance_usd"] == 5
         mock_dependencies["trigger_auto_reload"].assert_not_called()
 
-    def test_auto_reload_not_triggered_when_insufficient_credits(
-        self, mock_dependencies
-    ):
-        """Test that auto-reload is not triggered when credits are insufficient."""
+    def test_auto_reload_triggered_when_balance_is_zero(self, mock_dependencies):
+        """Test that auto-reload is triggered when credits are 0."""
         # Arrange
         mock_dependencies["get_stripe_customer_id"].return_value = None
         mock_dependencies["get_billing_type"].return_value = "credit"
@@ -324,7 +322,35 @@ class TestCheckAvailability:
         # Assert
         assert result["can_proceed"] is False
         assert result["credit_balance_usd"] == 0
-        mock_dependencies["trigger_auto_reload"].assert_not_called()
+        mock_dependencies["trigger_auto_reload"].assert_called_once()
+
+    def test_auto_reload_triggered_when_balance_is_negative(self, mock_dependencies):
+        """Test that auto-reload is triggered when credits are negative."""
+        # Arrange
+        mock_dependencies["get_stripe_customer_id"].return_value = None
+        mock_dependencies["get_billing_type"].return_value = "credit"
+        mock_dependencies["get_owner"].return_value = {
+            "credit_balance_usd": -5,
+            "auto_reload_enabled": True,
+            "auto_reload_threshold_usd": 10,
+        }
+        mock_dependencies["get_insufficient_credits_message"].return_value = (
+            "Insufficient credits"
+        )
+
+        # Act
+        result = check_availability(
+            owner_id=123,
+            owner_name="test_owner",
+            repo_name="test_repo",
+            installation_id=456,
+            sender_name="test_sender",
+        )
+
+        # Assert
+        assert result["can_proceed"] is False
+        assert result["credit_balance_usd"] == -5
+        mock_dependencies["trigger_auto_reload"].assert_called_once()
 
     def test_auto_reload_triggered_at_exact_threshold(self, mock_dependencies):
         """Test that auto-reload is triggered when credits equal the threshold."""
@@ -379,8 +405,8 @@ class TestCheckAvailability:
         # Assert
         assert result["can_proceed"] is False
         assert result["credit_balance_usd"] == 0
-        # Should not trigger auto-reload because balance is 0 and threshold is 0 (not <= 0)
-        mock_dependencies["trigger_auto_reload"].assert_not_called()
+        # Should trigger auto-reload because balance (0) <= threshold (0)
+        mock_dependencies["trigger_auto_reload"].assert_called_once()
 
     def test_subscription_with_no_stripe_customer_id(self, mock_dependencies):
         """Test subscription billing when no stripe customer ID exists."""
