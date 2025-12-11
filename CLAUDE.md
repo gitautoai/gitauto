@@ -19,6 +19,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. Read the actual script file (e.g., `scripts/github/update_file.py`) to see the function signature
 3. Write Python code that imports and calls the function correctly
 
+## CRITICAL: Never Guess - Always Verify
+
+**NEVER use words like "likely", "probably", "might be", "seems like", "most likely", "somehow" when diagnosing bugs or explaining root causes.**
+
+These words mean you are GUESSING, not providing facts.
+
+**What to do instead:**
+
+1. Check AWS CloudWatch logs to see the ACTUAL events and code execution
+2. Read the actual code to see what ACTUALLY happens
+3. Use scripts to get ACTUAL data from GitHub API, database, etc.
+4. Only state facts that you have verified through logs, code, or data
+
+**Example of WRONG approach:**
+- "The bug is likely caused by..."
+- "This probably triggers when..."
+- "It seems like the issue is..."
+
+**Example of CORRECT approach:**
+- "The CloudWatch logs show that at 17:57:33, webhook event X was received and handler Y was called"
+- "Reading the code at line 123 shows that function Z calls check_availability"
+- "The GitHub API returns issue #1445 for this query"
+
 ## Testing Workflow
 
 When modifying a file, follow this test-driven approach:
