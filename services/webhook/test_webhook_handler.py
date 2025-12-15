@@ -131,13 +131,37 @@ def mock_handle_coverage_report():
         yield mock
 
 
+@pytest.fixture
+def mock_handle_push():
+    with patch("services.webhook.webhook_handler.handle_push") as mock:
+        mock.return_value = None
+        yield mock
+
+
 class TestHandleWebhookEvent:
     @pytest.mark.asyncio
     async def test_handle_webhook_event_no_action(self):
         """Test that the function returns early when no action is provided."""
         payload = {"key": "value"}
-        result = await handle_webhook_event(event_name="push", payload=payload)
+        result = await handle_webhook_event(event_name="unknown_event", payload=payload)
         assert result is None
+
+    @pytest.mark.asyncio
+    async def test_handle_webhook_event_push(self, mock_handle_push):
+        """Test handling of push events."""
+        payload = {
+            "ref": "refs/heads/main",
+            "repository": {
+                "id": 123,
+                "name": "test-repo",
+                "owner": {"id": 456, "login": "test-owner"},
+            },
+            "installation": {"id": 789},
+        }
+
+        await handle_webhook_event(event_name="push", payload=payload)
+
+        mock_handle_push.assert_called_once_with(payload=payload)
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_installation_created(
