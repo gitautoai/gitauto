@@ -18,8 +18,6 @@ from services.aws.get_schedulers import get_schedulers_by_owner_id
 from services.github.comments.create_gitauto_button_comment import (
     create_gitauto_button_comment,
 )
-
-# Local imports (Resend)
 from services.github.types.github_types import (
     CheckRunCompletedPayload,
     GitHubInstallationPayload,
@@ -29,6 +27,9 @@ from services.github.types.github_types import (
 from services.github.types.owner import OwnerType
 from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
 from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
+from services.github.types.webhook.push import PushWebhookPayload
+
+# Local imports (Resend)
 from services.resend.get_first_name import get_first_name
 from services.resend.send_email import send_email
 from services.resend.text.suspend_email import get_suspend_email_text
@@ -59,6 +60,7 @@ from services.webhook.handle_installation import handle_installation_created
 from services.webhook.handle_installation_repos import handle_installation_repos_added
 from services.webhook.merge_handler import handle_pr_merged
 from services.webhook.pr_checkbox_handler import handle_pr_checkbox_trigger
+from services.webhook.push_handler import handle_push
 from services.webhook.utils.create_pr_checkbox_comment import create_pr_checkbox_comment
 
 # Local imports (Utils)
@@ -79,10 +81,10 @@ async def handle_webhook_event(
     """
     action: str | None = payload.get("action")
 
-    # Handle push events from non-bot users
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
-    # if event_name == "push":
-    # return
+    if event_name == "push":
+        handle_push(payload=cast(PushWebhookPayload, payload))
+        return
 
     # For other events, we need to check the action
     if not action:
