@@ -312,3 +312,21 @@ def test_handle_exceptions_generic_exception():
 
         assert result is None
         mock_get.assert_called_once()
+
+
+def test_handle_exceptions_preserves_return_type():
+    """Test that decorator preserves function return type for type checkers."""
+
+    @handle_exceptions(default_return_value=[], raise_on_error=False)
+    def get_items(count: int):
+        if count < 0:
+            raise ValueError("Count must be non-negative")
+        return [{"id": i} for i in range(count)]
+
+    result = get_items(3)
+    assert result == [{"id": 0}, {"id": 1}, {"id": 2}]
+    assert isinstance(result, list)
+
+    error_result = get_items(-1)
+    assert error_result == []
+    assert isinstance(error_result, list)

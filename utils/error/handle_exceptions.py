@@ -5,22 +5,25 @@ from functools import wraps
 import json
 import logging
 import time
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, ParamSpec, TypeVar
 
 # Third party imports
 import requests
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def handle_exceptions(
     default_return_value: Any = None,
     raise_on_error: bool = False,
     api_type: str = "github",  # "github" or "google"
-) -> Callable[[Callable], Callable]:
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#checking-the-status-of-your-rate-limit"""
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         @wraps(wrapped=func)
-        def wrapper(*args: Tuple[Any, ...], **kwargs: Any):
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             log_args = list(args)
             log_kwargs = dict(kwargs)
 
@@ -37,14 +40,16 @@ def handle_exceptions(
                 if err.response is None:
                     if raise_on_error:
                         raise
-                    return error_return
+                    # Type system cannot verify default_return_value matches R
+                    return error_return  # type: ignore[return-value]
                 status_code: int = err.response.status_code
 
                 # Skip logging for 500 Internal Server Error as it's usually a temporary issue and no meaningful information is available
                 if status_code == 500:
                     if raise_on_error:
                         raise
-                    return error_return
+                    # Type system cannot verify default_return_value matches R
+                    return error_return  # type: ignore[return-value]
 
                 reason: str | Any = (
                     str(err.response.reason)
@@ -128,7 +133,8 @@ def handle_exceptions(
                 logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
-            return error_return
+            # Type system cannot verify default_return_value matches R
+            return error_return  # type: ignore[return-value]
 
         return wrapper
 
