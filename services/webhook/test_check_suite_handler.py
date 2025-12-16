@@ -1,11 +1,13 @@
 """Unit tests for check_suite_handler.py"""
 
+# pylint: disable=too-many-lines
+
 # Test to verify imports work correctly
 # Standard imports
 import hashlib
 from unittest.mock import patch
 import pytest
-from config import GITHUB_APP_USER_NAME, UTF8
+from config import GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
 from services.webhook.check_suite_handler import handle_check_suite
 
 
@@ -16,7 +18,7 @@ def mock_check_run_payload(test_owner, test_repo):
         "action": "completed",
         "check_suite": {
             "id": 12345,
-            "head_branch": "gitauto-test/feature-branch",
+            "head_branch": f"{PRODUCT_ID}/issue-123",
             "head_sha": "abc123",
             "status": "completed",
             "conclusion": "failure",
@@ -111,7 +113,11 @@ def test_handle_check_suite_skips_when_trigger_disabled(
     """Test that handler skips when trigger_on_test_failure is disabled."""
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
-        {"details_url": "https://example.com", "name": "test"}
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": False}
 
@@ -122,6 +128,7 @@ def test_handle_check_suite_skips_when_trigger_disabled(
     mock_get_repo.assert_called_once_with(repo_id=98765)
 
 
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
@@ -133,22 +140,32 @@ def test_handle_check_suite_skips_when_comment_exists(
     mock_slack_notify,
     mock_get_repo,
     mock_get_token,
+    mock_get_failed_runs,
     mock_check_run_payload,
 ):
     """Test that handler skips when relevant comment already exists."""
     mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = True
 
     handle_check_suite(mock_check_run_payload)
 
     mock_get_token.assert_called_once()
+    mock_get_failed_runs.assert_called_once()
     mock_get_repo.assert_called_once()
     mock_has_comment.assert_called_once()
     mock_create_comment.assert_not_called()
     mock_slack_notify.assert_called()
 
 
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
@@ -186,11 +203,19 @@ def test_handle_check_suite_race_condition_prevention(
     mock_slack_notify,
     mock_get_repo,
     mock_get_token,
+    mock_get_failed_runs,
     mock_check_run_payload,
 ):
     """Test that handler properly detects and handles race conditions."""
     # Setup mocks for normal flow until race check
     mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = (
@@ -242,6 +267,7 @@ def test_handle_check_suite_race_condition_prevention(
     mock_update_comment.assert_called()
 
 
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
@@ -281,11 +307,19 @@ def test_handle_check_suite_full_workflow(
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
+    mock_get_failed_runs,
     mock_check_run_payload,
 ):
     """Test the full workflow of handling a check run failure."""
     # Setup mocks
     mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
@@ -356,6 +390,7 @@ def test_handle_check_suite_full_workflow(
     assert second_call.kwargs["trigger"] == "test_failure"
 
 
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
@@ -383,11 +418,19 @@ def test_handle_check_suite_with_404_logs(
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
+    mock_get_failed_runs,
     mock_check_run_payload,
 ):
     """Test handling when workflow logs return 404."""
     # Setup mocks
     mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
@@ -427,6 +470,7 @@ def test_handle_check_suite_with_404_logs(
     mock_update_comment.assert_called()
 
 
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
@@ -450,11 +494,19 @@ def test_handle_check_suite_with_none_logs(
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
+    mock_get_failed_runs,
     mock_check_run_payload,
 ):
     """Test handling when workflow logs return None."""
     # Setup mocks
     mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
@@ -490,6 +542,7 @@ def test_handle_check_suite_with_none_logs(
     mock_update_comment.assert_called()
 
 
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
@@ -521,11 +574,19 @@ def test_handle_check_suite_with_existing_retry_pair(
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
+    mock_get_failed_runs,
     mock_check_run_payload,
 ):
     """Test handling when the workflow/error pair has already been attempted."""
     # Setup mocks
     mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
@@ -575,6 +636,7 @@ def test_handle_check_suite_with_existing_retry_pair(
     mock_update_comment.assert_called()
 
 
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
@@ -604,11 +666,19 @@ def test_handle_check_suite_with_closed_pr(
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
+    mock_get_failed_runs,
     mock_check_run_payload,
 ):
     """Test handling when the PR is closed during processing."""
     # Setup mocks
     mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
@@ -647,6 +717,7 @@ def test_handle_check_suite_with_closed_pr(
     mock_update_comment.assert_called()
 
 
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
@@ -678,11 +749,19 @@ def test_handle_check_suite_with_deleted_branch(
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
+    mock_get_failed_runs,
     mock_check_run_payload,
 ):
     """Test handling when the branch is deleted during processing."""
     # Setup mocks
     mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
@@ -722,6 +801,7 @@ def test_handle_check_suite_with_deleted_branch(
     mock_update_comment.assert_called()
 
 
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
@@ -761,11 +841,19 @@ def test_check_run_handler_token_accumulation(
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
+    mock_get_failed_runs,
     mock_check_run_payload,
 ):
     """Test that check run handler accumulates tokens correctly and calls update_usage"""
     # Setup mocks
     mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"
@@ -819,6 +907,7 @@ def test_check_run_handler_token_accumulation(
     assert call_kwargs["token_output"] == 90  # Two calls: 45 + 45
 
 
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
@@ -854,11 +943,19 @@ def test_handle_check_suite_skips_duplicate_older_request(
     mock_slack_notify,
     mock_get_repo,
     mock_get_token,
+    mock_get_failed_runs,
     mock_check_run_payload,
 ):
     """Test that handler skips when older active request is found."""
     # Setup mocks
     mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = False
     mock_create_comment.return_value = "http://comment-url"

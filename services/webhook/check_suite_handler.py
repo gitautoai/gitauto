@@ -147,12 +147,6 @@ def handle_check_suite(
     pull_number = pull_request["number"]
     pull_url = pull_request["url"]
 
-    # Extract other information
-    installation_id = payload["installation"]["id"]
-    token = get_installation_access_token(installation_id=installation_id)
-    if not token:
-        return
-
     # Get repository settings - check if trigger_on_test_failure is enabled
     repo_settings = get_repository(repo_id=repo_id)
     if not repo_settings or not repo_settings.get("trigger_on_test_failure"):
