@@ -1,9 +1,7 @@
 from unittest.mock import patch
-
-
 import pytest
-
 from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
+
 from services.webhook.utils.create_pr_checkbox_comment import (
     create_pr_checkbox_comment,
 )
