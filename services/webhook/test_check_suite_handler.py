@@ -1,4 +1,4 @@
-"""Unit tests for check_run_handler.py"""
+"""Unit tests for check_suite_handler.py"""
 
 # Test to verify imports work correctly
 # Standard imports
@@ -6,24 +6,20 @@ import hashlib
 from unittest.mock import patch
 import pytest
 from config import GITHUB_APP_USER_NAME, UTF8
-from services.webhook.check_run_handler import handle_check_run
+from services.webhook.check_suite_handler import handle_check_suite
 
 
 @pytest.fixture
 def mock_check_run_payload(test_owner, test_repo):
-    """Fixture providing a mock check run payload."""
+    """Fixture providing a mock check suite payload."""
     return {
         "action": "completed",
-        "check_run": {
+        "check_suite": {
             "id": 12345,
-            "name": "test-check",
+            "head_branch": "gitauto-test/feature-branch",
             "head_sha": "abc123",
-            "details_url": "https://github.com/hiroshinishio/tetris/actions/runs/11393174689/job/31710113401",
             "status": "completed",
             "conclusion": "failure",
-            "check_suite": {
-                "head_branch": "feature-branch",
-            },
             "pull_requests": [
                 {
                     "number": 1,
@@ -87,44 +83,51 @@ def mock_pr_changes():
     ]
 
 
-@patch("services.webhook.check_run_handler.get_installation_access_token")
-@patch("services.webhook.check_run_handler.get_repository")
-def test_handle_check_run_skips_non_bot_sender(
-    mock_get_repo, mock_get_token, mock_check_run_payload
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+def test_handle_check_suite_skips_non_gitauto_branch(
+    mock_get_repo, mock_get_token, mock_get_failed_runs, mock_check_run_payload
 ):
-    """Test that handler skips when sender is not the bot."""
-    # Modify sender to be a non-bot user
+    """Test that handler skips when branch doesn't start with PRODUCT_ID."""
+    # Modify head_branch to not start with PRODUCT_ID
     payload = mock_check_run_payload.copy()
-    payload["sender"]["login"] = "human-user"
+    payload["check_suite"]["head_branch"] = "non-gitauto-branch"
 
-    handle_check_run(payload)
+    handle_check_suite(payload)
 
     # Verify no further processing occurred
     mock_get_token.assert_not_called()
     mock_get_repo.assert_not_called()
+    mock_get_failed_runs.assert_not_called()
 
 
-@patch("services.webhook.check_run_handler.get_installation_access_token")
-@patch("services.webhook.check_run_handler.get_repository")
-def test_handle_check_run_skips_when_trigger_disabled(
-    mock_get_repo, mock_get_token, mock_check_run_payload
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+def test_handle_check_suite_skips_when_trigger_disabled(
+    mock_get_repo, mock_get_token, mock_get_failed_runs, mock_check_run_payload
 ):
     """Test that handler skips when trigger_on_test_failure is disabled."""
     mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {"details_url": "https://example.com", "name": "test"}
+    ]
     mock_get_repo.return_value = {"trigger_on_test_failure": False}
 
-    handle_check_run(mock_check_run_payload)
+    handle_check_suite(mock_check_run_payload)
 
     mock_get_token.assert_called_once()
+    mock_get_failed_runs.assert_called_once()
     mock_get_repo.assert_called_once_with(repo_id=98765)
 
 
-@patch("services.webhook.check_run_handler.get_installation_access_token")
-@patch("services.webhook.check_run_handler.get_repository")
-@patch("services.webhook.check_run_handler.slack_notify")
-@patch("services.webhook.check_run_handler.has_comment_with_text")
-@patch("services.webhook.check_run_handler.create_comment")
-def test_handle_check_run_skips_when_comment_exists(
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.create_comment")
+def test_handle_check_suite_skips_when_comment_exists(
     mock_create_comment,
     mock_has_comment,
     mock_slack_notify,
@@ -137,7 +140,7 @@ def test_handle_check_run_skips_when_comment_exists(
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = True
 
-    handle_check_run(mock_check_run_payload)
+    handle_check_suite(mock_check_run_payload)
 
     mock_get_token.assert_called_once()
     mock_get_repo.assert_called_once()
@@ -146,25 +149,25 @@ def test_handle_check_run_skips_when_comment_exists(
     mock_slack_notify.assert_called()
 
 
-@patch("services.webhook.check_run_handler.get_installation_access_token")
-@patch("services.webhook.check_run_handler.get_repository")
-@patch("services.webhook.check_run_handler.slack_notify")
-@patch("services.webhook.check_run_handler.has_comment_with_text")
-@patch("services.webhook.check_run_handler.create_comment")
-@patch("services.webhook.check_run_handler.create_user_request")
-@patch("services.webhook.check_run_handler.cancel_workflow_runs")
-@patch("services.webhook.check_run_handler.get_pull_request")
-@patch("services.webhook.check_run_handler.get_pull_request_files")
-@patch("services.webhook.check_run_handler.get_workflow_run_logs")
-@patch("services.webhook.check_run_handler.clean_logs")
-@patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.check_older_active_test_failure_request")
-@patch("services.webhook.check_run_handler.is_pull_request_open")
-@patch("services.webhook.check_run_handler.check_branch_exists")
-@patch("services.webhook.check_run_handler.update_comment")
-@patch("services.webhook.check_run_handler.update_usage")
-def test_handle_check_run_race_condition_prevention(
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs")
+@patch("services.webhook.check_suite_handler.clean_logs")
+@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.check_older_active_test_failure_request")
+@patch("services.webhook.check_suite_handler.is_pull_request_open")
+@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.update_usage")
+def test_handle_check_suite_race_condition_prevention(
     mock_update_usage,
     mock_update_comment,
     mock_check_branch_exists,
@@ -212,7 +215,7 @@ def test_handle_check_run_race_condition_prevention(
         "created_at": "2025-09-28T14:19:01.247+00:00",
     }
 
-    handle_check_run(mock_check_run_payload)
+    handle_check_suite(mock_check_run_payload)
 
     # Verify race prevention logic was triggered
     mock_check_older_active.assert_called_with(
@@ -239,26 +242,26 @@ def test_handle_check_run_race_condition_prevention(
     mock_update_comment.assert_called()
 
 
-@patch("services.webhook.check_run_handler.get_installation_access_token")
-@patch("services.webhook.check_run_handler.get_repository")
-@patch("services.webhook.check_run_handler.slack_notify")
-@patch("services.webhook.check_run_handler.has_comment_with_text")
-@patch("services.webhook.check_run_handler.create_comment")
-@patch("services.webhook.check_run_handler.create_user_request")
-@patch("services.webhook.check_run_handler.cancel_workflow_runs")
-@patch("services.webhook.check_run_handler.get_pull_request")
-@patch("services.webhook.check_run_handler.get_pull_request_files")
-@patch("services.webhook.check_run_handler.get_workflow_run_logs")
-@patch("services.webhook.check_run_handler.update_comment")
-@patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.is_pull_request_open")
-@patch("services.webhook.check_run_handler.check_branch_exists")
-@patch("services.webhook.check_run_handler.chat_with_agent")
-@patch("services.webhook.check_run_handler.create_empty_commit")
-@patch("services.webhook.check_run_handler.update_usage")
-@patch("services.webhook.check_run_handler.is_lambda_timeout_approaching")
-def test_handle_check_run_full_workflow(
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.is_pull_request_open")
+@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.chat_with_agent")
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
+def test_handle_check_suite_full_workflow(
     mock_timeout_check,
     _mock_update_usage,
     _mock_create_empty_commit,
@@ -330,7 +333,7 @@ def test_handle_check_run_full_workflow(
     ]
 
     # Execute
-    handle_check_run(mock_check_run_payload)
+    handle_check_suite(mock_check_run_payload)
 
     # Verify key functions were called
     mock_get_token.assert_called_once()
@@ -353,20 +356,20 @@ def test_handle_check_run_full_workflow(
     assert second_call.kwargs["trigger"] == "test_failure"
 
 
-@patch("services.webhook.check_run_handler.get_installation_access_token")
-@patch("services.webhook.check_run_handler.get_repository")
-@patch("services.webhook.check_run_handler.slack_notify")
-@patch("services.webhook.check_run_handler.has_comment_with_text")
-@patch("services.webhook.check_run_handler.create_comment")
-@patch("services.webhook.check_run_handler.create_user_request")
-@patch("services.webhook.check_run_handler.cancel_workflow_runs")
-@patch("services.webhook.check_run_handler.get_pull_request")
-@patch("services.webhook.check_run_handler.get_pull_request_files")
-@patch("services.webhook.check_run_handler.get_workflow_run_logs")
-@patch("services.webhook.check_run_handler.update_comment")
-@patch("services.webhook.check_run_handler.create_permission_url")
-@patch("services.webhook.check_run_handler.get_installation_permissions")
-def test_handle_check_run_with_404_logs(
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.create_permission_url")
+@patch("services.webhook.check_suite_handler.get_installation_permissions")
+def test_handle_check_suite_with_404_logs(
     mock_get_permissions,
     mock_create_permission_url,
     mock_update_comment,
@@ -407,7 +410,7 @@ def test_handle_check_run_with_404_logs(
     mock_get_permissions.return_value = {"actions": "read"}
 
     # Execute
-    handle_check_run(mock_check_run_payload)
+    handle_check_suite(mock_check_run_payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -424,18 +427,18 @@ def test_handle_check_run_with_404_logs(
     mock_update_comment.assert_called()
 
 
-@patch("services.webhook.check_run_handler.get_installation_access_token")
-@patch("services.webhook.check_run_handler.get_repository")
-@patch("services.webhook.check_run_handler.slack_notify")
-@patch("services.webhook.check_run_handler.has_comment_with_text")
-@patch("services.webhook.check_run_handler.create_comment")
-@patch("services.webhook.check_run_handler.create_user_request")
-@patch("services.webhook.check_run_handler.cancel_workflow_runs")
-@patch("services.webhook.check_run_handler.get_pull_request")
-@patch("services.webhook.check_run_handler.get_pull_request_files")
-@patch("services.webhook.check_run_handler.get_workflow_run_logs")
-@patch("services.webhook.check_run_handler.update_comment")
-def test_handle_check_run_with_none_logs(
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs")
+@patch("services.webhook.check_suite_handler.update_comment")
+def test_handle_check_suite_with_none_logs(
     mock_update_comment,
     mock_get_logs,
     mock_get_changes,
@@ -472,7 +475,7 @@ def test_handle_check_run_with_none_logs(
     mock_get_logs.return_value = None
 
     # Execute
-    handle_check_run(mock_check_run_payload)
+    handle_check_suite(mock_check_run_payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -487,22 +490,22 @@ def test_handle_check_run_with_none_logs(
     mock_update_comment.assert_called()
 
 
-@patch("services.webhook.check_run_handler.get_installation_access_token")
-@patch("services.webhook.check_run_handler.get_repository")
-@patch("services.webhook.check_run_handler.slack_notify")
-@patch("services.webhook.check_run_handler.has_comment_with_text")
-@patch("services.webhook.check_run_handler.create_comment")
-@patch("services.webhook.check_run_handler.create_user_request")
-@patch("services.webhook.check_run_handler.cancel_workflow_runs")
-@patch("services.webhook.check_run_handler.get_pull_request")
-@patch("services.webhook.check_run_handler.get_pull_request_files")
-@patch("services.webhook.check_run_handler.get_workflow_run_logs")
-@patch("services.webhook.check_run_handler.update_comment")
-@patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.update_usage")
-@patch("services.webhook.check_run_handler.clean_logs")
-def test_handle_check_run_with_existing_retry_pair(
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.clean_logs")
+def test_handle_check_suite_with_existing_retry_pair(
     mock_clean_logs,
     mock_update_usage,
     _mock_update_retry_pairs,
@@ -549,7 +552,7 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_get_retry_pairs.return_value = [f"runs:{expected_hash}"]
 
     # Execute
-    handle_check_run(mock_check_run_payload)
+    handle_check_suite(mock_check_run_payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -572,21 +575,21 @@ def test_handle_check_run_with_existing_retry_pair(
     mock_update_comment.assert_called()
 
 
-@patch("services.webhook.check_run_handler.get_installation_access_token")
-@patch("services.webhook.check_run_handler.get_repository")
-@patch("services.webhook.check_run_handler.slack_notify")
-@patch("services.webhook.check_run_handler.has_comment_with_text")
-@patch("services.webhook.check_run_handler.create_comment")
-@patch("services.webhook.check_run_handler.create_user_request")
-@patch("services.webhook.check_run_handler.cancel_workflow_runs")
-@patch("services.webhook.check_run_handler.get_pull_request")
-@patch("services.webhook.check_run_handler.get_pull_request_files")
-@patch("services.webhook.check_run_handler.get_workflow_run_logs")
-@patch("services.webhook.check_run_handler.update_comment")
-@patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.is_pull_request_open")
-def test_handle_check_run_with_closed_pr(
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.is_pull_request_open")
+def test_handle_check_suite_with_closed_pr(
     mock_is_pr_open,
     _mock_update_retry_pairs,
     mock_get_retry_pairs,
@@ -628,7 +631,7 @@ def test_handle_check_run_with_closed_pr(
     mock_is_pr_open.return_value = False
 
     # Execute
-    handle_check_run(mock_check_run_payload)
+    handle_check_suite(mock_check_run_payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -644,22 +647,22 @@ def test_handle_check_run_with_closed_pr(
     mock_update_comment.assert_called()
 
 
-@patch("services.webhook.check_run_handler.get_installation_access_token")
-@patch("services.webhook.check_run_handler.get_repository")
-@patch("services.webhook.check_run_handler.slack_notify")
-@patch("services.webhook.check_run_handler.has_comment_with_text")
-@patch("services.webhook.check_run_handler.create_comment")
-@patch("services.webhook.check_run_handler.create_user_request")
-@patch("services.webhook.check_run_handler.cancel_workflow_runs")
-@patch("services.webhook.check_run_handler.get_pull_request")
-@patch("services.webhook.check_run_handler.get_pull_request_files")
-@patch("services.webhook.check_run_handler.get_workflow_run_logs")
-@patch("services.webhook.check_run_handler.update_comment")
-@patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.is_pull_request_open")
-@patch("services.webhook.check_run_handler.check_branch_exists")
-def test_handle_check_run_with_deleted_branch(
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.is_pull_request_open")
+@patch("services.webhook.check_suite_handler.check_branch_exists")
+def test_handle_check_suite_with_deleted_branch(
     mock_branch_exists,
     mock_is_pr_open,
     _mock_update_retry_pairs,
@@ -703,7 +706,7 @@ def test_handle_check_run_with_deleted_branch(
     mock_branch_exists.return_value = False
 
     # Execute
-    handle_check_run(mock_check_run_payload)
+    handle_check_suite(mock_check_run_payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -719,25 +722,25 @@ def test_handle_check_run_with_deleted_branch(
     mock_update_comment.assert_called()
 
 
-@patch("services.webhook.check_run_handler.get_installation_access_token")
-@patch("services.webhook.check_run_handler.get_repository")
-@patch("services.webhook.check_run_handler.slack_notify")
-@patch("services.webhook.check_run_handler.has_comment_with_text")
-@patch("services.webhook.check_run_handler.create_comment")
-@patch("services.webhook.check_run_handler.create_user_request")
-@patch("services.webhook.check_run_handler.cancel_workflow_runs")
-@patch("services.webhook.check_run_handler.get_pull_request")
-@patch("services.webhook.check_run_handler.get_pull_request_files")
-@patch("services.webhook.check_run_handler.get_workflow_run_logs")
-@patch("services.webhook.check_run_handler.update_comment")
-@patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.update_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.is_pull_request_open")
-@patch("services.webhook.check_run_handler.check_branch_exists")
-@patch("services.webhook.check_run_handler.chat_with_agent")
-@patch("services.webhook.check_run_handler.create_empty_commit")
-@patch("services.webhook.check_run_handler.update_usage")
-@patch("services.webhook.check_run_handler.is_lambda_timeout_approaching")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.is_pull_request_open")
+@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.chat_with_agent")
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
 def test_check_run_handler_token_accumulation(
     mock_timeout_check,
     mock_update_usage,
@@ -802,7 +805,7 @@ def test_check_run_handler_token_accumulation(
     )
 
     # Execute
-    handle_check_run(mock_check_run_payload)
+    handle_check_suite(mock_check_run_payload)
 
     # Verify chat_with_agent was called twice (get + commit modes)
     assert mock_chat_agent.call_count == 2
@@ -816,24 +819,24 @@ def test_check_run_handler_token_accumulation(
     assert call_kwargs["token_output"] == 90  # Two calls: 45 + 45
 
 
-@patch("services.webhook.check_run_handler.get_installation_access_token")
-@patch("services.webhook.check_run_handler.get_repository")
-@patch("services.webhook.check_run_handler.slack_notify")
-@patch("services.webhook.check_run_handler.has_comment_with_text")
-@patch("services.webhook.check_run_handler.create_comment")
-@patch("services.webhook.check_run_handler.create_user_request")
-@patch("services.webhook.check_run_handler.cancel_workflow_runs")
-@patch("services.webhook.check_run_handler.get_pull_request")
-@patch("services.webhook.check_run_handler.get_pull_request_files")
-@patch("services.webhook.check_run_handler.get_workflow_run_logs")
-@patch("services.webhook.check_run_handler.update_comment")
-@patch("services.webhook.check_run_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_run_handler.clean_logs")
-@patch("services.webhook.check_run_handler.check_older_active_test_failure_request")
-@patch("services.webhook.check_run_handler.update_usage")
-@patch("services.webhook.check_run_handler.is_pull_request_open")
-@patch("services.webhook.check_run_handler.check_branch_exists")
-def test_handle_check_run_skips_duplicate_older_request(
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.clean_logs")
+@patch("services.webhook.check_suite_handler.check_older_active_test_failure_request")
+@patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.is_pull_request_open")
+@patch("services.webhook.check_suite_handler.check_branch_exists")
+def test_handle_check_suite_skips_duplicate_older_request(
     mock_branch_exists,
     mock_is_pr_open,
     mock_update_usage,
@@ -885,7 +888,7 @@ def test_handle_check_run_skips_duplicate_older_request(
     }
 
     # Execute
-    handle_check_run(mock_check_run_payload)
+    handle_check_suite(mock_check_run_payload)
 
     # Verify
     mock_get_token.assert_called_once()

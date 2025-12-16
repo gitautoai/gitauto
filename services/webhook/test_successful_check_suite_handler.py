@@ -1,11 +1,15 @@
+from typing import cast
 from unittest.mock import MagicMock, patch
 
-from services.webhook.successful_check_run_handler import handle_successful_check_run
+from services.github.types.github_types import CheckSuiteCompletedPayload
+from services.webhook.successful_check_suite_handler import (
+    handle_successful_check_suite,
+)
 
 
-def test_handle_successful_check_run_with_pr():
+def test_handle_successful_check_suite_with_pr():
     payload = {
-        "check_run": {
+        "check_suite": {
             "id": 31710113401,
             "name": "test-job",
             "conclusion": "success",
@@ -28,7 +32,7 @@ def test_handle_successful_check_run_with_pr():
     }
 
     with patch(
-        "services.webhook.successful_check_run_handler.supabase"
+        "services.webhook.successful_check_suite_handler.supabase"
     ) as mock_supabase:
         # Setup mock chain for select
         mock_table = MagicMock()
@@ -55,7 +59,7 @@ def test_handle_successful_check_run_with_pr():
         mock_update.eq.return_value = mock_update_eq
 
         # Execute
-        handle_successful_check_run(payload)
+        handle_successful_check_suite(cast(CheckSuiteCompletedPayload, payload))
 
         # Verify select was called
         mock_table.select.assert_called_once_with("id")
@@ -69,9 +73,9 @@ def test_handle_successful_check_run_with_pr():
         mock_update_eq.execute.assert_called_once()
 
 
-def test_handle_successful_check_run_without_pr():
+def test_handle_successful_check_suite_without_pr():
     payload = {
-        "check_run": {
+        "check_suite": {
             "id": 31710113401,
             "name": "test-job",
             "conclusion": "success",
@@ -88,18 +92,18 @@ def test_handle_successful_check_run_without_pr():
     }
 
     with patch(
-        "services.webhook.successful_check_run_handler.supabase"
+        "services.webhook.successful_check_suite_handler.supabase"
     ) as mock_supabase:
         # Execute
-        handle_successful_check_run(payload)
+        handle_successful_check_suite(cast(CheckSuiteCompletedPayload, payload))
 
         # Verify no database call was made
         mock_supabase.table.assert_not_called()
 
 
-def test_handle_successful_check_run_no_usage_record_found():
+def test_handle_successful_check_suite_no_usage_record_found():
     payload = {
-        "check_run": {
+        "check_suite": {
             "id": 31710113401,
             "name": "test-job",
             "conclusion": "success",
@@ -122,7 +126,7 @@ def test_handle_successful_check_run_no_usage_record_found():
     }
 
     with patch(
-        "services.webhook.successful_check_run_handler.supabase"
+        "services.webhook.successful_check_suite_handler.supabase"
     ) as mock_supabase:
         # Setup mock to return empty data
         mock_table = MagicMock()
@@ -143,16 +147,16 @@ def test_handle_successful_check_run_no_usage_record_found():
         mock_limit.execute.return_value = MagicMock(data=[])
 
         # Execute
-        handle_successful_check_run(payload)
+        handle_successful_check_suite(cast(CheckSuiteCompletedPayload, payload))
 
         # Verify select was called but update was not
         mock_table.select.assert_called_once()
         mock_table.update.assert_not_called()
 
 
-def test_handle_successful_check_run_with_exception():
+def test_handle_successful_check_suite_with_exception():
     payload = {
-        "check_run": {
+        "check_suite": {
             "id": 31710113401,
             "name": "test-job",
             "conclusion": "success",
@@ -175,13 +179,15 @@ def test_handle_successful_check_run_with_exception():
     }
 
     with patch(
-        "services.webhook.successful_check_run_handler.supabase"
+        "services.webhook.successful_check_suite_handler.supabase"
     ) as mock_supabase:
         # Setup mock to raise exception
         mock_supabase.table.side_effect = Exception("Database error")
 
         # Execute - should not raise due to handle_exceptions decorator
-        result = handle_successful_check_run(payload)
+        result = handle_successful_check_suite(
+            cast(CheckSuiteCompletedPayload, payload)
+        )
 
         # Verify it returns None (default_return_value)
         assert result is None
