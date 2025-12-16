@@ -1,9 +1,11 @@
 from unittest.mock import patch
 
+
 import pytest
 
-from services.webhook.utils.create_pr_checkbox_comment import \
-    create_pr_checkbox_comment
+from services.webhook.utils.create_pr_checkbox_comment import (
+    create_pr_checkbox_comment,
+)
 
 
 @pytest.fixture
