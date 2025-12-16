@@ -1,4 +1,5 @@
-from unittest.mock import patch,
+from unittest.mock import patch
+
 import pytest
 from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
 
