@@ -4,6 +4,7 @@ from typing_extensions import NotRequired
 
 # Local imports
 from services.github.types.check_run import CheckRun
+from services.github.types.check_suite import CheckSuite
 from services.github.types.installation import Installation
 from services.github.types.installation_details import InstallationDetails
 from services.github.types.issue import Issue
@@ -62,6 +63,14 @@ class BaseArgs(TypedDict):
 class CheckRunCompletedPayload(TypedDict):
     action: str
     check_run: CheckRun
+    repository: Repository
+    sender: Sender
+    installation: Installation
+
+
+class CheckSuiteCompletedPayload(TypedDict):
+    action: str
+    check_suite: CheckSuite
     repository: Repository
     sender: Sender
     installation: Installation

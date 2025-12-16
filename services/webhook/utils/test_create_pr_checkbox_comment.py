@@ -1,6 +1,9 @@
+# pylint: disable=unused-argument
+from typing import cast
 from unittest.mock import patch
 
 import pytest
+from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
 from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
 
 from services.webhook.utils.create_pr_checkbox_comment import (
@@ -127,7 +130,9 @@ def create_test_payload(
     branch_name="feature-branch",
 ):
     """Helper function to create a test payload."""
-    return {
+    return cast(PullRequestWebhookPayload, {
+        "action": "opened",
+        "number": pull_number,
         "sender": {"login": sender_name},
         "repository": {
             "id": repo_id,
@@ -140,7 +145,7 @@ def create_test_payload(
             "head": {"ref": branch_name},
         },
         "installation": {"id": installation_id},
-    }
+    })
 
 
 def test_skips_bot_sender(
@@ -811,7 +816,9 @@ def test_pull_files_url_construction(
 
     mock_get_pull_request_files.assert_called_once()
     call_args = mock_get_pull_request_files.call_args
-    assert call_args[1]["url"] == "https://api.github.com/repos/owner/repo/pulls/123/files"
+    assert (
+        call_args[1]["url"] == "https://api.github.com/repos/owner/repo/pulls/123/files"
+    )
 
 
 def test_installation_token_used_correctly(

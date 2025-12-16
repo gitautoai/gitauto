@@ -6,7 +6,7 @@ import logging
 import time
 
 # Local imports
-from config import EMAIL_LINK, GITHUB_APP_USER_NAME, UTF8
+from config import EMAIL_LINK, PRODUCT_ID, UTF8
 from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_STUMBLED_MESSAGE
 from services.chat_with_agent import chat_with_agent
 
@@ -16,6 +16,9 @@ from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
 
 # Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
+from services.github.check_suites.get_failed_check_runs import (
+    get_failed_check_runs_from_check_suite,
+)
 from services.github.comments.create_comment import create_comment
 from services.github.comments.has_comment_with_text import has_comment_with_text
 from services.github.comments.update_comment import update_comment
@@ -26,13 +29,9 @@ from services.github.installations.get_installation_permissions import (
 from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.is_pull_request_open import is_pull_request_open
-from services.github.types.github_types import BaseArgs, CheckRunCompletedPayload
+from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
 from services.github.utils.create_permission_url import create_permission_url
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.types.check_run import CheckRun
-from services.github.types.check_suite import CheckSuite
-from services.github.types.pull_request import PullRequest
-from services.github.types.repository import Repository
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
 
@@ -59,16 +58,43 @@ from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approachi
 from utils.time.get_timeout_message import get_timeout_message
 
 
-def handle_check_run(
-    payload: CheckRunCompletedPayload,
+def handle_check_suite(
+    payload: CheckSuiteCompletedPayload,
     lambda_info: dict[str, str | None] | None = None,
 ):
     current_time = time.time()
     trigger = "test_failure"
 
-    # Extract workflow run id
-    check_run: CheckRun = payload["check_run"]
-    details_url = check_run["details_url"]
+    # Extract repository and installation info
+    repo = payload["repository"]
+    owner_name = repo["owner"]["login"]
+    repo_name = repo["name"]
+    installation_id = payload["installation"]["id"]
+
+    # Check if this is a GitAuto PR by branch name (early return)
+    check_suite = payload["check_suite"]
+    head_branch = check_suite["head_branch"]
+    if not head_branch.startswith(PRODUCT_ID):
+        return
+
+    # Get failed check runs from the check suite
+    token = get_installation_access_token(installation_id=installation_id)
+    if not token:
+        return
+    failed_check_runs = get_failed_check_runs_from_check_suite(
+        owner=owner_name,
+        repo=repo_name,
+        check_suite_id=check_suite["id"],
+        github_token=token,
+    )
+
+    if not failed_check_runs:
+        return
+
+    # Use the first failed check run
+    check_run = failed_check_runs[0]
+    details_url = check_run.get("details_url")
+    check_run_name = check_run.get("name", "Unknown Check")
 
     is_circleci = "circleci.com" in details_url if details_url else False
     is_deepsource = "deepsource.com" in details_url if details_url else False
@@ -97,11 +123,7 @@ def handle_check_run(
             # Other CI/CD services or external apps - skip processing
             return
 
-    check_run_name = check_run["name"]
-
     # Extract repository related variables
-    repo: Repository = payload["repository"]
-    repo_name = repo["name"]
     repo_id = repo["id"]
     is_fork = repo.get("fork", False)
 
@@ -111,30 +133,19 @@ def handle_check_run(
         return
     owner_type = owner["type"]
     owner_id = owner["id"]
-    owner_name = owner["login"]
 
-    # Extract branch related variables
-    check_suite: CheckSuite = check_run["check_suite"]
-    head_branch = check_suite["head_branch"]
-
-    # Extract sender related variables and return if sender is GitAuto itself
+    # Extract sender related variables
     sender_id = payload["sender"]["id"]
     sender_name = payload["sender"]["login"]
-    if sender_name != GITHUB_APP_USER_NAME:
-        return
 
-    # Extract PR related variables and return if no PR is associated with this check run
-    pull_requests: list[PullRequest] = check_run.get("pull_requests", [])
+    # Extract PR related variables and return if no PR is associated with this check suite
+    pull_requests = check_suite["pull_requests"]
     if not pull_requests:
         return
 
-    pull_request: PullRequest = pull_requests[0]
+    pull_request = pull_requests[0]
     pull_number = pull_request["number"]
     pull_url = pull_request["url"]
-
-    # Extract other information
-    installation_id = payload["installation"]["id"]
-    token: str = get_installation_access_token(installation_id=installation_id)
 
     # Get repository settings - check if trigger_on_test_failure is enabled
     repo_settings = get_repository(repo_id=repo_id)
@@ -298,7 +309,7 @@ def handle_check_run(
         slack_notify(msg, thread_ts)
         return
 
-    if error_log is None:
+    if error_log is None or not isinstance(error_log, str):
         comment_body = f"I couldn't find the error log. Contact {EMAIL_LINK} if the issue persists."
         log_messages.append(comment_body)
         update_comment(body="\n".join(log_messages), base_args=base_args)

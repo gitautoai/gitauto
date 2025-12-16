@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 # Standard imports
 import json
 from typing import cast
@@ -7,7 +9,7 @@ import pytest
 # Local imports
 from config import UTF8
 from services.github.types.github_types import (
-    CheckRunCompletedPayload,
+    CheckSuiteCompletedPayload,
     GitHubInstallationPayload,
     GitHubLabeledPayload,
     GitHubPullRequestClosedPayload,
@@ -76,8 +78,8 @@ def mock_handle_pr_checkbox_trigger():
 
 
 @pytest.fixture
-def mock_handle_check_run():
-    with patch("services.webhook.webhook_handler.handle_check_run") as mock:
+def mock_handle_check_suite():
+    with patch("services.webhook.webhook_handler.handle_check_suite") as mock:
         yield mock
 
 
@@ -356,39 +358,45 @@ class TestHandleWebhookEvent:
         mock_create_pr_from_issue.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_handle_webhook_event_check_run_completed_failure(
-        self, mock_handle_check_run
+    async def test_handle_webhook_event_check_suite_completed_failure(
+        self, mock_handle_check_suite
     ):
-        """Test handling of check run completed event with failure."""
+        """Test handling of check suite completed event with failure."""
         payload = {
             "action": "completed",
-            "check_run": {"conclusion": "failure"},
+            "check_suite": {
+                "conclusion": "failure",
+                "app": {"slug": "github-actions"},
+            },
         }
 
         with patch(
             "services.webhook.webhook_handler.GITHUB_CHECK_RUN_FAILURES", ["failure"]
         ):
-            await handle_webhook_event(event_name="check_run", payload=payload)
+            await handle_webhook_event(event_name="check_suite", payload=payload)
 
-            mock_handle_check_run.assert_called_once_with(
+            mock_handle_check_suite.assert_called_once_with(
                 payload=payload, lambda_info=None
             )
 
     @pytest.mark.asyncio
-    @patch("services.webhook.webhook_handler.handle_successful_check_run")
-    async def test_handle_webhook_event_check_run_completed_success(
-        self, mock_handle_successful_check_run, mock_handle_check_run
+    @patch("services.webhook.webhook_handler.handle_successful_check_suite")
+    async def test_handle_webhook_event_check_suite_completed_success(
+        self, mock_handle_successful_check_suite, mock_handle_check_suite
     ):
-        """Test handling of check run completed event with success."""
+        """Test handling of check suite completed event with success."""
         payload = {
             "action": "completed",
-            "check_run": {"conclusion": "success"},
+            "check_suite": {
+                "conclusion": "success",
+                "app": {"slug": "github-actions"},
+            },
         }
 
-        await handle_webhook_event(event_name="check_run", payload=payload)
+        await handle_webhook_event(event_name="check_suite", payload=payload)
 
-        mock_handle_check_run.assert_not_called()
-        mock_handle_successful_check_run.assert_called_once()
+        mock_handle_check_suite.assert_not_called()
+        mock_handle_successful_check_suite.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_pull_request_opened(
@@ -669,67 +677,78 @@ class TestHandleWebhookEvent:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_check_run_completed_type_checking_with_real_payload(
-        self, mock_handle_check_run
+    async def test_check_suite_completed_type_checking_with_real_payload(
+        self, mock_handle_check_suite
     ):
-        with open("payloads/github/check_run/completed.json", "r", encoding=UTF8) as f:
+        with open(
+            "payloads/github/check_suite/completed_by_circleci.json", "r", encoding=UTF8
+        ) as f:
             payload = json.load(f)
 
-        await handle_webhook_event("check_run", payload)
+        payload["check_suite"]["conclusion"] = "failure"
 
-        mock_handle_check_run.assert_called_once()
+        await handle_webhook_event("check_suite", payload)
 
-        call_args = mock_handle_check_run.call_args[1]
+        mock_handle_check_suite.assert_called_once()
+
+        call_args = mock_handle_check_suite.call_args[1]
         received_payload = call_args["payload"]
 
         assert isinstance(received_payload, dict)
         assert received_payload["action"] == "completed"
-        assert received_payload["check_run"]["conclusion"] == "failure"
-        assert received_payload["check_run"]["name"] == "MSBuild (3.9)"
-        assert received_payload["repository"]["name"] == "tetris"
-        assert received_payload["repository"]["owner"]["login"] == "hiroshinishio"
+        assert received_payload["check_suite"]["conclusion"] == "failure"
+        assert received_payload["repository"]["name"] == "circle-ci-test"
+        assert received_payload["repository"]["owner"]["login"] == "gitautoai"
 
-    def test_check_run_completed_payload_cast(self):
-        with open("payloads/github/check_run/completed.json", "r", encoding=UTF8) as f:
+    def test_check_suite_completed_payload_cast(self):
+        with open(
+            "payloads/github/check_suite/completed_by_circleci.json", "r", encoding=UTF8
+        ) as f:
             payload = json.load(f)
 
-        casted_payload = cast(CheckRunCompletedPayload, payload)
+        casted_payload = cast(CheckSuiteCompletedPayload, payload)
 
         assert casted_payload["action"] == "completed"
-        assert casted_payload["check_run"]["id"] == 31710113401
-        assert casted_payload["check_run"]["status"] == "completed"
-        assert casted_payload["check_run"]["conclusion"] == "failure"
-        assert casted_payload["check_run"]["name"] == "MSBuild (3.9)"
+        assert casted_payload["check_suite"]["id"] == 44556199312
+        assert casted_payload["check_suite"]["status"] == "completed"
+        assert casted_payload["check_suite"]["conclusion"] == "success"
         assert (
-            casted_payload["check_run"]["head_sha"]
-            == "cf4fb4f60a67e1b8ff1447ba72cb5131e4979ed7"
+            casted_payload["check_suite"]["head_sha"]
+            == "c083a8965106b8dff1b251fc3b0bffd194448694"
         )
-        assert casted_payload["repository"]["id"] == 871345449
-        assert casted_payload["repository"]["name"] == "tetris"
-        assert casted_payload["repository"]["owner"]["login"] == "hiroshinishio"
-        assert casted_payload["installation"]["id"] == 52733965
+        assert casted_payload["repository"]["id"] == 1048247380
+        assert casted_payload["repository"]["name"] == "circle-ci-test"
+        assert casted_payload["repository"]["owner"]["login"] == "gitautoai"
+        assert casted_payload["installation"]["id"] == 60314628
 
     @pytest.mark.asyncio
-    async def test_check_run_success_not_handled(self, mock_handle_check_run):
-        with open("payloads/github/check_run/completed.json", "r", encoding=UTF8) as f:
+    async def test_check_suite_success_handled_by_successful_check_run(
+        self, mock_handle_check_suite
+    ):
+        with open(
+            "payloads/github/check_suite/completed_by_circleci.json", "r", encoding=UTF8
+        ) as f:
             payload = json.load(f)
 
-        payload["check_run"]["conclusion"] = "success"
+        payload["check_suite"]["conclusion"] = "success"
 
-        await handle_webhook_event("check_run", payload)
+        with patch("services.webhook.webhook_handler.handle_successful_check_suite"):
+            await handle_webhook_event("check_suite", payload)
 
-        mock_handle_check_run.assert_not_called()
+        mock_handle_check_suite.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_check_run_skipped_not_handled(self, mock_handle_check_run):
-        with open("payloads/github/check_run/completed.json", "r", encoding=UTF8) as f:
+    async def test_check_suite_skipped_not_handled(self, mock_handle_check_suite):
+        with open(
+            "payloads/github/check_suite/completed_by_circleci.json", "r", encoding=UTF8
+        ) as f:
             payload = json.load(f)
 
-        payload["check_run"]["conclusion"] = "skipped"
+        payload["check_suite"]["conclusion"] = "skipped"
 
-        await handle_webhook_event("check_run", payload)
+        await handle_webhook_event("check_suite", payload)
 
-        mock_handle_check_run.assert_not_called()
+        mock_handle_check_suite.assert_not_called()
 
     def test_github_labeled_payload_cast(self):
         with open("payloads/github/issues/labeled.json", "r", encoding=UTF8) as f:
@@ -941,10 +960,11 @@ class TestHandleWebhookEvent:
         )
         assert received_payload["repository"]["name"] == "gitauto"
 
+    @patch("services.webhook.webhook_handler.handle_successful_check_suite")
     @patch("services.webhook.webhook_handler.handle_coverage_report")
     @pytest.mark.asyncio
     async def test_handle_webhook_event_check_suite_completed_circleci_success(
-        self, mock_handle_coverage_report
+        self, mock_handle_coverage_report, mock_handle_successful_check_suite
     ):
         with open(
             "payloads/github/check_suite/completed_by_circleci.json", "r", encoding=UTF8
@@ -964,11 +984,12 @@ class TestHandleWebhookEvent:
             user_name="hiroshinishio",
             source="circleci",
         )
+        mock_handle_successful_check_suite.assert_called_once()
 
-    @patch("services.webhook.webhook_handler.handle_coverage_report")
+    @patch("services.webhook.webhook_handler.handle_check_suite")
     @pytest.mark.asyncio
     async def test_handle_webhook_event_check_suite_completed_circleci_failure(
-        self, mock_handle_coverage_report
+        self, mock_handle_check_suite
     ):
         with open(
             "payloads/github/check_suite/completed_by_circleci.json", "r", encoding=UTF8
@@ -976,14 +997,20 @@ class TestHandleWebhookEvent:
             payload = json.load(f)
         payload["check_suite"]["conclusion"] = "failure"
 
-        await handle_webhook_event("check_suite", payload)
+        with patch(
+            "services.webhook.webhook_handler.GITHUB_CHECK_RUN_FAILURES", ["failure"]
+        ):
+            await handle_webhook_event("check_suite", payload)
 
-        mock_handle_coverage_report.assert_not_called()
+        mock_handle_check_suite.assert_called_once_with(
+            payload=payload, lambda_info=None
+        )
 
+    @patch("services.webhook.webhook_handler.handle_successful_check_suite")
     @patch("services.webhook.webhook_handler.handle_coverage_report")
     @pytest.mark.asyncio
     async def test_handle_webhook_event_check_suite_completed_non_circleci(
-        self, mock_handle_coverage_report
+        self, mock_handle_coverage_report, mock_handle_successful_check_suite
     ):
         with open(
             "payloads/github/check_suite/completed_by_circleci.json", "r", encoding=UTF8
@@ -994,3 +1021,4 @@ class TestHandleWebhookEvent:
         await handle_webhook_event("check_suite", payload)
 
         mock_handle_coverage_report.assert_not_called()
+        mock_handle_successful_check_suite.assert_called_once()

@@ -1,5 +1,4 @@
 # Standard imports
-import logging
 from typing import Any, cast
 
 # Local imports
@@ -19,7 +18,7 @@ from services.github.comments.create_gitauto_button_comment import (
     create_gitauto_button_comment,
 )
 from services.github.types.github_types import (
-    CheckRunCompletedPayload,
+    CheckSuiteCompletedPayload,
     GitHubInstallationPayload,
     GitHubLabeledPayload,
     GitHubPullRequestClosedPayload,
@@ -49,13 +48,15 @@ from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 
 # Local imports (Webhooks)
-from services.webhook.check_run_handler import handle_check_run
+from services.webhook.check_suite_handler import handle_check_suite
 from services.webhook.handle_coverage_report import handle_coverage_report
 from services.webhook.issue_handler import create_pr_from_issue
 from services.webhook.pr_body_handler import write_pr_description
 from services.webhook.review_run_handler import handle_review_run
 from services.webhook.screenshot_handler import handle_screenshot_comparison
-from services.webhook.successful_check_run_handler import handle_successful_check_run
+from services.webhook.successful_check_suite_handler import (
+    handle_successful_check_suite,
+)
 from services.webhook.handle_installation import handle_installation_created
 from services.webhook.handle_installation_repos import handle_installation_repos_added
 from services.webhook.merge_handler import handle_pr_merged
@@ -223,18 +224,6 @@ async def handle_webhook_event(
             )
         return
 
-    # Monitor check_run completion and handle both success and failure
-    # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#check_run
-    if event_name == "check_run" and action in ("completed"):
-        conclusion: str = payload["check_run"]["conclusion"]
-        if conclusion in GITHUB_CHECK_RUN_FAILURES:
-            handle_check_run(
-                payload=cast(CheckRunCompletedPayload, payload), lambda_info=lambda_info
-            )
-        elif conclusion == "success":
-            handle_successful_check_run(payload=cast(CheckRunCompletedPayload, payload))
-        return
-
     # Write a PR description to the issue when GitAuto opened the PR
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
     if event_name == "pull_request" and action == "opened":
@@ -326,23 +315,35 @@ async def handle_webhook_event(
             )
         return
 
-    # Add check_suite event handler (CircleCI only)
-    if (
-        event_name == "check_suite"
-        and action == "completed"
-        and payload["check_suite"]["app"]["slug"] == "circleci-checks"
-    ):
-        if payload["check_suite"]["conclusion"] == "success":
+    # Handle check_suite events
+    if event_name == "check_suite" and action == "completed":
+        check_suite = payload["check_suite"]
+        app_slug = check_suite["app"]["slug"]
+        conclusion = check_suite["conclusion"]
+
+        # Handle failures (test failures)
+        if conclusion in GITHUB_CHECK_RUN_FAILURES:
+            handle_check_suite(
+                payload=cast(CheckSuiteCompletedPayload, payload),
+                lambda_info=lambda_info,
+            )
+            return
+
+        # Skip non-success conclusions
+        if conclusion != "success":
+            return
+
+        # Handle successful check for all CI systems
+        handle_successful_check_suite(payload=cast(CheckSuiteCompletedPayload, payload))
+
+        # CircleCI: Handle coverage report
+        if app_slug == "circleci-checks":
             repository = payload["repository"]
             owner_id = repository["owner"]["id"]
             owner_name = repository["owner"]["login"]
             repo_name = repository["name"]
-            check_suite = payload["check_suite"]
-            logging.info(
-                "Processing CircleCI check_suite completion for %s/%s (run_id: %s)",
-                owner_name,
-                repo_name,
-                check_suite["id"],
+            print(
+                f"Processing CircleCI check_suite completion for {owner_name}/{repo_name} (run_id: {check_suite['id']})"
             )
             handle_coverage_report(
                 owner_id=owner_id,
@@ -355,4 +356,5 @@ async def handle_webhook_event(
                 user_name=payload["sender"]["login"],
                 source="circleci",
             )
+
         return

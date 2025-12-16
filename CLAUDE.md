@@ -573,6 +573,7 @@ All code analysis, generation, and file processing happens on our Lambda instanc
 - NO TYPE HINTS USING ->: Do not add return type hints using -> because it asserts type and ignores what the implementation actually returns. Return type hints are PROHIBITED.
 - NO TYPE: IGNORE: Do not use # type: ignore comments to suppress type errors. Fix the underlying type issues instead.
 - NO CAST: Do not use typing.cast() to suppress type errors. Fix the underlying type issues instead.
+- NO PYRIGHT SUPPRESSION: Do not use # pyright: reportArgumentType=false or any other pyright suppression comments. Fix the underlying type issues instead.
 - NO ANY: Do not use Any type. Fix the specific type issues instead.
 - CRITICAL: When using `as any` in TypeScript/JavaScript, ALWAYS add a comment above explaining why it's needed. Example:
   

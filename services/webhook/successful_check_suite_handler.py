@@ -1,13 +1,13 @@
-from services.github.types.github_types import CheckRunCompletedPayload
+from services.github.types.github_types import CheckSuiteCompletedPayload
 from services.github.types.pull_request import PullRequest
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def handle_successful_check_run(payload: CheckRunCompletedPayload):
-    check_run = payload["check_run"]
-    pull_requests: list[PullRequest] = check_run.get("pull_requests", [])
+def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
+    check_suite = payload["check_suite"]
+    pull_requests: list[PullRequest] = check_suite["pull_requests"]
 
     # Skip if no PR associated with this check run
     if not pull_requests:
