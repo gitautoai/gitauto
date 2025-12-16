@@ -878,9 +878,6 @@ def test_delete_comments_called_with_correct_identifier(
 
     mock_delete_comments_by_identifiers.assert_called_once()
     call_args = mock_delete_comments_by_identifiers.call_args
-    from utils.text.comment_identifiers import \
-        TEST_SELECTION_COMMENT_IDENTIFIER
-
     assert call_args[1]["identifiers"] == [TEST_SELECTION_COMMENT_IDENTIFIER]
 
 
