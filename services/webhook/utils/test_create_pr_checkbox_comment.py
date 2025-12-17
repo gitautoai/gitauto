@@ -4,11 +4,10 @@ from unittest.mock import patch
 
 import pytest
 from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
-from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
-
 from services.webhook.utils.create_pr_checkbox_comment import (
     create_pr_checkbox_comment,
 )
+from utils.text.comment_identifiers import TEST_SELECTION_COMMENT_IDENTIFIER
 
 
 @pytest.fixture
@@ -130,22 +129,25 @@ def create_test_payload(
     branch_name="feature-branch",
 ):
     """Helper function to create a test payload."""
-    return cast(PullRequestWebhookPayload, {
-        "action": "opened",
-        "number": pull_number,
-        "sender": {"login": sender_name},
-        "repository": {
-            "id": repo_id,
-            "name": repo_name,
-            "owner": {"id": owner_id, "login": owner_name},
-        },
-        "pull_request": {
+    return cast(
+        PullRequestWebhookPayload,
+        {
+            "action": "opened",
             "number": pull_number,
-            "url": pull_url,
-            "head": {"ref": branch_name},
+            "sender": {"login": sender_name},
+            "repository": {
+                "id": repo_id,
+                "name": repo_name,
+                "owner": {"id": owner_id, "login": owner_name},
+            },
+            "pull_request": {
+                "number": pull_number,
+                "url": pull_url,
+                "head": {"ref": branch_name},
+            },
+            "installation": {"id": installation_id},
         },
-        "installation": {"id": installation_id},
-    })
+    )
 
 
 def test_skips_bot_sender(

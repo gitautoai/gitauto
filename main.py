@@ -15,6 +15,9 @@ from payloads.aws.event_bridge_scheduler.event_types import EventBridgeScheduler
 from services.github.utils.verify_webhook_signature import verify_webhook_signature
 from services.jira.verify_jira_webhook import verify_jira_webhook
 from services.slack.slack_notify import slack_notify
+from services.supabase.webhook_deliveries.insert_webhook_delivery import (
+    insert_webhook_delivery,
+)
 from services.webhook.issue_handler import create_pr_from_issue
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.webhook_handler import handle_webhook_event
@@ -63,6 +66,14 @@ def handler(event, context):
 @app.post(path="/webhook")
 async def handle_webhook(request: Request) -> dict[str, str]:
     event_name: str = request.headers.get("X-GitHub-Event", "Event not specified")
+    delivery_id: str = request.headers.get("X-GitHub-Delivery", "No delivery ID")
+
+    # Deduplicate webhook delivery using atomic database insert
+    if not insert_webhook_delivery(delivery_id=delivery_id, event_name=event_name):
+        print(
+            f"Duplicate webhook ignored - delivery_id={delivery_id} event={event_name}"
+        )
+        return {"message": "Duplicate webhook ignored"}
 
     # Extract Lambda context information if available
     lambda_info = extract_lambda_info(request)
@@ -94,6 +105,11 @@ async def handle_webhook(request: Request) -> dict[str, str]:
                 payload = {}
     except Exception as e:  # pylint: disable=broad-except
         print(f"Error in parsing JSON payload: {e}")
+
+    # Add delivery_id to lambda_info for debugging
+    if lambda_info is None:
+        lambda_info = {}
+    lambda_info["delivery_id"] = delivery_id
 
     await handle_webhook_event(
         event_name=event_name, payload=payload, lambda_info=lambda_info
