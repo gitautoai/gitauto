@@ -33,14 +33,50 @@ These words mean you are GUESSING, not providing facts.
 4. Only state facts that you have verified through logs, code, or data
 
 **Example of WRONG approach:**
+
 - "The bug is likely caused by..."
 - "This probably triggers when..."
 - "It seems like the issue is..."
 
 **Example of CORRECT approach:**
+
 - "The CloudWatch logs show that at 17:57:33, webhook event X was received and handler Y was called"
 - "Reading the code at line 123 shows that function Z calls check_availability"
 - "The GitHub API returns issue #1445 for this query"
+
+## CRITICAL: Never Use `cd` Command
+
+**The `cd` command is NOT ALLOWED and DOES NOT WORK in bash commands.**
+
+- The working directory is automatically reset after EVERY bash command execution
+- Even if you use `cd`, you will be redirected back to the original working directory
+- Using `cd` is completely nonsense and a waste of time
+
+**What to do instead:**
+
+- Use absolute paths in commands: `python3 /path/to/script.py` instead of `cd /path && python3 script.py`
+- For Python scripts that need to import local modules, use `sys.path.insert(0, '/absolute/path')` inside the script
+- Never chain commands with `cd` - always use full paths
+
+**Example of WRONG approach:**
+
+```bash
+cd /tmp/repo && python3 script.py
+```
+
+**Example of CORRECT approach:**
+
+```bash
+python3 /tmp/repo/script.py
+```
+
+Or if imports are needed:
+
+```python
+import sys
+sys.path.insert(0, '/Users/rwest/Repositories/gitauto')
+from scripts.github.update_file import update_file
+```
 
 ## Testing Workflow
 
@@ -50,6 +86,40 @@ When modifying a file, follow this test-driven approach:
 2. If tests don't fail, the test coverage is insufficient - add new test cases
 3. Update the implementation to fix the failing tests
 4. Run tests again to confirm they pass
+
+### Common Jest Testing Patterns
+
+toBeInstanceOf Fails After jest.resetModules()
+
+When tests use `jest.resetModules()` in `beforeEach`, `.toBeInstanceOf()` assertions fail:
+
+```typescript
+expect(received).toBeInstanceOf(expected)
+Expected constructor: ApolloClient
+Received constructor: ApolloClient
+```
+
+**Root Cause:** After `jest.resetModules()`, class constructors are reloaded. The constructor from the import is different from the instantiated object's constructor.
+
+**Fix:** Use `.constructor.name` instead:
+
+```typescript
+// BEFORE (fails)
+expect(APOLLO_CLIENT).toBeInstanceOf(ApolloClient);
+
+// AFTER (works)
+expect(APOLLO_CLIENT.constructor.name).toBe('ApolloClient');
+```
+
+**Batch fix with sed:**
+
+```bash
+sed -i '' 's/expect(\(.*\))\.toBeInstanceOf(ApolloClient)/expect(\1.constructor.name).toBe('\''ApolloClient'\'')/g' test.ts
+
+# ALWAYS verify changes before uploading
+grep "toBeInstanceOf" test.ts  # Should return nothing
+grep "constructor.name" test.ts | head -5  # Verify correct format
+```
 
 ## Development Commands
 

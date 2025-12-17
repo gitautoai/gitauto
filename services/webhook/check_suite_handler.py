@@ -2,7 +2,6 @@
 from datetime import datetime
 import hashlib
 import json
-import logging
 import time
 
 # Local imports
@@ -70,6 +69,14 @@ def handle_check_suite(
     owner_name = repo["owner"]["login"]
     repo_name = repo["name"]
     installation_id = payload["installation"]["id"]
+    check_suite_id = payload["check_suite"]["id"]
+    delivery_id = (
+        lambda_info.get("delivery_id", "unknown") if lambda_info else "unknown"
+    )
+
+    print(
+        f"handle_check_suite called for {owner_name}/{repo_name} check_suite_id={check_suite_id} delivery_id={delivery_id}"
+    )
 
     # Check if this is a GitAuto PR by branch name (early return)
     check_suite = payload["check_suite"]
@@ -193,13 +200,13 @@ def handle_check_suite(
     # Check if permission comment or stumbled comment already exists
     if has_comment_with_text(base_args, [CHECK_RUN_STUMBLED_MESSAGE]):
         msg = f"Skipped - stumbled comment exists for PR #{pull_number} in `{owner_name}/{repo_name}`"
-        logging.info(msg)
+        print(msg)
         slack_notify(msg, thread_ts)
         return
 
     if has_comment_with_text(base_args, [PERMISSION_DENIED_MESSAGE]):
         msg = f"Skipped - permission request pending for PR #{pull_number} in `{owner_name}/{repo_name}`"
-        logging.info(msg)
+        print(msg)
         slack_notify(msg, thread_ts)
         return
 
@@ -305,7 +312,7 @@ def handle_check_suite(
 
         # Early return notification
         msg = f"Skipped - permission denied for workflow run id `{circleci_workflow_id if is_circleci else github_run_id}` in `{owner_name}/{repo_name}` - Permissions: `{permissions}`"
-        logging.info(msg)
+        print(msg)
         slack_notify(msg, thread_ts)
         return
 
@@ -316,7 +323,7 @@ def handle_check_suite(
 
         # Early return notification
         msg = f"Skipped - error log not found for `{owner_name}/{repo_name}`"
-        logging.info(msg)
+        print(msg)
         slack_notify(msg, thread_ts)
         return
 
@@ -356,7 +363,7 @@ def handle_check_suite(
 
         # Early return notification
         msg = f"Skipped - already attempted fix for `{check_run_name}` in `{owner_name}/{repo_name}`"
-        logging.info(msg)
+        print(msg)
         slack_notify(msg, thread_ts)
         return
 
@@ -400,7 +407,7 @@ def handle_check_suite(
             if comment_url:
                 update_comment(body=timeout_msg, base_args=base_args)
             msg = f"Timeout - check run processing for PR #{pull_number} in `{owner_name}/{repo_name}`"
-            logging.info(msg)
+            print(msg)
             slack_notify(msg, thread_ts)
             break
 
@@ -413,7 +420,7 @@ def handle_check_suite(
             if comment_url:
                 update_comment(body=body, base_args=base_args)
             msg = f"Stopped - pull request #{pull_number} was closed while GitAuto was processing check run failure in `{owner_name}/{repo_name}`"
-            logging.info(msg)
+            print(msg)
             slack_notify(msg, thread_ts)
             break
 
@@ -425,7 +432,7 @@ def handle_check_suite(
             if comment_url:
                 update_comment(body=body, base_args=base_args)
             msg = f"Stopped - branch '{head_branch}' was deleted while GitAuto was processing check run failure in `{owner_name}/{repo_name}`"
-            logging.info(msg)
+            print(msg)
             slack_notify(msg, thread_ts)
             break
 
@@ -442,7 +449,7 @@ def handle_check_suite(
             if comment_url:
                 update_comment(body=body, base_args=base_args)
             msg = f"Stopped - older active test failure request found for PR #{pull_number} in `{owner_name}/{repo_name}`. Avoiding race condition."
-            logging.info(msg)
+            print(msg)
             slack_notify(msg, thread_ts)
             break
 
