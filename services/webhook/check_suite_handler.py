@@ -38,6 +38,7 @@ from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run
 from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase)
+from services.supabase.check_suites.insert_check_suite import insert_check_suite
 from services.supabase.create_user_request import create_user_request
 from services.supabase.get_circleci_token import get_circleci_token
 from services.supabase.repositories.get_repository import get_repository
@@ -77,6 +78,12 @@ def handle_check_suite(
     print(
         f"handle_check_suite called for {owner_name}/{repo_name} check_suite_id={check_suite_id} delivery_id={delivery_id}"
     )
+
+    # Deduplicate by check_suite_id (GitHub may send duplicate webhooks with different delivery_ids)
+    if not insert_check_suite(check_suite_id=check_suite_id):
+        msg = f"Duplicate check_suite_id={check_suite_id} ignored for {owner_name}/{repo_name}"
+        print(msg)
+        return
 
     # Check if this is a GitAuto PR by branch name (early return)
     check_suite = payload["check_suite"]
