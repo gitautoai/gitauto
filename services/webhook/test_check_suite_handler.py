@@ -193,7 +193,9 @@ def test_handle_check_suite_skips_when_comment_exists(
 @patch("services.webhook.check_suite_handler.check_branch_exists")
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.insert_check_suite")
 def test_handle_check_suite_race_condition_prevention(
+    mock_insert_check_suite,
     mock_update_usage,
     mock_update_comment,
     mock_check_branch_exists,
@@ -217,6 +219,7 @@ def test_handle_check_suite_race_condition_prevention(
 ):
     """Test that handler properly detects and handles race conditions."""
     # Setup mocks for normal flow until race check
+    mock_insert_check_suite.return_value = True
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
