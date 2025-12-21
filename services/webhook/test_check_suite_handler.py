@@ -107,10 +107,16 @@ def test_handle_check_suite_skips_non_gitauto_branch(
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.insert_check_suite")
 def test_handle_check_suite_skips_when_trigger_disabled(
-    mock_get_repo, mock_get_token, mock_get_failed_runs, mock_check_run_payload
+    mock_insert_check_suite,
+    mock_get_repo,
+    mock_get_token,
+    mock_get_failed_runs,
+    mock_check_run_payload,
 ):
     """Test that handler skips when trigger_on_test_failure is disabled."""
+    mock_insert_check_suite.return_value = True
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
