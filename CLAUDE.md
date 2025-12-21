@@ -78,6 +78,24 @@ sys.path.insert(0, '/Users/rwest/Repositories/gitauto')
 from scripts.github.update_file import update_file
 ```
 
+## CRITICAL: Web Search Best Practices
+
+**NEVER include years in search queries unless specifically searching for historical information.**
+
+Years in search queries are almost always unnecessary and can limit results:
+
+**Example of WRONG approach:**
+
+- "GitHub repository ID unique globally 2025"
+- "PostgreSQL JSONB best practices 2024"
+
+**Example of CORRECT approach:**
+
+- "GitHub repository ID unique globally"
+- "PostgreSQL JSONB best practices"
+
+**Why:** Search engines automatically prioritize recent, relevant results. Adding years artificially limits results and may exclude the most current information.
+
 ## Testing Workflow
 
 When modifying a file, follow this test-driven approach:
@@ -640,11 +658,12 @@ All code analysis, generation, and file processing happens on our Lambda instanc
 - NO DOCSTRINGS: Do not add docstrings to functions or classes. Keep code clean and minimal. Always add API documentation URLs as comments for external API calls.
 - API URLS: Always verify API documentation URLs using WebFetch before using them. Never guess API endpoints.
 - NO COMMENTS: Do not add any comments in code when making changes. Never explain what was removed or why in the code itself. Explanations belong in terminal responses, not in code.
-- NO TYPE HINTS USING ->: Do not add return type hints using -> because it asserts type and ignores what the implementation actually returns. Return type hints are PROHIBITED.
-- NO TYPE: IGNORE: Do not use # type: ignore comments to suppress type errors. Fix the underlying type issues instead.
-- NO CAST: Do not use typing.cast() to suppress type errors. Fix the underlying type issues instead.
+- NO TYPE HINTS USING ->: Do not add return type hints using -> because it overwrites the inferred return type without actually validating that the implementation returns that type. It's a lie to the type checker that cannot be verified at runtime. Return type hints are PROHIBITED.
+- NO TYPE: IGNORE: Do not use # type: ignore comments to suppress type errors. This silences the type checker without fixing the actual type mismatch. Fix the underlying type issues instead.
+- NO CAST: Do not use typing.cast() to suppress type errors. Cast doesn't validate or guarantee the type is correct - it just tells the type checker to trust you without verification. Fix the underlying type issues instead.
 - NO PYRIGHT SUPPRESSION: Do not use # pyright: reportArgumentType=false or any other pyright suppression comments. Fix the underlying type issues instead.
 - NO ANY: Do not use Any type. Fix the specific type issues instead.
+- ALLOWED: Variable type annotations ARE allowed (e.g., `data: RepositoryFeatures = result.data[0]`) because they document intent and help type inference, though they don't enforce runtime validation. Use them to clarify types when the inferred type is too broad.
 - CRITICAL: When using `as any` in TypeScript/JavaScript, ALWAYS add a comment above explaining why it's needed. Example:
   
   ```typescript
