@@ -3,6 +3,7 @@
 # Standard imports
 import asyncio
 import json
+import random
 import urllib.parse
 from unittest.mock import AsyncMock, MagicMock, call, patch
 
@@ -22,7 +23,10 @@ from payloads.aws.event_bridge_scheduler.event_types import EventBridgeScheduler
 def mock_github_request():
     """Create a mock request object for testing."""
     mock_req = MagicMock(spec=Request)
-    mock_req.headers = {"X-GitHub-Event": "push"}
+    mock_req.headers = {
+        "X-GitHub-Event": "push",
+        "X-GitHub-Delivery": f"test-delivery-{random.randint(1000000, 9999999)}",
+    }
     mock_req.body = AsyncMock(return_value=b'{"key": "value"}')
     return mock_req
 
@@ -222,6 +226,7 @@ class TestHandler:
 
 
 class TestHandleWebhook:
+    @patch("main.insert_webhook_delivery")
     @patch("main.extract_lambda_info")
     @patch("main.verify_webhook_signature", new_callable=AsyncMock)
     @patch("main.handle_webhook_event", new_callable=AsyncMock)
@@ -231,10 +236,12 @@ class TestHandleWebhook:
         mock_handle_webhook_event,
         mock_verify_signature,
         mock_extract_lambda_info,
+        mock_insert_webhook_delivery,
         mock_github_request,
     ):
         """Test handle_webhook function with successful execution."""
         # Setup
+        mock_insert_webhook_delivery.return_value = True
         mock_verify_signature.return_value = None
         mock_handle_webhook_event.return_value = None
         mock_extract_lambda_info.return_value = {
@@ -251,15 +258,21 @@ class TestHandleWebhook:
             request=mock_github_request, secret=GITHUB_WEBHOOK_SECRET
         )
         mock_extract_lambda_info.assert_called_once_with(mock_github_request)
-        mock_handle_webhook_event.assert_called_once_with(
-            event_name="push",
-            payload={"key": "value"},
-            lambda_info={
-                "log_group": "/aws/lambda/pr-agent-prod",
-                "log_stream": "2025/09/04/pr-agent-prod[$LATEST]841315c5",
-                "request_id": "17921070-5cb6-43ee-8d2e-b5161ae89729",
-            },
+        call_args = mock_handle_webhook_event.call_args
+        assert call_args.kwargs["event_name"] == "push"
+        assert call_args.kwargs["payload"] == {"key": "value"}
+        assert (
+            call_args.kwargs["lambda_info"]["log_group"] == "/aws/lambda/pr-agent-prod"
         )
+        assert (
+            call_args.kwargs["lambda_info"]["log_stream"]
+            == "2025/09/04/pr-agent-prod[$LATEST]841315c5"
+        )
+        assert (
+            call_args.kwargs["lambda_info"]["request_id"]
+            == "17921070-5cb6-43ee-8d2e-b5161ae89729"
+        )
+        assert "delivery_id" in call_args.kwargs["lambda_info"]
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -607,7 +620,9 @@ class TestAppConfiguration:
 
     def test_app_routes_configuration(self):
         """Test that the FastAPI app has the expected route paths."""
-        route_paths = [route.path for route in app.routes if hasattr(route, "path")]
+        route_paths = [
+            getattr(route, "path") for route in app.routes if hasattr(route, "path")
+        ]
 
         # Check that expected routes exist
         assert "/" in route_paths
