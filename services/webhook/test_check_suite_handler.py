@@ -140,7 +140,9 @@ def test_handle_check_suite_skips_when_trigger_disabled(
 @patch("services.webhook.check_suite_handler.slack_notify")
 @patch("services.webhook.check_suite_handler.has_comment_with_text")
 @patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.insert_check_suite")
 def test_handle_check_suite_skips_when_comment_exists(
+    mock_insert_check_suite,
     mock_create_comment,
     mock_has_comment,
     mock_slack_notify,
@@ -150,6 +152,7 @@ def test_handle_check_suite_skips_when_comment_exists(
     mock_check_run_payload,
 ):
     """Test that handler skips when relevant comment already exists."""
+    mock_insert_check_suite.return_value = True
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
