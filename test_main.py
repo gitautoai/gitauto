@@ -35,7 +35,9 @@ def mock_github_request():
 def mock_github_request_no_event_header():
     """Create a mock request object without X-GitHub-Event header."""
     mock_req = MagicMock(spec=Request)
-    mock_req.headers = {}
+    mock_req.headers = {
+        "X-GitHub-Delivery": f"test-delivery-{random.randint(1000000, 9999999)}",
+    }
     mock_req.body = AsyncMock(return_value=b'{"key": "value"}')
     return mock_req
 
@@ -44,7 +46,10 @@ def mock_github_request_no_event_header():
 def mock_github_request_with_url_encoded_body():
     """Create a mock request with URL-encoded body."""
     mock_req = MagicMock(spec=Request)
-    mock_req.headers = {"X-GitHub-Event": "push"}
+    mock_req.headers = {
+        "X-GitHub-Event": "push",
+        "X-GitHub-Delivery": f"test-delivery-{random.randint(1000000, 9999999)}",
+    }
     payload = json.dumps({"key": "value"})
     encoded_body = f"payload={urllib.parse.quote(payload)}"
     mock_req.body = AsyncMock(return_value=encoded_body.encode())
@@ -55,7 +60,10 @@ def mock_github_request_with_url_encoded_body():
 def mock_github_request_with_malformed_url_encoded_body():
     """Create a mock request with malformed URL-encoded body."""
     mock_req = MagicMock(spec=Request)
-    mock_req.headers = {"X-GitHub-Event": "push"}
+    mock_req.headers = {
+        "X-GitHub-Event": "push",
+        "X-GitHub-Delivery": f"test-delivery-{random.randint(1000000, 9999999)}",
+    }
     # URL-encoded body without payload key
     encoded_body = "other_key=some_value"
     mock_req.body = AsyncMock(return_value=encoded_body.encode())
@@ -66,7 +74,10 @@ def mock_github_request_with_malformed_url_encoded_body():
 def mock_github_request_with_invalid_json_in_url_encoded():
     """Create a mock request with invalid JSON in URL-encoded payload."""
     mock_req = MagicMock(spec=Request)
-    mock_req.headers = {"X-GitHub-Event": "push"}
+    mock_req.headers = {
+        "X-GitHub-Event": "push",
+        "X-GitHub-Delivery": f"test-delivery-{random.randint(1000000, 9999999)}",
+    }
     # URL-encoded body with invalid JSON in payload
     encoded_body = "payload=invalid_json_content"
     mock_req.body = AsyncMock(return_value=encoded_body.encode())
@@ -302,11 +313,10 @@ class TestHandleWebhook:
         mock_extract_lambda_info.assert_called_once_with(
             mock_github_request_no_event_header
         )
-        mock_handle_webhook_event.assert_called_once_with(
-            event_name="Event not specified",  # Default value when header is missing
-            payload={"key": "value"},
-            lambda_info={},
-        )
+        call_args = mock_handle_webhook_event.call_args
+        assert call_args.kwargs["event_name"] == "Event not specified"
+        assert call_args.kwargs["payload"] == {"key": "value"}
+        assert "delivery_id" in call_args.kwargs["lambda_info"]
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -334,9 +344,10 @@ class TestHandleWebhook:
             request=mock_github_request, secret=GITHUB_WEBHOOK_SECRET
         )
         mock_extract_lambda_info.assert_called_once_with(mock_github_request)
-        mock_handle_webhook_event.assert_called_once_with(
-            event_name="push", payload={}, lambda_info={}
-        )
+        call_args = mock_handle_webhook_event.call_args
+        assert call_args.kwargs["event_name"] == "push"
+        assert call_args.kwargs["payload"] == {}
+        assert "delivery_id" in call_args.kwargs["lambda_info"]
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -364,9 +375,10 @@ class TestHandleWebhook:
             request=mock_github_request, secret=GITHUB_WEBHOOK_SECRET
         )
         mock_extract_lambda_info.assert_called_once_with(mock_github_request)
-        mock_handle_webhook_event.assert_called_once_with(
-            event_name="push", payload={}, lambda_info={}
-        )
+        call_args = mock_handle_webhook_event.call_args
+        assert call_args.kwargs["event_name"] == "push"
+        assert call_args.kwargs["payload"] == {}
+        assert "delivery_id" in call_args.kwargs["lambda_info"]
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -399,11 +411,11 @@ class TestHandleWebhook:
         mock_extract_lambda_info.assert_called_once_with(
             mock_github_request_with_url_encoded_body
         )
-        mock_handle_webhook_event.assert_called_once_with(
-            event_name="push",
-            payload={"key": "value"},
-            lambda_info={"log_group": "test-group"},
-        )
+        call_args = mock_handle_webhook_event.call_args
+        assert call_args.kwargs["event_name"] == "push"
+        assert call_args.kwargs["payload"] == {"key": "value"}
+        assert call_args.kwargs["lambda_info"]["log_group"] == "test-group"
+        assert "delivery_id" in call_args.kwargs["lambda_info"]
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -436,11 +448,10 @@ class TestHandleWebhook:
         mock_extract_lambda_info.assert_called_once_with(
             mock_github_request_with_malformed_url_encoded_body
         )
-        mock_handle_webhook_event.assert_called_once_with(
-            event_name="push",
-            payload={},  # Empty payload when no payload key in URL-encoded data
-            lambda_info={},
-        )
+        call_args = mock_handle_webhook_event.call_args
+        assert call_args.kwargs["event_name"] == "push"
+        assert call_args.kwargs["payload"] == {}
+        assert "delivery_id" in call_args.kwargs["lambda_info"]
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -473,13 +484,13 @@ class TestHandleWebhook:
         mock_extract_lambda_info.assert_called_once_with(
             mock_github_request_with_invalid_json_in_url_encoded
         )
-        mock_handle_webhook_event.assert_called_once_with(
-            event_name="push",
-            payload={},  # Empty payload when JSON parsing fails
-            lambda_info={},
-        )
+        call_args = mock_handle_webhook_event.call_args
+        assert call_args.kwargs["event_name"] == "push"
+        assert call_args.kwargs["payload"] == {}
+        assert "delivery_id" in call_args.kwargs["lambda_info"]
         assert response == {"message": "Webhook processed successfully"}
 
+    @patch("main.insert_webhook_delivery")
     @patch("main.extract_lambda_info")
     @patch("main.verify_webhook_signature", new_callable=AsyncMock)
     @patch("main.handle_webhook_event", new_callable=AsyncMock)
@@ -489,10 +500,12 @@ class TestHandleWebhook:
         mock_handle_webhook_event,
         mock_verify_signature,
         mock_extract_lambda_info,
+        mock_insert_webhook_delivery,
         mock_github_request,
     ):
         """Test handle_webhook function when a general exception occurs during JSON parsing."""
         # Setup
+        mock_insert_webhook_delivery.return_value = True
         mock_verify_signature.return_value = None
         mock_handle_webhook_event.return_value = None
         mock_extract_lambda_info.return_value = {}
@@ -507,11 +520,10 @@ class TestHandleWebhook:
             request=mock_github_request, secret=GITHUB_WEBHOOK_SECRET
         )
         mock_extract_lambda_info.assert_called_once_with(mock_github_request)
-        mock_handle_webhook_event.assert_called_once_with(
-            event_name="push",
-            payload={},  # Empty payload when exception occurs
-            lambda_info={},
-        )
+        call_args = mock_handle_webhook_event.call_args
+        assert call_args.kwargs["event_name"] == "push"
+        assert call_args.kwargs["payload"] == {}
+        assert "delivery_id" in call_args.kwargs["lambda_info"]
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -529,7 +541,10 @@ class TestHandleWebhook:
         # Setup
         mock_verify_signature.return_value = None
         mock_handle_webhook_event.return_value = None
-        mock_github_request.headers = {"X-GitHub-Event": "issue_comment"}
+        mock_github_request.headers = {
+            "X-GitHub-Event": "issue_comment",
+            "X-GitHub-Delivery": f"test-delivery-{random.randint(1000000, 9999999)}",
+        }
         mock_extract_lambda_info.return_value = {"request_id": "test-request-123"}
 
         # Execute
@@ -540,11 +555,11 @@ class TestHandleWebhook:
             request=mock_github_request, secret=GITHUB_WEBHOOK_SECRET
         )
         mock_extract_lambda_info.assert_called_once_with(mock_github_request)
-        mock_handle_webhook_event.assert_called_once_with(
-            event_name="issue_comment",
-            payload={"key": "value"},
-            lambda_info={"request_id": "test-request-123"},
-        )
+        call_args = mock_handle_webhook_event.call_args
+        assert call_args.kwargs["event_name"] == "issue_comment"
+        assert call_args.kwargs["payload"] == {"key": "value"}
+        assert call_args.kwargs["lambda_info"]["request_id"] == "test-request-123"
+        assert "delivery_id" in call_args.kwargs["lambda_info"]
         assert response == {"message": "Webhook processed successfully"}
 
 
