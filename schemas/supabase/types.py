@@ -3,6 +3,15 @@ from typing import Any
 from typing_extensions import TypedDict, NotRequired
 
 
+class CheckSuites(TypedDict):
+    check_suite_id: int
+    created_at: datetime.datetime | None
+
+
+class CheckSuitesInsert(TypedDict):
+    check_suite_id: NotRequired[int]
+
+
 class CircleciTokens(TypedDict):
     id: str
     owner_id: int
@@ -411,6 +420,33 @@ class RepositoriesInsert(TypedDict):
     schedule_interval_minutes: NotRequired[int]
 
 
+class RepositoryFeatures(TypedDict):
+    id: int
+    owner_id: int
+    owner_name: str
+    repo_id: int
+    repo_name: str
+    auto_merge: bool
+    auto_merge_only_test_files: bool
+    merge_method: str
+    created_at: datetime.datetime
+    created_by: str
+    updated_at: datetime.datetime
+    updated_by: str
+
+
+class RepositoryFeaturesInsert(TypedDict):
+    owner_id: NotRequired[int]
+    owner_name: NotRequired[str]
+    repo_id: NotRequired[int]
+    repo_name: NotRequired[str]
+    auto_merge: NotRequired[bool]
+    auto_merge_only_test_files: NotRequired[bool]
+    merge_method: NotRequired[str]
+    created_by: NotRequired[str]
+    updated_by: NotRequired[str]
+
+
 class Usage(TypedDict):
     id: int
     created_at: datetime.datetime
@@ -521,3 +557,15 @@ class UsersInsert(TypedDict):
     email: NotRequired[str | None]
     created_by: NotRequired[str | None]
     user_rules: NotRequired[str]
+
+
+class WebhookDeliveries(TypedDict):
+    id: int
+    delivery_id: str
+    event_name: str
+    created_at: datetime.datetime | None
+
+
+class WebhookDeliveriesInsert(TypedDict):
+    delivery_id: NotRequired[str]
+    event_name: NotRequired[str]

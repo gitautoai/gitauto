@@ -5,6 +5,7 @@
 # Test to verify imports work correctly
 # Standard imports
 import hashlib
+import random
 from unittest.mock import patch
 import pytest
 from config import GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
@@ -94,6 +95,8 @@ def test_handle_check_suite_skips_non_gitauto_branch(
     """Test that handler skips when branch doesn't start with PRODUCT_ID."""
     # Modify head_branch to not start with PRODUCT_ID
     payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
     payload["check_suite"]["head_branch"] = "non-gitauto-branch"
 
     handle_check_suite(payload)
@@ -108,9 +111,16 @@ def test_handle_check_suite_skips_non_gitauto_branch(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 def test_handle_check_suite_skips_when_trigger_disabled(
-    mock_get_repo, mock_get_token, mock_get_failed_runs, mock_check_run_payload
+    mock_get_repo,
+    mock_get_token,
+    mock_get_failed_runs,
+    mock_check_run_payload,
 ):
     """Test that handler skips when trigger_on_test_failure is disabled."""
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
@@ -121,7 +131,7 @@ def test_handle_check_suite_skips_when_trigger_disabled(
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": False}
 
-    handle_check_suite(mock_check_run_payload)
+    handle_check_suite(payload)
 
     mock_get_token.assert_called_once()
     mock_get_failed_runs.assert_called_once()
@@ -144,6 +154,10 @@ def test_handle_check_suite_skips_when_comment_exists(
     mock_check_run_payload,
 ):
     """Test that handler skips when relevant comment already exists."""
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
@@ -155,7 +169,7 @@ def test_handle_check_suite_skips_when_comment_exists(
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = True
 
-    handle_check_suite(mock_check_run_payload)
+    handle_check_suite(payload)
 
     mock_get_token.assert_called_once()
     mock_get_failed_runs.assert_called_once()
@@ -208,6 +222,10 @@ def test_handle_check_suite_race_condition_prevention(
 ):
     """Test that handler properly detects and handles race conditions."""
     # Setup mocks for normal flow until race check
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
@@ -240,7 +258,7 @@ def test_handle_check_suite_race_condition_prevention(
         "created_at": "2025-09-28T14:19:01.247+00:00",
     }
 
-    handle_check_suite(mock_check_run_payload)
+    handle_check_suite(payload)
 
     # Verify race prevention logic was triggered
     mock_check_older_active.assert_called_with(
@@ -312,6 +330,10 @@ def test_handle_check_suite_full_workflow(
 ):
     """Test the full workflow of handling a check run failure."""
     # Setup mocks
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
@@ -367,7 +389,7 @@ def test_handle_check_suite_full_workflow(
     ]
 
     # Execute
-    handle_check_suite(mock_check_run_payload)
+    handle_check_suite(payload)
 
     # Verify key functions were called
     mock_get_token.assert_called_once()
@@ -423,6 +445,10 @@ def test_handle_check_suite_with_404_logs(
 ):
     """Test handling when workflow logs return 404."""
     # Setup mocks
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
@@ -453,7 +479,7 @@ def test_handle_check_suite_with_404_logs(
     mock_get_permissions.return_value = {"actions": "read"}
 
     # Execute
-    handle_check_suite(mock_check_run_payload)
+    handle_check_suite(payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -499,6 +525,10 @@ def test_handle_check_suite_with_none_logs(
 ):
     """Test handling when workflow logs return None."""
     # Setup mocks
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
@@ -527,7 +557,7 @@ def test_handle_check_suite_with_none_logs(
     mock_get_logs.return_value = None
 
     # Execute
-    handle_check_suite(mock_check_run_payload)
+    handle_check_suite(payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -579,6 +609,10 @@ def test_handle_check_suite_with_existing_retry_pair(
 ):
     """Test handling when the workflow/error pair has already been attempted."""
     # Setup mocks
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
@@ -613,7 +647,7 @@ def test_handle_check_suite_with_existing_retry_pair(
     mock_get_retry_pairs.return_value = [f"runs:{expected_hash}"]
 
     # Execute
-    handle_check_suite(mock_check_run_payload)
+    handle_check_suite(payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -671,6 +705,10 @@ def test_handle_check_suite_with_closed_pr(
 ):
     """Test handling when the PR is closed during processing."""
     # Setup mocks
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
@@ -701,7 +739,7 @@ def test_handle_check_suite_with_closed_pr(
     mock_is_pr_open.return_value = False
 
     # Execute
-    handle_check_suite(mock_check_run_payload)
+    handle_check_suite(payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -754,6 +792,10 @@ def test_handle_check_suite_with_deleted_branch(
 ):
     """Test handling when the branch is deleted during processing."""
     # Setup mocks
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
@@ -785,7 +827,7 @@ def test_handle_check_suite_with_deleted_branch(
     mock_branch_exists.return_value = False
 
     # Execute
-    handle_check_suite(mock_check_run_payload)
+    handle_check_suite(payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -846,6 +888,10 @@ def test_check_run_handler_token_accumulation(
 ):
     """Test that check run handler accumulates tokens correctly and calls update_usage"""
     # Setup mocks
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
@@ -893,7 +939,7 @@ def test_check_run_handler_token_accumulation(
     )
 
     # Execute
-    handle_check_suite(mock_check_run_payload)
+    handle_check_suite(payload)
 
     # Verify chat_with_agent was called twice (get + commit modes)
     assert mock_chat_agent.call_count == 2
@@ -948,6 +994,10 @@ def test_handle_check_suite_skips_duplicate_older_request(
 ):
     """Test that handler skips when older active request is found."""
     # Setup mocks
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
     mock_get_token.return_value = "ghs_test_token_for_testing"
     mock_get_failed_runs.return_value = [
         {
@@ -985,7 +1035,7 @@ def test_handle_check_suite_skips_duplicate_older_request(
     }
 
     # Execute
-    handle_check_suite(mock_check_run_payload)
+    handle_check_suite(payload)
 
     # Verify
     mock_get_token.assert_called_once()
