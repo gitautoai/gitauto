@@ -659,7 +659,10 @@ class TestEdgeCases:
         """Test handle_webhook function with empty request body."""
         # Setup
         mock_req = MagicMock(spec=Request)
-        mock_req.headers = {"X-GitHub-Event": "ping"}
+        mock_req.headers = {
+            "X-GitHub-Event": "ping",
+            "X-GitHub-Delivery": f"test-delivery-{random.randint(1000000, 9999999)}",
+        }
         mock_req.body = AsyncMock(return_value=b"")
 
         mock_verify_signature.return_value = None
@@ -674,11 +677,10 @@ class TestEdgeCases:
             request=mock_req, secret=GITHUB_WEBHOOK_SECRET
         )
         mock_extract_lambda_info.assert_called_once_with(mock_req)
-        mock_handle_webhook_event.assert_called_once_with(
-            event_name="ping",
-            payload={},  # Empty payload for empty body
-            lambda_info={},
-        )
+        call_args = mock_handle_webhook_event.call_args
+        assert call_args.kwargs["event_name"] == "ping"
+        assert call_args.kwargs["payload"] == {}
+        assert "delivery_id" in call_args.kwargs["lambda_info"]
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.schedule_handler")
@@ -721,7 +723,10 @@ class TestEdgeCases:
         """Test handle_webhook function with Unicode content in request body."""
         # Setup
         mock_req = MagicMock(spec=Request)
-        mock_req.headers = {"X-GitHub-Event": "issues"}
+        mock_req.headers = {
+            "X-GitHub-Event": "issues",
+            "X-GitHub-Delivery": f"test-delivery-{random.randint(1000000, 9999999)}",
+        }
         unicode_content = '{"title": "测试 Unicode 内容", "body": "🚀 Emoji test"}'
         mock_req.body = AsyncMock(return_value=unicode_content.encode("utf-8"))
 
@@ -737,11 +742,13 @@ class TestEdgeCases:
             request=mock_req, secret=GITHUB_WEBHOOK_SECRET
         )
         mock_extract_lambda_info.assert_called_once_with(mock_req)
-        mock_handle_webhook_event.assert_called_once_with(
-            event_name="issues",
-            payload={"title": "测试 Unicode 内容", "body": "🚀 Emoji test"},
-            lambda_info={},
-        )
+        call_args = mock_handle_webhook_event.call_args
+        assert call_args.kwargs["event_name"] == "issues"
+        assert call_args.kwargs["payload"] == {
+            "title": "测试 Unicode 内容",
+            "body": "🚀 Emoji test",
+        }
+        assert "delivery_id" in call_args.kwargs["lambda_info"]
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.schedule_handler")
@@ -821,6 +828,7 @@ class TestPrintStatements:
         )
 
     @patch("builtins.print")
+    @patch("main.insert_webhook_delivery")
     @patch("main.extract_lambda_info")
     @patch("main.verify_webhook_signature", new_callable=AsyncMock)
     @patch("main.handle_webhook_event", new_callable=AsyncMock)
@@ -830,6 +838,7 @@ class TestPrintStatements:
         mock_handle_webhook_event,
         mock_verify_signature,
         mock_extract_lambda_info,
+        mock_insert_webhook_delivery,
         mock_print,
         mock_github_request,
     ):
@@ -837,6 +846,7 @@ class TestPrintStatements:
         # Setup
         mock_verify_signature.return_value = None
         mock_extract_lambda_info.return_value = {}
+        mock_insert_webhook_delivery.return_value = True
 
         # Mock json.loads to raise a general exception
         with patch("main.json.loads", side_effect=Exception("JSON parsing error")):
