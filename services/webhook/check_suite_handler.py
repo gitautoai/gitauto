@@ -5,7 +5,8 @@ import json
 import time
 
 # Local imports
-from config import EMAIL_LINK, PRODUCT_ID, UTF8
+from config import EMAIL_LINK, GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
+from constants.general import MAX_GITAUTO_COMMITS_PER_PR
 from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_STUMBLED_MESSAGE
 from services.chat_with_agent import chat_with_agent
 
@@ -26,6 +27,7 @@ from services.github.installations.get_installation_permissions import (
     get_installation_permissions,
 )
 from services.github.pulls.get_pull_request import get_pull_request
+from services.github.pulls.get_pull_request_commits import get_pull_request_commits
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
@@ -215,6 +217,31 @@ def handle_check_suite(
         msg = f"Skipped - permission request pending for PR #{pull_number} in `{owner_name}/{repo_name}`"
         print(msg)
         slack_notify(msg, thread_ts)
+        return
+
+    # Check if there are too many GitAuto commits (prevent infinite retry loops)
+    pr_commits = get_pull_request_commits(
+        owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+    )
+    gitauto_commit_count = 0
+    for commit in pr_commits:
+        commit_author = commit.get("commit", {}).get("author", {})
+        commit_name = commit_author.get("name", "")
+        if GITHUB_APP_USER_NAME in commit_name:
+            gitauto_commit_count += 1
+
+    if gitauto_commit_count >= MAX_GITAUTO_COMMITS_PER_PR:
+        comment_msg = f"I've made {gitauto_commit_count} commits trying to fix this, but the tests keep failing with slightly different errors. I'm going to stop here to avoid an infinite loop. Could you take a look?"
+        log_msg = f"Stopped after {gitauto_commit_count} commits in PR #{pull_number} in `{owner_name}/{repo_name}` - preventing infinite loop"
+        print(log_msg)
+        create_comment(
+            owner=owner_name,
+            repo=repo_name,
+            token=token,
+            issue_number=pull_number,
+            body=comment_msg,
+        )
+        slack_notify(log_msg, thread_ts)
         return
 
     # Create the first comment
