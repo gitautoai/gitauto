@@ -4,7 +4,7 @@ from services.github.comments.create_comment import create_comment
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.merge_pull_request import MergeMethod, merge_pull_request
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
+from services.github.types.github_types import CheckSuiteCompletedPayload
 from services.github.types.pull_request import PullRequest
 from services.supabase.client import supabase
 from services.supabase.repository_features.get_repository_features import (
@@ -75,37 +75,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     pull_file_url = f"{pull_url}/files"
     changed_files = get_pull_request_files(url=pull_file_url, token=token)
 
-    # Create base_args for commenting
-    pr_author = pull_request["user"]["login"]
-    sender = payload["sender"]
-    base_args: BaseArgs = {
-        "input_from": "github",
-        "owner_type": repo["owner"]["type"],
-        "owner_id": repo["owner"]["id"],
-        "owner": owner_name,
-        "repo_id": repo_id,
-        "repo": repo_name,
-        "clone_url": repo["clone_url"],
-        "is_fork": repo.get("fork", False),
-        "issue_number": pr_number,
-        "issue_title": pull_request["title"],
-        "issue_body": pull_request.get("body", ""),
-        "issue_comments": [],
-        "latest_commit_sha": pull_request["head"]["sha"],
-        "issuer_name": pr_author,
-        "base_branch": pull_request["base"]["ref"],
-        "new_branch": pull_request["head"]["ref"],
-        "installation_id": installation_id,
-        "token": token,
-        "sender_id": sender["id"],
-        "sender_name": sender["login"],
-        "sender_email": f"{sender['login']}@users.noreply.github.com",
-        "is_automation": True,
-        "reviewers": [],
-        "github_urls": [],
-        "other_urls": [],
-    }
-
     # Check if only test files restriction is enabled
     only_test_files = repo_features.get("auto_merge_only_test_files", False)
     if only_test_files:
@@ -116,7 +85,13 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             non_test_files_str = "\n".join(f"- `{f}`" for f in non_test_files)
             msg = f"Auto-merge skipped: non-test files changed:\n{non_test_files_str}"
             print(msg)
-            create_comment(body=msg, base_args=base_args)
+            create_comment(
+                owner=owner_name,
+                repo=repo_name,
+                token=token,
+                issue_number=pr_number,
+                body=msg,
+            )
             return
 
     # Check mergeable_state
@@ -132,7 +107,13 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         reason = state_reasons.get(mergeable_state, "unknown reason")
         msg = f"Auto-merge blocked: mergeable_state={mergeable_state} ({reason})"
         print(msg)
-        create_comment(body=msg, base_args=base_args)
+        create_comment(
+            owner=owner_name,
+            repo=repo_name,
+            token=token,
+            issue_number=pr_number,
+            body=msg,
+        )
         return
 
     # All conditions met - merge the PR

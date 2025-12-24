@@ -101,7 +101,13 @@ def test_combine_and_create_comment_success_subscription_user(
         credit_balance_usd=0,
     )
     expected_body = base_comment + mock_request_issue_comment.return_value
-    mock_create_comment.assert_called_once_with(body=expected_body, base_args=base_args)
+    mock_create_comment.assert_called_once_with(
+        owner=owner_name,
+        repo=base_args["repo"],
+        token=base_args["token"],
+        issue_number=base_args["issue_number"],
+        body=expected_body,
+    )
 
 
 def test_combine_and_create_comment_credit_user(
@@ -149,7 +155,13 @@ def test_combine_and_create_comment_credit_user(
         credit_balance_usd=50,
     )
     expected_body = base_comment + mock_request_issue_comment.return_value
-    mock_create_comment.assert_called_once_with(body=expected_body, base_args=base_args)
+    mock_create_comment.assert_called_once_with(
+        owner=owner_name,
+        repo=base_args["repo"],
+        token=base_args["token"],
+        issue_number=base_args["issue_number"],
+        body=expected_body,
+    )
 
 
 def test_combine_and_create_comment_no_period_end_date(
@@ -183,7 +195,13 @@ def test_combine_and_create_comment_no_period_end_date(
 
     # Assert
     mock_request_issue_comment.assert_not_called()
-    mock_create_comment.assert_called_once_with(body=base_comment, base_args=base_args)
+    mock_create_comment.assert_called_once_with(
+        owner=owner_name,
+        repo=base_args["repo"],
+        token=base_args["token"],
+        issue_number=base_args["issue_number"],
+        body=base_comment,
+    )
 
 
 def test_combine_and_create_comment_default_end_date(
@@ -219,7 +237,13 @@ def test_combine_and_create_comment_default_end_date(
 
     # Assert
     mock_request_issue_comment.assert_not_called()
-    mock_create_comment.assert_called_once_with(body=base_comment, base_args=base_args)
+    mock_create_comment.assert_called_once_with(
+        owner=owner_name,
+        repo=base_args["repo"],
+        token=base_args["token"],
+        issue_number=base_args["issue_number"],
+        body=base_comment,
+    )
 
 
 def test_combine_and_create_comment_cannot_proceed_with_user_message(
@@ -265,7 +289,11 @@ def test_combine_and_create_comment_cannot_proceed_with_user_message(
         credit_balance_usd=0,
     )
     mock_create_comment.assert_called_once_with(
-        body="You have reached your request limit.", base_args=base_args
+        owner=owner_name,
+        repo=base_args["repo"],
+        token=base_args["token"],
+        issue_number=base_args["issue_number"],
+        body="You have reached your request limit.",
     )
 
 
@@ -305,7 +333,13 @@ def test_combine_and_create_comment_cannot_proceed_no_user_message(
 
     # Assert
     expected_body = base_comment + mock_request_issue_comment.return_value
-    mock_create_comment.assert_called_once_with(body=expected_body, base_args=base_args)
+    mock_create_comment.assert_called_once_with(
+        owner=owner_name,
+        repo=base_args["repo"],
+        token=base_args["token"],
+        issue_number=base_args["issue_number"],
+        body=expected_body,
+    )
 
 
 def test_combine_and_create_comment_product_id_replacement(
@@ -343,7 +377,11 @@ def test_combine_and_create_comment_product_id_replacement(
             + mock_request_issue_comment.return_value
         )
         mock_create_comment.assert_called_once_with(
-            body=expected_body, base_args=base_args
+            owner=owner_name,
+            repo=base_args["repo"],
+            token=base_args["token"],
+            issue_number=base_args["issue_number"],
+            body=expected_body,
         )
 
 
@@ -375,7 +413,13 @@ def test_combine_and_create_comment_no_product_id_replacement_for_gitauto(
 
     # Assert
     expected_body = base_comment + mock_request_issue_comment.return_value
-    mock_create_comment.assert_called_once_with(body=expected_body, base_args=base_args)
+    mock_create_comment.assert_called_once_with(
+        owner=owner_name,
+        repo=base_args["repo"],
+        token=base_args["token"],
+        issue_number=base_args["issue_number"],
+        body=expected_body,
+    )
 
 
 def test_combine_and_create_comment_product_id_replacement_only_when_generate_present(
@@ -410,7 +454,11 @@ def test_combine_and_create_comment_product_id_replacement_only_when_generate_pr
         # Assert
         expected_body = base_comment + mock_request_issue_comment.return_value
         mock_create_comment.assert_called_once_with(
-            body=expected_body, base_args=base_args
+            owner=owner_name,
+            repo=base_args["repo"],
+            token=base_args["token"],
+            issue_number=base_args["issue_number"],
+            body=expected_body,
         )
 
 
@@ -568,7 +616,11 @@ def test_combine_and_create_comment_partial_generate_replacement(
             + mock_request_issue_comment.return_value
         )
         mock_create_comment.assert_called_once_with(
-            body=expected_body, base_args=base_args
+            owner=owner_name,
+            repo=base_args["repo"],
+            token=base_args["token"],
+            issue_number=base_args["issue_number"],
+            body=expected_body,
         )
 
 
@@ -604,5 +656,9 @@ def test_combine_and_create_comment_case_sensitive_generate(
         # Assert - should not replace lowercase 'generate'
         expected_body = base_comment + mock_request_issue_comment.return_value
         mock_create_comment.assert_called_once_with(
-            body=expected_body, base_args=base_args
+            owner=owner_name,
+            repo=base_args["repo"],
+            token=base_args["token"],
+            issue_number=base_args["issue_number"],
+            body=expected_body,
         )

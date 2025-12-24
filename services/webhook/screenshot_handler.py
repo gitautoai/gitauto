@@ -8,7 +8,7 @@ from urllib.parse import urlparse, quote
 
 # Third-party imports
 import boto3
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, ViewportSize
 
 # Local imports
 from config import GITHUB_APP_USER_NAME
@@ -63,7 +63,7 @@ async def capture_screenshots(urls: list[str], output_dir: str) -> None:
         )
         context = await browser.new_context()
         page = await context.new_page()
-        viewport_size = {"width": 1512, "height": 982}
+        viewport_size: ViewportSize = {"width": 1512, "height": 982}
         await page.set_viewport_size(viewport_size)
         print(f"\nOpened browser and set viewport size to `{viewport_size}`")
 
@@ -139,7 +139,7 @@ def find_all_html_pages(repo_dir: str) -> list[str]:
 
 
 @handle_exceptions(raise_on_error=True)
-def get_target_paths(file_changes: list[dict[str, str]], repo_dir: str = None):
+def get_target_paths(file_changes: list[dict[str, str]], repo_dir: str | None = None):
     has_css_changes = any(
         change.get("filename", "").endswith((".css", ".scss", ".sass", ".less"))
         for change in file_changes
@@ -326,7 +326,13 @@ async def handle_screenshot_comparison(payload: dict) -> None:
 
             # Create comparison comment
             comment_body = f"""Path: {path}\n\n{table_header}| <img src="{prod_url}?t={timestamp}" width="400" referrerpolicy="no-referrer"/> | <img src="{local_url}?t={timestamp}" width="400" referrerpolicy="no-referrer"/> |"""
-            create_comment(body=comment_body, base_args=base_args)
+            create_comment(
+                owner=owner,
+                repo=repo,
+                token=token,
+                issue_number=pull_number,
+                body=comment_body,
+            )
             print(f"Created comparison comment for {path}")
 
     finally:

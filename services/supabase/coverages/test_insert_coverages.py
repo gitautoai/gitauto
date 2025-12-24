@@ -54,8 +54,9 @@ def test_insert_coverages_successful_insertion(mock_supabase, sample_coverage_re
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
+    # Verify insert is called with dict() wrapper to convert TypedDict to plain dict
     mock_supabase.table.return_value.insert.assert_called_once_with(
-        sample_coverage_record
+        dict(sample_coverage_record)
     )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 

@@ -2,18 +2,22 @@ import logging
 from typing import cast
 import requests
 from config import GITHUB_API_URL, PRODUCT_ID, TIMEOUT
-from services.github.types.github_types import BaseArgs
 from services.github.types.issue import Issue
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=(500, None), raise_on_error=False)
-def create_issue(title: str, body: str, assignees: list[str], base_args: BaseArgs):
+def create_issue(
+    *,
+    owner: str,
+    repo: str,
+    token: str,
+    title: str,
+    body: str,
+    assignees: list[str],
+):
     """https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#create-an-issue"""
-    owner = base_args["owner"]
-    repo = base_args["repo"]
-    token = base_args["token"]
     labels = [PRODUCT_ID]
 
     payload = {

@@ -78,6 +78,50 @@ sys.path.insert(0, '/Users/rwest/Repositories/gitauto')
 from scripts.github.update_file import update_file
 ```
 
+## CRITICAL: Never Bypass Workflow Scripts
+
+**NEVER use git commands directly to bypass workflow scripts like commit_file.py or push_repo.py.**
+
+When workflow scripts fail, fix the ROOT CAUSE instead of working around them:
+
+**Example of WRONG approach:**
+
+```bash
+# Script fails because eslint is missing, so bypass it with git directly
+git -C /path/to/repo add file.ts && git -C /path/to/repo commit -m "message"
+
+# Or modify the script to skip validation
+# Or add exceptions to skip certain file types
+```
+
+**Example of CORRECT approach:**
+
+```bash
+# Script fails because eslint is missing
+# Install the missing dependencies
+npm install --prefix /path/to/repo
+# or
+yarn --cwd /path/to/repo install
+
+# Then use the proper workflow:
+python3 << 'EOF'
+from scripts.git.commit_file import commit_file
+from scripts.github.get_installation_token import get_installation_token
+
+token = get_installation_token('owner')
+commit_file(owner='owner', repo='repo', file_path='file.ts', pr_number=123, commit_message='message', token=token)
+EOF
+```
+
+**Why:** Workflow scripts exist for a reason (linting, validation, safety checks). Bypassing them leads to:
+
+- Code quality issues
+- Broken CI/CD pipelines
+- Inconsistent commit history
+- Missing safety checks
+
+**Always fix the fundamental issue (install missing tools) instead of working around it (skip validation).**
+
 ## CRITICAL: Web Search Best Practices
 
 **NEVER include years in search queries unless specifically searching for historical information.**

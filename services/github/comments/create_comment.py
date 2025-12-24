@@ -1,16 +1,20 @@
 import requests
 from config import GITHUB_API_URL, TIMEOUT
-from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def create_comment(body: str, base_args: BaseArgs):
+def create_comment(
+    *,
+    owner: str,
+    repo: str,
+    token: str,
+    issue_number: int,
+    body: str,
+    input_from: str = "github",
+):
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment"""
-    owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
-    issue_number = base_args["issue_number"]
-    input_from = base_args.get("input_from", "github")
 
     if input_from == "github":
         response = requests.post(

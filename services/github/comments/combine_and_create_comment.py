@@ -22,7 +22,7 @@ def combine_and_create_comment(
     owner_name: str,
     sender_name: str,
     base_args: BaseArgs,
-) -> None:
+):
     # Check availability
     availability_status = check_availability(
         owner_id=owner_id,
@@ -66,4 +66,10 @@ def combine_and_create_comment(
         body = user_message
 
     # Create the comment
-    create_comment(body=body, base_args=base_args)
+    create_comment(
+        owner=owner_name,
+        repo=base_args["repo"],
+        token=base_args["token"],
+        issue_number=base_args["issue_number"],
+        body=body,
+    )
