@@ -1,10 +1,12 @@
 from typing import cast
 
 from services.github.comments.create_comment import create_comment
+from services.github.commits.check_commit_has_skip_ci import check_commit_has_skip_ci
+from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.merge_pull_request import MergeMethod, merge_pull_request
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.types.github_types import CheckSuiteCompletedPayload
+from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
 from services.github.types.pull_request import PullRequest
 from services.supabase.client import supabase
 from services.supabase.repository_features.get_repository_features import (
@@ -68,9 +70,63 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         print(msg)
         return
 
-    # Get PR files
+    # Check if last commit has [skip ci] - if so, tests never ran, trigger them
+    head_sha = check_suite["head_sha"]
+    head_branch = check_suite["head_branch"]
     owner_name = repo["owner"]["login"]
     repo_name = repo["name"]
+    if check_commit_has_skip_ci(
+        owner=owner_name, repo=repo_name, commit_sha=head_sha, token=token
+    ):
+        msg = (
+            "Auto-merge blocked: last commit has [skip ci], triggering tests instead..."
+        )
+
+        print(msg)
+        create_comment(
+            owner=owner_name,
+            repo=repo_name,
+            token=token,
+            issue_number=pr_number,
+            body=msg,
+        )
+
+        sender = payload["sender"]
+        base_args: BaseArgs = {
+            "input_from": "github",
+            "owner_type": repo["owner"]["type"],
+            "owner_id": owner_id,
+            "owner": owner_name,
+            "repo_id": repo_id,
+            "repo": repo_name,
+            "clone_url": repo["clone_url"],
+            "is_fork": repo.get("fork", False),
+            "issue_number": pr_number,
+            "issue_title": "",
+            "issue_body": "",
+            "issue_comments": [],
+            "latest_commit_sha": head_sha,
+            "issuer_name": sender["login"],
+            "base_branch": head_branch,
+            "new_branch": head_branch,
+            "installation_id": installation_id,
+            "token": token,
+            "sender_id": sender["id"],
+            "sender_name": sender["login"],
+            "sender_email": f"{sender['login']}@users.noreply.github.com",
+            "is_automation": True,
+            "reviewers": [],
+            "github_urls": [],
+            "other_urls": [],
+        }
+
+        create_empty_commit(
+            base_args=base_args,
+            message="Trigger tests",
+        )
+        return
+
+    # Get PR files
     pull_url = pull_request["url"]
     pull_file_url = f"{pull_url}/files"
     changed_files = get_pull_request_files(url=pull_file_url, token=token)
