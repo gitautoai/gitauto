@@ -2,8 +2,9 @@ from constants.messages import SETTINGS_LINKS
 from constants.urls import GH_BASE_URL
 
 
-def get_issue_title(file_path: str):
-    return f"Schedule: Add unit tests to {file_path}"
+def get_issue_title(file_path: str, has_existing_tests: bool = False):
+    action = "Increase test coverage for" if has_existing_tests else "Add unit tests to"
+    return f"Schedule: {action} {file_path}"
 
 
 def get_issue_body(

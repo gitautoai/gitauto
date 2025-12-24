@@ -46,6 +46,8 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
         else "unknown"
     )
     token = get_installation_access_token(installation_id=installation_id)
+    if not token:
+        return None
 
     # Get repository settings
     repo_settings = get_repository(repo_id=repo_id)
@@ -63,12 +65,6 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
 
     if not availability_status["can_proceed"]:
         pr_number = payload["number"]
-        base_args = {
-            "owner": owner_name,
-            "repo": repo_name,
-            "token": token,
-            "issue_number": pr_number,
-        }
 
         comment_body = (
             f"⚠️ **Merge trigger disabled**: Insufficient credits\n\n"
@@ -77,7 +73,13 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
         )
 
         # Create comment on the PR
-        create_comment(body=comment_body, base_args=base_args)
+        create_comment(
+            owner=owner_name,
+            repo=repo_name,
+            token=token,
+            issue_number=pr_number,
+            body=comment_body,
+        )
 
         # Disable the merge trigger to prevent future attempts
         update_repository(repo_id=repo_id, trigger_on_merged=False)
@@ -188,12 +190,14 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
     title = get_issue_title_for_pr_merged(pr_number=pr_number)
     body = get_issue_body_for_pr_merged(pr_number=pr_number, file_list=file_list)
 
-    # Create base args for issue creation
-    base_args = {"owner": owner_name, "repo": repo_name, "token": token}
-
     # Create the issue
     status_code, issue_response = create_issue(
-        title=title, body=body, assignees=assignees, base_args=base_args
+        owner=owner_name,
+        repo=repo_name,
+        token=token,
+        title=title,
+        body=body,
+        assignees=assignees,
     )
 
     # Handle 410 - issues are disabled for this repository

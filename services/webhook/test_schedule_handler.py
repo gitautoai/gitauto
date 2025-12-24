@@ -169,6 +169,7 @@ class TestScheduleHandler:
             assert result is not None
             assert isinstance(result, list)
 
+    @patch("services.webhook.schedule_handler.get_open_pull_requests")
     @patch("services.webhook.schedule_handler.should_skip_test")
     @patch("services.webhook.schedule_handler.should_test_file")
     @patch("services.webhook.schedule_handler.get_installation_access_token")
@@ -191,6 +192,7 @@ class TestScheduleHandler:
         mock_get_token,
         mock_should_test_file,
         mock_should_skip_test,
+        mock_get_open_pull_requests,
         mock_event,
     ):
         """Test that schedule_handler skips files that only contain exports."""
@@ -246,6 +248,9 @@ class TestScheduleHandler:
         # Mock should_test_file to return True for files with logic
         mock_should_test_file.return_value = True
 
+        # Mock has_open_pr_for_file to return False (no open PRs)
+        mock_get_open_pull_requests.return_value = []
+
         # Execute
         result = schedule_handler(mock_event)
 
@@ -264,6 +269,7 @@ class TestScheduleHandler:
         assert "src/utils/helper.ts" in call_kwargs["title"]
         assert result["status"] == "success"
 
+    @patch("services.webhook.schedule_handler.get_open_pull_requests")
     @patch("services.webhook.schedule_handler.get_installation_access_token")
     @patch("services.webhook.schedule_handler.get_repository")
     @patch("services.webhook.schedule_handler.check_availability")
@@ -282,6 +288,7 @@ class TestScheduleHandler:
         mock_check_availability,
         mock_get_repository,
         mock_get_token,
+        mock_get_open_pull_requests,
         mock_event,
     ):
         """Test that schedule_handler skips empty files."""
@@ -322,6 +329,9 @@ class TestScheduleHandler:
             {"html_url": "https://github.com/test/issue/2"},
         )
 
+        # Mock has_open_pr_for_file to return False (no open PRs)
+        mock_get_open_pull_requests.return_value = []
+
         # Execute
         result = schedule_handler(mock_event)
 
@@ -336,7 +346,7 @@ class TestScheduleHandler:
     @patch("services.webhook.schedule_handler.update_repository")
     @patch("services.webhook.schedule_handler.get_issue_body")
     @patch("services.webhook.schedule_handler.get_issue_title")
-    @patch("services.webhook.schedule_handler.is_issue_open")
+    @patch("services.webhook.schedule_handler.get_open_pull_requests")
     @patch("services.webhook.schedule_handler.should_test_file")
     @patch("services.webhook.schedule_handler.should_skip_test")
     @patch("services.webhook.schedule_handler.get_raw_content")
@@ -367,7 +377,7 @@ class TestScheduleHandler:
         mock_get_raw_content,
         mock_should_skip_test,
         mock_should_test_file,
-        mock_is_issue_open,
+        mock_get_open_pull_requests,
         mock_get_issue_title,
         mock_get_issue_body,
         mock_update_repository,
@@ -417,7 +427,7 @@ class TestScheduleHandler:
         mock_get_raw_content.return_value = "def test_function(): return True"
         mock_should_skip_test.return_value = False  # Don't skip
         mock_should_test_file.return_value = True  # Should test
-        mock_is_issue_open.return_value = False  # No open issues
+        mock_get_open_pull_requests.return_value = []  # No open PRs
         mock_get_issue_title.return_value = "Test Title"
         mock_get_issue_body.return_value = "Test Body"
 
@@ -442,3 +452,147 @@ class TestScheduleHandler:
         mock_slack_notify.assert_called_once()
         slack_msg = mock_slack_notify.call_args[0][0]
         assert "Issues are disabled" in slack_msg
+
+    @patch("services.webhook.schedule_handler.get_open_pull_requests")
+    @patch("services.webhook.schedule_handler.should_test_file")
+    @patch("services.webhook.schedule_handler.should_skip_test")
+    @patch("services.webhook.schedule_handler.get_installation_access_token")
+    @patch("services.webhook.schedule_handler.get_repository")
+    @patch("services.webhook.schedule_handler.check_availability")
+    @patch("services.webhook.schedule_handler.get_default_branch")
+    @patch("services.webhook.schedule_handler.get_file_tree")
+    @patch("services.webhook.schedule_handler.get_all_coverages")
+    @patch("services.webhook.schedule_handler.get_raw_content")
+    @patch("services.webhook.schedule_handler.create_issue")
+    def test_schedule_handler_prioritizes_zero_coverage_files(
+        self,
+        mock_create_issue,
+        mock_get_raw_content,
+        mock_get_all_coverages,
+        mock_get_file_tree,
+        mock_get_default_branch,
+        mock_check_availability,
+        mock_get_repository,
+        mock_get_token,
+        mock_should_skip_test,
+        mock_should_test_file,
+        mock_get_open_pull_requests,
+        mock_event,
+    ):
+        mock_get_token.return_value = "test-token"
+        mock_get_repository.return_value = {"trigger_on_schedule": True}
+        mock_check_availability.return_value = {
+            "can_proceed": True,
+            "billing_type": "exception",
+            "requests_left": None,
+            "credit_balance_usd": 0,
+            "period_end_date": None,
+            "user_message": "",
+            "log_message": "Exception owner - unlimited access.",
+        }
+        mock_get_default_branch.return_value = ("main", None)
+        mock_get_file_tree.return_value = [
+            {"path": "src/partial.py", "type": "blob", "size": 50},
+            {"path": "src/untouched.py", "type": "blob", "size": 100},
+            {"path": "src/new_file.py", "type": "blob", "size": 75},
+        ]
+        mock_get_all_coverages.return_value = [
+            {
+                "id": 1,
+                "full_path": "src/partial.py",
+                "owner_id": 123,
+                "repo_id": 456,
+                "branch_name": "main",
+                "created_by": "test-user",
+                "updated_by": "test-user",
+                "level": "file",
+                "file_size": 50,
+                "statement_coverage": 50.0,
+                "function_coverage": 50.0,
+                "branch_coverage": 50.0,
+                "line_coverage": 50.0,
+                "path_coverage": 0.0,
+                "package_name": None,
+                "language": None,
+                "uncovered_lines": None,
+                "uncovered_functions": None,
+                "uncovered_branches": None,
+                "created_at": "2024-01-01",
+                "updated_at": "2024-01-01",
+                "github_issue_url": None,
+                "is_excluded_from_testing": False,
+            },
+            {
+                "id": 2,
+                "full_path": "src/untouched.py",
+                "owner_id": 123,
+                "repo_id": 456,
+                "branch_name": "main",
+                "created_by": "test-user",
+                "updated_by": "test-user",
+                "level": "file",
+                "file_size": 100,
+                "statement_coverage": 0.0,
+                "function_coverage": 0.0,
+                "branch_coverage": 0.0,
+                "line_coverage": 0.0,
+                "path_coverage": 0.0,
+                "package_name": None,
+                "language": None,
+                "uncovered_lines": None,
+                "uncovered_functions": None,
+                "uncovered_branches": None,
+                "created_at": "2024-01-01",
+                "updated_at": "2024-01-01",
+                "github_issue_url": None,
+                "is_excluded_from_testing": False,
+            },
+        ]
+        # src/new_file.py is NOT in get_all_coverages, so it will be treated as 0% coverage new file and trigger insert_coverages
+        mock_get_raw_content.return_value = "def test(): pass"
+        mock_should_skip_test.return_value = False
+        mock_should_test_file.return_value = True
+        mock_get_open_pull_requests.return_value = []
+        mock_create_issue.return_value = (
+            200,
+            {"html_url": "https://github.com/test/issue/1"},
+        )
+
+        with patch("services.webhook.schedule_handler.insert_coverages") as mock_insert:
+            result = schedule_handler(mock_event)
+
+            assert result["status"] == "success"
+            mock_create_issue.assert_called_once()
+            call_kwargs = mock_create_issue.call_args.kwargs
+            assert "src/new_file.py" in call_kwargs["title"]
+            assert "Add unit tests to" in call_kwargs["title"]
+
+            # Verify insert_coverages was called with correct CoveragesInsert structure
+            mock_insert.assert_called_once()
+            coverage_record = mock_insert.call_args[0][0]
+            assert coverage_record["full_path"] == "src/new_file.py"
+            assert coverage_record["owner_id"] == 123
+            assert coverage_record["repo_id"] == 456
+            assert coverage_record["branch_name"] == "main"
+            assert coverage_record["created_by"] == "test-user"
+            assert coverage_record["updated_by"] == "test-user"
+            assert coverage_record["level"] == "file"
+            assert coverage_record["file_size"] == 75
+            assert coverage_record["statement_coverage"] == 0
+            assert coverage_record["function_coverage"] == 0
+            assert coverage_record["branch_coverage"] == 0
+            assert coverage_record["line_coverage"] == 0
+            assert coverage_record["path_coverage"] == 0
+            assert coverage_record["package_name"] is None
+            assert coverage_record["language"] is None
+            assert (
+                coverage_record["github_issue_url"] == "https://github.com/test/issue/1"
+            )
+            assert coverage_record["is_excluded_from_testing"] is False
+            assert coverage_record["uncovered_lines"] is None
+            assert coverage_record["uncovered_functions"] is None
+            assert coverage_record["uncovered_branches"] is None
+            # Verify CoveragesInsert doesn't include these fields
+            assert "id" not in coverage_record
+            assert "created_at" not in coverage_record
+            assert "updated_at" not in coverage_record

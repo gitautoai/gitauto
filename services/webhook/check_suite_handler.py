@@ -223,7 +223,13 @@ def handle_check_suite(
     msg = CHECK_RUN_STUMBLED_MESSAGE
     log_messages.append(msg)
     body = create_progress_bar(p=p, msg="\n".join(log_messages))
-    comment_url = create_comment(body=body, base_args=base_args)
+    comment_url = create_comment(
+        owner=owner_name,
+        repo=repo_name,
+        token=token,
+        issue_number=pull_number,
+        body=body,
+    )
     base_args["comment_url"] = comment_url
 
     # Create a usage record

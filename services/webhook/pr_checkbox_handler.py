@@ -91,6 +91,8 @@ async def handle_pr_checkbox_trigger(
     owner_id = repository["owner"]["id"]
     installation_id = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
+    if not token:
+        return
 
     issue_number = payload["issue"]["number"]
 
@@ -147,7 +149,13 @@ async def handle_pr_checkbox_trigger(
 
     # If access is denied, create a comment and return early
     if not can_proceed:
-        create_comment(body=user_message, base_args=base_args)
+        create_comment(
+            owner=owner_name,
+            repo=repo_name,
+            token=token,
+            issue_number=issue_number,
+            body=user_message,
+        )
 
         # Early return notification
         slack_notify(availability_status["log_message"], thread_ts)
@@ -183,7 +191,13 @@ async def handle_pr_checkbox_trigger(
     log_messages.append(msg)
 
     comment_body = create_progress_bar(p=0, msg="\n".join(log_messages))
-    comment_url = create_comment(body=comment_body, base_args=base_args)
+    comment_url = create_comment(
+        owner=owner_name,
+        repo=repo_name,
+        token=token,
+        issue_number=issue_number,
+        body=comment_body,
+    )
     base_args["comment_url"] = comment_url
 
     p += 10

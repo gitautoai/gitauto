@@ -73,8 +73,12 @@ def test_handle_pr_merged_success(
     # Verify create_issue was called with correct parameters
     mock_create_issue.assert_called_once()
     call_kwargs = mock_create_issue.call_args.kwargs
+    assert call_kwargs["owner"] == "test-owner"
+    assert call_kwargs["repo"] == "test-repo"
+    assert call_kwargs["token"] == "test-token"
     assert call_kwargs["title"] == "Test Issue Title"
     assert call_kwargs["body"] == "Test issue body content"
+    assert call_kwargs["assignees"] == ["pr-creator"]
 
     # Verify success notification was sent
     success_calls = [
@@ -154,8 +158,15 @@ def test_handle_pr_merged_410_issues_disabled(
     # Verify
     assert result is None  # Function returns None
 
-    # Verify create_issue was called
+    # Verify create_issue was called with correct parameters
     mock_create_issue.assert_called_once()
+    call_kwargs = mock_create_issue.call_args.kwargs
+    assert call_kwargs["owner"] == "test-owner"
+    assert call_kwargs["repo"] == "test-repo"
+    assert call_kwargs["token"] == "test-token"
+    assert call_kwargs["title"] == "Test Issue Title"
+    assert call_kwargs["body"] == "Test issue body content"
+    assert call_kwargs["assignees"] == ["pr-creator"]
 
     # Verify repository was updated to disable merge trigger
     mock_update_repository.assert_called_once_with(
@@ -246,8 +257,15 @@ def test_handle_pr_merged_other_error(
     # Verify
     assert result is None  # Function returns None
 
-    # Verify create_issue was called
+    # Verify create_issue was called with correct parameters
     mock_create_issue.assert_called_once()
+    call_kwargs = mock_create_issue.call_args.kwargs
+    assert call_kwargs["owner"] == "test-owner"
+    assert call_kwargs["repo"] == "test-repo"
+    assert call_kwargs["token"] == "test-token"
+    assert call_kwargs["title"] == "Test Issue Title"
+    assert call_kwargs["body"] == "Test issue body content"
+    assert call_kwargs["assignees"] == ["pr-creator"]
 
     # Verify failure notification was sent (not success)
     failure_calls = [
