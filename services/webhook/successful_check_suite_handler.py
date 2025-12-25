@@ -30,6 +30,10 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     pr_number = pull_request["number"]
     pr_author = pull_request["user"]["login"]
 
+    # Only auto-merge PRs created by GitAuto (check early to avoid unnecessary work)
+    if pr_author != GITHUB_APP_USER_NAME:
+        return
+
     # Get repository info
     repo = payload["repository"]
     repo_id = repo["id"]
@@ -61,12 +65,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     repo_features = get_repository_features(repo_id=repo_id)
     if not repo_features or not repo_features.get("auto_merge"):
         msg = f"Auto-merge disabled for repo_id={repo_id}"
-        print(msg)
-        return
-
-    # Only auto-merge PRs created by GitAuto
-    if pr_author != GITHUB_APP_USER_NAME:
-        msg = f"Auto-merge skipped: PR #{pr_number} not created by GitAuto (author: {pr_author})"
         print(msg)
         return
 
@@ -158,11 +156,10 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             )
             return
 
-    # Check mergeable_state
+    # Check mergeable_state - allow "clean" and "blocked" (blocked = missing reviews, which we bypass)
     mergeable_state = pull_request.get("mergeable_state", "")
-    if mergeable_state != "clean":
+    if mergeable_state not in ["clean", "blocked"]:
         state_reasons = {
-            "blocked": "required checks or approvals missing",
             "behind": "PR branch is behind base branch",
             "dirty": "merge conflicts detected",
             "unstable": "some checks failing",
