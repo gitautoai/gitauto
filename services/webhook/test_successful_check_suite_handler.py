@@ -7,6 +7,10 @@ from services.webhook.successful_check_suite_handler import (
 )
 
 
+@patch(
+    "services.webhook.successful_check_suite_handler.GITHUB_APP_USER_NAME",
+    "gitauto[bot]",
+)
 def test_handle_successful_check_suite_with_pr():
     payload = {
         "check_suite": {
@@ -18,7 +22,7 @@ def test_handle_successful_check_suite_with_pr():
                     "url": "https://api.github.com/repos/test-owner/test-repo/pulls/123",
                     "id": 2131041354,
                     "number": 123,
-                    "user": {"login": "test-user", "id": 12345},
+                    "user": {"login": "gitauto[bot]", "id": 12345},
                 }
             ],
         },
@@ -102,6 +106,10 @@ def test_handle_successful_check_suite_without_pr():
         mock_supabase.table.assert_not_called()
 
 
+@patch(
+    "services.webhook.successful_check_suite_handler.GITHUB_APP_USER_NAME",
+    "gitauto[bot]",
+)
 def test_handle_successful_check_suite_no_usage_record_found():
     payload = {
         "check_suite": {
@@ -113,7 +121,7 @@ def test_handle_successful_check_suite_no_usage_record_found():
                     "url": "https://api.github.com/repos/test-owner/test-repo/pulls/123",
                     "id": 2131041354,
                     "number": 123,
-                    "user": {"login": "test-user", "id": 12345},
+                    "user": {"login": "gitauto[bot]", "id": 12345},
                 }
             ],
         },
@@ -156,6 +164,10 @@ def test_handle_successful_check_suite_no_usage_record_found():
         mock_table.update.assert_not_called()
 
 
+@patch(
+    "services.webhook.successful_check_suite_handler.GITHUB_APP_USER_NAME",
+    "gitauto[bot]",
+)
 def test_handle_successful_check_suite_with_exception():
     payload = {
         "check_suite": {
@@ -167,7 +179,7 @@ def test_handle_successful_check_suite_with_exception():
                     "url": "https://api.github.com/repos/test-owner/test-repo/pulls/123",
                     "id": 2131041354,
                     "number": 123,
-                    "user": {"login": "test-user", "id": 12345},
+                    "user": {"login": "gitauto[bot]", "id": 12345},
                 }
             ],
         },
@@ -300,6 +312,10 @@ def test_auto_merge_success(
 
 
 @patch("services.webhook.successful_check_suite_handler.get_repository_features")
+@patch(
+    "services.webhook.successful_check_suite_handler.GITHUB_APP_USER_NAME",
+    "gitauto[bot]",
+)
 def test_auto_merge_disabled(
     mock_get_repo_features,
 ):
@@ -315,7 +331,7 @@ def test_auto_merge_disabled(
                     "url": "https://api.github.com/repos/test-owner/test-repo/pulls/123",
                     "id": 2131041354,
                     "number": 123,
-                    "user": {"login": "test-user", "id": 12345},
+                    "user": {"login": "gitauto[bot]", "id": 12345},
                 }
             ],
         },
@@ -722,6 +738,109 @@ def test_auto_merge_skipped_for_human_pr(
         handle_successful_check_suite(cast(CheckSuiteCompletedPayload, payload))
 
         mock_merge_pr.assert_not_called()
+
+
+@patch(
+    "services.webhook.successful_check_suite_handler.GITHUB_APP_USER_NAME",
+    "gitauto[bot]",
+)
+@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
+@patch("services.webhook.successful_check_suite_handler.merge_pull_request")
+@patch("services.webhook.successful_check_suite_handler.get_pull_request_files")
+@patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
+@patch("services.webhook.successful_check_suite_handler.get_repository_features")
+@patch("services.webhook.successful_check_suite_handler.is_test_file")
+def test_auto_merge_with_blocked_state(
+    mock_is_test_file,
+    mock_get_repo_features,
+    mock_get_token,
+    mock_get_files,
+    mock_merge_pr,
+    mock_check_skip_ci,
+):
+    payload = {
+        "check_suite": {
+            "id": 31710113401,
+            "name": "test-job",
+            "conclusion": "success",
+            "head_sha": "abc123",
+            "head_branch": "feature-branch",
+            "pull_requests": [
+                {
+                    "url": "https://api.github.com/repos/test-owner/test-repo/pulls/123",
+                    "id": 2131041354,
+                    "number": 123,
+                    "title": "GitAuto PR",
+                    "body": "Auto-generated PR",
+                    "user": {"login": "gitauto[bot]", "id": 12345},
+                    "head": {"ref": "feature-branch", "sha": "abc123"},
+                    "base": {"ref": "main", "sha": "def456"},
+                    "mergeable": True,
+                    "mergeable_state": "blocked",
+                }
+            ],
+        },
+        "repository": {
+            "id": 871345449,
+            "name": "test-repo",
+            "owner": {
+                "id": 4620828,
+                "login": "test-owner",
+                "type": "Organization",
+            },
+            "clone_url": "https://github.com/test-owner/test-repo.git",
+            "fork": False,
+        },
+        "installation": {"id": 12345},
+        "sender": {"id": 12345, "login": "test-sender"},
+    }
+
+    mock_get_repo_features.return_value = {
+        "auto_merge": True,
+        "merge_method": "squash",
+        "auto_merge_only_test_files": False,
+    }
+    mock_get_token.return_value = "test-token"
+    mock_check_skip_ci.return_value = False
+    mock_get_files.return_value = [
+        {"filename": "test_something.py", "status": "modified"}
+    ]
+    mock_is_test_file.return_value = True
+
+    with patch(
+        "services.webhook.successful_check_suite_handler.supabase"
+    ) as mock_supabase:
+        mock_table = MagicMock()
+        mock_select = MagicMock()
+        mock_eq1 = MagicMock()
+        mock_eq2 = MagicMock()
+        mock_eq3 = MagicMock()
+        mock_order = MagicMock()
+        mock_limit = MagicMock()
+
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_select
+        mock_select.eq.return_value = mock_eq1
+        mock_eq1.eq.return_value = mock_eq2
+        mock_eq2.eq.return_value = mock_eq3
+        mock_eq3.order.return_value = mock_order
+        mock_order.limit.return_value = mock_limit
+        mock_limit.execute.return_value = MagicMock(data=[{"id": 100}])
+
+        mock_update = MagicMock()
+        mock_update_eq = MagicMock()
+        mock_table.update.return_value = mock_update
+        mock_update.eq.return_value = mock_update_eq
+
+        handle_successful_check_suite(cast(CheckSuiteCompletedPayload, payload))
+
+        mock_merge_pr.assert_called_once_with(
+            owner="test-owner",
+            repo="test-repo",
+            pull_number=123,
+            token="test-token",
+            merge_method="squash",
+        )
 
 
 @patch(
