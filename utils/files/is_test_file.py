@@ -41,6 +41,29 @@ def is_test_file(filename: str) -> bool:
         r"\.mock\.",  # api.mock.ts, database.mock.js
         r"mock\.",  # ApiMock.java, DatabaseMock.cs
         r"mocks\.",  # ApiMocks.java, DatabaseMocks.cs
+        # Snapshot files (Jest, Vitest, etc.)
+        r"/__snapshots__/",  # __snapshots__/Button.test.tsx.snap
+        r"\.snap$",  # any .snap file
+        # Test fixtures and data
+        r"(^|/)__fixtures__/",  # __fixtures__/user.json
+        r"(^|/)fixtures/",  # fixtures/sample_data.json
+        r"\.fixture\.",  # user.fixture.ts
+        # Test configuration files
+        r"jest\.config\.",  # jest.config.js, jest.config.ts
+        r"vitest\.config\.",  # vitest.config.js
+        r"karma\.conf\.",  # karma.conf.js
+        r"\.spec\.snap$",  # component.spec.snap
+        r"\.test\.snap$",  # component.test.snap
+        # Test helpers and utilities
+        r"(^|/)test[-_]utils?/",  # test-utils/, test_utils/
+        r"(^|/)test[-_]helpers?/",  # test-helpers/, test_helper/
+        r"(^|/)setuptests\.",  # setupTests.js, setupTests.ts
+        r"(^|/)testsetup\.",  # testSetup.js, testSetup.ts
+        r"^testsetup\.",  # testSetup.js at root
+        r"(^|/)test[-_]setup\.",  # test-setup.js, test_setup.py
+        # Storybook files (visual testing)
+        r"\.stories\.",  # Button.stories.tsx
+        r"(^|/)stories/",  # stories/Button.tsx
         # Common test file names
         r"^test\.",  # test.js, test.py
         r"^spec\.",  # spec.rb, spec.js
