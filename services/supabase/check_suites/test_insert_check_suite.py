@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from postgrest.exceptions import APIError
+
 from services.supabase.check_suites.insert_check_suite import insert_check_suite
 
 
@@ -33,6 +35,18 @@ def test_insert_check_suite_success(mock_supabase_client):
 def test_insert_check_suite_duplicate(mock_supabase_client):
     _, mock_execute = mock_supabase_client
     mock_execute.data = []
+
+    result = insert_check_suite(check_suite_id=12345)
+
+    assert result is False
+
+
+def test_insert_check_suite_duplicate_key_error_returns_false(mock_supabase_client):
+    mock, _ = mock_supabase_client
+    api_error = APIError(
+        {"code": "23505", "message": "duplicate key value violates unique constraint"}
+    )
+    mock.table.return_value.insert.return_value.execute.side_effect = api_error
 
     result = insert_check_suite(check_suite_id=12345)
 
