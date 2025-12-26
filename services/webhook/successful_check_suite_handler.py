@@ -1,14 +1,14 @@
 from typing import cast
 
-from config import GITHUB_APP_USER_NAME
+from config import PRODUCT_ID
 from services.github.comments.create_comment import create_comment
 from services.github.commits.check_commit_has_skip_ci import check_commit_has_skip_ci
 from services.github.commits.create_empty_commit import create_empty_commit
+from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.merge_pull_request import MergeMethod, merge_pull_request
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
-from services.github.types.pull_request import PullRequest
 from services.supabase.client import supabase
 from services.supabase.repository_features.get_repository_features import (
     get_repository_features,
@@ -20,7 +20,7 @@ from utils.files.is_test_file import is_test_file
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     check_suite = payload["check_suite"]
-    pull_requests: list[PullRequest] = check_suite["pull_requests"]
+    pull_requests = check_suite["pull_requests"]
 
     # Skip if no PR associated with this check run
     if not pull_requests:
@@ -28,16 +28,18 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
 
     pull_request = pull_requests[0]
     pr_number = pull_request["number"]
-    pr_author = pull_request["user"]["login"]
+    pr_branch = pull_request["head"]["ref"]
 
     # Only auto-merge PRs created by GitAuto (check early to avoid unnecessary work)
-    if pr_author != GITHUB_APP_USER_NAME:
+    if not pr_branch.lower().startswith(f"{PRODUCT_ID.lower()}/"):
         return
 
     # Get repository info
     repo = payload["repository"]
     repo_id = repo["id"]
     owner_id = repo["owner"]["id"]
+    owner_name = repo["owner"]["login"]
+    repo_name = repo["name"]
 
     # Get the most recent usage record for this PR
     result = (
@@ -79,8 +81,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     # Check if last commit has [skip ci] - if so, tests never ran, trigger them
     head_sha = check_suite["head_sha"]
     head_branch = check_suite["head_branch"]
-    owner_name = repo["owner"]["login"]
-    repo_name = repo["name"]
     if check_commit_has_skip_ci(
         owner=owner_name, repo=repo_name, commit_sha=head_sha, token=token
     ):
@@ -132,6 +132,15 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         )
         return
 
+    # Fetch full PR details to get mergeable_state (not in simplified PR from check_suite webhook)
+    full_pr = get_pull_request(
+        owner=owner_name, repo=repo_name, pull_number=pr_number, token=token
+    )
+    if not full_pr:
+        msg = f"Failed to fetch full PR details for #{pr_number}"
+        print(msg)
+        return
+
     # Get PR files
     pull_url = pull_request["url"]
     pull_file_url = f"{pull_url}/files"
@@ -157,7 +166,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             return
 
     # Check mergeable_state - allow "clean" and "blocked" (blocked = missing reviews, which we bypass)
-    mergeable_state = pull_request.get("mergeable_state", "")
+    mergeable_state = full_pr.get("mergeable_state", "")
     if mergeable_state not in ["clean", "blocked"]:
         state_reasons = {
             "behind": "PR branch is behind base branch",
