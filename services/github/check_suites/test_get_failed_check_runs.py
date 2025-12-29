@@ -541,7 +541,7 @@ def test_get_failed_check_runs_large_dataset(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
 def test_get_failed_check_runs_mixed_conclusions(mock_create_headers, mock_get):
     """Test with various conclusion values"""
     mock_create_headers.return_value = {
