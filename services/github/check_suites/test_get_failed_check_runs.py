@@ -470,7 +470,7 @@ def test_get_failed_check_runs_verify_url_construction(
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
 def test_get_failed_check_runs_verify_headers_called(mock_create_headers, mock_get):
     """Test that create_headers is called with the correct token"""
     mock_create_headers.return_value = {
