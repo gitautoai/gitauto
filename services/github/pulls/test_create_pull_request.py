@@ -294,5 +294,3 @@ def test_create_pull_request_create_headers_exception(
     mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_post.assert_not_called()
     mock_add_reviewers.assert_not_called()
-
-

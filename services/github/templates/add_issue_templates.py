@@ -2,7 +2,7 @@
 from uuid import uuid4
 
 # Third-party imports
-from github import Github
+from github import Auth, Github
 from github.ContentFile import ContentFile
 from github.PullRequest import PullRequest
 from github.Repository import Repository
@@ -28,7 +28,8 @@ from utils.files.get_file_content import get_file_content
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def add_issue_templates(full_name: str, installer_name: str, token: str) -> None:
     print(f"Adding issue templates to the repo: '{full_name}' by '{installer_name}'.\n")
-    gh = Github(login_or_token=token)
+    auth = Auth.Token(token)
+    gh = Github(auth=auth)
     repo: Repository = gh.get_repo(full_name_or_id=full_name)
     owner, repo_name = full_name.split("/")
     default_branch_name = repo.default_branch
@@ -41,7 +42,7 @@ def add_issue_templates(full_name: str, installer_name: str, token: str) -> None
         "token": token,
     }
     clone_url = repo.clone_url
-    latest_sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)
+    latest_sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)  # type: ignore
 
     # Create a new branch using the SHA
     new_branch_name: str = f"{PRODUCT_ID}/add-issue-templates-{str(object=uuid4())}"
@@ -57,7 +58,8 @@ def add_issue_templates(full_name: str, installer_name: str, token: str) -> None
 
         # Get the list of existing files in the user's remote repository at the GITHUB_ISSUE_DIR. We need to use try except as repo.get_contents() raises a 404 error if the directory doesn't exist. Also directory path MUST end without a slash.
         try:
-            remote_files: list[ContentFile] = repo.get_contents(path=GITHUB_ISSUE_DIR)
+            remote_files_result = repo.get_contents(path=GITHUB_ISSUE_DIR)
+            remote_files: list[ContentFile] = remote_files_result if isinstance(remote_files_result, list) else [remote_files_result]
             remote_file_names: list[str] = [file.name for file in remote_files]
         except Exception:  # pylint: disable=broad-except
             remote_file_names = []
