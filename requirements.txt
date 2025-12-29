@@ -30,6 +30,7 @@ distro==1.9.0
 dnspython==2.6.1
 email_validator==2.2.0
 exceptiongroup==1.2.2
+execnet==2.1.2
 Faker==24.14.1
 fastapi==0.115.12
 fastapi-cli==0.0.5
@@ -93,6 +94,7 @@ pyright==1.1.405
 pytest==8.3.3
 pytest-asyncio==0.26.0
 pytest-cov==6.0.0
+pytest-xdist==3.8.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-multipart==0.0.20

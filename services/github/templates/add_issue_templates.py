@@ -59,7 +59,11 @@ def add_issue_templates(full_name: str, installer_name: str, token: str) -> None
         # Get the list of existing files in the user's remote repository at the GITHUB_ISSUE_DIR. We need to use try except as repo.get_contents() raises a 404 error if the directory doesn't exist. Also directory path MUST end without a slash.
         try:
             remote_files_result = repo.get_contents(path=GITHUB_ISSUE_DIR)
-            remote_files: list[ContentFile] = remote_files_result if isinstance(remote_files_result, list) else [remote_files_result]
+            remote_files: list[ContentFile] = (
+                remote_files_result
+                if isinstance(remote_files_result, list)
+                else [remote_files_result]
+            )
             remote_file_names: list[str] = [file.name for file in remote_files]
         except Exception:  # pylint: disable=broad-except
             remote_file_names = []
