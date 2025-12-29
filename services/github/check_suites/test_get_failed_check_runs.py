@@ -2,8 +2,8 @@ import inspect
 from unittest.mock import Mock, patch
 
 import requests
-
-from services.github.check_suites.get_failed_check_runs import get_failed_check_runs_from_check_suite
+from services.github.check_suites.get_failed_check_runs import \
+    get_failed_check_runs_from_check_suite
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -88,11 +88,11 @@ def test_get_failed_check_runs_no_failures(mock_create_headers, mock_get):
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-@patch("builtins.print")
+@patch("services.github.check_suites.get_failed_check_runs.logging.error")
 def test_get_failed_check_runs_api_error_500(
-    mock_print, mock_create_headers, mock_get
+    mock_logging_error, mock_create_headers, mock_get
 ):
-    """Test API error response (500) and print output"""
+    """Test API error response (500) and logging output"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
 
     mock_response = Mock()
@@ -106,8 +106,10 @@ def test_get_failed_check_runs_api_error_500(
 
     assert not result
 
-    mock_print.assert_called_once_with(
-        "Failed to get check runs for check suite 12345: Internal Server Error"
+    mock_logging_error.assert_called_once_with(
+        "Failed to get check runs for check suite %s: %s",
+        12345,
+        "Internal Server Error",
     )
 
 
@@ -131,11 +133,11 @@ def test_get_failed_check_runs_404_not_found(mock_create_headers, mock_get):
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-@patch("builtins.print")
+@patch("services.github.check_suites.get_failed_check_runs.logging.error")
 def test_get_failed_check_runs_401_unauthorized(
-    mock_print, mock_create_headers, mock_get
+    mock_logging_error, mock_create_headers, mock_get
 ):
-    """Test 401 Unauthorized error with print output"""
+    """Test 401 Unauthorized error with logging output"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
 
     mock_response = Mock()
@@ -148,8 +150,10 @@ def test_get_failed_check_runs_401_unauthorized(
     )
 
     assert not result
-    mock_print.assert_called_once_with(
-        "Failed to get check runs for check suite 12345: Unauthorized"
+    mock_logging_error.assert_called_once_with(
+        "Failed to get check runs for check suite %s: %s",
+        12345,
+        "Unauthorized",
     )
 
 
@@ -173,11 +177,11 @@ def test_get_failed_check_runs_empty_response(mock_create_headers, mock_get):
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-@patch("builtins.print")
+@patch("services.github.check_suites.get_failed_check_runs.logging.error")
 def test_get_failed_check_runs_403_forbidden(
-    mock_print, mock_create_headers, mock_get
+    mock_logging_error, mock_create_headers, mock_get
 ):
-    """Test 403 Forbidden error with print output verification"""
+    """Test 403 Forbidden error with logging output verification"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
 
     mock_response = Mock()
@@ -190,8 +194,10 @@ def test_get_failed_check_runs_403_forbidden(
     )
 
     assert not result
-    mock_print.assert_called_once_with(
-        "Failed to get check runs for check suite 12345: Forbidden - insufficient permissions"
+    mock_logging_error.assert_called_once_with(
+        "Failed to get check runs for check suite %s: %s",
+        12345,
+        "Forbidden - insufficient permissions",
     )
 
 
@@ -553,9 +559,9 @@ def test_get_failed_check_runs_empty_conclusion_string(mock_create_headers, mock
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-@patch("builtins.print")
+@patch("services.github.check_suites.get_failed_check_runs.logging.error")
 def test_get_failed_check_runs_different_error_codes(
-    mock_print, mock_create_headers, mock_get
+    mock_logging_error, mock_create_headers, mock_get
 ):
     """Test different HTTP error status codes"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -570,6 +576,8 @@ def test_get_failed_check_runs_different_error_codes(
     )
 
     assert not result
-    mock_print.assert_called_once_with(
-        "Failed to get check runs for check suite 12345: Unprocessable Entity"
+    mock_logging_error.assert_called_once_with(
+        "Failed to get check runs for check suite %s: %s",
+        12345,
+        "Unprocessable Entity",
     )
