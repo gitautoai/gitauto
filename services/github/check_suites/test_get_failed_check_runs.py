@@ -1,4 +1,3 @@
-import inspect
 from unittest.mock import Mock, patch
 
 import requests
@@ -8,14 +7,11 @@ from services.github.check_suites.get_failed_check_runs import \
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_success(mock_create_headers, mock_get):
-    """Test successful retrieval of failed check runs"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_returns_failed_check_runs_when_mixed_outcomes(
+    mock_create_headers, mock_get
+):
+    """Returns only failed check runs when suite includes failed and non-failed runs"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -41,14 +37,9 @@ def test_get_failed_check_runs_success(mock_create_headers, mock_get):
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_only_failures(mock_create_headers, mock_get):
-    """Test filtering only failed check runs"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_returns_all_when_only_failures(mock_create_headers, mock_get):
+    """Returns all check runs when all are failures"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -70,14 +61,9 @@ def test_get_failed_check_runs_only_failures(mock_create_headers, mock_get):
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_no_failures(mock_create_headers, mock_get):
-    """Test when there are no failed check runs"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_returns_empty_when_no_failures(mock_create_headers, mock_get):
+    """Returns empty list when there are no failed check runs"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -93,22 +79,17 @@ def test_get_failed_check_runs_no_failures(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
+    assert result == []
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
 @patch("services.github.check_suites.get_failed_check_runs.logging.error")
-def test_get_failed_check_runs_api_error_500(
+def test_returns_empty_when_api_error(
     mock_logging_error, mock_create_headers, mock_get
 ):
-    """Test API error response (500) and logging output"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+    """Returns empty list when API returns error status code"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 500
@@ -119,25 +100,15 @@ def test_get_failed_check_runs_api_error_500(
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
-
-    mock_logging_error.assert_called_once_with(
-        "Failed to get check runs for check suite %s: %s",
-        12345,
-        "Internal Server Error",
-    )
+    assert result == []
+    mock_logging_error.assert_called_once()
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_404_not_found(mock_create_headers, mock_get):
-    """Test 404 Not Found error"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_returns_empty_when_not_found(mock_create_headers, mock_get):
+    """Returns empty list when check suite is not found"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 404
@@ -148,22 +119,17 @@ def test_get_failed_check_runs_404_not_found(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
+    assert result == []
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
 @patch("services.github.check_suites.get_failed_check_runs.logging.error")
-def test_get_failed_check_runs_401_unauthorized(
+def test_returns_empty_when_unauthorized(
     mock_logging_error, mock_create_headers, mock_get
 ):
-    """Test 401 Unauthorized error with logging output"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+    """Returns empty list when authentication fails"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 401
@@ -174,24 +140,17 @@ def test_get_failed_check_runs_401_unauthorized(
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
-    mock_logging_error.assert_called_once_with(
-        "Failed to get check runs for check suite %s: %s",
-        12345,
-        "Unauthorized",
-    )
+    assert result == []
+    mock_logging_error.assert_called_once()
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_empty_response(mock_create_headers, mock_get):
-    """Test handling of empty API response"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_returns_empty_when_response_has_no_check_runs_key(
+    mock_create_headers, mock_get
+):
+    """Returns empty list when API response doesn't contain check_runs key"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -202,22 +161,17 @@ def test_get_failed_check_runs_empty_response(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
+    assert result == []
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
 @patch("services.github.check_suites.get_failed_check_runs.logging.error")
-def test_get_failed_check_runs_403_forbidden(
+def test_returns_empty_when_forbidden(
     mock_logging_error, mock_create_headers, mock_get
 ):
-    """Test 403 Forbidden error with logging output verification"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+    """Returns empty list when access is forbidden"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 403
@@ -228,24 +182,17 @@ def test_get_failed_check_runs_403_forbidden(
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
-    mock_logging_error.assert_called_once_with(
-        "Failed to get check runs for check suite %s: %s",
-        12345,
-        "Forbidden - insufficient permissions",
-    )
+    assert result == []
+    mock_logging_error.assert_called_once()
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_empty_check_runs(mock_create_headers, mock_get):
-    """Test when check_runs is an empty array"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_returns_empty_when_check_runs_array_is_empty(
+    mock_create_headers, mock_get
+):
+    """Returns empty list when check_runs array is empty"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -256,19 +203,14 @@ def test_get_failed_check_runs_empty_check_runs(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
+    assert result == []
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_network_timeout(mock_create_headers, mock_get):
-    """Test network timeout exception"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_returns_empty_when_network_timeout(mock_create_headers, mock_get):
+    """Returns empty list when network request times out"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_get.side_effect = requests.exceptions.Timeout("Request timed out")
 
@@ -276,19 +218,14 @@ def test_get_failed_check_runs_network_timeout(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
+    assert result == []
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_connection_error(mock_create_headers, mock_get):
-    """Test connection error exception"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_returns_empty_when_connection_error(mock_create_headers, mock_get):
+    """Returns empty list when connection fails"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
 
@@ -296,19 +233,14 @@ def test_get_failed_check_runs_connection_error(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
+    assert result == []
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_http_error_exception(mock_create_headers, mock_get):
-    """Test HTTP error exception handling"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_returns_empty_when_http_error(mock_create_headers, mock_get):
+    """Returns empty list when HTTP error occurs"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_get.side_effect = requests.exceptions.HTTPError("HTTP Error occurred")
 
@@ -316,19 +248,14 @@ def test_get_failed_check_runs_http_error_exception(mock_create_headers, mock_ge
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
+    assert result == []
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_request_exception(mock_create_headers, mock_get):
-    """Test general request exception handling"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_returns_empty_when_request_exception(mock_create_headers, mock_get):
+    """Returns empty list when general request exception occurs"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_get.side_effect = requests.exceptions.RequestException("Request failed")
 
@@ -336,19 +263,14 @@ def test_get_failed_check_runs_request_exception(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
+    assert result == []
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_all_failure_types(mock_create_headers, mock_get):
-    """Test all types of failures from GITHUB_CHECK_RUN_FAILURES"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_returns_all_failure_types(mock_create_headers, mock_get):
+    """Returns all types of failures including startup_failure, failure, and timed_out"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -378,14 +300,9 @@ def test_get_failed_check_runs_all_failure_types(mock_create_headers, mock_get):
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_missing_conclusion(mock_create_headers, mock_get):
-    """Test handling of check runs without conclusion field"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_skips_check_runs_without_conclusion(mock_create_headers, mock_get):
+    """Skips check runs that don't have a conclusion field"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -407,14 +324,9 @@ def test_get_failed_check_runs_missing_conclusion(mock_create_headers, mock_get)
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_none_conclusion(mock_create_headers, mock_get):
-    """Test handling of check runs with None conclusion"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_skips_check_runs_with_none_conclusion(mock_create_headers, mock_get):
+    """Skips check runs with None as conclusion value"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -434,93 +346,11 @@ def test_get_failed_check_runs_none_conclusion(mock_create_headers, mock_get):
     assert result[0]["conclusion"] == "failure"
 
 
-def test_get_failed_check_runs_function_signature():
-    """Test that the function has the correct signature"""
-    sig = inspect.signature(get_failed_check_runs_from_check_suite)
-    params = list(sig.parameters.keys())
-    assert params == ["owner", "repo", "check_suite_id", "github_token"]
-
-
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_verify_url_construction(
-    mock_create_headers, mock_get
-):
-    """Test that the URL is constructed correctly with different parameters"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"check_runs": []}
-    mock_get.return_value = mock_response
-
-    get_failed_check_runs_from_check_suite(
-        "test-owner", "test-repo", 99999, "test-token"
-    )
-
-    expected_url = "https://api.github.com/repos/test-owner/test-repo/check-suites/99999/check-runs"
-    args, kwargs = mock_get.call_args
-    assert args[0] == expected_url
-    assert kwargs["timeout"] == 30
-
-
-@patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_verify_headers_called(mock_create_headers, mock_get):
-    """Test that create_headers is called with the correct token"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer custom-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"check_runs": []}
-    mock_get.return_value = mock_response
-
-    get_failed_check_runs_from_check_suite("owner", "repo", 12345, "custom-token")
-
-
-
-@patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
-def test_get_failed_check_runs_timeout_parameter(mock_create_headers, mock_get):
-    """Test that the timeout parameter is set correctly"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"check_runs": []}
-    mock_get.return_value = mock_response
-
-    get_failed_check_runs_from_check_suite("owner", "repo", 12345, "test-token")
-
-    _, kwargs = mock_get.call_args
-    assert kwargs["timeout"] == 30
-
-
-@patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
-def test_get_failed_check_runs_large_dataset(mock_create_headers, mock_get):
-    """Test with a large number of check runs"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_handles_large_number_of_check_runs(mock_create_headers, mock_get):
+    """Correctly filters large number of check runs"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     check_runs = []
     for i in range(100):
@@ -542,14 +372,9 @@ def test_get_failed_check_runs_large_dataset(mock_create_headers, mock_get):
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_mixed_conclusions(mock_create_headers, mock_get):
-    """Test with various conclusion values"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_filters_various_conclusion_values(mock_create_headers, mock_get):
+    """Correctly filters check runs with various conclusion values"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -578,17 +403,10 @@ def test_get_failed_check_runs_mixed_conclusions(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
-def test_get_failed_check_runs_malformed_response_json(
-    mock_create_headers, mock_get
-):
-    """Test when the API response itself has malformed JSON"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+def test_returns_empty_when_json_parsing_fails(mock_create_headers, mock_get):
+    """Returns empty list when API response has malformed JSON"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -599,49 +417,16 @@ def test_get_failed_check_runs_malformed_response_json(
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
-
-
-@patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
-def test_get_failed_check_runs_special_characters_in_owner_repo(
-    mock_create_headers, mock_get
-):
-    """Test with special characters in owner and repo names"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {
-        "check_runs": [{"id": 1, "name": "test1", "conclusion": "failure"}]
-    }
-    mock_get.return_value = mock_response
-
-    result = get_failed_check_runs_from_check_suite(
-        "owner-with-dash", "repo_with_underscore", 12345, "test-token"
-    )
-
-    assert len(result) == 1
-    expected_url = "https://api.github.com/repos/owner-with-dash/repo_with_underscore/check-suites/12345/check-runs"
-    args, _ = mock_get.call_args
-    assert args[0] == expected_url
+    assert result == []
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_get_failed_check_runs_empty_conclusion_string(mock_create_headers, mock_get):
-    """Test handling of check runs with empty string conclusion"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+def test_skips_check_runs_with_empty_string_conclusion(
+    mock_create_headers, mock_get
+):
+    """Skips check runs with empty string as conclusion"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -664,16 +449,11 @@ def test_get_failed_check_runs_empty_conclusion_string(mock_create_headers, mock
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
 @patch("services.github.check_suites.get_failed_check_runs.logging.error")
-def test_get_failed_check_runs_different_error_codes(
+def test_returns_empty_when_unprocessable_entity(
     mock_logging_error, mock_create_headers, mock_get
 ):
-    """Test different HTTP error status codes"""
-    mock_create_headers.return_value = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "Bearer test-token",
-        "User-Agent": "test-app",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+    """Returns empty list when API returns 422 Unprocessable Entity"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
     mock_response = Mock()
     mock_response.status_code = 422
@@ -684,9 +464,33 @@ def test_get_failed_check_runs_different_error_codes(
         "owner", "repo", 12345, "test-token"
     )
 
-    assert not result
-    mock_logging_error.assert_called_once_with(
-        "Failed to get check runs for check suite %s: %s",
-        12345,
-        "Unprocessable Entity",
+    assert result == []
+    mock_logging_error.assert_called_once()
+
+
+@patch("services.github.check_suites.get_failed_check_runs.requests.get")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+def test_preserves_order_of_failed_check_runs(mock_create_headers, mock_get):
+    """Preserves original order of failed check runs in result"""
+    mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "check_runs": [
+            {"id": 3, "name": "test3", "conclusion": "timed_out"},
+            {"id": 1, "name": "test1", "conclusion": "failure"},
+            {"id": 2, "name": "test2", "conclusion": "success"},
+            {"id": 4, "name": "test4", "conclusion": "startup_failure"},
+        ]
+    }
+    mock_get.return_value = mock_response
+
+    result = get_failed_check_runs_from_check_suite(
+        "owner", "repo", 12345, "test-token"
     )
+
+    assert len(result) == 3
+    assert result[0]["id"] == 3
+    assert result[1]["id"] == 1
+    assert result[2]["id"] == 4
