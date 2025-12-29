@@ -22,7 +22,7 @@ def test_merge_pull_request_success(mock_put):
     )
 
     assert result is not None
-    assert result["merged"] is True
+    assert result["code"] == 200
     mock_put.assert_called_once()
     call_args = mock_put.call_args
     assert call_args[1]["json"]["merge_method"] == "squash"
