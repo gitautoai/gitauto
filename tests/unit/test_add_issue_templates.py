@@ -21,6 +21,8 @@ class TestAddIssueTemplates:
     def mock_github_setup(self):
         """Setup common GitHub mocks."""
         with patch(
+            "services.github.templates.add_issue_templates.Auth.Token"
+        ) as mock_auth_token, patch(
             "services.github.templates.add_issue_templates.Github"
         ) as mock_github_class, patch(
             "services.github.templates.add_issue_templates.get_latest_remote_commit_sha"
@@ -31,6 +33,10 @@ class TestAddIssueTemplates:
         ) as mock_uuid, patch(
             "services.github.templates.add_issue_templates.PRODUCT_ID", "gitauto"
         ):
+
+            # Setup Auth.Token mock
+            mock_auth = Mock()
+            mock_auth_token.return_value = mock_auth
 
             # Setup GitHub instance and repository
             mock_github = Mock(spec=Github)
@@ -47,6 +53,8 @@ class TestAddIssueTemplates:
             mock_uuid.return_value = "test-uuid-1234"
 
             yield {
+                "auth_token": mock_auth_token,
+                "auth": mock_auth,
                 "github_class": mock_github_class,
                 "github": mock_github,
                 "repo": mock_repo,
@@ -76,7 +84,8 @@ class TestAddIssueTemplates:
         assert result is None  # Function returns None on success
 
         # Verify GitHub client initialization
-        mocks["github_class"].assert_called_once_with(login_or_token="test-token")
+        mocks["auth_token"].assert_called_once_with("test-token")
+        mocks["github_class"].assert_called_once_with(auth=mocks["auth"])
         mocks["github"].get_repo.assert_called_once_with(
             full_name_or_id="test-owner/test-repo"
         )

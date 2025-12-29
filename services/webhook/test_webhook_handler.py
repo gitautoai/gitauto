@@ -125,10 +125,7 @@ def mock_handle_review_run():
 
 @pytest.fixture
 def mock_handle_coverage_report():
-    with patch(
-        "services.webhook.webhook_handler.handle_coverage_report",
-        new_callable=AsyncMock,
-    ) as mock:
+    with patch("services.webhook.webhook_handler.handle_coverage_report") as mock:
         mock.return_value = None
         yield mock
 

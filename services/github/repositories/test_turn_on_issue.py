@@ -12,7 +12,15 @@ def test_turn_on_issue_when_issues_already_enabled():
     full_name = "owner/repo"
     token = "test_token"
 
-    with patch("services.github.repositories.turn_on_issue.Github") as mock_github:
+    with patch(
+        "services.github.repositories.turn_on_issue.Auth.Token"
+    ) as mock_auth_token, patch(
+        "services.github.repositories.turn_on_issue.Github"
+    ) as mock_github:
+        # Setup Auth.Token mock
+        mock_auth = MagicMock()
+        mock_auth_token.return_value = mock_auth
+
         # Setup mock repository with issues already enabled
         mock_repo = MagicMock(spec=Repository)
         mock_repo.has_issues = True
@@ -24,8 +32,10 @@ def test_turn_on_issue_when_issues_already_enabled():
         # Call the function
         result = turn_on_issue(full_name, token)
 
-        # Verify Github was initialized with the token
-        mock_github.assert_called_once_with(login_or_token=token)
+        # Verify Auth.Token was initialized with the token
+        mock_auth_token.assert_called_once_with(token)
+        # Verify Github was initialized with auth
+        mock_github.assert_called_once_with(auth=mock_auth)
 
         # Verify get_repo was called with the full_name
         mock_github_instance.get_repo.assert_called_once_with(full_name_or_id=full_name)
@@ -42,7 +52,15 @@ def test_turn_on_issue_when_issues_disabled():
     full_name = "owner/repo"
     token = "test_token"
 
-    with patch("services.github.repositories.turn_on_issue.Github") as mock_github:
+    with patch(
+        "services.github.repositories.turn_on_issue.Auth.Token"
+    ) as mock_auth_token, patch(
+        "services.github.repositories.turn_on_issue.Github"
+    ) as mock_github:
+        # Setup Auth.Token mock
+        mock_auth = MagicMock()
+        mock_auth_token.return_value = mock_auth
+
         # Setup mock repository with issues disabled
         mock_repo = MagicMock(spec=Repository)
         mock_repo.has_issues = False
@@ -54,8 +72,10 @@ def test_turn_on_issue_when_issues_disabled():
         # Call the function
         result = turn_on_issue(full_name, token)
 
-        # Verify Github was initialized with the token
-        mock_github.assert_called_once_with(login_or_token=token)
+        # Verify Auth.Token was initialized with the token
+        mock_auth_token.assert_called_once_with(token)
+        # Verify Github was initialized with auth
+        mock_github.assert_called_once_with(auth=mock_auth)
 
         # Verify get_repo was called with the full_name
         mock_github_instance.get_repo.assert_called_once_with(full_name_or_id=full_name)
@@ -72,15 +92,25 @@ def test_turn_on_issue_with_github_exception():
     full_name = "owner/repo"
     token = "test_token"
 
-    with patch("services.github.repositories.turn_on_issue.Github") as mock_github:
+    with patch(
+        "services.github.repositories.turn_on_issue.Auth.Token"
+    ) as mock_auth_token, patch(
+        "services.github.repositories.turn_on_issue.Github"
+    ) as mock_github:
+        # Setup Auth.Token mock
+        mock_auth = MagicMock()
+        mock_auth_token.return_value = mock_auth
+
         # Make Github constructor raise an exception
         mock_github.side_effect = GithubException(status=401, data="Unauthorized")
 
         # Call the function - should return None due to handle_exceptions decorator
         result = turn_on_issue(full_name, token)
 
-        # Verify Github was called with the token
-        mock_github.assert_called_once_with(login_or_token=token)
+        # Verify Auth.Token was initialized with the token
+        mock_auth_token.assert_called_once_with(token)
+        # Verify Github was initialized with auth
+        mock_github.assert_called_once_with(auth=mock_auth)
 
         # Verify function returns None due to exception handling
         assert result is None
@@ -91,7 +121,15 @@ def test_turn_on_issue_with_get_repo_exception():
     full_name = "owner/repo"
     token = "test_token"
 
-    with patch("services.github.repositories.turn_on_issue.Github") as mock_github:
+    with patch(
+        "services.github.repositories.turn_on_issue.Auth.Token"
+    ) as mock_auth_token, patch(
+        "services.github.repositories.turn_on_issue.Github"
+    ) as mock_github:
+        # Setup Auth.Token mock
+        mock_auth = MagicMock()
+        mock_auth_token.return_value = mock_auth
+
         mock_github_instance = MagicMock(spec=Github)
         mock_github_instance.get_repo.side_effect = GithubException(
             status=404, data="Not Found"
@@ -101,8 +139,10 @@ def test_turn_on_issue_with_get_repo_exception():
         # Call the function - should return None due to handle_exceptions decorator
         result = turn_on_issue(full_name, token)
 
-        # Verify Github was initialized with the token
-        mock_github.assert_called_once_with(login_or_token=token)
+        # Verify Auth.Token was initialized with the token
+        mock_auth_token.assert_called_once_with(token)
+        # Verify Github was initialized with auth
+        mock_github.assert_called_once_with(auth=mock_auth)
 
         # Verify get_repo was called
         mock_github_instance.get_repo.assert_called_once_with(full_name_or_id=full_name)
@@ -116,7 +156,15 @@ def test_turn_on_issue_with_edit_exception():
     full_name = "owner/repo"
     token = "test_token"
 
-    with patch("services.github.repositories.turn_on_issue.Github") as mock_github:
+    with patch(
+        "services.github.repositories.turn_on_issue.Auth.Token"
+    ) as mock_auth_token, patch(
+        "services.github.repositories.turn_on_issue.Github"
+    ) as mock_github:
+        # Setup Auth.Token mock
+        mock_auth = MagicMock()
+        mock_auth_token.return_value = mock_auth
+
         # Setup mock repository with issues disabled
         mock_repo = MagicMock(spec=Repository)
         mock_repo.has_issues = False
@@ -129,8 +177,10 @@ def test_turn_on_issue_with_edit_exception():
         # Call the function - should return None due to handle_exceptions decorator
         result = turn_on_issue(full_name, token)
 
-        # Verify Github was initialized with the token
-        mock_github.assert_called_once_with(login_or_token=token)
+        # Verify Auth.Token was initialized with the token
+        mock_auth_token.assert_called_once_with(token)
+        # Verify Github was initialized with auth
+        mock_github.assert_called_once_with(auth=mock_auth)
 
         # Verify get_repo was called
         mock_github_instance.get_repo.assert_called_once_with(full_name_or_id=full_name)
@@ -147,7 +197,15 @@ def test_turn_on_issue_with_empty_full_name():
     full_name = ""
     token = "test_token"
 
-    with patch("services.github.repositories.turn_on_issue.Github") as mock_github:
+    with patch(
+        "services.github.repositories.turn_on_issue.Auth.Token"
+    ) as mock_auth_token, patch(
+        "services.github.repositories.turn_on_issue.Github"
+    ) as mock_github:
+        # Setup Auth.Token mock
+        mock_auth = MagicMock()
+        mock_auth_token.return_value = mock_auth
+
         mock_github_instance = MagicMock(spec=Github)
         mock_github_instance.get_repo.side_effect = GithubException(
             status=400, data="Bad Request"
@@ -157,8 +215,10 @@ def test_turn_on_issue_with_empty_full_name():
         # Call the function - should return None due to handle_exceptions decorator
         result = turn_on_issue(full_name, token)
 
-        # Verify Github was initialized with the token
-        mock_github.assert_called_once_with(login_or_token=token)
+        # Verify Auth.Token was initialized with the token
+        mock_auth_token.assert_called_once_with(token)
+        # Verify Github was initialized with auth
+        mock_github.assert_called_once_with(auth=mock_auth)
 
         # Verify get_repo was called with empty string
         mock_github_instance.get_repo.assert_called_once_with(full_name_or_id=full_name)
@@ -172,7 +232,15 @@ def test_turn_on_issue_with_empty_token():
     full_name = "owner/repo"
     token = ""
 
-    with patch("services.github.repositories.turn_on_issue.Github") as mock_github:
+    with patch(
+        "services.github.repositories.turn_on_issue.Auth.Token"
+    ) as mock_auth_token, patch(
+        "services.github.repositories.turn_on_issue.Github"
+    ) as mock_github:
+        # Setup Auth.Token mock
+        mock_auth = MagicMock()
+        mock_auth_token.return_value = mock_auth
+
         mock_github_instance = MagicMock(spec=Github)
         mock_repo = MagicMock(spec=Repository)
         mock_repo.has_issues = False
@@ -182,8 +250,10 @@ def test_turn_on_issue_with_empty_token():
         # Call the function
         result = turn_on_issue(full_name, token)
 
-        # Verify Github was initialized with empty token
-        mock_github.assert_called_once_with(login_or_token=token)
+        # Verify Auth.Token was initialized with empty token
+        mock_auth_token.assert_called_once_with(token)
+        # Verify Github was initialized with auth
+        mock_github.assert_called_once_with(auth=mock_auth)
 
         # Verify get_repo was called
         mock_github_instance.get_repo.assert_called_once_with(full_name_or_id=full_name)
@@ -197,9 +267,7 @@ def test_turn_on_issue_with_empty_token():
 
 def test_turn_on_issue_with_none_parameters():
     """Test turn_on_issue with None parameters."""
-    # This test verifies that the function handles None parameters gracefully
-    # The handle_exceptions decorator should catch any TypeError or AttributeError
-    result = turn_on_issue(None, None)
+    result = turn_on_issue(None, None)  # type: ignore
     assert result is None
 
 
@@ -213,7 +281,15 @@ def test_turn_on_issue_with_different_repo_formats():
     ]
 
     for full_name in test_cases:
-        with patch("services.github.repositories.turn_on_issue.Github") as mock_github:
+        with patch(
+            "services.github.repositories.turn_on_issue.Auth.Token"
+        ) as mock_auth_token, patch(
+            "services.github.repositories.turn_on_issue.Github"
+        ) as mock_github:
+            # Setup Auth.Token mock
+            mock_auth = MagicMock()
+            mock_auth_token.return_value = mock_auth
+
             # Setup mock repository with issues disabled
             mock_repo = MagicMock(spec=Repository)
             mock_repo.has_issues = False
