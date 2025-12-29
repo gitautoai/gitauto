@@ -1,6 +1,8 @@
 import inspect
 from unittest.mock import Mock, patch
 
+
+from services.github.check_suites.get_failed_check_runs import get_failed_check_runs_from_check_suite
 import requests
 
 
