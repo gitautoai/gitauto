@@ -123,8 +123,8 @@ describe('Test', () => {});
 
 
 def test_merge_test_file_headers_php():
-    file_content = """<?php
-use PHPUnit\\Framework\\TestCase;
+    file_content = r"""<?php
+use PHPUnit\Framework\TestCase;
 
 class MyTest extends TestCase {
     public function testSomething() {
@@ -133,9 +133,9 @@ class MyTest extends TestCase {
 }
 """
     result = merge_test_file_headers(file_content, "MyTest.php")
-    expected = """// phpcs:disable unused-variable
+    expected = r"""// phpcs:disable unused-variable
 <?php
-use PHPUnit\\Framework\\TestCase;
+use PHPUnit\Framework\TestCase;
 
 class MyTest extends TestCase {
     public function testSomething() {
