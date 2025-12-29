@@ -2,8 +2,7 @@ import inspect
 from unittest.mock import Mock, patch
 
 import requests
-from services.github.check_suites.get_failed_check_runs import \
-    get_failed_check_runs_from_check_suite
+
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
