@@ -237,7 +237,7 @@ def test_get_failed_check_runs_403_forbidden(
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
 def test_get_failed_check_runs_empty_check_runs(mock_create_headers, mock_get):
     """Test when check_runs is an empty array"""
     mock_create_headers.return_value = {
