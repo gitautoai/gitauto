@@ -7,7 +7,7 @@ from services.github.check_suites.get_failed_check_runs import \
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
 def test_get_failed_check_runs_success(mock_create_headers, mock_get):
     """Test successful retrieval of failed check runs"""
     mock_create_headers.return_value = {
@@ -40,7 +40,7 @@ def test_get_failed_check_runs_success(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
 def test_get_failed_check_runs_only_failures(mock_create_headers, mock_get):
     """Test filtering only failed check runs"""
     mock_create_headers.return_value = {
