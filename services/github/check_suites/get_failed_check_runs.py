@@ -22,8 +22,7 @@ def get_failed_check_runs_from_check_suite(
             check_suite_id,
             response.text,
         )
-        empty_result: list[CheckRun] = []
-        return empty_result
+        return []
 
     data = response.json()
     check_runs: list[CheckRun] = data.get("check_runs", [])
