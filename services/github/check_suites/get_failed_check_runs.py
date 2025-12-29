@@ -1,4 +1,5 @@
 import requests
+import logging
 
 from config import GITHUB_API_URL, GITHUB_CHECK_RUN_FAILURES
 from services.github.types.check_run import CheckRun
