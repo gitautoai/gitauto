@@ -88,9 +88,14 @@ def handle_check_suite(
         return
 
     # Check if this is a GitAuto PR by branch name (early return)
+    # head_branch can be None when:
+    # - Check suite runs on a tag push (tags don't have branches)
+    # - Check suite runs on a deleted branch
+    # - Check suite runs on a direct commit without PR
+    # - Orphan commits or detached HEAD state
     check_suite = payload["check_suite"]
     head_branch = check_suite["head_branch"]
-    if not head_branch.startswith(PRODUCT_ID):
+    if not head_branch or not head_branch.startswith(PRODUCT_ID):
         return
 
     # Get failed check runs from the check suite
