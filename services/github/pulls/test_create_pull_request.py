@@ -65,7 +65,7 @@ def test_create_pull_request_success(
 
     result = create_pull_request("Test body", "Test title", base_args)
 
-    assert result == "https://github.com/owner/repo/pull/123"
+    assert result == ("https://github.com/owner/repo/pull/123", 123)
     mock_post.assert_called_once_with(
         url="https://api.github.com/repos/gitautoai/gitauto/pulls",
         headers={"Authorization": "Bearer token"},
@@ -89,9 +89,7 @@ def test_create_pull_request_success(
 @patch("services.github.pulls.create_pull_request.add_reviewers")
 @patch("services.github.pulls.create_pull_request.create_headers")
 @patch("services.github.pulls.create_pull_request.requests.post")
-@patch("builtins.print")
 def test_create_pull_request_422_error(
-    mock_print,
     mock_post,
     mock_create_headers,
     mock_add_reviewers,
@@ -101,9 +99,14 @@ def test_create_pull_request_422_error(
     mock_post.return_value = mock_422_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
 
-    result = create_pull_request("Test body", "Test title", base_args)
+    with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+        create_pull_request("Test body", "Test title", base_args)
 
-    assert result is None
+    assert "422 Client Error: Unprocessable Entity" in str(exc_info.value)
+    assert "no commits between the base branch and the working branch" in str(
+        exc_info.value
+    )
+
     mock_post.assert_called_once_with(
         url="https://api.github.com/repos/gitautoai/gitauto/pulls",
         headers={"Authorization": "Bearer token"},
@@ -120,9 +123,6 @@ def test_create_pull_request_422_error(
     mock_422_response.json.assert_not_called()
     mock_add_reviewers.assert_not_called()
 
-    expected_msg = "create_pull_request encountered an HTTPError: 422 Client Error: Unprocessable Entity for url: https://api.github.com/repos/owner/repo/pulls, which is because no commits between the base branch and the working branch."
-    mock_print.assert_called_once_with(expected_msg)
-
 
 @patch("services.github.pulls.create_pull_request.add_reviewers")
 @patch("services.github.pulls.create_pull_request.create_headers")
@@ -137,9 +137,9 @@ def test_create_pull_request_http_error(
     mock_post.return_value = mock_error_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
 
-    result = create_pull_request("Test body", "Test title", base_args)
+    with pytest.raises(requests.HTTPError):
+        create_pull_request("Test body", "Test title", base_args)
 
-    assert result is None
     mock_post.assert_called_once_with(
         url="https://api.github.com/repos/gitautoai/gitauto/pulls",
         headers={"Authorization": "Bearer token"},
@@ -171,9 +171,9 @@ def test_create_pull_request_json_error(
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
     mock_response.json.side_effect = ValueError("Invalid JSON")
 
-    result = create_pull_request("Test body", "Test title", base_args)
+    with pytest.raises(ValueError):
+        create_pull_request("Test body", "Test title", base_args)
 
-    assert result is None
     mock_post.assert_called_once()
     mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_response.raise_for_status.assert_called_once()
@@ -195,9 +195,11 @@ def test_create_pull_request_add_reviewers_error(
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
     mock_add_reviewers.side_effect = Exception("Reviewer error")
 
-    result = create_pull_request("Test body", "Test title", base_args)
+    with pytest.raises(Exception) as exc_info:
+        create_pull_request("Test body", "Test title", base_args)
 
-    assert result is None
+    assert "Reviewer error" in str(exc_info.value)
+
     mock_post.assert_called_once()
     mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_response.raise_for_status.assert_called_once()
@@ -219,7 +221,7 @@ def test_create_pull_request_empty_strings(
 
     result = create_pull_request("", "", base_args)
 
-    assert result == "https://github.com/owner/repo/pull/123"
+    assert result == ("https://github.com/owner/repo/pull/123", 123)
     mock_post.assert_called_once_with(
         url="https://api.github.com/repos/gitautoai/gitauto/pulls",
         headers={"Authorization": "Bearer token"},
@@ -245,7 +247,7 @@ def test_create_pull_request_different_branches(
 
     result = create_pull_request("Feature body", "Feature title", base_args)
 
-    assert result == "https://github.com/owner/repo/pull/123"
+    assert result == ("https://github.com/owner/repo/pull/123", 123)
     mock_post.assert_called_once_with(
         url="https://api.github.com/repos/gitautoai/gitauto/pulls",
         headers={"Authorization": "Bearer token"},
@@ -268,9 +270,9 @@ def test_create_pull_request_requests_exception(
     mock_post.side_effect = requests.RequestException("Network error")
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
 
-    result = create_pull_request("Test body", "Test title", base_args)
+    with pytest.raises(requests.RequestException):
+        create_pull_request("Test body", "Test title", base_args)
 
-    assert result is None
     mock_post.assert_called_once()
     mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_add_reviewers.assert_not_called()
@@ -284,26 +286,13 @@ def test_create_pull_request_create_headers_exception(
 ):
     mock_create_headers.side_effect = Exception("Header creation error")
 
-    result = create_pull_request("Test body", "Test title", base_args)
+    with pytest.raises(Exception) as exc_info:
+        create_pull_request("Test body", "Test title", base_args)
 
-    assert result is None
+    assert "Header creation error" in str(exc_info.value)
+
     mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_post.assert_not_called()
     mock_add_reviewers.assert_not_called()
 
 
-@patch("services.github.pulls.create_pull_request.add_reviewers")
-@patch("services.github.pulls.create_pull_request.create_headers")
-@patch("services.github.pulls.create_pull_request.requests.post")
-def test_create_pull_request_key_error_in_base_args(
-    mock_post, mock_create_headers, mock_add_reviewers, test_owner, test_repo
-):
-    mock_create_headers.return_value = {"Authorization": "Bearer token"}
-    incomplete_base_args = {"owner": test_owner, "repo": test_repo}
-
-    result = create_pull_request("Test body", "Test title", incomplete_base_args)
-
-    assert result is None
-    mock_create_headers.assert_not_called()
-    mock_post.assert_not_called()
-    mock_add_reviewers.assert_not_called()

@@ -1,15 +1,14 @@
 from unittest.mock import Mock, patch
 
 import requests
-from services.github.check_suites.get_failed_check_runs import \
-    get_failed_check_runs_from_check_suite
+from services.github.check_suites.get_failed_check_runs import (
+    get_failed_check_runs_from_check_suite,
+)
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_returns_failed_check_runs_when_mixed_outcomes(
-    mock_create_headers, mock_get
-):
+def test_returns_failed_check_runs_when_mixed_outcomes(mock_create_headers, mock_get):
     """Returns only failed check runs when suite includes failed and non-failed runs"""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
@@ -85,9 +84,7 @@ def test_returns_empty_when_no_failures(mock_create_headers, mock_get):
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
 @patch("builtins.print")
-def test_returns_empty_when_api_error(
-    mock_print, mock_create_headers, mock_get
-):
+def test_returns_empty_when_api_error(mock_print, mock_create_headers, mock_get):
     """Returns empty list when API returns error status code"""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
@@ -125,9 +122,7 @@ def test_returns_empty_when_not_found(mock_create_headers, mock_get):
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
 @patch("builtins.print")
-def test_returns_empty_when_unauthorized(
-    mock_print, mock_create_headers, mock_get
-):
+def test_returns_empty_when_unauthorized(mock_print, mock_create_headers, mock_get):
     """Returns empty list when authentication fails"""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
@@ -167,9 +162,7 @@ def test_returns_empty_when_response_has_no_check_runs_key(
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
 @patch("builtins.print")
-def test_returns_empty_when_forbidden(
-    mock_print, mock_create_headers, mock_get
-):
+def test_returns_empty_when_forbidden(mock_print, mock_create_headers, mock_get):
     """Returns empty list when access is forbidden"""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
@@ -188,9 +181,7 @@ def test_returns_empty_when_forbidden(
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_returns_empty_when_check_runs_array_is_empty(
-    mock_create_headers, mock_get
-):
+def test_returns_empty_when_check_runs_array_is_empty(mock_create_headers, mock_get):
     """Returns empty list when check_runs array is empty"""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
@@ -422,9 +413,7 @@ def test_returns_empty_when_json_parsing_fails(mock_create_headers, mock_get):
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-def test_skips_check_runs_with_empty_string_conclusion(
-    mock_create_headers, mock_get
-):
+def test_skips_check_runs_with_empty_string_conclusion(mock_create_headers, mock_get):
     """Skips check runs with empty string as conclusion"""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
