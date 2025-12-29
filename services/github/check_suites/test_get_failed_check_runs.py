@@ -84,9 +84,9 @@ def test_returns_empty_when_no_failures(mock_create_headers, mock_get):
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-@patch("services.github.check_suites.get_failed_check_runs.logging.error")
+@patch("builtins.print")
 def test_returns_empty_when_api_error(
-    mock_logging_error, mock_create_headers, mock_get
+    mock_print, mock_create_headers, mock_get
 ):
     """Returns empty list when API returns error status code"""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
@@ -101,7 +101,7 @@ def test_returns_empty_when_api_error(
     )
 
     assert result == []
-    mock_logging_error.assert_called_once()
+    mock_print.assert_called_once()
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -124,9 +124,9 @@ def test_returns_empty_when_not_found(mock_create_headers, mock_get):
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-@patch("services.github.check_suites.get_failed_check_runs.logging.error")
+@patch("builtins.print")
 def test_returns_empty_when_unauthorized(
-    mock_logging_error, mock_create_headers, mock_get
+    mock_print, mock_create_headers, mock_get
 ):
     """Returns empty list when authentication fails"""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
@@ -141,7 +141,7 @@ def test_returns_empty_when_unauthorized(
     )
 
     assert result == []
-    mock_logging_error.assert_called_once()
+    mock_print.assert_called_once()
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -166,9 +166,9 @@ def test_returns_empty_when_response_has_no_check_runs_key(
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-@patch("services.github.check_suites.get_failed_check_runs.logging.error")
+@patch("builtins.print")
 def test_returns_empty_when_forbidden(
-    mock_logging_error, mock_create_headers, mock_get
+    mock_print, mock_create_headers, mock_get
 ):
     """Returns empty list when access is forbidden"""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
@@ -183,7 +183,7 @@ def test_returns_empty_when_forbidden(
     )
 
     assert result == []
-    mock_logging_error.assert_called_once()
+    mock_print.assert_called_once()
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -448,9 +448,9 @@ def test_skips_check_runs_with_empty_string_conclusion(
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
 @patch("services.github.check_suites.get_failed_check_runs.create_headers")
-@patch("services.github.check_suites.get_failed_check_runs.logging.error")
+@patch("builtins.print")
 def test_returns_empty_when_unprocessable_entity(
-    mock_logging_error, mock_create_headers, mock_get
+    mock_print, mock_create_headers, mock_get
 ):
     """Returns empty list when API returns 422 Unprocessable Entity"""
     mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
@@ -465,7 +465,7 @@ def test_returns_empty_when_unprocessable_entity(
     )
 
     assert result == []
-    mock_logging_error.assert_called_once()
+    mock_print.assert_called_once()
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")

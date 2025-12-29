@@ -1,6 +1,5 @@
-import logging
-
 import requests
+
 from config import GITHUB_API_URL, GITHUB_CHECK_RUN_FAILURES
 from services.github.types.check_run import CheckRun
 from services.github.utils.create_headers import create_headers
@@ -17,15 +16,14 @@ def get_failed_check_runs_from_check_suite(
     response = requests.get(url, headers=headers, timeout=30)
 
     if response.status_code != 200:
-        logging.error(
-            "Failed to get check runs for check suite %s: %s",
-            check_suite_id,
-            response.text,
+        print(
+            f"Failed to get check runs for check suite {check_suite_id}: {response.text}"
         )
-        return []
+        empty_result: list[CheckRun] = []
+        return empty_result
 
     data = response.json()
-    check_runs = data.get("check_runs", [])
+    check_runs: list[CheckRun] = data.get("check_runs", [])
 
     failed_check_runs = [
         cr for cr in check_runs if cr.get("conclusion") in GITHUB_CHECK_RUN_FAILURES
