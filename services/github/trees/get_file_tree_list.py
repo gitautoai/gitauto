@@ -21,7 +21,7 @@ def get_file_tree_list(base_args: BaseArgs, dir_path: str = "", **_kwargs):
     files = []
     dirs = []
 
-    if not dir_path:
+    if not dir_path or dir_path == ".":
         # Show root directory contents (no "/" in path)
         for item in tree_items:
             path = item["path"]
