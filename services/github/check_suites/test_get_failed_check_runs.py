@@ -662,7 +662,7 @@ def test_get_failed_check_runs_empty_conclusion_string(mock_create_headers, mock
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
 @patch("services.github.check_suites.get_failed_check_runs.logging.error")
 def test_get_failed_check_runs_different_error_codes(
     mock_logging_error, mock_create_headers, mock_get
