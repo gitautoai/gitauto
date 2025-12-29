@@ -183,7 +183,7 @@ def test_get_failed_check_runs_401_unauthorized(
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
 def test_get_failed_check_runs_empty_response(mock_create_headers, mock_get):
     """Test handling of empty API response"""
     mock_create_headers.return_value = {
@@ -206,7 +206,7 @@ def test_get_failed_check_runs_empty_response(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
 @patch("services.github.check_suites.get_failed_check_runs.logging.error")
 def test_get_failed_check_runs_403_forbidden(
     mock_logging_error, mock_create_headers, mock_get
