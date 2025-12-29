@@ -129,7 +129,7 @@ def test_get_failed_check_runs_api_error_500(
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
 def test_get_failed_check_runs_404_not_found(mock_create_headers, mock_get):
     """Test 404 Not Found error"""
     mock_create_headers.return_value = {
