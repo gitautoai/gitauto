@@ -7,7 +7,7 @@ from services.github.check_suites.get_failed_check_runs import \
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_success(mock_create_headers, mock_get):
     """Test successful retrieval of failed check runs"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -40,7 +40,7 @@ def test_get_failed_check_runs_success(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_only_failures(mock_create_headers, mock_get):
     """Test filtering only failed check runs"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -64,7 +64,7 @@ def test_get_failed_check_runs_only_failures(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_no_failures(mock_create_headers, mock_get):
     """Test when there are no failed check runs"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -87,7 +87,7 @@ def test_get_failed_check_runs_no_failures(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 @patch("services.github.check_suites.get_failed_check_runs.logging.error")
 def test_get_failed_check_runs_api_error_500(
     mock_logging_error, mock_create_headers, mock_get
@@ -114,7 +114,7 @@ def test_get_failed_check_runs_api_error_500(
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_404_not_found(mock_create_headers, mock_get):
     """Test 404 Not Found error"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -132,7 +132,7 @@ def test_get_failed_check_runs_404_not_found(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 @patch("services.github.check_suites.get_failed_check_runs.logging.error")
 def test_get_failed_check_runs_401_unauthorized(
     mock_logging_error, mock_create_headers, mock_get
@@ -158,7 +158,7 @@ def test_get_failed_check_runs_401_unauthorized(
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_empty_response(mock_create_headers, mock_get):
     """Test handling of empty API response"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -176,7 +176,7 @@ def test_get_failed_check_runs_empty_response(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 @patch("services.github.check_suites.get_failed_check_runs.logging.error")
 def test_get_failed_check_runs_403_forbidden(
     mock_logging_error, mock_create_headers, mock_get
@@ -202,7 +202,7 @@ def test_get_failed_check_runs_403_forbidden(
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_empty_check_runs(mock_create_headers, mock_get):
     """Test when check_runs is an empty array"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -220,7 +220,7 @@ def test_get_failed_check_runs_empty_check_runs(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_network_timeout(mock_create_headers, mock_get):
     """Test network timeout exception"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -235,7 +235,7 @@ def test_get_failed_check_runs_network_timeout(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_connection_error(mock_create_headers, mock_get):
     """Test connection error exception"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -250,7 +250,7 @@ def test_get_failed_check_runs_connection_error(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_http_error_exception(mock_create_headers, mock_get):
     """Test HTTP error exception handling"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -265,7 +265,7 @@ def test_get_failed_check_runs_http_error_exception(mock_create_headers, mock_ge
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_request_exception(mock_create_headers, mock_get):
     """Test general request exception handling"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -280,7 +280,7 @@ def test_get_failed_check_runs_request_exception(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_all_failure_types(mock_create_headers, mock_get):
     """Test all types of failures from GITHUB_CHECK_RUN_FAILURES"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -312,7 +312,7 @@ def test_get_failed_check_runs_all_failure_types(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_missing_conclusion(mock_create_headers, mock_get):
     """Test handling of check runs without conclusion field"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -336,7 +336,7 @@ def test_get_failed_check_runs_missing_conclusion(mock_create_headers, mock_get)
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_none_conclusion(mock_create_headers, mock_get):
     """Test handling of check runs with None conclusion"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -367,7 +367,7 @@ def test_get_failed_check_runs_function_signature():
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_verify_url_construction(
     mock_create_headers, mock_get
 ):
@@ -392,7 +392,7 @@ def test_get_failed_check_runs_verify_url_construction(
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_verify_headers_called(mock_create_headers, mock_get):
     """Test that create_headers is called with the correct token"""
     mock_create_headers.return_value = {"Authorization": "Bearer custom-token"}
@@ -413,7 +413,7 @@ def test_get_failed_check_runs_verify_headers_called(mock_create_headers, mock_g
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_timeout_parameter(mock_create_headers, mock_get):
     """Test that the timeout parameter is set correctly"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -430,7 +430,7 @@ def test_get_failed_check_runs_timeout_parameter(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_large_dataset(mock_create_headers, mock_get):
     """Test with a large number of check runs"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -454,7 +454,7 @@ def test_get_failed_check_runs_large_dataset(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_mixed_conclusions(mock_create_headers, mock_get):
     """Test with various conclusion values"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -486,7 +486,7 @@ def test_get_failed_check_runs_mixed_conclusions(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_malformed_response_json(
     mock_create_headers, mock_get
 ):
@@ -506,7 +506,7 @@ def test_get_failed_check_runs_malformed_response_json(
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_special_characters_in_owner_repo(
     mock_create_headers, mock_get
 ):
@@ -534,7 +534,7 @@ def test_get_failed_check_runs_special_characters_in_owner_repo(
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 def test_get_failed_check_runs_empty_conclusion_string(mock_create_headers, mock_get):
     """Test handling of check runs with empty string conclusion"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -558,7 +558,7 @@ def test_get_failed_check_runs_empty_conclusion_string(mock_create_headers, mock
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.check_suites.get_failed_check_runs.create_headers")
+@patch("services.github.utils.create_headers.create_headers")
 @patch("services.github.check_suites.get_failed_check_runs.logging.error")
 def test_get_failed_check_runs_different_error_codes(
     mock_logging_error, mock_create_headers, mock_get
