@@ -111,9 +111,7 @@ def test_get_pull_request_commits_http_error():
 
         mock_response = MagicMock()
         mock_response.status_code = 404
-        http_error = requests.exceptions.HTTPError(  # pylint: disable=no-member
-            "404 Client Error"
-        )
+        http_error = requests.exceptions.HTTPError("404 Client Error")
         http_error.response = mock_response
         mock_response.raise_for_status.side_effect = http_error
 
@@ -132,11 +130,7 @@ def test_get_pull_request_commits_network_error():
         "services.github.pulls.get_pull_request_commits.create_headers"
     ) as mock_headers:
 
-        mock_get.side_effect = (
-            requests.exceptions.ConnectionError(  # pylint: disable=no-member
-                "Network error"
-            )
-        )
+        mock_get.side_effect = requests.exceptions.ConnectionError("Network error")
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
         result = get_pull_request_commits("owner", "repo", 123, "test_token")

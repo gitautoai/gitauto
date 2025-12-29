@@ -11,6 +11,11 @@ PRICING_URL = f"{BASE_URL}/pricing{PARAMS}"
 SETTINGS_RULES_URL = f"{BASE_URL}/settings/rules{PARAMS}"
 SETTINGS_TRIGGERS_URL = f"{BASE_URL}/settings/triggers{PARAMS}"
 
+# GitAuto documentation URLs
+DOC_URLS = {
+    "AUTO_MERGE": f"{BASE_URL}/docs/actions/auto-merge",
+}
+
 # External links
 PRODUCT_DEMO_URL = "https://www.youtube.com/watch?v=wnIi73WR1kE"
 PRODUCT_LINKEDIN_URL = "https://www.linkedin.com/company/gitauto/"

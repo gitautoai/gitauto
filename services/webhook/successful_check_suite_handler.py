@@ -1,6 +1,7 @@
 from typing import cast
 
 from config import PRODUCT_ID
+from constants.urls import DOC_URLS
 from services.github.comments.create_comment import create_comment
 from services.github.commits.check_commit_has_skip_ci import check_commit_has_skip_ci
 from services.github.commits.create_empty_commit import create_empty_commit
@@ -9,6 +10,7 @@ from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.merge_pull_request import MergeMethod, merge_pull_request
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
+from services.slack.slack_notify import slack_notify
 from services.supabase.client import supabase
 from services.supabase.repository_features.get_repository_features import (
     get_repository_features,
@@ -87,7 +89,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         msg = (
             "Auto-merge blocked: last commit has [skip ci], triggering tests instead..."
         )
-
         print(msg)
         create_comment(
             owner=owner_name,
@@ -96,6 +97,8 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             issue_number=pr_number,
             body=msg,
         )
+        slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
+        slack_notify(slack_msg)
 
         sender = payload["sender"]
         base_args: BaseArgs = {
@@ -139,6 +142,8 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     if not full_pr:
         msg = f"Failed to fetch full PR details for #{pr_number}"
         print(msg)
+        slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
+        slack_notify(slack_msg)
         return
 
     # Get PR files
@@ -163,6 +168,8 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
                 issue_number=pr_number,
                 body=msg,
             )
+            slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
+            slack_notify(slack_msg)
             return
 
     # Check mergeable_state - allow "clean" and "blocked" (blocked = missing reviews, which we bypass)
@@ -184,16 +191,34 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             issue_number=pr_number,
             body=msg,
         )
+        slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
+        slack_notify(slack_msg)
         return
 
     # All conditions met - merge the PR
     merge_method = cast(MergeMethod, repo_features.get("merge_method", "merge"))
     msg = f"Auto-merging PR #{pr_number} in {owner_name}/{repo_name} with method={merge_method}"
     print(msg)
-    merge_pull_request(
+    result = merge_pull_request(
         owner=owner_name,
         repo=repo_name,
         pull_number=pr_number,
         token=token,
         merge_method=merge_method,
     )
+
+    if result and isinstance(result, dict) and result.get("code") == 405:
+        msg = (
+            f"Auto-merge blocked by branch protection: {result.get('message')}\n\n"
+            f"See {DOC_URLS['AUTO_MERGE']}"
+        )
+        print(msg)
+        create_comment(
+            owner=owner_name,
+            repo=repo_name,
+            token=token,
+            issue_number=pr_number,
+            body=msg,
+        )
+        slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
+        slack_notify(slack_msg)
