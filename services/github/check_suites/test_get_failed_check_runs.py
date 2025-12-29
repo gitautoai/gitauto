@@ -320,7 +320,7 @@ def test_get_failed_check_runs_http_error_exception(mock_create_headers, mock_ge
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
 def test_get_failed_check_runs_request_exception(mock_create_headers, mock_get):
     """Test general request exception handling"""
     mock_create_headers.return_value = {
