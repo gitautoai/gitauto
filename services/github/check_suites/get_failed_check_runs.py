@@ -1,11 +1,10 @@
 import logging
 
-from utils.error.handle_exceptions import handle_exceptions
-
 import requests
 from config import GITHUB_API_URL, GITHUB_CHECK_RUN_FAILURES
-from services.github.utils.create_headers import create_headers
 from services.github.types.check_run import CheckRun
+from services.github.utils.create_headers import create_headers
+from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=[])
@@ -29,7 +28,9 @@ def get_failed_check_runs_from_check_suite(
     check_runs = data.get("check_runs", [])
 
     failed_check_runs = [
-        run for run in check_runs if run.get("conclusion") in GITHUB_CHECK_RUN_FAILURES
+        check_run
+        for check_run in check_runs
+        if check_run.get("conclusion") in GITHUB_CHECK_RUN_FAILURES
     ]
 
     return failed_check_runs
