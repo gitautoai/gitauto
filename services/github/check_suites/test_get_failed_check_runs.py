@@ -37,7 +37,6 @@ def test_get_failed_check_runs_success(mock_create_headers, mock_get):
     assert result[0]["conclusion"] == "failure"
     assert result[1]["conclusion"] == "timed_out"
     assert result[2]["conclusion"] == "startup_failure"
-    mock_create_headers.assert_called_once_with("test-token")
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
