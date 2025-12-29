@@ -25,7 +25,7 @@ def get_failed_check_runs_from_check_suite(
         return []
 
     data = response.json()
-    check_runs: list[CheckRun] = data.get("check_runs", [])
+    check_runs = data.get("check_runs", [])
 
     failed_check_runs = [
         cr for cr in check_runs if cr.get("conclusion") in GITHUB_CHECK_RUN_FAILURES
