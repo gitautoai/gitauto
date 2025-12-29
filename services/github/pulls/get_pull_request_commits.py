@@ -16,7 +16,7 @@ def get_pull_request_commits(owner: str, repo: str, pull_number: int, token: str
 
     while True:
         params = {"per_page": PER_PAGE, "page": page}
-        response = requests.get(  # pylint: disable=no-member
+        response = requests.get(
             url=url, headers=headers, params=params, timeout=TIMEOUT
         )
         response.raise_for_status()

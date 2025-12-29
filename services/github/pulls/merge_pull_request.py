@@ -24,6 +24,16 @@ def merge_pull_request(
     data = {"merge_method": merge_method}
 
     response = requests.put(url=url, headers=headers, json=data, timeout=TIMEOUT)
+
+    if response.status_code == 405:
+        error_detail = response.json().get(
+            "message", "Branch protection rule preventing merge"
+        )
+        print(
+            f"Branch protection preventing merge for {owner}/{repo} PR #{pull_number}: {error_detail}"
+        )
+        return {"code": 405, "message": error_detail}
+
     response.raise_for_status()
 
-    return response.json()
+    return {"code": 200, "message": ""}
