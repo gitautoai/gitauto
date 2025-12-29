@@ -6,8 +6,8 @@ from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | None:
+@handle_exceptions(raise_on_error=True)
+def create_pull_request(body: str, title: str, base_args: BaseArgs):
     """https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request"""
     owner, repo, base, head, token = (
         base_args["owner"],
@@ -24,13 +24,15 @@ def create_pull_request(body: str, title: str, base_args: BaseArgs) -> str | Non
     )
     if response.status_code == 422:
         msg = f"{create_pull_request.__name__} encountered an HTTPError: 422 Client Error: Unprocessable Entity for url: {response.url}, which is because no commits between the base branch and the working branch."
-        print(msg)
-        return None
+        raise requests.exceptions.HTTPError(msg)
+
     response.raise_for_status()
     pr_data = response.json()
+    pr_url: str = pr_data["html_url"]
+    pr_number: int = pr_data["number"]
 
     # Add reviewers to the pull request
-    base_args["pr_number"] = pr_data["number"]
+    base_args["pr_number"] = pr_number
     add_reviewers(base_args=base_args)
 
-    return pr_data["html_url"]
+    return pr_url, pr_number

@@ -6,7 +6,7 @@ import time
 from typing import Literal, cast
 
 # Local imports
-from config import PRODUCT_ID, PR_BODY_STARTS_WITH
+from config import GITHUB_API_URL, PRODUCT_ID, PR_BODY_STARTS_WITH
 from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.chat_with_agent import chat_with_agent
 from services.resend.send_email import send_email
@@ -25,15 +25,18 @@ from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.commits.get_latest_remote_commit_sha import (
     get_latest_remote_commit_sha,
 )
+from services.github.commits.replace_remote_file import replace_remote_file_content
+from services.github.files.get_raw_content import get_raw_content
 from services.github.files.get_remote_file_content_by_url import (
     get_remote_file_content_by_url,
 )
 from services.github.markdown.render_text import render_text
 from services.github.pulls.create_pull_request import create_pull_request
+from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.reactions.add_reaction_to_issue import add_reaction_to_issue
 from services.github.types.github_types import GitHubLabeledPayload
-from services.jira.types import JiraPayload
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
+from services.jira.types import JiraPayload
 
 # Local imports (Jira, OpenAI, Slack)
 from services.jira.deconstruct_jira_payload import deconstruct_jira_payload
@@ -53,16 +56,18 @@ from services.supabase.users.get_user import get_user
 from services.supabase.owners.get_owner import get_owner
 
 # Local imports (Utils)
+from utils.files.is_test_file import is_test_file
+from utils.files.merge_test_file_headers import merge_test_file_headers
 from utils.images.get_base64 import get_base64
 from utils.progress_bar.progress_bar import create_progress_bar
-from utils.text.comment_identifiers import PROGRESS_BAR_FILLED, PROGRESS_BAR_EMPTY
+from utils.text.comment_identifiers import PROGRESS_BAR_EMPTY, PROGRESS_BAR_FILLED
 from utils.text.text_copy import (
     UPDATE_COMMENT_FOR_422,
     git_command,
     pull_request_completed,
 )
-from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 from utils.time.get_timeout_message import get_timeout_message
+from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 from utils.urls.extract_urls import extract_image_urls
 
 
@@ -355,16 +360,17 @@ def create_pr_from_issue(
 
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
     pr_body = issue_link + git_command(new_branch_name=new_branch_name)
-    pr_url = create_pull_request(body=pr_body, title=issue_title, base_args=base_args)
+    pr_url, pr_number = create_pull_request(
+        body=pr_body, title=issue_title, base_args=base_args
+    )
 
-    if pr_url is not None:
-        comment_body = f"Created pull request: {pr_url}"
-        p += 5
-        log_messages.append(comment_body)
-        update_comment(
-            body=create_progress_bar(p=p, msg="\n".join(log_messages)),
-            base_args=base_args,
-        )
+    comment_body = f"Created pull request: {pr_url}"
+    p += 5
+    log_messages.append(comment_body)
+    update_comment(
+        body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+        base_args=base_args,
+    )
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     previous_calls = []
@@ -485,6 +491,37 @@ def create_pr_from_issue(
         # Because the agent is committing changes, keep doing the loop
         retry_count = 0
 
+    # Add headers to test files before triggering CI
+    files_url = (
+        f"{GITHUB_API_URL}/repos/{owner_name}/{repo_name}/pulls/{pr_number}/files"
+    )
+    changed_files = get_pull_request_files(url=files_url, token=token)
+
+    for file_change in changed_files:
+        file_path = file_change["filename"]
+        if not is_test_file(file_path):
+            continue
+
+        file_content = get_raw_content(
+            owner=owner_name,
+            repo=repo_name,
+            file_path=file_path,
+            ref=new_branch_name,
+            token=token,
+        )
+        if not file_content:
+            continue
+
+        updated_content = merge_test_file_headers(file_content, file_path)
+        if not updated_content or updated_content == file_content:
+            continue
+
+        replace_remote_file_content(
+            file_content=updated_content,
+            file_path=file_path,
+            base_args=base_args,
+        )
+
     # Trigger final test workflows with an empty commit
     comment_body = "Triggering workflows..."
     p += 5
@@ -494,30 +531,19 @@ def create_pr_from_issue(
     )
     create_empty_commit(base_args=base_args)
 
-    # Update the issue comment based on if the PR was created or not
-    pr_number = None
-    if pr_url is not None:
-        is_completed = True
-        pr_number = int(pr_url.split("/")[-1])
-        body_after_pr = pull_request_completed(
-            issuer_name=issuer_name,
-            sender_name=sender_name,
-            pr_url=pr_url,
-            is_automation=is_automation,
-        )
-
-        # Success notification
-        success_msg = f"Work completed for {owner_name}/{repo_name} PR: {pr_url}"
-        slack_notify(success_msg, thread_ts)
-    else:
-        is_completed = False
-        body_after_pr = UPDATE_COMMENT_FOR_422
-
-        # Failure notification
-        failure_msg = f"@channel Failed to create PR for {owner_name}/{repo_name}"
-        slack_notify(failure_msg, thread_ts)
-
+    # Update the issue comment
+    is_completed = True
+    body_after_pr = pull_request_completed(
+        issuer_name=issuer_name,
+        sender_name=sender_name,
+        pr_url=pr_url,
+        is_automation=is_automation,
+    )
     update_comment(body=body_after_pr, base_args=base_args)
+
+    # Success notification
+    success_msg = f"Work completed for {owner_name}/{repo_name} PR: {pr_url}"
+    slack_notify(success_msg, thread_ts)
 
     end_time = time.time()
     update_usage(

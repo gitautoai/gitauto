@@ -164,7 +164,10 @@ def test_issue_handler_token_accumulation(
     mock_get_latest_remote_commit_sha.return_value = "abc123"
     mock_create_remote_branch.return_value = None
 
-    mock_create_pull_request.return_value = "https://github.com/test/repo/pull/123"
+    mock_create_pull_request.return_value = (
+        "https://github.com/test/repo/pull/123",
+        123,
+    )
     mock_create_empty_commit.return_value = None
     mock_check_branch_exists.return_value = True
     mock_insert_credit.return_value = None
