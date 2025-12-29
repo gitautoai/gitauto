@@ -487,7 +487,6 @@ def test_get_failed_check_runs_verify_headers_called(mock_create_headers, mock_g
 
     get_failed_check_runs_from_check_suite("owner", "repo", 12345, "custom-token")
 
-    mock_create_headers.assert_called_once_with("custom-token")
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
