@@ -340,7 +340,7 @@ def test_get_failed_check_runs_request_exception(mock_create_headers, mock_get):
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
 def test_get_failed_check_runs_all_failure_types(mock_create_headers, mock_get):
     """Test all types of failures from GITHUB_CHECK_RUN_FAILURES"""
     mock_create_headers.return_value = {
