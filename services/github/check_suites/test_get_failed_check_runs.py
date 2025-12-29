@@ -406,7 +406,7 @@ def test_get_failed_check_runs_missing_conclusion(mock_create_headers, mock_get)
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
-@patch("services.github.utils.create_headers.create_headers")
+@patch("services.github.check_suites.get_failed_check_runs.create_headers")
 def test_get_failed_check_runs_none_conclusion(mock_create_headers, mock_get):
     """Test handling of check runs with None conclusion"""
     mock_create_headers.return_value = {
