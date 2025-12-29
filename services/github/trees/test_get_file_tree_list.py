@@ -383,6 +383,26 @@ def test_get_file_tree_list_empty_dir_path_string(base_args, mock_tree_items):
         assert result == expected_result
 
 
+def test_get_file_tree_list_current_dir_dot(base_args, mock_tree_items):
+    with patch(
+        "services.github.trees.get_file_tree_list.get_file_tree"
+    ) as mock_get_tree:
+        mock_get_tree.return_value = mock_tree_items
+
+        result = get_file_tree_list(base_args, dir_path=".")
+
+        expected_result = [
+            ".github/",
+            "services/",
+            "utils/",
+            "README.md",
+            "config.py",
+            "main.py",
+        ]
+
+        assert result == expected_result
+
+
 def test_get_file_tree_list_deep_nested_path(base_args):
     # Test with deeply nested directory path
     mock_deep_tree = [
