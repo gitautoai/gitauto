@@ -1,6 +1,6 @@
 import logging
 
-from utils.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions
 
 import requests
 from config import GITHUB_API_URL, GITHUB_CHECK_RUN_FAILURES
