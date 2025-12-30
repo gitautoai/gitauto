@@ -318,3 +318,55 @@ def test_replace_remote_file_content_handles_new_content_arg_name(
         assert "file_content" in call_kwargs
         assert call_kwargs["file_content"] == "updated content"
         assert "new_content" not in call_kwargs
+
+
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.slack_notify")
+def test_unavailable_tool_sends_slack_notification(
+    mock_slack_notify, mock_chat_with_claude, mock_get_model
+):
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "bash",
+                    "input": {"command": "ls -la"},
+                }
+            ],
+        },
+        "test_id",
+        "bash",
+        {"command": "ls -la"},
+        15,
+        10,
+    )
+
+    base_args = Mock()
+    base_args.get.side_effect = lambda key, default=None: {
+        "owner": "test-owner",
+        "repo": "test-repo",
+    }.get(key, default)
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        mock_tools.__contains__.return_value = False
+
+        with patch("services.chat_with_agent.update_comment"):
+            chat_with_agent(
+                messages=[{"role": "user", "content": "test"}],
+                trigger="issue_comment",
+                base_args=base_args,
+                mode="explore",
+                repo_settings=None,
+            )
+
+        assert mock_slack_notify.call_count == 3
+        call_args = mock_slack_notify.call_args[0][0]
+        assert "bash" in call_args
+        assert "command" in call_args
+        assert "test-owner/test-repo" in call_args
+        assert "explore" in call_args

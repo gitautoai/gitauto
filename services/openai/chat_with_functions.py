@@ -48,7 +48,7 @@ def convert_tool_result(block: dict, openai_messages: list[dict]):
 
 @handle_exceptions(raise_on_error=True)
 def chat_with_openai(
-    messages: list[ChatCompletionMessageParam],
+    messages: list[dict[str, Any]],
     system_content: str,
     tools: list[ChatCompletionToolParam],
     model_id: str = OPENAI_MODEL_ID_GPT_5,
@@ -152,17 +152,18 @@ def chat_with_openai(
     }
 
     # Log the request history
-    full_messages = [{"role": "system", "content": system_content}] + messages
-    insert_llm_request(
-        usage_id=usage_id,
-        provider="openai",
-        model_id=model_id,
-        input_messages=full_messages,
-        input_tokens=token_input,
-        output_message=response_message,
-        output_tokens=token_output,
-        response_time_ms=response_time_ms,
-    )
+    if usage_id is not None:
+        full_messages = [{"role": "system", "content": system_content}] + messages
+        insert_llm_request(
+            usage_id=usage_id,
+            provider="openai",
+            model_id=model_id,
+            input_messages=full_messages,
+            input_tokens=token_input,
+            output_message=response_message,
+            output_tokens=token_output,
+            response_time_ms=response_time_ms,
+        )
 
     if not tool_calls:
         return (

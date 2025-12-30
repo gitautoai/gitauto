@@ -1,5 +1,5 @@
 # Standard imports
-from typing import Any, Iterable
+from typing import Any
 
 # Third-party imports
 from openai.types import shared_params
@@ -177,24 +177,24 @@ DELETE_FILE: shared_params.FunctionDefinition = {
 }
 
 # See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-TOOLS_TO_UPDATE_COMMENT: Iterable[ChatCompletionToolParam] = [
+TOOLS_TO_UPDATE_COMMENT: list[ChatCompletionToolParam] = [
     {"type": "function", "function": UPDATE_GITHUB_COMMENT},
 ]
-TOOLS_TO_GET_FILE: Iterable[ChatCompletionToolParam] = [
+TOOLS_TO_GET_FILE: list[ChatCompletionToolParam] = [
     {"type": "function", "function": GET_FILE_TREE_LIST},
     {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
 ]
-TOOLS_TO_EXPLORE_REPO: Iterable[ChatCompletionToolParam] = [
+TOOLS_TO_EXPLORE_REPO: list[ChatCompletionToolParam] = [
     # {"type": "code_interpreter"},
     # {"type": "retrieval"},
     {"type": "function", "function": GET_FILE_TREE_LIST},
     {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
     {"type": "function", "function": SEARCH_REMOTE_FILE_CONTENT},
 ]
-TOOLS_TO_SEARCH_GOOGLE: Iterable[ChatCompletionToolParam] = [
+TOOLS_TO_SEARCH_GOOGLE: list[ChatCompletionToolParam] = [
     {"type": "function", "function": SEARCH_GOOGLE},
 ]
-TOOLS_TO_COMMIT_CHANGES: Iterable[ChatCompletionToolParam] = [
+TOOLS_TO_COMMIT_CHANGES: list[ChatCompletionToolParam] = [
     {"type": "function", "function": APPLY_DIFF_TO_FILE},
     {"type": "function", "function": DELETE_FILE},
     {"type": "function", "function": MOVE_FILE},
