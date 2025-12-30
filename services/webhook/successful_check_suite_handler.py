@@ -2,6 +2,10 @@ from typing import cast
 
 from config import PRODUCT_ID
 from constants.urls import DOC_URLS
+from services.github.branches.get_required_status_checks import (
+    get_required_status_checks,
+)
+from services.github.check_suites.get_check_suites import get_check_suites
 from services.github.comments.create_comment import create_comment
 from services.github.commits.check_commit_has_skip_ci import check_commit_has_skip_ci
 from services.github.commits.create_empty_commit import create_empty_commit
@@ -43,6 +47,58 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     owner_name = repo["owner"]["login"]
     repo_name = repo["name"]
 
+    # Get installation token
+    installation_id = payload["installation"]["id"]
+    token = get_installation_access_token(installation_id=installation_id)
+    if not token:
+        msg = f"Failed to get installation token for {owner_name}/{repo_name} PR #{pr_number}, installation_id={installation_id}"
+        print(msg)
+        raise RuntimeError(msg)
+
+    head_sha = check_suite["head_sha"]
+    base_branch = pull_request["base"]["ref"]
+
+    all_suites = get_check_suites(
+        owner=owner_name, repo=repo_name, ref=head_sha, token=token
+    )
+    if not all_suites:
+        msg = f"Failed to fetch check suites for {owner_name}/{repo_name} PR #{pr_number}@{head_sha}"
+        print(msg)
+        raise RuntimeError(msg)
+
+    required_checks = get_required_status_checks(
+        owner=owner_name, repo=repo_name, branch=base_branch, token=token
+    )
+
+    if required_checks:
+        print(f"Using required status checks: {required_checks}")
+        for suite in all_suites:
+            app_name = suite["app"]["name"]
+            status = suite["status"]
+            if app_name in required_checks and status != "completed":
+                print(f"Required check '{app_name}' not completed: status={status}")
+                return
+        print("All required checks completed")
+    else:
+        print("No required checks, using fallback: wait for all non-queued suites")
+
+        active_suites = [s for s in all_suites if s["status"] != "queued"]
+        if not active_suites:
+            queued_suite_names = [s["app"]["name"] for s in all_suites]
+            msg = f"No active check suites for {owner_name}/{repo_name} PR #{pr_number}@{head_sha} (all queued: {queued_suite_names})"
+            print(msg)
+            raise RuntimeError(msg)
+
+        for suite in active_suites:
+            app_name = suite["app"]["name"]
+            status = suite["status"]
+            if status != "completed":
+                print(f"Check suite '{app_name}' not completed: status={status}")
+                return
+        print(
+            f"All {len(active_suites)} active check suites completed (ignored {len(all_suites) - len(active_suites)} queued)"
+        )
+
     # Get the most recent usage record for this PR
     result = (
         supabase.table("usage")
@@ -72,16 +128,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         print(msg)
         return
 
-    # Get installation token
-    installation_id = payload["installation"]["id"]
-    token = get_installation_access_token(installation_id=installation_id)
-    if not token:
-        msg = f"Failed to get installation token for installation_id={installation_id}"
-        print(msg)
-        return
-
     # Check if last commit has [skip ci] - if so, tests never ran, trigger them
-    head_sha = check_suite["head_sha"]
     head_branch = check_suite["head_branch"]
     if check_commit_has_skip_ci(
         owner=owner_name, repo=repo_name, commit_sha=head_sha, token=token
