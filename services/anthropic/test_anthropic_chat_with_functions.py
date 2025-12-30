@@ -66,10 +66,7 @@ def test_chat_with_claude_with_tool_use(mock_claude, mock_insert_llm_request):
     assert result[2] == "test_function"  # tool_name
     assert result[3] == {"param": "value"}  # tool_args
 
-    mock_insert_llm_request.assert_called_once()
-    call_args = mock_insert_llm_request.call_args[1]
-    assert call_args["usage_id"] is None
-    assert call_args["provider"] == "claude"
+    mock_insert_llm_request.assert_not_called()
 
 
 @patch("services.anthropic.chat_with_functions.insert_llm_request")
@@ -86,10 +83,11 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
         messages=[{"role": "user", "content": "test"}],
         system_content="assistant",
         tools=[],
+        usage_id=None,
     )
 
     assert result[5] == 0  # output tokens should be 0 when no usage info
-    mock_insert_llm_request.assert_called_once()
+    mock_insert_llm_request.assert_not_called()
 
 
 @patch(
