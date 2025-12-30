@@ -1,19 +1,9 @@
 # Standard imports
 import base64
-import os
 from datetime import datetime, timezone
 
-# Third-party imports
-from dotenv import load_dotenv
-
-load_dotenv()
-
-
-def get_env_var(name: str) -> str:
-    value: str | None = os.environ.get(name)
-    if value is None:
-        raise ValueError(f"Environment variable {name} not set.")
-    return value
+# Project imports
+from utils.env import get_env_var
 
 
 # GitHub Credentials from environment variables
@@ -76,10 +66,6 @@ EMAIL_FROM = "Wes from GitAuto <wes@gitauto.ai>"
 
 # Sentry Credentials from environment variables
 SENTRY_DSN = get_env_var(name="SENTRY_DSN")
-
-# Supabase Credentials from environment variables
-SUPABASE_SERVICE_ROLE_KEY = get_env_var(name="SUPABASE_SERVICE_ROLE_KEY")
-SUPABASE_URL = get_env_var(name="SUPABASE_URL")
 
 # Stripe
 STRIPE_API_KEY = get_env_var(name="STRIPE_API_KEY")

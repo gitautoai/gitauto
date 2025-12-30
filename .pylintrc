@@ -63,7 +63,7 @@ ignore-patterns=^\.#
 # (useful for modules/projects where namespaces are manipulated during runtime
 # and thus existing member attributes cannot be deduced by static analysis). It
 # supports qualified module names, as well as Unix pattern matching.
-ignored-modules=
+ignored-modules=supabase
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
@@ -576,7 +576,7 @@ contextmanager-decorators=contextlib.contextmanager
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E1101 when accessed. Python regular
 # expressions are accepted.
-generated-members=logging.*,requests.*
+generated-members=logging.*,requests.*,supabase.*
 
 # Tells whether to warn about missing members when the owner of the attribute
 # is inferred to be None.
