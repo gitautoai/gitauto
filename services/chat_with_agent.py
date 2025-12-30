@@ -2,6 +2,7 @@
 from typing import Any, Literal
 
 # Third party imports
+from openai.types.chat import ChatCompletionToolParam
 from schemas.supabase.types import Repositories
 
 # Local imports
@@ -19,6 +20,7 @@ from services.openai.functions.functions import (
     TOOLS_TO_UPDATE_COMMENT,
     tools_to_call,
 )
+from services.slack.slack_notify import slack_notify
 from services.supabase.usage.insert_usage import Trigger
 from services.webhook.utils.create_system_message import create_system_message
 
@@ -54,7 +56,7 @@ def chat_with_agent(
     )
 
     # Select the tools
-    tools = []
+    tools: list[ChatCompletionToolParam] = []
     if mode == "comment":
         tools = TOOLS_TO_UPDATE_COMMENT
     elif mode == "commit":
@@ -68,14 +70,14 @@ def chat_with_agent(
 
     while True:
         current_model = get_model()
-        provider = (
-            chat_with_openai
-            if current_model == OPENAI_MODEL_ID_GPT_5
-            else chat_with_claude
-        )
         print(f"Using model: {current_model}")
 
         try:
+            provider = (
+                chat_with_openai
+                if current_model == OPENAI_MODEL_ID_GPT_5
+                else chat_with_claude
+            )
             (
                 response_message,
                 tool_call_id,
@@ -174,6 +176,15 @@ def chat_with_agent(
             is_done = True
         else:
             tool_result = f"Error: The function '{tool_name}' does not exist in the available tools. Please use one of the available tools."
+            owner = base_args.get("owner", "unknown")
+            repo = base_args.get("repo", "unknown")
+            slack_notify(
+                f"🚨 LLM tried to call unavailable tool:\n"
+                f"Tool: `{tool_name}`\n"
+                f"Args: `{tool_args}`\n"
+                f"Mode: `{mode}`\n"
+                f"Repo: `{owner}/{repo}`"
+            )
 
     # Append the function call to the messages
     messages.append(response_message)

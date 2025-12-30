@@ -6,6 +6,7 @@ from typing import Any, cast
 from anthropic import AuthenticationError
 from anthropic._exceptions import OverloadedError
 from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
+from openai.types.chat import ChatCompletionToolParam
 
 # Local imports
 from config import ANTHROPIC_MODEL_ID_45
@@ -32,9 +33,9 @@ from utils.objects.safe_get_attribute import safe_get_attribute
 
 @handle_exceptions(raise_on_error=True)
 def chat_with_claude(
-    messages: list[MessageParam],
+    messages: list[dict[str, Any]],
     system_content: str,
-    tools: list[dict[str, Any]],
+    tools: list[ChatCompletionToolParam],
     model_id: str = ANTHROPIC_MODEL_ID_45,
     usage_id: int | None = None,
 ):
@@ -84,7 +85,7 @@ def chat_with_claude(
         response = claude.messages.create(
             model=model_id,
             system=system_content,
-            messages=messages,
+            messages=cast(list[MessageParam], messages),
             tools=anthropic_tools,
             # https://docs.anthropic.com/en/docs/about-claude/models/all-models#model-comparison-table
             max_tokens=max_tokens,
@@ -96,10 +97,9 @@ def chat_with_claude(
     except AuthenticationError as e:
         raise ClaudeAuthenticationError("Claude API authentication failed (401)") from e
 
-    # Calculate tokens (approximation using OpenAI's tokenizer)
-    # Convert messages to dicts for token counting
+    # Calculate tokens
     token_input = claude.messages.count_tokens(
-        messages=messages, model=model_id
+        messages=cast(list[MessageParam], messages), model=model_id
     ).input_tokens
 
     # Process the response
@@ -150,17 +150,18 @@ def chat_with_claude(
     )
 
     # Combine system message with user messages for logging
-    full_messages = [{"role": "system", "content": system_content}] + messages
-    insert_llm_request(
-        usage_id=usage_id,
-        provider="claude",
-        model_id=model_id,
-        input_messages=full_messages,
-        input_tokens=token_input,
-        output_message=assistant_message,
-        output_tokens=token_output,
-        response_time_ms=response_time_ms,
-    )
+    if usage_id is not None:
+        full_messages = [{"role": "system", "content": system_content}] + messages
+        insert_llm_request(
+            usage_id=usage_id,
+            provider="claude",
+            model_id=model_id,
+            input_messages=full_messages,
+            input_tokens=token_input,
+            output_message=assistant_message,
+            output_tokens=token_output,
+            response_time_ms=response_time_ms,
+        )
 
     return (
         assistant_message,
