@@ -7,6 +7,9 @@ from services.github.branches.get_required_status_checks import (
 )
 from services.github.check_suites.get_check_suites import get_check_suites
 from services.github.comments.create_comment import create_comment
+from services.github.comments.delete_comments_by_identifiers import (
+    delete_comments_by_identifiers,
+)
 from services.github.commits.check_commit_has_skip_ci import check_commit_has_skip_ci
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.pulls.get_pull_request import get_pull_request
@@ -21,6 +24,8 @@ from services.supabase.repository_features.get_repository_features import (
 )
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_test_file import is_test_file
+
+BLOCKED = "Auto-merge blocked"
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -128,15 +133,45 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         print(msg)
         return
 
-    # Check if last commit has [skip ci] - if so, tests never ran, trigger them
+    # Create base_args for further API calls
     head_branch = check_suite["head_branch"]
+    sender = payload["sender"]
+    base_args: BaseArgs = {
+        "input_from": "github",
+        "owner_type": repo["owner"]["type"],
+        "owner_id": owner_id,
+        "owner": owner_name,
+        "repo_id": repo_id,
+        "repo": repo_name,
+        "clone_url": repo["clone_url"],
+        "is_fork": repo.get("fork", False),
+        "issue_number": pr_number,
+        "issue_title": "",
+        "issue_body": "",
+        "issue_comments": [],
+        "latest_commit_sha": head_sha,
+        "issuer_name": sender["login"],
+        "base_branch": head_branch,
+        "new_branch": head_branch,
+        "installation_id": installation_id,
+        "token": token,
+        "sender_id": sender["id"],
+        "sender_name": sender["login"],
+        "sender_email": f"{sender['login']}@users.noreply.github.com",
+        "is_automation": True,
+        "reviewers": [],
+        "github_urls": [],
+        "other_urls": [],
+    }
+
+    # Check if last commit has [skip ci] - if so, tests never ran, trigger them
     if check_commit_has_skip_ci(
         owner=owner_name, repo=repo_name, commit_sha=head_sha, token=token
     ):
-        msg = (
-            "Auto-merge blocked: last commit has [skip ci], triggering tests instead..."
-        )
+        msg = f"{BLOCKED}: last commit has [skip ci], triggering tests instead..."
         print(msg)
+
+        delete_comments_by_identifiers(base_args=base_args, identifiers=[BLOCKED])
         create_comment(
             owner=owner_name,
             repo=repo_name,
@@ -146,35 +181,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         )
         slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
         slack_notify(slack_msg)
-
-        sender = payload["sender"]
-        base_args: BaseArgs = {
-            "input_from": "github",
-            "owner_type": repo["owner"]["type"],
-            "owner_id": owner_id,
-            "owner": owner_name,
-            "repo_id": repo_id,
-            "repo": repo_name,
-            "clone_url": repo["clone_url"],
-            "is_fork": repo.get("fork", False),
-            "issue_number": pr_number,
-            "issue_title": "",
-            "issue_body": "",
-            "issue_comments": [],
-            "latest_commit_sha": head_sha,
-            "issuer_name": sender["login"],
-            "base_branch": head_branch,
-            "new_branch": head_branch,
-            "installation_id": installation_id,
-            "token": token,
-            "sender_id": sender["id"],
-            "sender_name": sender["login"],
-            "sender_email": f"{sender['login']}@users.noreply.github.com",
-            "is_automation": True,
-            "reviewers": [],
-            "github_urls": [],
-            "other_urls": [],
-        }
 
         create_empty_commit(
             base_args=base_args,
@@ -193,6 +199,37 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         slack_notify(slack_msg)
         return
 
+    # Check mergeable_state - only proceed if merging is allowed
+    # https://docs.github.com/en/graphql/reference/enums#mergestatestatus
+    mergeable_state = full_pr.get("mergeable_state", "")
+    print(f"PR mergeable_state: {mergeable_state}")
+
+    # Allow merge for: clean, unstable (failing non-required checks), has_hooks
+    if mergeable_state not in ["clean", "unstable", "has_hooks"]:
+        state_reasons = {
+            "behind": "PR branch is behind base branch",
+            "blocked": "required status checks failing or missing",
+            "dirty": "merge conflicts detected",
+            "draft": "PR is in draft mode",
+            "unknown": "GitHub still calculating mergeability",
+        }
+        reason = state_reasons.get(mergeable_state, "unknown reason")
+        msg = f"{BLOCKED}: mergeable_state={mergeable_state} ({reason})"
+        print(msg)
+
+        # Delete any existing auto-merge blocked comments to avoid clutter
+        delete_comments_by_identifiers(base_args=base_args, identifiers=[BLOCKED])
+        create_comment(
+            owner=owner_name,
+            repo=repo_name,
+            token=token,
+            issue_number=pr_number,
+            body=msg,
+        )
+        slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
+        slack_notify(slack_msg)
+        return
+
     # Get PR files
     pull_url = pull_request["url"]
     pull_file_url = f"{pull_url}/files"
@@ -206,8 +243,10 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         ]
         if non_test_files:
             non_test_files_str = "\n".join(f"- `{f}`" for f in non_test_files)
-            msg = f"Auto-merge skipped: non-test files changed:\n{non_test_files_str}"
+            msg = f"{BLOCKED}: non-test files changed:\n{non_test_files_str}"
             print(msg)
+
+            delete_comments_by_identifiers(base_args=base_args, identifiers=[BLOCKED])
             create_comment(
                 owner=owner_name,
                 repo=repo_name,
@@ -218,29 +257,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
             slack_notify(slack_msg)
             return
-
-    # Check mergeable_state - allow "clean" and "blocked" (blocked = missing reviews, which we bypass)
-    mergeable_state = full_pr.get("mergeable_state", "")
-    if mergeable_state not in ["clean", "blocked"]:
-        state_reasons = {
-            "behind": "PR branch is behind base branch",
-            "dirty": "merge conflicts detected",
-            "unstable": "some checks failing",
-            "unknown": "GitHub still calculating mergeability",
-        }
-        reason = state_reasons.get(mergeable_state, "unknown reason")
-        msg = f"Auto-merge blocked: mergeable_state={mergeable_state} ({reason})"
-        print(msg)
-        create_comment(
-            owner=owner_name,
-            repo=repo_name,
-            token=token,
-            issue_number=pr_number,
-            body=msg,
-        )
-        slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
-        slack_notify(slack_msg)
-        return
 
     # All conditions met - merge the PR
     merge_method = cast(MergeMethod, repo_features.get("merge_method", "merge"))
@@ -256,10 +272,11 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
 
     if result and isinstance(result, dict) and result.get("code") == 405:
         msg = (
-            f"Auto-merge blocked by branch protection: {result.get('message')}\n\n"
+            f"{BLOCKED} by branch protection: {result.get('message')}\n\n"
             f"See {DOC_URLS['AUTO_MERGE']}"
         )
         print(msg)
+        delete_comments_by_identifiers(base_args=base_args, identifiers=[BLOCKED])
         create_comment(
             owner=owner_name,
             repo=repo_name,

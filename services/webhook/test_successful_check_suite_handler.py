@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 from config import PRODUCT_ID, UTF8
 from services.github.types.github_types import CheckSuiteCompletedPayload
 from services.webhook.successful_check_suite_handler import (
+    BLOCKED,
     handle_successful_check_suite,
 )
 
@@ -596,25 +597,21 @@ def test_auto_merge_skipped_for_human_pr(
         mock_merge_pr.assert_not_called()
 
 
+@patch("services.webhook.successful_check_suite_handler.create_comment")
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
-@patch("services.webhook.successful_check_suite_handler.get_pull_request_files")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
 @patch("services.webhook.successful_check_suite_handler.get_repository_features")
-@patch("services.webhook.successful_check_suite_handler.is_test_file")
 def test_auto_merge_with_blocked_state(
-    mock_is_test_file,
     mock_get_repo_features,
     mock_get_token,
     mock_get_pr,
-    mock_get_files,
     mock_merge_pr,
-    mock_check_skip_ci,
     mock_get_check_suites,
     mock_get_required_checks,
+    mock_create_comment,
 ):
     payload = load_payload("completed_by_circleci.json")
     payload["check_suite"]["pull_requests"][0]["head"][
@@ -633,6 +630,76 @@ def test_auto_merge_with_blocked_state(
     ]
     mock_get_required_checks.return_value = ["CircleCI Checks"]
     mock_get_pr.return_value = {"mergeable_state": "blocked"}
+
+    with patch(
+        "services.webhook.successful_check_suite_handler.supabase"
+    ) as mock_supabase:
+        mock_table = MagicMock()
+        mock_select = MagicMock()
+        mock_eq1 = MagicMock()
+        mock_eq2 = MagicMock()
+        mock_eq3 = MagicMock()
+        mock_order = MagicMock()
+        mock_limit = MagicMock()
+
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_select
+        mock_select.eq.return_value = mock_eq1
+        mock_eq1.eq.return_value = mock_eq2
+        mock_eq2.eq.return_value = mock_eq3
+        mock_eq3.order.return_value = mock_order
+        mock_order.limit.return_value = mock_limit
+        mock_limit.execute.return_value = MagicMock(data=[{"id": 100}])
+
+        mock_update = MagicMock()
+        mock_update_eq = MagicMock()
+        mock_table.update.return_value = mock_update
+        mock_update.eq.return_value = mock_update_eq
+
+        handle_successful_check_suite(cast(CheckSuiteCompletedPayload, payload))
+
+        # Blocked state should prevent merge and create a comment
+        mock_merge_pr.assert_not_called()
+        mock_create_comment.assert_called_once()
+
+
+@patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
+@patch("services.webhook.successful_check_suite_handler.get_check_suites")
+@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
+@patch("services.webhook.successful_check_suite_handler.merge_pull_request")
+@patch("services.webhook.successful_check_suite_handler.get_pull_request_files")
+@patch("services.webhook.successful_check_suite_handler.get_pull_request")
+@patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
+@patch("services.webhook.successful_check_suite_handler.get_repository_features")
+@patch("services.webhook.successful_check_suite_handler.is_test_file")
+def test_auto_merge_with_unstable_state(
+    mock_is_test_file,
+    mock_get_repo_features,
+    mock_get_token,
+    mock_get_pr,
+    mock_get_files,
+    mock_merge_pr,
+    mock_check_skip_ci,
+    mock_get_check_suites,
+    mock_get_required_checks,
+):
+    payload = load_payload("completed_by_circleci.json")
+    payload["check_suite"]["pull_requests"][0]["head"][
+        "ref"
+    ] = f"{PRODUCT_ID}/issue-2-test"
+    payload["check_suite"]["head_branch"] = f"{PRODUCT_ID}/issue-2-test"
+
+    mock_get_repo_features.return_value = {
+        "auto_merge": True,
+        "merge_method": "merge",
+        "auto_merge_only_test_files": False,
+    }
+    mock_get_token.return_value = "test-token"
+    mock_get_check_suites.return_value = [
+        {"app": {"name": "CircleCI Checks"}, "status": "completed"}
+    ]
+    mock_get_required_checks.return_value = ["CircleCI Checks"]
+    mock_get_pr.return_value = {"mergeable_state": "unstable"}
     mock_check_skip_ci.return_value = False
     mock_get_files.return_value = [
         {"filename": "test_something.py", "status": "modified"}
@@ -666,13 +733,80 @@ def test_auto_merge_with_blocked_state(
 
         handle_successful_check_suite(cast(CheckSuiteCompletedPayload, payload))
 
+        # Unstable state allows merge (non-required checks failing)
         mock_merge_pr.assert_called_once_with(
             owner="gitautoai",
             repo="circle-ci-test",
             pull_number=2,
             token="test-token",
-            merge_method="squash",
+            merge_method="merge",
         )
+
+
+@patch("services.webhook.successful_check_suite_handler.create_comment")
+@patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
+@patch("services.webhook.successful_check_suite_handler.get_check_suites")
+@patch("services.webhook.successful_check_suite_handler.merge_pull_request")
+@patch("services.webhook.successful_check_suite_handler.get_pull_request")
+@patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
+@patch("services.webhook.successful_check_suite_handler.get_repository_features")
+def test_auto_merge_with_unknown_state_no_comment(
+    mock_get_repo_features,
+    mock_get_token,
+    mock_get_pr,
+    mock_merge_pr,
+    mock_get_check_suites,
+    mock_get_required_checks,
+    mock_create_comment,
+):
+    payload = load_payload("completed_by_circleci.json")
+    payload["check_suite"]["pull_requests"][0]["head"][
+        "ref"
+    ] = f"{PRODUCT_ID}/issue-2-test"
+    payload["check_suite"]["head_branch"] = f"{PRODUCT_ID}/issue-2-test"
+
+    mock_get_repo_features.return_value = {
+        "auto_merge": True,
+        "merge_method": "merge",
+        "auto_merge_only_test_files": False,
+    }
+    mock_get_token.return_value = "test-token"
+    mock_get_check_suites.return_value = [
+        {"app": {"name": "CircleCI Checks"}, "status": "completed"}
+    ]
+    mock_get_required_checks.return_value = ["CircleCI Checks"]
+    mock_get_pr.return_value = {"mergeable_state": "unknown"}
+
+    with patch(
+        "services.webhook.successful_check_suite_handler.supabase"
+    ) as mock_supabase:
+        mock_table = MagicMock()
+        mock_select = MagicMock()
+        mock_eq1 = MagicMock()
+        mock_eq2 = MagicMock()
+        mock_eq3 = MagicMock()
+        mock_order = MagicMock()
+        mock_limit = MagicMock()
+
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_select
+        mock_select.eq.return_value = mock_eq1
+        mock_eq1.eq.return_value = mock_eq2
+        mock_eq2.eq.return_value = mock_eq3
+        mock_eq3.order.return_value = mock_order
+        mock_order.limit.return_value = mock_limit
+        mock_limit.execute.return_value = MagicMock(data=[{"id": 100}])
+
+        mock_update = MagicMock()
+        mock_update_eq = MagicMock()
+        mock_table.update.return_value = mock_update
+        mock_update.eq.return_value = mock_update_eq
+
+        handle_successful_check_suite(cast(CheckSuiteCompletedPayload, payload))
+
+        # Unknown state should return early with comment
+        mock_merge_pr.assert_not_called()
+        mock_create_comment.assert_called_once()
 
 
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
@@ -746,6 +880,6 @@ def test_auto_merge_blocked_skip_ci(
             repo="gitauto",
             token="test-token",
             issue_number=2004,
-            body="Auto-merge blocked: last commit has [skip ci], triggering tests instead...",
+            body=f"{BLOCKED}: last commit has [skip ci], triggering tests instead...",
         )
         mock_create_empty_commit.assert_called_once()
