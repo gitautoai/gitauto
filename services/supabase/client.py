@@ -1,5 +1,5 @@
 from supabase import create_client, Client
-from config import SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
+from constants.supabase import SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
 
 # Initialize shared Supabase client
 supabase: Client = create_client(

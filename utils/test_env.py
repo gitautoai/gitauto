@@ -1,6 +1,6 @@
 import os
 import pytest
-from config import get_env_var
+from utils.env import get_env_var
 
 
 def test_get_env_var_success():
