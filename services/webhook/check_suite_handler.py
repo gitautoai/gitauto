@@ -14,6 +14,9 @@ from services.chat_with_agent import chat_with_agent
 from services.circleci.get_build_logs import get_circleci_build_logs
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
 
+# Local imports (Codecov)
+from services.codecov.get_commit_coverage import get_codecov_commit_coverage
+
 # Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.check_suites.get_failed_check_runs import (
@@ -41,6 +44,7 @@ from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase)
 from services.supabase.check_suites.insert_check_suite import insert_check_suite
+from services.supabase.codecov_tokens.get_codecov_token import get_codecov_token
 from services.supabase.create_user_request import create_user_request
 from services.supabase.get_circleci_token import get_circleci_token
 from services.supabase.repositories.get_repository import get_repository
@@ -118,10 +122,12 @@ def handle_check_suite(
     check_run_name = check_run.get("name", "Unknown Check")
 
     is_circleci = "circleci.com" in details_url if details_url else False
+    is_codecov = "codecov.io" in details_url if details_url else False
     is_deepsource = "deepsource.com" in details_url if details_url else False
     is_side8 = "side8.io" in details_url if details_url else False
     circleci_project_slug = ""
     circleci_workflow_id = ""
+    codecov_check_run_id = ""
     github_run_id = 0
 
     if is_circleci:
@@ -129,6 +135,8 @@ def handle_check_suite(
         circleci_workflow_id = details_url.split("/workflows/")[1].split("?")[0]
         url_parts = details_url.split("/pipelines/")[1].split("/")
         circleci_project_slug = f"{url_parts[0]}/{url_parts[1]}/{url_parts[2]}"
+    elif is_codecov:
+        codecov_check_run_id = str(check_run.get("id", ""))
     elif is_deepsource:
         # DeepSource: https://app.deepsource.com/gh/guibranco/projects-monitor-ui/
         return
@@ -336,6 +344,53 @@ def handle_check_suite(
             if failed_job_logs
             else "No failed job logs found"
         )
+    elif is_codecov:
+        # See payloads/github/check_run/codecov_check_run_output.json
+        output = check_run.get("output", {})
+        title = output.get("title", "")
+        summary = output.get("summary", "")
+        text = output.get("text", "")
+
+        error_log = f"Codecov Check Failed: {check_run_name}\n\n"
+        error_log += f"Title: {title}\n\n"
+        error_log += f"Summary:\n{summary}\n\n"
+        error_log += f"Details:\n{text}\n\n"
+
+        # Fetch file-level coverage from Codecov API
+        codecov_token = get_codecov_token(owner_id)
+        if codecov_token:
+            # Extract service from details_url (e.g., "gh" from https://app.codecov.io/gh/owner/repo)
+            parts = details_url.split("codecov.io/")[1].split("/")
+            service_map = {
+                "gh": "github",  # Confirmed from Codecov documentation
+                "ghe": "github_enterprise",  # Inferred
+                "gl": "gitlab",  # Inferred
+                "bb": "bitbucket",  # Inferred
+            }
+            codecov_service = service_map.get(parts[0], "github")
+
+            codecov_data = get_codecov_commit_coverage(
+                owner=owner_name,
+                repo=repo_name,
+                commit_sha=check_run["head_sha"],
+                codecov_token=codecov_token,
+                service=codecov_service,
+            )
+            if codecov_data:
+                error_log += "\n\nFile-level Coverage Details:\n"
+                for file in codecov_data:
+                    error_log += f"\n{file['name']}: {file['coverage']}%\n"
+                    if file.get("uncovered_lines"):
+                        lines = ", ".join(
+                            str(line_num) for line_num in file["uncovered_lines"]
+                        )
+                        error_log += f"  Uncovered lines: {lines}\n"
+                    if file.get("partially_covered_lines"):
+                        lines = ", ".join(
+                            str(line_num)
+                            for line_num in file["partially_covered_lines"]
+                        )
+                        error_log += f"  Partially covered lines: {lines}\n"
     else:
         # GitHub Actions log retrieval (existing logic)
         error_log = get_workflow_run_logs(
@@ -374,9 +429,13 @@ def handle_check_suite(
 
     # Create a pair of workflow ID and error log hash
     error_log_hash = hashlib.sha256(error_log.encode(encoding=UTF8)).hexdigest()
-    current_pair = (
-        f"{circleci_workflow_id if is_circleci else github_run_id}:{error_log_hash}"
-    )
+    if is_circleci:
+        workflow_id = circleci_workflow_id
+    elif is_codecov:
+        workflow_id = codecov_check_run_id
+    else:
+        workflow_id = str(github_run_id)
+    current_pair = f"{workflow_id}:{error_log_hash}"
     print(f"Workflow ID and error log hash pair: {current_pair}")
     print(f"Error log content for {owner_name}/{repo_name} PR #{pull_number}:")
     print(error_log)

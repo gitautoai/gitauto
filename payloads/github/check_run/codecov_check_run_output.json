@@ -1,0 +1,15 @@
+{
+  "id": 59222916115,
+  "name": "codecov/project",
+  "status": "completed",
+  "conclusion": "failure",
+  "started_at": "2025-12-31T14:32:08Z",
+  "completed_at": "2025-12-31T14:32:08Z",
+  "details_url": "https://app.codecov.io/gh/Foxquilt/foxcom-payment-frontend/pull/464",
+  "output": {
+    "title": "74.69% (-0.14%) compared to cc568e4",
+    "summary": "[View this Pull Request on Codecov](https://app.codecov.io/gh/Foxquilt/foxcom-payment-frontend/pull/464?dropdown=coverage&src=pr&el=h1&utm_medium=referral&utm_source=github&utm_content=checks&utm_campaign=pr+comments&utm_term=Foxquilt)\n\n74.69% (-0.14%) compared to cc568e4",
+    "text": "## [Codecov](https://app.codecov.io/gh/Foxquilt/foxcom-payment-frontend/pull/464?dropdown=coverage&src=pr&el=h1&utm_medium=referral&utm_source=github&utm_content=checks&utm_campaign=pr+comments&utm_term=Foxquilt) Report\n:white_check_mark: All modified and coverable lines are covered by tests.\n:white_check_mark: Project coverage is 74.69%. Comparing base ([`cc568e4`](https://app.codecov.io/gh/Foxquilt/foxcom-payment-frontend/commit/cc568e45598a0c349007a3dc84e1ba88a8bca529?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=checks&utm_campaign=pr+comments&utm_term=Foxquilt)) to head ([`7bcd492`](https://app.codecov.io/gh/Foxquilt/foxcom-payment-frontend/commit/7bcd49213737ea1b5cf0c47a9e98a37c67bd76fe?dropdown=coverage&el=desc&utm_medium=referral&utm_source=github&utm_content=checks&utm_campaign=pr+comments&utm_term=Foxquilt)).\n\n<details><summary>Additional details and impacted files</summary>\n\n\n\n```diff\n@@            Coverage Diff             @@\n##           master     #464      +/-   ##\n==========================================\n- Coverage   74.82%   74.69%   -0.14%     \n==========================================\n  Files          83       83              \n  Lines        1454     1454              \n  Branches      405      404       -1     \n==========================================\n- Hits         1088     1086       -2     \n- Misses        363      365       +2     \n  Partials        3        3              \n```\n</details>\n\n[:umbrella: View full report in Codecov by Sentry](https://app.codecov.io/gh/Foxquilt/foxcom-payment-frontend/pull/464?dropdown=coverage&src=pr&el=continue&utm_medium=referral&utm_source=github&utm_content=checks&utm_campaign=pr+comments&utm_term=Foxquilt).   \n:loudspeaker: Have feedback on the report? [Share it here](https://about.codecov.io/codecov-pr-comment-feedback/?utm_medium=referral&utm_source=github&utm_content=checks&utm_campaign=pr+comments&utm_term=Foxquilt).\n<details><summary> :rocket: New features to boost your workflow: </summary>\n\n- :snowflake: [Test Analytics](https://docs.codecov.com/docs/test-analytics): Detect flaky tests, report on failures, and find test suite problems.\n- :package: [JS Bundle Analysis](https://docs.codecov.com/docs/javascript-bundle-analysis): Save yourself from yourself by tracking and limiting bundle sizes in JS merges.\n</details>",
+    "annotations_count": 0
+  }
+}
