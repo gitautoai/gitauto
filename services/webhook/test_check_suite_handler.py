@@ -1061,3 +1061,208 @@ def test_handle_check_suite_skips_duplicate_older_request(
     duplicate_call = mock_slack_notify.call_args_list[1]
     assert "older active test failure request found" in duplicate_call[0][0]
     assert duplicate_call[0][1] == "thread-123"  # Uses thread_ts
+
+
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.is_pull_request_open")
+@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.chat_with_agent")
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
+@patch("services.webhook.check_suite_handler.get_codecov_token")
+@patch("services.webhook.check_suite_handler.get_codecov_commit_coverage")
+def test_handle_check_suite_codecov_failure(
+    mock_get_codecov_coverage,
+    mock_get_codecov_token,
+    mock_timeout_check,
+    _mock_update_usage,
+    _mock_create_empty_commit,
+    mock_chat_agent,
+    mock_check_branch_exists,
+    mock_is_pr_open,
+    _mock_update_retry_pairs,
+    mock_get_retry_pairs,
+    _mock_update_comment,
+    mock_get_changes,
+    mock_get_pr,
+    _mock_cancel_workflow_runs,
+    mock_create_user_request,
+    mock_create_comment,
+    mock_has_comment,
+    _mock_slack_notify,
+    mock_get_repo,
+    mock_get_token,
+    mock_get_failed_runs,
+    mock_check_run_payload,
+):
+    """Test handling codecov check run failures with coverage data."""
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
+    mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://codecov.io/gh/test-owner/test-repo/commit/abc123",
+            "name": "codecov/project",
+            "head_sha": "abc123",
+            "output": {
+                "title": "Coverage decreased",
+                "summary": "Coverage decreased by 2.5%",
+                "text": "Detailed coverage report",
+            },
+        }
+    ]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_has_comment.return_value = False
+    mock_create_comment.return_value = "http://comment-url"
+    mock_create_user_request.return_value = "usage-id-123"
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
+    mock_get_retry_pairs.return_value = []
+    mock_is_pr_open.return_value = True
+    mock_check_branch_exists.return_value = True
+    mock_timeout_check.return_value = (False, 0)
+    mock_get_codecov_token.return_value = "codecov_token_123"
+    mock_get_codecov_coverage.return_value = [
+        {
+            "name": "src/main.py",
+            "coverage": 75.0,
+            "uncovered_lines": [10, 15, 20],
+            "partially_covered_lines": [25],
+        }
+    ]
+    mock_chat_agent.side_effect = [
+        ([], [], None, None, 50, 25, False, 50),
+        ([], [], None, None, 30, 20, False, 75),
+    ]
+
+    handle_check_suite(payload)
+
+    mock_get_codecov_token.assert_called_once_with(11111)
+    mock_get_codecov_coverage.assert_called_once_with(
+        owner="gitautoai",
+        repo="gitauto",
+        commit_sha="abc123",
+        codecov_token="codecov_token_123",
+        service="github",
+    )
+    assert mock_chat_agent.call_count == 2
+
+
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.is_pull_request_open")
+@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.chat_with_agent")
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
+@patch("services.webhook.check_suite_handler.get_codecov_token")
+def test_handle_check_suite_codecov_no_token(
+    mock_get_codecov_token,
+    mock_timeout_check,
+    _mock_update_usage,
+    _mock_create_empty_commit,
+    mock_chat_agent,
+    mock_check_branch_exists,
+    mock_is_pr_open,
+    _mock_update_retry_pairs,
+    mock_get_retry_pairs,
+    _mock_update_comment,
+    mock_get_changes,
+    mock_get_pr,
+    _mock_cancel_workflow_runs,
+    mock_create_user_request,
+    mock_create_comment,
+    mock_has_comment,
+    _mock_slack_notify,
+    mock_get_repo,
+    mock_get_token,
+    mock_get_failed_runs,
+    mock_check_run_payload,
+):
+    """Test handling codecov failures when no codecov token is configured."""
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
+    mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://codecov.io/gh/test-owner/test-repo/commit/abc123",
+            "name": "codecov/project",
+            "head_sha": "abc123",
+            "output": {
+                "title": "Coverage decreased",
+                "summary": "Coverage decreased by 2.5%",
+                "text": "Detailed coverage report",
+            },
+        }
+    ]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_has_comment.return_value = False
+    mock_create_comment.return_value = "http://comment-url"
+    mock_create_user_request.return_value = "usage-id-123"
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
+    mock_get_retry_pairs.return_value = []
+    mock_is_pr_open.return_value = True
+    mock_check_branch_exists.return_value = True
+    mock_timeout_check.return_value = (False, 0)
+    mock_get_codecov_token.return_value = None
+    mock_chat_agent.side_effect = [
+        ([], [], None, None, 50, 25, False, 50),
+        ([], [], None, None, 30, 20, False, 75),
+    ]
+
+    handle_check_suite(payload)
+
+    mock_get_codecov_token.assert_called_once_with(11111)
+    assert mock_chat_agent.call_count == 2
