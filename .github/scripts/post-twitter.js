@@ -21,13 +21,18 @@ async function postTwitter({ context }) {
   });
 
   const message = "🚀 New release";
-  const title = context.payload.pull_request.title;
+  let title = context.payload.pull_request.title;
   const description = context.payload.pull_request.body || "";
-  const url = "https://gitauto.ai?utm_source=x&utm_medium=referral"
+
+  if (title.endsWith('…') && description) {
+    const firstLine = description.split('\n')[0];
+    if (firstLine.startsWith('…')) {
+      title = title.slice(0, -1) + firstLine.slice(1);
+    }
+  }
 
   // Non-paid account, we can only post 280 characters. Paid account can post 250,000 characters.
-  const combinedText = description ? `${title}\n${url}\n\n${description}` : `${title}\n${url}`;
-  const tweet = `${message}: ${combinedText}`;
+  const tweet = `${message}: ${title}`;
 
   // Senders have to be in the community
   // https://x.com/hnishio0105/communities
