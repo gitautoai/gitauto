@@ -21,13 +21,18 @@ async function postTwitter({ context }) {
   });
 
   const message = "🚀 New release";
-  const title = context.payload.pull_request.title;
+  let title = context.payload.pull_request.title;
   const description = context.payload.pull_request.body || "";
-  const url = "https://gitauto.ai?utm_source=x&utm_medium=referral"
+
+  if (title.endsWith('…') && description) {
+    const firstLine = description.split('\n')[0];
+    if (firstLine.startsWith('…')) {
+      title = title.slice(0, -1) + firstLine.slice(1);
+    }
+  }
 
   // Non-paid account, we can only post 280 characters. Paid account can post 250,000 characters.
-  const combinedText = description ? `${title}\n${url}\n\n${description}` : `${title}\n${url}`;
-  const tweet = `${message}: ${combinedText}`;
+  const tweet = `${message}: ${title}`;
 
   // Senders have to be in the community
   // https://x.com/hnishio0105/communities
@@ -41,8 +46,20 @@ async function postTwitter({ context }) {
 
   // Post tweets and get their IDs
   // https://github.com/PLhery/node-twitter-api-v2/blob/master/doc/v2.md#create-a-tweet
-  const companyTweet = await clientCompany.v2.tweet(tweet);
-  const wesTweet = await clientWes.v2.tweet(tweet);
+  const postTweet = async (client, text) => {
+    try {
+      return await client.v2.tweet(text);
+    } catch (error) {
+      if (text.length > 280) {
+        const truncated = text.substring(0, 277) + "...";
+        return await client.v2.tweet(truncated);
+      }
+      throw error;
+    }
+  };
+
+  const companyTweet = await postTweet(clientCompany, tweet);
+  const wesTweet = await postTweet(clientWes, tweet);
 
   // https://docs.x.com/x-api/posts/creation-of-a-post
   // const communityTweets = await Promise.all(

@@ -11,9 +11,16 @@ async function postLinkedIn({ context }) {
   const accessToken = process.env.LINKEDIN_ACCESS_TOKEN;
 
   const message = "🚀 New release";
-  const title = context.payload.pull_request.title;
+  let title = context.payload.pull_request.title;
   const description = context.payload.pull_request.body || "";
   const url = "https://gitauto.ai?utm_source=linkedin&utm_medium=referral"
+
+  if (title.endsWith('…') && description) {
+    const firstLine = description.split('\n')[0];
+    if (firstLine.startsWith('…')) {
+      title = title.slice(0, -1) + firstLine.slice(1);
+    }
+  }
 
   // Helper function for random delay between 5-15 seconds
   const getRandomDelay = () => Math.floor(Math.random() * 10000 + 5000);
@@ -25,7 +32,7 @@ async function postLinkedIn({ context }) {
       resourcePath: "/posts",
       entity: {
         author: authorUrn,
-        commentary: `${message}: ${title}${description ? `\n\n${description}` : ""}`,
+        commentary: `${message}: ${title}`,
         visibility: "PUBLIC",
         distribution: {
           feedDistribution: "MAIN_FEED",
@@ -38,7 +45,7 @@ async function postLinkedIn({ context }) {
           article: {
             source: url,
             title: title,
-            description: description || `Check out our latest release on Q!`,
+            description: description || `Check out our latest release!`,
           },
         },
         lifecycleState: "PUBLISHED",
