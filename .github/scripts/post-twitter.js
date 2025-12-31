@@ -41,8 +41,20 @@ async function postTwitter({ context }) {
 
   // Post tweets and get their IDs
   // https://github.com/PLhery/node-twitter-api-v2/blob/master/doc/v2.md#create-a-tweet
-  const companyTweet = await clientCompany.v2.tweet(tweet);
-  const wesTweet = await clientWes.v2.tweet(tweet);
+  const postTweet = async (client, text) => {
+    try {
+      return await client.v2.tweet(text);
+    } catch (error) {
+      if (text.length > 280) {
+        const truncated = text.substring(0, 277) + "...";
+        return await client.v2.tweet(truncated);
+      }
+      throw error;
+    }
+  };
+
+  const companyTweet = await postTweet(clientCompany, tweet);
+  const wesTweet = await postTweet(clientWes, tweet);
 
   // https://docs.x.com/x-api/posts/creation-of-a-post
   // const communityTweets = await Promise.all(
