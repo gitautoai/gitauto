@@ -11,7 +11,7 @@ from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(default_return_value=(201, None), raise_on_error=False)
 def get_required_status_checks(owner: str, repo: str, branch: str, token: str):
     """https://docs.github.com/en/rest/branches/branch-protection#get-branch-protection"""
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/branches/{branch}/protection"
@@ -21,11 +21,11 @@ def get_required_status_checks(owner: str, repo: str, branch: str, token: str):
     # NOTE: 403 happens when GitHub App lacks "Administration: Read" permission
     if response.status_code == 403:
         print(f"No permission to read branch protection for {owner}/{repo}/{branch}")
-        return None
+        return 403, None
 
     if response.status_code == 404:
         print(f"No branch protection configured for {owner}/{repo}/{branch}")
-        return None
+        return 404, []
 
     response.raise_for_status()
     protection = cast(BranchProtection, response.json())
@@ -35,11 +35,11 @@ def get_required_status_checks(owner: str, repo: str, branch: str, token: str):
         print(
             f"Branch protection exists but no required status checks configured for {owner}/{repo}/{branch}"
         )
-        return None
+        return 200, []
 
     contexts = set(required_status_checks.get("contexts", []))
     checks = {
         check.get("context") for check in required_status_checks.get("checks", [])
     }
 
-    return list(contexts | checks)
+    return 200, list(contexts | checks)

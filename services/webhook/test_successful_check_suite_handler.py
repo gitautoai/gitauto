@@ -32,7 +32,7 @@ def test_handle_successful_check_suite_with_pr(
     mock_get_check_suites.return_value = [
         {"app": {"name": "CircleCI Checks"}, "status": "completed"}
     ]
-    mock_get_required_checks.return_value = ["CircleCI Checks"]
+    mock_get_required_checks.return_value = (200, ["CircleCI Checks"])
 
     with patch(
         "services.webhook.successful_check_suite_handler.supabase"
@@ -133,7 +133,7 @@ def test_handle_successful_check_suite_no_usage_record_found(
     mock_get_check_suites.return_value = [
         {"app": {"name": "GitHub Actions"}, "status": "completed"}
     ]
-    mock_get_required_checks.return_value = ["GitHub Actions"]
+    mock_get_required_checks.return_value = (200, ["GitHub Actions"])
     mock_get_pr.return_value = {"mergeable_state": "clean"}
     mock_check_skip_ci.return_value = False
     mock_get_files.return_value = []
@@ -227,7 +227,7 @@ def test_auto_merge_success(
     mock_get_check_suites.return_value = [
         {"app": {"name": "CircleCI Checks"}, "status": "completed"}
     ]
-    mock_get_required_checks.return_value = ["CircleCI Checks"]
+    mock_get_required_checks.return_value = (200, ["CircleCI Checks"])
     mock_get_pr.return_value = {"mergeable_state": "clean"}
     mock_check_skip_ci.return_value = False
     mock_get_files.return_value = [
@@ -349,7 +349,7 @@ def test_auto_merge_multiple_test_files_changed(
     mock_get_check_suites.return_value = [
         {"app": {"name": "CircleCI Checks"}, "status": "completed"}
     ]
-    mock_get_required_checks.return_value = ["CircleCI Checks"]
+    mock_get_required_checks.return_value = (200, ["CircleCI Checks"])
     mock_get_pr.return_value = {"mergeable_state": "clean"}
     mock_check_skip_ci.return_value = False
     mock_get_files.return_value = [
@@ -501,7 +501,7 @@ def test_auto_merge_with_non_test_files_allowed(
     mock_get_check_suites.return_value = [
         {"app": {"name": "CircleCI Checks"}, "status": "completed"}
     ]
-    mock_get_required_checks.return_value = ["CircleCI Checks"]
+    mock_get_required_checks.return_value = (200, ["CircleCI Checks"])
     mock_get_pr.return_value = {"mergeable_state": "clean"}
     mock_check_skip_ci.return_value = False
     mock_get_files.return_value = [
@@ -628,7 +628,7 @@ def test_auto_merge_with_blocked_state(
     mock_get_check_suites.return_value = [
         {"app": {"name": "CircleCI Checks"}, "status": "completed"}
     ]
-    mock_get_required_checks.return_value = ["CircleCI Checks"]
+    mock_get_required_checks.return_value = (200, ["CircleCI Checks"])
     mock_get_pr.return_value = {"mergeable_state": "blocked"}
 
     with patch(
@@ -698,7 +698,7 @@ def test_auto_merge_with_unstable_state(
     mock_get_check_suites.return_value = [
         {"app": {"name": "CircleCI Checks"}, "status": "completed"}
     ]
-    mock_get_required_checks.return_value = ["CircleCI Checks"]
+    mock_get_required_checks.return_value = (200, ["CircleCI Checks"])
     mock_get_pr.return_value = {"mergeable_state": "unstable"}
     mock_check_skip_ci.return_value = False
     mock_get_files.return_value = [
@@ -774,7 +774,7 @@ def test_auto_merge_with_unknown_state_no_comment(
     mock_get_check_suites.return_value = [
         {"app": {"name": "CircleCI Checks"}, "status": "completed"}
     ]
-    mock_get_required_checks.return_value = ["CircleCI Checks"]
+    mock_get_required_checks.return_value = (200, ["CircleCI Checks"])
     mock_get_pr.return_value = {"mergeable_state": "unknown"}
 
     with patch(
@@ -838,7 +838,7 @@ def test_auto_merge_blocked_skip_ci(
     mock_get_check_suites.return_value = [
         {"app": {"name": "GitHub Actions"}, "status": "completed"}
     ]
-    mock_get_required_checks.return_value = ["GitHub Actions"]
+    mock_get_required_checks.return_value = (200, ["GitHub Actions"])
     mock_get_pr.return_value = {"mergeable_state": "clean"}
     mock_check_skip_ci.return_value = True
 

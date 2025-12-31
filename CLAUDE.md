@@ -149,6 +149,35 @@ When modifying a file, follow this test-driven approach:
 3. Update the implementation to fix the failing tests
 4. Run tests again to confirm they pass
 
+### CRITICAL: Never Celebrate Partial Success
+
+**NEVER celebrate or claim success when ANY check/test fails. Work is NOT done until ALL checks pass.**
+
+This applies to:
+
+- PR status checks (`get_pr_status.py` returns FAIL)
+- Test runs (some tests pass but others fail)
+- CI/CD checks (CircleCI passes but codecov fails)
+- Build steps (tests pass but lint fails)
+- ANY situation where work is incomplete
+
+**WRONG responses (celebrating partial success):**
+
+- "Great! CircleCI Checks: success!" (when codecov/project: failure)
+- "Tests are passing, only codecov is failing"
+- "DatePicker is passing now!" (when overall PR status is FAIL)
+- "14 tests passing!" (when 2 tests are still failing)
+- "CircleCI is green, just a coverage issue"
+- "Build succeeded, just some lint warnings"
+
+**CORRECT responses:**
+
+- "PR status: FAIL. codecov/project failing. Investigating..."
+- "14 tests pass, 2 tests fail. Fixing failures..."
+- "Overall status: FAIL. Must fix all failures."
+
+**Why:** If work is incomplete, celebrating partial progress wastes time and frustrates users. The job is either DONE (all checks pass) or NOT DONE (any check fails). There is no middle ground.
+
 ### Common Jest Testing Patterns
 
 toBeInstanceOf Fails After jest.resetModules()
