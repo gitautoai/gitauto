@@ -71,68 +71,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         print(msg)
         raise RuntimeError(msg)
 
-    required_checks = get_required_status_checks(
-        owner=owner_name, repo=repo_name, branch=base_branch, token=token
-    )
-
-    if required_checks:
-        print(f"Using required status checks: {required_checks}")
-        for suite in all_suites:
-            app_name = suite["app"]["name"]
-            status = suite["status"]
-            if app_name in required_checks and status != "completed":
-                print(f"Required check '{app_name}' not completed: status={status}")
-                return
-        print("All required checks completed")
-    else:
-        print("No required checks, using fallback: wait for all non-queued suites")
-
-        active_suites = [s for s in all_suites if s["status"] != "queued"]
-        if not active_suites:
-            queued_suite_names = [s["app"]["name"] for s in all_suites]
-            msg = f"No active check suites for {owner_name}/{repo_name} PR #{pr_number}@{head_sha} (all queued: {queued_suite_names})"
-            print(msg)
-            raise RuntimeError(msg)
-
-        for suite in active_suites:
-            app_name = suite["app"]["name"]
-            status = suite["status"]
-            if status != "completed":
-                print(f"Check suite '{app_name}' not completed: status={status}")
-                return
-        print(
-            f"All {len(active_suites)} active check suites completed (ignored {len(all_suites) - len(active_suites)} queued)"
-        )
-
-    # Get the most recent usage record for this PR
-    result = (
-        supabase.table("usage")
-        .select("id")
-        .eq("repo_id", repo_id)
-        .eq("pr_number", pr_number)
-        .eq("owner_id", owner_id)
-        .order("created_at", desc=True)
-        .limit(1)
-        .execute()
-    )
-
-    # Update that record to mark test as passed
-    if result.data:
-        usage_id = result.data[0]["id"]
-        (
-            supabase.table("usage")
-            .update({"is_test_passed": True})
-            .eq("id", usage_id)
-            .execute()
-        )
-
-    # Check if auto-merge should be performed
-    repo_features = get_repository_features(repo_id=repo_id)
-    if not repo_features or not repo_features.get("auto_merge"):
-        msg = f"Auto-merge disabled for repo_id={repo_id}"
-        print(msg)
-        return
-
     # Create base_args for further API calls
     head_branch = check_suite["head_branch"]
     sender = payload["sender"]
@@ -163,6 +101,59 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         "github_urls": [],
         "other_urls": [],
     }
+
+    _, required_checks = get_required_status_checks(
+        owner=owner_name, repo=repo_name, branch=base_branch, token=token
+    )
+
+    if required_checks:
+        print(f"Using required status checks: {required_checks}")
+        for suite in all_suites:
+            app_name = suite["app"]["name"]
+            status = suite["status"]
+            if app_name in required_checks and status != "completed":
+                print(f"Required check '{app_name}' not completed: status={status}")
+                return
+        print("All required checks completed")
+    else:
+        print("No required checks configured, waiting for all check suites to complete")
+        for suite in all_suites:
+            app_name = suite["app"]["name"]
+            status = suite["status"]
+            if status != "completed":
+                print(f"Check suite '{app_name}' not completed: status={status}")
+                return
+
+        print(f"All {len(all_suites)} check suites completed")
+
+    # Get the most recent usage record for this PR
+    result = (
+        supabase.table("usage")
+        .select("id")
+        .eq("repo_id", repo_id)
+        .eq("pr_number", pr_number)
+        .eq("owner_id", owner_id)
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+
+    # Update that record to mark test as passed
+    if result.data:
+        usage_id = result.data[0]["id"]
+        (
+            supabase.table("usage")
+            .update({"is_test_passed": True})
+            .eq("id", usage_id)
+            .execute()
+        )
+
+    # Check if auto-merge should be performed
+    repo_features = get_repository_features(repo_id=repo_id)
+    if not repo_features or not repo_features.get("auto_merge"):
+        msg = f"Auto-merge disabled for repo_id={repo_id}"
+        print(msg)
+        return
 
     # Check if last commit has [skip ci] - if so, tests never ran, trigger them
     if check_commit_has_skip_ci(
@@ -208,12 +199,25 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     if mergeable_state not in ["clean", "unstable", "has_hooks"]:
         state_reasons = {
             "behind": "PR branch is behind base branch",
-            "blocked": "required status checks failing or missing",
+            "blocked": "The merge is blocked",
             "dirty": "merge conflicts detected",
             "draft": "PR is in draft mode",
             "unknown": "GitHub still calculating mergeability",
         }
-        reason = state_reasons.get(mergeable_state, "unknown reason")
+
+        if mergeable_state == "blocked":
+            check_statuses = [
+                f"{s['app']['name']}: status={s['status']}, conclusion={s.get('conclusion', 'null')}"
+                for s in all_suites
+            ]
+            reason = (
+                state_reasons["blocked"]
+                + ". Check suites: "
+                + "; ".join(check_statuses)
+            )
+        else:
+            reason = state_reasons.get(mergeable_state, "unknown reason")
+
         msg = f"{BLOCKED}: mergeable_state={mergeable_state} ({reason})"
         print(msg)
 

@@ -39,7 +39,7 @@ def test_get_required_status_checks_success(
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        result = get_required_status_checks(
+        status_code, result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
@@ -48,6 +48,7 @@ def test_get_required_status_checks_success(
             headers={"Authorization": "Bearer test_token"},
             timeout=120,
         )
+        assert status_code == 200
         assert result is not None
         assert set(result) == {
             "ci/circleci: test",
@@ -70,10 +71,11 @@ def test_get_required_status_checks_403_no_permission(
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        result = get_required_status_checks(
+        status_code, result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
+        assert status_code == 403
         assert result is None
         captured = capsys.readouterr()
         assert "No permission to read branch protection" in captured.out
@@ -92,11 +94,12 @@ def test_get_required_status_checks_404_no_protection(
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        result = get_required_status_checks(
+        status_code, result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
-        assert result is None
+        assert status_code == 404
+        assert result == []
         captured = capsys.readouterr()
         assert "No branch protection configured" in captured.out
 
@@ -115,11 +118,12 @@ def test_get_required_status_checks_no_required_checks(
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        result = get_required_status_checks(
+        status_code, result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
-        assert result is None
+        assert status_code == 200
+        assert result == []
         captured = capsys.readouterr()
         assert "no required status checks configured" in captured.out
 
@@ -142,10 +146,11 @@ def test_get_required_status_checks_only_contexts(test_owner, test_repo, test_to
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        result = get_required_status_checks(
+        status_code, result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
+        assert status_code == 200
         assert result == ["ci/circleci: test"]
 
 
@@ -167,10 +172,11 @@ def test_get_required_status_checks_only_checks(test_owner, test_repo, test_toke
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        result = get_required_status_checks(
+        status_code, result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
+        assert status_code == 200
         assert result == ["CircleCI Checks"]
 
 
@@ -188,10 +194,11 @@ def test_get_required_status_checks_http_error_500(test_owner, test_repo, test_t
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        result = get_required_status_checks(
+        status_code, result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
+        assert status_code == 201
         assert result is None
 
 
@@ -204,8 +211,9 @@ def test_get_required_status_checks_network_error(test_owner, test_repo, test_to
         mock_get.side_effect = requests.exceptions.ConnectionError("Network error")
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        result = get_required_status_checks(
+        status_code, result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
+        assert status_code == 201
         assert result is None
