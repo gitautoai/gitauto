@@ -1,4 +1,6 @@
-from typing import Any
+from typing import cast
+
+from schemas.supabase.types import Users
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -12,6 +14,7 @@ def get_user(user_id: int):
         .execute()
     )
     if len(data[1]) > 0:
-        user: dict[str, Any] = data[1][0]
+        user = cast(Users, data[1][0])
         return user
+
     return None

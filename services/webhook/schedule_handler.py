@@ -19,6 +19,8 @@ from services.github.token.get_installation_token import get_installation_access
 from services.github.trees.get_file_tree import get_file_tree
 
 # Local imports (Notifications)
+from services.resend.send_email import send_email
+from services.resend.text.issues_disabled_email import get_issues_disabled_email_text
 from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase)
@@ -27,6 +29,7 @@ from services.supabase.coverages.insert_coverages import insert_coverages
 from services.supabase.coverages.update_issue_url import update_issue_url
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.repositories.update_repository import update_repository
+from services.supabase.users.get_user import get_user
 from services.stripe.check_availability import check_availability
 
 # Local imports (Utils)
@@ -278,6 +281,16 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         # Delete AWS scheduler
         schedule_name = f"gitauto-repo-{owner_id}-{repo_id}"
         delete_scheduler(schedule_name)
+
+        # Send email notification to user
+        if user_id:
+            user = get_user(user_id=user_id)
+            email = user.get("email") if user else None
+            if email:
+                subject, text = get_issues_disabled_email_text(
+                    user_name, owner_name, repo_name
+                )
+                send_email(to=email, subject=subject, text=text)
 
         msg = f"Issues are disabled for {owner_name}/{repo_name}. Disabled schedule trigger."
         logging.warning(msg)
