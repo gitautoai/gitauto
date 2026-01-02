@@ -18,6 +18,8 @@ jobs:
       has_python_changes: ${{ steps.check.outputs.has_python_changes }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - id: check
         run: |
