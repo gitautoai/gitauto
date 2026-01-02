@@ -21,10 +21,20 @@ async function postTwitter({ context }) {
   });
 
   const message = "🚀 New release";
-  let title = context.payload.pull_request.title;
   const description = context.payload.pull_request.body || "";
 
-  if (title.endsWith('…') && description) {
+  // Extract social media post from PR body if present
+  let socialPost = null;
+  const socialMediaMatch = description.match(/## Social Media Post\s*\n([\s\S]*?)(?=\n##|\n$|$)/i);
+  if (socialMediaMatch) {
+    socialPost = socialMediaMatch[1].trim();
+  }
+
+  // Fallback to PR title if no social media section
+  let title = socialPost || context.payload.pull_request.title;
+
+  // Handle truncated titles with continuation in body
+  if (!socialPost && title.endsWith('…') && description) {
     const firstLine = description.split('\n')[0];
     if (firstLine.startsWith('…')) {
       title = title.slice(0, -1) + firstLine.slice(1);
