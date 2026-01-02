@@ -29,6 +29,23 @@ class CircleciTokensInsert(TypedDict):
     updated_by: NotRequired[str]
 
 
+class CodecovTokens(TypedDict):
+    id: str
+    owner_id: int
+    token: str
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    created_by: str
+    updated_by: str
+
+
+class CodecovTokensInsert(TypedDict):
+    owner_id: NotRequired[int]
+    token: NotRequired[str]
+    created_by: NotRequired[str]
+    updated_by: NotRequired[str]
+
+
 class Contacts(TypedDict):
     id: int
     user_id: int | None
@@ -262,6 +279,23 @@ class LlmRequestsInsert(TypedDict):
     updated_by: NotRequired[str | None]
 
 
+class NpmTokens(TypedDict):
+    id: str
+    owner_id: int
+    token: str
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    created_by: str
+    updated_by: str
+
+
+class NpmTokensInsert(TypedDict):
+    owner_id: NotRequired[int]
+    token: NotRequired[str]
+    created_by: NotRequired[str]
+    updated_by: NotRequired[str]
+
+
 class OauthTokens(TypedDict):
     id: int
     user_id: int
@@ -433,6 +467,8 @@ class RepositoryFeatures(TypedDict):
     created_by: str
     updated_at: datetime.datetime
     updated_by: str
+    allow_edit_any_file: bool
+    restrict_edit_to_target_test_file_only: bool
 
 
 class RepositoryFeaturesInsert(TypedDict):
@@ -445,6 +481,8 @@ class RepositoryFeaturesInsert(TypedDict):
     merge_method: NotRequired[str]
     created_by: NotRequired[str]
     updated_by: NotRequired[str]
+    allow_edit_any_file: NotRequired[bool]
+    restrict_edit_to_target_test_file_only: NotRequired[bool]
 
 
 class Usage(TypedDict):

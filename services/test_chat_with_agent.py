@@ -370,3 +370,57 @@ def test_unavailable_tool_sends_slack_notification(
         assert "command" in call_args
         assert "test-owner/test-repo" in call_args
         assert "explore" in call_args
+
+
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.is_target_test_file")
+def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
+    mock_is_target_test_file, mock_chat_with_claude, mock_get_model
+):
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_is_target_test_file.return_value = False
+    mock_chat_with_claude.side_effect = [
+        (
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "test_id",
+                        "name": "apply_diff_to_file",
+                        "input": {"file_path": "test_wrong.py", "diff": "some diff"},
+                    }
+                ],
+            },
+            "test_id",
+            "apply_diff_to_file",
+            {"file_path": "test_wrong.py", "diff": "some diff"},
+            15,
+            10,
+        ),
+        (
+            {"role": "assistant", "content": "response"},
+            None,
+            None,
+            None,
+            15,
+            10,
+        ),
+    ]
+
+    base_args = Mock()
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        mock_tools.__contains__.return_value = True
+
+        chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            trigger="issue_comment",
+            base_args=base_args,
+            mode="commit",
+            repo_settings=None,
+            restrict_edit_to_target_test_file_only=True,
+        )
+
+        mock_is_target_test_file.assert_called_once_with("test_wrong.py", base_args)

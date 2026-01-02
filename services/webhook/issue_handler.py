@@ -46,14 +46,17 @@ from services.slack.slack_notify import slack_notify
 # Local imports (Supabase, Webhook)
 from services.supabase.create_user_request import create_user_request
 from services.supabase.credits.insert_credit import insert_credit
-from services.supabase.usage.insert_usage import Trigger
-from services.stripe.check_availability import check_availability
-from services.stripe.create_stripe_customer import create_stripe_customer
+from services.supabase.owners.get_owner import get_owner
 from services.supabase.owners.get_stripe_customer_id import get_stripe_customer_id
 from services.supabase.owners.update_stripe_customer_id import update_stripe_customer_id
+from services.supabase.repository_features.get_repository_features import (
+    get_repository_features,
+)
+from services.supabase.usage.insert_usage import Trigger
 from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
-from services.supabase.owners.get_owner import get_owner
+from services.stripe.check_availability import check_availability
+from services.stripe.create_stripe_customer import create_stripe_customer
 
 # Local imports (Utils)
 from utils.files.is_test_file import is_test_file
@@ -159,6 +162,16 @@ def create_pr_from_issue(
     # other_urls = base_args["other_urls"]
     token = base_args["token"]
     is_automation = base_args["is_automation"]
+
+    repo_features = get_repository_features(repo_id=repo_id)
+    restrict_edit_to_target_test_file_only = (
+        repo_features["restrict_edit_to_target_test_file_only"]
+        if repo_features
+        else True
+    )
+    allow_edit_any_file = (
+        repo_features["allow_edit_any_file"] if repo_features else False
+    )
 
     p += 5
     log_messages.append("Extracted metadata.")
@@ -421,6 +434,8 @@ def create_pr_from_issue(
             p=p,
             log_messages=log_messages,
             usage_id=usage_id,
+            allow_edit_any_file=allow_edit_any_file,
+            restrict_edit_to_target_test_file_only=restrict_edit_to_target_test_file_only,
         )
         total_token_input += token_input
         total_token_output += token_output
@@ -466,6 +481,8 @@ def create_pr_from_issue(
             p=p,
             log_messages=log_messages,
             usage_id=usage_id,
+            allow_edit_any_file=allow_edit_any_file,
+            restrict_edit_to_target_test_file_only=restrict_edit_to_target_test_file_only,
         )
         total_token_input += token_input
         total_token_output += token_output
