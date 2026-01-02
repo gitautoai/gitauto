@@ -867,8 +867,30 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
     - Ensure deleted files are staged (they should already be if renamed with `mv`)
     - Use specific file names: `git add file1.py file2.py file3.py` (**NEVER use `git add .`**)
     - For deleted files already staged, they'll be included automatically in the commit
-12. Commit with descriptive message: `git commit -m "descriptive message"` (NO Claude credits in commit message)
+12. Commit with descriptive message: `git commit -m "descriptive message"`
+    - **CRITICAL**: NEVER include Claude Code credits or co-author lines in commit messages
+    - NO "🤖 Generated with [Claude Code]" footer
+    - NO "Co-Authored-By: Claude <noreply@anthropic.com>" lines
+    - Keep commit messages professional and focused on the actual changes
 13. Push to remote: `git push`
+14. Create pull request:
+
+    ```bash
+    gh pr create --title "PR title" --body "$(cat <<'EOF'
+    ## Social Media Post
+    Marketing-focused message about GitAuto benefits for customers
+    EOF
+    )"
+    ```
+
+    - PR title should be technical and descriptive
+    - **CRITICAL**: Social Media Post section is REQUIRED - will be used for X/LinkedIn/HN posts
+    - Social Media Post must:
+      - Be concise and fit in a tweet (under 280 characters is ideal)
+      - Mention "GitAuto" by name
+      - Explain WHAT changed in practical terms
+      - Highlight WHY it matters - benefits for existing or potential GitAuto customers
+      - Example: "GitAuto now prevents editing unrelated files with repository-level restrictions - safer automated PR generation for your team"
 
 **CRITICAL GIT RULES:**
 
