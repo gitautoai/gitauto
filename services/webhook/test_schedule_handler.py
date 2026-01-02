@@ -341,6 +341,8 @@ class TestScheduleHandler:
         assert "src/app.ts" in call_kwargs["title"]
         assert result["status"] == "success"
 
+    @patch("services.webhook.schedule_handler.send_email")
+    @patch("services.webhook.schedule_handler.get_user")
     @patch("services.webhook.schedule_handler.slack_notify")
     @patch("services.webhook.schedule_handler.delete_scheduler")
     @patch("services.webhook.schedule_handler.update_repository")
@@ -383,6 +385,8 @@ class TestScheduleHandler:
         mock_update_repository,
         mock_delete_scheduler,
         mock_slack_notify,
+        mock_get_user,
+        mock_send_email,
         mock_event,
     ):
         """Test that schedule_handler handles 410 (issues disabled) correctly."""
@@ -434,6 +438,9 @@ class TestScheduleHandler:
         # Mock create_issue to return 410 (issues disabled)
         mock_create_issue.return_value = (410, None)
 
+        # Mock get_user to return user with email
+        mock_get_user.return_value = {"email": "test@example.com", "user_id": 789}
+
         result = schedule_handler(cast(EventBridgeSchedulerEvent, mock_event))
 
         # Verify the function handled 410 correctly
@@ -447,6 +454,19 @@ class TestScheduleHandler:
 
         # Verify that it deleted the AWS scheduler
         mock_delete_scheduler.assert_called_once_with("gitauto-repo-123-456")
+
+        # Verify that it sent email notification to user
+        mock_get_user.assert_called_once_with(user_id=789)
+        mock_send_email.assert_called_once()
+        email_call = mock_send_email.call_args
+        assert email_call.kwargs["to"] == "test@example.com"
+        assert email_call.kwargs["subject"] == "Enable Issues to use GitAuto"
+        assert "Hi test-user," in email_call.kwargs["text"]
+        assert "test-org/test-repo" in email_call.kwargs["text"]
+        assert (
+            "https://github.com/test-org/test-repo/settings"
+            in email_call.kwargs["text"]
+        )
 
         # Verify that it sent a Slack notification
         mock_slack_notify.assert_called_once()
