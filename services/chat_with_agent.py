@@ -27,6 +27,8 @@ from services.webhook.utils.create_system_message import create_system_message
 # Local imports (Utils)
 from utils.colors.colorize_log import colorize
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.is_target_test_file import is_target_test_file
+from utils.files.is_test_file import is_test_file
 from utils.number.is_valid_line_number import is_valid_line_number
 from utils.progress_bar.progress_bar import create_progress_bar
 
@@ -43,6 +45,8 @@ def chat_with_agent(
     p: int = 0,
     log_messages: list[str] | None = None,
     usage_id: int | None = None,
+    allow_edit_any_file: bool = False,
+    restrict_edit_to_target_test_file_only: bool = True,
 ):
     if previous_calls is None:
         previous_calls = []
@@ -167,6 +171,70 @@ def chat_with_agent(
             tool_args = corrected_tool[1]
 
         if tool_name in tools_to_call:
+            is_file_edit_tool = tool_name in [
+                "apply_diff_to_file",
+                "replace_remote_file_content",
+                "move_file",
+                "delete_file",
+            ]
+
+            if is_file_edit_tool:
+                file_path = (
+                    tool_args.get("file_path", "")
+                    if isinstance(tool_args, dict)
+                    else ""
+                )
+
+                validation_error = None
+                if (
+                    file_path
+                    and restrict_edit_to_target_test_file_only
+                    and not is_target_test_file(file_path, base_args)
+                ):
+                    validation_error = (
+                        f"Error: Cannot modify '{file_path}'. "
+                        f"You can only create/edit/move/delete the test file for the target implementation file mentioned in the issue title."
+                    )
+                elif (
+                    file_path
+                    and not allow_edit_any_file
+                    and not is_test_file(file_path)
+                ):
+                    validation_error = (
+                        f"Error: Cannot modify non-test file '{file_path}'. "
+                        f"This repository is in restricted mode - only test files can be created/edited/moved/deleted."
+                    )
+
+                if validation_error:
+                    print(validation_error)
+                    messages.append(response_message)
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "tool_result",
+                                    "tool_use_id": tool_call_id,
+                                    "content": validation_error,
+                                }
+                            ],
+                        }
+                    )
+                    return chat_with_agent(
+                        messages=messages,
+                        trigger=trigger,
+                        base_args=base_args,
+                        mode=mode,
+                        repo_settings=repo_settings,
+                        previous_calls=previous_calls,
+                        recursion_count=recursion_count + 1,
+                        p=p,
+                        log_messages=log_messages,
+                        usage_id=usage_id,
+                        allow_edit_any_file=allow_edit_any_file,
+                        restrict_edit_to_target_test_file_only=restrict_edit_to_target_test_file_only,
+                    )
+
             if isinstance(tool_args, dict):
                 tool_args.pop("base_args", None)
                 tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
