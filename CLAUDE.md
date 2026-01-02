@@ -880,7 +880,7 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
     ## Social Media Post
     Marketing-focused message about GitAuto benefits for customers
     EOF
-    )"
+    )" --assignee @me
     ```
 
     - PR title should be technical and descriptive
