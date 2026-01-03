@@ -1,7 +1,5 @@
-# Third-party imports
-from schemas.supabase.types import CircleciTokens
+from typing import cast
 
-# Local imports
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -10,13 +8,12 @@ from utils.error.handle_exceptions import handle_exceptions
 def get_circleci_token(owner_id: int):
     result = (
         supabase.table("circleci_tokens")
-        .select("*")
+        .select("token")
         .eq("owner_id", owner_id)
-        .limit(1)
+        .maybe_single()
         .execute()
     )
 
-    if result.data:
-        token_data: CircleciTokens = result.data[0]
-        return token_data
+    if result and result.data:
+        return cast(str, result.data["token"])
     return None
