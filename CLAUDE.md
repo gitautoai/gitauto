@@ -270,24 +270,12 @@ brew install getsentry/tools/sentry-cli
 
 #### Accessing Sentry Issues
 
-Sentry issues are identified by IDs like `AGENT-129`. Use these commands to investigate specific issues:
+Sentry issues are identified by IDs like `AGENT-129`. Use the Python script for detailed issue analysis:
 
 ```bash
-# List recent issues (requires SENTRY_PERSONAL_TOKEN in .env)
-source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --max-rows 10
-
-# List issues with specific status
-source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --status unresolved --max-rows 20
-
-# Get details for a specific issue by ID (replace AGENT-129 with actual issue ID)
-source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --id AGENT-129
-
-# Search issues with query
-source .env && sentry-cli issues list --auth-token "$SENTRY_PERSONAL_TOKEN" --org "$SENTRY_ORG_SLUG" --project "$SENTRY_PROJECT_ID" --query "is:unresolved level:error" --max-rows 10
-
-# Get full event details for a specific issue (replace AGENT-129 with actual issue ID)
-source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" \
-  "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/AGENT-129/events/latest/" | python -m json.tool
+# Get detailed issue information
+# Automatically loads .env and saves full JSON to /tmp/sentry_<issue_id>.json
+python3 scripts/sentry/get_issue.py AGENT-20N
 ```
 
 #### Issue ID Format
@@ -298,14 +286,17 @@ source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" \
 
 #### Finding Exact Error Location
 
-When analyzing Sentry issues, use grep to find the specific error location instead of reading truncated output:
+When analyzing Sentry issues, use the saved JSON file from the script:
 
 ```bash
-# INCORRECT - Shows truncated middleware frames only
-source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/ISSUE_ID/events/latest/" | python -m json.tool
+# Get issue details (saves to /tmp/sentry_<issue_id>.json)
+python3 scripts/sentry/get_issue.py AGENT-20N
 
-# CORRECT - Shows actual application code where error occurs
-source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/ISSUE_ID/events/latest/" | python -m json.tool | grep -A 10 -B 5 "error_keyword"
+# Search for specific keywords in the saved JSON
+cat /tmp/sentry_agent-20n.json | python -m json.tool | grep -A 10 -B 5 "error_keyword"
+
+# Or examine the full JSON
+python -m json.tool /tmp/sentry_agent-20n.json | less
 ```
 
 #### Investigating Token/Context Limit Errors (e.g., AGENT-146)
@@ -313,10 +304,11 @@ source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" "https
 When a Sentry issue shows a token limit error (e.g., "167,154 token context limit"), find the actual input that caused it:
 
 ```bash
-# 1. Get the CloudWatch URL from Sentry error
-source .env && curl -sS -H "Authorization: Bearer $SENTRY_PERSONAL_TOKEN" \
-  "https://sentry.io/api/0/organizations/$SENTRY_ORG_SLUG/issues/AGENT-146/events/latest/" | \
-  python -m json.tool | grep -A 5 "cloudwatch"
+# 1. Get the issue details and CloudWatch URL
+python3 scripts/sentry/get_issue.py AGENT-146
+
+# Extract CloudWatch info from saved JSON
+cat /tmp/sentry_agent-146.json | python -m json.tool | grep -A 5 "cloudwatch"
 
 # Example output shows log stream and request ID:
 # "cloudwatch logs": {
@@ -579,13 +571,6 @@ repo_settings = response.json()
 - **Memory**: 512MB allocated, timeout: 900 seconds (15 minutes)
 - **Storage**: `/tmp` directory (2GB) for temporary file operations
 
-#### JavaScript/TypeScript Support
-
-- **ESLint**: Available via `npx --yes eslint@latest` (downloads on-demand)
-- **Import Sorting**: Full support for JS/TS via ESLint sort-imports rule
-- **Cold Start**: First ESLint download adds ~5-10 seconds per container instance
-- **Caching**: Downloaded npm packages persist per Lambda container
-
 #### Tool Installation
 All code analysis, generation, and file processing happens on our Lambda instances. We can install tools via:
 
@@ -733,7 +718,7 @@ All code analysis, generation, and file processing happens on our Lambda instanc
 - NO COMMENTS: Do not add any comments in code when making changes. Never explain what was removed or why in the code itself. Explanations belong in terminal responses, not in code.
 - NO TYPE HINTS USING ->: Do not add return type hints using -> because it overwrites the inferred return type without actually validating that the implementation returns that type. It's a lie to the type checker that cannot be verified at runtime. Return type hints are PROHIBITED.
 - NO TYPE: IGNORE: Do not use # type: ignore comments to suppress type errors. This silences the type checker without fixing the actual type mismatch. Fix the underlying type issues instead.
-- NO CAST: Do not use typing.cast() to suppress type errors. Cast doesn't validate or guarantee the type is correct - it just tells the type checker to trust you without verification. Fix the underlying type issues instead.
+- NO CAST: Do not use typing.cast() to suppress type errors. Cast doesn't validate or guarantee the type is correct - it just tells the type checker to trust you without verification. Fix the underlying type issues instead. **EXCEPTION**: Use cast when external libraries (e.g., Supabase) return `Any` and you need proper type inference. Example: `return cast(str, result.data["token"])` when `result.data` is typed as `Any` by the library.
 - NO PYRIGHT SUPPRESSION: Do not use # pyright: reportArgumentType=false or any other pyright suppression comments. Fix the underlying type issues instead.
 - NO ANY: Do not use Any type. Fix the specific type issues instead.
 - ALLOWED: Variable type annotations ARE allowed (e.g., `data: RepositoryFeatures = result.data[0]`) because they document intent and help type inference, though they don't enforce runtime validation. Use them to clarify types when the inferred type is too broad.
@@ -823,11 +808,20 @@ When refactoring or replacing old systems, always be PROACTIVE and think compreh
    - Search for ALL files in related directories
    - Look for similar patterns that should be updated consistently
 
+6. **Architecture Change Side Effects**: When introducing new architecture (e.g., EFS-based caching):
+   - Identify code that becomes OBSOLETE due to the new architecture
+   - Example: If packages are now pre-installed on EFS, version extraction code that downloads on-demand is obsolete
+   - Example: If we always run from EFS dir, temp_dir fallback is unnecessary
+   - Example: Tests that ran real commands may need mocking since the environment changed
+   - DON'T wait for the user to ask "why do we still have X?" - proactively find and remove X
+
 ### Bad Examples (Reactive)
 
 - User: "You missed schedule_handler.py" → You fix only that file
 - User: "What about the test files?" → You then look for tests
 - User: "Remove get_billing_type too" → You remove only that
+- User: "Why do we still have version extraction?" → You then remove it
+- User: "Why temp_dir case?" → You then realize it's obsolete
 
 ### Good Examples (Proactive)
 
@@ -840,7 +834,84 @@ When refactoring or replacing old systems, always be PROACTIVE and think compreh
   6. Remove ALL old functions from that refactoring session
   7. Verify no remaining references exist
 
+- User: "Move package installation to EFS" → You automatically:
+  1. Implement EFS-based installation
+  2. Find code that assumed on-demand download (version extraction, temp_dir fallback)
+  3. Remove ALL obsolete code paths without being asked
+  4. Update tests to mock the new EFS dependencies
+  5. Rename functions for clarity (e.g., `wait_for_install` → `is_install_ready` for bool return)
+
 **ALWAYS THINK: "What other files/functions/tests are related to this change?" and handle them ALL at once.**
+
+## Long-Term Thinking vs Short-Term Thinking
+
+**CRITICAL**: Don't be single-minded. Think about future use cases, not just current ones.
+
+### Bad (Short-term thinking)
+
+- "This function has only 1 caller, let's inline it" → WRONG if future callers are obvious
+- "We only need ESLint check" → WRONG because prettier, tsc, pylint, pyright, flake8 will follow
+- Optimizing for current state without considering roadmap
+
+### Good (Long-term thinking)
+
+- "ESLint check needs EFS install ready. What else will need this?" → prettier, tsc, pylint, pyright, flake8
+- "This helper has 1 caller NOW, but the pattern will repeat" → Keep it separate
+- "We're building Node support. Python and PHP will follow" → Design for extensibility
+
+### Example
+
+When asked "should we inline `is_efs_install_ready.py` since it has 1 caller?":
+
+- SHORT-TERM: "Yes, only run_eslint uses it"
+- LONG-TERM: "No, run_prettier, run_tsc, run_pylint, run_pyright, run_flake8 will all need it"
+
+### Rule
+
+ALWAYS ASK: "What similar tools/features will need this in the future?"
+
+## Always Write Tests for New Code
+
+**CRITICAL**: When you create new functions/modules, ALWAYS write tests without being asked.
+
+- Don't wait for the user to say "where are the tests?"
+- Don't wait until LGTM to realize tests are missing
+- Write tests as part of the implementation, not as an afterthought
+
+**Bad**: Create `services/efs/is_efs_install_ready.py` → wait for user to ask for tests
+**Good**: Create `services/efs/is_efs_install_ready.py` → immediately create `services/efs/test_is_efs_install_ready.py`
+
+## Critical Thinking for Production Issues
+
+**CRITICAL**: When implementing features, think about production edge cases and real customer scenarios.
+
+### Questions to Always Ask
+
+1. **Authentication/Credentials**: Does this feature need tokens/credentials to work in production?
+   - Example: `npm install` needs NPM_TOKEN for private packages (stored in Supabase)
+   - Example: GitHub API needs installation token
+   - Example: Private registries need authentication
+
+2. **Version/Environment Ambiguity**: Which version of a tool will be used?
+   - Example: If EFS has eslint installed, which version runs? (Answer: local node_modules version)
+   - Example: If multiple Python versions exist, which one runs?
+
+3. **Customer-Specific Requirements**: What do real customers need?
+   - Example: Foxquilt has private npm dependencies → needs NPM_TOKEN
+   - Example: Some repos use yarn instead of npm
+   - Example: Some repos have monorepo structure
+
+### Bad (Missing Production Issues)
+
+- Implement npm install without thinking about private packages
+- Assume all packages are public
+- Don't consider authentication requirements
+
+### Good (Catching Production Issues)
+
+- "We're running npm install. What about private packages? Do we have NPM_TOKEN?"
+- "Foxquilt uses private deps. Where is the token stored? How do we pass it?"
+- "Which eslint version will npx use? The one in node_modules or global?"
 
 ## LGTM Workflow
 
@@ -873,7 +944,7 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
     - NO "Co-Authored-By: Claude <noreply@anthropic.com>" lines
     - Keep commit messages professional and focused on the actual changes
 13. Push to remote: `git push`
-14. Create pull request:
+14. Create pull request: `gh pr create --title "PR title" --body "PR description" --assignee @me`. Example:
 
     ```bash
     gh pr create --title "PR title" --body "$(cat <<'EOF'
