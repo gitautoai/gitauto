@@ -46,7 +46,7 @@ from services.slack.slack_notify import slack_notify
 from services.supabase.check_suites.insert_check_suite import insert_check_suite
 from services.supabase.codecov_tokens.get_codecov_token import get_codecov_token
 from services.supabase.create_user_request import create_user_request
-from services.supabase.get_circleci_token import get_circleci_token
+from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.get_retry_pairs import get_retry_workflow_id_hash_pairs
 from services.supabase.usage.update_retry_pairs import (

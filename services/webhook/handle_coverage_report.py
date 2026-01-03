@@ -55,11 +55,10 @@ def handle_coverage_report(
     if source == "github":
         artifacts = get_workflow_artifacts(owner_name, repo_name, run_id, github_token)
     elif source == "circleci":
-        token_record = get_circleci_token(owner_id=owner_id)
-        if not token_record:
+        circle_token = get_circleci_token(owner_id=owner_id)
+        if not circle_token:
             logging.warning("No CircleCI token found for owner %d", owner_id)
             return None
-        circle_token = token_record["token"]
         circleci_workflow_ids = get_circleci_workflow_ids_from_check_suite(
             owner_name, repo_name, run_id, github_token
         )
