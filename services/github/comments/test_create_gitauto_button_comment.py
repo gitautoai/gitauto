@@ -90,10 +90,12 @@ def test_create_gitauto_button_comment_success(
     assert call_args.kwargs["owner_name"] == "test-owner"
     assert call_args.kwargs["sender_name"] == "test-user"
 
-    # Check explicit params
-    assert call_args.kwargs["repo_name"] == "test-repo"
-    assert call_args.kwargs["issue_number"] == 123
-    assert call_args.kwargs["token"] == "test-token"
+    # Check base_args structure
+    base_args = call_args.kwargs["base_args"]
+    assert base_args["owner"] == "test-owner"
+    assert base_args["repo"] == "test-repo"
+    assert base_args["issue_number"] == 123
+    assert base_args["token"] == "test-token"
 
 
 def test_create_gitauto_button_comment_with_null_email(
@@ -122,20 +124,20 @@ def test_create_gitauto_button_comment_with_null_email(
 def test_create_gitauto_button_comment_token_error(
     mock_github_labeled_payload, mock_dependencies
 ):
-    """Test behavior when token retrieval returns None"""
+    """Test behavior when token retrieval fails"""
     # Arrange
-    mock_dependencies["get_token"].return_value = None
+    mock_dependencies["get_token"].side_effect = Exception("Token error")
 
     # Act
     result = create_gitauto_button_comment(mock_github_labeled_payload)
 
-    # Assert - handle_exceptions decorator should return None on error (ValueError raised)
+    # Assert - handle_exceptions decorator should return None on error
     assert result is None
 
     # Verify token retrieval was attempted
     mock_dependencies["get_token"].assert_called_once_with(installation_id=12345)
 
-    # Verify subsequent functions were not called due to ValueError
+    # Verify subsequent functions were not called due to exception
     mock_dependencies["get_email"].assert_not_called()
     mock_dependencies["upsert_user"].assert_not_called()
     mock_dependencies["combine_comment"].assert_not_called()
@@ -258,9 +260,11 @@ def test_create_gitauto_button_comment_different_payload_values():
         assert call_args.kwargs["owner_name"] == "different-owner"
         assert call_args.kwargs["sender_name"] == "different-user"
 
-        assert call_args.kwargs["repo_name"] == "different-repo"
-        assert call_args.kwargs["issue_number"] == 456
-        assert call_args.kwargs["token"] == "different-token"
+        base_args = call_args.kwargs["base_args"]
+        assert base_args["owner"] == "different-owner"
+        assert base_args["repo"] == "different-repo"
+        assert base_args["issue_number"] == 456
+        assert base_args["token"] == "different-token"
 
 
 def test_create_gitauto_button_comment_base_comment_format():
