@@ -63,7 +63,7 @@ def test_handle_push_repository_not_found_returns_early(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(repo_id=456)
+    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
     mock_get_token.assert_not_called()
     mock_get_open_prs.assert_not_called()
     mock_update_pr.assert_not_called()
@@ -97,7 +97,7 @@ def test_handle_push_local_feature_to_remote_feature_not_handled(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(repo_id=456)
+    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
     mock_get_token.assert_not_called()
     mock_get_open_prs.assert_not_called()
     mock_update_pr.assert_not_called()
@@ -131,7 +131,7 @@ def test_handle_push_remote_feature_to_remote_staging_not_handled(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(repo_id=456)
+    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
     mock_get_token.assert_not_called()
     mock_get_open_prs.assert_not_called()
     mock_update_pr.assert_not_called()
@@ -167,7 +167,7 @@ def test_handle_push_no_open_prs_returns_early(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(repo_id=456)
+    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_called_once_with(
         owner="test-owner", repo="test-repo", target_branch="main", token="test-token"
@@ -209,7 +209,7 @@ def test_handle_push_local_main_to_remote_main_handled(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(repo_id=456)
+    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_called_once_with(
         owner="test-owner", repo="test-repo", target_branch="main", token="test-token"
@@ -254,7 +254,7 @@ def test_handle_push_remote_feature_to_remote_main_handled(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(repo_id=456)
+    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_called_once_with(
         owner="test-owner", repo="test-repo", target_branch="main", token="test-token"
@@ -336,7 +336,7 @@ def test_handle_push_no_gitauto_prs_returns_early(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(repo_id=456)
+    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_called_once_with(
         owner="test-owner", repo="test-repo", target_branch="main", token="test-token"

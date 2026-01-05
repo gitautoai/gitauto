@@ -1,4 +1,6 @@
+from typing import cast
 from unittest.mock import patch
+from services.github.types.github_types import GitHubPullRequestClosedPayload
 from services.webhook.merge_handler import handle_pr_merged
 
 
@@ -48,29 +50,27 @@ def test_handle_pr_merged_success(
         {"html_url": "https://github.com/test/repo/issues/1"},
     )
 
-    # Create payload
-    payload = {
-        "installation": {"id": 12345},
-        "repository": {
-            "owner": {"login": "test-owner", "id": 123},
-            "name": "test-repo",
-            "id": 456,
+    payload = cast(
+        GitHubPullRequestClosedPayload,
+        {
+            "installation": {"id": 12345},
+            "repository": {
+                "owner": {"login": "test-owner", "id": 123},
+                "name": "test-repo",
+                "id": 456,
+            },
+            "pull_request": {
+                "merged_by": {"login": "test-user"},
+                "url": "https://api.github.com/repos/test-owner/test-repo/pulls/42",
+                "user": {"login": "pr-creator"},
+            },
+            "number": 42,
         },
-        "pull_request": {
-            "merged_by": {"login": "test-user"},
-            "url": "https://api.github.com/repos/test-owner/test-repo/pulls/42",
-            "user": {"login": "pr-creator"},
-        },
-        "number": 42,
-    }
+    )
 
-    # Execute
     result = handle_pr_merged(payload)
 
-    # Verify
-    assert result is None  # Function returns None
-
-    # Verify create_issue was called with correct parameters
+    assert result is None
     mock_create_issue.assert_called_once()
     call_kwargs = mock_create_issue.call_args.kwargs
     assert call_kwargs["owner"] == "test-owner"
@@ -80,7 +80,6 @@ def test_handle_pr_merged_success(
     assert call_kwargs["body"] == "Test issue body content"
     assert call_kwargs["assignees"] == ["pr-creator"]
 
-    # Verify success notification was sent
     success_calls = [
         call
         for call in mock_slack_notify.call_args_list
@@ -133,32 +132,29 @@ def test_handle_pr_merged_410_issues_disabled(
     mock_get_issue_title.return_value = "Test Issue Title"
     mock_get_issue_body.return_value = "Test issue body content"
 
-    # Mock create_issue to return 410 (issues disabled)
     mock_create_issue.return_value = (410, None)
 
-    # Create payload
-    payload = {
-        "installation": {"id": 12345},
-        "repository": {
-            "owner": {"login": "test-owner", "id": 123},
-            "name": "test-repo",
-            "id": 456,
+    payload = cast(
+        GitHubPullRequestClosedPayload,
+        {
+            "installation": {"id": 12345},
+            "repository": {
+                "owner": {"login": "test-owner", "id": 123},
+                "name": "test-repo",
+                "id": 456,
+            },
+            "pull_request": {
+                "merged_by": {"login": "test-user"},
+                "url": "https://api.github.com/repos/test-owner/test-repo/pulls/42",
+                "user": {"login": "pr-creator"},
+            },
+            "number": 42,
         },
-        "pull_request": {
-            "merged_by": {"login": "test-user"},
-            "url": "https://api.github.com/repos/test-owner/test-repo/pulls/42",
-            "user": {"login": "pr-creator"},
-        },
-        "number": 42,
-    }
+    )
 
-    # Execute
     result = handle_pr_merged(payload)
 
-    # Verify
-    assert result is None  # Function returns None
-
-    # Verify create_issue was called with correct parameters
+    assert result is None
     mock_create_issue.assert_called_once()
     call_kwargs = mock_create_issue.call_args.kwargs
     assert call_kwargs["owner"] == "test-owner"
@@ -168,9 +164,8 @@ def test_handle_pr_merged_410_issues_disabled(
     assert call_kwargs["body"] == "Test issue body content"
     assert call_kwargs["assignees"] == ["pr-creator"]
 
-    # Verify repository was updated to disable merge trigger
     mock_update_repository.assert_called_once_with(
-        repo_id=456, trigger_on_merged=False, updated_by="test-user"
+        owner_id=123, repo_id=456, trigger_on_merged=False, updated_by="test-user"
     )
 
     # Verify warning notification was sent with correct message
@@ -232,32 +227,29 @@ def test_handle_pr_merged_other_error(
     mock_get_issue_title.return_value = "Test Issue Title"
     mock_get_issue_body.return_value = "Test issue body content"
 
-    # Mock create_issue to return 500 (server error)
     mock_create_issue.return_value = (500, None)
 
-    # Create payload
-    payload = {
-        "installation": {"id": 12345},
-        "repository": {
-            "owner": {"login": "test-owner", "id": 123},
-            "name": "test-repo",
-            "id": 456,
+    payload = cast(
+        GitHubPullRequestClosedPayload,
+        {
+            "installation": {"id": 12345},
+            "repository": {
+                "owner": {"login": "test-owner", "id": 123},
+                "name": "test-repo",
+                "id": 456,
+            },
+            "pull_request": {
+                "merged_by": {"login": "test-user"},
+                "url": "https://api.github.com/repos/test-owner/test-repo/pulls/42",
+                "user": {"login": "pr-creator"},
+            },
+            "number": 42,
         },
-        "pull_request": {
-            "merged_by": {"login": "test-user"},
-            "url": "https://api.github.com/repos/test-owner/test-repo/pulls/42",
-            "user": {"login": "pr-creator"},
-        },
-        "number": 42,
-    }
+    )
 
-    # Execute
     result = handle_pr_merged(payload)
 
-    # Verify
-    assert result is None  # Function returns None
-
-    # Verify create_issue was called with correct parameters
+    assert result is None
     mock_create_issue.assert_called_once()
     call_kwargs = mock_create_issue.call_args.kwargs
     assert call_kwargs["owner"] == "test-owner"
@@ -267,7 +259,6 @@ def test_handle_pr_merged_other_error(
     assert call_kwargs["body"] == "Test issue body content"
     assert call_kwargs["assignees"] == ["pr-creator"]
 
-    # Verify failure notification was sent (not success)
     failure_calls = [
         call for call in mock_slack_notify.call_args_list if "Failed" in str(call)
     ]

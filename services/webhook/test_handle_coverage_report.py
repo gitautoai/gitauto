@@ -47,6 +47,12 @@ def test_handle_coverage_report_with_python_sample():
         mock_upsert_cov.assert_called_once()
         mock_upsert_repo.assert_called_once()
 
+        # Verify get_coverages was called with owner_id
+        mock_get_cov.assert_called_once()
+        call_kwargs = mock_get_cov.call_args.kwargs
+        assert call_kwargs["owner_id"] == 12345
+        assert call_kwargs["repo_id"] == 67890
+
 
 def test_handle_coverage_report_with_coverage_report_artifact():
     """Test handling coverage with artifact named 'coverage-report'"""

@@ -103,11 +103,11 @@ def test_deconstruct_jira_payload_basic_functionality(
     assert base_args["issue_number"] == "JIRA-123"
     assert base_args["issue_title"] == "Test Jira Issue"
     assert base_args["issue_body"] == "Test issue body"
-    assert base_args["issue_comments"] == []
+    assert base_args.get("issue_comments") == []
     assert base_args["issuer_name"] == "John Doe"
-    assert base_args["issuer_email"] == "john.doe@example.com"
+    assert base_args.get("issuer_email") == "john.doe@example.com"
     assert base_args["base_branch"] == "main"
-    assert base_args["latest_commit_sha"] == "abc123def456"
+    assert base_args.get("latest_commit_sha") == "abc123def456"
     assert base_args["installation_id"] == 67890
     assert base_args["token"] == "test_token"
     assert base_args["sender_id"] == "jira-user-123"
@@ -121,6 +121,9 @@ def test_deconstruct_jira_payload_basic_functionality(
 
     expected_branch = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}JIRA-123-20241225-143000"
     assert base_args["new_branch"] == expected_branch
+
+    # Verify get_repository was called with owner_id and repo_id
+    mock_get_repository.assert_called_once_with(owner_id=789, repo_id=456)
 
 
 @patch("services.jira.deconstruct_jira_payload.get_installation")
@@ -367,7 +370,7 @@ def test_deconstruct_jira_payload_with_comments(
 
     base_args, _ = deconstruct_jira_payload(payload)
 
-    assert base_args["issue_comments"] == comments
+    assert base_args.get("issue_comments") == comments
 
 
 @patch("services.jira.deconstruct_jira_payload.get_installation")
@@ -568,7 +571,7 @@ def test_deconstruct_jira_payload_different_default_branches(
     base_args, _ = deconstruct_jira_payload(payload)
 
     assert base_args["base_branch"] == "master"
-    assert base_args["latest_commit_sha"] == "xyz789abc123"
+    assert base_args.get("latest_commit_sha") == "xyz789abc123"
 
 
 @patch("services.jira.deconstruct_jira_payload.get_installation")
@@ -656,7 +659,7 @@ def test_deconstruct_jira_payload_with_empty_issue_comments(
 
     base_args, _ = deconstruct_jira_payload(payload)
 
-    assert base_args["issue_comments"] == []
+    assert base_args.get("issue_comments") == []
 
 
 @patch("services.jira.deconstruct_jira_payload.get_installation")
@@ -695,7 +698,7 @@ def test_deconstruct_jira_payload_with_multiple_issue_comments(
 
     base_args, _ = deconstruct_jira_payload(payload)
 
-    assert base_args["issue_comments"] == comments
+    assert base_args.get("issue_comments") == comments
 
 
 @patch("services.jira.deconstruct_jira_payload.get_installation")
@@ -864,7 +867,7 @@ def test_deconstruct_jira_payload_with_different_default_branch(
     base_args, _ = deconstruct_jira_payload(payload)
 
     assert base_args["base_branch"] == "master"
-    assert base_args["latest_commit_sha"] == "def456"
+    assert base_args.get("latest_commit_sha") == "def456"
 
 
 @patch("services.jira.deconstruct_jira_payload.get_installation")
@@ -971,7 +974,7 @@ def test_deconstruct_jira_payload_with_empty_comments(
 
     base_args, _ = deconstruct_jira_payload(payload)
 
-    assert base_args["issue_comments"] == []
+    assert base_args.get("issue_comments") == []
 
 
 @patch("services.jira.deconstruct_jira_payload.get_installation")
@@ -1010,7 +1013,7 @@ def test_deconstruct_jira_payload_with_multiple_comments(
 
     base_args, _ = deconstruct_jira_payload(payload)
 
-    assert base_args["issue_comments"] == comments
+    assert base_args.get("issue_comments") == comments
 
 
 @patch("services.jira.deconstruct_jira_payload.get_installation")

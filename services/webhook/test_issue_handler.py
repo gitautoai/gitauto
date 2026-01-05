@@ -178,6 +178,9 @@ def test_can_proceed_false_early_return(
     mock_update_comment.assert_called()
     assert mock_slack_notify.call_count == 2
 
+    # Verify get_repository_features was called with owner_id and repo_id
+    mock_get_repo_features.assert_called_once_with(owner_id=456, repo_id=789)
+
 
 @patch("services.webhook.issue_handler.update_stripe_customer_id")
 @patch("services.webhook.issue_handler.create_stripe_customer")

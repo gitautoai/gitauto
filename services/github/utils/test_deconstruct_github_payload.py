@@ -1,9 +1,11 @@
 """Unit tests for deconstruct_github_payload function."""
 
+from typing import Any, cast
 from unittest.mock import patch
 
 import pytest
 from config import GITHUB_APP_USER_ID, ISSUE_NUMBER_FORMAT, PRODUCT_ID
+from services.github.types.github_types import GitHubLabeledPayload
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
 
 
@@ -17,9 +19,8 @@ def create_mock_payload(
     default_branch="main",
     issue_number=123,
     issue_title="Test Issue",
-):
-    """Create a mock GitHub payload for testing."""
-    return {
+) -> GitHubLabeledPayload:
+    return cast(GitHubLabeledPayload, {
         "action": "labeled",
         "issue": {
             "user": {"login": issuer_name},
@@ -46,7 +47,7 @@ def create_mock_payload(
         "installation": {
             "id": installation_id,
         },
-    }
+    })
 
 
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
@@ -114,6 +115,9 @@ def test_deconstruct_github_payload_basic_functionality(
 
     # Verify _
     assert _ == {"target_branch": None}
+
+    # Verify get_repository was called with owner_id and repo_id
+    mock_get_repository.assert_called_once_with(owner_id=789, repo_id=456)
 
 
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
@@ -608,11 +612,9 @@ def test_deconstruct_github_payload_missing_fork_key(
     mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
     mock_choices.return_value = ["A", "B", "C", "D"]
 
-    # Create test payload without fork key
-    payload = create_mock_payload()
-    del payload["repository"]["fork"]  # Remove fork key to test .get() default
+    payload: Any = create_mock_payload()
+    del payload["repository"]["fork"]
 
-    # Call the function
     base_args, _ = deconstruct_github_payload(payload)
 
     # Verify fork defaults to False when key is missing

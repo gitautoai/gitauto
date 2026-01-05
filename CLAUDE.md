@@ -915,6 +915,14 @@ ALWAYS ASK: "What similar tools/features will need this in the future?"
 
 ## LGTM Workflow
 
+**CRITICAL: PR Must Be Clean**
+
+- During LGTM, do NOT ignore unrelated failures or issues found in modified files
+- If you find issues unrelated to the current task, do NOT arbitrarily decide to skip them
+- Always ASK the user how to proceed when there are mixed changes or unrelated issues
+- The PR should be clean - either fix all issues or get explicit user approval to proceed
+- When you find unrelated issues, add them to the todo list to fix later - never just skip them silently
+
 When the user says "LGTM" (Looks Good To Me), automatically execute this workflow:
 
 1. Run black formatting: `black .`

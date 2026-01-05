@@ -157,12 +157,12 @@ class TestScheduleHandler:
             # Setup mock to return empty data
             mock_result = MagicMock()
             mock_result.data = []
-            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = (
+            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = (
                 mock_result
             )
 
             # Execute
-            result = get_all_coverages(repo_id=123)
+            result = get_all_coverages(owner_id=789, repo_id=123)
 
             # Verify - should be empty list, not None
             assert result == []
@@ -449,7 +449,7 @@ class TestScheduleHandler:
 
         # Verify that it updated the repository to disable schedule
         mock_update_repository.assert_called_once_with(
-            repo_id=456, trigger_on_schedule=False, updated_by="test-user"
+            owner_id=123, repo_id=456, trigger_on_schedule=False, updated_by="test-user"
         )
 
         # Verify that it deleted the AWS scheduler

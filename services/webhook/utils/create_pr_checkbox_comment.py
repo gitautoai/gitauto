@@ -41,17 +41,17 @@ def create_pr_checkbox_comment(payload: PullRequestWebhookPayload):
     repo_id = repo["id"]
     repo_name = repo["name"]
 
-    # Check repository settings for PR test selection
-    repo_settings = get_repository(repo_id=repo_id)
-    if not repo_settings or not repo_settings["trigger_on_pr_change"]:
-        msg = f"Skipping PR test selection for repo {repo_name} because trigger_on_pr_change is False"
-        logging.info(msg)
-        return
-
     # Extract owner related variables
     owner = repo["owner"]
     owner_id = owner["id"]
     owner_name = owner["login"]
+
+    # Check repository settings for PR test selection
+    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+    if not repo_settings or not repo_settings["trigger_on_pr_change"]:
+        msg = f"Skipping PR test selection for repo {repo_name} because trigger_on_pr_change is False"
+        logging.info(msg)
+        return
 
     # Extract PR related variables
     pull_number = pull_request["number"]
@@ -81,7 +81,9 @@ def create_pr_checkbox_comment(payload: PullRequestWebhookPayload):
 
     # Get coverage data for the changed files
     changed_file_paths = [f["filename"] for f in changed_code_files]
-    coverage_data = get_coverages(repo_id=repo_id, filenames=changed_file_paths)
+    coverage_data = get_coverages(
+        owner_id=owner_id, repo_id=repo_id, filenames=changed_file_paths
+    )
 
     checklist = create_file_checklist(changed_code_files, coverage_data)
 

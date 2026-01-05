@@ -57,8 +57,9 @@ def test_upsert_repository_owner_exists_repo_exists(mocks):
 
     assert result == mock_update_result
     mocks["get_owner"].assert_called_once_with(123)
-    mocks["get_repository"].assert_called_once_with(456)
+    mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
     mocks["update_repository"].assert_called_once_with(
+        owner_id=123,
         repo_id=456,
         updated_by="789:test_user",
         file_count=10,
@@ -87,7 +88,7 @@ def test_upsert_repository_owner_not_exists_repo_not_exists(mocks):
     mocks["create_owner"].assert_called_once_with(
         owner_id=123, owner_name="test_owner", user_id=789, user_name="test_user"
     )
-    mocks["get_repository"].assert_called_once_with(456)
+    mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
     mocks["insert_repository"].assert_called_once_with(
         owner_id=123,
         repo_id=456,
@@ -122,7 +123,7 @@ def test_upsert_repository_owner_exists_repo_not_exists(mocks):
 
     assert result == {"repo_id": 456, "created": True}
     mocks["get_owner"].assert_called_once_with(123)
-    mocks["get_repository"].assert_called_once_with(456)
+    mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
     mocks["insert_repository"].assert_called_once_with(
         owner_id=123,
         repo_id=456,
@@ -155,8 +156,9 @@ def test_upsert_repository_update_no_data_returned(mocks):
 
     assert result is None
     mocks["get_owner"].assert_called_once_with(123)
-    mocks["get_repository"].assert_called_once_with(456)
+    mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
     mocks["update_repository"].assert_called_once_with(
+        owner_id=123,
         repo_id=456,
         updated_by="789:test_user",
         file_count=0,
@@ -184,7 +186,7 @@ def test_upsert_repository_insert_no_data_returned(mocks):
 
     assert result is None
     mocks["get_owner"].assert_called_once_with(123)
-    mocks["get_repository"].assert_called_once_with(456)
+    mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
     mocks["insert_repository"].assert_called_once_with(
         owner_id=123,
         repo_id=456,
@@ -217,7 +219,7 @@ def test_upsert_repository_with_default_parameters(mocks):
 
     assert result == mock_insert_result
     mocks["get_owner"].assert_called_once_with(123)
-    mocks["get_repository"].assert_called_once_with(456)
+    mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
     mocks["insert_repository"].assert_called_once_with(
         owner_id=123,
         repo_id=456,

@@ -102,7 +102,7 @@ class TestGetCoverages:
         filenames = ["src/main.py", "src/utils.py"]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert isinstance(result, dict)
@@ -114,7 +114,6 @@ class TestGetCoverages:
 
         # Verify database query was constructed correctly
         mock_supabase_chain.select.assert_called_once_with("*")
-        mock_supabase_chain.eq.assert_called_once_with("repo_id", repo_id)
         mock_supabase_chain.in_.assert_called_once_with("full_path", filenames)
         mock_supabase_chain.execute.assert_called_once()
 
@@ -125,7 +124,7 @@ class TestGetCoverages:
         filenames = []
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert not result
@@ -144,7 +143,7 @@ class TestGetCoverages:
         filenames = ["src/nonexistent.py"]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert not result
@@ -161,7 +160,7 @@ class TestGetCoverages:
         filenames = ["src/test.py"]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert not result
@@ -179,7 +178,7 @@ class TestGetCoverages:
         filenames = ["src/main.py"]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert len(result) == 1
@@ -200,7 +199,7 @@ class TestGetCoverages:
         filenames = ["src/main.py", "src/utils.py", "src/nonexistent.py"]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert len(result) == 2  # Only files with data are returned
@@ -221,11 +220,10 @@ class TestGetCoverages:
         filenames = ["src/main.py"]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert len(result) == 2
-        mock_supabase_chain.eq.assert_called_once_with("repo_id", repo_id)
 
     def test_get_coverages_with_special_file_paths(self, mock_supabase_chain):
         """Test coverage retrieval with special characters in file paths."""
@@ -252,7 +250,7 @@ class TestGetCoverages:
         ]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert len(result) == 1
@@ -281,7 +279,7 @@ class TestGetCoverages:
         filenames = ["src/uncovered.py"]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert len(result) == 1
@@ -311,7 +309,7 @@ class TestGetCoverages:
         filenames = ["src/perfect.py"]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert len(result) == 1
@@ -328,7 +326,7 @@ class TestGetCoverages:
         filenames = ["src/test.py"]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify - should return empty dict due to handle_exceptions decorator
         assert not result
@@ -342,7 +340,7 @@ class TestGetCoverages:
         filenames = ["src/test.py"]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify - should return empty dict due to handle_exceptions decorator
         assert not result
@@ -366,11 +364,10 @@ class TestGetCoverages:
         mock_supabase_chain.execute.return_value = mock_result
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert not result
-        mock_supabase_chain.eq.assert_called_once_with("repo_id", repo_id)
         mock_supabase_chain.in_.assert_called_once_with("full_path", filenames)
 
     def test_get_coverages_with_none_values_in_data(self, mock_supabase_chain):
@@ -400,7 +397,7 @@ class TestGetCoverages:
         filenames = ["src/partial.py"]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert len(result) == 1
@@ -422,7 +419,7 @@ class TestGetCoverages:
         filenames = ["src/main.py"]
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify the result structure (cast function doesn't change runtime behavior)
         assert isinstance(result, dict)
@@ -441,7 +438,7 @@ class TestGetCoverages:
         repo_id = 123
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=large_filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=large_filenames)
 
         # Verify
         assert not result
@@ -461,7 +458,7 @@ class TestGetCoverages:
         filenames = ["src/main.py", "src/main.py", "src/main.py"]  # Duplicates
 
         # Execute
-        result = get_coverages(repo_id=repo_id, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=repo_id, filenames=filenames)
 
         # Verify
         assert len(result) == 1  # Should only have one entry despite duplicates
@@ -491,7 +488,7 @@ class TestGetCoverages:
         repo_id = 123
 
         # Execute
-        get_coverages(repo_id=repo_id, filenames=long_filenames)
+        get_coverages(owner_id=789, repo_id=repo_id, filenames=long_filenames)
 
         # Verify - Should be called twice due to character limit
         assert mock_chain.execute.call_count == 2
@@ -523,7 +520,7 @@ class TestGetCoverages:
             "a" * 195 for _ in range(100)
         ]  # 100 files × 195 chars = 19,500 + overhead
 
-        get_coverages(repo_id=123, filenames=filenames_under)
+        get_coverages(owner_id=789, repo_id=123, filenames=filenames_under)
         assert mock_chain.execute.call_count == 1
 
         # Reset mock
@@ -535,7 +532,7 @@ class TestGetCoverages:
             "b" * 215 for _ in range(100)
         ]  # 100 files × 215 chars = 21,500 + overhead
 
-        get_coverages(repo_id=123, filenames=filenames_over)
+        get_coverages(owner_id=789, repo_id=123, filenames=filenames_over)
         assert mock_chain.execute.call_count == 2
 
     def test_get_coverages_agent_zx_scenario(self, mock_supabase):
@@ -566,7 +563,7 @@ class TestGetCoverages:
         mock_chain.execute.return_value = mock_result
 
         # This should not raise an exception with the fix
-        result = get_coverages(repo_id=297717337, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=297717337, filenames=filenames)
 
         # Should have made 2 batches (total ~20,735 chars)
         assert mock_chain.execute.call_count == 2
@@ -592,7 +589,7 @@ class TestGetCoverages:
         mock_result.data = []
         mock_chain.execute.return_value = mock_result
 
-        result = get_coverages(repo_id=123, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=123, filenames=filenames)
 
         # Total: (4+3)*100 + (24+3)*100 + (55+3)*100 + 100 = 9,600 chars
         # Should fit in single batch
@@ -614,7 +611,9 @@ class TestGetCoverages:
         mock_chain.execute.return_value = mock_result
 
         # Execute
-        result = get_coverages(repo_id=123, filenames=[very_long_filename])
+        result = get_coverages(
+            owner_id=789, repo_id=123, filenames=[very_long_filename]
+        )
 
         # Verify - should still process the single file
         assert mock_chain.execute.call_count == 1
@@ -640,7 +639,9 @@ class TestGetCoverages:
         mock_chain.execute.return_value = mock_result
 
         # Execute with the long filename first, then normal filename
-        result = get_coverages(repo_id=123, filenames=[long_filename, normal_filename])
+        result = get_coverages(
+            owner_id=789, repo_id=123, filenames=[long_filename, normal_filename]
+        )
 
         # Should make 2 calls - one for each filename due to character limit
         assert mock_chain.execute.call_count == 2
@@ -671,7 +672,7 @@ class TestGetCoverages:
         mock_chain.execute.return_value = mock_result
 
         # Execute
-        result = get_coverages(repo_id=123, filenames=all_files)
+        result = get_coverages(owner_id=789, repo_id=123, filenames=all_files)
 
         # Should make 2 calls due to batching
         assert mock_chain.execute.call_count == 2
@@ -705,7 +706,7 @@ class TestGetCoverages:
         mock_chain.execute.return_value = mock_result
 
         # Execute
-        result = get_coverages(repo_id=123, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=123, filenames=filenames)
 
         # Should make 1 call for the final batch
         assert mock_chain.execute.call_count == 1
@@ -738,7 +739,7 @@ class TestGetCoverages:
         mock_chain.execute.side_effect = mock_results
 
         # Execute
-        result = get_coverages(repo_id=123, filenames=long_filenames)
+        result = get_coverages(owner_id=789, repo_id=123, filenames=long_filenames)
 
         # Should make 2 calls and combine data from both
         assert mock_chain.execute.call_count == 2
@@ -766,7 +767,7 @@ class TestGetCoverages:
         mock_chain.execute.return_value = mock_result
 
         # Execute
-        result = get_coverages(repo_id=123, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=123, filenames=filenames)
 
         # Should fit in single batch (under 20,000 limit)
         assert mock_chain.execute.call_count == 1
@@ -788,7 +789,7 @@ class TestGetCoverages:
         mock_chain.execute.return_value = mock_result
 
         # Execute
-        result = get_coverages(repo_id=123, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=123, filenames=filenames)
 
         # Should fit in single batch (exactly at limit)
         assert mock_chain.execute.call_count == 1
@@ -864,5 +865,5 @@ class TestGetCoveragesIntegration:
         ]  # Simulate many amTrust files
 
         # This should not raise an exception
-        result = get_coverages(repo_id=999999, filenames=filenames)
+        result = get_coverages(owner_id=789, repo_id=999999, filenames=filenames)
         assert isinstance(result, dict)

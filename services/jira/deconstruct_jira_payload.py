@@ -8,7 +8,6 @@ from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.branches.get_default_branch import get_default_branch
 from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.types.github_types import BaseArgs
 from services.github.types.owner import OwnerType
 from services.jira.types import JiraPayload
 from services.supabase.installations.get_installation import get_installation
@@ -51,6 +50,8 @@ def deconstruct_jira_payload(payload: JiraPayload):
     installation_id = cast(int, installation["installation_id"])
     owner_type = cast(OwnerType, installation["owner_type"])
     token = get_installation_access_token(installation_id=installation_id)
+    if not token:
+        raise ValueError(f"Failed to get token for installation_id: {installation_id}")
     is_fork = is_repo_forked(owner=owner_name, repo=repo_name, token=token)
 
     # Extract branch related variables
@@ -59,7 +60,7 @@ def deconstruct_jira_payload(payload: JiraPayload):
     )
 
     # Get repository rules from Supabase
-    repo_settings = get_repository(repo_id=repo_id)
+    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     target_branch = (
         cast(str | None, repo_settings["target_branch"]) if repo_settings else None
     )
@@ -84,7 +85,7 @@ def deconstruct_jira_payload(payload: JiraPayload):
     # Extract other information
     github_urls, other_urls = extract_urls(text=issue_body)
 
-    base_args: BaseArgs = {
+    base_args = {
         "input_from": "jira",
         "owner_type": owner_type,
         "owner_id": owner_id,
