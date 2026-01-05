@@ -397,31 +397,17 @@ class TestHandleInstallationCreated:
     def test_handle_installation_created_with_none_token(
         self, mock_installation_payload, all_mocks
     ):
-        """Test handling when token is None."""
+        """Test handling when token is None - returns early without processing."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = None
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
-        all_mocks["check_owner_exists"].return_value = False
-        all_mocks["create_stripe_customer"].return_value = "cus_test123"
-        all_mocks["check_grant_exists"].return_value = False
 
         # Execute
         handle_installation_created(mock_installation_payload)
 
-        # Verify email retrieval with None token
-        all_mocks["get_user_public_email"].assert_called_once_with(
-            username="test-sender", token=None
-        )
-
-        # Verify repository processing with None token
-        all_mocks["process_repositories"].assert_called_once_with(
-            owner_id=67890,
-            owner_name="test-owner",
-            repositories=mock_installation_payload["repositories"],
-            token=None,
-            user_id=11111,
-            user_name="test-sender",
-        )
+        # Verify - should return early when token is None
+        all_mocks["get_installation_access_token"].assert_called_once()
+        all_mocks["get_user_public_email"].assert_not_called()
+        all_mocks["process_repositories"].assert_not_called()
 
     def test_handle_installation_created_with_empty_repositories(
         self, mock_installation_payload, all_mocks
