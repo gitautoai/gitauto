@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Lambda function with VPC and EFS configuration'
+
+Parameters:
+  LambdaFunctionName:
+    Type: String
+    Description: Name of the Lambda function
+  ECRImageUri:
+    Type: String
+    Description: ECR image URI for the Lambda function
+
+Resources:
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      PackageType: Image
+      Code:
+        ImageUri: !Ref ECRImageUri
+      MemorySize: 512
+      Timeout: 900
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/service-role/${LambdaFunctionName}-role-5hjanfe3'
+      VpcConfig:
+        SecurityGroupIds:
+          - !ImportValue GitAutoLambdaSecurityGroupId
+        SubnetIds:
+          - !ImportValue GitAutoPrivateSubnet1Id
+          - !ImportValue GitAutoPrivateSubnet2Id
+      FileSystemConfigs:
+        - Arn: !ImportValue GitAutoEFSAccessPointArn
+          LocalMountPath: /mnt/efs

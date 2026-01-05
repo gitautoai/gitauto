@@ -3,16 +3,19 @@ name: Deployment to AWS Lambda with Docker
 on:
   pull_request:
     types: [closed]
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
-      - '**.md'
-      - '.github/workflows/pytest.yml'
-      - '.gitignore'
-      - 'CODEOWNERS'
-      - 'LICENSE'
+      - "**.md"
+      - ".github/workflows/pytest.yml"
+      - ".gitignore"
+      - "CODEOWNERS"
+      - "LICENSE"
   workflow_dispatch:
 
-# Global environment variables
+concurrency:
+  group: deploy-lambda
+  cancel-in-progress: true # Cancel older deployments, run only the latest
+
 env:
   AWS_REGION: us-west-1
 
@@ -23,10 +26,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4  # https://github.com/actions/checkout
+        uses: actions/checkout@v4 # https://github.com/actions/checkout
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4  # https://github.com/aws-actions/configure-aws-credentials
+        uses: aws-actions/configure-aws-credentials@v4 # https://github.com/aws-actions/configure-aws-credentials
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -34,59 +37,38 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2  # https://github.com/aws-actions/amazon-ecr-login
+        uses: aws-actions/amazon-ecr-login@v2 # https://github.com/aws-actions/amazon-ecr-login
 
-      # LAMBDA_ARN is only used in production
       # Register secrets here https://github.com/gitautoai/gitauto/settings/secrets/actions
       - name: Set deployment environment variables
         run: |
           {
             echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}"
-            echo "EMAIL=${{ secrets.EMAIL }}"
+            echo "ECR_REPOSITORY=${{ secrets.PROD_LAMBDA_NAME }}"
             echo "IMAGE_TAG=${{ github.sha }}"
-
-            if [[ "${{ github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' }}" == "true" ]]; then
-              # For production
-              echo "ECR_REPOSITORY=${{ secrets.PROD_LAMBDA_NAME }}"
-              echo "LAMBDA_NAME=${{ secrets.PROD_LAMBDA_NAME }}"
-              echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD }}"
-
-            else
-              # For staging
-              echo "ECR_REPOSITORY=${{ secrets.STAGE_LAMBDA_NAME }}"
-              echo "LAMBDA_NAME=${{ secrets.STAGE_LAMBDA_NAME }}"
-              echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_STG }}"
-            fi
+            echo "LAMBDA_NAME=${{ secrets.PROD_LAMBDA_NAME }}"
+            echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD }}"
           } >> $GITHUB_ENV
 
       - name: Build, tag, and push image to Amazon ECR
-        id: build-image
         run: |
           docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Update Lambda function with latest ECR image
-        run: |
-          if aws lambda update-function-code \
-          --function-name $LAMBDA_NAME \
-          --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG 2>&1 | grep -q "ResourceConflictException"; then
-            echo "Lambda update already in progress, skipping..."
-            exit 0
-          fi
-
-      # Deploy CloudFormation stack for monitoring (SNS, CloudWatch Alarm)
-      - name: Deploy CloudFormation stack for monitoring
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+      # CloudFormation manages Lambda (code + VPC/EFS config)
+      - name: Deploy CloudFormation stack
         run: |
           aws cloudformation deploy \
-          --stack-name MonitoringStack \
-          --template-file cloudformation.yml \
-          --parameter-overrides LambdaFunctionName=$LAMBDA_NAME Email=$EMAIL \
-          --capabilities CAPABILITY_NAMED_IAM
+            --stack-name gitauto-lambda-with-vpc-efs \
+            --template-file infrastructure/deploy-lambda-with-vpc-efs.yml \
+            --parameter-overrides \
+              LambdaFunctionName=$LAMBDA_NAME \
+              ECRImageUri=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
 
       - name: Notify Slack of deployment status
-        # Only notify if the PR is merged into main
-        if: always() && github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+        if: always()
         env:
           SLACK_MESSAGE: ${{ job.status == 'success' && 'Deployment successful' || 'Deployment failed' }}
         run: |

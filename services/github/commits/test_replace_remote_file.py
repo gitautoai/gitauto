@@ -713,6 +713,9 @@ def test_replace_file_with_eslint_integration(sample_base_args):
         assert result == "Content replaced in the file: test.js successfully."
         mock_get_eslint.assert_called_once_with(sample_base_args)
         mock_run_eslint.assert_called_once()
+        call_kwargs = mock_run_eslint.call_args[1]
+        assert call_kwargs["owner"] == "test-owner"
+        assert call_kwargs["repo"] == "test-repo"
 
 
 def test_replace_file_with_eslint_no_config(sample_base_args):

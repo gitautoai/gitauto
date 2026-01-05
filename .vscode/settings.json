@@ -28,27 +28,27 @@
   "python.analysis.autoImportCompletions": true,
   "python.analysis.typeCheckingMode": "off",
   "yaml.schemas": {
-    "https://raw.githubusercontent.com/awslabs/goformation/master/schema/cloudformation.schema.json": [
+    "https://d33vqc0rt9ld30.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json": [
       "infrastructure/*.yml",
       "infrastructure/*.yaml"
     ]
   },
   "yaml.customTags": [
-    "!Ref",
-    "!GetAtt",
-    "!Sub",
-    "!Join",
-    "!Select",
-    "!Split",
-    "!Base64",
-    "!GetAZs",
-    "!ImportValue",
-    "!FindInMap",
-    "!Equals",
-    "!If",
-    "!Not",
-    "!And",
-    "!Or",
-    "!Condition"
+    "!Ref scalar",
+    "!GetAtt scalar",
+    "!Sub scalar",
+    "!Join sequence",
+    "!Select sequence",
+    "!Split sequence",
+    "!Base64 scalar",
+    "!GetAZs scalar",
+    "!ImportValue scalar",
+    "!FindInMap sequence",
+    "!Equals sequence",
+    "!If sequence",
+    "!Not sequence",
+    "!And sequence",
+    "!Or sequence",
+    "!Condition scalar"
   ]
 }

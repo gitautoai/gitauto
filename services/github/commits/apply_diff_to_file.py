@@ -77,8 +77,10 @@ def apply_diff_to_file(
                 token=token,
             )
             eslint_result = run_eslint(
-                file_content=modified_text,
+                owner=owner,
+                repo=repo,
                 file_path=file_path,
+                file_content=modified_text,
                 eslint_config_content=eslint_config["content"],
                 package_json_content=package_json_content,
             )

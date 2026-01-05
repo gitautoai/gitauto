@@ -1,5 +1,3 @@
-from typing import Any
-
 # Local imports (Github)
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.github_types import GitHubInstallationPayload
@@ -27,10 +25,12 @@ def handle_installation_created(payload: GitHubInstallationPayload):
     owner_type = payload["installation"]["account"]["type"]
     owner_name = payload["installation"]["account"]["login"]
     owner_id = payload["installation"]["account"]["id"]
-    repositories: list[dict[str, Any]] = payload["repositories"]
+    repositories = payload["repositories"]
     user_id = payload["sender"]["id"]
     user_name = payload["sender"]["login"]
     token = get_installation_access_token(installation_id=installation_id)
+    if not token:
+        return
     email = get_user_public_email(username=user_name, token=token)
 
     if not check_owner_exists(owner_id=owner_id):

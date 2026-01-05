@@ -734,6 +734,9 @@ def test_apply_diff_to_file_with_eslint_integration(sample_base_args):
         assert "successfully" in result.lower()
         mock_get_eslint.assert_called_once_with(sample_base_args)
         mock_run_eslint.assert_called_once()
+        call_kwargs = mock_run_eslint.call_args[1]
+        assert call_kwargs["owner"] == "test_owner"
+        assert call_kwargs["repo"] == "test_repo"
 
 
 def test_apply_diff_to_file_with_eslint_no_config(sample_base_args):
@@ -875,6 +878,9 @@ def test_apply_diff_to_file_with_eslint_unfixable_errors(sample_base_args):
 
         assert "successfully" in result.lower()
         mock_run_eslint.assert_called_once()
+        call_kwargs = mock_run_eslint.call_args[1]
+        assert call_kwargs["owner"] == "test_owner"
+        assert call_kwargs["repo"] == "test_repo"
         put_call_args = mock_put.call_args[1]
         decoded_content = base64.b64decode(put_call_args["json"]["content"]).decode(
             "utf-8"

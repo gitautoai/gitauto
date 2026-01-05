@@ -9,6 +9,7 @@ from typing import Literal, cast
 from config import GITHUB_API_URL, PRODUCT_ID, PR_BODY_STARTS_WITH
 from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.chat_with_agent import chat_with_agent
+from services.efs.start_async_install_on_efs import start_async_install_on_efs
 from services.resend.send_email import send_email
 from services.resend.text.credits_depleted_email import get_credits_depleted_email_text
 
@@ -230,6 +231,9 @@ def create_pr_from_issue(
         # Early return notification
         slack_notify(availability_status["log_message"], thread_ts)
         return
+
+    # Start async package installation early to run in parallel with LLM processing (returns immediately if already installed on EFS)
+    start_async_install_on_efs(base_args)
 
     # Create a usage record
     usage_id = create_user_request(
@@ -580,9 +584,10 @@ def create_pr_from_issue(
         owner = get_owner(owner_id=owner_id)
         if owner and owner["credit_balance_usd"] <= 0 and sender_id:
             user = get_user(user_id=sender_id)
-            if user and user.get("email"):
+            email = user.get("email") if user else None
+            if email:
                 subject, text = get_credits_depleted_email_text(sender_name)
-                send_email(to=user["email"], subject=subject, text=text)
+                send_email(to=email, subject=subject, text=text)
 
     # End notification
     end_msg = "Completed" if is_completed else "@channel Failed"

@@ -80,6 +80,13 @@ class GitHubInstallationPayload(TypedDict):
     action: str
     installation: InstallationDetails
     repositories: list[Repository]
+    requester: Optional[User]
+    sender: User
+
+
+class GitHubInstallationRepositoriesPayload(TypedDict):
+    action: str
+    installation: InstallationDetails
     repository_selection: str
     repositories_added: list[Repository]
     repositories_removed: list[Repository]

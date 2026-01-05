@@ -1,6 +1,9 @@
+import json
 from unittest.mock import patch, MagicMock
+
 import pytest
 import requests
+
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -242,10 +245,12 @@ def test_handle_exceptions_429_rate_limit_retry():
 
 
 def test_handle_exceptions_http_error_no_retry():
-    """Test that non-rate-limit HTTP errors don't trigger retry."""
+    """Test that non-rate-limit HTTP errors don't trigger retry and report to sentry."""
     with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
         "utils.error.handle_exceptions.time.sleep"
-    ) as mock_sleep:
+    ) as mock_sleep, patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
 
         mock_response = MagicMock()
         mock_response.status_code = 404
@@ -263,37 +268,47 @@ def test_handle_exceptions_http_error_no_retry():
         assert result is None
         assert mock_get.call_count == 1
         mock_sleep.assert_not_called()  # Should not sleep
+        mock_sentry.assert_called_once_with(http_error)
 
 
 def test_handle_exceptions_connection_error():
-    """Test that connection errors are handled without retry."""
-    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get:
-        mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
+    """Test that connection errors are handled without retry and report to sentry."""
+    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
+        conn_error = requests.exceptions.ConnectionError("Connection failed")
+        mock_get.side_effect = conn_error
 
         result = mock_function_for_testing()
 
         assert result is None
         mock_get.assert_called_once()
+        mock_sentry.assert_called_once_with(conn_error)
 
 
 def test_handle_exceptions_timeout_error():
-    """Test that timeout errors are handled without retry."""
-    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get:
-        mock_get.side_effect = requests.exceptions.Timeout("Request timed out")
+    """Test that timeout errors are handled without retry and report to sentry."""
+    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
+        timeout_error = requests.exceptions.Timeout("Request timed out")
+        mock_get.side_effect = timeout_error
 
         result = mock_function_for_testing()
 
         assert result is None
         mock_get.assert_called_once()
+        mock_sentry.assert_called_once_with(timeout_error)
 
 
 def test_handle_exceptions_json_decode_error():
-    """Test that JSON decode errors are handled without retry."""
-    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get:
+    """Test that JSON decode errors are handled without retry and report to sentry."""
+    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
         mock_response = MagicMock()
-        mock_response.json.side_effect = requests.exceptions.JSONDecodeError(
-            "Invalid JSON", "", 0
-        )
+        json_error = requests.exceptions.JSONDecodeError("Invalid JSON", "", 0)
+        mock_response.json.side_effect = json_error
         mock_get.return_value = mock_response
 
         result = mock_function_for_testing()
@@ -301,17 +316,22 @@ def test_handle_exceptions_json_decode_error():
         assert result is None
         mock_get.assert_called_once()
         mock_response.raise_for_status.assert_called_once()
+        mock_sentry.assert_called_once_with(json_error)
 
 
 def test_handle_exceptions_generic_exception():
-    """Test that generic exceptions are handled."""
-    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get:
-        mock_get.side_effect = ValueError("Generic error")
+    """Test that generic exceptions are handled and report to sentry."""
+    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
+        value_error = ValueError("Generic error")
+        mock_get.side_effect = value_error
 
         result = mock_function_for_testing()
 
         assert result is None
         mock_get.assert_called_once()
+        mock_sentry.assert_called_once_with(value_error)
 
 
 def test_handle_exceptions_preserves_return_type():
@@ -330,3 +350,170 @@ def test_handle_exceptions_preserves_return_type():
     error_result = get_items(-1)
     assert error_result == []
     assert isinstance(error_result, list)
+
+
+def test_handle_exceptions_http_error_no_response_raises():
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def func_raises_http_error_no_response():
+        error = requests.exceptions.HTTPError("No response")
+        error.response = None
+        raise error
+
+    with pytest.raises(requests.exceptions.HTTPError):
+        func_raises_http_error_no_response()
+
+
+def test_handle_exceptions_http_error_no_response_returns_default():
+    @handle_exceptions(default_return_value="default", raise_on_error=False)
+    def func_raises_http_error_no_response():
+        error = requests.exceptions.HTTPError("No response")
+        error.response = None
+        raise error
+
+    result = func_raises_http_error_no_response()
+    assert result == "default"
+
+
+def test_handle_exceptions_500_error_raises():
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def func_raises_500():
+        response = MagicMock()
+        response.status_code = 500
+        error = requests.exceptions.HTTPError("500 Server Error")
+        error.response = response
+        raise error
+
+    with pytest.raises(requests.exceptions.HTTPError):
+        func_raises_500()
+
+
+def test_handle_exceptions_500_error_returns_default():
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def func_raises_500():
+        response = MagicMock()
+        response.status_code = 500
+        error = requests.exceptions.HTTPError("500 Server Error")
+        error.response = response
+        raise error
+
+    result = func_raises_500()
+    assert result == "fallback"
+
+
+def test_handle_exceptions_primary_rate_limit_with_future_reset():
+    with patch("utils.error.handle_exceptions.time.sleep") as mock_sleep, patch(
+        "utils.error.handle_exceptions.time.time"
+    ) as mock_time:
+        mock_time.return_value = 1000
+        future_reset = 1010
+        call_count = [0]
+
+        @handle_exceptions(default_return_value=None, raise_on_error=False)
+        def func_rate_limited():
+            call_count[0] += 1
+            if call_count[0] == 1:
+                response = MagicMock()
+                response.status_code = 403
+                response.reason = "Forbidden"
+                response.text = "rate limit exceeded"
+                response.headers = {
+                    "X-RateLimit-Limit": "5000",
+                    "X-RateLimit-Remaining": "0",
+                    "X-RateLimit-Used": "5000",
+                    "X-RateLimit-Reset": str(future_reset),
+                }
+                error = requests.exceptions.HTTPError("403 Forbidden")
+                error.response = response
+                raise error
+            return "success"
+
+        result = func_rate_limited()
+        assert result == "success"
+        mock_sleep.assert_called_with(15)
+
+
+def test_handle_exceptions_403_remaining_positive_raises():
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def func_403_remaining():
+        response = MagicMock()
+        response.status_code = 403
+        response.reason = "Forbidden"
+        response.text = "Access denied"
+        response.headers = {
+            "X-RateLimit-Limit": "5000",
+            "X-RateLimit-Remaining": "100",
+            "X-RateLimit-Used": "4900",
+        }
+        error = requests.exceptions.HTTPError("403 Forbidden")
+        error.response = response
+        raise error
+
+    with patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
+        with pytest.raises(requests.exceptions.HTTPError):
+            func_403_remaining()
+        mock_sentry.assert_called_once()
+
+
+def test_handle_exceptions_google_429_raises():
+    @handle_exceptions(
+        default_return_value=None, raise_on_error=False, api_type="google"
+    )
+    def func_google_429():
+        response = MagicMock()
+        response.status_code = 429
+        response.reason = "Too Many Requests"
+        response.text = "quota exceeded"
+        response.headers = {"Retry-After": "60"}
+        error = requests.exceptions.HTTPError("429 Too Many Requests")
+        error.response = response
+        raise error
+
+    with pytest.raises(requests.exceptions.HTTPError):
+        func_google_429()
+
+
+def test_handle_exceptions_http_error_non_rate_limit_raise_on_error():
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def func_raises_404():
+        response = MagicMock()
+        response.status_code = 404
+        response.reason = "Not Found"
+        response.text = "Not Found"
+        error = requests.exceptions.HTTPError("404 Not Found")
+        error.response = response
+        raise error
+
+    with patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
+        with pytest.raises(requests.exceptions.HTTPError):
+            func_raises_404()
+        mock_sentry.assert_called_once()
+
+
+def test_handle_exceptions_json_decode_error_no_doc():
+    @handle_exceptions(default_return_value="default", raise_on_error=False)
+    def func_json_error_no_doc():
+        error = json.JSONDecodeError("Invalid", "", 0)
+        if hasattr(error, "doc"):
+            delattr(error, "doc")
+        raise error
+
+    with patch("utils.error.handle_exceptions.sentry_sdk.capture_exception"):
+        result = func_json_error_no_doc()
+        assert result == "default"
+
+
+def test_handle_exceptions_json_decode_error_raise_on_error():
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    def func_json_error_raises():
+        raise json.JSONDecodeError("Invalid", "bad json", 0)
+
+    with patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
+        with pytest.raises(json.JSONDecodeError):
+            func_json_error_raises()
+        mock_sentry.assert_called_once()

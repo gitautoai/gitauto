@@ -5,10 +5,11 @@ from functools import wraps
 import json
 import logging
 import time
-from typing import Any, Callable, ParamSpec, TypeVar
+from typing import Any, Callable, ParamSpec, TypeVar, cast
 
 # Third party imports
 import requests
+import sentry_sdk
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -40,16 +41,14 @@ def handle_exceptions(
                 if err.response is None:
                     if raise_on_error:
                         raise
-                    # Type system cannot verify default_return_value matches R
-                    return error_return  # type: ignore[return-value]
+                    return cast(R, error_return)
                 status_code: int = err.response.status_code
 
                 # Skip logging for 500 Internal Server Error as it's usually a temporary issue and no meaningful information is available
                 if status_code == 500:
                     if raise_on_error:
                         raise
-                    # Type system cannot verify default_return_value matches R
-                    return error_return  # type: ignore[return-value]
+                    return cast(R, error_return)
 
                 reason: str | Any = (
                     str(err.response.reason)
@@ -93,6 +92,7 @@ def handle_exceptions(
 
                     # Otherwise, log the error and return the default return value
                     err_msg = f"{func.__name__} encountered an HTTPError: {err}. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n\n"
+                    sentry_sdk.capture_exception(err)
                     logging.error(msg=err_msg)
                     if raise_on_error:
                         raise
@@ -111,6 +111,7 @@ def handle_exceptions(
                 # Ex) 409: Conflict, 422: Unprocessable Entity (No changes made), and etc.
                 else:
                     err_msg = f"{func.__name__} encountered an HTTPError: {err}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}\n\nReason: {reason}\n\nText: {text}\n\n"
+                    sentry_sdk.capture_exception(err)
                     logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
@@ -123,6 +124,7 @@ def handle_exceptions(
                     raw_response = "Raw response not available"
 
                 err_msg = f"{func.__name__} encountered a JSONDecodeError: {err}\n\nRaw response: {raw_response}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}"
+                sentry_sdk.capture_exception(err)
                 logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
@@ -130,11 +132,11 @@ def handle_exceptions(
             # Catch all other exceptions
             except (AttributeError, KeyError, TypeError, Exception) as err:
                 err_msg = f"{func.__name__} encountered an {type(err).__name__}: {err}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}"
+                sentry_sdk.capture_exception(err)
                 logging.error(msg=err_msg)
                 if raise_on_error:
                     raise
-            # Type system cannot verify default_return_value matches R
-            return error_return  # type: ignore[return-value]
+            return cast(R, error_return)
 
         return wrapper
 
