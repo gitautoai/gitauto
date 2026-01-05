@@ -2,14 +2,18 @@
 """Unit tests for handle_installation_repos.py"""
 
 # Standard imports
-from unittest.mock import patch
 import json
+from typing import cast
+from unittest.mock import patch
 
 # Third-party imports
 import pytest
 
 # Local imports
-from services.webhook.handle_installation_repos import handle_installation_repos_added
+from services.github.types.github_types import GitHubInstallationRepositoriesPayload
+from services.webhook.handle_installation_repos_added import (
+    handle_installation_repos_added,
+)
 
 
 @pytest.fixture
@@ -44,7 +48,7 @@ def mock_installation_payload():
 def mock_is_installation_valid():
     """Mock is_installation_valid function."""
     with patch(
-        "services.webhook.handle_installation_repos.is_installation_valid"
+        "services.webhook.handle_installation_repos_added.is_installation_valid"
     ) as mock:
         yield mock
 
@@ -53,7 +57,7 @@ def mock_is_installation_valid():
 def mock_get_installation_access_token():
     """Mock get_installation_access_token function."""
     with patch(
-        "services.webhook.handle_installation_repos.get_installation_access_token"
+        "services.webhook.handle_installation_repos_added.get_installation_access_token"
     ) as mock:
         yield mock
 
@@ -62,7 +66,7 @@ def mock_get_installation_access_token():
 def mock_process_repositories():
     """Mock process_repositories function."""
     with patch(
-        "services.webhook.handle_installation_repos.process_repositories"
+        "services.webhook.handle_installation_repos_added.process_repositories"
     ) as mock:
         yield mock
 
@@ -159,7 +163,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token,
         mock_process_repositories,
     ):
-        """Test handling when token is None."""
+        """Test handling when token is None - returns early without processing."""
         # Setup
         mock_is_installation_valid.return_value = True
         mock_get_installation_access_token.return_value = None
@@ -167,22 +171,12 @@ class TestHandleInstallationReposAdded:
         # Execute
         handle_installation_repos_added(mock_installation_payload)
 
-        # Verify
+        # Verify - should return early when token is None
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
-        mock_process_repositories.assert_called_once_with(
-            owner_id=12345,
-            owner_name="test-owner",
-            repositories=[
-                {"id": 111, "name": "test-repo-1"},
-                {"id": 222, "name": "test-repo-2"},
-            ],
-            token=None,
-            user_id=67890,
-            user_name="test-sender",
-        )
+        mock_process_repositories.assert_not_called()
 
     def test_handle_installation_repos_added_with_empty_token(
         self,
@@ -191,7 +185,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token,
         mock_process_repositories,
     ):
-        """Test handling when token is empty string."""
+        """Test handling when token is empty string - returns early without processing."""
         # Setup
         mock_is_installation_valid.return_value = True
         mock_get_installation_access_token.return_value = ""
@@ -199,22 +193,12 @@ class TestHandleInstallationReposAdded:
         # Execute
         handle_installation_repos_added(mock_installation_payload)
 
-        # Verify
+        # Verify - should return early when token is empty
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
-        mock_process_repositories.assert_called_once_with(
-            owner_id=12345,
-            owner_name="test-owner",
-            repositories=[
-                {"id": 111, "name": "test-repo-1"},
-                {"id": 222, "name": "test-repo-2"},
-            ],
-            token="",
-            user_id=67890,
-            user_name="test-sender",
-        )
+        mock_process_repositories.assert_not_called()
 
     def test_handle_installation_repos_added_with_exception_in_is_installation_valid(
         self,
@@ -317,7 +301,9 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        result = handle_installation_repos_added(incomplete_payload)
+        result = handle_installation_repos_added(
+            cast(GitHubInstallationRepositoriesPayload, incomplete_payload)
+        )
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
@@ -352,7 +338,9 @@ class TestHandleInstallationReposAdded:
         }
 
         # Execute
-        result = handle_installation_repos_added(incomplete_payload)
+        result = handle_installation_repos_added(
+            cast(GitHubInstallationRepositoriesPayload, incomplete_payload)
+        )
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
@@ -384,7 +372,9 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        result = handle_installation_repos_added(incomplete_payload)
+        result = handle_installation_repos_added(
+            cast(GitHubInstallationRepositoriesPayload, incomplete_payload)
+        )
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
@@ -620,7 +610,7 @@ class TestHandleInstallationReposAdded:
     ):
         """Test handling when payload is None."""
         # Execute
-        result = handle_installation_repos_added(None)
+        result = handle_installation_repos_added(None)  # type: ignore[arg-type]
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
@@ -636,7 +626,7 @@ class TestHandleInstallationReposAdded:
     ):
         """Test handling when payload is empty dictionary."""
         # Execute
-        result = handle_installation_repos_added({})
+        result = handle_installation_repos_added({})  # type: ignore[arg-type]
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None
@@ -659,7 +649,9 @@ class TestHandleInstallationReposAdded:
         }
 
         # Execute
-        result = handle_installation_repos_added(invalid_payload)
+        result = handle_installation_repos_added(
+            cast(GitHubInstallationRepositoriesPayload, invalid_payload)
+        )
 
         # Verify - function should return None due to handle_exceptions decorator
         assert result is None

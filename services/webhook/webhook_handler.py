@@ -20,6 +20,7 @@ from services.github.comments.create_gitauto_button_comment import (
 from services.github.types.github_types import (
     CheckSuiteCompletedPayload,
     GitHubInstallationPayload,
+    GitHubInstallationRepositoriesPayload,
     GitHubLabeledPayload,
     GitHubPullRequestClosedPayload,
 )
@@ -58,7 +59,12 @@ from services.webhook.successful_check_suite_handler import (
     handle_successful_check_suite,
 )
 from services.webhook.handle_installation import handle_installation_created
-from services.webhook.handle_installation_repos import handle_installation_repos_added
+from services.webhook.handle_installation_repos_added import (
+    handle_installation_repos_added,
+)
+from services.webhook.handle_installation_repos_removed import (
+    handle_installation_repos_removed,
+)
 from services.webhook.merge_handler import handle_pr_merged
 from services.webhook.pr_checkbox_handler import handle_pr_checkbox_trigger
 from services.webhook.push_handler import handle_push
@@ -120,10 +126,12 @@ async def handle_webhook_event(
 
         # Send uninstall email
         user = get_user(payload["sender"]["id"])
-        if user and user.get("email"):
-            first_name = get_first_name(user.get("user_name", ""))
+        email = user.get("email") if user else None
+        user_name = user.get("user_name", "") if user else ""
+        if email:
+            first_name = get_first_name(user_name)
             subject, text = get_uninstall_email_text(first_name)
-            send_email(to=user["email"], subject=subject, text=text)
+            send_email(to=email, subject=subject, text=text)
 
         # Delete AWS schedulers for this owner
         schedulers_to_delete = get_schedulers_by_owner_id(owner_id)
@@ -148,10 +156,12 @@ async def handle_webhook_event(
 
         # Send suspend email
         user = get_user(payload["sender"]["id"])
-        if user and user.get("email"):
-            first_name = get_first_name(user.get("user_name", ""))
+        email = user.get("email") if user else None
+        user_name = user.get("user_name", "") if user else ""
+        if email:
+            first_name = get_first_name(user_name)
             subject, text = get_suspend_email_text(first_name)
-            send_email(to=user["email"], subject=subject, text=text)
+            send_email(to=email, subject=subject, text=text)
 
         # Delete AWS schedulers for this owner
         schedulers_to_delete = get_schedulers_by_owner_id(owner_id)
@@ -171,9 +181,18 @@ async def handle_webhook_event(
 
     # Add issue templates to the repositories when GitAuto is added to a repository
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation_repositories
-    if event_name == "installation_repositories" and action in ("added"):
-        handle_installation_repos_added(payload=payload)
-        return
+    if event_name == "installation_repositories":
+        if action == "added":
+            handle_installation_repos_added(
+                payload=cast(GitHubInstallationRepositoriesPayload, payload)
+            )
+            return
+
+        if action == "removed":
+            handle_installation_repos_removed(
+                payload=cast(GitHubInstallationRepositoriesPayload, payload)
+            )
+            return
 
     # Handle issue events
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues

@@ -10,7 +10,7 @@ import pytest
 from config import UTF8
 from services.github.types.github_types import (
     CheckSuiteCompletedPayload,
-    GitHubInstallationPayload,
+    GitHubInstallationRepositoriesPayload,
     GitHubLabeledPayload,
     GitHubPullRequestClosedPayload,
 )
@@ -47,6 +47,15 @@ def mock_handle_installation_created():
 def mock_handle_installation_repos_added():
     with patch(
         "services.webhook.webhook_handler.handle_installation_repos_added"
+    ) as mock:
+        mock.return_value = None
+        yield mock
+
+
+@pytest.fixture
+def mock_handle_installation_repos_removed():
+    with patch(
+        "services.webhook.webhook_handler.handle_installation_repos_removed"
     ) as mock:
         mock.return_value = None
         yield mock
@@ -843,13 +852,13 @@ class TestHandleWebhookEvent:
             assert call_args["issue_number"] == 714
             assert call_args["merged"] is True
 
-    def test_github_installation_payload_cast(self):
+    def test_github_installation_repositories_payload_cast(self):
         with open(
             "payloads/github/installation_repositories/added.json", "r", encoding=UTF8
         ) as f:
             payload = json.load(f)
 
-        casted_payload = cast(GitHubInstallationPayload, payload)
+        casted_payload = cast(GitHubInstallationRepositoriesPayload, payload)
 
         assert casted_payload["action"] == "added"
         assert casted_payload["installation"]["id"] == 52733965
@@ -905,6 +914,25 @@ class TestHandleWebhookEvent:
         assert received_payload["action"] == "added"
         assert received_payload["installation"]["id"] == 52733965
         assert received_payload["sender"]["login"] == "hiroshinishio"
+
+    @pytest.mark.asyncio
+    async def test_installation_repositories_removed_calls_handler(
+        self, mock_handle_installation_repos_removed
+    ):
+        with open(
+            "payloads/github/installation_repositories/removed.json", "r", encoding=UTF8
+        ) as f:
+            payload = json.load(f)
+
+        await handle_webhook_event("installation_repositories", payload)
+
+        mock_handle_installation_repos_removed.assert_called_once()
+
+        call_args = mock_handle_installation_repos_removed.call_args[1]
+        received_payload = call_args["payload"]
+
+        assert isinstance(received_payload, dict)
+        assert received_payload["action"] == "removed"
 
     def test_pull_request_webhook_payload_cast(self):
         with open("payloads/github/pull_request/opened.json", "r", encoding=UTF8) as f:

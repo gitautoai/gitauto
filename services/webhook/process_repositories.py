@@ -1,11 +1,11 @@
 # Standard imports
 import shutil
 import tempfile
-from typing import Any
 
 # Local imports
 from services.git.clone_repo import clone_repo
 from services.github.repositories.get_repository_stats import get_repository_stats
+from services.github.types.repository import Repository
 from services.supabase.repositories.upsert_repository import upsert_repository
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -14,7 +14,7 @@ from utils.error.handle_exceptions import handle_exceptions
 def process_repositories(
     owner_id: int,
     owner_name: str,
-    repositories: list[dict[str, Any]],
+    repositories: list[Repository],
     token: str,
     user_id: int,
     user_name: str,

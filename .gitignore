@@ -1,13 +1,14 @@
-*private-key.pem
-/scripts/
+*.pem
 .coverage*
 .env*
 .history
 .pytest_cache
 .ruff_cache
 __pycache__
+/scripts/
 coverage.*
 coverage/
+infrastructure/lambda-env-backup.json
 mcp.json
 ngrok.yml
 pylint_results.txt

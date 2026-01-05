@@ -1,0 +1,355 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'VPC + NAT Instance (~$4/mo) + EFS for GitAuto'
+
+# No parameters needed - creates everything from scratch
+Resources:
+
+  # =============================================================================
+  # VPC (Virtual Private Cloud)
+  # =============================================================================
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: gitauto-vpc
+
+  # =============================================================================
+  # Internet Gateway - allows public subnet to reach internet
+  # =============================================================================
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: gitauto-igw
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # =============================================================================
+  # Subnets - isolated network segments within VPC, each in one AZ (Availability Zone)
+  # - 1 public subnet: NAT Instance in AZ-a only (single point of failure, but ~$4/mo vs ~$8/mo for 2)
+  # - 2 private subnets: Lambda + EFS in both AZs (EFS HA works, but internet depends on NAT in AZ-a)
+  # us-west-1 AZs verified: aws ec2 describe-availability-zones --region us-west-1 --query 'AvailabilityZones[*].ZoneName'
+  # =============================================================================
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: us-west-1a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: gitauto-public-1a
+
+  # Private subnets (for Lambda + EFS)
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.11.0/24
+      AvailabilityZone: us-west-1a
+      Tags:
+        - Key: Name
+          Value: gitauto-private-1a
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.12.0/24
+      AvailabilityZone: us-west-1c
+      Tags:
+        - Key: Name
+          Value: gitauto-private-1c
+
+  # =============================================================================
+  # Route Tables - rules that determine where network traffic is directed
+  # =============================================================================
+
+  # Public route table - routes to Internet Gateway
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: gitauto-public-rt
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  # Private route table - routes to NAT Instance
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: gitauto-private-rt
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      InstanceId: !Ref NATInstance
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  # =============================================================================
+  # NAT Instance (~$4/mo vs NAT Gateway ~$64/mo)
+  # =============================================================================
+
+  NATSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for NAT Instance
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: -1 # All traffic from private subnets
+          CidrIp: 10.0.11.0/24
+        - IpProtocol: -1
+          CidrIp: 10.0.12.0/24
+        - IpProtocol: tcp # SSH access for troubleshooting
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0 # From anywhere (use various WiFis, private key is security)
+      SecurityGroupEgress:
+        - IpProtocol: -1 # All outbound traffic
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: gitauto-nat-sg
+
+  # Using Amazon Linux 2023 AMI with NAT configuration
+  # https://docs.aws.amazon.com/vpc/latest/userguide/VPC_NAT_Instance.html
+  NATInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.nano # ~$4/mo
+      ImageId: ami-0edea6d05015c16a4 # Amazon Linux 2023 - Verified: aws ec2 describe-images --region us-west-1 --owners amazon --filters "Name=name,Values=al2023-ami-2023*-x86_64" --query 'Images | sort_by(@, &CreationDate) | [-1].[ImageId,Name]'
+      KeyName: gitauto # Private key: infrastructure/nat-instance-ssh-private-key.pem
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref NATSecurityGroup
+      SourceDestCheck: false # Required for NAT
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          set -e # Exit on error
+          # Enable IP forwarding
+          echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+          sysctl -p
+          # Enable NAT - detect primary interface dynamically
+          IFACE=$(ip route | grep default | awk '{print $5}')
+          if [ -z "$IFACE" ]; then
+            echo "ERROR: Could not detect network interface" >> /var/log/nat-setup.log
+            exit 1
+          fi
+          echo "Using interface: $IFACE" >> /var/log/nat-setup.log
+          yum install -y iptables-services
+          systemctl enable iptables
+          systemctl start iptables
+          # Allow forwarding (must be before Amazon Linux 2023's default REJECT rule)
+          iptables -I FORWARD 1 -m state --state ESTABLISHED,RELATED -j ACCEPT # Return traffic
+          iptables -I FORWARD 2 -s 10.0.11.0/24 -j ACCEPT # Private subnet 1
+          iptables -I FORWARD 3 -s 10.0.12.0/24 -j ACCEPT # Private subnet 2
+          iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
+          service iptables save
+          echo "NAT setup complete" >> /var/log/nat-setup.log
+      Tags:
+        - Key: Name
+          Value: gitauto-nat-instance
+
+  # Elastic IP for NAT Instance (consistent public IP)
+  NATEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: gitauto-nat-eip
+
+  NATEIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref NATInstance
+      AllocationId: !GetAtt NATEIP.AllocationId
+
+  # =============================================================================
+  # Lambda Security Group - only egress needed (Lambda initiates connections, doesn't receive)
+  # =============================================================================
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for GitAuto Lambda
+      VpcId: !Ref VPC
+      SecurityGroupEgress:
+        - IpProtocol: -1 # All outbound traffic
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: gitauto-lambda-sg
+
+  # =============================================================================
+  # EFS (Elastic File System) - persistent storage shared across Lambda invocations
+  # =============================================================================
+  GitAutoEFS:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      PerformanceMode: generalPurpose
+      ThroughputMode: bursting # Free, vs provisioned ($6/MB/s/mo)
+      Encrypted: true
+      BackupPolicy: # Disabled - data is regenerable (re-clone, re-install)
+        Status: DISABLED
+      # Move unused files from Standard ($0.30/GB/mo) to IA ($0.016/GB/mo)
+      # https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-efs-filesystem-lifecyclepolicy.html
+      LifecyclePolicies:
+        - TransitionToIA: AFTER_7_DAYS
+      FileSystemTags:
+        - Key: Name
+          Value: gitauto-efs
+
+  EFSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for GitAuto EFS
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          SourceSecurityGroupId: !Ref LambdaSecurityGroup
+      Tags:
+        - Key: Name
+          Value: gitauto-efs-sg
+
+  # Mount Targets (one per private subnet)
+  MountTarget1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref GitAutoEFS
+      SubnetId: !Ref PrivateSubnet1
+      SecurityGroups:
+        - !Ref EFSSecurityGroup
+
+  MountTarget2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref GitAutoEFS
+      SubnetId: !Ref PrivateSubnet2
+      SecurityGroups:
+        - !Ref EFSSecurityGroup
+
+  # =============================================================================
+  # S3 Gateway Endpoint - FREE, allows Lambda to access S3 without going through NAT
+  # =============================================================================
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+
+  # EFS Access Point for Lambda
+  LambdaAccessPoint:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref GitAutoEFS
+      PosixUser: # Lambda runs as UID 0 (root)
+        Uid: '0'
+        Gid: '0'
+      RootDirectory:
+        Path: /
+        CreationInfo: # Must match PosixUser for write access
+          OwnerUid: '0'
+          OwnerGid: '0'
+          Permissions: '755'
+      AccessPointTags:
+        - Key: Name
+          Value: gitauto-lambda-access-point
+
+# =============================================================================
+# Outputs - values needed to configure Lambda
+# =============================================================================
+Outputs:
+  VPCId:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: GitAutoVPCId
+
+  PrivateSubnet1Id:
+    Description: Private Subnet 1 ID (us-west-1a)
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: GitAutoPrivateSubnet1Id
+
+  PrivateSubnet2Id:
+    Description: Private Subnet 2 ID (us-west-1c)
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: GitAutoPrivateSubnet2Id
+
+  LambdaSecurityGroupId:
+    Description: Security Group ID for Lambda
+    Value: !Ref LambdaSecurityGroup
+    Export:
+      Name: GitAutoLambdaSecurityGroupId
+
+  EFSFileSystemId:
+    Description: EFS File System ID
+    Value: !Ref GitAutoEFS
+    Export:
+      Name: GitAutoEFSId
+
+  EFSAccessPointArn:
+    Description: EFS Access Point ARN (Amazon Resource Name) for Lambda
+    Value: !GetAtt LambdaAccessPoint.Arn
+    Export:
+      Name: GitAutoEFSAccessPointArn
+
+  NATInstanceId:
+    Description: NAT Instance ID
+    Value: !Ref NATInstance
+    Export:
+      Name: GitAutoNATInstanceId
+
+  NATPublicIP:
+    Description: NAT Instance Public IP
+    Value: !Ref NATEIP
+    Export:
+      Name: GitAutoNATPublicIP

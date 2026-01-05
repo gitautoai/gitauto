@@ -75,8 +75,10 @@ def replace_remote_file_content(
                 token=token,
             )
             eslint_result = run_eslint(
-                file_content=file_content,
+                owner=owner,
+                repo=repo,
                 file_path=file_path,
+                file_content=file_content,
                 eslint_config_content=eslint_config["content"],
                 package_json_content=package_json_content,
             )

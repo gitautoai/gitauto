@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'CloudFormation template for Lambda monitoring and notifications'
+Description: 'Lambda monitoring - SNS notifications and CloudWatch alarm'
 
 Parameters:
   Email:
@@ -32,8 +32,8 @@ Resources:
       AlarmDescription: Alarm for Lambda function errors
       MetricName: Errors
       Namespace: AWS/Lambda
-      Statistic: Sum  # Total number of errors in each period
-      Period: 300  # in seconds
+      Statistic: Sum
+      Period: 300
       EvaluationPeriods: 1
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold

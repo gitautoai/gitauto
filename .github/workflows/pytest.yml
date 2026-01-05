@@ -3,14 +3,14 @@ name: PyTest
 on:
   pull_request:
     types: [opened, synchronize]
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
-      - '**.md'
-      - '.github/**'
-      - '.gitignore'
-      - 'cloudformation.yml'
-      - 'CODEOWNERS'
-      - 'LICENSE'
+      - "**.md"
+      - ".github/**"
+      - ".gitignore"
+      - "infrastructure/**"
+      - "CODEOWNERS"
+      - "LICENSE"
   workflow_dispatch:
 
 permissions:
@@ -28,76 +28,75 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Set PYTHONPATH
-      run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
 
-    - name: Check initial disk space
-      run: df -h
+      - name: Check initial disk space
+        run: df -h
 
-    - name: Check memory usage
-      run: free -h
+      - name: Check memory usage
+        run: free -h
 
-    - name: Run pytest
-      env:  # https://github.com/gitautoai/gitauto/settings/secrets/actions
+      - name: Run pytest
+        env: # https://github.com/gitautoai/gitauto/settings/secrets/actions
+          # GitHub credentials https://github.com/settings/apps/gitauto-for-dev
+          GH_APP_ID: ${{ secrets.GH_APP_ID }}
+          GH_APP_NAME: ${{ secrets.GH_APP_NAME }}
+          GH_APP_USER_ID: ${{ secrets.GH_APP_USER_ID }}
+          GH_APP_USER_NAME: ${{ secrets.GH_APP_USER_NAME }}
+          GH_PRIVATE_KEY: ${{ secrets.GH_PRIVATE_KEY }}
+          GH_WEBHOOK_SECRET: ${{ secrets.GH_WEBHOOK_SECRET }}
 
-        # GitHub credentials https://github.com/settings/apps/gitauto-for-dev
-        GH_APP_ID: ${{ secrets.GH_APP_ID }}
-        GH_APP_NAME: ${{ secrets.GH_APP_NAME }}
-        GH_APP_USER_ID: ${{ secrets.GH_APP_USER_ID }}
-        GH_APP_USER_NAME: ${{ secrets.GH_APP_USER_NAME }}
-        GH_PRIVATE_KEY: ${{ secrets.GH_PRIVATE_KEY }}
-        GH_WEBHOOK_SECRET: ${{ secrets.GH_WEBHOOK_SECRET }}
+          # Anthropic credentials
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
-        # Anthropic credentials
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # OpenAI credentials
+          OPENAI_API_KEY: ${{ secrets.STAGE_OPENAI_API_KEY }}
+          OPENAI_ORG_ID: ${{ secrets.STAGE_OPENAI_ORG_ID }}
 
-        # OpenAI credentials
-        OPENAI_API_KEY: ${{ secrets.STAGE_OPENAI_API_KEY }}
-        OPENAI_ORG_ID: ${{ secrets.STAGE_OPENAI_ORG_ID }}
+          # Resend credentials
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
 
-        # Resend credentials
-        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          # Sentry credentials
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
-        # Sentry credentials
-        SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          # Supabase credentials
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGE_SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_URL: ${{ secrets.STAGE_SUPABASE_URL }}
 
-        # Supabase credentials
-        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGE_SUPABASE_SERVICE_ROLE_KEY }}
-        SUPABASE_URL: ${{ secrets.STAGE_SUPABASE_URL }}
+          # Stripe credentials
+          STRIPE_API_KEY: ${{ secrets.STAGE_STRIPE_API_KEY }}
+          STRIPE_FREE_TIER_PRICE_ID: ${{ secrets.STAGE_STRIPE_FREE_TIER_PRICE_ID }}
+          STRIPE_PRODUCT_ID_FREE: ${{ secrets.STRIPE_PRODUCT_ID_FREE_STAGE }}
+          STRIPE_PRODUCT_ID_STANDARD: ${{ secrets.STRIPE_PRODUCT_ID_STANDARD_STAGE }}
 
-        # Stripe credentials
-        STRIPE_API_KEY: ${{ secrets.STAGE_STRIPE_API_KEY }}
-        STRIPE_FREE_TIER_PRICE_ID: ${{ secrets.STAGE_STRIPE_FREE_TIER_PRICE_ID }}
-        STRIPE_PRODUCT_ID_FREE: ${{ secrets.STRIPE_PRODUCT_ID_FREE_STAGE }}
-        STRIPE_PRODUCT_ID_STANDARD: ${{ secrets.STRIPE_PRODUCT_ID_STANDARD_STAGE }}
+          # Environment variables
+          ENV: stage
+          PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
 
-        # Environment variables
-        ENV: stage
-        PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
+        run: python -m pytest --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
 
-      run: python -m pytest --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
+      - name: Check resources on failure
+        if: failure()
+        run: |
+          df -h
+          du -sh coverage/ .pytest_cache/ || true
 
-    - name: Check resources on failure
-      if: failure()
-      run: |
-        df -h
-        du -sh coverage/ .pytest_cache/ || true
-
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: coverage-report
-        path: coverage/lcov.info
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/lcov.info
