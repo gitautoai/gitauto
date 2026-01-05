@@ -86,7 +86,7 @@ jobs:
           ENV: stage
           PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
 
-        run: python -m pytest --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
+        run: python -m pytest -n auto --dist loadgroup --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
 
       - name: Check resources on failure
         if: failure()
