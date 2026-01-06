@@ -156,44 +156,24 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_none_token(
+    def test_handle_installation_repos_added_with_token_error(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
         mock_get_installation_access_token,
         mock_process_repositories,
     ):
-        """Test handling when token is None - returns early without processing."""
-        # Setup
+        """Test handling when token retrieval raises - returns early without processing."""
+        # Setup - get_installation_access_token now raises instead of returning None
         mock_is_installation_valid.return_value = True
-        mock_get_installation_access_token.return_value = None
-
-        # Execute
-        handle_installation_repos_added(mock_installation_payload)
-
-        # Verify - should return early when token is None
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
-        mock_get_installation_access_token.assert_called_once_with(
-            installation_id=67890
+        mock_get_installation_access_token.side_effect = ValueError(
+            "Installation 67890 suspended or deleted"
         )
-        mock_process_repositories.assert_not_called()
-
-    def test_handle_installation_repos_added_with_empty_token(
-        self,
-        mock_installation_payload,
-        mock_is_installation_valid,
-        mock_get_installation_access_token,
-        mock_process_repositories,
-    ):
-        """Test handling when token is empty string - returns early without processing."""
-        # Setup
-        mock_is_installation_valid.return_value = True
-        mock_get_installation_access_token.return_value = ""
 
         # Execute
         handle_installation_repos_added(mock_installation_payload)
 
-        # Verify - should return early when token is empty
+        # Verify - should return early when token retrieval fails
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890

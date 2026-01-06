@@ -20,34 +20,37 @@ def create_mock_payload(
     issue_number=123,
     issue_title="Test Issue",
 ) -> GitHubLabeledPayload:
-    return cast(GitHubLabeledPayload, {
-        "action": "labeled",
-        "issue": {
-            "user": {"login": issuer_name},
-            "body": issue_body,
-            "number": issue_number,
-            "title": issue_title,
-        },
-        "repository": {
-            "id": 456,
-            "name": "test-repo",
-            "clone_url": "https://github.com/test-owner/test-repo.git",
-            "fork": fork,
-            "default_branch": default_branch,
-            "owner": {
-                "type": "Organization",
-                "login": "test-owner",
-                "id": 789,
+    return cast(
+        GitHubLabeledPayload,
+        {
+            "action": "labeled",
+            "issue": {
+                "user": {"login": issuer_name},
+                "body": issue_body,
+                "number": issue_number,
+                "title": issue_title,
+            },
+            "repository": {
+                "id": 456,
+                "name": "test-repo",
+                "clone_url": "https://github.com/test-owner/test-repo.git",
+                "fork": fork,
+                "default_branch": default_branch,
+                "owner": {
+                    "type": "Organization",
+                    "login": "test-owner",
+                    "id": 789,
+                },
+            },
+            "sender": {
+                "id": sender_id,
+                "login": sender_name,
+            },
+            "installation": {
+                "id": installation_id,
             },
         },
-        "sender": {
-            "id": sender_id,
-            "login": sender_name,
-        },
-        "installation": {
-            "id": installation_id,
-        },
-    })
+    )
 
 
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
@@ -125,18 +128,18 @@ def test_deconstruct_github_payload_no_token_raises_error(
     mock_get_installation_access_token,
 ):
     """Test that ValueError is raised when no installation token is found."""
-    # Setup mock to return None (no token)
-    mock_get_installation_access_token.return_value = None
+    # Setup mock to raise ValueError (get_installation_access_token now raises)
+    mock_get_installation_access_token.side_effect = ValueError(
+        "Installation 67890 suspended or deleted"
+    )
 
     # Create test payload
     payload = create_mock_payload()
 
-    # Call the function and expect ValueError
+    # Call the function and expect ValueError to propagate
     with pytest.raises(ValueError) as excinfo:
         deconstruct_github_payload(payload)
-    assert "Installation access token is not found for test-owner/test-repo" in str(
-        excinfo.value
-    )
+    assert "Installation 67890 suspended or deleted" in str(excinfo.value)
 
 
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
