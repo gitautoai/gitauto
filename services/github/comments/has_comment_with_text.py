@@ -1,12 +1,15 @@
 from config import GITHUB_APP_USER_NAME
 from services.github.comments.get_all_comments import get_all_comments
-from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
-def has_comment_with_text(base_args: BaseArgs, texts: list[str]):
-    comments = get_all_comments(base_args)
+def has_comment_with_text(
+    *, owner: str, repo: str, issue_number: int, token: str, texts: list[str]
+):
+    comments = get_all_comments(
+        owner=owner, repo=repo, issue_number=issue_number, token=token
+    )
 
     for comment in comments:
         if comment.get("user", {}).get("login") != GITHUB_APP_USER_NAME:

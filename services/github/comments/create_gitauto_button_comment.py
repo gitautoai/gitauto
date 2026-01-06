@@ -28,20 +28,14 @@ def create_gitauto_button_comment(payload: GitHubLabeledPayload) -> None:
     # Base comment
     base_comment = f"{CLICK_THE_CHECKBOX}\n- [ ] Generate PR"
 
-    # Create base args for comment creation
-    base_args = {
-        "owner": owner_name,
-        "repo": repo_name,
-        "issue_number": issue_number,
-        "token": token,
-    }
-
     # Create the comment with usage info
     combine_and_create_comment(
         base_comment=base_comment,
         installation_id=installation_id,
         owner_id=owner_id,
         owner_name=owner_name,
+        repo_name=repo_name,
+        issue_number=issue_number,
+        token=token,
         sender_name=user_name,
-        base_args=base_args,
     )

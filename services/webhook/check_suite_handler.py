@@ -218,13 +218,25 @@ def handle_check_suite(
     }
 
     # Check if permission comment or stumbled comment already exists
-    if has_comment_with_text(base_args, [CHECK_RUN_STUMBLED_MESSAGE]):
+    if has_comment_with_text(
+        owner=owner_name,
+        repo=repo_name,
+        issue_number=pull_number,
+        token=token,
+        texts=[CHECK_RUN_STUMBLED_MESSAGE],
+    ):
         msg = f"Skipped - stumbled comment exists for PR #{pull_number} in `{owner_name}/{repo_name}`"
         print(msg)
         slack_notify(msg, thread_ts)
         return
 
-    if has_comment_with_text(base_args, [PERMISSION_DENIED_MESSAGE]):
+    if has_comment_with_text(
+        owner=owner_name,
+        repo=repo_name,
+        issue_number=pull_number,
+        token=token,
+        texts=[PERMISSION_DENIED_MESSAGE],
+    ):
         msg = f"Skipped - permission request pending for PR #{pull_number} in `{owner_name}/{repo_name}`"
         print(msg)
         slack_notify(msg, thread_ts)

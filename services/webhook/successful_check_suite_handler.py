@@ -158,7 +158,13 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         msg = f"{BLOCKED}: last commit has [skip ci], triggering tests instead..."
         print(msg)
 
-        delete_comments_by_identifiers(base_args=base_args, identifiers=[BLOCKED])
+        delete_comments_by_identifiers(
+            owner=owner_name,
+            repo=repo_name,
+            issue_number=pr_number,
+            token=token,
+            identifiers=[BLOCKED],
+        )
         create_comment(
             owner=owner_name,
             repo=repo_name,
@@ -218,7 +224,13 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         print(msg)
 
         # Delete any existing auto-merge blocked comments to avoid clutter
-        delete_comments_by_identifiers(base_args=base_args, identifiers=[BLOCKED])
+        delete_comments_by_identifiers(
+            owner=owner_name,
+            repo=repo_name,
+            issue_number=pr_number,
+            token=token,
+            identifiers=[BLOCKED],
+        )
         create_comment(
             owner=owner_name,
             repo=repo_name,
@@ -246,7 +258,13 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             msg = f"{BLOCKED}: non-test files changed:\n{non_test_files_str}"
             print(msg)
 
-            delete_comments_by_identifiers(base_args=base_args, identifiers=[BLOCKED])
+            delete_comments_by_identifiers(
+                owner=owner_name,
+                repo=repo_name,
+                issue_number=pr_number,
+                token=token,
+                identifiers=[BLOCKED],
+            )
             create_comment(
                 owner=owner_name,
                 repo=repo_name,
@@ -276,7 +294,13 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             f"See {DOC_URLS['AUTO_MERGE']}"
         )
         print(msg)
-        delete_comments_by_identifiers(base_args=base_args, identifiers=[BLOCKED])
+        delete_comments_by_identifiers(
+            owner=owner_name,
+            repo=repo_name,
+            issue_number=pr_number,
+            token=token,
+            identifiers=[BLOCKED],
+        )
         create_comment(
             owner=owner_name,
             repo=repo_name,

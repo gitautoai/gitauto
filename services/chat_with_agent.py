@@ -387,6 +387,8 @@ def chat_with_agent(
             p=p + 5,
             log_messages=log_messages,
             usage_id=usage_id,
+            allow_edit_any_file=allow_edit_any_file,
+            restrict_edit_to_target_test_file_only=restrict_edit_to_target_test_file_only,
         )
 
     # Return

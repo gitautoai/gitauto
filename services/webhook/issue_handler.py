@@ -113,6 +113,7 @@ def create_pr_from_issue(
     issue_number = base_args["issue_number"]
     issue_title = base_args["issue_title"]
     sender_name = base_args["sender_name"]
+    token = base_args["token"]
 
     # Start notification
     start_msg = f"Issue handler started: `{trigger}` by `{sender_name}` for `{issue_number}:{issue_title}` in `{owner_name}/{repo_name}`"
@@ -127,7 +128,11 @@ def create_pr_from_issue(
             PROGRESS_BAR_EMPTY,
         ]
         delete_comments_by_identifiers(
-            base_args=base_args, identifiers=gitauto_identifiers
+            owner=owner_name,
+            repo=repo_name,
+            issue_number=issue_number,
+            token=token,
+            identifiers=gitauto_identifiers,
         )
 
     # Create a comment to track progress
@@ -139,7 +144,7 @@ def create_pr_from_issue(
     comment_url = create_comment(
         owner=owner_name,
         repo=repo_name,
-        token=base_args["token"],
+        token=token,
         issue_number=issue_number,
         body=comment_body,
     )
@@ -161,7 +166,6 @@ def create_pr_from_issue(
     sender_email = base_args["sender_email"]
     github_urls = base_args["github_urls"]
     # other_urls = base_args["other_urls"]
-    token = base_args["token"]
     is_automation = base_args["is_automation"]
 
     repo_features = get_repository_features(owner_id=owner_id, repo_id=repo_id)

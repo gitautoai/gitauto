@@ -4,7 +4,6 @@ from config import PRODUCT_ID
 
 # Local imports (GitHub)
 from services.github.comments.create_comment import create_comment
-from services.github.types.github_types import BaseArgs
 
 # Local imports (Stripe)
 from services.stripe.check_availability import check_availability
@@ -16,18 +15,21 @@ from utils.text.text_copy import request_issue_comment
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def combine_and_create_comment(
-    base_comment: str,
-    installation_id: int,
+    *,
     owner_id: int,
     owner_name: str,
+    repo_name: str,
+    installation_id: int,
+    issue_number: int,
+    token: str,
+    base_comment: str,
     sender_name: str,
-    base_args: BaseArgs,
 ):
     # Check availability
     availability_status = check_availability(
         owner_id=owner_id,
         owner_name=owner_name,
-        repo_name=base_args["repo"],
+        repo_name=repo_name,
         installation_id=installation_id,
         sender_name=sender_name,
     )
@@ -68,8 +70,8 @@ def combine_and_create_comment(
     # Create the comment
     create_comment(
         owner=owner_name,
-        repo=base_args["repo"],
-        token=base_args["token"],
-        issue_number=base_args["issue_number"],
+        repo=repo_name,
+        token=token,
+        issue_number=issue_number,
         body=body,
     )
