@@ -201,7 +201,6 @@ async def handle_webhook_event(
             create_pr_from_issue(
                 payload=cast(GitHubLabeledPayload, payload),
                 trigger="issue_label",
-                input_from="github",
                 lambda_info=lambda_info,
             )
             return
@@ -227,7 +226,6 @@ async def handle_webhook_event(
             create_pr_from_issue(
                 payload=cast(GitHubLabeledPayload, payload),
                 trigger="issue_comment",
-                input_from="github",
                 lambda_info=lambda_info,
             )
             return
@@ -238,7 +236,6 @@ async def handle_webhook_event(
             create_pr_from_issue(
                 payload=cast(GitHubLabeledPayload, payload),
                 trigger="issue_comment",
-                input_from="github",
                 lambda_info=lambda_info,
             )
         return

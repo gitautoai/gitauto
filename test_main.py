@@ -15,7 +15,7 @@ import pytest
 # Local imports
 from config import GITHUB_WEBHOOK_SECRET, PRODUCT_NAME
 import main
-from main import app, mangum_handler, handle_jira_webhook, handle_webhook, handler, root
+from main import app, mangum_handler, handle_webhook, handler, root
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 
 
@@ -81,15 +81,6 @@ def mock_github_request_with_invalid_json_in_url_encoded():
     # URL-encoded body with invalid JSON in payload
     encoded_body = "payload=invalid_json_content"
     mock_req.body = AsyncMock(return_value=encoded_body.encode())
-    return mock_req
-
-
-@pytest.fixture
-def mock_jira_request():
-    """Create a mock Jira request object for testing."""
-    mock_req = MagicMock(spec=Request)
-    mock_req.headers = {"X-Atlassian-Token": "no-check"}
-    mock_req.body = AsyncMock(return_value=b'{"issue": {"key": "JIRA-123"}}')
     return mock_req
 
 
@@ -563,47 +554,6 @@ class TestHandleWebhook:
         assert response == {"message": "Webhook processed successfully"}
 
 
-class TestHandleJiraWebhook:
-    @patch("main.extract_lambda_info")
-    @patch("main.verify_jira_webhook", new_callable=AsyncMock)
-    @patch("main.create_pr_from_issue")
-    @pytest.mark.asyncio
-    async def test_handle_jira_webhook_success(
-        self,
-        mock_create_pr,
-        mock_verify_jira,
-        mock_extract_lambda_info,
-        mock_jira_request,
-    ):
-        """Test handle_jira_webhook function with successful execution."""
-        # Setup
-        mock_verify_jira.return_value = {"issue": {"key": "JIRA-123"}}
-        mock_create_pr.return_value = None
-        mock_extract_lambda_info.return_value = {
-            "log_group": "/aws/lambda/pr-agent-prod",
-            "log_stream": "2025/09/04/jira-stream",
-            "request_id": "jira-request-456",
-        }
-
-        # Execute
-        response = await handle_jira_webhook(request=mock_jira_request)
-
-        # Verify
-        mock_verify_jira.assert_called_once_with(mock_jira_request)
-        mock_extract_lambda_info.assert_called_once_with(mock_jira_request)
-        mock_create_pr.assert_called_once_with(
-            payload={"issue": {"key": "JIRA-123"}},
-            trigger="issue_comment",
-            input_from="jira",
-            lambda_info={
-                "log_group": "/aws/lambda/pr-agent-prod",
-                "log_stream": "2025/09/04/jira-stream",
-                "request_id": "jira-request-456",
-            },
-        )
-        assert response == {"message": "Jira webhook processed successfully"}
-
-
 class TestRootEndpoint:
     @pytest.mark.asyncio
     async def test_root_endpoint(self):
@@ -642,7 +592,6 @@ class TestAppConfiguration:
         # Check that expected routes exist
         assert "/" in route_paths
         assert "/webhook" in route_paths
-        assert "/jira-webhook" in route_paths
 
 
 class TestEdgeCases:
@@ -869,13 +818,11 @@ class TestModuleImports:
         # Test handler functions
         assert hasattr(main, "handler")
         assert hasattr(main, "handle_webhook")
-        assert hasattr(main, "handle_jira_webhook")
         assert hasattr(main, "root")
 
         # Test that functions are callable
         assert callable(main.handler)
         assert callable(main.handle_webhook)
-        assert callable(main.handle_jira_webhook)
         assert callable(main.root)
 
 

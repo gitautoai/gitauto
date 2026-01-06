@@ -18,8 +18,8 @@ from services.github.types.user import User
 
 
 class BaseArgs(TypedDict):
-    # Required fields - set by both deconstruct functions
-    input_from: Literal["github", "jira"]
+    # Required fields
+    input_from: Literal["github"]
     owner_type: OwnerType
     owner_id: int
     owner: str

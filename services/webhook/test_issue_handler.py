@@ -29,7 +29,6 @@ def test_create_pr_from_issue_wrong_label_early_return():
     create_pr_from_issue(
         payload=payload,
         trigger="issue_label",
-        input_from="github",
         lambda_info=lambda_info,
     )
 
@@ -59,12 +58,11 @@ def test_lambda_info_parameter_exists(mock_create_user_request):
     create_pr_from_issue(
         payload=payload,
         trigger="issue_label",
-        input_from="github",
         lambda_info=lambda_info,
     )
 
     # Test without lambda_info (should default to None)
-    create_pr_from_issue(payload=payload, trigger="issue_label", input_from="github")
+    create_pr_from_issue(payload=payload, trigger="issue_label")
 
     # Function calls completed without errors (early return due to wrong label)
 
@@ -172,7 +170,6 @@ def test_can_proceed_false_early_return(
     create_pr_from_issue(
         payload=_get_test_payload(),
         trigger="issue_label",
-        input_from="github",
     )
 
     mock_update_comment.assert_called()
@@ -234,7 +231,6 @@ def test_stripe_customer_id_update(
     create_pr_from_issue(
         payload=_get_test_payload(),
         trigger="issue_label",
-        input_from="github",
     )
 
     mock_update_stripe.assert_called_once_with(456, "cus_new123")
@@ -330,7 +326,6 @@ def test_image_urls_processing(
     create_pr_from_issue(
         payload=_get_test_payload(),
         trigger="issue_label",
-        input_from="github",
     )
 
     mock_extract_image_urls.assert_called()
@@ -420,9 +415,7 @@ def test_image_unsupported_format_skipped(
     mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 0)
     mock_get_pr_files.return_value = []
 
-    create_pr_from_issue(
-        payload=_get_test_payload(), trigger="issue_label", input_from="github"
-    )
+    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_get_base64.assert_not_called()
 
@@ -512,9 +505,7 @@ def test_image_base64_fetch_failed(
     mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 0)
     mock_get_pr_files.return_value = []
 
-    create_pr_from_issue(
-        payload=_get_test_payload(), trigger="issue_label", input_from="github"
-    )
+    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_get_base64.assert_called_once()
     mock_describe_image.assert_not_called()
@@ -603,9 +594,7 @@ def test_timeout_approaching_breaks_loop(
     mock_is_timeout.return_value = (True, 850.0)
     mock_get_timeout_msg.return_value = "Timeout approaching after 850s"
 
-    create_pr_from_issue(
-        payload=_get_test_payload(), trigger="issue_label", input_from="github"
-    )
+    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_is_timeout.assert_called_once()
     mock_get_timeout_msg.assert_called_once_with(850.0, "Issue processing")
@@ -692,9 +681,7 @@ def test_branch_deleted_breaks_loop(
     mock_get_pr_files.return_value = []
     mock_is_timeout.return_value = (False, 10.0)
 
-    create_pr_from_issue(
-        payload=_get_test_payload(), trigger="issue_label", input_from="github"
-    )
+    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_check_branch.assert_called()
     mock_update_comment.assert_called()
@@ -791,9 +778,7 @@ def test_retry_loop_exhausted_not_explored_but_committed(
         ([], [], None, None, 10, 5, True, 60),
     ]
 
-    create_pr_from_issue(
-        payload=_get_test_payload(), trigger="issue_label", input_from="github"
-    )
+    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     assert mock_chat_with_agent.call_count == 8
 
@@ -888,9 +873,7 @@ def test_retry_loop_exhausted_explored_but_not_committed(
         ([], [], None, None, 10, 5, False, 60),
     ]
 
-    create_pr_from_issue(
-        payload=_get_test_payload(), trigger="issue_label", input_from="github"
-    )
+    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     assert mock_chat_with_agent.call_count == 8
 
@@ -981,9 +964,7 @@ def test_retry_counter_reset_on_successful_loop(
         ([], [], None, None, 10, 5, False, 60),
     ]
 
-    create_pr_from_issue(
-        payload=_get_test_payload(), trigger="issue_label", input_from="github"
-    )
+    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     assert mock_chat_with_agent.call_count == 4
 
@@ -1072,9 +1053,7 @@ def test_non_test_file_skipped_in_header_merge(
     mock_get_pr_files.return_value = [{"filename": "src/main.py"}]
     mock_is_test_file.return_value = False
 
-    create_pr_from_issue(
-        payload=_get_test_payload(), trigger="issue_label", input_from="github"
-    )
+    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_is_test_file.assert_called_with("src/main.py")
 
@@ -1171,9 +1150,7 @@ def test_test_file_header_merge(
     mock_get_raw_content.return_value = "def test_something(): pass"
     mock_merge_headers.return_value = "import pytest\n\ndef test_something(): pass"
 
-    create_pr_from_issue(
-        payload=_get_test_payload(), trigger="issue_label", input_from="github"
-    )
+    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_is_test_file.assert_called_with("tests/test_example.py")
     mock_get_raw_content.assert_called()
@@ -1272,9 +1249,7 @@ def test_test_file_header_merge_no_content(
     mock_is_test_file.return_value = True
     mock_get_raw_content.return_value = None
 
-    create_pr_from_issue(
-        payload=_get_test_payload(), trigger="issue_label", input_from="github"
-    )
+    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_is_test_file.assert_called()
     mock_get_raw_content.assert_called()
@@ -1374,9 +1349,7 @@ def test_test_file_header_merge_no_change(
     mock_get_raw_content.return_value = "import pytest\n\ndef test_something(): pass"
     mock_merge_headers.return_value = "import pytest\n\ndef test_something(): pass"
 
-    create_pr_from_issue(
-        payload=_get_test_payload(), trigger="issue_label", input_from="github"
-    )
+    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_is_test_file.assert_called()
     mock_get_raw_content.assert_called()
@@ -1478,9 +1451,7 @@ def test_credits_depleted_email_sent(
     mock_get_user.return_value = {"id": 888, "email": "user@example.com"}
     mock_get_email_text.return_value = ("Credits Depleted", "Your credits are gone")
 
-    create_pr_from_issue(
-        payload=_get_test_payload(), trigger="issue_label", input_from="github"
-    )
+    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_insert_credit.assert_called_once()
     mock_get_owner.assert_called_with(owner_id=456)
@@ -1631,7 +1602,6 @@ def test_issue_handler_token_accumulation(
     create_pr_from_issue(
         payload=payload,
         trigger="issue_comment",
-        input_from="github",
         lambda_info={
             "log_group": "/aws/lambda/test",
             "log_stream": "test_stream",
@@ -1787,7 +1757,6 @@ def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     create_pr_from_issue(
         payload=payload,
         trigger="issue_comment",
-        input_from="github",
     )
 
     call_kwargs = mock_chat_with_agent.call_args.kwargs
