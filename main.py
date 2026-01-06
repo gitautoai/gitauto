@@ -13,12 +13,10 @@ from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 from config import ENV, GITHUB_WEBHOOK_SECRET, PRODUCT_NAME, SENTRY_DSN, UTF8
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 from services.github.utils.verify_webhook_signature import verify_webhook_signature
-from services.jira.verify_jira_webhook import verify_jira_webhook
 from services.slack.slack_notify import slack_notify
 from services.supabase.webhook_deliveries.insert_webhook_delivery import (
     insert_webhook_delivery,
 )
-from services.webhook.issue_handler import create_pr_from_issue
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.webhook_handler import handle_webhook_event
 from utils.aws.extract_lambda_info import extract_lambda_info
@@ -115,21 +113,6 @@ async def handle_webhook(request: Request) -> dict[str, str]:
         event_name=event_name, payload=payload, lambda_info=lambda_info
     )
     return {"message": "Webhook processed successfully"}
-
-
-@app.post(path="/jira-webhook")
-async def handle_jira_webhook(request: Request):
-    # Extract Lambda context information if available
-    lambda_info = extract_lambda_info(request)
-
-    payload = await verify_jira_webhook(request)
-    create_pr_from_issue(
-        payload=payload,
-        trigger="issue_comment",
-        input_from="jira",
-        lambda_info=lambda_info,
-    )
-    return {"message": "Jira webhook processed successfully"}
 
 
 @app.get(path="/")

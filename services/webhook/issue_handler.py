@@ -3,7 +3,6 @@ from datetime import datetime
 from json import dumps
 import logging
 import time
-from typing import Literal, cast
 
 # Local imports
 from config import GITHUB_API_URL, PRODUCT_ID, PR_BODY_STARTS_WITH
@@ -37,10 +36,6 @@ from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.reactions.add_reaction_to_issue import add_reaction_to_issue
 from services.github.types.github_types import GitHubLabeledPayload
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
-from services.jira.types import JiraPayload
-
-# Local imports (Jira, OpenAI, Slack)
-from services.jira.deconstruct_jira_payload import deconstruct_jira_payload
 from services.openai.vision import describe_image
 from services.slack.slack_notify import slack_notify
 
@@ -76,9 +71,8 @@ from utils.urls.extract_urls import extract_image_urls
 
 
 def create_pr_from_issue(
-    payload: GitHubLabeledPayload | JiraPayload,
+    payload: GitHubLabeledPayload,
     trigger: Trigger,
-    input_from: Literal["github", "jira"],
     lambda_info: dict[str, str | None] | None = None,
 ) -> None:
     current_time: float = time.time()
@@ -86,23 +80,13 @@ def create_pr_from_issue(
     # Extract label and validate it
     if (
         trigger == "issue_label"
-        and input_from == "github"
         and "label" in payload
         and payload["label"]["name"] != PRODUCT_ID
     ):
         return
 
-    # Deconstruct payload based on input_from
-    base_args = None
-    repo_settings = None
-    if input_from == "github":
-        base_args, repo_settings = deconstruct_github_payload(
-            payload=cast(GitHubLabeledPayload, payload)
-        )
-    elif input_from == "jira":
-        base_args, repo_settings = deconstruct_jira_payload(
-            payload=cast(JiraPayload, payload)
-        )
+    # Deconstruct payload
+    base_args, repo_settings = deconstruct_github_payload(payload=payload)
 
     # Ensure skip_ci is set to True for development commits
     base_args["skip_ci"] = True
@@ -120,20 +104,19 @@ def create_pr_from_issue(
     thread_ts = slack_notify(start_msg)
 
     # Delete all comments made by GitAuto except the one with the checkbox to clean up the issue
-    if input_from == "github":
-        gitauto_identifiers = [
-            COMPLETED_PR,
-            UPDATE_COMMENT_FOR_422,
-            PROGRESS_BAR_FILLED,
-            PROGRESS_BAR_EMPTY,
-        ]
-        delete_comments_by_identifiers(
-            owner=owner_name,
-            repo=repo_name,
-            issue_number=issue_number,
-            token=token,
-            identifiers=gitauto_identifiers,
-        )
+    gitauto_identifiers = [
+        COMPLETED_PR,
+        UPDATE_COMMENT_FOR_422,
+        PROGRESS_BAR_FILLED,
+        PROGRESS_BAR_EMPTY,
+    ]
+    delete_comments_by_identifiers(
+        owner=owner_name,
+        repo=repo_name,
+        issue_number=issue_number,
+        token=token,
+        identifiers=gitauto_identifiers,
+    )
 
     # Create a comment to track progress
     p = 0
@@ -241,7 +224,7 @@ def create_pr_from_issue(
 
     # Create a usage record
     usage_id = create_user_request(
-        user_id=sender_id if input_from == "github" else 0,
+        user_id=sender_id,
         user_name=sender_name,
         installation_id=installation_id,
         owner_id=owner_id,
@@ -250,23 +233,18 @@ def create_pr_from_issue(
         repo_id=repo_id,
         repo_name=repo_name,
         issue_number=issue_number,
-        source=input_from,
+        source="github",
         trigger=trigger,
         email=sender_email,
         lambda_info=lambda_info,
     )
 
-    if input_from == "github":
-        add_reaction_to_issue(
-            issue_number=issue_number, content="eyes", base_args=base_args
-        )
+    add_reaction_to_issue(
+        issue_number=issue_number, content="eyes", base_args=base_args
+    )
 
     # Check out the issue comments
-    issue_comments: list[str] = []
-    if input_from == "github":
-        issue_comments = get_comments(issue_number=issue_number, base_args=base_args)
-    elif input_from == "jira":
-        issue_comments = base_args.get("issue_comments", [])
+    issue_comments = get_comments(issue_number=issue_number, base_args=base_args)
     comment_body = f"Found {len(issue_comments)} issue comments."
     p += 5
     log_messages.append(comment_body)
@@ -353,13 +331,9 @@ def create_pr_from_issue(
     messages = [{"role": "user", "content": user_input}]
 
     # Create a remote branch
-    latest_commit_sha: str = ""
-    if input_from == "github":
-        latest_commit_sha = get_latest_remote_commit_sha(
-            clone_url=base_args["clone_url"], base_args=base_args
-        )
-    elif input_from == "jira":
-        latest_commit_sha = base_args.get("latest_commit_sha", "")
+    latest_commit_sha = get_latest_remote_commit_sha(
+        clone_url=base_args["clone_url"], base_args=base_args
+    )
     create_remote_branch(sha=latest_commit_sha, base_args=base_args)
     comment_body = f"Created a branch: `{new_branch_name}`"
     p += 5

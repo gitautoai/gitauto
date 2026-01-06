@@ -285,7 +285,6 @@ class TestHandleWebhookEvent:
         mock_create_pr_from_issue.assert_called_once_with(
             payload=payload,
             trigger="issue_label",
-            input_from="github",
             lambda_info=None,
         )
 
@@ -319,7 +318,6 @@ class TestHandleWebhookEvent:
             mock_create_pr_from_issue.assert_called_once_with(
                 payload=payload,
                 trigger="issue_comment",
-                input_from="github",
                 lambda_info=None,
             )
 
@@ -342,7 +340,6 @@ class TestHandleWebhookEvent:
             mock_create_pr_from_issue.assert_called_once_with(
                 payload=payload,
                 trigger="issue_comment",
-                input_from="github",
                 lambda_info=None,
             )
 
