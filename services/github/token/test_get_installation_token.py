@@ -77,11 +77,12 @@ def test_get_installation_access_token_suspended(
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert
+    with pytest.raises(
+        ValueError, match=f"Installation {installation_id} suspended or deleted"
+    ):
+        get_installation_access_token(installation_id)
 
-    # Assert
-    assert result is None
     mock_requests_post.assert_called_once()
     mock_delete_installation.assert_called_once_with(
         installation_id=installation_id, user_id=0, user_name="System"
@@ -101,11 +102,12 @@ def test_get_installation_access_token_not_found(
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert
+    with pytest.raises(
+        ValueError, match=f"Installation {installation_id} suspended or deleted"
+    ):
+        get_installation_access_token(installation_id)
 
-    # Assert
-    assert result is None
     mock_requests_post.assert_called_once()
     mock_delete_installation.assert_called_once_with(
         installation_id=installation_id, user_id=0, user_name="System"
@@ -126,11 +128,10 @@ def test_get_installation_access_token_403_without_suspension_message(
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert - Should raise HTTPError
+    with pytest.raises(requests.exceptions.HTTPError):
+        get_installation_access_token(installation_id)
 
-    # Assert - Should return None due to @handle_exceptions decorator
-    assert result is None
     mock_requests_post.assert_called_once()
     mock_delete_installation.assert_not_called()
 
@@ -138,7 +139,7 @@ def test_get_installation_access_token_403_without_suspension_message(
 def test_get_installation_access_token_other_http_error(
     mock_get_jwt, mock_create_headers, mock_requests_post, mock_delete_installation
 ):
-    """Test handling of other HTTP errors (e.g., 500) - should be handled by decorator"""
+    """Test handling of other HTTP errors (e.g., 500) - should raise"""
     # Arrange
     installation_id = 12345
     mock_response = MagicMock()
@@ -149,11 +150,10 @@ def test_get_installation_access_token_other_http_error(
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert - Should raise HTTPError
+    with pytest.raises(requests.exceptions.HTTPError):
+        get_installation_access_token(installation_id)
 
-    # Assert - Should return None due to @handle_exceptions decorator
-    assert result is None
     mock_requests_post.assert_called_once()
     mock_delete_installation.assert_not_called()
 
@@ -172,11 +172,10 @@ def test_get_installation_access_token_422_error(
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert - Should raise HTTPError
+    with pytest.raises(requests.exceptions.HTTPError):
+        get_installation_access_token(installation_id)
 
-    # Assert - Should return None due to @handle_exceptions decorator
-    assert result is None
     mock_requests_post.assert_called_once()
     mock_delete_installation.assert_not_called()
 
@@ -191,11 +190,10 @@ def test_get_installation_access_token_json_decode_error(
     mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
     mock_requests_post.return_value = mock_response
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert - Should raise JSONDecodeError
+    with pytest.raises(json.JSONDecodeError):
+        get_installation_access_token(installation_id)
 
-    # Assert - Should return None due to @handle_exceptions decorator
-    assert result is None
     mock_requests_post.assert_called_once()
 
 
@@ -211,11 +209,10 @@ def test_get_installation_access_token_key_error(
     }  # Missing "token" key
     mock_requests_post.return_value = mock_response
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert - Should raise KeyError
+    with pytest.raises(KeyError):
+        get_installation_access_token(installation_id)
 
-    # Assert - Should return None due to @handle_exceptions decorator
-    assert result is None
     mock_requests_post.assert_called_once()
 
 
@@ -229,11 +226,10 @@ def test_get_installation_access_token_get_jwt_exception(
     with patch("services.github.token.get_installation_token.get_jwt") as mock_get_jwt:
         mock_get_jwt.side_effect = Exception("JWT generation failed")
 
-        # Act
-        result = get_installation_access_token(installation_id)
+        # Act & Assert - Should raise Exception
+        with pytest.raises(Exception, match="JWT generation failed"):
+            get_installation_access_token(installation_id)
 
-        # Assert - Should return None due to @handle_exceptions decorator
-        assert result is None
         mock_requests_post.assert_not_called()
 
 
@@ -249,11 +245,10 @@ def test_get_installation_access_token_create_headers_exception(
     ) as mock_create_headers:
         mock_create_headers.side_effect = Exception("Header creation failed")
 
-        # Act
-        result = get_installation_access_token(installation_id)
+        # Act & Assert - Should raise Exception
+        with pytest.raises(Exception, match="Header creation failed"):
+            get_installation_access_token(installation_id)
 
-        # Assert - Should return None due to @handle_exceptions decorator
-        assert result is None
         mock_requests_post.assert_not_called()
 
 
@@ -267,11 +262,10 @@ def test_get_installation_access_token_requests_exception(
         "Network error"
     )
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert - Should raise RequestException
+    with pytest.raises(requests.exceptions.RequestException):
+        get_installation_access_token(installation_id)
 
-    # Assert - Should return None due to @handle_exceptions decorator
-    assert result is None
     mock_requests_post.assert_called_once()
 
 
@@ -285,11 +279,10 @@ def test_get_installation_access_token_http_error_without_response(
     mock_error.response = None
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert - Should raise AttributeError (accessing response.status_code on None)
+    with pytest.raises(AttributeError):
+        get_installation_access_token(installation_id)
 
-    # Assert - Should return None due to @handle_exceptions decorator
-    assert result is None
     mock_requests_post.assert_called_once()
     mock_delete_installation.assert_not_called()
 
@@ -297,7 +290,7 @@ def test_get_installation_access_token_http_error_without_response(
 def test_get_installation_access_token_rate_limit_403(
     mock_get_jwt, mock_create_headers, mock_requests_post, mock_delete_installation
 ):
-    """Test handling of 403 rate limit error (should be handled by decorator)"""
+    """Test handling of 403 rate limit error - should raise"""
     # Arrange
     installation_id = 12345
     mock_response = MagicMock()
@@ -314,11 +307,10 @@ def test_get_installation_access_token_rate_limit_403(
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert - Should raise HTTPError
+    with pytest.raises(requests.exceptions.HTTPError):
+        get_installation_access_token(installation_id)
 
-    # Assert - Should return None due to @handle_exceptions decorator handling rate limits
-    assert result is None
     mock_requests_post.assert_called_once()
     mock_delete_installation.assert_not_called()
 
@@ -326,7 +318,7 @@ def test_get_installation_access_token_rate_limit_403(
 def test_get_installation_access_token_rate_limit_429(
     mock_get_jwt, mock_create_headers, mock_requests_post, mock_delete_installation
 ):
-    """Test handling of 429 rate limit error (should be handled by decorator)"""
+    """Test handling of 429 rate limit error - should raise"""
     # Arrange
     installation_id = 12345
     mock_response = MagicMock()
@@ -343,11 +335,10 @@ def test_get_installation_access_token_rate_limit_429(
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert - Should raise HTTPError
+    with pytest.raises(requests.exceptions.HTTPError):
+        get_installation_access_token(installation_id)
 
-    # Assert - Should return None due to @handle_exceptions decorator handling rate limits
-    assert result is None
     mock_requests_post.assert_called_once()
     mock_delete_installation.assert_not_called()
 
@@ -491,16 +482,15 @@ def test_get_installation_access_token_function_signature_compliance():
 def test_get_installation_access_token_various_exceptions(
     mock_get_jwt, mock_create_headers, mock_requests_post, error_type, error_message
 ):
-    """Test handling of various exception types"""
+    """Test handling of various exception types - should raise"""
     # Arrange
     installation_id = 12345
     mock_requests_post.side_effect = error_type(error_message)
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert - Should raise the exception
+    with pytest.raises(error_type):
+        get_installation_access_token(installation_id)
 
-    # Assert - Should return None due to @handle_exceptions decorator
-    assert result is None
     mock_requests_post.assert_called_once()
 
 
@@ -541,11 +531,12 @@ def test_get_installation_access_token_suspended_with_partial_message(
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert
+    with pytest.raises(
+        ValueError, match=f"Installation {installation_id} suspended or deleted"
+    ):
+        get_installation_access_token(installation_id)
 
-    # Assert
-    assert result is None
     mock_requests_post.assert_called_once()
     mock_delete_installation.assert_called_once_with(
         installation_id=installation_id, user_id=0, user_name="System"
@@ -606,11 +597,10 @@ def test_get_installation_access_token_empty_response_body(
     mock_response.json.return_value = {}  # Empty response
     mock_requests_post.return_value = mock_response
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    # Act & Assert - Should raise KeyError
+    with pytest.raises(KeyError):
+        get_installation_access_token(installation_id)
 
-    # Assert - Should return None due to KeyError being handled by @handle_exceptions
-    assert result is None
     mock_requests_post.assert_called_once()
 
 

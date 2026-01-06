@@ -88,10 +88,6 @@ def handle_review_run(
     # Extract other information
     installation_id: int = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
-    if not token:
-        raise ValueError(
-            f"No token for installation {installation_id} ({owner_name}/{repo_name})"
-        )
 
     # Get all comments in the review thread
     thread_comments = get_review_thread_comments(

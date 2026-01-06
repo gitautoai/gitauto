@@ -45,10 +45,6 @@ def deconstruct_github_payload(
     # Get installation access token
     installation_id = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
-    if not token:
-        raise ValueError(
-            f"Installation access token is not found for {owner_name}/{repo_name}"
-        )
 
     # Get repository rules from Supabase
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)

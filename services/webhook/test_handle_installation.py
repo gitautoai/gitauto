@@ -394,17 +394,19 @@ class TestHandleInstallationCreated:
             user_id=11111, user_name="test-sender", email=""
         )
 
-    def test_handle_installation_created_with_none_token(
+    def test_handle_installation_created_with_token_error(
         self, mock_installation_payload, all_mocks
     ):
-        """Test handling when token is None - returns early without processing."""
-        # Setup
-        all_mocks["get_installation_access_token"].return_value = None
+        """Test handling when get_installation_access_token raises - returns early."""
+        # Setup - get_installation_access_token now raises instead of returning None
+        all_mocks["get_installation_access_token"].side_effect = ValueError(
+            "Installation 12345 suspended or deleted"
+        )
 
-        # Execute
+        # Execute - handle_exceptions decorator catches and returns None
         handle_installation_created(mock_installation_payload)
 
-        # Verify - should return early when token is None
+        # Verify - should return early when token retrieval fails
         all_mocks["get_installation_access_token"].assert_called_once()
         all_mocks["get_user_public_email"].assert_not_called()
         all_mocks["process_repositories"].assert_not_called()

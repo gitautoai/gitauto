@@ -946,34 +946,19 @@ class TestWritePrDescription:
         self, mock_pr_payload, all_mocks
     ):
         """Test PR description generation when token retrieval fails."""
-        # Setup
-        all_mocks["get_installation_access_token"].return_value = None
+        # Setup - get_installation_access_token now raises instead of returning None
+        all_mocks["get_installation_access_token"].side_effect = ValueError(
+            "Installation 12345 suspended or deleted"
+        )
 
-        # Execute
-        write_pr_description(mock_pr_payload)
+        # Execute - exception propagates since no handle_exceptions decorator
+        with pytest.raises(ValueError, match="Installation 12345 suspended or deleted"):
+            write_pr_description(mock_pr_payload)
 
         # Verify token retrieval was attempted
         all_mocks["get_installation_access_token"].assert_called_once_with(12345)
 
         # Verify no further functions are called after token failure
-        all_mocks["get_pull_request_file_changes"].assert_not_called()
-        all_mocks["get_issue_body"].assert_not_called()
-        all_mocks["is_pull_request_open"].assert_not_called()
-
-    def test_write_pr_description_token_retrieval_empty_string(
-        self, mock_pr_payload, all_mocks
-    ):
-        """Test PR description generation when token retrieval returns empty string."""
-        # Setup
-        all_mocks["get_installation_access_token"].return_value = ""
-
-        # Execute
-        write_pr_description(mock_pr_payload)
-
-        # Verify token retrieval was attempted
-        all_mocks["get_installation_access_token"].assert_called_once_with(12345)
-
-        # Verify no further functions are called after empty token
         all_mocks["get_pull_request_file_changes"].assert_not_called()
         all_mocks["get_issue_body"].assert_not_called()
         all_mocks["is_pull_request_open"].assert_not_called()
@@ -1015,28 +1000,6 @@ class TestWritePrDescription:
         # Verify print message
         output = mock_stdout.getvalue()
         assert "Skipping AI call: Branch 'feature-branch' has been deleted" in output
-
-    def test_write_pr_description_with_falsy_token_values(
-        self, mock_pr_payload, all_mocks
-    ):
-        """Test PR description generation with various falsy token values."""
-        falsy_values = [None, "", 0, False, []]
-
-        for falsy_value in falsy_values:
-            # Setup
-            all_mocks["get_installation_access_token"].return_value = falsy_value
-            all_mocks["get_installation_access_token"].reset_mock()
-            all_mocks["get_pull_request_file_changes"].reset_mock()
-
-            # Execute
-            write_pr_description(mock_pr_payload)
-
-            # Verify token retrieval was attempted
-            all_mocks["get_installation_access_token"].assert_called_once_with(12345)
-
-            # Verify no further functions are called after falsy token
-            all_mocks["get_pull_request_file_changes"].assert_not_called()
-            all_mocks["get_issue_body"].assert_not_called()
 
     def test_write_pr_description_with_malformed_resolves_statement(
         self, mock_pr_payload, all_mocks

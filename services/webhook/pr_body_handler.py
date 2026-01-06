@@ -43,8 +43,6 @@ def write_pr_description(payload: dict):
     repo_name: str = repo["name"]
     installation_id: int = payload["installation"]["id"]
     token = get_installation_access_token(installation_id)
-    if not token:
-        return
 
     # Get the pull request information
     pull_title: str = pull["title"]

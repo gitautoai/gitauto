@@ -104,8 +104,6 @@ def handle_check_suite(
 
     # Get failed check runs from the check suite
     token = get_installation_access_token(installation_id=installation_id)
-    if not token:
-        return
     failed_check_runs = get_failed_check_runs_from_check_suite(
         owner=owner_name,
         repo=repo_name,

@@ -13,14 +13,14 @@ from utils.error.handle_exceptions import handle_exceptions
 def create_gitauto_button_comment(payload: GitHubLabeledPayload) -> None:
     """Create a comment with GitAuto button and usage information"""
     installation_id: int = payload["installation"]["id"]
-    token: str = get_installation_access_token(installation_id=installation_id)
-    owner_id: int = payload["repository"]["owner"]["id"]
-    owner_name: str = payload["repository"]["owner"]["login"]
-    repo_name: str = payload["repository"]["name"]
-    issue_number: int = payload["issue"]["number"]
-    user_id: int = payload["sender"]["id"]
-    user_name: str = payload["sender"]["login"]
-    user_email: str | None = get_user_public_email(username=user_name, token=token)
+    token = get_installation_access_token(installation_id=installation_id)
+    owner_id = payload["repository"]["owner"]["id"]
+    owner_name = payload["repository"]["owner"]["login"]
+    repo_name = payload["repository"]["name"]
+    issue_number = payload["issue"]["number"]
+    user_id = payload["sender"]["id"]
+    user_name = payload["sender"]["login"]
+    user_email = get_user_public_email(username=user_name, token=token)
 
     # Create user if not exist and check if first issue
     upsert_user(user_id=user_id, user_name=user_name, email=user_email)

@@ -46,8 +46,6 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
         else "unknown"
     )
     token = get_installation_access_token(installation_id=installation_id)
-    if not token:
-        return None
 
     # Get repository settings
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
