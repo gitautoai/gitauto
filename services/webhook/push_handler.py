@@ -38,8 +38,6 @@ def handle_push(payload: PushWebhookPayload):
         return None
 
     token = get_installation_access_token(installation_id=installation_id)
-    if not token:
-        return None
 
     open_prs = get_open_pull_requests(
         owner=owner_name, repo=repo_name, target_branch=target_branch, token=token

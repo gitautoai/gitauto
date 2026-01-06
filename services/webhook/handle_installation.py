@@ -29,8 +29,6 @@ def handle_installation_created(payload: GitHubInstallationPayload):
     user_id = payload["sender"]["id"]
     user_name = payload["sender"]["login"]
     token = get_installation_access_token(installation_id=installation_id)
-    if not token:
-        return
     email = get_user_public_email(username=user_name, token=token)
 
     if not check_owner_exists(owner_id=owner_id):

@@ -12,8 +12,6 @@ def handle_installation_repos_added(payload: GitHubInstallationRepositoriesPaylo
         return
 
     token = get_installation_access_token(installation_id=installation_id)
-    if not token:
-        return
 
     # Get other information
     owner_id = payload["installation"]["account"]["id"]

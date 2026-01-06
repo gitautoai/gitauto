@@ -55,10 +55,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     # Get installation token
     installation_id = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
-    if not token:
-        msg = f"Failed to get installation token for {owner_name}/{repo_name} PR #{pr_number}, installation_id={installation_id}"
-        print(msg)
-        raise RuntimeError(msg)
 
     head_sha = check_suite["head_sha"]
     base_branch = pull_request["base"]["ref"]

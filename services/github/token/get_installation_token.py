@@ -7,7 +7,7 @@ from services.supabase.installations.delete_installation import delete_installat
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(raise_on_error=True)
 def get_installation_access_token(installation_id: int):
     """https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-an-installation-access-token-for-an-app"""
     try:
@@ -30,6 +30,8 @@ def get_installation_access_token(installation_id: int):
             delete_installation(
                 installation_id=installation_id, user_id=0, user_name="System"
             )
-            return None
+            raise ValueError(
+                f"Installation {installation_id} suspended or deleted"
+            ) from err
 
         raise

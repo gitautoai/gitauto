@@ -91,8 +91,6 @@ async def handle_pr_checkbox_trigger(
     owner_id = repository["owner"]["id"]
     installation_id = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
-    if not token:
-        return
 
     issue_number = payload["issue"]["number"]
 
