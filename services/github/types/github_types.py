@@ -30,8 +30,8 @@ class BaseArgs(TypedDict):
     issue_number: int
     issue_title: str
     issue_body: str
-    issue_comments: list[str]
-    latest_commit_sha: str
+    issue_comments: NotRequired[list[str]]
+    latest_commit_sha: NotRequired[str]
     issuer_name: str
     base_branch: str
     new_branch: str
@@ -39,7 +39,7 @@ class BaseArgs(TypedDict):
     token: str
     sender_id: int
     sender_name: str
-    sender_email: str
+    sender_email: str | None
     is_automation: bool
     reviewers: list[str]
     github_urls: list[str]
@@ -51,13 +51,26 @@ class BaseArgs(TypedDict):
     issuer_email: NotRequired[str]
     pull_number: NotRequired[int]
     workflow_id: NotRequired[str | int]
-    parent_issue_body: NotRequired[str]
-    parent_issue_number: NotRequired[int]
-    parent_issue_title: NotRequired[str]
+    parent_issue_body: NotRequired[str | None]
+    parent_issue_number: NotRequired[int | None]
+    parent_issue_title: NotRequired[str | None]
     pr_body: NotRequired[str]
     pr_number: NotRequired[int]
     review_id: NotRequired[int]
     skip_ci: NotRequired[bool]
+
+
+class ReviewBaseArgs(BaseArgs):
+    pull_title: str
+    pull_body: str
+    pull_url: str
+    pull_file_url: str
+    review_path: str
+    review_subject_type: str
+    review_line: int
+    review_side: str
+    review_body: str
+    review_comment: str
 
 
 class CheckRunCompletedPayload(TypedDict):

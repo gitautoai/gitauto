@@ -171,3 +171,6 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     # Verify other expected parameters
     assert "total_seconds" in usage_call_kwargs
     assert usage_call_kwargs["pr_number"] == 123
+
+    # Verify get_repository was called with owner_id and repo_id
+    mock_get_repo.assert_called_once_with(owner_id=11111, repo_id=98765)

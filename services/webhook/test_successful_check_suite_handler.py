@@ -270,6 +270,11 @@ def test_auto_merge_success(
             merge_method="squash",
         )
 
+        # Verify get_repository_features was called with owner_id and repo_id
+        mock_get_repo_features.assert_called_once_with(
+            owner_id=159883862, repo_id=1048247380
+        )
+
 
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_repository_features")

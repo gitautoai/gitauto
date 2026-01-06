@@ -1,7 +1,9 @@
 """Integration tests for pr_checkbox_handler.py token accumulation"""
 
+from typing import cast
 from unittest.mock import patch
 import pytest
+from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
 from services.webhook.pr_checkbox_handler import handle_pr_checkbox_trigger
 
 
@@ -184,26 +186,35 @@ async def test_pr_checkbox_handler_accumulates_tokens_correctly(
     assert "total_seconds" in usage_call_kwargs
     assert usage_call_kwargs["pr_number"] == 123
 
+    # Verify get_repository was called with owner_id and repo_id
+    mock_get_repo.assert_called_once_with(owner_id=11111, repo_id=98765)
+
 
 @pytest.mark.asyncio
 async def test_pr_checkbox_handler_early_exit_conditions():
     """Test that handler exits early for various conditions without calling chat_with_agent."""
 
-    # Test with bot sender - should exit early
-    bot_payload = {
-        "action": "created",
-        "comment": {
-            "body": "- [x] Generate Tests",
-            "user": {"login": "gitauto-ai[bot]"},
+    bot_payload = cast(
+        IssueCommentWebhookPayload,
+        {
+            "action": "created",
+            "comment": {
+                "body": "- [x] Generate Tests",
+                "user": {"login": "gitauto-ai[bot]"},
+            },
+            "issue": {
+                "number": 123,
+                "pull_request": {"url": "https://api.github.com/test"},
+            },
+            "repository": {
+                "id": 123,
+                "name": "test",
+                "owner": {"id": 1, "login": "test"},
+            },
+            "sender": {"id": 1, "login": "user[bot]"},
+            "installation": {"id": 123},
         },
-        "issue": {
-            "number": 123,
-            "pull_request": {"url": "https://api.github.com/test"},
-        },
-        "repository": {"id": 123, "name": "test", "owner": {"id": 1, "login": "test"}},
-        "sender": {"id": 1, "login": "user[bot]"},  # Bot sender
-        "installation": {"id": 123},
-    }
+    )
 
     with patch("services.webhook.pr_checkbox_handler.chat_with_agent") as mock_chat:
         await handle_pr_checkbox_trigger(bot_payload)
@@ -215,20 +226,27 @@ async def test_pr_checkbox_handler_early_exit_conditions():
 async def test_pr_checkbox_handler_wrong_comment_body():
     """Test that handler exits early when comment doesn't contain the trigger text."""
 
-    wrong_body_payload = {
-        "action": "created",
-        "comment": {
-            "body": "Just a regular comment",
-            "user": {"login": "gitauto-ai[bot]"},
+    wrong_body_payload = cast(
+        IssueCommentWebhookPayload,
+        {
+            "action": "created",
+            "comment": {
+                "body": "Just a regular comment",
+                "user": {"login": "gitauto-ai[bot]"},
+            },
+            "issue": {
+                "number": 123,
+                "pull_request": {"url": "https://api.github.com/test"},
+            },
+            "repository": {
+                "id": 123,
+                "name": "test",
+                "owner": {"id": 1, "login": "test"},
+            },
+            "sender": {"id": 1, "login": "human-user"},
+            "installation": {"id": 123},
         },
-        "issue": {
-            "number": 123,
-            "pull_request": {"url": "https://api.github.com/test"},
-        },
-        "repository": {"id": 123, "name": "test", "owner": {"id": 1, "login": "test"}},
-        "sender": {"id": 1, "login": "human-user"},
-        "installation": {"id": 123},
-    }
+    )
 
     with patch("services.webhook.pr_checkbox_handler.chat_with_agent") as mock_chat:
         await handle_pr_checkbox_trigger(wrong_body_payload)

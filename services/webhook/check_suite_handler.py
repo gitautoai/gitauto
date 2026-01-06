@@ -177,7 +177,7 @@ def handle_check_suite(
     pull_url = pull_request["url"]
 
     # Get repository settings - check if trigger_on_test_failure is enabled
-    repo_settings = get_repository(repo_id=repo_id)
+    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     if not repo_settings or not repo_settings.get("trigger_on_test_failure"):
         return
 

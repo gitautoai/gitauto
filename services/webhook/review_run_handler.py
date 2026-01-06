@@ -6,6 +6,7 @@ from typing import Any
 # Local imports
 from config import GITHUB_APP_USER_NAME
 from services.chat_with_agent import chat_with_agent
+from services.github.types.github_types import ReviewBaseArgs
 
 # Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
@@ -86,7 +87,11 @@ def handle_review_run(
 
     # Extract other information
     installation_id: int = payload["installation"]["id"]
-    token: str = get_installation_access_token(installation_id=installation_id)
+    token = get_installation_access_token(installation_id=installation_id)
+    if not token:
+        raise ValueError(
+            f"No token for installation {installation_id} ({owner_name}/{repo_name})"
+        )
 
     # Get all comments in the review thread
     thread_comments = get_review_thread_comments(
@@ -109,7 +114,7 @@ def handle_review_run(
         # Fallback to single comment if thread fetch fails
         review_comment += f"{review_body}"
 
-    base_args = {
+    base_args: ReviewBaseArgs = {
         # Required fields
         "input_from": "github",
         "owner_type": owner_type,
@@ -194,11 +199,11 @@ def handle_review_run(
     update_comment(body=comment_body, base_args=base_args)
 
     # Get repository settings
-    repo_settings = get_repository(repo_id=repo_id)
+    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
 
     # Plan how to fix the error
     today = datetime.now().strftime("%Y-%m-%d")
-    input_message: dict[str, str] = {
+    input_message = {
         "pull_request_title": pull_title,
         "pull_request_body": pull_body,
         "review_comment": review_comment,

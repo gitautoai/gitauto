@@ -51,7 +51,12 @@ class TestUpdateIssueUrl:
         github_issue_url = "https://github.com/owner/repo/issues/123"
 
         # Act
-        result = update_issue_url(repo_id, file_path, github_issue_url)
+        result = update_issue_url(
+            owner_id=789,
+            repo_id=repo_id,
+            file_path=file_path,
+            github_issue_url=github_issue_url,
+        )
 
         # Assert
         mock_supabase.table.assert_called_once_with("coverages")
@@ -72,7 +77,12 @@ class TestUpdateIssueUrl:
         github_issue_url = "https://github.com/owner/repo/issues/123"
 
         # Act
-        result = update_issue_url(repo_id, file_path, github_issue_url)
+        result = update_issue_url(
+            owner_id=789,
+            repo_id=repo_id,
+            file_path=file_path,
+            github_issue_url=github_issue_url,
+        )
 
         # Assert
         mock_supabase.table.assert_called_once_with("coverages")
@@ -93,7 +103,12 @@ class TestUpdateIssueUrl:
         github_issue_url = "https://github.com/owner/repo/issues/123"
 
         # Act
-        result = update_issue_url(repo_id, file_path, github_issue_url)
+        result = update_issue_url(
+            owner_id=789,
+            repo_id=repo_id,
+            file_path=file_path,
+            github_issue_url=github_issue_url,
+        )
 
         # Assert
         mock_table.eq.assert_any_call("repo_id", 0)
@@ -108,7 +123,12 @@ class TestUpdateIssueUrl:
         github_issue_url = "https://github.com/owner/repo/issues/123"
 
         # Act
-        result = update_issue_url(repo_id, file_path, github_issue_url)
+        result = update_issue_url(
+            owner_id=789,
+            repo_id=repo_id,
+            file_path=file_path,
+            github_issue_url=github_issue_url,
+        )
 
         # Assert
         mock_table.eq.assert_any_call("repo_id", -1)
@@ -123,7 +143,12 @@ class TestUpdateIssueUrl:
         github_issue_url = "https://github.com/owner/repo/issues/123"
 
         # Act
-        result = update_issue_url(repo_id, file_path, github_issue_url)
+        result = update_issue_url(
+            owner_id=789,
+            repo_id=repo_id,
+            file_path=file_path,
+            github_issue_url=github_issue_url,
+        )
 
         # Assert
         mock_table.eq.assert_any_call("full_path", "")
@@ -138,7 +163,12 @@ class TestUpdateIssueUrl:
         github_issue_url = ""
 
         # Act
-        result = update_issue_url(repo_id, file_path, github_issue_url)
+        result = update_issue_url(
+            owner_id=789,
+            repo_id=repo_id,
+            file_path=file_path,
+            github_issue_url=github_issue_url,
+        )
 
         # Assert
         mock_table.update.assert_called_once_with({"github_issue_url": ""})
@@ -155,7 +185,12 @@ class TestUpdateIssueUrl:
         github_issue_url = "https://github.com/owner/repo/issues/123"
 
         # Act
-        result = update_issue_url(repo_id, file_path, github_issue_url)
+        result = update_issue_url(
+            owner_id=789,
+            repo_id=repo_id,
+            file_path=file_path,
+            github_issue_url=github_issue_url,
+        )
 
         # Assert
         mock_table.eq.assert_any_call("full_path", file_path)
@@ -172,7 +207,12 @@ class TestUpdateIssueUrl:
         github_issue_url = "https://github.com/owner/repo/issues/123"
 
         # Act
-        result = update_issue_url(repo_id, file_path, github_issue_url)
+        result = update_issue_url(
+            owner_id=789,
+            repo_id=repo_id,
+            file_path=file_path,
+            github_issue_url=github_issue_url,
+        )
 
         # Assert
         mock_table.eq.assert_any_call("full_path", file_path)
@@ -187,7 +227,12 @@ class TestUpdateIssueUrl:
         github_issue_url = "https://github.com/owner/repo/issues/123"
 
         # Act
-        result = update_issue_url(repo_id, file_path, github_issue_url)
+        result = update_issue_url(
+            owner_id=789,
+            repo_id=repo_id,
+            file_path=file_path,
+            github_issue_url=github_issue_url,
+        )
 
         # Assert
         mock_table.eq.assert_any_call("repo_id", repo_id)
@@ -203,7 +248,10 @@ class TestUpdateIssueUrl:
 
             # Act
             result = update_issue_url(
-                123456, "src/main.py", "https://github.com/owner/repo/issues/123"
+                owner_id=789,
+                repo_id=123456,
+                file_path="src/main.py",
+                github_issue_url="https://github.com/owner/repo/issues/123",
             )
 
             # Assert - The handle_exceptions decorator should return None on error
@@ -216,7 +264,10 @@ class TestUpdateIssueUrl:
 
         # Act
         update_issue_url(
-            123456, "src/main.py", "https://github.com/owner/repo/issues/123"
+            owner_id=789,
+            repo_id=123456,
+            file_path="src/main.py",
+            github_issue_url="https://github.com/owner/repo/issues/123",
         )
 
         # Assert - Verify the method chaining sequence

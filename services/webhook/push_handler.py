@@ -12,6 +12,7 @@ from utils.error.handle_exceptions import handle_exceptions
 def handle_push(payload: PushWebhookPayload):
     """https://docs.github.com/en/webhooks/webhook-events-and-payloads#push"""
     repository = payload["repository"]
+    owner_id = repository["owner"]["id"]
     owner_name = repository["owner"]["login"]
     repo_id = repository["id"]
     repo_name = repository["name"]
@@ -24,7 +25,7 @@ def handle_push(payload: PushWebhookPayload):
 
     pushed_branch = ref.replace("refs/heads/", "")
 
-    repo_settings = get_repository(repo_id=repo_id)
+    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     if not repo_settings:
         # Repository settings not found in database
         return None

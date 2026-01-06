@@ -164,7 +164,7 @@ def create_pr_from_issue(
     token = base_args["token"]
     is_automation = base_args["is_automation"]
 
-    repo_features = get_repository_features(repo_id=repo_id)
+    repo_features = get_repository_features(owner_id=owner_id, repo_id=repo_id)
     restrict_edit_to_target_test_file_only = (
         repo_features["restrict_edit_to_target_test_file_only"]
         if repo_features
@@ -262,7 +262,7 @@ def create_pr_from_issue(
     if input_from == "github":
         issue_comments = get_comments(issue_number=issue_number, base_args=base_args)
     elif input_from == "jira":
-        issue_comments = base_args["issue_comments"]
+        issue_comments = base_args.get("issue_comments", [])
     comment_body = f"Found {len(issue_comments)} issue comments."
     p += 5
     log_messages.append(comment_body)
@@ -355,7 +355,7 @@ def create_pr_from_issue(
             clone_url=base_args["clone_url"], base_args=base_args
         )
     elif input_from == "jira":
-        latest_commit_sha = base_args["latest_commit_sha"]
+        latest_commit_sha = base_args.get("latest_commit_sha", "")
     create_remote_branch(sha=latest_commit_sha, base_args=base_args)
     comment_body = f"Created a branch: `{new_branch_name}`"
     p += 5

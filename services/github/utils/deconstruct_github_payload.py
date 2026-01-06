@@ -51,7 +51,7 @@ def deconstruct_github_payload(
         )
 
     # Get repository rules from Supabase
-    repo_settings = get_repository(repo_id=repo_id)
+    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     target_branch = (
         cast(str | None, repo_settings["target_branch"]) if repo_settings else None
     )

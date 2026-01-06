@@ -80,7 +80,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         return {"status": "skipped", "message": msg}
 
     # Get repository settings - check if trigger_on_schedule is enabled
-    repo_settings = get_repository(repo_id=repo_id)
+    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     if not repo_settings or not repo_settings.get("trigger_on_schedule"):
         msg = f"Skipping repo_id: {repo_id} - trigger_on_schedule is not enabled"
         logging.info(msg)
@@ -113,7 +113,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         if item["type"] == "blob"  # Only files
     ]
 
-    all_coverages = get_all_coverages(repo_id=repo_id)
+    all_coverages = get_all_coverages(owner_id=owner_id, repo_id=repo_id)
 
     # all_files LEFT JOIN all_coverages
     enriched_all_files: list[Coverages] = []
@@ -275,7 +275,10 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     if status_code == 410:
         # Disable schedule trigger in database
         update_repository(
-            repo_id=repo_id, trigger_on_schedule=False, updated_by=user_name
+            owner_id=owner_id,
+            repo_id=repo_id,
+            trigger_on_schedule=False,
+            updated_by=user_name,
         )
 
         # Delete AWS scheduler
@@ -324,6 +327,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             insert_coverages(coverage_record)
         else:
             update_issue_url(
+                owner_id=owner_id,
                 repo_id=repo_id,
                 file_path=target_path,
                 github_issue_url=issue_response["html_url"],

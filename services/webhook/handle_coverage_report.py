@@ -51,6 +51,11 @@ def handle_coverage_report(
         )
 
     github_token = get_installation_access_token(installation_id=installation_id)
+    if not github_token:
+        raise ValueError(
+            f"No token for installation {installation_id} ({owner_name}/{repo_name})"
+        )
+
     circle_token = None
     if source == "github":
         artifacts = get_workflow_artifacts(owner_name, repo_name, run_id, github_token)
@@ -203,7 +208,9 @@ def handle_coverage_report(
     current_paths = [coverage["full_path"] for coverage in seen.values()]
 
     # Get existing records
-    existing_records = get_coverages(repo_id=repo_id, filenames=current_paths)
+    existing_records = get_coverages(
+        owner_id=owner_id, repo_id=repo_id, filenames=current_paths
+    )
 
     # Prepare data for upsert
     upsert_data = []

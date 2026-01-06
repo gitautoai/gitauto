@@ -135,7 +135,7 @@ def test_handle_check_suite_skips_when_trigger_disabled(
 
     mock_get_token.assert_called_once()
     mock_get_failed_runs.assert_called_once()
-    mock_get_repo.assert_called_once_with(repo_id=98765)
+    mock_get_repo.assert_called_once_with(owner_id=11111, repo_id=98765)
 
 
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")

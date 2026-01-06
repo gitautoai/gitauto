@@ -183,7 +183,7 @@ async def handle_pr_checkbox_trigger(
         owner=owner_name, repo=repo_name, branch=head_branch, token=token
     )
 
-    repo_settings = get_repository(repo_id=repo_id)
+    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
 
     p = 0
     log_messages = []
@@ -340,9 +340,10 @@ async def handle_pr_checkbox_trigger(
         owner = get_owner(owner_id=owner_id)
         if owner and owner["credit_balance_usd"] <= 0 and sender_id:
             user = get_user(user_id=sender_id)
-            if user and user.get("email"):
+            email = user.get("email") if user else None
+            if email:
                 subject, text = get_credits_depleted_email_text(sender_name)
-                send_email(to=user["email"], subject=subject, text=text)
+                send_email(to=email, subject=subject, text=text)
 
     # End notification
     slack_notify("Completed", thread_ts)

@@ -50,7 +50,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
         return None
 
     # Get repository settings
-    repo_settings = get_repository(repo_id=repo_id)
+    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     if not repo_settings or not repo_settings["trigger_on_merged"]:
         return None
 
@@ -82,7 +82,7 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
         )
 
         # Disable the merge trigger to prevent future attempts
-        update_repository(repo_id=repo_id, trigger_on_merged=False)
+        update_repository(owner_id=owner_id, repo_id=repo_id, trigger_on_merged=False)
 
         # Slack notification
         slack_notify(
@@ -105,7 +105,9 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
 
     # Filter for code files that might need tests
     coverage_data = get_coverages(
-        repo_id=repo_id, filenames=[f["filename"] for f in changed_files]
+        owner_id=owner_id,
+        repo_id=repo_id,
+        filenames=[f["filename"] for f in changed_files],
     )
 
     changed_code_files = [
@@ -204,7 +206,10 @@ def handle_pr_merged(payload: GitHubPullRequestClosedPayload):
     if status_code == 410:
         # Disable merge trigger in database
         update_repository(
-            repo_id=repo_id, trigger_on_merged=False, updated_by=merged_by
+            owner_id=owner_id,
+            repo_id=repo_id,
+            trigger_on_merged=False,
+            updated_by=merged_by,
         )
 
         msg = (

@@ -149,7 +149,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         )
 
     # Check if auto-merge should be performed
-    repo_features = get_repository_features(repo_id=repo_id)
+    repo_features = get_repository_features(owner_id=owner_id, repo_id=repo_id)
     if not repo_features or not repo_features.get("auto_merge"):
         msg = f"Auto-merge disabled for repo_id={repo_id}"
         print(msg)

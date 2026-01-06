@@ -33,11 +33,12 @@ def upsert_repository(
         )
 
     # Check if repository already exists
-    repository = get_repository(repo_id)
+    repository = get_repository(owner_id=owner_id, repo_id=repo_id)
 
     if repository:
         # Update existing repository
         return update_repository(
+            owner_id=owner_id,
             repo_id=repo_id,
             updated_by=f"{user_id}:{user_name}",
             file_count=file_count,
