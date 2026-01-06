@@ -969,13 +969,26 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
       - Mention "GitAuto" by name
       - Explain WHAT changed in practical terms
       - Highlight WHY it matters - benefits for existing or potential GitAuto customers
-      - Example: "GitAuto now prevents editing unrelated files with repository-level restrictions - safer automated PR generation for your team"
+      - **Write for developers, not marketers** - our customers are devs who hate corporate speak
+      - **NEVER use typical marketing keywords**: "all-in", "doubling down", "sunsetting", "deeper features", "polished product", "game-changer", "seamless"
+      - **NEVER frame things negatively**: "unused", "nobody used", "removing unused" - this is embarrassing
+      - **Be straightforward and honest** like a dev talking to other devs
+      - Good example: "We're dropping Jira integration to focus on GitHub. Less code to maintain, fewer edge cases to handle, and we can ship GitHub features faster."
+      - Bad example: "GitAuto is sunsetting Jira integration to deliver the best possible GitHub experience" (too corporate)
+      - Bad example: "Removed unused Jira code paths" (sounds like failure)
 
 **CRITICAL GIT RULES:**
 
 - **NEVER EVER use `git add .`** - this adds ALL files including unrelated changes
 - **ALWAYS specify exact files**: Use `git diff --name-only HEAD` to see what's changed, then add only those specific files
 - **Example**: `git add $(git diff --name-only HEAD)` or list files manually
+- **CRITICAL: Recognize new branch push output** - When `git push` shows:
+  ```
+  remote: Create a pull request for 'branch' on GitHub by visiting:
+  remote:      https://github.com/owner/repo/pull/new/branch
+  * [new branch]        branch -> branch
+  ```
+  This means NO PR EXISTS YET. You MUST run `gh pr create` to create the PR. Don't assume a PR exists.
 
 IMPORTANT: When pylint and pyright show many alerts/errors, focus on fixing issues related to your code changes unless explicitly told to fix all issues. Don't ignore everything, but prioritize errors in files you modified.
 

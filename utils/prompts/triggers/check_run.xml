@@ -20,4 +20,14 @@
   - Use **delete_file** when one of the duplicate files is unused or redundant (check imports first to confirm it's not referenced)
   - Always search for import statements before deleting files to avoid breaking the codebase
   - After renaming/deleting files, update any import statements that reference the old paths
+
+  **Syntax/Brace Errors (TypeScript TS1128, missing closing brace, unexpected token, etc.)**:
+
+  When you see errors about missing braces, unexpected tokens, or nesting issues:
+
+  1. **FIRST read the ENTIRE file** - Do NOT use start_line/end_line parameters. You cannot understand brace nesting from small chunks.
+  2. **Count braces** - Mentally track opening `{` and closing `}` to find where the mismatch is.
+  3. **Only then attempt a fix** - After understanding the full structure, make a single targeted fix.
+
+  **CRITICAL**: Do NOT read 20-70 line chunks and guess. This wastes iterations and leads to wrong hypotheses. Brace errors require seeing the complete file structure.
 </trigger_instruction> 
