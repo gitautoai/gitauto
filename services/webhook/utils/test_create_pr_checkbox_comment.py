@@ -447,7 +447,7 @@ def test_passes_correct_base_args_to_delete_comments(
     mock_delete_comments_by_identifiers,
     mock_combine_and_create_comment,
 ):
-    """Test that correct parameters are passed to delete_comments_by_identifiers."""
+    """Test that correct base_args are passed to delete_comments_by_identifiers."""
     payload = create_test_payload(
         owner_name="test-owner", repo_name="test-repo", pull_number=42
     )
@@ -463,11 +463,12 @@ def test_passes_correct_base_args_to_delete_comments(
     create_pr_checkbox_comment(payload)
 
     mock_delete_comments_by_identifiers.assert_called_once()
-    call_kwargs = mock_delete_comments_by_identifiers.call_args.kwargs
-    assert call_kwargs["owner"] == "test-owner"
-    assert call_kwargs["repo"] == "test-repo"
-    assert call_kwargs["issue_number"] == 42
-    assert call_kwargs["token"] == "test-token-123"
+    call_args = mock_delete_comments_by_identifiers.call_args
+    base_args = call_args[1]["base_args"]
+    assert base_args["owner"] == "test-owner"
+    assert base_args["repo"] == "test-repo"
+    assert base_args["issue_number"] == 42
+    assert base_args["token"] == "test-token-123"
 
 
 def test_passes_correct_args_to_combine_and_create_comment(
