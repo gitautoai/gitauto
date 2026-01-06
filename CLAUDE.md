@@ -982,6 +982,13 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 - **NEVER EVER use `git add .`** - this adds ALL files including unrelated changes
 - **ALWAYS specify exact files**: Use `git diff --name-only HEAD` to see what's changed, then add only those specific files
 - **Example**: `git add $(git diff --name-only HEAD)` or list files manually
+- **CRITICAL: Recognize new branch push output** - When `git push` shows:
+  ```
+  remote: Create a pull request for 'branch' on GitHub by visiting:
+  remote:      https://github.com/owner/repo/pull/new/branch
+  * [new branch]        branch -> branch
+  ```
+  This means NO PR EXISTS YET. You MUST run `gh pr create` to create the PR. Don't assume a PR exists.
 
 IMPORTANT: When pylint and pyright show many alerts/errors, focus on fixing issues related to your code changes unless explicitly told to fix all issues. Don't ignore everything, but prioritize errors in files you modified.
 
