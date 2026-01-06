@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument,too-many-instance-attributes
 import unittest
 from unittest.mock import patch, MagicMock
 

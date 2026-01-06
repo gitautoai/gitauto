@@ -225,15 +225,6 @@ async def handle_screenshot_comparison(payload: dict) -> None:
     file_changes = get_pull_request_file_changes(url=pull_files_url, token=token)
     print(dumps(file_changes, indent=2))
 
-    # Create base arguments for GitHub API calls
-    base_args = {
-        "owner": owner,
-        "repo": repo,
-        "issue_number": pull_number,
-        "pull_number": pull_number,
-        "token": token,
-    }
-
     server_process = None
     try:
         # Create temporary directory for cloning. For Mac, this is /private/tmp
@@ -295,10 +286,14 @@ async def handle_screenshot_comparison(payload: dict) -> None:
 
         # Delete existing screenshot comparison comments if any
         table_header = "| Before (production) | After (this branch) |\n|-------------------|----------------|\n"
-        comments = get_all_comments(base_args)
+        comments = get_all_comments(
+            owner=owner, repo=repo, issue_number=pull_number, token=token
+        )
         for comment in comments:
             if table_header in comment.get("body", ""):
-                delete_comment(base_args, comment["id"])
+                delete_comment(
+                    owner=owner, repo=repo, token=token, comment_id=comment["id"]
+                )
         print("Deleted old screenshot comparison comments")
 
         # Upload screenshots and create comparison comments

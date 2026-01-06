@@ -91,17 +91,13 @@ def create_pr_checkbox_comment(payload: PullRequestWebhookPayload):
     branch_name = pull_request["head"]["ref"]
     base_comment = create_test_selection_comment(checklist, branch_name)
 
-    # Create base args for comment creation
-    base_args = {
-        "owner": owner_name,
-        "repo": repo_name,
-        "issue_number": pull_number,
-        "token": token,
-    }
-
     # Delete existing test selection comments before creating new one
     delete_comments_by_identifiers(
-        base_args=base_args, identifiers=[TEST_SELECTION_COMMENT_IDENTIFIER]
+        owner=owner_name,
+        repo=repo_name,
+        issue_number=pull_number,
+        token=token,
+        identifiers=[TEST_SELECTION_COMMENT_IDENTIFIER],
     )
 
     # Combine and create the comment
@@ -110,6 +106,8 @@ def create_pr_checkbox_comment(payload: PullRequestWebhookPayload):
         installation_id=installation_id,
         owner_id=owner_id,
         owner_name=owner_name,
+        repo_name=repo_name,
+        issue_number=pull_number,
+        token=token,
         sender_name=sender_name,
-        base_args=base_args,
     )
