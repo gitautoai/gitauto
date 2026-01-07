@@ -220,6 +220,11 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         else:
             reason = state_reasons.get(mergeable_state, "unknown reason")
 
+        # If any check suite is still in_progress, skip notification - we're just waiting
+        if any(s["status"] == "in_progress" for s in all_suites):
+            print("Check suites still in progress, waiting...")
+            return
+
         msg = f"{BLOCKED}: mergeable_state={mergeable_state} ({reason})"
         print(msg)
 
