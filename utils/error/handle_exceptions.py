@@ -1,11 +1,12 @@
 # pylint: disable=broad-exception-caught
+# flake8: noqa: E704
 
 # Standard imports
 from functools import wraps
 import json
 import logging
 import time
-from typing import Any, Callable, ParamSpec, TypeVar, cast
+from typing import Any, Callable, ParamSpec, TypeVar, cast, overload
 
 # Third party imports
 import requests
@@ -13,13 +14,30 @@ import sentry_sdk
 
 P = ParamSpec("P")
 R = TypeVar("R")
+D = TypeVar("D")
+
+
+@overload
+def handle_exceptions(
+    default_return_value: None = None,
+    raise_on_error: bool = False,
+    api_type: str = "github",
+) -> Callable[[Callable[P, R]], Callable[P, R | None]]: ...
+
+
+@overload
+def handle_exceptions(
+    default_return_value: D,
+    raise_on_error: bool = False,
+    api_type: str = "github",
+) -> Callable[[Callable[P, R]], Callable[P, R | D]]: ...
 
 
 def handle_exceptions(
     default_return_value: Any = None,
     raise_on_error: bool = False,
-    api_type: str = "github",  # "github" or "google"
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    api_type: str = "github",
+) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
     """https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#checking-the-status-of-your-rate-limit"""
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
