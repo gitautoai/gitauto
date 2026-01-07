@@ -602,6 +602,79 @@ def test_auto_merge_skipped_for_human_pr(
         mock_merge_pr.assert_not_called()
 
 
+@patch("services.webhook.successful_check_suite_handler.slack_notify")
+@patch("services.webhook.successful_check_suite_handler.create_comment")
+@patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
+@patch("services.webhook.successful_check_suite_handler.get_check_suites")
+@patch("services.webhook.successful_check_suite_handler.merge_pull_request")
+@patch("services.webhook.successful_check_suite_handler.get_pull_request")
+@patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
+@patch("services.webhook.successful_check_suite_handler.get_repository_features")
+def test_auto_merge_blocked_skips_notification_when_checks_in_progress(
+    mock_get_repo_features,
+    mock_get_token,
+    mock_get_pr,
+    mock_merge_pr,
+    mock_get_check_suites,
+    mock_get_required_checks,
+    mock_create_comment,
+    mock_slack_notify,
+):
+    payload = load_payload("completed_by_circleci.json")
+    payload["check_suite"]["pull_requests"][0]["head"][
+        "ref"
+    ] = f"{PRODUCT_ID}/issue-2-test"
+    payload["check_suite"]["head_branch"] = f"{PRODUCT_ID}/issue-2-test"
+
+    mock_get_repo_features.return_value = {
+        "auto_merge": True,
+        "merge_method": "squash",
+        "auto_merge_only_test_files": False,
+    }
+    mock_get_token.return_value = "test-token"
+    mock_get_check_suites.return_value = [
+        {
+            "app": {"name": "CircleCI Checks"},
+            "status": "completed",
+            "conclusion": "success",
+        },
+        {"app": {"name": "Cypress"}, "status": "in_progress", "conclusion": None},
+    ]
+    mock_get_required_checks.return_value = (200, ["CircleCI Checks"])
+    mock_get_pr.return_value = {"mergeable_state": "blocked"}
+
+    with patch(
+        "services.webhook.successful_check_suite_handler.supabase"
+    ) as mock_supabase:
+        mock_table = MagicMock()
+        mock_select = MagicMock()
+        mock_eq1 = MagicMock()
+        mock_eq2 = MagicMock()
+        mock_eq3 = MagicMock()
+        mock_order = MagicMock()
+        mock_limit = MagicMock()
+
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_select
+        mock_select.eq.return_value = mock_eq1
+        mock_eq1.eq.return_value = mock_eq2
+        mock_eq2.eq.return_value = mock_eq3
+        mock_eq3.order.return_value = mock_order
+        mock_order.limit.return_value = mock_limit
+        mock_limit.execute.return_value = MagicMock(data=[{"id": 100}])
+
+        mock_update = MagicMock()
+        mock_update_eq = MagicMock()
+        mock_table.update.return_value = mock_update
+        mock_update.eq.return_value = mock_update_eq
+
+        handle_successful_check_suite(cast(CheckSuiteCompletedPayload, payload))
+
+        mock_merge_pr.assert_not_called()
+        mock_create_comment.assert_not_called()
+        mock_slack_notify.assert_not_called()
+
+
 @patch("services.webhook.successful_check_suite_handler.create_comment")
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
