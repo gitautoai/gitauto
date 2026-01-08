@@ -174,11 +174,9 @@ def test_get_schedulers_by_owner_id_client_error(mock_scheduler_client):
     """Test retrieval when ClientError occurs."""
     # Setup
     owner_id = 123
-    error_response = {
-        "Error": {"Code": "AccessDeniedException", "Message": "Access denied"}
-    }
     mock_scheduler_client.list_schedules.side_effect = ClientError(
-        error_response, "ListSchedules"
+        {"Error": {"Code": "AccessDeniedException", "Message": "Access denied"}},
+        "ListSchedules",
     )
 
     # Execute

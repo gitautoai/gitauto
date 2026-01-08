@@ -322,15 +322,15 @@ def test_create_empty_commit_update_reference_fails(
     )
 
 
-def test_create_empty_commit_with_different_base_args(all_mocks_successful):
-    """Test create_empty_commit with different BaseArgs values."""
-    # pylint: disable=redefined-outer-name
-    base_args = {
-        "owner": "test-owner",
-        "repo": "test-repo",
-        "token": "test-token-123",
-        "new_branch": "feature-branch",
-    }
+def test_create_empty_commit_with_different_base_args(
+    all_mocks_successful, create_test_base_args
+):
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token-123",
+        new_branch="feature-branch",
+    )
 
     result = create_empty_commit(base_args, "Test commit message")
 

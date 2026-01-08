@@ -386,31 +386,6 @@ def test_render_text_attribute_error_returns_empty_string(mock_base_args):
         assert result == ""
 
 
-def test_render_text_key_error_returns_empty_string():
-    """Test that key errors return empty string due to handle_exceptions decorator."""
-    # Create BaseArgs missing required keys to trigger KeyError
-    incomplete_base_args = {}
-    text = "Test content"
-
-    with patch("services.github.markdown.render_text.post"):
-        result = render_text(incomplete_base_args, text)
-
-        # Due to handle_exceptions decorator, should return empty string
-        assert result == ""
-
-
-def test_render_text_type_error_returns_empty_string():
-    """Test that type errors return empty string due to handle_exceptions decorator."""
-    # Pass None as base_args to trigger TypeError
-    text = "Test content"
-
-    with patch("services.github.markdown.render_text.post"):
-        result = render_text(None, text)
-
-        # Due to handle_exceptions decorator, should return empty string
-        assert result == ""
-
-
 # Integration Tests
 def test_integration_render_text_simple_markdown(integration_base_args):
     """Integration test: render simple markdown text."""

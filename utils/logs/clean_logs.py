@@ -13,6 +13,9 @@ from utils.logs.minimize_jest_test_logs import minimize_jest_test_logs
 def clean_logs(error_log: str):
     sections_removed_log = remove_pytest_sections(error_log)
     eslint_cleaned_log = remove_repetitive_eslint_warnings(sections_removed_log)
+    if eslint_cleaned_log is None:
+        return error_log
+
     ansi_cleaned_log = remove_ansi_escape_codes(eslint_cleaned_log)
     minimized_log = minimize_jest_test_logs(ansi_cleaned_log)
     return minimized_log

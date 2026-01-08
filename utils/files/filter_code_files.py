@@ -3,10 +3,6 @@ from utils.error.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
 def filter_code_files(filenames: list[str]):
-    """Filter out test files and common non-code files"""
-    # Validate input type
-    if not isinstance(filenames, list):
-        return []
 
     # File patterns that are likely tests or don't need tests
     test_patterns = [

@@ -2,7 +2,7 @@ from typing import Literal
 
 ColorType = Literal["red", "green", "yellow", "blue", "magenta", "cyan"]
 
-ANSI_COLORS = {
+ANSI_COLORS: dict[ColorType, str] = {
     "red": "\033[31m",
     "green": "\033[32m",
     "yellow": "\033[33m",

@@ -4,7 +4,7 @@ from utils.error.handle_exceptions import handle_exceptions
 @handle_exceptions(
     default_return_value=lambda error_log: error_log, raise_on_error=False
 )
-def minimize_jest_test_logs(error_log: str) -> str:
+def minimize_jest_test_logs(error_log: str):
     if not error_log:
         return error_log
 

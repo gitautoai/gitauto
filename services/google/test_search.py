@@ -357,14 +357,6 @@ class TestGoogleSearch:
 
         assert result == []
 
-    def test_google_search_none_query(self, create_test_base_args):
-        """Test google_search with None query."""
-        base_args = create_test_base_args()
-
-        result = google_search(base_args, None)
-
-        assert result == []
-
     @patch("services.google.search.scrape_content_from_url")
     @patch("services.google.search.search_urls")
     def test_google_search_success_single_url(

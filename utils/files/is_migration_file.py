@@ -1,6 +1,4 @@
 def is_migration_file(file_path: str):
-    if not isinstance(file_path, str):
-        return False
 
     file_path_lower = file_path.lower()
 

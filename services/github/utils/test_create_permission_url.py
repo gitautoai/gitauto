@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
+from services.github.types.github_types import OwnerType
 from services.github.utils.create_permission_url import create_permission_url
 
 
@@ -150,8 +151,7 @@ def test_create_permission_url_url_structure():
 
 def test_create_permission_url_with_special_characters_in_owner_name():
     """Test that create_permission_url handles special characters in owner names."""
-    # Test with various special characters that might appear in GitHub usernames/org names
-    test_cases = [
+    test_cases: list[tuple[OwnerType, str, int]] = [
         ("Organization", "test-org-123", 123),
         ("Organization", "test_org_456", 456),
         ("User", "user.name", 789),

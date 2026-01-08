@@ -297,6 +297,7 @@ def test_clear_old_content_single_record(mock_datetime, mock_supabase):
 
     result = clear_old_content()
 
+    assert result is not None
     assert result == mock_result.data
     assert len(result) == 1
     mock_supabase.table.assert_called_with("llm_requests")
@@ -327,6 +328,7 @@ def test_clear_old_content_multiple_records(mock_datetime, mock_supabase):
 
     result = clear_old_content()
 
+    assert result is not None
     assert result == mock_result.data
     assert len(result) == 3
     mock_supabase.table.assert_called_with("llm_requests")

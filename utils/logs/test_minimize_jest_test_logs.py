@@ -66,9 +66,7 @@ Test Suites: 1 passed, 1 total"""
 
 
 def test_minimize_jest_test_logs_empty():
-    """Test that empty logs are returned unchanged."""
     assert minimize_jest_test_logs("") == ""
-    assert minimize_jest_test_logs(None) is None
 
 
 def test_minimize_jest_test_logs_not_jest():

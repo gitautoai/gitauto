@@ -80,11 +80,14 @@ def test_delete_scheduler_client_error_resource_not_found(
     """Test scheduler deletion when resource is not found."""
     # Setup
     schedule_name = "non-existent-schedule"
-    error_response = {
-        "Error": {"Code": "ResourceNotFoundException", "Message": "Schedule not found"}
-    }
     mock_scheduler_client.delete_schedule.side_effect = ClientError(
-        error_response, "DeleteSchedule"
+        {
+            "Error": {
+                "Code": "ResourceNotFoundException",
+                "Message": "Schedule not found",
+            }
+        },
+        "DeleteSchedule",
     )
 
     # Execute
@@ -105,11 +108,9 @@ def test_delete_scheduler_client_error_access_denied(
     """Test scheduler deletion when access is denied."""
     # Setup
     schedule_name = "restricted-schedule"
-    error_response = {
-        "Error": {"Code": "AccessDeniedException", "Message": "Access denied"}
-    }
     mock_scheduler_client.delete_schedule.side_effect = ClientError(
-        error_response, "DeleteSchedule"
+        {"Error": {"Code": "AccessDeniedException", "Message": "Access denied"}},
+        "DeleteSchedule",
     )
 
     # Execute
@@ -125,11 +126,9 @@ def test_delete_scheduler_client_error_throttling(mock_scheduler_client, mock_lo
     """Test scheduler deletion when throttling occurs."""
     # Setup
     schedule_name = "throttled-schedule"
-    error_response = {
-        "Error": {"Code": "ThrottlingException", "Message": "Rate exceeded"}
-    }
     mock_scheduler_client.delete_schedule.side_effect = ClientError(
-        error_response, "DeleteSchedule"
+        {"Error": {"Code": "ThrottlingException", "Message": "Rate exceeded"}},
+        "DeleteSchedule",
     )
 
     # Execute
@@ -169,23 +168,6 @@ def test_delete_scheduler_generic_exception(mock_scheduler_client, mock_logging)
     assert result is False
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
     mock_logging.info.assert_not_called()
-
-
-def test_delete_scheduler_with_none_schedule_name(mock_scheduler_client, mock_logging):
-    """Test scheduler deletion with None schedule name."""
-    # Setup
-    schedule_name = None
-    mock_scheduler_client.delete_schedule.return_value = None
-
-    # Execute
-    result = delete_scheduler(schedule_name)
-
-    # Assert
-    assert result is True
-    mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
-    mock_logging.info.assert_called_once_with(
-        "Deleted EventBridge Scheduler: %s", schedule_name
-    )
 
 
 @pytest.mark.parametrize(

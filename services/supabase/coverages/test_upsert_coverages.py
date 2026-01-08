@@ -7,6 +7,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 # Local imports
+from schemas.supabase.types import CoveragesInsert
 from services.supabase.coverages.upsert_coverages import upsert_coverages
 
 
@@ -20,7 +21,7 @@ def mock_supabase():
 @pytest.fixture
 def sample_coverage_record():
     """Create a sample coverage record for testing."""
-    return {
+    record: CoveragesInsert = {
         "repo_id": 123,
         "full_path": "src/test.py",
         "owner_id": 456,
@@ -31,25 +32,24 @@ def sample_coverage_record():
         "created_by": "test_user",
         "updated_by": "test_user",
     }
+    return record
 
 
 @pytest.fixture
 def sample_coverage_records(sample_coverage_record):
     """Create multiple sample coverage records for testing."""
-    return [
-        sample_coverage_record,
-        {
-            "repo_id": 123,
-            "full_path": "src/another.py",
-            "owner_id": 456,
-            "level": "file",
-            "line_coverage": 70.0,
-            "function_coverage": 80.0,
-            "branch_coverage": 65.0,
-            "created_by": "test_user",
-            "updated_by": "test_user",
-        },
-    ]
+    second_record: CoveragesInsert = {
+        "repo_id": 123,
+        "full_path": "src/another.py",
+        "owner_id": 456,
+        "level": "file",
+        "line_coverage": 70.0,
+        "function_coverage": 80.0,
+        "branch_coverage": 65.0,
+        "created_by": "test_user",
+        "updated_by": "test_user",
+    }
+    return [sample_coverage_record, second_record]
 
 
 class TestUpsertCoverages:
@@ -59,18 +59,6 @@ class TestUpsertCoverages:
         """Test that empty coverage records list returns None."""
         # Arrange
         coverage_records = []
-
-        # Act
-        result = upsert_coverages(coverage_records)
-
-        # Assert
-        assert result is None
-        mock_supabase.table.assert_not_called()
-
-    def test_upsert_coverages_none_input_returns_none(self, mock_supabase):
-        """Test that None input returns None."""
-        # Arrange
-        coverage_records = None
 
         # Act
         result = upsert_coverages(coverage_records)
@@ -264,7 +252,7 @@ class TestUpsertCoverages:
     def test_upsert_coverages_with_various_coverage_types(self, mock_supabase):
         """Test upsert with different types of coverage data."""
         # Arrange
-        coverage_records = [
+        coverage_records: list[CoveragesInsert] = [
             {
                 "repo_id": 123,
                 "full_path": "src/file1.py",
@@ -307,7 +295,7 @@ class TestUpsertCoverages:
     def test_upsert_coverages_with_different_repo_ids(self, mock_supabase):
         """Test upsert with coverage records from different repositories."""
         # Arrange
-        coverage_records = [
+        coverage_records: list[CoveragesInsert] = [
             {
                 "repo_id": 123,
                 "full_path": "src/test.py",

@@ -44,6 +44,7 @@ def test_claude_to_openai_message_conversion():
             system_content="Test system content",
             tools=[
                 {
+                    "type": "function",
                     "function": {
                         "name": "get_remote_file_content",
                         "description": "Get content of a remote file",
@@ -51,7 +52,7 @@ def test_claude_to_openai_message_conversion():
                             "type": "object",
                             "properties": {"file_path": {"type": "string"}},
                         },
-                    }
+                    },
                 }
             ],
         )
@@ -116,6 +117,7 @@ def test_claude_error_fallback_to_openai():
             system_content="Test system content",
             tools=[
                 {
+                    "type": "function",
                     "function": {
                         "name": "get_remote_file_content",
                         "description": "Get content of a remote file",
@@ -123,7 +125,7 @@ def test_claude_error_fallback_to_openai():
                             "type": "object",
                             "properties": {"file_path": {"type": "string"}},
                         },
-                    }
+                    },
                 }
             ],
         )

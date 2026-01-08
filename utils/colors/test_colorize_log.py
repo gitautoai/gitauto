@@ -1,4 +1,3 @@
-import pytest
 from utils.colors.colorize_log import colorize, ANSI_COLORS, ANSI_RESET
 
 
@@ -15,8 +14,3 @@ def test_colorize_empty_string():
         result = colorize("", color)
         expected = f"{color_code}{ANSI_RESET}"
         assert result == expected
-
-
-def test_colorize_invalid_color():
-    with pytest.raises(KeyError):
-        colorize("test", "invalid_color")

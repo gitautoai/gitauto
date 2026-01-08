@@ -1,4 +1,7 @@
 from unittest.mock import Mock, patch
+
+from openai.types.chat import ChatCompletionToolParam
+
 from services.anthropic.chat_with_functions import chat_with_claude
 
 
@@ -54,8 +57,15 @@ def test_chat_with_claude_with_tool_use(mock_claude, mock_insert_llm_request):
 
     messages = [{"role": "user", "content": "Do something"}]
     system_content = "You are a helpful assistant."
-    tools = [
-        {"function": {"name": "test_function", "description": "Test", "parameters": {}}}
+    tools: list[ChatCompletionToolParam] = [
+        {
+            "type": "function",
+            "function": {
+                "name": "test_function",
+                "description": "Test",
+                "parameters": {},
+            },
+        }
     ]
 
     result = chat_with_claude(

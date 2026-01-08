@@ -141,12 +141,7 @@ def test_non_type_files():
     assert is_type_file("src/components/Button.tsx") is False
 
 
-def test_invalid_input():
-    # Test with invalid input types (decorator should handle these)
-    assert is_type_file(None) is False
-    assert is_type_file(123) is False
-    assert is_type_file([]) is False
-    assert is_type_file({}) is False
+def test_empty_string():
     assert is_type_file("") is False
 
 

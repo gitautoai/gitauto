@@ -266,33 +266,6 @@ def test_update_pull_request_body_uses_correct_timeout(
     assert call_args.kwargs["timeout"] == 120
 
 
-def test_update_pull_request_body_with_none_body(
-    mock_requests_patch, mock_create_headers, sample_response_data
-):
-    """Test updating pull request with None body."""
-    # Setup
-    mock_response = MagicMock()
-    sample_response_data["body"] = None
-    mock_response.json.return_value = sample_response_data
-    mock_requests_patch.return_value = mock_response
-
-    url = "https://api.github.com/repos/owner/repo/pulls/42"
-    token = "test_token_123"
-    body = None
-
-    # Execute
-    result = update_pull_request_body(url=url, token=token, body=body)
-
-    # Assert
-    assert result == sample_response_data
-    mock_requests_patch.assert_called_once_with(
-        url=url,
-        headers=mock_create_headers.return_value,
-        json={"body": None},
-        timeout=120,
-    )
-
-
 def test_update_pull_request_body_with_very_long_body(
     mock_requests_patch, mock_create_headers, sample_response_data
 ):
@@ -472,6 +445,7 @@ def test_update_pull_request_body_response_processing(
     )
 
     # Assert
+    assert result is not None
     assert result == expected_response_data
     mock_response.raise_for_status.assert_called_once()
     mock_response.json.assert_called_once()

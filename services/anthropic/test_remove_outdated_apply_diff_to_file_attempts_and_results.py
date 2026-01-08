@@ -1107,7 +1107,7 @@ def test_handles_exception_gracefully():
 
 def test_handles_runtime_exception():
     # Test by making dict access fail
-    class BadDict:
+    class BadDict(dict):
         def get(self, key, default=None):
             if key == "role":
                 return "user"
@@ -1115,7 +1115,7 @@ def test_handles_runtime_exception():
                 raise KeyError("Simulated KeyError")
             return default
 
-    messages = [BadDict()]
+    messages: list[dict] = [BadDict()]
 
     result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
     # Should return original messages unchanged when exception occurs

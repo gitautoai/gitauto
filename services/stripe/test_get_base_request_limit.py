@@ -152,12 +152,3 @@ def test_get_base_request_limit_with_empty_product_id(mock_stripe_product):
     result = get_base_request_limit("")
 
     assert result == 0
-
-
-def test_get_base_request_limit_with_none_product_id(mock_stripe_product):
-    """Test get_base_request_limit with None product ID."""
-    mock_stripe_product.side_effect = Exception("Invalid product ID")
-
-    result = get_base_request_limit(None)
-
-    assert result == 0

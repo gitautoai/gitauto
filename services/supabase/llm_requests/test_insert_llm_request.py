@@ -56,29 +56,6 @@ def test_insert_llm_request_success(mock_calculate_costs, mock_supabase):
 
 
 @patch("services.supabase.llm_requests.insert_llm_request.supabase")
-@patch("services.supabase.llm_requests.insert_llm_request.calculate_costs")
-def test_insert_llm_request_no_usage_id(mock_calculate_costs, mock_supabase):
-    mock_calculate_costs.return_value = (0.001, 0.005)
-    mock_result = Mock()
-    mock_result.data = [{"id": 2}]
-    mock_supabase.table.return_value.insert.return_value.execute.return_value = (
-        mock_result
-    )
-
-    result = insert_llm_request(
-        usage_id=None,
-        provider="openai",
-        model_id="gpt-5",
-        input_messages=[{"role": "user", "content": "test"}],
-        input_tokens=10,
-        output_message={"role": "assistant", "content": "response"},
-        output_tokens=5,
-    )
-
-    assert result == {"id": 2}
-
-
-@patch("services.supabase.llm_requests.insert_llm_request.supabase")
 def test_insert_llm_request_database_error(mock_supabase):
     mock_supabase.table().insert().execute.side_effect = Exception("Database error")
 

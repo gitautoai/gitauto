@@ -155,16 +155,8 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     if check_commit_has_skip_ci(
         owner=owner_name, repo=repo_name, commit_sha=head_sha, token=token
     ):
-        msg = f"{BLOCKED}: last commit has [skip ci], triggering tests instead..."
+        msg = "Noticed I haven't completed (last commit has [skip ci]), triggering tests..."
         print(msg)
-
-        delete_comments_by_identifiers(
-            owner=owner_name,
-            repo=repo_name,
-            issue_number=pr_number,
-            token=token,
-            identifiers=[BLOCKED],
-        )
         create_comment(
             owner=owner_name,
             repo=repo_name,
@@ -175,10 +167,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
         slack_notify(slack_msg)
 
-        create_empty_commit(
-            base_args=base_args,
-            message="Trigger tests",
-        )
+        create_empty_commit(base_args=base_args, message="Trigger tests")
         return
 
     # Fetch full PR details to get mergeable_state (not in simplified PR from check_suite webhook)

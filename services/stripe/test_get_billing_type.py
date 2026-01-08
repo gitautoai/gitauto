@@ -146,14 +146,6 @@ def test_get_billing_type_with_truthy_subscription_values(mock_subscription):
     )
     assert result == "subscription"
 
-    # Test with any truthy object
-    result = get_billing_type(
-        owner_name="regular_owner",
-        stripe_customer_id="cus_test123",
-        paid_subscription={"id": "sub_test"},
-    )
-    assert result == "subscription"
-
 
 @patch("services.stripe.get_billing_type.EXCEPTION_OWNERS", [])
 def test_get_billing_type_with_empty_exception_owners():

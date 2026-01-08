@@ -38,7 +38,5 @@ def test_is_migration_file_case_insensitive():
     assert is_migration_file("DB/MIGRATIONS/init.py") is True
 
 
-def test_is_migration_file_with_invalid_input():
-    assert is_migration_file(None) is False
-    assert is_migration_file(123) is False
+def test_is_migration_file_with_empty_string():
     assert is_migration_file("") is False
