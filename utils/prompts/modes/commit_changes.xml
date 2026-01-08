@@ -17,4 +17,14 @@
     <rule>NEVER EVER place import statements in the body of the function</rule>
   </coding_rules>
 
+  <testing_best_practices>
+    <react_testing_library>
+      <rule>Prefer userEvent over fireEvent for user interactions</rule>
+      <reason>userEvent automatically wraps in act() preventing CI flaky tests, and simulates real user behavior (mousedown → mouseup → click). fireEvent causes race conditions where tests pass locally but fail in CI.</reason>
+      <fallback>If userEvent doesn't work, use fireEvent wrapped in act(): await act(async () => { fireEvent.click(button); });</fallback>
+      <migration>When modifying test files that use fireEvent, try userEvent first. If it fails, wrap fireEvent in act().</migration>
+      <example>import userEvent from '@testing-library/user-event'; await userEvent.click(button); await userEvent.type(input, 'text');</example>
+    </react_testing_library>
+  </testing_best_practices>
+
 </mode_instruction> 
