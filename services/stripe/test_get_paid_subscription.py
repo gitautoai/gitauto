@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch, MagicMock
 import pytest
 from services.stripe.get_paid_subscription import get_paid_subscription
@@ -33,6 +34,7 @@ def create_mock_subscription(sub_id, price_id, price_amount=1000):
             "id": price_id,
             "product": f"prod_{price_id}",
             "recurring": {"interval": "month"},
+            "unit_amount": price_amount,
         },
         "quantity": 1,
     }
@@ -235,3 +237,59 @@ def test_get_paid_subscription_with_pagination(mock_stripe):
 
     # Should return the highest priced subscription
     assert result == paid_subscription2
+
+
+def test_get_paid_subscription_with_per_unit_pricing_real_payload(mock_stripe):
+    """Test get_paid_subscription returns highest priced subscription using real payload."""
+    with open(
+        "payloads/stripe/subscription_list_per_unit_pricing.json", encoding="utf-8"
+    ) as f:
+        response = json.load(f)
+
+    mock_response = MagicMock()
+    mock_response.has_more = False
+    mock_response.data = response["data"]
+    mock_stripe.Subscription.list.return_value = mock_response
+
+    with patch(
+        "services.stripe.get_paid_subscription.STRIPE_FREE_TIER_PRICE_ID",
+        "price_1SjaXsKUN3yUNaHzZxZHMGf4",  # The $0 subscription's price ID
+    ):
+        result = get_paid_subscription(customer_id="cus_TgyVwXFvno13M4")
+
+    # Should return the $19.99 subscription (not the $0 one)
+    assert result is not None
+    assert result["items"]["data"][0]["price"]["unit_amount"] == 1999
+    assert result["id"] == "sub_1SjaYoKUN3yUNaHz0bai8kBM"
+
+
+def test_get_paid_subscription_with_mixed_pricing_real_payload(mock_stripe):
+    """Test get_paid_subscription with mixed tiered and per-unit subscriptions.
+
+    The tiered pricing file has both:
+    - Tiered subscriptions (unit_amount=null, treated as 0)
+    - Per-unit subscriptions (unit_amount=1900)
+
+    The code should return the highest priced one (per-unit with $19.00).
+    """
+    with open(
+        "payloads/stripe/subscription_list_tiered_pricing.json", encoding="utf-8"
+    ) as f:
+        response = json.load(f)
+
+    mock_response = MagicMock()
+    mock_response.has_more = False
+    mock_response.data = response["data"]
+    mock_stripe.Subscription.list.return_value = mock_response
+
+    with patch(
+        "services.stripe.get_paid_subscription.STRIPE_FREE_TIER_PRICE_ID",
+        "price_fake_free_tier",
+    ):
+        result = get_paid_subscription(customer_id="cus_PfLxvlZddnLf1d")
+
+    # Should return the per-unit subscription with $19.00 (highest price)
+    # Tiered subscriptions have unit_amount=null which becomes 0, so they lose
+    assert result is not None
+    assert result["items"]["data"][0]["price"]["unit_amount"] == 1900
+    assert result["items"]["data"][0]["price"]["billing_scheme"] == "per_unit"

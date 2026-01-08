@@ -30,9 +30,9 @@ def get_remote_file_content_by_url(url: str, token: str) -> str:
         parts["file_path"],
     )
     start, end = parts["start_line"], parts["end_line"]
-    url: str = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
+    api_url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
     headers: dict[str, str] = create_headers(token=token)
-    response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
+    response = requests.get(url=api_url, headers=headers, timeout=TIMEOUT)
     response.raise_for_status()
     response_json = response.json()
     encoded_content: str = response_json["content"]  # Base64 encoded content

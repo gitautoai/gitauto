@@ -15,14 +15,16 @@ class SubscriptionLimitResult(TypedDict):
     period_end_date: datetime
 
 
+DEFAULT_SUBSCRIPTION_LIMIT: SubscriptionLimitResult = {
+    "can_proceed": False,
+    "requests_left": 0,
+    "request_limit": 0,
+    "period_end_date": ONE_YEAR_FROM_NOW,
+}
+
+
 @handle_exceptions(
-    default_return_value={
-        "can_proceed": False,
-        "requests_left": 0,
-        "request_limit": 0,
-        "period_end_date": ONE_YEAR_FROM_NOW,
-    },
-    raise_on_error=False,
+    default_return_value=DEFAULT_SUBSCRIPTION_LIMIT, raise_on_error=False
 )
 def check_subscription_limit(
     paid_subscription,

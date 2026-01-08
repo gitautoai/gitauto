@@ -545,14 +545,15 @@ def create_pr_from_issue(
     slack_notify(success_msg, thread_ts)
 
     end_time = time.time()
-    update_usage(
-        usage_id=usage_id,
-        is_completed=is_completed,
-        pr_number=pr_number,
-        token_input=total_token_input,
-        token_output=total_token_output,
-        total_seconds=int(end_time - current_time),
-    )
+    if usage_id:
+        update_usage(
+            usage_id=usage_id,
+            is_completed=is_completed,
+            pr_number=pr_number,
+            token_input=total_token_input,
+            token_output=total_token_output,
+            total_seconds=int(end_time - current_time),
+        )
 
     # Insert credit usage if user is using credits (not paid subscription)
     if is_completed and billing_type == "credit":

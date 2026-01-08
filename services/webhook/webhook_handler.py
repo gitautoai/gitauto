@@ -211,7 +211,7 @@ async def handle_webhook_event(
     # Run GitAuto when checkbox is checked (edited)
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
     if event_name == "issue_comment" and action == "edited":
-        await handle_pr_checkbox_trigger(
+        handle_pr_checkbox_trigger(
             payload=cast(IssueCommentWebhookPayload, payload), lambda_info=lambda_info
         )
 

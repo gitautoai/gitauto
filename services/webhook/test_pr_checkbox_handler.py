@@ -69,8 +69,7 @@ def mock_issue_comment_payload():
 )
 @patch("services.webhook.pr_checkbox_handler.create_comment")
 @patch("services.webhook.pr_checkbox_handler.cancel_workflow_runs")
-@pytest.mark.asyncio
-async def test_pr_checkbox_handler_accumulates_tokens_correctly(
+def test_pr_checkbox_handler_accumulates_tokens_correctly(
     mock_cancel_workflow_runs,
     mock_create_comment,
     mock_slack_notify,
@@ -157,7 +156,7 @@ async def test_pr_checkbox_handler_accumulates_tokens_correctly(
     ]
 
     # Execute the function
-    await handle_pr_checkbox_trigger(mock_issue_comment_payload)
+    handle_pr_checkbox_trigger(mock_issue_comment_payload)
 
     # Verify chat_with_agent was called exactly twice (get + commit modes)
     assert mock_chat_with_agent.call_count == 2
@@ -190,8 +189,7 @@ async def test_pr_checkbox_handler_accumulates_tokens_correctly(
     mock_get_repo.assert_called_once_with(owner_id=11111, repo_id=98765)
 
 
-@pytest.mark.asyncio
-async def test_pr_checkbox_handler_early_exit_conditions():
+def test_pr_checkbox_handler_early_exit_conditions():
     """Test that handler exits early for various conditions without calling chat_with_agent."""
 
     bot_payload = cast(
@@ -217,13 +215,12 @@ async def test_pr_checkbox_handler_early_exit_conditions():
     )
 
     with patch("services.webhook.pr_checkbox_handler.chat_with_agent") as mock_chat:
-        await handle_pr_checkbox_trigger(bot_payload)
+        handle_pr_checkbox_trigger(bot_payload)
         # Should not call chat_with_agent for bot senders
         mock_chat.assert_not_called()
 
 
-@pytest.mark.asyncio
-async def test_pr_checkbox_handler_wrong_comment_body():
+def test_pr_checkbox_handler_wrong_comment_body():
     """Test that handler exits early when comment doesn't contain the trigger text."""
 
     wrong_body_payload = cast(
@@ -249,6 +246,6 @@ async def test_pr_checkbox_handler_wrong_comment_body():
     )
 
     with patch("services.webhook.pr_checkbox_handler.chat_with_agent") as mock_chat:
-        await handle_pr_checkbox_trigger(wrong_body_payload)
+        handle_pr_checkbox_trigger(wrong_body_payload)
         # Should not call chat_with_agent for wrong comment body
         mock_chat.assert_not_called()

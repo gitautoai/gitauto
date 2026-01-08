@@ -6,8 +6,10 @@ from utils.error.handle_exceptions import handle_exceptions
 
 BillingType = Literal["exception", "subscription", "credit"]
 
+DEFAULT_BILLING_TYPE: BillingType = "credit"
 
-@handle_exceptions(default_return_value="credit", raise_on_error=False)
+
+@handle_exceptions(default_return_value=DEFAULT_BILLING_TYPE, raise_on_error=False)
 def get_billing_type(
     owner_name: str,
     stripe_customer_id: str | None,

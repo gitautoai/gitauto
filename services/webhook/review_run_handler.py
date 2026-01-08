@@ -347,12 +347,13 @@ def handle_review_run(
 
     # Update usage record
     end_time = time.time()
-    update_usage(
-        usage_id=usage_id,
-        token_input=total_token_input,
-        token_output=total_token_output,
-        total_seconds=int(end_time - current_time),
-        pr_number=pull_number,
-        is_completed=True,
-    )
+    if usage_id:
+        update_usage(
+            usage_id=usage_id,
+            token_input=total_token_input,
+            token_output=total_token_output,
+            total_seconds=int(end_time - current_time),
+            pr_number=pull_number,
+            is_completed=True,
+        )
     return

@@ -1,6 +1,9 @@
 # pylint: disable=unused-argument,import-outside-toplevel
 
+from typing import cast
 from unittest.mock import MagicMock, patch
+
+from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 import pytest
 import tiktoken
 
@@ -27,7 +30,7 @@ def mock_tiktoken_encoding_for_model(mock_encoding):
 def test_count_tokens_empty_messages(mock_tiktoken_encoding_for_model):
     """Test count_tokens with empty message list"""
     messages = []
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     assert result == 0
     mock_tiktoken_encoding_for_model.assert_called_once()
@@ -38,7 +41,7 @@ def test_count_tokens_message_with_role_only(
 ):
     """Test count_tokens with message containing only role"""
     messages = [{"role": "user"}]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" = 4 characters = 4 tokens
     assert result == 4
@@ -50,7 +53,7 @@ def test_count_tokens_message_with_string_content(
 ):
     """Test count_tokens with message containing role and string content"""
     messages = [{"role": "user", "content": "Hello world"}]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" (4) + "Hello world" (11) = 15 tokens
     assert result == 15
@@ -62,7 +65,7 @@ def test_count_tokens_message_with_empty_string_content(
 ):
     """Test count_tokens with message containing empty string content"""
     messages = [{"role": "user", "content": ""}]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" (4) + "" (0) = 4 tokens
     assert result == 4
@@ -75,7 +78,7 @@ def test_count_tokens_message_with_none_string_content(
 ):
     """Test count_tokens with message containing None string content"""
     messages = [{"role": "user", "content": None}]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" (4) + 0 (None content is not processed as string) = 4 tokens
     assert result == 4
@@ -87,7 +90,7 @@ def test_count_tokens_message_with_name(
 ):
     """Test count_tokens with message containing name field"""
     messages = [{"role": "user", "content": "Hello", "name": "assistant"}]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" (4) + "Hello" (5) + "assistant" (9) = 18 tokens
     assert result == 18
@@ -101,7 +104,7 @@ def test_count_tokens_message_with_list_content_text_block(
 ):
     """Test count_tokens with message containing list content with text block"""
     messages = [{"role": "user", "content": [{"type": "text", "text": "Hello world"}]}]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" (4) + "Hello world" (11) = 15 tokens
     assert result == 15
@@ -122,7 +125,7 @@ def test_count_tokens_message_with_list_content_text_block_empty_text(
             ],
         }
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" (4) + "" (0) + "" (0, default for missing text) = 4 tokens
     assert result == 4
@@ -142,7 +145,7 @@ def test_count_tokens_message_with_list_content_tool_use_block(
             ],
         }
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "assistant" (9) + "search" (6) + "{'query': 'test'}" (17) = 32 tokens
     assert result == 32
@@ -164,7 +167,7 @@ def test_count_tokens_message_with_list_content_tool_use_block_empty_fields(
             ],
         }
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "assistant" (9) + "" (0, default name) + "" (0, default input) + "" (0, empty name) + "" (0, empty input) = 9 tokens
     assert result == 9
@@ -179,7 +182,7 @@ def test_count_tokens_message_with_list_content_tool_result_block(
     messages = [
         {"role": "user", "content": [{"type": "tool_result", "content": "Result data"}]}
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" (4) + "Result data" (11) = 15 tokens
     assert result == 15
@@ -200,7 +203,7 @@ def test_count_tokens_message_with_list_content_tool_result_block_empty_content(
             ],
         }
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" (4) + "" (0, default content) + "" (0, empty content) = 4 tokens
     assert result == 4
@@ -221,7 +224,7 @@ def test_count_tokens_message_with_list_content_unknown_block_type(
             ],
         }
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # Only "user" (4) tokens, unknown blocks are ignored
     assert result == 4
@@ -241,7 +244,7 @@ def test_count_tokens_message_with_tool_calls(
             ],
         }
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "assistant" (9) + "I'll search for that" (20) + "search" (6) + '{"query": "test"}' (17) = 52 tokens
     assert result == 52
@@ -265,7 +268,7 @@ def test_count_tokens_message_with_tool_calls_no_function(
             ],
         }
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # Only "assistant" (9) + "Hello" (5) = 14 tokens, tool_calls without function are ignored
     assert result == 14
@@ -291,7 +294,7 @@ def test_count_tokens_message_with_multiple_tool_calls(
             ],
         }
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "assistant" (9) + "search" (6) + '{"query": "test1"}' (18) + "calculate" (9) + '{"expression": "2+2"}' (21) = 63 tokens
     assert result == 63
@@ -320,7 +323,7 @@ def test_count_tokens_multiple_messages_complex(
             "content": [{"type": "tool_result", "content": "Found results"}],
         },
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # Message 1: "user" (4) + "Hello" (5) + "john" (4) = 13
     # Message 2: "assistant" (9) + "Hi there" (8) + "search" (6) + "{'q': 'test'}" (13) = 36
@@ -334,7 +337,7 @@ def test_count_tokens_message_without_role(
 ):
     """Test count_tokens with message without role field"""
     messages = [{"content": "Hello world"}]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # Only "Hello world" (11) tokens, no role
     assert result == 11
@@ -353,7 +356,7 @@ def test_count_tokens_message_with_all_fields(
             "tool_calls": [{"function": {"name": "func", "arguments": "{}"}}],
         }
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "assistant" (9) + "Response" (8) + "bot" (3) + "func" (4) + "{}" (2) = 26 tokens
     assert result == 26
@@ -379,7 +382,7 @@ def test_count_tokens_mixed_content_types(
             ],
         }
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" (4) + "Question" (8) + "search" (6) + "query" (5) + "answer" (6) = 29 tokens
     # unknown type is ignored
@@ -397,8 +400,9 @@ def test_count_tokens_uses_correct_model(
     """Test that count_tokens uses the correct OpenAI model"""
     from config import OPENAI_MODEL_ID_FOR_TIKTOKEN
 
+    # Intentionally passing dict list to test runtime behavior
     messages = [{"role": "user", "content": "test"}]
-    count_tokens(messages)
+    count_tokens(messages)  # pyright: ignore[reportArgumentType]
 
     mock_tiktoken_encoding_for_model.assert_called_once_with(
         model_name=OPENAI_MODEL_ID_FOR_TIKTOKEN
@@ -411,7 +415,7 @@ def test_count_tokens_tiktoken_error_returns_default(mock_tiktoken_encoding_for_
     mock_tiktoken_encoding_for_model.side_effect = Exception("Tiktoken error")
 
     messages = [{"role": "user", "content": "test"}]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # Should return default value due to handle_exceptions decorator
     assert result == 0
@@ -425,7 +429,7 @@ def test_count_tokens_encoding_error_returns_default(mock_tiktoken_encoding_for_
     mock_tiktoken_encoding_for_model.return_value = mock_encoding
 
     messages = [{"role": "user", "content": "test"}]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # Should return default value due to handle_exceptions decorator
     assert result == 0
@@ -434,7 +438,7 @@ def test_count_tokens_encoding_error_returns_default(mock_tiktoken_encoding_for_
 def test_count_tokens_unicode_content(mock_tiktoken_encoding_for_model, mock_encoding):
     """Test count_tokens with unicode characters"""
     messages = [{"role": "user", "content": "Hello 🌍 世界", "name": "用户"}]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" (4) + "Hello 🌍 世界" (10) + "用户" (2) = 16 tokens
     assert result == 16
@@ -450,7 +454,7 @@ def test_count_tokens_special_characters(
     messages = [
         {"role": "user", "content": "Line 1\nLine 2\tTabbed\r\nWindows newline"}
     ]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" (4) + content (37) = 41 tokens
     assert result == 41
@@ -462,7 +466,7 @@ def test_count_tokens_large_input(mock_tiktoken_encoding_for_model, mock_encodin
     """Test count_tokens with large input"""
     large_content = "x" * 10000
     messages = [{"role": "user", "content": large_content}]
-    result = count_tokens(messages)
+    result = count_tokens(cast(list[ChatCompletionMessageParam], messages))
 
     # "user" (4) + large_content (10000) = 10004 tokens
     assert result == 10004

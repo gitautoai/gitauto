@@ -5,7 +5,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def insert_credit(owner_id: int, transaction_type: str, usage_id: int = None):
+def insert_credit(owner_id: int, transaction_type: str, usage_id: int | None = None):
     amount_usd = CREDIT_AMOUNTS_USD[transaction_type]
 
     data = {

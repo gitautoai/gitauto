@@ -13,7 +13,7 @@ def delete_file_by_sha(
     file_path: str,
     sha: str,
     base_args: BaseArgs,
-    commit_message: str = None,
+    commit_message: str | None = None,
     **_kwargs,
 ):
     """Delete a file from GitHub repository using its SHA."""

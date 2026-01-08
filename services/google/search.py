@@ -31,7 +31,7 @@ def search_urls(query: str, num_results: int = NUM_RESULTS_DEFAULT, lang: str = 
     """https://pypi.org/project/googlesearch-python/"""
     search_results: list[dict[str, str]] = []
     results = search(
-        term=query, num_results=num_results, lang=lang, safe=None, advanced=True
+        term=query, num_results=num_results, lang=lang, safe="off", advanced=True
     )
     for result in results:
         title = result.title
@@ -83,7 +83,9 @@ def google_search(
     urls: list[dict[str, str]] = search_urls(
         query=query, num_results=num_results, lang=lang
     )
-    contents: list[str] = []
+    contents: list[dict[str, str]] = []
     for url in urls:
-        contents.append(scrape_content_from_url(url["url"]))
+        content = scrape_content_from_url(url["url"])
+        if content:
+            contents.append(content)
     return contents

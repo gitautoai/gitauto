@@ -1,6 +1,3 @@
-# Standard imports
-from typing import Any
-
 # Third party imports
 import requests
 
@@ -16,22 +13,25 @@ def get_comments(
     issue_number: int, base_args: BaseArgs, includes_me: bool = False
 ) -> list[str]:
     """https://docs.github.com/en/rest/issues/comments#list-issue-comments"""
-    owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
+    owner = base_args["owner"]
+    repo = base_args["repo"]
+    token = base_args["token"]
     response = requests.get(
         url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
         headers=create_headers(token=token),
         timeout=TIMEOUT,
     )
     response.raise_for_status()
-    comments: list[dict[str, Any]] = response.json()
+    comments: list[dict[str, object]] = response.json()
     if not includes_me:
-        filtered_comments: list[dict[str, Any]] = [
-            comment
-            for comment in comments
-            if comment.get("performed_via_github_app") is None
-            or comment["performed_via_github_app"].get("id") not in GITHUB_APP_IDS
-        ]
+        filtered_comments: list[dict[str, object]] = []
+        for comment in comments:
+            app = comment.get("performed_via_github_app")
+            if app is None:
+                filtered_comments.append(comment)
+            elif isinstance(app, dict) and app.get("id") not in GITHUB_APP_IDS:
+                filtered_comments.append(comment)
     else:
         filtered_comments = comments
-    comment_texts: list[str] = [comment["body"] for comment in filtered_comments]
+    comment_texts: list[str] = [str(comment["body"]) for comment in filtered_comments]
     return comment_texts

@@ -22,17 +22,19 @@ class AvailabilityStatus(TypedDict):
     log_message: str
 
 
+DEFAULT_AVAILABILITY_STATUS: AvailabilityStatus = {
+    "can_proceed": False,
+    "billing_type": "credit",
+    "requests_left": None,
+    "credit_balance_usd": 0,
+    "period_end_date": None,
+    "user_message": "Error checking availability",
+    "log_message": "Error checking availability",
+}
+
+
 @handle_exceptions(
-    default_return_value={
-        "can_proceed": False,
-        "billing_type": "credit",
-        "requests_left": None,
-        "credit_balance_usd": 0,
-        "period_end_date": None,
-        "user_message": "Error checking availability",
-        "log_message": "Error checking availability",
-    },
-    raise_on_error=False,
+    default_return_value=DEFAULT_AVAILABILITY_STATUS, raise_on_error=False
 )
 def check_availability(
     owner_id: int,
@@ -60,8 +62,8 @@ def check_availability(
         "requests_left": None,
         "credit_balance_usd": 0,
         "period_end_date": None,
-        "user_message": "",  # For user-facing comments
-        "log_message": "",  # For internal logging/slack
+        "user_message": "",
+        "log_message": "",
     }
 
     if billing_type == "exception":

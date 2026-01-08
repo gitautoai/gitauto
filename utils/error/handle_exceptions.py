@@ -6,31 +6,47 @@ from functools import wraps
 import json
 import logging
 import time
-from typing import Any, Callable, ParamSpec, TypeVar, cast, overload
+from typing import Any, Callable, Literal, ParamSpec, TypeVar, cast, overload
 
 # Third party imports
 import requests
 import sentry_sdk
 
-P = ParamSpec("P")
-R = TypeVar("R")
-D = TypeVar("D")
+P = ParamSpec("P")  # Function parameters (args, kwargs)
+R = TypeVar("R")  # Return type of decorated function
+D = TypeVar("D")  # Default return value type
+
+
+@overload
+def handle_exceptions(
+    default_return_value: Any = None,
+    raise_on_error: Literal[True] = ...,
+    api_type: str = "github",
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
+
+
+@overload
+def handle_exceptions(
+    default_return_value: Callable[..., R],
+    raise_on_error: Literal[False] = ...,
+    api_type: str = "github",
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
 @overload
 def handle_exceptions(
     default_return_value: None = None,
-    raise_on_error: bool = False,
+    raise_on_error: Literal[False] = ...,
     api_type: str = "github",
 ) -> Callable[[Callable[P, R]], Callable[P, R | None]]: ...
 
 
 @overload
 def handle_exceptions(
-    default_return_value: D,
-    raise_on_error: bool = False,
+    default_return_value: object,
+    raise_on_error: Literal[False] = ...,
     api_type: str = "github",
-) -> Callable[[Callable[P, R]], Callable[P, R | D]]: ...
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
 def handle_exceptions(

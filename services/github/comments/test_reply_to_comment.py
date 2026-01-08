@@ -3,6 +3,7 @@ import pytest
 import requests
 from requests import HTTPError
 
+# pylint: disable=unused-argument
 from config import TIMEOUT
 from services.github.comments.reply_to_comment import reply_to_comment
 
@@ -235,7 +236,10 @@ def test_reply_to_comment_url_construction(
         with patch("services.github.comments.reply_to_comment.post") as mock_post:
             mock_post.return_value = mock_post_response
 
-            reply_to_comment(base_args, "Test body")
+            # Intentionally passing merged dict to test runtime behavior
+            reply_to_comment(
+                base_args, "Test body"  # pyright: ignore[reportArgumentType]
+            )
 
             mock_post.assert_called_once()
             call_args = mock_post.call_args
@@ -254,7 +258,10 @@ def test_reply_to_comment_different_tokens(
         with patch("services.github.comments.reply_to_comment.post") as mock_post:
             mock_post.return_value = mock_post_response
 
-            reply_to_comment(base_args, "Test body")
+            # Intentionally passing merged dict to test runtime behavior
+            reply_to_comment(
+                base_args, "Test body"  # pyright: ignore[reportArgumentType]
+            )
 
             mock_create_headers.assert_called_with(token=token)
 
@@ -296,7 +303,10 @@ def test_reply_to_comment_various_ids(
     with patch("services.github.comments.reply_to_comment.post") as mock_post:
         mock_post.return_value = mock_post_response
 
-        result = reply_to_comment(base_args, "Test body")
+        # Intentionally passing merged dict to test runtime behavior
+        result = reply_to_comment(
+            base_args, "Test body"  # pyright: ignore[reportArgumentType]
+        )
 
         assert (
             result
@@ -313,7 +323,10 @@ def test_reply_to_comment_with_zero_values_returns_none(
     base_args = {**mock_base_args, "pull_number": 0, "review_id": 0}
 
     # Should return None due to handle_exceptions decorator when validation fails
-    result = reply_to_comment(base_args, "Test body")
+    # Intentionally passing merged dict to test runtime behavior
+    result = reply_to_comment(
+        base_args, "Test body"  # pyright: ignore[reportArgumentType]
+    )
     assert result is None
 
 
@@ -351,11 +364,12 @@ def test_reply_to_comment_missing_required_fields():
         "owner": "test-owner",
         "repo": "test-repo",
         "token": "test-token",
-        # Missing pull_number and review_id
     }
 
-    # The function should handle missing fields gracefully due to the decorator
-    result = reply_to_comment(incomplete_base_args, "Test body")
+    # Intentionally passing incomplete BaseArgs to test runtime error handling
+    result = reply_to_comment(
+        incomplete_base_args, "Test body"  # pyright: ignore[reportArgumentType]
+    )
     assert result is None
 
 
@@ -369,13 +383,17 @@ def test_reply_to_comment_with_none_values():
         "review_id": None,
     }
 
-    # The function should handle None values gracefully due to the decorator
-    result = reply_to_comment(base_args_with_none, "Test body")
+    # Intentionally passing None values to test runtime error handling
+    result = reply_to_comment(
+        base_args_with_none, "Test body"  # pyright: ignore[reportArgumentType]
+    )
     assert result is None
 
 
 def test_reply_to_comment_with_none_body(mock_base_args, mock_create_headers):
     """Test that function handles None body gracefully."""
-    # The function should handle None body gracefully due to the decorator
-    result = reply_to_comment(mock_base_args, None)
+    # Intentionally passing None body to test runtime error handling
+    result = reply_to_comment(
+        mock_base_args, None  # pyright: ignore[reportArgumentType]
+    )
     assert result is None

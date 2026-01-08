@@ -39,7 +39,7 @@ class TestSearchUrls:
             term="test query",
             num_results=NUM_RESULTS_DEFAULT,
             lang="en",
-            safe=None,
+            safe="off",
             advanced=True,
         )
 
@@ -73,7 +73,7 @@ class TestSearchUrls:
 
         assert len(result) == 1
         mock_search.assert_called_once_with(
-            term="test query", num_results=5, lang="fr", safe=None, advanced=True
+            term="test query", num_results=5, lang="fr", safe="off", advanced=True
         )
 
     @patch("services.google.search.search")
