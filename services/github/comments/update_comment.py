@@ -1,8 +1,7 @@
-# Standard imports
 import logging
+
 from requests import patch
 
-# Local imports
 from config import TIMEOUT
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers

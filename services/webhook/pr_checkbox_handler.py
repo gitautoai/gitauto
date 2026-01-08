@@ -50,7 +50,7 @@ from utils.time.get_timeout_message import get_timeout_message
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def handle_pr_checkbox_trigger(
+def handle_pr_checkbox_trigger(
     payload: IssueCommentWebhookPayload,
     lambda_info: dict[str, str | None] | None = None,
 ):
@@ -115,7 +115,9 @@ async def handle_pr_checkbox_trigger(
     pr_data = get_pull_request(
         owner=owner_name, repo=repo_name, pull_number=issue_number, token=token
     )
-    head_branch = pr_data["head"]["ref"]
+    head_branch = pr_data["head"]["ref"] if pr_data else ""
+    if not head_branch:
+        raise ValueError(f"Could not get head branch for PR #{issue_number}")
 
     base_args: BaseArgs = {
         "input_from": "github",
@@ -127,8 +129,8 @@ async def handle_pr_checkbox_trigger(
         "clone_url": repository.get("clone_url", ""),
         "is_fork": repository.get("fork", False),
         "issue_number": issue_number,
-        "issue_title": pr_data.get("title", ""),
-        "issue_body": pr_data.get("body", ""),
+        "issue_title": pr_data.get("title", "") if pr_data else "",
+        "issue_body": pr_data.get("body", "") if pr_data else "",
         "issue_comments": [],
         "latest_commit_sha": "",
         "issuer_name": sender_name,
@@ -321,14 +323,15 @@ async def handle_pr_checkbox_trigger(
 
     # Update usage record
     end_time = time.time()
-    update_usage(
-        usage_id=usage_id,
-        token_input=total_token_input,
-        token_output=total_token_output,
-        total_seconds=int(end_time - current_time),
-        pr_number=issue_number,
-        is_completed=True,
-    )
+    if usage_id:
+        update_usage(
+            usage_id=usage_id,
+            token_input=total_token_input,
+            token_output=total_token_output,
+            total_seconds=int(end_time - current_time),
+            pr_number=issue_number,
+            is_completed=True,
+        )
 
     # Insert credit usage if user is using credits (not paid subscription)
     if billing_type == "credit":

@@ -48,9 +48,9 @@ def handler(event, context):
         )
 
         result = schedule_handler(event=event)
-        if result["status"] == "success":
+        if result and result["status"] == "success":
             slack_notify("Completed", thread_ts)
-        else:
+        elif result:
             slack_notify(
                 f"@channel Failed: {result.get('message', 'Unknown error')}",
                 thread_ts,

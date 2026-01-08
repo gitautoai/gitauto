@@ -174,6 +174,11 @@ def handle_check_suite(
     pull_number = pull_request["number"]
     pull_url = pull_request["url"]
 
+    full_pr = get_pull_request(
+        owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+    )
+    pull_title = full_pr["title"] if full_pr else f"Check run failure: {check_run_name}"
+
     # Get repository settings - check if trigger_on_test_failure is enabled
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     if not repo_settings or not repo_settings.get("trigger_on_test_failure"):
@@ -194,7 +199,7 @@ def handle_check_suite(
         "clone_url": repo["clone_url"],
         "is_fork": is_fork,
         "issue_number": pull_number,
-        "issue_title": f"Check run failure: {check_run_name}",
+        "issue_title": pull_title,
         "issue_body": f"Automated fix for failed check run: {check_run_name}",
         "issue_comments": [],
         "latest_commit_sha": check_run["head_sha"],
@@ -305,11 +310,7 @@ def handle_check_suite(
         owner=owner_name, repo=repo_name, branch=head_branch, token=token
     )
 
-    # Get title and changed files in the PR
-    pr_data = get_pull_request(
-        owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
-    )
-    pull_title = pr_data["title"]
+    # Get changed files in the PR
     pull_file_url = f"{pull_url}/files"
     changed_files = get_pull_request_files(url=pull_file_url, token=token)
 
@@ -463,17 +464,18 @@ def handle_check_suite(
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
         # Update usage record for skipped duplicate
-        update_usage(
-            usage_id=usage_id,
-            token_input=0,
-            token_output=0,
-            total_seconds=int(time.time() - current_time),
-            is_completed=True,
-            pr_number=pull_number,
-            retry_workflow_id_hash_pairs=existing_pairs,
-            original_error_log=error_log,
-            minimized_error_log=minimized_log,
-        )
+        if usage_id:
+            update_usage(
+                usage_id=usage_id,
+                token_input=0,
+                token_output=0,
+                total_seconds=int(time.time() - current_time),
+                is_completed=True,
+                pr_number=pull_number,
+                retry_workflow_id_hash_pairs=existing_pairs,
+                original_error_log=error_log,
+                minimized_error_log=minimized_log,
+            )
 
         # Early return notification
         msg = f"Skipped - already attempted fix for `{check_run_name}` in `{owner_name}/{repo_name}`"
@@ -551,11 +553,15 @@ def handle_check_suite(
             break
 
         # Safety check: Stop if older active request exists (race condition prevention)
-        older_active_request = check_older_active_test_failure_request(
-            owner_id=owner_id,
-            repo_id=repo_id,
-            pr_number=pull_number,
-            current_usage_id=usage_id,
+        older_active_request = (
+            check_older_active_test_failure_request(
+                owner_id=owner_id,
+                repo_id=repo_id,
+                pr_number=pull_number,
+                current_usage_id=usage_id,
+            )
+            if usage_id
+            else None
         )
         if older_active_request:
             body = f"Process stopped: Older active request found for PR #{pull_number}. Avoiding race condition."
@@ -647,17 +653,18 @@ def handle_check_suite(
 
     # Update usage record
     end_time = time.time()
-    update_usage(
-        usage_id=usage_id,
-        token_input=total_token_input,
-        token_output=total_token_output,
-        total_seconds=int(end_time - current_time),
-        pr_number=pull_number,
-        is_completed=True,
-        retry_workflow_id_hash_pairs=existing_pairs,
-        original_error_log=error_log,
-        minimized_error_log=minimized_log,
-    )
+    if usage_id:
+        update_usage(
+            usage_id=usage_id,
+            token_input=total_token_input,
+            token_output=total_token_output,
+            total_seconds=int(end_time - current_time),
+            pr_number=pull_number,
+            is_completed=True,
+            retry_workflow_id_hash_pairs=existing_pairs,
+            original_error_log=error_log,
+            minimized_error_log=minimized_log,
+        )
 
     # End notification
     slack_notify("Completed", thread_ts)

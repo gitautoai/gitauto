@@ -39,12 +39,13 @@ def handle_installation_created(payload: GitHubInstallationPayload):
             user_id=user_id,
             user_name=user_name,
         )
-        insert_owner(
-            owner_id=owner_id,
-            owner_type=owner_type,
-            owner_name=owner_name,
-            stripe_customer_id=customer_id,
-        )
+        if customer_id:
+            insert_owner(
+                owner_id=owner_id,
+                owner_type=owner_type,
+                owner_name=owner_name,
+                stripe_customer_id=customer_id,
+            )
 
     if not check_grant_exists(owner_id=owner_id):
         insert_credit(owner_id=owner_id, transaction_type="grant")

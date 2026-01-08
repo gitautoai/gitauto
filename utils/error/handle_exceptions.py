@@ -1,25 +1,59 @@
 # pylint: disable=broad-exception-caught
+# flake8: noqa: E704
 
 # Standard imports
 from functools import wraps
 import json
 import logging
 import time
-from typing import Any, Callable, ParamSpec, TypeVar, cast
+from typing import Any, Callable, Literal, ParamSpec, TypeVar, cast, overload
 
 # Third party imports
 import requests
 import sentry_sdk
 
-P = ParamSpec("P")
-R = TypeVar("R")
+P = ParamSpec("P")  # Function parameters (args, kwargs)
+R = TypeVar("R")  # Return type of decorated function
+D = TypeVar("D")  # Default return value type
+
+
+@overload
+def handle_exceptions(
+    default_return_value: Any = None,
+    raise_on_error: Literal[True] = ...,
+    api_type: str = "github",
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
+
+
+@overload
+def handle_exceptions(
+    default_return_value: Callable[..., R],
+    raise_on_error: Literal[False] = ...,
+    api_type: str = "github",
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
+
+
+@overload
+def handle_exceptions(
+    default_return_value: None = None,
+    raise_on_error: Literal[False] = ...,
+    api_type: str = "github",
+) -> Callable[[Callable[P, R]], Callable[P, R | None]]: ...
+
+
+@overload
+def handle_exceptions(
+    default_return_value: object,
+    raise_on_error: Literal[False] = ...,
+    api_type: str = "github",
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
 def handle_exceptions(
     default_return_value: Any = None,
     raise_on_error: bool = False,
-    api_type: str = "github",  # "github" or "google"
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    api_type: str = "github",
+) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
     """https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#checking-the-status-of-your-rate-limit"""
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:

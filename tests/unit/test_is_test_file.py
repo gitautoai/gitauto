@@ -66,10 +66,10 @@ def test_is_test_file_with_various_filenames(filename, expected):
 
 
 def test_is_test_file_non_string_input():
-    # Non-string inputs should safely return False
-    assert is_test_file(None) is False
-    assert is_test_file(123) is False
-    assert is_test_file([]) is False
+    # Intentionally passing invalid types to test runtime error handling
+    assert is_test_file(None) is False  # pyright: ignore[reportArgumentType]
+    assert is_test_file(123) is False  # pyright: ignore[reportArgumentType]
+    assert is_test_file([]) is False  # pyright: ignore[reportArgumentType]
 
 
 def test_is_test_file_case_insensitivity():

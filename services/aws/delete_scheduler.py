@@ -15,8 +15,9 @@ def delete_scheduler(schedule_name: str):
         scheduler_client.delete_schedule(Name=schedule_name)
         logging.info("Deleted EventBridge Scheduler: %s", schedule_name)
         return True
+
     except ClientError as err:
-        if err.response["Error"]["Code"] == "ResourceNotFoundException":
+        if err.response.get("Error", {}).get("Code") == "ResourceNotFoundException":
             logging.info("EventBridge Scheduler already deleted: %s", schedule_name)
             return True
         raise

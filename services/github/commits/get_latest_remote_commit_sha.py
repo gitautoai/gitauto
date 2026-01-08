@@ -5,16 +5,13 @@ import logging
 import requests
 
 # Local imports
-from config import (
-    GITHUB_API_URL,
-    TIMEOUT,
-)
+from config import GITHUB_API_URL, TIMEOUT
 
 # Local imports (GitHub)
 from services.github.comments.update_comment import update_comment
 from services.github.repositories.initialize_repo import initialize_repo
-from services.github.utils.create_headers import create_headers
 from services.github.types.github_types import BaseArgs
+from services.github.utils.create_headers import create_headers
 
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
@@ -24,11 +21,9 @@ from utils.error.handle_exceptions import handle_exceptions
 def get_latest_remote_commit_sha(clone_url: str, base_args: BaseArgs) -> str:
     """SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
     https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference"""
-    owner, repo, branch = (
-        base_args["owner"],
-        base_args["repo"],
-        base_args["base_branch"],
-    )
+    owner = base_args["owner"]
+    repo = base_args["repo"]
+    branch = base_args["base_branch"]
     token = base_args["token"]
     try:
         response: requests.Response = requests.get(
@@ -54,6 +49,7 @@ def get_latest_remote_commit_sha(clone_url: str, base_args: BaseArgs) -> str:
     except Exception as e:
         msg = f"{get_latest_remote_commit_sha.__name__} encountered an error: {e}"
         update_comment(body=msg, base_args=base_args)
+
         # Raise an error because we can't continue without the latest commit SHA
         raise RuntimeError(
             f"Error: Could not get the latest commit SHA in {get_latest_remote_commit_sha.__name__}"

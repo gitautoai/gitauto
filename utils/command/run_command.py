@@ -1,7 +1,9 @@
 import subprocess
 
 
-def run_command(command: str, cwd: str, use_shell: bool = True, env: dict = None):
+def run_command(
+    command: str, cwd: str, use_shell: bool = True, env: dict | None = None
+):
     try:
         if not command:
             raise ValueError("Command cannot be empty")

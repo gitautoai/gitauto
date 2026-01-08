@@ -31,6 +31,9 @@ def get_paid_subscription(customer_id: str):
 
     # If multiple paid subscriptions exist, return only the highest priced one
     if len(paid_subscriptions) > 1:
-        return max(paid_subscriptions, key=lambda x: x.plan.amount)
+        return max(
+            paid_subscriptions,
+            key=lambda x: x["items"]["data"][0]["price"]["unit_amount"] or 0,
+        )
 
     return paid_subscriptions[0]

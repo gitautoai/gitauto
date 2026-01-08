@@ -16,7 +16,7 @@ def create_file_with_content(
     file_path: str,
     content: str,
     base_args: BaseArgs,
-    commit_message: str = None,
+    commit_message: str | None = None,
     **_kwargs,
 ):
     """Create a new file in GitHub repository with the given content."""

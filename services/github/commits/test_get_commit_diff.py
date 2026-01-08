@@ -118,6 +118,7 @@ def test_get_commit_diff_empty_files(test_owner, test_repo, test_token):
 
         result = get_commit_diff(test_owner, test_repo, "abc123def456", test_token)
 
+        assert result is not None
         assert result["commit_id"] == "abc123def456"
         assert result["message"] == "Empty commit"
         assert len(result["files"]) == 0
@@ -153,6 +154,7 @@ def test_get_commit_diff_missing_fields(test_owner, test_repo, test_token):
 
         result = get_commit_diff(test_owner, test_repo, "abc123def456", test_token)
 
+        assert result is not None
         assert result["commit_id"] == "abc123def456"
         assert result["message"] == "Commit with missing fields"
         assert result["author"] == {}  # Default empty dict for missing author
