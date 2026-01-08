@@ -958,6 +958,6 @@ def test_auto_merge_blocked_skip_ci(
             repo="gitauto",
             token="test-token",
             issue_number=2004,
-            body=f"{BLOCKED}: last commit has [skip ci], triggering tests instead...",
+            body="Noticed I haven't completed (last commit has [skip ci]), triggering tests...",
         )
         mock_create_empty_commit.assert_called_once()
