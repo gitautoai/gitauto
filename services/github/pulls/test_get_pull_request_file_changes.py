@@ -381,6 +381,7 @@ def test_get_pull_request_file_changes_mixed_file_types(mock_requests):
         "https://api.github.com/repos/test/test/pulls/1/files", "test_token"
     )
 
+    assert result is not None
     assert len(result) == 4
     assert all(
         "filename" in change and "status" in change and "patch" in change
@@ -429,6 +430,7 @@ def test_get_pull_request_file_changes_special_characters_in_filename(mock_reque
         "https://api.github.com/repos/test/test/pulls/1/files", "test_token"
     )
 
+    assert result is not None
     assert len(result) == 3
     filenames = [change["filename"] for change in result]
     assert "file with spaces.py" in filenames
@@ -462,6 +464,7 @@ def test_get_pull_request_file_changes_empty_patch(mock_requests):
     )
 
     # Both files should be included, even with empty patch
+    assert result is not None
     assert len(result) == 2
     assert result[0]["filename"] == "file1.py"
     assert result[0]["patch"] == ""

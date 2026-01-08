@@ -1,13 +1,14 @@
+# pylint: disable=unused-argument
 from unittest.mock import patch
 from datetime import datetime
 from typing import cast
 import pytest
 from schemas.supabase.types import Coverages
-from services.github.pulls.get_pull_request_files import FileChange
+from services.github.pulls.get_pull_request_files import FileChange, Status
 from services.webhook.utils.create_file_checklist import create_file_checklist
 
 
-def create_file_change(filename: str, status: str = "modified") -> FileChange:
+def create_file_change(filename: str, status: Status = "modified") -> FileChange:
     """Helper function to create a FileChange object."""
     return {"filename": filename, "status": status}
 
@@ -383,9 +384,10 @@ class TestCreateFileChecklist:
         file_changes = []
         coverage_data = {}
 
+        statuses: list[Status] = ["added", "modified", "removed"]
         for i in range(num_files):
             filename = f"src/file_{i:03d}.py"
-            status = ["added", "modified", "removed"][i % 3]
+            status = statuses[i % 3]
             file_changes.append(create_file_change(filename, status))
 
             # Add coverage data for every other file

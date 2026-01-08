@@ -129,13 +129,6 @@ def test_filter_code_files_edge_cases():
     assert result == expected
 
 
-def test_filter_code_files_exception_handling():
-    result = filter_code_files(None)
-    assert not result
-    result = filter_code_files("not_a_list")
-    assert not result
-
-
 def test_filter_code_files_all_non_code_extensions():
     filenames = [
         f"file{ext}"

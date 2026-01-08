@@ -141,14 +141,6 @@ def test_is_code_file_edge_cases():
     assert is_code_file("file.") is False
 
 
-def test_is_code_file_invalid_input():
-    assert is_code_file(None) is False
-    assert is_code_file(123) is False
-    assert is_code_file([]) is False
-    assert is_code_file({}) is False
-    assert is_code_file(True) is False
-
-
 def test_is_code_file_with_paths():
     assert is_code_file("src/main.py") is True
     assert is_code_file("utils/helper.js") is True

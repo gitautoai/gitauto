@@ -135,7 +135,7 @@ def test_handles_exception_gracefully():
 
 def test_handles_runtime_exception():
     # Test by making dict access fail
-    class BadDict:
+    class BadDict(dict):
         def get(self, key, default=None):
             if key == "role":
                 return "user"
@@ -143,7 +143,7 @@ def test_handles_runtime_exception():
                 raise KeyError("Simulated KeyError")
             return default
 
-    messages = [BadDict()]
+    messages: list[dict] = [BadDict()]
 
     result = remove_get_remote_file_content_before_replace_remote_file_content(messages)
     # Should return original messages unchanged when exception occurs

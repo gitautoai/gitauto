@@ -182,14 +182,14 @@ def test_add_reviewers_missing_pr_number(base_args_no_pr_number):
     assert result is None  # handle_exceptions decorator returns None on error
 
 
-def test_add_reviewers_pr_number_none(test_owner, test_repo):
-    base_args = {
-        "owner": test_owner,
-        "repo": test_repo,
-        "pr_number": None,
-        "token": "test-token-mock",
-        "reviewers": ["reviewer1"],
-    }
+def test_add_reviewers_pr_number_none(test_owner, test_repo, create_test_base_args):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=None,
+        token="test-token-mock",
+        reviewers=["reviewer1"],
+    )
 
     result = add_reviewers(base_args)
 
@@ -281,14 +281,15 @@ def test_add_reviewers_single_reviewer(
     test_owner,
     test_repo,
     mock_success_response,
+    create_test_base_args,
 ):
-    base_args = {
-        "owner": test_owner,
-        "repo": test_repo,
-        "pr_number": 456,
-        "token": "test-token-mock",
-        "reviewers": ["single_reviewer"],
-    }
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=456,
+        token="test-token-mock",
+        reviewers=["single_reviewer"],
+    )
 
     mock_check_collaborator.return_value = True
     mock_post.return_value = mock_success_response
@@ -334,17 +335,17 @@ def test_add_reviewers_422_unprocessable_entity(
     mock_post.assert_called_once()
 
 
-def test_add_reviewers_missing_required_fields():
-    # Test with missing owner
-    incomplete_args = {
-        "repo": "test-repo",
-        "pr_number": 123,
-        "token": "test-token",
-        "reviewers": ["reviewer1"],
-    }
+def test_add_reviewers_missing_required_fields(create_test_base_args):
+    base_args = create_test_base_args(
+        repo="test-repo",
+        pr_number=123,
+        token="test-token",
+        reviewers=["reviewer1"],
+    )
+    del base_args["owner"]
 
-    result = add_reviewers(incomplete_args)
-    assert result is None  # handle_exceptions decorator returns None on error
+    result = add_reviewers(base_args)
+    assert result is None
 
 
 @patch("services.github.pulls.add_reviewers.create_headers")
@@ -429,15 +430,15 @@ def test_add_reviewers_url_construction(
     mock_post,
     mock_create_headers,
     mock_success_response,
+    create_test_base_args,
 ):
-    # Test with different owner/repo/pr_number combinations
-    base_args = {
-        "owner": "different-owner",
-        "repo": "different-repo",
-        "pr_number": 999,
-        "token": "different-token",
-        "reviewers": ["test-reviewer"],
-    }
+    base_args = create_test_base_args(
+        owner="different-owner",
+        repo="different-repo",
+        pr_number=999,
+        token="different-token",
+        reviewers=["test-reviewer"],
+    )
 
     mock_check_collaborator.return_value = True
     mock_post.return_value = mock_success_response

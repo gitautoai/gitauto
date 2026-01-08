@@ -418,6 +418,7 @@ def test_large_file_content(mock_create_headers, mock_requests_get):
         "test-owner", "test-repo", "large_file.py", "main", "test-token"
     )
 
+    assert result is not None
     assert result == large_content
     assert (
         len(result.split("\n")) == 1002

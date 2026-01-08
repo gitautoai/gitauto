@@ -1,7 +1,10 @@
 """Integration tests for chat_with_functions.py with GPT-5"""
 
 import os
+
+from openai.types.chat import ChatCompletionToolParam
 import pytest
+
 from services.openai.chat_with_functions import chat_with_openai
 
 
@@ -28,7 +31,7 @@ def test_chat_with_openai_gpt5_with_tools():
     """Test chat_with_openai with tools using GPT-5"""
     messages = [{"role": "user", "content": "What's 2+2? Use the calculator."}]
     system_content = "Use tools when appropriate"
-    tools = [
+    tools: list[ChatCompletionToolParam] = [
         {
             "type": "function",
             "function": {

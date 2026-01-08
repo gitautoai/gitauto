@@ -27,6 +27,7 @@ def test_empty_token(monkeypatch):
     token = ""
     client = get_graphql_client(token)
     transport = client.transport
-    if hasattr(transport, "headers"):
-        assert "Authorization" in transport.headers
-        assert transport.headers["Authorization"] == "Bearer "
+    assert isinstance(transport, RequestsHTTPTransport)
+    assert transport.headers is not None
+    assert "Authorization" in transport.headers
+    assert transport.headers["Authorization"] == "Bearer "

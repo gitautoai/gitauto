@@ -298,6 +298,7 @@ class TestGetInstallation:
         result = get_installation(owner_id=TEST_OWNER_ID)
 
         # Assert
+        assert result is not None
         assert result == complete_installation
         assert all(key in result for key in complete_installation.keys())
 

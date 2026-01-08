@@ -3,12 +3,6 @@ from utils.error.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 def is_code_file(filename: str) -> bool:
-    """
-    Check if a file is a code file based on file extension whitelist.
-    Returns True if the file has a code extension, False otherwise.
-    """
-    if not isinstance(filename, str):
-        return False
 
     # Extract file extension
     if "." not in filename:

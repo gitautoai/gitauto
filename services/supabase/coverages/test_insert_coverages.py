@@ -1,6 +1,8 @@
 from unittest.mock import patch, MagicMock
 
 import pytest
+
+from schemas.supabase.types import CoveragesInsert
 from services.supabase.coverages.insert_coverages import insert_coverages
 
 
@@ -93,7 +95,7 @@ def test_insert_coverages_returns_none_data(mock_supabase, sample_coverage_recor
 
 def test_insert_coverages_with_minimal_required_fields(mock_supabase):
     """Test insertion with only required fields."""
-    minimal_record = {
+    minimal_record: CoveragesInsert = {
         "created_by": "test_user",
         "full_path": "minimal/path.py",
         "level": "file",
@@ -116,7 +118,7 @@ def test_insert_coverages_with_minimal_required_fields(mock_supabase):
 
 def test_insert_coverages_with_all_optional_fields(mock_supabase):
     """Test insertion with all optional fields populated."""
-    comprehensive_record = {
+    comprehensive_record: CoveragesInsert = {
         "created_by": "test_user",
         "full_path": "comprehensive/path.py",
         "level": "function",
@@ -200,7 +202,7 @@ def test_insert_coverages_handles_insert_exception(
 
 def test_insert_coverages_with_zero_coverage_values(mock_supabase):
     """Test insertion with zero coverage values."""
-    zero_coverage_record = {
+    zero_coverage_record: CoveragesInsert = {
         "created_by": "test_user",
         "full_path": "zero/coverage.py",
         "level": "file",
@@ -229,7 +231,7 @@ def test_insert_coverages_with_zero_coverage_values(mock_supabase):
 
 def test_insert_coverages_with_perfect_coverage_values(mock_supabase):
     """Test insertion with perfect coverage values."""
-    perfect_coverage_record = {
+    perfect_coverage_record: CoveragesInsert = {
         "created_by": "test_user",
         "full_path": "perfect/coverage.py",
         "level": "file",
@@ -258,7 +260,7 @@ def test_insert_coverages_with_perfect_coverage_values(mock_supabase):
 
 def test_insert_coverages_with_none_values(mock_supabase):
     """Test insertion with None values for optional fields."""
-    record_with_nones = {
+    record_with_nones: CoveragesInsert = {
         "created_by": "test_user",
         "full_path": "test/with_nones.py",
         "level": "file",
@@ -291,6 +293,7 @@ def test_insert_coverages_with_none_values(mock_supabase):
 
 def test_insert_coverages_with_string_coverage_values(mock_supabase):
     """Test insertion with string coverage values that could be converted."""
+    # Tests defensive handling of string values passed instead of floats
     string_coverage_record = {
         "created_by": "test_user",
         "full_path": "test/string_coverage.py",
@@ -298,17 +301,17 @@ def test_insert_coverages_with_string_coverage_values(mock_supabase):
         "owner_id": 700,
         "repo_id": 800,
         "updated_by": "test_user",
-        "line_coverage": "85.5",
-        "branch_coverage": "75.0",
-        "function_coverage": "90.0",
-        "statement_coverage": "88.0",
+        "line_coverage": "85.5",  # type: ignore[typeddict-item]
+        "branch_coverage": "75.0",  # type: ignore[typeddict-item]
+        "function_coverage": "90.0",  # type: ignore[typeddict-item]
+        "statement_coverage": "88.0",  # type: ignore[typeddict-item]
     }
     expected_data = [{"id": 7, "full_path": "test/string_coverage.py"}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = (
         expected_data
     )
 
-    result = insert_coverages(string_coverage_record)
+    result = insert_coverages(string_coverage_record)  # type: ignore[arg-type]
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
@@ -320,7 +323,7 @@ def test_insert_coverages_with_string_coverage_values(mock_supabase):
 
 def test_insert_coverages_with_large_file_size(mock_supabase):
     """Test insertion with large file size."""
-    large_file_record = {
+    large_file_record: CoveragesInsert = {
         "created_by": "test_user",
         "full_path": "test/large_file.py",
         "level": "file",
@@ -348,7 +351,7 @@ def test_insert_coverages_with_large_file_size(mock_supabase):
 
 def test_insert_coverages_with_boolean_exclusion_flag(mock_supabase):
     """Test insertion with boolean exclusion flag."""
-    excluded_record = {
+    excluded_record: CoveragesInsert = {
         "created_by": "test_user",
         "full_path": "test/excluded.py",
         "level": "file",
@@ -376,7 +379,7 @@ def test_insert_coverages_with_boolean_exclusion_flag(mock_supabase):
 
 def test_insert_coverages_with_special_characters_in_path(mock_supabase):
     """Test insertion with special characters in file path."""
-    special_path_record = {
+    special_path_record: CoveragesInsert = {
         "created_by": "test_user",
         "full_path": "test/special-chars_file@#$.py",
         "level": "file",
@@ -403,7 +406,7 @@ def test_insert_coverages_with_special_characters_in_path(mock_supabase):
 
 def test_insert_coverages_with_empty_strings(mock_supabase):
     """Test insertion with empty strings for optional fields."""
-    empty_strings_record = {
+    empty_strings_record: CoveragesInsert = {
         "created_by": "test_user",
         "full_path": "test/empty_strings.py",
         "level": "file",
@@ -437,7 +440,7 @@ def test_insert_coverages_with_empty_strings(mock_supabase):
 
 def test_insert_coverages_with_different_levels(mock_supabase):
     """Test insertion with different level values."""
-    directory_record = {
+    directory_record: CoveragesInsert = {
         "created_by": "test_user",
         "full_path": "test/directory",
         "level": "directory",
@@ -464,7 +467,7 @@ def test_insert_coverages_with_different_levels(mock_supabase):
 
 def test_insert_coverages_with_repository_level(mock_supabase):
     """Test insertion with repository level."""
-    repository_record = {
+    repository_record: CoveragesInsert = {
         "created_by": "test_user",
         "full_path": "All",
         "level": "repository",

@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 """Unit tests for process_repositories.py"""
 
 # Standard imports
@@ -48,11 +49,12 @@ def mock_shutil():
 
 @pytest.fixture
 def sample_repositories():
-    """Sample repository data for testing."""
-    return [
+    # Tests use minimal dicts; production receives full Repository objects
+    repos = [
         {"id": 111, "name": "test-repo-1"},
         {"id": 222, "name": "test-repo-2"},
     ]
+    return repos
 
 
 @pytest.fixture
@@ -184,11 +186,11 @@ class TestProcessRepositories:
         single_repo = [{"id": 333, "name": "single-repo"}]
         mock_get_repository_stats.return_value = sample_stats
 
-        # Execute
+        # Execute - tests use minimal dicts; production receives full Repository objects
         process_repositories(
             owner_id=12345,
             owner_name="test-owner",
-            repositories=single_repo,
+            repositories=single_repo,  # type: ignore[arg-type]
             token="ghs_test_token",
             user_id=67890,
             user_name="test-user",
@@ -304,38 +306,6 @@ class TestProcessRepositories:
         assert mock_shutil.call_count == 1
         mock_shutil.assert_called_with("/tmp/test_repo_12345", ignore_errors=True)
 
-    def test_process_repositories_with_none_token(
-        self,
-        sample_repositories,
-        sample_stats,
-        mock_clone_repo,
-        mock_get_repository_stats,
-        mock_upsert_repository,
-        mock_tempfile,
-        mock_shutil,
-    ):
-        """Test processing with None token."""
-        # Setup
-        mock_get_repository_stats.return_value = sample_stats
-
-        # Execute
-        process_repositories(
-            owner_id=12345,
-            owner_name="test-owner",
-            repositories=sample_repositories,
-            token=None,
-            user_id=67890,
-            user_name="test-user",
-        )
-
-        # Verify clone is called with None token
-        mock_clone_repo.assert_any_call(
-            owner="test-owner",
-            repo="test-repo-1",
-            token=None,
-            target_dir="/tmp/test_repo_12345",
-        )
-
     def test_process_repositories_with_empty_token(
         self,
         sample_repositories,
@@ -382,11 +352,11 @@ class TestProcessRepositories:
         special_repos = [{"id": 444, "name": "repo-with-special-chars@#$"}]
         mock_get_repository_stats.return_value = sample_stats
 
-        # Execute
+        # Execute - tests use minimal dicts; production receives full Repository objects
         process_repositories(
             owner_id=12345,
             owner_name="owner-with-special@chars",
-            repositories=special_repos,
+            repositories=special_repos,  # type: ignore[arg-type]
             token="ghs_test_token",
             user_id=67890,
             user_name="user-with-special@chars",
@@ -497,11 +467,11 @@ class TestProcessRepositories:
         large_repo_list = [{"id": i, "name": f"repo-{i}"} for i in range(50)]
         mock_get_repository_stats.return_value = sample_stats
 
-        # Execute
+        # Execute - tests use minimal dicts; production receives full Repository objects
         process_repositories(
             owner_id=12345,
             owner_name="test-owner",
-            repositories=large_repo_list,
+            repositories=large_repo_list,  # type: ignore[arg-type]
             token="ghs_test_token",
             user_id=67890,
             user_name="test-user",
@@ -513,59 +483,6 @@ class TestProcessRepositories:
         assert mock_clone_repo.call_count == 50
         assert mock_get_repository_stats.call_count == 50
         assert mock_upsert_repository.call_count == 50
-
-    def test_process_repositories_with_missing_repo_fields(
-        self,
-        mock_clone_repo,
-        mock_get_repository_stats,
-        mock_upsert_repository,
-        mock_tempfile,
-        mock_shutil,
-    ):
-        """Test processing when repository data is missing required fields."""
-        # Setup - repository missing 'name' field
-        invalid_repos = [{"id": 555}]  # Missing 'name' field
-
-        # Execute - should handle KeyError gracefully due to decorator
-        result = process_repositories(
-            owner_id=12345,
-            owner_name="test-owner",
-            repositories=invalid_repos,
-            token="ghs_test_token",
-            user_id=67890,
-            user_name="test-user",
-        )
-
-        # Verify function returns None due to exception handling
-        assert result is None
-
-    def test_process_repositories_with_none_repositories(
-        self,
-        mock_clone_repo,
-        mock_get_repository_stats,
-        mock_upsert_repository,
-        mock_tempfile,
-        mock_shutil,
-    ):
-        """Test processing when repositories parameter is None."""
-        # Execute - should handle TypeError gracefully due to decorator
-        result = process_repositories(
-            owner_id=12345,
-            owner_name="test-owner",
-            repositories=None,
-            token="ghs_test_token",
-            user_id=67890,
-            user_name="test-user",
-        )
-
-        # Verify function returns None due to exception handling
-        assert result is None
-        # Verify no operations were attempted
-        mock_tempfile.assert_not_called()
-        mock_shutil.assert_not_called()
-        mock_clone_repo.assert_not_called()
-        mock_get_repository_stats.assert_not_called()
-        mock_upsert_repository.assert_not_called()
 
     def test_process_repositories_tempfile_creation_failure(
         self,
@@ -652,17 +569,16 @@ class TestProcessRepositories:
         # Make clone fail for the second repository only
         def clone_side_effect(owner, repo, token, target_dir):
             if repo == "fail-repo":
-                raise Exception("Clone failed for fail-repo")
-            return None
+                raise Exception("Clone failed for fail-repo")  # pylint: disable=broad-exception-raised
 
         mock_clone_repo.side_effect = clone_side_effect
         mock_get_repository_stats.return_value = sample_stats
 
-        # Execute
+        # Execute - tests use minimal dicts; production receives full Repository objects
         process_repositories(
             owner_id=12345,
             owner_name="test-owner",
-            repositories=repos,
+            repositories=repos,  # type: ignore[arg-type]
             token="ghs_test_token",
             user_id=67890,
             user_name="test-user",

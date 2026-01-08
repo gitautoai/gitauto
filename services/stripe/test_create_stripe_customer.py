@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 # Third-party imports
-import stripe
+from stripe import StripeError
 
 # Local imports
 from services.stripe.create_stripe_customer import create_stripe_customer
@@ -113,9 +113,7 @@ class TestCreateStripeCustomer(unittest.TestCase):
     def test_create_stripe_customer_stripe_error(self, mock_stripe):
         """Test handling of Stripe-specific errors"""
         # Setup
-        mock_stripe.Customer.create.side_effect = stripe.error.StripeError(
-            "Stripe API error"
-        )
+        mock_stripe.Customer.create.side_effect = StripeError("Stripe API error")
 
         # Execute
         result = create_stripe_customer(

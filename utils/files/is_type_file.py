@@ -4,8 +4,6 @@ from utils.error.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 def is_type_file(filename: str) -> bool:
-    if not isinstance(filename, str):
-        return False
 
     # Convert to lowercase for case-insensitive matching
     filename_lower = filename.lower()

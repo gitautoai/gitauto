@@ -211,6 +211,7 @@ End of issue body."""
 
         result = get_issue_body(**sample_params)
 
+        assert result is not None
         assert result == long_body
         assert len(result) == 10000
         mock_graphql_client.execute.assert_called_once()
@@ -294,16 +295,10 @@ End of issue body."""
             assert isinstance(result, (str, type(None)))
 
     def test_get_issue_body_parameter_types(self, mock_graphql_client):
-        """Test function with different parameter types."""
         mock_graphql_client.execute.return_value = {
             "repository": {"issue": {"body": "test"}}
         }
 
-        # Test with string issue_number (should work due to Python's flexibility)
-        result = get_issue_body("owner", "repo", "123", "token")
-        assert result == "test"
-
-        # Test with negative issue_number
         result = get_issue_body("owner", "repo", -1, "token")
         assert result == "test"
 

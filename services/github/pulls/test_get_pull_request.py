@@ -94,6 +94,7 @@ def test_get_pull_request_success():
         mock_response.raise_for_status.assert_called_once()
 
         # Verify result
+        assert result is not None
         assert result == mock_pr_data
         assert result["number"] == 123
         assert result["title"] == "Test PR"

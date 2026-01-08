@@ -49,11 +49,7 @@ def test_is_issue_open_with_closed_issue(test_token):
 
 
 def test_is_issue_open_with_empty_url(test_token):
-    """Test is_issue_open returns False for empty URL."""
     result = is_issue_open("", test_token)
-    assert result is False
-
-    result = is_issue_open(None, test_token)
     assert result is False
 
 

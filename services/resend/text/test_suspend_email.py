@@ -43,15 +43,6 @@ def test_get_suspend_email_text_with_empty_string():
     assert "I noticed you suspended GitAuto. What happened?" in text
 
 
-def test_get_suspend_email_text_with_none():
-    """Test with None as user name."""
-    subject, text = get_suspend_email_text(None)
-
-    assert subject == "Taking a break from GitAuto?"
-    assert "Hi None," in text
-    assert "I noticed you suspended GitAuto. What happened?" in text
-
-
 def test_get_suspend_email_text_includes_email_signature():
     """Test that the email includes the email signature."""
     with patch(

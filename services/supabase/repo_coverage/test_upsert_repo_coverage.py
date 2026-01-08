@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
+from schemas.supabase.types import RepoCoverageInsert
 from services.supabase.repo_coverage.upsert_repo_coverage import upsert_repo_coverage
 
 
@@ -101,7 +102,7 @@ class TestUpsertRepoCoverage:
     def test_upsert_with_none_values_excluded(self, mock_supabase_client):
         """Test that None values are properly excluded from the insert data."""
         # Setup
-        coverage_data = {
+        coverage_data: RepoCoverageInsert = {
             "branch_name": "feature-branch",
             "created_by": "test-user",
             "owner_id": 123456,

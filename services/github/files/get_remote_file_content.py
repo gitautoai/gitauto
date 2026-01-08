@@ -1,7 +1,6 @@
 # Standard imports
 import base64
 import json
-from typing import Optional
 
 # Third-party imports
 import requests
@@ -29,10 +28,10 @@ from utils.new_lines.detect_new_line import detect_line_break
 def get_remote_file_content(
     file_path: str,
     base_args: BaseArgs,
-    line_number: Optional[int] = None,
-    keyword: Optional[str] = None,
-    start_line: Optional[int] = None,
-    end_line: Optional[int] = None,
+    line_number: int | None = None,
+    keyword: str | None = None,
+    start_line: int | None = None,
+    end_line: int | None = None,
     **_kwargs,
 ):
     """

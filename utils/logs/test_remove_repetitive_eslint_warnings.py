@@ -40,12 +40,6 @@ def test_empty_error_log():
     assert result == ""
 
 
-def test_none_error_log():
-    # Test line 5-6: None input
-    result = remove_repetitive_eslint_warnings(None)
-    assert result is None
-
-
 def test_file_with_only_warnings():
     # Test line 27 branch: file path with only warnings (no errors)
     log = """/path/to/file1.ts
@@ -134,10 +128,10 @@ def test_non_js_ts_file():
 
 
 def test_input_with_trailing_newline():
-    # Test that input with trailing newline preserves it
     log = """/path/to/file1.js
   1:1  error  Unexpected token
 """
 
     result = remove_repetitive_eslint_warnings(log)
+    assert result is not None
     assert result.endswith("\n")

@@ -2,7 +2,7 @@ import json
 from unittest.mock import Mock, patch
 import requests
 
-from services.supabase.usage.insert_usage import insert_usage
+from services.supabase.usage.insert_usage import Trigger, insert_usage
 
 
 def test_insert_usage_success_with_all_parameters():
@@ -143,7 +143,7 @@ def test_insert_usage_with_zero_values():
 
 def test_insert_usage_with_different_triggers():
     """Test usage insertion with different valid triggers"""
-    triggers = [
+    triggers: list[Trigger] = [
         "issue_label",
         "issue_comment",
         "review_comment",

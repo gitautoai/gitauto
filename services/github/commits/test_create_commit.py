@@ -7,9 +7,10 @@ from services.github.commits.create_commit import create_commit
 
 
 @pytest.fixture
-def sample_base_args(test_owner, test_repo):
-    """Fixture providing sample BaseArgs for testing."""
-    return {"owner": test_owner, "repo": test_repo, "token": "test-token-mock"}
+def sample_base_args(create_test_base_args, test_owner, test_repo):
+    return create_test_base_args(
+        owner=test_owner, repo=test_repo, token="test-token-mock"
+    )
 
 
 @pytest.fixture
@@ -73,10 +74,11 @@ def test_create_commit_success(
 
 
 def test_create_commit_with_different_parameters(
-    mock_requests_post, mock_create_headers
+    mock_requests_post, mock_create_headers, create_test_base_args
 ):
-    """Test commit creation with different parameter values."""
-    base_args = {"owner": "test-owner", "repo": "test-repo", "token": "test-token-123"}
+    base_args = create_test_base_args(
+        owner="test-owner", repo="test-repo", token="test-token-123"
+    )
     message = "Different commit message"
     tree_sha = "different_tree_sha"
     parent_sha = "different_parent_sha"
@@ -284,13 +286,14 @@ def test_create_commit_json_payload_structure(mock_requests_post, sample_base_ar
     assert len(json_payload["parents"]) == 1
 
 
-def test_create_commit_with_special_characters_in_owner_repo(mock_requests_post):
-    """Test commit creation with special characters in owner and repo names."""
-    base_args = {
-        "owner": "test-owner_123",
-        "repo": "test.repo-name_456",
-        "token": "test_token",
-    }
+def test_create_commit_with_special_characters_in_owner_repo(
+    mock_requests_post, create_test_base_args
+):
+    base_args = create_test_base_args(
+        owner="test-owner_123",
+        repo="test.repo-name_456",
+        token="test_token",
+    )
 
     result = create_commit(base_args, "Test message", "tree123", "parent456")
     assert result == "abc123def456789"
@@ -302,17 +305,17 @@ def test_create_commit_with_special_characters_in_owner_repo(mock_requests_post)
     assert call_args.kwargs["url"] == expected_url
 
 
-def test_create_commit_extracts_base_args_correctly(mock_requests_post):
-    """Test that BaseArgs values are extracted correctly."""
-    base_args = {
-        "owner": "extracted_owner",
-        "repo": "extracted_repo",
-        "token": "extracted_token",
-        # Include other fields that should be ignored
-        "issue_number": 123,
-        "sender_name": "test_sender",
-        "new_branch": "test_branch",
-    }
+def test_create_commit_extracts_base_args_correctly(
+    mock_requests_post, create_test_base_args
+):
+    base_args = create_test_base_args(
+        owner="extracted_owner",
+        repo="extracted_repo",
+        token="extracted_token",
+        issue_number=123,
+        sender_name="test_sender",
+        new_branch="test_branch",
+    )
 
     create_commit(base_args, "Test message", "tree123", "parent456")
 

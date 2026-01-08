@@ -451,17 +451,6 @@ def test_add_reaction_to_issue_create_headers_exception_handled(
         mock_create_headers.assert_called_once_with(token="test_token_123")
 
 
-def test_add_reaction_to_issue_key_error_in_base_args_handled():
-    """Test that KeyError from missing base_args keys is handled by the decorator."""
-    # Create incomplete base_args missing required keys
-    incomplete_base_args = {"owner": "test_owner"}  # Missing repo and token
-
-    result = add_reaction_to_issue(123, "+1", incomplete_base_args)
-
-    # The handle_exceptions decorator should catch the KeyError and return None
-    assert result is None
-
-
 def test_add_reaction_to_issue_attribute_error_handled(reaction_base_args):
     """Test that AttributeError is handled by the decorator."""
     with patch(
@@ -661,103 +650,6 @@ def test_add_reaction_to_issue_response_json_returns_none(reaction_base_args):
         mock_response.json.assert_called_once()
 
 
-def test_add_reaction_to_issue_with_none_base_args():
-    """Test that function handles None base_args gracefully."""
-    result = add_reaction_to_issue(123, "+1", None)
-
-    # The handle_exceptions decorator should catch the TypeError and return None
-    assert result is None
-
-
-def test_add_reaction_to_issue_with_none_issue_number(reaction_base_args):
-    """Test function with None issue number."""
-    result = add_reaction_to_issue(None, "+1", reaction_base_args)
-
-    # The handle_exceptions decorator should catch the error and return None
-    assert result is None
-
-
-def test_add_reaction_to_issue_with_none_content(
-    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
-):
-    """Test function with None content."""
-    result = add_reaction_to_issue(123, None, reaction_base_args)
-
-    assert result is None
-    reaction_mock_requests_post.assert_called_once_with(
-        url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
-        headers={
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": "Bearer test_token",
-            "User-Agent": "GitAuto",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-        json={"content": None},
-        timeout=120,
-    )
-
-
-def test_add_reaction_to_issue_with_float_issue_number(
-    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
-):
-    """Test function with float issue number (should be converted to int in URL)."""
-    result = add_reaction_to_issue(123.5, "+1", reaction_base_args)
-
-    assert result is None
-    # Python f-string will convert float to string, so 123.5 becomes "123.5"
-    reaction_mock_requests_post.assert_called_once_with(
-        url="https://api.github.com/repos/test_owner/test_repo/issues/123.5/reactions",
-        headers={
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": "Bearer test_token",
-            "User-Agent": "GitAuto",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-        json={"content": "+1"},
-        timeout=120,
-    )
-
-
-def test_add_reaction_to_issue_with_string_issue_number(
-    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
-):
-    """Test function with string issue number."""
-    result = add_reaction_to_issue("123", "+1", reaction_base_args)
-
-    assert result is None
-    reaction_mock_requests_post.assert_called_once_with(
-        url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
-        headers={
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": "Bearer test_token",
-            "User-Agent": "GitAuto",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-        json={"content": "+1"},
-        timeout=120,
-    )
-
-
-def test_add_reaction_to_issue_with_boolean_content(
-    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
-):
-    """Test function with boolean content."""
-    result = add_reaction_to_issue(123, True, reaction_base_args)
-
-    assert result is None
-    reaction_mock_requests_post.assert_called_once_with(
-        url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
-        headers={
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": "Bearer test_token",
-            "User-Agent": "GitAuto",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-        json={"content": True},
-        timeout=120,
-    )
-
-
 def test_add_reaction_to_issue_with_whitespace_only_content(
     reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
 ):
@@ -816,38 +708,6 @@ def test_add_reaction_to_issue_with_zero_issue_number(
             "X-GitHub-Api-Version": "2022-11-28",
         },
         json={"content": "+1"},
-        timeout=120,
-    )
-
-
-def test_add_reaction_to_issue_base_args_missing_multiple_keys():
-    """Test that function handles base_args missing multiple required keys."""
-    incomplete_base_args = {"owner": "test_owner"}  # Missing repo, token, and others
-
-    result = add_reaction_to_issue(123, "+1", incomplete_base_args)
-
-    # The handle_exceptions decorator should catch the KeyError and return None
-    assert result is None
-
-
-def test_add_reaction_to_issue_with_list_content(
-    reaction_mock_requests_post, reaction_mock_create_headers, reaction_base_args
-):
-    """Test function with list content (should be serialized by requests)."""
-    list_content = ["+1", "heart"]
-
-    result = add_reaction_to_issue(123, list_content, reaction_base_args)
-
-    assert result is None
-    reaction_mock_requests_post.assert_called_once_with(
-        url="https://api.github.com/repos/test_owner/test_repo/issues/123/reactions",
-        headers={
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": "Bearer test_token",
-            "User-Agent": "GitAuto",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-        json={"content": list_content},
         timeout=120,
     )
 

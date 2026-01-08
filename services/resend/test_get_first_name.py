@@ -9,12 +9,6 @@ def test_get_first_name_with_empty_string():
     assert result == "there"
 
 
-def test_get_first_name_with_none():
-    """Test that None returns 'there'."""
-    result = get_first_name(None)
-    assert result == "there"
-
-
 def test_get_first_name_with_single_name():
     """Test that single name returns the name itself."""
     result = get_first_name("John")

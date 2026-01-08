@@ -29,11 +29,13 @@ def mock_get_remote_file_content():
 
 
 def test_get_pull_request_file_contents_success(
-    mock_requests, mock_create_headers, mock_get_remote_file_content
+    mock_requests,
+    mock_create_headers,
+    mock_get_remote_file_content,
+    create_test_base_args,
 ):
-    # Arrange
     url = "https://api.github.com/repos/owner/repo/pulls/1/files"
-    base_args = {"token": "test_token"}
+    base_args = create_test_base_args(token="test_token")
 
     # Mock responses for pagination
     response1 = Mock()
@@ -60,11 +62,13 @@ def test_get_pull_request_file_contents_success(
 
 
 def test_get_pull_request_file_contents_empty(
-    mock_requests, mock_create_headers, mock_get_remote_file_content
+    mock_requests,
+    mock_create_headers,
+    mock_get_remote_file_content,
+    create_test_base_args,
 ):
-    # Arrange
     url = "https://api.github.com/repos/owner/repo/pulls/1/files"
-    base_args = {"token": "test_token"}
+    base_args = create_test_base_args(token="test_token")
 
     response = Mock()
     response.json.return_value = []
@@ -80,10 +84,11 @@ def test_get_pull_request_file_contents_empty(
     mock_get_remote_file_content.assert_not_called()
 
 
-def test_get_pull_request_file_contents_http_error(mock_requests, mock_create_headers):
-    # Arrange
+def test_get_pull_request_file_contents_http_error(
+    mock_requests, mock_create_headers, create_test_base_args
+):
     url = "https://api.github.com/repos/owner/repo/pulls/1/files"
-    base_args = {"token": "test_token"}
+    base_args = create_test_base_args(token="test_token")
 
     mock_requests.get.side_effect = Exception("HTTP Error")
 

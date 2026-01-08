@@ -300,30 +300,31 @@ class TestGetRemoteFileContent:
             in result
         )
 
-    # Test invalid line_number string
     def test_invalid_line_number_string(self, base_args):
-        """Test error when line_number is an invalid string."""
-        result = get_remote_file_content("test.py", base_args, line_number="invalid")
-
+        """Test error when LLM passes line_number as invalid string."""
+        # LLMs ignore type hints and pass strings at runtime
+        result = get_remote_file_content(
+            "test.py", base_args, **{"line_number": "invalid"}  # type: ignore[arg-type]
+        )
         assert "Error: line_number 'invalid' is not a valid integer." in result
 
-    # Test valid line_number string conversion
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
     def test_valid_line_number_string_conversion(
         self, mock_create_headers, mock_get, base_args, mock_file_response
     ):
-        """Test conversion of valid line_number string to integer."""
+        """Test conversion when LLM passes valid line_number as string."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_get.return_value = mock_file_response
 
-        result = get_remote_file_content("src/test.py", base_args, line_number="1")
-
+        # LLMs ignore type hints and pass strings at runtime
+        result = get_remote_file_content(
+            "src/test.py", base_args, **{"line_number": "1"}  # type: ignore[arg-type]
+        )
         assert (
             "Opened file: 'src/test.py' with line numbers for your information."
             in result
         )
-
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_get.assert_called_once()
 
@@ -976,16 +977,15 @@ class TestGetRemoteFileContent:
         )
 
     def test_start_line_end_line_string_conversion(self, base_args):
-        """Test string to integer conversion for start_line and end_line."""
-        # Test invalid start_line string
+        """Test string to integer conversion when LLM passes strings."""
+        # LLMs ignore type hints and pass strings at runtime
         result = get_remote_file_content(
-            "test.py", base_args, start_line="abc", end_line="5"
+            "test.py", base_args, **{"start_line": "abc", "end_line": "5"}  # type: ignore[arg-type]
         )
         assert "Error: start_line 'abc' is not a valid integer." in result
 
-        # Test invalid end_line string
         result = get_remote_file_content(
-            "test.py", base_args, start_line="1", end_line="xyz"
+            "test.py", base_args, **{"start_line": "1", "end_line": "xyz"}  # type: ignore[arg-type]
         )
         assert "Error: end_line 'xyz' is not a valid integer." in result
 

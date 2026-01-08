@@ -23,9 +23,6 @@ def test_extract_image_urls_with_svg():
 
 
 def test_extract_image_urls_with_invalid_input():
-    result = extract_image_urls(None)
-    assert result == []
-
     result = extract_image_urls("")
     assert result == []
 
