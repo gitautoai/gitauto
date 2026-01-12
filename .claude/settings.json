@@ -52,7 +52,6 @@
       "Bash(sentry-cli issues :*)",
       "Bash(sentry-cli projects :*)",
       "Bash(source .env)",
-      "Bash(source :*)",
       "Bash(wc :*)",
       "Bash(xargs pylint :*)",
       "Bash(xargs :*)",

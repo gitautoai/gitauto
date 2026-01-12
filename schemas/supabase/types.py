@@ -367,6 +367,12 @@ class RepoCoverage(TypedDict):
     created_at: datetime.datetime
     created_by: str
     language: str
+    lines_covered: int
+    lines_total: int
+    functions_total: int
+    functions_covered: int
+    branches_total: int
+    branches_covered: int
 
 
 class RepoCoverageInsert(TypedDict):
@@ -381,6 +387,12 @@ class RepoCoverageInsert(TypedDict):
     branch_coverage: NotRequired[float]
     created_by: NotRequired[str]
     language: NotRequired[str]
+    lines_covered: NotRequired[int]
+    lines_total: NotRequired[int]
+    functions_total: NotRequired[int]
+    functions_covered: NotRequired[int]
+    branches_total: NotRequired[int]
+    branches_covered: NotRequired[int]
 
 
 class Repositories(TypedDict):

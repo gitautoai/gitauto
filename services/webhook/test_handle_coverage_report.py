@@ -53,6 +53,15 @@ def test_handle_coverage_report_with_python_sample():
         assert call_kwargs["owner_id"] == 12345
         assert call_kwargs["repo_id"] == 67890
 
+        # Verify upsert_repo_coverage was called with count fields
+        repo_coverage_data = mock_upsert_repo.call_args[0][0]
+        assert repo_coverage_data["lines_covered"] == 4918
+        assert repo_coverage_data["lines_total"] == 6721
+        assert repo_coverage_data["functions_covered"] == 195
+        assert repo_coverage_data["functions_total"] == 242
+        assert repo_coverage_data["branches_covered"] == 1009
+        assert repo_coverage_data["branches_total"] == 1830
+
 
 def test_handle_coverage_report_with_coverage_report_artifact():
     """Test handling coverage with artifact named 'coverage-report'"""
@@ -215,6 +224,15 @@ def test_handle_coverage_report_with_javascript_sample():
         assert result is True
         mock_upsert_cov.assert_called_once()
         mock_upsert_repo.assert_called_once()
+
+        # Verify upsert_repo_coverage was called with count fields
+        repo_coverage_data = mock_upsert_repo.call_args[0][0]
+        assert repo_coverage_data["lines_covered"] == 141
+        assert repo_coverage_data["lines_total"] == 3941
+        assert repo_coverage_data["functions_covered"] == 40
+        assert repo_coverage_data["functions_total"] == 1484
+        assert repo_coverage_data["branches_covered"] == 43
+        assert repo_coverage_data["branches_total"] == 1696
 
 
 def test_handle_coverage_report_with_null_head_branch():

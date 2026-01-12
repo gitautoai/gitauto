@@ -20,8 +20,6 @@ def test_create_empty_stats_has_all_required_keys():
         "uncovered_lines",
         "uncovered_functions",
         "uncovered_branches",
-        "test_name",
-        "current_function",
     }
     assert set(result.keys()) == expected_keys
 
@@ -46,13 +44,6 @@ def test_create_empty_stats_set_values():
     assert isinstance(result["uncovered_lines"], set)
     assert isinstance(result["uncovered_functions"], set)
     assert isinstance(result["uncovered_branches"], set)
-
-
-def test_create_empty_stats_none_values():
-    """Test that optional fields are initialized to None"""
-    result = create_empty_stats()
-    assert result["test_name"] is None
-    assert result["current_function"] is None
 
 
 def test_create_empty_stats_immutability():
@@ -84,8 +75,6 @@ def test_create_empty_stats_complete_structure():
         "uncovered_lines": set(),
         "uncovered_functions": set(),
         "uncovered_branches": set(),
-        "test_name": None,
-        "current_function": None,
     }
     assert result == expected
 
@@ -113,7 +102,3 @@ def test_create_empty_stats_return_type_consistency():
     assert isinstance(result["uncovered_lines"], set)
     assert isinstance(result["uncovered_functions"], set)
     assert isinstance(result["uncovered_branches"], set)
-
-    # Test None types
-    assert result["test_name"] is None
-    assert result["current_function"] is None
