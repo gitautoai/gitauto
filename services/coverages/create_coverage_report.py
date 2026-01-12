@@ -1,10 +1,10 @@
 from typing import Literal
 
-from services.coverages.coverage_types import CoverageReport
+from services.coverages.coverage_types import CoverageReport, CoverageStats
 
 
 def create_coverage_report(
-    path: str, stats: dict, level: Literal["repository", "directory", "file"]
+    path: str, stats: CoverageStats, level: Literal["repository", "directory", "file"]
 ):
     # For directory level and empty path, then use "."
     if level == "directory" and path == "":
@@ -45,6 +45,12 @@ def create_coverage_report(
         "function_coverage": function_coverage,
         "branch_coverage": branch_coverage,
         "path_coverage": branch_coverage,
+        "lines_covered": stats["lines_covered"],
+        "lines_total": stats["lines_total"],
+        "functions_covered": stats["functions_covered"],
+        "functions_total": stats["functions_total"],
+        "branches_covered": stats["branches_covered"],
+        "branches_total": stats["branches_total"],
         "uncovered_lines": (
             ", ".join(map(str, sorted(stats["uncovered_lines"])))
             if level == "file" and line_coverage > 0

@@ -1,9 +1,10 @@
+from services.coverages.coverage_types import CoverageStats
 from services.coverages.create_coverage_report import create_coverage_report
 
 
 def test_create_coverage_report_directory_level_empty_path():
     """Test directory level with empty path - covers lines 3, 4"""
-    stats = {
+    stats: CoverageStats = {
         "lines_total": 100,
         "lines_covered": 80,
         "functions_total": 10,
@@ -24,6 +25,12 @@ def test_create_coverage_report_directory_level_empty_path():
     assert result["function_coverage"] == 80.0
     assert result["branch_coverage"] == 75.0
     assert result["package_name"] is None
+    assert result["lines_covered"] == 80
+    assert result["lines_total"] == 100
+    assert result["functions_covered"] == 8
+    assert result["functions_total"] == 10
+    assert result["branches_covered"] == 15
+    assert result["branches_total"] == 20
     assert result["uncovered_lines"] == ""  # Not file level
     assert result["uncovered_functions"] == "L10:test_func, L20-30:another_func"
     assert result["uncovered_branches"] == "branch1, branch2"
@@ -31,7 +38,7 @@ def test_create_coverage_report_directory_level_empty_path():
 
 def test_create_coverage_report_directory_level_non_empty_path():
     """Test directory level with non-empty path - covers branch where condition is false"""
-    stats = {
+    stats: CoverageStats = {
         "lines_total": 50,
         "lines_covered": 25,
         "functions_total": 5,
@@ -55,7 +62,7 @@ def test_create_coverage_report_directory_level_non_empty_path():
 
 def test_create_coverage_report_file_level_with_coverage():
     """Test file level with coverage > 0 - covers lines 6, 14, 22, 31 and uncovered_lines logic"""
-    stats = {
+    stats: CoverageStats = {
         "lines_total": 200,
         "lines_covered": 150,
         "functions_total": 20,
@@ -82,7 +89,7 @@ def test_create_coverage_report_file_level_with_coverage():
 
 def test_create_coverage_report_file_level_zero_coverage():
     """Test file level with zero coverage"""
-    stats = {
+    stats: CoverageStats = {
         "lines_total": 100,
         "lines_covered": 0,
         "functions_total": 10,
@@ -109,7 +116,7 @@ def test_create_coverage_report_file_level_zero_coverage():
 
 def test_create_coverage_report_repository_level():
     """Test repository level"""
-    stats = {
+    stats: CoverageStats = {
         "lines_total": 1000,
         "lines_covered": 850,
         "functions_total": 100,
@@ -138,7 +145,7 @@ def test_create_coverage_report_repository_level():
 
 def test_create_coverage_report_zero_totals():
     """Test edge case with zero totals - should default to 100% coverage"""
-    stats = {
+    stats: CoverageStats = {
         "lines_total": 0,
         "lines_covered": 0,
         "functions_total": 0,
@@ -165,7 +172,7 @@ def test_create_coverage_report_zero_totals():
 
 def test_create_coverage_report_mixed_function_formats():
     """Test with mixed function formats (2-tuple and 3-tuple)"""
-    stats = {
+    stats: CoverageStats = {
         "lines_total": 100,
         "lines_covered": 80,
         "functions_total": 5,
@@ -194,7 +201,7 @@ def test_create_coverage_report_mixed_function_formats():
 
 def test_create_coverage_report_empty_uncovered_sets():
     """Test with empty uncovered sets"""
-    stats = {
+    stats: CoverageStats = {
         "lines_total": 100,
         "lines_covered": 100,
         "functions_total": 10,
@@ -218,7 +225,7 @@ def test_create_coverage_report_empty_uncovered_sets():
 
 def test_create_coverage_report_rounding():
     """Test coverage percentage rounding"""
-    stats = {
+    stats: CoverageStats = {
         "lines_total": 3,
         "lines_covered": 1,  # 33.333...%
         "functions_total": 3,
@@ -240,7 +247,7 @@ def test_create_coverage_report_rounding():
 
 def test_create_coverage_report_non_file_level_uncovered_lines():
     """Test that uncovered_lines is empty for non-file levels"""
-    stats = {
+    stats: CoverageStats = {
         "lines_total": 100,
         "lines_covered": 80,
         "functions_total": 10,
@@ -263,7 +270,7 @@ def test_create_coverage_report_non_file_level_uncovered_lines():
 
 def test_create_coverage_report_other_level():
     """Test with a level that's not 'directory' to ensure the if condition works correctly"""
-    stats = {
+    stats: CoverageStats = {
         "lines_total": 50,
         "lines_covered": 40,
         "functions_total": 5,

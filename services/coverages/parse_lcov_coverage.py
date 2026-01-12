@@ -2,9 +2,9 @@
 import os
 
 # Local imports
+from services.coverages.coverage_types import CoverageReport, CoverageStats
 from services.coverages.create_coverage_report import create_coverage_report
 from services.coverages.create_empty_stats import create_empty_stats
-from services.coverages.coverage_types import CoverageReport
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -13,8 +13,8 @@ def parse_lcov_coverage(lcov_content: str):
 
     # Tracking stats at all levels
     repo_stats = create_empty_stats()
-    dir_stats = {}
-    file_stats = {}
+    dir_stats: dict[str, CoverageStats] = {}
+    file_stats: dict[str, CoverageStats] = {}
 
     current_file = None
     current_stats = create_empty_stats()
@@ -196,11 +196,6 @@ def parse_lcov_coverage(lcov_content: str):
             if dir_path not in dir_stats:
                 dir_stats[dir_path] = create_empty_stats()
             for key, value in current_stats.items():
-                if key in [
-                    "test_name",
-                    "current_function",
-                ]:  # Skip metadata fields
-                    continue
                 if isinstance(value, set):
                     dir_stats[dir_path][key].update(value)
                 else:
@@ -208,11 +203,6 @@ def parse_lcov_coverage(lcov_content: str):
 
             # Update repository stats
             for key, value in current_stats.items():
-                if key in [
-                    "test_name",
-                    "current_function",
-                ]:  # Skip metadata fields
-                    continue
                 if isinstance(value, set):
                     repo_stats[key].update(value)
                 else:

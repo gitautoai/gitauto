@@ -22,6 +22,12 @@ def test_parse_lcov_python_sample_exact_counts():
     assert repo_coverage["function_coverage"] == 80.58
     assert repo_coverage["branch_coverage"] == 55.14
     assert repo_coverage["line_coverage"] == 73.17
+    assert repo_coverage["lines_covered"] == 4918
+    assert repo_coverage["lines_total"] == 6721
+    assert repo_coverage["functions_covered"] == 195
+    assert repo_coverage["functions_total"] == 242
+    assert repo_coverage["branches_covered"] == 1009
+    assert repo_coverage["branches_total"] == 1830
 
 
 def test_parse_lcov_python_sample_specific_file():
@@ -62,6 +68,12 @@ def test_parse_lcov_javascript_sample_exact_counts():
     assert repo_coverage["function_coverage"] == 2.7
     assert repo_coverage["branch_coverage"] == 2.54
     assert repo_coverage["line_coverage"] == 3.58
+    assert repo_coverage["lines_covered"] == 141
+    assert repo_coverage["lines_total"] == 3941
+    assert repo_coverage["functions_covered"] == 40
+    assert repo_coverage["functions_total"] == 1484
+    assert repo_coverage["branches_covered"] == 43
+    assert repo_coverage["branches_total"] == 1696
 
 
 def test_parse_lcov_javascript_sample_specific_file():
