@@ -21,9 +21,10 @@
     <react_testing_library>
       <rule>Prefer userEvent over fireEvent for user interactions</rule>
       <reason>userEvent automatically wraps in act() preventing CI flaky tests, and simulates real user behavior (mousedown → mouseup → click). fireEvent causes race conditions where tests pass locally but fail in CI.</reason>
+      <setup_required>ALWAYS use userEvent.setup({ delay: null }) at the start of each test. Direct userEvent.click/type() calls without setup cause 30s timeouts in CI. The delay: null disables realistic typing delays for faster, more stable CI runs.</setup_required>
       <fallback>If userEvent doesn't work, use fireEvent wrapped in act(): await act(async () => { fireEvent.click(button); });</fallback>
       <migration>When modifying test files that use fireEvent, try userEvent first. If it fails, wrap fireEvent in act().</migration>
-      <example>import userEvent from '@testing-library/user-event'; await userEvent.click(button); await userEvent.type(input, 'text');</example>
+      <example>import userEvent from '@testing-library/user-event'; const user = userEvent.setup({ delay: null }); await user.click(button); await user.type(input, 'text');</example>
     </react_testing_library>
   </testing_best_practices>
 

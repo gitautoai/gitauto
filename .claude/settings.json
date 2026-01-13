@@ -79,10 +79,6 @@
       "WebFetch(domain:www.linkedin.com)",
       "WebFetch(domain:www.techtarget.com)",
       "WebSearch"
-    ],
-    "deny": [
-      "Bash(cd:*)",
-      "Bash(rm:*)"
     ]
   }
 }
