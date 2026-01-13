@@ -2,7 +2,13 @@
 
 from unittest.mock import patch, MagicMock
 import pytest
+from config import CREDIT_AMOUNTS_USD
 from services.supabase.credits.insert_credit import insert_credit
+
+USAGE_AMOUNT = CREDIT_AMOUNTS_USD["usage"]
+GRANT_AMOUNT = CREDIT_AMOUNTS_USD["grant"]
+BONUS_AMOUNT = 5
+REFUND_AMOUNT = CREDIT_AMOUNTS_USD["usage"] * -1
 
 
 @pytest.fixture
@@ -16,10 +22,10 @@ def mock_supabase():
 def mock_credit_amounts():
     """Fixture to provide mocked credit amounts configuration."""
     return {
-        "usage": -4,
-        "grant": 12,
-        "bonus": 5,
-        "refund": 4,
+        "usage": USAGE_AMOUNT,
+        "grant": GRANT_AMOUNT,
+        "bonus": BONUS_AMOUNT,
+        "refund": REFUND_AMOUNT,
     }
 
 
@@ -48,7 +54,8 @@ def test_insert_credit_success_without_usage_id(mock_supabase, mock_query_chain)
     transaction_type = "grant"
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"grant": 12}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"grant": GRANT_AMOUNT},
     ):
         # Act
         result = insert_credit(owner_id=owner_id, transaction_type=transaction_type)
@@ -59,7 +66,7 @@ def test_insert_credit_success_without_usage_id(mock_supabase, mock_query_chain)
         mock_query_chain["table"].insert.assert_called_once_with(
             {
                 "owner_id": owner_id,
-                "amount_usd": 12,
+                "amount_usd": GRANT_AMOUNT,
                 "transaction_type": transaction_type,
             }
         )
@@ -74,7 +81,8 @@ def test_insert_credit_success_with_usage_id(mock_supabase, mock_query_chain):
     usage_id = 456
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"usage": -4}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"usage": USAGE_AMOUNT},
     ):
         # Act
         result = insert_credit(
@@ -87,7 +95,7 @@ def test_insert_credit_success_with_usage_id(mock_supabase, mock_query_chain):
         mock_query_chain["table"].insert.assert_called_once_with(
             {
                 "owner_id": owner_id,
-                "amount_usd": -4,
+                "amount_usd": USAGE_AMOUNT,
                 "transaction_type": transaction_type,
                 "usage_id": usage_id,
             }
@@ -129,7 +137,8 @@ def test_insert_credit_handles_database_exception(mock_supabase):
     mock_supabase.table.side_effect = Exception("Database connection error")
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"grant": 12}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"grant": GRANT_AMOUNT},
     ):
         # Act
         result = insert_credit(owner_id=owner_id, transaction_type=transaction_type)
@@ -149,7 +158,8 @@ def test_insert_credit_handles_insert_exception(mock_supabase, mock_query_chain)
     mock_query_chain["table"].insert.side_effect = Exception("Insert error")
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"usage": -4}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"usage": USAGE_AMOUNT},
     ):
         # Act
         result = insert_credit(owner_id=owner_id, transaction_type=transaction_type)
@@ -169,7 +179,8 @@ def test_insert_credit_handles_execute_exception(mock_supabase, mock_query_chain
     mock_query_chain["insert"].execute.side_effect = Exception("Execute error")
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"refund": 4}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"refund": REFUND_AMOUNT},
     ):
         # Act
         result = insert_credit(owner_id=owner_id, transaction_type=transaction_type)
@@ -188,7 +199,8 @@ def test_insert_credit_handles_missing_transaction_type(mock_supabase):
     transaction_type = "unknown_type"
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"grant": 12}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"grant": GRANT_AMOUNT},
     ):
         # Act
         result = insert_credit(owner_id=owner_id, transaction_type=transaction_type)
@@ -208,7 +220,8 @@ def test_insert_credit_with_various_owner_ids(
     transaction_type = "grant"
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"grant": 12}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"grant": GRANT_AMOUNT},
     ):
         # Act
         result = insert_credit(owner_id=owner_id, transaction_type=transaction_type)
@@ -218,7 +231,7 @@ def test_insert_credit_with_various_owner_ids(
         mock_query_chain["table"].insert.assert_called_once_with(
             {
                 "owner_id": owner_id,
-                "amount_usd": 12,
+                "amount_usd": GRANT_AMOUNT,
                 "transaction_type": transaction_type,
             }
         )
@@ -234,7 +247,8 @@ def test_insert_credit_with_various_usage_ids(
     transaction_type = "usage"
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"usage": -4}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"usage": USAGE_AMOUNT},
     ):
         # Act
         result = insert_credit(
@@ -246,7 +260,7 @@ def test_insert_credit_with_various_usage_ids(
         mock_query_chain["table"].insert.assert_called_once_with(
             {
                 "owner_id": owner_id,
-                "amount_usd": -4,
+                "amount_usd": USAGE_AMOUNT,
                 "transaction_type": transaction_type,
                 "usage_id": usage_id,
             }
@@ -256,10 +270,10 @@ def test_insert_credit_with_various_usage_ids(
 @pytest.mark.parametrize(
     "transaction_type,expected_amount",
     [
-        ("usage", -4),
-        ("grant", 12),
-        ("bonus", 5),
-        ("refund", 4),
+        ("usage", USAGE_AMOUNT),
+        ("grant", GRANT_AMOUNT),
+        ("bonus", BONUS_AMOUNT),
+        ("refund", REFUND_AMOUNT),
     ],
 )
 def test_insert_credit_with_different_transaction_types(
@@ -269,10 +283,10 @@ def test_insert_credit_with_different_transaction_types(
     # Arrange
     owner_id = 123456
     credit_amounts = {
-        "usage": -4,
-        "grant": 12,
-        "bonus": 5,
-        "refund": 4,
+        "usage": USAGE_AMOUNT,
+        "grant": GRANT_AMOUNT,
+        "bonus": BONUS_AMOUNT,
+        "refund": REFUND_AMOUNT,
     }
 
     with patch(
@@ -299,7 +313,8 @@ def test_insert_credit_verifies_correct_table_name(mock_supabase, mock_query_cha
     transaction_type = "grant"
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"grant": 12}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"grant": GRANT_AMOUNT},
     ):
         # Act
         insert_credit(owner_id=owner_id, transaction_type=transaction_type)
@@ -315,12 +330,13 @@ def test_insert_credit_data_structure_without_usage_id(mock_supabase, mock_query
     transaction_type = "grant"
     expected_data = {
         "owner_id": owner_id,
-        "amount_usd": 12,
+        "amount_usd": GRANT_AMOUNT,
         "transaction_type": transaction_type,
     }
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"grant": 12}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"grant": GRANT_AMOUNT},
     ):
         # Act
         insert_credit(owner_id=owner_id, transaction_type=transaction_type)
@@ -337,13 +353,14 @@ def test_insert_credit_data_structure_with_usage_id(mock_supabase, mock_query_ch
     usage_id = 789
     expected_data = {
         "owner_id": owner_id,
-        "amount_usd": -4,
+        "amount_usd": USAGE_AMOUNT,
         "transaction_type": transaction_type,
         "usage_id": usage_id,
     }
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"usage": -4}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"usage": USAGE_AMOUNT},
     ):
         # Act
         insert_credit(
@@ -361,7 +378,8 @@ def test_insert_credit_handles_key_error_from_credit_amounts(mock_supabase):
     transaction_type = "nonexistent_type"
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"grant": 12}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"grant": GRANT_AMOUNT},
     ):
         # Act
         result = insert_credit(owner_id=owner_id, transaction_type=transaction_type)
@@ -380,7 +398,8 @@ def test_insert_credit_handles_type_error_exception(mock_supabase, mock_query_ch
     mock_query_chain["table"].insert.side_effect = TypeError("Type error")
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"grant": 12}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"grant": GRANT_AMOUNT},
     ):
         # Act
         result = insert_credit(owner_id=owner_id, transaction_type=transaction_type)
@@ -401,7 +420,8 @@ def test_insert_credit_handles_attribute_error_exception(mock_supabase):
     del mock_table.insert  # Remove the insert attribute
 
     with patch(
-        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD", {"grant": 12}
+        "services.supabase.credits.insert_credit.CREDIT_AMOUNTS_USD",
+        {"grant": GRANT_AMOUNT},
     ):
         # Act
         result = insert_credit(owner_id=owner_id, transaction_type=transaction_type)
