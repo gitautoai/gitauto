@@ -2,7 +2,10 @@
 
 from unittest.mock import patch, MagicMock, PropertyMock
 import pytest
+from config import CREDIT_AMOUNTS_USD
 from services.supabase.credits.check_grant_exists import check_grant_exists
+
+GRANT_AMOUNT = CREDIT_AMOUNTS_USD["grant"]
 
 
 @pytest.fixture
@@ -440,8 +443,18 @@ def test_check_grant_exists_with_complex_data_structure(
     owner_id = 151515
     mock_query_result = MagicMock()
     mock_query_result.data = [
-        {"id": 1, "owner_id": owner_id, "transaction_type": "grant", "amount": 12},
-        {"id": 2, "owner_id": owner_id, "transaction_type": "grant", "amount": 12},
+        {
+            "id": 1,
+            "owner_id": owner_id,
+            "transaction_type": "grant",
+            "amount": GRANT_AMOUNT,
+        },
+        {
+            "id": 2,
+            "owner_id": owner_id,
+            "transaction_type": "grant",
+            "amount": GRANT_AMOUNT,
+        },
     ]
     mock_query_chain["eq2"].execute.return_value = mock_query_result
 
