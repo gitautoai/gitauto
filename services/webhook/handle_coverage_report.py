@@ -246,8 +246,18 @@ def handle_coverage_report(
             if item.get("branch_coverage") == 100:
                 item["uncovered_branches"] = None
 
-            # Remove fields that cause upsert conflicts
-            for field in ["id", "created_at", "updated_at"]:
+            # Remove fields that cause upsert conflicts or don't exist in coverages table
+            for field in [
+                "id",
+                "created_at",
+                "updated_at",
+                "lines_covered",
+                "lines_total",
+                "functions_covered",
+                "functions_total",
+                "branches_covered",
+                "branches_total",
+            ]:
                 item.pop(field, None)
 
             json.dumps(item)

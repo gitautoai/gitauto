@@ -62,6 +62,22 @@ def test_handle_coverage_report_with_python_sample():
         assert repo_coverage_data["branches_covered"] == 1009
         assert repo_coverage_data["branches_total"] == 1830
 
+        # Verify upsert_coverages does NOT include fields that don't exist in coverages table
+        coverage_records = mock_upsert_cov.call_args[0][0]
+        excluded_fields = [
+            "lines_covered",
+            "lines_total",
+            "functions_covered",
+            "functions_total",
+            "branches_covered",
+            "branches_total",
+        ]
+        for record in coverage_records:
+            for field in excluded_fields:
+                assert (
+                    field not in record
+                ), f"Field '{field}' should not be in coverage record"
+
 
 def test_handle_coverage_report_with_coverage_report_artifact():
     """Test handling coverage with artifact named 'coverage-report'"""
