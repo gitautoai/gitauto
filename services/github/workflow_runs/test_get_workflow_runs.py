@@ -96,7 +96,7 @@ def test_get_workflow_runs_success_with_commit_sha(
     mock_get.assert_called_once()
     assert (
         mock_get.call_args[1]["url"]
-        == f"https://api.github.com/repos/{test_owner}/{test_repo}/actions/runs?head_sha={commit_sha}"
+        == f"https://api.github.com/repos/{test_owner}/{test_repo}/actions/runs?per_page=30&page=1&head_sha={commit_sha}"
     )
     assert mock_get.call_args[1]["headers"] == mock_headers
     assert mock_get.call_args[1]["timeout"] == 120
@@ -133,7 +133,7 @@ def test_get_workflow_runs_success_with_branch(
     mock_get.assert_called_once()
     assert (
         mock_get.call_args[1]["url"]
-        == f"https://api.github.com/repos/{test_owner}/{test_repo}/actions/runs?branch={branch}"
+        == f"https://api.github.com/repos/{test_owner}/{test_repo}/actions/runs?per_page=30&page=1&branch={branch}"
     )
     assert mock_get.call_args[1]["headers"] == mock_headers
     assert mock_get.call_args[1]["timeout"] == 120
@@ -166,7 +166,7 @@ def test_get_workflow_runs_both_commit_sha_and_branch_prefers_commit_sha(
     mock_get.assert_called_once()
     assert (
         mock_get.call_args[1]["url"]
-        == f"https://api.github.com/repos/{test_owner}/{test_repo}/actions/runs?head_sha={commit_sha}"
+        == f"https://api.github.com/repos/{test_owner}/{test_repo}/actions/runs?per_page=30&page=1&head_sha={commit_sha}"
     )
 
 
@@ -419,7 +419,7 @@ def test_get_workflow_runs_url_construction_with_commit_sha():
     mock_get.assert_called_once()
     assert (
         mock_get.call_args[1]["url"]
-        == f"https://api.github.test/repos/{owner}/{repo}/actions/runs?head_sha={commit_sha}"
+        == f"https://api.github.test/repos/{owner}/{repo}/actions/runs?per_page=30&page=1&head_sha={commit_sha}"
     )
 
 
@@ -451,7 +451,7 @@ def test_get_workflow_runs_url_construction_with_branch():
     mock_get.assert_called_once()
     assert (
         mock_get.call_args[1]["url"]
-        == f"https://api.github.test/repos/{owner}/{repo}/actions/runs?branch={branch}"
+        == f"https://api.github.test/repos/{owner}/{repo}/actions/runs?per_page=30&page=1&branch={branch}"
     )
 
 

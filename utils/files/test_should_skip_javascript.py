@@ -887,3 +887,37 @@ def test_enum_multiline_closing():
 }
 const MAX_SIZE = 100;"""
     assert should_skip_javascript(content) is True
+
+
+def test_exported_function_with_logic():
+    # export function should NOT be skipped - it has actual logic
+    content = """export function convertData(input: Input): Output {
+  const { ...data } = input;
+  delete data.__typename;
+  return { ...data, date: new Date(input.date) };
+}"""
+    assert should_skip_javascript(content) is False
+
+
+def test_exported_class_with_constructor():
+    # export class with constructor should NOT be skipped
+    content = """export class MyClient {
+  sdk: Sdk;
+
+  constructor(url: string) {
+    const client = new GraphQLClient(url);
+    this.sdk = getSdk(client);
+  }
+}"""
+    assert should_skip_javascript(content) is False
+
+
+def test_exported_async_method():
+    # export class with async methods should NOT be skipped
+    content = """export class ApiClient {
+  public async fetchData(id: string): Promise<Data> {
+    const result = await this.sdk.getData({ id });
+    return result;
+  }
+}"""
+    assert should_skip_javascript(content) is False

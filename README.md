@@ -192,30 +192,21 @@ aws logs tail /aws/lambda/pr-agent-prod --follow | grep -v -E "(START RequestId|
 4. Click on the latest log stream to view real-time logs
 5. Use the filter box to exclude system messages: `- "START RequestId" - "END RequestId" - "REPORT RequestId"`
 
-### 3-10. GitHub Check Suite Architecture
+### 3-10. GitHub Actions Check Suite Architecture
 
 ```text
 Pull Request #123
 └── Commit (sha: abc123)
-    └── check_suite
-        ├── GitHub Actions (GitAuto)
-        │   ├── Workflow: "ci" (.github/workflows/ci.yml)
-        │   │   ├── Job: build → check_run: "build"
-        │   │   ├── Job: test → check_run: "test"
-        │   │   └── Job: lint → check_run: "lint"
-        │   └── Workflow: "deploy" (.github/workflows/deploy.yml)
-        │       └── Job: deploy → check_run: "deploy"
-        │
-        └── CircleCI (Foxquilt)
-            ├── Workflow: "ci"
-            │   ├── Job: build
-            │   ├── Job: test
-            │   ├── Job: lint
-            │   └── check_run: "ci" (represents entire workflow)
-            └── Workflow: "deploy"
-                ├── Job: deploy
-                └── check_run: "deploy" (represents entire workflow)
+    └── check_suite (GitHub Actions)
+        ├── Workflow: "ci" (.github/workflows/ci.yml)
+        │   ├── Job: build → check_run: "build"
+        │   ├── Job: test → check_run: "test"
+        │   └── Job: lint → check_run: "lint"
+        └── Workflow: "deploy" (.github/workflows/deploy.yml)
+            └── Job: deploy → check_run: "deploy"
 ```
+
+For CircleCI hierarchy, see [services/circleci/README.md](services/circleci/README.md).
 
 ### 3-11. Other information
 
