@@ -11,12 +11,11 @@ from services.github.comments.delete_comments_by_identifiers import (
     delete_comments_by_identifiers,
 )
 from services.github.commits.check_commit_has_skip_ci import check_commit_has_skip_ci
-from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.merge_pull_request import MergeMethod, merge_pull_request
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
+from services.github.types.github_types import CheckSuiteCompletedPayload
 from services.slack.slack_notify import slack_notify
 from services.supabase.client import supabase
 from services.supabase.repository_features.get_repository_features import (
@@ -66,37 +65,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         msg = f"Failed to fetch check suites for {owner_name}/{repo_name} PR #{pr_number}@{head_sha}"
         print(msg)
         raise RuntimeError(msg)
-
-    # Create base_args for further API calls
-    head_branch = check_suite["head_branch"]
-    sender = payload["sender"]
-    base_args: BaseArgs = {
-        "input_from": "github",
-        "owner_type": repo["owner"]["type"],
-        "owner_id": owner_id,
-        "owner": owner_name,
-        "repo_id": repo_id,
-        "repo": repo_name,
-        "clone_url": repo["clone_url"],
-        "is_fork": repo.get("fork", False),
-        "issue_number": pr_number,
-        "issue_title": "",
-        "issue_body": "",
-        "issue_comments": [],
-        "latest_commit_sha": head_sha,
-        "issuer_name": sender["login"],
-        "base_branch": head_branch,
-        "new_branch": head_branch,
-        "installation_id": installation_id,
-        "token": token,
-        "sender_id": sender["id"],
-        "sender_name": sender["login"],
-        "sender_email": f"{sender['login']}@users.noreply.github.com",
-        "is_automation": True,
-        "reviewers": [],
-        "github_urls": [],
-        "other_urls": [],
-    }
 
     _, required_checks = get_required_status_checks(
         owner=owner_name, repo=repo_name, branch=base_branch, token=token
@@ -151,23 +119,11 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         print(msg)
         return
 
-    # Check if last commit has [skip ci] - if so, tests never ran, trigger them
+    # If last commit has [skip ci], GitAuto is either still working or abandoned - either way, skip
     if check_commit_has_skip_ci(
         owner=owner_name, repo=repo_name, commit_sha=head_sha, token=token
     ):
-        msg = "Noticed I haven't completed (last commit has [skip ci]), triggering tests..."
-        print(msg)
-        create_comment(
-            owner=owner_name,
-            repo=repo_name,
-            token=token,
-            issue_number=pr_number,
-            body=msg,
-        )
-        slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
-        slack_notify(slack_msg)
-
-        create_empty_commit(base_args=base_args, message="Trigger tests")
+        print("Last commit has [skip ci], skipping auto-merge check")
         return
 
     # Fetch full PR details to get mergeable_state (not in simplified PR from check_suite webhook)

@@ -888,19 +888,15 @@ def test_auto_merge_with_unknown_state_no_comment(
 
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
-@patch("services.webhook.successful_check_suite_handler.create_empty_commit")
-@patch("services.webhook.successful_check_suite_handler.create_comment")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
 @patch("services.webhook.successful_check_suite_handler.get_repository_features")
-def test_auto_merge_blocked_skip_ci(
+def test_skip_ci_returns_early(
     mock_get_repo_features,
     mock_get_token,
     mock_get_pr,
     mock_check_skip_ci,
-    mock_create_comment,
-    mock_create_empty_commit,
     mock_get_check_suites,
     mock_get_required_checks,
 ):
@@ -916,7 +912,6 @@ def test_auto_merge_blocked_skip_ci(
         {"app": {"name": "GitHub Actions"}, "status": "completed"}
     ]
     mock_get_required_checks.return_value = (200, ["GitHub Actions"])
-    mock_get_pr.return_value = {"mergeable_state": "clean"}
     mock_check_skip_ci.return_value = True
 
     with patch(
@@ -952,11 +947,4 @@ def test_auto_merge_blocked_skip_ci(
             commit_sha="f8a15e5cc8987ef16de232e6a7d6d27c62ace05b",
             token="test-token",
         )
-        mock_create_comment.assert_called_once_with(
-            owner="gitautoai",
-            repo="gitauto",
-            token="test-token",
-            issue_number=2004,
-            body="Noticed I haven't completed (last commit has [skip ci]), triggering tests...",
-        )
-        mock_create_empty_commit.assert_called_once()
+        mock_get_pr.assert_not_called()
