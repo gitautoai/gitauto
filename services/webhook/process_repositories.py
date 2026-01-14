@@ -1,6 +1,5 @@
 # Standard imports
 import shutil
-import tempfile
 
 # Local imports
 from services.git.clone_repo import clone_repo
@@ -22,24 +21,29 @@ def process_repositories(
     for repo in repositories:
         repo_id = repo["id"]
         repo_name = repo["name"]
+        default_branch = repo["default_branch"]
 
         # Always save the repository, with or without stats
         stats = {"file_count": 0, "blank_lines": 0, "comment_lines": 0, "code_lines": 0}
 
-        # Create a temporary directory to clone the repository
-        temp_dir = tempfile.mkdtemp()
+        clone_dir = None
         try:
-            print(f"Cloning repository {repo_name} into {temp_dir}")
-            clone_repo(
-                owner=owner_name, repo=repo_name, token=token, target_dir=temp_dir
+            clone_dir = clone_repo(
+                owner=owner_name,
+                repo=repo_name,
+                pr_number=None,
+                branch=default_branch,
+                token=token,
             )
+            print(f"Cloned repository {repo_name} into {clone_dir}")
 
             # Try to get repository stats, but don't fail if this doesn't work
-            stats = get_repository_stats(local_path=temp_dir)
+            stats = get_repository_stats(local_path=clone_dir)
             print(f"Repository {repo_name} stats: {stats}")
 
         finally:
-            shutil.rmtree(temp_dir, ignore_errors=True)
+            if clone_dir:
+                shutil.rmtree(clone_dir, ignore_errors=True)
 
         # Always create repository record in Supabase, even if stats failed
         upsert_repository(

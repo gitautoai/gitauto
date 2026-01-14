@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 from config import PRODUCT_ID, UTF8
 from services.github.types.github_types import CheckSuiteCompletedPayload
 from services.webhook.successful_check_suite_handler import (
-    BLOCKED,
     handle_successful_check_suite,
 )
 

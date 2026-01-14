@@ -671,15 +671,20 @@ def test_replace_file_with_extra_kwargs(
 
 
 def test_replace_file_with_eslint_integration(sample_base_args):
+    base_args_with_clone = cast(
+        BaseArgs,
+        {
+            **sample_base_args,
+            "clone_dir": "/tmp/test-owner/test-repo/pr-1",
+        },
+    )
     with patch(
         "services.github.commits.replace_remote_file.requests.get"
     ) as mock_get, patch(
         "services.github.commits.replace_remote_file.requests.put"
     ) as mock_put, patch(
-        "services.github.commits.replace_remote_file.get_eslint_config"
-    ) as mock_get_eslint, patch(
-        "services.github.commits.replace_remote_file.get_raw_content"
-    ) as mock_get_raw, patch(
+        "services.github.commits.replace_remote_file.run_prettier"
+    ) as mock_run_prettier, patch(
         "services.github.commits.replace_remote_file.run_eslint"
     ) as mock_run_eslint:
 
@@ -693,41 +698,33 @@ def test_replace_file_with_eslint_integration(sample_base_args):
         mock_put_response.raise_for_status.return_value = None
         mock_put.return_value = mock_put_response
 
-        mock_get_eslint.return_value = {
-            "filename": ".eslintrc",
-            "content": '{"rules": {"no-console": "warn"}}',
-        }
-        mock_get_raw.return_value = '{"devDependencies": {"eslint": "^7.22.0"}}'
-        mock_run_eslint.return_value = {
-            "success": True,
-            "fixed_content": "const foo = 'bar';\n",
-            "errors": [],
-        }
+        mock_run_prettier.return_value = "const foo = 'bar';\n"
+        mock_run_eslint.return_value = "const foo = 'bar';\n"
 
         result = replace_remote_file_content(
             file_content="const foo = 'bar';",
             file_path="test.js",
-            base_args=sample_base_args,
+            base_args=base_args_with_clone,
         )
 
         assert result == "Content replaced in the file: test.js successfully."
-        mock_get_eslint.assert_called_once_with(sample_base_args)
+        mock_run_prettier.assert_called_once()
         mock_run_eslint.assert_called_once()
         call_kwargs = mock_run_eslint.call_args[1]
-        assert call_kwargs["owner"] == "test-owner"
-        assert call_kwargs["repo"] == "test-repo"
+        assert call_kwargs["clone_dir"] == "/tmp/test-owner/test-repo/pr-1"
+        assert call_kwargs["file_path"] == "test.js"
 
 
-def test_replace_file_with_eslint_no_config(sample_base_args):
+def test_replace_file_without_clone_dir_skips_linting(sample_base_args):
     with patch(
         "services.github.commits.replace_remote_file.requests.get"
     ) as mock_get, patch(
         "services.github.commits.replace_remote_file.requests.put"
     ) as mock_put, patch(
-        "services.github.commits.replace_remote_file.get_eslint_config"
-    ) as mock_get_eslint, patch(
-        "builtins.print"
-    ) as mock_print:
+        "services.github.commits.replace_remote_file.run_prettier"
+    ) as mock_run_prettier, patch(
+        "services.github.commits.replace_remote_file.run_eslint"
+    ) as mock_run_eslint:
 
         mock_get_response = MagicMock()
         mock_get_response.status_code = 200
@@ -739,8 +736,6 @@ def test_replace_file_with_eslint_no_config(sample_base_args):
         mock_put_response.raise_for_status.return_value = None
         mock_put.return_value = mock_put_response
 
-        mock_get_eslint.return_value = None
-
         result = replace_remote_file_content(
             file_content="export const foo = 'bar';",
             file_path="test.tsx",
@@ -748,19 +743,27 @@ def test_replace_file_with_eslint_no_config(sample_base_args):
         )
 
         assert result == "Content replaced in the file: test.tsx successfully."
-        mock_get_eslint.assert_called_once_with(sample_base_args)
-        mock_print.assert_called()
-        assert "No ESLint config found" in str(mock_print.call_args)
+        mock_run_prettier.assert_not_called()
+        mock_run_eslint.assert_not_called()
 
 
 def test_replace_file_skips_eslint_for_python(sample_base_args):
+    base_args_with_clone = cast(
+        BaseArgs,
+        {
+            **sample_base_args,
+            "clone_dir": "/tmp/test-owner/test-repo/pr-1",
+        },
+    )
     with patch(
         "services.github.commits.replace_remote_file.requests.get"
     ) as mock_get, patch(
         "services.github.commits.replace_remote_file.requests.put"
     ) as mock_put, patch(
-        "services.github.commits.replace_remote_file.get_eslint_config"
-    ) as mock_get_eslint:
+        "services.github.commits.replace_remote_file.run_prettier"
+    ) as mock_run_prettier, patch(
+        "services.github.commits.replace_remote_file.run_eslint"
+    ) as mock_run_eslint:
 
         mock_get_response = MagicMock()
         mock_get_response.status_code = 200
@@ -775,23 +778,29 @@ def test_replace_file_skips_eslint_for_python(sample_base_args):
         result = replace_remote_file_content(
             file_content="print('hello')",
             file_path="test.py",
-            base_args=sample_base_args,
+            base_args=base_args_with_clone,
         )
 
         assert result == "Content replaced in the file: test.py successfully."
-        mock_get_eslint.assert_not_called()
+        mock_run_prettier.assert_not_called()
+        mock_run_eslint.assert_not_called()
 
 
 def test_replace_file_with_eslint_unfixable_errors(sample_base_args):
+    base_args_with_clone = cast(
+        BaseArgs,
+        {
+            **sample_base_args,
+            "clone_dir": "/tmp/test-owner/test-repo/pr-1",
+        },
+    )
     with patch(
         "services.github.commits.replace_remote_file.requests.get"
     ) as mock_get, patch(
         "services.github.commits.replace_remote_file.requests.put"
     ) as mock_put, patch(
-        "services.github.commits.replace_remote_file.get_eslint_config"
-    ) as mock_get_eslint, patch(
-        "services.github.commits.replace_remote_file.get_raw_content"
-    ) as mock_get_raw, patch(
+        "services.github.commits.replace_remote_file.run_prettier"
+    ) as mock_run_prettier, patch(
         "services.github.commits.replace_remote_file.run_eslint"
     ) as mock_run_eslint:
 
@@ -808,21 +817,13 @@ def test_replace_file_with_eslint_unfixable_errors(sample_base_args):
         mock_put_response.raise_for_status.return_value = None
         mock_put.return_value = mock_put_response
 
-        mock_get_eslint.return_value = {
-            "filename": ".eslintrc.json",
-            "content": '{"rules": {"no-unused-vars": "error"}}',
-        }
-        mock_get_raw.return_value = '{"devDependencies": {"eslint": "^7.0.0"}}'
-        mock_run_eslint.return_value = {
-            "success": False,
-            "fixed_content": "const a = 1;\nconst b = 2;\n",
-            "errors": [{"line": 2, "message": "'b' is assigned but never used"}],
-        }
+        mock_run_prettier.return_value = "const a = 1;\nconst b = 2;\n"
+        mock_run_eslint.return_value = "const a = 1;\nconst b = 2;\n"
 
         result = replace_remote_file_content(
             file_content="const a = 1;\nconst b = 2;\n",
             file_path="test.js",
-            base_args=sample_base_args,
+            base_args=base_args_with_clone,
         )
 
         assert result == "Content replaced in the file: test.js successfully."

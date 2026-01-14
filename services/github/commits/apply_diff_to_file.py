@@ -1,15 +1,16 @@
-# Third party imports
+# Standard imports
 import base64
+
+# Third party imports
 import requests
 
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.eslint.run_eslint import run_eslint
-from services.github.files.get_eslint_config import get_eslint_config
-from services.github.files.get_raw_content import get_raw_content
 from services.github.types.contents import Contents
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
+from services.prettier.run_prettier import run_prettier
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.apply_patch import apply_patch
 
@@ -23,6 +24,7 @@ def apply_diff_to_file(
 ):
     """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
     skip_ci = base_args.get("skip_ci", False)
+    clone_dir = base_args.get("clone_dir")
     message = f"Update {file_path} [skip ci]" if skip_ci else f"Update {file_path}"
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     new_branch = base_args["new_branch"]
@@ -66,30 +68,23 @@ def apply_diff_to_file(
     if modified_text != "" and rej_text != "":
         return f"diff partially applied to the file: {file_path}. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\n{diff=}\n\n{rej_text=}"
 
-    if file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
-        eslint_config = get_eslint_config(base_args)
-        if eslint_config:
-            package_json_content = get_raw_content(
-                owner=owner,
-                repo=repo,
-                file_path="package.json",
-                ref=new_branch,
-                token=token,
-            )
-            eslint_result = run_eslint(
-                owner=owner,
-                repo=repo,
-                file_path=file_path,
-                file_content=modified_text,
-                eslint_config_content=eslint_config["content"],
-                package_json_content=package_json_content,
-            )
-            if eslint_result and eslint_result["fixed_content"]:
-                modified_text = eslint_result["fixed_content"]
-        else:
-            print(
-                f"No ESLint config found for {owner}/{repo}, skipping ESLint validation"
-            )
+    # Prettier then ESLint (JS ecosystem convention)
+    if clone_dir and file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
+        formatted_content = run_prettier(
+            clone_dir=clone_dir,
+            file_path=file_path,
+            file_content=modified_text,
+        )
+        if formatted_content:
+            modified_text = formatted_content
+
+        linted_content = run_eslint(
+            clone_dir=clone_dir,
+            file_path=file_path,
+            file_content=modified_text,
+        )
+        if linted_content:
+            modified_text = linted_content
 
     # Normal file update
     s2 = modified_text.encode(encoding=UTF8)

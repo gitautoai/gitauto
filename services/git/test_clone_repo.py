@@ -1,5 +1,4 @@
 import subprocess
-import tempfile
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -7,56 +6,143 @@ import pytest
 from services.git.clone_repo import clone_repo
 
 
-def test_clone_repo_success(test_owner, test_repo, test_token):
-    """Test successful repository cloning."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Mock subprocess.run to avoid actual git clone
-        with patch("subprocess.run") as mock_run:
-            mock_process = MagicMock()
-            mock_process.returncode = 0
-            mock_run.return_value = mock_process
+def test_clone_repo_with_pr_number(test_owner, test_repo, test_token):
+    with patch("services.git.clone_repo.subprocess.run") as mock_run:
+        with patch("services.git.clone_repo.os.path.exists") as mock_exists:
+            with patch("services.git.clone_repo.os.symlink"):
+                mock_run.return_value = MagicMock(returncode=0)
+                mock_exists.return_value = False
 
-            # Call the function
-            clone_repo(test_owner, test_repo, test_token, temp_dir)
+                result = clone_repo(
+                    owner=test_owner,
+                    repo=test_repo,
+                    pr_number=123,
+                    branch="main",
+                    token=test_token,
+                )
 
-            # Verify subprocess.run was called with correct arguments
-            expected_repo_url = f"https://x-access-token:{test_token}@github.com/{test_owner}/{test_repo}.git"
-            expected_cmd = f"git clone {expected_repo_url} {temp_dir}"
-            mock_run.assert_called_once_with(
-                expected_cmd, shell=True, capture_output=True, text=True, check=True
+                assert result == f"/tmp/{test_owner}/{test_repo}/pr-123"
+
+
+def test_clone_repo_without_pr_number(test_owner, test_repo, test_token):
+    with patch("services.git.clone_repo.subprocess.run") as mock_run:
+        with patch("services.git.clone_repo.os.path.exists") as mock_exists:
+            with patch("services.git.clone_repo.os.symlink"):
+                mock_run.return_value = MagicMock(returncode=0)
+                mock_exists.return_value = False
+
+                result = clone_repo(
+                    owner=test_owner,
+                    repo=test_repo,
+                    pr_number=None,
+                    branch="main",
+                    token=test_token,
+                )
+
+                assert result == f"/tmp/{test_owner}/{test_repo}"
+
+
+def test_clone_repo_reuses_existing_dir(test_owner, test_repo, test_token):
+    with patch("services.git.clone_repo.subprocess.run") as mock_run:
+        with patch("services.git.clone_repo.os.path.exists") as mock_exists:
+            mock_exists.return_value = True
+
+            result = clone_repo(
+                owner=test_owner,
+                repo=test_repo,
+                pr_number=456,
+                branch="main",
+                token=test_token,
             )
+
+            assert result == f"/tmp/{test_owner}/{test_repo}/pr-456"
+            mock_run.assert_not_called()
+
+
+def test_clone_repo_symlinks_node_modules(test_owner, test_repo, test_token):
+    with patch("services.git.clone_repo.subprocess.run") as mock_run:
+        with patch("services.git.clone_repo.os.path.exists") as mock_exists:
+            with patch("services.git.clone_repo.os.symlink") as mock_symlink:
+                with patch("services.git.clone_repo.get_efs_dir") as mock_efs:
+                    mock_run.return_value = MagicMock(returncode=0)
+                    mock_efs.return_value = f"/mnt/efs/{test_owner}/{test_repo}"
+
+                    def exists_side_effect(path):
+                        if "pr-789" in path:
+                            return False
+                        if "efs" in path and "node_modules" in path:
+                            return True
+                        return False
+
+                    mock_exists.side_effect = exists_side_effect
+
+                    clone_repo(
+                        owner=test_owner,
+                        repo=test_repo,
+                        pr_number=789,
+                        branch="feature",
+                        token=test_token,
+                    )
+
+                    mock_symlink.assert_called_once_with(
+                        f"/mnt/efs/{test_owner}/{test_repo}/node_modules",
+                        f"/tmp/{test_owner}/{test_repo}/pr-789/node_modules",
+                    )
+
+
+def test_clone_repo_uses_shallow_clone(test_owner, test_repo, test_token):
+    with patch("services.git.clone_repo.subprocess.run") as mock_run:
+        with patch("services.git.clone_repo.os.path.exists", return_value=False):
+            with patch("services.git.clone_repo.os.symlink"):
+                mock_run.return_value = MagicMock(returncode=0)
+
+                clone_repo(
+                    owner=test_owner,
+                    repo=test_repo,
+                    pr_number=100,
+                    branch="develop",
+                    token=test_token,
+                )
+
+                clone_call = mock_run.call_args_list[0]
+                clone_cmd = clone_call[0][0]
+                assert "--depth" in clone_cmd
+                assert "1" in clone_cmd
+                assert "--branch" in clone_cmd
+                assert "develop" in clone_cmd
 
 
 def test_clone_repo_subprocess_error(test_owner, test_repo, test_token):
-    """Test error handling when subprocess.run fails."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Mock subprocess.run to simulate a failure
-        with patch("subprocess.run") as mock_run:
-            # Create a subprocess error
+    with patch("services.git.clone_repo.subprocess.run") as mock_run:
+        with patch("services.git.clone_repo.os.path.exists", return_value=False):
             mock_run.side_effect = subprocess.CalledProcessError(
                 returncode=1,
                 cmd="git clone",
-                output="",
                 stderr="fatal: repository not found",
             )
 
-            # The function should raise an exception due to raise_on_error=True
             with pytest.raises(subprocess.CalledProcessError):
-                clone_repo(test_owner, test_repo, test_token, temp_dir)
+                clone_repo(
+                    owner=test_owner,
+                    repo=test_repo,
+                    pr_number=100,
+                    branch="main",
+                    token=test_token,
+                )
 
 
-def test_clone_repo_with_invalid_parameters(test_owner, test_token):
-    """Test with invalid parameters to ensure proper error handling."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Mock subprocess.run to avoid actual git clone but simulate failure
-        with patch("subprocess.run") as mock_run:
-            mock_run.side_effect = subprocess.CalledProcessError(
-                returncode=1,
-                cmd="git clone",
-                output="",
-                stderr="fatal: repository not found",
+def test_clone_repo_timeout(test_owner, test_repo, test_token):
+    with patch("services.git.clone_repo.subprocess.run") as mock_run:
+        with patch("services.git.clone_repo.os.path.exists", return_value=False):
+            mock_run.side_effect = subprocess.TimeoutExpired(
+                cmd="git clone", timeout=180
             )
 
-            # Test with invalid repo name
-            with pytest.raises(subprocess.CalledProcessError):
-                clone_repo(test_owner, "non-existent-repo", test_token, temp_dir)
+            with pytest.raises(subprocess.TimeoutExpired):
+                clone_repo(
+                    owner=test_owner,
+                    repo=test_repo,
+                    pr_number=100,
+                    branch="main",
+                    token=test_token,
+                )

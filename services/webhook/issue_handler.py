@@ -9,6 +9,7 @@ from config import GITHUB_API_URL, PRODUCT_ID, PR_BODY_STARTS_WITH
 from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.chat_with_agent import chat_with_agent
 from services.efs.start_async_install_on_efs import start_async_install_on_efs
+from services.git.clone_repo import clone_repo
 from services.resend.send_email import send_email
 from services.resend.text.credits_depleted_email import get_credits_depleted_email_text
 
@@ -357,6 +358,15 @@ def create_pr_from_issue(
     pr_body = issue_link + git_command(new_branch_name=new_branch_name)
     pr_url, pr_number = create_pull_request(
         body=pr_body, title=issue_title, base_args=base_args
+    )
+
+    # Clone repo to /tmp for code quality tools (prettier, eslint, pylint, pyright, testing, etc.)
+    base_args["clone_dir"] = clone_repo(
+        owner=owner_name,
+        repo=repo_name,
+        pr_number=pr_number,
+        branch=new_branch_name,
+        token=token,
     )
 
     comment_body = f"Created pull request: {pr_url}"

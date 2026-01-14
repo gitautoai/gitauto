@@ -47,6 +47,7 @@ class BaseArgs(TypedDict):
 
     # Optional fields
     check_run_name: NotRequired[str]
+    clone_dir: NotRequired[str]
     comment_url: NotRequired[str | None]
     issuer_email: NotRequired[str]
     pull_number: NotRequired[int]

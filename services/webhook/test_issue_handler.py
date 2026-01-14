@@ -248,6 +248,7 @@ def test_stripe_customer_id_update(
 @patch("services.webhook.issue_handler.get_base64")
 @patch("services.webhook.issue_handler.describe_image")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -277,6 +278,7 @@ def test_image_urls_processing(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_describe_image,
     mock_get_base64,
@@ -290,6 +292,7 @@ def test_image_urls_processing(
     mock_get_pr_files,
     mock_update_usage,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -344,6 +347,7 @@ def test_image_urls_processing(
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.get_base64")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -373,6 +377,7 @@ def test_image_unsupported_format_skipped(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_get_base64,
     mock_get_remote_file,
@@ -385,6 +390,7 @@ def test_image_unsupported_format_skipped(
     mock_get_pr_files,
     mock_update_usage,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -432,6 +438,7 @@ def test_image_unsupported_format_skipped(
 @patch("services.webhook.issue_handler.get_base64")
 @patch("services.webhook.issue_handler.describe_image")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -461,6 +468,7 @@ def test_image_base64_fetch_failed(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_describe_image,
     mock_get_base64,
@@ -474,6 +482,7 @@ def test_image_base64_fetch_failed(
     mock_get_pr_files,
     mock_update_usage,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -522,6 +531,7 @@ def test_image_base64_fetch_failed(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -553,6 +563,7 @@ def test_timeout_approaching_breaks_loop(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_check_branch,
@@ -565,6 +576,7 @@ def test_timeout_approaching_breaks_loop(
     mock_is_timeout,
     mock_get_timeout_msg,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -611,6 +623,7 @@ def test_timeout_approaching_breaks_loop(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -642,6 +655,7 @@ def test_branch_deleted_breaks_loop(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_check_branch,
@@ -653,6 +667,7 @@ def test_branch_deleted_breaks_loop(
     mock_is_timeout,
     mock_get_pr_files,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -698,6 +713,7 @@ def test_branch_deleted_breaks_loop(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -729,6 +745,7 @@ def test_retry_loop_exhausted_not_explored_but_committed(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_check_branch,
@@ -740,6 +757,7 @@ def test_retry_loop_exhausted_not_explored_but_committed(
     mock_is_timeout,
     mock_get_pr_files,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -793,6 +811,7 @@ def test_retry_loop_exhausted_not_explored_but_committed(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -824,6 +843,7 @@ def test_retry_loop_exhausted_explored_but_not_committed(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_check_branch,
@@ -835,6 +855,7 @@ def test_retry_loop_exhausted_explored_but_not_committed(
     mock_is_timeout,
     mock_get_pr_files,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -888,6 +909,7 @@ def test_retry_loop_exhausted_explored_but_not_committed(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -919,6 +941,7 @@ def test_retry_counter_reset_on_successful_loop(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_check_branch,
@@ -930,6 +953,7 @@ def test_retry_counter_reset_on_successful_loop(
     mock_is_timeout,
     mock_get_pr_files,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -980,6 +1004,7 @@ def test_retry_counter_reset_on_successful_loop(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -1011,6 +1036,7 @@ def test_non_test_file_skipped_in_header_merge(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_check_branch,
@@ -1023,6 +1049,7 @@ def test_non_test_file_skipped_in_header_merge(
     mock_get_pr_files,
     mock_is_test_file,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -1072,6 +1099,7 @@ def test_non_test_file_skipped_in_header_merge(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -1103,6 +1131,7 @@ def test_test_file_header_merge(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_check_branch,
@@ -1118,6 +1147,7 @@ def test_test_file_header_merge(
     mock_merge_headers,
     mock_replace_remote,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -1172,6 +1202,7 @@ def test_test_file_header_merge(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -1203,6 +1234,7 @@ def test_test_file_header_merge_no_content(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_check_branch,
@@ -1218,6 +1250,7 @@ def test_test_file_header_merge_no_content(
     mock_merge_headers,
     mock_replace_remote,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -1271,6 +1304,7 @@ def test_test_file_header_merge_no_content(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -1302,6 +1336,7 @@ def test_test_file_header_merge_no_change(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_check_branch,
@@ -1317,6 +1352,7 @@ def test_test_file_header_merge_no_change(
     mock_merge_headers,
     mock_replace_remote,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -1372,6 +1408,7 @@ def test_test_file_header_merge_no_change(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -1403,6 +1440,7 @@ def test_credits_depleted_email_sent(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_start_async,
+    mock_clone_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_check_branch,
@@ -1419,6 +1457,7 @@ def test_credits_depleted_email_sent(
     mock_get_email_text,
     mock_send_email,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -1477,6 +1516,7 @@ def test_credits_depleted_email_sent(
 @patch("services.webhook.issue_handler.update_usage")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_user_request")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.get_owner")
 @patch("services.webhook.issue_handler.create_comment")
@@ -1490,6 +1530,7 @@ def test_issue_handler_token_accumulation(
     mock_create_comment,
     mock_get_owner,
     mock_start_async_install_on_efs,
+    mock_clone_repo,
     mock_create_user_request,
     mock_chat_with_agent,
     mock_update_usage,
@@ -1507,6 +1548,7 @@ def test_issue_handler_token_accumulation(
     mock_insert_credit,
 ):
     """Test that issue handler accumulates tokens correctly and calls update_usage"""
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
 
     # Mock the payload deconstruction
     mock_deconstruct_github_payload.return_value = (
@@ -1639,6 +1681,7 @@ def test_issue_handler_token_accumulation(
 @patch("services.webhook.issue_handler.get_repository_features")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_user_request")
+@patch("services.webhook.issue_handler.clone_repo")
 @patch("services.webhook.issue_handler.start_async_install_on_efs")
 @patch("services.webhook.issue_handler.get_owner")
 @patch("services.webhook.issue_handler.create_comment")
@@ -1652,6 +1695,7 @@ def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_create_comment,
     mock_get_owner,
     mock_start_async_install_on_efs,
+    mock_clone_repo,
     mock_create_user_request,
     mock_chat_with_agent,
     mock_get_repository_features,
@@ -1670,6 +1714,7 @@ def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_check_branch_exists,
     mock_insert_credit,
 ):
+    mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
     mock_deconstruct_github_payload.return_value = (
         {
             "installation_id": 123,

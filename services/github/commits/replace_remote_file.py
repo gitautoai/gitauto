@@ -8,15 +8,14 @@ import requests
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.eslint.run_eslint import run_eslint
-from services.github.files.get_eslint_config import get_eslint_config
-from services.github.files.get_raw_content import get_raw_content
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from services.openai.functions.properties import FILE_PATH
+from services.prettier.run_prettier import run_prettier
 from utils.error.handle_exceptions import handle_exceptions
-from utils.text.strip_trailing_spaces import strip_trailing_spaces
 from utils.text.ensure_final_newline import ensure_final_newline
 from utils.text.sort_imports import sort_imports
+from utils.text.strip_trailing_spaces import strip_trailing_spaces
 
 # Define the function for replacing remote file content
 REPLACE_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
@@ -51,6 +50,7 @@ def replace_remote_file_content(
     token = base_args["token"]
     new_branch = base_args["new_branch"]
     skip_ci = base_args.get("skip_ci", False)
+    clone_dir = base_args.get("clone_dir")
 
     # Prepare the request
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={new_branch}"
@@ -64,30 +64,23 @@ def replace_remote_file_content(
     file_content = strip_trailing_spaces(file_content)
     file_content = ensure_final_newline(file_content)
 
-    if file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
-        eslint_config = get_eslint_config(base_args)
-        if eslint_config:
-            package_json_content = get_raw_content(
-                owner=owner,
-                repo=repo,
-                file_path="package.json",
-                ref=new_branch,
-                token=token,
-            )
-            eslint_result = run_eslint(
-                owner=owner,
-                repo=repo,
-                file_path=file_path,
-                file_content=file_content,
-                eslint_config_content=eslint_config["content"],
-                package_json_content=package_json_content,
-            )
-            if eslint_result and eslint_result["fixed_content"]:
-                file_content = eslint_result["fixed_content"]
-        else:
-            print(
-                f"No ESLint config found for {owner}/{repo}, skipping ESLint validation"
-            )
+    # Prettier then ESLint (JS ecosystem convention)
+    if clone_dir and file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
+        formatted_content = run_prettier(
+            clone_dir=clone_dir,
+            file_path=file_path,
+            file_content=file_content,
+        )
+        if formatted_content:
+            file_content = formatted_content
+
+        linted_content = run_eslint(
+            clone_dir=clone_dir,
+            file_path=file_path,
+            file_content=file_content,
+        )
+        if linted_content:
+            file_content = linted_content
 
     # Set up the data for the PUT request
     message = (
