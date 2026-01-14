@@ -65,20 +65,41 @@ def test_delete_comment_with_different_comment_id(mock_delete_response):
         assert str(comment_id) in actual_call[1]["url"]
 
 
-def test_delete_comment_http_error_handled():
+def test_delete_comment_404_returns_none_silently():
+    """Test that 404 errors are handled silently without raising."""
     owner = fake.user_name()
     repo = fake.slug()
     token = fake.sha256()
     comment_id = fake.random_int(min=1000, max=99999)
 
     mock_response = MagicMock()
-    http_error = HTTPError("404 Not Found")
-    mock_error_response = MagicMock()
-    mock_error_response.status_code = 404
-    mock_error_response.reason = "Not Found"
-    mock_error_response.text = "Comment not found"
-    http_error.response = mock_error_response
-    mock_response.raise_for_status.side_effect = http_error
+    mock_response.status_code = 404
+    mock_response.raise_for_status.side_effect = HTTPError("404 Not Found")
+
+    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+        mock_delete.return_value = mock_response
+
+        result = delete_comment(
+            owner=owner,
+            repo=repo,
+            token=token,
+            comment_id=comment_id,
+        )
+
+        assert result is None
+        mock_delete.assert_called_once()
+
+
+def test_delete_comment_non_404_error_handled_by_decorator():
+    """Test that non-404 errors are re-raised and handled by decorator."""
+    owner = fake.user_name()
+    repo = fake.slug()
+    token = fake.sha256()
+    comment_id = fake.random_int(min=1000, max=99999)
+
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    mock_response.raise_for_status.side_effect = HTTPError("500 Server Error")
 
     with patch("services.github.comments.delete_comment.delete") as mock_delete:
         mock_delete.return_value = mock_response
