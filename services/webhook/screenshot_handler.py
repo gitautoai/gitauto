@@ -221,41 +221,45 @@ async def handle_screenshot_comparison(payload: dict) -> None:
     pull_url: str = pull["url"]
     pull_files_url = pull_url + "/files"
     head: dict[str, Any] = pull["head"]
+    base: dict[str, Any] = pull["base"]
     branch_name = head["ref"]
+    base_branch = base["ref"]
     file_changes = get_pull_request_file_changes(url=pull_files_url, token=token)
     print(dumps(file_changes, indent=2))
 
     server_process = None
+    clone_dir = None
     try:
-        # Create temporary directory for cloning. For Mac, this is /private/tmp
-        temp_dir = f"/tmp/{owner}/{repo}/pr-{pull_number}"
-        os.makedirs(temp_dir, exist_ok=True)
-        print(f"Created temporary directory: `{temp_dir}`")
-
-        # Clone repository
-        clone_repo(owner=owner, repo=repo, token=token, target_dir=temp_dir)
-        print(f"Cloned repository to `{temp_dir}`")
+        # Clone repository with base branch
+        clone_dir = clone_repo(
+            owner=owner,
+            repo=repo,
+            pr_number=pull_number,
+            branch=base_branch,
+            token=token,
+        )
+        print(f"Cloned repository to `{clone_dir}`")
 
         # Fetch the pull request branch
         fetch_branch(
-            pull_number=pull_number, branch_name=branch_name, repo_dir=temp_dir
+            pull_number=pull_number, branch_name=branch_name, repo_dir=clone_dir
         )
         print(f"Fetched branch `{branch_name}`")
 
         # Check out the pull request branch
-        switch_to_branch(branch_name=branch_name, repo_dir=temp_dir)
+        switch_to_branch(branch_name=branch_name, repo_dir=clone_dir)
         print(f"Switched to pull request branch `{branch_name}`")
 
         # Get paths that need screenshot comparison
-        paths = get_target_paths(file_changes, repo_dir=temp_dir)
+        paths = get_target_paths(file_changes, repo_dir=clone_dir)
         if not paths:
             return
         print(f"Found {len(paths)} target paths.")
         print(dumps(paths, indent=2))
 
         # Start a local server in the cloned repository directory
-        get_current_branch(repo_dir=temp_dir)
-        server_process = start_local_server(repo_dir=temp_dir)
+        get_current_branch(repo_dir=clone_dir)
+        server_process = start_local_server(repo_dir=clone_dir)
         print(f"Started local server at server process ID: `{server_process.pid}`")
 
         # Wait for server to start
@@ -275,8 +279,8 @@ async def handle_screenshot_comparison(payload: dict) -> None:
         print(f"Local URLs: {dumps(local_urls, indent=2)}")
 
         # Create temporary directories for screenshots
-        prod_dir = os.path.join(temp_dir, "prod_screenshots")
-        local_dir = os.path.join(temp_dir, "local_screenshots")
+        prod_dir = os.path.join(clone_dir, "prod_screenshots")
+        local_dir = os.path.join(clone_dir, "local_screenshots")
         print(f"Prod dir: {prod_dir}")
         print(f"Local dir: {local_dir}")
 
@@ -338,6 +342,6 @@ async def handle_screenshot_comparison(payload: dict) -> None:
             print(f"Terminated local server at process ID: `{server_process.pid}`")
 
         # Remove cloned repository
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
-            print(f"Deleted the temporary directory: `{temp_dir}`")
+        if clone_dir and os.path.exists(clone_dir):
+            shutil.rmtree(clone_dir)
+            print(f"Deleted the cloned directory: `{clone_dir}`")

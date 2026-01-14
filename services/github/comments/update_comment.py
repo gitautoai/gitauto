@@ -9,7 +9,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def update_comment(body: str, base_args: BaseArgs):
+def update_comment(body: str, base_args: BaseArgs, **_kwargs):
     """https://docs.github.com/en/rest/issues/comments#update-an-issue-comment"""
     token = base_args["token"]
     comment_url = base_args.get("comment_url")
