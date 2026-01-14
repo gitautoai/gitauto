@@ -45,6 +45,7 @@
       "Bash(python3 scripts/github/get_pr_info.py:*)",
       "Bash(python3 scripts/github/get_pr_status.py:*)",
       "Bash(python3 scripts/github/list_failing_gitauto_prs.py:*)",
+      "Bash(python3 scripts/sentry/get_issue.py:*)",
       "Bash(ruff check:*)",
       "Bash(sed :*)",
       "Bash(sentry-cli issues list :*)",

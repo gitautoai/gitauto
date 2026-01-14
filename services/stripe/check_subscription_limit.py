@@ -1,5 +1,8 @@
 from datetime import datetime
 from typing import TypedDict
+
+from stripe import Subscription
+
 from config import TZ, ONE_YEAR_FROM_NOW
 from services.supabase.usage.count_completed_unique_requests import (
     count_completed_unique_requests,
@@ -27,15 +30,20 @@ DEFAULT_SUBSCRIPTION_LIMIT: SubscriptionLimitResult = {
     default_return_value=DEFAULT_SUBSCRIPTION_LIMIT, raise_on_error=False
 )
 def check_subscription_limit(
-    paid_subscription,
+    paid_subscription: Subscription,
     installation_id: int,
 ) -> SubscriptionLimitResult:
-    item = paid_subscription["items"]["data"][0]
-    start_date_seconds = paid_subscription.current_period_start
-    end_date_seconds = paid_subscription.current_period_end
-    product_id = item["price"]["product"]
-    interval = item["price"]["recurring"]["interval"]
-    quantity = item["quantity"]
+    item = paid_subscription.items.data[0]
+    start_date_seconds = item.current_period_start
+    end_date_seconds = item.current_period_end
+    recurring = item.price.recurring
+    quantity = item.quantity
+
+    if recurring is None or quantity is None:
+        raise ValueError("Invalid subscription: missing recurring or quantity")
+
+    product_id = str(item.price.product)
+    interval = recurring.interval
 
     base_request_limit = get_base_request_limit(product_id)
     request_limit = (
