@@ -10,27 +10,23 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_workflow_runs(
+def get_workflow_file_runs(
     owner: str,
     repo: str,
+    workflow_file: str,
     token: str,
-    commit_sha: str | None = None,
     branch: str | None = None,
     per_page: int = 30,
     max_pages: int = 1,
 ):
-    # https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-repository
-    if not commit_sha and not branch:
-        raise ValueError("Either commit_sha or branch must be provided")
-
+    # https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-workflow
     headers = create_headers(token=token, media_type="")
     all_runs: list[WorkflowRun] = []
 
     for page in range(1, max_pages + 1):
-        url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs?per_page={per_page}&page={page}"
-        if commit_sha:
-            url += f"&head_sha={commit_sha}"
-        else:
+        print(f"    Page {page}...", flush=True)
+        url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/workflows/{workflow_file}/runs?per_page={per_page}&page={page}"
+        if branch:
             url += f"&branch={branch}"
 
         response = get(url=url, headers=headers, timeout=TIMEOUT)

@@ -190,18 +190,22 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
         # Skip non-code files
         if not is_code_file(item_path):
+            print(f"Skipping {item_path}: not a code file")
             continue
 
         # Skip test files
         if is_test_file(item_path):
+            print(f"Skipping {item_path}: test file")
             continue
 
         # Skip types files
         if is_type_file(item_path):
+            print(f"Skipping {item_path}: type file")
             continue
 
         # Skip migration files
         if is_migration_file(item_path):
+            print(f"Skipping {item_path}: migration file")
             continue
 
         # Skip files that only contain exports/re-exports or are empty
@@ -214,22 +218,27 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         )
         # Skip empty files or files with only whitespace
         if not content or not content.strip():
+            print(f"Skipping {item_path}: empty content")
             continue
 
         # Skip files that should be skipped based on content
         if should_skip_test(item_path, content):
+            print(f"Skipping {item_path}: should_skip_test=True")
             continue
 
         # Skip files excluded from testing
         if item.get("is_excluded_from_testing"):
+            print(f"Skipping {item_path}: excluded from testing")
             continue
 
         # Skip files that have open PRs
         if any(item_path in pr.get("title", "") for pr in open_prs):
+            print(f"Skipping {item_path}: has open PR")
             continue
 
         # Final check: Use Claude AI to determine if this file should be tested (expensive, so run last)
         if not should_test_file(item_path, content):
+            print(f"Skipping {item_path}: should_test_file=False")
             continue
 
         # Found the best suitable file

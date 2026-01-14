@@ -80,7 +80,6 @@ def mock_create_gitauto_button_comment():
 def mock_handle_pr_checkbox_trigger():
     with patch(
         "services.webhook.webhook_handler.handle_pr_checkbox_trigger",
-        new_callable=AsyncMock,
     ) as mock:
         mock.return_value = None
         yield mock
