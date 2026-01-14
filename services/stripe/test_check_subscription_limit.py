@@ -33,26 +33,25 @@ def create_mock_subscription(
     end_timestamp=1643673600,
 ):
     """Helper to create a mock subscription with proper structure."""
+    mock_recurring = MagicMock()
+    mock_recurring.interval = interval
+
+    mock_price = MagicMock()
+    mock_price.product = product_id
+    mock_price.recurring = mock_recurring
+
+    mock_item = MagicMock()
+    mock_item.price = mock_price
+    mock_item.quantity = quantity
+    mock_item.current_period_start = start_timestamp
+    mock_item.current_period_end = end_timestamp
+
+    mock_items = MagicMock()
+    mock_items.data = [mock_item]
+
     mock_subscription = MagicMock()
-    mock_subscription.current_period_start = start_timestamp
-    mock_subscription.current_period_end = end_timestamp
+    mock_subscription.items = mock_items
 
-    # Mock the subscription's items data access using a direct dictionary approach
-    subscription_data = {
-        "items": {
-            "data": [
-                {
-                    "price": {
-                        "product": product_id,
-                        "recurring": {"interval": interval},
-                    },
-                    "quantity": quantity,
-                }
-            ]
-        }
-    }
-
-    mock_subscription.__getitem__ = lambda self, key: subscription_data[key]
     return mock_subscription
 
 
@@ -297,12 +296,10 @@ def test_check_subscription_limit_handles_malformed_subscription_data(
     sample_installation_id,
 ):
     """Test that function returns default values when subscription data is malformed."""
-    malformed_subscription = create_mock_subscription(
-        "prod_test", "month", 1, 1640995200, 1643673600
-    )
-
-    # Override the __getitem__ to return empty data array
-    malformed_subscription.__getitem__ = lambda self, key: {"items": {"data": []}}[key]
+    mock_items = MagicMock()
+    mock_items.data = []
+    malformed_subscription = MagicMock()
+    malformed_subscription.items = mock_items
 
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
