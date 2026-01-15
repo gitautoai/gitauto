@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from services.github.types.repository import Repository
+from services.github.types.repository import RepositoryAddedOrRemoved
 from services.webhook.process_repositories import process_repositories
 
 
@@ -12,6 +12,13 @@ from services.webhook.process_repositories import process_repositories
 def mock_clone_repo():
     with patch("services.webhook.process_repositories.clone_repo") as mock:
         mock.return_value = "/tmp/test-owner/test-repo"
+        yield mock
+
+
+@pytest.fixture
+def mock_get_default_branch():
+    with patch("services.webhook.process_repositories.get_default_branch") as mock:
+        mock.return_value = ("main", "abc123")
         yield mock
 
 
@@ -36,8 +43,20 @@ def mock_shutil():
 @pytest.fixture
 def sample_repositories():
     return [
-        {"id": 111, "name": "test-repo-1", "default_branch": "main"},
-        {"id": 222, "name": "test-repo-2", "default_branch": "master"},
+        {
+            "id": 111,
+            "node_id": "R_1",
+            "name": "test-repo-1",
+            "full_name": "test-owner/test-repo-1",
+            "private": False,
+        },
+        {
+            "id": 222,
+            "node_id": "R_2",
+            "name": "test-repo-2",
+            "full_name": "test-owner/test-repo-2",
+            "private": True,
+        },
     ]
 
 
@@ -58,11 +77,13 @@ class TestProcessRepositories:
         sample_repositories,
         sample_stats,
         mock_clone_repo,
+        mock_get_default_branch,
         mock_get_repository_stats,
         mock_upsert_repository,
         mock_shutil,
     ):
         mock_get_repository_stats.return_value = sample_stats
+        mock_get_default_branch.side_effect = [("main", "sha1"), ("master", "sha2")]
         mock_clone_repo.side_effect = [
             "/tmp/test-owner/test-repo-1",
             "/tmp/test-owner/test-repo-2",
@@ -77,6 +98,7 @@ class TestProcessRepositories:
             user_name="test-user",
         )
 
+        assert mock_get_default_branch.call_count == 2
         assert mock_clone_repo.call_count == 2
         mock_clone_repo.assert_any_call(
             owner="test-owner",
@@ -100,6 +122,7 @@ class TestProcessRepositories:
     def test_process_repositories_empty_list(
         self,
         mock_clone_repo,
+        mock_get_default_branch,
         mock_get_repository_stats,
         mock_upsert_repository,
         mock_shutil,
@@ -113,6 +136,7 @@ class TestProcessRepositories:
             user_name="test-user",
         )
 
+        mock_get_default_branch.assert_not_called()
         mock_clone_repo.assert_not_called()
         mock_get_repository_stats.assert_not_called()
         mock_upsert_repository.assert_not_called()
@@ -122,6 +146,7 @@ class TestProcessRepositories:
         self,
         sample_repositories,
         mock_clone_repo,
+        mock_get_default_branch,
         mock_get_repository_stats,
         mock_upsert_repository,
         mock_shutil,
@@ -137,6 +162,7 @@ class TestProcessRepositories:
             user_name="test-user",
         )
 
+        assert mock_get_default_branch.call_count == 1
         assert mock_clone_repo.call_count == 1
         mock_get_repository_stats.assert_not_called()
         mock_upsert_repository.assert_not_called()
@@ -145,6 +171,7 @@ class TestProcessRepositories:
         self,
         sample_repositories,
         mock_clone_repo,
+        mock_get_default_branch,
         mock_get_repository_stats,
         mock_upsert_repository,
         mock_shutil,
@@ -161,6 +188,7 @@ class TestProcessRepositories:
             user_name="test-user",
         )
 
+        assert mock_get_default_branch.call_count == 1
         assert mock_clone_repo.call_count == 1
         assert mock_get_repository_stats.call_count == 1
         mock_upsert_repository.assert_not_called()
@@ -169,13 +197,22 @@ class TestProcessRepositories:
         self,
         sample_stats,
         mock_clone_repo,
+        mock_get_default_branch,
         mock_get_repository_stats,
         mock_upsert_repository,
         mock_shutil,
     ):
         single_repo = cast(
-            list[Repository],
-            [{"id": 333, "name": "single-repo", "default_branch": "main"}],
+            list[RepositoryAddedOrRemoved],
+            [
+                {
+                    "id": 333,
+                    "node_id": "R_3",
+                    "name": "single-repo",
+                    "full_name": "test-owner/single-repo",
+                    "private": False,
+                }
+            ],
         )
         mock_clone_repo.return_value = "/tmp/test-owner/single-repo"
         mock_get_repository_stats.return_value = sample_stats
@@ -197,6 +234,7 @@ class TestProcessRepositories:
         self,
         sample_repositories,
         mock_clone_repo,
+        mock_get_default_branch,
         mock_get_repository_stats,
         mock_upsert_repository,
         mock_shutil,
@@ -236,6 +274,7 @@ class TestProcessRepositories:
         self,
         sample_repositories,
         mock_clone_repo,
+        mock_get_default_branch,
         mock_get_repository_stats,
         mock_upsert_repository,
         mock_shutil,
