@@ -3,8 +3,9 @@ import shutil
 
 # Local imports
 from services.git.clone_repo import clone_repo
+from services.github.branches.get_default_branch import get_default_branch
 from services.github.repositories.get_repository_stats import get_repository_stats
-from services.github.types.repository import Repository
+from services.github.types.repository import RepositoryAddedOrRemoved
 from services.supabase.repositories.upsert_repository import upsert_repository
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -13,7 +14,7 @@ from utils.error.handle_exceptions import handle_exceptions
 def process_repositories(
     owner_id: int,
     owner_name: str,
-    repositories: list[Repository],
+    repositories: list[RepositoryAddedOrRemoved],
     token: str,
     user_id: int,
     user_name: str,
@@ -21,7 +22,9 @@ def process_repositories(
     for repo in repositories:
         repo_id = repo["id"]
         repo_name = repo["name"]
-        default_branch = repo["default_branch"]
+        default_branch, _ = get_default_branch(
+            owner=owner_name, repo=repo_name, token=token
+        )
 
         # Always save the repository, with or without stats
         stats = {"file_count": 0, "blank_lines": 0, "comment_lines": 0, "code_lines": 0}

@@ -3,6 +3,16 @@ from typing import Optional, TypedDict
 from services.github.types.owner import Owner
 
 
+class RepositoryAddedOrRemoved(TypedDict):
+    """https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation_repositories"""
+
+    id: int
+    node_id: str
+    name: str
+    full_name: str
+    private: bool
+
+
 class Repository(TypedDict):
     id: int
     node_id: str

@@ -12,7 +12,7 @@ from services.github.types.label import Label
 from services.github.types.organization import Organization
 from services.github.types.owner import OwnerType
 from services.github.types.pull_request import PullRequest
-from services.github.types.repository import Repository
+from services.github.types.repository import Repository, RepositoryAddedOrRemoved
 from services.github.types.sender import Sender
 from services.github.types.user import User
 
@@ -93,7 +93,7 @@ class CheckSuiteCompletedPayload(TypedDict):
 class GitHubInstallationPayload(TypedDict):
     action: str
     installation: InstallationDetails
-    repositories: list[Repository]
+    repositories: list[RepositoryAddedOrRemoved]
     requester: Optional[User]
     sender: User
 
@@ -102,8 +102,8 @@ class GitHubInstallationRepositoriesPayload(TypedDict):
     action: str
     installation: InstallationDetails
     repository_selection: str
-    repositories_added: list[Repository]
-    repositories_removed: list[Repository]
+    repositories_added: list[RepositoryAddedOrRemoved]
+    repositories_removed: list[RepositoryAddedOrRemoved]
     requester: Optional[User]
     sender: User
 
