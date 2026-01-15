@@ -13,7 +13,7 @@ def test_start_async_install_on_efs_submits_future():
         "owner_id": 12345,
         "repo": "test-repo",
         "token": "test-token",
-        "new_branch": "test-branch",
+        "base_branch": "test-branch",
     }
 
     mock_executor = MagicMock()
@@ -40,7 +40,7 @@ def test_start_async_install_on_efs_reuses_successful_future():
         "owner_id": 12345,
         "repo": "test-repo",
         "token": "test-token",
-        "new_branch": "test-branch",
+        "base_branch": "test-branch",
     }
 
     existing_future = Future()
@@ -68,7 +68,7 @@ def test_start_async_install_on_efs_retries_failed_future():
         "owner_id": 12345,
         "repo": "test-repo",
         "token": "test-token",
-        "new_branch": "test-branch",
+        "base_branch": "test-branch",
     }
 
     failed_future = Future()
@@ -99,7 +99,7 @@ def test_start_async_install_on_efs_skips_in_progress_future():
         "owner_id": 12345,
         "repo": "test-repo",
         "token": "test-token",
-        "new_branch": "test-branch",
+        "base_branch": "test-branch",
     }
 
     in_progress_future = Future()

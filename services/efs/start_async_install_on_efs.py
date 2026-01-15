@@ -28,7 +28,7 @@ def start_async_install_on_efs(base_args: BaseArgs):
     owner_id = base_args["owner_id"]
     repo = base_args["repo"]
     token = base_args["token"]
-    new_branch = base_args["new_branch"]
+    base_branch = base_args["base_branch"]
     efs_dir = get_efs_dir(owner, repo)
 
     for name, func in _INSTALLERS:
@@ -48,7 +48,7 @@ def start_async_install_on_efs(base_args: BaseArgs):
 
         if name not in install_futures[efs_dir]:
             future = _executor.submit(
-                func, owner, owner_id, repo, new_branch, token, efs_dir
+                func, owner, owner_id, repo, base_branch, token, efs_dir
             )
             install_futures[efs_dir][name] = future
             print(f"{name}: Started async installation for {owner}/{repo}")
