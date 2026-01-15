@@ -1,4 +1,5 @@
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name,unused-argument,import-outside-toplevel
+# pyright: reportUnusedVariable=false
 from unittest.mock import patch, MagicMock
 import pytest
 from services.supabase.owners.insert_owner import insert_owner

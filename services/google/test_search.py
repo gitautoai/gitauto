@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 from unittest.mock import Mock, patch
 import pytest
 import requests

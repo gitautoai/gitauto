@@ -143,7 +143,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     ]
 
     # Execute the function
-    handle_review_run(mock_review_comment_payload)
+    await handle_review_run(mock_review_comment_payload)
 
     # Verify chat_with_agent was called exactly twice (get + commit modes)
     assert mock_chat_with_agent.call_count == 2

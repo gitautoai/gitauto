@@ -86,10 +86,11 @@ def mock_pr_changes():
     ]
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
-def test_handle_check_suite_skips_non_gitauto_branch(
+async def test_handle_check_suite_skips_non_gitauto_branch(
     mock_get_repo, mock_get_token, mock_get_failed_runs, mock_check_run_payload
 ):
     """Test that handler skips when branch doesn't start with PRODUCT_ID."""
@@ -99,7 +100,7 @@ def test_handle_check_suite_skips_non_gitauto_branch(
     payload["check_suite"]["id"] = random.randint(1000000, 9999999)
     payload["check_suite"]["head_branch"] = "non-gitauto-branch"
 
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     # Verify no further processing occurred
     mock_get_token.assert_not_called()
@@ -107,10 +108,11 @@ def test_handle_check_suite_skips_non_gitauto_branch(
     mock_get_failed_runs.assert_not_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
-def test_handle_check_suite_skips_when_trigger_disabled(
+async def test_handle_check_suite_skips_when_trigger_disabled(
     mock_get_repo,
     mock_get_token,
     mock_get_failed_runs,
@@ -131,20 +133,21 @@ def test_handle_check_suite_skips_when_trigger_disabled(
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": False}
 
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     mock_get_token.assert_called_once()
     mock_get_failed_runs.assert_called_once()
     mock_get_repo.assert_called_once_with(owner_id=11111, repo_id=98765)
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
 @patch("services.webhook.check_suite_handler.has_comment_with_text")
 @patch("services.webhook.check_suite_handler.create_comment")
-def test_handle_check_suite_skips_when_comment_exists(
+async def test_handle_check_suite_skips_when_comment_exists(
     mock_create_comment,
     mock_has_comment,
     mock_slack_notify,
@@ -169,7 +172,7 @@ def test_handle_check_suite_skips_when_comment_exists(
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = True
 
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     mock_get_token.assert_called_once()
     mock_get_failed_runs.assert_called_once()
@@ -179,6 +182,7 @@ def test_handle_check_suite_skips_when_comment_exists(
     mock_slack_notify.assert_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
@@ -198,7 +202,7 @@ def test_handle_check_suite_skips_when_comment_exists(
 @patch("services.webhook.check_suite_handler.check_branch_exists")
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.update_usage")
-def test_handle_check_suite_race_condition_prevention(
+async def test_handle_check_suite_race_condition_prevention(
     mock_update_usage,
     mock_update_comment,
     mock_check_branch_exists,
@@ -258,7 +262,7 @@ def test_handle_check_suite_race_condition_prevention(
         "created_at": "2025-09-28T14:19:01.247+00:00",
     }
 
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     # Verify race prevention logic was triggered
     mock_check_older_active.assert_called_with(
@@ -285,6 +289,7 @@ def test_handle_check_suite_race_condition_prevention(
     mock_update_comment.assert_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
@@ -305,7 +310,7 @@ def test_handle_check_suite_race_condition_prevention(
 @patch("services.webhook.check_suite_handler.create_empty_commit")
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
-def test_handle_check_suite_full_workflow(
+async def test_handle_check_suite_full_workflow(
     mock_timeout_check,
     _mock_update_usage,
     _mock_create_empty_commit,
@@ -389,7 +394,7 @@ def test_handle_check_suite_full_workflow(
     ]
 
     # Execute
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     # Verify key functions were called
     mock_get_token.assert_called_once()
@@ -412,6 +417,7 @@ def test_handle_check_suite_full_workflow(
     assert second_call.kwargs["trigger"] == "test_failure"
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
@@ -426,7 +432,7 @@ def test_handle_check_suite_full_workflow(
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.create_permission_url")
 @patch("services.webhook.check_suite_handler.get_installation_permissions")
-def test_handle_check_suite_with_404_logs(
+async def test_handle_check_suite_with_404_logs(
     mock_get_permissions,
     mock_create_permission_url,
     mock_update_comment,
@@ -479,7 +485,7 @@ def test_handle_check_suite_with_404_logs(
     mock_get_permissions.return_value = {"actions": "read"}
 
     # Execute
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -496,6 +502,7 @@ def test_handle_check_suite_with_404_logs(
     mock_update_comment.assert_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
@@ -508,7 +515,7 @@ def test_handle_check_suite_with_404_logs(
 @patch("services.webhook.check_suite_handler.get_pull_request_files")
 @patch("services.webhook.check_suite_handler.get_workflow_run_logs")
 @patch("services.webhook.check_suite_handler.update_comment")
-def test_handle_check_suite_with_none_logs(
+async def test_handle_check_suite_with_none_logs(
     mock_update_comment,
     mock_get_logs,
     mock_get_changes,
@@ -557,7 +564,7 @@ def test_handle_check_suite_with_none_logs(
     mock_get_logs.return_value = None
 
     # Execute
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -572,6 +579,7 @@ def test_handle_check_suite_with_none_logs(
     mock_update_comment.assert_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
@@ -588,7 +596,7 @@ def test_handle_check_suite_with_none_logs(
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.clean_logs")
-def test_handle_check_suite_with_existing_retry_pair(
+async def test_handle_check_suite_with_existing_retry_pair(
     mock_clean_logs,
     mock_update_usage,
     _mock_update_retry_pairs,
@@ -647,7 +655,7 @@ def test_handle_check_suite_with_existing_retry_pair(
     mock_get_retry_pairs.return_value = [f"runs:{expected_hash}"]
 
     # Execute
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -670,6 +678,7 @@ def test_handle_check_suite_with_existing_retry_pair(
     mock_update_comment.assert_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
@@ -685,7 +694,7 @@ def test_handle_check_suite_with_existing_retry_pair(
 @patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.is_pull_request_open")
-def test_handle_check_suite_with_closed_pr(
+async def test_handle_check_suite_with_closed_pr(
     mock_is_pr_open,
     _mock_update_retry_pairs,
     mock_get_retry_pairs,
@@ -739,7 +748,7 @@ def test_handle_check_suite_with_closed_pr(
     mock_is_pr_open.return_value = False
 
     # Execute
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -755,6 +764,7 @@ def test_handle_check_suite_with_closed_pr(
     mock_update_comment.assert_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
@@ -771,7 +781,7 @@ def test_handle_check_suite_with_closed_pr(
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.is_pull_request_open")
 @patch("services.webhook.check_suite_handler.check_branch_exists")
-def test_handle_check_suite_with_deleted_branch(
+async def test_handle_check_suite_with_deleted_branch(
     mock_branch_exists,
     mock_is_pr_open,
     _mock_update_retry_pairs,
@@ -827,7 +837,7 @@ def test_handle_check_suite_with_deleted_branch(
     mock_branch_exists.return_value = False
 
     # Execute
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -843,6 +853,7 @@ def test_handle_check_suite_with_deleted_branch(
     mock_update_comment.assert_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
@@ -863,7 +874,7 @@ def test_handle_check_suite_with_deleted_branch(
 @patch("services.webhook.check_suite_handler.create_empty_commit")
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
-def test_check_run_handler_token_accumulation(
+async def test_check_run_handler_token_accumulation(
     mock_timeout_check,
     mock_update_usage,
     _mock_create_empty_commit,
@@ -939,7 +950,7 @@ def test_check_run_handler_token_accumulation(
     )
 
     # Execute
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     # Verify chat_with_agent was called twice (get + commit modes)
     assert mock_chat_agent.call_count == 2
@@ -953,6 +964,7 @@ def test_check_run_handler_token_accumulation(
     assert call_kwargs["token_output"] == 90  # Two calls: 45 + 45
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
@@ -971,7 +983,7 @@ def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.is_pull_request_open")
 @patch("services.webhook.check_suite_handler.check_branch_exists")
-def test_handle_check_suite_skips_duplicate_older_request(
+async def test_handle_check_suite_skips_duplicate_older_request(
     mock_branch_exists,
     mock_is_pr_open,
     mock_update_usage,
@@ -1035,7 +1047,7 @@ def test_handle_check_suite_skips_duplicate_older_request(
     }
 
     # Execute
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     # Verify
     mock_get_token.assert_called_once()
@@ -1076,6 +1088,7 @@ def test_handle_check_suite_skips_duplicate_older_request(
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.is_pull_request_open")
 @patch("services.webhook.check_suite_handler.check_branch_exists")
 @patch("services.webhook.check_suite_handler.chat_with_agent")
@@ -1084,7 +1097,7 @@ def test_handle_check_suite_skips_duplicate_older_request(
 @patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.check_suite_handler.get_codecov_token")
 @patch("services.webhook.check_suite_handler.get_codecov_commit_coverage")
-def test_handle_check_suite_codecov_failure(
+async def test_handle_check_suite_codecov_failure(
     mock_get_codecov_coverage,
     mock_get_codecov_token,
     mock_timeout_check,
@@ -1161,7 +1174,7 @@ def test_handle_check_suite_codecov_failure(
         ([], [], None, None, 30, 20, False, 75),
     ]
 
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     mock_get_codecov_token.assert_called_once_with(11111)
     mock_get_codecov_coverage.assert_called_once_with(
@@ -1187,6 +1200,7 @@ def test_handle_check_suite_codecov_failure(
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.is_pull_request_open")
 @patch("services.webhook.check_suite_handler.check_branch_exists")
 @patch("services.webhook.check_suite_handler.chat_with_agent")
@@ -1194,7 +1208,7 @@ def test_handle_check_suite_codecov_failure(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.check_suite_handler.get_codecov_token")
-def test_handle_check_suite_codecov_no_token(
+async def test_handle_check_suite_codecov_no_token(
     mock_get_codecov_token,
     mock_timeout_check,
     _mock_update_usage,
@@ -1262,7 +1276,7 @@ def test_handle_check_suite_codecov_no_token(
         ([], [], None, None, 30, 20, False, 75),
     ]
 
-    handle_check_suite(payload)
+    await handle_check_suite(payload)
 
     mock_get_codecov_token.assert_called_once_with(11111)
     assert mock_chat_agent.call_count == 2

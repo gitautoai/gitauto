@@ -1,13 +1,16 @@
+import asyncio
 from collections import defaultdict
-from concurrent.futures import Future
 from typing import cast
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from services.efs.start_async_install_on_efs import start_async_install_on_efs
 from services.github.types.github_types import BaseArgs
 
 
-def test_start_async_install_on_efs_submits_future():
+@pytest.mark.asyncio
+async def test_start_async_install_on_efs_creates_task():
     base_args = {
         "owner": "test-owner",
         "owner_id": 12345,
@@ -16,13 +19,15 @@ def test_start_async_install_on_efs_submits_future():
         "base_branch": "test-branch",
     }
 
-    mock_executor = MagicMock()
-    mock_future = Future()
-    mock_executor.submit.return_value = mock_future
+    mock_task = MagicMock(spec=asyncio.Task)
+    mock_task.done.return_value = False
 
-    with patch("services.efs.start_async_install_on_efs._executor", mock_executor):
+    with patch(
+        "services.efs.start_async_install_on_efs.asyncio.create_task",
+        return_value=mock_task,
+    ) as mock_create:
         with patch(
-            "services.efs.start_async_install_on_efs.install_futures",
+            "services.efs.start_async_install_on_efs.install_tasks",
             defaultdict(dict),
         ):
             with patch(
@@ -31,10 +36,11 @@ def test_start_async_install_on_efs_submits_future():
             ):
                 start_async_install_on_efs(cast(BaseArgs, base_args))
 
-    mock_executor.submit.assert_called_once()
+    mock_create.assert_called_once()
 
 
-def test_start_async_install_on_efs_reuses_successful_future():
+@pytest.mark.asyncio
+async def test_start_async_install_on_efs_reuses_successful_task():
     base_args = {
         "owner": "test-owner",
         "owner_id": 12345,
@@ -43,15 +49,16 @@ def test_start_async_install_on_efs_reuses_successful_future():
         "base_branch": "test-branch",
     }
 
-    existing_future = Future()
-    existing_future.set_result(True)
+    existing_task = MagicMock(spec=asyncio.Task)
+    existing_task.done.return_value = True
+    existing_task.result.return_value = True
 
-    mock_executor = MagicMock()
-
-    with patch("services.efs.start_async_install_on_efs._executor", mock_executor):
+    with patch(
+        "services.efs.start_async_install_on_efs.asyncio.create_task"
+    ) as mock_create:
         with patch(
-            "services.efs.start_async_install_on_efs.install_futures",
-            {"/mnt/efs/test-owner/test-repo": {"node": existing_future}},
+            "services.efs.start_async_install_on_efs.install_tasks",
+            {"/mnt/efs/test-owner/test-repo": {"node": existing_task}},
         ):
             with patch(
                 "services.efs.start_async_install_on_efs.get_efs_dir",
@@ -59,10 +66,11 @@ def test_start_async_install_on_efs_reuses_successful_future():
             ):
                 start_async_install_on_efs(cast(BaseArgs, base_args))
 
-    mock_executor.submit.assert_not_called()
+    mock_create.assert_not_called()
 
 
-def test_start_async_install_on_efs_retries_failed_future():
+@pytest.mark.asyncio
+async def test_start_async_install_on_efs_retries_failed_task():
     base_args = {
         "owner": "test-owner",
         "owner_id": 12345,
@@ -71,29 +79,29 @@ def test_start_async_install_on_efs_retries_failed_future():
         "base_branch": "test-branch",
     }
 
-    failed_future = Future()
-    failed_future.set_result(False)
+    failed_task = MagicMock(spec=asyncio.Task)
+    failed_task.done.return_value = True
+    failed_task.result.return_value = False
 
-    mock_executor = MagicMock()
-    new_future = Future()
-    mock_executor.submit.return_value = new_future
+    new_task = MagicMock(spec=asyncio.Task)
+    mock_tasks = {"/mnt/efs/test-owner/test-repo": {"node": failed_task}}
 
-    mock_futures = {"/mnt/efs/test-owner/test-repo": {"node": failed_future}}
-
-    with patch("services.efs.start_async_install_on_efs._executor", mock_executor):
-        with patch(
-            "services.efs.start_async_install_on_efs.install_futures", mock_futures
-        ):
+    with patch(
+        "services.efs.start_async_install_on_efs.asyncio.create_task",
+        return_value=new_task,
+    ) as mock_create:
+        with patch("services.efs.start_async_install_on_efs.install_tasks", mock_tasks):
             with patch(
                 "services.efs.start_async_install_on_efs.get_efs_dir",
                 return_value="/mnt/efs/test-owner/test-repo",
             ):
                 start_async_install_on_efs(cast(BaseArgs, base_args))
 
-    mock_executor.submit.assert_called_once()
+    mock_create.assert_called_once()
 
 
-def test_start_async_install_on_efs_skips_in_progress_future():
+@pytest.mark.asyncio
+async def test_start_async_install_on_efs_skips_in_progress_task():
     base_args = {
         "owner": "test-owner",
         "owner_id": 12345,
@@ -102,14 +110,15 @@ def test_start_async_install_on_efs_skips_in_progress_future():
         "base_branch": "test-branch",
     }
 
-    in_progress_future = Future()
+    in_progress_task = MagicMock(spec=asyncio.Task)
+    in_progress_task.done.return_value = False
 
-    mock_executor = MagicMock()
-
-    with patch("services.efs.start_async_install_on_efs._executor", mock_executor):
+    with patch(
+        "services.efs.start_async_install_on_efs.asyncio.create_task"
+    ) as mock_create:
         with patch(
-            "services.efs.start_async_install_on_efs.install_futures",
-            {"/mnt/efs/test-owner/test-repo": {"node": in_progress_future}},
+            "services.efs.start_async_install_on_efs.install_tasks",
+            {"/mnt/efs/test-owner/test-repo": {"node": in_progress_task}},
         ):
             with patch(
                 "services.efs.start_async_install_on_efs.get_efs_dir",
@@ -117,4 +126,4 @@ def test_start_async_install_on_efs_skips_in_progress_future():
             ):
                 start_async_install_on_efs(cast(BaseArgs, base_args))
 
-    mock_executor.submit.assert_not_called()
+    mock_create.assert_not_called()

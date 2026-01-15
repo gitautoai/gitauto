@@ -1,6 +1,6 @@
+import asyncio
 import fcntl
 import os
-import subprocess
 
 from config import UTF8
 from services.github.files.get_raw_content import get_raw_content
@@ -25,22 +25,34 @@ def _can_reuse_packages(
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
-def install_node_packages(
+async def install_node_packages(
     owner: str,
     owner_id: int,
     repo: str,
     branch: str,
     token: str,
     efs_dir: str,
+    clone_dir: str | None = None,
 ):
-    # Fetch package.json content from GitHub
-    package_json_content = get_raw_content(
-        owner=owner,
-        repo=repo,
-        file_path="package.json",
-        ref=branch,
-        token=token,
-    )
+    # Try reading package.json from clone_dir first (if available)
+    package_json_content = None
+    if clone_dir:
+        local_path = os.path.join(clone_dir, "package.json")
+        if os.path.exists(local_path):
+            with open(local_path, "r", encoding=UTF8) as f:
+                package_json_content = f.read()
+            print(f"node: Read package.json from clone_dir: {local_path}")
+
+    # Fall back to GitHub API
+    if not package_json_content:
+        package_json_content = get_raw_content(
+            owner=owner,
+            repo=repo,
+            file_path="package.json",
+            ref=branch,
+            token=token,
+        )
+        print(f"node: Fetched package.json from GitHub API for {owner}/{repo}")
 
     if not package_json_content:
         print(f"node: No package.json found for {owner}/{repo}, skipping installation")
@@ -77,19 +89,19 @@ def install_node_packages(
                 npm_env["NPM_TOKEN"] = npm_token
                 print(f"node: Using NPM_TOKEN for private packages in {owner}/{repo}")
 
-            result = subprocess.run(
-                ["npm", "install"],
-                capture_output=True,  # Capture stdout/stderr to result.stdout/stderr
-                text=True,  # Return strings instead of bytes
-                timeout=300,
-                check=False,  # Don't raise on non-zero return code, we handle it manually
+            process = await asyncio.create_subprocess_exec(
+                "npm",
+                "install",
                 cwd=efs_dir,
                 env=npm_env,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=300)
 
-            if result.returncode != 0:
+            if process.returncode != 0:
                 raise RuntimeError(
-                    f"npm install failed at {efs_dir} with code {result.returncode}: {result.stderr}"
+                    f"npm install failed at {efs_dir} with code {process.returncode}: {stderr.decode()}"
                 )
 
             print("node: Package installation completed successfully")

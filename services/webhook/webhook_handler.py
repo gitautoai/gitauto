@@ -193,7 +193,7 @@ async def handle_webhook_event(
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues
     if event_name == "issues":
         if action == "labeled":
-            create_pr_from_issue(
+            await create_pr_from_issue(
                 payload=cast(GitHubLabeledPayload, payload),
                 trigger="issue_label",
                 lambda_info=lambda_info,
@@ -206,9 +206,11 @@ async def handle_webhook_event(
     # Run GitAuto when checkbox is checked (edited)
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
     if event_name == "issue_comment" and action == "edited":
-        handle_pr_checkbox_trigger(
+        coro = handle_pr_checkbox_trigger(
             payload=cast(IssueCommentWebhookPayload, payload), lambda_info=lambda_info
         )
+        assert coro is not None
+        await coro
 
         search_text = "- [x] Generate PR"
         comment_body = payload["comment"]["body"]
@@ -218,7 +220,7 @@ async def handle_webhook_event(
             PRODUCT_ID != "gitauto"
             and (search_text + " - " + PRODUCT_ID) in comment_body
         ):
-            create_pr_from_issue(
+            await create_pr_from_issue(
                 payload=cast(GitHubLabeledPayload, payload),
                 trigger="issue_comment",
                 lambda_info=lambda_info,
@@ -228,7 +230,7 @@ async def handle_webhook_event(
         # For production environment, ensure it's just "- [x] Generate PR" without any suffix
         # This prevents both prod and dev from triggering on prod checkbox
         if search_text in comment_body and (search_text + " - ") not in comment_body:
-            create_pr_from_issue(
+            await create_pr_from_issue(
                 payload=cast(GitHubLabeledPayload, payload),
                 trigger="issue_comment",
                 lambda_info=lambda_info,
@@ -299,7 +301,7 @@ async def handle_webhook_event(
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_comment
     # Do nothing when action is "deleted"
     if event_name == "pull_request_review_comment" and action in ("created", "edited"):
-        handle_review_run(payload=payload, lambda_info=lambda_info)
+        await handle_review_run(payload=payload, lambda_info=lambda_info)
         return
 
     # Add workflow_run event handler (GitHub Actions)
@@ -325,7 +327,7 @@ async def handle_webhook_event(
 
         # Handle failures (test failures)
         if conclusion in GITHUB_CHECK_RUN_FAILURES:
-            handle_check_suite(
+            await handle_check_suite(
                 payload=cast(CheckSuiteCompletedPayload, payload),
                 lambda_info=lambda_info,
             )

@@ -1,3 +1,4 @@
+# pylint: disable=import-outside-toplevel
 from services.anthropic.message_to_dict import message_to_dict
 
 

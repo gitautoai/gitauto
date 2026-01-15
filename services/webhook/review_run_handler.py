@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 import json
 import time
@@ -22,6 +23,11 @@ from services.github.types.owner import Owner
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
 
+# Local imports (EFS)
+from services.efs.start_async_install_on_efs import start_async_install_on_efs
+from services.git.clone_repo import clone_repo
+from services.git.get_clone_dir import get_clone_dir
+
 # Local imports (Supabase)
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
@@ -33,7 +39,7 @@ from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approachi
 from utils.time.get_timeout_message import get_timeout_message
 
 
-def handle_review_run(
+async def handle_review_run(
     payload: dict[str, Any], lambda_info: dict[str, str | None] | None = None
 ):
     current_time = time.time()
@@ -154,6 +160,13 @@ def handle_review_run(
         "skip_ci": True,
     }
 
+    # Clone repo to tmp and install dependencies to efs (both fire-and-forget, run in parallel)
+    base_args["clone_dir"] = get_clone_dir(owner_name, repo_name, pull_number)
+    asyncio.create_task(
+        clone_repo(owner_name, repo_name, pull_number, head_branch, token)
+    )
+    start_async_install_on_efs(base_args)
+
     # Create a usage record
     usage_id = create_user_request(
         user_id=sender_id,
@@ -257,7 +270,7 @@ def handle_review_run(
             token_output,
             is_explored,
             p,
-        ) = chat_with_agent(
+        ) = await chat_with_agent(
             messages=messages,
             trigger=trigger,
             repo_settings=repo_settings,
@@ -281,7 +294,7 @@ def handle_review_run(
         #     _token_output,
         #     _is_searched,
         #     p,
-        # ) = chat_with_agent(
+        # ) = await chat_with_agent(
         #     messages=messages,
         #     trigger=trigger,
         #     repo_settings=repo_settings,
@@ -301,7 +314,7 @@ def handle_review_run(
             token_output,
             is_committed,
             p,
-        ) = chat_with_agent(
+        ) = await chat_with_agent(
             messages=messages,
             trigger=trigger,
             repo_settings=repo_settings,

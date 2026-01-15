@@ -1,4 +1,6 @@
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import AsyncMock, MagicMock, mock_open, patch
+
+import pytest
 
 from services.node.install_node_packages import (
     _can_reuse_packages,
@@ -41,11 +43,12 @@ def test_can_reuse_packages_returns_false_when_content_differs():
             assert result is False
 
 
-def test_install_node_packages_returns_false_when_no_package_json():
+@pytest.mark.asyncio
+async def test_install_node_packages_returns_false_when_no_package_json():
     with patch("services.node.install_node_packages.get_raw_content") as mock_get:
         mock_get.return_value = None
 
-        result = install_node_packages(
+        result = await install_node_packages(
             owner="owner",
             owner_id=123,
             repo="repo",
@@ -57,7 +60,8 @@ def test_install_node_packages_returns_false_when_no_package_json():
         assert result is False
 
 
-def test_install_node_packages_reuses_existing_packages():
+@pytest.mark.asyncio
+async def test_install_node_packages_reuses_existing_packages():
     with patch("services.node.install_node_packages.get_raw_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
             with patch(
@@ -66,7 +70,7 @@ def test_install_node_packages_reuses_existing_packages():
                 mock_get.return_value = '{"name": "test"}'
                 mock_reuse.return_value = True
 
-                result = install_node_packages(
+                result = await install_node_packages(
                     owner="owner",
                     owner_id=123,
                     repo="repo",
@@ -78,9 +82,14 @@ def test_install_node_packages_reuses_existing_packages():
                 assert result is True
 
 
-def test_install_node_packages_runs_npm_install():
+@pytest.mark.asyncio
+async def test_install_node_packages_runs_npm_install():
     mock_lock_file = MagicMock()
     mock_lock_file.fileno.return_value = 1
+
+    mock_process = MagicMock()
+    mock_process.returncode = 0
+    mock_process.communicate = AsyncMock(return_value=(b"", b""))
 
     with patch("services.node.install_node_packages.get_raw_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
@@ -91,16 +100,16 @@ def test_install_node_packages_runs_npm_install():
                 with patch("builtins.open", return_value=mock_lock_file):
                     with patch("services.node.install_node_packages.fcntl.flock"):
                         with patch(
-                            "services.node.install_node_packages.subprocess.run"
-                        ) as mock_run:
+                            "services.node.install_node_packages.asyncio.create_subprocess_exec",
+                            return_value=mock_process,
+                        ) as mock_exec:
                             with patch(
                                 "services.node.install_node_packages.get_npm_token",
                                 return_value=None,
                             ):
                                 mock_get.return_value = '{"name": "test"}'
-                                mock_run.return_value = MagicMock(returncode=0)
 
-                                result = install_node_packages(
+                                result = await install_node_packages(
                                     owner="owner",
                                     owner_id=123,
                                     repo="repo",
@@ -109,7 +118,7 @@ def test_install_node_packages_runs_npm_install():
                                     efs_dir="/mnt/efs/owner/repo",
                                 )
 
-                                mock_run.assert_called_once()
+                                mock_exec.assert_called_once()
                                 assert result is True
 
 
@@ -126,7 +135,8 @@ def test_can_reuse_packages_returns_false_when_no_package_json_file():
         assert result is False
 
 
-def test_install_node_packages_reuses_after_lock():
+@pytest.mark.asyncio
+async def test_install_node_packages_reuses_after_lock():
     mock_lock_file = MagicMock()
     mock_lock_file.fileno.return_value = 1
 
@@ -140,7 +150,7 @@ def test_install_node_packages_reuses_after_lock():
                     with patch("services.node.install_node_packages.fcntl.flock"):
                         mock_get.return_value = '{"name": "test"}'
 
-                        result = install_node_packages(
+                        result = await install_node_packages(
                             owner="owner",
                             owner_id=123,
                             repo="repo",
@@ -153,9 +163,14 @@ def test_install_node_packages_reuses_after_lock():
                         assert mock_reuse.call_count == 2
 
 
-def test_install_node_packages_uses_npm_token():
+@pytest.mark.asyncio
+async def test_install_node_packages_uses_npm_token():
     mock_lock_file = MagicMock()
     mock_lock_file.fileno.return_value = 1
+
+    mock_process = MagicMock()
+    mock_process.returncode = 0
+    mock_process.communicate = AsyncMock(return_value=(b"", b""))
 
     with patch("services.node.install_node_packages.get_raw_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
@@ -166,16 +181,16 @@ def test_install_node_packages_uses_npm_token():
                 with patch("builtins.open", return_value=mock_lock_file):
                     with patch("services.node.install_node_packages.fcntl.flock"):
                         with patch(
-                            "services.node.install_node_packages.subprocess.run"
-                        ) as mock_run:
+                            "services.node.install_node_packages.asyncio.create_subprocess_exec",
+                            return_value=mock_process,
+                        ) as mock_exec:
                             with patch(
                                 "services.node.install_node_packages.get_npm_token",
                                 return_value="npm_secret_token",
                             ):
                                 mock_get.return_value = '{"name": "test"}'
-                                mock_run.return_value = MagicMock(returncode=0)
 
-                                result = install_node_packages(
+                                result = await install_node_packages(
                                     owner="owner",
                                     owner_id=123,
                                     repo="repo",
@@ -184,7 +199,7 @@ def test_install_node_packages_uses_npm_token():
                                     efs_dir="/mnt/efs/owner/repo",
                                 )
 
-                                call_kwargs = mock_run.call_args[1]
+                                call_kwargs = mock_exec.call_args[1]
                                 assert "NPM_TOKEN" in call_kwargs["env"]
                                 assert (
                                     call_kwargs["env"]["NPM_TOKEN"]
@@ -193,9 +208,14 @@ def test_install_node_packages_uses_npm_token():
                                 assert result is True
 
 
-def test_install_node_packages_handles_npm_failure():
+@pytest.mark.asyncio
+async def test_install_node_packages_handles_npm_failure():
     mock_lock_file = MagicMock()
     mock_lock_file.fileno.return_value = 1
+
+    mock_process = MagicMock()
+    mock_process.returncode = 1
+    mock_process.communicate = AsyncMock(return_value=(b"", b"npm ERR!"))
 
     with patch("services.node.install_node_packages.get_raw_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
@@ -206,18 +226,16 @@ def test_install_node_packages_handles_npm_failure():
                 with patch("builtins.open", return_value=mock_lock_file):
                     with patch("services.node.install_node_packages.fcntl.flock"):
                         with patch(
-                            "services.node.install_node_packages.subprocess.run"
-                        ) as mock_run:
+                            "services.node.install_node_packages.asyncio.create_subprocess_exec",
+                            return_value=mock_process,
+                        ):
                             with patch(
                                 "services.node.install_node_packages.get_npm_token",
                                 return_value=None,
                             ):
                                 mock_get.return_value = '{"name": "test"}'
-                                mock_run.return_value = MagicMock(
-                                    returncode=1, stderr="npm ERR!"
-                                )
 
-                                result = install_node_packages(
+                                result = await install_node_packages(
                                     owner="owner",
                                     owner_id=123,
                                     repo="repo",

@@ -38,7 +38,7 @@ REPLACE_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def replace_remote_file_content(
+async def replace_remote_file_content(
     file_content: str,
     file_path: str,
     base_args: BaseArgs,
@@ -66,19 +66,29 @@ def replace_remote_file_content(
 
     # Prettier then ESLint (JS ecosystem convention)
     if clone_dir and file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
-        formatted_content = run_prettier(
+        prettier_coro = run_prettier(
+            owner=owner,
+            repo=repo,
             clone_dir=clone_dir,
             file_path=file_path,
             file_content=file_content,
         )
+        # Decorator always returns coroutine for async functions; None is the inner resolved type
+        assert prettier_coro is not None
+        formatted_content = await prettier_coro
         if formatted_content:
             file_content = formatted_content
 
-        linted_content = run_eslint(
+        eslint_coro = run_eslint(
+            owner=owner,
+            repo=repo,
             clone_dir=clone_dir,
             file_path=file_path,
             file_content=file_content,
         )
+        # Decorator always returns coroutine for async functions; None is the inner resolved type
+        assert eslint_coro is not None
+        linted_content = await eslint_coro
         if linted_content:
             file_content = linted_content
 

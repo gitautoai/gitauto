@@ -1,4 +1,5 @@
 # Standard imports
+import inspect
 from typing import Any, Literal
 
 # Third party imports
@@ -34,7 +35,7 @@ from utils.progress_bar.progress_bar import create_progress_bar
 
 
 @handle_exceptions(raise_on_error=True)
-def chat_with_agent(
+async def chat_with_agent(
     messages: list[dict[str, Any]],
     trigger: Trigger,
     base_args: BaseArgs,
@@ -220,7 +221,7 @@ def chat_with_agent(
                             ],
                         }
                     )
-                    return chat_with_agent(
+                    return await chat_with_agent(
                         messages=messages,
                         trigger=trigger,
                         base_args=base_args,
@@ -240,6 +241,8 @@ def chat_with_agent(
                 tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
             else:
                 tool_result = tools_to_call[tool_name](base_args=base_args)
+            if inspect.iscoroutine(tool_result):
+                tool_result = await tool_result
             previous_calls.append(current_call)
             is_done = True
         else:
@@ -376,7 +379,7 @@ def chat_with_agent(
         )
 
     if recursion_count < 3:
-        return chat_with_agent(
+        return await chat_with_agent(
             messages=messages,
             trigger=trigger,
             base_args=base_args,

@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD029 -->
+<!-- markdownlint-disable MD029 MD032 -->
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -870,6 +870,59 @@ When asked "should we inline `is_efs_install_ready.py` since it has 1 caller?":
 
 ALWAYS ASK: "What similar tools/features will need this in the future?"
 
+## Deep Architectural Thinking
+
+**CRITICAL**: Don't just shuffle code around. Question fundamental assumptions and think about WHY things are the way they are.
+
+### Shallow vs Deep Thinking
+
+**Shallow (BAD)**:
+- "Clone is sync, so move it later to avoid blocking" → Just moving WHEN we block, not reducing blocking
+- "Make order consistent across handlers" → Consistency for its own sake, without understanding WHY
+- "Install first, clone later for parallelism" → Accepting current implementation as given
+
+**Deep (GOOD)**:
+- "Clone is sync. WHY is it sync? Do we actually need to wait for it? Clone is used for tsc/tests - we don't need it until chat_with_agent. Should clone be async?"
+- "For issue_handler, PR is new so EFS has no packages. But if a nearby PR folder exists, could we copy from it to reduce install time?"
+- "For defensive handlers, EFS already has packages from issue_handler. Install will be quick. The real question is whether clone should be async."
+
+### Questions to Ask Yourself
+
+When making architectural decisions, ask "why" 5 times:
+
+1. **Why is this sync/async?** - Is it inherently blocking, or just implemented that way?
+2. **Why do we need this here?** - When is the result actually used?
+3. **Why this order?** - What dependencies exist? What can run in parallel?
+4. **Why can't we optimize?** - What assumptions are we accepting without questioning?
+5. **Why is this different per handler?** - Should it be different, or is it just inconsistent?
+
+### Example: Clone and Install Order
+
+**Shallow analysis**:
+- "Install is async, clone is sync. Do async first, sync later."
+
+**Deep analysis**:
+- Clone is in /tmp, happens every Lambda invocation (not cached)
+- For issue_handler: New PR, EFS has no packages. Using GitHub API for install (ignoring clone_dir) is actually efficient - install runs async during clone time
+- For defensive handlers: EFS already has packages from issue_handler. Install is quick.
+- Real question: Why is clone sync? We only need clone for tsc/tests during chat_with_agent. Could make clone async, start earlier, let it complete in background.
+- Optimization idea: For new PRs, if nearest PR folder exists, copy from it instead of fresh clone - might reduce time.
+
+### Anti-Patterns
+
+- **"Keep as is"** - Without deep reasoning for WHY current implementation is correct
+- **"Be consistent"** - Consistency is a means, not an end. Each handler may have different requirements.
+- **"Move X later"** - Moving blocking work later doesn't reduce total blocking time
+- **"This is how it's done"** - Question whether current approach is optimal
+
+### The Right Approach
+
+1. Understand WHAT each operation does (sync vs async, blocking vs non-blocking)
+2. Understand WHEN each result is needed (immediately vs later)
+3. Question WHY it's implemented this way (inherent limitation vs arbitrary choice)
+4. Think about OPTIMIZATIONS (parallel execution, caching, copying from nearby resources)
+5. Consider EACH HANDLER's specific context (new PR vs existing PR, empty EFS vs populated EFS)
+
 ## Always Write Tests for New Code
 
 **CRITICAL**: When you create new functions/modules, ALWAYS write tests without being asked.
@@ -937,7 +990,10 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
    - **CRITICAL**: For pylint, pyright, flake8, and pytest, filter out deleted files that no longer exist
 5. Run flake8 on the Python files identified in step 4 (excluding deleted files): `flake8 file1.py file2.py file3.py` - **IF ANY FLAKE8 ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
 6. Run pylint on the Python files identified in step 4 (excluding deleted files): `pylint file1.py file2.py file3.py` - **IF ANY PYLINT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
-7. Run pyright on the Python files identified in step 4 (excluding deleted files): `pyright file1.py file2.py file3.py` - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+7. Run pyright on the whole repo: `pyright` - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+   - For test files with many mock parameters, pyright will warn about unused variables (e.g., `_mock_update_usage is not accessed`)
+   - This is expected - test files often have mock parameters that are required by the decorator order but not used in the test
+   - Suppress these warnings by adding `# pyright: reportUnusedVariable=false` at the top of the test file (after pylint disables)
 8. Run pytest on the test files identified in step 4 (excluding deleted files): `python -m pytest test_file1.py test_file2.py` - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
 9. Check current branch is not main: `git branch --show-current`
 10. Merge latest main: `git fetch origin main && git merge origin/main`
@@ -983,7 +1039,7 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 - **ALWAYS specify exact files**: Use `git diff --name-only HEAD` to see what's changed, then add only those specific files
 - **Example**: `git add $(git diff --name-only HEAD)` or list files manually
 - **CRITICAL: Recognize new branch push output** - When `git push` shows:
-  ```
+  ```bash
   remote: Create a pull request for 'branch' on GitHub by visiting:
   remote:      https://github.com/owner/repo/pull/new/branch
   * [new branch]        branch -> branch

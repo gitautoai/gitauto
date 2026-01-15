@@ -1,4 +1,5 @@
 # Standard imports
+import asyncio
 from datetime import datetime
 import hashlib
 import json
@@ -57,6 +58,11 @@ from services.supabase.usage.check_older_active_test_failure import (
     check_older_active_test_failure_request,
 )
 
+# Local imports (EFS)
+from services.efs.start_async_install_on_efs import start_async_install_on_efs
+from services.git.clone_repo import clone_repo
+from services.git.get_clone_dir import get_clone_dir
+
 # Local imports (Others)
 from utils.logs.clean_logs import clean_logs
 from utils.progress_bar.progress_bar import create_progress_bar
@@ -64,7 +70,7 @@ from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approachi
 from utils.time.get_timeout_message import get_timeout_message
 
 
-def handle_check_suite(
+async def handle_check_suite(
     payload: CheckSuiteCompletedPayload,
     lambda_info: dict[str, str | None] | None = None,
 ):
@@ -221,6 +227,13 @@ def handle_check_suite(
         "check_run_name": check_run_name,
         "skip_ci": True,
     }
+
+    # Clone repo to tmp and install dependencies to efs (both fire-and-forget, run in parallel)
+    base_args["clone_dir"] = get_clone_dir(owner_name, repo_name, pull_number)
+    asyncio.create_task(
+        clone_repo(owner_name, repo_name, pull_number, head_branch, token)
+    )
+    start_async_install_on_efs(base_args)
 
     # Check if permission comment or stumbled comment already exists
     if has_comment_with_text(
@@ -583,7 +596,7 @@ def handle_check_suite(
             token_output,
             is_explored,
             p,
-        ) = chat_with_agent(
+        ) = await chat_with_agent(
             messages=messages,
             trigger=trigger,
             repo_settings=repo_settings,
@@ -607,7 +620,7 @@ def handle_check_suite(
             token_output,
             is_committed,
             p,
-        ) = chat_with_agent(
+        ) = await chat_with_agent(
             messages=messages,
             trigger=trigger,
             repo_settings=repo_settings,
