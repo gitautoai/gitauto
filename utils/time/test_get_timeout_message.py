@@ -135,7 +135,7 @@ def test_get_timeout_message_exception_handling():
 
 def test_get_timeout_message_real_world_usage_scenarios():
     """Test get_timeout_message with real-world usage scenarios from the codebase."""
-    # Test scenario from pr_checkbox_handler.py
+    # Test scenario for Lambda timeout handling
     elapsed_time = 850.5  # Close to Lambda timeout limit
     process_name = "PR test generation processing"
     expected = "PR test generation processing stopped due to Lambda timeout limit (850.5s elapsed). Proceeding with current progress."

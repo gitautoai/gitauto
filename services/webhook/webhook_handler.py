@@ -24,7 +24,6 @@ from services.github.types.github_types import (
     GitHubLabeledPayload,
 )
 from services.github.types.owner import OwnerType
-from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
 from services.github.types.webhook.push import PushWebhookPayload
 
 # Local imports (Resend)
@@ -58,7 +57,6 @@ from services.webhook.handle_installation_repos_removed import (
 )
 from services.webhook.issue_handler import create_pr_from_issue
 from services.webhook.pr_body_handler import write_pr_description
-from services.webhook.pr_checkbox_handler import handle_pr_checkbox_trigger
 from services.webhook.push_handler import handle_push
 from services.webhook.review_run_handler import handle_review_run
 from services.webhook.successful_check_suite_handler import (
@@ -203,15 +201,9 @@ async def handle_webhook_event(
             create_gitauto_button_comment(payload=cast(GitHubLabeledPayload, payload))
             return
 
-    # Run GitAuto when checkbox is checked (edited)
+    # Run GitAuto when "Generate PR" checkbox is checked
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
     if event_name == "issue_comment" and action == "edited":
-        coro = handle_pr_checkbox_trigger(
-            payload=cast(IssueCommentWebhookPayload, payload), lambda_info=lambda_info
-        )
-        assert coro is not None
-        await coro
-
         search_text = "- [x] Generate PR"
         comment_body = payload["comment"]["body"]
 
