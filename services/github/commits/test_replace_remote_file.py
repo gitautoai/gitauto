@@ -1,4 +1,5 @@
 # pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 import base64
 from unittest.mock import MagicMock, patch
 from typing import cast
@@ -90,7 +91,8 @@ def mock_requests_put_success():
         yield mock_put
 
 
-def test_replace_existing_file_success(
+@pytest.mark.asyncio
+async def test_replace_existing_file_success(
     mock_requests_get_existing_file,
     mock_requests_put_success,
     mock_create_headers,
@@ -100,11 +102,13 @@ def test_replace_existing_file_success(
     file_path = "src/test.py"
     file_content = "print('Hello, World!')"
 
-    result = replace_remote_file_content(
+    coro = replace_remote_file_content(
         file_content=file_content,
         file_path=file_path,
         base_args=sample_base_args,
     )
+    assert coro is not None
+    result = await coro
 
     # Verify the result
     assert result == f"Content replaced in the file: {file_path} successfully."
@@ -150,7 +154,8 @@ def test_replace_existing_file_success(
     mock_create_headers.assert_called_with(token="test-token")
 
 
-def test_replace_nonexistent_file_success(
+@pytest.mark.asyncio
+async def test_replace_nonexistent_file_success(
     mock_requests_get_nonexistent_file,
     mock_requests_put_success,
     mock_create_headers,
@@ -160,11 +165,13 @@ def test_replace_nonexistent_file_success(
     file_path = "src/new_file.py"
     file_content = "print('New file content')"
 
-    result = replace_remote_file_content(
+    coro = replace_remote_file_content(
         file_content=file_content,
         file_path=file_path,
         base_args=sample_base_args,
     )
+    assert coro is not None
+    result = await coro
 
     # Verify the result
     assert result == f"Content replaced in the file: {file_path} successfully."
@@ -206,7 +213,8 @@ def test_replace_nonexistent_file_success(
     )
 
 
-def test_replace_file_with_skip_ci(
+@pytest.mark.asyncio
+async def test_replace_file_with_skip_ci(
     mock_requests_get_existing_file,
     mock_requests_put_success,
     mock_create_headers,
@@ -216,11 +224,13 @@ def test_replace_file_with_skip_ci(
     file_path = "src/test.py"
     file_content = "print('Hello with skip CI')"
 
-    result = replace_remote_file_content(
+    coro = replace_remote_file_content(
         file_content=file_content,
         file_path=file_path,
         base_args=sample_base_args_with_skip_ci,
     )
+    assert coro is not None
+    result = await coro
 
     # Verify the result
     assert result == f"Content replaced in the file: {file_path} successfully."
@@ -233,7 +243,8 @@ def test_replace_file_with_skip_ci(
     )
 
 
-def test_replace_file_directory_error(
+@pytest.mark.asyncio
+async def test_replace_file_directory_error(
     mock_create_headers,
     sample_base_args,
 ):
@@ -251,11 +262,13 @@ def test_replace_file_directory_error(
         file_path = "src/directory"
         file_content = "content"
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content=file_content,
             file_path=file_path,
             base_args=sample_base_args,
         )
+        assert coro is not None
+        result = await coro
 
         # Verify error message
         assert (
@@ -264,7 +277,8 @@ def test_replace_file_directory_error(
         )
 
 
-def test_replace_file_multiple_files_error(
+@pytest.mark.asyncio
+async def test_replace_file_multiple_files_error(
     mock_create_headers,
     sample_base_args,
 ):
@@ -282,11 +296,13 @@ def test_replace_file_multiple_files_error(
         file_path = "src/*"
         file_content = "content"
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content=file_content,
             file_path=file_path,
             base_args=sample_base_args,
         )
+        assert coro is not None
+        result = await coro
 
         # Verify error message
         assert (
@@ -295,7 +311,8 @@ def test_replace_file_multiple_files_error(
         )
 
 
-def test_replace_file_with_special_characters(
+@pytest.mark.asyncio
+async def test_replace_file_with_special_characters(
     mock_requests_get_existing_file,
     mock_requests_put_success,
     mock_create_headers,
@@ -305,11 +322,13 @@ def test_replace_file_with_special_characters(
     file_path = "src/unicode_test.py"
     file_content = "print('Hello 世界! 🌍 émojis and special chars: !@#$%^&*()')"
 
-    result = replace_remote_file_content(
+    coro = replace_remote_file_content(
         file_content=file_content,
         file_path=file_path,
         base_args=sample_base_args,
     )
+    assert coro is not None
+    result = await coro
 
     # Verify the result
     assert result == f"Content replaced in the file: {file_path} successfully."
@@ -324,7 +343,8 @@ def test_replace_file_with_special_characters(
     assert call_args.kwargs["json"]["content"] == expected_content
 
 
-def test_replace_file_with_empty_content(
+@pytest.mark.asyncio
+async def test_replace_file_with_empty_content(
     mock_requests_get_existing_file,
     mock_requests_put_success,
     mock_create_headers,
@@ -334,11 +354,13 @@ def test_replace_file_with_empty_content(
     file_path = "src/empty.py"
     file_content = ""
 
-    result = replace_remote_file_content(
+    coro = replace_remote_file_content(
         file_content=file_content,
         file_path=file_path,
         base_args=sample_base_args,
     )
+    assert coro is not None
+    result = await coro
 
     # Verify the result
     assert result == f"Content replaced in the file: {file_path} successfully."
@@ -349,7 +371,8 @@ def test_replace_file_with_empty_content(
     assert call_args.kwargs["json"]["content"] == expected_content
 
 
-def test_replace_file_with_large_content(
+@pytest.mark.asyncio
+async def test_replace_file_with_large_content(
     mock_requests_get_existing_file,
     mock_requests_put_success,
     mock_create_headers,
@@ -359,11 +382,13 @@ def test_replace_file_with_large_content(
     file_path = "src/large_file.py"
     file_content = "# Large file content\n" * 1000
 
-    result = replace_remote_file_content(
+    coro = replace_remote_file_content(
         file_content=file_content,
         file_path=file_path,
         base_args=sample_base_args,
     )
+    assert coro is not None
+    result = await coro
 
     # Verify the result
     assert result == f"Content replaced in the file: {file_path} successfully."
@@ -381,7 +406,8 @@ def test_replace_file_with_large_content(
     assert call_args.kwargs["json"]["content"] == expected_content
 
 
-def test_replace_file_get_request_error_handled(sample_base_args):
+@pytest.mark.asyncio
+async def test_replace_file_get_request_error_handled(sample_base_args):
     """Test that GET request errors are handled by the decorator."""
     with patch("services.github.commits.replace_remote_file.requests.get") as mock_get:
         mock_response = MagicMock()
@@ -392,17 +418,20 @@ def test_replace_file_get_request_error_handled(sample_base_args):
         mock_response.raise_for_status.side_effect = http_error
         mock_get.return_value = mock_response
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content="content",
             file_path="test.py",
             base_args=sample_base_args,
         )
+        assert coro is not None
+        result = await coro
 
         # Function should return None due to handle_exceptions decorator
         assert result is None
 
 
-def test_replace_file_put_request_error_handled(
+@pytest.mark.asyncio
+async def test_replace_file_put_request_error_handled(
     mock_requests_get_existing_file,
     sample_base_args,
 ):
@@ -416,57 +445,68 @@ def test_replace_file_put_request_error_handled(
         mock_response.raise_for_status.side_effect = http_error
         mock_put.return_value = mock_response
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content="content",
             file_path="test.py",
             base_args=sample_base_args,
         )
+        assert coro is not None
+        result = await coro
 
         # Function should return None due to handle_exceptions decorator
         assert result is None
 
 
-def test_replace_file_connection_error_handled(sample_base_args):
+@pytest.mark.asyncio
+async def test_replace_file_connection_error_handled(sample_base_args):
     """Test that connection errors are handled by the decorator."""
     with patch("services.github.commits.replace_remote_file.requests.get") as mock_get:
         mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content="content",
             file_path="test.py",
             base_args=sample_base_args,
         )
+        assert coro is not None
+        result = await coro
 
         # Function should return None due to handle_exceptions decorator
         assert result is None
 
 
-def test_replace_file_timeout_error_handled(sample_base_args):
+@pytest.mark.asyncio
+async def test_replace_file_timeout_error_handled(sample_base_args):
     """Test that timeout errors are handled by the decorator."""
     with patch("services.github.commits.replace_remote_file.requests.get") as mock_get:
         mock_get.side_effect = requests.exceptions.Timeout("Request timed out")
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content="content",
             file_path="test.py",
             base_args=sample_base_args,
         )
+        assert coro is not None
+        result = await coro
 
         # Function should return None due to handle_exceptions decorator
         assert result is None
 
 
-def test_replace_file_uses_correct_timeout(
+@pytest.mark.asyncio
+async def test_replace_file_uses_correct_timeout(
     mock_requests_get_existing_file,
     mock_requests_put_success,
     sample_base_args,
 ):
     """Test that correct timeout value is used for requests."""
-    replace_remote_file_content(
+    coro = replace_remote_file_content(
         file_content="content",
         file_path="test.py",
         base_args=sample_base_args,
     )
+    assert coro is not None
+    await coro
 
     # Verify GET request uses correct timeout
     get_call_args = mock_requests_get_existing_file.call_args
@@ -477,7 +517,8 @@ def test_replace_file_uses_correct_timeout(
     assert put_call_args.kwargs["timeout"] == 120
 
 
-def test_replace_file_with_different_base_args(
+@pytest.mark.asyncio
+async def test_replace_file_with_different_base_args(
     mock_requests_get_existing_file,
     mock_requests_put_success,
     mock_create_headers,
@@ -491,11 +532,13 @@ def test_replace_file_with_different_base_args(
         "skip_ci": False,
     }
 
-    result = replace_remote_file_content(
+    coro = replace_remote_file_content(
         file_content="content",
         file_path="different/path.py",
         base_args=cast(BaseArgs, base_args),
     )
+    assert coro is not None
+    result = await coro
 
     # Verify the result
     assert result == "Content replaced in the file: different/path.py successfully."
@@ -519,25 +562,29 @@ def test_replace_file_with_different_base_args(
         (KeyError, "Key Error"),
     ],
 )
-def test_replace_file_handles_various_exceptions(
+@pytest.mark.asyncio
+async def test_replace_file_handles_various_exceptions(
     sample_base_args, error_type, error_message
 ):
     """Test that various exception types are handled by the decorator."""
     with patch("services.github.commits.replace_remote_file.requests.get") as mock_get:
         mock_get.side_effect = error_type(error_message)
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content="content",
             file_path="test.py",
             base_args=sample_base_args,
         )
+        assert coro is not None
+        result = await coro
 
         # Function should return None due to handle_exceptions decorator
         assert result is None
         mock_get.assert_called_once()
 
 
-def test_replace_file_missing_sha_in_existing_file(
+@pytest.mark.asyncio
+async def test_replace_file_missing_sha_in_existing_file(
     mock_create_headers,
     sample_base_args,
 ):
@@ -565,11 +612,13 @@ def test_replace_file_missing_sha_in_existing_file(
         mock_put_response.raise_for_status.return_value = None
         mock_put.return_value = mock_put_response
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content="new content",
             file_path="test.py",
             base_args=sample_base_args,
         )
+        assert coro is not None
+        result = await coro
 
         # Should still succeed with empty SHA
         assert result == "Content replaced in the file: test.py successfully."
@@ -579,7 +628,8 @@ def test_replace_file_missing_sha_in_existing_file(
         assert call_args.kwargs["json"]["sha"] == ""
 
 
-def test_replace_file_with_nested_file_path(
+@pytest.mark.asyncio
+async def test_replace_file_with_nested_file_path(
     mock_requests_get_existing_file,
     mock_requests_put_success,
     mock_create_headers,
@@ -589,11 +639,13 @@ def test_replace_file_with_nested_file_path(
     file_path = "src/utils/helpers/deep/nested/file.py"
     file_content = "# Deeply nested file content"
 
-    result = replace_remote_file_content(
+    coro = replace_remote_file_content(
         file_content=file_content,
         file_path=file_path,
         base_args=sample_base_args,
     )
+    assert coro is not None
+    result = await coro
 
     # Verify the result
     assert result == f"Content replaced in the file: {file_path} successfully."
@@ -604,7 +656,8 @@ def test_replace_file_with_nested_file_path(
     assert get_call_args.kwargs["url"] == expected_url
 
 
-def test_replace_file_json_decode_error_on_get(sample_base_args):
+@pytest.mark.asyncio
+async def test_replace_file_json_decode_error_on_get(sample_base_args):
     """Test handling of JSON decode error during GET request."""
     with patch("services.github.commits.replace_remote_file.requests.get") as mock_get:
         mock_response = MagicMock()
@@ -613,11 +666,13 @@ def test_replace_file_json_decode_error_on_get(sample_base_args):
         mock_response.json.side_effect = ValueError("Invalid JSON response")
         mock_get.return_value = mock_response
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content="content",
             file_path="test.py",
             base_args=sample_base_args,
         )
+        assert coro is not None
+        result = await coro
 
         # Function should return None due to handle_exceptions decorator
         assert result is None
@@ -651,26 +706,30 @@ def test_replace_remote_file_content_function_definition():
                 assert "description" in file_content_param
 
 
-def test_replace_file_with_extra_kwargs(
+@pytest.mark.asyncio
+async def test_replace_file_with_extra_kwargs(
     mock_requests_get_existing_file,
     mock_requests_put_success,
     mock_create_headers,
     sample_base_args,
 ):
     """Test that function handles extra kwargs properly (they should be ignored)."""
-    result = replace_remote_file_content(
+    coro = replace_remote_file_content(
         file_content="content",
         file_path="test.py",
         base_args=sample_base_args,
         extra_param="should_be_ignored",
         another_param=123,
     )
+    assert coro is not None
+    result = await coro
 
     # Should work normally despite extra parameters
     assert result == "Content replaced in the file: test.py successfully."
 
 
-def test_replace_file_with_eslint_integration(sample_base_args):
+@pytest.mark.asyncio
+async def test_replace_file_with_eslint_integration(sample_base_args):
     base_args_with_clone = cast(
         BaseArgs,
         {
@@ -701,11 +760,13 @@ def test_replace_file_with_eslint_integration(sample_base_args):
         mock_run_prettier.return_value = "const foo = 'bar';\n"
         mock_run_eslint.return_value = "const foo = 'bar';\n"
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content="const foo = 'bar';",
             file_path="test.js",
             base_args=base_args_with_clone,
         )
+        assert coro is not None
+        result = await coro
 
         assert result == "Content replaced in the file: test.js successfully."
         mock_run_prettier.assert_called_once()
@@ -715,7 +776,8 @@ def test_replace_file_with_eslint_integration(sample_base_args):
         assert call_kwargs["file_path"] == "test.js"
 
 
-def test_replace_file_without_clone_dir_skips_linting(sample_base_args):
+@pytest.mark.asyncio
+async def test_replace_file_without_clone_dir_skips_linting(sample_base_args):
     with patch(
         "services.github.commits.replace_remote_file.requests.get"
     ) as mock_get, patch(
@@ -736,18 +798,21 @@ def test_replace_file_without_clone_dir_skips_linting(sample_base_args):
         mock_put_response.raise_for_status.return_value = None
         mock_put.return_value = mock_put_response
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content="export const foo = 'bar';",
             file_path="test.tsx",
             base_args=sample_base_args,
         )
+        assert coro is not None
+        result = await coro
 
         assert result == "Content replaced in the file: test.tsx successfully."
         mock_run_prettier.assert_not_called()
         mock_run_eslint.assert_not_called()
 
 
-def test_replace_file_skips_eslint_for_python(sample_base_args):
+@pytest.mark.asyncio
+async def test_replace_file_skips_eslint_for_python(sample_base_args):
     base_args_with_clone = cast(
         BaseArgs,
         {
@@ -775,18 +840,21 @@ def test_replace_file_skips_eslint_for_python(sample_base_args):
         mock_put_response.raise_for_status.return_value = None
         mock_put.return_value = mock_put_response
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content="print('hello')",
             file_path="test.py",
             base_args=base_args_with_clone,
         )
+        assert coro is not None
+        result = await coro
 
         assert result == "Content replaced in the file: test.py successfully."
         mock_run_prettier.assert_not_called()
         mock_run_eslint.assert_not_called()
 
 
-def test_replace_file_with_eslint_unfixable_errors(sample_base_args):
+@pytest.mark.asyncio
+async def test_replace_file_with_eslint_unfixable_errors(sample_base_args):
     base_args_with_clone = cast(
         BaseArgs,
         {
@@ -820,11 +888,13 @@ def test_replace_file_with_eslint_unfixable_errors(sample_base_args):
         mock_run_prettier.return_value = "const a = 1;\nconst b = 2;\n"
         mock_run_eslint.return_value = "const a = 1;\nconst b = 2;\n"
 
-        result = replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content="const a = 1;\nconst b = 2;\n",
             file_path="test.js",
             base_args=base_args_with_clone,
         )
+        assert coro is not None
+        result = await coro
 
         assert result == "Content replaced in the file: test.js successfully."
         mock_run_eslint.assert_called_once()

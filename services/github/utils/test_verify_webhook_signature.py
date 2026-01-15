@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 import hashlib
 import hmac
 from unittest.mock import AsyncMock, MagicMock, patch

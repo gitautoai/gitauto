@@ -1,4 +1,5 @@
 # Standard imports
+import asyncio
 from datetime import datetime
 from json import dumps
 import logging
@@ -10,6 +11,7 @@ from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.chat_with_agent import chat_with_agent
 from services.efs.start_async_install_on_efs import start_async_install_on_efs
 from services.git.clone_repo import clone_repo
+from services.git.get_clone_dir import get_clone_dir
 from services.resend.send_email import send_email
 from services.resend.text.credits_depleted_email import get_credits_depleted_email_text
 
@@ -71,7 +73,7 @@ from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approachi
 from utils.urls.extract_urls import extract_image_urls
 
 
-def create_pr_from_issue(
+async def create_pr_from_issue(
     payload: GitHubLabeledPayload,
     trigger: Trigger,
     lambda_info: dict[str, str | None] | None = None,
@@ -360,13 +362,10 @@ def create_pr_from_issue(
         body=pr_body, title=issue_title, base_args=base_args
     )
 
-    # Clone repo to /tmp for code quality tools (prettier, eslint, pylint, pyright, testing, etc.)
-    base_args["clone_dir"] = clone_repo(
-        owner=owner_name,
-        repo=repo_name,
-        pr_number=pr_number,
-        branch=new_branch_name,
-        token=token,
+    # Clone repo (fire-and-forget, runs in parallel with remaining work)
+    base_args["clone_dir"] = get_clone_dir(owner_name, repo_name, pr_number)
+    asyncio.create_task(
+        clone_repo(owner_name, repo_name, pr_number, new_branch_name, token)
     )
 
     comment_body = f"Created pull request: {pr_url}"
@@ -416,7 +415,7 @@ def create_pr_from_issue(
             token_output,
             is_explored,
             p,
-        ) = chat_with_agent(
+        ) = await chat_with_agent(
             messages=messages,
             trigger=trigger,
             repo_settings=repo_settings,
@@ -442,7 +441,7 @@ def create_pr_from_issue(
         #     token_output,
         #     _is_searched,
         #     p,
-        # ) = chat_with_agent(
+        # ) = await chat_with_agent(
         #     messages=messages,
         #     trigger=trigger,
         #     repo_settings=repo_settings,
@@ -463,7 +462,7 @@ def create_pr_from_issue(
             token_output,
             is_committed,
             p,
-        ) = chat_with_agent(
+        ) = await chat_with_agent(
             messages=messages,
             trigger=trigger,
             repo_settings=repo_settings,
@@ -525,11 +524,13 @@ def create_pr_from_issue(
         if not updated_content or updated_content == file_content:
             continue
 
-        replace_remote_file_content(
+        coro = replace_remote_file_content(
             file_content=updated_content,
             file_path=file_path,
             base_args=base_args,
         )
+        assert coro is not None
+        await coro
 
     # Trigger final test workflows with an empty commit
     comment_body = "Triggering workflows..."

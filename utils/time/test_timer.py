@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 import asyncio
 from unittest.mock import patch
 import pytest

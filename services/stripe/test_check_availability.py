@@ -414,15 +414,6 @@ class TestCheckAvailability:
         mock_dependencies["get_stripe_customer_id"].return_value = None
         mock_dependencies["get_paid_subscription"].return_value = None
         mock_dependencies["get_billing_type"].return_value = "subscription"
-        mock_dependencies["check_subscription_limit"].return_value = {
-            "can_proceed": False,
-            "requests_left": 0,
-            "period_end_date": None,
-            "request_limit": 0,
-        }
-        mock_dependencies["get_subscription_limit_message"].return_value = (
-            "No subscription found"
-        )
 
         # Act
         result = check_availability(
@@ -433,14 +424,11 @@ class TestCheckAvailability:
             sender_name="test_sender",
         )
 
-        # Assert
+        # Assert - when paid_subscription is None, check_subscription_limit is NOT called
         assert result["can_proceed"] is False
         assert result["billing_type"] == "subscription"
         mock_dependencies["get_paid_subscription"].assert_not_called()
-        mock_dependencies["check_subscription_limit"].assert_called_once_with(
-            paid_subscription=None,
-            installation_id=456,
-        )
+        mock_dependencies["check_subscription_limit"].assert_not_called()
 
     def test_subscription_with_stripe_customer_id_but_no_subscription(
         self, mock_dependencies
@@ -450,15 +438,6 @@ class TestCheckAvailability:
         mock_dependencies["get_stripe_customer_id"].return_value = "cus_123"
         mock_dependencies["get_paid_subscription"].return_value = None
         mock_dependencies["get_billing_type"].return_value = "subscription"
-        mock_dependencies["check_subscription_limit"].return_value = {
-            "can_proceed": False,
-            "requests_left": 0,
-            "period_end_date": None,
-            "request_limit": 0,
-        }
-        mock_dependencies["get_subscription_limit_message"].return_value = (
-            "No active subscription"
-        )
 
         # Act
         result = check_availability(
@@ -469,16 +448,13 @@ class TestCheckAvailability:
             sender_name="test_sender",
         )
 
-        # Assert
+        # Assert - when paid_subscription is None, check_subscription_limit is NOT called
         assert result["can_proceed"] is False
         assert result["billing_type"] == "subscription"
         mock_dependencies["get_paid_subscription"].assert_called_once_with(
             customer_id="cus_123"
         )
-        mock_dependencies["check_subscription_limit"].assert_called_once_with(
-            paid_subscription=None,
-            installation_id=456,
-        )
+        mock_dependencies["check_subscription_limit"].assert_not_called()
 
     def test_get_billing_type_called_with_correct_parameters(self, mock_dependencies):
         """Test that get_billing_type is called with correct parameters."""

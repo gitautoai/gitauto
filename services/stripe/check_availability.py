@@ -70,7 +70,7 @@ def check_availability(
         availability_status["can_proceed"] = True
         availability_status["log_message"] = "Exception owner - unlimited access."
 
-    elif billing_type == "subscription":
+    elif billing_type == "subscription" and paid_subscription is not None:
         subscription_limit = check_subscription_limit(
             paid_subscription=paid_subscription,
             installation_id=installation_id,

@@ -1,15 +1,19 @@
 # pylint: disable=unused-argument,too-many-lines
+# pyright: reportUnusedVariable=false
 
 import inspect
 from typing import cast
 from unittest.mock import patch
+
+import pytest
 
 from config import PRODUCT_ID
 from services.webhook.issue_handler import create_pr_from_issue
 from services.github.types.github_types import GitHubLabeledPayload
 
 
-def test_create_pr_from_issue_wrong_label_early_return():
+@pytest.mark.asyncio
+async def test_create_pr_from_issue_wrong_label_early_return():
     """Test early return when wrong label is provided"""
     payload_dict = {
         "action": "labeled",
@@ -26,15 +30,16 @@ def test_create_pr_from_issue_wrong_label_early_return():
     }
 
     # Function should complete without errors (early return due to wrong label)
-    create_pr_from_issue(
+    await create_pr_from_issue(
         payload=payload,
         trigger="issue_label",
         lambda_info=lambda_info,
     )
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.create_user_request")
-def test_lambda_info_parameter_exists(mock_create_user_request):
+async def test_lambda_info_parameter_exists(mock_create_user_request):
     """Test that the create_pr_from_issue function accepts lambda_info parameter"""
 
     # This test just verifies the function signature accepts lambda_info
@@ -55,14 +60,14 @@ def test_lambda_info_parameter_exists(mock_create_user_request):
     }
 
     # Test with lambda_info
-    create_pr_from_issue(
+    await create_pr_from_issue(
         payload=payload,
         trigger="issue_label",
         lambda_info=lambda_info,
     )
 
     # Test without lambda_info (should default to None)
-    create_pr_from_issue(payload=payload, trigger="issue_label")
+    await create_pr_from_issue(payload=payload, trigger="issue_label")
 
     # Function calls completed without errors (early return due to wrong label)
 
@@ -123,6 +128,7 @@ def _get_test_payload():
     )
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
 @patch("services.webhook.issue_handler.slack_notify")
@@ -134,7 +140,7 @@ def _get_test_payload():
 @patch("services.webhook.issue_handler.render_text")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_can_proceed_false_early_return(
+async def test_can_proceed_false_early_return(
     mock_deconstruct,
     mock_check_availability,
     mock_render_text,
@@ -167,7 +173,7 @@ def test_can_proceed_false_early_return(
         "log_message": "User has no credits",
     }
 
-    create_pr_from_issue(
+    await create_pr_from_issue(
         payload=_get_test_payload(),
         trigger="issue_label",
     )
@@ -179,6 +185,7 @@ def test_can_proceed_false_early_return(
     mock_get_repo_features.assert_called_once_with(owner_id=456, repo_id=789)
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.update_stripe_customer_id")
 @patch("services.webhook.issue_handler.create_stripe_customer")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
@@ -192,7 +199,7 @@ def test_can_proceed_false_early_return(
 @patch("services.webhook.issue_handler.render_text")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_stripe_customer_id_update(
+async def test_stripe_customer_id_update(
     mock_deconstruct,
     mock_check_availability,
     mock_render_text,
@@ -228,7 +235,7 @@ def test_stripe_customer_id_update(
         "log_message": "No credits",
     }
 
-    create_pr_from_issue(
+    await create_pr_from_issue(
         payload=_get_test_payload(),
         trigger="issue_label",
     )
@@ -236,6 +243,7 @@ def test_stripe_customer_id_update(
     mock_update_stripe.assert_called_once_with(456, "cus_new123")
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.update_usage")
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.chat_with_agent")
@@ -263,7 +271,7 @@ def test_stripe_customer_id_update(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_image_urls_processing(
+async def test_image_urls_processing(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -326,7 +334,7 @@ def test_image_urls_processing(
     mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 0)
     mock_get_pr_files.return_value = []
 
-    create_pr_from_issue(
+    await create_pr_from_issue(
         payload=_get_test_payload(),
         trigger="issue_label",
     )
@@ -336,6 +344,7 @@ def test_image_urls_processing(
     mock_describe_image.assert_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.update_usage")
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.chat_with_agent")
@@ -362,7 +371,7 @@ def test_image_urls_processing(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_image_unsupported_format_skipped(
+async def test_image_unsupported_format_skipped(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -421,11 +430,12 @@ def test_image_unsupported_format_skipped(
     mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 0)
     mock_get_pr_files.return_value = []
 
-    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_get_base64.assert_not_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.update_usage")
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.chat_with_agent")
@@ -453,7 +463,7 @@ def test_image_unsupported_format_skipped(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_image_base64_fetch_failed(
+async def test_image_base64_fetch_failed(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -514,12 +524,13 @@ def test_image_base64_fetch_failed(
     mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 0)
     mock_get_pr_files.return_value = []
 
-    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_get_base64.assert_called_once()
     mock_describe_image.assert_not_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.get_timeout_message")
 @patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.get_pull_request_files")
@@ -547,7 +558,7 @@ def test_image_base64_fetch_failed(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_timeout_approaching_breaks_loop(
+async def test_timeout_approaching_breaks_loop(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -606,13 +617,14 @@ def test_timeout_approaching_breaks_loop(
     mock_is_timeout.return_value = (True, 850.0)
     mock_get_timeout_msg.return_value = "Timeout approaching after 850s"
 
-    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_is_timeout.assert_called_once()
     mock_get_timeout_msg.assert_called_once_with(850.0, "Issue processing")
     mock_chat_with_agent.assert_not_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
@@ -639,7 +651,7 @@ def test_timeout_approaching_breaks_loop(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_branch_deleted_breaks_loop(
+async def test_branch_deleted_breaks_loop(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -696,13 +708,14 @@ def test_branch_deleted_breaks_loop(
     mock_get_pr_files.return_value = []
     mock_is_timeout.return_value = (False, 10.0)
 
-    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_check_branch.assert_called()
     mock_update_comment.assert_called()
     mock_chat_with_agent.assert_not_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
@@ -729,7 +742,7 @@ def test_branch_deleted_breaks_loop(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_retry_loop_exhausted_not_explored_but_committed(
+async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -796,11 +809,12 @@ def test_retry_loop_exhausted_not_explored_but_committed(
         ([], [], None, None, 10, 5, True, 60),
     ]
 
-    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     assert mock_chat_with_agent.call_count == 8
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
@@ -827,7 +841,7 @@ def test_retry_loop_exhausted_not_explored_but_committed(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_retry_loop_exhausted_explored_but_not_committed(
+async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -894,11 +908,12 @@ def test_retry_loop_exhausted_explored_but_not_committed(
         ([], [], None, None, 10, 5, False, 60),
     ]
 
-    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     assert mock_chat_with_agent.call_count == 8
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
@@ -925,7 +940,7 @@ def test_retry_loop_exhausted_explored_but_not_committed(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_retry_counter_reset_on_successful_loop(
+async def test_retry_counter_reset_on_successful_loop(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -988,11 +1003,12 @@ def test_retry_counter_reset_on_successful_loop(
         ([], [], None, None, 10, 5, False, 60),
     ]
 
-    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     assert mock_chat_with_agent.call_count == 4
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.is_test_file")
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
@@ -1020,7 +1036,7 @@ def test_retry_counter_reset_on_successful_loop(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_non_test_file_skipped_in_header_merge(
+async def test_non_test_file_skipped_in_header_merge(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -1080,11 +1096,12 @@ def test_non_test_file_skipped_in_header_merge(
     mock_get_pr_files.return_value = [{"filename": "src/main.py"}]
     mock_is_test_file.return_value = False
 
-    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_is_test_file.assert_called_with("src/main.py")
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.replace_remote_file_content")
 @patch("services.webhook.issue_handler.merge_test_file_headers")
 @patch("services.webhook.issue_handler.get_raw_content")
@@ -1115,7 +1132,7 @@ def test_non_test_file_skipped_in_header_merge(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_test_file_header_merge(
+async def test_test_file_header_merge(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -1180,7 +1197,7 @@ def test_test_file_header_merge(
     mock_get_raw_content.return_value = "def test_something(): pass"
     mock_merge_headers.return_value = "import pytest\n\ndef test_something(): pass"
 
-    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_is_test_file.assert_called_with("tests/test_example.py")
     mock_get_raw_content.assert_called()
@@ -1188,6 +1205,7 @@ def test_test_file_header_merge(
     mock_replace_remote.assert_called_once()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.replace_remote_file_content")
 @patch("services.webhook.issue_handler.merge_test_file_headers")
 @patch("services.webhook.issue_handler.get_raw_content")
@@ -1218,7 +1236,7 @@ def test_test_file_header_merge(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_test_file_header_merge_no_content(
+async def test_test_file_header_merge_no_content(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -1282,7 +1300,7 @@ def test_test_file_header_merge_no_content(
     mock_is_test_file.return_value = True
     mock_get_raw_content.return_value = None
 
-    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_is_test_file.assert_called()
     mock_get_raw_content.assert_called()
@@ -1290,6 +1308,7 @@ def test_test_file_header_merge_no_content(
     mock_replace_remote.assert_not_called()
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.replace_remote_file_content")
 @patch("services.webhook.issue_handler.merge_test_file_headers")
 @patch("services.webhook.issue_handler.get_raw_content")
@@ -1320,7 +1339,7 @@ def test_test_file_header_merge_no_content(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_test_file_header_merge_no_change(
+async def test_test_file_header_merge_no_change(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -1385,7 +1404,7 @@ def test_test_file_header_merge_no_change(
     mock_get_raw_content.return_value = "import pytest\n\ndef test_something(): pass"
     mock_merge_headers.return_value = "import pytest\n\ndef test_something(): pass"
 
-    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_is_test_file.assert_called()
     mock_get_raw_content.assert_called()
@@ -1394,6 +1413,7 @@ def test_test_file_header_merge_no_change(
 
 
 @patch("services.webhook.issue_handler.send_email")
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.get_credits_depleted_email_text")
 @patch("services.webhook.issue_handler.get_user")
 @patch("services.webhook.issue_handler.get_owner")
@@ -1424,7 +1444,7 @@ def test_test_file_header_merge_no_change(
 @patch("services.webhook.issue_handler.get_comments")
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_credits_depleted_email_sent(
+async def test_credits_depleted_email_sent(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -1490,7 +1510,7 @@ def test_credits_depleted_email_sent(
     mock_get_user.return_value = {"id": 888, "email": "user@example.com"}
     mock_get_email_text.return_value = ("Credits Depleted", "Your credits are gone")
 
-    create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     mock_insert_credit.assert_called_once()
     mock_get_owner.assert_called_with(owner_id=456)
@@ -1501,6 +1521,7 @@ def test_credits_depleted_email_sent(
     )
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.insert_credit")
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.create_empty_commit")
@@ -1523,7 +1544,7 @@ def test_credits_depleted_email_sent(
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.render_text")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_issue_handler_token_accumulation(
+async def test_issue_handler_token_accumulation(
     mock_deconstruct_github_payload,
     mock_render_text,
     mock_check_availability,
@@ -1641,7 +1662,7 @@ def test_issue_handler_token_accumulation(
     )
 
     # Call the function
-    create_pr_from_issue(
+    await create_pr_from_issue(
         payload=payload,
         trigger="issue_comment",
         lambda_info={
@@ -1664,6 +1685,7 @@ def test_issue_handler_token_accumulation(
     assert call_kwargs["token_output"] == 70  # Two calls: 35 + 35
 
 
+@pytest.mark.asyncio
 @patch("services.webhook.issue_handler.insert_credit")
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.create_empty_commit")
@@ -1688,7 +1710,7 @@ def test_issue_handler_token_accumulation(
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.render_text")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
-def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
+async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_deconstruct_github_payload,
     mock_render_text,
     mock_check_availability,
@@ -1799,7 +1821,7 @@ def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
         },
     )
 
-    create_pr_from_issue(
+    await create_pr_from_issue(
         payload=payload,
         trigger="issue_comment",
     )

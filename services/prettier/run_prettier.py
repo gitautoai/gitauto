@@ -2,11 +2,14 @@ import os
 import subprocess
 
 from config import UTF8
+from services.efs.is_efs_install_ready import is_efs_install_ready
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def run_prettier(*, clone_dir: str, file_path: str, file_content: str):
+async def run_prettier(
+    *, owner: str, repo: str, clone_dir: str, file_path: str, file_content: str
+):
     if not file_content.strip():
         print(f"Prettier: Skipping {file_path} - empty content")
         return None
@@ -16,6 +19,9 @@ def run_prettier(*, clone_dir: str, file_path: str, file_content: str):
     ):
         print(f"Prettier: Skipping {file_path} - not a Prettier-supported file")
         return None
+
+    # Wait for install to complete so npx uses local packages instead of downloading
+    await is_efs_install_ready(owner, repo, "node")
 
     # Write to disk and use --write (alternative: stdin/stdout without file)
     full_path = os.path.join(clone_dir, file_path)

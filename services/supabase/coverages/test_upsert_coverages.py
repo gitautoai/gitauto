@@ -1,4 +1,5 @@
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name,unused-argument
+# pyright: reportUnusedVariable=false
 
 # Standard imports
 from unittest.mock import patch, MagicMock

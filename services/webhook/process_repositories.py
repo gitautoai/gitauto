@@ -11,7 +11,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def process_repositories(
+async def process_repositories(
     owner_id: int,
     owner_name: str,
     repositories: list[RepositoryAddedOrRemoved],
@@ -31,13 +31,15 @@ def process_repositories(
 
         clone_dir = None
         try:
-            clone_dir = clone_repo(
+            coro = clone_repo(
                 owner=owner_name,
                 repo=repo_name,
                 pr_number=None,
                 branch=default_branch,
                 token=token,
             )
+            assert coro is not None
+            clone_dir = await coro
             print(f"Cloned repository {repo_name} into {clone_dir}")
 
             # Try to get repository stats, but don't fail if this doesn't work

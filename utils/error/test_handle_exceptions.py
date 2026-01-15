@@ -8,6 +8,26 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
+async def async_mock_function_for_testing():
+    raise ValueError("Async test error")
+
+
+@handle_exceptions(default_return_value="async_default", raise_on_error=False)
+async def async_mock_function_with_custom_default():
+    raise ValueError("Async test error")
+
+
+@handle_exceptions(default_return_value=None, raise_on_error=True)
+async def async_mock_function_with_raise_on_error():
+    raise ValueError("Async test error")
+
+
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+async def async_mock_function_success():
+    return {"async": "success"}
+
+
+@handle_exceptions(default_return_value=None, raise_on_error=False)
 def mock_function_for_testing():
     """Mock function to test handle_exceptions decorator."""
     response = requests.get("https://api.github.com/test", timeout=120)
@@ -516,4 +536,50 @@ def test_handle_exceptions_json_decode_error_raise_on_error():
     ) as mock_sentry:
         with pytest.raises(json.JSONDecodeError):
             func_json_error_raises()
+        mock_sentry.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_async_handle_exceptions_returns_none_on_error():
+    with patch("utils.error.handle_exceptions.sentry_sdk.capture_exception"):
+        coro = async_mock_function_for_testing()
+        assert coro is not None
+        result = await coro
+        assert result is None
+
+
+@pytest.mark.asyncio
+async def test_async_handle_exceptions_returns_custom_default():
+    with patch("utils.error.handle_exceptions.sentry_sdk.capture_exception"):
+        coro = async_mock_function_with_custom_default()
+        assert coro is not None
+        result = await coro
+        assert result == "async_default"
+
+
+@pytest.mark.asyncio
+async def test_async_handle_exceptions_raises_when_raise_on_error_true():
+    with patch("utils.error.handle_exceptions.sentry_sdk.capture_exception"):
+        with pytest.raises(ValueError, match="Async test error"):
+            coro = async_mock_function_with_raise_on_error()
+            assert coro is not None
+            await coro
+
+
+@pytest.mark.asyncio
+async def test_async_handle_exceptions_success_case():
+    coro = async_mock_function_success()
+    assert coro is not None
+    result = await coro
+    assert result == {"async": "success"}
+
+
+@pytest.mark.asyncio
+async def test_async_handle_exceptions_reports_to_sentry():
+    with patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
+        coro = async_mock_function_for_testing()
+        assert coro is not None
+        await coro
         mock_sentry.assert_called_once()

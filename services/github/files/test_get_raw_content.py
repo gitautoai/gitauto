@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 # Standard imports
 import base64
 import json

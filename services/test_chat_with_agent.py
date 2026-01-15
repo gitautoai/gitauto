@@ -1,10 +1,13 @@
+# pyright: reportUnusedVariable=false
 from unittest.mock import Mock, patch
+import pytest
 from services.chat_with_agent import chat_with_agent
 
 
+@pytest.mark.asyncio
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
-def test_chat_with_agent_passes_usage_id_to_claude(
+async def test_chat_with_agent_passes_usage_id_to_claude(
     mock_chat_with_claude, mock_get_model
 ):
     mock_get_model.return_value = "claude-sonnet-4-0"
@@ -20,7 +23,7 @@ def test_chat_with_agent_passes_usage_id_to_claude(
     base_args = Mock()
     repo_settings = None
 
-    chat_with_agent(
+    await chat_with_agent(
         messages=[{"role": "user", "content": "test"}],
         trigger="issue_comment",
         base_args=base_args,
@@ -34,9 +37,10 @@ def test_chat_with_agent_passes_usage_id_to_claude(
     assert call_args["usage_id"] == 123
 
 
+@pytest.mark.asyncio
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_openai")
-def test_chat_with_agent_passes_usage_id_to_openai(
+async def test_chat_with_agent_passes_usage_id_to_openai(
     mock_chat_with_openai, mock_get_model
 ):
     mock_get_model.return_value = "gpt-5"
@@ -52,7 +56,7 @@ def test_chat_with_agent_passes_usage_id_to_openai(
     base_args = Mock()
     repo_settings = None
 
-    chat_with_agent(
+    await chat_with_agent(
         messages=[{"role": "user", "content": "test"}],
         trigger="issue_comment",
         base_args=base_args,
@@ -66,9 +70,12 @@ def test_chat_with_agent_passes_usage_id_to_openai(
     assert call_args["usage_id"] == 456
 
 
+@pytest.mark.asyncio
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
-def test_chat_with_agent_returns_token_counts(mock_chat_with_claude, mock_get_model):
+async def test_chat_with_agent_returns_token_counts(
+    mock_chat_with_claude, mock_get_model
+):
     mock_get_model.return_value = "claude-sonnet-4-0"
     mock_chat_with_claude.return_value = (
         {"role": "assistant", "content": "response"},
@@ -81,7 +88,7 @@ def test_chat_with_agent_returns_token_counts(mock_chat_with_claude, mock_get_mo
 
     base_args = Mock()
 
-    result = chat_with_agent(
+    result = await chat_with_agent(
         messages=[{"role": "user", "content": "test"}],
         trigger="issue_comment",
         base_args=base_args,
@@ -94,10 +101,11 @@ def test_chat_with_agent_returns_token_counts(mock_chat_with_claude, mock_get_mo
     assert result[5] == 15  # token_output
 
 
+@pytest.mark.asyncio
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
 @patch("services.chat_with_agent.update_comment")
-def test_get_remote_file_content_start_line_end_line_logging(
+async def test_get_remote_file_content_start_line_end_line_logging(
     mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
     """Test that start_line and end_line parameters are properly logged in chat_with_agent."""
@@ -126,7 +134,7 @@ def test_get_remote_file_content_start_line_end_line_logging(
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(return_value="file content")
 
-        chat_with_agent(
+        await chat_with_agent(
             messages=[{"role": "user", "content": "test"}],
             trigger="issue_comment",
             base_args=base_args,
@@ -151,10 +159,11 @@ def test_get_remote_file_content_start_line_end_line_logging(
     ), f"Expected message not found in update_comment calls: {[call.kwargs.get('body', '') for call in call_args]}"
 
 
+@pytest.mark.asyncio
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
 @patch("services.chat_with_agent.update_comment")
-def test_delete_file_logging(
+async def test_delete_file_logging(
     mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
     """Test that delete_file function calls are properly logged in chat_with_agent."""
@@ -185,7 +194,7 @@ def test_delete_file_logging(
             return_value="File deleted successfully"
         )
 
-        chat_with_agent(
+        await chat_with_agent(
             messages=[{"role": "user", "content": "test"}],
             trigger="issue_comment",
             base_args=base_args,
@@ -210,10 +219,13 @@ def test_delete_file_logging(
     ), f"Expected delete message not found in update_comment calls: {[call.kwargs.get('body', '') for call in call_args]}"
 
 
+@pytest.mark.asyncio
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
 @patch("services.chat_with_agent.update_comment")
-def test_move_file_logging(mock_update_comment, mock_chat_with_claude, mock_get_model):
+async def test_move_file_logging(
+    mock_update_comment, mock_chat_with_claude, mock_get_model
+):
     """Test that move_file function calls are properly logged in chat_with_agent."""
     mock_get_model.return_value = "claude-sonnet-4-0"
     mock_chat_with_claude.return_value = (
@@ -245,7 +257,7 @@ def test_move_file_logging(mock_update_comment, mock_chat_with_claude, mock_get_
             return_value="File moved successfully"
         )
 
-        chat_with_agent(
+        await chat_with_agent(
             messages=[{"role": "user", "content": "test"}],
             trigger="issue_comment",
             base_args=base_args,
@@ -270,9 +282,10 @@ def test_move_file_logging(mock_update_comment, mock_chat_with_claude, mock_get_
     ), f"Expected move message not found in update_comment calls: {[call.kwargs.get('body', '') for call in call_args]}"
 
 
+@pytest.mark.asyncio
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
-def test_replace_remote_file_content_handles_new_content_arg_name(
+async def test_replace_remote_file_content_handles_new_content_arg_name(
     mock_chat_with_claude, mock_get_model
 ):
     mock_get_model.return_value = "claude-sonnet-4-0"
@@ -305,7 +318,7 @@ def test_replace_remote_file_content_handles_new_content_arg_name(
         mock_tools.__getitem__.return_value = mock_function
         mock_tools.__contains__.return_value = True
 
-        chat_with_agent(
+        await chat_with_agent(
             messages=[{"role": "user", "content": "test"}],
             trigger="issue_comment",
             base_args=base_args,
@@ -320,10 +333,11 @@ def test_replace_remote_file_content_handles_new_content_arg_name(
         assert "new_content" not in call_kwargs
 
 
+@pytest.mark.asyncio
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
 @patch("services.chat_with_agent.slack_notify")
-def test_unavailable_tool_sends_slack_notification(
+async def test_unavailable_tool_sends_slack_notification(
     mock_slack_notify, mock_chat_with_claude, mock_get_model
 ):
     mock_get_model.return_value = "claude-sonnet-4-0"
@@ -356,7 +370,7 @@ def test_unavailable_tool_sends_slack_notification(
         mock_tools.__contains__.return_value = False
 
         with patch("services.chat_with_agent.update_comment"):
-            chat_with_agent(
+            await chat_with_agent(
                 messages=[{"role": "user", "content": "test"}],
                 trigger="issue_comment",
                 base_args=base_args,
@@ -372,10 +386,11 @@ def test_unavailable_tool_sends_slack_notification(
         assert "explore" in call_args
 
 
+@pytest.mark.asyncio
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
 @patch("services.chat_with_agent.is_target_test_file")
-def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
+async def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
     mock_is_target_test_file, mock_chat_with_claude, mock_get_model
 ):
     mock_get_model.return_value = "claude-sonnet-4-0"
@@ -414,7 +429,7 @@ def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = True
 
-        chat_with_agent(
+        await chat_with_agent(
             messages=[{"role": "user", "content": "test"}],
             trigger="issue_comment",
             base_args=base_args,

@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 # Standard imports
 import os
 from unittest.mock import patch, mock_open, MagicMock, call

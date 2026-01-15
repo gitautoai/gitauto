@@ -16,7 +16,7 @@ from utils.files.apply_patch import apply_patch
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
-def apply_diff_to_file(
+async def apply_diff_to_file(
     diff: str,
     file_path: str,
     base_args: BaseArgs,
@@ -70,19 +70,29 @@ def apply_diff_to_file(
 
     # Prettier then ESLint (JS ecosystem convention)
     if clone_dir and file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
-        formatted_content = run_prettier(
+        prettier_coro = run_prettier(
+            owner=owner,
+            repo=repo,
             clone_dir=clone_dir,
             file_path=file_path,
             file_content=modified_text,
         )
+        # Decorator always returns coroutine for async functions; None is the inner resolved type
+        assert prettier_coro is not None
+        formatted_content = await prettier_coro
         if formatted_content:
             modified_text = formatted_content
 
-        linted_content = run_eslint(
+        eslint_coro = run_eslint(
+            owner=owner,
+            repo=repo,
             clone_dir=clone_dir,
             file_path=file_path,
             file_content=modified_text,
         )
+        # Decorator always returns coroutine for async functions; None is the inner resolved type
+        assert eslint_coro is not None
+        linted_content = await eslint_coro
         if linted_content:
             modified_text = linted_content
 

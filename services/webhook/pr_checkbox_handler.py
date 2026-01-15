@@ -50,7 +50,7 @@ from utils.time.get_timeout_message import get_timeout_message
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def handle_pr_checkbox_trigger(
+async def handle_pr_checkbox_trigger(
     payload: IssueCommentWebhookPayload,
     lambda_info: dict[str, str | None] | None = None,
 ):
@@ -256,7 +256,7 @@ def handle_pr_checkbox_trigger(
             token_output,
             is_explored,
             p,
-        ) = chat_with_agent(
+        ) = await chat_with_agent(
             messages=messages,
             trigger=trigger,
             repo_settings=repo_settings,
@@ -279,7 +279,7 @@ def handle_pr_checkbox_trigger(
             token_output,
             is_committed,
             p,
-        ) = chat_with_agent(
+        ) = await chat_with_agent(
             messages=messages,
             trigger=trigger,
             repo_settings=repo_settings,

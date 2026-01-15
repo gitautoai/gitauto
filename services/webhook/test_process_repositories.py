@@ -1,6 +1,7 @@
 # pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 from typing import cast
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 import pytest
 
@@ -10,8 +11,11 @@ from services.webhook.process_repositories import process_repositories
 
 @pytest.fixture
 def mock_clone_repo():
-    with patch("services.webhook.process_repositories.clone_repo") as mock:
-        mock.return_value = "/tmp/test-owner/test-repo"
+    with patch(
+        "services.webhook.process_repositories.clone_repo",
+        new_callable=AsyncMock,
+        return_value="/tmp/test-owner/test-repo",
+    ) as mock:
         yield mock
 
 
@@ -72,7 +76,8 @@ def sample_stats():
 
 class TestProcessRepositories:
 
-    def test_process_repositories_success(
+    @pytest.mark.asyncio
+    async def test_process_repositories_success(
         self,
         sample_repositories,
         sample_stats,
@@ -89,7 +94,7 @@ class TestProcessRepositories:
             "/tmp/test-owner/test-repo-2",
         ]
 
-        process_repositories(
+        coro = process_repositories(
             owner_id=12345,
             owner_name="test-owner",
             repositories=sample_repositories,
@@ -97,6 +102,8 @@ class TestProcessRepositories:
             user_id=67890,
             user_name="test-user",
         )
+        assert coro is not None
+        await coro
 
         assert mock_get_default_branch.call_count == 2
         assert mock_clone_repo.call_count == 2
@@ -119,7 +126,8 @@ class TestProcessRepositories:
         assert mock_upsert_repository.call_count == 2
         assert mock_shutil.call_count == 2
 
-    def test_process_repositories_empty_list(
+    @pytest.mark.asyncio
+    async def test_process_repositories_empty_list(
         self,
         mock_clone_repo,
         mock_get_default_branch,
@@ -127,7 +135,7 @@ class TestProcessRepositories:
         mock_upsert_repository,
         mock_shutil,
     ):
-        process_repositories(
+        coro = process_repositories(
             owner_id=12345,
             owner_name="test-owner",
             repositories=[],
@@ -135,6 +143,8 @@ class TestProcessRepositories:
             user_id=67890,
             user_name="test-user",
         )
+        assert coro is not None
+        await coro
 
         mock_get_default_branch.assert_not_called()
         mock_clone_repo.assert_not_called()
@@ -142,7 +152,8 @@ class TestProcessRepositories:
         mock_upsert_repository.assert_not_called()
         mock_shutil.assert_not_called()
 
-    def test_process_repositories_clone_failure(
+    @pytest.mark.asyncio
+    async def test_process_repositories_clone_failure(
         self,
         sample_repositories,
         mock_clone_repo,
@@ -153,7 +164,7 @@ class TestProcessRepositories:
     ):
         mock_clone_repo.side_effect = Exception("Clone failed")
 
-        process_repositories(
+        coro = process_repositories(
             owner_id=12345,
             owner_name="test-owner",
             repositories=sample_repositories,
@@ -161,13 +172,16 @@ class TestProcessRepositories:
             user_id=67890,
             user_name="test-user",
         )
+        assert coro is not None
+        await coro
 
         assert mock_get_default_branch.call_count == 1
         assert mock_clone_repo.call_count == 1
         mock_get_repository_stats.assert_not_called()
         mock_upsert_repository.assert_not_called()
 
-    def test_process_repositories_stats_failure(
+    @pytest.mark.asyncio
+    async def test_process_repositories_stats_failure(
         self,
         sample_repositories,
         mock_clone_repo,
@@ -179,7 +193,7 @@ class TestProcessRepositories:
         mock_clone_repo.return_value = "/tmp/test-owner/test-repo-1"
         mock_get_repository_stats.side_effect = Exception("Stats failed")
 
-        process_repositories(
+        coro = process_repositories(
             owner_id=12345,
             owner_name="test-owner",
             repositories=sample_repositories,
@@ -187,13 +201,16 @@ class TestProcessRepositories:
             user_id=67890,
             user_name="test-user",
         )
+        assert coro is not None
+        await coro
 
         assert mock_get_default_branch.call_count == 1
         assert mock_clone_repo.call_count == 1
         assert mock_get_repository_stats.call_count == 1
         mock_upsert_repository.assert_not_called()
 
-    def test_process_repositories_cleanup_on_success(
+    @pytest.mark.asyncio
+    async def test_process_repositories_cleanup_on_success(
         self,
         sample_stats,
         mock_clone_repo,
@@ -217,7 +234,7 @@ class TestProcessRepositories:
         mock_clone_repo.return_value = "/tmp/test-owner/single-repo"
         mock_get_repository_stats.return_value = sample_stats
 
-        process_repositories(
+        coro = process_repositories(
             owner_id=12345,
             owner_name="test-owner",
             repositories=single_repo,
@@ -225,12 +242,15 @@ class TestProcessRepositories:
             user_id=67890,
             user_name="test-user",
         )
+        assert coro is not None
+        await coro
 
         mock_shutil.assert_called_once_with(
             "/tmp/test-owner/single-repo", ignore_errors=True
         )
 
-    def test_process_repositories_with_zero_stats(
+    @pytest.mark.asyncio
+    async def test_process_repositories_with_zero_stats(
         self,
         sample_repositories,
         mock_clone_repo,
@@ -248,7 +268,7 @@ class TestProcessRepositories:
         mock_clone_repo.return_value = "/tmp/test-owner/test-repo"
         mock_get_repository_stats.return_value = zero_stats
 
-        process_repositories(
+        coro = process_repositories(
             owner_id=12345,
             owner_name="test-owner",
             repositories=sample_repositories,
@@ -256,6 +276,8 @@ class TestProcessRepositories:
             user_id=67890,
             user_name="test-user",
         )
+        assert coro is not None
+        await coro
 
         mock_upsert_repository.assert_any_call(
             owner_id=12345,
@@ -270,7 +292,8 @@ class TestProcessRepositories:
             code_lines=0,
         )
 
-    def test_process_repositories_cleanup_when_clone_returns_none(
+    @pytest.mark.asyncio
+    async def test_process_repositories_cleanup_when_clone_returns_none(
         self,
         sample_repositories,
         mock_clone_repo,
@@ -281,7 +304,7 @@ class TestProcessRepositories:
     ):
         mock_clone_repo.return_value = None
 
-        process_repositories(
+        coro = process_repositories(
             owner_id=12345,
             owner_name="test-owner",
             repositories=sample_repositories,
@@ -289,5 +312,7 @@ class TestProcessRepositories:
             user_id=67890,
             user_name="test-user",
         )
+        assert coro is not None
+        await coro
 
         mock_shutil.assert_not_called()

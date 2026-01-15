@@ -1,17 +1,17 @@
+import asyncio
 import os
-import subprocess
 
 from services.efs.get_efs_dir import get_efs_dir
+from services.git.get_clone_dir import get_clone_dir
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(raise_on_error=True)
-def clone_repo(owner: str, repo: str, pr_number: int | None, branch: str, token: str):
+async def clone_repo(
+    owner: str, repo: str, pr_number: int | None, branch: str, token: str
+):
     """Clone to /tmp, not EFS, because EFS is shared across Lambda invocations and concurrent PRs would conflict. /tmp works for both Lambda and Mac local (/private/tmp on Mac)."""
-    if pr_number:
-        clone_dir = f"/tmp/{owner}/{repo}/pr-{pr_number}"
-    else:
-        clone_dir = f"/tmp/{owner}/{repo}"
+    clone_dir = get_clone_dir(owner, repo, pr_number)
 
     if os.path.exists(clone_dir):
         print(f"Reusing existing clone: {clone_dir}")
@@ -20,7 +20,7 @@ def clone_repo(owner: str, repo: str, pr_number: int | None, branch: str, token:
     repo_url = f"https://x-access-token:{token}@github.com/{owner}/{repo}.git"
 
     # --depth 1 (shallow clone): only need current files for code quality tools, not git history
-    clone_cmd = [
+    process = await asyncio.create_subprocess_exec(
         "git",
         "clone",
         "--depth",
@@ -29,10 +29,14 @@ def clone_repo(owner: str, repo: str, pr_number: int | None, branch: str, token:
         branch,
         repo_url,
         clone_dir,
-    ]
-    subprocess.run(clone_cmd, capture_output=True, text=True, check=True, timeout=180)
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=180)
 
-    # Symlink node_modules from EFS so eslint/prettier can find packages (skipped for non-JS repos)
+    if process.returncode != 0:
+        raise RuntimeError(f"git clone failed: {stderr.decode()}")
+
     efs_node_modules = os.path.join(get_efs_dir(owner, repo), "node_modules")
     clone_node_modules = os.path.join(clone_dir, "node_modules")
     if os.path.exists(efs_node_modules) and not os.path.exists(clone_node_modules):

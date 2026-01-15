@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 # Standard imports
 from datetime import datetime, timezone
 import uuid

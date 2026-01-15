@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 """Unit tests for check_user_is_collaborator function.
 
 Related Documentation:
