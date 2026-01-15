@@ -3,7 +3,7 @@
 # Standard imports
 import json
 from typing import cast
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 import pytest
 
 # Local imports
@@ -92,30 +92,8 @@ def mock_handle_check_suite():
 
 
 @pytest.fixture
-def mock_create_pr_checkbox_comment():
-    with patch("services.webhook.webhook_handler.create_pr_checkbox_comment") as mock:
-        yield mock
-
-
-@pytest.fixture
 def mock_write_pr_description():
     with patch("services.webhook.webhook_handler.write_pr_description") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_handle_screenshot_comparison():
-    with patch(
-        "services.webhook.webhook_handler.handle_screenshot_comparison",
-        new_callable=AsyncMock,
-    ) as mock:
-        mock.return_value = None
-        yield mock
-
-
-@pytest.fixture
-def mock_handle_pr_merged():
-    with patch("services.webhook.webhook_handler.handle_pr_merged") as mock:
         yield mock
 
 
@@ -403,30 +381,14 @@ class TestHandleWebhookEvent:
     @pytest.mark.asyncio
     async def test_handle_webhook_event_pull_request_opened(
         self,
-        mock_create_pr_checkbox_comment,
         mock_write_pr_description,
-        mock_handle_screenshot_comparison,
     ):
         """Test handling of pull request opened event."""
         payload = {"action": "opened"}
 
         await handle_webhook_event(event_name="pull_request", payload=payload)
 
-        mock_create_pr_checkbox_comment.assert_called_once_with(payload=payload)
         mock_write_pr_description.assert_called_once_with(payload=payload)
-        mock_handle_screenshot_comparison.assert_called_once_with(payload=payload)
-
-    @pytest.mark.asyncio
-    async def test_handle_webhook_event_pull_request_synchronize(
-        self, mock_create_pr_checkbox_comment, mock_handle_screenshot_comparison
-    ):
-        """Test handling of pull request synchronize event."""
-        payload = {"action": "synchronize"}
-
-        await handle_webhook_event(event_name="pull_request", payload=payload)
-
-        mock_create_pr_checkbox_comment.assert_called_once_with(payload=payload)
-        mock_handle_screenshot_comparison.assert_called_once_with(payload=payload)
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_pull_request_closed_no_pull_request(self):
@@ -450,9 +412,7 @@ class TestHandleWebhookEvent:
         # Should return early with no errors
 
     @pytest.mark.asyncio
-    async def test_handle_webhook_event_pull_request_closed_non_gitauto_branch(
-        self, mock_handle_pr_merged
-    ):
+    async def test_handle_webhook_event_pull_request_closed_non_gitauto_branch(self):
         """Test handling of pull request closed event from non-GitAuto branch."""
         with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
             with patch(
@@ -466,9 +426,8 @@ class TestHandleWebhookEvent:
                     },
                 }
 
+                # Should return early without errors (non-GitAuto branches are ignored)
                 await handle_webhook_event(event_name="pull_request", payload=payload)
-
-                mock_handle_pr_merged.assert_called_once_with(payload=payload)
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_pull_request_closed_gitauto_branch_no_body(
@@ -956,20 +915,16 @@ class TestHandleWebhookEvent:
     @pytest.mark.asyncio
     async def test_pull_request_opened_type_checking_with_real_payload(
         self,
-        mock_create_pr_checkbox_comment,
         mock_write_pr_description,
-        mock_handle_screenshot_comparison,
     ):
         with open("payloads/github/pull_request/opened.json", "r", encoding=UTF8) as f:
             payload = json.load(f)
 
         await handle_webhook_event("pull_request", payload)
 
-        mock_create_pr_checkbox_comment.assert_called_once()
         mock_write_pr_description.assert_called_once()
-        mock_handle_screenshot_comparison.assert_called_once()
 
-        call_args = mock_create_pr_checkbox_comment.call_args[1]
+        call_args = mock_write_pr_description.call_args[1]
         received_payload = call_args["payload"]
 
         assert isinstance(received_payload, dict)

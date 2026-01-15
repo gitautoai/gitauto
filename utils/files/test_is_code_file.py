@@ -151,7 +151,7 @@ def test_is_code_file_with_paths():
 
 
 def test_is_code_file_real_world_examples():
-    assert is_code_file("services/webhook/merge_handler.py") is True
+    assert is_code_file("services/webhook/webhook_handler.py") is True
     assert is_code_file("utils/files/is_code_file.py") is True
     assert is_code_file("config/database.yml") is False
     assert is_code_file("README.md") is False

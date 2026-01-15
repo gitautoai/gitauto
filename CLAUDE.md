@@ -623,7 +623,7 @@ All code analysis, generation, and file processing happens on our Lambda instanc
 
 1. GitHub Webhook → `main.py:/webhook` → `services/webhook/webhook_handler.py`
 2. Event Routing: Based on `X-GitHub-Event` header
-3. Specialized Handlers: `issue_handler.py`, `merge_handler.py`, etc.
+3. Specialized Handlers: `issue_handler.py`, `check_suite_handler.py`, etc.
 4. AI Processing: Generate code changes via Anthropic/OpenAI
 5. GitHub Actions: Create PRs, comments, commits
 

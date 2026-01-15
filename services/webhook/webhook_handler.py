@@ -22,10 +22,8 @@ from services.github.types.github_types import (
     GitHubInstallationPayload,
     GitHubInstallationRepositoriesPayload,
     GitHubLabeledPayload,
-    GitHubPullRequestClosedPayload,
 )
 from services.github.types.owner import OwnerType
-from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
 from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
 from services.github.types.webhook.push import PushWebhookPayload
 
@@ -51,13 +49,6 @@ from services.supabase.users.get_user import get_user
 # Local imports (Webhooks)
 from services.webhook.check_suite_handler import handle_check_suite
 from services.webhook.handle_coverage_report import handle_coverage_report
-from services.webhook.issue_handler import create_pr_from_issue
-from services.webhook.pr_body_handler import write_pr_description
-from services.webhook.review_run_handler import handle_review_run
-from services.webhook.screenshot_handler import handle_screenshot_comparison
-from services.webhook.successful_check_suite_handler import (
-    handle_successful_check_suite,
-)
 from services.webhook.handle_installation import handle_installation_created
 from services.webhook.handle_installation_repos_added import (
     handle_installation_repos_added,
@@ -65,10 +56,14 @@ from services.webhook.handle_installation_repos_added import (
 from services.webhook.handle_installation_repos_removed import (
     handle_installation_repos_removed,
 )
-from services.webhook.merge_handler import handle_pr_merged
+from services.webhook.issue_handler import create_pr_from_issue
+from services.webhook.pr_body_handler import write_pr_description
 from services.webhook.pr_checkbox_handler import handle_pr_checkbox_trigger
 from services.webhook.push_handler import handle_push
-from services.webhook.utils.create_pr_checkbox_comment import create_pr_checkbox_comment
+from services.webhook.review_run_handler import handle_review_run
+from services.webhook.successful_check_suite_handler import (
+    handle_successful_check_suite,
+)
 
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
@@ -243,15 +238,7 @@ async def handle_webhook_event(
     # Write a PR description to the issue when GitAuto opened the PR
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
     if event_name == "pull_request" and action == "opened":
-        create_pr_checkbox_comment(payload=cast(PullRequestWebhookPayload, payload))
         write_pr_description(payload=payload)
-        await handle_screenshot_comparison(payload=payload)
-        return
-
-    # Compare screenshots when the PR is synchronized
-    if event_name == "pull_request" and action in ("synchronize"):
-        create_pr_checkbox_comment(payload=cast(PullRequestWebhookPayload, payload))
-        await handle_screenshot_comparison(payload=payload)
         return
 
     # Track merged PRs as this is also our success status
@@ -269,7 +256,6 @@ async def handle_webhook_event(
             return
 
         if not ref.startswith(PRODUCT_ID + ISSUE_NUMBER_FORMAT):
-            handle_pr_merged(payload=cast(GitHubPullRequestClosedPayload, payload))
             return
 
         # Get issue number from PR body

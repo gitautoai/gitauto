@@ -322,7 +322,6 @@ def test_parse_lcov_gitauto_real_exact_counts():
     # Verify legitimate files containing 'test' are kept (they're not actual test files)
     legitimate_files = [
         "conftest.py",  # pytest configuration file
-        "services/webhook/utils/create_test_selection_comment.py",  # utility for test selection
         "utils/files/is_test_file.py",  # utility to detect test files
     ]
 
