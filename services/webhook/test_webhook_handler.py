@@ -77,15 +77,6 @@ def mock_create_gitauto_button_comment():
 
 
 @pytest.fixture
-def mock_handle_pr_checkbox_trigger():
-    with patch(
-        "services.webhook.webhook_handler.handle_pr_checkbox_trigger",
-    ) as mock:
-        mock.return_value = None
-        yield mock
-
-
-@pytest.fixture
 def mock_handle_check_suite():
     with patch("services.webhook.webhook_handler.handle_check_suite") as mock:
         yield mock
@@ -278,7 +269,7 @@ class TestHandleWebhookEvent:
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_issue_comment_edited_dev_env(
-        self, mock_handle_pr_checkbox_trigger, mock_create_pr_from_issue
+        self, mock_create_pr_from_issue
     ):
         """Test handling of issue comment edited event in dev environment."""
         with patch("services.webhook.webhook_handler.PRODUCT_ID", "dev"):
@@ -289,9 +280,6 @@ class TestHandleWebhookEvent:
 
             await handle_webhook_event(event_name="issue_comment", payload=payload)
 
-            mock_handle_pr_checkbox_trigger.assert_called_once_with(
-                payload=payload, lambda_info=None
-            )
             mock_create_pr_from_issue.assert_called_once_with(
                 payload=payload,
                 trigger="issue_comment",
@@ -300,7 +288,7 @@ class TestHandleWebhookEvent:
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_issue_comment_edited_prod_env(
-        self, mock_handle_pr_checkbox_trigger, mock_create_pr_from_issue
+        self, mock_create_pr_from_issue
     ):
         """Test handling of issue comment edited event in production environment."""
         with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
@@ -311,9 +299,6 @@ class TestHandleWebhookEvent:
 
             await handle_webhook_event(event_name="issue_comment", payload=payload)
 
-            mock_handle_pr_checkbox_trigger.assert_called_once_with(
-                payload=payload, lambda_info=None
-            )
             mock_create_pr_from_issue.assert_called_once_with(
                 payload=payload,
                 trigger="issue_comment",
@@ -322,7 +307,7 @@ class TestHandleWebhookEvent:
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_issue_comment_edited_no_trigger(
-        self, mock_handle_pr_checkbox_trigger, mock_create_pr_from_issue
+        self, mock_create_pr_from_issue
     ):
         """Test handling of issue comment edited event with no trigger text."""
         payload = {
@@ -332,9 +317,6 @@ class TestHandleWebhookEvent:
 
         await handle_webhook_event(event_name="issue_comment", payload=payload)
 
-        mock_handle_pr_checkbox_trigger.assert_called_once_with(
-            payload=payload, lambda_info=None
-        )
         mock_create_pr_from_issue.assert_not_called()
 
     @pytest.mark.asyncio
