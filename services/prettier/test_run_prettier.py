@@ -36,6 +36,43 @@ async def test_run_prettier_success():
 
 
 @pytest.mark.asyncio
+async def test_run_prettier_sets_npm_cache_env_on_lambda():
+    def mock_set_npm_cache_env(env):
+        env["npm_config_cache"] = "/tmp/.npm"
+
+    with patch(
+        "services.prettier.run_prettier.set_npm_cache_env",
+        side_effect=mock_set_npm_cache_env,
+    ):
+        with patch(
+            "services.prettier.run_prettier.is_efs_install_ready",
+            new_callable=AsyncMock,
+        ) as mock_efs:
+            mock_efs.return_value = True
+            with patch("services.prettier.run_prettier.os.makedirs"):
+                with patch("builtins.open", mock_open(read_data="formatted")):
+                    with patch(
+                        "services.prettier.run_prettier.subprocess.run"
+                    ) as mock_run:
+                        mock_run.return_value = MagicMock(returncode=0)
+
+                        coro = run_prettier(
+                            owner="test-owner",
+                            repo="test-repo",
+                            clone_dir="/tmp/test-clone",
+                            file_path="src/index.ts",
+                            file_content="const x=1",
+                        )
+                        assert coro is not None
+                        await coro
+
+                        mock_run.assert_called_once()
+                        call_kwargs = mock_run.call_args[1]
+                        assert "env" in call_kwargs
+                        assert call_kwargs["env"]["npm_config_cache"] == "/tmp/.npm"
+
+
+@pytest.mark.asyncio
 async def test_run_prettier_empty_content():
     coro = run_prettier(
         owner="test-owner",

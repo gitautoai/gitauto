@@ -6,6 +6,7 @@ import sentry_sdk
 
 from config import UTF8
 from services.efs.is_efs_install_ready import is_efs_install_ready
+from services.node.get_npm_cache_dir import set_npm_cache_env
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -33,6 +34,9 @@ async def run_eslint(
     with open(full_path, "w", encoding=UTF8) as f:
         f.write(file_content)
 
+    env = os.environ.copy()
+    set_npm_cache_env(env)
+
     # --yes: fallback to download if not in node_modules
     print("ESLint: Running eslint with --fix...")
     result = subprocess.run(
@@ -42,6 +46,7 @@ async def run_eslint(
         timeout=30,
         check=False,
         cwd=clone_dir,
+        env=env,
     )
 
     # ESLint exit codes:

@@ -4,6 +4,7 @@ import os
 
 from config import UTF8
 from services.node.detect_package_manager import detect_package_manager
+from services.node.get_npm_cache_dir import set_npm_cache_env
 from services.node.read_file_content import read_file_content
 from services.supabase.npm_tokens.get_npm_token import get_npm_token
 from utils.error.handle_exceptions import handle_exceptions
@@ -126,7 +127,7 @@ async def install_node_packages(
             logger.info("node: Running %s install in %s", pkg_manager, efs_dir)
 
             env = os.environ.copy()
-            env["npm_config_cache"] = "/tmp/.npm"
+            set_npm_cache_env(env)
 
             npm_token = get_npm_token(owner_id)
             if npm_token:
