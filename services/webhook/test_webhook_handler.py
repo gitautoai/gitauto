@@ -260,12 +260,25 @@ class TestHandleWebhookEvent:
     async def test_handle_webhook_event_issues_opened(
         self, mock_create_gitauto_button_comment
     ):
-        """Test handling of issues opened event."""
-        payload = {"action": "opened"}
+        """Test handling of issues opened event by gitauto bot."""
+        with patch("services.webhook.webhook_handler.GITHUB_APP_USER_NAME", "gitauto"):
+            payload = {"action": "opened", "sender": {"login": "gitauto[bot]"}}
 
-        await handle_webhook_event(event_name="issues", payload=payload)
+            await handle_webhook_event(event_name="issues", payload=payload)
 
-        mock_create_gitauto_button_comment.assert_called_once_with(payload=payload)
+            mock_create_gitauto_button_comment.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_handle_webhook_event_issues_opened_by_user(
+        self, mock_create_gitauto_button_comment
+    ):
+        """Test that issues opened by regular users do not trigger button comment."""
+        with patch("services.webhook.webhook_handler.GITHUB_APP_USER_NAME", "gitauto"):
+            payload = {"action": "opened", "sender": {"login": "some-user"}}
+
+            await handle_webhook_event(event_name="issues", payload=payload)
+
+            mock_create_gitauto_button_comment.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_issue_comment_edited_dev_env(
