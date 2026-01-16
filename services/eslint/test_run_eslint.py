@@ -53,6 +53,44 @@ async def test_run_eslint_skips_whitespace_only():
 
 
 @pytest.mark.asyncio
+async def test_run_eslint_sets_npm_cache_env_on_lambda():
+    eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
+
+    def mock_set_npm_cache_env(env):
+        env["npm_config_cache"] = "/tmp/.npm"
+
+    with patch(
+        "services.eslint.run_eslint.set_npm_cache_env",
+        side_effect=mock_set_npm_cache_env,
+    ):
+        with patch(
+            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
+        ) as mock_efs:
+            mock_efs.return_value = True
+            with patch("services.eslint.run_eslint.os.makedirs"):
+                with patch("builtins.open", mock_open(read_data="formatted")):
+                    with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
+                        mock_run.return_value = MagicMock(
+                            returncode=0, stdout=eslint_output
+                        )
+
+                        coro = run_eslint(
+                            owner="test-owner",
+                            repo="test-repo",
+                            clone_dir="/tmp/test-clone",
+                            file_path="src/index.ts",
+                            file_content="const x=1",
+                        )
+                        assert coro is not None
+                        await coro
+
+                        mock_run.assert_called_once()
+                        call_kwargs = mock_run.call_args[1]
+                        assert "env" in call_kwargs
+                        assert call_kwargs["env"]["npm_config_cache"] == "/tmp/.npm"
+
+
+@pytest.mark.asyncio
 async def test_run_eslint_returns_fixed_content():
     fixed_content = "export const foo = 'fixed';\n"
     eslint_output = json.dumps([{"filePath": "test.js", "messages": []}])
