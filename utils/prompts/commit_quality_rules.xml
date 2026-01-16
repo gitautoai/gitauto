@@ -25,10 +25,10 @@
   </mock_management>
 
   <test_design_principles>
-    <rule>Avoid testing internal implementation details</rule>
     <rule>Tests should not break when refactoring internal code structure</rule>
     <rule>Assert on meaningful outcomes, not intermediate steps</rule>
     <rule>Keep tests independent and focused on single responsibilities</rule>
+    <rule>Verify test interactions actually trigger the code paths being tested - different frameworks and DOM structures may require different approaches (React example: userEvent.click() may not trigger onChange on non-form parent elements like tr/div - use Simulate.change() from react-dom/test-utils instead)</rule>
   </test_design_principles>
 
   <test_file_organization>
@@ -39,8 +39,6 @@
   </test_file_organization>
 
   <anti_patterns>
-    <rule>Do not test implementation details instead of user-facing behavior</rule>
-    <rule>Do not create tests that break when refactoring internal code structure</rule>
     <rule>Do not over-assert on internal function call parameters when the behavior is what matters</rule>
     <rule>Do not create unnecessarily complex mock chains when testing method chaining - focus on the final result, not each step of the chain</rule>
     <rule>Do not test constant content (values, text, or any content within constants) unless explicitly requested - tests should not fail when constant values are updated</rule>
