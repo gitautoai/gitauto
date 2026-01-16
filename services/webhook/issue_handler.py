@@ -60,6 +60,7 @@ from services.stripe.create_stripe_customer import create_stripe_customer
 from utils.files.is_test_file import is_test_file
 from utils.files.merge_test_file_headers import merge_test_file_headers
 from utils.images.get_base64 import get_base64
+from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.text.comment_identifiers import PROGRESS_BAR_EMPTY, PROGRESS_BAR_FILLED
@@ -126,7 +127,7 @@ async def create_pr_from_issue(
     p = 0
     log_messages = []
     msg = "Got your request."
-    log_messages.append(msg)
+    add_log_message(msg, log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     comment_url = create_comment(
         owner=owner_name,
@@ -166,7 +167,7 @@ async def create_pr_from_issue(
     )
 
     p += 5
-    log_messages.append("Extracted metadata.")
+    add_log_message("Extracted metadata.", log_messages)
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
@@ -198,7 +199,7 @@ async def create_pr_from_issue(
     billing_type = availability_status["billing_type"]
 
     if availability_status["log_message"] and can_proceed:
-        log_messages.append(availability_status["log_message"])
+        add_log_message(availability_status["log_message"], log_messages)
 
     p += 5
     update_comment(
@@ -251,7 +252,7 @@ async def create_pr_from_issue(
     issue_comments = get_comments(issue_number=issue_number, base_args=base_args)
     comment_body = f"Found {len(issue_comments)} issue comments."
     p += 5
-    log_messages.append(comment_body)
+    add_log_message(comment_body, log_messages)
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
@@ -261,7 +262,7 @@ async def create_pr_from_issue(
     if image_urls:
         comment_body = f"Found {len(image_urls)} images in the issue body."
         p += 5
-        log_messages.append(comment_body)
+        add_log_message(comment_body, log_messages)
         update_comment(
             body=create_progress_bar(p=p, msg="\n".join(log_messages)),
             base_args=base_args,
@@ -302,7 +303,7 @@ async def create_pr_from_issue(
     for url in github_urls:
         comment_body = "Also checking out the URLs in the issue body."
         p += 5
-        log_messages.append(comment_body)
+        add_log_message(comment_body, log_messages)
         update_comment(
             body=create_progress_bar(p=p, msg="\n".join(log_messages)),
             base_args=base_args,
@@ -341,7 +342,7 @@ async def create_pr_from_issue(
     create_remote_branch(sha=latest_commit_sha, base_args=base_args)
     comment_body = f"Created a branch: `{new_branch_name}`"
     p += 5
-    log_messages.append(comment_body)
+    add_log_message(comment_body, log_messages)
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
@@ -349,7 +350,7 @@ async def create_pr_from_issue(
     # Create initial empty commit and PR early in the process
     comment_body = "Creating initial PR..."
     p += 5
-    log_messages.append(comment_body)
+    add_log_message(comment_body, log_messages)
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
@@ -372,7 +373,7 @@ async def create_pr_from_issue(
 
     comment_body = f"Created pull request: {pr_url}"
     p += 5
-    log_messages.append(comment_body)
+    add_log_message(comment_body, log_messages)
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)),
         base_args=base_args,
@@ -390,7 +391,7 @@ async def create_pr_from_issue(
         )
         if is_timeout_approaching:
             timeout_msg = get_timeout_message(elapsed_time, "Issue processing")
-            log_messages.append(timeout_msg)
+            add_log_message(timeout_msg, log_messages)
             update_comment(
                 body=create_progress_bar(p=p, msg="\n".join(log_messages)),
                 base_args=base_args,
@@ -537,7 +538,7 @@ async def create_pr_from_issue(
     # Trigger final test workflows with an empty commit
     comment_body = "Triggering workflows..."
     p += 5
-    log_messages.append(comment_body)
+    add_log_message(comment_body, log_messages)
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )

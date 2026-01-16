@@ -64,6 +64,7 @@ from services.git.clone_repo import clone_repo
 from services.git.get_clone_dir import get_clone_dir
 
 # Local imports (Others)
+from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.logs.clean_logs import clean_logs
 from utils.progress_bar.progress_bar import create_progress_bar
@@ -293,7 +294,7 @@ async def handle_check_suite(
     p = 0
     log_messages = []
     msg = CHECK_RUN_STUMBLED_MESSAGE
-    log_messages.append(msg)
+    add_log_message(msg, log_messages)
     body = create_progress_bar(p=p, msg="\n".join(log_messages))
     comment_url = create_comment(
         owner=owner_name,
@@ -332,7 +333,9 @@ async def handle_check_suite(
     changed_files = get_pull_request_files(url=pull_file_url, token=token)
 
     p += 5
-    log_messages.append("Checked out the pull request title and changed files.")
+    add_log_message(
+        "Checked out the pull request title and changed files.", log_messages
+    )
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
@@ -432,7 +435,7 @@ async def handle_check_suite(
             installation_id=installation_id,
         )
         comment_body = f"{PERMISSION_DENIED_MESSAGE} {permission_url}"
-        log_messages.append(comment_body)
+        add_log_message(comment_body, log_messages)
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
         # Get installation permissions via API
@@ -446,7 +449,7 @@ async def handle_check_suite(
 
     if error_log is None or not isinstance(error_log, str):
         comment_body = f"I couldn't find the error log. Contact {EMAIL_LINK} if the issue persists."
-        log_messages.append(comment_body)
+        add_log_message(comment_body, log_messages)
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
         # Early return notification
@@ -477,7 +480,7 @@ async def handle_check_suite(
     )
     if existing_pairs and current_pair in existing_pairs:
         msg = f"Skipping `{check_run_name}` because GitAuto has already tried to fix this exact error before `{current_pair}`."
-        log_messages.append(msg)
+        add_log_message(msg, log_messages)
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
         # Update usage record for skipped duplicate
@@ -506,7 +509,7 @@ async def handle_check_suite(
     )
 
     p += 5
-    log_messages.append("Checked out the error log from the workflow run.")
+    add_log_message("Checked out the error log from the workflow run.", log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
