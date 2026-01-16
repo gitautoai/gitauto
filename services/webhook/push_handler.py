@@ -1,4 +1,3 @@
-import logging
 from services.github.pulls.get_open_pull_requests import get_open_pull_requests
 from services.github.pulls.update_pull_request_branch import update_pull_request_branch
 from services.github.token.get_installation_token import get_installation_access_token
@@ -6,11 +5,13 @@ from services.github.types.webhook.push import PushWebhookPayload
 from services.slack.slack_notify import slack_notify
 from services.supabase.repositories.get_repository import get_repository
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger, set_trigger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def handle_push(payload: PushWebhookPayload):
     """https://docs.github.com/en/webhooks/webhook-events-and-payloads#push"""
+    set_trigger("push")
     repository = payload["repository"]
     owner_id = repository["owner"]["id"]
     owner_name = repository["owner"]["login"]
@@ -63,13 +64,7 @@ def handle_push(payload: PushWebhookPayload):
         else:
             failed_count += 1
             failures.append(f"PR #{pr_number}: {error}")
-            logging.warning(
-                "Failed to update PR #%s in %s/%s: %s",
-                pr_number,
-                owner_name,
-                repo_name,
-                error,
-            )
+            logger.error("Failed to update PR #%s: %s", pr_number, error)
 
     result_msg = f"Updated {updated_count}, already up-to-date {up_to_date_count}, failed {failed_count} out of {len(open_prs)} GitAuto PR(s) in `{owner_name}/{repo_name}`"
     if failures:

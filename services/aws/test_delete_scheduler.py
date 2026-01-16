@@ -19,13 +19,13 @@ def mock_scheduler_client():
 
 
 @pytest.fixture
-def mock_logging():
-    """Fixture to mock logging."""
-    with patch("services.aws.delete_scheduler.logging") as mock:
+def mock_logger():
+    """Fixture to mock logger."""
+    with patch("services.aws.delete_scheduler.logger") as mock:
         yield mock
 
 
-def test_delete_scheduler_success(mock_scheduler_client, mock_logging):
+def test_delete_scheduler_success(mock_scheduler_client, mock_logger):
     """Test successful scheduler deletion."""
     # Setup
     schedule_name = "test-schedule-123"
@@ -37,12 +37,12 @@ def test_delete_scheduler_success(mock_scheduler_client, mock_logging):
     # Assert
     assert result is True
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
-    mock_logging.info.assert_called_once_with(
+    mock_logger.info.assert_called_once_with(
         "Deleted EventBridge Scheduler: %s", schedule_name
     )
 
 
-def test_delete_scheduler_with_empty_schedule_name(mock_scheduler_client, mock_logging):
+def test_delete_scheduler_with_empty_schedule_name(mock_scheduler_client, mock_logger):
     """Test scheduler deletion with empty schedule name."""
     # Setup
     schedule_name = ""
@@ -54,12 +54,12 @@ def test_delete_scheduler_with_empty_schedule_name(mock_scheduler_client, mock_l
     # Assert
     assert result is True
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
-    mock_logging.info.assert_called_once_with(
+    mock_logger.info.assert_called_once_with(
         "Deleted EventBridge Scheduler: %s", schedule_name
     )
 
 
-def test_delete_scheduler_with_special_characters(mock_scheduler_client, mock_logging):
+def test_delete_scheduler_with_special_characters(mock_scheduler_client, mock_logger):
     """Test scheduler deletion with special characters in name."""
     # Setup
     schedule_name = "test-schedule_with.special@chars#123"
@@ -71,13 +71,13 @@ def test_delete_scheduler_with_special_characters(mock_scheduler_client, mock_lo
     # Assert
     assert result is True
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
-    mock_logging.info.assert_called_once_with(
+    mock_logger.info.assert_called_once_with(
         "Deleted EventBridge Scheduler: %s", schedule_name
     )
 
 
 def test_delete_scheduler_client_error_resource_not_found(
-    mock_scheduler_client, mock_logging
+    mock_scheduler_client, mock_logger
 ):
     """Test scheduler deletion when resource is not found."""
     # Setup
@@ -99,13 +99,13 @@ def test_delete_scheduler_client_error_resource_not_found(
     assert result is True
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
     # Should log as info that scheduler was already deleted
-    mock_logging.info.assert_called_once_with(
+    mock_logger.info.assert_called_once_with(
         "EventBridge Scheduler already deleted: %s", schedule_name
     )
 
 
 def test_delete_scheduler_client_error_access_denied(
-    mock_scheduler_client, mock_logging
+    mock_scheduler_client, mock_logger
 ):
     """Test scheduler deletion when access is denied."""
     # Setup
@@ -121,10 +121,10 @@ def test_delete_scheduler_client_error_access_denied(
     # Assert - should return False due to handle_exceptions decorator
     assert result is False
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
-    mock_logging.info.assert_not_called()
+    mock_logger.info.assert_not_called()
 
 
-def test_delete_scheduler_client_error_throttling(mock_scheduler_client, mock_logging):
+def test_delete_scheduler_client_error_throttling(mock_scheduler_client, mock_logger):
     """Test scheduler deletion when throttling occurs."""
     # Setup
     schedule_name = "throttled-schedule"
@@ -139,10 +139,10 @@ def test_delete_scheduler_client_error_throttling(mock_scheduler_client, mock_lo
     # Assert - should return False due to handle_exceptions decorator
     assert result is False
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
-    mock_logging.info.assert_not_called()
+    mock_logger.info.assert_not_called()
 
 
-def test_delete_scheduler_botocore_error(mock_scheduler_client, mock_logging):
+def test_delete_scheduler_botocore_error(mock_scheduler_client, mock_logger):
     """Test scheduler deletion with BotoCoreError."""
     # Setup
     schedule_name = "error-schedule"
@@ -154,10 +154,10 @@ def test_delete_scheduler_botocore_error(mock_scheduler_client, mock_logging):
     # Assert - should return False due to handle_exceptions decorator
     assert result is False
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
-    mock_logging.info.assert_not_called()
+    mock_logger.info.assert_not_called()
 
 
-def test_delete_scheduler_generic_exception(mock_scheduler_client, mock_logging):
+def test_delete_scheduler_generic_exception(mock_scheduler_client, mock_logger):
     """Test scheduler deletion with generic exception."""
     # Setup
     schedule_name = "exception-schedule"
@@ -169,7 +169,7 @@ def test_delete_scheduler_generic_exception(mock_scheduler_client, mock_logging)
     # Assert - should return False due to handle_exceptions decorator
     assert result is False
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
-    mock_logging.info.assert_not_called()
+    mock_logger.info.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -186,7 +186,7 @@ def test_delete_scheduler_generic_exception(mock_scheduler_client, mock_logging)
     ],
 )
 def test_delete_scheduler_with_various_schedule_names(
-    mock_scheduler_client, mock_logging, schedule_name
+    mock_scheduler_client, mock_logger, schedule_name
 ):
     """Test scheduler deletion with various schedule name formats."""
     # Setup
@@ -198,17 +198,17 @@ def test_delete_scheduler_with_various_schedule_names(
     # Assert
     assert result is True
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
-    mock_logging.info.assert_called_once_with(
+    mock_logger.info.assert_called_once_with(
         "Deleted EventBridge Scheduler: %s", schedule_name
     )
 
 
 def test_delete_scheduler_logging_level(mock_scheduler_client):
-    """Test that the function uses logging.info for success messages."""
+    """Test that the function uses logger.info for success messages."""
     schedule_name = "test-schedule"
     mock_scheduler_client.delete_schedule.return_value = None
 
-    with patch("services.aws.delete_scheduler.logging.info") as mock_info:
+    with patch("services.aws.delete_scheduler.logger.info") as mock_info:
         result = delete_scheduler(schedule_name)
 
         assert result is True
@@ -218,7 +218,7 @@ def test_delete_scheduler_logging_level(mock_scheduler_client):
 
 
 def test_delete_scheduler_client_method_call_parameters(
-    mock_scheduler_client, mock_logging
+    mock_scheduler_client, mock_logger
 ):
     """Test that scheduler_client.delete_schedule is called with correct parameters."""
     schedule_name = "test-schedule-params"
@@ -233,7 +233,7 @@ def test_delete_scheduler_client_method_call_parameters(
     assert len(call_args[1]) == 1  # Only one parameter
 
 
-def test_delete_scheduler_exception_before_logging(mock_scheduler_client, mock_logging):
+def test_delete_scheduler_exception_before_logging(mock_scheduler_client, mock_logger):
     """Test that logging is not called when exception occurs before logging."""
     schedule_name = "exception-before-log"
     # Exception occurs during delete_schedule call, before logging
@@ -245,4 +245,4 @@ def test_delete_scheduler_exception_before_logging(mock_scheduler_client, mock_l
     assert result is False
     mock_scheduler_client.delete_schedule.assert_called_once_with(Name=schedule_name)
     # Logging should not be called since exception occurred before it
-    mock_logging.info.assert_not_called()
+    mock_logger.info.assert_not_called()

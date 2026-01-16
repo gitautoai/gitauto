@@ -20,6 +20,7 @@ from services.supabase.webhook_deliveries.insert_webhook_delivery import (
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.webhook_handler import handle_webhook_event
 from utils.aws.extract_lambda_info import extract_lambda_info
+from utils.logging.logging_config import logger, set_request_id, set_owner_repo
 
 # https://us-west-1.console.aws.amazon.com/lambda/home?region=us-west-1#/functions/pr-agent-prod?subtab=envVars&tab=configure
 if ENV == "prod":
@@ -37,12 +38,15 @@ mangum_handler = Mangum(app=app, lifespan="off")
 
 # Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 def handler(event, context):
+    set_request_id(getattr(context, "aws_request_id", "local"))
+
     # For scheduled event from EventBridge Scheduler
     if "triggerType" in event and event["triggerType"] == "schedule":
-        print("AWS EventBridge Scheduler invoked")
         event = cast(EventBridgeSchedulerEvent, event)
         owner_name = event.get("ownerName", "")
         repo_name = event.get("repoName", "")
+        set_owner_repo(owner_name, repo_name)
+        logger.info("EventBridge Scheduler invoked")
         thread_ts = slack_notify(
             f"Event Scheduler started for {owner_name}/{repo_name}"
         )
@@ -68,8 +72,10 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
     # Deduplicate webhook delivery using atomic database insert
     if not insert_webhook_delivery(delivery_id=delivery_id, event_name=event_name):
-        print(
-            f"Duplicate webhook ignored - delivery_id={delivery_id} event={event_name}"
+        logger.info(
+            "Duplicate webhook ignored - delivery_id=%s event=%s",
+            delivery_id,
+            event_name,
         )
         return {"message": "Duplicate webhook ignored"}
 
@@ -83,7 +89,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     try:
         request_body: bytes = await request.body()
     except Exception as e:  # pylint: disable=broad-except
-        print(f"Error in reading request body: {e}")
+        logger.error("Error reading request body: %s", e)
         request_body = b""
 
     payload: Any = {}
@@ -102,12 +108,19 @@ async def handle_webhook(request: Request) -> dict[str, str]:
                 # If URL-encoded payload contains invalid JSON, use empty payload
                 payload = {}
     except Exception as e:  # pylint: disable=broad-except
-        print(f"Error in parsing JSON payload: {e}")
+        logger.error("Error parsing JSON payload: %s", e)
 
     # Add delivery_id to lambda_info for debugging
     if lambda_info is None:
         lambda_info = {}
     lambda_info["delivery_id"] = delivery_id
+
+    # Set logging context for owner/repo (most webhook payloads have repository field)
+    repository = payload.get("repository", {})
+    if repository:
+        set_owner_repo(
+            repository.get("owner", {}).get("login", ""), repository.get("name", "")
+        )
 
     await handle_webhook_event(
         event_name=event_name, payload=payload, lambda_info=lambda_info

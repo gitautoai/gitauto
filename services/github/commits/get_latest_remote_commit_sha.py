@@ -1,6 +1,3 @@
-# Standard imports
-import logging
-
 # Third-party imports
 import requests
 
@@ -15,6 +12,7 @@ from services.github.utils.create_headers import create_headers
 
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(raise_on_error=True)
@@ -39,7 +37,7 @@ def get_latest_remote_commit_sha(clone_url: str, base_args: BaseArgs) -> str:
             and e.response.json()["message"] == "Git Repository is empty."
         ):
             msg = "Repository is empty. So, creating an initial empty commit."
-            logging.info(msg)
+            logger.info(msg)
             repo_path = f"/tmp/repo/{owner}-{repo}"
             initialize_repo(repo_path=repo_path, remote_url=clone_url, token=token)
             return get_latest_remote_commit_sha(

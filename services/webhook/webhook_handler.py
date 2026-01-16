@@ -66,6 +66,7 @@ from services.webhook.successful_check_suite_handler import (
 
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger, set_pr_number, set_trigger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=True)
@@ -92,7 +93,7 @@ async def handle_webhook_event(
         return
 
     # if event_name == "marketplace_purchase" and action in ("purchased"):
-    #     logging.info("Marketplace purchase is triggered")
+    #     logger.info("Marketplace purchase is triggered")
     #     await handle_installation_created(payload=payload)
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=created#installation
@@ -268,6 +269,7 @@ async def handle_webhook_event(
             return
 
         issue_number = int(issue_ref[1:])  # "#714" -> 714
+        set_trigger("pr_merged")
         repository: dict[str, Any] = payload["repository"]
         owner_type: OwnerType = repository["owner"]["type"]
         owner_name: str = repository["owner"]["login"]
@@ -282,6 +284,7 @@ async def handle_webhook_event(
 
         # Update usage records for this PR to mark as merged
         pr_number = pull_request["number"]
+        set_pr_number(pr_number)
         repo_id = repository["id"]
         owner_id = repository["owner"]["id"]
 
@@ -344,8 +347,9 @@ async def handle_webhook_event(
             owner_id = repository["owner"]["id"]
             owner_name = repository["owner"]["login"]
             repo_name = repository["name"]
-            print(
-                f"Processing CircleCI check_suite completion for {owner_name}/{repo_name} (run_id: {check_suite['id']})"
+            logger.info(
+                "Processing CircleCI check_suite completion (run_id: %s)",
+                check_suite["id"],
             )
             handle_coverage_report(
                 owner_id=owner_id,

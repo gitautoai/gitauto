@@ -1,11 +1,11 @@
-import logging
-
 from requests import patch
+
 
 from config import TIMEOUT
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -26,7 +26,7 @@ def update_comment(body: str, base_args: BaseArgs, **_kwargs):
 
     # Handle 404 (Client Error: Not Found for url) errors silently since they're expected when comments are deleted
     if response.status_code == 404:
-        logging.info("Comment %s not found", comment_url)
+        logger.info("Comment %s not found", comment_url)
         return None
 
     response.raise_for_status()

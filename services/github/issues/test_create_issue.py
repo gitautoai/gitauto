@@ -366,8 +366,8 @@ def test_create_issue_410_issues_disabled(test_owner, test_repo, test_token):
     ) as mock_create_headers, patch(
         "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
     ), patch(
-        "services.github.issues.create_issue.logging"
-    ) as mock_logging:
+        "services.github.issues.create_issue.logger"
+    ) as mock_logger:
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
 
@@ -388,9 +388,6 @@ def test_create_issue_410_issues_disabled(test_owner, test_repo, test_token):
     mock_response.raise_for_status.assert_not_called()
 
     # Verify that a warning was logged
-    mock_logging.warning.assert_called_once()
-    call_args = mock_logging.warning.call_args
-    warning_msg = call_args[0][0]
-    warning_args = call_args[0][1:]
-    assert "Issues are disabled" in warning_msg
-    assert warning_args == (test_owner, test_repo)
+    mock_logger.warning.assert_called_once_with(
+        "Issues are disabled for this repository"
+    )

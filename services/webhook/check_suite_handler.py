@@ -64,6 +64,7 @@ from services.git.clone_repo import clone_repo
 from services.git.get_clone_dir import get_clone_dir
 
 # Local imports (Others)
+from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.logs.clean_logs import clean_logs
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
@@ -76,6 +77,7 @@ async def handle_check_suite(
 ):
     current_time = time.time()
     trigger = "test_failure"
+    set_trigger(trigger)
 
     # Extract repository and installation info
     repo = payload["repository"]
@@ -87,14 +89,15 @@ async def handle_check_suite(
         lambda_info.get("delivery_id", "unknown") if lambda_info else "unknown"
     )
 
-    print(
-        f"handle_check_suite called for {owner_name}/{repo_name} check_suite_id={check_suite_id} delivery_id={delivery_id}"
+    logger.info(
+        "handle_check_suite called check_suite_id=%s delivery_id=%s",
+        check_suite_id,
+        delivery_id,
     )
 
     # Deduplicate by check_suite_id (GitHub may send duplicate webhooks with different delivery_ids)
     if not insert_check_suite(check_suite_id=check_suite_id):
-        msg = f"Duplicate check_suite_id={check_suite_id} ignored for {owner_name}/{repo_name}"
-        print(msg)
+        logger.info("Duplicate check_suite_id=%s ignored", check_suite_id)
         return
 
     # Check if this is a GitAuto PR by branch name (early return)
@@ -179,6 +182,7 @@ async def handle_check_suite(
     pull_request = pull_requests[0]
     pull_number = pull_request["number"]
     pull_url = pull_request["url"]
+    set_pr_number(pull_number)
 
     full_pr = get_pull_request(
         owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
@@ -243,9 +247,9 @@ async def handle_check_suite(
         token=token,
         texts=[CHECK_RUN_STUMBLED_MESSAGE],
     ):
-        msg = f"Skipped - stumbled comment exists for PR #{pull_number} in `{owner_name}/{repo_name}`"
-        print(msg)
-        slack_notify(msg, thread_ts)
+        msg = f"Skipped - stumbled comment exists for PR #{pull_number}"
+        logger.info(msg)
+        slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
     if has_comment_with_text(
@@ -255,9 +259,9 @@ async def handle_check_suite(
         token=token,
         texts=[PERMISSION_DENIED_MESSAGE],
     ):
-        msg = f"Skipped - permission request pending for PR #{pull_number} in `{owner_name}/{repo_name}`"
-        print(msg)
-        slack_notify(msg, thread_ts)
+        msg = f"Skipped - permission request pending for PR #{pull_number}"
+        logger.error(msg)
+        slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
     # Check if there are too many GitAuto commits (prevent infinite retry loops)
@@ -273,8 +277,8 @@ async def handle_check_suite(
 
     if gitauto_commit_count >= MAX_GITAUTO_COMMITS_PER_PR:
         comment_msg = f"I've made {gitauto_commit_count} commits trying to fix this, but the tests keep failing with slightly different errors. I'm going to stop here to avoid an infinite loop. Could you take a look?"
-        log_msg = f"Stopped after {gitauto_commit_count} commits in PR #{pull_number} in `{owner_name}/{repo_name}` - preventing infinite loop"
-        print(log_msg)
+        msg = f"Stopped after {gitauto_commit_count} commits in PR #{pull_number} - preventing infinite loop"
+        logger.info(msg)
         create_comment(
             owner=owner_name,
             repo=repo_name,
@@ -282,7 +286,7 @@ async def handle_check_suite(
             issue_number=pull_number,
             body=comment_msg,
         )
-        slack_notify(log_msg, thread_ts)
+        slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
     # Create the first comment
@@ -435,9 +439,9 @@ async def handle_check_suite(
         permissions = get_installation_permissions(installation_id)
 
         # Early return notification
-        msg = f"Skipped - permission denied for workflow run id `{circleci_workflow_id if is_circleci else github_run_id}` in `{owner_name}/{repo_name}` - Permissions: `{permissions}`"
-        print(msg)
-        slack_notify(msg, thread_ts)
+        msg = f"Skipped - permission denied for workflow run id `{circleci_workflow_id if is_circleci else github_run_id}` - Permissions: `{permissions}`"
+        logger.error(msg)
+        slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
     if error_log is None or not isinstance(error_log, str):
@@ -446,9 +450,9 @@ async def handle_check_suite(
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
         # Early return notification
-        msg = f"Skipped - error log not found for `{owner_name}/{repo_name}`"
-        print(msg)
-        slack_notify(msg, thread_ts)
+        msg = "Skipped - error log not found"
+        logger.error(msg)
+        slack_notify(f"{msg} for `{owner_name}/{repo_name}`", thread_ts)
         return
 
     # Create a pair of workflow ID and error log hash
@@ -460,9 +464,9 @@ async def handle_check_suite(
     else:
         workflow_id = str(github_run_id)
     current_pair = f"{workflow_id}:{error_log_hash}"
-    print(f"Workflow ID and error log hash pair: {current_pair}")
-    print(f"Error log content for {owner_name}/{repo_name} PR #{pull_number}:")
-    print(error_log)
+    logger.info("Workflow ID and error log hash pair: %s", current_pair)
+    logger.info("Error log content for PR #%s:", pull_number)
+    logger.info(error_log)
 
     # Clean logs using the complete pipeline
     minimized_log = clean_logs(error_log)
@@ -491,9 +495,8 @@ async def handle_check_suite(
             )
 
         # Early return notification
-        msg = f"Skipped - already attempted fix for `{check_run_name}` in `{owner_name}/{repo_name}`"
-        print(msg)
-        slack_notify(msg, thread_ts)
+        logger.info(msg)
+        slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
     # Save the pair to avoid infinite loops
@@ -535,9 +538,9 @@ async def handle_check_suite(
             timeout_msg = get_timeout_message(elapsed_time, "Check run processing")
             if comment_url:
                 update_comment(body=timeout_msg, base_args=base_args)
-            msg = f"Timeout - check run processing for PR #{pull_number} in `{owner_name}/{repo_name}`"
-            print(msg)
-            slack_notify(msg, thread_ts)
+            msg = f"Timeout - check run processing for PR #{pull_number}"
+            logger.error(msg)
+            slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
             break
 
         # Safety check: Stop if PR is closed or branch is deleted
@@ -545,24 +548,20 @@ async def handle_check_suite(
             owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
         ):
             body = f"Process stopped: Pull request #{pull_number} was closed during execution."
-            print(body)
+            logger.warning(body)
             if comment_url:
                 update_comment(body=body, base_args=base_args)
-            msg = f"Stopped - pull request #{pull_number} was closed while GitAuto was processing check run failure in `{owner_name}/{repo_name}`"
-            print(msg)
-            slack_notify(msg, thread_ts)
+            slack_notify(f"{body} in `{owner_name}/{repo_name}`", thread_ts)
             break
 
         if not check_branch_exists(
             owner=owner_name, repo=repo_name, branch_name=head_branch, token=token
         ):
-            body = f"Process stopped: Branch '{head_branch}' has been deleted"
-            print(body)
+            body = f"Stopped - branch '{head_branch}' was deleted while processing check run failure"
+            logger.warning(body)
             if comment_url:
                 update_comment(body=body, base_args=base_args)
-            msg = f"Stopped - branch '{head_branch}' was deleted while GitAuto was processing check run failure in `{owner_name}/{repo_name}`"
-            print(msg)
-            slack_notify(msg, thread_ts)
+            slack_notify(f"{body} in `{owner_name}/{repo_name}`", thread_ts)
             break
 
         # Safety check: Stop if older active request exists (race condition prevention)
@@ -577,13 +576,11 @@ async def handle_check_suite(
             else None
         )
         if older_active_request:
-            body = f"Process stopped: Older active request found for PR #{pull_number}. Avoiding race condition."
-            print(body)
+            body = f"Stopped - older active test failure request found for PR #{pull_number}. Avoiding race condition."
+            logger.info(body)
             if comment_url:
                 update_comment(body=body, base_args=base_args)
-            msg = f"Stopped - older active test failure request found for PR #{pull_number} in `{owner_name}/{repo_name}`. Avoiding race condition."
-            print(msg)
-            slack_notify(msg, thread_ts)
+            slack_notify(f"{body} in `{owner_name}/{repo_name}`", thread_ts)
             break
 
         # Explore repo

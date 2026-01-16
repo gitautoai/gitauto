@@ -4,6 +4,7 @@ import os
 from services.efs.get_efs_dir import get_efs_dir
 from services.git.get_clone_dir import get_clone_dir
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(raise_on_error=True)
@@ -14,7 +15,7 @@ async def clone_repo(
     clone_dir = get_clone_dir(owner, repo, pr_number)
 
     if os.path.exists(clone_dir):
-        print(f"Reusing existing clone: {clone_dir}")
+        logger.info("Reusing existing clone: %s", clone_dir)
         return clone_dir
 
     repo_url = f"https://x-access-token:{token}@github.com/{owner}/{repo}.git"
@@ -32,7 +33,7 @@ async def clone_repo(
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=180)
+    _, stderr = await asyncio.wait_for(process.communicate(), timeout=180)
 
     if process.returncode != 0:
         raise RuntimeError(f"git clone failed: {stderr.decode()}")

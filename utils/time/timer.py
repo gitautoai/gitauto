@@ -1,10 +1,8 @@
 import functools
 import inspect
-import logging
 import time
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+from utils.logging.logging_config import logger
 
 
 def timer_decorator(func):

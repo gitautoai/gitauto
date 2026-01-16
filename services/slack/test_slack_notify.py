@@ -123,7 +123,7 @@ def test_slack_notify_missing_token(mock_is_prd_true, mock_no_slack_token):
 
 
 def test_slack_notify_http_error_status_code(
-    mock_requests_post, mock_is_prd_true, mock_slack_token
+    mock_requests_post, mock_is_prd_true, mock_slack_token, caplog
 ):
     """Test handling of HTTP error status codes."""
     # Setup
@@ -133,16 +133,15 @@ def test_slack_notify_http_error_status_code(
     mock_requests_post.return_value = mock_response
 
     # Execute
-    with patch("builtins.print") as mock_print:
-        result = slack_notify("Test message")
+    result = slack_notify("Test message")
 
     # Assert
     assert result is None
-    mock_print.assert_called_with("Slack notification failed: 400 Bad Request")
+    assert "Slack notification failed: 400 Bad Request" in caplog.text
 
 
 def test_slack_notify_slack_api_error_response(
-    mock_requests_post, mock_is_prd_true, mock_slack_token
+    mock_requests_post, mock_is_prd_true, mock_slack_token, caplog
 ):
     """Test handling of Slack API error responses."""
     # Setup
@@ -152,12 +151,11 @@ def test_slack_notify_slack_api_error_response(
     mock_requests_post.return_value = mock_response
 
     # Execute
-    with patch("builtins.print") as mock_print:
-        result = slack_notify("Test message")
+    result = slack_notify("Test message")
 
     # Assert
     assert result is None
-    mock_print.assert_called_with("Slack notification failed: channel_not_found")
+    assert "Slack notification failed: channel_not_found" in caplog.text
 
 
 def test_slack_notify_requests_exception(

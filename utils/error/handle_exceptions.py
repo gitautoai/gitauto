@@ -5,13 +5,14 @@
 from functools import wraps
 import inspect
 import json
-import logging
 import time
 from typing import Any, Callable, Literal, ParamSpec, TypeVar, cast, overload
 
 # Third party imports
 import requests
 import sentry_sdk
+
+from utils.logging.logging_config import logger
 
 P = ParamSpec("P")  # Function parameters (args, kwargs)
 R = TypeVar("R")  # Return type of decorated function
@@ -78,10 +79,10 @@ def _handle_http_error(
     text: str | Any = (
         str(err.response.text) if err.response.text is not None else "Unknown"
     )
-    print(f"reason: {reason}, text: {text}, status_code: {status_code}")
+    logger.error("reason: %s, text: %s, status_code: %s", reason, text, status_code)
 
     if api_type == "github" and status_code in {403, 429}:
-        print(f"err.response.headers: {err.response.headers}")
+        logger.error("err.response.headers: %s", err.response.headers)
         limit = int(err.response.headers["X-RateLimit-Limit"])
         remaining = int(err.response.headers["X-RateLimit-Remaining"])
         used = int(err.response.headers["X-RateLimit-Used"])
@@ -94,34 +95,34 @@ def _handle_http_error(
                 wait_time = 1
             else:
                 wait_time = wait_time + 5
-            err_msg = f"{func_name} encountered a GitHubPrimaryRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n\n"
-            logging.warning(msg=err_msg)
+            err_msg = f"{func_name} encountered a GitHubPrimaryRateLimitError: {err}. Retrying after {wait_time} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}"
+            logger.error(err_msg)
             time.sleep(wait_time)
             return retry_callback(), True
 
         if "exceeded a secondary rate limit" in err.response.text.lower():
             retry_after = int(err.response.headers.get("Retry-After", 60))
-            err_msg = f"{func_name} encountered a GitHubSecondaryRateLimitError: {err}. Retrying after {retry_after} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n\n"
-            logging.warning(msg=err_msg)
+            err_msg = f"{func_name} encountered a GitHubSecondaryRateLimitError: {err}. Retrying after {retry_after} seconds. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}"
+            logger.error(err_msg)
             time.sleep(retry_after)
             return retry_callback(), True
 
-        err_msg = f"{func_name} encountered an HTTPError: {err}. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}\n\n"
+        err_msg = f"{func_name} encountered an HTTPError: {err}. Limit: {limit}, Remaining: {remaining}, Used: {used}. Reason: {reason}. Text: {text}"
         sentry_sdk.capture_exception(err)
-        logging.error(msg=err_msg)
+        logger.error(err_msg)
         if raise_on_error:
             raise err
 
     elif api_type == "google" and status_code == 429:
         err_msg = f"Google Search Rate Limit in {func_name}()"
-        print(err_msg)
-        print(f"err.response.headers: {err.response.headers}")
+        logger.error(err_msg)
+        logger.error("err.response.headers: %s", err.response.headers)
         raise err
 
     else:
-        err_msg = f"{func_name} encountered an HTTPError: {err}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}\n\nReason: {reason}\n\nText: {text}\n\n"
+        err_msg = f"{func_name} encountered an HTTPError: {err}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}\n\nReason: {reason}\n\nText: {text}"
         sentry_sdk.capture_exception(err)
-        logging.error(msg=err_msg)
+        logger.error(err_msg)
 
     if raise_on_error:
         raise err
@@ -139,7 +140,7 @@ def _handle_json_error(
     raw_response = err.doc if hasattr(err, "doc") else "Raw response not available"
     err_msg = f"{func_name} encountered a JSONDecodeError: {err}\n\nRaw response: {raw_response}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}"
     sentry_sdk.capture_exception(err)
-    logging.error(msg=err_msg)
+    logger.error(err_msg)
     if raise_on_error:
         raise err
     return error_return
@@ -155,7 +156,7 @@ def _handle_generic_error(
 ):
     err_msg = f"{func_name} encountered an {type(err).__name__}: {err}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}"
     sentry_sdk.capture_exception(err)
-    logging.error(msg=err_msg)
+    logger.error(err_msg)
     if raise_on_error:
         raise err
     return error_return

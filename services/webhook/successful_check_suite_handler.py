@@ -23,12 +23,14 @@ from services.supabase.repository_features.get_repository_features import (
 )
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_test_file import is_test_file
+from utils.logging.logging_config import logger, set_pr_number, set_trigger
 
 BLOCKED = "Auto-merge blocked"
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
+    set_trigger("auto_merge")
     check_suite = payload["check_suite"]
     pull_requests = check_suite["pull_requests"]
 
@@ -39,6 +41,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     pull_request = pull_requests[0]
     pr_number = pull_request["number"]
     pr_branch = pull_request["head"]["ref"]
+    set_pr_number(pr_number)
 
     # Only auto-merge PRs created by GitAuto (check early to avoid unnecessary work)
     if not pr_branch.lower().startswith(f"{PRODUCT_ID.lower()}/"):
@@ -62,8 +65,8 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         owner=owner_name, repo=repo_name, ref=head_sha, token=token
     )
     if not all_suites:
-        msg = f"Failed to fetch check suites for {owner_name}/{repo_name} PR #{pr_number}@{head_sha}"
-        print(msg)
+        msg = f"Failed to fetch check suites for {head_sha}"
+        logger.error(msg)
         raise RuntimeError(msg)
 
     _, required_checks = get_required_status_checks(
@@ -71,24 +74,30 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     )
 
     if required_checks:
-        print(f"Using required status checks: {required_checks}")
+        logger.info("Using required status checks: %s", required_checks)
         for suite in all_suites:
             app_name = suite["app"]["name"]
             status = suite["status"]
             if app_name in required_checks and status != "completed":
-                print(f"Required check '{app_name}' not completed: status={status}")
+                logger.info(
+                    "Required check '%s' not completed: status=%s", app_name, status
+                )
                 return
-        print("All required checks completed")
+        logger.info("All required checks completed")
     else:
-        print("No required checks configured, waiting for all check suites to complete")
+        logger.info(
+            "No required checks configured, waiting for all check suites to complete"
+        )
         for suite in all_suites:
             app_name = suite["app"]["name"]
             status = suite["status"]
             if status != "completed":
-                print(f"Check suite '{app_name}' not completed: status={status}")
+                logger.info(
+                    "Check suite '%s' not completed: status=%s", app_name, status
+                )
                 return
 
-        print(f"All {len(all_suites)} check suites completed")
+        logger.info("All %s check suites completed", len(all_suites))
 
     # Get the most recent usage record for this PR
     result = (
@@ -115,15 +124,14 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     # Check if auto-merge should be performed
     repo_features = get_repository_features(owner_id=owner_id, repo_id=repo_id)
     if not repo_features or not repo_features.get("auto_merge"):
-        msg = f"Auto-merge disabled for repo_id={repo_id}"
-        print(msg)
+        logger.info("Auto-merge disabled for repo_id=%s", repo_id)
         return
 
     # If last commit has [skip ci], GitAuto is either still working or abandoned - either way, skip
     if check_commit_has_skip_ci(
         owner=owner_name, repo=repo_name, commit_sha=head_sha, token=token
     ):
-        print("Last commit has [skip ci], skipping auto-merge check")
+        logger.info("Last commit has [skip ci], skipping auto-merge check")
         return
 
     # Fetch full PR details to get mergeable_state (not in simplified PR from check_suite webhook)
@@ -132,7 +140,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     )
     if not full_pr:
         msg = f"Failed to fetch full PR details for #{pr_number}"
-        print(msg)
+        logger.error(msg)
         slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
         slack_notify(slack_msg)
         return
@@ -140,7 +148,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     # Check mergeable_state - only proceed if merging is allowed
     # https://docs.github.com/en/graphql/reference/enums#mergestatestatus
     mergeable_state = full_pr.get("mergeable_state", "")
-    print(f"PR mergeable_state: {mergeable_state}")
+    logger.info("PR mergeable_state: %s", mergeable_state)
 
     # Allow merge for: clean, unstable (failing non-required checks), has_hooks
     if mergeable_state not in ["clean", "unstable", "has_hooks"]:
@@ -167,11 +175,11 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
 
         # If any check suite is still in_progress, skip notification - we're just waiting
         if any(s["status"] == "in_progress" for s in all_suites):
-            print("Check suites still in progress, waiting...")
+            logger.info("Check suites still in progress, waiting...")
             return
 
         msg = f"{BLOCKED}: mergeable_state={mergeable_state} ({reason})"
-        print(msg)
+        logger.info(msg)
 
         # Delete any existing auto-merge blocked comments to avoid clutter
         delete_comments_by_identifiers(
@@ -206,7 +214,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         if non_test_files:
             non_test_files_str = "\n".join(f"- `{f}`" for f in non_test_files)
             msg = f"{BLOCKED}: non-test files changed:\n{non_test_files_str}"
-            print(msg)
+            logger.info(msg)
 
             delete_comments_by_identifiers(
                 owner=owner_name,
@@ -228,8 +236,8 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
 
     # All conditions met - merge the PR
     merge_method = cast(MergeMethod, repo_features.get("merge_method", "merge"))
-    msg = f"Auto-merging PR #{pr_number} in {owner_name}/{repo_name} with method={merge_method}"
-    print(msg)
+    msg = f"Auto-merging PR #{pr_number} with method={merge_method}"
+    logger.info(msg)
     result = merge_pull_request(
         owner=owner_name,
         repo=repo_name,
@@ -243,7 +251,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             f"{BLOCKED} by branch protection: {result.get('message')}\n\n"
             f"See {DOC_URLS['AUTO_MERGE']}"
         )
-        print(msg)
+        logger.info(msg)
         delete_comments_by_identifiers(
             owner=owner_name,
             repo=repo_name,

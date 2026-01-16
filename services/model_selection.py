@@ -7,7 +7,7 @@ from config import (
     ANTHROPIC_MODEL_ID_45,
     OPENAI_MODEL_ID_GPT_5,
 )
-from utils.colors.colorize_log import colorize
+from utils.logging.logging_config import logger
 
 MODEL_CHAIN = [
     ANTHROPIC_MODEL_ID_45,
@@ -28,8 +28,7 @@ def try_next_model():
     current_index = MODEL_CHAIN.index(_current_model)
     if current_index + 1 < len(MODEL_CHAIN):
         next_model = MODEL_CHAIN[current_index + 1]
-        msg = f"Switching from {_current_model} to {next_model}"
-        print(colorize(msg, "yellow"))
+        logger.warning("Switching from %s to %s", _current_model, next_model)
         _current_model = next_model
         return True, _current_model
     return False, _current_model

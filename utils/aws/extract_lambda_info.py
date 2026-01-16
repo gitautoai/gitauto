@@ -1,18 +1,18 @@
-import logging
 from fastapi import Request
 from payloads.aws.lambda_types import LambdaContext
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value={}, raise_on_error=False)
 def extract_lambda_info(request: Request):
-    logging.info("Request scope: %s", request.scope)
+    logger.info("Request scope: %s", request.scope)
     lambda_info: dict[str, str | None] = {}
 
     # https://mangum.fastapiexpert.com/adapter/
     if "aws.context" in request.scope:
         aws_context: LambdaContext = request.scope["aws.context"]
-        logging.info("Lambda context: %s", aws_context)
+        logger.info("Lambda context: %s", aws_context)
         lambda_info = {
             "log_group": getattr(aws_context, "log_group_name", None),
             "log_stream": getattr(aws_context, "log_stream_name", None),

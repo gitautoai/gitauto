@@ -146,7 +146,7 @@ def test_get_file_tree_truncated_warning(
     with patch("services.github.trees.get_file_tree.requests.get") as mock_get, patch(
         "services.github.trees.get_file_tree.create_headers"
     ) as mock_create_headers, patch(
-        "services.github.trees.get_file_tree.logging.warning"
+        "services.github.trees.get_file_tree.logger.warning"
     ) as mock_warning:
 
         mock_get.return_value = mock_truncated_response

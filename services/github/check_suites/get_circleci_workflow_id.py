@@ -1,10 +1,10 @@
 import json
-import logging
 
 import requests
 
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
@@ -17,7 +17,7 @@ def get_circleci_workflow_ids_from_check_suite(
     response = requests.get(url, headers=headers, timeout=30)
 
     if response.status_code != 200:
-        logging.error(
+        logger.error(
             "Failed to get check runs for check suite %s: %s",
             check_suite_id,
             response.text,

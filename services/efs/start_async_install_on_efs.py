@@ -5,6 +5,7 @@ from services.efs.get_efs_dir import get_efs_dir
 from services.github.types.github_types import BaseArgs
 from services.node.install_node_packages import install_node_packages
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 _INSTALLERS = [
     ("node", install_node_packages),
@@ -32,20 +33,20 @@ def start_async_install_on_efs(base_args: BaseArgs):
 
     for name, func in _INSTALLERS:
         if name in install_tasks[efs_dir]:
-            print(f"{name}: Found existing install task for {owner}/{repo}")
+            logger.info("%s: Found existing install task", name)
             task = install_tasks[efs_dir][name]
             if task.done():
                 try:
                     if task.result():
-                        print(f"{name}: Reusing successful install for {owner}/{repo}")
+                        logger.info("%s: Reusing successful install", name)
                         continue
                 except Exception:
                     pass
 
-                print(f"{name}: Retrying failed install for {owner}/{repo}")
+                logger.warning("%s: Retrying failed install", name)
                 del install_tasks[efs_dir][name]
             else:
-                print(f"{name}: Install already in progress for {owner}/{repo}")
+                logger.info("%s: Install already in progress", name)
                 continue
 
         if name not in install_tasks[efs_dir]:
@@ -53,4 +54,4 @@ def start_async_install_on_efs(base_args: BaseArgs):
                 func(owner, owner_id, repo, base_branch, token, efs_dir, clone_dir)
             )
             install_tasks[efs_dir][name] = task
-            print(f"{name}: Started async installation for {owner}/{repo}")
+            logger.info("%s: Started async installation", name)

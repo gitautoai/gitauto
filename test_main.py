@@ -727,18 +727,18 @@ class TestEdgeCases:
         assert result is None
 
 
-class TestPrintStatements:
-    @patch("builtins.print")
+class TestLogStatements:
+    @patch("main.logger")
     @patch("main.schedule_handler")
     @patch("main.slack_notify")
-    def test_handler_schedule_event_prints_message(
+    def test_handler_schedule_event_logs_message(
         self,
         mock_slack_notify,
         mock_schedule_handler,
-        mock_print,
+        mock_logger,
         mock_event_bridge_event,
     ):
-        """Test that handler function prints the correct message for schedule events."""
+        """Test that handler function logs the correct message for schedule events."""
         # Setup
         mock_slack_notify.return_value = "thread-123"
         mock_schedule_handler.return_value = {"status": "success"}
@@ -747,22 +747,22 @@ class TestPrintStatements:
         handler(event=mock_event_bridge_event, context={})
 
         # Verify
-        mock_print.assert_called_once_with("AWS EventBridge Scheduler invoked")
+        mock_logger.info.assert_called_once_with("EventBridge Scheduler invoked")
 
-    @patch("builtins.print")
+    @patch("main.logger")
     @patch("main.extract_lambda_info")
     @patch("main.verify_webhook_signature", new_callable=AsyncMock)
     @patch("main.handle_webhook_event", new_callable=AsyncMock)
     @pytest.mark.asyncio
-    async def test_handle_webhook_prints_body_error(
+    async def test_handle_webhook_logs_body_error(
         self,
         mock_handle_webhook_event,
         mock_verify_signature,
         mock_extract_lambda_info,
-        mock_print,
+        mock_logger,
         mock_github_request,
     ):
-        """Test that handle_webhook prints error message when body reading fails."""
+        """Test that handle_webhook logs error message when body reading fails."""
         # Setup
         mock_verify_signature.return_value = None
         mock_github_request.body.side_effect = Exception("Body read error")
@@ -772,26 +772,27 @@ class TestPrintStatements:
         await handle_webhook(request=mock_github_request)
 
         # Verify
-        mock_print.assert_called_once_with(
-            "Error in reading request body: Body read error"
-        )
+        mock_logger.error.assert_called_once()
+        call_args = mock_logger.error.call_args
+        assert call_args[0][0] == "Error reading request body: %s"
+        assert str(call_args[0][1]) == "Body read error"
 
-    @patch("builtins.print")
+    @patch("main.logger")
     @patch("main.insert_webhook_delivery")
     @patch("main.extract_lambda_info")
     @patch("main.verify_webhook_signature", new_callable=AsyncMock)
     @patch("main.handle_webhook_event", new_callable=AsyncMock)
     @pytest.mark.asyncio
-    async def test_handle_webhook_prints_json_parsing_error(
+    async def test_handle_webhook_logs_json_parsing_error(
         self,
         mock_handle_webhook_event,
         mock_verify_signature,
         mock_extract_lambda_info,
         mock_insert_webhook_delivery,
-        mock_print,
+        mock_logger,
         mock_github_request,
     ):
-        """Test that handle_webhook prints error message when JSON parsing fails."""
+        """Test that handle_webhook logs error message when JSON parsing fails."""
         # Setup
         mock_verify_signature.return_value = None
         mock_extract_lambda_info.return_value = {}
@@ -803,9 +804,10 @@ class TestPrintStatements:
             await handle_webhook(request=mock_github_request)
 
         # Verify
-        mock_print.assert_called_once_with(
-            "Error in parsing JSON payload: JSON parsing error"
-        )
+        mock_logger.error.assert_called_once()
+        call_args = mock_logger.error.call_args
+        assert call_args[0][0] == "Error parsing JSON payload: %s"
+        assert str(call_args[0][1]) == "JSON parsing error"
 
 
 class TestModuleImports:
