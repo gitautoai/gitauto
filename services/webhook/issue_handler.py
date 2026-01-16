@@ -146,7 +146,6 @@ async def create_pr_from_issue(
     issue_body = base_args["issue_body"].replace(SETTINGS_LINKS, "").strip()
     issue_body_rendered = render_text(base_args=base_args, text=issue_body)
     issuer_name = base_args["issuer_name"]
-    parent_issue_number = base_args.get("parent_issue_number")
     parent_issue_title = base_args.get("parent_issue_title")
     parent_issue_body = base_args.get("parent_issue_body")
     new_branch_name = base_args["new_branch"]
@@ -321,12 +320,12 @@ async def create_pr_from_issue(
     user_input = dumps(
         {
             "today": today,
-            "metadata": base_args,
+            "owner": owner_name,
+            "repo": repo_name,
             "issue_title": issue_title,
             "issue_body": issue_body,
             "reference_contents": reference_contents,
             "issue_comments": issue_comments,
-            "parent_issue_number": parent_issue_number,
             "parent_issue_title": parent_issue_title,
             "parent_issue_body": parent_issue_body,
         }
