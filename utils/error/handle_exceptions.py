@@ -2,6 +2,7 @@
 # flake8: noqa: E704
 
 # Standard imports
+import asyncio
 from functools import wraps
 import inspect
 import json
@@ -210,6 +211,11 @@ def handle_exceptions(
                             error_return,
                         ),
                     )
+                except asyncio.CancelledError:
+                    logger.warning("%s was cancelled (CancelledError)", func.__name__)
+                    if raise_on_error:
+                        raise
+                    return cast(R, error_return)
                 except (AttributeError, KeyError, TypeError, Exception) as err:
                     return cast(
                         R,

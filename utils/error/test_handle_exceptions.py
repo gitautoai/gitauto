@@ -1,3 +1,4 @@
+import asyncio
 import json
 from unittest.mock import patch, MagicMock
 
@@ -583,3 +584,23 @@ async def test_async_handle_exceptions_reports_to_sentry():
         assert coro is not None
         await coro
         mock_sentry.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_async_handle_exceptions_cancelled_error_returns_default():
+    @handle_exceptions(default_return_value="cancelled_default", raise_on_error=False)
+    async def func_gets_cancelled():
+        raise asyncio.CancelledError()
+
+    result = await func_gets_cancelled()
+    assert result == "cancelled_default"
+
+
+@pytest.mark.asyncio
+async def test_async_handle_exceptions_cancelled_error_raises_when_raise_on_error():
+    @handle_exceptions(default_return_value=None, raise_on_error=True)
+    async def func_gets_cancelled():
+        raise asyncio.CancelledError()
+
+    with pytest.raises(asyncio.CancelledError):
+        await func_gets_cancelled()
