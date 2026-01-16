@@ -4,10 +4,10 @@ from typing import Any, Literal
 
 # Third party imports
 from openai.types.chat import ChatCompletionToolParam
-from schemas.supabase.types import Repositories
 
 # Local imports
 from config import OPENAI_MODEL_ID_GPT_5
+from schemas.supabase.types import Repositories
 from services.anthropic.chat_with_functions import chat_with_claude
 from services.github.comments.update_comment import update_comment
 from services.github.types.github_types import BaseArgs
@@ -24,12 +24,10 @@ from services.openai.functions.functions import (
 from services.slack.slack_notify import slack_notify
 from services.supabase.usage.insert_usage import Trigger
 from services.webhook.utils.create_system_message import create_system_message
-
-# Local imports (Utils)
-from utils.colors.colorize_log import colorize
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_target_test_file import is_target_test_file
 from utils.files.is_test_file import is_test_file
+from utils.logging.logging_config import logger
 from utils.number.is_valid_line_number import is_valid_line_number
 from utils.progress_bar.progress_bar import create_progress_bar
 
@@ -75,7 +73,7 @@ async def chat_with_agent(
 
     while True:
         current_model = get_model()
-        print(f"Using model: {current_model}")
+        logger.info("Using model: %s", current_model)
 
         try:
             provider = (
@@ -107,7 +105,7 @@ async def chat_with_agent(
     # Return if no tool calls
     is_done = False
     if not tool_name:
-        print(colorize(f"No tools were called in '{mode}' mode", "yellow"))
+        logger.info("No tools were called in '%s' mode", mode)
         return (
             messages,
             previous_calls,
@@ -123,7 +121,7 @@ async def chat_with_agent(
     current_call = {"function": tool_name, "args": tool_args}
     if current_call in previous_calls:
         tool_result = f"Error: The function '{tool_name}' was already called with the same arguments '{tool_args}' as before. You need to either:\n1. Call the function with different arguments, or\n2. Call another function, or\n3. Stop calling the function."
-        print(tool_result)
+        logger.warning(tool_result)
     else:
         # Function name and argument validation
         corrected_tool = None
@@ -165,8 +163,8 @@ async def chat_with_agent(
 
         # Execute the appropriate function
         if corrected_tool:
-            print(
-                f"Warning: Redirecting call from '{tool_name}' to '{corrected_tool[0]}'"
+            logger.warning(
+                "Redirecting call from '%s' to '%s'", tool_name, corrected_tool[0]
             )
             tool_name = corrected_tool[0]
             tool_args = corrected_tool[1]
@@ -207,7 +205,7 @@ async def chat_with_agent(
                     )
 
                 if validation_error:
-                    print(validation_error)
+                    logger.error(validation_error)
                     messages.append(response_message)
                     messages.append(
                         {

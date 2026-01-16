@@ -34,6 +34,7 @@ from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
 
 # Local imports (Utils)
+from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 from utils.time.get_timeout_message import get_timeout_message
@@ -44,6 +45,7 @@ async def handle_review_run(
 ):
     current_time = time.time()
     trigger = "review_comment"
+    set_trigger(trigger)
 
     # Extract review comment etc
     review: dict[str, Any] = payload["comment"]
@@ -76,6 +78,7 @@ async def handle_review_run(
     # Extract PR related variables
     pull_request: PullRequest = payload["pull_request"]
     pull_number: int = pull_request["number"]
+    set_pr_number(pull_number)
     pull_title: str = pull_request["title"]
     pull_body: str = pull_request["body"]
     pull_url: str = pull_request["url"]
@@ -246,7 +249,7 @@ async def handle_review_run(
             owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
         ):
             body = f"Process stopped: Pull request #{pull_number} was closed during execution."
-            print(body)
+            logger.info(body)
             if comment_url:
                 update_comment(body=body, base_args=base_args)
             break
@@ -255,7 +258,7 @@ async def handle_review_run(
             owner=owner_name, repo=repo_name, branch_name=head_branch, token=token
         ):
             body = f"Process stopped: Branch '{head_branch}' has been deleted"
-            print(body)
+            logger.info(body)
             if comment_url:
                 update_comment(body=body, base_args=base_args)
             break

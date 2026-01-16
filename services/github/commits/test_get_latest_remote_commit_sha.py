@@ -244,8 +244,8 @@ def test_get_latest_remote_commit_sha_empty_repository_409_error(
     ) as mock_headers, patch(
         "services.github.commits.get_latest_remote_commit_sha.initialize_repo"
     ) as mock_initialize, patch(
-        "services.github.commits.get_latest_remote_commit_sha.logging.info"
-    ) as mock_logging:
+        "services.github.commits.get_latest_remote_commit_sha.logger.info"
+    ) as mock_logger_info:
         # Setup mocks for first call (409 error) and second call (success)
         mock_response_409 = MagicMock()
         mock_response_409.status_code = 409
@@ -276,7 +276,7 @@ def test_get_latest_remote_commit_sha_empty_repository_409_error(
         )
 
         # Verify logging message
-        mock_logging.assert_called_once_with(
+        mock_logger_info.assert_called_once_with(
             "Repository is empty. So, creating an initial empty commit."
         )
 

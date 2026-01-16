@@ -1,6 +1,5 @@
 # pylint: disable=protected-access
 import sys
-from unittest.mock import patch
 
 import pytest
 
@@ -27,21 +26,6 @@ def _():
 
     # Restore original state
     model_selection._current_model = original_model
-
-
-@pytest.fixture
-def mock_colorize():
-    """Fixture to mock the colorize function."""
-    with patch("services.model_selection.colorize") as mock:
-        mock.return_value = "mocked_colored_text"
-        yield mock
-
-
-@pytest.fixture
-def mock_print():
-    """Fixture to mock the print function."""
-    with patch("builtins.print") as mock:
-        yield mock
 
 
 def test_model_chain_contains_expected_models():
@@ -77,7 +61,7 @@ def test_get_model_returns_string():
     assert len(result) > 0
 
 
-def test_try_next_model_from_first_model(_, mock_colorize, mock_print):
+def test_try_next_model_from_first_model(_, caplog):
     """Test switching from first model to second model."""
     # Ensure we start with the first model
     assert get_model() == ANTHROPIC_MODEL_ID_45
@@ -88,18 +72,15 @@ def test_try_next_model_from_first_model(_, mock_colorize, mock_print):
     assert new_model == ANTHROPIC_MODEL_ID_40
     assert get_model() == ANTHROPIC_MODEL_ID_40
 
-    # Verify colorize was called with correct message and color
-    expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_45} to {ANTHROPIC_MODEL_ID_40}"
-    mock_colorize.assert_called_once_with(expected_msg, "yellow")
+    # Verify log message was emitted
+    assert (
+        f"Switching from {ANTHROPIC_MODEL_ID_45} to {ANTHROPIC_MODEL_ID_40}"
+        in caplog.text
+    )
 
-    # Verify print was called with colorized message
-    mock_print.assert_called_once_with("mocked_colored_text")
 
-
-def test_try_next_model_from_second_model(_, mock_colorize, mock_print):
+def test_try_next_model_from_second_model(_, caplog):
     """Test switching from second model to third model."""
-    # Use already imported model_selection
-
     # Set current model to second model
     model_selection._current_model = ANTHROPIC_MODEL_ID_40
 
@@ -109,16 +90,15 @@ def test_try_next_model_from_second_model(_, mock_colorize, mock_print):
     assert new_model == ANTHROPIC_MODEL_ID_37
     assert get_model() == ANTHROPIC_MODEL_ID_37
 
-    # Verify colorize was called with correct message
-    expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_40} to {ANTHROPIC_MODEL_ID_37}"
-    mock_colorize.assert_called_once_with(expected_msg, "yellow")
-    mock_print.assert_called_once_with("mocked_colored_text")
+    # Verify log message was emitted
+    assert (
+        f"Switching from {ANTHROPIC_MODEL_ID_40} to {ANTHROPIC_MODEL_ID_37}"
+        in caplog.text
+    )
 
 
-def test_try_next_model_from_third_model(_, mock_colorize, mock_print):
+def test_try_next_model_from_third_model(_, caplog):
     """Test switching from third model to fourth model."""
-    # Use already imported model_selection
-
     # Set current model to third model
     model_selection._current_model = ANTHROPIC_MODEL_ID_37
 
@@ -128,16 +108,15 @@ def test_try_next_model_from_third_model(_, mock_colorize, mock_print):
     assert new_model == OPENAI_MODEL_ID_GPT_5
     assert get_model() == OPENAI_MODEL_ID_GPT_5
 
-    # Verify colorize was called with correct message
-    expected_msg = f"Switching from {ANTHROPIC_MODEL_ID_37} to {OPENAI_MODEL_ID_GPT_5}"
-    mock_colorize.assert_called_once_with(expected_msg, "yellow")
-    mock_print.assert_called_once_with("mocked_colored_text")
+    # Verify log message was emitted
+    assert (
+        f"Switching from {ANTHROPIC_MODEL_ID_37} to {OPENAI_MODEL_ID_GPT_5}"
+        in caplog.text
+    )
 
 
-def test_try_next_model_from_last_model(_, mock_colorize, mock_print):
+def test_try_next_model_from_last_model(_, caplog):
     """Test that trying to switch from the last model returns False."""
-    # Use already imported model_selection
-
     # Set current model to last model
     model_selection._current_model = OPENAI_MODEL_ID_GPT_5
 
@@ -147,12 +126,11 @@ def test_try_next_model_from_last_model(_, mock_colorize, mock_print):
     assert current_model == OPENAI_MODEL_ID_GPT_5
     assert get_model() == OPENAI_MODEL_ID_GPT_5
 
-    # Verify no colorize or print calls were made
-    mock_colorize.assert_not_called()
-    mock_print.assert_not_called()
+    # Verify no log message was emitted
+    assert "Switching from" not in caplog.text
 
 
-def test_try_next_model_sequential_calls(_, mock_colorize, mock_print):
+def test_try_next_model_sequential_calls(_, caplog):
     """Test sequential calls to try_next_model through all models."""
     # Start with first model
     assert get_model() == ANTHROPIC_MODEL_ID_45
@@ -181,9 +159,8 @@ def test_try_next_model_sequential_calls(_, mock_colorize, mock_print):
     assert model4 == OPENAI_MODEL_ID_GPT_5
     assert get_model() == OPENAI_MODEL_ID_GPT_5
 
-    # Verify colorize was called 3 times (for successful switches)
-    assert mock_colorize.call_count == 3
-    assert mock_print.call_count == 3
+    # Verify log was emitted 3 times (for successful switches)
+    assert caplog.text.count("Switching from") == 3
 
 
 def test_try_next_model_return_types():
@@ -217,8 +194,6 @@ def test_model_selection_state_persistence(_):
 
 def test_try_next_model_with_invalid_current_model(_):
     """Test behavior when _current_model is not in MODEL_CHAIN."""
-    # Use already imported model_selection
-
     # Set an invalid current model
     model_selection._current_model = "invalid-model"
 
@@ -236,33 +211,13 @@ def test_get_model_consistency():
     assert model1 == model2 == model3
 
 
-def test_colorize_function_integration(_):
-    """Test that colorize function is called with correct parameters."""
-    with patch("services.model_selection.colorize") as mock_colorize:
-        mock_colorize.return_value = "colored_message"
+def test_logging_on_model_switch(_, caplog):
+    """Test that logging is called with correct parameters on switch."""
+    try_next_model()
 
-        try_next_model()
-
-        # Verify colorize was called with string message and "yellow" color
-        args, _ = mock_colorize.call_args
-        assert len(args) == 2
-        assert isinstance(args[0], str)
-        assert args[1] == "yellow"
-        assert "Switching from" in args[0]
-        assert "to" in args[0]
-
-
-def test_print_function_integration(_):
-    """Test that print function is called with colorized message."""
-    with patch("services.model_selection.colorize") as mock_colorize, patch(
-        "builtins.print"
-    ) as mock_print:
-
-        mock_colorize.return_value = "test_colored_output"
-
-        try_next_model()
-
-        mock_print.assert_called_once_with("test_colored_output")
+    # Verify log message contains expected content
+    assert "Switching from" in caplog.text
+    assert "to" in caplog.text
 
 
 def test_module_level_constants():
@@ -282,8 +237,6 @@ def test_module_level_constants():
 @pytest.mark.parametrize("model_index", [0, 1, 2, 3])
 def test_try_next_model_from_each_position(_, model_index):
     """Test try_next_model behavior when starting from each model position."""
-    # Use already imported model_selection
-
     # Set current model to the specified index
     model_selection._current_model = MODEL_CHAIN[model_index]
 
@@ -305,9 +258,6 @@ def test_global_state_isolation():
     """Test that global state changes don't affect other imports."""
     # Import the module again to test isolation
     if "services.model_selection" in sys.modules:
-        # Get reference to the same module
-        # Use already imported model_selection
-
         original_model = model_selection.get_model()
 
         # Change the model

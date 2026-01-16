@@ -2,7 +2,6 @@
 import asyncio
 from datetime import datetime
 from json import dumps
-import logging
 import time
 
 # Local imports
@@ -61,6 +60,7 @@ from services.stripe.create_stripe_customer import create_stripe_customer
 from utils.files.is_test_file import is_test_file
 from utils.files.merge_test_file_headers import merge_test_file_headers
 from utils.images.get_base64 import get_base64
+from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.text.comment_identifiers import PROGRESS_BAR_EMPTY, PROGRESS_BAR_FILLED
 from utils.text.text_copy import (
@@ -78,6 +78,7 @@ async def create_pr_from_issue(
     trigger: Trigger,
     lambda_info: dict[str, str | None] | None = None,
 ) -> None:
+    set_trigger(trigger)
     current_time: float = time.time()
 
     # Extract label and validate it
@@ -208,7 +209,7 @@ async def create_pr_from_issue(
     if not can_proceed:
         body = user_message
         update_comment(body=body, base_args=base_args)
-        print(body)
+        logger.info(body)
 
         # Send email notification if user is a credit user and has zero credits
         # Disabled: This would send emails every time schedule trigger runs, annoying users
@@ -273,7 +274,7 @@ async def create_pr_from_issue(
         # Check if URL has a valid image extension (OpenAI only supports: png, jpeg, gif, webp)
         image_extensions = (".png", ".jpg", ".jpeg", ".gif", ".webp")
         if not any(url["url"].lower().endswith(ext) for ext in image_extensions):
-            logging.warning(
+            logger.warning(
                 "Skipping non-image URL or unsupported format: %s", url["url"]
             )
             continue
@@ -281,7 +282,7 @@ async def create_pr_from_issue(
         base64_image = get_base64(url=url["url"])
 
         if not base64_image:
-            logging.warning("Failed to fetch image from URL: %s", url["url"])
+            logger.warning("Failed to fetch image from URL: %s", url["url"])
             continue
 
         context = f"## Issue:\n{issue_title}\n\n## Issue Body:\n{issue_body}\n\n## Issue Comments:\n{'\n'.join(issue_comments)}"
@@ -307,7 +308,7 @@ async def create_pr_from_issue(
             base_args=base_args,
         )
         content = get_remote_file_content_by_url(url=url, token=token)
-        print(f"```{url}\n{content}```\n")
+        logger.info("```%s\n%s```\n", url, content)
         reference_contents.append(content)
 
     today = datetime.now().strftime("%Y-%m-%d")
@@ -361,6 +362,7 @@ async def create_pr_from_issue(
     pr_url, pr_number = create_pull_request(
         body=pr_body, title=issue_title, base_args=base_args
     )
+    set_pr_number(pr_number)
 
     # Clone repo (fire-and-forget, runs in parallel with remaining work)
     base_args["clone_dir"] = get_clone_dir(owner_name, repo_name, pr_number)
@@ -400,7 +402,7 @@ async def create_pr_from_issue(
             owner=owner_name, repo=repo_name, branch_name=new_branch_name, token=token
         ):
             body = f"Process stopped: Branch '{new_branch_name}' has been deleted"
-            print(body)
+            logger.info(body)
             if comment_url:
                 update_comment(body=body, base_args=base_args)
             break

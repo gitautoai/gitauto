@@ -115,9 +115,9 @@ def test_get_circleci_workflow_ids_invalid_json(mock_create_headers, mock_get):
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
 @patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
-@patch("services.github.check_suites.get_circleci_workflow_id.logging.error")
+@patch("services.github.check_suites.get_circleci_workflow_id.logger.error")
 def test_get_circleci_workflow_ids_api_error(
-    mock_logging_error, mock_create_headers, mock_get
+    mock_logger_error, mock_create_headers, mock_get
 ):
     """Test API error response and logging"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -134,7 +134,7 @@ def test_get_circleci_workflow_ids_api_error(
     assert not result
 
     # Verify logging was called with correct parameters
-    mock_logging_error.assert_called_once_with(
+    mock_logger_error.assert_called_once_with(
         "Failed to get check runs for check suite %s: %s",
         12345,
         "Internal Server Error",
@@ -270,9 +270,9 @@ def test_get_circleci_workflow_ids_different_error_codes(mock_create_headers, mo
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
 @patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
-@patch("services.github.check_suites.get_circleci_workflow_id.logging.error")
+@patch("services.github.check_suites.get_circleci_workflow_id.logger.error")
 def test_get_circleci_workflow_ids_401_unauthorized(
-    mock_logging_error, mock_create_headers, mock_get
+    mock_logger_error, mock_create_headers, mock_get
 ):
     """Test 401 Unauthorized error with logging"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -287,7 +287,7 @@ def test_get_circleci_workflow_ids_401_unauthorized(
     )
 
     assert not result
-    mock_logging_error.assert_called_once_with(
+    mock_logger_error.assert_called_once_with(
         "Failed to get check runs for check suite %s: %s", 12345, "Unauthorized"
     )
 
@@ -462,9 +462,9 @@ def test_get_circleci_workflow_ids_unicode_characters(mock_create_headers, mock_
 
 @patch("services.github.check_suites.get_circleci_workflow_id.requests.get")
 @patch("services.github.check_suites.get_circleci_workflow_id.create_headers")
-@patch("services.github.check_suites.get_circleci_workflow_id.logging.error")
+@patch("services.github.check_suites.get_circleci_workflow_id.logger.error")
 def test_get_circleci_workflow_ids_403_forbidden_with_logging(
-    mock_logging_error, mock_create_headers, mock_get
+    mock_logger_error, mock_create_headers, mock_get
 ):
     """Test 403 Forbidden error with logging verification"""
     mock_create_headers.return_value = {"Authorization": "token test-token"}
@@ -479,7 +479,7 @@ def test_get_circleci_workflow_ids_403_forbidden_with_logging(
     )
 
     assert not result
-    mock_logging_error.assert_called_once_with(
+    mock_logger_error.assert_called_once_with(
         "Failed to get check runs for check suite %s: %s",
         12345,
         "Forbidden - insufficient permissions",

@@ -1,5 +1,4 @@
 # Standard imports
-import logging
 import json
 
 # Local imports
@@ -27,6 +26,7 @@ from utils.files.is_code_file import is_code_file
 from utils.files.is_test_file import is_test_file
 from utils.files.is_type_file import is_type_file
 from utils.languages.detect_language_from_coverage import detect_language_from_coverage
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -44,7 +44,7 @@ def handle_coverage_report(
     # Default to "detached" for builds without branch context (tag builds, API triggers, etc.)
     if head_branch is None:
         head_branch = "detached"
-        logging.info(
+        logger.info(
             "No branch context for coverage report (run_id: %s, source: %s). Using 'detached'.",
             run_id,
             source,
@@ -62,13 +62,13 @@ def handle_coverage_report(
     elif source == "circleci":
         circle_token = get_circleci_token(owner_id=owner_id)
         if not circle_token:
-            logging.warning("No CircleCI token found for owner %d", owner_id)
+            logger.warning("No CircleCI token found for owner %d", owner_id)
             return None
         circleci_workflow_ids = get_circleci_workflow_ids_from_check_suite(
             owner_name, repo_name, run_id, github_token
         )
         if not circleci_workflow_ids:
-            logging.warning(
+            logger.warning(
                 "Failed to get CircleCI workflow IDs from check suite %d", run_id
             )
             return None
@@ -78,12 +78,12 @@ def handle_coverage_report(
 
         # Try each workflow ID until we find coverage artifacts
         for workflow_id in circleci_workflow_ids:
-            logging.info("Checking CircleCI workflow ID: %s", workflow_id)
+            logger.info("Checking CircleCI workflow ID: %s", workflow_id)
             jobs = get_circleci_workflow_jobs(
                 workflow_id=workflow_id, circle_token=circle_token
             )
             for job in jobs:
-                logging.info(
+                logger.info(
                     "Found CircleCI job: %s (status: %s)", job["name"], job["status"]
                 )
                 if job["status"] != "success":
@@ -99,7 +99,7 @@ def handle_coverage_report(
         return None
 
     coverage_data: list[CoverageReport] = []
-    logging.info(
+    logger.info(
         "Processing %d artifacts for %s/%s", len(artifacts), owner_name, repo_name
     )
 
@@ -109,13 +109,13 @@ def handle_coverage_report(
         else:
             artifact_name = artifact.get("path", "")
 
-        logging.info("Processing artifact: %s", artifact_name)
+        logger.info("Processing artifact: %s", artifact_name)
 
         # Check for coverage artifacts - lcov files, coverage reports, or default artifact
         if not (
             artifact_name.endswith("lcov.info") or artifact_name == "coverage-report"
         ):
-            logging.info("Skipping non-coverage artifact: %s", artifact_name)
+            logger.info("Skipping non-coverage artifact: %s", artifact_name)
             continue
 
         if source == "github":
@@ -128,25 +128,25 @@ def handle_coverage_report(
         else:
             if not circle_token:
                 continue
-            logging.info("Downloading CircleCI artifact from %s", artifact_name)
+            logger.info("Downloading CircleCI artifact from %s", artifact_name)
             lcov_content = download_circleci_artifact(
                 artifact_url=artifact["url"], token=circle_token
             )
 
         if not lcov_content:
-            logging.warning("No content downloaded from artifact: %s", artifact_name)
+            logger.warning("No content downloaded from artifact: %s", artifact_name)
             continue
 
-        logging.info("Downloaded lcov content, size: %d chars", len(lcov_content))
+        logger.info("Downloaded lcov content, size: %d chars", len(lcov_content))
         parsed_coverage = parse_lcov_coverage(lcov_content)
 
         if parsed_coverage:
-            logging.info("Parsed %d coverage items", len(parsed_coverage))
+            logger.info("Parsed %d coverage items", len(parsed_coverage))
             levels = [item.get("level") for item in parsed_coverage]
-            logging.info("Coverage levels found: %s", levels)
+            logger.info("Coverage levels found: %s", levels)
 
             report_language = detect_language_from_coverage(parsed_coverage)
-            logging.info("Detected language: %s", report_language)
+            logger.info("Detected language: %s", report_language)
 
             for item in parsed_coverage:
                 item["language"] = report_language
@@ -155,9 +155,9 @@ def handle_coverage_report(
 
             coverage_data.extend(parsed_coverage)
         else:
-            logging.warning("No parsed coverage from artifact: %s", artifact_name)
+            logger.warning("No parsed coverage from artifact: %s", artifact_name)
 
-    logging.info("Total coverage_data items: %d", len(coverage_data))
+    logger.info("Total coverage_data items: %d", len(coverage_data))
 
     if not coverage_data:
         return None
@@ -207,7 +207,7 @@ def handle_coverage_report(
         key = (repo_id, coverage["full_path"])
         if key in seen:
             msg = f"Duplicate coverage for `{owner_name}/{repo_name}`, full_path=`{coverage['full_path']}`"
-            logging.warning(msg)
+            logger.warning(msg)
         seen[key] = coverage
 
     # Get current file paths
@@ -264,18 +264,16 @@ def handle_coverage_report(
             upsert_data.append(item)
         except (TypeError, ValueError, OverflowError) as e:
             msg = f"Skipping non-serializable item: {str(e)}\nItem data: {coverage}"
-            logging.warning(msg)
+            logger.warning(msg)
             continue
 
     if not upsert_data:
-        logging.warning("No valid items to upsert")
+        logger.warning("No valid items to upsert")
         return None
 
     # Extract repository-level coverage for historical tracking
     repo_coverage = next((c for c in coverage_data if c["level"] == "repository"), None)
-    logging.info(
-        "Looking for repository-level coverage in %d items", len(coverage_data)
-    )
+    logger.info("Looking for repository-level coverage in %d items", len(coverage_data))
 
     if repo_coverage:
         repo_coverage_data: RepoCoverageInsert = {

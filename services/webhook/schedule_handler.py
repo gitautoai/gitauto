@@ -1,5 +1,4 @@
 # Standard imports
-import logging
 from datetime import datetime, timezone
 from typing import cast
 
@@ -41,10 +40,12 @@ from utils.files.is_type_file import is_type_file
 from utils.files.should_skip_test import should_skip_test
 from utils.files.should_test_file import should_test_file
 from utils.issue_templates.schedule import get_issue_title, get_issue_body
+from utils.logging.logging_config import logger, set_trigger
 
 
 @handle_exceptions(raise_on_error=True)
 def schedule_handler(event: EventBridgeSchedulerEvent):
+    set_trigger("schedule")
     # Extract details from the event payload
     owner_id = event.get("ownerId")
     owner_type = event.get("ownerType")
@@ -76,14 +77,14 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         schedule_name = f"gitauto-repo-{owner_id}-{repo_id}"
         delete_scheduler(schedule_name)
         msg = f"Installation {installation_id} no longer exists. Cleaned up scheduler."
-        logging.info(msg)
+        logger.info(msg)
         return {"status": "skipped", "message": msg}
 
     # Get repository settings - check if trigger_on_schedule is enabled
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     if not repo_settings or not repo_settings.get("trigger_on_schedule"):
         msg = f"Skipping repo_id: {repo_id} - trigger_on_schedule is not enabled"
-        logging.info(msg)
+        logger.info(msg)
         return {"status": "skipped", "message": msg}
 
     # Check availability
@@ -153,8 +154,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             enriched_all_files.append(new_coverage)
 
     if not enriched_all_files:
-        msg = f"No files found for {owner_name}/{repo_name}"
-        logging.info(msg)
+        msg = "Schedule: No files found"
+        logger.warning(msg)
         return {"status": "skipped", "message": msg}
 
     # Filter out files with 100% coverage in all three metrics
@@ -187,25 +188,26 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     target_item = None
     for item in files_needing_tests:
         item_path = cast(str, item["full_path"])
+        logger.info("Evaluating %s", item_path)
 
         # Skip non-code files
         if not is_code_file(item_path):
-            print(f"Skipping {item_path}: not a code file")
+            logger.info("Skipping %s: not a code file", item_path)
             continue
 
         # Skip test files
         if is_test_file(item_path):
-            print(f"Skipping {item_path}: test file")
+            logger.info("Skipping %s: test file", item_path)
             continue
 
         # Skip types files
         if is_type_file(item_path):
-            print(f"Skipping {item_path}: type file")
+            logger.info("Skipping %s: type file", item_path)
             continue
 
         # Skip migration files
         if is_migration_file(item_path):
-            print(f"Skipping {item_path}: migration file")
+            logger.info("Skipping %s: migration file", item_path)
             continue
 
         # Skip files that only contain exports/re-exports or are empty
@@ -218,27 +220,27 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         )
         # Skip empty files or files with only whitespace
         if not content or not content.strip():
-            print(f"Skipping {item_path}: empty content")
+            logger.info("Skipping %s: empty content", item_path)
             continue
 
         # Skip files that should be skipped based on content
         if should_skip_test(item_path, content):
-            print(f"Skipping {item_path}: should_skip_test=True")
+            logger.info("Skipping %s: should_skip_test=True", item_path)
             continue
 
         # Skip files excluded from testing
         if item.get("is_excluded_from_testing"):
-            print(f"Skipping {item_path}: excluded from testing")
+            logger.info("Skipping %s: excluded from testing by dashboard", item_path)
             continue
 
         # Skip files that have open PRs
         if any(item_path in pr.get("title", "") for pr in open_prs):
-            print(f"Skipping {item_path}: has open PR")
+            logger.info("Skipping %s: has open PR", item_path)
             continue
 
         # Final check: Use Claude AI to determine if this file should be tested (expensive, so run last)
         if not should_test_file(item_path, content):
-            print(f"Skipping {item_path}: should_test_file=False")
+            logger.info("Skipping %s: should_test_file=False", item_path)
             continue
 
         # Found the best suitable file
@@ -246,8 +248,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         break
 
     if target_item is None:
-        msg = f"No suitable file found for {owner_name}/{repo_name}"
-        logging.info(msg)
+        checked_files = [f["full_path"] for f in files_needing_tests]
+        msg = f"No suitable file found after checking {len(checked_files)} files: {checked_files}"
+        logger.warning(msg)
         return {"status": "skipped", "message": msg}
 
     target_path = target_item["full_path"]
@@ -304,8 +307,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                 )
                 send_email(to=email, subject=subject, text=text)
 
-        msg = f"Issues are disabled for {owner_name}/{repo_name}. Disabled schedule trigger."
-        logging.warning(msg)
+        msg = "Issues are disabled. Disabled schedule trigger."
+        logger.warning(msg)
         slack_notify(msg)
         return {"status": "skipped", "message": msg}
 
@@ -347,5 +350,5 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
     # Handle other errors
     msg = f"Failed to create issue for {target_path} (status: {status_code})"
-    logging.error(msg)
+    logger.error(msg)
     return {"status": "failed", "message": msg}

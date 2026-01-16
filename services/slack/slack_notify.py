@@ -8,6 +8,7 @@ import requests
 from config import TIMEOUT
 from constants.general import IS_PRD
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 
@@ -37,12 +38,14 @@ def slack_notify(text: str, thread_ts: str | None = None):
     )
 
     if response.status_code != 200:
-        print(f"Slack notification failed: {response.status_code} {response.text}")
+        logger.error(
+            "Slack notification failed: %s %s", response.status_code, response.text
+        )
         return None
 
     response_data = response.json()
     if not response_data.get("ok"):
-        print(f"Slack notification failed: {response_data.get('error')}")
+        logger.error("Slack notification failed: %s", response_data.get("error"))
         return None
 
     ts: str = response_data.get("ts")

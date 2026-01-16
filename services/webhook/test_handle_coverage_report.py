@@ -271,8 +271,8 @@ def test_handle_coverage_report_with_null_head_branch():
     ) as mock_upsert_cov, patch(
         "services.webhook.handle_coverage_report.upsert_repo_coverage"
     ) as mock_upsert_repo, patch(
-        "services.webhook.handle_coverage_report.logging"
-    ) as mock_logging:
+        "services.webhook.handle_coverage_report.logger"
+    ) as mock_logger:
 
         mock_token.return_value = "fake-token"
         mock_artifacts.return_value = [{"id": 123, "name": "coverage-lcov.info"}]
@@ -303,7 +303,7 @@ def test_handle_coverage_report_with_null_head_branch():
         assert all(item.get("branch_name") == "detached" for item in upsert_call_args)
 
         # Verify logging was called
-        mock_logging.info.assert_any_call(
+        mock_logger.info.assert_any_call(
             "No branch context for coverage report (run_id: %s, source: %s). Using 'detached'.",
             222,
             "github",
