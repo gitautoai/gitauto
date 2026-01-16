@@ -34,6 +34,7 @@ from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
 
 # Local imports (Utils)
+from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.progress_bar.progress_bar import create_progress_bar
 from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
@@ -191,7 +192,7 @@ async def handle_review_run(
     p = 0
     log_messages = []
     msg = "Thanks for the review! I'm on it."
-    log_messages.append(msg)
+    add_log_message(msg, log_messages)
     comment_body = create_progress_bar(p=0, msg="\n".join(log_messages))
     comment_url = reply_to_comment(base_args=base_args, body=comment_body)
     base_args["comment_url"] = comment_url
@@ -199,14 +200,14 @@ async def handle_review_run(
     # Get a review commented file
     review_file = get_remote_file_content(file_path=review_path, base_args=base_args)
     p += 5
-    log_messages.append(f"Read the file `{review_path}` you commented on.")
+    add_log_message(f"Read the file `{review_path}` you commented on.", log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
     # Get list of changed files in the PR (filenames only, not contents)
     pull_files = get_pull_request_files(url=pull_file_url, token=token)
     p += 5
-    log_messages.append(f"Found {len(pull_files)} changed files in the PR.")
+    add_log_message(f"Found {len(pull_files)} changed files in the PR.", log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 

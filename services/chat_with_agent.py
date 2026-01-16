@@ -27,6 +27,7 @@ from services.webhook.utils.create_system_message import create_system_message
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_target_test_file import is_target_test_file
 from utils.files.is_test_file import is_test_file
+from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger
 from utils.number.is_valid_line_number import is_valid_line_number
 from utils.progress_bar.progress_bar import create_progress_bar
@@ -344,7 +345,7 @@ async def chat_with_agent(
         query = tool_args.get("query", "")
         if query.strip():
             msg = f"Googled `{query}` and went through the results."
-            log_messages.append(msg)
+            add_log_message(msg, log_messages)
             update_comment(
                 body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
                 base_args=base_args,
@@ -370,7 +371,7 @@ async def chat_with_agent(
 
     # Add message to log and update comment
     if msg:
-        log_messages.append(msg)
+        add_log_message(msg, log_messages)
         update_comment(
             body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
             base_args=base_args,
