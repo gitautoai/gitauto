@@ -3,6 +3,7 @@ from typing import Any, cast
 
 # Local imports
 from config import (
+    GITHUB_APP_USER_NAME,
     GITHUB_CHECK_RUN_FAILURES,
     ISSUE_NUMBER_FORMAT,
     PR_BODY_STARTS_WITH,
@@ -198,7 +199,12 @@ async def handle_webhook_event(
             )
             return
         if action == "opened":
-            create_gitauto_button_comment(payload=cast(GitHubLabeledPayload, payload))
+            assert "sender" in payload and "login" in payload["sender"]
+            sender_login: str = payload["sender"]["login"]
+            if GITHUB_APP_USER_NAME in sender_login:
+                create_gitauto_button_comment(
+                    payload=cast(GitHubLabeledPayload, payload)
+                )
             return
 
     # Run GitAuto when "Generate PR" checkbox is checked
