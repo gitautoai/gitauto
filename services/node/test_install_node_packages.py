@@ -12,7 +12,7 @@ def test_can_reuse_packages_returns_false_when_no_node_modules():
     with patch("services.node.install_node_packages.os.path.exists") as mock_exists:
         mock_exists.return_value = False
 
-        result = _can_reuse_packages("/mnt/efs/owner/repo", "package.json", "{}")
+        result = _can_reuse_packages("/mnt/efs/owner/repo", "{}")
 
         assert result is False
 
@@ -30,7 +30,6 @@ def test_can_reuse_packages_returns_true_when_content_matches():
         with patch("builtins.open", mock_open(read_data='{"name": "test"}')):
             result = _can_reuse_packages(
                 "/mnt/efs/owner/repo",
-                "/mnt/efs/owner/repo/package.json",
                 '{"name": "test"}',
             )
 
@@ -43,7 +42,6 @@ def test_can_reuse_packages_returns_false_when_content_differs():
         with patch("builtins.open", mock_open(read_data='{"name": "old"}')):
             result = _can_reuse_packages(
                 "/mnt/efs/owner/repo",
-                "/mnt/efs/owner/repo/package.json",
                 '{"name": "new"}',
             )
 
@@ -70,7 +68,6 @@ def test_can_reuse_packages_returns_true_when_npmrc_matches():
         with patch("builtins.open", side_effect=open_side_effect):
             result = _can_reuse_packages(
                 "/mnt/efs/owner/repo",
-                "/mnt/efs/owner/repo/package.json",
                 '{"name": "test"}',
                 "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
             )
@@ -98,7 +95,6 @@ def test_can_reuse_packages_returns_false_when_npmrc_differs():
         with patch("builtins.open", side_effect=open_side_effect):
             result = _can_reuse_packages(
                 "/mnt/efs/owner/repo",
-                "/mnt/efs/owner/repo/package.json",
                 '{"name": "test"}',
                 "//different-registry.npmjs.org/:_authToken=${NPM_TOKEN}",
             )
@@ -117,7 +113,6 @@ def test_can_reuse_packages_returns_false_when_npmrc_missing_on_efs():
         with patch("builtins.open", mock_open(read_data='{"name": "test"}')):
             result = _can_reuse_packages(
                 "/mnt/efs/owner/repo",
-                "/mnt/efs/owner/repo/package.json",
                 '{"name": "test"}',
                 "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
             )
@@ -127,7 +122,7 @@ def test_can_reuse_packages_returns_false_when_npmrc_missing_on_efs():
 
 @pytest.mark.asyncio
 async def test_install_node_packages_returns_false_when_no_package_json():
-    with patch("services.node.install_node_packages.get_raw_content") as mock_get:
+    with patch("services.node.install_node_packages.read_file_content") as mock_get:
         mock_get.return_value = None
 
         result = await install_node_packages(
@@ -144,7 +139,7 @@ async def test_install_node_packages_returns_false_when_no_package_json():
 
 @pytest.mark.asyncio
 async def test_install_node_packages_reuses_existing_packages():
-    with patch("services.node.install_node_packages.get_raw_content") as mock_get:
+    with patch("services.node.install_node_packages.read_file_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
             with patch(
                 "services.node.install_node_packages._can_reuse_packages"
@@ -173,7 +168,7 @@ async def test_install_node_packages_runs_npm_install():
     mock_process.returncode = 0
     mock_process.communicate = AsyncMock(return_value=(b"", b""))
 
-    with patch("services.node.install_node_packages.get_raw_content") as mock_get:
+    with patch("services.node.install_node_packages.read_file_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
             with patch(
                 "services.node.install_node_packages._can_reuse_packages",
@@ -210,7 +205,6 @@ def test_can_reuse_packages_returns_false_when_no_package_json_file():
 
         result = _can_reuse_packages(
             "/mnt/efs/owner/repo",
-            "/mnt/efs/owner/repo/package.json",
             '{"name": "test"}',
         )
 
@@ -222,7 +216,7 @@ async def test_install_node_packages_reuses_after_lock():
     mock_lock_file = MagicMock()
     mock_lock_file.fileno.return_value = 1
 
-    with patch("services.node.install_node_packages.get_raw_content") as mock_get:
+    with patch("services.node.install_node_packages.read_file_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
             with patch(
                 "services.node.install_node_packages._can_reuse_packages"
@@ -254,7 +248,7 @@ async def test_install_node_packages_uses_npm_token():
     mock_process.returncode = 0
     mock_process.communicate = AsyncMock(return_value=(b"", b""))
 
-    with patch("services.node.install_node_packages.get_raw_content") as mock_get:
+    with patch("services.node.install_node_packages.read_file_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
             with patch(
                 "services.node.install_node_packages._can_reuse_packages",
@@ -299,7 +293,7 @@ async def test_install_node_packages_handles_npm_failure():
     mock_process.returncode = 1
     mock_process.communicate = AsyncMock(return_value=(b"", b"npm ERR!"))
 
-    with patch("services.node.install_node_packages.get_raw_content") as mock_get:
+    with patch("services.node.install_node_packages.read_file_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
             with patch(
                 "services.node.install_node_packages._can_reuse_packages",

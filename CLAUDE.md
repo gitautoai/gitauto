@@ -981,7 +981,7 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 1. Run black formatting: `black .`
 2. Run ruff linting: `ruff check . --fix` (fix ALL ruff errors, not just modified files - if any errors remain unfixed, STOP and fix them before continuing)
 3. **CRITICAL**: Check `git status` FIRST to see ALL changes including deleted/renamed files
-4. Get list of modified, created, AND deleted files ONCE: `{ git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard; } | sort -u`
+4. Get list of modified, created, AND deleted files ONCE: `(git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard) | sort -u`
    - This command captures: modified files, staged files, and newly created untracked files
    - NOTE: Deleted files that are already staged won't appear in this list but MUST be included in the commit
    - Store this list and use it for all subsequent steps
