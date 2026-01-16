@@ -18,8 +18,15 @@ def test_can_reuse_packages_returns_false_when_no_node_modules():
 
 
 def test_can_reuse_packages_returns_true_when_content_matches():
+    def exists_side_effect(path):
+        if "node_modules" in path or "package.json" in path:
+            return True
+        if ".npmrc" in path:
+            return False
+        return False
+
     with patch("services.node.install_node_packages.os.path.exists") as mock_exists:
-        mock_exists.return_value = True
+        mock_exists.side_effect = exists_side_effect
         with patch("builtins.open", mock_open(read_data='{"name": "test"}')):
             result = _can_reuse_packages(
                 "/mnt/efs/owner/repo",
@@ -38,6 +45,81 @@ def test_can_reuse_packages_returns_false_when_content_differs():
                 "/mnt/efs/owner/repo",
                 "/mnt/efs/owner/repo/package.json",
                 '{"name": "new"}',
+            )
+
+            assert result is False
+
+
+def test_can_reuse_packages_returns_true_when_npmrc_matches():
+    def exists_side_effect(_path):
+        return True
+
+    file_contents = {
+        "package.json": '{"name": "test"}',
+        ".npmrc": "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
+    }
+
+    def open_side_effect(path, *_args, **_kwargs):
+        for filename, content in file_contents.items():
+            if filename in path:
+                return mock_open(read_data=content)()
+        return mock_open(read_data="")()
+
+    with patch("services.node.install_node_packages.os.path.exists") as mock_exists:
+        mock_exists.side_effect = exists_side_effect
+        with patch("builtins.open", side_effect=open_side_effect):
+            result = _can_reuse_packages(
+                "/mnt/efs/owner/repo",
+                "/mnt/efs/owner/repo/package.json",
+                '{"name": "test"}',
+                "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
+            )
+
+            assert result is True
+
+
+def test_can_reuse_packages_returns_false_when_npmrc_differs():
+    def exists_side_effect(_path):
+        return True
+
+    file_contents = {
+        "package.json": '{"name": "test"}',
+        ".npmrc": "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
+    }
+
+    def open_side_effect(path, *_args, **_kwargs):
+        for filename, content in file_contents.items():
+            if filename in path:
+                return mock_open(read_data=content)()
+        return mock_open(read_data="")()
+
+    with patch("services.node.install_node_packages.os.path.exists") as mock_exists:
+        mock_exists.side_effect = exists_side_effect
+        with patch("builtins.open", side_effect=open_side_effect):
+            result = _can_reuse_packages(
+                "/mnt/efs/owner/repo",
+                "/mnt/efs/owner/repo/package.json",
+                '{"name": "test"}',
+                "//different-registry.npmjs.org/:_authToken=${NPM_TOKEN}",
+            )
+
+            assert result is False
+
+
+def test_can_reuse_packages_returns_false_when_npmrc_missing_on_efs():
+    def exists_side_effect(path):
+        if ".npmrc" in path:
+            return False
+        return True
+
+    with patch("services.node.install_node_packages.os.path.exists") as mock_exists:
+        mock_exists.side_effect = exists_side_effect
+        with patch("builtins.open", mock_open(read_data='{"name": "test"}')):
+            result = _can_reuse_packages(
+                "/mnt/efs/owner/repo",
+                "/mnt/efs/owner/repo/package.json",
+                '{"name": "test"}',
+                "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
             )
 
             assert result is False
