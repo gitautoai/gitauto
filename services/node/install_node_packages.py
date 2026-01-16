@@ -10,7 +10,10 @@ from utils.logging.logging_config import logger
 
 
 def _can_reuse_packages(
-    efs_dir: str, package_json_path: str, package_json_content: str
+    efs_dir: str,
+    package_json_path: str,
+    package_json_content: str,
+    npmrc_content: str | None = None,
 ):
     node_modules_path = os.path.join(efs_dir, "node_modules")
     if not os.path.exists(node_modules_path):
@@ -19,10 +22,22 @@ def _can_reuse_packages(
         return False
     with open(package_json_path, "r", encoding=UTF8) as f:
         stored_content = f.read()
-    if stored_content == package_json_content:
-        logger.info("node: Reusing existing packages on EFS at %s", efs_dir)
-        return True
-    return False
+    if stored_content != package_json_content:
+        return False
+
+    npmrc_path = os.path.join(efs_dir, ".npmrc")
+    if npmrc_content:
+        if not os.path.exists(npmrc_path):
+            return False
+        with open(npmrc_path, "r", encoding=UTF8) as f:
+            stored_npmrc = f.read()
+        if stored_npmrc != npmrc_content:
+            return False
+    elif os.path.exists(npmrc_path):
+        return False
+
+    logger.info("node: Reusing existing packages on EFS at %s", efs_dir)
+    return True
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
@@ -53,11 +68,33 @@ async def install_node_packages(
             ref=branch,
             token=token,
         )
-        logger.info("node: Fetched package.json from GitHub API")
+        if package_json_content:
+            logger.info("node: Fetched package.json from GitHub API")
 
     if not package_json_content:
         logger.info("node: No package.json found, skipping installation")
         return False
+
+    # Try reading .npmrc from clone_dir first (if available)
+    npmrc_content = None
+    if clone_dir:
+        local_npmrc_path = os.path.join(clone_dir, ".npmrc")
+        if os.path.exists(local_npmrc_path):
+            with open(local_npmrc_path, "r", encoding=UTF8) as f:
+                npmrc_content = f.read()
+            logger.info("node: Read .npmrc from clone_dir: %s", local_npmrc_path)
+
+    # Fall back to GitHub API for .npmrc
+    if not npmrc_content:
+        npmrc_content = get_raw_content(
+            owner=owner,
+            repo=repo,
+            file_path=".npmrc",
+            ref=branch,
+            token=token,
+        )
+        if npmrc_content:
+            logger.info("node: Fetched .npmrc from GitHub API")
 
     # Ensure EFS directory exists
     os.makedirs(efs_dir, exist_ok=True)
@@ -65,7 +102,9 @@ async def install_node_packages(
     lock_file_path = os.path.join(efs_dir, ".install.lock")
     package_json_path = os.path.join(efs_dir, "package.json")
 
-    if _can_reuse_packages(efs_dir, package_json_path, package_json_content):
+    if _can_reuse_packages(
+        efs_dir, package_json_path, package_json_content, npmrc_content
+    ):
         return True
 
     with open(lock_file_path, "w", encoding=UTF8) as lock_file:
@@ -74,11 +113,20 @@ async def install_node_packages(
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
             logger.info("node: Lock acquired for %s", efs_dir)
 
-            if _can_reuse_packages(efs_dir, package_json_path, package_json_content):
+            if _can_reuse_packages(
+                efs_dir, package_json_path, package_json_content, npmrc_content
+            ):
                 return True
 
+            # Copy to EFS because npm install runs in EFS to cache node_modules across Lambda invocations
             with open(package_json_path, "w", encoding=UTF8) as f:
                 f.write(package_json_content)
+
+            if npmrc_content:
+                npmrc_path = os.path.join(efs_dir, ".npmrc")
+                with open(npmrc_path, "w", encoding=UTF8) as f:
+                    f.write(npmrc_content)
+                logger.info("node: Wrote .npmrc to %s", npmrc_path)
 
             logger.info("node: Installing packages to %s", efs_dir)
 
