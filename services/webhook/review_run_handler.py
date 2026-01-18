@@ -1,3 +1,4 @@
+# Standard imports
 import asyncio
 from datetime import datetime
 import json
@@ -6,10 +7,9 @@ from typing import Any
 
 # Local imports
 from config import GITHUB_APP_USER_NAME
+from constants.agent import MAX_ITERATIONS
 from services.chat_with_agent import chat_with_agent
-from services.github.types.github_types import ReviewBaseArgs
-
-# Local imports (GitHub)
+from services.efs.start_async_install_on_efs import start_async_install_on_efs
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
@@ -19,21 +19,16 @@ from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.types.github_types import ReviewBaseArgs
 from services.github.types.owner import Owner
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
-
-# Local imports (EFS)
-from services.efs.start_async_install_on_efs import start_async_install_on_efs
 from services.git.clone_repo import clone_repo
 from services.git.get_clone_dir import get_clone_dir
-
-# Local imports (Supabase)
+from services.openai.functions.functions import TOOLS_FOR_PRS
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
-
-# Local imports (Utils)
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.progress_bar.progress_bar import create_progress_bar
@@ -205,7 +200,9 @@ async def handle_review_run(
     update_comment(body=comment_body, base_args=base_args)
 
     # Get list of changed files in the PR (filenames only, not contents)
-    pull_files = get_pull_request_files(url=pull_file_url, token=token)
+    pull_files = get_pull_request_files(
+        owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+    )
     p += 5
     add_log_message(f"Found {len(pull_files)} changed files in the PR.", log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
@@ -230,11 +227,11 @@ async def handle_review_run(
     messages = [{"role": "user", "content": user_input}]
 
     # Loop a process explore repo and commit changes until the ticket is resolved
-    previous_calls = []
-    retry_count = 0
     total_token_input = 0
     total_token_output = 0
-    while True:
+    is_completed = False
+
+    for _iteration in range(MAX_ITERATIONS):
         # Timeout check: Stop if we're approaching Lambda limit
         is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
             current_time
@@ -264,94 +261,35 @@ async def handle_review_run(
                 update_comment(body=body, base_args=base_args)
             break
 
-        # Explore repo
+        # Call the agent to explore the codebase and commit changes
         (
             messages,
-            previous_calls,
-            _tool_name,
-            _tool_args,
             token_input,
             token_output,
-            is_explored,
+            is_completed,
             p,
         ) = await chat_with_agent(
             messages=messages,
             trigger=trigger,
             repo_settings=repo_settings,
             base_args=base_args,
-            mode="get",  # explore can not be used here because "search_remote_file_contents" can search files only in the default branch NOT in the branch that is merged into the default branch
-            previous_calls=previous_calls,
             p=p,
             log_messages=log_messages,
             usage_id=usage_id,
+            tools=TOOLS_FOR_PRS,
         )
         total_token_input += token_input
         total_token_output += token_output
 
-        # Search Google
-        # (
-        #     messages,
-        #     previous_calls,
-        #     _tool_name,
-        #     _tool_args,
-        #     _token_input,
-        #     _token_output,
-        #     _is_searched,
-        #     p,
-        # ) = await chat_with_agent(
-        #     messages=messages,
-        #     trigger=trigger,
-        #     repo_settings=repo_settings,
-        #     base_args=base_args,
-        #     mode="search",
-        #     previous_calls=previous_calls,
-        #     p=p,
-        # )
-
-        # Commit changes based on the exploration information
-        (
-            messages,
-            previous_calls,
-            _tool_name,
-            _tool_args,
-            token_input,
-            token_output,
-            is_committed,
-            p,
-        ) = await chat_with_agent(
-            messages=messages,
-            trigger=trigger,
-            repo_settings=repo_settings,
-            base_args=base_args,
-            mode="commit",
-            previous_calls=previous_calls,
-            p=p,
-            log_messages=log_messages,
-            usage_id=usage_id,
-        )
-        total_token_input += token_input
-        total_token_output += token_output
-
-        # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
-        if not is_explored and not is_committed:
+        if is_completed:
+            logger.info(
+                "Agent signaled completion via verify_task_is_complete, breaking loop"
+            )
             break
 
-        # If no files are found but changes are made, it might fall into an infinite loop (e.g., repeatedly making and reverting similar changes with slight variations)
-        if not is_explored and is_committed:
-            retry_count += 1
-            if retry_count > 3:
-                break
-            continue
-
-        # If files are found but no changes are made, it means that the agent found files but didn't think it's necessary to commit changes or fell into an infinite-like loop (e.g. slightly different searches)
-        if is_explored and not is_committed:
-            retry_count += 1
-            if retry_count > 3:
-                break
-            continue
-
-        # Because the agent is committing changes, keep doing the loop
-        retry_count = 0
+    # Log if loop exhausted without completion
+    if not is_completed:
+        logger.warning("Agent loop ended without calling verify_task_is_complete")
 
     # Trigger final test workflows with an empty commit
     body = "Creating final empty commit to trigger workflows..."

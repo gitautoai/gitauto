@@ -1,7 +1,9 @@
 """Integration tests for chat.py with GPT-5"""
 
 import os
+
 import pytest
+
 from services.openai.chat import chat_with_ai
 
 
@@ -12,7 +14,6 @@ def test_chat_with_ai_gpt5_integration():
 
     assert isinstance(response, str)
     assert len(response) > 0
-    print(f"GPT-5 chat response: {response}")
 
 
 @pytest.mark.skipif(bool(os.getenv("CI")), reason="Skip integration tests in CI")
@@ -25,4 +26,3 @@ def test_chat_with_ai_gpt5_properties():
     assert len(response) > 0
     # Should contain "4" since it's a simple math question
     assert "4" in response
-    print(f"GPT-5 math response: {response}")

@@ -1,8 +1,6 @@
 # pylint: disable=too-many-lines,too-many-public-methods
 """Unit tests for pr_body_handler.py"""
 
-from io import StringIO
-
 # Standard imports
 from unittest.mock import patch
 
@@ -950,44 +948,6 @@ class TestWritePrDescription:
         all_mocks["get_pull_request_file_changes"].assert_not_called()
         all_mocks["get_issue_body"].assert_not_called()
         all_mocks["is_pull_request_open"].assert_not_called()
-
-    @patch("sys.stdout", new_callable=StringIO)
-    def test_write_pr_description_pr_closed_prints_message(
-        self, mock_stdout, mock_pr_payload, all_mocks
-    ):
-        """Test that closing PR prints appropriate message."""
-        # Setup
-        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
-        all_mocks["is_pull_request_open"].return_value = False
-        all_mocks["check_branch_exists"].return_value = True
-
-        # Execute
-        write_pr_description(mock_pr_payload)
-
-        # Verify print message
-        output = mock_stdout.getvalue()
-        assert "Skipping AI call: PR #123 has been closed" in output
-
-    @patch("sys.stdout", new_callable=StringIO)
-    def test_write_pr_description_branch_deleted_prints_message(
-        self, mock_stdout, mock_pr_payload, all_mocks
-    ):
-        """Test that deleted branch prints appropriate message."""
-        # Setup
-        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
-        all_mocks["is_pull_request_open"].return_value = True
-        all_mocks["check_branch_exists"].return_value = False
-
-        # Execute
-        write_pr_description(mock_pr_payload)
-
-        # Verify print message
-        output = mock_stdout.getvalue()
-        assert "Skipping AI call: Branch 'feature-branch' has been deleted" in output
 
     def test_write_pr_description_with_malformed_resolves_statement(
         self, mock_pr_payload, all_mocks

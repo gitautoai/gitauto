@@ -51,7 +51,7 @@ def chat_with_claude(
     max_tokens = 64000
     buffer = 4096
     max_input = 200_000 - max_tokens - buffer
-    messages = trim_messages_to_token_limit(
+    messages, token_input = trim_messages_to_token_limit(
         messages=messages, client=claude, model=model_id, max_input=max_input
     )
 
@@ -96,11 +96,6 @@ def chat_with_claude(
         raise ClaudeOverloadedError("Claude API is overloaded (529)") from e
     except AuthenticationError as e:
         raise ClaudeAuthenticationError("Claude API authentication failed (401)") from e
-
-    # Calculate tokens
-    token_input = claude.messages.count_tokens(
-        messages=cast(list[MessageParam], messages), model=model_id
-    ).input_tokens
 
     # Process the response
     tool_call_id = None

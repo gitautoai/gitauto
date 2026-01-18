@@ -1,10 +1,13 @@
 from constants.messages import SETTINGS_LINKS
 from constants.urls import GH_BASE_URL
 
+SCHEDULE_PREFIX_ADD = "Schedule: Add unit tests to "
+SCHEDULE_PREFIX_INCREASE = "Schedule: Increase test coverage for "
+
 
 def get_issue_title(file_path: str, has_existing_tests: bool = False):
-    action = "Increase test coverage for" if has_existing_tests else "Add unit tests to"
-    return f"Schedule: {action} {file_path}"
+    prefix = SCHEDULE_PREFIX_INCREASE if has_existing_tests else SCHEDULE_PREFIX_ADD
+    return f"{prefix}{file_path}"
 
 
 def get_issue_body(

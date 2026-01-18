@@ -1,10 +1,12 @@
+import requests
 from bs4 import BeautifulSoup
 from googlesearch import search
-from requests import get
+
 from config import TIMEOUT
 from constants.requests import USER_AGENT
 from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 NUM_RESULTS_DEFAULT = 1
 UNNECESSARY_TAGS = [
@@ -45,7 +47,7 @@ def search_urls(query: str, num_results: int = NUM_RESULTS_DEFAULT, lang: str = 
 @handle_exceptions(default_return_value=None, raise_on_error=False, api_type="google")
 def scrape_content_from_url(url: str):
     headers = {"User-Agent": USER_AGENT}
-    response = get(url, headers=headers, timeout=TIMEOUT)
+    response = requests.get(url, headers=headers, timeout=TIMEOUT)
     response.raise_for_status()
 
     soup = BeautifulSoup(response.text, "html.parser")
@@ -57,11 +59,11 @@ def scrape_content_from_url(url: str):
     for element in soup(UNNECESSARY_TAGS):
         element.decompose()
 
-    print(f"Googled url: {url}\nTitle: {title}")
+    logger.info("Googled url: %s, Title: %s", url, title)
 
-    # Print unique HTML tags
+    # Log unique HTML tags
     unique_tags = set(tag.name for tag in soup.find_all())
-    print(f"Unique HTML tags found: {sorted(unique_tags)}")
+    logger.info("Unique HTML tags found: %s", sorted(unique_tags))
 
     # Find main content area if possible
     main_content = soup.find(["main", "article", 'div[role="main"]']) or soup

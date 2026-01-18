@@ -6,6 +6,7 @@ from services.coverages.coverage_types import CoverageReport, CoverageStats
 from services.coverages.create_coverage_report import create_coverage_report
 from services.coverages.create_empty_stats import create_empty_stats
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
@@ -156,7 +157,7 @@ def parse_lcov_coverage(lcov_content: str):
                     current_stats["uncovered_branches"].discard(branch_info)
                 current_stats["branches_total"] += 1
             except (ValueError, IndexError):
-                print(f"Error parsing line: {line}")
+                logger.error("Error parsing line: %s", line)
                 continue  # Skip malformed lines
 
         elif line.startswith("BRF:"):  # BRF: Branches Found

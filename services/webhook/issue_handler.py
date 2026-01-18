@@ -5,12 +5,14 @@ from json import dumps
 import time
 
 # Local imports
-from config import GITHUB_API_URL, PRODUCT_ID, PR_BODY_STARTS_WITH
+from config import PRODUCT_ID, PR_BODY_STARTS_WITH
+from constants.agent import MAX_ITERATIONS
 from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.chat_with_agent import chat_with_agent
 from services.efs.start_async_install_on_efs import start_async_install_on_efs
 from services.git.clone_repo import clone_repo
 from services.git.get_clone_dir import get_clone_dir
+from services.openai.functions.functions import TOOLS_FOR_ISSUES
 from services.resend.send_email import send_email
 from services.resend.text.credits_depleted_email import get_credits_depleted_email_text
 
@@ -57,6 +59,8 @@ from services.stripe.check_availability import check_availability
 from services.stripe.create_stripe_customer import create_stripe_customer
 
 # Local imports (Utils)
+from utils.files.get_impl_file_from_issue_title import get_impl_file_from_issue_title
+from utils.files.guess_test_file_path import guess_test_file_path
 from utils.files.is_test_file import is_test_file
 from utils.files.merge_test_file_headers import merge_test_file_headers
 from utils.images.get_base64 import get_base64
@@ -313,10 +317,48 @@ async def create_pr_from_issue(
 
     today = datetime.now().strftime("%Y-%m-%d")
 
-    # Ask for help if needed like a human would do
-    # comment_body = "Checking if I can solve it or if I should just hit you up."
-    # p = min(p + 5, 95)
-    # update_comment(body=comment_body, base_args=base_args, p=p)
+    # Extract target implementation file and find test file candidates
+    impl_file_path = get_impl_file_from_issue_title(issue_title)
+    test_file_path_candidates = (
+        guess_test_file_path(impl_file_path) if impl_file_path else None
+    )
+    impl_file_content = None
+    test_files: dict[str, str] = {}
+
+    base_branch = base_args["base_branch"]
+    if impl_file_path:
+        impl_file_content = get_raw_content(
+            owner=owner_name,
+            repo=repo_name,
+            file_path=impl_file_path,
+            ref=base_branch,
+            token=token,
+        )
+        p += 5
+        add_log_message(f"Read target file: `{impl_file_path}`", log_messages)
+        update_comment(
+            body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+            base_args=base_args,
+        )
+
+    for candidate in test_file_path_candidates or []:
+        content = get_raw_content(
+            owner=owner_name,
+            repo=repo_name,
+            file_path=candidate,
+            ref=base_branch,
+            token=token,
+        )
+        if not content:
+            continue
+        test_files[candidate] = content
+        p += 5
+        add_log_message(f"Found existing test file: `{candidate}`", log_messages)
+        update_comment(
+            body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+            base_args=base_args,
+        )
+
     user_input = dumps(
         {
             "today": today,
@@ -328,6 +370,9 @@ async def create_pr_from_issue(
             "issue_comments": issue_comments,
             "parent_issue_title": parent_issue_title,
             "parent_issue_body": parent_issue_body,
+            "impl_file_path": impl_file_path,
+            "impl_file_content": impl_file_content,
+            "test_files": test_files,
         }
     )
 
@@ -363,6 +408,7 @@ async def create_pr_from_issue(
         body=pr_body, title=issue_title, base_args=base_args
     )
     set_pr_number(pr_number)
+    base_args["pull_number"] = pr_number
 
     # Clone repo (fire-and-forget, runs in parallel with remaining work)
     base_args["clone_dir"] = get_clone_dir(owner_name, repo_name, pr_number)
@@ -379,11 +425,11 @@ async def create_pr_from_issue(
     )
 
     # Loop a process explore repo and commit changes until the ticket is resolved
-    previous_calls = []
-    retry_count = 0
     total_token_input = 0
     total_token_output = 0
-    while True:
+    is_completed = False
+
+    for _iteration in range(MAX_ITERATIONS):
         # Timeout check: Stop if we're approaching Lambda limit
         is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
             current_time
@@ -407,23 +453,19 @@ async def create_pr_from_issue(
                 update_comment(body=body, base_args=base_args)
             break
 
-        # Explore repo
+        # Call the agent to explore the codebase and commit changes
         (
             messages,
-            previous_calls,
-            _tool_name,
-            _tool_args,
             token_input,
             token_output,
-            is_explored,
+            is_completed,
             p,
         ) = await chat_with_agent(
             messages=messages,
             trigger=trigger,
-            repo_settings=repo_settings,
             base_args=base_args,
-            mode="explore",
-            previous_calls=previous_calls,
+            repo_settings=repo_settings,
+            tools=TOOLS_FOR_ISSUES,
             p=p,
             log_messages=log_messages,
             usage_id=usage_id,
@@ -433,79 +475,20 @@ async def create_pr_from_issue(
         total_token_input += token_input
         total_token_output += token_output
 
-        # Search Google
-        # (
-        #     messages,
-        #     previous_calls,
-        #     _tool_name,
-        #     _tool_args,
-        #     token_input,
-        #     token_output,
-        #     _is_searched,
-        #     p,
-        # ) = await chat_with_agent(
-        #     messages=messages,
-        #     trigger=trigger,
-        #     repo_settings=repo_settings,
-        #     base_args=base_args,
-        #     mode="search",
-        #     previous_calls=previous_calls,
-        #     p=p,
-        #     log_messages=log_messages,
-        # )
-
-        # Commit changes based on the exploration information
-        (
-            messages,
-            previous_calls,
-            _tool_name,
-            _tool_args,
-            token_input,
-            token_output,
-            is_committed,
-            p,
-        ) = await chat_with_agent(
-            messages=messages,
-            trigger=trigger,
-            repo_settings=repo_settings,
-            base_args=base_args,
-            mode="commit",
-            previous_calls=previous_calls,
-            p=p,
-            log_messages=log_messages,
-            usage_id=usage_id,
-            allow_edit_any_file=allow_edit_any_file,
-            restrict_edit_to_target_test_file_only=restrict_edit_to_target_test_file_only,
-        )
-        total_token_input += token_input
-        total_token_output += token_output
-
-        # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
-        if not is_explored and not is_committed:
+        if is_completed:
+            logger.info(
+                "Agent signaled completion via verify_task_is_complete, breaking loop"
+            )
             break
 
-        # If no files are found but changes are made, it might fall into an infinite loop (e.g., repeatedly making and reverting similar changes with slight variations)
-        if not is_explored and is_committed:
-            retry_count += 1
-            if retry_count > 3:
-                break
-            continue
-
-        # If files are found but no changes are made, it means that the agent found files but didn't think it's necessary to commit changes or fell into an infinite-like loop (e.g. slightly different searches)
-        if is_explored and not is_committed:
-            retry_count += 1
-            if retry_count > 3:
-                break
-            continue
-
-        # Because the agent is committing changes, keep doing the loop
-        retry_count = 0
+    # Log if loop exhausted without completion
+    if not is_completed:
+        logger.warning("Agent loop ended without calling verify_task_is_complete")
 
     # Add headers to test files before triggering CI
-    files_url = (
-        f"{GITHUB_API_URL}/repos/{owner_name}/{repo_name}/pulls/{pr_number}/files"
+    changed_files = get_pull_request_files(
+        owner=owner_name, repo=repo_name, pull_number=pr_number, token=token
     )
-    changed_files = get_pull_request_files(url=files_url, token=token)
 
     for file_change in changed_files:
         file_path = file_change["filename"]
@@ -544,7 +527,6 @@ async def create_pr_from_issue(
     create_empty_commit(base_args=base_args)
 
     # Update the issue comment
-    is_completed = True
     body_after_pr = pull_request_completed(
         issuer_name=issuer_name,
         sender_name=sender_name,

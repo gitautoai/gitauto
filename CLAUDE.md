@@ -718,7 +718,7 @@ All code analysis, generation, and file processing happens on our Lambda instanc
 - NO COMMENTS: Do not add any comments in code when making changes. Never explain what was removed or why in the code itself. Explanations belong in terminal responses, not in code. IMPORTANT: Do NOT delete existing comments unless they are obsolete. Preserve URL references, API documentation links, and other contextual comments that remain relevant.
 - NO TYPE HINTS USING ->: Do not add return type hints using -> because it overwrites the inferred return type without actually validating that the implementation returns that type. It's a lie to the type checker that cannot be verified at runtime. Return type hints are PROHIBITED.
 - NO TYPE: IGNORE: Do not use # type: ignore comments to suppress type errors. This silences the type checker without fixing the actual type mismatch. Fix the underlying type issues instead.
-- NO CAST: Do not use typing.cast() to suppress type errors. Cast doesn't validate or guarantee the type is correct - it just tells the type checker to trust you without verification. Fix the underlying type issues instead. **EXCEPTION**: Use cast when external libraries (e.g., Supabase) return `Any` and you need proper type inference. Example: `return cast(str, result.data["token"])` when `result.data` is typed as `Any` by the library.
+- NO CAST: Do not use typing.cast() to suppress type errors. Cast doesn't validate or guarantee the type is correct - it just tells the type checker to trust you without verification. Fix the underlying type issues instead. **EXCEPTIONS**: (1) Use cast when external libraries (e.g., Supabase) return `Any` and you need proper type inference. Example: `return cast(str, result.data["token"])` when `result.data` is typed as `Any` by the library. (2) Use cast in test files when creating test fixtures that need to satisfy TypedDict requirements.
 - NO PYRIGHT SUPPRESSION: Do not use # pyright: reportArgumentType=false or any other pyright suppression comments. Fix the underlying type issues instead.
 - NO ANY: Do not use Any type. Fix the specific type issues instead.
 - ALLOWED: Variable type annotations ARE allowed (e.g., `data: RepositoryFeatures = result.data[0]`) because they document intent and help type inference, though they don't enforce runtime validation. Use them to clarify types when the inferred type is too broad.
@@ -980,35 +980,39 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 
 1. Run black formatting: `black .`
 2. Run ruff linting: `ruff check . --fix` (fix ALL ruff errors, not just modified files - if any errors remain unfixed, STOP and fix them before continuing)
-3. **CRITICAL**: Check `git status` FIRST to see ALL changes including deleted/renamed files
-4. Get list of modified, created, AND deleted files ONCE: `(git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard) | sort -u`
+3. Check for print statements and built-in logging:
+   - Run `ruff check --select=T201 .` to find print statements - **FIX ALL before continuing** (use custom logger instead)
+   - Run `grep -r "^import logging$" --include="*.py" . --exclude-dir=venv` to find built-in logging imports - **FIX ALL before continuing** (use `from utils.logging.logging_config import logger` instead)
+   - Exception: `schemas/` directory scripts may use print for CLI output
+4. **CRITICAL**: Check `git status` FIRST to see ALL changes including deleted/renamed files
+5. Get list of modified, created, AND deleted files ONCE: `(git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard) | sort -u`
    - This command captures: modified files, staged files, and newly created untracked files
    - NOTE: Deleted files that are already staged won't appear in this list but MUST be included in the commit
    - Store this list and use it for all subsequent steps
    - Extract Python files from this list: filter for `.py` files
    - Extract test files from this list: filter for `test_*.py` files
    - **CRITICAL**: For pylint, pyright, flake8, and pytest, filter out deleted files that no longer exist
-5. Run flake8 on the Python files identified in step 4 (excluding deleted files): `flake8 file1.py file2.py file3.py` - **IF ANY FLAKE8 ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
-6. Run pylint on the Python files identified in step 4 (excluding deleted files): `pylint file1.py file2.py file3.py` - **IF ANY PYLINT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
-7. Run pyright on the whole repo: `pyright` - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+6. Run flake8 on the Python files identified in step 5 (excluding deleted files): `flake8 file1.py file2.py file3.py` - **IF ANY FLAKE8 ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+7. Run pylint on the Python files identified in step 5 (excluding deleted files): `pylint file1.py file2.py file3.py` - **IF ANY PYLINT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+8. Run pyright on the whole repo: `pyright` - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
    - For test files with many mock parameters, pyright will warn about unused variables (e.g., `_mock_update_usage is not accessed`)
    - This is expected - test files often have mock parameters that are required by the decorator order but not used in the test
    - Suppress these warnings by adding `# pyright: reportUnusedVariable=false` at the top of the test file (after pylint disables)
-8. Run pytest on the test files identified in step 4 (excluding deleted files): `python -m pytest test_file1.py test_file2.py` - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
-9. Check current branch is not main: `git branch --show-current`
-10. Merge latest main: `git fetch origin main && git merge origin/main`
-11. **CRITICAL**: Review `git status` again to ensure ALL changes are staged:
-    - Add all modified/new files identified in step 4
+9. Run pytest on the test files identified in step 5 (excluding deleted files): `python -m pytest test_file1.py test_file2.py` - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
+10. Check current branch is not main: `git branch --show-current`
+11. Merge latest main: `git fetch origin main && git merge origin/main`
+12. **CRITICAL**: Review `git status` again to ensure ALL changes are staged:
+    - Add all modified/new files identified in step 5
     - Ensure deleted files are staged (they should already be if renamed with `mv`)
     - Use specific file names: `git add file1.py file2.py file3.py` (**NEVER use `git add .`**)
     - For deleted files already staged, they'll be included automatically in the commit
-12. Commit with descriptive message: `git commit -m "descriptive message"`
+13. Commit with descriptive message: `git commit -m "descriptive message"`
     - **CRITICAL**: NEVER include Claude Code credits or co-author lines in commit messages
     - NO "🤖 Generated with [Claude Code]" footer
     - NO "Co-Authored-By: Claude <noreply@anthropic.com>" lines
     - Keep commit messages professional and focused on the actual changes
-13. Push to remote: `git push`
-14. Create pull request: `gh pr create --title "PR title" --body "PR description" --assignee @me`. Example:
+14. Push to remote: `git push`
+15. Create pull request: `gh pr create --title "PR title" --body "PR description" --assignee @me`. Example:
 
     ```bash
     gh pr create --title "PR title" --body "$(cat <<'EOF'

@@ -397,29 +397,6 @@ class TestAddIssueTemplates:
         assert "bug report template content" in contents
         assert "feature request template content" in contents
 
-    def test_add_issue_templates_print_statements(self, mock_github_setup):
-        """Test that appropriate print statements are made."""
-        mocks = mock_github_setup
-        mock_repo = mocks["repo"]
-
-        # Mock no existing templates
-        mock_repo.get_contents.side_effect = UnknownObjectException(
-            status=404, data={}, headers={}
-        )
-
-        # Mock PR creation
-        mock_pr = Mock(spec=PullRequest)
-        mock_repo.create_pull.return_value = mock_pr
-
-        with patch("builtins.print") as mock_print:
-            # Call the function
-            add_issue_templates("test-owner/test-repo", "installer", "test-token")
-
-            # Verify print was called with the expected message
-            mock_print.assert_called_once_with(
-                "Adding issue templates to the repo: 'test-owner/test-repo' by 'installer'.\n"
-            )
-
     def test_add_issue_templates_branch_creation_parameters(self, mock_github_setup):
         """Test that branch creation uses correct parameters."""
         mocks = mock_github_setup

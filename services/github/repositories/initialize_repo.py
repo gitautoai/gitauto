@@ -19,8 +19,9 @@ from constants.urls import (
 )
 
 # Local imports (Utils)
-from utils.error.handle_exceptions import handle_exceptions
 from utils.command.run_command import run_command
+from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -49,14 +50,14 @@ def initialize_repo(repo_path: str, remote_url: str, token: str) -> None:
 
     # Try to add remote, if it fails then set-url instead
     try:
-        print(f"Adding remote: {remote_url}")
+        logger.info("Adding remote: %s", remote_url)
         run_command(command=f"git remote add origin {auth_remote_url}", cwd=repo_path)
-        print("Remote added successfully")
+        logger.info("Remote added successfully")
     except Exception:  # pylint: disable=broad-except
-        print(f"Setting remote: {remote_url}")
+        logger.info("Setting remote: %s", remote_url)
         run_command(
             command=f"git remote set-url origin {auth_remote_url}", cwd=repo_path
         )
-        print("Remote set successfully")
+        logger.info("Remote set successfully")
 
     run_command(command="git push -u origin main", cwd=repo_path)

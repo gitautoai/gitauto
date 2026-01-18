@@ -372,25 +372,19 @@ async def test_handle_check_suite_full_workflow(
 
     mock_chat_agent.side_effect = [
         (
-            [],
-            [],
-            None,
-            None,
+            [],  # messages
             50,  # token_input
             25,  # token_output
-            False,
-            50,
-        ),  # First call (get mode) - no exploration
+            False,  # is_completed=False (continue loop)
+            50,  # progress
+        ),
         (
-            [],
-            [],
-            None,
-            None,
+            [],  # messages
             30,  # token_input
             20,  # token_output
-            False,
-            75,
-        ),  # Second call (commit mode) - no commit, loop exits
+            True,  # is_completed=True (break loop)
+            75,  # progress
+        ),
     ]
 
     # Execute
@@ -407,13 +401,11 @@ async def test_handle_check_suite_full_workflow(
     mock_get_retry_pairs.assert_called_once()
     assert mock_chat_agent.call_count == 2
 
-    # Verify chat_with_agent calls
+    # Verify chat_with_agent calls have correct trigger
     first_call = mock_chat_agent.call_args_list[0]
-    assert first_call.kwargs["mode"] == "get"
     assert first_call.kwargs["trigger"] == "test_failure"
 
     second_call = mock_chat_agent.call_args_list[1]
-    assert second_call.kwargs["mode"] == "commit"
     assert second_call.kwargs["trigger"] == "test_failure"
 
 
@@ -934,25 +926,29 @@ async def test_check_run_handler_token_accumulation(
     mock_check_branch_exists.return_value = True
     mock_timeout_check.return_value = (False, 0)
 
-    # Mock chat_with_agent to return token counts and break loop
-    mock_chat_agent.return_value = (
-        [
-            {"role": "user", "content": "test"},
-            {"role": "assistant", "content": "AI response"},
-        ],
-        [],
-        "no_action",
-        {},
-        80,  # input tokens
-        45,  # output tokens
-        False,  # is_explored/is_committed=False (breaks loop)
-        90,
-    )
+    # Mock chat_with_agent to return token counts
+    # First call: is_completed=False (continue), Second call: is_completed=True (break)
+    mock_chat_agent.side_effect = [
+        (
+            [{"role": "user", "content": "test"}],
+            80,  # token_input
+            45,  # token_output
+            False,  # is_completed=False (continue loop)
+            90,  # progress
+        ),
+        (
+            [{"role": "user", "content": "test"}],
+            80,  # token_input
+            45,  # token_output
+            True,  # is_completed=True (break loop)
+            95,  # progress
+        ),
+    ]
 
     # Execute
     await handle_check_suite(payload)
 
-    # Verify chat_with_agent was called twice (get + commit modes)
+    # Verify chat_with_agent was called twice
     assert mock_chat_agent.call_count == 2
 
     # Verify update_usage was called with accumulated tokens
@@ -1170,8 +1166,14 @@ async def test_handle_check_suite_codecov_failure(
         }
     ]
     mock_chat_agent.side_effect = [
-        ([], [], None, None, 50, 25, False, 50),
-        ([], [], None, None, 30, 20, False, 75),
+        (
+            [],
+            50,
+            25,
+            False,
+            50,
+        ),  # messages, token_input, token_output, is_completed, progress
+        ([], 30, 20, True, 75),
     ]
 
     await handle_check_suite(payload)
@@ -1272,8 +1274,14 @@ async def test_handle_check_suite_codecov_no_token(
     mock_timeout_check.return_value = (False, 0)
     mock_get_codecov_token.return_value = None
     mock_chat_agent.side_effect = [
-        ([], [], None, None, 50, 25, False, 50),
-        ([], [], None, None, 30, 20, False, 75),
+        (
+            [],
+            50,
+            25,
+            False,
+            50,
+        ),  # messages, token_input, token_output, is_completed, progress
+        ([], 30, 20, True, 75),
     ]
 
     await handle_check_suite(payload)

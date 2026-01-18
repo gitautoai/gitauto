@@ -1,30 +1,44 @@
 # https://docs.powertools.aws.dev/lambda/python/latest/core/logger/
 # https://docs.aws.amazon.com/lambda/latest/dg/python-logging.html
+import logging
+from typing import cast
+
 from aws_lambda_powertools import Logger
 
-# POWERTOOLS_DEV=true in .env for human-readable local logs
-# In production, logs are JSON formatted
-logger = Logger(service="gitauto", log_uncaught_exceptions=True)
+from config import PRODUCT_NAME
+from constants.general import IS_PRD
+
+if IS_PRD:
+    logger = Logger(service=PRODUCT_NAME, log_uncaught_exceptions=True)
+else:
+    # Use standard Python logging locally for cleaner output
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+    )
+    logger = logging.getLogger(PRODUCT_NAME)
 
 
 def set_request_id(request_id: str):
     """Set AWS Lambda request ID for current context."""
-    logger.append_keys(request_id=request_id)
+    if IS_PRD:
+        cast(Logger, logger).append_keys(request_id=request_id)
 
 
 def set_owner_repo(owner: str, repo: str):
     """Set GitHub owner and repo for current context."""
-    if owner and repo:
-        logger.append_keys(owner_repo=f"{owner}/{repo}")
+    if IS_PRD and owner and repo:
+        cast(Logger, logger).append_keys(owner_repo=f"{owner}/{repo}")
 
 
 def set_pr_number(pr_number: int):
     """Set PR number for current context."""
-    if pr_number:
-        logger.append_keys(pr_number=pr_number)
+    if IS_PRD and pr_number:
+        cast(Logger, logger).append_keys(pr_number=pr_number)
 
 
 def set_trigger(trigger: str):
     """Set trigger name for current context."""
-    if trigger:
-        logger.append_keys(trigger=trigger)
+    if IS_PRD and trigger:
+        cast(Logger, logger).append_keys(trigger=trigger)

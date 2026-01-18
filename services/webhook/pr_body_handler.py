@@ -16,6 +16,7 @@ from services.github.token.get_installation_token import get_installation_access
 
 # Local imports (OpenAI)
 from services.openai.chat import chat_with_ai
+from utils.logging.logging_config import logger
 from utils.prompts.write_pr_body import WRITE_PR_BODY
 
 
@@ -101,13 +102,13 @@ def write_pr_description(payload: dict):
     if not is_pull_request_open(
         owner=owner, repo=repo_name, pull_number=pull_number, token=token
     ):
-        print(f"Skipping AI call: PR #{pull_number} has been closed")
+        logger.info("Skipping AI call: PR #%d has been closed", pull_number)
         return
 
     if not check_branch_exists(
         owner=owner, repo=repo_name, branch_name=head_branch, token=token
     ):
-        print(f"Skipping AI call: Branch '{head_branch}' has been deleted")
+        logger.info("Skipping AI call: Branch '%s' has been deleted", head_branch)
         return
 
     # Write a PR description to the issue

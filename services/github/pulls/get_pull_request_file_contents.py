@@ -7,6 +7,7 @@ from services.github.files.get_remote_file_content import get_remote_file_conten
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -31,5 +32,5 @@ def get_pull_request_file_contents(url: str, base_args: BaseArgs):
             contents.append(content)
         page += 1
 
-    print(f"get_pull_request_file_contents: {dumps(obj=contents, indent=2)}")
+    logger.info("get_pull_request_file_contents: %s", dumps(obj=contents, indent=2))
     return contents

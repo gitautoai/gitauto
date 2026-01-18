@@ -9,10 +9,11 @@ import tempfile
 # Local imports
 from config import UTF8
 from utils.files.get_file_content import get_file_content
+from utils.logging.logging_config import logger
 from utils.new_lines.detect_new_line import detect_line_break
-from utils.text.strip_trailing_spaces import strip_trailing_spaces
 from utils.text.ensure_final_newline import ensure_final_newline
 from utils.text.sort_imports import sort_imports
+from utils.text.strip_trailing_spaces import strip_trailing_spaces
 
 
 def apply_patch(original_text: str, diff_text: str):
@@ -138,12 +139,12 @@ def apply_patch(original_text: str, diff_text: str):
         try:
             os.remove(path=org_fname)
         except Exception as e:
-            print(f"Failed to remove org file: {e}")
+            logger.error("Failed to remove org file: %s", e)
 
         try:
             os.remove(path=diff_fname)
         except Exception as e:
-            print(f"Failed to remove diff file: {e}")
+            logger.error("Failed to remove diff file: %s", e)
 
         # Remove any Oops.rej* files in the root directory
         root_dir = os.getcwd()

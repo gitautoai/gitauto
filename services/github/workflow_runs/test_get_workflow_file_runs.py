@@ -18,7 +18,7 @@ def mock_response():
     return response
 
 
-@patch("services.github.workflow_runs.get_workflow_file_runs.get")
+@patch("requests.get")
 def test_get_workflow_file_runs_basic(mock_get, mock_response):
     mock_get.return_value = mock_response
 
@@ -36,7 +36,7 @@ def test_get_workflow_file_runs_basic(mock_get, mock_response):
     assert "workflows/pytest.yml/runs" in call_url
 
 
-@patch("services.github.workflow_runs.get_workflow_file_runs.get")
+@patch("requests.get")
 def test_get_workflow_file_runs_with_branch(mock_get, mock_response):
     mock_get.return_value = mock_response
 
@@ -52,7 +52,7 @@ def test_get_workflow_file_runs_with_branch(mock_get, mock_response):
     assert "branch=main" in call_url
 
 
-@patch("services.github.workflow_runs.get_workflow_file_runs.get")
+@patch("requests.get")
 def test_get_workflow_file_runs_pagination(mock_get):
     page1 = MagicMock()
     page1.status_code = 200
@@ -76,7 +76,7 @@ def test_get_workflow_file_runs_pagination(mock_get):
     assert mock_get.call_count == 2
 
 
-@patch("services.github.workflow_runs.get_workflow_file_runs.get")
+@patch("requests.get")
 def test_get_workflow_file_runs_empty(mock_get):
     response = MagicMock()
     response.status_code = 200

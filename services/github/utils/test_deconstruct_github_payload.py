@@ -632,9 +632,7 @@ def test_deconstruct_github_payload_missing_fork_key(
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
 @patch("services.github.utils.deconstruct_github_payload.datetime")
 @patch("services.github.utils.deconstruct_github_payload.choices")
-@patch("builtins.print")
-def test_deconstruct_github_payload_target_branch_print_statement(
-    mock_print,
+def test_deconstruct_github_payload_target_branch_used(
     mock_choices,
     mock_datetime,
     mock_get_parent_issue,
@@ -644,7 +642,7 @@ def test_deconstruct_github_payload_target_branch_print_statement(
     mock_get_repository,
     mock_get_installation_access_token,
 ):
-    """Test that print statement is called when using target branch."""
+    """Test that target branch is used when it exists."""
     # Setup mocks
     mock_get_installation_access_token.return_value = "test_token"
     mock_get_repository.return_value = {"target_branch": "develop"}
@@ -661,6 +659,5 @@ def test_deconstruct_github_payload_target_branch_print_statement(
     # Call the function
     base_args, _ = deconstruct_github_payload(payload)
 
-    # Verify print statement was called
-    mock_print.assert_called_once_with("Using target branch: develop")
+    # Verify target branch is used
     assert base_args["base_branch"] == "develop"

@@ -126,34 +126,6 @@ def test_get_file_content_uses_correct_newline():
     )
 
 
-def test_get_file_content_prints_file_exists_debug():
-    """Test that get_file_content prints debug information about file existence."""
-    with patch("builtins.open", mock_open(read_data="test")):
-        with patch("os.path.exists", return_value=True) as mock_exists:
-            with patch("builtins.print") as mock_print:
-                get_file_content("test.txt")
-
-    # Verify that os.path.exists was called
-    mock_exists.assert_called_once_with("test.txt")
-
-    # Verify that print was called with the correct message
-    mock_print.assert_called_once_with("get_file_content - file exists: True")
-
-
-def test_get_file_content_prints_file_not_exists_debug():
-    """Test that get_file_content prints debug information when file doesn't exist."""
-    with patch("builtins.open", side_effect=FileNotFoundError()):
-        with patch("os.path.exists", return_value=False) as mock_exists:
-            with patch("builtins.print") as mock_print:
-                get_file_content("nonexistent.txt")
-
-    # Verify that os.path.exists was called
-    mock_exists.assert_called_once_with("nonexistent.txt")
-
-    # Verify that print was called with the correct message
-    mock_print.assert_called_once_with("get_file_content - file exists: False")
-
-
 def test_get_file_content_with_different_file_paths():
     """Test that get_file_content works with various file path formats."""
     test_cases = [

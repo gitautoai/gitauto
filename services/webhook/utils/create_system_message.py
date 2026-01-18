@@ -1,4 +1,4 @@
-from typing import Any, cast, Literal
+from typing import Any, cast
 
 # Third party imports
 from schemas.supabase.types import Repositories
@@ -6,15 +6,13 @@ from schemas.supabase.types import Repositories
 # Local imports
 from services.supabase.usage.insert_usage import Trigger
 from utils.error.handle_exceptions import handle_exceptions
-from utils.prompts.get_trigger_prompt import get_trigger_prompt
-from utils.prompts.get_mode_prompt import get_mode_prompt
 from utils.files.read_xml_file import read_xml_file
+from utils.prompts.get_trigger_prompt import get_trigger_prompt
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
 def create_system_message(
     trigger: Trigger,
-    mode: Literal["comment", "commit", "explore", "get", "search"],
     repo_settings: Repositories | None = None,
 ):
     content_parts = []
@@ -24,14 +22,8 @@ def create_system_message(
     if trigger_content:
         content_parts.append(trigger_content)
 
-    # Add mode instruction
-    mode_content = get_mode_prompt(mode)
-    if mode_content:
-        content_parts.append(mode_content)
-
-    # Add quality rules only for commit mode
-    if mode == "commit":
-        content_parts.append(read_xml_file("utils/prompts/commit_quality_rules.xml"))
+    # Add coding standards
+    content_parts.append(read_xml_file("utils/prompts/coding_standards.xml"))
 
     # Repository rules
     if repo_settings:
