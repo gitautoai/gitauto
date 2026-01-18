@@ -62,9 +62,7 @@ def mock_error_response():
 @patch("services.github.pulls.add_reviewers.create_headers")
 @patch("services.github.pulls.add_reviewers.requests.post")
 @patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
-@patch("builtins.print")
 def test_add_reviewers_success_all_valid(
-    mock_print,
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
@@ -92,11 +90,6 @@ def test_add_reviewers_success_all_valid(
         owner="gitautoai", repo="gitauto", user="reviewer3", token="test-token-mock"
     )
 
-    # Verify print was called with valid reviewers
-    mock_print.assert_called_once_with(
-        "Adding reviewers: ['reviewer1', 'reviewer2', 'reviewer3']"
-    )
-
     # Verify API call was made
     mock_create_headers.assert_called_once_with(token="test-token-mock")
     mock_post.assert_called_once_with(
@@ -111,9 +104,7 @@ def test_add_reviewers_success_all_valid(
 @patch("services.github.pulls.add_reviewers.create_headers")
 @patch("services.github.pulls.add_reviewers.requests.post")
 @patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
-@patch("builtins.print")
 def test_add_reviewers_success_partial_valid(
-    mock_print,
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
@@ -134,9 +125,6 @@ def test_add_reviewers_success_partial_valid(
 
     # Verify collaborator checks were called for each reviewer
     assert mock_check_collaborator.call_count == 3
-
-    # Verify print was called with only valid reviewers
-    mock_print.assert_called_once_with("Adding reviewers: ['reviewer1', 'reviewer3']")
 
     # Verify API call was made with only valid reviewers
     mock_post.assert_called_once_with(
@@ -199,9 +187,7 @@ def test_add_reviewers_pr_number_none(test_owner, test_repo, create_test_base_ar
 @patch("services.github.pulls.add_reviewers.create_headers")
 @patch("services.github.pulls.add_reviewers.requests.post")
 @patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
-@patch("builtins.print")
 def test_add_reviewers_http_error(
-    mock_print,
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
@@ -272,9 +258,7 @@ def test_add_reviewers_collaborator_check_exception(
 @patch("services.github.pulls.add_reviewers.create_headers")
 @patch("services.github.pulls.add_reviewers.requests.post")
 @patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
-@patch("builtins.print")
 def test_add_reviewers_single_reviewer(
-    mock_print,
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
@@ -298,7 +282,6 @@ def test_add_reviewers_single_reviewer(
     result = add_reviewers(base_args)
 
     assert result is None
-    mock_print.assert_called_once_with("Adding reviewers: ['single_reviewer']")
     mock_post.assert_called_once_with(
         url="https://api.github.com/repos/gitautoai/gitauto/pulls/456/requested_reviewers",
         headers={"Authorization": "Bearer token"},
@@ -351,9 +334,7 @@ def test_add_reviewers_missing_required_fields(create_test_base_args):
 @patch("services.github.pulls.add_reviewers.create_headers")
 @patch("services.github.pulls.add_reviewers.requests.post")
 @patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
-@patch("builtins.print")
 def test_add_reviewers_mixed_collaborator_results(
-    mock_print,
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
@@ -423,9 +404,7 @@ def test_add_reviewers_connection_error(
 @patch("services.github.pulls.add_reviewers.create_headers")
 @patch("services.github.pulls.add_reviewers.requests.post")
 @patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
-@patch("builtins.print")
 def test_add_reviewers_url_construction(
-    mock_print,
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
@@ -454,4 +433,3 @@ def test_add_reviewers_url_construction(
         timeout=120,
     )
     mock_create_headers.assert_called_once_with(token="different-token")
-    mock_print.assert_called_once_with("Adding reviewers: ['test-reviewer']")

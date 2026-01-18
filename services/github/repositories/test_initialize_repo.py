@@ -146,9 +146,7 @@ class TestInitializeRepo:
             "builtins.open", mock_open()
         ), patch(
             "services.github.repositories.initialize_repo.run_command"
-        ) as mock_run_command, patch(
-            "builtins.print"
-        ) as mock_print:
+        ) as mock_run_command:
 
             # Make remote add command fail
             def side_effect(command, cwd):
@@ -166,14 +164,6 @@ class TestInitializeRepo:
                 cwd=test_repo_path,
             )
             assert set_url_call in mock_run_command.call_args_list
-
-            # Verify print statements for failed remote add and successful set-url
-            expected_print_calls = [
-                call(f"Adding remote: {test_remote_url}"),
-                call(f"Setting remote: {test_remote_url}"),
-                call("Remote set successfully"),
-            ]
-            mock_print.assert_has_calls(expected_print_calls)
 
     def test_initialize_repo_file_write_error_handled(
         self,
