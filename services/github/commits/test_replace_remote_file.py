@@ -772,7 +772,7 @@ async def test_replace_file_with_eslint_integration(sample_base_args):
         mock_run_prettier.assert_called_once()
         mock_run_eslint.assert_called_once()
         call_kwargs = mock_run_eslint.call_args[1]
-        assert call_kwargs["clone_dir"] == "/tmp/test-owner/test-repo/pr-1"
+        assert call_kwargs["base_args"]["clone_dir"] == "/tmp/test-owner/test-repo/pr-1"
         assert call_kwargs["file_path"] == "test.js"
 
 

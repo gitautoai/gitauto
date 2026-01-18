@@ -793,7 +793,7 @@ async def test_apply_diff_to_file_with_eslint_integration(sample_base_args):
         mock_run_prettier.assert_called_once()
         mock_run_eslint.assert_called_once()
         call_kwargs = mock_run_eslint.call_args[1]
-        assert call_kwargs["clone_dir"] == "/tmp/test_owner/test_repo/pr-1"
+        assert call_kwargs["base_args"]["clone_dir"] == "/tmp/test_owner/test_repo/pr-1"
         assert call_kwargs["file_path"] == "test.js"
 
 
@@ -950,7 +950,7 @@ async def test_apply_diff_to_file_with_eslint_unfixable_errors(sample_base_args)
         assert "successfully" in result.lower()
         mock_run_eslint.assert_called_once()
         call_kwargs = mock_run_eslint.call_args[1]
-        assert call_kwargs["clone_dir"] == "/tmp/test_owner/test_repo/pr-1"
+        assert call_kwargs["base_args"]["clone_dir"] == "/tmp/test_owner/test_repo/pr-1"
         assert call_kwargs["file_path"] == "test.js"
         put_call_args = mock_put.call_args[1]
         decoded_content = base64.b64decode(put_call_args["json"]["content"]).decode(

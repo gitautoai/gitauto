@@ -1,8 +1,10 @@
 # pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 import json
 from unittest.mock import patch
 
 import pytest
+
 from services.github.files.get_eslint_config import get_eslint_config
 
 REAL_CUSTOMER_ESLINTRC = """{
@@ -64,15 +66,15 @@ def base_args():
 
 def test_get_eslint_config_finds_eslintrc_json(base_args):
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == ".eslintrc.json":
+        def side_effect(file_name, **kwargs):
+            if file_name == ".eslintrc.json":
                 return REAL_CUSTOMER_ESLINTRC
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -90,15 +92,15 @@ def test_get_eslint_config_finds_eslintrc_js(base_args):
 };"""
 
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == ".eslintrc.js":
+        def side_effect(file_name, **kwargs):
+            if file_name == ".eslintrc.js":
                 return eslintrc_js
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -113,15 +115,15 @@ rules:
   no-console: warn"""
 
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == ".eslintrc.yml":
+        def side_effect(file_name, **kwargs):
+            if file_name == ".eslintrc.yml":
                 return eslintrc_yml
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -136,15 +138,15 @@ rules:
   no-console: error"""
 
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == ".eslintrc.yaml":
+        def side_effect(file_name, **kwargs):
+            if file_name == ".eslintrc.yaml":
                 return eslintrc_yaml
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -155,15 +157,15 @@ rules:
 
 def test_get_eslint_config_finds_eslintrc(base_args):
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == ".eslintrc":
+        def side_effect(file_name, **kwargs):
+            if file_name == ".eslintrc":
                 return REAL_CUSTOMER_ESLINTRC
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -185,15 +187,15 @@ def test_get_eslint_config_finds_eslint_config_js(base_args):
 };"""
 
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == "eslint.config.js":
+        def side_effect(file_name, **kwargs):
+            if file_name == "eslint.config.js":
                 return eslint_config_js
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -211,15 +213,15 @@ def test_get_eslint_config_finds_eslint_config_mjs(base_args):
 };"""
 
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == "eslint.config.mjs":
+        def side_effect(file_name, **kwargs):
+            if file_name == "eslint.config.mjs":
                 return eslint_config_mjs
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -237,15 +239,15 @@ def test_get_eslint_config_finds_eslint_config_cjs(base_args):
 };"""
 
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == "eslint.config.cjs":
+        def side_effect(file_name, **kwargs):
+            if file_name == "eslint.config.cjs":
                 return eslint_config_cjs
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -266,15 +268,15 @@ def test_get_eslint_config_finds_in_package_json(base_args):
 }"""
 
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == "package.json":
+        def side_effect(file_name, **kwargs):
+            if file_name == "package.json":
                 return package_json_content
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -295,15 +297,15 @@ def test_get_eslint_config_package_json_without_eslint_config(base_args):
 }"""
 
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == "package.json":
+        def side_effect(file_name, **kwargs):
+            if file_name == "package.json":
                 return package_json_content
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -312,9 +314,9 @@ def test_get_eslint_config_package_json_without_eslint_config(base_args):
 
 def test_get_eslint_config_not_found(base_args):
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
-        mock_get_raw.return_value = None
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
+        mock_read.return_value = None
 
         result = get_eslint_config(base_args)
 
@@ -323,17 +325,17 @@ def test_get_eslint_config_not_found(base_args):
 
 def test_get_eslint_config_priority_order(base_args):
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == ".eslintrc.js":
+        def side_effect(file_name, **kwargs):
+            if file_name == ".eslintrc.js":
                 return "module.exports = { rules: {} };"
-            if file_path == "package.json":
+            if file_name == "package.json":
                 return '{"eslintConfig": {"rules": {}}}'
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -343,29 +345,29 @@ def test_get_eslint_config_priority_order(base_args):
 
 def test_get_eslint_config_tries_all_config_files(base_args):
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
-        mock_get_raw.return_value = None
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
+        mock_read.return_value = None
 
         result = get_eslint_config(base_args)
 
         assert result is None
-        assert mock_get_raw.call_count >= 8
+        assert mock_read.call_count >= 8
 
 
 def test_get_eslint_config_with_empty_package_json(base_args):
     package_json_content = "{}"
 
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == "package.json":
+        def side_effect(file_name, **kwargs):
+            if file_name == "package.json":
                 return package_json_content
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -394,15 +396,15 @@ def test_get_eslint_config_with_complex_eslint_config_in_package_json(base_args)
 }"""
 
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == "package.json":
+        def side_effect(file_name, **kwargs):
+            if file_name == "package.json":
                 return package_json_content
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -418,9 +420,9 @@ def test_get_eslint_config_with_complex_eslint_config_in_package_json(base_args)
 
 def test_get_eslint_config_handles_exception_gracefully(base_args):
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
-        mock_get_raw.side_effect = Exception("Network error")
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
+        mock_read.side_effect = Exception("Network error")
 
         result = get_eslint_config(base_args)
 
@@ -431,15 +433,15 @@ def test_get_eslint_config_handles_json_decode_error(base_args):
     invalid_json = "{ invalid json content"
 
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == "package.json":
+        def side_effect(file_name, **kwargs):
+            if file_name == "package.json":
                 return invalid_json
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -448,19 +450,19 @@ def test_get_eslint_config_handles_json_decode_error(base_args):
 
 def test_get_eslint_config_first_found_wins(base_args):
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
 
-        def side_effect(owner, repo, file_path, ref, token):
-            if file_path == ".eslintrc.json":
+        def side_effect(file_name, **kwargs):
+            if file_name == ".eslintrc.json":
                 return '{"rules": {"no-console": "error"}}'
-            if file_path == ".eslintrc.js":
+            if file_name == ".eslintrc.js":
                 return "module.exports = { rules: {} };"
-            if file_path == ".eslintrc":
+            if file_name == ".eslintrc":
                 return '{"rules": {}}'
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 
@@ -479,18 +481,18 @@ def test_get_eslint_config_skips_to_package_json_when_no_config_files(base_args)
 }"""
 
     with patch(
-        "services.github.files.get_eslint_config.get_raw_content"
-    ) as mock_get_raw:
+        "services.github.files.get_eslint_config.read_file_content"
+    ) as mock_read:
         call_count = 0
 
-        def side_effect(owner, repo, file_path, ref, token):
+        def side_effect(file_name, **kwargs):
             nonlocal call_count
             call_count += 1
-            if file_path == "package.json":
+            if file_name == "package.json":
                 return package_json_content
             return None
 
-        mock_get_raw.side_effect = side_effect
+        mock_read.side_effect = side_effect
 
         result = get_eslint_config(base_args)
 

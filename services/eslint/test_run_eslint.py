@@ -1,126 +1,154 @@
+# pylint: disable=unused-argument
 import json
 import subprocess
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 
 import pytest
 
 from services.eslint.run_eslint import run_eslint
+from services.github.types.github_types import BaseArgs
+
+
+@pytest.fixture
+def base_args():
+    return cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "token": "test-token",
+            "base_branch": "main",
+            "clone_dir": "/tmp/test-clone",
+        },
+    )
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_skips_non_js_files():
+async def test_run_eslint_skips_non_js_files(base_args):
     coro = run_eslint(
-        owner="test-owner",
-        repo="test-repo",
-        clone_dir="/tmp/test-clone",
+        base_args=base_args,
         file_path="test.py",
         file_content="def foo(): pass",
     )
     assert coro is not None
     result = await coro
-
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_skips_empty_content():
+async def test_run_eslint_skips_empty_content(base_args):
     coro = run_eslint(
-        owner="test-owner",
-        repo="test-repo",
-        clone_dir="/tmp/test-clone",
+        base_args=base_args,
         file_path="test.ts",
         file_content="",
     )
     assert coro is not None
     result = await coro
-
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_skips_whitespace_only():
+async def test_run_eslint_skips_whitespace_only(base_args):
     coro = run_eslint(
-        owner="test-owner",
-        repo="test-repo",
-        clone_dir="/tmp/test-clone",
+        base_args=base_args,
         file_path="test.ts",
         file_content="   \n\t  ",
     )
     assert coro is not None
     result = await coro
-
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_sets_npm_cache_env_on_lambda():
+async def test_run_eslint_skips_when_no_config(base_args):
+    with patch("services.eslint.run_eslint.get_eslint_config", return_value=None):
+        coro = run_eslint(
+            base_args=base_args,
+            file_path="test.ts",
+            file_content="const x = 1;",
+        )
+        assert coro is not None
+        result = await coro
+        assert result is None
+
+
+@pytest.mark.asyncio
+async def test_run_eslint_sets_npm_cache_env_on_lambda(base_args):
     eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
 
     def mock_set_npm_cache_env(env):
         env["npm_config_cache"] = "/tmp/.npm"
 
     with patch(
-        "services.eslint.run_eslint.set_npm_cache_env",
-        side_effect=mock_set_npm_cache_env,
+        "services.eslint.run_eslint.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch(
+            "services.eslint.run_eslint.set_npm_cache_env",
+            side_effect=mock_set_npm_cache_env,
+        ):
+            with patch(
+                "services.eslint.run_eslint.is_efs_install_ready",
+                new_callable=AsyncMock,
+            ) as mock_efs:
+                mock_efs.return_value = True
+                with patch("services.eslint.run_eslint.os.makedirs"):
+                    with patch("builtins.open", mock_open(read_data="formatted")):
+                        with patch(
+                            "services.eslint.run_eslint.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(
+                                returncode=0, stdout=eslint_output
+                            )
+
+                            coro = run_eslint(
+                                base_args=base_args,
+                                file_path="src/index.ts",
+                                file_content="const x=1",
+                            )
+                            assert coro is not None
+                            await coro
+
+                            mock_run.assert_called_once()
+                            call_kwargs = mock_run.call_args[1]
+                            assert "env" in call_kwargs
+                            assert call_kwargs["env"]["npm_config_cache"] == "/tmp/.npm"
+
+
+@pytest.mark.asyncio
+async def test_run_eslint_returns_fixed_content(base_args):
+    fixed_content = "export const foo = 'fixed';\n"
+    eslint_output = json.dumps([{"filePath": "test.js", "messages": []}])
+
+    with patch(
+        "services.eslint.run_eslint.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
         with patch(
             "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
         ) as mock_efs:
             mock_efs.return_value = True
             with patch("services.eslint.run_eslint.os.makedirs"):
-                with patch("builtins.open", mock_open(read_data="formatted")):
+                with patch("builtins.open", mock_open(read_data=fixed_content)):
                     with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
                         mock_run.return_value = MagicMock(
-                            returncode=0, stdout=eslint_output
+                            returncode=0, stdout=eslint_output, stderr=""
                         )
 
                         coro = run_eslint(
-                            owner="test-owner",
-                            repo="test-repo",
-                            clone_dir="/tmp/test-clone",
-                            file_path="src/index.ts",
-                            file_content="const x=1",
+                            base_args=base_args,
+                            file_path="test.js",
+                            file_content="export const foo = 'bar';\n",
                         )
                         assert coro is not None
-                        await coro
-
-                        mock_run.assert_called_once()
-                        call_kwargs = mock_run.call_args[1]
-                        assert "env" in call_kwargs
-                        assert call_kwargs["env"]["npm_config_cache"] == "/tmp/.npm"
-
-
-@pytest.mark.asyncio
-async def test_run_eslint_returns_fixed_content():
-    fixed_content = "export const foo = 'fixed';\n"
-    eslint_output = json.dumps([{"filePath": "test.js", "messages": []}])
-
-    with patch(
-        "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-    ) as mock_efs:
-        mock_efs.return_value = True
-        with patch("services.eslint.run_eslint.os.makedirs"):
-            with patch("builtins.open", mock_open(read_data=fixed_content)):
-                with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
-                    mock_run.return_value = MagicMock(
-                        returncode=0, stdout=eslint_output, stderr=""
-                    )
-
-                    coro = run_eslint(
-                        owner="test-owner",
-                        repo="test-repo",
-                        clone_dir="/tmp/test-clone",
-                        file_path="test.js",
-                        file_content="export const foo = 'bar';\n",
-                    )
-                    assert coro is not None
-                    result = await coro
+                        result = await coro
 
     assert result == fixed_content
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_with_unfixable_errors():
+async def test_run_eslint_with_unfixable_errors(base_args):
     file_content = "export const foo = 'bar';\n"
     eslint_output = json.dumps(
         [
@@ -140,109 +168,119 @@ async def test_run_eslint_with_unfixable_errors():
     )
 
     with patch(
-        "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-    ) as mock_efs:
-        mock_efs.return_value = True
-        with patch("services.eslint.run_eslint.os.makedirs"):
-            with patch("builtins.open", mock_open(read_data=file_content)):
-                with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
-                    mock_run.return_value = MagicMock(
-                        returncode=1, stdout=eslint_output, stderr=""
-                    )
-
-                    with patch("services.eslint.run_eslint.sentry_sdk.capture_message"):
-                        coro = run_eslint(
-                            owner="test-owner",
-                            repo="test-repo",
-                            clone_dir="/tmp/test-clone",
-                            file_path="test.js",
-                            file_content=file_content,
+        "services.eslint.run_eslint.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch(
+            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
+        ) as mock_efs:
+            mock_efs.return_value = True
+            with patch("services.eslint.run_eslint.os.makedirs"):
+                with patch("builtins.open", mock_open(read_data=file_content)):
+                    with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
+                        mock_run.return_value = MagicMock(
+                            returncode=1, stdout=eslint_output, stderr=""
                         )
-                        assert coro is not None
-                        result = await coro
+
+                        with patch(
+                            "services.eslint.run_eslint.sentry_sdk.capture_message"
+                        ):
+                            coro = run_eslint(
+                                base_args=base_args,
+                                file_path="test.js",
+                                file_content=file_content,
+                            )
+                            assert coro is not None
+                            result = await coro
 
     assert result == file_content
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_with_json_decode_error():
+async def test_run_eslint_with_json_decode_error(base_args):
     file_content = "export const foo = 'bar';\n"
 
     with patch(
-        "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-    ) as mock_efs:
-        mock_efs.return_value = True
-        with patch("services.eslint.run_eslint.os.makedirs"):
-            with patch("builtins.open", mock_open(read_data=file_content)):
-                with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
-                    mock_run.return_value = MagicMock(
-                        returncode=0, stdout="not json output", stderr=""
-                    )
-
-                    with patch(
-                        "services.eslint.run_eslint.sentry_sdk.capture_exception"
-                    ):
-                        coro = run_eslint(
-                            owner="test-owner",
-                            repo="test-repo",
-                            clone_dir="/tmp/test-clone",
-                            file_path="test.js",
-                            file_content=file_content,
+        "services.eslint.run_eslint.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch(
+            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
+        ) as mock_efs:
+            mock_efs.return_value = True
+            with patch("services.eslint.run_eslint.os.makedirs"):
+                with patch("builtins.open", mock_open(read_data=file_content)):
+                    with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
+                        mock_run.return_value = MagicMock(
+                            returncode=0, stdout="not json output", stderr=""
                         )
-                        assert coro is not None
-                        result = await coro
+
+                        with patch(
+                            "services.eslint.run_eslint.sentry_sdk.capture_exception"
+                        ):
+                            coro = run_eslint(
+                                base_args=base_args,
+                                file_path="test.js",
+                                file_content=file_content,
+                            )
+                            assert coro is not None
+                            result = await coro
 
     assert result == file_content
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fatal_error_returns_none():
+async def test_run_eslint_fatal_error_returns_none(base_args):
     with patch(
-        "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-    ) as mock_efs:
-        mock_efs.return_value = True
-        with patch("services.eslint.run_eslint.os.makedirs"):
-            with patch("builtins.open", mock_open()):
-                with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
-                    mock_run.return_value = MagicMock(
-                        returncode=2, stdout="", stderr="Fatal error"
-                    )
+        "services.eslint.run_eslint.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch(
+            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
+        ) as mock_efs:
+            mock_efs.return_value = True
+            with patch("services.eslint.run_eslint.os.makedirs"):
+                with patch("builtins.open", mock_open()):
+                    with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
+                        mock_run.return_value = MagicMock(
+                            returncode=2, stdout="", stderr="Fatal error"
+                        )
 
-                    coro = run_eslint(
-                        owner="test-owner",
-                        repo="test-repo",
-                        clone_dir="/tmp/test-clone",
-                        file_path="test.js",
-                        file_content="const x = 1;",
-                    )
-                    assert coro is not None
-                    result = await coro
+                        coro = run_eslint(
+                            base_args=base_args,
+                            file_path="test.js",
+                            file_content="const x = 1;",
+                        )
+                        assert coro is not None
+                        result = await coro
 
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_timeout_returns_none():
+async def test_run_eslint_timeout_returns_none(base_args):
     with patch(
-        "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-    ) as mock_efs:
-        mock_efs.return_value = True
-        with patch("services.eslint.run_eslint.os.makedirs"):
-            with patch("builtins.open", mock_open()):
-                with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
-                    mock_run.side_effect = subprocess.TimeoutExpired(
-                        cmd="npx eslint", timeout=30
-                    )
+        "services.eslint.run_eslint.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch(
+            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
+        ) as mock_efs:
+            mock_efs.return_value = True
+            with patch("services.eslint.run_eslint.os.makedirs"):
+                with patch("builtins.open", mock_open()):
+                    with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
+                        mock_run.side_effect = subprocess.TimeoutExpired(
+                            cmd="npx eslint", timeout=30
+                        )
 
-                    coro = run_eslint(
-                        owner="test-owner",
-                        repo="test-repo",
-                        clone_dir="/tmp/test-clone",
-                        file_path="test.js",
-                        file_content="const x = 1;",
-                    )
-                    assert coro is not None
-                    result = await coro
+                        coro = run_eslint(
+                            base_args=base_args,
+                            file_path="test.js",
+                            file_content="const x = 1;",
+                        )
+                        assert coro is not None
+                        result = await coro
 
     assert result is None
 
@@ -257,62 +295,66 @@ async def test_run_eslint_timeout_returns_none():
     ],
 )
 @pytest.mark.asyncio
-async def test_run_eslint_supported_extensions(file_path):
+async def test_run_eslint_supported_extensions(base_args, file_path):
     eslint_output = json.dumps([{"filePath": file_path, "messages": []}])
 
     with patch(
-        "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-    ) as mock_efs:
-        mock_efs.return_value = True
-        with patch("services.eslint.run_eslint.os.makedirs"):
-            with patch("builtins.open", mock_open(read_data="formatted")):
-                with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
-                    mock_run.return_value = MagicMock(
-                        returncode=0, stdout=eslint_output, stderr=""
-                    )
+        "services.eslint.run_eslint.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch(
+            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
+        ) as mock_efs:
+            mock_efs.return_value = True
+            with patch("services.eslint.run_eslint.os.makedirs"):
+                with patch("builtins.open", mock_open(read_data="formatted")):
+                    with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
+                        mock_run.return_value = MagicMock(
+                            returncode=0, stdout=eslint_output, stderr=""
+                        )
 
-                    coro = run_eslint(
-                        owner="test-owner",
-                        repo="test-repo",
-                        clone_dir="/tmp/test-clone",
-                        file_path=file_path,
-                        file_content="content",
-                    )
-                    assert coro is not None
-                    result = await coro
+                        coro = run_eslint(
+                            base_args=base_args,
+                            file_path=file_path,
+                            file_content="content",
+                        )
+                        assert coro is not None
+                        result = await coro
 
-                    mock_run.assert_called_once()
-                    assert "npx" in mock_run.call_args[0][0]
-                    assert "eslint" in mock_run.call_args[0][0]
-                    assert result == "formatted"
+                        mock_run.assert_called_once()
+                        assert "npx" in mock_run.call_args[0][0]
+                        assert "eslint" in mock_run.call_args[0][0]
+                        assert result == "formatted"
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_creates_directories():
+async def test_run_eslint_creates_directories(base_args):
     file_content = "const x = 1;"
     eslint_output = json.dumps(
         [{"filePath": "src/deep/nested/test.js", "messages": []}]
     )
 
     with patch(
-        "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-    ) as mock_efs:
-        mock_efs.return_value = True
-        with patch("services.eslint.run_eslint.os.makedirs") as mock_makedirs:
-            with patch("builtins.open", mock_open(read_data=file_content)):
-                with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
-                    mock_run.return_value = MagicMock(
-                        returncode=0, stdout=eslint_output, stderr=""
-                    )
+        "services.eslint.run_eslint.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch(
+            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
+        ) as mock_efs:
+            mock_efs.return_value = True
+            with patch("services.eslint.run_eslint.os.makedirs") as mock_makedirs:
+                with patch("builtins.open", mock_open(read_data=file_content)):
+                    with patch("services.eslint.run_eslint.subprocess.run") as mock_run:
+                        mock_run.return_value = MagicMock(
+                            returncode=0, stdout=eslint_output, stderr=""
+                        )
 
-                    coro = run_eslint(
-                        owner="test-owner",
-                        repo="test-repo",
-                        clone_dir="/tmp/test-clone",
-                        file_path="src/deep/nested/test.js",
-                        file_content=file_content,
-                    )
-                    assert coro is not None
-                    await coro
+                        coro = run_eslint(
+                            base_args=base_args,
+                            file_path="src/deep/nested/test.js",
+                            file_content=file_content,
+                        )
+                        assert coro is not None
+                        await coro
 
-                    mock_makedirs.assert_called_once()
+                        mock_makedirs.assert_called_once()

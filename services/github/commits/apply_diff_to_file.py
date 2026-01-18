@@ -71,9 +71,7 @@ async def apply_diff_to_file(
     # Prettier then ESLint (JS ecosystem convention)
     if clone_dir and file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
         prettier_coro = run_prettier(
-            owner=owner,
-            repo=repo,
-            clone_dir=clone_dir,
+            base_args=base_args,
             file_path=file_path,
             file_content=modified_text,
         )
@@ -84,9 +82,7 @@ async def apply_diff_to_file(
             modified_text = formatted_content
 
         eslint_coro = run_eslint(
-            owner=owner,
-            repo=repo,
-            clone_dir=clone_dir,
+            base_args=base_args,
             file_path=file_path,
             file_content=modified_text,
         )

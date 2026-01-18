@@ -29,4 +29,11 @@ def read_file_content(
     )
     if content:
         logger.info("node: Fetched %s from GitHub API", file_name)
+
+        # Save to clone_dir so subsequent calls find it locally
+        if clone_dir:
+            local_path = os.path.join(clone_dir, file_name)
+            with open(local_path, "w", encoding=UTF8) as f:
+                f.write(content)
+
     return content
