@@ -320,7 +320,9 @@ class TestGetCoverages:
     def test_get_coverages_database_exception(self, mock_supabase_chain):
         """Test that database exceptions are handled gracefully due to handle_exceptions decorator."""
         # Setup
-        mock_supabase_chain.execute.side_effect = RuntimeError("Database connection error")
+        mock_supabase_chain.execute.side_effect = RuntimeError(
+            "Database connection error"
+        )
 
         repo_id = 123
         filenames = ["src/test.py"]

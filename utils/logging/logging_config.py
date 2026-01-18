@@ -20,6 +20,12 @@ else:
     logger = logging.getLogger(PRODUCT_NAME)
 
 
+def clear_state():
+    """Clear all custom keys to prevent metadata bleeding between Lambda invocations."""
+    if IS_PRD:
+        cast(Logger, logger).clear_state()
+
+
 def set_request_id(request_id: str):
     """Set AWS Lambda request ID for current context."""
     if IS_PRD:
