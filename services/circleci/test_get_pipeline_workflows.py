@@ -66,7 +66,7 @@ def test_get_pipeline_workflows_http_error(mock_get):
 
     mock_response = Mock()
     mock_response.status_code = 500
-    mock_response.raise_for_status.side_effect = Exception("Server Error")
+    mock_response.raise_for_status.side_effect = RuntimeError("Server Error")
     mock_get.return_value = mock_response
 
     result = get_pipeline_workflows(pipeline_id, token)

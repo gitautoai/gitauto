@@ -1,5 +1,5 @@
+# flake8: noqa: E704 - overload stubs use `...` on same line as `def`
 # pylint: disable=broad-exception-caught
-# flake8: noqa: E704
 
 # Standard imports
 import asyncio
@@ -216,7 +216,7 @@ def handle_exceptions(
                     if raise_on_error:
                         raise
                     return cast(R, error_return)
-                except (AttributeError, KeyError, TypeError, Exception) as err:
+                except Exception as err:
                     return cast(
                         R,
                         _handle_generic_error(
@@ -269,7 +269,7 @@ def handle_exceptions(
                         error_return,
                     ),
                 )
-            except (AttributeError, KeyError, TypeError, Exception) as err:
+            except Exception as err:
                 return cast(
                     R,
                     _handle_generic_error(

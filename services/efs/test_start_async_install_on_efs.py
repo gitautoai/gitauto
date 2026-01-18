@@ -9,6 +9,14 @@ from services.efs.start_async_install_on_efs import start_async_install_on_efs
 from services.github.types.github_types import BaseArgs
 
 
+def create_mock_create_task(mock_task):
+    def side_effect(coro):
+        coro.close()
+        return mock_task
+
+    return side_effect
+
+
 @pytest.mark.asyncio
 async def test_start_async_install_on_efs_creates_task():
     base_args = {
@@ -24,7 +32,7 @@ async def test_start_async_install_on_efs_creates_task():
 
     with patch(
         "services.efs.start_async_install_on_efs.asyncio.create_task",
-        return_value=mock_task,
+        side_effect=create_mock_create_task(mock_task),
     ) as mock_create:
         with patch(
             "services.efs.start_async_install_on_efs.install_tasks",
@@ -51,6 +59,7 @@ async def test_start_async_install_on_efs_reuses_successful_task():
 
     existing_task = MagicMock(spec=asyncio.Task)
     existing_task.done.return_value = True
+    existing_task.exception.return_value = None
     existing_task.result.return_value = True
 
     with patch(
@@ -81,6 +90,7 @@ async def test_start_async_install_on_efs_retries_failed_task():
 
     failed_task = MagicMock(spec=asyncio.Task)
     failed_task.done.return_value = True
+    failed_task.exception.return_value = None
     failed_task.result.return_value = False
 
     new_task = MagicMock(spec=asyncio.Task)
@@ -88,7 +98,7 @@ async def test_start_async_install_on_efs_retries_failed_task():
 
     with patch(
         "services.efs.start_async_install_on_efs.asyncio.create_task",
-        return_value=new_task,
+        side_effect=create_mock_create_task(new_task),
     ) as mock_create:
         with patch("services.efs.start_async_install_on_efs.install_tasks", mock_tasks):
             with patch(

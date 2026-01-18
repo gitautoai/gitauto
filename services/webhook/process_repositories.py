@@ -11,7 +11,7 @@ from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(raise_on_error=True)
 async def process_repositories(
     owner_id: int,
     owner_name: str,

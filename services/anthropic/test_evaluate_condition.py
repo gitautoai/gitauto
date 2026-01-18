@@ -72,7 +72,7 @@ def test_evaluate_condition_invalid_input():
 def test_evaluate_condition_exception_handling():
     with patch("services.anthropic.evaluate_condition.claude") as mock_claude:
         # Mock an exception
-        mock_claude.messages.create.side_effect = Exception("API Error")
+        mock_claude.messages.create.side_effect = RuntimeError("API Error")
 
         result = evaluate_condition(content="test content", system_prompt="test prompt")
 

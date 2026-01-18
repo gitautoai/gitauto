@@ -173,7 +173,8 @@ class TestProcessRepositories:
             user_name="test-user",
         )
         assert coro is not None
-        await coro
+        with pytest.raises(Exception, match="Clone failed"):
+            await coro
 
         assert mock_get_default_branch.call_count == 1
         assert mock_clone_repo.call_count == 1
@@ -202,7 +203,8 @@ class TestProcessRepositories:
             user_name="test-user",
         )
         assert coro is not None
-        await coro
+        with pytest.raises(Exception, match="Stats failed"):
+            await coro
 
         assert mock_get_default_branch.call_count == 1
         assert mock_clone_repo.call_count == 1

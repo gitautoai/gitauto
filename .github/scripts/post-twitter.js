@@ -23,22 +23,16 @@ async function postTwitter({ context }) {
   const message = "🚀 New release";
   const description = context.payload.pull_request.body || "";
 
-  // Extract social media post from PR body if present
-  let socialPost = null;
+  // Extract social media post from PR body - skip posting if not present
   const socialMediaMatch = description.match(/## Social Media Post\s*\n([\s\S]*?)(?=\n##|\n$|$)/i);
-  if (socialMediaMatch) {
-    socialPost = socialMediaMatch[1].trim();
+  if (!socialMediaMatch) {
+    console.log("No Social Media Post section found in PR body, skipping Twitter post");
+    return;
   }
-
-  // Fallback to PR title if no social media section
-  let title = socialPost || context.payload.pull_request.title;
-
-  // Handle truncated titles with continuation in body
-  if (!socialPost && title.endsWith('…') && description) {
-    const firstLine = description.split('\n')[0];
-    if (firstLine.startsWith('…')) {
-      title = title.slice(0, -1) + firstLine.slice(1);
-    }
+  const title = socialMediaMatch[1].trim();
+  if (!title) {
+    console.log("Social Media Post section is empty, skipping Twitter post");
+    return;
   }
 
   // Non-paid account, we can only post 280 characters. Paid account can post 250,000 characters.

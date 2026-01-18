@@ -1,4 +1,4 @@
-# pylint: disable=broad-exception-caught
+import json
 
 import requests
 from config import GITHUB_API_URL, TIMEOUT
@@ -25,7 +25,7 @@ def update_pull_request_branch(
             error_detail = response.json().get("message", "")
             if "no new commits" in error_detail.lower():
                 return ("up_to_date", None)
-        except Exception:
+        except (json.JSONDecodeError, ValueError, KeyError):
             pass
 
     if response.status_code not in [200, 202]:
@@ -34,7 +34,7 @@ def update_pull_request_branch(
             error_detail = response.json().get("message", "")
             if error_detail:
                 error_msg += f": {error_detail}"
-        except Exception:
+        except (json.JSONDecodeError, ValueError, KeyError):
             pass
         return ("failed", error_msg)
 

@@ -205,7 +205,7 @@ def test_get_schedulers_by_owner_id_generic_exception(mock_scheduler_client):
     """Test retrieval when generic exception occurs."""
     # Setup
     owner_id = 123
-    mock_scheduler_client.list_schedules.side_effect = Exception("Unexpected error")
+    mock_scheduler_client.list_schedules.side_effect = RuntimeError("Unexpected error")
 
     # Execute
     result = get_schedulers_by_owner_id(owner_id)
@@ -273,7 +273,7 @@ def test_get_schedulers_by_owner_id_handle_exceptions_decorator():
     # This test verifies the decorator is applied with correct parameters
     # by checking the function's behavior when an exception occurs
     with patch("services.aws.get_schedulers.scheduler_client") as mock_client:
-        mock_client.list_schedules.side_effect = Exception("Test exception")
+        mock_client.list_schedules.side_effect = RuntimeError("Test exception")
 
         result = get_schedulers_by_owner_id(123)
 

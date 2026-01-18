@@ -2,13 +2,15 @@
 """Unit tests for handle_installation.py"""
 
 # Standard imports
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 # Third-party imports
 import pytest
 
 # Local imports
 from services.webhook.handle_installation import handle_installation_created
+
+pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture
@@ -112,7 +114,10 @@ def mock_upsert_user():
 @pytest.fixture
 def mock_process_repositories():
     """Mock process_repositories function."""
-    with patch("services.webhook.handle_installation.process_repositories") as mock:
+    with patch(
+        "services.webhook.handle_installation.process_repositories",
+        new_callable=AsyncMock,
+    ) as mock:
         yield mock
 
 
@@ -147,7 +152,7 @@ def all_mocks(
 class TestHandleInstallationCreated:
     """Test cases for handle_installation_created function."""
 
-    def test_handle_installation_created_new_owner_with_grant(
+    async def test_handle_installation_created_new_owner_with_grant(
         self, mock_installation_payload, all_mocks
     ):
         """Test successful handling of installation created for new owner with grant."""
@@ -159,7 +164,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False  # No existing grant
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify token and email retrieval
         all_mocks["get_installation_access_token"].assert_called_once_with(
@@ -214,7 +219,7 @@ class TestHandleInstallationCreated:
             user_name="test-sender",
         )
 
-    def test_handle_installation_created_existing_owner_with_existing_grant(
+    async def test_handle_installation_created_existing_owner_with_existing_grant(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling of installation created for existing owner with existing grant."""
@@ -225,7 +230,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = True  # Existing grant
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify token and email retrieval
         all_mocks["get_installation_access_token"].assert_called_once_with(
@@ -267,7 +272,7 @@ class TestHandleInstallationCreated:
             user_name="test-sender",
         )
 
-    def test_handle_installation_created_new_owner_existing_grant(
+    async def test_handle_installation_created_new_owner_existing_grant(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling of installation created for new owner with existing grant."""
@@ -279,7 +284,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = True  # Existing grant
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify owner creation flow
         all_mocks["check_owner_exists"].assert_called_once_with(owner_id=67890)
@@ -301,7 +306,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].assert_called_once_with(owner_id=67890)
         all_mocks["insert_credit"].assert_not_called()
 
-    def test_handle_installation_created_existing_owner_new_grant(
+    async def test_handle_installation_created_existing_owner_new_grant(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling of installation created for existing owner with new grant."""
@@ -312,7 +317,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False  # No existing grant
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify owner creation flow is skipped
         all_mocks["check_owner_exists"].assert_called_once_with(owner_id=67890)
@@ -325,7 +330,7 @@ class TestHandleInstallationCreated:
             owner_id=67890, transaction_type="grant"
         )
 
-    def test_handle_installation_created_with_user_type_owner(
+    async def test_handle_installation_created_with_user_type_owner(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling of installation created for User type owner."""
@@ -338,7 +343,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify owner creation with User type
         all_mocks["insert_owner"].assert_called_once_with(
@@ -356,7 +361,7 @@ class TestHandleInstallationCreated:
             owner_name="test-owner",
         )
 
-    def test_handle_installation_created_with_none_email(
+    async def test_handle_installation_created_with_none_email(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when user email is None."""
@@ -368,14 +373,14 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify user upsert with None email
         all_mocks["upsert_user"].assert_called_once_with(
             user_id=11111, user_name="test-sender", email=None
         )
 
-    def test_handle_installation_created_with_empty_email(
+    async def test_handle_installation_created_with_empty_email(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when user email is empty string."""
@@ -387,31 +392,32 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify user upsert with empty email
         all_mocks["upsert_user"].assert_called_once_with(
             user_id=11111, user_name="test-sender", email=""
         )
 
-    def test_handle_installation_created_with_token_error(
+    async def test_handle_installation_created_with_token_error(
         self, mock_installation_payload, all_mocks
     ):
-        """Test handling when get_installation_access_token raises - returns early."""
+        """Test handling when get_installation_access_token raises - exception is re-raised."""
         # Setup - get_installation_access_token now raises instead of returning None
         all_mocks["get_installation_access_token"].side_effect = ValueError(
             "Installation 12345 suspended or deleted"
         )
 
-        # Execute - handle_exceptions decorator catches and returns None
-        handle_installation_created(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(ValueError, match="Installation 12345 suspended or deleted"):
+            await handle_installation_created(mock_installation_payload)
 
         # Verify - should return early when token retrieval fails
         all_mocks["get_installation_access_token"].assert_called_once()
         all_mocks["get_user_public_email"].assert_not_called()
         all_mocks["process_repositories"].assert_not_called()
 
-    def test_handle_installation_created_with_empty_repositories(
+    async def test_handle_installation_created_with_empty_repositories(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when repositories list is empty."""
@@ -424,7 +430,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify repository processing with empty list
         all_mocks["process_repositories"].assert_called_once_with(
@@ -436,7 +442,7 @@ class TestHandleInstallationCreated:
             user_name="test-sender",
         )
 
-    def test_handle_installation_created_with_single_repository(
+    async def test_handle_installation_created_with_single_repository(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling with single repository."""
@@ -450,7 +456,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify repository processing with single repository
         all_mocks["process_repositories"].assert_called_once_with(
@@ -462,7 +468,7 @@ class TestHandleInstallationCreated:
             user_name="test-sender",
         )
 
-    def test_handle_installation_created_with_exception_in_get_token(
+    async def test_handle_installation_created_with_exception_in_get_token(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when get_installation_access_token raises exception."""
@@ -471,17 +477,16 @@ class TestHandleInstallationCreated:
             "Token error"
         )
 
-        # Execute
-        result = handle_installation_created(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="Token error"):
+            await handle_installation_created(mock_installation_payload)
 
-        # Verify function returns None due to handle_exceptions decorator
-        assert result is None
         all_mocks["get_installation_access_token"].assert_called_once_with(
             installation_id=12345
         )
         all_mocks["get_user_public_email"].assert_not_called()
 
-    def test_handle_installation_created_with_exception_in_get_email(
+    async def test_handle_installation_created_with_exception_in_get_email(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when get_user_public_email raises exception."""
@@ -489,11 +494,10 @@ class TestHandleInstallationCreated:
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_user_public_email"].side_effect = Exception("Email error")
 
-        # Execute
-        result = handle_installation_created(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="Email error"):
+            await handle_installation_created(mock_installation_payload)
 
-        # Verify function returns None due to handle_exceptions decorator
-        assert result is None
         all_mocks["get_installation_access_token"].assert_called_once_with(
             installation_id=12345
         )
@@ -502,7 +506,7 @@ class TestHandleInstallationCreated:
         )
         all_mocks["check_owner_exists"].assert_not_called()
 
-    def test_handle_installation_created_with_exception_in_check_owner_exists(
+    async def test_handle_installation_created_with_exception_in_check_owner_exists(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when check_owner_exists raises exception."""
@@ -511,15 +515,14 @@ class TestHandleInstallationCreated:
         all_mocks["get_user_public_email"].return_value = "test@example.com"
         all_mocks["check_owner_exists"].side_effect = Exception("Database error")
 
-        # Execute
-        result = handle_installation_created(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="Database error"):
+            await handle_installation_created(mock_installation_payload)
 
-        # Verify function returns None due to handle_exceptions decorator
-        assert result is None
         all_mocks["check_owner_exists"].assert_called_once_with(owner_id=67890)
         all_mocks["create_stripe_customer"].assert_not_called()
 
-    def test_handle_installation_created_with_exception_in_create_stripe_customer(
+    async def test_handle_installation_created_with_exception_in_create_stripe_customer(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when create_stripe_customer raises exception."""
@@ -529,15 +532,14 @@ class TestHandleInstallationCreated:
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].side_effect = Exception("Stripe error")
 
-        # Execute
-        result = handle_installation_created(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="Stripe error"):
+            await handle_installation_created(mock_installation_payload)
 
-        # Verify function returns None due to handle_exceptions decorator
-        assert result is None
         all_mocks["create_stripe_customer"].assert_called_once()
         all_mocks["insert_owner"].assert_not_called()
 
-    def test_handle_installation_created_with_exception_in_insert_owner(
+    async def test_handle_installation_created_with_exception_in_insert_owner(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when insert_owner raises exception."""
@@ -548,15 +550,14 @@ class TestHandleInstallationCreated:
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["insert_owner"].side_effect = Exception("Insert error")
 
-        # Execute
-        result = handle_installation_created(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="Insert error"):
+            await handle_installation_created(mock_installation_payload)
 
-        # Verify function returns None due to handle_exceptions decorator
-        assert result is None
         all_mocks["insert_owner"].assert_called_once()
         all_mocks["check_grant_exists"].assert_not_called()
 
-    def test_handle_installation_created_with_exception_in_check_grant_exists(
+    async def test_handle_installation_created_with_exception_in_check_grant_exists(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when check_grant_exists raises exception."""
@@ -566,15 +567,14 @@ class TestHandleInstallationCreated:
         all_mocks["check_owner_exists"].return_value = True  # Skip owner creation
         all_mocks["check_grant_exists"].side_effect = Exception("Grant check error")
 
-        # Execute
-        result = handle_installation_created(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="Grant check error"):
+            await handle_installation_created(mock_installation_payload)
 
-        # Verify function returns None due to handle_exceptions decorator
-        assert result is None
         all_mocks["check_grant_exists"].assert_called_once_with(owner_id=67890)
         all_mocks["insert_credit"].assert_not_called()
 
-    def test_handle_installation_created_with_exception_in_insert_credit(
+    async def test_handle_installation_created_with_exception_in_insert_credit(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when insert_credit raises exception."""
@@ -585,15 +585,14 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
         all_mocks["insert_credit"].side_effect = Exception("Credit insert error")
 
-        # Execute
-        result = handle_installation_created(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="Credit insert error"):
+            await handle_installation_created(mock_installation_payload)
 
-        # Verify function returns None due to handle_exceptions decorator
-        assert result is None
         all_mocks["insert_credit"].assert_called_once()
         all_mocks["insert_installation"].assert_not_called()
 
-    def test_handle_installation_created_with_exception_in_insert_installation(
+    async def test_handle_installation_created_with_exception_in_insert_installation(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when insert_installation raises exception."""
@@ -606,15 +605,14 @@ class TestHandleInstallationCreated:
             "Installation insert error"
         )
 
-        # Execute
-        result = handle_installation_created(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="Installation insert error"):
+            await handle_installation_created(mock_installation_payload)
 
-        # Verify function returns None due to handle_exceptions decorator
-        assert result is None
         all_mocks["insert_installation"].assert_called_once()
         all_mocks["upsert_user"].assert_not_called()
 
-    def test_handle_installation_created_with_exception_in_upsert_user(
+    async def test_handle_installation_created_with_exception_in_upsert_user(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when upsert_user raises exception."""
@@ -625,15 +623,14 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = True  # Skip grant creation
         all_mocks["upsert_user"].side_effect = Exception("User upsert error")
 
-        # Execute
-        result = handle_installation_created(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="User upsert error"):
+            await handle_installation_created(mock_installation_payload)
 
-        # Verify function returns None due to handle_exceptions decorator
-        assert result is None
         all_mocks["upsert_user"].assert_called_once()
         all_mocks["process_repositories"].assert_not_called()
 
-    def test_handle_installation_created_with_exception_in_process_repositories(
+    async def test_handle_installation_created_with_exception_in_process_repositories(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when process_repositories raises exception."""
@@ -646,14 +643,13 @@ class TestHandleInstallationCreated:
             "Repository processing error"
         )
 
-        # Execute
-        result = handle_installation_created(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="Repository processing error"):
+            await handle_installation_created(mock_installation_payload)
 
-        # Verify function returns None due to handle_exceptions decorator
-        assert result is None
         all_mocks["process_repositories"].assert_called_once()
 
-    def test_handle_installation_created_with_string_ids(
+    async def test_handle_installation_created_with_string_ids(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when IDs are provided as strings."""
@@ -668,7 +664,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify calls with string IDs
         all_mocks["get_installation_access_token"].assert_called_once_with(
@@ -683,7 +679,7 @@ class TestHandleInstallationCreated:
             user_name="test-sender",
         )
 
-    def test_handle_installation_created_with_unicode_names(
+    async def test_handle_installation_created_with_unicode_names(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling with unicode characters in names."""
@@ -697,7 +693,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify calls with unicode names
         all_mocks["get_user_public_email"].assert_called_once_with(
@@ -714,7 +710,7 @@ class TestHandleInstallationCreated:
             user_id=11111, user_name="tëst-sëndér", email="tëst@ëxämplë.com"
         )
 
-    def test_handle_installation_created_with_zero_ids(
+    async def test_handle_installation_created_with_zero_ids(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling with zero IDs."""
@@ -729,7 +725,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify calls with zero IDs
         all_mocks["get_installation_access_token"].assert_called_once_with(
@@ -744,7 +740,7 @@ class TestHandleInstallationCreated:
             user_name="test-sender",
         )
 
-    def test_handle_installation_created_with_negative_ids(
+    async def test_handle_installation_created_with_negative_ids(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling with negative IDs."""
@@ -759,7 +755,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify calls with negative IDs
         all_mocks["get_installation_access_token"].assert_called_once_with(
@@ -774,7 +770,7 @@ class TestHandleInstallationCreated:
             user_name="test-sender",
         )
 
-    def test_handle_installation_created_with_large_repository_list(
+    async def test_handle_installation_created_with_large_repository_list(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling with a large number of repositories."""
@@ -788,7 +784,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify repository processing with large list
         all_mocks["process_repositories"].assert_called_once_with(
@@ -800,7 +796,7 @@ class TestHandleInstallationCreated:
             user_name="test-sender",
         )
 
-    def test_handle_installation_created_with_none_repositories(
+    async def test_handle_installation_created_with_none_repositories(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling when repositories is None."""
@@ -813,7 +809,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify repository processing with None
         all_mocks["process_repositories"].assert_called_once_with(
@@ -825,7 +821,7 @@ class TestHandleInstallationCreated:
             user_name="test-sender",
         )
 
-    def test_handle_installation_created_with_complex_repository_data(
+    async def test_handle_installation_created_with_complex_repository_data(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling with complex repository data structure."""
@@ -860,7 +856,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify repository processing with complex data
         all_mocks["process_repositories"].assert_called_once_with(
@@ -872,7 +868,7 @@ class TestHandleInstallationCreated:
             user_name="test-sender",
         )
 
-    def test_handle_installation_created_with_special_characters_in_names(
+    async def test_handle_installation_created_with_special_characters_in_names(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling with special characters in names."""
@@ -888,7 +884,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify calls with special characters
         all_mocks["get_user_public_email"].assert_called_once_with(
@@ -902,7 +898,7 @@ class TestHandleInstallationCreated:
             user_name=special_sender,
         )
 
-    def test_handle_installation_created_with_very_long_names(
+    async def test_handle_installation_created_with_very_long_names(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling with very long names."""
@@ -917,7 +913,7 @@ class TestHandleInstallationCreated:
         all_mocks["check_grant_exists"].return_value = False
 
         # Execute
-        handle_installation_created(mock_installation_payload)
+        await handle_installation_created(mock_installation_payload)
 
         # Verify calls with long names
         all_mocks["get_user_public_email"].assert_called_once_with(
@@ -931,7 +927,7 @@ class TestHandleInstallationCreated:
             user_name=long_name,
         )
 
-    def test_handle_installation_created_with_whitespace_only_names(
+    async def test_handle_installation_created_with_whitespace_only_names(
         self, mock_installation_payload, all_mocks
     ):
         """Test handling with whitespace-only names."""

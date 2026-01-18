@@ -36,13 +36,10 @@ def start_async_install_on_efs(base_args: BaseArgs):
             logger.info("%s: Found existing install task", name)
             task = install_tasks[efs_dir][name]
             if task.done():
-                try:
-                    if task.result():
-                        logger.info("%s: Reusing successful install", name)
-                        continue
-                except Exception:
-                    pass
-
+                exc = task.exception()
+                if exc is None and task.result():
+                    logger.info("%s: Reusing successful install", name)
+                    continue
                 logger.warning("%s: Retrying failed install", name)
                 del install_tasks[efs_dir][name]
             else:
@@ -50,6 +47,7 @@ def start_async_install_on_efs(base_args: BaseArgs):
                 continue
 
         if name not in install_tasks[efs_dir]:
+            # Don't await - runs in background, checked later by is_efs_install_ready()
             task = asyncio.create_task(
                 func(owner, owner_id, repo, base_branch, token, efs_dir, clone_dir)
             )
