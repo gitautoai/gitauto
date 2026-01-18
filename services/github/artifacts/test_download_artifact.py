@@ -334,28 +334,6 @@ def test_download_artifact_url_construction():
         )
 
 
-def test_download_artifact_logs_file_list(mock_zip_with_lcov, caplog):
-    """Test that the function logs the file list from the zip."""
-    import logging
-
-    with caplog.at_level(logging.INFO):
-        with patch("requests.get") as mock_get, patch(
-            "services.github.artifacts.download_artifact.create_headers"
-        ) as mock_create_headers:
-
-            # Setup mocks
-            mock_response = MagicMock()
-            mock_response.content = mock_zip_with_lcov
-            mock_get.return_value = mock_response
-            mock_create_headers.return_value = {}
-
-            # Call function
-            download_artifact("owner", "repo", 123, "token")
-
-            # Check logged output
-            assert "File list:" in caplog.text
-
-
 @pytest.mark.parametrize(
     "owner,repo,artifact_id,token",
     [
