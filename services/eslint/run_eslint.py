@@ -6,15 +6,15 @@ import sentry_sdk
 
 from config import UTF8
 from services.efs.is_efs_install_ready import is_efs_install_ready
+from services.github.files.get_eslint_config import get_eslint_config
+from services.github.types.github_types import BaseArgs
 from services.node.get_npm_cache_dir import set_npm_cache_env
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def run_eslint(
-    *, owner: str, repo: str, clone_dir: str, file_path: str, file_content: str
-):
+async def run_eslint(*, base_args: BaseArgs, file_path: str, file_content: str):
     if not file_content.strip():
         logger.info("ESLint: Skipping %s - empty content", file_path)
         return None
@@ -22,6 +22,14 @@ async def run_eslint(
     if not file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
         logger.info("ESLint: Skipping %s - not a JS/TS file", file_path)
         return None
+
+    if not get_eslint_config(base_args):
+        logger.info("ESLint: Skipping %s - no ESLint config found in repo", file_path)
+        return None
+
+    owner = base_args["owner"]
+    repo = base_args["repo"]
+    clone_dir = base_args.get("clone_dir", "")
 
     # Wait for install to complete so npx uses local packages instead of downloading
     await is_efs_install_ready(owner, repo, "node")

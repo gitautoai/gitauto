@@ -67,9 +67,7 @@ async def replace_remote_file_content(
     # Prettier then ESLint (JS ecosystem convention)
     if clone_dir and file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
         prettier_coro = run_prettier(
-            owner=owner,
-            repo=repo,
-            clone_dir=clone_dir,
+            base_args=base_args,
             file_path=file_path,
             file_content=file_content,
         )
@@ -80,9 +78,7 @@ async def replace_remote_file_content(
             file_content = formatted_content
 
         eslint_coro = run_eslint(
-            owner=owner,
-            repo=repo,
-            clone_dir=clone_dir,
+            base_args=base_args,
             file_path=file_path,
             file_content=file_content,
         )

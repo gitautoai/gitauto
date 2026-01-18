@@ -15,33 +15,33 @@ def test_read_from_clone_dir():
                 branch="main",
                 token="token",
             )
-
             assert result == '{"name": "test"}'
 
 
 def test_fallback_to_github_api():
     with patch("services.node.read_file_content.os.path.exists") as mock_exists:
         with patch("services.node.read_file_content.get_raw_content") as mock_get:
-            mock_exists.return_value = False
-            mock_get.return_value = '{"name": "test"}'
+            with patch("builtins.open", mock_open()):
+                mock_exists.return_value = False
+                mock_get.return_value = '{"name": "test"}'
 
-            result = read_file_content(
-                "package.json",
-                clone_dir="/tmp/repo",
-                owner="owner",
-                repo="repo",
-                branch="main",
-                token="token",
-            )
+                result = read_file_content(
+                    "package.json",
+                    clone_dir="/tmp/repo",
+                    owner="owner",
+                    repo="repo",
+                    branch="main",
+                    token="token",
+                )
 
-            assert result == '{"name": "test"}'
-            mock_get.assert_called_once_with(
-                owner="owner",
-                repo="repo",
-                file_path="package.json",
-                ref="main",
-                token="token",
-            )
+                assert result == '{"name": "test"}'
+                mock_get.assert_called_once_with(
+                    owner="owner",
+                    repo="repo",
+                    file_path="package.json",
+                    ref="main",
+                    token="token",
+                )
 
 
 def test_github_api_when_no_clone_dir():
