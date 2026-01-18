@@ -8,6 +8,7 @@ from config import UTF8
 from services.efs.is_efs_install_ready import is_efs_install_ready
 from services.node.get_npm_cache_dir import set_npm_cache_env
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -15,11 +16,11 @@ async def run_eslint(
     *, owner: str, repo: str, clone_dir: str, file_path: str, file_content: str
 ):
     if not file_content.strip():
-        print(f"ESLint: Skipping {file_path} - empty content")
+        logger.info("ESLint: Skipping %s - empty content", file_path)
         return None
 
     if not file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
-        print(f"ESLint: Skipping {file_path} - not a JS/TS file")
+        logger.info("ESLint: Skipping %s - not a JS/TS file", file_path)
         return None
 
     # Wait for install to complete so npx uses local packages instead of downloading
@@ -38,7 +39,7 @@ async def run_eslint(
     set_npm_cache_env(env)
 
     # --yes: fallback to download if not in node_modules
-    print("ESLint: Running eslint with --fix...")
+    logger.info("ESLint: Running eslint with --fix...")
     result = subprocess.run(
         ["npx", "--yes", "eslint", "--fix", "--format", "json", full_path],
         capture_output=True,
@@ -83,11 +84,13 @@ async def run_eslint(
                     level="warning",
                 )
             else:
-                print(f"ESLint: Successfully fixed {file_path} with no errors")
+                logger.info("ESLint: Successfully fixed %s with no errors", file_path)
 
             return fixed_content
         except json.JSONDecodeError as e:
             sentry_sdk.capture_exception(e)
 
-    print(f"ESLint: Completed for {file_path} (return code: {result.returncode})")
+    logger.info(
+        "ESLint: Completed for %s (return code: %d)", file_path, result.returncode
+    )
     return fixed_content

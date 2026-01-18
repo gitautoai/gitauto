@@ -6,7 +6,7 @@ from utils.logging.logging_config import logger
 
 @handle_exceptions(default_return_value={}, raise_on_error=False)
 def extract_lambda_info(request: Request):
-    logger.info("Request scope: %s", request.scope)
+    logger.debug("Request scope: %s", request.scope)
     lambda_info: dict[str, str | None] = {}
 
     # https://mangum.fastapiexpert.com/adapter/

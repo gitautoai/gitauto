@@ -9,6 +9,7 @@ from config import GITHUB_API_URL, TIMEOUT
 from services.github.types.branch_protection import BranchProtection
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=(201, None), raise_on_error=False)
@@ -20,11 +21,15 @@ def get_required_status_checks(owner: str, repo: str, branch: str, token: str):
 
     # NOTE: 403 happens when GitHub App lacks "Administration: Read" permission
     if response.status_code == 403:
-        print(f"No permission to read branch protection for {owner}/{repo}/{branch}")
+        logger.warning(
+            "No permission to read branch protection for %s/%s/%s", owner, repo, branch
+        )
         return 403, None
 
     if response.status_code == 404:
-        print(f"No branch protection configured for {owner}/{repo}/{branch}")
+        logger.warning(
+            "No branch protection configured for %s/%s/%s", owner, repo, branch
+        )
         return 404, []
 
     response.raise_for_status()
@@ -32,8 +37,11 @@ def get_required_status_checks(owner: str, repo: str, branch: str, token: str):
     required_status_checks = protection.get("required_status_checks")
 
     if not required_status_checks:
-        print(
-            f"Branch protection exists but no required status checks configured for {owner}/{repo}/{branch}"
+        logger.info(
+            "Branch protection exists but no required status checks configured for %s/%s/%s",
+            owner,
+            repo,
+            branch,
         )
         return 200, []
 

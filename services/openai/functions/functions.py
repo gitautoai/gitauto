@@ -6,7 +6,8 @@ from openai.types import shared_params
 from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
 
 # Local imports
-from services.github.comments.update_comment import update_comment
+from services.agents.verify_task_is_complete import verify_task_is_complete
+from services.github.comments.create_comment import create_comment
 from services.github.commits.apply_diff_to_file import apply_diff_to_file
 from services.github.commits.replace_remote_file import (
     REPLACE_REMOTE_FILE_CONTENT,
@@ -19,14 +20,17 @@ from services.github.search.search_remote_file_contents import (
     search_remote_file_contents,
 )
 from services.github.trees.get_file_tree_list import get_file_tree_list
-from services.google.search import google_search
+
+# from services.google.search import google_search
 from services.openai.functions.properties import FILE_PATH
-from services.openai.functions.search_google import SEARCH_GOOGLE
-from services.openai.functions.update_comment import UPDATE_GITHUB_COMMENT
+
+# from services.openai.functions.search_google import SEARCH_GOOGLE
 from utils.prompts.diff import DIFF_DESCRIPTION
 
-# OpenAI: We recommend including instructions regarding when to call a function in the system prompt, while using the function definition to provide instructions on how to call the function and how to generate the parameters.
-# https://platform.openai.com/docs/guides/function-calling/should-i-include-function-call-instructions-in-the-tool-specification-or-in-the-system-prompt
+# Tool description best practices (Anthropic):
+# - What the tool does, when it should be used, parameter meanings, caveats
+# https://platform.claude.com/docs/en/agents-and-tools/tool-use/implement-tool-use
+# https://www.anthropic.com/engineering/writing-tools-for-agents
 
 DIFF: dict[str, str] = {
     "type": "string",
@@ -176,42 +180,79 @@ DELETE_FILE: shared_params.FunctionDefinition = {
     "strict": True,
 }
 
+# No parameters needed - agent calls with empty {} (JSON Schema requires the object structure)
+# In API payload: verify_task_is_complete({}) - the empty object must be explicitly sent
+# Conceptually equivalent to verify_task_is_complete() - a function with no arguments
+VERIFY_TASK_IS_COMPLETE: shared_params.FunctionDefinition = {
+    "name": "verify_task_is_complete",
+    "description": "Call this when you have finished making all required changes for the ENTIRE original issue - not after just one step. You MUST call this to complete the task - do not just stop calling tools.",
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
+
+CREATE_COMMENT: shared_params.FunctionDefinition = {
+    "name": "create_comment",
+    "description": "Creates a note/notification on the GitHub issue or pull request. The user is not there - they will see it later. After commenting, continue working on what you CAN do. WHEN TO USE: To inform the user about something they need to know (e.g., you are restricted to test files but the fix requires source file changes, or secrets need to be added via GitHub UI). WHEN NOT TO USE: Status updates, progress reports, or asking questions. WHAT TO SAY: State the fact briefly - what you found and what the user needs to do later. Do not ask questions.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "body": {
+                "type": "string",
+                "description": "The comment text to post.",
+            },
+        },
+        "required": ["body"],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
+
 # See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-TOOLS_TO_UPDATE_COMMENT: list[ChatCompletionToolParam] = [
-    {"type": "function", "function": UPDATE_GITHUB_COMMENT},
-]
-TOOLS_TO_GET_FILE: list[ChatCompletionToolParam] = [
-    {"type": "function", "function": GET_FILE_TREE_LIST},
-    {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
-]
-TOOLS_TO_EXPLORE_REPO: list[ChatCompletionToolParam] = [
-    # {"type": "code_interpreter"},
-    # {"type": "retrieval"},
-    {"type": "function", "function": GET_FILE_TREE_LIST},
-    {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
-    {"type": "function", "function": SEARCH_REMOTE_FILE_CONTENT},
-]
-TOOLS_TO_SEARCH_GOOGLE: list[ChatCompletionToolParam] = [
-    {"type": "function", "function": SEARCH_GOOGLE},
-]
-TOOLS_TO_COMMIT_CHANGES: list[ChatCompletionToolParam] = [
+_TOOLS: list[ChatCompletionToolParam] = [
     {"type": "function", "function": APPLY_DIFF_TO_FILE},
+    {"type": "function", "function": CREATE_COMMENT},
     {"type": "function", "function": DELETE_FILE},
+    {"type": "function", "function": GET_FILE_TREE_LIST},
+    {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
     {"type": "function", "function": MOVE_FILE},
     {"type": "function", "function": REPLACE_REMOTE_FILE_CONTENT},
+    # {"type": "function", "function": SEARCH_GOOGLE},
+    {"type": "function", "function": VERIFY_TASK_IS_COMPLETE},
+]
+
+TOOLS_FOR_ISSUES: list[ChatCompletionToolParam] = _TOOLS + [
+    {"type": "function", "function": SEARCH_REMOTE_FILE_CONTENT},
+]
+
+# search_remote_file_contents only searches default branch, not PR branch
+TOOLS_FOR_PRS: list[ChatCompletionToolParam] = _TOOLS + [
+    # TODO: Add search_local_file_contents when implemented
+]
+
+
+FILE_EDIT_TOOLS = [
+    "apply_diff_to_file",
+    "replace_remote_file_content",
+    "move_file",
+    "delete_file",
 ]
 
 # Define tools to call
 tools_to_call: dict[str, Any] = {
     # GitHub
     "apply_diff_to_file": apply_diff_to_file,
+    "create_comment": create_comment,
     "delete_file": delete_file,
     "get_file_tree_list": get_file_tree_list,
     "get_remote_file_content": get_remote_file_content,
     "move_file": move_file,
     "replace_remote_file_content": replace_remote_file_content,
+    # "search_google": google_search,
     "search_remote_file_contents": search_remote_file_contents,
-    "update_github_comment": update_comment,
-    # Google
-    "search_google": google_search,
+    "verify_task_is_complete": verify_task_is_complete,
 }

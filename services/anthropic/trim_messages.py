@@ -20,7 +20,7 @@ def trim_messages_to_token_limit(
 
     # Early return if empty
     if not messages:
-        return messages
+        return messages, 0
 
     token_input = client.messages.count_tokens(
         messages=messages, model=model
@@ -89,4 +89,4 @@ def trim_messages_to_token_limit(
             messages=messages, model=model
         ).input_tokens
 
-    return messages
+    return messages, token_input

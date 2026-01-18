@@ -2,8 +2,8 @@
 
 import os
 
-from openai.types.chat import ChatCompletionToolParam
 import pytest
+from openai.types.chat import ChatCompletionToolParam
 
 from services.openai.chat_with_functions import chat_with_openai
 
@@ -23,7 +23,6 @@ def test_chat_with_openai_gpt5_integration():
     assert "content" in response
     assert isinstance(response["content"], str)
     assert len(response["content"]) > 0
-    print(f"GPT-5 function response: {response['content']}")
 
 
 @pytest.mark.skipif(bool(os.getenv("CI")), reason="Skip integration tests in CI")
@@ -51,12 +50,10 @@ def test_chat_with_openai_gpt5_with_tools():
         }
     ]
 
-    response, _tool_call_id, tool_name, tool_args, _token_input, _token_output = (
+    response, _tool_call_id, _tool_name, _tool_args, _token_input, _token_output = (
         chat_with_openai(messages=messages, system_content=system_content, tools=tools)
     )
 
     assert isinstance(response, dict)
     # Should either return content or make a tool call
     assert "content" in response or "tool_calls" in response
-    print(f"GPT-5 tools response: {response}")
-    print(f"Tool called: {tool_name}, Args: {tool_args}")

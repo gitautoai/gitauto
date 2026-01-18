@@ -171,32 +171,6 @@ def test_update_comment_404_not_found(
     assert result is None
 
 
-def test_update_comment_prints_body(
-    test_owner, test_repo, test_token, create_test_base_args
-):
-    # Arrange
-    mock_response = MagicMock()
-    mock_response.json.return_value = {"id": 123, "body": "Test comment"}
-
-    base_args = create_test_base_args(
-        owner=test_owner,
-        repo=test_repo,
-        token=test_token,
-        comment_url="https://api.github.com/repos/owner/repo/issues/comments/123",
-    )
-
-    # Act
-    with patch("services.github.comments.update_comment.patch") as mock_patch, patch(
-        "builtins.print"
-    ) as mock_print:
-        mock_patch.return_value = mock_response
-        result = update_comment("Test comment", base_args)
-
-    # Assert
-    mock_print.assert_called_once_with("Test comment\n")
-    assert result == {"id": 123, "body": "Test comment"}
-
-
 def test_update_comment_uses_timeout(
     test_owner, test_repo, test_token, create_test_base_args
 ):

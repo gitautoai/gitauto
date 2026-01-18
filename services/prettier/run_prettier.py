@@ -5,6 +5,7 @@ from config import UTF8
 from services.efs.is_efs_install_ready import is_efs_install_ready
 from services.node.get_npm_cache_dir import set_npm_cache_env
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -12,13 +13,13 @@ async def run_prettier(
     *, owner: str, repo: str, clone_dir: str, file_path: str, file_content: str
 ):
     if not file_content.strip():
-        print(f"Prettier: Skipping {file_path} - empty content")
+        logger.info("Prettier: Skipping %s - empty content", file_path)
         return None
 
     if not file_path.endswith(
         (".js", ".jsx", ".ts", ".tsx", ".json", ".css", ".scss", ".md", ".yaml", ".yml")
     ):
-        print(f"Prettier: Skipping {file_path} - not a Prettier-supported file")
+        logger.info("Prettier: Skipping %s - not a Prettier-supported file", file_path)
         return None
 
     # Wait for install to complete so npx uses local packages instead of downloading
@@ -53,5 +54,5 @@ async def run_prettier(
     with open(full_path, "r", encoding=UTF8) as f:
         fixed_content = f.read()
 
-    print(f"Prettier: Successfully formatted {file_path}")
+    logger.info("Prettier: Successfully formatted %s", file_path)
     return fixed_content

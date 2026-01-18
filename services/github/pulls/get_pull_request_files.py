@@ -5,7 +5,7 @@ from typing import Literal, TypedDict
 import requests
 
 # Local imports
-from config import PER_PAGE, TIMEOUT
+from config import GITHUB_API_URL, PER_PAGE, TIMEOUT
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -19,8 +19,9 @@ class FileChange(TypedDict):
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_pull_request_files(url: str, token: str):
+def get_pull_request_files(owner: str, repo: str, pull_number: int, token: str):
     """https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests-files"""
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pull_number}/files"
     headers = create_headers(token=token)
     file_changes: list[FileChange] = []
     page = 1

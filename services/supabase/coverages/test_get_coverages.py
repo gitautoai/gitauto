@@ -1,7 +1,6 @@
 # pylint: disable=redefined-outer-name
 
 # Standard imports
-import logging
 import os
 from unittest.mock import Mock, patch
 
@@ -802,47 +801,40 @@ class TestGetCoveragesIntegration:
     @pytest.mark.skipif(bool(os.getenv("CI")), reason="Skip integration tests in CI")
     def test_find_exact_character_limit(self):
         """Integration test to find the exact character limit for Supabase queries."""
-        # Suppress error logging for this test
-        logging.disable(logging.ERROR)
+        # Binary search for exact character limit
+        low, high = 20000, 30000
+        max_working = 0
 
-        try:
-            # Binary search for exact character limit
-            low, high = 20000, 30000
-            max_working = 0
+        while low <= high:
+            mid = (low + high) // 2
 
-            while low <= high:
-                mid = (low + high) // 2
+            # Create a single filename with exact length
+            overhead = 60  # Query structure overhead
+            filename_length = mid - overhead
+            filename = "x" * filename_length
 
-                # Create a single filename with exact length
-                overhead = 60  # Query structure overhead
-                filename_length = mid - overhead
-                filename = "x" * filename_length
+            try:
+                supabase.table("coverages").select("*").eq("repo_id", 999999).in_(
+                    "full_path", [filename]
+                ).execute()
+                max_working = mid
+                low = mid + 1
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                if (
+                    "400" in str(e)
+                    or "Bad Request" in str(e)
+                    or "JSON could not be generated" in str(e)
+                    or "APIError" in str(e)
+                ):
+                    high = mid - 1
+                else:
+                    # Different error, skip
+                    high = mid - 1
 
-                try:
-                    supabase.table("coverages").select("*").eq("repo_id", 999999).in_(
-                        "full_path", [filename]
-                    ).execute()
-                    max_working = mid
-                    low = mid + 1
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    if (
-                        "400" in str(e)
-                        or "Bad Request" in str(e)
-                        or "JSON could not be generated" in str(e)
-                        or "APIError" in str(e)
-                    ):
-                        high = mid - 1
-                    else:
-                        # Different error, skip
-                        high = mid - 1
-
-            # We found the limit to be 25,036 chars
-            assert (
-                25000 <= max_working <= 26000
-            ), f"Expected limit around 25,036, got {max_working}"
-
-        finally:
-            logging.disable(logging.NOTSET)
+        # We found the limit to be 25,036 chars
+        assert (
+            25000 <= max_working <= 26000
+        ), f"Expected limit around 25,036, got {max_working}"
 
     @pytest.mark.skipif(bool(os.getenv("CI")), reason="Skip integration tests in CI")
     def test_get_coverages_with_realistic_large_batch(self):

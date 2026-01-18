@@ -18,29 +18,24 @@ def mock_create_headers():
 
 
 def test_get_pull_request_files_success(mock_requests, mock_create_headers):
-    """Test successful retrieval of pull request files"""
     mock_response_data = [
         {"filename": "file1.py", "status": "modified"},
         {"filename": "file2.js", "status": "added"},
         {"filename": "file3.txt", "status": "removed"},
     ]
-    # Setup mock response
     mock_response = Mock()
     mock_response.json.return_value = mock_response_data
     mock_response.raise_for_status.return_value = None
 
-    # Mock for empty second page (pagination)
     empty_response = Mock()
     empty_response.json.return_value = []
 
     mock_requests.get.side_effect = [mock_response, empty_response]
 
-    # Call function
     result = get_pull_request_files(
-        "https://api.github.com/repos/test/test/pulls/1/files", "token123"
+        owner="test-owner", repo="test-repo", pull_number=1, token="token123"
     )
 
-    # Verify result
     expected = [
         {"filename": "file1.py", "status": "modified"},
         {"filename": "file2.js", "status": "added"},
@@ -53,7 +48,6 @@ def test_get_pull_request_files_success(mock_requests, mock_create_headers):
 
 
 def test_get_pull_request_files_pagination():
-    """Test pagination handling"""
     page1_data = [{"filename": "file1.py", "status": "modified"}]
     page2_data = [{"filename": "file2.js", "status": "added"}]
 
@@ -67,13 +61,13 @@ def test_get_pull_request_files_pagination():
         mock_response2.raise_for_status.return_value = None
 
         mock_response3 = Mock()
-        mock_response3.json.return_value = []  # Empty page ends pagination
+        mock_response3.json.return_value = []
         mock_response3.raise_for_status.return_value = None
 
         mock_get.side_effect = [mock_response1, mock_response2, mock_response3]
 
         result = get_pull_request_files(
-            "https://api.github.com/repos/test/test/pulls/1/files", "token123"
+            owner="test-owner", repo="test-repo", pull_number=1, token="token123"
         )
 
         expected = [
@@ -86,11 +80,10 @@ def test_get_pull_request_files_pagination():
 
 
 def test_get_pull_request_files_missing_fields():
-    """Test handling of files with missing filename or status fields"""
     mock_response_data = [
         {"filename": "file1.py", "status": "modified"},
-        {"filename": "file2.js"},  # Missing status
-        {"status": "added"},  # Missing filename
+        {"filename": "file2.js"},
+        {"status": "added"},
         {"filename": "file3.txt", "status": "removed"},
     ]
 
@@ -106,7 +99,7 @@ def test_get_pull_request_files_missing_fields():
         mock_get.side_effect = [mock_response, empty_response]
 
         result = get_pull_request_files(
-            "https://api.github.com/repos/test/test/pulls/1/files", "token123"
+            owner="test-owner", repo="test-repo", pull_number=1, token="token123"
         )
 
         expected = [
@@ -118,7 +111,6 @@ def test_get_pull_request_files_missing_fields():
 
 
 def test_get_pull_request_files_http_error():
-    """Test handling of HTTP errors"""
     with patch("services.github.pulls.get_pull_request_files.requests.get") as mock_get:
         mock_response = Mock()
         mock_response.status_code = 404
@@ -128,14 +120,13 @@ def test_get_pull_request_files_http_error():
         mock_get.return_value = mock_response
 
         result = get_pull_request_files(
-            "https://api.github.com/repos/test/test/pulls/1/files", "token123"
+            owner="test-owner", repo="test-repo", pull_number=1, token="token123"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_pull_request_files_empty_response():
-    """Test handling of empty response"""
     with patch("services.github.pulls.get_pull_request_files.requests.get") as mock_get:
         mock_response = Mock()
         mock_response.json.return_value = []
@@ -143,7 +134,25 @@ def test_get_pull_request_files_empty_response():
         mock_get.return_value = mock_response
 
         result = get_pull_request_files(
-            "https://api.github.com/repos/test/test/pulls/1/files", "token123"
+            owner="test-owner", repo="test-repo", pull_number=1, token="token123"
         )
 
-        assert result == []
+        assert not result
+
+
+def test_get_pull_request_files_constructs_correct_url():
+    with patch("services.github.pulls.get_pull_request_files.requests.get") as mock_get:
+        mock_response = Mock()
+        mock_response.json.return_value = []
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        get_pull_request_files(
+            owner="my-org", repo="my-repo", pull_number=42, token="token123"
+        )
+
+        call_args = mock_get.call_args
+        assert (
+            call_args[1]["url"]
+            == "https://api.github.com/repos/my-org/my-repo/pulls/42/files"
+        )

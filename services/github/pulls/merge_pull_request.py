@@ -5,6 +5,7 @@ import requests
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 MergeMethod = Literal["merge", "squash", "rebase"]
 
@@ -29,9 +30,7 @@ def merge_pull_request(
         error_detail = response.json().get(
             "message", "Branch protection rule preventing merge"
         )
-        print(
-            f"Branch protection preventing merge for {owner}/{repo} PR #{pull_number}: {error_detail}"
-        )
+        logger.error("Branch protection preventing merge: %s", error_detail)
         return {"code": 405, "message": error_detail}
 
     response.raise_for_status()

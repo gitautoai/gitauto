@@ -1,7 +1,9 @@
 """Integration tests for vision.py with GPT-5"""
 
 import os
+
 import pytest
+
 from services.openai.vision import describe_image
 
 
@@ -15,7 +17,6 @@ def test_describe_image_gpt5_integration():
 
     assert isinstance(response, str)
     assert len(response) > 0
-    print(f"GPT-5 vision response: {response}")
 
 
 @pytest.mark.skipif(bool(os.getenv("CI")), reason="Skip integration tests in CI")
@@ -27,4 +28,3 @@ def test_describe_image_gpt5_with_context():
 
     assert isinstance(response, str)
     assert len(response) > 0
-    print(f"GPT-5 vision with context response: {response}")

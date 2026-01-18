@@ -497,6 +497,34 @@ class RepositoryFeaturesInsert(TypedDict):
     restrict_edit_to_target_test_file_only: NotRequired[bool]
 
 
+class TotalRepoCoverage(TypedDict):
+    owner_id: int | None
+    coverage_date: Any | None
+    lines_covered: int | None
+    lines_total: int | None
+    functions_covered: int | None
+    functions_total: int | None
+    branches_covered: int | None
+    branches_total: int | None
+    statement_coverage: float | None
+    function_coverage: float | None
+    branch_coverage: float | None
+
+
+class TotalRepoCoverageInsert(TypedDict):
+    owner_id: NotRequired[int | None]
+    coverage_date: NotRequired[Any | None]
+    lines_covered: NotRequired[int | None]
+    lines_total: NotRequired[int | None]
+    functions_covered: NotRequired[int | None]
+    functions_total: NotRequired[int | None]
+    branches_covered: NotRequired[int | None]
+    branches_total: NotRequired[int | None]
+    statement_coverage: NotRequired[float | None]
+    function_coverage: NotRequired[float | None]
+    branch_coverage: NotRequired[float | None]
+
+
 class Usage(TypedDict):
     id: int
     created_at: datetime.datetime

@@ -11,11 +11,12 @@ QUERY: dict[str, str] = {
 
 SEARCH_GOOGLE: shared_params.FunctionDefinition = {
     "name": "search_google",
-    "description": "Search Google for a query.",
+    "description": "Search Google to verify information that may be outdated due to knowledge cutoff. Use when suggesting libraries, GitHub Actions, or external tools to: (1) Verify latest available versions (e.g., actions/checkout@v4 instead of v2). (2) Check current status of methods, tools, or parameters. NEVER search for repository-specific content - assume the repository is private.",
     "parameters": {
         "type": "object",
         "properties": {"query": QUERY},
         "required": ["query"],
         "additionalProperties": False,
     },
+    "strict": True,
 }

@@ -1,7 +1,9 @@
 # pyright: reportUnusedVariable=false
+from typing import cast
 from unittest.mock import Mock, patch
 import pytest
 from services.chat_with_agent import chat_with_agent
+from services.github.types.github_types import BaseArgs
 
 
 @pytest.mark.asyncio
@@ -27,8 +29,8 @@ async def test_chat_with_agent_passes_usage_id_to_claude(
         messages=[{"role": "user", "content": "test"}],
         trigger="issue_comment",
         base_args=base_args,
-        mode="explore",
         repo_settings=repo_settings,
+        tools=[],
         usage_id=123,
     )
 
@@ -60,8 +62,8 @@ async def test_chat_with_agent_passes_usage_id_to_openai(
         messages=[{"role": "user", "content": "test"}],
         trigger="issue_comment",
         base_args=base_args,
-        mode="explore",
         repo_settings=repo_settings,
+        tools=[],
         usage_id=456,
     )
 
@@ -92,13 +94,13 @@ async def test_chat_with_agent_returns_token_counts(
         messages=[{"role": "user", "content": "test"}],
         trigger="issue_comment",
         base_args=base_args,
-        mode="explore",
         repo_settings=None,
+        tools=[],
         usage_id=789,
     )
 
-    assert result[4] == 25  # token_input
-    assert result[5] == 15  # token_output
+    assert result[1] == 25  # token_input
+    assert result[2] == 15  # token_output
 
 
 @pytest.mark.asyncio
@@ -138,8 +140,8 @@ async def test_get_remote_file_content_start_line_end_line_logging(
             messages=[{"role": "user", "content": "test"}],
             trigger="issue_comment",
             base_args=base_args,
-            mode="explore",
             repo_settings=None,
+            tools=[],
         )
 
     # Check that update_comment was called with the correct message
@@ -198,8 +200,8 @@ async def test_delete_file_logging(
             messages=[{"role": "user", "content": "test"}],
             trigger="issue_comment",
             base_args=base_args,
-            mode="commit",
             repo_settings=None,
+            tools=[],
         )
 
     # Check that update_comment was called with the correct message
@@ -261,8 +263,8 @@ async def test_move_file_logging(
             messages=[{"role": "user", "content": "test"}],
             trigger="issue_comment",
             base_args=base_args,
-            mode="commit",
             repo_settings=None,
+            tools=[],
         )
 
     # Check that update_comment was called with the correct message
@@ -322,8 +324,8 @@ async def test_replace_remote_file_content_handles_new_content_arg_name(
             messages=[{"role": "user", "content": "test"}],
             trigger="issue_comment",
             base_args=base_args,
-            mode="commit",
             repo_settings=None,
+            tools=[],
         )
 
         mock_function.assert_called_once()
@@ -374,16 +376,15 @@ async def test_unavailable_tool_sends_slack_notification(
                 messages=[{"role": "user", "content": "test"}],
                 trigger="issue_comment",
                 base_args=base_args,
-                mode="explore",
                 repo_settings=None,
+                tools=[],
             )
 
-        assert mock_slack_notify.call_count == 3
+        assert mock_slack_notify.call_count == 1
         call_args = mock_slack_notify.call_args[0][0]
         assert "bash" in call_args
         assert "command" in call_args
         assert "test-owner/test-repo" in call_args
-        assert "explore" in call_args
 
 
 @pytest.mark.asyncio
@@ -433,9 +434,192 @@ async def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
             messages=[{"role": "user", "content": "test"}],
             trigger="issue_comment",
             base_args=base_args,
-            mode="commit",
             repo_settings=None,
+            tools=[],
             restrict_edit_to_target_test_file_only=True,
         )
 
         mock_is_target_test_file.assert_called_once_with("test_wrong.py", base_args)
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+@patch("services.chat_with_agent.update_comment")
+async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true(
+    _mock_update_comment, mock_get_pr_files, mock_chat_with_claude, mock_get_model
+):
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_pr_files.return_value = [{"filename": "test.py", "status": "modified"}]
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "verify_task_is_complete",
+                    "input": {},
+                }
+            ],
+        },
+        "test_id",
+        "verify_task_is_complete",
+        {},
+        15,
+        10,
+    )
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+        },
+    )
+
+    result = await chat_with_agent(
+        messages=[{"role": "user", "content": "test"}],
+        trigger="issue_comment",
+        base_args=base_args,
+        repo_settings=None,
+        tools=[],
+    )
+
+    is_completed = result[3]
+    assert is_completed is True
+    mock_get_pr_files.assert_called_once_with(
+        owner="test-owner", repo="test-repo", pull_number=123, token="test-token"
+    )
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.update_comment")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_false(
+    mock_get_pr_files, _mock_update_comment, mock_chat_with_claude, mock_get_model
+):
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_pr_files.return_value = []
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "verify_task_is_complete",
+                    "input": {},
+                }
+            ],
+        },
+        "test_id",
+        "verify_task_is_complete",
+        {},
+        15,
+        10,
+    )
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+        },
+    )
+
+    result = await chat_with_agent(
+        messages=[{"role": "user", "content": "test"}],
+        trigger="issue_comment",
+        base_args=base_args,
+        repo_settings=None,
+        tools=[],
+    )
+
+    is_completed = result[3]
+    assert is_completed is False
+    messages = result[0]
+    last_message = messages[-1]["content"][0]["content"]
+    assert "Error: Cannot complete task" in last_message
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+async def test_regular_tool_returns_is_completed_false(
+    mock_chat_with_claude, mock_get_model
+):
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "get_remote_file_content",
+                    "input": {"file_path": "test.py"},
+                }
+            ],
+        },
+        "test_id",
+        "get_remote_file_content",
+        {"file_path": "test.py"},
+        15,
+        10,
+    )
+
+    base_args = Mock()
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        mock_tools.__getitem__.return_value = Mock(return_value="file content")
+        mock_tools.__contains__.return_value = True
+
+        with patch("services.chat_with_agent.update_comment"):
+            result = await chat_with_agent(
+                messages=[{"role": "user", "content": "test"}],
+                trigger="issue_comment",
+                base_args=base_args,
+                repo_settings=None,
+                tools=[],
+            )
+
+    is_completed = result[3]
+    assert is_completed is False
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+async def test_no_tool_call_returns_is_completed_false(
+    mock_chat_with_claude, mock_get_model
+):
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_chat_with_claude.return_value = (
+        {"role": "assistant", "content": "I'm thinking about it..."},
+        None,
+        None,
+        None,
+        15,
+        10,
+    )
+
+    base_args = Mock()
+
+    result = await chat_with_agent(
+        messages=[{"role": "user", "content": "test"}],
+        trigger="issue_comment",
+        base_args=base_args,
+        repo_settings=None,
+        tools=[],
+    )
+
+    is_completed = result[3]
+    assert is_completed is False

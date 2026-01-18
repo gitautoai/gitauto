@@ -13,6 +13,7 @@ from services.github.token.get_installation_token import get_installation_access
 from services.github.users.get_user_public_email import get_user_public_email
 from services.supabase.repositories.get_repository import get_repository
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 from utils.urls.extract_urls import extract_urls
 
 
@@ -57,7 +58,7 @@ def deconstruct_github_payload(
         owner=owner_name, repo=repo_name, branch_name=target_branch, token=token
     ):
         base_branch_name = target_branch
-        print(f"Using target branch: {target_branch}")
+        logger.info("Using target branch: %s", target_branch)
 
     date = datetime.now().strftime(format="%Y%m%d")  # like "20241224"
     time = datetime.now().strftime(format="%H%M%S")  # like "120000" means 12:00:00

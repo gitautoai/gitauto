@@ -201,9 +201,9 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         return
 
     # Get PR files
-    pull_url = pull_request["url"]
-    pull_file_url = f"{pull_url}/files"
-    changed_files = get_pull_request_files(url=pull_file_url, token=token)
+    changed_files = get_pull_request_files(
+        owner=owner_name, repo=repo_name, pull_number=pr_number, token=token
+    )
 
     # Check if only test files restriction is enabled
     only_test_files = repo_features.get("auto_merge_only_test_files", False)

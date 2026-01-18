@@ -23,11 +23,14 @@ from services.github.commits.get_latest_remote_commit_sha import (
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.get_file_content import get_file_content
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def add_issue_templates(full_name: str, installer_name: str, token: str) -> None:
-    print(f"Adding issue templates to the repo: '{full_name}' by '{installer_name}'.\n")
+    logger.info(
+        "Adding issue templates to the repo: '%s' by '%s'.", full_name, installer_name
+    )
     auth = Auth.Token(token)
     gh = Github(auth=auth)
     repo: Repository = gh.get_repo(full_name_or_id=full_name)

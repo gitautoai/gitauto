@@ -1,6 +1,7 @@
-<commit_quality_rules>
+<coding_standards>
   <code_quality_requirement>
     <instruction>Before committing, review your code as if you ran standard linting/formatting tools for that language and fix any issues they would detect.</instruction>
+    <rule>NEVER place import statements inside function bodies - all imports must be at the top of the file</rule>
     <examples>
       <typescript>Issues that tsc --noEmit would catch (syntax errors, type issues)</typescript>
       <python>Issues that pylint, pyright, black, or ruff check --fix would catch (unused imports, formatting, style violations)</python>
@@ -44,4 +45,4 @@
     <rule>Do not test constant content (values, text, or any content within constants) unless explicitly requested - tests should not fail when constant values are updated</rule>
   </anti_patterns>
   </test_rules>
-</commit_quality_rules> 
+</coding_standards> 

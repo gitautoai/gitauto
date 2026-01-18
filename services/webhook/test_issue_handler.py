@@ -331,7 +331,7 @@ async def test_image_urls_processing(
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
-    mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 0)
+    mock_chat_with_agent.return_value = ([], 10, 5, True, 0)
     mock_get_pr_files.return_value = []
 
     await create_pr_from_issue(
@@ -427,7 +427,7 @@ async def test_image_unsupported_format_skipped(
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
-    mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 0)
+    mock_chat_with_agent.return_value = ([], 10, 5, True, 0)
     mock_get_pr_files.return_value = []
 
     await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
@@ -521,7 +521,7 @@ async def test_image_base64_fetch_failed(
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
-    mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 0)
+    mock_chat_with_agent.return_value = ([], 10, 5, True, 0)
     mock_get_pr_files.return_value = []
 
     await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
@@ -716,6 +716,7 @@ async def test_branch_deleted_breaks_loop(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.issue_handler.MAX_ITERATIONS", 10)
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
@@ -799,22 +800,25 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_get_pr_files.return_value = []
     mock_is_timeout.return_value = (False, 10.0)
     mock_chat_with_agent.side_effect = [
-        ([], [], None, None, 10, 5, False, 50),
-        ([], [], None, None, 10, 5, True, 60),
-        ([], [], None, None, 10, 5, False, 50),
-        ([], [], None, None, 10, 5, True, 60),
-        ([], [], None, None, 10, 5, False, 50),
-        ([], [], None, None, 10, 5, True, 60),
-        ([], [], None, None, 10, 5, False, 50),
-        ([], [], None, None, 10, 5, True, 60),
+        ([], 10, 5, False, 10),
+        ([], 10, 5, False, 20),
+        ([], 10, 5, False, 30),
+        ([], 10, 5, False, 40),
+        ([], 10, 5, False, 50),
+        ([], 10, 5, False, 60),
+        ([], 10, 5, False, 70),
+        ([], 10, 5, False, 80),
+        ([], 10, 5, False, 90),
+        ([], 10, 5, False, 95),
     ]
 
     await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
-    assert mock_chat_with_agent.call_count == 8
+    assert mock_chat_with_agent.call_count == 10
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.issue_handler.MAX_ITERATIONS", 9)
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
@@ -898,19 +902,20 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_get_pr_files.return_value = []
     mock_is_timeout.return_value = (False, 10.0)
     mock_chat_with_agent.side_effect = [
-        ([], [], None, None, 10, 5, True, 50),
-        ([], [], None, None, 10, 5, False, 60),
-        ([], [], None, None, 10, 5, True, 50),
-        ([], [], None, None, 10, 5, False, 60),
-        ([], [], None, None, 10, 5, True, 50),
-        ([], [], None, None, 10, 5, False, 60),
-        ([], [], None, None, 10, 5, True, 50),
-        ([], [], None, None, 10, 5, False, 60),
+        ([], 10, 5, False, 10),
+        ([], 10, 5, False, 20),
+        ([], 10, 5, False, 30),
+        ([], 10, 5, False, 40),
+        ([], 10, 5, False, 50),
+        ([], 10, 5, False, 60),
+        ([], 10, 5, False, 70),
+        ([], 10, 5, False, 80),
+        ([], 10, 5, False, 90),
     ]
 
     await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
-    assert mock_chat_with_agent.call_count == 8
+    assert mock_chat_with_agent.call_count == 9
 
 
 @pytest.mark.asyncio
@@ -997,15 +1002,14 @@ async def test_retry_counter_reset_on_successful_loop(
     mock_get_pr_files.return_value = []
     mock_is_timeout.return_value = (False, 10.0)
     mock_chat_with_agent.side_effect = [
-        ([], [], None, None, 10, 5, True, 50),
-        ([], [], None, None, 10, 5, True, 60),
-        ([], [], None, None, 10, 5, False, 50),
-        ([], [], None, None, 10, 5, False, 60),
+        ([], 10, 5, False, 10),
+        ([], 10, 5, False, 20),
+        ([], 10, 5, True, 100),
     ]
 
     await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
-    assert mock_chat_with_agent.call_count == 4
+    assert mock_chat_with_agent.call_count == 3
 
 
 @pytest.mark.asyncio
@@ -1092,7 +1096,7 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_is_timeout.return_value = (False, 10.0)
-    mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 50)
+    mock_chat_with_agent.return_value = ([], 10, 5, True, 50)
     mock_get_pr_files.return_value = [{"filename": "src/main.py"}]
     mock_is_test_file.return_value = False
 
@@ -1191,7 +1195,7 @@ async def test_test_file_header_merge(
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_is_timeout.return_value = (False, 10.0)
-    mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 50)
+    mock_chat_with_agent.return_value = ([], 10, 5, True, 50)
     mock_get_pr_files.return_value = [{"filename": "tests/test_example.py"}]
     mock_is_test_file.return_value = True
     mock_get_raw_content.return_value = "def test_something(): pass"
@@ -1295,7 +1299,7 @@ async def test_test_file_header_merge_no_content(
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_is_timeout.return_value = (False, 10.0)
-    mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 50)
+    mock_chat_with_agent.return_value = ([], 10, 5, True, 50)
     mock_get_pr_files.return_value = [{"filename": "tests/test_example.py"}]
     mock_is_test_file.return_value = True
     mock_get_raw_content.return_value = None
@@ -1398,7 +1402,7 @@ async def test_test_file_header_merge_no_change(
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_is_timeout.return_value = (False, 10.0)
-    mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 50)
+    mock_chat_with_agent.return_value = ([], 10, 5, True, 50)
     mock_get_pr_files.return_value = [{"filename": "tests/test_example.py"}]
     mock_is_test_file.return_value = True
     mock_get_raw_content.return_value = "import pytest\n\ndef test_something(): pass"
@@ -1504,8 +1508,8 @@ async def test_credits_depleted_email_sent(
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_is_timeout.return_value = (False, 10.0)
-    mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 50)
-    mock_get_pr_files.return_value = []
+    mock_chat_with_agent.return_value = ([], 10, 5, True, 50)
+    mock_get_pr_files.return_value = [{"filename": "test.py", "status": "modified"}]
     mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 0}
     mock_get_user.return_value = {"id": 888, "email": "user@example.com"}
     mock_get_email_text.return_value = ("Credits Depleted", "Your credits are gone")
@@ -1544,7 +1548,9 @@ async def test_credits_depleted_email_sent(
 @patch("services.webhook.issue_handler.check_availability")
 @patch("services.webhook.issue_handler.render_text")
 @patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.issue_handler.get_pull_request_files")
 async def test_issue_handler_token_accumulation(
+    mock_get_pull_request_files,
     mock_deconstruct_github_payload,
     mock_render_text,
     mock_check_availability,
@@ -1570,6 +1576,7 @@ async def test_issue_handler_token_accumulation(
 ):
     """Test that issue handler accumulates tokens correctly and calls update_usage"""
     mock_clone_repo.return_value = "/tmp/test_owner/test_repo/pr-100"
+    mock_get_pull_request_files.return_value = []
 
     # Mock the payload deconstruction
     mock_deconstruct_github_payload.return_value = (
@@ -1634,20 +1641,32 @@ async def test_issue_handler_token_accumulation(
     mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 100}
     mock_create_user_request.return_value = 999
 
-    # Mock chat_with_agent - return False for both is_explored and is_committed to break loop
-    mock_chat_with_agent.return_value = (
-        [
-            {"role": "user", "content": "test"},
-            {"role": "assistant", "content": "AI response"},
-        ],
-        [],
-        "no_action",
-        {},
-        75,  # input tokens
-        35,  # output tokens
-        False,  # is_explored=False (breaks loop when both are False)
-        90,
-    )
+    # Mock chat_with_agent - first call makes progress, second signals completion
+    mock_chat_with_agent.side_effect = [
+        (
+            [
+                {"role": "user", "content": "test"},
+                {"role": "assistant", "content": "AI response"},
+            ],
+            75,  # input tokens
+            35,  # output tokens
+            False,  # is_completed=False (not done yet)
+            90,
+        ),
+        (
+            [
+                {"role": "user", "content": "test"},
+                {"role": "assistant", "content": "AI response"},
+            ],
+            75,  # input tokens
+            35,  # output tokens
+            True,  # is_completed=True (task done)
+            95,
+        ),
+    ]
+    mock_get_pull_request_files.return_value = [
+        {"filename": "test.py", "status": "modified"}
+    ]
 
     # Create test payload
     payload = cast(
@@ -1787,7 +1806,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_create_comment.return_value = "https://api.github.com/comment/1"
     mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 100}
     mock_create_user_request.return_value = 999
-    mock_chat_with_agent.return_value = ([], [], None, None, 10, 5, False, 0)
+    mock_chat_with_agent.return_value = ([], 10, 5, True, 0)
     mock_get_repository_features.return_value = {
         "restrict_edit_to_target_test_file_only": False,
         "allow_edit_any_file": True,

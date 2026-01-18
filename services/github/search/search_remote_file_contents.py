@@ -4,6 +4,7 @@ from config import GITHUB_API_URL, TIMEOUT
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
@@ -42,5 +43,5 @@ def search_remote_file_contents(query: str, base_args: BaseArgs, **_kwargs) -> s
         + "\n- ".join(file_paths)
         + "\n"
     )
-    print(msg)
+    logger.info(msg)
     return msg

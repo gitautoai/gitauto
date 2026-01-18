@@ -8,6 +8,7 @@ from services.github.repositories.get_repository_stats import get_repository_sta
 from services.github.types.repository import RepositoryAddedOrRemoved
 from services.supabase.repositories.upsert_repository import upsert_repository
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -40,11 +41,11 @@ async def process_repositories(
             )
             assert coro is not None
             clone_dir = await coro
-            print(f"Cloned repository {repo_name} into {clone_dir}")
+            logger.info("Cloned repository %s into %s", repo_name, clone_dir)
 
             # Try to get repository stats, but don't fail if this doesn't work
             stats = get_repository_stats(local_path=clone_dir)
-            print(f"Repository {repo_name} stats: {stats}")
+            logger.info("Repository %s stats: %s", repo_name, stats)
 
         finally:
             if clone_dir:

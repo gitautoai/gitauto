@@ -1,4 +1,5 @@
 import os
+
 from config import UTF8
 from utils.logs.clean_logs import clean_logs
 
@@ -64,4 +65,3 @@ def test_clean_logs_jest_with_summary_section():
 
 if __name__ == "__main__":
     test_clean_logs_circleci_pipeline()
-    print("Clean logs test passed!")

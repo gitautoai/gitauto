@@ -7,18 +7,16 @@ import time
 
 # Local imports
 from config import EMAIL_LINK, GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
+from constants.agent import MAX_ITERATIONS
 from constants.general import MAX_GITAUTO_COMMITS_PER_PR
 from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_STUMBLED_MESSAGE
 from services.chat_with_agent import chat_with_agent
-
-# Local imports (CircleCI)
 from services.circleci.get_build_logs import get_circleci_build_logs
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
-
-# Local imports (Codecov)
 from services.codecov.get_commit_coverage import get_codecov_commit_coverage
-
-# Local imports (GitHub)
+from services.efs.start_async_install_on_efs import start_async_install_on_efs
+from services.git.clone_repo import clone_repo
+from services.git.get_clone_dir import get_clone_dir
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.check_suites.get_failed_check_runs import (
     get_failed_check_runs_from_check_suite,
@@ -39,11 +37,8 @@ from services.github.utils.create_permission_url import create_permission_url
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
-
-# Local imports (Slack)
+from services.openai.functions.functions import TOOLS_FOR_PRS
 from services.slack.slack_notify import slack_notify
-
-# Local imports (Supabase)
 from services.supabase.check_suites.insert_check_suite import insert_check_suite
 from services.supabase.codecov_tokens.get_codecov_token import get_codecov_token
 from services.supabase.create_user_request import create_user_request
@@ -57,13 +52,6 @@ from services.supabase.usage.update_usage import update_usage
 from services.supabase.usage.check_older_active_test_failure import (
     check_older_active_test_failure_request,
 )
-
-# Local imports (EFS)
-from services.efs.start_async_install_on_efs import start_async_install_on_efs
-from services.git.clone_repo import clone_repo
-from services.git.get_clone_dir import get_clone_dir
-
-# Local imports (Others)
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.logs.clean_logs import clean_logs
@@ -182,7 +170,6 @@ async def handle_check_suite(
 
     pull_request = pull_requests[0]
     pull_number = pull_request["number"]
-    pull_url = pull_request["url"]
     set_pr_number(pull_number)
 
     full_pr = get_pull_request(
@@ -329,8 +316,9 @@ async def handle_check_suite(
     )
 
     # Get changed files in the PR
-    pull_file_url = f"{pull_url}/files"
-    changed_files = get_pull_request_files(url=pull_file_url, token=token)
+    changed_files = get_pull_request_files(
+        owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+    )
 
     p += 5
     add_log_message(
@@ -528,11 +516,11 @@ async def handle_check_suite(
     messages = [{"role": "user", "content": user_input}]
 
     # Loop a process explore repo and commit changes until the ticket is resolved
-    previous_calls = []
-    retry_count = 0
     total_token_input = 0
     total_token_output = 0
-    while True:
+    is_completed = False
+
+    for _iteration in range(MAX_ITERATIONS):
         # Timeout check: Stop if we're approaching Lambda limit
         is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
             current_time
@@ -586,74 +574,35 @@ async def handle_check_suite(
             slack_notify(f"{body} in `{owner_name}/{repo_name}`", thread_ts)
             break
 
-        # Explore repo
+        # Call the agent to explore the codebase and commit changes
         (
             messages,
-            previous_calls,
-            _tool_name,
-            _tool_args,
             token_input,
             token_output,
-            is_explored,
+            is_completed,
             p,
         ) = await chat_with_agent(
             messages=messages,
             trigger=trigger,
             repo_settings=repo_settings,
             base_args=base_args,
-            mode="get",  # explore can not be used here because "search_remote_file_contents" can search files only in the default branch NOT in the branch that is merged into the default branch
-            previous_calls=previous_calls,
             p=p,
             log_messages=log_messages,
             usage_id=usage_id,
+            tools=TOOLS_FOR_PRS,
         )
         total_token_input += token_input
         total_token_output += token_output
 
-        # Commit changes based on the exploration information
-        (
-            messages,
-            previous_calls,
-            _tool_name,
-            _tool_args,
-            token_input,
-            token_output,
-            is_committed,
-            p,
-        ) = await chat_with_agent(
-            messages=messages,
-            trigger=trigger,
-            repo_settings=repo_settings,
-            base_args=base_args,
-            mode="commit",
-            previous_calls=previous_calls,
-            p=p,
-            log_messages=log_messages,
-            usage_id=usage_id,
-        )
-        total_token_input += token_input
-        total_token_output += token_output
-
-        # If no new file is found and no changes are made, it means that the agent has completed the ticket or got stuck for some reason
-        if not is_explored and not is_committed:
+        if is_completed:
+            logger.info(
+                "Agent signaled completion via verify_task_is_complete, breaking loop"
+            )
             break
 
-        # If no files are found but changes are made, it might fall into an infinite loop (e.g., repeatedly making and reverting similar changes with slight variations)
-        if not is_explored and is_committed:
-            retry_count += 1
-            if retry_count > 3:
-                break
-            continue
-
-        # If files are found but no changes are made, it means that the agent found files but didn't think it's necessary to commit changes or fell into an infinite-like loop (e.g. slightly different searches)
-        if is_explored and not is_committed:
-            retry_count += 1
-            if retry_count > 3:
-                break
-            continue
-
-        # Because the agent is committing changes, keep doing the loop
-        retry_count = 0
+    # Log if loop exhausted without completion
+    if not is_completed:
+        logger.warning("Agent loop ended without calling verify_task_is_complete")
 
     # Trigger final test workflows with an empty commit
     comment_body = "Creating final empty commit to trigger workflows..."

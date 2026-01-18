@@ -1,4 +1,5 @@
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 # https://docs.claude.com/en/docs/about-claude/pricing
@@ -23,7 +24,7 @@ def calculate_costs(
     model_pricing = provider_pricing.get(model_id)
 
     if not model_pricing:
-        print(f"Warning: Unknown model {model_id} for provider {provider}")
+        logger.warning("Unknown model %s for provider %s", model_id, provider)
         return 0, 0
 
     input_cost_usd = (input_tokens / 1_000_000) * model_pricing["input"]
