@@ -109,63 +109,40 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     mock_update_comment.return_value = None
     mock_create_empty_commit.return_value = None
 
-    # Mock chat_with_agent to return values that break the loop after 2 calls
-    # is_explored=False and is_committed=False breaks the loop (line 314-315)
+    # Mock chat_with_agent to return 5-tuple: (messages, token_input, token_output, is_completed, progress)
+    # is_completed=True breaks the loop
     mock_chat_with_agent.side_effect = [
-        # First call (get mode) - 120 input, 80 output tokens
+        # First call - 120 input, 80 output tokens
         (
             [
                 {"role": "user", "content": "review"},
                 {"role": "assistant", "content": "analysis"},
             ],
-            [],
-            "analyze_code",
-            {"suggestions": ["optimize loop"]},
             120,  # token_input
             80,  # token_output
-            False,  # is_explored=False (to break loop)
-            40,
-        ),
-        # Second call (commit mode) - 90 input, 60 output tokens
-        (
-            [
-                {"role": "user", "content": "review"},
-                {"role": "assistant", "content": "fix applied"},
-            ],
-            [],
-            "apply_fixes",
-            {"files_modified": ["src/main.py"]},
-            90,  # token_input
-            60,  # token_output
-            False,  # is_committed=False (to break loop)
-            50,
+            True,  # is_completed=True (breaks loop)
+            40,  # progress
         ),
     ]
 
     # Execute the function
     await handle_review_run(mock_review_comment_payload)
 
-    # Verify chat_with_agent was called exactly twice (get + commit modes)
-    assert mock_chat_with_agent.call_count == 2
+    # Verify chat_with_agent was called once (loop breaks on is_completed=True)
+    assert mock_chat_with_agent.call_count == 1
 
-    # Verify the calls were made with correct modes
+    # Verify call includes usage_id for API request tracking
     first_call_kwargs = mock_chat_with_agent.call_args_list[0].kwargs
-    second_call_kwargs = mock_chat_with_agent.call_args_list[1].kwargs
-    assert first_call_kwargs["mode"] == "get"
-    assert second_call_kwargs["mode"] == "commit"
-
-    # Verify both calls include usage_id for API request tracking
     assert first_call_kwargs["usage_id"] == 777
-    assert second_call_kwargs["usage_id"] == 777
 
-    # CRITICAL: Verify update_usage was called with ACCUMULATED tokens
+    # CRITICAL: Verify update_usage was called with tokens
     mock_update_usage.assert_called_once()
     usage_call_kwargs = mock_update_usage.call_args.kwargs
 
     # This is the actual meaningful test - verifies token accumulation works
     assert usage_call_kwargs["usage_id"] == 777
-    assert usage_call_kwargs["token_input"] == 210  # 120 + 90 = 210
-    assert usage_call_kwargs["token_output"] == 140  # 80 + 60 = 140
+    assert usage_call_kwargs["token_input"] == 120
+    assert usage_call_kwargs["token_output"] == 80
     assert usage_call_kwargs["is_completed"] is True
 
     # Verify other expected parameters

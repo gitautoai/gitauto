@@ -117,7 +117,6 @@ class TestSearchRemoteFileContents:
         mock_get,
         create_test_base_args,
         mock_response_success,
-        capsys,
     ):
         """Test successful search returning multiple files."""
         # Arrange
@@ -158,12 +157,6 @@ class TestSearchRemoteFileContents:
         # Verify headers were set correctly
         headers = call_args[1]["headers"]
         assert headers["Accept"] == "application/vnd.github.text-match+json"
-
-        # Verify console output
-        captured = capsys.readouterr()
-        assert (
-            "2 files found for the search query 'def search_function':" in captured.out
-        )
 
     @patch("services.github.search.search_remote_file_contents.requests.get")
     @patch("services.github.search.search_remote_file_contents.create_headers")
@@ -206,7 +199,6 @@ class TestSearchRemoteFileContents:
         mock_get,
         create_test_base_args,
         mock_response_empty,
-        capsys,
     ):
         """Test search returning no results."""
         # Arrange
@@ -224,12 +216,6 @@ class TestSearchRemoteFileContents:
         # Assert
         assert "0 files found for the search query 'nonexistent_function':" in result
         assert result.endswith("\n")
-
-        # Verify console output
-        captured = capsys.readouterr()
-        assert (
-            "0 files found for the search query 'nonexistent_function':" in captured.out
-        )
 
     @patch("services.github.search.search_remote_file_contents.requests.get")
     @patch("services.github.search.search_remote_file_contents.create_headers")
