@@ -20,7 +20,12 @@ from services.supabase.webhook_deliveries.insert_webhook_delivery import (
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.webhook_handler import handle_webhook_event
 from utils.aws.extract_lambda_info import extract_lambda_info
-from utils.logging.logging_config import logger, set_request_id, set_owner_repo
+from utils.logging.logging_config import (
+    clear_state,
+    logger,
+    set_owner_repo,
+    set_request_id,
+)
 
 # https://us-west-1.console.aws.amazon.com/lambda/home?region=us-west-1#/functions/pr-agent-prod?subtab=envVars&tab=configure
 if ENV == "prod":
@@ -38,6 +43,7 @@ mangum_handler = Mangum(app=app, lifespan="off")
 
 # Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 def handler(event, context):
+    clear_state()  # Prevent metadata from previous invocation bleeding into this one on warm starts
     set_request_id(getattr(context, "aws_request_id", "local"))
 
     # For scheduled event from EventBridge Scheduler
