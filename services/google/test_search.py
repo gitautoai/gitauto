@@ -101,9 +101,8 @@ class TestSearchUrls:
 class TestScrapeContentFromUrl:
     """Test cases for scrape_content_from_url function."""
 
-    @patch("services.google.search.get")
-    @patch("builtins.print")
-    def test_scrape_content_success(self, mock_print, mock_get):
+    @patch("requests.get")
+    def test_scrape_content_success(self, mock_get):
         """Test successful content scraping."""
         html_content = """
         <html>
@@ -139,12 +138,8 @@ class TestScrapeContentFromUrl:
         assert "Main Article Title" in result["content"]
         assert "main content of the article" in result["content"]
 
-        # Verify print calls
-        assert mock_print.call_count == 2
-
-    @patch("services.google.search.get")
-    @patch("builtins.print")
-    def test_scrape_content_no_title(self, mock_print, mock_get):
+    @patch("requests.get")
+    def test_scrape_content_no_title(self, mock_get):
         """Test scraping content without title."""
         html_no_title = """
         <html>
@@ -166,9 +161,8 @@ class TestScrapeContentFromUrl:
         assert result["url"] == "https://example.com"
         assert "Content without title" in result["content"]
 
-    @patch("services.google.search.get")
-    @patch("builtins.print")
-    def test_scrape_content_with_main_tag(self, mock_print, mock_get):
+    @patch("requests.get")
+    def test_scrape_content_with_main_tag(self, mock_get):
         """Test scraping content with main tag."""
         html_with_main = """
         <html>
@@ -195,9 +189,8 @@ class TestScrapeContentFromUrl:
         # Should not contain content outside main tag
         assert "Other content" not in result["content"]
 
-    @patch("services.google.search.get")
-    @patch("builtins.print")
-    def test_scrape_content_with_article_tag(self, mock_print, mock_get):
+    @patch("requests.get")
+    def test_scrape_content_with_article_tag(self, mock_get):
         """Test scraping content with article tag."""
         html_with_article = """
         <html>
@@ -224,9 +217,8 @@ class TestScrapeContentFromUrl:
         # Should not contain content outside article tag
         assert "Other content" not in result["content"]
 
-    @patch("services.google.search.get")
-    @patch("builtins.print")
-    def test_scrape_content_removes_unnecessary_tags(self, mock_print, mock_get):
+    @patch("requests.get")
+    def test_scrape_content_removes_unnecessary_tags(self, mock_get):
         """Test that unnecessary tags are removed."""
         html_with_unnecessary_tags = """
         <html>
@@ -265,7 +257,7 @@ class TestScrapeContentFromUrl:
         assert "Footer to remove" not in result["content"]
         assert "Iframe to remove" not in result["content"]
 
-    @patch("services.google.search.get")
+    @patch("requests.get")
     def test_scrape_content_http_error(self, mock_get):
         """Test scraping with HTTP error."""
         # Create a proper HTTPError with a mock response
@@ -282,7 +274,7 @@ class TestScrapeContentFromUrl:
         # Should return None due to handle_exceptions decorator
         assert result is None
 
-    @patch("services.google.search.get")
+    @patch("requests.get")
     def test_scrape_content_uses_correct_headers(self, mock_get):
         """Test that correct headers are used in request."""
         mock_response = Mock()
@@ -299,9 +291,8 @@ class TestScrapeContentFromUrl:
         assert "User-Agent" in call_args[1]["headers"]
         assert "timeout" in call_args[1]
 
-    @patch("services.google.search.get")
-    @patch("builtins.print")
-    def test_scrape_content_with_whitespace_title(self, mock_print, mock_get):
+    @patch("requests.get")
+    def test_scrape_content_with_whitespace_title(self, mock_get):
         """Test scraping content with title that has whitespace."""
         html_with_whitespace_title = """
         <html>
@@ -320,9 +311,8 @@ class TestScrapeContentFromUrl:
         assert result is not None
         assert result["title"] == "Title with spaces"  # Should be stripped
 
-    @patch("services.google.search.get")
-    @patch("builtins.print")
-    def test_scrape_content_fallback_to_soup(self, mock_print, mock_get):
+    @patch("requests.get")
+    def test_scrape_content_fallback_to_soup(self, mock_get):
         """Test scraping content when no main/article/div[role=main] found."""
         html_without_main = """
         <html>

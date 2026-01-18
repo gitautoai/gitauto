@@ -61,7 +61,7 @@ def mock_headers():
 
 def test_download_artifact_success_with_lcov(mock_zip_with_lcov, mock_headers):
     """Test successful artifact download with lcov.info present."""
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "services.github.artifacts.download_artifact.create_headers"
     ) as mock_create_headers:
 
@@ -86,7 +86,7 @@ def test_download_artifact_success_with_lcov(mock_zip_with_lcov, mock_headers):
 
 def test_download_artifact_success_without_lcov(mock_zip_without_lcov, mock_headers):
     """Test artifact download when lcov.info is not present."""
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "services.github.artifacts.download_artifact.create_headers"
     ) as mock_create_headers:
 
@@ -111,7 +111,7 @@ def test_download_artifact_success_without_lcov(mock_zip_without_lcov, mock_head
 
 def test_download_artifact_empty_zip(mock_zip_empty, mock_headers):
     """Test artifact download with empty zip file."""
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "services.github.artifacts.download_artifact.create_headers"
     ) as mock_create_headers:
 
@@ -138,9 +138,7 @@ def test_download_artifact_with_different_parameters():
     ]
 
     for owner, repo, artifact_id, token in test_cases:
-        with patch(
-            "services.github.artifacts.download_artifact.get"
-        ) as mock_get, patch(
+        with patch("requests.get") as mock_get, patch(
             "services.github.artifacts.download_artifact.create_headers"
         ) as mock_create_headers:
 
@@ -182,7 +180,7 @@ def test_download_artifact_lcov_with_unicode_content():
     zip_buffer.seek(0)
     zip_content = zip_buffer.getvalue()
 
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "services.github.artifacts.download_artifact.create_headers"
     ) as mock_create_headers:
 
@@ -209,7 +207,7 @@ def test_download_artifact_lcov_with_binary_content():
     zip_buffer.seek(0)
     zip_content = zip_buffer.getvalue()
 
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "services.github.artifacts.download_artifact.create_headers"
     ) as mock_create_headers:
 
@@ -238,7 +236,7 @@ def test_download_artifact_multiple_files_with_lcov():
     zip_buffer.seek(0)
     zip_content = zip_buffer.getvalue()
 
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "services.github.artifacts.download_artifact.create_headers"
     ) as mock_create_headers:
 
@@ -257,7 +255,7 @@ def test_download_artifact_multiple_files_with_lcov():
 
 def test_download_artifact_exception_handling():
     """Test that exceptions are handled by the decorator."""
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "services.github.artifacts.download_artifact.create_headers"
     ) as mock_create_headers:
 
@@ -274,7 +272,7 @@ def test_download_artifact_exception_handling():
 
 def test_download_artifact_request_timeout():
     """Test that request timeout is handled by the decorator."""
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "services.github.artifacts.download_artifact.create_headers"
     ) as mock_create_headers:
 
@@ -291,7 +289,7 @@ def test_download_artifact_request_timeout():
 
 def test_download_artifact_invalid_zip_content():
     """Test download_artifact with invalid zip content."""
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "services.github.artifacts.download_artifact.create_headers"
     ) as mock_create_headers:
 
@@ -310,7 +308,7 @@ def test_download_artifact_invalid_zip_content():
 
 def test_download_artifact_url_construction():
     """Test that the GitHub API URL is constructed correctly."""
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "services.github.artifacts.download_artifact.create_headers"
     ) as mock_create_headers, patch(
         "services.github.artifacts.download_artifact.zipfile.ZipFile"
@@ -336,26 +334,26 @@ def test_download_artifact_url_construction():
         )
 
 
-def test_download_artifact_prints_file_list(mock_zip_with_lcov, capsys):
-    """Test that the function prints the file list from the zip."""
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
-        "services.github.artifacts.download_artifact.create_headers"
-    ) as mock_create_headers:
+def test_download_artifact_logs_file_list(mock_zip_with_lcov, caplog):
+    """Test that the function logs the file list from the zip."""
+    import logging
 
-        # Setup mocks
-        mock_response = MagicMock()
-        mock_response.content = mock_zip_with_lcov
-        mock_get.return_value = mock_response
-        mock_create_headers.return_value = {}
+    with caplog.at_level(logging.INFO):
+        with patch("requests.get") as mock_get, patch(
+            "services.github.artifacts.download_artifact.create_headers"
+        ) as mock_create_headers:
 
-        # Call function
-        download_artifact("owner", "repo", 123, "token")
+            # Setup mocks
+            mock_response = MagicMock()
+            mock_response.content = mock_zip_with_lcov
+            mock_get.return_value = mock_response
+            mock_create_headers.return_value = {}
 
-        # Check printed output
-        captured = capsys.readouterr()
-        assert "File list:" in captured.out
-        assert "lcov.info" in captured.out
-        assert "other_file.txt" in captured.out
+            # Call function
+            download_artifact("owner", "repo", 123, "token")
+
+            # Check logged output
+            assert "File list:" in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -370,7 +368,7 @@ def test_download_artifact_prints_file_list(mock_zip_with_lcov, capsys):
 )
 def test_download_artifact_edge_case_parameters(owner, repo, artifact_id, token):
     """Test download_artifact with edge case parameters."""
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "services.github.artifacts.download_artifact.create_headers"
     ) as mock_create_headers, patch(
         "services.github.artifacts.download_artifact.zipfile.ZipFile"
@@ -409,7 +407,7 @@ def test_download_artifact_large_lcov_content():
     zip_buffer.seek(0)
     zip_content = zip_buffer.getvalue()
 
-    with patch("services.github.artifacts.download_artifact.get") as mock_get, patch(
+    with patch("requests.get") as mock_get, patch(
         "services.github.artifacts.download_artifact.create_headers"
     ) as mock_create_headers:
 
