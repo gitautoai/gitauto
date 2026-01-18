@@ -1,5 +1,3 @@
-# pylint: disable=broad-exception-caught
-
 # Standard imports
 import os
 import subprocess
@@ -132,18 +130,18 @@ def apply_patch(original_text: str, diff_text: str):
     except FileNotFoundError as e:
         return "", f"Error: {e}"
 
-    except Exception as e:  # pylint: disable=broad-except
+    except OSError as e:
         return "", f"Error: {e}"
     finally:
         # Remove temporary files
         try:
             os.remove(path=org_fname)
-        except Exception as e:
+        except OSError as e:
             logger.error("Failed to remove org file: %s", e)
 
         try:
             os.remove(path=diff_fname)
-        except Exception as e:
+        except OSError as e:
             logger.error("Failed to remove diff file: %s", e)
 
         # Remove any Oops.rej* files in the root directory

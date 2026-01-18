@@ -5,6 +5,7 @@ import os
 from unittest.mock import Mock, patch
 
 # Third-party imports
+from postgrest.exceptions import APIError
 import pytest
 
 # Local imports
@@ -319,7 +320,7 @@ class TestGetCoverages:
     def test_get_coverages_database_exception(self, mock_supabase_chain):
         """Test that database exceptions are handled gracefully due to handle_exceptions decorator."""
         # Setup
-        mock_supabase_chain.execute.side_effect = Exception("Database connection error")
+        mock_supabase_chain.execute.side_effect = RuntimeError("Database connection error")
 
         repo_id = 123
         filenames = ["src/test.py"]
@@ -333,7 +334,7 @@ class TestGetCoverages:
     def test_get_coverages_supabase_table_exception(self, mock_supabase):
         """Test that supabase.table exceptions are handled gracefully."""
         # Setup
-        mock_supabase.table.side_effect = Exception("Table access error")
+        mock_supabase.table.side_effect = RuntimeError("Table access error")
 
         repo_id = 123
         filenames = ["src/test.py"]
@@ -819,17 +820,8 @@ class TestGetCoveragesIntegration:
                 ).execute()
                 max_working = mid
                 low = mid + 1
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                if (
-                    "400" in str(e)
-                    or "Bad Request" in str(e)
-                    or "JSON could not be generated" in str(e)
-                    or "APIError" in str(e)
-                ):
-                    high = mid - 1
-                else:
-                    # Different error, skip
-                    high = mid - 1
+            except APIError:
+                high = mid - 1
 
         # We found the limit to be 25,036 chars
         assert (

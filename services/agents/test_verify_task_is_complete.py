@@ -88,7 +88,7 @@ def test_verify_task_is_complete_no_pull_number_with_issue_returns_default(
 
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 def test_verify_task_is_complete_api_error_returns_default(mock_get_files, base_args):
-    mock_get_files.side_effect = Exception("API error")
+    mock_get_files.side_effect = RuntimeError("API error")
 
     result = verify_task_is_complete(base_args)
 

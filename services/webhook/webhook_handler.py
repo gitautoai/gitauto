@@ -102,7 +102,9 @@ async def handle_webhook_event(
         sender_name = payload["sender"]["login"]
         msg = f"🎉 New installation by `{sender_name}` for `{owner_name}`"
         slack_notify(msg)
-        handle_installation_created(payload=cast(GitHubInstallationPayload, payload))
+        await handle_installation_created(
+            payload=cast(GitHubInstallationPayload, payload)
+        )
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=deleted#installation
@@ -178,7 +180,7 @@ async def handle_webhook_event(
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation_repositories
     if event_name == "installation_repositories":
         if action == "added":
-            handle_installation_repos_added(
+            await handle_installation_repos_added(
                 payload=cast(GitHubInstallationRepositoriesPayload, payload)
             )
             return

@@ -5,8 +5,10 @@ from services.webhook.process_repositories import process_repositories
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def handle_installation_repos_added(payload: GitHubInstallationRepositoriesPayload):
+@handle_exceptions(raise_on_error=True)
+async def handle_installation_repos_added(
+    payload: GitHubInstallationRepositoriesPayload,
+):
     installation_id = payload["installation"]["id"]
     if not is_installation_valid(installation_id=installation_id):
         return
@@ -20,7 +22,7 @@ def handle_installation_repos_added(payload: GitHubInstallationRepositoriesPaylo
     sender_name = payload["sender"]["login"]
 
     # Process added repositories
-    process_repositories(
+    await process_repositories(
         owner_id=owner_id,
         owner_name=owner_name,
         repositories=payload["repositories_added"],

@@ -57,7 +57,7 @@ def test_get_circleci_job_artifacts_empty_response():
 def test_get_circleci_job_artifacts_http_error():
     """Test handling of HTTP errors when retrieving CircleCI job artifacts."""
     mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = Exception("HTTP 404")
+    mock_response.raise_for_status.side_effect = RuntimeError("HTTP 404")
 
     with patch("services.circleci.get_job_artifacts.get") as mock_get:
         mock_get.return_value = mock_response
@@ -646,7 +646,7 @@ def test_get_circleci_job_artifacts_generic_exception():
     """Test handling of generic Exception."""
     mock_response = MagicMock()
     # Simulate a generic exception
-    mock_response.json.side_effect = Exception("Unexpected error occurred")
+    mock_response.json.side_effect = RuntimeError("Unexpected error occurred")
     mock_response.raise_for_status.return_value = None
 
     with patch("services.circleci.get_job_artifacts.get") as mock_get:

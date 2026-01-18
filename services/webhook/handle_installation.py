@@ -19,8 +19,8 @@ from services.webhook.process_repositories import process_repositories
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-def handle_installation_created(payload: GitHubInstallationPayload):
+@handle_exceptions(raise_on_error=True)
+async def handle_installation_created(payload: GitHubInstallationPayload):
     installation_id = payload["installation"]["id"]
     owner_type = payload["installation"]["account"]["type"]
     owner_name = payload["installation"]["account"]["login"]
@@ -59,7 +59,7 @@ def handle_installation_created(payload: GitHubInstallationPayload):
 
     upsert_user(user_id=user_id, user_name=user_name, email=email)
 
-    process_repositories(
+    await process_repositories(
         owner_id=owner_id,
         owner_name=owner_name,
         repositories=repositories,

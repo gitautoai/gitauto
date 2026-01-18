@@ -4,7 +4,7 @@
 # Standard imports
 import json
 from typing import cast
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 # Third-party imports
 import pytest
@@ -14,6 +14,8 @@ from services.github.types.github_types import GitHubInstallationRepositoriesPay
 from services.webhook.handle_installation_repos_added import (
     handle_installation_repos_added,
 )
+
+pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture
@@ -66,7 +68,8 @@ def mock_get_installation_access_token():
 def mock_process_repositories():
     """Mock process_repositories function."""
     with patch(
-        "services.webhook.handle_installation_repos_added.process_repositories"
+        "services.webhook.handle_installation_repos_added.process_repositories",
+        new_callable=AsyncMock,
     ) as mock:
         yield mock
 
@@ -74,7 +77,7 @@ def mock_process_repositories():
 class TestHandleInstallationReposAdded:
     """Test cases for handle_installation_repos_added function."""
 
-    def test_handle_installation_repos_added_success(
+    async def test_handle_installation_repos_added_success(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -87,7 +90,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -106,7 +109,7 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_invalid_installation(
+    async def test_handle_installation_repos_added_invalid_installation(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -118,7 +121,7 @@ class TestHandleInstallationReposAdded:
         mock_is_installation_valid.return_value = False
 
         # Execute
-        result = handle_installation_repos_added(mock_installation_payload)
+        result = await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         assert result is None
@@ -126,7 +129,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
 
-    def test_handle_installation_repos_added_empty_repositories(
+    async def test_handle_installation_repos_added_empty_repositories(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -140,7 +143,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -156,22 +159,23 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_token_error(
+    async def test_handle_installation_repos_added_with_token_error(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
         mock_get_installation_access_token,
         mock_process_repositories,
     ):
-        """Test handling when token retrieval raises - returns early without processing."""
+        """Test handling when token retrieval raises - exception is re-raised."""
         # Setup - get_installation_access_token now raises instead of returning None
         mock_is_installation_valid.return_value = True
         mock_get_installation_access_token.side_effect = ValueError(
             "Installation 67890 suspended or deleted"
         )
 
-        # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(ValueError, match="Installation 67890 suspended or deleted"):
+            await handle_installation_repos_added(mock_installation_payload)
 
         # Verify - should return early when token retrieval fails
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -180,7 +184,7 @@ class TestHandleInstallationReposAdded:
         )
         mock_process_repositories.assert_not_called()
 
-    def test_handle_installation_repos_added_with_exception_in_is_installation_valid(
+    async def test_handle_installation_repos_added_with_exception_in_is_installation_valid(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -191,16 +195,15 @@ class TestHandleInstallationReposAdded:
         # Setup
         mock_is_installation_valid.side_effect = Exception("Database error")
 
-        # Execute
-        result = handle_installation_repos_added(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="Database error"):
+            await handle_installation_repos_added(mock_installation_payload)
 
-        # Verify - function should return None due to handle_exceptions decorator
-        assert result is None
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
 
-    def test_handle_installation_repos_added_with_exception_in_get_token(
+    async def test_handle_installation_repos_added_with_exception_in_get_token(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -212,18 +215,17 @@ class TestHandleInstallationReposAdded:
         mock_is_installation_valid.return_value = True
         mock_get_installation_access_token.side_effect = Exception("Token error")
 
-        # Execute
-        result = handle_installation_repos_added(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="Token error"):
+            await handle_installation_repos_added(mock_installation_payload)
 
-        # Verify - function should return None due to handle_exceptions decorator
-        assert result is None
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
         mock_process_repositories.assert_not_called()
 
-    def test_handle_installation_repos_added_with_exception_in_process_repositories(
+    async def test_handle_installation_repos_added_with_exception_in_process_repositories(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -236,11 +238,10 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
         mock_process_repositories.side_effect = Exception("Processing error")
 
-        # Execute
-        result = handle_installation_repos_added(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(Exception, match="Processing error"):
+            await handle_installation_repos_added(mock_installation_payload)
 
-        # Verify - function should return None due to handle_exceptions decorator
-        assert result is None
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
@@ -257,7 +258,7 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_missing_payload_fields(
+    async def test_handle_installation_repos_added_with_missing_payload_fields(
         self,
         mock_is_installation_valid,
         mock_get_installation_access_token,
@@ -280,20 +281,19 @@ class TestHandleInstallationReposAdded:
         mock_is_installation_valid.return_value = True
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
-        # Execute
-        result = handle_installation_repos_added(
-            cast(GitHubInstallationRepositoriesPayload, incomplete_payload)
-        )
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(KeyError, match="sender"):
+            await handle_installation_repos_added(
+                cast(GitHubInstallationRepositoriesPayload, incomplete_payload)
+            )
 
-        # Verify - function should return None due to handle_exceptions decorator
-        assert result is None
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
         mock_process_repositories.assert_not_called()
 
-    def test_handle_installation_repos_added_with_missing_installation_id(
+    async def test_handle_installation_repos_added_with_missing_installation_id(
         self,
         mock_is_installation_valid,
         mock_get_installation_access_token,
@@ -317,18 +317,17 @@ class TestHandleInstallationReposAdded:
             ],
         }
 
-        # Execute
-        result = handle_installation_repos_added(
-            cast(GitHubInstallationRepositoriesPayload, incomplete_payload)
-        )
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(KeyError, match="id"):
+            await handle_installation_repos_added(
+                cast(GitHubInstallationRepositoriesPayload, incomplete_payload)
+            )
 
-        # Verify - function should return None due to handle_exceptions decorator
-        assert result is None
         mock_is_installation_valid.assert_not_called()
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
 
-    def test_handle_installation_repos_added_with_missing_account_info(
+    async def test_handle_installation_repos_added_with_missing_account_info(
         self,
         mock_is_installation_valid,
         mock_get_installation_access_token,
@@ -351,20 +350,19 @@ class TestHandleInstallationReposAdded:
         mock_is_installation_valid.return_value = True
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
-        # Execute
-        result = handle_installation_repos_added(
-            cast(GitHubInstallationRepositoriesPayload, incomplete_payload)
-        )
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(KeyError, match="account"):
+            await handle_installation_repos_added(
+                cast(GitHubInstallationRepositoriesPayload, incomplete_payload)
+            )
 
-        # Verify - function should return None due to handle_exceptions decorator
-        assert result is None
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
         mock_process_repositories.assert_not_called()
 
-    def test_handle_installation_repos_added_with_single_repository(
+    async def test_handle_installation_repos_added_with_single_repository(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -380,7 +378,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -396,7 +394,7 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_different_installation_id(
+    async def test_handle_installation_repos_added_with_different_installation_id(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -411,7 +409,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_different_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(
@@ -432,7 +430,7 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_zero_installation_id(
+    async def test_handle_installation_repos_added_with_zero_installation_id(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -446,7 +444,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=0)
@@ -463,7 +461,7 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_string_ids(
+    async def test_handle_installation_repos_added_with_string_ids(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -479,7 +477,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=str(67890))
@@ -498,7 +496,7 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_complex_repository_data(
+    async def test_handle_installation_repos_added_with_complex_repository_data(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -532,7 +530,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -548,7 +546,7 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_unicode_names(
+    async def test_handle_installation_repos_added_with_unicode_names(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -563,7 +561,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -582,39 +580,37 @@ class TestHandleInstallationReposAdded:
             user_name="tëst-sëndér",
         )
 
-    def test_handle_installation_repos_added_with_none_payload(
+    async def test_handle_installation_repos_added_with_none_payload(
         self,
         mock_is_installation_valid,
         mock_get_installation_access_token,
         mock_process_repositories,
     ):
         """Test handling when payload is None."""
-        # Execute
-        result = handle_installation_repos_added(None)  # type: ignore[arg-type]
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(TypeError):
+            await handle_installation_repos_added(None)  # type: ignore[arg-type]
 
-        # Verify - function should return None due to handle_exceptions decorator
-        assert result is None
         mock_is_installation_valid.assert_not_called()
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
 
-    def test_handle_installation_repos_added_with_empty_payload(
+    async def test_handle_installation_repos_added_with_empty_payload(
         self,
         mock_is_installation_valid,
         mock_get_installation_access_token,
         mock_process_repositories,
     ):
         """Test handling when payload is empty dictionary."""
-        # Execute
-        result = handle_installation_repos_added({})  # type: ignore[arg-type]
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(KeyError, match="installation"):
+            await handle_installation_repos_added({})  # type: ignore[arg-type]
 
-        # Verify - function should return None due to handle_exceptions decorator
-        assert result is None
         mock_is_installation_valid.assert_not_called()
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
 
-    def test_handle_installation_repos_added_with_type_error_in_payload_access(
+    async def test_handle_installation_repos_added_with_type_error_in_payload_access(
         self,
         mock_is_installation_valid,
         mock_get_installation_access_token,
@@ -628,18 +624,17 @@ class TestHandleInstallationReposAdded:
             "repositories_added": [],
         }
 
-        # Execute
-        result = handle_installation_repos_added(
-            cast(GitHubInstallationRepositoriesPayload, invalid_payload)
-        )
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(TypeError):
+            await handle_installation_repos_added(
+                cast(GitHubInstallationRepositoriesPayload, invalid_payload)
+            )
 
-        # Verify - function should return None due to handle_exceptions decorator
-        assert result is None
         mock_is_installation_valid.assert_not_called()
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
 
-    def test_handle_installation_repos_added_with_attribute_error(
+    async def test_handle_installation_repos_added_with_attribute_error(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -654,18 +649,17 @@ class TestHandleInstallationReposAdded:
             "'NoneType' object has no attribute 'some_attr'"
         )
 
-        # Execute
-        result = handle_installation_repos_added(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(AttributeError, match="some_attr"):
+            await handle_installation_repos_added(mock_installation_payload)
 
-        # Verify - function should return None due to handle_exceptions decorator
-        assert result is None
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
         mock_process_repositories.assert_called_once()
 
-    def test_handle_installation_repos_added_with_key_error(
+    async def test_handle_installation_repos_added_with_key_error(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -678,18 +672,17 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
         mock_process_repositories.side_effect = KeyError("missing_key")
 
-        # Execute
-        result = handle_installation_repos_added(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(KeyError, match="missing_key"):
+            await handle_installation_repos_added(mock_installation_payload)
 
-        # Verify - function should return None due to handle_exceptions decorator
-        assert result is None
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
         mock_process_repositories.assert_called_once()
 
-    def test_handle_installation_repos_added_with_json_decode_error(
+    async def test_handle_installation_repos_added_with_json_decode_error(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -703,18 +696,17 @@ class TestHandleInstallationReposAdded:
         json_error = json.JSONDecodeError("Expecting value", "invalid json", 0)
         mock_process_repositories.side_effect = json_error
 
-        # Execute
-        result = handle_installation_repos_added(mock_installation_payload)
+        # Execute - exception is re-raised due to raise_on_error=True
+        with pytest.raises(json.JSONDecodeError):
+            await handle_installation_repos_added(mock_installation_payload)
 
-        # Verify - function should return None due to handle_exceptions decorator
-        assert result is None
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
         mock_process_repositories.assert_called_once()
 
-    def test_handle_installation_repos_added_decorator_behavior(
+    async def test_handle_installation_repos_added_decorator_behavior(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -728,7 +720,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.return_value = None
 
         # Execute
-        result = handle_installation_repos_added(mock_installation_payload)
+        result = await handle_installation_repos_added(mock_installation_payload)
 
         # Verify - function should return None (default_return_value from decorator)
         assert result is None
@@ -738,7 +730,7 @@ class TestHandleInstallationReposAdded:
         )
         mock_process_repositories.assert_called_once()
 
-    def test_handle_installation_repos_added_with_large_repository_list(
+    async def test_handle_installation_repos_added_with_large_repository_list(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -753,7 +745,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -769,7 +761,7 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_negative_installation_id(
+    async def test_handle_installation_repos_added_with_negative_installation_id(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -782,7 +774,7 @@ class TestHandleInstallationReposAdded:
         mock_is_installation_valid.return_value = False
 
         # Execute
-        result = handle_installation_repos_added(mock_installation_payload)
+        result = await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         assert result is None
@@ -790,7 +782,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
 
-    def test_handle_installation_repos_added_with_repositories_added_none(
+    async def test_handle_installation_repos_added_with_repositories_added_none(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -804,7 +796,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -820,7 +812,7 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_very_long_names(
+    async def test_handle_installation_repos_added_with_very_long_names(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -836,7 +828,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -855,7 +847,7 @@ class TestHandleInstallationReposAdded:
             user_name=long_name,
         )
 
-    def test_handle_installation_repos_added_with_special_characters_in_names(
+    async def test_handle_installation_repos_added_with_special_characters_in_names(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -872,7 +864,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -891,7 +883,7 @@ class TestHandleInstallationReposAdded:
             user_name=special_sender,
         )
 
-    def test_handle_installation_repos_added_with_max_int_values(
+    async def test_handle_installation_repos_added_with_max_int_values(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -908,7 +900,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=max_int)
@@ -927,7 +919,7 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_float_installation_id(
+    async def test_handle_installation_repos_added_with_float_installation_id(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -941,7 +933,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=12345.0)
@@ -960,7 +952,7 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_whitespace_only_names(
+    async def test_handle_installation_repos_added_with_whitespace_only_names(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -975,7 +967,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -994,7 +986,7 @@ class TestHandleInstallationReposAdded:
             user_name="\t\n\r",
         )
 
-    def test_handle_installation_repos_added_with_boolean_installation_valid_response(
+    async def test_handle_installation_repos_added_with_boolean_installation_valid_response(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -1007,7 +999,7 @@ class TestHandleInstallationReposAdded:
         mock_get_installation_access_token.return_value = "ghs_test_token"
 
         # Execute
-        handle_installation_repos_added(mock_installation_payload)
+        await handle_installation_repos_added(mock_installation_payload)
 
         # Verify - should still proceed since "valid" is truthy
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -1026,7 +1018,7 @@ class TestHandleInstallationReposAdded:
             user_name="test-sender",
         )
 
-    def test_handle_installation_repos_added_with_falsy_installation_valid_response(
+    async def test_handle_installation_repos_added_with_falsy_installation_valid_response(
         self,
         mock_installation_payload,
         mock_is_installation_valid,
@@ -1038,7 +1030,7 @@ class TestHandleInstallationReposAdded:
         mock_is_installation_valid.return_value = 0  # Falsy but not boolean
 
         # Execute
-        result = handle_installation_repos_added(mock_installation_payload)
+        result = await handle_installation_repos_added(mock_installation_payload)
 
         # Verify - should return early since 0 is falsy
         assert result is None

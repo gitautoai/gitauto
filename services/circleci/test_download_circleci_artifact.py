@@ -24,7 +24,7 @@ def test_download_circleci_artifact_success():
 
 def test_download_circleci_artifact_http_error():
     mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = Exception("HTTP 404")
+    mock_response.raise_for_status.side_effect = RuntimeError("HTTP 404")
 
     with patch("services.circleci.download_circleci_artifact.requests.get") as mock_get:
         mock_get.return_value = mock_response

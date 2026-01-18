@@ -161,7 +161,7 @@ def test_delete_scheduler_generic_exception(mock_scheduler_client, mock_logger):
     """Test scheduler deletion with generic exception."""
     # Setup
     schedule_name = "exception-schedule"
-    mock_scheduler_client.delete_schedule.side_effect = Exception("Unexpected error")
+    mock_scheduler_client.delete_schedule.side_effect = RuntimeError("Unexpected error")
 
     # Execute
     result = delete_scheduler(schedule_name)
@@ -237,7 +237,7 @@ def test_delete_scheduler_exception_before_logging(mock_scheduler_client, mock_l
     """Test that logging is not called when exception occurs before logging."""
     schedule_name = "exception-before-log"
     # Exception occurs during delete_schedule call, before logging
-    mock_scheduler_client.delete_schedule.side_effect = Exception("AWS Error")
+    mock_scheduler_client.delete_schedule.side_effect = RuntimeError("AWS Error")
 
     result = delete_scheduler(schedule_name)
 
