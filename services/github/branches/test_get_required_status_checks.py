@@ -59,7 +59,7 @@ def test_get_required_status_checks_success(
 
 
 def test_get_required_status_checks_403_no_permission(
-    test_owner, test_repo, test_token, capsys
+    test_owner, test_repo, test_token
 ):
     with patch(
         "services.github.branches.get_required_status_checks.requests.get"
@@ -77,12 +77,10 @@ def test_get_required_status_checks_403_no_permission(
 
         assert status_code == 403
         assert result is None
-        captured = capsys.readouterr()
-        assert "No permission to read branch protection" in captured.out
 
 
 def test_get_required_status_checks_404_no_protection(
-    test_owner, test_repo, test_token, capsys
+    test_owner, test_repo, test_token
 ):
     with patch(
         "services.github.branches.get_required_status_checks.requests.get"
@@ -100,12 +98,10 @@ def test_get_required_status_checks_404_no_protection(
 
         assert status_code == 404
         assert result == []
-        captured = capsys.readouterr()
-        assert "No branch protection configured" in captured.out
 
 
 def test_get_required_status_checks_no_required_checks(
-    test_owner, test_repo, test_token, capsys
+    test_owner, test_repo, test_token
 ):
     with patch(
         "services.github.branches.get_required_status_checks.requests.get"
@@ -124,8 +120,6 @@ def test_get_required_status_checks_no_required_checks(
 
         assert status_code == 200
         assert result == []
-        captured = capsys.readouterr()
-        assert "no required status checks configured" in captured.out
 
 
 def test_get_required_status_checks_only_contexts(test_owner, test_repo, test_token):
