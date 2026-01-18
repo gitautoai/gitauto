@@ -1022,8 +1022,8 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
     ```
 
     - PR title should be technical and descriptive
-    - **CRITICAL**: Social Media Post section is REQUIRED - will be used for X/LinkedIn/HN posts
-    - Social Media Post must:
+    - **Social Media Post section**: Will be used for X/LinkedIn/HN posts. Only include when there are explicit customer benefits. Skip for internal-only changes (refactoring, logging fixes, test improvements, infrastructure updates) that don't affect customers.
+    - When included, Social Media Post must:
       - Be concise and fit in a tweet (under 280 characters is ideal)
       - Mention "GitAuto" by name
       - Explain WHAT changed in practical terms
