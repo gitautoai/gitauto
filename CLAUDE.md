@@ -982,7 +982,7 @@ When the user says "LGTM" (Looks Good To Me), automatically execute this workflo
 2. Run ruff linting: `ruff check . --fix` (fix ALL ruff errors, not just modified files - if any errors remain unfixed, STOP and fix them before continuing)
 3. Check for print statements and built-in logging:
    - Run `ruff check --select=T201 . --exclude schemas/,venv/` to find print statements - **FIX ALL before continuing** (use custom logger instead)
-   - Run `grep -r "^import logging$" --include="*.py" . --exclude-dir=venv` to find built-in logging imports - **FIX ALL before continuing** (use `from utils.logging.logging_config import logger` instead)
+   - Run `grep -r "^import logging$" --include="*.py" . --exclude-dir=venv | grep -v "utils/logging/logging_config.py"` to find built-in logging imports - **FIX ALL before continuing** (use `from utils.logging.logging_config import logger` instead). Note: `utils/logging/logging_config.py` is excluded because it's the central logging module.
 4. **CRITICAL**: Check `git status` FIRST to see ALL changes including deleted/renamed files
 5. Get list of modified, created, AND deleted files ONCE: `(git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard) | sort -u`
    - This command captures: modified files, staged files, and newly created untracked files
