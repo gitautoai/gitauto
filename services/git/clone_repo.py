@@ -46,6 +46,8 @@ async def clone_repo(
     clone_node_modules = os.path.join(clone_dir, "node_modules")
     if os.path.exists(efs_node_modules) and not os.path.exists(clone_node_modules):
         os.symlink(efs_node_modules, clone_node_modules)
-        logger.info("Symlinked node_modules: %s -> %s", clone_node_modules, efs_node_modules)
+        logger.info(
+            "Symlinked node_modules: %s -> %s", clone_node_modules, efs_node_modules
+        )
 
     return clone_dir
