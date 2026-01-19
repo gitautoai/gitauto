@@ -33,6 +33,7 @@ def read_file_content(
         # Save to clone_dir so subsequent calls find it locally
         if clone_dir:
             local_path = os.path.join(clone_dir, file_name)
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
             with open(local_path, "w", encoding=UTF8) as f:
                 f.write(content)
 
