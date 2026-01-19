@@ -11,6 +11,8 @@ def test_handle_coverage_report_with_python_sample():
     with patch(
         "services.webhook.handle_coverage_report.get_installation_access_token"
     ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
         "services.webhook.handle_coverage_report.get_workflow_artifacts"
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
@@ -23,6 +25,7 @@ def test_handle_coverage_report_with_python_sample():
     ) as mock_upsert_repo:
 
         mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
         mock_artifacts.return_value = [{"id": 123, "name": "coverage-lcov.info"}]
         mock_download.return_value = sample_lcov
         mock_get_cov.return_value = {}
@@ -84,6 +87,8 @@ def test_handle_coverage_report_with_coverage_report_artifact():
     with patch(
         "services.webhook.handle_coverage_report.get_installation_access_token"
     ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
         "services.webhook.handle_coverage_report.get_workflow_artifacts"
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
@@ -96,6 +101,7 @@ def test_handle_coverage_report_with_coverage_report_artifact():
     ) as mock_upsert_repo:
 
         mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
         mock_artifacts.return_value = [{"id": 123, "name": "coverage-report.lcov.info"}]
         mock_download.return_value = sample_lcov
         mock_get_cov.return_value = {}
@@ -125,6 +131,8 @@ def test_handle_coverage_report_with_default_artifact_name():
     with patch(
         "services.webhook.handle_coverage_report.get_installation_access_token"
     ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
         "services.webhook.handle_coverage_report.get_workflow_artifacts"
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
@@ -137,6 +145,7 @@ def test_handle_coverage_report_with_default_artifact_name():
     ) as mock_upsert_repo:
 
         mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
         mock_artifacts.return_value = [{"id": 456, "name": "artifact.lcov.info"}]
         mock_download.return_value = sample_lcov
         mock_get_cov.return_value = {}
@@ -163,12 +172,15 @@ def test_handle_coverage_report_skips_non_coverage_artifacts():
     with patch(
         "services.webhook.handle_coverage_report.get_installation_access_token"
     ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
         "services.webhook.handle_coverage_report.get_workflow_artifacts"
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
     ) as mock_download:
 
         mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
         mock_artifacts.return_value = [
             {"id": 123, "name": "build-logs"},
             {"id": 456, "name": "test-results"},
@@ -196,6 +208,8 @@ def test_handle_coverage_report_with_javascript_sample():
     with patch(
         "services.webhook.handle_coverage_report.get_installation_access_token"
     ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
         "services.webhook.handle_coverage_report.get_workflow_artifacts"
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
@@ -208,6 +222,7 @@ def test_handle_coverage_report_with_javascript_sample():
     ) as mock_upsert_repo:
 
         mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
         mock_artifacts.return_value = [{"id": 456, "name": "jest-coverage-lcov.info"}]
         mock_download.return_value = sample_lcov
         mock_get_cov.return_value = {}
@@ -240,34 +255,22 @@ def test_handle_coverage_report_with_javascript_sample():
 
 
 def test_handle_coverage_report_with_null_head_branch():
-    """Test handling coverage report when head_branch is None (detached HEAD state)"""
-    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
-        sample_lcov = f.read()
+    """Test handling coverage report when head_branch is None (detached HEAD state)
 
+    With target branch checking, detached HEAD builds are skipped since
+    'detached' != target_branch.
+    """
     with patch(
         "services.webhook.handle_coverage_report.get_installation_access_token"
     ) as mock_token, patch(
-        "services.webhook.handle_coverage_report.get_workflow_artifacts"
-    ) as mock_artifacts, patch(
-        "services.webhook.handle_coverage_report.download_artifact"
-    ) as mock_download, patch(
-        "services.webhook.handle_coverage_report.get_coverages"
-    ) as mock_get_cov, patch(
-        "services.webhook.handle_coverage_report.upsert_coverages"
-    ) as mock_upsert_cov, patch(
-        "services.webhook.handle_coverage_report.upsert_repo_coverage"
-    ) as mock_upsert_repo, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
         "services.webhook.handle_coverage_report.logger"
     ) as mock_logger:
 
         mock_token.return_value = "fake-token"
-        mock_artifacts.return_value = [{"id": 123, "name": "coverage-lcov.info"}]
-        mock_download.return_value = sample_lcov
-        mock_get_cov.return_value = {}
-        mock_upsert_cov.return_value = True
-        mock_upsert_repo.return_value = True
+        mock_repo.return_value = {"target_branch": "main"}
 
-        # Act - pass None for head_branch
         result = handle_coverage_report(
             owner_id=12345,
             owner_name="test-owner",
@@ -275,23 +278,20 @@ def test_handle_coverage_report_with_null_head_branch():
             repo_name="test-repo",
             installation_id=111,
             run_id=222,
-            head_branch=None,  # Testing null head_branch
+            head_branch=None,
             user_name="test-user",
         )
 
-        # Assert
-        assert result is True
-        mock_upsert_cov.assert_called_once()
-
-        # Verify the branch_name was set to "detached" in the upserted data
-        upsert_call_args = mock_upsert_cov.call_args[0][0]
-        assert all(item.get("branch_name") == "detached" for item in upsert_call_args)
-
-        # Verify logging was called
+        assert result is None
         mock_logger.info.assert_any_call(
             "No branch context for coverage report (run_id: %s, source: %s). Using 'detached'.",
             222,
             "github",
+        )
+        mock_logger.info.assert_any_call(
+            "Skipping saving coverage to Supabase: head_branch=%s != target_branch=%s",
+            "detached",
+            "main",
         )
 
 
@@ -302,6 +302,8 @@ def test_handle_coverage_report_circleci():
     with patch(
         "services.webhook.handle_coverage_report.get_installation_access_token"
     ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
         "services.webhook.handle_coverage_report.get_circleci_token"
     ) as mock_get_token, patch(
         "services.webhook.handle_coverage_report.get_circleci_workflow_ids_from_check_suite"
@@ -320,6 +322,7 @@ def test_handle_coverage_report_circleci():
     ) as mock_upsert_repo:
 
         mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
         mock_get_token.return_value = {"token": "circle-token"}
         mock_workflow_ids.return_value = ["workflow-123"]
         mock_jobs.return_value = [
@@ -358,6 +361,8 @@ def test_scenario1_file_exists_and_in_lcov_updates_coverage():
     with patch(
         "services.webhook.handle_coverage_report.get_installation_access_token"
     ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
         "services.webhook.handle_coverage_report.get_workflow_artifacts"
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
@@ -376,6 +381,7 @@ def test_scenario1_file_exists_and_in_lcov_updates_coverage():
     ) as mock_delete:
 
         mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
         mock_artifacts.return_value = [{"id": 123, "name": "coverage-lcov.info"}]
         mock_download.return_value = sample_lcov
         mock_get_cov.return_value = {}
@@ -412,6 +418,8 @@ def test_scenario2_file_exists_but_not_in_lcov_not_touched():
     with patch(
         "services.webhook.handle_coverage_report.get_installation_access_token"
     ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
         "services.webhook.handle_coverage_report.get_workflow_artifacts"
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
@@ -430,6 +438,7 @@ def test_scenario2_file_exists_but_not_in_lcov_not_touched():
     ) as mock_delete:
 
         mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
         mock_artifacts.return_value = [{"id": 123, "name": "coverage-lcov.info"}]
         mock_download.return_value = sample_lcov
         mock_get_cov.return_value = {}
@@ -472,6 +481,8 @@ def test_scenario3_file_deleted_from_repo_removes_coverage():
     with patch(
         "services.webhook.handle_coverage_report.get_installation_access_token"
     ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
         "services.webhook.handle_coverage_report.get_workflow_artifacts"
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
@@ -490,6 +501,7 @@ def test_scenario3_file_deleted_from_repo_removes_coverage():
     ) as mock_delete:
 
         mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
         mock_artifacts.return_value = [{"id": 123, "name": "coverage-lcov.info"}]
         mock_download.return_value = sample_lcov
         mock_get_cov.return_value = {}
@@ -518,4 +530,42 @@ def test_scenario3_file_deleted_from_repo_removes_coverage():
             owner_id=12345,
             repo_id=67890,
             file_paths=["deleted/old_file.py"],
+        )
+
+
+def test_handle_coverage_report_fallback_to_default_branch():
+    """Test that empty target_branch falls back to GitHub's default branch"""
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
+        "services.webhook.handle_coverage_report.get_default_branch"
+    ) as mock_default, patch(
+        "services.webhook.handle_coverage_report.logger"
+    ) as mock_logger:
+
+        mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": ""}
+        mock_default.return_value = ("main", "abc123")
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=222,
+            head_branch="feature-branch",
+            user_name="test-user",
+        )
+
+        assert result is None
+        mock_default.assert_called_once_with(
+            owner="test-owner", repo="test-repo", token="fake-token"
+        )
+        mock_logger.info.assert_any_call(
+            "Skipping saving coverage to Supabase: head_branch=%s != target_branch=%s",
+            "feature-branch",
+            "main",
         )
