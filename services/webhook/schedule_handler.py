@@ -159,15 +159,23 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         return {"status": "skipped", "message": msg}
 
     # Filter out files with 100% coverage in all three metrics
-    files_needing_tests = [
-        item
-        for item in enriched_all_files
-        if not (
-            cast(float, item["statement_coverage"]) == 100.0
-            and cast(float, item["function_coverage"]) == 100.0
-            and cast(float, item["branch_coverage"]) == 100.0
+    files_needing_tests = []
+    for item in enriched_all_files:
+        stmt = item["statement_coverage"]
+        func = item["function_coverage"]
+        branch = item["branch_coverage"]
+        logger.info(
+            "Coverage for %s: stmt=%s, func=%s, branch=%s",
+            item["full_path"],
+            stmt,
+            func,
+            branch,
         )
-    ]
+        if stmt == 100.0 and func == 100.0 and branch == 100.0:
+            logger.info("Skipping %s: all 3 metrics at 100%%", item["full_path"])
+        else:
+            logger.info("Adding to candidates: %s", item["full_path"])
+            files_needing_tests.append(item)
 
     # Sort: prioritize untouched files (0% coverage) first, then by file_size, coverage, path
     files_needing_tests.sort(
@@ -188,7 +196,13 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     target_item = None
     for item in files_needing_tests:
         item_path = cast(str, item["full_path"])
-        logger.info("Evaluating %s", item_path)
+        logger.info(
+            "Evaluating %s (stmt=%s, func=%s, branch=%s)",
+            item_path,
+            item["statement_coverage"],
+            item["function_coverage"],
+            item["branch_coverage"],
+        )
 
         # Skip non-code files
         if not is_code_file(item_path):

@@ -16,15 +16,16 @@ from services.github.check_suites.get_circleci_workflow_id import (
     get_circleci_workflow_ids_from_check_suite,
 )
 from services.github.trees.get_file_tree import get_file_tree
+from services.supabase.coverages.delete_coverages_by_paths import (
+    delete_coverages_by_paths,
+)
+from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.coverages.upsert_coverages import upsert_coverages
 from services.supabase.repo_coverage.upsert_repo_coverage import upsert_repo_coverage
 
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
-from utils.files.is_code_file import is_code_file
-from utils.files.is_test_file import is_test_file
-from utils.files.is_type_file import is_type_file
 from utils.languages.detect_language_from_coverage import detect_language_from_coverage
 from utils.logging.logging_config import logger
 
@@ -162,45 +163,6 @@ def handle_coverage_report(
     if not coverage_data:
         return None
 
-    # Add uncovered source files
-    tree_items = get_file_tree(owner_name, repo_name, head_branch, github_token)
-
-    all_files = [item["path"] for item in tree_items if item["type"] == "blob"]
-    source_files = [
-        f
-        for f in all_files
-        if is_code_file(f) and not is_test_file(f) and not is_type_file(f)
-    ]
-
-    covered_files = {
-        report["full_path"] for report in coverage_data if report["level"] == "file"
-    }
-
-    for source_file in source_files:
-        if source_file not in covered_files:
-            coverage_data.append(
-                {
-                    "package_name": None,
-                    "language": "unknown",
-                    "level": "file",
-                    "full_path": source_file,
-                    "statement_coverage": 0.0,
-                    "function_coverage": 0.0,
-                    "branch_coverage": 0.0,
-                    "line_coverage": 0.0,
-                    "path_coverage": 0.0,
-                    "lines_covered": 0,
-                    "lines_total": 0,
-                    "functions_covered": 0,
-                    "functions_total": 0,
-                    "branches_covered": 0,
-                    "branches_total": 0,
-                    "uncovered_lines": "",
-                    "uncovered_functions": "",
-                    "uncovered_branches": "",
-                }
-            )
-
     # Remove duplicates
     seen: dict[tuple[int, str], CoverageReport] = {}
     for coverage in coverage_data:
@@ -298,5 +260,44 @@ def handle_coverage_report(
 
         upsert_repo_coverage(repo_coverage_data)
 
+    # Log files being upserted with their coverage values
+    for item in upsert_data:
+        logger.info(
+            "Upserting coverage for %s (stmt=%s, func=%s, branch=%s)",
+            item.get("full_path"),
+            item.get("statement_coverage"),
+            item.get("function_coverage"),
+            item.get("branch_coverage"),
+        )
+
     # Upsert file coverages
-    return upsert_coverages(upsert_data)
+    upsert_result = upsert_coverages(upsert_data)
+    logger.info("Upserted %d coverage records", len(upsert_data))
+
+    # Delete coverage records for files that no longer exist in the repo
+    tree_items = get_file_tree(owner_name, repo_name, head_branch, github_token)
+    current_repo_files = {item["path"] for item in tree_items if item["type"] == "blob"}
+    logger.info("Found %d files in repo tree", len(current_repo_files))
+
+    all_coverage_records = get_all_coverages(owner_id=owner_id, repo_id=repo_id)
+    logger.info(
+        "Found %d existing coverage records in database", len(all_coverage_records)
+    )
+
+    stale_paths = [
+        record["full_path"]
+        for record in all_coverage_records
+        if record["full_path"] not in current_repo_files
+    ]
+
+    if stale_paths:
+        logger.info(
+            "Deleting %d stale coverage records: %s", len(stale_paths), stale_paths
+        )
+        delete_coverages_by_paths(
+            owner_id=owner_id, repo_id=repo_id, file_paths=stale_paths
+        )
+    else:
+        logger.info("No stale coverage records to delete")
+
+    return upsert_result
