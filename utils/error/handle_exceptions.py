@@ -41,7 +41,7 @@ def handle_exceptions(
     default_return_value: None = None,
     raise_on_error: Literal[False] = ...,
     api_type: str = "github",
-) -> Callable[[Callable[P, R]], Callable[P, R | None]]: ...
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
 @overload

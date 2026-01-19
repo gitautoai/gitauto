@@ -11,8 +11,8 @@ from constants.agent import MAX_ITERATIONS
 from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.chat_with_agent import chat_with_agent
 from services.efs.start_async_install_on_efs import start_async_install_on_efs
-from services.git.clone_repo import clone_repo
 from services.git.get_clone_dir import get_clone_dir
+from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.openai.functions.functions import TOOLS_FOR_ISSUES
 from services.resend.send_email import send_email
 from services.resend.text.credits_depleted_email import get_credits_depleted_email_text
@@ -424,10 +424,13 @@ async def create_pr_from_issue(
     set_pr_number(pr_number)
     base_args["pull_number"] = pr_number
 
-    # Clone repo (fire-and-forget, runs in parallel with remaining work)
-    base_args["clone_dir"] = get_clone_dir(owner_name, repo_name, pr_number)
+    # Clone repo to tmp (fire-and-forget, runs in parallel with remaining work)
+    clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
+    base_args["clone_dir"] = clone_dir
     asyncio.create_task(
-        clone_repo(owner_name, repo_name, pr_number, new_branch_name, token)
+        prepare_repo_for_work(
+            owner_name, repo_name, base_branch, new_branch_name, token, clone_dir
+        )
     )
 
     comment_body = f"Created pull request: {pr_url}"

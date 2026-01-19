@@ -976,7 +976,7 @@ When making architectural decisions, ask "why" 5 times:
 - The PR should be clean - either fix all issues or get explicit user approval to proceed
 - When you find unrelated issues, add them to the todo list to fix later - never just skip them silently
 
-When the user says "LGTM" (Looks Good To Me), automatically execute this workflow:
+When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
 
 1. Run black formatting: `black .`
 2. Run ruff linting: `ruff check . --fix` (fix ALL ruff errors, not just modified files - if any errors remain unfixed, STOP and fix them before continuing)
