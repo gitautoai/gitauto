@@ -19,6 +19,7 @@ async def clone_repo(
         return clone_dir
 
     repo_url = f"https://x-access-token:{token}@github.com/{owner}/{repo}.git"
+    logger.info("Clone started: branch=%s dir=%s", branch, clone_dir)
 
     # --depth 1 (shallow clone): only need current files for code quality tools, not git history
     process = await asyncio.create_subprocess_exec(
@@ -36,11 +37,15 @@ async def clone_repo(
     _, stderr = await asyncio.wait_for(process.communicate(), timeout=180)
 
     if process.returncode != 0:
+        logger.error("Clone failed: %s", stderr.decode())
         raise RuntimeError(f"git clone failed: {stderr.decode()}")
+
+    logger.info("Clone completed: %s", clone_dir)
 
     efs_node_modules = os.path.join(get_efs_dir(owner, repo), "node_modules")
     clone_node_modules = os.path.join(clone_dir, "node_modules")
     if os.path.exists(efs_node_modules) and not os.path.exists(clone_node_modules):
         os.symlink(efs_node_modules, clone_node_modules)
+        logger.info("Symlinked node_modules: %s -> %s", clone_node_modules, efs_node_modules)
 
     return clone_dir
