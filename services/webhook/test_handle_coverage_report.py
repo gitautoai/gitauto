@@ -15,8 +15,6 @@ def test_handle_coverage_report_with_python_sample():
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
     ) as mock_download, patch(
-        "services.webhook.handle_coverage_report.get_file_tree"
-    ) as mock_tree, patch(
         "services.webhook.handle_coverage_report.get_coverages"
     ) as mock_get_cov, patch(
         "services.webhook.handle_coverage_report.upsert_coverages"
@@ -27,7 +25,6 @@ def test_handle_coverage_report_with_python_sample():
         mock_token.return_value = "fake-token"
         mock_artifacts.return_value = [{"id": 123, "name": "coverage-lcov.info"}]
         mock_download.return_value = sample_lcov
-        mock_tree.return_value = []
         mock_get_cov.return_value = {}
         mock_upsert_cov.return_value = True
         mock_upsert_repo.return_value = True
@@ -91,8 +88,6 @@ def test_handle_coverage_report_with_coverage_report_artifact():
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
     ) as mock_download, patch(
-        "services.webhook.handle_coverage_report.get_file_tree"
-    ) as mock_tree, patch(
         "services.webhook.handle_coverage_report.get_coverages"
     ) as mock_get_cov, patch(
         "services.webhook.handle_coverage_report.upsert_coverages"
@@ -103,7 +98,6 @@ def test_handle_coverage_report_with_coverage_report_artifact():
         mock_token.return_value = "fake-token"
         mock_artifacts.return_value = [{"id": 123, "name": "coverage-report.lcov.info"}]
         mock_download.return_value = sample_lcov
-        mock_tree.return_value = []
         mock_get_cov.return_value = {}
         mock_upsert_cov.return_value = True
         mock_upsert_repo.return_value = True
@@ -135,8 +129,6 @@ def test_handle_coverage_report_with_default_artifact_name():
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
     ) as mock_download, patch(
-        "services.webhook.handle_coverage_report.get_file_tree"
-    ) as mock_tree, patch(
         "services.webhook.handle_coverage_report.get_coverages"
     ) as mock_get_cov, patch(
         "services.webhook.handle_coverage_report.upsert_coverages"
@@ -147,7 +139,6 @@ def test_handle_coverage_report_with_default_artifact_name():
         mock_token.return_value = "fake-token"
         mock_artifacts.return_value = [{"id": 456, "name": "artifact.lcov.info"}]
         mock_download.return_value = sample_lcov
-        mock_tree.return_value = []
         mock_get_cov.return_value = {}
         mock_upsert_cov.return_value = True
         mock_upsert_repo.return_value = True
@@ -209,8 +200,6 @@ def test_handle_coverage_report_with_javascript_sample():
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
     ) as mock_download, patch(
-        "services.webhook.handle_coverage_report.get_file_tree"
-    ) as mock_tree, patch(
         "services.webhook.handle_coverage_report.get_coverages"
     ) as mock_get_cov, patch(
         "services.webhook.handle_coverage_report.upsert_coverages"
@@ -221,7 +210,6 @@ def test_handle_coverage_report_with_javascript_sample():
         mock_token.return_value = "fake-token"
         mock_artifacts.return_value = [{"id": 456, "name": "jest-coverage-lcov.info"}]
         mock_download.return_value = sample_lcov
-        mock_tree.return_value = []
         mock_get_cov.return_value = {}
         mock_upsert_cov.return_value = True
         mock_upsert_repo.return_value = True
@@ -263,8 +251,6 @@ def test_handle_coverage_report_with_null_head_branch():
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_artifact"
     ) as mock_download, patch(
-        "services.webhook.handle_coverage_report.get_file_tree"
-    ) as mock_tree, patch(
         "services.webhook.handle_coverage_report.get_coverages"
     ) as mock_get_cov, patch(
         "services.webhook.handle_coverage_report.upsert_coverages"
@@ -277,7 +263,6 @@ def test_handle_coverage_report_with_null_head_branch():
         mock_token.return_value = "fake-token"
         mock_artifacts.return_value = [{"id": 123, "name": "coverage-lcov.info"}]
         mock_download.return_value = sample_lcov
-        mock_tree.return_value = []
         mock_get_cov.return_value = {}
         mock_upsert_cov.return_value = True
         mock_upsert_repo.return_value = True
@@ -327,8 +312,6 @@ def test_handle_coverage_report_circleci():
     ) as mock_artifacts, patch(
         "services.webhook.handle_coverage_report.download_circleci_artifact"
     ) as mock_download, patch(
-        "services.webhook.handle_coverage_report.get_file_tree"
-    ) as mock_tree, patch(
         "services.webhook.handle_coverage_report.get_coverages"
     ) as mock_get_cov, patch(
         "services.webhook.handle_coverage_report.upsert_coverages"
@@ -346,7 +329,6 @@ def test_handle_coverage_report_circleci():
             {"path": "lcov.info", "url": "http://example.com/lcov.info"}
         ]
         mock_download.return_value = sample_lcov
-        mock_tree.return_value = []
         mock_get_cov.return_value = {}
         mock_upsert_cov.return_value = True
         mock_upsert_repo.return_value = True
@@ -366,3 +348,174 @@ def test_handle_coverage_report_circleci():
         assert result is True
         mock_upsert_cov.assert_called_once()
         mock_upsert_repo.assert_called_once()
+
+
+def test_scenario1_file_exists_and_in_lcov_updates_coverage():
+    """Scenario 1: File exists in repo AND is in lcov → Update with actual coverage"""
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_workflow_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo, patch(
+        "services.webhook.handle_coverage_report.get_file_tree"
+    ) as mock_tree, patch(
+        "services.webhook.handle_coverage_report.get_all_coverages"
+    ) as mock_all_cov, patch(
+        "services.webhook.handle_coverage_report.delete_coverages_by_paths"
+    ) as mock_delete:
+
+        mock_token.return_value = "fake-token"
+        mock_artifacts.return_value = [{"id": 123, "name": "coverage-lcov.info"}]
+        mock_download.return_value = sample_lcov
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+        mock_tree.return_value = [
+            {"path": "services/github/github_manager.py", "type": "blob"},
+        ]
+        mock_all_cov.return_value = []
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=222,
+            head_branch="main",
+            user_name="test-user",
+        )
+
+        assert result is True
+        mock_upsert_cov.assert_called_once()
+        upsert_data = mock_upsert_cov.call_args[0][0]
+        assert len(upsert_data) > 0
+        mock_delete.assert_not_called()
+
+
+def test_scenario2_file_exists_but_not_in_lcov_not_touched():
+    """Scenario 2: File exists in repo but NOT in lcov → Don't touch existing coverage"""
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_workflow_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo, patch(
+        "services.webhook.handle_coverage_report.get_file_tree"
+    ) as mock_tree, patch(
+        "services.webhook.handle_coverage_report.get_all_coverages"
+    ) as mock_all_cov, patch(
+        "services.webhook.handle_coverage_report.delete_coverages_by_paths"
+    ) as mock_delete:
+
+        mock_token.return_value = "fake-token"
+        mock_artifacts.return_value = [{"id": 123, "name": "coverage-lcov.info"}]
+        mock_download.return_value = sample_lcov
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+        mock_tree.return_value = [
+            {"path": "services/github/github_manager.py", "type": "blob"},
+            {"path": "src/components/Table/index.tsx", "type": "blob"},
+        ]
+        mock_all_cov.return_value = [
+            {
+                "full_path": "src/components/Table/index.tsx",
+                "statement_coverage": 100.0,
+            },
+        ]
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=222,
+            head_branch="main",
+            user_name="test-user",
+        )
+
+        assert result is True
+        upsert_data = mock_upsert_cov.call_args[0][0]
+        upserted_paths = [item["full_path"] for item in upsert_data]
+        assert "src/components/Table/index.tsx" not in upserted_paths
+        mock_delete.assert_not_called()
+
+
+def test_scenario3_file_deleted_from_repo_removes_coverage():
+    """Scenario 3: File was deleted from repo → Remove coverage record"""
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_workflow_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo, patch(
+        "services.webhook.handle_coverage_report.get_file_tree"
+    ) as mock_tree, patch(
+        "services.webhook.handle_coverage_report.get_all_coverages"
+    ) as mock_all_cov, patch(
+        "services.webhook.handle_coverage_report.delete_coverages_by_paths"
+    ) as mock_delete:
+
+        mock_token.return_value = "fake-token"
+        mock_artifacts.return_value = [{"id": 123, "name": "coverage-lcov.info"}]
+        mock_download.return_value = sample_lcov
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+        mock_tree.return_value = [
+            {"path": "services/github/github_manager.py", "type": "blob"},
+        ]
+        mock_all_cov.return_value = [
+            {"full_path": "deleted/old_file.py", "statement_coverage": 50.0},
+        ]
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=222,
+            head_branch="main",
+            user_name="test-user",
+        )
+
+        assert result is True
+        mock_delete.assert_called_once_with(
+            owner_id=12345,
+            repo_id=67890,
+            file_paths=["deleted/old_file.py"],
+        )
