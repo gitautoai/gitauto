@@ -2,6 +2,7 @@
 import asyncio
 from datetime import datetime
 import json
+from pathlib import Path
 import time
 from typing import Any
 
@@ -19,6 +20,7 @@ from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.github_types import ReviewBaseArgs
 from services.github.types.owner import Owner
 from services.github.types.pull_request import PullRequest
@@ -213,6 +215,16 @@ async def handle_review_run(
 
     # Plan how to fix the error
     today = datetime.now().strftime("%Y-%m-%d")
+
+    root_files = get_file_tree_list(base_args=base_args, dir_path="")
+    target_dir: str | None = None
+    target_dir_files: list[str] = []
+    if review_path:
+        parent = str(Path(review_path).parent)
+        if parent != ".":
+            target_dir = parent
+            target_dir_files = get_file_tree_list(base_args=base_args, dir_path=parent)
+
     input_message = {
         "pull_request_title": pull_title,
         "pull_request_body": pull_body,
@@ -220,6 +232,9 @@ async def handle_review_run(
         "review_file": review_file,
         "pull_files": pull_files,
         "today": today,
+        "root_files": root_files,
+        "target_dir": target_dir,
+        "target_dir_files": target_dir_files,
     }
     user_input = json.dumps(obj=input_message)
 

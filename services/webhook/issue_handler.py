@@ -2,6 +2,7 @@
 import asyncio
 from datetime import datetime
 from json import dumps
+from pathlib import Path
 import time
 
 # Local imports
@@ -38,6 +39,7 @@ from services.github.markdown.render_text import render_text
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.reactions.add_reaction_to_issue import add_reaction_to_issue
+from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.github_types import GitHubLabeledPayload
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
 from services.openai.vision import describe_image
@@ -359,6 +361,15 @@ async def create_pr_from_issue(
             base_args=base_args,
         )
 
+    root_files = get_file_tree_list(base_args=base_args, dir_path="")
+    target_dir: str | None = None
+    target_dir_files: list[str] = []
+    if impl_file_path:
+        parent = str(Path(impl_file_path).parent)
+        if parent != ".":
+            target_dir = parent
+            target_dir_files = get_file_tree_list(base_args=base_args, dir_path=parent)
+
     user_input = dumps(
         {
             "today": today,
@@ -373,6 +384,9 @@ async def create_pr_from_issue(
             "impl_file_path": impl_file_path,
             "impl_file_content": impl_file_content,
             "test_files": test_files,
+            "root_files": root_files,
+            "target_dir": target_dir,
+            "target_dir_files": target_dir_files,
         }
     )
 

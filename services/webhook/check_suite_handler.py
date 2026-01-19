@@ -3,6 +3,7 @@ import asyncio
 from datetime import datetime
 import hashlib
 import json
+from pathlib import Path
 import time
 
 # Local imports
@@ -35,6 +36,7 @@ from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
 from services.github.utils.create_permission_url import create_permission_url
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
 from services.openai.functions.functions import TOOLS_FOR_PRS
@@ -504,11 +506,29 @@ async def handle_check_suite(
     # Plan how to fix the error
     today = datetime.now().strftime("%Y-%m-%d")
 
-    input_message: dict[str, str] = {
+    root_files = get_file_tree_list(base_args=base_args, dir_path="")
+    target_dir: str | None = None
+    target_dir_files: list[str] = []
+    if changed_files:
+        parents: set[str] = set()
+        for file_change in changed_files:
+            parent = str(Path(file_change["filename"]).parent)
+            if parent != ".":
+                parents.add(parent)
+        if len(parents) == 1:
+            target_dir = parents.pop()
+            target_dir_files = get_file_tree_list(
+                base_args=base_args, dir_path=target_dir
+            )
+
+    input_message: dict[str, str | list[str] | None] = {
         "pull_request_title": pull_title,
         "changed_files": json.dumps(obj=changed_files),
         "error_log": minimized_log,
         "today": today,
+        "root_files": root_files,
+        "target_dir": target_dir,
+        "target_dir_files": target_dir_files,
     }
     user_input = json.dumps(obj=input_message)
 
