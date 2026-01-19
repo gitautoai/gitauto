@@ -16,8 +16,8 @@ from services.circleci.get_build_logs import get_circleci_build_logs
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
 from services.codecov.get_commit_coverage import get_codecov_commit_coverage
 from services.efs.start_async_install_on_efs import start_async_install_on_efs
-from services.git.clone_repo import clone_repo
 from services.git.get_clone_dir import get_clone_dir
+from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.check_suites.get_failed_check_runs import (
     get_failed_check_runs_from_check_suite,
@@ -222,11 +222,16 @@ async def handle_check_suite(
         "skip_ci": True,
     }
 
-    # Clone repo to tmp and install dependencies to efs (both fire-and-forget, run in parallel)
-    base_args["clone_dir"] = get_clone_dir(owner_name, repo_name, pull_number)
+    # Clone repo to tmp (fire-and-forget, runs in parallel with remaining work)
+    clone_dir = get_clone_dir(owner_name, repo_name, pull_number)
+    base_args["clone_dir"] = clone_dir
     asyncio.create_task(
-        clone_repo(owner_name, repo_name, pull_number, head_branch, token)
+        prepare_repo_for_work(
+            owner_name, repo_name, head_branch, head_branch, token, clone_dir
+        )
     )
+
+    # Install dependencies to EFS (fire-and-forget, returns immediately if already installed)
     start_async_install_on_efs(base_args)
 
     # Check if permission comment or stumbled comment already exists

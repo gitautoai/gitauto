@@ -25,8 +25,8 @@ from services.github.types.github_types import ReviewBaseArgs
 from services.github.types.owner import Owner
 from services.github.types.pull_request import PullRequest
 from services.github.types.repository import Repository
-from services.git.clone_repo import clone_repo
 from services.git.get_clone_dir import get_clone_dir
+from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.openai.functions.functions import TOOLS_FOR_PRS
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
@@ -161,11 +161,16 @@ async def handle_review_run(
         "skip_ci": True,
     }
 
-    # Clone repo to tmp and install dependencies to efs (both fire-and-forget, run in parallel)
-    base_args["clone_dir"] = get_clone_dir(owner_name, repo_name, pull_number)
+    # Clone repo to tmp (fire-and-forget, runs in parallel with remaining work)
+    clone_dir = get_clone_dir(owner_name, repo_name, pull_number)
+    base_args["clone_dir"] = clone_dir
     asyncio.create_task(
-        clone_repo(owner_name, repo_name, pull_number, head_branch, token)
+        prepare_repo_for_work(
+            owner_name, repo_name, head_branch, head_branch, token, clone_dir
+        )
     )
+
+    # Install dependencies to EFS (fire-and-forget, returns immediately if already installed)
     start_async_install_on_efs(base_args)
 
     # Create a usage record

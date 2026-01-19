@@ -63,9 +63,13 @@ def mock_review_comment_payload():
 @patch("services.webhook.review_run_handler.chat_with_agent")
 @patch("services.webhook.review_run_handler.create_empty_commit")
 @patch("services.webhook.review_run_handler.update_usage")
+@patch("services.webhook.review_run_handler.start_async_install_on_efs")
+@patch("services.webhook.review_run_handler.prepare_repo_for_work")
 @patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
 @pytest.mark.asyncio
 async def test_review_run_handler_accumulates_tokens_correctly(
+    _mock_prepare_repo,
+    _mock_start_async,
     mock_update_usage,
     mock_create_empty_commit,
     mock_chat_with_agent,
