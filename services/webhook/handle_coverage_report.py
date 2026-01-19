@@ -10,7 +10,9 @@ from services.github.artifacts.get_workflow_artifacts import get_workflow_artifa
 from services.circleci.download_circleci_artifact import download_circleci_artifact
 from services.circleci.get_job_artifacts import get_circleci_job_artifacts
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
+from services.github.branches.get_default_branch import get_default_branch
 from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
+from services.supabase.repositories.get_repository import get_repository
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.check_suites.get_circleci_workflow_id import (
     get_circleci_workflow_ids_from_check_suite,
@@ -56,6 +58,21 @@ def handle_coverage_report(
         raise ValueError(
             f"No token for installation {installation_id} ({owner_name}/{repo_name})"
         )
+
+    # Only process coverage for target branch
+    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+    target_branch = repo_settings.get("target_branch") if repo_settings else ""
+    if not target_branch:
+        target_branch, _ = get_default_branch(
+            owner=owner_name, repo=repo_name, token=github_token
+        )
+    if head_branch != target_branch:
+        logger.info(
+            "Skipping saving coverage to Supabase: head_branch=%s != target_branch=%s",
+            head_branch,
+            target_branch,
+        )
+        return None
 
     circle_token = None
     if source == "github":
