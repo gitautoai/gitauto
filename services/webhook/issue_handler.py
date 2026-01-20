@@ -428,10 +428,10 @@ async def create_pr_from_issue(
     set_pr_number(pr_number)
     base_args["pull_number"] = pr_number
 
-    # Clone repo to tmp (fire-and-forget, runs in parallel with remaining work)
+    # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
     base_args["clone_dir"] = clone_dir
-    asyncio.create_task(
+    clone_task = asyncio.create_task(
         prepare_repo_for_work(
             owner_name, repo_name, base_branch, new_branch_name, token, clone_dir
         )
@@ -587,4 +587,9 @@ async def create_pr_from_issue(
     # End notification
     end_msg = "Completed" if is_completed else "@channel Failed"
     slack_notify(end_msg, thread_ts)
+
+    # Wait for clone task to complete before Lambda terminates
+    logger.info("Waiting for clone task to complete...")
+    await clone_task
+    logger.info("Clone task completed")
     return
