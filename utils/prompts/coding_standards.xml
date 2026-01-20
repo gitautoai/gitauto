@@ -22,7 +22,7 @@
     <rule>Create descriptive fixture/setup names that clearly indicate what is being mocked</rule>
     <rule>Handle fixture parameter name conflicts (Python example: use # pylint: disable=redefined-outer-name)</rule>
     <rule>For method chaining operations (e.g., database operations), mock the entire operation as one unit rather than each individual step in the chain (Contract Testing approach) - avoid complex setups like mock.obj.method1.return_value.method2.return_value.method3.return_value</rule>
-    <rule>When creating partial mock objects that don't fully implement an interface, suppress the type checker warning with an explanatory comment that specifies which interface is incomplete and what properties/methods are actually provided (TypeScript example: // @ts-expect-error - partial mock: only [property] needed, not full [Interface] interface)</rule>
+    <rule>For complex nested types in tests (in priority order): (1) Search the codebase for existing fixtures/mocks of that type and reuse them. (2) If not found, create a reusable fixture. (3) Use type cast to avoid type errors (TypeScript: `as any`, Python: `cast(Any, ...)` or `# type: ignore`). (4) Use type suppression comments if you need partial type safety (TypeScript: `@ts-expect-error`). Never hand-craft complete type-safe mocks for complex interfaces.</rule>
   </mock_management>
 
   <test_design_principles>
