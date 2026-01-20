@@ -168,7 +168,7 @@ async def test_successful_file_update_with_skip_ci(
     # Verify PUT request has [skip ci] in message
     mock_requests_put_success.assert_called_once()
     put_call_args = mock_requests_put_success.call_args
-    assert put_call_args.kwargs["json"]["message"] == "Update test.py [skip ci]"
+    assert put_call_args.kwargs["json"]["message"] == "Update test.py\n\n[skip ci]"
 
 
 @pytest.mark.asyncio

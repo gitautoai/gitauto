@@ -68,7 +68,7 @@ def test_delete_file_with_skip_ci(base_args, mock_requests, mock_create_headers)
     delete_file_by_sha(file_path=file_path, sha=sha, base_args=base_args)
 
     called_args = mock_requests.delete.call_args[1]
-    assert called_args["json"]["message"] == f"Delete {file_path} [skip ci]"
+    assert called_args["json"]["message"] == f"Delete {file_path}\n\n[skip ci]"
 
 
 def test_delete_file_request_error(base_args, mock_requests, mock_create_headers):
