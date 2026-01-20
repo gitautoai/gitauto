@@ -161,10 +161,10 @@ async def handle_review_run(
         "skip_ci": True,
     }
 
-    # Clone repo to tmp (fire-and-forget, runs in parallel with remaining work)
+    # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
     clone_dir = get_clone_dir(owner_name, repo_name, pull_number)
     base_args["clone_dir"] = clone_dir
-    asyncio.create_task(
+    clone_task = asyncio.create_task(
         prepare_repo_for_work(
             owner_name, repo_name, head_branch, head_branch, token, clone_dir
         )
@@ -331,4 +331,9 @@ async def handle_review_run(
             pr_number=pull_number,
             is_completed=True,
         )
+
+    # Wait for clone task to complete before Lambda terminates
+    logger.info("Waiting for clone task to complete...")
+    await clone_task
+    logger.info("Clone task completed")
     return
