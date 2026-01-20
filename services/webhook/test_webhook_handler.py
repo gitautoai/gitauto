@@ -503,6 +503,7 @@ class TestHandleWebhookEvent:
                             "body": "Resolves #123",
                             "user": {"login": "author-name"},
                             "number": 456,
+                            "title": "Fix issue #123",
                         },
                         "repository": {
                             "id": 789,
@@ -532,7 +533,7 @@ class TestHandleWebhookEvent:
                     mock_update_usage.assert_any_call(usage_id=1, is_merged=True)
                     mock_update_usage.assert_any_call(usage_id=2, is_merged=True)
                     mock_slack_notify.assert_called_once_with(
-                        "🎉 PR created by `author-name` was merged by `sender-name` for `owner-name/repo-name`"
+                        "🎉 PR #456 merged by `sender-name` for `owner-name/repo-name`: Fix issue #123"
                     )
 
     @pytest.mark.asyncio
