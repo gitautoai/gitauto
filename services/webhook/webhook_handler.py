@@ -296,8 +296,8 @@ async def handle_webhook_event(
 
         # Notify Slack
         sender_name: str = payload["sender"]["login"]
-        author_name: str = payload["pull_request"]["user"]["login"]
-        msg = f"🎉 PR created by `{author_name}` was merged by `{sender_name}` for `{owner_name}/{repo_name}`"
+        pr_title: str = pull_request["title"]
+        msg = f"🎉 PR #{pr_number} merged by `{sender_name}` for `{owner_name}/{repo_name}`: {pr_title}"
         slack_notify(msg)
         return
 
