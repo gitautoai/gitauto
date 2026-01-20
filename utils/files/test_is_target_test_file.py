@@ -19,13 +19,13 @@ def test_is_target_test_file_with_add_unit_tests():
     assert not is_target_test_file("services/webhook/schedule_handler.py", base_args)
 
 
-def test_is_target_test_file_with_increase_coverage():
+def test_is_target_test_file_with_uncovered_code():
     base_args = cast(
         BaseArgs,
         {
             "owner": "test",
             "repo": "test",
-            "issue_title": "Schedule: Increase test coverage for utils/files/is_test_file.py",
+            "issue_title": "Schedule: Add tests for uncovered code in utils/files/is_test_file.py",
         },
     )
 

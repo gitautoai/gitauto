@@ -1,3 +1,18 @@
 <trigger_instruction>
-  Implement functionality described in the issue.
+  Add unit tests for the file mentioned in the issue.
+
+  IF NO TEST FILE EXISTS:
+  - Create a new test file with comprehensive tests for the source file
+
+  IF TEST FILE ALREADY EXISTS:
+  - The issue body specifies EXACTLY which lines, functions, and branches are uncovered
+  - Write tests that specifically target those uncovered items (e.g., "Uncovered Lines: 6, 7" means write tests that execute lines 6 and 7)
+  - Use apply_diff_to_file to ADD new test cases - do NOT use replace_remote_file_content
+  - Preserve ALL existing content including headers (eslint-disable, pylint: disable, etc.)
+
+  COMMON MISTAKES TO AVOID:
+  - Do NOT assume existing tests are "comprehensive" just because they look thorough
+  - Do NOT replace the entire test file with a "cleaner version"
+  - Do NOT remove or modify existing test file headers
+  - Do NOT just reformat existing tests - you must ADD new ones
 </trigger_instruction> 
