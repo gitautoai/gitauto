@@ -2,7 +2,9 @@ import os
 import subprocess
 
 from config import UTF8
+from services.efs.get_efs_dir import get_efs_dir
 from services.efs.is_efs_install_ready import is_efs_install_ready
+from services.efs.symlink_dependencies import symlink_dependencies
 from services.github.files.get_prettier_config import get_prettier_config
 from services.github.types.github_types import BaseArgs
 from services.node.get_npm_cache_dir import set_npm_cache_env
@@ -34,6 +36,10 @@ async def run_prettier(*, base_args: BaseArgs, file_path: str, file_content: str
 
     # Wait for install to complete so npx uses local packages instead of downloading
     await is_efs_install_ready(owner, repo, "node")
+
+    # Symlink EFS deps to clone_dir (may not exist if install finished after initial symlink attempt)
+    efs_dir = get_efs_dir(owner, repo)
+    symlink_dependencies(efs_dir, clone_dir)
 
     # Write to disk and use --write (alternative: stdin/stdout without file)
     full_path = os.path.join(clone_dir, file_path)
