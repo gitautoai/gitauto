@@ -26,7 +26,7 @@ def delete_file_by_sha(
     # Use custom message or default
     if commit_message is None:
         commit_message = (
-            f"Delete {file_path}\n\n[skip ci]" if skip_ci else f"Delete {file_path}"
+            f"Delete {file_path} [skip ci]" if skip_ci else f"Delete {file_path}"
         )
 
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={new_branch}"

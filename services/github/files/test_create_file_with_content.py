@@ -125,7 +125,7 @@ class TestCreateFileWithContent:
         # Verify the commit message includes [skip ci]
         expected_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
         expected_data = {
-            "message": "Create src/test.py\n\n[skip ci]",
+            "message": "Create src/test.py [skip ci]",
             "content": expected_content,
             "branch": "test-branch",
         }

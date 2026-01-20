@@ -79,7 +79,7 @@ def move_file(
 
     # Create commit message
     commit_message = (
-        f"Move {old_file_path} to {new_file_path}\n\n[skip ci]"
+        f"Move {old_file_path} to {new_file_path} [skip ci]"
         if skip_ci
         else f"Move {old_file_path} to {new_file_path}"
     )
