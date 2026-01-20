@@ -254,7 +254,12 @@ source .env && psql "postgresql://postgres.dkrxtcbaqzrodvsagwwn:$SUPABASE_DB_PAS
 
 # Connect to Supabase PostgreSQL database (Production)
 # READ-ONLY access
-source .env && psql "postgresql://postgres.awegqusxzsmlgxaxyyrq:$SUPABASE_DB_PASSWORD_PRD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
+source .env && psql "postgresql://postgres.awegqusxzsmlgxawyyrq:$SUPABASE_DB_PASSWORD_PRD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
+
+# Query tips:
+# - Use -c "SELECT ..." for single queries
+# - Use -x for vertical (expanded) display when rows have many columns or wide values (e.g., JSON)
+# - Example: psql ... -x -c "SELECT structured_rules FROM repositories WHERE ..."
 ```
 
 ### Sentry CLI

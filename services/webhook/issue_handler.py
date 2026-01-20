@@ -343,6 +343,9 @@ async def create_pr_from_issue(
             base_args=base_args,
         )
 
+    logger.info(
+        "Test file candidates for %s: %s", impl_file_path, test_file_path_candidates
+    )
     for candidate in test_file_path_candidates or []:
         content = get_raw_content(
             owner=owner_name,
@@ -360,6 +363,7 @@ async def create_pr_from_issue(
             body=create_progress_bar(p=p, msg="\n".join(log_messages)),
             base_args=base_args,
         )
+    logger.info("Test files found: %s", list(test_files.keys()))
 
     root_files = get_file_tree_list(base_args=base_args, dir_path="")
     target_dir: str | None = None
