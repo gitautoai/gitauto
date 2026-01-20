@@ -29,7 +29,7 @@ def create_file_with_content(
     # Use custom message or default
     if commit_message is None:
         commit_message = (
-            f"Create {file_path} [skip ci]" if skip_ci else f"Create {file_path}"
+            f"Create {file_path}\n\n[skip ci]" if skip_ci else f"Create {file_path}"
         )
 
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={new_branch}"
