@@ -239,7 +239,7 @@ async def test_replace_file_with_skip_ci(
     call_args = mock_requests_put_success.call_args
     assert (
         call_args.kwargs["json"]["message"]
-        == f"Replace content of {file_path} [skip ci]"
+        == f"Replace content of {file_path}\n\n[skip ci]"
     )
 
 

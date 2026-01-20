@@ -280,7 +280,7 @@ def test_successful_move_with_skip_ci(
     mock_create_tree.assert_called_once()
     mock_create_commit.assert_called_once_with(
         base_args,
-        "Move old/file.py to new/path.py [skip ci]",
+        "Move old/file.py to new/path.py\n\n[skip ci]",
         "new_tree_sha_789",
         "commit_sha_123",
     )

@@ -25,7 +25,7 @@ async def apply_diff_to_file(
     """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
     skip_ci = base_args.get("skip_ci", False)
     clone_dir = base_args.get("clone_dir")
-    message = f"Update {file_path} [skip ci]" if skip_ci else f"Update {file_path}"
+    message = f"Update {file_path}\n\n[skip ci]" if skip_ci else f"Update {file_path}"
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     new_branch = base_args["new_branch"]
     if not new_branch:

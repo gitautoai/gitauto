@@ -90,7 +90,7 @@ async def replace_remote_file_content(
 
     # Set up the data for the PUT request
     message = (
-        f"Replace content of {file_path} [skip ci]"
+        f"Replace content of {file_path}\n\n[skip ci]"
         if skip_ci
         else f"Replace content of {file_path}"
     )
