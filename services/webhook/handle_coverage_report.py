@@ -1,4 +1,5 @@
 # Standard imports
+from collections import Counter
 import json
 
 # Local imports
@@ -160,8 +161,8 @@ def handle_coverage_report(
 
         if parsed_coverage:
             logger.info("Parsed %d coverage items", len(parsed_coverage))
-            levels = [item.get("level") for item in parsed_coverage]
-            logger.info("Coverage levels found: %s", levels)
+            level_counts = Counter(item.get("level") for item in parsed_coverage)
+            logger.info("Coverage levels: %s", dict(level_counts))
 
             report_language = detect_language_from_coverage(parsed_coverage)
             logger.info("Detected language: %s", report_language)
