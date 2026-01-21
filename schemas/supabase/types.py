@@ -115,6 +115,7 @@ class Coverages(TypedDict):
     branch_name: str
     file_size: int | None
     is_excluded_from_testing: bool | None
+    exclusion_reason: str | None
 
 
 class CoveragesInsert(TypedDict):
@@ -138,6 +139,7 @@ class CoveragesInsert(TypedDict):
     branch_name: NotRequired[str]
     file_size: NotRequired[int | None]
     is_excluded_from_testing: NotRequired[bool | None]
+    exclusion_reason: NotRequired[str | None]
 
 
 class Credits(TypedDict):

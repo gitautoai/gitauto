@@ -141,7 +141,7 @@ async def chat_with_agent(
 
         if is_file_edit_tool:
             file_path = (
-                tool_args.get("file_path", "") if isinstance(tool_args, dict) else ""
+                str(tool_args.get("file_path", "")) if isinstance(tool_args, dict) else ""
             )
 
             validation_error = None
@@ -261,9 +261,10 @@ async def chat_with_agent(
     # Recursively call the function if the mode is "explore" and the tool was called
     if tool_name == "get_remote_file_content" and isinstance(tool_args, dict):
         if "line_number" in tool_args:
+            line_number = tool_args["line_number"]
             line_info = (
-                f" around line {tool_args['line_number']}"
-                if is_valid_line_number(tool_args["line_number"])
+                f" around line {line_number}"
+                if isinstance(line_number, (int, str)) and is_valid_line_number(line_number)
                 else ""
             )
             msg = f"Read `{tool_args['file_path']}`{line_info}."
@@ -326,7 +327,7 @@ async def chat_with_agent(
         and isinstance(tool_args, dict)
         and "query" in tool_args
     ):
-        query = tool_args.get("query", "")
+        query = str(tool_args.get("query", ""))
         if query.strip():
             msg = f"Googled `{query}` and went through the results."
             add_log_message(msg, log_messages)
