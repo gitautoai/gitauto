@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
+from postgrest.exceptions import APIError
+
 from services.supabase.llm_requests.clear_old_content import (
     BATCH_SIZE,
     clear_old_content,
@@ -161,7 +163,7 @@ def test_clear_old_content_database_exception(mock_datetime, mock_supabase):
 
     mock_table = Mock()
     mock_supabase.table.return_value = mock_table
-    mock_table.select.side_effect = Exception("Database connection error")
+    mock_table.select.side_effect = APIError({"message": "Database connection error"})
 
     result = clear_old_content()
 
