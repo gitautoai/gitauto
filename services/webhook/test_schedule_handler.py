@@ -13,7 +13,6 @@ from services.webhook.schedule_handler import schedule_handler
 
 @pytest.fixture
 def mock_event():
-    """Fixture for EventBridge event."""
     return {
         "ownerId": 123,
         "ownerType": "Organization",
@@ -26,593 +25,491 @@ def mock_event():
     }
 
 
-class TestScheduleHandler:
-    def test_schedule_handler_missing_required_fields(self):
-        """Test that schedule_handler raises ValueError when required fields are missing."""
-        # Setup - event with missing fields
-        incomplete_event = {
-            "ownerId": 123,
-            "ownerName": "test-org",
-            # Missing other required fields
-        }
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+def test_schedule_handler_no_token(mock_get_token, mock_event):
+    mock_get_token.return_value = None
+    result = schedule_handler(mock_event)
+    assert result["status"] == "skipped"
+    assert "Installation" in result["message"]
+    assert "no longer exists" in result["message"]
 
-        # Execute and verify - should raise ValueError
-        with pytest.raises(ValueError, match="Missing required fields in event detail"):
-            schedule_handler(cast(EventBridgeSchedulerEvent, incomplete_event))
 
-    @patch("services.webhook.schedule_handler.get_installation_access_token")
-    def test_schedule_handler_no_token(self, mock_get_token, mock_event):
-        """Test that schedule_handler returns skipped status when token is None."""
-        # Setup
-        mock_get_token.return_value = None
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.get_repository")
+def test_schedule_handler_trigger_disabled(
+    mock_get_repository, mock_get_token, mock_event
+):
+    mock_get_token.return_value = "test-token"
+    mock_get_repository.return_value = {
+        "id": 456,
+        "name": "test-repo",
+        "trigger_on_schedule": False,
+    }
+    result = schedule_handler(mock_event)
+    assert result["status"] == "skipped"
+    assert "trigger_on_schedule is not enabled" in result["message"]
 
-        # Execute
-        result = schedule_handler(mock_event)
 
-        # Verify
-        assert result["status"] == "skipped"
-        assert "Installation" in result["message"]
-        assert "no longer exists" in result["message"]
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.get_repository")
+@patch("services.webhook.schedule_handler.check_availability")
+def test_schedule_handler_access_denied(
+    mock_check_availability,
+    mock_get_repository,
+    mock_get_token,
+    mock_event,
+):
+    mock_get_token.return_value = "test-token"
+    mock_get_repository.return_value = {
+        "id": 456,
+        "name": "test-repo",
+        "trigger_on_schedule": True,
+    }
+    mock_check_availability.return_value = {
+        "can_proceed": False,
+        "billing_type": "credit",
+        "requests_left": None,
+        "credit_balance_usd": 0,
+        "period_end_date": None,
+        "user_message": "Insufficient credits",
+        "log_message": "Insufficient credits for test-org/test-repo",
+    }
+    result = schedule_handler(mock_event)
+    assert result["status"] == "skipped"
+    assert "Insufficient credits" in result["message"]
 
-    @patch("services.webhook.schedule_handler.get_installation_access_token")
-    @patch("services.webhook.schedule_handler.get_repository")
-    def test_schedule_handler_trigger_disabled(
-        self, mock_get_repository, mock_get_token, mock_event
-    ):
-        """Test that schedule_handler skips when trigger_on_schedule is disabled."""
-        # Setup
-        mock_get_token.return_value = "test-token"
-        mock_get_repository.return_value = {
-            "id": 456,
-            "name": "test-repo",
-            "trigger_on_schedule": False,
-        }
 
-        # Execute
-        result = schedule_handler(mock_event)
+@patch("services.webhook.schedule_handler.get_all_coverages")
+def test_get_all_coverages_returns_empty_list_not_none(mock_get_all_coverages):
+    mock_get_all_coverages.return_value = []
+    all_coverages = mock_get_all_coverages(repo_id=123)
+    assert isinstance(all_coverages, list)
+    assert len(all_coverages) == 0
 
-        # Verify
-        assert result["status"] == "skipped"
-        assert "trigger_on_schedule is not enabled" in result["message"]
+    test_files = [("src/main.py", 1024), ("src/utils.py", 512)]
+    enriched_files = []
 
-    @patch("services.webhook.schedule_handler.get_installation_access_token")
-    @patch("services.webhook.schedule_handler.get_repository")
-    @patch("services.webhook.schedule_handler.check_availability")
-    def test_schedule_handler_access_denied(
-        self,
-        mock_check_availability,
-        mock_get_repository,
-        mock_get_token,
-        mock_event,
-    ):
-        """Test that schedule_handler skips when access is denied."""
-        # Setup
-        mock_get_token.return_value = "test-token"
-        mock_get_repository.return_value = {
-            "id": 456,
-            "name": "test-repo",
-            "trigger_on_schedule": True,
-        }
-        mock_check_availability.return_value = {
-            "can_proceed": False,
-            "billing_type": "credit",
-            "requests_left": None,
-            "credit_balance_usd": 0,
-            "period_end_date": None,
-            "user_message": "Insufficient credits",
-            "log_message": "Insufficient credits for test-org/test-repo",
-        }
-
-        # Execute
-        result = schedule_handler(mock_event)
-
-        # Verify
-        assert result["status"] == "skipped"
-        assert "Insufficient credits" in result["message"]
-
-    @patch("services.webhook.schedule_handler.get_all_coverages")
-    def test_get_all_coverages_returns_empty_list_not_none(
-        self, mock_get_all_coverages
-    ):
-        """Test that get_all_coverages returns empty list instead of None.
-
-        This test verifies the fix for 'NoneType' object is not iterable error.
-        """
-        # Setup - simulate empty coverage data
-        mock_get_all_coverages.return_value = []  # Should be empty list, not None
-
-        # Execute
-        all_coverages = mock_get_all_coverages(repo_id=123)
-
-        # Verify - should be able to iterate without TypeError
-        assert isinstance(all_coverages, list)
-        assert len(all_coverages) == 0
-
-        # This would fail with TypeError if all_coverages was None
-        _ = all_coverages  # Should not raise TypeError when iterated
-
-        # Test the actual pattern used in schedule_handler
-        test_files = [("src/main.py", 1024), ("src/utils.py", 512)]
-        enriched_files = []
-
-        for file_path, file_size in test_files:
-            # This is the line that was failing at line 114
-            coverages = next(
-                (c for c in all_coverages if c.get("full_path") == file_path), None
-            )
-            if coverages:
-                enriched_files.append(coverages)
-            else:
-                enriched_files.append({"full_path": file_path, "file_size": file_size})
-
-        # Verify we processed all files without error
-        assert len(enriched_files) == 2
-        assert all("full_path" in f for f in enriched_files)
-
-    def test_get_all_coverages_contract(self):
-        """Verify that get_all_coverages always returns a list."""
-        with patch(
-            "services.supabase.coverages.get_all_coverages.supabase"
-        ) as mock_supabase:
-            # Setup mock to return empty data
-            mock_result = MagicMock()
-            mock_result.data = []
-            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = (
-                mock_result
-            )
-
-            # Execute
-            result = get_all_coverages(owner_id=789, repo_id=123)
-
-            # Verify - should be empty list, not None
-            assert result == []
-            assert result is not None
-            assert isinstance(result, list)
-
-    @patch("services.webhook.schedule_handler.get_open_pull_requests")
-    @patch("services.webhook.schedule_handler.should_skip_test")
-    @patch("services.webhook.schedule_handler.should_test_file")
-    @patch("services.webhook.schedule_handler.get_installation_access_token")
-    @patch("services.webhook.schedule_handler.get_repository")
-    @patch("services.webhook.schedule_handler.check_availability")
-    @patch("services.webhook.schedule_handler.get_default_branch")
-    @patch("services.webhook.schedule_handler.get_file_tree")
-    @patch("services.webhook.schedule_handler.get_all_coverages")
-    @patch("services.webhook.schedule_handler.get_raw_content")
-    @patch("services.webhook.schedule_handler.create_issue")
-    def test_schedule_handler_skips_export_only_files(
-        self,
-        mock_create_issue,
-        mock_get_raw_content,
-        mock_get_all_coverages,
-        mock_get_file_tree,
-        mock_get_default_branch,
-        mock_check_availability,
-        mock_get_repository,
-        mock_get_token,
-        mock_should_test_file,
-        mock_should_skip_test,
-        mock_get_open_pull_requests,
-        mock_event,
-    ):
-        """Test that schedule_handler skips files that only contain exports."""
-        # Setup
-        mock_get_token.return_value = "test-token"
-        mock_get_repository.return_value = {"trigger_on_schedule": True}
-        mock_check_availability.return_value = {
-            "can_proceed": True,
-            "billing_type": "exception",
-            "requests_left": None,
-            "credit_balance_usd": 0,
-            "period_end_date": None,
-            "user_message": "",
-            "log_message": "Exception owner - unlimited access.",
-        }
-        mock_get_default_branch.return_value = ("main", None)
-
-        # Mock file tree with index.ts that only has exports
-        mock_get_file_tree.return_value = [
-            {"path": "src/components/Button/index.ts", "type": "blob", "size": 100},
-            {"path": "src/utils/helper.ts", "type": "blob", "size": 200},
-        ]
-
-        mock_get_all_coverages.return_value = []
-
-        # Mock index.ts as export-only, helper.ts with actual logic (should create issue)
-        def mock_content_side_effect(file_path=None, **_):
-            content_map = {
-                "src/components/Button/index.ts": "export * from './Button';\nexport { default } from './Button';",
-                "src/utils/helper.ts": "function helper() { return processData(input); }\nexport { helper };",
-            }
-            return content_map.get(file_path or "")
-
-        mock_get_raw_content.side_effect = mock_content_side_effect
-
-        mock_create_issue.return_value = (
-            200,
-            {"html_url": "https://github.com/test/issue/1"},
+    for file_path, file_size in test_files:
+        coverages = next(
+            (c for c in all_coverages if c.get("full_path") == file_path), None
         )
+        if coverages:
+            enriched_files.append(coverages)
+        else:
+            enriched_files.append({"full_path": file_path, "file_size": file_size})
 
-        # Mock should_skip_test to return True for export-only files, False for files with logic
-        def mock_should_skip_side_effect(file_path, content):
-            if (
-                "index.ts" in file_path
-                and "export" in content
-                and "function" not in content
-            ):
-                return True  # Export-only file should be skipped
-            return False  # File with actual logic should not be skipped
+    assert len(enriched_files) == 2
+    assert all("full_path" in f for f in enriched_files)
 
-        mock_should_skip_test.side_effect = mock_should_skip_side_effect
 
-        # Mock should_test_file to return True for files with logic
-        mock_should_test_file.return_value = True
+def test_get_all_coverages_contract():
+    with patch(
+        "services.supabase.coverages.get_all_coverages.supabase"
+    ) as mock_supabase:
+        mock_result = MagicMock()
+        mock_result.data = []
+        mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = (
+            mock_result
+        )
+        result = get_all_coverages(owner_id=789, repo_id=123)
+        assert result == []
+        assert result is not None
+        assert isinstance(result, list)
 
-        # Mock has_open_pr_for_file to return False (no open PRs)
-        mock_get_open_pull_requests.return_value = []
 
-        # Execute
+@patch("services.webhook.schedule_handler.get_open_pull_requests")
+@patch("services.webhook.schedule_handler.should_skip_test")
+@patch("services.webhook.schedule_handler.evaluate_condition")
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.get_repository")
+@patch("services.webhook.schedule_handler.check_availability")
+@patch("services.webhook.schedule_handler.get_default_branch")
+@patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_all_coverages")
+@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.create_issue")
+def test_schedule_handler_skips_export_only_files(
+    mock_create_issue,
+    mock_get_raw_content,
+    mock_get_all_coverages,
+    mock_get_file_tree,
+    mock_get_default_branch,
+    mock_check_availability,
+    mock_get_repository,
+    mock_get_token,
+    mock_evaluate_condition,
+    mock_should_skip_test,
+    mock_get_open_pull_requests,
+    mock_event,
+):
+    mock_get_token.return_value = "test-token"
+    mock_get_repository.return_value = {"trigger_on_schedule": True}
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "exception",
+        "requests_left": None,
+        "credit_balance_usd": 0,
+        "period_end_date": None,
+        "user_message": "",
+        "log_message": "Exception owner - unlimited access.",
+    }
+    mock_get_default_branch.return_value = ("main", None)
+    mock_get_file_tree.return_value = [
+        {"path": "src/components/Button/index.ts", "type": "blob", "size": 100},
+        {"path": "src/utils/helper.ts", "type": "blob", "size": 200},
+    ]
+    mock_get_all_coverages.return_value = []
+
+    def mock_content_side_effect(file_path=None, **_):
+        content_map = {
+            "src/components/Button/index.ts": "export * from './Button';\nexport { default } from './Button';",
+            "src/utils/helper.ts": "function helper() { return processData(input); }\nexport { helper };",
+        }
+        return content_map.get(file_path or "")
+
+    mock_get_raw_content.side_effect = mock_content_side_effect
+    mock_create_issue.return_value = (
+        200,
+        {"html_url": "https://github.com/test/issue/1"},
+    )
+
+    def mock_should_skip_side_effect(file_path, content):
+        if (
+            "index.ts" in file_path
+            and "export" in content
+            and "function" not in content
+        ):
+            return True
+        return False
+
+    mock_should_skip_test.side_effect = mock_should_skip_side_effect
+    mock_evaluate_condition.return_value = (True, "has testable logic")
+    mock_get_open_pull_requests.return_value = []
+
+    result = schedule_handler(mock_event)
+
+    mock_get_raw_content.assert_any_call(
+        owner="test-org",
+        repo="test-repo",
+        file_path="src/components/Button/index.ts",
+        ref="main",
+        token="test-token",
+    )
+    mock_create_issue.assert_called_once()
+    call_kwargs = mock_create_issue.call_args.kwargs
+    assert "src/utils/helper.ts" in call_kwargs["title"]
+    assert result["status"] == "success"
+
+
+@patch("services.webhook.schedule_handler.get_open_pull_requests")
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.get_repository")
+@patch("services.webhook.schedule_handler.check_availability")
+@patch("services.webhook.schedule_handler.get_default_branch")
+@patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_all_coverages")
+@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.create_issue")
+def test_schedule_handler_skips_empty_files(
+    mock_create_issue,
+    mock_get_raw_content,
+    mock_get_all_coverages,
+    mock_get_file_tree,
+    mock_get_default_branch,
+    mock_check_availability,
+    mock_get_repository,
+    mock_get_token,
+    mock_get_open_pull_requests,
+    mock_event,
+):
+    mock_get_token.return_value = "test-token"
+    mock_get_repository.return_value = {"trigger_on_schedule": True}
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "exception",
+        "requests_left": None,
+        "credit_balance_usd": 0,
+        "period_end_date": None,
+        "user_message": "",
+        "log_message": "Exception owner - unlimited access.",
+    }
+    mock_get_default_branch.return_value = ("main", None)
+    mock_get_file_tree.return_value = [
+        {"path": "src/index.ts", "type": "blob", "size": 0},
+        {"path": "src/app.ts", "type": "blob", "size": 300},
+    ]
+    mock_get_all_coverages.return_value = []
+
+    def mock_empty_content_side_effect(file_path=None, **_):
+        content_map = {
+            "src/index.ts": "   \n\n   ",
+            "src/app.ts": "function processData(data) {\n  return data.map(x => x * 2);\n}\nexport { processData };",
+        }
+        return content_map.get(file_path or "")
+
+    mock_get_raw_content.side_effect = mock_empty_content_side_effect
+    mock_create_issue.return_value = (
+        200,
+        {"html_url": "https://github.com/test/issue/2"},
+    )
+    mock_get_open_pull_requests.return_value = []
+
+    result = schedule_handler(mock_event)
+
+    mock_create_issue.assert_called_once()
+    call_kwargs = mock_create_issue.call_args.kwargs
+    assert "src/app.ts" in call_kwargs["title"]
+    assert result["status"] == "success"
+
+
+@patch("services.webhook.schedule_handler.send_email")
+@patch("services.webhook.schedule_handler.get_user")
+@patch("services.webhook.schedule_handler.slack_notify")
+@patch("services.webhook.schedule_handler.delete_scheduler")
+@patch("services.webhook.schedule_handler.update_repository")
+@patch("services.webhook.schedule_handler.get_issue_body")
+@patch("services.webhook.schedule_handler.get_issue_title")
+@patch("services.webhook.schedule_handler.get_open_pull_requests")
+@patch("services.webhook.schedule_handler.evaluate_condition")
+@patch("services.webhook.schedule_handler.should_skip_test")
+@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.get_all_coverages")
+@patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_default_branch")
+@patch("services.webhook.schedule_handler.check_availability")
+@patch("services.webhook.schedule_handler.get_repository")
+@patch("services.webhook.schedule_handler.create_issue")
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.is_migration_file")
+@patch("services.webhook.schedule_handler.is_type_file")
+@patch("services.webhook.schedule_handler.is_test_file")
+@patch("services.webhook.schedule_handler.is_code_file")
+def test_schedule_handler_410_issues_disabled(
+    mock_is_code_file,
+    mock_is_test_file,
+    mock_is_type_file,
+    mock_is_migration_file,
+    mock_get_token,
+    mock_create_issue,
+    mock_get_repository,
+    mock_check_availability,
+    mock_get_default_branch,
+    mock_get_file_tree,
+    mock_get_all_coverages,
+    mock_get_raw_content,
+    mock_should_skip_test,
+    mock_evaluate_condition,
+    mock_get_open_pull_requests,
+    mock_get_issue_title,
+    mock_get_issue_body,
+    mock_update_repository,
+    mock_delete_scheduler,
+    mock_slack_notify,
+    mock_get_user,
+    mock_send_email,
+    mock_event,
+):
+    mock_get_token.return_value = "test-token"
+    mock_get_repository.return_value = {"trigger_on_schedule": True}
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "exception",
+        "requests_left": None,
+        "credit_balance_usd": 0,
+        "period_end_date": None,
+        "user_message": "",
+        "log_message": "Exception owner - unlimited access.",
+    }
+    mock_get_default_branch.return_value = ("main", None)
+    mock_get_file_tree.return_value = [
+        {"path": "src/test.py", "type": "blob", "size": 100}
+    ]
+    mock_get_all_coverages.return_value = [
+        {
+            "id": 1,
+            "full_path": "src/test.py",
+            "file_size": 100,
+            "statement_coverage": 0.0,
+            "function_coverage": 0.0,
+            "branch_coverage": 0.0,
+            "line_coverage": 0.0,
+            "uncovered_lines": None,
+            "uncovered_functions": None,
+            "uncovered_branches": None,
+            "created_at": "2024-01-01",
+            "updated_at": "2024-01-01",
+            "github_issue_url": None,
+            "is_excluded_from_testing": False,
+        }
+    ]
+    mock_is_code_file.return_value = True
+    mock_is_test_file.return_value = False
+    mock_is_type_file.return_value = False
+    mock_is_migration_file.return_value = False
+    mock_get_raw_content.return_value = "def test_function(): return True"
+    mock_should_skip_test.return_value = False
+    mock_evaluate_condition.return_value = (True, "has testable logic")
+    mock_get_open_pull_requests.return_value = []
+    mock_get_issue_title.return_value = "Test Title"
+    mock_get_issue_body.return_value = "Test Body"
+    mock_create_issue.return_value = (410, None)
+    mock_get_user.return_value = {"email": "test@example.com", "user_id": 789}
+
+    result = schedule_handler(cast(EventBridgeSchedulerEvent, mock_event))
+
+    assert result["status"] == "skipped"
+    assert "Issues are disabled" in result["message"]
+    mock_update_repository.assert_called_once_with(
+        owner_id=123, repo_id=456, trigger_on_schedule=False, updated_by="test-user"
+    )
+    mock_delete_scheduler.assert_called_once_with("gitauto-repo-123-456")
+    mock_get_user.assert_called_once_with(user_id=789)
+    mock_send_email.assert_called_once()
+    email_call = mock_send_email.call_args
+    assert email_call.kwargs["to"] == "test@example.com"
+    assert email_call.kwargs["subject"] == "Enable Issues to use GitAuto"
+    assert "Hi test-user," in email_call.kwargs["text"]
+    assert "test-org/test-repo" in email_call.kwargs["text"]
+    assert "https://github.com/test-org/test-repo/settings" in email_call.kwargs["text"]
+    mock_slack_notify.assert_called_once()
+    slack_msg = mock_slack_notify.call_args[0][0]
+    assert "Issues are disabled" in slack_msg
+
+
+@patch("services.webhook.schedule_handler.get_open_pull_requests")
+@patch("services.webhook.schedule_handler.evaluate_condition")
+@patch("services.webhook.schedule_handler.should_skip_test")
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.get_repository")
+@patch("services.webhook.schedule_handler.check_availability")
+@patch("services.webhook.schedule_handler.get_default_branch")
+@patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_all_coverages")
+@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.create_issue")
+def test_schedule_handler_prioritizes_zero_coverage_files(
+    mock_create_issue,
+    mock_get_raw_content,
+    mock_get_all_coverages,
+    mock_get_file_tree,
+    mock_get_default_branch,
+    mock_check_availability,
+    mock_get_repository,
+    mock_get_token,
+    mock_should_skip_test,
+    mock_evaluate_condition,
+    mock_get_open_pull_requests,
+    mock_event,
+):
+    mock_get_token.return_value = "test-token"
+    mock_get_repository.return_value = {"trigger_on_schedule": True}
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "exception",
+        "requests_left": None,
+        "credit_balance_usd": 0,
+        "period_end_date": None,
+        "user_message": "",
+        "log_message": "Exception owner - unlimited access.",
+    }
+    mock_get_default_branch.return_value = ("main", None)
+    mock_get_file_tree.return_value = [
+        {"path": "src/partial.py", "type": "blob", "size": 50},
+        {"path": "src/untouched.py", "type": "blob", "size": 100},
+        {"path": "src/new_file.py", "type": "blob", "size": 75},
+    ]
+    mock_get_all_coverages.return_value = [
+        {
+            "id": 1,
+            "full_path": "src/partial.py",
+            "owner_id": 123,
+            "repo_id": 456,
+            "branch_name": "main",
+            "created_by": "test-user",
+            "updated_by": "test-user",
+            "level": "file",
+            "file_size": 50,
+            "statement_coverage": 50.0,
+            "function_coverage": 50.0,
+            "branch_coverage": 50.0,
+            "line_coverage": 50.0,
+            "path_coverage": 0.0,
+            "package_name": None,
+            "language": None,
+            "uncovered_lines": None,
+            "uncovered_functions": None,
+            "uncovered_branches": None,
+            "created_at": "2024-01-01",
+            "updated_at": "2024-01-01",
+            "github_issue_url": None,
+            "is_excluded_from_testing": False,
+        },
+        {
+            "id": 2,
+            "full_path": "src/untouched.py",
+            "owner_id": 123,
+            "repo_id": 456,
+            "branch_name": "main",
+            "created_by": "test-user",
+            "updated_by": "test-user",
+            "level": "file",
+            "file_size": 100,
+            "statement_coverage": 0.0,
+            "function_coverage": 0.0,
+            "branch_coverage": 0.0,
+            "line_coverage": 0.0,
+            "path_coverage": 0.0,
+            "package_name": None,
+            "language": None,
+            "uncovered_lines": None,
+            "uncovered_functions": None,
+            "uncovered_branches": None,
+            "created_at": "2024-01-01",
+            "updated_at": "2024-01-01",
+            "github_issue_url": None,
+            "is_excluded_from_testing": False,
+        },
+    ]
+    mock_get_raw_content.return_value = "def test(): pass"
+    mock_should_skip_test.return_value = False
+    mock_evaluate_condition.return_value = (True, "has testable logic")
+    mock_get_open_pull_requests.return_value = []
+    mock_create_issue.return_value = (
+        200,
+        {"html_url": "https://github.com/test/issue/1"},
+    )
+
+    with patch("services.webhook.schedule_handler.insert_coverages") as mock_insert:
         result = schedule_handler(mock_event)
 
-        # Verify index.ts was checked for content
-        mock_get_raw_content.assert_any_call(
-            owner="test-org",
-            repo="test-repo",
-            file_path="src/components/Button/index.ts",
-            ref="main",
-            token="test-token",
-        )
-
-        # Verify issue was created for helper.ts (not index.ts)
+        assert result["status"] == "success"
         mock_create_issue.assert_called_once()
         call_kwargs = mock_create_issue.call_args.kwargs
-        assert "src/utils/helper.ts" in call_kwargs["title"]
-        assert result["status"] == "success"
+        assert "src/new_file.py" in call_kwargs["title"]
+        assert "Add unit tests to" in call_kwargs["title"]
 
-    @patch("services.webhook.schedule_handler.get_open_pull_requests")
-    @patch("services.webhook.schedule_handler.get_installation_access_token")
-    @patch("services.webhook.schedule_handler.get_repository")
-    @patch("services.webhook.schedule_handler.check_availability")
-    @patch("services.webhook.schedule_handler.get_default_branch")
-    @patch("services.webhook.schedule_handler.get_file_tree")
-    @patch("services.webhook.schedule_handler.get_all_coverages")
-    @patch("services.webhook.schedule_handler.get_raw_content")
-    @patch("services.webhook.schedule_handler.create_issue")
-    def test_schedule_handler_skips_empty_files(
-        self,
-        mock_create_issue,
-        mock_get_raw_content,
-        mock_get_all_coverages,
-        mock_get_file_tree,
-        mock_get_default_branch,
-        mock_check_availability,
-        mock_get_repository,
-        mock_get_token,
-        mock_get_open_pull_requests,
-        mock_event,
-    ):
-        """Test that schedule_handler skips empty files."""
-        # Setup
-        mock_get_token.return_value = "test-token"
-        mock_get_repository.return_value = {"trigger_on_schedule": True}
-        mock_check_availability.return_value = {
-            "can_proceed": True,
-            "billing_type": "exception",
-            "requests_left": None,
-            "credit_balance_usd": 0,
-            "period_end_date": None,
-            "user_message": "",
-            "log_message": "Exception owner - unlimited access.",
-        }
-        mock_get_default_branch.return_value = ("main", None)
-
-        # Mock file tree with empty index.ts
-        mock_get_file_tree.return_value = [
-            {"path": "src/index.ts", "type": "blob", "size": 0},
-            {"path": "src/app.ts", "type": "blob", "size": 300},
-        ]
-
-        mock_get_all_coverages.return_value = []
-
-        # Mock empty index.ts, app.ts with actual code that should generate an issue
-        def mock_empty_content_side_effect(file_path=None, **_):
-            content_map = {
-                "src/index.ts": "   \n\n   ",  # Empty with whitespace
-                "src/app.ts": "function processData(data) {\n  return data.map(x => x * 2);\n}\nexport { processData };",
-            }
-            return content_map.get(file_path or "")
-
-        mock_get_raw_content.side_effect = mock_empty_content_side_effect
-
-        mock_create_issue.return_value = (
-            200,
-            {"html_url": "https://github.com/test/issue/2"},
-        )
-
-        # Mock has_open_pr_for_file to return False (no open PRs)
-        mock_get_open_pull_requests.return_value = []
-
-        # Execute
-        result = schedule_handler(mock_event)
-
-        # Verify issue was created for app.ts (not empty index.ts)
-        mock_create_issue.assert_called_once()
-        call_kwargs = mock_create_issue.call_args.kwargs
-        assert "src/app.ts" in call_kwargs["title"]
-        assert result["status"] == "success"
-
-    @patch("services.webhook.schedule_handler.send_email")
-    @patch("services.webhook.schedule_handler.get_user")
-    @patch("services.webhook.schedule_handler.slack_notify")
-    @patch("services.webhook.schedule_handler.delete_scheduler")
-    @patch("services.webhook.schedule_handler.update_repository")
-    @patch("services.webhook.schedule_handler.get_issue_body")
-    @patch("services.webhook.schedule_handler.get_issue_title")
-    @patch("services.webhook.schedule_handler.get_open_pull_requests")
-    @patch("services.webhook.schedule_handler.should_test_file")
-    @patch("services.webhook.schedule_handler.should_skip_test")
-    @patch("services.webhook.schedule_handler.get_raw_content")
-    @patch("services.webhook.schedule_handler.get_all_coverages")
-    @patch("services.webhook.schedule_handler.get_file_tree")
-    @patch("services.webhook.schedule_handler.get_default_branch")
-    @patch("services.webhook.schedule_handler.check_availability")
-    @patch("services.webhook.schedule_handler.get_repository")
-    @patch("services.webhook.schedule_handler.create_issue")
-    @patch("services.webhook.schedule_handler.get_installation_access_token")
-    @patch("services.webhook.schedule_handler.is_migration_file")
-    @patch("services.webhook.schedule_handler.is_type_file")
-    @patch("services.webhook.schedule_handler.is_test_file")
-    @patch("services.webhook.schedule_handler.is_code_file")
-    def test_schedule_handler_410_issues_disabled(
-        self,
-        mock_is_code_file,
-        mock_is_test_file,
-        mock_is_type_file,
-        mock_is_migration_file,
-        mock_get_token,
-        mock_create_issue,
-        mock_get_repository,
-        mock_check_availability,
-        mock_get_default_branch,
-        mock_get_file_tree,
-        mock_get_all_coverages,
-        mock_get_raw_content,
-        mock_should_skip_test,
-        mock_should_test_file,
-        mock_get_open_pull_requests,
-        mock_get_issue_title,
-        mock_get_issue_body,
-        mock_update_repository,
-        mock_delete_scheduler,
-        mock_slack_notify,
-        mock_get_user,
-        mock_send_email,
-        mock_event,
-    ):
-        """Test that schedule_handler handles 410 (issues disabled) correctly."""
-        # Setup all required mocks to reach create_issue call
-        mock_get_token.return_value = "test-token"
-        mock_get_repository.return_value = {"trigger_on_schedule": True}
-        mock_check_availability.return_value = {
-            "can_proceed": True,
-            "billing_type": "exception",
-            "requests_left": None,
-            "credit_balance_usd": 0,
-            "period_end_date": None,
-            "user_message": "",
-            "log_message": "Exception owner - unlimited access.",
-        }
-        mock_get_default_branch.return_value = ("main", None)
-        mock_get_file_tree.return_value = [
-            {"path": "src/test.py", "type": "blob", "size": 100}
-        ]
-        mock_get_all_coverages.return_value = [
-            {
-                "id": 1,
-                "full_path": "src/test.py",
-                "file_size": 100,
-                "statement_coverage": 0.0,
-                "function_coverage": 0.0,
-                "branch_coverage": 0.0,
-                "line_coverage": 0.0,
-                "uncovered_lines": None,
-                "uncovered_functions": None,
-                "uncovered_branches": None,
-                "created_at": "2024-01-01",
-                "updated_at": "2024-01-01",
-                "github_issue_url": None,
-                "is_excluded_from_testing": False,
-            }
-        ]
-        mock_is_code_file.return_value = True
-        mock_is_test_file.return_value = False
-        mock_is_type_file.return_value = False
-        mock_is_migration_file.return_value = False
-        mock_get_raw_content.return_value = "def test_function(): return True"
-        mock_should_skip_test.return_value = False  # Don't skip
-        mock_should_test_file.return_value = True  # Should test
-        mock_get_open_pull_requests.return_value = []  # No open PRs
-        mock_get_issue_title.return_value = "Test Title"
-        mock_get_issue_body.return_value = "Test Body"
-
-        # Mock create_issue to return 410 (issues disabled)
-        mock_create_issue.return_value = (410, None)
-
-        # Mock get_user to return user with email
-        mock_get_user.return_value = {"email": "test@example.com", "user_id": 789}
-
-        result = schedule_handler(cast(EventBridgeSchedulerEvent, mock_event))
-
-        # Verify the function handled 410 correctly
-        assert result["status"] == "skipped"
-        assert "Issues are disabled" in result["message"]
-
-        # Verify that it updated the repository to disable schedule
-        mock_update_repository.assert_called_once_with(
-            owner_id=123, repo_id=456, trigger_on_schedule=False, updated_by="test-user"
-        )
-
-        # Verify that it deleted the AWS scheduler
-        mock_delete_scheduler.assert_called_once_with("gitauto-repo-123-456")
-
-        # Verify that it sent email notification to user
-        mock_get_user.assert_called_once_with(user_id=789)
-        mock_send_email.assert_called_once()
-        email_call = mock_send_email.call_args
-        assert email_call.kwargs["to"] == "test@example.com"
-        assert email_call.kwargs["subject"] == "Enable Issues to use GitAuto"
-        assert "Hi test-user," in email_call.kwargs["text"]
-        assert "test-org/test-repo" in email_call.kwargs["text"]
-        assert (
-            "https://github.com/test-org/test-repo/settings"
-            in email_call.kwargs["text"]
-        )
-
-        # Verify that it sent a Slack notification
-        mock_slack_notify.assert_called_once()
-        slack_msg = mock_slack_notify.call_args[0][0]
-        assert "Issues are disabled" in slack_msg
-
-    @patch("services.webhook.schedule_handler.get_open_pull_requests")
-    @patch("services.webhook.schedule_handler.should_test_file")
-    @patch("services.webhook.schedule_handler.should_skip_test")
-    @patch("services.webhook.schedule_handler.get_installation_access_token")
-    @patch("services.webhook.schedule_handler.get_repository")
-    @patch("services.webhook.schedule_handler.check_availability")
-    @patch("services.webhook.schedule_handler.get_default_branch")
-    @patch("services.webhook.schedule_handler.get_file_tree")
-    @patch("services.webhook.schedule_handler.get_all_coverages")
-    @patch("services.webhook.schedule_handler.get_raw_content")
-    @patch("services.webhook.schedule_handler.create_issue")
-    def test_schedule_handler_prioritizes_zero_coverage_files(
-        self,
-        mock_create_issue,
-        mock_get_raw_content,
-        mock_get_all_coverages,
-        mock_get_file_tree,
-        mock_get_default_branch,
-        mock_check_availability,
-        mock_get_repository,
-        mock_get_token,
-        mock_should_skip_test,
-        mock_should_test_file,
-        mock_get_open_pull_requests,
-        mock_event,
-    ):
-        mock_get_token.return_value = "test-token"
-        mock_get_repository.return_value = {"trigger_on_schedule": True}
-        mock_check_availability.return_value = {
-            "can_proceed": True,
-            "billing_type": "exception",
-            "requests_left": None,
-            "credit_balance_usd": 0,
-            "period_end_date": None,
-            "user_message": "",
-            "log_message": "Exception owner - unlimited access.",
-        }
-        mock_get_default_branch.return_value = ("main", None)
-        mock_get_file_tree.return_value = [
-            {"path": "src/partial.py", "type": "blob", "size": 50},
-            {"path": "src/untouched.py", "type": "blob", "size": 100},
-            {"path": "src/new_file.py", "type": "blob", "size": 75},
-        ]
-        mock_get_all_coverages.return_value = [
-            {
-                "id": 1,
-                "full_path": "src/partial.py",
-                "owner_id": 123,
-                "repo_id": 456,
-                "branch_name": "main",
-                "created_by": "test-user",
-                "updated_by": "test-user",
-                "level": "file",
-                "file_size": 50,
-                "statement_coverage": 50.0,
-                "function_coverage": 50.0,
-                "branch_coverage": 50.0,
-                "line_coverage": 50.0,
-                "path_coverage": 0.0,
-                "package_name": None,
-                "language": None,
-                "uncovered_lines": None,
-                "uncovered_functions": None,
-                "uncovered_branches": None,
-                "created_at": "2024-01-01",
-                "updated_at": "2024-01-01",
-                "github_issue_url": None,
-                "is_excluded_from_testing": False,
-            },
-            {
-                "id": 2,
-                "full_path": "src/untouched.py",
-                "owner_id": 123,
-                "repo_id": 456,
-                "branch_name": "main",
-                "created_by": "test-user",
-                "updated_by": "test-user",
-                "level": "file",
-                "file_size": 100,
-                "statement_coverage": 0.0,
-                "function_coverage": 0.0,
-                "branch_coverage": 0.0,
-                "line_coverage": 0.0,
-                "path_coverage": 0.0,
-                "package_name": None,
-                "language": None,
-                "uncovered_lines": None,
-                "uncovered_functions": None,
-                "uncovered_branches": None,
-                "created_at": "2024-01-01",
-                "updated_at": "2024-01-01",
-                "github_issue_url": None,
-                "is_excluded_from_testing": False,
-            },
-        ]
-        # src/new_file.py is NOT in get_all_coverages, so it will be treated as 0% coverage new file and trigger insert_coverages
-        mock_get_raw_content.return_value = "def test(): pass"
-        mock_should_skip_test.return_value = False
-        mock_should_test_file.return_value = True
-        mock_get_open_pull_requests.return_value = []
-        mock_create_issue.return_value = (
-            200,
-            {"html_url": "https://github.com/test/issue/1"},
-        )
-
-        with patch("services.webhook.schedule_handler.insert_coverages") as mock_insert:
-            result = schedule_handler(mock_event)
-
-            assert result["status"] == "success"
-            mock_create_issue.assert_called_once()
-            call_kwargs = mock_create_issue.call_args.kwargs
-            assert "src/new_file.py" in call_kwargs["title"]
-            assert "Add unit tests to" in call_kwargs["title"]
-
-            # Verify insert_coverages was called with correct CoveragesInsert structure
-            mock_insert.assert_called_once()
-            coverage_record = mock_insert.call_args[0][0]
-            assert coverage_record["full_path"] == "src/new_file.py"
-            assert coverage_record["owner_id"] == 123
-            assert coverage_record["repo_id"] == 456
-            assert coverage_record["branch_name"] == "main"
-            assert coverage_record["created_by"] == "test-user"
-            assert coverage_record["updated_by"] == "test-user"
-            assert coverage_record["level"] == "file"
-            assert coverage_record["file_size"] == 75
-            assert coverage_record["statement_coverage"] == 0
-            assert coverage_record["function_coverage"] == 0
-            assert coverage_record["branch_coverage"] == 0
-            assert coverage_record["line_coverage"] == 0
-            assert coverage_record["path_coverage"] == 0
-            assert coverage_record["package_name"] is None
-            assert coverage_record["language"] is None
-            assert (
-                coverage_record["github_issue_url"] == "https://github.com/test/issue/1"
-            )
-            assert coverage_record["is_excluded_from_testing"] is False
-            assert coverage_record["uncovered_lines"] is None
-            assert coverage_record["uncovered_functions"] is None
-            assert coverage_record["uncovered_branches"] is None
-            # Verify CoveragesInsert doesn't include these fields
-            assert "id" not in coverage_record
-            assert "created_at" not in coverage_record
-            assert "updated_at" not in coverage_record
+        mock_insert.assert_called_once()
+        coverage_record = mock_insert.call_args[0][0]
+        assert coverage_record["full_path"] == "src/new_file.py"
+        assert coverage_record["owner_id"] == 123
+        assert coverage_record["repo_id"] == 456
+        assert coverage_record["branch_name"] == "main"
+        assert coverage_record["created_by"] == "test-user"
+        assert coverage_record["updated_by"] == "test-user"
+        assert coverage_record["level"] == "file"
+        assert coverage_record["file_size"] == 75
+        assert coverage_record["statement_coverage"] == 0
+        assert coverage_record["function_coverage"] == 0
+        assert coverage_record["branch_coverage"] == 0
+        assert coverage_record["line_coverage"] == 0
+        assert coverage_record["path_coverage"] == 0
+        assert coverage_record["package_name"] is None
+        assert coverage_record["language"] is None
+        assert coverage_record["github_issue_url"] == "https://github.com/test/issue/1"
+        assert coverage_record["is_excluded_from_testing"] is False
+        assert coverage_record["uncovered_lines"] is None
+        assert coverage_record["uncovered_functions"] is None
+        assert coverage_record["uncovered_branches"] is None
+        assert "id" not in coverage_record
+        assert "created_at" not in coverage_record
+        assert "updated_at" not in coverage_record
