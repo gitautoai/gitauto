@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD029 MD032 -->
+<!-- markdownlint-disable MD029 MD032 MD036 -->
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -253,8 +253,7 @@ uvicorn main:app --reload --port 8000 --log-level warning
 source .env && psql "postgresql://postgres.dkrxtcbaqzrodvsagwwn:$SUPABASE_DB_PASSWORD_DEV@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
 
 # Connect to Supabase PostgreSQL database (Production)
-# READ-ONLY access
-source .env && psql "postgresql://postgres.awegqusxzsmlgxawyyrq:$SUPABASE_DB_PASSWORD_PRD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
+source .env && psql "postgresql://postgres.awegqusxzsmlgxaxyyrq:$SUPABASE_DB_PASSWORD_PRD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
 
 # Query tips:
 # - Use -c "SELECT ..." for single queries
@@ -425,57 +424,10 @@ aws logs filter-log-events \
 
 #### Searching CloudWatch Logs
 
+Use `scripts/aws/filter_log_events_across_streams.py`. Example:
+
 ```bash
-# Search production Lambda logs
-# Main log group: /aws/lambda/pr-agent-prod (configured for the Lambda function)
-
-# IMPORTANT: Sentry provides a direct CloudWatch logs URL in the error context!
-# Look for "cloudwatch logs" section in Sentry error details, it contains a URL like:
-# https://console.aws.amazon.com/cloudwatch/home?region=us-west-1#logEventViewer:group=/aws/lambda/pr-agent-prod;stream=2025/08/29/pr-agent-prod[$LATEST]65d5c604f2fc4f44b1a2105a77aaf7cd;start=2025-08-29T13:08:32Z;end=2025-08-29T13:08:51Z
-#
-# Extract the stream name and timestamps from this URL:
-# - Stream: 2025/08/29/pr-agent-prod[$LATEST]65d5c604f2fc4f44b1a2105a77aaf7cd
-# - Start: 2025-08-29T13:08:32Z
-# - End: 2025-08-29T13:08:51Z
-#
-# Convert the timestamps to epoch milliseconds:
-python3 -c "import datetime; start = datetime.datetime(2025, 8, 29, 13, 8, 32); end = datetime.datetime(2025, 8, 29, 13, 8, 51); print(f'Start: {int(start.timestamp() * 1000)}, End: {int(end.timestamp() * 1000)}')"
-#
-# For relative time ranges (usually more practical):
-python3 -c "import datetime; now = datetime.datetime.now(); print(f'Last 2 hours - Start: {int((now - datetime.timedelta(hours=2)).timestamp() * 1000)}, End: {int(now.timestamp() * 1000)}')"
-
-# Search for errors in main log group
-aws logs filter-log-events --log-group-name "/aws/lambda/pr-agent-prod" --filter-pattern "ERROR" --start-time START_EPOCH --end-time END_EPOCH --max-items 100
-
-# Get recent logs without filter
-aws logs filter-log-events --log-group-name "/aws/lambda/pr-agent-prod" --start-time START_EPOCH --end-time END_EPOCH --max-items 50
-
-# List available log groups
-aws logs describe-log-groups --log-group-name-prefix "/aws/lambda" --max-items 20
-
-# List log streams in a specific log group (recent streams first)
-aws logs describe-log-streams --log-group-name "/aws/lambda/pr-agent-prod" --order-by LastEventTime --descending --max-items 10
-
-# List log streams from a specific date (cannot use --order-by with prefix)
-aws logs describe-log-streams --log-group-name "/aws/lambda/pr-agent-prod" --log-stream-name-prefix "2025/08/29/" --max-items 20
-
-# Get logs from a specific stream (use [\$LATEST] with escape for $)
-aws logs get-log-events --log-group-name "/aws/lambda/pr-agent-prod" --log-stream-name "2025/08/29/pr-agent-prod[\$LATEST]65d5c604f2fc4f44b1a2105a77aaf7cd" --start-time START_EPOCH --end-time END_EPOCH --limit 100
-
-# Search by keyword across all streams in a time range
-aws logs filter-log-events --log-group-name "/aws/lambda/pr-agent-prod" --filter-pattern "Foxquilt" --start-time START_EPOCH --end-time END_EPOCH --max-items 10
-
-# Find specific error by request ID or issue ID
-aws logs filter-log-events --log-group-name "/aws/lambda/pr-agent-prod" --filter-pattern "AGENT-12N OR req_011CSc46UReJXaoSqKaUX2Lz" --start-time START_EPOCH --end-time END_EPOCH --max-items 10
-
-# Save logs to file for detailed analysis
-aws logs get-log-events --log-group-name "/aws/lambda/pr-agent-prod" --log-stream-name "STREAM_NAME" --start-time START_EPOCH --end-time END_EPOCH --limit 200 > /tmp/cloudwatch_logs.txt
-
-# Parse saved logs with Python
-cat /tmp/cloudwatch_logs.txt | python3 -c "import sys, json; data = json.load(sys.stdin); [print(e['message']) for e in data['events'] if 'ERROR' in e['message']]"
-
-# Update Lambda function log group configuration
-aws lambda update-function-configuration --function-name pr-agent-prod --logging-config LogFormat=Text,LogGroup=/aws/lambda/pr-agent-prod
+python3 scripts/aws/filter_log_events_across_streams.py --hours 24 --owner Foxquilt --repo foxcom-forms --trigger schedule
 ```
 
 ## GitHub API Access for Production Customer Repository Investigation
@@ -983,40 +935,41 @@ When making architectural decisions, ask "why" 5 times:
 
 When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
 
-1. Run black formatting: `black .`
-2. Run ruff linting: `ruff check . --fix` (fix ALL ruff errors, not just modified files - if any errors remain unfixed, STOP and fix them before continuing)
-3. Check for print statements and built-in logging:
+1. Regenerate TypedDict schemas from database: `python3 schemas/supabase/generate_types.py`
+2. Run black formatting: `black .`
+3. Run ruff linting: `ruff check . --fix` (fix ALL ruff errors, not just modified files - if any errors remain unfixed, STOP and fix them before continuing)
+4. Check for print statements and built-in logging:
    - Run `ruff check --select=T201 . --exclude schemas/,venv/` to find print statements - **FIX ALL before continuing** (use custom logger instead)
    - Run `grep -r "^import logging$" --include="*.py" . --exclude-dir=venv | grep -v "utils/logging/logging_config.py"` to find built-in logging imports - **FIX ALL before continuing** (use `from utils.logging.logging_config import logger` instead). Note: `utils/logging/logging_config.py` is excluded because it's the central logging module.
-4. **CRITICAL**: Check `git status` FIRST to see ALL changes including deleted/renamed files
-5. Get list of modified, created, AND deleted files ONCE: `(git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard) | sort -u`
+5. **CRITICAL**: Check `git status` FIRST to see ALL changes including deleted/renamed files
+6. Get list of modified, created, AND deleted files ONCE: `(git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard) | sort -u`
    - This command captures: modified files, staged files, and newly created untracked files
    - NOTE: Deleted files that are already staged won't appear in this list but MUST be included in the commit
    - Store this list and use it for all subsequent steps
    - Extract Python files from this list: filter for `.py` files
    - Extract test files from this list: filter for `test_*.py` files
    - **CRITICAL**: For pylint, pyright, flake8, and pytest, filter out deleted files that no longer exist
-6. Run flake8 on the Python files identified in step 5 (excluding deleted files): `flake8 file1.py file2.py file3.py` - **IF ANY FLAKE8 ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
-7. Run pylint on the Python files identified in step 5 (excluding deleted files): `pylint file1.py file2.py file3.py` - **IF ANY PYLINT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
-8. Run pyright on the whole repo: `pyright` - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+7. Run flake8 on the Python files identified in step 6 (excluding deleted files): `flake8 file1.py file2.py file3.py` - **IF ANY FLAKE8 ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+8. Run pylint on the Python files identified in step 6 (excluding deleted files): `pylint file1.py file2.py file3.py` - **IF ANY PYLINT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
+9. Run pyright on the whole repo: `pyright` - **IF ANY PYRIGHT ERRORS/WARNINGS ARE FOUND, FIX THEM ALL BEFORE CONTINUING**
    - For test files with many mock parameters, pyright will warn about unused variables (e.g., `_mock_update_usage is not accessed`)
    - This is expected - test files often have mock parameters that are required by the decorator order but not used in the test
    - Suppress these warnings by adding `# pyright: reportUnusedVariable=false` at the top of the test file (after pylint disables)
-9. Run pytest on the test files identified in step 5 (excluding deleted files): `python -m pytest test_file1.py test_file2.py` - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
-10. Check current branch is not main: `git branch --show-current`
-11. Merge latest main: `git fetch origin main && git merge origin/main`
-12. **CRITICAL**: Review `git status` again to ensure ALL changes are staged:
-    - Add all modified/new files identified in step 5
+10. Run pytest on the test files identified in step 6 (excluding deleted files): `python -m pytest test_file1.py test_file2.py` - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
+11. Check current branch is not main: `git branch --show-current`
+12. Merge latest main: `git fetch origin main && git merge origin/main`
+13. **CRITICAL**: Review `git status` again to ensure ALL changes are staged:
+    - Add all modified/new files identified in step 6
     - Ensure deleted files are staged (they should already be if renamed with `mv`)
     - Use specific file names: `git add file1.py file2.py file3.py` (**NEVER use `git add .`**)
     - For deleted files already staged, they'll be included automatically in the commit
-13. Commit with descriptive message: `git commit -m "descriptive message"`
+14. Commit with descriptive message: `git commit -m "descriptive message"`
     - **CRITICAL**: NEVER include Claude Code credits or co-author lines in commit messages
     - NO "🤖 Generated with [Claude Code]" footer
     - NO "Co-Authored-By: Claude <noreply@anthropic.com>" lines
     - Keep commit messages professional and focused on the actual changes
-14. Push to remote: `git push`
-15. Create pull request: `gh pr create --title "PR title" --body "PR description" --assignee @me`. Example:
+15. Push to remote: `git push`
+16. Create pull request: `gh pr create --title "PR title" --body "PR description" --assignee @me`. Example:
 
     ```bash
     gh pr create --title "PR title" --body "$(cat <<'EOF'
@@ -1047,11 +1000,13 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
 - **ALWAYS specify exact files**: Use `git diff --name-only HEAD` to see what's changed, then add only those specific files
 - **Example**: `git add $(git diff --name-only HEAD)` or list files manually
 - **CRITICAL: Recognize new branch push output** - When `git push` shows:
+
   ```bash
   remote: Create a pull request for 'branch' on GitHub by visiting:
   remote:      https://github.com/owner/repo/pull/new/branch
   * [new branch]        branch -> branch
   ```
+
   This means NO PR EXISTS YET. You MUST run `gh pr create` to create the PR. Don't assume a PR exists.
 
 IMPORTANT: When pylint and pyright show many alerts/errors, focus on fixing issues related to your code changes unless explicitly told to fix all issues. Don't ignore everything, but prioritize errors in files you modified.

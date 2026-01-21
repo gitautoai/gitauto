@@ -6,6 +6,9 @@ from typing import cast
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 from schemas.supabase.types import Coverages, CoveragesInsert
 
+# Local imports (AI)
+from services.anthropic.evaluate_condition import evaluate_condition
+
 # Local imports (AWS)
 from services.aws.delete_scheduler import delete_scheduler
 
@@ -23,6 +26,7 @@ from services.resend.text.issues_disabled_email import get_issues_disabled_email
 from services.slack.slack_notify import slack_notify
 
 # Local imports (Supabase)
+from services.supabase.coverages.exclude_from_testing import exclude_from_testing
 from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.supabase.coverages.insert_coverages import insert_coverages
 from services.supabase.coverages.update_issue_url import update_issue_url
@@ -38,9 +42,9 @@ from utils.files.is_migration_file import is_migration_file
 from utils.files.is_test_file import is_test_file
 from utils.files.is_type_file import is_type_file
 from utils.files.should_skip_test import should_skip_test
-from utils.files.should_test_file import should_test_file
 from utils.issue_templates.schedule import get_issue_title, get_issue_body
 from utils.logging.logging_config import logger, set_trigger
+from utils.prompts.should_test_file import SHOULD_TEST_FILE_PROMPT
 
 
 @handle_exceptions(raise_on_error=True)
@@ -48,27 +52,12 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     set_trigger("schedule")
     # Extract details from the event payload
     owner_id = event.get("ownerId")
-    owner_type = event.get("ownerType")
     owner_name = event.get("ownerName")
     repo_id = event.get("repoId")
     repo_name = event.get("repoName")
     user_id = event.get("userId")
     user_name = event.get("userName")
     installation_id = event.get("installationId")
-
-    if not all(
-        [
-            owner_id,
-            owner_name,
-            owner_type,
-            repo_id,
-            repo_name,
-            user_id,
-            user_name,
-            installation_id,
-        ]
-    ):
-        raise ValueError("Missing required fields in event detail")
 
     # Get installation access token - simplified since we already have installation_id
     token = get_installation_access_token(installation_id=installation_id)
@@ -100,11 +89,13 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         return {"status": "skipped", "message": availability_status["log_message"]}
 
     # Get repository files and coverage data
-    default_branch, _ = get_default_branch(
-        owner=owner_name, repo=repo_name, token=token
-    )
+    target_branch = repo_settings.get("target_branch")
+    if not target_branch:
+        target_branch, _ = get_default_branch(
+            owner=owner_name, repo=repo_name, token=token
+        )
     tree_items = get_file_tree(
-        owner=owner_name, repo=repo_name, ref=default_branch, token=token
+        owner=owner_name, repo=repo_name, ref=target_branch, token=token
     )
 
     # Extract necessary data
@@ -131,7 +122,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                 "full_path": file_path,
                 "owner_id": owner_id,
                 "repo_id": repo_id,
-                "branch_name": default_branch,
+                "branch_name": target_branch,
                 "created_by": user_name,
                 "updated_by": user_name,
                 "level": "file",
@@ -145,6 +136,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                 "language": None,
                 "github_issue_url": None,
                 "is_excluded_from_testing": False,
+                "exclusion_reason": None,
                 "uncovered_lines": None,
                 "uncovered_functions": None,
                 "uncovered_branches": None,
@@ -159,7 +151,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         return {"status": "skipped", "message": msg}
 
     # Filter out files with 100% coverage in all three metrics
-    files_needing_tests = []
+    files_needing_tests: list[Coverages] = []
     for item in enriched_all_files:
         stmt = item["statement_coverage"]
         func = item["function_coverage"]
@@ -189,7 +181,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
     # Get open PRs once before the loop
     open_prs = get_open_pull_requests(
-        owner=owner_name, repo=repo_name, target_branch=default_branch, token=token
+        owner=owner_name, repo=repo_name, target_branch=target_branch, token=token
     )
 
     # Find the first suitable file from sorted list
@@ -207,21 +199,33 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         # Skip non-code files
         if not is_code_file(item_path):
             logger.info("Skipping %s: not a code file", item_path)
+            exclude_from_testing(
+                owner_id, repo_id, item_path, target_branch, "not code file", user_name
+            )
             continue
 
         # Skip test files
         if is_test_file(item_path):
             logger.info("Skipping %s: test file", item_path)
+            exclude_from_testing(
+                owner_id, repo_id, item_path, target_branch, "test file", user_name
+            )
             continue
 
         # Skip types files
         if is_type_file(item_path):
             logger.info("Skipping %s: type file", item_path)
+            exclude_from_testing(
+                owner_id, repo_id, item_path, target_branch, "type file", user_name
+            )
             continue
 
         # Skip migration files
         if is_migration_file(item_path):
             logger.info("Skipping %s: migration file", item_path)
+            exclude_from_testing(
+                owner_id, repo_id, item_path, target_branch, "migration file", user_name
+            )
             continue
 
         # Skip files that only contain exports/re-exports or are empty
@@ -229,35 +233,49 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             owner=owner_name,
             repo=repo_name,
             file_path=item_path,
-            ref=default_branch,
+            ref=target_branch,
             token=token,
         )
         # Skip empty files or files with only whitespace
         if not content or not content.strip():
             logger.info("Skipping %s: empty content", item_path)
+            exclude_from_testing(
+                owner_id, repo_id, item_path, target_branch, "empty file", user_name
+            )
             continue
 
         # Skip files that should be skipped based on content
         if should_skip_test(item_path, content):
             logger.info("Skipping %s: should_skip_test=True", item_path)
+            exclude_from_testing(
+                owner_id, repo_id, item_path, target_branch, "only exports", user_name
+            )
             continue
 
-        # Skip files excluded from testing
+        # Skip files excluded from testing (already in DB, no need to re-exclude)
         if item.get("is_excluded_from_testing"):
             logger.info("Skipping %s: excluded from testing by dashboard", item_path)
             continue
 
-        # Skip files that have open PRs
+        # Skip files that have open PRs (temporary, don't exclude)
         if any(item_path in pr.get("title", "") for pr in open_prs):
             logger.info("Skipping %s: has open PR", item_path)
             continue
 
         # Final check: Use Claude AI to determine if this file should be tested (expensive, so run last)
-        if not should_test_file(item_path, content):
-            logger.info("Skipping %s: should_test_file=False", item_path)
+        should_test, reason = evaluate_condition(
+            content=f"File path: {item_path}\n\nContent:\n{content}",
+            system_prompt=SHOULD_TEST_FILE_PROMPT,
+        )
+        if not should_test:
+            logger.info("Skipping %s: %s", item_path, reason)
+            exclude_from_testing(
+                owner_id, repo_id, item_path, target_branch, reason, user_name
+            )
             continue
 
         # Found the best suitable file
+        logger.info("Selected %s: %s", item_path, reason)
         target_item = item
         break
 
@@ -276,7 +294,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     body = get_issue_body(
         owner=owner_name,
         repo=repo_name,
-        branch=default_branch,
+        branch=target_branch,
         file_path=target_path,
         statement_coverage=target_item["statement_coverage"],
         function_coverage=target_item["function_coverage"],
@@ -346,6 +364,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                 "language": target_item["language"],
                 "github_issue_url": issue_response["html_url"],
                 "is_excluded_from_testing": target_item["is_excluded_from_testing"],
+                "exclusion_reason": target_item["exclusion_reason"],
                 "uncovered_lines": target_item["uncovered_lines"],
                 "uncovered_functions": target_item["uncovered_functions"],
                 "uncovered_branches": target_item["uncovered_branches"],

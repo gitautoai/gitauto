@@ -1,36 +1,51 @@
+import json
+from typing import Literal, TypedDict
+
 from config import ANTHROPIC_MODEL_ID_45
 from services.anthropic.client import claude
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=False, raise_on_error=False)
+class OutputFormat(TypedDict):
+    type: Literal["json_schema"]
+    schema: dict[str, object]
+
+
+RESPONSE_SCHEMA: OutputFormat = {
+    "type": "json_schema",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "result": {"type": "boolean"},
+            "reason": {"type": "string"},
+        },
+        "required": ["result", "reason"],
+        "additionalProperties": False,
+    },
+}
+
+
+@handle_exceptions(
+    default_return_value=(False, "evaluation failed"), raise_on_error=False
+)
 def evaluate_condition(
     content: str,
     system_prompt: str,
     max_tokens: int = 100,
 ):
     if not content or not system_prompt:
-        return False
+        return (False, "empty input")
 
-    response = claude.messages.create(
+    response = claude.beta.messages.create(
         model=ANTHROPIC_MODEL_ID_45,
         max_tokens=max_tokens,
         temperature=0,
-        system=f"""{system_prompt}
-
-Respond with ONLY the word TRUE or FALSE. Nothing else.""",
+        system=system_prompt,
         messages=[{"role": "user", "content": content}],
+        betas=["structured-outputs-2025-11-13"],
+        output_format=RESPONSE_SCHEMA,
     )
 
-    # Parse the response
-    first_content = response.content[0]
-    response_text = getattr(first_content, "text", "").strip().lower()
-
-    # Simple parsing - just check for true or false
-    if "true" in response_text:
-        return True
-
-    if "false" in response_text:
-        return False
-
-    return False
+    response_text = getattr(response.content[0], "text", "").strip()
+    data = json.loads(response_text)
+    return (data["result"], data["reason"])
