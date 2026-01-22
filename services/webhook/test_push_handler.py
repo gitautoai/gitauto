@@ -4,7 +4,7 @@ from services.github.types.webhook.push import PushWebhookPayload
 from services.webhook.push_handler import handle_push
 
 
-@patch("services.webhook.push_handler.slack_notify")
+@patch("services.webhook.push_handler.logger")
 @patch("services.webhook.push_handler.update_pull_request_branch")
 @patch("services.webhook.push_handler.get_open_pull_requests")
 @patch("services.webhook.push_handler.get_installation_access_token")
@@ -14,7 +14,7 @@ def test_handle_push_tag_push_returns_early(
     mock_get_token,
     mock_get_open_prs,
     mock_update_pr,
-    mock_slack_notify,
+    mock_logger,
 ):
     payload = {
         "repository": {
@@ -33,10 +33,10 @@ def test_handle_push_tag_push_returns_early(
     mock_get_token.assert_not_called()
     mock_get_open_prs.assert_not_called()
     mock_update_pr.assert_not_called()
-    mock_slack_notify.assert_not_called()
+    mock_logger.info.assert_not_called()
 
 
-@patch("services.webhook.push_handler.slack_notify")
+@patch("services.webhook.push_handler.logger")
 @patch("services.webhook.push_handler.update_pull_request_branch")
 @patch("services.webhook.push_handler.get_open_pull_requests")
 @patch("services.webhook.push_handler.get_installation_access_token")
@@ -46,7 +46,7 @@ def test_handle_push_repository_not_found_returns_early(
     mock_get_token,
     mock_get_open_prs,
     mock_update_pr,
-    mock_slack_notify,
+    mock_logger,
 ):
     payload = {
         "repository": {
@@ -67,10 +67,10 @@ def test_handle_push_repository_not_found_returns_early(
     mock_get_token.assert_not_called()
     mock_get_open_prs.assert_not_called()
     mock_update_pr.assert_not_called()
-    mock_slack_notify.assert_not_called()
+    mock_logger.info.assert_not_called()
 
 
-@patch("services.webhook.push_handler.slack_notify")
+@patch("services.webhook.push_handler.logger")
 @patch("services.webhook.push_handler.update_pull_request_branch")
 @patch("services.webhook.push_handler.get_open_pull_requests")
 @patch("services.webhook.push_handler.get_installation_access_token")
@@ -80,7 +80,7 @@ def test_handle_push_local_feature_to_remote_feature_not_handled(
     mock_get_token,
     mock_get_open_prs,
     mock_update_pr,
-    mock_slack_notify,
+    mock_logger,
 ):
     payload = {
         "repository": {
@@ -101,10 +101,10 @@ def test_handle_push_local_feature_to_remote_feature_not_handled(
     mock_get_token.assert_not_called()
     mock_get_open_prs.assert_not_called()
     mock_update_pr.assert_not_called()
-    mock_slack_notify.assert_not_called()
+    mock_logger.info.assert_not_called()
 
 
-@patch("services.webhook.push_handler.slack_notify")
+@patch("services.webhook.push_handler.logger")
 @patch("services.webhook.push_handler.update_pull_request_branch")
 @patch("services.webhook.push_handler.get_open_pull_requests")
 @patch("services.webhook.push_handler.get_installation_access_token")
@@ -114,7 +114,7 @@ def test_handle_push_remote_feature_to_remote_staging_not_handled(
     mock_get_token,
     mock_get_open_prs,
     mock_update_pr,
-    mock_slack_notify,
+    mock_logger,
 ):
     payload = {
         "repository": {
@@ -135,10 +135,10 @@ def test_handle_push_remote_feature_to_remote_staging_not_handled(
     mock_get_token.assert_not_called()
     mock_get_open_prs.assert_not_called()
     mock_update_pr.assert_not_called()
-    mock_slack_notify.assert_not_called()
+    mock_logger.info.assert_not_called()
 
 
-@patch("services.webhook.push_handler.slack_notify")
+@patch("services.webhook.push_handler.logger")
 @patch("services.webhook.push_handler.update_pull_request_branch")
 @patch("services.webhook.push_handler.get_open_pull_requests")
 @patch("services.webhook.push_handler.get_installation_access_token")
@@ -148,7 +148,7 @@ def test_handle_push_no_open_prs_returns_early(
     mock_get_token,
     mock_get_open_prs,
     mock_update_pr,
-    mock_slack_notify,
+    mock_logger,
 ):
     payload = {
         "repository": {
@@ -173,10 +173,10 @@ def test_handle_push_no_open_prs_returns_early(
         owner="test-owner", repo="test-repo", target_branch="main", token="test-token"
     )
     mock_update_pr.assert_not_called()
-    mock_slack_notify.assert_not_called()
+    mock_logger.info.assert_not_called()
 
 
-@patch("services.webhook.push_handler.slack_notify")
+@patch("services.webhook.push_handler.logger")
 @patch("services.webhook.push_handler.update_pull_request_branch")
 @patch("services.webhook.push_handler.get_open_pull_requests")
 @patch("services.webhook.push_handler.get_installation_access_token")
@@ -186,7 +186,7 @@ def test_handle_push_local_main_to_remote_main_handled(
     mock_get_token,
     mock_get_open_prs,
     mock_update_pr,
-    mock_slack_notify,
+    mock_logger,
 ):
     payload = {
         "repository": {
@@ -221,10 +221,10 @@ def test_handle_push_local_main_to_remote_main_handled(
     mock_update_pr.assert_any_call(
         owner="test-owner", repo="test-repo", pull_number=2, token="test-token"
     )
-    mock_slack_notify.assert_called_once()
+    mock_logger.info.assert_called_once()
 
 
-@patch("services.webhook.push_handler.slack_notify")
+@patch("services.webhook.push_handler.logger")
 @patch("services.webhook.push_handler.update_pull_request_branch")
 @patch("services.webhook.push_handler.get_open_pull_requests")
 @patch("services.webhook.push_handler.get_installation_access_token")
@@ -234,7 +234,7 @@ def test_handle_push_remote_feature_to_remote_main_handled(
     mock_get_token,
     mock_get_open_prs,
     mock_update_pr,
-    mock_slack_notify,
+    mock_logger,
 ):
     payload = {
         "repository": {
@@ -262,10 +262,10 @@ def test_handle_push_remote_feature_to_remote_main_handled(
     mock_update_pr.assert_called_once_with(
         owner="test-owner", repo="test-repo", pull_number=5, token="test-token"
     )
-    mock_slack_notify.assert_called_once()
+    mock_logger.info.assert_called_once()
 
 
-@patch("services.webhook.push_handler.slack_notify")
+@patch("services.webhook.push_handler.logger")
 @patch("services.webhook.push_handler.update_pull_request_branch")
 @patch("services.webhook.push_handler.get_open_pull_requests")
 @patch("services.webhook.push_handler.get_installation_access_token")
@@ -275,7 +275,7 @@ def test_handle_push_with_failed_updates(
     mock_get_token,
     mock_get_open_prs,
     mock_update_pr,
-    mock_slack_notify,
+    mock_logger,
 ):
     payload = {
         "repository": {
@@ -296,7 +296,7 @@ def test_handle_push_with_failed_updates(
     ]
     mock_update_pr.side_effect = [
         ("updated", None),
-        ("failed", "HTTP 422: Merge conflict detected"),
+        ("failed", "HTTP 500: Internal server error"),
         ("updated", None),
     ]
 
@@ -304,10 +304,61 @@ def test_handle_push_with_failed_updates(
 
     assert result is None
     assert mock_update_pr.call_count == 3
-    mock_slack_notify.assert_called_once()
+    mock_logger.info.assert_called_once()
+    call_args = mock_logger.info.call_args[0][0]
+    assert "- Failed: 1" in call_args
+    assert "PR #2: HTTP 500" in call_args
 
 
-@patch("services.webhook.push_handler.slack_notify")
+@patch("services.webhook.push_handler.logger")
+@patch("services.webhook.push_handler.update_pull_request_branch")
+@patch("services.webhook.push_handler.get_open_pull_requests")
+@patch("services.webhook.push_handler.get_installation_access_token")
+@patch("services.webhook.push_handler.get_repository")
+def test_handle_push_with_merge_conflicts(
+    mock_get_repository,
+    mock_get_token,
+    mock_get_open_prs,
+    mock_update_pr,
+    mock_logger,
+):
+    payload = {
+        "repository": {
+            "owner": {"id": 123, "login": "test-owner"},
+            "id": 456,
+            "name": "test-repo",
+        },
+        "installation": {"id": 789},
+        "ref": "refs/heads/main",
+    }
+
+    mock_get_repository.return_value = {"target_branch": "main"}
+    mock_get_token.return_value = "test-token"
+    mock_get_open_prs.return_value = [
+        {"number": 1, "title": "PR 1"},
+        {"number": 2, "title": "PR 2"},
+        {"number": 3, "title": "PR 3"},
+    ]
+    mock_update_pr.side_effect = [
+        ("updated", None),
+        ("conflict", None),
+        ("up_to_date", None),
+    ]
+
+    result = handle_push(cast(PushWebhookPayload, payload))
+
+    assert result is None
+    assert mock_update_pr.call_count == 3
+    mock_logger.info.assert_called_once()
+    call_args = mock_logger.info.call_args[0][0]
+    assert "- Updated: 1" in call_args
+    assert "- Up-to-date: 1" in call_args
+    assert "- Conflicts: 1" in call_args
+    assert "- Failed: 0" in call_args
+    assert "PR #2" in call_args
+
+
+@patch("services.webhook.push_handler.logger")
 @patch("services.webhook.push_handler.update_pull_request_branch")
 @patch("services.webhook.push_handler.get_open_pull_requests")
 @patch("services.webhook.push_handler.get_installation_access_token")
@@ -317,7 +368,7 @@ def test_handle_push_no_gitauto_prs_returns_early(
     mock_get_token,
     mock_get_open_prs,
     mock_update_pr,
-    mock_slack_notify,
+    mock_logger,
 ):
     payload = {
         "repository": {
@@ -342,4 +393,4 @@ def test_handle_push_no_gitauto_prs_returns_early(
         owner="test-owner", repo="test-repo", target_branch="main", token="test-token"
     )
     mock_update_pr.assert_not_called()
-    mock_slack_notify.assert_not_called()
+    mock_logger.info.assert_not_called()

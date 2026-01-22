@@ -39,6 +39,7 @@
       "Bash(python3 /Users/rwest/Repositories/gitauto/scripts/github/get_pr_info.py:*)",
       "Bash(python3 /Users/rwest/Repositories/gitauto/scripts/github/get_pr_status.py:*)",
       "Bash(python3 /Users/rwest/Repositories/gitauto/scripts/github/list_failing_gitauto_prs.py:*)",
+      "Bash(python3 schemas/supabase/generate_types.py)",
       "Bash(python3 scripts/checkout_pr_branch_and_get_circleci_logs.py:*)",
       "Bash(python3 scripts/github/get_pr_file_diff.py:*)",
       "Bash(python3 scripts/github/get_pr_files.py:*)",
