@@ -53,7 +53,7 @@ def mock_os_path_exists():
 @pytest.fixture
 def mock_get_default_branch():
     with patch("services.webhook.process_repositories.get_default_branch") as mock:
-        mock.return_value = ("main", "abc123")
+        mock.return_value = ("main", False)
         yield mock
 
 
@@ -113,7 +113,7 @@ async def test_process_repositories_efs_exists_pulls(
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
-    mock_get_default_branch.side_effect = [("main", "sha1"), ("master", "sha2")]
+    mock_get_default_branch.side_effect = [("main", False), ("master", False)]
 
     await process_repositories(
         owner_id=12345,
@@ -243,7 +243,7 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_get_repository_stats,
     mock_upsert_repository,
 ):
-    mock_get_default_branch.return_value = ("main", "")
+    mock_get_default_branch.return_value = ("main", True)
     single_repo = cast(
         list[RepositoryAddedOrRemoved],
         [
