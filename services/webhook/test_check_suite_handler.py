@@ -413,12 +413,14 @@ async def test_handle_check_suite_full_workflow(
     mock_get_retry_pairs.assert_called_once()
     assert mock_chat_agent.call_count == 2
 
-    # Verify chat_with_agent calls have correct trigger
+    # Verify chat_with_agent calls have system_message
     first_call = mock_chat_agent.call_args_list[0]
-    assert first_call.kwargs["trigger"] == "test_failure"
+    assert "system_message" in first_call.kwargs
+    assert isinstance(first_call.kwargs["system_message"], str)
 
     second_call = mock_chat_agent.call_args_list[1]
-    assert second_call.kwargs["trigger"] == "test_failure"
+    assert "system_message" in second_call.kwargs
+    assert isinstance(second_call.kwargs["system_message"], str)
 
 
 @pytest.mark.asyncio

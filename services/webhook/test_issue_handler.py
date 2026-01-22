@@ -1833,3 +1833,5 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     call_kwargs = mock_chat_with_agent.call_args.kwargs
     assert call_kwargs["restrict_edit_to_target_test_file_only"] is False
     assert call_kwargs["allow_edit_any_file"] is True
+    assert "system_message" in call_kwargs
+    assert isinstance(call_kwargs["system_message"], str)

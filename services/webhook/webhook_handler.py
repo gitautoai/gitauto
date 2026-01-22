@@ -309,6 +309,7 @@ async def handle_webhook_event(
 
     # Add workflow_run event handler (GitHub Actions)
     if event_name == "workflow_run" and action == "completed":
+        set_trigger(f"{event_name}_{action}")
         if payload["workflow_run"]["conclusion"] == "success":
             handle_coverage_report(
                 owner_id=payload["repository"]["owner"]["id"],
@@ -345,6 +346,7 @@ async def handle_webhook_event(
 
         # CircleCI: Handle coverage report
         if app_slug == "circleci-checks":
+            set_trigger(f"{event_name}_{action}")
             repository = payload["repository"]
             owner_id = repository["owner"]["id"]
             owner_name = repository["owner"]["login"]

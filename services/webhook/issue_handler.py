@@ -59,6 +59,7 @@ from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 from services.stripe.check_availability import check_availability
 from services.stripe.create_stripe_customer import create_stripe_customer
+from services.webhook.utils.create_system_message import create_system_message
 
 # Local imports (Utils)
 from utils.files.get_impl_file_from_issue_title import get_impl_file_from_issue_title
@@ -450,6 +451,8 @@ async def create_pr_from_issue(
     total_token_output = 0
     is_completed = False
 
+    system_message = create_system_message(trigger=trigger, repo_settings=repo_settings)
+
     for _iteration in range(MAX_ITERATIONS):
         # Timeout check: Stop if we're approaching Lambda limit
         is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
@@ -483,9 +486,8 @@ async def create_pr_from_issue(
             p,
         ) = await chat_with_agent(
             messages=messages,
-            trigger=trigger,
+            system_message=system_message,
             base_args=base_args,
-            repo_settings=repo_settings,
             tools=TOOLS_FOR_ISSUES,
             p=p,
             log_messages=log_messages,

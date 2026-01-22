@@ -6,6 +6,7 @@ from services.coverages.coverage_types import CoverageReport, CoverageStats
 from services.coverages.create_coverage_report import create_coverage_report
 from services.coverages.create_empty_stats import create_empty_stats
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.is_test_file import is_test_file
 from utils.logging.logging_config import logger
 
 
@@ -28,16 +29,8 @@ def parse_lcov_coverage(lcov_content: str):
             # Start of new file section
             current_file = line[3:]
 
-            # Extract the directory and filename
-            directory_name = os.path.dirname(current_file)
-            file_name = os.path.basename(current_file)
-
             # Skip test files
-            if (
-                "tests" in directory_name
-                or file_name.startswith("test_")
-                or file_name.endswith("_test.py")
-            ):
+            if is_test_file(current_file):
                 current_file = None
 
                 # Skip to the next SF:
