@@ -2,7 +2,6 @@ from services.github.pulls.get_open_pull_requests import get_open_pull_requests
 from services.github.pulls.update_pull_request_branch import update_pull_request_branch
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.webhook.push import PushWebhookPayload
-from services.slack.slack_notify import slack_notify
 from services.supabase.repositories.get_repository import get_repository
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger, set_trigger
@@ -50,8 +49,10 @@ def handle_push(payload: PushWebhookPayload):
 
     updated_count = 0
     up_to_date_count = 0
+    conflict_count = 0
+    conflict_prs: list[int] = []
     failed_count = 0
-    failures = []
+    failures: list[str] = []
     for pr in open_prs:
         pr_number = pr["number"]
         status, error = update_pull_request_branch(
@@ -61,14 +62,22 @@ def handle_push(payload: PushWebhookPayload):
             updated_count += 1
         elif status == "up_to_date":
             up_to_date_count += 1
+        elif status == "conflict":
+            conflict_count += 1
+            conflict_prs.append(pr_number)
+            logger.warning(
+                "PR #%s has merge conflicts with %s", pr_number, target_branch
+            )
         else:
             failed_count += 1
             failures.append(f"PR #{pr_number}: {error}")
             logger.error("Failed to update PR #%s: %s", pr_number, error)
 
-    result_msg = f"Updated {updated_count}, already up-to-date {up_to_date_count}, failed {failed_count} out of {len(open_prs)} GitAuto PR(s) in `{owner_name}/{repo_name}`"
+    result_msg = f"PR branch updates ({len(open_prs)} GitAuto PRs):\n- Updated: {updated_count}\n- Up-to-date: {up_to_date_count}\n- Conflicts: {conflict_count}\n- Failed: {failed_count}"
+    if conflict_prs:
+        result_msg += f"\nMerge conflicts: PR #{', #'.join(map(str, conflict_prs))}"
     if failures:
         result_msg += f"\nFailures: {', '.join(failures)}"
-    slack_notify(result_msg)
+    logger.info(result_msg)
 
     return None

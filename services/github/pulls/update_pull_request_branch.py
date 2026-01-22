@@ -23,8 +23,11 @@ def update_pull_request_branch(
     if response.status_code == 422:
         try:
             error_detail = response.json().get("message", "")
-            if "no new commits" in error_detail.lower():
+            error_lower = error_detail.lower()
+            if "no new commits" in error_lower:
                 return ("up_to_date", None)
+            if "merge conflict" in error_lower:
+                return ("conflict", None)
         except (json.JSONDecodeError, ValueError, KeyError):
             pass
 
