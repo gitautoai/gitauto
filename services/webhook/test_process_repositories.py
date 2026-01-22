@@ -230,3 +230,55 @@ async def test_process_repositories_stats_saved_correctly(
         comment_lines=75,
         code_lines=500,
     )
+
+
+@pytest.mark.asyncio
+async def test_process_repositories_empty_repo_skips_clone(
+    mock_get_efs_dir,
+    mock_get_clone_url,
+    mock_git_clone_to_efs,
+    mock_git_pull,
+    mock_os_path_exists,
+    mock_get_default_branch,
+    mock_get_repository_stats,
+    mock_upsert_repository,
+):
+    mock_get_default_branch.return_value = ("main", "")
+    single_repo = cast(
+        list[RepositoryAddedOrRemoved],
+        [
+            {
+                "id": 444,
+                "node_id": "R_4",
+                "name": "empty-repo",
+                "full_name": "test-owner/empty-repo",
+                "private": False,
+            }
+        ],
+    )
+
+    await process_repositories(
+        owner_id=12345,
+        owner_name="test-owner",
+        repositories=single_repo,
+        token="ghs_test_token",
+        user_id=67890,
+        user_name="test-user",
+    )
+
+    mock_get_default_branch.assert_called_once()
+    mock_git_clone_to_efs.assert_not_called()
+    mock_git_pull.assert_not_called()
+    mock_get_repository_stats.assert_not_called()
+    mock_upsert_repository.assert_called_once_with(
+        owner_id=12345,
+        owner_name="test-owner",
+        repo_id=444,
+        repo_name="empty-repo",
+        user_id=67890,
+        user_name="test-user",
+        file_count=0,
+        blank_lines=0,
+        comment_lines=0,
+        code_lines=0,
+    )

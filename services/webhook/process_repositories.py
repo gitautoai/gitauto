@@ -26,28 +26,34 @@ async def process_repositories(
     for repo in repositories:
         repo_id = repo["id"]
         repo_name = repo["name"]
-        default_branch, _ = get_default_branch(
+        default_branch, latest_commit_sha = get_default_branch(
             owner=owner_name, repo=repo_name, token=token
         )
 
         # Always save the repository, with or without stats
         stats = {"file_count": 0, "blank_lines": 0, "comment_lines": 0, "code_lines": 0}
 
-        # Clone or update EFS (reusable for future issue/PR work)
-        efs_dir = get_efs_dir(owner_name, repo_name)
-        efs_git_dir = os.path.join(efs_dir, ".git")
-        clone_url = get_clone_url(owner_name, repo_name, token)
-
-        if os.path.exists(efs_git_dir):
-            logger.info("EFS clone exists, updating: %s", efs_dir)
-            await git_pull(efs_dir, clone_url, default_branch)
+        # Empty repos (no commits) have empty commit SHA - skip cloning
+        if not latest_commit_sha:
+            logger.info(
+                "Repository %s/%s is empty, skipping clone", owner_name, repo_name
+            )
         else:
-            logger.info("No EFS clone, creating: %s", efs_dir)
-            await git_clone_to_efs(efs_dir, clone_url, default_branch)
+            # Clone or update EFS (reusable for future issue/PR work)
+            efs_dir = get_efs_dir(owner_name, repo_name)
+            efs_git_dir = os.path.join(efs_dir, ".git")
+            clone_url = get_clone_url(owner_name, repo_name, token)
 
-        # Get stats directly from EFS (no need to copy to /tmp)
-        stats = get_repository_stats(local_path=efs_dir)
-        logger.info("Repository %s stats: %s", repo_name, stats)
+            if os.path.exists(efs_git_dir):
+                logger.info("EFS clone exists, updating: %s", efs_dir)
+                await git_pull(efs_dir, clone_url, default_branch)
+            else:
+                logger.info("No EFS clone, creating: %s", efs_dir)
+                await git_clone_to_efs(efs_dir, clone_url, default_branch)
+
+            # Get stats directly from EFS (no need to copy to /tmp)
+            stats = get_repository_stats(local_path=efs_dir)
+            logger.info("Repository %s stats: %s", repo_name, stats)
 
         # Always create repository record in Supabase, even if stats failed
         upsert_repository(

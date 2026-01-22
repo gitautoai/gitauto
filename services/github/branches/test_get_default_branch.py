@@ -164,28 +164,53 @@ class TestGetDefaultBranch:
         # Verify only one call was made (to repository API)
         assert mock_requests_get.call_count == 1
 
-    def test_branch_api_http_error(
+    def test_empty_repository_branch_404(
         self, mock_requests_get, mock_create_headers, sample_repo_response
     ):
-        """Test behavior when branch API call fails with HTTP error."""
+        """Test that empty repositories (branch 404) return empty commit SHA."""
         # Setup successful repo response
         repo_response = MagicMock()
         repo_response.json.return_value = sample_repo_response
         repo_response.raise_for_status.return_value = None
 
-        # Setup branch response to raise HTTPError
-        http_error = requests.exceptions.HTTPError("404 Not Found")
+        # Setup branch response with 404 (empty repository has no branches)
+        branch_response = MagicMock()
+        branch_response.status_code = 404
+
+        mock_requests_get.side_effect = [repo_response, branch_response]
+
+        # Execute - should not raise, should return empty commit SHA
+        result = get_default_branch("test-owner", "test-repo", "test-token")
+
+        # Verify returns branch name but empty commit SHA
+        assert result == ("main", "")
+
+        # Verify both calls were made
+        assert mock_requests_get.call_count == 2
+
+    def test_branch_api_non_404_http_error(
+        self, mock_requests_get, mock_create_headers, sample_repo_response
+    ):
+        """Test behavior when branch API call fails with non-404 HTTP error."""
+        # Setup successful repo response
+        repo_response = MagicMock()
+        repo_response.json.return_value = sample_repo_response
+        repo_response.raise_for_status.return_value = None
+
+        # Setup branch response with 500 error (not 404)
+        http_error = requests.exceptions.HTTPError("500 Internal Server Error")
         http_error.response = MagicMock()
-        http_error.response.status_code = 404
-        http_error.response.reason = "Not Found"
-        http_error.response.text = "Branch not found"
+        http_error.response.status_code = 500
+        http_error.response.reason = "Internal Server Error"
+        http_error.response.text = "Server error"
 
         branch_response = MagicMock()
+        branch_response.status_code = 500
         branch_response.raise_for_status.side_effect = http_error
 
         mock_requests_get.side_effect = [repo_response, branch_response]
 
-        # Execute and verify exception is raised
+        # Execute and verify exception is raised (non-404 should still raise)
         with pytest.raises(requests.exceptions.HTTPError):
             get_default_branch("test-owner", "test-repo", "test-token")
 

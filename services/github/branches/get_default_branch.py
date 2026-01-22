@@ -2,6 +2,7 @@ import requests
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=("main", ""), raise_on_error=True)
@@ -19,6 +20,12 @@ def get_default_branch(owner: str, repo: str, token: str):
     # https://docs.github.com/en/rest/branches/branches?apiVersion=2022-11-28#get-a-branch
     branch_url = f"{url}/branches/{default_branch_name}"
     branch_response = requests.get(url=branch_url, headers=headers, timeout=TIMEOUT)
+
+    # Empty repositories have a default_branch set but no actual branch until first commit
+    if branch_response.status_code == 404:
+        logger.warning("Repository %s/%s appears to be empty (no commits)", owner, repo)
+        return default_branch_name, ""
+
     branch_response.raise_for_status()
     branch_data = branch_response.json()
     latest_commit_sha: str = branch_data["commit"]["sha"]
