@@ -1007,7 +1007,9 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
   * [new branch]        branch -> branch
   ```
 
-  This means NO PR EXISTS YET. You MUST run `gh pr create` to create the PR. Don't assume a PR exists.
+  This message means the remote branch didn't exist at push time. Two scenarios:
+  1. **If you haven't created a PR yet**: Run `gh pr create` to create the PR.
+  2. **If you JUST created a PR and see this message**: The PR was already merged. The branch was deleted on merge and recreated on your push. Do NOT create another PR - check with `gh pr list` or `gh pr view` first.
 
 IMPORTANT: When pylint and pyright show many alerts/errors, focus on fixing issues related to your code changes unless explicitly told to fix all issues. Don't ignore everything, but prioritize errors in files you modified.
 
