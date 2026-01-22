@@ -227,7 +227,7 @@ def test_fnda_parsing_dotnet():
 def test_fn_fnda_parsing_formats():
     # Test all FN/FNDA formats: 2-part, 3-part, and with commas
     test_lcov = """TN:
-SF:/test2part.js
+SF:/src/utils.js
 FN:10,simpleFunction
 FNDA:5,simpleFunction
 FNF:1
@@ -236,7 +236,7 @@ DA:10,5
 LH:1
 LF:1
 end_of_record
-SF:/test3part.py
+SF:/src/helpers.py
 FN:20,25,pythonFunction
 FNDA:3,pythonFunction
 FNF:1
@@ -245,7 +245,7 @@ DA:20,3
 LH:1
 LF:1
 end_of_record
-SF:/testcommas.cs
+SF:/src/services.cs
 FN:30,.ctor(System.String,System.Int32)
 FN:40,Method(List<Dictionary<string,object>>,bool)
 FNDA:2,.ctor(System.String,System.Int32)
@@ -272,16 +272,42 @@ end_of_record"""
     assert len(files) == 3
 
     # JavaScript file (2-part format)
-    js_file = next(f for f in files if "test2part.js" in f["full_path"])
+    js_file = next(f for f in files if "utils.js" in f["full_path"])
     assert js_file["function_coverage"] == 100.0
 
     # Python file (3-part format)
-    py_file = next(f for f in files if "test3part.py" in f["full_path"])
+    py_file = next(f for f in files if "helpers.py" in f["full_path"])
     assert py_file["function_coverage"] == 100.0
 
     # C# file (commas in function names)
-    cs_file = next(f for f in files if "testcommas.cs" in f["full_path"])
+    cs_file = next(f for f in files if "services.cs" in f["full_path"])
     assert cs_file["function_coverage"] == 50.0
+
+
+def test_typescript_utility_file_not_filtered():
+    test_lcov = """TN:
+SF:utils/get-random-item.ts
+FN:1,getRandomItem
+FNF:1
+FNH:1
+FNDA:1134,getRandomItem
+DA:1,1134
+DA:2,1134
+LF:2
+LH:2
+BRF:0
+BRH:0
+end_of_record
+TN:
+"""
+
+    result = parse_lcov_coverage(test_lcov)
+
+    files = [r for r in result if r["level"] == "file"]
+    assert len(files) == 1
+    assert files[0]["full_path"] == "utils/get-random-item.ts"
+    assert files[0]["function_coverage"] == 100.0
+    assert files[0]["line_coverage"] == 100.0
 
 
 def test_parse_lcov_gitauto_real_exact_counts():
