@@ -1,7 +1,7 @@
 import json
 from typing import Literal, TypedDict
 
-from config import ANTHROPIC_MODEL_ID_45
+from constants.claude import CLAUDE_MAX_TOKENS, CLAUDE_MODEL_ID_45
 from services.anthropic.client import claude
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -31,14 +31,13 @@ RESPONSE_SCHEMA: OutputFormat = {
 def evaluate_condition(
     content: str,
     system_prompt: str,
-    max_tokens: int = 100,
 ):
     if not content or not system_prompt:
         return (False, "empty input")
 
     response = claude.beta.messages.create(
-        model=ANTHROPIC_MODEL_ID_45,
-        max_tokens=max_tokens,
+        model=CLAUDE_MODEL_ID_45,
+        max_tokens=CLAUDE_MAX_TOKENS,
         temperature=0,
         system=system_prompt,
         messages=[{"role": "user", "content": content}],

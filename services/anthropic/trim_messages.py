@@ -5,7 +5,7 @@ from typing import Any
 from anthropic import Anthropic
 
 # Local imports
-from config import ANTHROPIC_MODEL_ID_45
+from constants.claude import CLAUDE_MODEL_ID_45
 from services.anthropic.message_to_dict import message_to_dict
 from utils.objects.safe_get_attribute import safe_get_attribute
 
@@ -14,7 +14,7 @@ def trim_messages_to_token_limit(
     messages: list[Any],
     client: Anthropic,
     max_input: int,
-    model: str = ANTHROPIC_MODEL_ID_45,
+    model: str = CLAUDE_MODEL_ID_45,
 ):
     messages = list(messages)  # Make a copy to avoid mutating the original
 

@@ -9,7 +9,7 @@ from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 from openai.types.chat import ChatCompletionToolParam
 
 # Local imports
-from config import ANTHROPIC_MODEL_ID_45
+from constants.claude import CLAUDE_MAX_TOKENS, CLAUDE_MODEL_ID_45
 from services.anthropic.client import claude
 from services.anthropic.remove_duplicate_get_remote_file_content_results import (
     remove_duplicate_get_remote_file_content_results,
@@ -36,7 +36,7 @@ def chat_with_claude(
     messages: list[dict[str, Any]],
     system_content: str,
     tools: list[ChatCompletionToolParam],
-    model_id: str = ANTHROPIC_MODEL_ID_45,
+    model_id: str = CLAUDE_MODEL_ID_45,
     usage_id: int | None = None,
 ):
     # https://docs.anthropic.com/en/api/client-sdks
@@ -48,9 +48,8 @@ def chat_with_claude(
     messages = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
 
     # Check token count and delete messages if necessary
-    max_tokens = 64000
     buffer = 4096
-    max_input = 200_000 - max_tokens - buffer
+    max_input = 200_000 - CLAUDE_MAX_TOKENS - buffer
     messages, token_input = trim_messages_to_token_limit(
         messages=messages, client=claude, model=model_id, max_input=max_input
     )
@@ -88,7 +87,7 @@ def chat_with_claude(
             messages=cast(list[MessageParam], messages),
             tools=anthropic_tools,
             # https://docs.anthropic.com/en/docs/about-claude/models/all-models#model-comparison-table
-            max_tokens=max_tokens,
+            max_tokens=CLAUDE_MAX_TOKENS,
             temperature=0.0,
         )
         response_time_ms = int((time.time() - start_time) * 1000)
