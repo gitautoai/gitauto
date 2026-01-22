@@ -101,7 +101,7 @@ jobs:
           PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
 
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             python -m pytest --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
           else
             python -m pytest
@@ -114,7 +114,7 @@ jobs:
           du -sh coverage/ .pytest_cache/ || true
 
       - name: Upload coverage artifact
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
