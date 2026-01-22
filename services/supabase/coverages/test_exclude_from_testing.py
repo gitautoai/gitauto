@@ -37,6 +37,8 @@ class TestExcludeFromTesting:
                 "repo_id": 456,
                 "full_path": "src/generated/file.ts",
                 "branch_name": "main",
+                "level": "file",
+                "created_by": "test_user",
                 "is_excluded_from_testing": True,
                 "exclusion_reason": "ai_no_testable_logic",
                 "updated_by": "test_user",
