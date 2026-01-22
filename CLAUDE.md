@@ -1009,7 +1009,7 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
 
   This message means the remote branch didn't exist at push time. Two scenarios:
   1. **If you haven't created a PR yet**: Run `gh pr create` to create the PR.
-  2. **If you JUST created a PR and see this message**: The PR was already merged. Do NOT create another PR.
+  2. **If you JUST created a PR and see this message**: The PR was already merged. Create a NEW PR for your new commits.
 
 IMPORTANT: When pylint and pyright show many alerts/errors, focus on fixing issues related to your code changes unless explicitly told to fix all issues. Don't ignore everything, but prioritize errors in files you modified.
 
