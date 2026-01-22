@@ -141,7 +141,9 @@ async def chat_with_agent(
 
         if is_file_edit_tool:
             file_path = (
-                str(tool_args.get("file_path", "")) if isinstance(tool_args, dict) else ""
+                str(tool_args.get("file_path", ""))
+                if isinstance(tool_args, dict)
+                else ""
             )
 
             validation_error = None
@@ -264,7 +266,8 @@ async def chat_with_agent(
             line_number = tool_args["line_number"]
             line_info = (
                 f" around line {line_number}"
-                if isinstance(line_number, (int, str)) and is_valid_line_number(line_number)
+                if isinstance(line_number, (int, str))
+                and is_valid_line_number(line_number)
                 else ""
             )
             msg = f"Read `{tool_args['file_path']}`{line_info}."
