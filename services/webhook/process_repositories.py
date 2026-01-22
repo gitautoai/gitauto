@@ -26,15 +26,15 @@ async def process_repositories(
     for repo in repositories:
         repo_id = repo["id"]
         repo_name = repo["name"]
-        default_branch, latest_commit_sha = get_default_branch(
+        default_branch, is_empty = get_default_branch(
             owner=owner_name, repo=repo_name, token=token
         )
 
         # Always save the repository, with or without stats
         stats = {"file_count": 0, "blank_lines": 0, "comment_lines": 0, "code_lines": 0}
 
-        # Empty repos (no commits) have empty commit SHA - skip cloning
-        if not latest_commit_sha:
+        # Empty repos (size=0) have no commits - skip cloning
+        if is_empty:
             logger.info(
                 "Repository %s/%s is empty, skipping clone", owner_name, repo_name
             )

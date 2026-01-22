@@ -572,7 +572,6 @@ All code analysis, generation, and file processing happens on our Lambda instanc
 
 - Stripe: `services/stripe/` - Payment and subscription management
 - Slack: `services/slack/` - Internal notifications
-- Jira: `services/jira/` - Alternative issue source
 
 ### Event-Driven Architecture
 
