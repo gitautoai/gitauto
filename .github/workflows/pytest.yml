@@ -1,6 +1,7 @@
 name: PyTest
 
 on:
+  # Run tests on PRs to verify code doesn't break before merge
   pull_request:
     types: [opened, synchronize]
     branches: [main]
@@ -12,6 +13,18 @@ on:
       - "infrastructure/**"
       - "CODEOWNERS"
       - "LICENSE"
+  # Run tests after merge and save coverage to Supabase as canonical source of truth
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "**.xml"
+      - ".github/**"
+      - ".gitignore"
+      - "infrastructure/**"
+      - "CODEOWNERS"
+      - "LICENSE"
+  # Allow manual trigger for debugging
   workflow_dispatch:
 
 permissions:
@@ -87,7 +100,12 @@ jobs:
           ENV: stage
           PRODUCT_ID: ${{ secrets.STAGE_PRODUCT_ID }}
 
-        run: python -m pytest --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            python -m pytest --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
+          else
+            python -m pytest
+          fi
 
       - name: Check resources on failure
         if: failure()
@@ -96,8 +114,8 @@ jobs:
           du -sh coverage/ .pytest_cache/ || true
 
       - name: Upload coverage artifact
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: coverage-report
           path: coverage/lcov.info
