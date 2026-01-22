@@ -3,11 +3,11 @@ import sys
 
 import pytest
 
-from config import (
-    ANTHROPIC_MODEL_ID_37,
-    ANTHROPIC_MODEL_ID_40,
-    ANTHROPIC_MODEL_ID_45,
-    OPENAI_MODEL_ID_GPT_5,
+from config import OPENAI_MODEL_ID_GPT_5
+from constants.claude import (
+    CLAUDE_MODEL_ID_37,
+    CLAUDE_MODEL_ID_40,
+    CLAUDE_MODEL_ID_45,
 )
 from services import model_selection
 from services.model_selection import MODEL_CHAIN, get_model, try_next_model
@@ -31,9 +31,9 @@ def _():
 def test_model_chain_contains_expected_models():
     """Test that MODEL_CHAIN contains the expected models in correct order."""
     expected_models = [
-        ANTHROPIC_MODEL_ID_45,
-        ANTHROPIC_MODEL_ID_40,
-        ANTHROPIC_MODEL_ID_37,
+        CLAUDE_MODEL_ID_45,
+        CLAUDE_MODEL_ID_40,
+        CLAUDE_MODEL_ID_37,
         OPENAI_MODEL_ID_GPT_5,
     ]
     assert MODEL_CHAIN == expected_models
@@ -42,16 +42,16 @@ def test_model_chain_contains_expected_models():
 
 def test_model_chain_order():
     """Test that models are in the expected priority order."""
-    assert MODEL_CHAIN[0] == ANTHROPIC_MODEL_ID_45  # Highest priority
-    assert MODEL_CHAIN[1] == ANTHROPIC_MODEL_ID_40
-    assert MODEL_CHAIN[2] == ANTHROPIC_MODEL_ID_37
+    assert MODEL_CHAIN[0] == CLAUDE_MODEL_ID_45  # Highest priority
+    assert MODEL_CHAIN[1] == CLAUDE_MODEL_ID_40
+    assert MODEL_CHAIN[2] == CLAUDE_MODEL_ID_37
     assert MODEL_CHAIN[3] == OPENAI_MODEL_ID_GPT_5  # Lowest priority
 
 
 def test_get_model_returns_current_model(_):
     """Test that get_model returns the current model."""
     result = get_model()
-    assert result == ANTHROPIC_MODEL_ID_45  # Initial model
+    assert result == CLAUDE_MODEL_ID_45  # Initial model
 
 
 def test_get_model_returns_string():
@@ -64,43 +64,37 @@ def test_get_model_returns_string():
 def test_try_next_model_from_first_model(_, caplog):
     """Test switching from first model to second model."""
     # Ensure we start with the first model
-    assert get_model() == ANTHROPIC_MODEL_ID_45
+    assert get_model() == CLAUDE_MODEL_ID_45
 
     success, new_model = try_next_model()
 
     assert success is True
-    assert new_model == ANTHROPIC_MODEL_ID_40
-    assert get_model() == ANTHROPIC_MODEL_ID_40
+    assert new_model == CLAUDE_MODEL_ID_40
+    assert get_model() == CLAUDE_MODEL_ID_40
 
     # Verify log message was emitted
-    assert (
-        f"Switching from {ANTHROPIC_MODEL_ID_45} to {ANTHROPIC_MODEL_ID_40}"
-        in caplog.text
-    )
+    assert f"Switching from {CLAUDE_MODEL_ID_45} to {CLAUDE_MODEL_ID_40}" in caplog.text
 
 
 def test_try_next_model_from_second_model(_, caplog):
     """Test switching from second model to third model."""
     # Set current model to second model
-    model_selection._current_model = ANTHROPIC_MODEL_ID_40
+    model_selection._current_model = CLAUDE_MODEL_ID_40
 
     success, new_model = try_next_model()
 
     assert success is True
-    assert new_model == ANTHROPIC_MODEL_ID_37
-    assert get_model() == ANTHROPIC_MODEL_ID_37
+    assert new_model == CLAUDE_MODEL_ID_37
+    assert get_model() == CLAUDE_MODEL_ID_37
 
     # Verify log message was emitted
-    assert (
-        f"Switching from {ANTHROPIC_MODEL_ID_40} to {ANTHROPIC_MODEL_ID_37}"
-        in caplog.text
-    )
+    assert f"Switching from {CLAUDE_MODEL_ID_40} to {CLAUDE_MODEL_ID_37}" in caplog.text
 
 
 def test_try_next_model_from_third_model(_, caplog):
     """Test switching from third model to fourth model."""
     # Set current model to third model
-    model_selection._current_model = ANTHROPIC_MODEL_ID_37
+    model_selection._current_model = CLAUDE_MODEL_ID_37
 
     success, new_model = try_next_model()
 
@@ -110,8 +104,7 @@ def test_try_next_model_from_third_model(_, caplog):
 
     # Verify log message was emitted
     assert (
-        f"Switching from {ANTHROPIC_MODEL_ID_37} to {OPENAI_MODEL_ID_GPT_5}"
-        in caplog.text
+        f"Switching from {CLAUDE_MODEL_ID_37} to {OPENAI_MODEL_ID_GPT_5}" in caplog.text
     )
 
 
@@ -133,19 +126,19 @@ def test_try_next_model_from_last_model(_, caplog):
 def test_try_next_model_sequential_calls(_, caplog):
     """Test sequential calls to try_next_model through all models."""
     # Start with first model
-    assert get_model() == ANTHROPIC_MODEL_ID_45
+    assert get_model() == CLAUDE_MODEL_ID_45
 
     # First call: switch to second model
     success1, model1 = try_next_model()
     assert success1 is True
-    assert model1 == ANTHROPIC_MODEL_ID_40
-    assert get_model() == ANTHROPIC_MODEL_ID_40
+    assert model1 == CLAUDE_MODEL_ID_40
+    assert get_model() == CLAUDE_MODEL_ID_40
 
     # Second call: switch to third model
     success2, model2 = try_next_model()
     assert success2 is True
-    assert model2 == ANTHROPIC_MODEL_ID_37
-    assert get_model() == ANTHROPIC_MODEL_ID_37
+    assert model2 == CLAUDE_MODEL_ID_37
+    assert get_model() == CLAUDE_MODEL_ID_37
 
     # Third call: switch to fourth model
     success3, model3 = try_next_model()
@@ -175,21 +168,21 @@ def test_try_next_model_return_types():
 def test_model_selection_state_persistence(_):
     """Test that model state persists between function calls."""
     # Initial state
-    assert get_model() == ANTHROPIC_MODEL_ID_45
+    assert get_model() == CLAUDE_MODEL_ID_45
 
     # Switch model
     try_next_model()
-    assert get_model() == ANTHROPIC_MODEL_ID_40
+    assert get_model() == CLAUDE_MODEL_ID_40
 
     # State should persist
-    assert get_model() == ANTHROPIC_MODEL_ID_40
+    assert get_model() == CLAUDE_MODEL_ID_40
 
     # Switch again
     try_next_model()
-    assert get_model() == ANTHROPIC_MODEL_ID_37
+    assert get_model() == CLAUDE_MODEL_ID_37
 
     # State should still persist
-    assert get_model() == ANTHROPIC_MODEL_ID_37
+    assert get_model() == CLAUDE_MODEL_ID_37
 
 
 def test_try_next_model_with_invalid_current_model(_):
