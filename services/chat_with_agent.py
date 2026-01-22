@@ -7,7 +7,6 @@ from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
 
 # Local imports
 from config import OPENAI_MODEL_ID_GPT_5
-from schemas.supabase.types import Repositories
 from services.anthropic.chat_with_functions import chat_with_claude
 from services.github.comments.update_comment import update_comment
 from services.github.types.github_types import BaseArgs
@@ -15,8 +14,6 @@ from services.model_selection import get_model, try_next_model
 from services.openai.chat_with_functions import chat_with_openai
 from services.openai.functions.functions import FILE_EDIT_TOOLS, tools_to_call
 from services.slack.slack_notify import slack_notify
-from services.supabase.usage.insert_usage import Trigger
-from services.webhook.utils.create_system_message import create_system_message
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_target_test_file import is_target_test_file
 from utils.files.is_test_file import is_test_file
@@ -30,9 +27,8 @@ from utils.progress_bar.progress_bar import create_progress_bar
 async def chat_with_agent(
     *,
     messages: list[dict[str, Any]],
-    trigger: Trigger,
+    system_message: str,
     base_args: BaseArgs,
-    repo_settings: Repositories | None,
     tools: list[ChatCompletionToolParam],
     p: int = 0,
     log_messages: list[str] | None = None,
@@ -42,9 +38,6 @@ async def chat_with_agent(
 ):
     if log_messages is None:
         log_messages = []
-
-    # Create the system content
-    system_message = create_system_message(trigger=trigger, repo_settings=repo_settings)
 
     while True:
         current_model = get_model()
@@ -179,9 +172,8 @@ async def chat_with_agent(
                 )
                 return await chat_with_agent(
                     messages=messages,
-                    trigger=trigger,
+                    system_message=system_message,
                     base_args=base_args,
-                    repo_settings=repo_settings,
                     tools=tools,
                     p=p,
                     log_messages=log_messages,

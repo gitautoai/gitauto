@@ -138,6 +138,8 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     # Verify call includes usage_id for API request tracking
     first_call_kwargs = mock_chat_with_agent.call_args_list[0].kwargs
     assert first_call_kwargs["usage_id"] == 777
+    assert "system_message" in first_call_kwargs
+    assert isinstance(first_call_kwargs["system_message"], str)
 
     # CRITICAL: Verify update_usage was called with tokens
     mock_update_usage.assert_called_once()

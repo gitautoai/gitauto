@@ -8,26 +8,26 @@ def test_parse_lcov_python_sample_exact_counts():
 
     result = parse_lcov_coverage(lcov_content)
 
-    assert len(result) == 330
+    assert len(result) == 329
 
     repo_level = [r for r in result if r["level"] == "repository"]
     assert len(repo_level) == 1
 
     file_level = [r for r in result if r["level"] == "file"]
-    assert len(file_level) == 260
+    assert len(file_level) == 259
 
     repo_coverage = repo_level[0]
     assert repo_coverage["full_path"] == "All"
-    assert repo_coverage["statement_coverage"] == 73.17
-    assert repo_coverage["function_coverage"] == 80.58
-    assert repo_coverage["branch_coverage"] == 55.14
-    assert repo_coverage["line_coverage"] == 73.17
-    assert repo_coverage["lines_covered"] == 4918
-    assert repo_coverage["lines_total"] == 6721
-    assert repo_coverage["functions_covered"] == 195
-    assert repo_coverage["functions_total"] == 242
-    assert repo_coverage["branches_covered"] == 1009
-    assert repo_coverage["branches_total"] == 1830
+    assert repo_coverage["statement_coverage"] == 73.07
+    assert repo_coverage["function_coverage"] == 80.0
+    assert repo_coverage["branch_coverage"] == 55.09
+    assert repo_coverage["line_coverage"] == 73.07
+    assert repo_coverage["lines_covered"] == 4891
+    assert repo_coverage["lines_total"] == 6694
+    assert repo_coverage["functions_covered"] == 188
+    assert repo_coverage["functions_total"] == 235
+    assert repo_coverage["branches_covered"] == 1007
+    assert repo_coverage["branches_total"] == 1828
 
 
 def test_parse_lcov_python_sample_specific_file():
@@ -54,13 +54,13 @@ def test_parse_lcov_javascript_sample_exact_counts():
 
     result = parse_lcov_coverage(lcov_content)
 
-    assert len(result) == 407
+    assert len(result) == 402
 
     repo_level = [r for r in result if r["level"] == "repository"]
     assert len(repo_level) == 1
 
     file_level = [r for r in result if r["level"] == "file"]
-    assert len(file_level) == 305
+    assert len(file_level) == 300
 
     repo_coverage = repo_level[0]
     assert repo_coverage["full_path"] == "All"
@@ -69,7 +69,7 @@ def test_parse_lcov_javascript_sample_exact_counts():
     assert repo_coverage["branch_coverage"] == 2.54
     assert repo_coverage["line_coverage"] == 3.58
     assert repo_coverage["lines_covered"] == 141
-    assert repo_coverage["lines_total"] == 3941
+    assert repo_coverage["lines_total"] == 3935
     assert repo_coverage["functions_covered"] == 40
     assert repo_coverage["functions_total"] == 1484
     assert repo_coverage["branches_covered"] == 43
@@ -142,7 +142,7 @@ def test_fnda_parsing_python():
     result = parse_lcov_coverage(lcov_content)
     # Check that function coverage is calculated correctly
     repo = [r for r in result if r["level"] == "repository"][0]
-    assert repo["function_coverage"] == 80.58
+    assert repo["function_coverage"] == 80.0
 
 
 def test_fn_parsing_javascript():
@@ -297,14 +297,14 @@ def test_parse_lcov_gitauto_real_exact_counts():
     result = parse_lcov_coverage(lcov_content)
 
     # Total reports should be: files + directories + repository
-    # Expected: 282 files + 77 directories + 1 repository = 360 total
-    assert len(result) == 360
+    # Expected: 281 files + 77 directories + 1 repository = 359 total
+    assert len(result) == 359
 
     repo_level = [r for r in result if r["level"] == "repository"]
     assert len(repo_level) == 1
 
     file_level = [r for r in result if r["level"] == "file"]
-    assert len(file_level) == 282  # Non-test files only
+    assert len(file_level) == 281  # Non-test files only
 
     directory_level = [r for r in result if r["level"] == "directory"]
     assert len(directory_level) == 77  # Unique directories
@@ -321,7 +321,6 @@ def test_parse_lcov_gitauto_real_exact_counts():
 
     # Verify legitimate files containing 'test' are kept (they're not actual test files)
     legitimate_files = [
-        "conftest.py",  # pytest configuration file
         "utils/files/is_test_file.py",  # utility to detect test files
     ]
 

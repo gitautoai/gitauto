@@ -44,6 +44,7 @@ def create_system_message(
             content_parts.append(
                 f"<freeform_repository_rules>\n{free_rules.strip()}\n</freeform_repository_rules>"
             )
+            logger.info("Freeform rules: %s", free_rules.strip())
 
     combined_content = "\n\n".join(content_parts) if content_parts else ""
     return combined_content

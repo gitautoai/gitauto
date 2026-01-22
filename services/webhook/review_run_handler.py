@@ -31,6 +31,7 @@ from services.openai.functions.functions import TOOLS_FOR_PRS
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
+from services.webhook.utils.create_system_message import create_system_message
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.progress_bar.progress_bar import create_progress_bar
@@ -251,6 +252,8 @@ async def handle_review_run(
     total_token_output = 0
     is_completed = False
 
+    system_message = create_system_message(trigger=trigger, repo_settings=repo_settings)
+
     for _iteration in range(MAX_ITERATIONS):
         # Timeout check: Stop if we're approaching Lambda limit
         is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
@@ -290,8 +293,7 @@ async def handle_review_run(
             p,
         ) = await chat_with_agent(
             messages=messages,
-            trigger=trigger,
-            repo_settings=repo_settings,
+            system_message=system_message,
             base_args=base_args,
             p=p,
             log_messages=log_messages,

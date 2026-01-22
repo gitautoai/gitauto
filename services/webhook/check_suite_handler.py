@@ -54,6 +54,7 @@ from services.supabase.usage.update_usage import update_usage
 from services.supabase.usage.check_older_active_test_failure import (
     check_older_active_test_failure_request,
 )
+from services.webhook.utils.create_system_message import create_system_message
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.logs.clean_logs import clean_logs
@@ -545,6 +546,8 @@ async def handle_check_suite(
     total_token_output = 0
     is_completed = False
 
+    system_message = create_system_message(trigger=trigger, repo_settings=repo_settings)
+
     for _iteration in range(MAX_ITERATIONS):
         # Timeout check: Stop if we're approaching Lambda limit
         is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
@@ -608,8 +611,7 @@ async def handle_check_suite(
             p,
         ) = await chat_with_agent(
             messages=messages,
-            trigger=trigger,
-            repo_settings=repo_settings,
+            system_message=system_message,
             base_args=base_args,
             p=p,
             log_messages=log_messages,
