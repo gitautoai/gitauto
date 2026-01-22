@@ -19,6 +19,8 @@ def exclude_from_testing(
                 "repo_id": repo_id,
                 "full_path": full_path,
                 "branch_name": branch_name,
+                "level": "file",
+                "created_by": updated_by,
                 "is_excluded_from_testing": True,
                 "exclusion_reason": exclusion_reason,
                 "updated_by": updated_by,
