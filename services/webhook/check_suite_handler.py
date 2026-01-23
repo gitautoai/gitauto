@@ -11,6 +11,7 @@ from config import EMAIL_LINK, GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
 from constants.agent import MAX_ITERATIONS
 from constants.general import MAX_GITAUTO_COMMITS_PER_PR
 from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_STUMBLED_MESSAGE
+from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
 from services.circleci.get_build_logs import get_circleci_build_logs
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
@@ -627,9 +628,13 @@ async def handle_check_suite(
             )
             break
 
-    # Log if loop exhausted without completion
+    # Log if loop exhausted without completion and force verification
     if not is_completed:
-        logger.warning("Agent loop ended without calling verify_task_is_complete")
+        logger.warning(
+            "Agent loop hit MAX_ITERATIONS (%d) without calling verify_task_is_complete. Forcing verification.",
+            MAX_ITERATIONS,
+        )
+        await verify_task_is_complete(base_args=base_args)
 
     # Trigger final test workflows with an empty commit
     comment_body = "Creating final empty commit to trigger workflows..."

@@ -712,6 +712,7 @@ async def test_branch_deleted_breaks_loop(
 
 @pytest.mark.asyncio
 @patch("services.webhook.issue_handler.MAX_ITERATIONS", 10)
+@patch("services.webhook.issue_handler.verify_task_is_complete")
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
@@ -765,6 +766,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_chat_with_agent,
     mock_is_timeout,
     mock_get_pr_files,
+    mock_verify_task_is_complete,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -805,14 +807,20 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
         ([], 10, 5, False, 90),
         ([], 10, 5, False, 95),
     ]
+    mock_verify_task_is_complete.return_value = {
+        "success": True,
+        "message": "Task completed.",
+    }
 
     await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     assert mock_chat_with_agent.call_count == 10
+    mock_verify_task_is_complete.assert_called_once()
 
 
 @pytest.mark.asyncio
 @patch("services.webhook.issue_handler.MAX_ITERATIONS", 9)
+@patch("services.webhook.issue_handler.verify_task_is_complete")
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
@@ -866,6 +874,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_chat_with_agent,
     mock_is_timeout,
     mock_get_pr_files,
+    mock_verify_task_is_complete,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -905,10 +914,15 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
         ([], 10, 5, False, 80),
         ([], 10, 5, False, 90),
     ]
+    mock_verify_task_is_complete.return_value = {
+        "success": True,
+        "message": "Task completed.",
+    }
 
     await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
     assert mock_chat_with_agent.call_count == 9
+    mock_verify_task_is_complete.assert_called_once()
 
 
 @pytest.mark.asyncio
