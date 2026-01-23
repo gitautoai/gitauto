@@ -1,4 +1,5 @@
 # pyright: reportArgumentType=false
+# pyright: reportUnusedVariable=false
 from typing import cast
 from unittest.mock import patch
 
@@ -153,17 +154,23 @@ async def test_verify_passes_with_correct_test_syntax(
 
 
 @pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.run_eslint")
+@patch("services.agents.verify_task_is_complete.run_prettier")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
-async def test_verify_ignores_non_test_files(mock_get_files, mock_get_raw, base_args):
+async def test_verify_ignores_non_test_files(
+    mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
+):
     mock_get_files.return_value = [
         {"filename": "src/components/Button.tsx", "status": "modified"},
     ]
+    mock_get_raw.return_value = "const x = 1;\n"
+    mock_prettier.return_value = None
+    mock_eslint.return_value = None
 
     result = await verify_task_is_complete(base_args)
 
     assert result["success"] is True
-    mock_get_raw.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -183,10 +190,12 @@ async def test_verify_ignores_removed_test_files(
 
 
 @pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.run_eslint")
+@patch("services.agents.verify_task_is_complete.run_prettier")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_checks_both_ts_test_files(
-    mock_get_files, mock_get_raw, base_args
+    mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
 ):
     mock_get_files.return_value = [
         {"filename": "src/Button.test.tsx", "status": "modified"},
@@ -197,18 +206,22 @@ async def test_verify_checks_both_ts_test_files(
     expect(true).toBe(true);
   });
 });"""
+    mock_prettier.return_value = None
+    mock_eslint.return_value = None
 
     result = await verify_task_is_complete(base_args)
 
     assert result["success"] is True
-    assert mock_get_raw.call_count == 2
+    assert mock_get_raw.call_count == 4
 
 
 @pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.run_eslint")
+@patch("services.agents.verify_task_is_complete.run_prettier")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_checks_only_ts_when_mixed_with_py(
-    mock_get_files, mock_get_raw, base_args
+    mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
 ):
     mock_get_files.return_value = [
         {"filename": "src/Button.test.tsx", "status": "modified"},
@@ -219,11 +232,13 @@ async def test_verify_checks_only_ts_when_mixed_with_py(
     expect(true).toBe(true);
   });
 });"""
+    mock_prettier.return_value = None
+    mock_eslint.return_value = None
 
     result = await verify_task_is_complete(base_args)
 
     assert result["success"] is True
-    assert mock_get_raw.call_count == 1
+    assert mock_get_raw.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -278,11 +293,13 @@ async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
 
 
 @pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.run_eslint")
+@patch("services.agents.verify_task_is_complete.run_prettier")
 @patch("services.agents.verify_task_is_complete.replace_remote_file_content")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
-    mock_get_files, mock_get_raw, mock_upload, base_args
+    mock_get_files, mock_get_raw, mock_upload, mock_prettier, mock_eslint, base_args
 ):
     mock_get_files.return_value = [
         {"filename": "src/Button.test.tsx", "status": "modified"},
@@ -298,10 +315,11 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
 });"""
     mock_get_raw.return_value = broken_content
     mock_upload.return_value = True
+    mock_prettier.return_value = None
+    mock_eslint.return_value = None
 
     result = await verify_task_is_complete(base_args)
 
     assert result["success"] is True
     assert result["message"] == "Task completed."
-    assert mock_get_raw.call_count == 1
     mock_upload.assert_called_once()

@@ -7,11 +7,9 @@ import requests
 
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
-from services.eslint.run_eslint import run_eslint
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from services.openai.functions.properties import FILE_PATH
-from services.prettier.run_prettier import run_prettier
 from utils.error.handle_exceptions import handle_exceptions
 from utils.text.ensure_final_newline import ensure_final_newline
 from utils.text.sort_imports import sort_imports
@@ -38,7 +36,7 @@ REPLACE_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def replace_remote_file_content(
+def replace_remote_file_content(
     file_content: str,
     file_path: str,
     base_args: BaseArgs,
@@ -51,7 +49,6 @@ async def replace_remote_file_content(
     token = base_args["token"]
     new_branch = base_args["new_branch"]
     skip_ci = base_args.get("skip_ci", False)
-    clone_dir = base_args.get("clone_dir")
 
     # Prepare the request
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={new_branch}"
@@ -64,30 +61,6 @@ async def replace_remote_file_content(
     file_content = sort_imports(file_content, file_path)
     file_content = strip_trailing_spaces(file_content)
     file_content = ensure_final_newline(file_content)
-
-    # Prettier then ESLint (JS ecosystem convention)
-    if clone_dir and file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
-        prettier_coro = run_prettier(
-            base_args=base_args,
-            file_path=file_path,
-            file_content=file_content,
-        )
-        # Decorator always returns coroutine for async functions; None is the inner resolved type
-        assert prettier_coro is not None
-        formatted_content = await prettier_coro
-        if formatted_content:
-            file_content = formatted_content
-
-        eslint_coro = run_eslint(
-            base_args=base_args,
-            file_path=file_path,
-            file_content=file_content,
-        )
-        # Decorator always returns coroutine for async functions; None is the inner resolved type
-        assert eslint_coro is not None
-        linted_content = await eslint_coro
-        if linted_content:
-            file_content = linted_content
 
     # Set up the data for the PUT request
     message = commit_message if commit_message else f"Replace content of {file_path}"

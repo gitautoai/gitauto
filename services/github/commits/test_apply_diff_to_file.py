@@ -101,8 +101,7 @@ def mock_create_headers():
         yield mock_headers
 
 
-@pytest.mark.asyncio
-async def test_successful_file_update(
+def test_successful_file_update(
     sample_base_args,
     mock_requests_get_existing_file,
     mock_requests_put_success,
@@ -116,11 +115,9 @@ async def test_successful_file_update(
 -print('hello world')
 +print('hello modified world')"""
 
-    coro = apply_diff_to_file(
+    result = apply_diff_to_file(
         diff=diff, file_path="test.py", base_args=sample_base_args
     )
-    assert coro is not None
-    result = await coro
 
     assert isinstance(result, str)
     assert "diff applied to the file: test.py successfully" in result
@@ -141,8 +138,7 @@ async def test_successful_file_update(
     assert "content" in put_call_args.kwargs["json"]
 
 
-@pytest.mark.asyncio
-async def test_successful_file_update_with_skip_ci(
+def test_successful_file_update_with_skip_ci(
     sample_base_args_with_skip_ci,
     mock_requests_get_existing_file,
     mock_requests_put_success,
@@ -156,11 +152,9 @@ async def test_successful_file_update_with_skip_ci(
 -print('hello world')
 +print('hello modified world')"""
 
-    coro = apply_diff_to_file(
+    result = apply_diff_to_file(
         diff=diff, file_path="test.py", base_args=sample_base_args_with_skip_ci
     )
-    assert coro is not None
-    result = await coro
 
     assert isinstance(result, str)
     assert "diff applied to the file: test.py successfully" in result
@@ -171,8 +165,7 @@ async def test_successful_file_update_with_skip_ci(
     assert put_call_args.kwargs["json"]["message"] == "Update test.py [skip ci]"
 
 
-@pytest.mark.asyncio
-async def test_new_file_creation(
+def test_new_file_creation(
     sample_base_args,
     mock_requests_get_404,
     mock_requests_put_success,
@@ -185,11 +178,9 @@ async def test_new_file_creation(
 @@ -0,0 +1,1 @@
 +print('new file content')"""
 
-    coro = apply_diff_to_file(
+    result = apply_diff_to_file(
         diff=diff, file_path="new_file.py", base_args=sample_base_args
     )
-    assert coro is not None
-    result = await coro
 
     assert isinstance(result, str)
     assert "diff applied to the file: new_file.py successfully" in result
@@ -205,8 +196,7 @@ async def test_new_file_creation(
     assert put_call_args.kwargs["json"]["branch"] == "test_branch"
 
 
-@pytest.mark.asyncio
-async def test_deletion_diff_rejected(mock_requests_get_existing_file):
+def test_deletion_diff_rejected(mock_requests_get_existing_file):
     """Test that deletion diffs are rejected with proper error message."""
     base_args = cast(
         BaseArgs,
@@ -223,11 +213,9 @@ async def test_deletion_diff_rejected(mock_requests_get_existing_file):
 @@ -1 +0,0 @@
 -# Temporary file to check existing content"""
 
-    coro = apply_diff_to_file(
+    result = apply_diff_to_file(
         diff=deletion_diff, file_path="utils/files/test_file.py", base_args=base_args
     )
-    assert coro is not None
-    result = await coro
 
     assert isinstance(result, str)
     assert "Cannot delete files using apply_diff_to_file" in result
@@ -235,8 +223,7 @@ async def test_deletion_diff_rejected(mock_requests_get_existing_file):
     assert "utils/files/test_file.py" in result
 
 
-@pytest.mark.asyncio
-async def test_missing_new_branch_error():
+def test_missing_new_branch_error():
     """Test that missing new_branch returns False due to handle_exceptions."""
     base_args = cast(
         BaseArgs,
@@ -248,19 +235,16 @@ async def test_missing_new_branch_error():
         },
     )
 
-    coro = apply_diff_to_file(
+    result = apply_diff_to_file(
         diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
         file_path="test.py",
         base_args=base_args,
     )
-    assert coro is not None
-    result = await coro
 
     assert result is False
 
 
-@pytest.mark.asyncio
-async def test_empty_new_branch_error():
+def test_empty_new_branch_error():
     """Test that empty new_branch returns False due to handle_exceptions."""
     base_args = cast(
         BaseArgs,
@@ -272,19 +256,16 @@ async def test_empty_new_branch_error():
         },
     )
 
-    coro = apply_diff_to_file(
+    result = apply_diff_to_file(
         diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
         file_path="test.py",
         base_args=base_args,
     )
-    assert coro is not None
-    result = await coro
 
     assert result is False
 
 
-@pytest.mark.asyncio
-async def test_directory_path_error(mock_create_headers):
+def test_directory_path_error(mock_create_headers):
     """Test error when file_path points to a directory."""
     with patch("services.github.commits.apply_diff_to_file.requests.get") as mock_get:
         mock_response = MagicMock()
@@ -306,21 +287,18 @@ async def test_directory_path_error(mock_create_headers):
             },
         )
 
-        coro = apply_diff_to_file(
+        result = apply_diff_to_file(
             diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
             file_path="test_directory",
             base_args=base_args,
         )
-        assert coro is not None
-        result = await coro
 
         assert isinstance(result, str)
         assert "file_path: 'test_directory' is a directory" in result
         assert "It should be a file path" in result
 
 
-@pytest.mark.asyncio
-async def test_multiple_files_error(mock_create_headers):
+def test_multiple_files_error(mock_create_headers):
     """Test error when file_path returns multiple files (list response)."""
     with patch("services.github.commits.apply_diff_to_file.requests.get") as mock_get:
         mock_response = MagicMock()
@@ -342,21 +320,18 @@ async def test_multiple_files_error(mock_create_headers):
             },
         )
 
-        coro = apply_diff_to_file(
+        result = apply_diff_to_file(
             diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
             file_path="ambiguous_path",
             base_args=base_args,
         )
-        assert coro is not None
-        result = await coro
 
         assert isinstance(result, str)
         assert "file_path: 'ambiguous_path' returned multiple files" in result
         assert "Please specify a single file path" in result
 
 
-@pytest.mark.asyncio
-async def test_incorrect_diff_format(
+def test_incorrect_diff_format(
     sample_base_args,
     mock_requests_get_existing_file,
     mock_create_headers,
@@ -368,11 +343,9 @@ async def test_incorrect_diff_format(
 
         diff = "invalid diff format"
 
-        coro = apply_diff_to_file(
+        result = apply_diff_to_file(
             diff=diff, file_path="test.py", base_args=sample_base_args
         )
-        assert coro is not None
-        result = await coro
 
         assert isinstance(result, str)
         assert "diff format is incorrect" in result
@@ -381,8 +354,7 @@ async def test_incorrect_diff_format(
         assert "diff=" in result
 
 
-@pytest.mark.asyncio
-async def test_partially_applied_diff(
+def test_partially_applied_diff(
     sample_base_args,
     mock_requests_get_existing_file,
     mock_create_headers,
@@ -398,11 +370,9 @@ async def test_partially_applied_diff(
 -print('hello world')
 +print('hello modified world')"""
 
-        coro = apply_diff_to_file(
+        result = apply_diff_to_file(
             diff=diff, file_path="test.py", base_args=sample_base_args
         )
-        assert coro is not None
-        result = await coro
 
         assert isinstance(result, str)
         assert "diff partially applied to the file: test.py" in result
@@ -412,8 +382,7 @@ async def test_partially_applied_diff(
         assert "rej_text=" in result
 
 
-@pytest.mark.asyncio
-async def test_http_error_on_get_request(sample_base_args, mock_create_headers):
+def test_http_error_on_get_request(sample_base_args, mock_create_headers):
     """Test handling of HTTP error during GET request."""
     with patch("services.github.commits.apply_diff_to_file.requests.get") as mock_get:
         mock_response = MagicMock()
@@ -423,20 +392,17 @@ async def test_http_error_on_get_request(sample_base_args, mock_create_headers):
         )
         mock_get.return_value = mock_response
 
-        coro = apply_diff_to_file(
+        result = apply_diff_to_file(
             diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
             file_path="test.py",
             base_args=sample_base_args,
         )
-        assert coro is not None
-        result = await coro
 
         # Should return False due to handle_exceptions decorator
         assert result is False
 
 
-@pytest.mark.asyncio
-async def test_http_error_on_put_request(
+def test_http_error_on_put_request(
     sample_base_args,
     mock_requests_get_existing_file,
     mock_apply_patch_success,
@@ -450,20 +416,17 @@ async def test_http_error_on_put_request(
         )
         mock_put.return_value = mock_response
 
-        coro = apply_diff_to_file(
+        result = apply_diff_to_file(
             diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
             file_path="test.py",
             base_args=sample_base_args,
         )
-        assert coro is not None
-        result = await coro
 
         # Should return False due to handle_exceptions decorator
         assert result is False
 
 
-@pytest.mark.asyncio
-async def test_base64_decoding_with_special_characters(
+def test_base64_decoding_with_special_characters(
     sample_base_args,
     mock_requests_put_success,
     mock_create_headers,
@@ -496,11 +459,9 @@ async def test_base64_decoding_with_special_characters(
 -print('héllo wörld 🌍')
 +print('héllo modified wörld 🌍')"""
 
-            coro = apply_diff_to_file(
+            result = apply_diff_to_file(
                 diff=diff, file_path="test.py", base_args=sample_base_args
             )
-            assert coro is not None
-            result = await coro
 
             assert isinstance(result, str)
             assert "diff applied to the file: test.py successfully" in result
@@ -511,8 +472,7 @@ async def test_base64_decoding_with_special_characters(
             assert call_args[1]["original_text"] == special_content
 
 
-@pytest.mark.asyncio
-async def test_missing_content_field_in_response(
+def test_missing_content_field_in_response(
     sample_base_args,
     mock_requests_put_success,
     mock_apply_patch_success,
@@ -530,20 +490,17 @@ async def test_missing_content_field_in_response(
         }
         mock_get.return_value = mock_response
 
-        coro = apply_diff_to_file(
+        result = apply_diff_to_file(
             diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
             file_path="test.py",
             base_args=sample_base_args,
         )
-        assert coro is not None
-        result = await coro
 
         assert isinstance(result, str)
         assert "diff applied to the file: test.py successfully" in result
 
 
-@pytest.mark.asyncio
-async def test_missing_sha_field_in_response(
+def test_missing_sha_field_in_response(
     sample_base_args,
     mock_requests_put_success,
     mock_apply_patch_success,
@@ -561,13 +518,11 @@ async def test_missing_sha_field_in_response(
         }
         mock_get.return_value = mock_response
 
-        coro = apply_diff_to_file(
+        result = apply_diff_to_file(
             diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
             file_path="test.py",
             base_args=sample_base_args,
         )
-        assert coro is not None
-        result = await coro
 
         assert isinstance(result, str)
         assert "diff applied to the file: test.py successfully" in result
@@ -578,8 +533,7 @@ async def test_missing_sha_field_in_response(
         assert "sha" not in put_call_args.kwargs["json"]
 
 
-@pytest.mark.asyncio
-async def test_url_construction_with_special_characters(
+def test_url_construction_with_special_characters(
     mock_requests_get_existing_file,
     mock_requests_put_success,
     mock_apply_patch_success,
@@ -598,13 +552,11 @@ async def test_url_construction_with_special_characters(
 
     file_path = "src/utils/test_file-name_123.py"
 
-    coro = apply_diff_to_file(
+    result = apply_diff_to_file(
         diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
         file_path=file_path,
         base_args=base_args,
     )
-    assert coro is not None
-    result = await coro
 
     assert isinstance(result, str)
     assert (
@@ -625,8 +577,7 @@ async def test_url_construction_with_special_characters(
         assert part in get_call_args.kwargs["url"]
 
 
-@pytest.mark.asyncio
-async def test_base64_encoding_in_put_request(
+def test_base64_encoding_in_put_request(
     sample_base_args,
     mock_requests_get_existing_file,
     mock_create_headers,
@@ -643,13 +594,11 @@ async def test_base64_encoding_in_put_request(
             modified_content = "print('modified content with special chars: éñ 🚀')\n"
             mock_patch.return_value = (modified_content, "")
 
-            coro = apply_diff_to_file(
+            result = apply_diff_to_file(
                 diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
                 file_path="test.py",
                 base_args=sample_base_args,
             )
-            assert coro is not None
-            result = await coro
 
             assert isinstance(result, str)
             assert "diff applied to the file: test.py successfully" in result
@@ -664,8 +613,7 @@ async def test_base64_encoding_in_put_request(
             assert decoded_content == modified_content
 
 
-@pytest.mark.asyncio
-async def test_kwargs_parameter_ignored():
+def test_kwargs_parameter_ignored():
     """Test that additional kwargs are ignored."""
     base_args = cast(
         BaseArgs,
@@ -695,15 +643,13 @@ async def test_kwargs_parameter_ignored():
                 mock_patch.return_value = ("new content", "")
 
                 # Call with additional kwargs that should be ignored
-                coro = apply_diff_to_file(
+                result = apply_diff_to_file(
                     diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
                     file_path="test.py",
                     base_args=base_args,
                     extra_param="should_be_ignored",
                     another_param=123,
                 )
-                assert coro is not None
-                result = await coro
 
                 assert isinstance(result, str)
                 assert "diff applied to the file: test.py successfully" in result
@@ -719,241 +665,17 @@ async def test_kwargs_parameter_ignored():
         (KeyError, "Key error occurred"),
     ],
 )
-@pytest.mark.asyncio
-async def test_various_exceptions_handled(sample_base_args, error_type, error_message):
+def test_various_exceptions_handled(sample_base_args, error_type, error_message):
     """Test that various exception types are handled by the decorator."""
     with patch("services.github.commits.apply_diff_to_file.requests.get") as mock_get:
         mock_get.side_effect = error_type(error_message)
 
-        coro = apply_diff_to_file(
+        result = apply_diff_to_file(
             diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
             file_path="test.py",
             base_args=sample_base_args,
         )
-        assert coro is not None
-        result = await coro
 
         # Should return False due to handle_exceptions decorator
         assert result is False
         mock_get.assert_called_once()
-
-
-@pytest.mark.asyncio
-async def test_apply_diff_to_file_with_eslint_integration(sample_base_args):
-    base_args_with_clone = cast(
-        BaseArgs,
-        {
-            **sample_base_args,
-            "clone_dir": "/tmp/test_owner/test_repo/pr-1",
-        },
-    )
-    with patch(
-        "services.github.commits.apply_diff_to_file.requests.get"
-    ) as mock_get, patch(
-        "services.github.commits.apply_diff_to_file.requests.put"
-    ) as mock_put, patch(
-        "services.github.commits.apply_diff_to_file.run_prettier"
-    ) as mock_run_prettier, patch(
-        "services.github.commits.apply_diff_to_file.run_eslint"
-    ) as mock_run_eslint:
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "type": "file",
-            "content": base64.b64encode(b"const a = 1;\n").decode("utf-8"),
-            "sha": "test_sha",
-        }
-        mock_get.return_value = mock_response
-
-        mock_put_response = MagicMock()
-        mock_put_response.status_code = 200
-        mock_put_response.raise_for_status.return_value = None
-        mock_put.return_value = mock_put_response
-
-        mock_run_prettier.return_value = "const a = 1;\n"
-        mock_run_eslint.return_value = "const a = 1;\n"
-
-        diff = """--- a/test.js
-+++ b/test.js
-@@ -1,1 +1,1 @@
--const a = 1;
-+const a = 1;
-"""
-
-        coro = apply_diff_to_file(
-            diff=diff,
-            file_path="test.js",
-            base_args=base_args_with_clone,
-        )
-        assert coro is not None
-        result = await coro
-
-        assert "successfully" in result.lower()
-        mock_run_prettier.assert_called_once()
-        mock_run_eslint.assert_called_once()
-        call_kwargs = mock_run_eslint.call_args[1]
-        assert call_kwargs["base_args"]["clone_dir"] == "/tmp/test_owner/test_repo/pr-1"
-        assert call_kwargs["file_path"] == "test.js"
-
-
-@pytest.mark.asyncio
-async def test_apply_diff_to_file_without_clone_dir_skips_linting(sample_base_args):
-    with patch(
-        "services.github.commits.apply_diff_to_file.requests.get"
-    ) as mock_get, patch(
-        "services.github.commits.apply_diff_to_file.requests.put"
-    ) as mock_put, patch(
-        "services.github.commits.apply_diff_to_file.run_prettier"
-    ) as mock_run_prettier, patch(
-        "services.github.commits.apply_diff_to_file.run_eslint"
-    ) as mock_run_eslint:
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "type": "file",
-            "content": base64.b64encode(b"const a = 1;\n").decode("utf-8"),
-            "sha": "test_sha",
-        }
-        mock_get.return_value = mock_response
-
-        mock_put_response = MagicMock()
-        mock_put_response.status_code = 200
-        mock_put_response.raise_for_status.return_value = None
-        mock_put.return_value = mock_put_response
-
-        diff = """--- a/test.ts
-+++ b/test.ts
-@@ -1,1 +1,1 @@
--const a = 1;
-+const a = 1;
-"""
-
-        coro = apply_diff_to_file(
-            diff=diff,
-            file_path="test.ts",
-            base_args=sample_base_args,
-        )
-        assert coro is not None
-        result = await coro
-
-        assert "successfully" in result.lower()
-        mock_run_prettier.assert_not_called()
-        mock_run_eslint.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_apply_diff_to_file_skips_eslint_for_python_files(sample_base_args):
-    base_args_with_clone = cast(
-        BaseArgs,
-        {
-            **sample_base_args,
-            "clone_dir": "/tmp/test_owner/test_repo/pr-1",
-        },
-    )
-    with patch(
-        "services.github.commits.apply_diff_to_file.requests.get"
-    ) as mock_get, patch(
-        "services.github.commits.apply_diff_to_file.requests.put"
-    ) as mock_put, patch(
-        "services.github.commits.apply_diff_to_file.run_prettier"
-    ) as mock_run_prettier, patch(
-        "services.github.commits.apply_diff_to_file.run_eslint"
-    ) as mock_run_eslint:
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "type": "file",
-            "content": base64.b64encode(b"print('hello')\n").decode("utf-8"),
-            "sha": "test_sha",
-        }
-        mock_get.return_value = mock_response
-
-        mock_put_response = MagicMock()
-        mock_put_response.status_code = 200
-        mock_put_response.raise_for_status.return_value = None
-        mock_put.return_value = mock_put_response
-
-        diff = """--- a/test.py
-+++ b/test.py
-@@ -1,1 +1,1 @@
--print('hello')
-+print('world')
-"""
-
-        coro = apply_diff_to_file(
-            diff=diff,
-            file_path="test.py",
-            base_args=base_args_with_clone,
-        )
-        assert coro is not None
-        result = await coro
-
-        assert "successfully" in result.lower()
-        mock_run_prettier.assert_not_called()
-        mock_run_eslint.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_apply_diff_to_file_with_eslint_unfixable_errors(sample_base_args):
-    base_args_with_clone = cast(
-        BaseArgs,
-        {
-            **sample_base_args,
-            "clone_dir": "/tmp/test_owner/test_repo/pr-1",
-        },
-    )
-    with patch(
-        "services.github.commits.apply_diff_to_file.requests.get"
-    ) as mock_get, patch(
-        "services.github.commits.apply_diff_to_file.requests.put"
-    ) as mock_put, patch(
-        "services.github.commits.apply_diff_to_file.run_prettier"
-    ) as mock_run_prettier, patch(
-        "services.github.commits.apply_diff_to_file.run_eslint"
-    ) as mock_run_eslint:
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "type": "file",
-            "content": base64.b64encode(b"const a = 1;\n").decode("utf-8"),
-            "sha": "test_sha",
-        }
-        mock_get.return_value = mock_response
-
-        mock_put_response = MagicMock()
-        mock_put_response.status_code = 200
-        mock_put_response.raise_for_status.return_value = None
-        mock_put.return_value = mock_put_response
-
-        mock_run_prettier.return_value = "const a = 1;\nconst b = 2;\n"
-        mock_run_eslint.return_value = "const a = 1;\nconst b = 2;\n"
-
-        diff = """--- a/test.js
-+++ b/test.js
-@@ -1,1 +1,2 @@
- const a = 1;
-+const b = 2;
-"""
-
-        coro = apply_diff_to_file(
-            diff=diff,
-            file_path="test.js",
-            base_args=base_args_with_clone,
-        )
-        assert coro is not None
-        result = await coro
-
-        assert "successfully" in result.lower()
-        mock_run_eslint.assert_called_once()
-        call_kwargs = mock_run_eslint.call_args[1]
-        assert call_kwargs["base_args"]["clone_dir"] == "/tmp/test_owner/test_repo/pr-1"
-        assert call_kwargs["file_path"] == "test.js"
-        put_call_args = mock_put.call_args[1]
-        decoded_content = base64.b64decode(put_call_args["json"]["content"]).decode(
-            "utf-8"
-        )
-        assert "const b = 2" in decoded_content

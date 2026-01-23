@@ -532,13 +532,11 @@ async def create_pr_from_issue(
         if not updated_content or updated_content == file_content:
             continue
 
-        coro = replace_remote_file_content(
+        replace_remote_file_content(
             file_content=updated_content,
             file_path=file_path,
             base_args=base_args,
         )
-        assert coro is not None
-        await coro
 
     # Trigger final test workflows with an empty commit
     comment_body = "Triggering workflows..."
