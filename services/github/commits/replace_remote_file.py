@@ -42,6 +42,7 @@ async def replace_remote_file_content(
     file_content: str,
     file_path: str,
     base_args: BaseArgs,
+    commit_message: str | None = None,
     **_kwargs,
 ):
     """Replace the content of a remote file directly without using unified diff and patch commands."""
@@ -89,11 +90,8 @@ async def replace_remote_file_content(
             file_content = linted_content
 
     # Set up the data for the PUT request
-    message = (
-        f"Replace content of {file_path} [skip ci]"
-        if skip_ci
-        else f"Replace content of {file_path}"
-    )
+    message = commit_message if commit_message else f"Replace content of {file_path}"
+    message = f"{message} [skip ci]" if skip_ci else message
     content = base64.b64encode(file_content.encode(UTF8)).decode(UTF8)
     data = {"message": message, "content": content, "branch": new_branch}
 

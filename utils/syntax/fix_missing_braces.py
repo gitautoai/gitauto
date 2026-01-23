@@ -2,6 +2,7 @@ import re
 from typing import TypedDict
 
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 class MissingBrace(TypedDict):
@@ -11,8 +12,15 @@ class MissingBrace(TypedDict):
     missing: str
 
 
-@handle_exceptions(default_return_value=[], raise_on_error=False)
-def detect_missing_braces(content: str):
+class FixResult(TypedDict):
+    content: str
+    fixes: list[MissingBrace]
+
+
+@handle_exceptions(
+    default_return_value={"content": "", "fixes": []}, raise_on_error=False
+)
+def fix_missing_braces(content: str) -> FixResult:
     lines = content.split("\n")
     # Match describe/test/it blocks with arrow function opening brace
     block_pattern = re.compile(r"^(\s*)(describe|test|it)\s*\(.*=>\s*\{\s*$")
@@ -37,11 +45,10 @@ def detect_missing_braces(content: str):
                     stack.pop(j)
                     break
 
-    results: list[MissingBrace] = []
-
     if not stack:
-        return results
+        return FixResult(content=content, fixes=[])
 
+    fixes: list[MissingBrace] = []
     for block_line, block_type, block_indent in stack:
         insert_after = block_line
 
@@ -66,7 +73,7 @@ def detect_missing_braces(content: str):
         while insert_after > block_line and not lines[insert_after].strip():
             insert_after -= 1
 
-        results.append(
+        fixes.append(
             MissingBrace(
                 block_start_line=block_line + 1,
                 block_type=block_type,
@@ -75,4 +82,41 @@ def detect_missing_braces(content: str):
             )
         )
 
-    return results
+    # Sort by insert_after_line descending so we insert from bottom-up
+    # This prevents line number shifts from affecting earlier insertions
+    sorted_fixes = sorted(fixes, key=lambda x: x["insert_after_line"], reverse=True)
+    for fix in sorted_fixes:
+        insert_idx = fix["insert_after_line"] - 1  # Convert to 0-indexed
+        block_indent = len(lines[fix["block_start_line"] - 1]) - len(
+            lines[fix["block_start_line"] - 1].lstrip()
+        )
+        closing_brace = " " * block_indent + fix["missing"]
+
+        next_idx = insert_idx + 1
+        if next_idx < len(lines) and not lines[next_idx].strip():
+            check_idx = next_idx + 1
+            while check_idx < len(lines) and not lines[check_idx].strip():
+                check_idx += 1
+            if check_idx < len(lines) and lines[check_idx].strip() == "});":
+                logger.info(
+                    "Replacing blank line %s with '%s' because blank followed by }); means Claude forgot to write });",
+                    next_idx + 1,
+                    closing_brace,
+                )
+                lines[next_idx] = closing_brace
+            else:
+                logger.info(
+                    "Inserting '%s' after line %s because blank followed by code means it's spacing",
+                    closing_brace,
+                    insert_idx + 1,
+                )
+                lines.insert(next_idx, closing_brace)
+        else:
+            logger.info(
+                "Inserting '%s' after line %s because next line is not blank",
+                closing_brace,
+                insert_idx + 1,
+            )
+            lines.insert(next_idx, closing_brace)
+
+    return FixResult(content="\n".join(lines), fixes=fixes)
