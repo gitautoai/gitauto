@@ -28,8 +28,25 @@ def _can_reuse_packages(
     lock_file_name: str | None = None,
     lock_file_content: str | None = None,
 ):
-    if not os.path.exists(os.path.join(efs_dir, "node_modules")):
+    node_modules_path = os.path.join(efs_dir, "node_modules")
+    if not os.path.exists(node_modules_path):
         return False
+
+    # Check if .bin directory exists and has binaries (indicates complete install)
+    bin_path = os.path.join(node_modules_path, ".bin")
+    if not os.path.exists(bin_path):
+        logger.info(
+            "node: Incomplete install detected - .bin directory missing at %s", bin_path
+        )
+        return False
+
+    bin_contents = os.listdir(bin_path)
+    if not bin_contents:
+        logger.info(
+            "node: Incomplete install detected - .bin directory empty at %s", bin_path
+        )
+        return False
+
     if not _file_matches(os.path.join(efs_dir, "package.json"), package_json_content):
         return False
     if not _file_matches(os.path.join(efs_dir, ".npmrc"), npmrc_content):
@@ -39,7 +56,11 @@ def _can_reuse_packages(
     ):
         return False
 
-    logger.info("node: Reusing existing packages on EFS at %s", efs_dir)
+    logger.info(
+        "node: Reusing existing packages on EFS at %s (%d binaries in .bin)",
+        efs_dir,
+        len(bin_contents),
+    )
     return True
 
 
