@@ -9,6 +9,7 @@ from typing import Any
 # Local imports
 from config import GITHUB_APP_USER_NAME
 from constants.agent import MAX_ITERATIONS
+from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
 from services.efs.start_async_install_on_efs import start_async_install_on_efs
 from services.github.branches.check_branch_exists import check_branch_exists
@@ -309,9 +310,13 @@ async def handle_review_run(
             )
             break
 
-    # Log if loop exhausted without completion
+    # Log if loop exhausted without completion and force verification
     if not is_completed:
-        logger.warning("Agent loop ended without calling verify_task_is_complete")
+        logger.warning(
+            "Agent loop hit MAX_ITERATIONS (%d) without calling verify_task_is_complete. Forcing verification.",
+            MAX_ITERATIONS,
+        )
+        await verify_task_is_complete(base_args=base_args)
 
     # Trigger final test workflows with an empty commit
     body = "Creating final empty commit to trigger workflows..."
