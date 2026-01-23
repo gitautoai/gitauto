@@ -6,17 +6,15 @@ import requests
 
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
-from services.eslint.run_eslint import run_eslint
 from services.github.types.contents import Contents
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
-from services.prettier.run_prettier import run_prettier
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.apply_patch import apply_patch
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
-async def apply_diff_to_file(
+def apply_diff_to_file(
     diff: str,
     file_path: str,
     base_args: BaseArgs,
@@ -24,7 +22,6 @@ async def apply_diff_to_file(
 ):
     """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
     skip_ci = base_args.get("skip_ci", False)
-    clone_dir = base_args.get("clone_dir")
     message = f"Update {file_path} [skip ci]" if skip_ci else f"Update {file_path}"
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     new_branch = base_args["new_branch"]
@@ -67,30 +64,6 @@ async def apply_diff_to_file(
 
     if modified_text != "" and rej_text != "":
         return f"diff partially applied to the file: {file_path}. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\n{diff=}\n\n{rej_text=}"
-
-    # Prettier then ESLint (JS ecosystem convention)
-    if clone_dir and file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
-        prettier_coro = run_prettier(
-            base_args=base_args,
-            file_path=file_path,
-            file_content=modified_text,
-        )
-        # Decorator always returns coroutine for async functions; None is the inner resolved type
-        assert prettier_coro is not None
-        formatted_content = await prettier_coro
-        if formatted_content:
-            modified_text = formatted_content
-
-        eslint_coro = run_eslint(
-            base_args=base_args,
-            file_path=file_path,
-            file_content=modified_text,
-        )
-        # Decorator always returns coroutine for async functions; None is the inner resolved type
-        assert eslint_coro is not None
-        linted_content = await eslint_coro
-        if linted_content:
-            modified_text = linted_content
 
     # Normal file update
     s2 = modified_text.encode(encoding=UTF8)

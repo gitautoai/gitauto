@@ -1,8 +1,10 @@
 # Local imports
+from services.eslint.run_eslint import run_eslint
 from services.github.commits.replace_remote_file import replace_remote_file_content
 from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.types.github_types import BaseArgs
+from services.prettier.run_prettier import run_prettier
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 from utils.syntax.fix_missing_braces import fix_missing_braces
@@ -17,6 +19,8 @@ JS_TEST_FILE_EXTENSIONS = (
     ".spec.ts",
     ".spec.tsx",
 )
+
+JS_TS_FILE_EXTENSIONS = (".js", ".jsx", ".ts", ".tsx")
 
 
 @handle_exceptions(
@@ -59,7 +63,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
 
         result = fix_missing_braces(content)
         if result["fixes"]:
-            upload_result = await replace_remote_file_content(
+            upload_result = replace_remote_file_content(
                 file_content=result["content"],
                 file_path=file_path,
                 base_args=base_args,
@@ -73,5 +77,49 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
 
     if fixes_applied:
         logger.info("Fixed missing braces in test files:\n%s", "\n".join(fixes_applied))
+
+    js_ts_files = [
+        f["filename"]
+        for f in pr_files
+        if f["filename"].endswith(JS_TS_FILE_EXTENSIONS) and f["status"] != "removed"
+    ]
+
+    formatting_applied: list[str] = []
+    for file_path in js_ts_files:
+        original_content = get_raw_content(
+            owner=owner, repo=repo, file_path=file_path, ref=new_branch, token=token
+        )
+        if not original_content:
+            continue
+
+        content = original_content
+
+        prettier_result = await run_prettier(
+            base_args=base_args,
+            file_path=file_path,
+            file_content=content,
+        )
+        if prettier_result:
+            content = prettier_result
+
+        eslint_result = await run_eslint(
+            base_args=base_args,
+            file_path=file_path,
+            file_content=content,
+        )
+        if eslint_result:
+            content = eslint_result
+
+        if content != original_content:
+            replace_remote_file_content(
+                file_content=content,
+                file_path=file_path,
+                base_args=base_args,
+                commit_message=f"Format {file_path}",
+            )
+            formatting_applied.append(f"- {file_path}")
+
+    if formatting_applied:
+        logger.info("Applied formatting to files:\n%s", "\n".join(formatting_applied))
 
     return {"success": True, "message": "Task completed."}
