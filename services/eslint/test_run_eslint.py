@@ -412,3 +412,137 @@ async def test_run_eslint_creates_directories(base_args):
                                 await coro
 
                                 mock_makedirs.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_run_eslint_sets_flat_config_false_for_legacy_config(base_args):
+    eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
+
+    with patch(
+        "services.eslint.run_eslint.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch(
+            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
+        ) as mock_efs:
+            mock_efs.return_value = True
+            with patch(
+                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+            ):
+                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                    with patch("services.eslint.run_eslint.os.makedirs"):
+                        with patch("builtins.open", mock_open(read_data="formatted")):
+                            with patch(
+                                "services.eslint.run_eslint.subprocess.run"
+                            ) as mock_run:
+                                mock_run.return_value = MagicMock(
+                                    returncode=0, stdout=eslint_output
+                                )
+
+                                coro = run_eslint(
+                                    base_args=base_args,
+                                    file_path="test.ts",
+                                    file_content="const x=1",
+                                )
+                                assert coro is not None
+                                await coro
+
+                                mock_run.assert_called_once()
+                                call_kwargs = mock_run.call_args[1]
+                                assert "env" in call_kwargs
+                                assert (
+                                    call_kwargs["env"]["ESLINT_USE_FLAT_CONFIG"]
+                                    == "false"
+                                )
+
+
+@pytest.mark.asyncio
+async def test_run_eslint_does_not_set_flat_config_for_new_config(base_args):
+    eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
+
+    with patch(
+        "services.eslint.run_eslint.get_eslint_config",
+        return_value={"filename": "eslint.config.js", "content": "export default {};"},
+    ):
+        with patch(
+            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
+        ) as mock_efs:
+            mock_efs.return_value = True
+            with patch(
+                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+            ):
+                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                    with patch("services.eslint.run_eslint.os.makedirs"):
+                        with patch("builtins.open", mock_open(read_data="formatted")):
+                            with patch(
+                                "services.eslint.run_eslint.subprocess.run"
+                            ) as mock_run:
+                                mock_run.return_value = MagicMock(
+                                    returncode=0, stdout=eslint_output
+                                )
+
+                                coro = run_eslint(
+                                    base_args=base_args,
+                                    file_path="test.ts",
+                                    file_content="const x=1",
+                                )
+                                assert coro is not None
+                                await coro
+
+                                mock_run.assert_called_once()
+                                call_kwargs = mock_run.call_args[1]
+                                assert "env" in call_kwargs
+                                assert (
+                                    "ESLINT_USE_FLAT_CONFIG" not in call_kwargs["env"]
+                                )
+
+
+@pytest.mark.parametrize(
+    "config_filename",
+    [
+        ".eslintrc",
+        ".eslintrc.json",
+        ".eslintrc.js",
+        ".eslintrc.yml",
+        ".eslintrc.yaml",
+    ],
+)
+@pytest.mark.asyncio
+async def test_run_eslint_legacy_config_variants(base_args, config_filename):
+    eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
+
+    with patch(
+        "services.eslint.run_eslint.get_eslint_config",
+        return_value={"filename": config_filename, "content": "{}"},
+    ):
+        with patch(
+            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
+        ) as mock_efs:
+            mock_efs.return_value = True
+            with patch(
+                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+            ):
+                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                    with patch("services.eslint.run_eslint.os.makedirs"):
+                        with patch("builtins.open", mock_open(read_data="formatted")):
+                            with patch(
+                                "services.eslint.run_eslint.subprocess.run"
+                            ) as mock_run:
+                                mock_run.return_value = MagicMock(
+                                    returncode=0, stdout=eslint_output
+                                )
+
+                                coro = run_eslint(
+                                    base_args=base_args,
+                                    file_path="test.ts",
+                                    file_content="const x=1",
+                                )
+                                assert coro is not None
+                                await coro
+
+                                mock_run.assert_called_once()
+                                call_kwargs = mock_run.call_args[1]
+                                assert (
+                                    call_kwargs["env"]["ESLINT_USE_FLAT_CONFIG"]
+                                    == "false"
+                                )

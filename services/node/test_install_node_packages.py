@@ -19,7 +19,7 @@ def test_can_reuse_packages_returns_false_when_no_node_modules():
 
 def test_can_reuse_packages_returns_true_when_content_matches():
     def exists_side_effect(path):
-        if "node_modules" in path or "package.json" in path:
+        if "node_modules" in path or "package.json" in path or ".bin" in path:
             return True
         if ".npmrc" in path:
             return False
@@ -27,31 +27,34 @@ def test_can_reuse_packages_returns_true_when_content_matches():
 
     with patch("services.node.install_node_packages.os.path.exists") as mock_exists:
         mock_exists.side_effect = exists_side_effect
-        with patch("builtins.open", mock_open(read_data='{"name": "test"}')):
-            result = _can_reuse_packages(
-                "/mnt/efs/owner/repo",
-                '{"name": "test"}',
-            )
+        with patch(
+            "services.node.install_node_packages.os.listdir", return_value=["eslint"]
+        ):
+            with patch("builtins.open", mock_open(read_data='{"name": "test"}')):
+                result = _can_reuse_packages(
+                    "/mnt/efs/owner/repo",
+                    '{"name": "test"}',
+                )
 
-            assert result is True
+                assert result is True
 
 
 def test_can_reuse_packages_returns_false_when_content_differs():
     with patch("services.node.install_node_packages.os.path.exists") as mock_exists:
         mock_exists.return_value = True
-        with patch("builtins.open", mock_open(read_data='{"name": "old"}')):
-            result = _can_reuse_packages(
-                "/mnt/efs/owner/repo",
-                '{"name": "new"}',
-            )
+        with patch(
+            "services.node.install_node_packages.os.listdir", return_value=["eslint"]
+        ):
+            with patch("builtins.open", mock_open(read_data='{"name": "old"}')):
+                result = _can_reuse_packages(
+                    "/mnt/efs/owner/repo",
+                    '{"name": "new"}',
+                )
 
-            assert result is False
+                assert result is False
 
 
 def test_can_reuse_packages_returns_true_when_npmrc_matches():
-    def exists_side_effect(_path):
-        return True
-
     file_contents = {
         "package.json": '{"name": "test"}',
         ".npmrc": "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
@@ -63,22 +66,21 @@ def test_can_reuse_packages_returns_true_when_npmrc_matches():
                 return mock_open(read_data=content)()
         return mock_open(read_data="")()
 
-    with patch("services.node.install_node_packages.os.path.exists") as mock_exists:
-        mock_exists.side_effect = exists_side_effect
-        with patch("builtins.open", side_effect=open_side_effect):
-            result = _can_reuse_packages(
-                "/mnt/efs/owner/repo",
-                '{"name": "test"}',
-                "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
-            )
+    with patch("services.node.install_node_packages.os.path.exists", return_value=True):
+        with patch(
+            "services.node.install_node_packages.os.listdir", return_value=["eslint"]
+        ):
+            with patch("builtins.open", side_effect=open_side_effect):
+                result = _can_reuse_packages(
+                    "/mnt/efs/owner/repo",
+                    '{"name": "test"}',
+                    "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
+                )
 
-            assert result is True
+                assert result is True
 
 
 def test_can_reuse_packages_returns_false_when_npmrc_differs():
-    def exists_side_effect(_path):
-        return True
-
     file_contents = {
         "package.json": '{"name": "test"}',
         ".npmrc": "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
@@ -90,16 +92,18 @@ def test_can_reuse_packages_returns_false_when_npmrc_differs():
                 return mock_open(read_data=content)()
         return mock_open(read_data="")()
 
-    with patch("services.node.install_node_packages.os.path.exists") as mock_exists:
-        mock_exists.side_effect = exists_side_effect
-        with patch("builtins.open", side_effect=open_side_effect):
-            result = _can_reuse_packages(
-                "/mnt/efs/owner/repo",
-                '{"name": "test"}',
-                "//different-registry.npmjs.org/:_authToken=${NPM_TOKEN}",
-            )
+    with patch("services.node.install_node_packages.os.path.exists", return_value=True):
+        with patch(
+            "services.node.install_node_packages.os.listdir", return_value=["eslint"]
+        ):
+            with patch("builtins.open", side_effect=open_side_effect):
+                result = _can_reuse_packages(
+                    "/mnt/efs/owner/repo",
+                    '{"name": "test"}',
+                    "//different-registry.npmjs.org/:_authToken=${NPM_TOKEN}",
+                )
 
-            assert result is False
+                assert result is False
 
 
 def test_can_reuse_packages_returns_false_when_npmrc_missing_on_efs():
@@ -110,14 +114,17 @@ def test_can_reuse_packages_returns_false_when_npmrc_missing_on_efs():
 
     with patch("services.node.install_node_packages.os.path.exists") as mock_exists:
         mock_exists.side_effect = exists_side_effect
-        with patch("builtins.open", mock_open(read_data='{"name": "test"}')):
-            result = _can_reuse_packages(
-                "/mnt/efs/owner/repo",
-                '{"name": "test"}',
-                "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
-            )
+        with patch(
+            "services.node.install_node_packages.os.listdir", return_value=["eslint"]
+        ):
+            with patch("builtins.open", mock_open(read_data='{"name": "test"}')):
+                result = _can_reuse_packages(
+                    "/mnt/efs/owner/repo",
+                    '{"name": "test"}',
+                    "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
+                )
 
-            assert result is False
+                assert result is False
 
 
 @pytest.mark.asyncio
@@ -200,8 +207,32 @@ async def test_install_node_packages_runs_npm_install():
 
 
 def test_can_reuse_packages_returns_false_when_no_package_json_file():
+    def exists_side_effect(path):
+        if "package.json" in path:
+            return False
+        return True
+
     with patch("services.node.install_node_packages.os.path.exists") as mock_exists:
-        mock_exists.side_effect = [True, False]
+        mock_exists.side_effect = exists_side_effect
+        with patch(
+            "services.node.install_node_packages.os.listdir", return_value=["eslint"]
+        ):
+            result = _can_reuse_packages(
+                "/mnt/efs/owner/repo",
+                '{"name": "test"}',
+            )
+
+            assert result is False
+
+
+def test_can_reuse_packages_returns_false_when_bin_directory_missing():
+    def exists_side_effect(path):
+        if ".bin" in path:
+            return False
+        return True
+
+    with patch("services.node.install_node_packages.os.path.exists") as mock_exists:
+        mock_exists.side_effect = exists_side_effect
 
         result = _can_reuse_packages(
             "/mnt/efs/owner/repo",
@@ -209,6 +240,17 @@ def test_can_reuse_packages_returns_false_when_no_package_json_file():
         )
 
         assert result is False
+
+
+def test_can_reuse_packages_returns_false_when_bin_directory_empty():
+    with patch("services.node.install_node_packages.os.path.exists", return_value=True):
+        with patch("services.node.install_node_packages.os.listdir", return_value=[]):
+            result = _can_reuse_packages(
+                "/mnt/efs/owner/repo",
+                '{"name": "test"}',
+            )
+
+            assert result is False
 
 
 @pytest.mark.asyncio

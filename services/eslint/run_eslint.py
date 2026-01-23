@@ -25,9 +25,13 @@ async def run_eslint(*, base_args: BaseArgs, file_path: str, file_content: str):
         logger.info("ESLint: Skipping %s - not a JS/TS file", file_path)
         return None
 
-    if not get_eslint_config(base_args):
+    eslint_config = get_eslint_config(base_args)
+    if not eslint_config:
         logger.info("ESLint: Skipping %s - no ESLint config found in repo", file_path)
         return None
+
+    config_filename = eslint_config.get("filename", "")
+    is_legacy_config = config_filename.startswith(".eslintrc")
 
     owner = base_args["owner"]
     repo = base_args["repo"]
@@ -51,6 +55,21 @@ async def run_eslint(*, base_args: BaseArgs, file_path: str, file_content: str):
 
     env = os.environ.copy()
     set_npm_cache_env(env)
+
+    # ESLint 9+ uses flat config (eslint.config.js) by default
+    # For repos using legacy .eslintrc.* config, disable flat config mode
+    if is_legacy_config:
+        env["ESLINT_USE_FLAT_CONFIG"] = "false"
+        logger.info("ESLint: Using legacy config mode for %s", config_filename)
+
+    # Check if eslint exists locally before running npx
+    eslint_bin = os.path.join(clone_dir, "node_modules", ".bin", "eslint")
+    eslint_exists = os.path.exists(eslint_bin)
+    logger.info(
+        "ESLint: Local binary exists=%s at %s",
+        eslint_exists,
+        eslint_bin,
+    )
 
     # --yes: fallback to download if not in node_modules
     logger.info("ESLint: Running eslint with --fix...")
