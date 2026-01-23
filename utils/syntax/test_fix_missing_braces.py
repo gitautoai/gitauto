@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from utils.syntax.detect_missing_braces import detect_missing_braces
+from utils.syntax.fix_missing_braces import fix_missing_braces
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -11,12 +11,12 @@ def test_no_missing_braces():
     expect(true).toBe(true);
   });
 });"""
-    result = detect_missing_braces(content)
-    assert not result
+    result = fix_missing_braces(content)
+    assert not result["fixes"]
+    assert result["content"] == content
 
 
 def test_detects_missing_test_close():
-    # Missing: }); after line 3
     broken = """describe('test', () => {
   it('works', () => {
     expect(true).toBe(true);
@@ -26,8 +26,18 @@ def test_detects_missing_test_close():
     });
   });
 });"""
-    result = detect_missing_braces(broken)
-    assert result == [
+    fixed = """describe('test', () => {
+  it('works', () => {
+    expect(true).toBe(true);
+  });
+
+  describe('other', () => {
+    it('also works', () => {
+    });
+  });
+});"""
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
         {
             "block_start_line": 2,
             "block_type": "it",
@@ -35,18 +45,26 @@ def test_detects_missing_test_close():
             "missing": "});",
         },
     ]
+    assert result["content"] == fixed
 
 
 def test_detects_missing_describe_close():
-    # Missing: }); after line 4
     broken = """describe('Error Handling', () => {
   test('throws error', () => {
     expect(() => {}).toThrow();
   });
 
 describe('Component', () => {"""
-    result = detect_missing_braces(broken)
-    assert result == [
+    fixed = """describe('Error Handling', () => {
+  test('throws error', () => {
+    expect(() => {}).toThrow();
+  });
+});
+
+describe('Component', () => {
+});"""
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
         {
             "block_start_line": 1,
             "block_type": "describe",
@@ -60,10 +78,10 @@ describe('Component', () => {"""
             "missing": "});",
         },
     ]
+    assert result["content"] == fixed
 
 
 def test_detects_two_missing_separate_places():
-    # Missing: }); after line 3 and after line 9
     broken = """describe('suite', () => {
   it('test1', () => {
     expect(1).toBe(1);
@@ -79,8 +97,25 @@ def test_detects_two_missing_separate_places():
     expect(4).toBe(4);
   });
 });"""
-    result = detect_missing_braces(broken)
-    assert result == [
+    fixed = """describe('suite', () => {
+  it('test1', () => {
+    expect(1).toBe(1);
+  });
+
+  it('test2', () => {
+    expect(2).toBe(2);
+  });
+
+  it('test3', () => {
+    expect(3).toBe(3);
+  });
+
+  it('test4', () => {
+    expect(4).toBe(4);
+  });
+});"""
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
         {
             "block_start_line": 2,
             "block_type": "it",
@@ -94,13 +129,14 @@ def test_detects_two_missing_separate_places():
             "missing": "});",
         },
     ]
+    assert result["content"] == fixed
 
 
 def test_detects_build_hooks_missing():
-    # Missing: }); after second test (line 57)
     broken = (FIXTURES_DIR / "broken_build_hooks.test.tsx").read_text()
-    result = detect_missing_braces(broken)
-    assert result == [
+    correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
         {
             "block_start_line": 25,
             "block_type": "test",
@@ -108,13 +144,14 @@ def test_detects_build_hooks_missing():
             "missing": "});",
         },
     ]
+    assert result["content"] == correct
 
 
 def test_detects_build_hooks_two_separate():
-    # Missing: }); after first test (line 23) and after third test (line 84)
     broken = (FIXTURES_DIR / "broken_build_hooks_two_separate.test.tsx").read_text()
-    result = detect_missing_braces(broken)
-    assert result == [
+    correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
         {
             "block_start_line": 6,
             "block_type": "test",
@@ -128,13 +165,14 @@ def test_detects_build_hooks_two_separate():
             "missing": "});",
         },
     ]
+    assert result["content"] == correct
 
 
 def test_detects_build_hooks_two_in_row():
-    # Missing: }); after third test and }); after describe (both insert at line 85)
     broken = (FIXTURES_DIR / "broken_build_hooks_two_in_row.test.tsx").read_text()
-    result = detect_missing_braces(broken)
-    assert result == [
+    correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
         {
             "block_start_line": 5,
             "block_type": "describe",
@@ -148,13 +186,14 @@ def test_detects_build_hooks_two_in_row():
             "missing": "});",
         },
     ]
+    assert result["content"] == correct
 
 
 def test_detects_build_hooks_with_blank():
-    # Missing: }); after first test (line 23) and after third test (line 84), with blank lines
     broken = (FIXTURES_DIR / "broken_build_hooks_with_blank.test.tsx").read_text()
-    result = detect_missing_braces(broken)
-    assert result == [
+    correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
         {
             "block_start_line": 6,
             "block_type": "test",
@@ -168,3 +207,4 @@ def test_detects_build_hooks_with_blank():
             "missing": "});",
         },
     ]
+    assert result["content"] == correct
