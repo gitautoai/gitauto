@@ -208,3 +208,24 @@ def test_detects_build_hooks_with_blank():
         },
     ]
     assert result["content"] == correct
+
+
+def test_detects_nested_missing_braces():
+    broken = (FIXTURES_DIR / "missing_braces_nested.spec.ts").read_text()
+    correct = (FIXTURES_DIR / "correct_nested.spec.ts").read_text()
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
+        {
+            "block_start_line": 475,
+            "block_type": "describe",
+            "insert_after_line": 512,
+            "missing": "});",
+        },
+        {
+            "block_start_line": 559,
+            "block_type": "const",
+            "insert_after_line": 568,
+            "missing": "};",
+        },
+    ]
+    assert result["content"] == correct
