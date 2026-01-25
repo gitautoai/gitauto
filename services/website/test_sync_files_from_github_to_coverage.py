@@ -70,6 +70,8 @@ def test_sync_upserts_files(
     assert len(records) == 2
     assert records[0]["full_path"] == "src/main.py"
     assert records[0]["file_size"] == 100
+    assert records[0]["created_by"] == "test-user"
+    assert records[0]["updated_by"] == "test-user"
     assert records[1]["full_path"] == "src/utils.py"
 
 

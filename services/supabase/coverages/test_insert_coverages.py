@@ -102,6 +102,7 @@ def test_insert_coverages_with_minimal_required_fields(mock_supabase):
         "owner_id": 1,
         "repo_id": 2,
         "updated_by": "test_user",
+        "branch_name": "main",
     }
     expected_data = [{"id": 2, "full_path": "minimal/path.py"}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = (
@@ -213,6 +214,7 @@ def test_insert_coverages_with_zero_coverage_values(mock_supabase):
         "branch_coverage": 0.0,
         "function_coverage": 0.0,
         "statement_coverage": 0.0,
+        "branch_name": "main",
     }
     expected_data = [{"id": 4, "full_path": "zero/coverage.py"}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = (
@@ -242,6 +244,7 @@ def test_insert_coverages_with_perfect_coverage_values(mock_supabase):
         "branch_coverage": 100.0,
         "function_coverage": 100.0,
         "statement_coverage": 100.0,
+        "branch_name": "main",
     }
     expected_data = [{"id": 5, "full_path": "perfect/coverage.py"}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = (
@@ -277,6 +280,7 @@ def test_insert_coverages_with_none_values(mock_supabase):
         "github_issue_url": None,
         "package_name": None,
         "language": None,
+        "branch_name": "main",
     }
     expected_data = [{"id": 6, "full_path": "test/with_nones.py"}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = (
@@ -335,6 +339,7 @@ def test_insert_coverages_with_large_file_size(mock_supabase):
         "branch_coverage": 45.0,
         "function_coverage": 60.0,
         "statement_coverage": 55.0,
+        "branch_name": "main",
     }
     expected_data = [{"id": 8, "full_path": "test/large_file.py"}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = (
@@ -363,6 +368,7 @@ def test_insert_coverages_with_boolean_exclusion_flag(mock_supabase):
         "branch_coverage": 0.0,
         "function_coverage": 0.0,
         "statement_coverage": 0.0,
+        "branch_name": "main",
     }
     expected_data = [{"id": 9, "full_path": "test/excluded.py"}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = (
@@ -390,6 +396,7 @@ def test_insert_coverages_with_special_characters_in_path(mock_supabase):
         "branch_coverage": 70.0,
         "function_coverage": 80.0,
         "statement_coverage": 77.5,
+        "branch_name": "main",
     }
     expected_data = [{"id": 10, "full_path": "test/special-chars_file@#$.py"}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = (
@@ -422,6 +429,7 @@ def test_insert_coverages_with_empty_strings(mock_supabase):
         "branch_coverage": 100.0,
         "function_coverage": 100.0,
         "statement_coverage": 100.0,
+        "branch_name": "main",
     }
     expected_data = [{"id": 11, "full_path": "test/empty_strings.py"}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = (
@@ -451,6 +459,7 @@ def test_insert_coverages_with_different_levels(mock_supabase):
         "branch_coverage": 60.0,
         "function_coverage": 70.0,
         "statement_coverage": 67.5,
+        "branch_name": "main",
     }
     expected_data = [{"id": 12, "full_path": "test/directory"}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = (
@@ -478,6 +487,7 @@ def test_insert_coverages_with_repository_level(mock_supabase):
         "branch_coverage": 75.0,
         "function_coverage": 85.0,
         "statement_coverage": 82.5,
+        "branch_name": "main",
     }
     expected_data = [{"id": 13, "full_path": "All"}]
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = (

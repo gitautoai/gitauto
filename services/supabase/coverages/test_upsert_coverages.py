@@ -1,13 +1,10 @@
 # pylint: disable=redefined-outer-name,unused-argument
 # pyright: reportUnusedVariable=false
 
-# Standard imports
 from unittest.mock import patch, MagicMock
 
-# Third party imports
 import pytest
 
-# Local imports
 from schemas.supabase.types import CoveragesInsert
 from services.supabase.coverages.upsert_coverages import upsert_coverages
 
@@ -32,6 +29,7 @@ def sample_coverage_record():
         "branch_coverage": 75.0,
         "created_by": "test_user",
         "updated_by": "test_user",
+        "branch_name": "main",
     }
     return record
 
@@ -49,6 +47,7 @@ def sample_coverage_records(sample_coverage_record):
         "branch_coverage": 65.0,
         "created_by": "test_user",
         "updated_by": "test_user",
+        "branch_name": "main",
     }
     return [sample_coverage_record, second_record]
 
@@ -264,6 +263,7 @@ class TestUpsertCoverages:
                 "branch_coverage": 0.0,
                 "created_by": "test_user",
                 "updated_by": "test_user",
+                "branch_name": "main",
             },
             {
                 "repo_id": 123,
@@ -275,6 +275,7 @@ class TestUpsertCoverages:
                 "branch_coverage": None,
                 "created_by": "test_user",
                 "updated_by": "test_user",
+                "branch_name": "main",
             },
         ]
         mock_result = MagicMock()
@@ -305,6 +306,7 @@ class TestUpsertCoverages:
                 "line_coverage": 85.0,
                 "created_by": "user1",
                 "updated_by": "user1",
+                "branch_name": "main",
             },
             {
                 "repo_id": 789,
@@ -314,6 +316,7 @@ class TestUpsertCoverages:
                 "line_coverage": 90.0,
                 "created_by": "user2",
                 "updated_by": "user2",
+                "branch_name": "main",
             },
         ]
         mock_result = MagicMock()
