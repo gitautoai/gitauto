@@ -74,7 +74,13 @@ for line in result.stdout.split("\n"):
             if is_nullable == "YES":
                 PYTHON_TYPE = f"{PYTHON_TYPE} | None"
 
-            tables[table_name].append(f"    {column_name}: {PYTHON_TYPE}")
+            tables[table_name].append(
+                {
+                    "name": column_name,
+                    "type": PYTHON_TYPE,
+                    "nullable": is_nullable == "YES",
+                }
+            )
 
 output_path = Path(__file__).parent / "types.py"
 with open(output_path, "w", encoding="utf-8") as f:
@@ -90,17 +96,21 @@ with open(output_path, "w", encoding="utf-8") as f:
 
         f.write(f"class {CLASS_NAME}(TypedDict):\n")
         if tables[table_name]:
-            f.write("\n".join(tables[table_name]) + "\n")
+            lines = [f"    {col['name']}: {col['type']}" for col in tables[table_name]]
+            f.write("\n".join(lines) + "\n")
         else:
             f.write("    pass\n")
         f.write("\n\n")
 
         insert_fields = []
-        for field in tables[table_name]:
-            field_name = field.strip().split(":")[0].strip()
-            if field_name not in auto_fields:
-                FIELD_TYPE = ":".join(field.strip().split(":")[1:]).strip()
-                insert_fields.append(f"    {field_name}: NotRequired[{FIELD_TYPE}]")
+        for col in tables[table_name]:
+            if col["name"] not in auto_fields:
+                if col["nullable"]:
+                    insert_fields.append(
+                        f"    {col['name']}: NotRequired[{col['type']}]"
+                    )
+                else:
+                    insert_fields.append(f"    {col['name']}: {col['type']}")
 
         if insert_fields:
             f.write(f"class {CLASS_NAME}Insert(TypedDict):\n")

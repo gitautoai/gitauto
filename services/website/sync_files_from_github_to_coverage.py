@@ -46,6 +46,7 @@ def sync_files_from_github_to_coverage(
                     "file_size": size,
                     "branch_name": branch,
                     "level": "file",
+                    "created_by": user_name,
                     "updated_by": user_name,
                 }
                 for path, size in current_files.items()

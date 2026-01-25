@@ -22,6 +22,12 @@ def sample_repo_coverage_data():
         "line_coverage": 88.2,
         "statement_coverage": 87.8,
         "language": "Python",
+        "lines_covered": 100,
+        "lines_total": 113,
+        "functions_total": 10,
+        "functions_covered": 9,
+        "branches_total": 20,
+        "branches_covered": 17,
         "created_at": datetime(2023, 1, 1, 12, 0, 0),
     }
 
@@ -36,6 +42,17 @@ def minimal_repo_coverage_data():
         "owner_name": "minimal-owner",
         "repo_id": 222222,
         "repo_name": "minimal-repo",
+        "branch_coverage": 0.0,
+        "function_coverage": 0.0,
+        "line_coverage": 0.0,
+        "statement_coverage": 0.0,
+        "language": "Python",
+        "lines_covered": 0,
+        "lines_total": 0,
+        "functions_total": 0,
+        "functions_covered": 0,
+        "branches_total": 0,
+        "branches_covered": 0,
     }
 
 
@@ -99,9 +116,8 @@ class TestUpsertRepoCoverage:
         )
         mock_supabase_client.table.return_value.insert.return_value.execute.assert_called_once()
 
-    def test_upsert_with_none_values_excluded(self, mock_supabase_client):
-        """Test that None values are properly excluded from the insert data."""
-        # Setup
+    def test_upsert_with_all_required_fields(self, mock_supabase_client):
+        """Test upsert with all required fields."""
         coverage_data: RepoCoverageInsert = {
             "branch_name": "feature-branch",
             "created_by": "test-user",
@@ -110,6 +126,16 @@ class TestUpsertRepoCoverage:
             "repo_id": 789012,
             "repo_name": "test-repo",
             "line_coverage": 75.0,
+            "statement_coverage": 74.0,
+            "function_coverage": 80.0,
+            "branch_coverage": 70.0,
+            "language": "Python",
+            "lines_covered": 75,
+            "lines_total": 100,
+            "functions_total": 10,
+            "functions_covered": 8,
+            "branches_total": 20,
+            "branches_covered": 14,
         }
 
         expected_data = [{"id": 3, "repo_name": "test-repo"}]
@@ -120,16 +146,13 @@ class TestUpsertRepoCoverage:
             mock_result
         )
 
-        # Execute
         result = upsert_repo_coverage(coverage_data)
 
-        # Verify
         assert result == expected_data
 
-        # Verify that only included fields are present
         call_args = mock_supabase_client.table.return_value.insert.call_args[0][0]
         assert call_args["line_coverage"] == 75.0
-        assert len(call_args) == 7  # Only the 7 fields we included
+        assert len(call_args) == 17
 
     def test_empty_result_data(self, mock_supabase_client, sample_repo_coverage_data):
         """Test handling of empty result data."""
