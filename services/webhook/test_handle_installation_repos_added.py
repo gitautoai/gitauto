@@ -27,6 +27,7 @@ def mock_installation_payload():
             "account": {
                 "id": 12345,
                 "login": "test-owner",
+                "type": "Organization",
             },
         },
         "sender": {
@@ -100,6 +101,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=[
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
@@ -153,6 +155,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=[],
             token="ghs_test_token",
             user_id=67890,
@@ -249,6 +252,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=[
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
@@ -272,6 +276,7 @@ class TestHandleInstallationReposAdded:
                 "account": {
                     "id": 12345,
                     "login": "test-owner",
+                    "type": "Organization",
                 },
             },
             "repositories_added": [
@@ -306,6 +311,7 @@ class TestHandleInstallationReposAdded:
                 "account": {
                     "id": 12345,
                     "login": "test-owner",
+                    "type": "Organization",
                 },
             },
             "sender": {
@@ -388,6 +394,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=[{"id": 333, "name": "single-repo"}],
             token="ghs_test_token",
             user_id=67890,
@@ -421,6 +428,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=[
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
@@ -452,6 +460,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=[
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
@@ -487,6 +496,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id="12345",
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=[
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
@@ -540,6 +550,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=complex_repos,
             token="ghs_test_token",
             user_id=67890,
@@ -571,6 +582,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="tëst-öwnér",
+            owner_type="Organization",
             repositories=[
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
@@ -755,6 +767,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=large_repo_list,
             token="ghs_test_token",
             user_id=67890,
@@ -806,6 +819,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=None,
             token="ghs_test_token",
             user_id=67890,
@@ -838,6 +852,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name=long_name,
+            owner_type="Organization",
             repositories=[
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
@@ -874,6 +889,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name=special_owner,
+            owner_type="Organization",
             repositories=[
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
@@ -910,6 +926,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=max_int,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=[
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
@@ -943,6 +960,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=[
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
@@ -977,6 +995,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="   ",
+            owner_type="Organization",
             repositories=[
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
@@ -1009,6 +1028,7 @@ class TestHandleInstallationReposAdded:
         mock_process_repositories.assert_called_once_with(
             owner_id=12345,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=[
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
