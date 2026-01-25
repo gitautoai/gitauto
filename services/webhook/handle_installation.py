@@ -22,9 +22,10 @@ from utils.error.handle_exceptions import handle_exceptions
 @handle_exceptions(raise_on_error=True)
 async def handle_installation_created(payload: GitHubInstallationPayload):
     installation_id = payload["installation"]["id"]
-    owner_type = payload["installation"]["account"]["type"]
-    owner_name = payload["installation"]["account"]["login"]
-    owner_id = payload["installation"]["account"]["id"]
+    owner = payload["installation"]["account"]
+    owner_id = owner["id"]
+    owner_name = owner["login"]
+    owner_type = owner["type"]
     repositories = payload["repositories"]
     user_id = payload["sender"]["id"]
     user_name = payload["sender"]["login"]
@@ -39,13 +40,14 @@ async def handle_installation_created(payload: GitHubInstallationPayload):
             user_id=user_id,
             user_name=user_name,
         )
-        if customer_id:
-            insert_owner(
-                owner_id=owner_id,
-                owner_type=owner_type,
-                owner_name=owner_name,
-                stripe_customer_id=customer_id,
-            )
+        insert_owner(
+            owner_id=owner_id,
+            owner_name=owner_name,
+            owner_type=owner_type,
+            user_id=user_id,
+            user_name=user_name,
+            stripe_customer_id=customer_id or "",
+        )
 
     if not check_grant_exists(owner_id=owner_id):
         insert_credit(owner_id=owner_id, transaction_type="grant")
@@ -62,6 +64,7 @@ async def handle_installation_created(payload: GitHubInstallationPayload):
     await process_repositories(
         owner_id=owner_id,
         owner_name=owner_name,
+        owner_type=owner_type,
         repositories=repositories,
         token=token,
         user_id=user_id,

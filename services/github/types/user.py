@@ -1,5 +1,7 @@
 from typing import TypedDict
 
+from services.github.types.owner import OwnerType
+
 
 class User(TypedDict):
     login: str
@@ -18,5 +20,5 @@ class User(TypedDict):
     repos_url: str
     events_url: str
     received_events_url: str
-    type: str
+    type: OwnerType
     site_admin: bool

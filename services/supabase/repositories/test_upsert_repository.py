@@ -15,8 +15,8 @@ def mocks():
     with patch(
         "services.supabase.repositories.upsert_repository.get_owner"
     ) as mock_get_owner, patch(
-        "services.supabase.repositories.upsert_repository.create_owner"
-    ) as mock_create_owner, patch(
+        "services.supabase.repositories.upsert_repository.insert_owner"
+    ) as mock_insert_owner, patch(
         "services.supabase.repositories.upsert_repository.get_repository"
     ) as mock_get_repository, patch(
         "services.supabase.repositories.upsert_repository.update_repository"
@@ -26,7 +26,7 @@ def mocks():
 
         yield {
             "get_owner": mock_get_owner,
-            "create_owner": mock_create_owner,
+            "insert_owner": mock_insert_owner,
             "get_repository": mock_get_repository,
             "update_repository": mock_update_repository,
             "insert_repository": mock_insert_repository,
@@ -45,6 +45,7 @@ def test_upsert_repository_owner_exists_repo_exists(mocks):
     result = upsert_repository(
         owner_id=123,
         owner_name="test_owner",
+        owner_type="Organization",
         repo_id=456,
         repo_name="test_repo",
         user_id=789,
@@ -77,6 +78,7 @@ def test_upsert_repository_owner_not_exists_repo_not_exists(mocks):
     result = upsert_repository(
         owner_id=123,
         owner_name="test_owner",
+        owner_type="Organization",
         repo_id=456,
         repo_name="test_repo",
         user_id=789,
@@ -85,8 +87,13 @@ def test_upsert_repository_owner_not_exists_repo_not_exists(mocks):
 
     assert result == {"repo_id": 456, "created": True}
     mocks["get_owner"].assert_called_once_with(123)
-    mocks["create_owner"].assert_called_once_with(
-        owner_id=123, owner_name="test_owner", user_id=789, user_name="test_user"
+    mocks["insert_owner"].assert_called_once_with(
+        owner_id=123,
+        owner_name="test_owner",
+        owner_type="Organization",
+        user_id=789,
+        user_name="test_user",
+        stripe_customer_id="",
     )
     mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
     mocks["insert_repository"].assert_called_once_with(
@@ -111,6 +118,7 @@ def test_upsert_repository_owner_exists_repo_not_exists(mocks):
     result = upsert_repository(
         owner_id=123,
         owner_name="test_owner",
+        owner_type="Organization",
         repo_id=456,
         repo_name="test_repo",
         user_id=789,
@@ -148,6 +156,7 @@ def test_upsert_repository_update_no_data_returned(mocks):
     result = upsert_repository(
         owner_id=123,
         owner_name="test_owner",
+        owner_type="Organization",
         repo_id=456,
         repo_name="test_repo",
         user_id=789,
@@ -157,14 +166,11 @@ def test_upsert_repository_update_no_data_returned(mocks):
     assert result is None
     mocks["get_owner"].assert_called_once_with(123)
     mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
+    # When stats are 0, they're not passed to avoid overwriting existing
     mocks["update_repository"].assert_called_once_with(
         owner_id=123,
         repo_id=456,
         updated_by="789:test_user",
-        file_count=0,
-        blank_lines=0,
-        comment_lines=0,
-        code_lines=0,
     )
 
 
@@ -178,6 +184,7 @@ def test_upsert_repository_insert_no_data_returned(mocks):
     result = upsert_repository(
         owner_id=123,
         owner_name="test_owner",
+        owner_type="Organization",
         repo_id=456,
         repo_name="test_repo",
         user_id=789,
@@ -211,6 +218,7 @@ def test_upsert_repository_with_default_parameters(mocks):
     result = upsert_repository(
         owner_id=123,
         owner_name="test_owner",
+        owner_type="Organization",
         repo_id=456,
         repo_name="test_repo",
         user_id=789,
@@ -233,7 +241,7 @@ def test_upsert_repository_with_default_parameters(mocks):
     )
 
 
-def test_upsert_repository_owner_not_exists_create_owner_called(mocks):
+def test_upsert_repository_owner_not_exists_insert_owner_called(mocks):
     mocks["get_owner"].return_value = None
     mocks["get_repository"].return_value = None
     mocks["insert_repository"].return_value = {"repo_id": 456, "created": True}
@@ -241,18 +249,24 @@ def test_upsert_repository_owner_not_exists_create_owner_called(mocks):
     upsert_repository(
         owner_id=123,
         owner_name="test_owner",
+        owner_type="Organization",
         repo_id=456,
         repo_name="test_repo",
         user_id=789,
         user_name="test_user",
     )
 
-    mocks["create_owner"].assert_called_once_with(
-        owner_id=123, owner_name="test_owner", user_id=789, user_name="test_user"
+    mocks["insert_owner"].assert_called_once_with(
+        owner_id=123,
+        owner_name="test_owner",
+        owner_type="Organization",
+        user_id=789,
+        user_name="test_user",
+        stripe_customer_id="",
     )
 
 
-def test_upsert_repository_owner_exists_create_owner_not_called(mocks):
+def test_upsert_repository_owner_exists_insert_owner_not_called(mocks):
     mock_owner = {"owner_id": 123, "owner_name": "test_owner"}
     mock_repository = {"repo_id": 456, "repo_name": "test_repo"}
     mock_update_result = {"repo_id": 456, "updated": True}
@@ -264,13 +278,14 @@ def test_upsert_repository_owner_exists_create_owner_not_called(mocks):
     upsert_repository(
         owner_id=123,
         owner_name="test_owner",
+        owner_type="Organization",
         repo_id=456,
         repo_name="test_repo",
         user_id=789,
         user_name="test_user",
     )
 
-    mocks["create_owner"].assert_not_called()
+    mocks["insert_owner"].assert_not_called()
 
 
 def test_upsert_repository_string_formatting(mocks):
@@ -284,6 +299,7 @@ def test_upsert_repository_string_formatting(mocks):
     upsert_repository(
         owner_id=123,
         owner_name="test_owner",
+        owner_type="Organization",
         repo_id=456,
         repo_name="test_repo",
         user_id=789,

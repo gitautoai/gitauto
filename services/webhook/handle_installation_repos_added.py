@@ -16,8 +16,10 @@ async def handle_installation_repos_added(
     token = get_installation_access_token(installation_id=installation_id)
 
     # Get other information
-    owner_id = payload["installation"]["account"]["id"]
-    owner_name = payload["installation"]["account"]["login"]
+    owner = payload["installation"]["account"]
+    owner_id = owner["id"]
+    owner_name = owner["login"]
+    owner_type = owner["type"]
     sender_id = payload["sender"]["id"]
     sender_name = payload["sender"]["login"]
 
@@ -25,6 +27,7 @@ async def handle_installation_repos_added(
     await process_repositories(
         owner_id=owner_id,
         owner_name=owner_name,
+        owner_type=owner_type,
         repositories=payload["repositories_added"],
         token=token,
         user_id=sender_id,
