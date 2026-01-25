@@ -15,7 +15,14 @@ import pytest
 # Local imports
 from config import GITHUB_WEBHOOK_SECRET, PRODUCT_NAME
 import main
-from main import app, mangum_handler, handle_webhook, handler, root
+from main import (
+    app,
+    mangum_handler,
+    handle_webhook,
+    handler,
+    root,
+    api_get_repository_files,
+)
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 
 
@@ -850,3 +857,46 @@ class TestTypeAnnotations:
 
         assert isinstance(result, dict)
         assert all(isinstance(k, str) for k in result.keys())
+
+
+class TestApiGetRepositoryFiles:
+    @patch("main.get_repository_files")
+    @pytest.mark.asyncio
+    async def test_api_get_repository_files_success(self, mock_get_repository_files):
+        mock_get_repository_files.return_value = [
+            {"path": "src/main.py", "sha": "abc123", "size": 100},
+            {"path": "src/utils.py", "sha": "def456", "size": 200},
+        ]
+
+        result = await api_get_repository_files(
+            owner="test-owner",
+            repo="test-repo",
+            branch="main",
+            token="test-token",
+            api_key="test-api-key",
+        )
+
+        mock_get_repository_files.assert_called_once_with(
+            owner="test-owner",
+            repo="test-repo",
+            branch="main",
+            token="test-token",
+            api_key="test-api-key",
+        )
+        assert len(result) == 2
+        assert result[0]["path"] == "src/main.py"
+
+    @patch("main.get_repository_files")
+    @pytest.mark.asyncio
+    async def test_api_get_repository_files_empty(self, mock_get_repository_files):
+        mock_get_repository_files.return_value = []
+
+        result = await api_get_repository_files(
+            owner="test-owner",
+            repo="test-repo",
+            branch="develop",
+            token="test-token",
+            api_key="test-api-key",
+        )
+
+        assert result == []
