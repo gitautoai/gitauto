@@ -21,7 +21,7 @@ from main import (
     handle_webhook,
     handler,
     root,
-    api_get_repository_files,
+    api_sync_files_from_github_to_coverage,
 )
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 
@@ -859,44 +859,26 @@ class TestTypeAnnotations:
         assert all(isinstance(k, str) for k in result.keys())
 
 
-class TestApiGetRepositoryFiles:
-    @patch("main.get_repository_files")
+class TestApiSyncFilesFromGithubToCoverage:
+    @patch("main.sync_files_from_github_to_coverage")
     @pytest.mark.asyncio
-    async def test_api_get_repository_files_success(self, mock_get_repository_files):
-        mock_get_repository_files.return_value = [
-            {"path": "src/main.py", "sha": "abc123", "size": 100},
-            {"path": "src/utils.py", "sha": "def456", "size": 200},
-        ]
+    async def test_api_sync_files_success(self, mock_sync_files):
+        mock_background_tasks = MagicMock()
 
-        result = await api_get_repository_files(
+        result = await api_sync_files_from_github_to_coverage(
             owner="test-owner",
             repo="test-repo",
-            branch="main",
+            body=MagicMock(branch="main", owner_id=123, repo_id=456, user_name="user"),
+            background_tasks=mock_background_tasks,
             token="test-token",
             api_key="test-api-key",
         )
 
-        mock_get_repository_files.assert_called_once_with(
-            owner="test-owner",
-            repo="test-repo",
-            branch="main",
-            token="test-token",
-            api_key="test-api-key",
-        )
-        assert len(result) == 2
-        assert result[0]["path"] == "src/main.py"
-
-    @patch("main.get_repository_files")
-    @pytest.mark.asyncio
-    async def test_api_get_repository_files_empty(self, mock_get_repository_files):
-        mock_get_repository_files.return_value = []
-
-        result = await api_get_repository_files(
-            owner="test-owner",
-            repo="test-repo",
-            branch="develop",
-            token="test-token",
-            api_key="test-api-key",
-        )
-
-        assert result == []
+        mock_background_tasks.add_task.assert_called_once()
+        call_kwargs = mock_background_tasks.add_task.call_args.kwargs
+        assert call_kwargs["owner"] == "test-owner"
+        assert call_kwargs["repo"] == "test-repo"
+        assert call_kwargs["branch"] == "main"
+        assert call_kwargs["token"] == "test-token"
+        assert call_kwargs["api_key"] == "test-api-key"
+        assert result == {"status": "syncing"}

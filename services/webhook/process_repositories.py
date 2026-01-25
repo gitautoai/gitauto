@@ -11,6 +11,9 @@ from services.github.repositories.get_repository_stats import get_repository_sta
 from services.github.types.owner import OwnerType
 from services.github.types.repository import RepositoryAddedOrRemoved
 from services.supabase.repositories.upsert_repository import upsert_repository
+from services.website.sync_files_from_github_to_coverage import (
+    sync_files_from_github_to_coverage,
+)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
@@ -78,4 +81,15 @@ async def process_repositories(
             blank_lines=stats["blank_lines"],
             comment_lines=stats["comment_lines"],
             code_lines=stats["code_lines"],
+        )
+
+        # Sync files to coverage database
+        sync_files_from_github_to_coverage(
+            owner=owner_name,
+            repo=repo_name,
+            branch=default_branch,
+            token=token,
+            owner_id=owner_id,
+            repo_id=repo_id,
+            user_name=user_name,
         )

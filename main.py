@@ -4,8 +4,9 @@ from typing import Any, cast
 import urllib.parse
 
 # Third-party imports
-from fastapi import FastAPI, Header, Request
+from fastapi import BackgroundTasks, FastAPI, Header, Request
 from mangum import Mangum
+from pydantic import BaseModel
 import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
@@ -19,7 +20,9 @@ from services.supabase.webhook_deliveries.insert_webhook_delivery import (
 )
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.webhook_handler import handle_webhook_event
-from services.website.get_repository_files import get_repository_files
+from services.website.sync_files_from_github_to_coverage import (
+    sync_files_from_github_to_coverage,
+)
 from utils.aws.extract_lambda_info import extract_lambda_info
 from utils.logging.logging_config import (
     clear_state,
@@ -140,15 +143,32 @@ async def root() -> dict[str, str]:
     return {"message": PRODUCT_NAME}
 
 
-@app.get(path="/api/files/{owner}/{repo}")
-async def api_get_repository_files(
+class SyncFilesRequest(BaseModel):
+    branch: str
+    owner_id: int
+    repo_id: int
+    user_name: str
+
+
+@app.post(path="/api/{owner}/{repo}/sync_files_from_github_to_coverage")
+async def api_sync_files_from_github_to_coverage(
     owner: str,
     repo: str,
-    branch: str,
+    body: SyncFilesRequest,
+    background_tasks: BackgroundTasks,
     token: str = Header(..., alias="X-GitHub-Token"),
     api_key: str = Header(..., alias="X-API-Key"),
 ):
-    """Fetch all files from a GitHub repository. Used by website for coverage dashboard."""
-    return get_repository_files(
-        owner=owner, repo=repo, branch=branch, token=token, api_key=api_key
+    """Sync repository files from GitHub to coverage database. Returns immediately, runs in background."""
+    background_tasks.add_task(
+        sync_files_from_github_to_coverage,
+        owner=owner,
+        repo=repo,
+        branch=body.branch,
+        token=token,
+        owner_id=body.owner_id,
+        repo_id=body.repo_id,
+        user_name=body.user_name,
+        api_key=api_key,
     )
+    return {"status": "syncing"}
