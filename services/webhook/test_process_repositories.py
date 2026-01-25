@@ -118,6 +118,7 @@ async def test_process_repositories_efs_exists_pulls(
     await process_repositories(
         owner_id=12345,
         owner_name="test-owner",
+        owner_type="Organization",
         repositories=sample_repositories,
         token="ghs_test_token",
         user_id=67890,
@@ -127,7 +128,7 @@ async def test_process_repositories_efs_exists_pulls(
     assert mock_get_default_branch.call_count == 2
     assert mock_git_pull.call_count == 2
     assert mock_get_repository_stats.call_count == 2
-    assert mock_upsert_repository.call_count == 2
+    assert mock_upsert_repository.call_count == 4  # 2 repos x 2 calls (insert + update)
 
 
 @pytest.mark.asyncio
@@ -148,6 +149,7 @@ async def test_process_repositories_efs_not_exists_clones(
     await process_repositories(
         owner_id=12345,
         owner_name="test-owner",
+        owner_type="Organization",
         repositories=sample_repositories,
         token="ghs_test_token",
         user_id=67890,
@@ -155,7 +157,7 @@ async def test_process_repositories_efs_not_exists_clones(
     )
 
     assert mock_git_clone_to_efs.call_count == 2
-    assert mock_upsert_repository.call_count == 2
+    assert mock_upsert_repository.call_count == 4  # 2 repos x 2 calls (insert + update)
 
 
 @pytest.mark.asyncio
@@ -171,6 +173,7 @@ async def test_process_repositories_empty_list(
     await process_repositories(
         owner_id=12345,
         owner_name="test-owner",
+        owner_type="Organization",
         repositories=[],
         token="ghs_test_token",
         user_id=67890,
@@ -212,15 +215,19 @@ async def test_process_repositories_stats_saved_correctly(
     await process_repositories(
         owner_id=12345,
         owner_name="test-owner",
+        owner_type="Organization",
         repositories=single_repo,
         token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
     )
 
-    mock_upsert_repository.assert_called_once_with(
+    assert mock_upsert_repository.call_count == 2
+    # Second call should have stats
+    mock_upsert_repository.assert_called_with(
         owner_id=12345,
         owner_name="test-owner",
+        owner_type="Organization",
         repo_id=333,
         repo_name="single-repo",
         user_id=67890,
@@ -260,6 +267,7 @@ async def test_process_repositories_empty_repo_skips_clone(
     await process_repositories(
         owner_id=12345,
         owner_name="test-owner",
+        owner_type="Organization",
         repositories=single_repo,
         token="ghs_test_token",
         user_id=67890,
@@ -270,15 +278,13 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_git_clone_to_efs.assert_not_called()
     mock_git_pull.assert_not_called()
     mock_get_repository_stats.assert_not_called()
+    # Only called once without stats (empty repo skips clone)
     mock_upsert_repository.assert_called_once_with(
         owner_id=12345,
         owner_name="test-owner",
+        owner_type="Organization",
         repo_id=444,
         repo_name="empty-repo",
         user_id=67890,
         user_name="test-user",
-        file_count=0,
-        blank_lines=0,
-        comment_lines=0,
-        code_lines=0,
     )

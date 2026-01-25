@@ -185,8 +185,10 @@ class TestHandleInstallationCreated:
         )
         all_mocks["insert_owner"].assert_called_once_with(
             owner_id=67890,
-            owner_type="Organization",
             owner_name="test-owner",
+            owner_type="Organization",
+            user_id=11111,
+            user_name="test-sender",
             stripe_customer_id="cus_test123",
         )
 
@@ -213,6 +215,7 @@ class TestHandleInstallationCreated:
         all_mocks["process_repositories"].assert_called_once_with(
             owner_id=67890,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=mock_installation_payload["repositories"],
             token="ghs_test_token",
             user_id=11111,
@@ -266,6 +269,7 @@ class TestHandleInstallationCreated:
         all_mocks["process_repositories"].assert_called_once_with(
             owner_id=67890,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=mock_installation_payload["repositories"],
             token="ghs_test_token",
             user_id=11111,
@@ -297,8 +301,10 @@ class TestHandleInstallationCreated:
         )
         all_mocks["insert_owner"].assert_called_once_with(
             owner_id=67890,
-            owner_type="Organization",
             owner_name="test-owner",
+            owner_type="Organization",
+            user_id=11111,
+            user_name="test-sender",
             stripe_customer_id="cus_test123",
         )
 
@@ -348,8 +354,10 @@ class TestHandleInstallationCreated:
         # Verify owner creation with User type
         all_mocks["insert_owner"].assert_called_once_with(
             owner_id=67890,
-            owner_type="User",
             owner_name="test-owner",
+            owner_type="User",
+            user_id=11111,
+            user_name="test-sender",
             stripe_customer_id="cus_test123",
         )
 
@@ -436,6 +444,7 @@ class TestHandleInstallationCreated:
         all_mocks["process_repositories"].assert_called_once_with(
             owner_id=67890,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=[],
             token="ghs_test_token",
             user_id=11111,
@@ -462,6 +471,7 @@ class TestHandleInstallationCreated:
         all_mocks["process_repositories"].assert_called_once_with(
             owner_id=67890,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=single_repo,
             token="ghs_test_token",
             user_id=11111,
@@ -790,6 +800,7 @@ class TestHandleInstallationCreated:
         all_mocks["process_repositories"].assert_called_once_with(
             owner_id=67890,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=large_repo_list,
             token="ghs_test_token",
             user_id=11111,
@@ -815,6 +826,7 @@ class TestHandleInstallationCreated:
         all_mocks["process_repositories"].assert_called_once_with(
             owner_id=67890,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=None,
             token="ghs_test_token",
             user_id=11111,
@@ -862,6 +874,7 @@ class TestHandleInstallationCreated:
         all_mocks["process_repositories"].assert_called_once_with(
             owner_id=67890,
             owner_name="test-owner",
+            owner_type="Organization",
             repositories=complex_repos,
             token="ghs_test_token",
             user_id=11111,
