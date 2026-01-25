@@ -4,7 +4,7 @@ from typing import Any, cast
 import urllib.parse
 
 # Third-party imports
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Header, Request
 from mangum import Mangum
 import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
@@ -19,6 +19,7 @@ from services.supabase.webhook_deliveries.insert_webhook_delivery import (
 )
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.webhook_handler import handle_webhook_event
+from services.website.get_repository_files import get_repository_files
 from utils.aws.extract_lambda_info import extract_lambda_info
 from utils.logging.logging_config import (
     clear_state,
@@ -137,3 +138,17 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 @app.get(path="/")
 async def root() -> dict[str, str]:
     return {"message": PRODUCT_NAME}
+
+
+@app.get(path="/api/files/{owner}/{repo}")
+async def api_get_repository_files(
+    owner: str,
+    repo: str,
+    branch: str,
+    token: str = Header(..., alias="X-GitHub-Token"),
+    api_key: str = Header(..., alias="X-API-Key"),
+):
+    """Fetch all files from a GitHub repository. Used by website for coverage dashboard."""
+    return get_repository_files(
+        owner=owner, repo=repo, branch=branch, token=token, api_key=api_key
+    )
