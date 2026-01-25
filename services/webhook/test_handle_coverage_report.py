@@ -375,10 +375,8 @@ def test_scenario1_file_exists_and_in_lcov_updates_coverage():
     ) as mock_upsert_repo, patch(
         "services.webhook.handle_coverage_report.get_file_tree"
     ) as mock_tree, patch(
-        "services.webhook.handle_coverage_report.get_all_coverages"
-    ) as mock_all_cov, patch(
-        "services.webhook.handle_coverage_report.delete_coverages_by_paths"
-    ) as mock_delete:
+        "services.webhook.handle_coverage_report.delete_stale_coverages"
+    ) as mock_delete_stale:
 
         mock_token.return_value = "fake-token"
         mock_repo.return_value = {"target_branch": "main"}
@@ -390,7 +388,7 @@ def test_scenario1_file_exists_and_in_lcov_updates_coverage():
         mock_tree.return_value = [
             {"path": "services/github/github_manager.py", "type": "blob"},
         ]
-        mock_all_cov.return_value = []
+        mock_delete_stale.return_value = 0
 
         result = handle_coverage_report(
             owner_id=12345,
@@ -407,7 +405,7 @@ def test_scenario1_file_exists_and_in_lcov_updates_coverage():
         mock_upsert_cov.assert_called_once()
         upsert_data = mock_upsert_cov.call_args[0][0]
         assert len(upsert_data) > 0
-        mock_delete.assert_not_called()
+        mock_delete_stale.assert_called_once()
 
 
 def test_scenario2_file_exists_but_not_in_lcov_not_touched():
@@ -432,10 +430,8 @@ def test_scenario2_file_exists_but_not_in_lcov_not_touched():
     ) as mock_upsert_repo, patch(
         "services.webhook.handle_coverage_report.get_file_tree"
     ) as mock_tree, patch(
-        "services.webhook.handle_coverage_report.get_all_coverages"
-    ) as mock_all_cov, patch(
-        "services.webhook.handle_coverage_report.delete_coverages_by_paths"
-    ) as mock_delete:
+        "services.webhook.handle_coverage_report.delete_stale_coverages"
+    ) as mock_delete_stale:
 
         mock_token.return_value = "fake-token"
         mock_repo.return_value = {"target_branch": "main"}
@@ -448,12 +444,7 @@ def test_scenario2_file_exists_but_not_in_lcov_not_touched():
             {"path": "services/github/github_manager.py", "type": "blob"},
             {"path": "src/components/Table/index.tsx", "type": "blob"},
         ]
-        mock_all_cov.return_value = [
-            {
-                "full_path": "src/components/Table/index.tsx",
-                "statement_coverage": 100.0,
-            },
-        ]
+        mock_delete_stale.return_value = 0
 
         result = handle_coverage_report(
             owner_id=12345,
@@ -470,7 +461,7 @@ def test_scenario2_file_exists_but_not_in_lcov_not_touched():
         upsert_data = mock_upsert_cov.call_args[0][0]
         upserted_paths = [item["full_path"] for item in upsert_data]
         assert "src/components/Table/index.tsx" not in upserted_paths
-        mock_delete.assert_not_called()
+        mock_delete_stale.assert_called_once()
 
 
 def test_scenario3_file_deleted_from_repo_removes_coverage():
@@ -495,10 +486,8 @@ def test_scenario3_file_deleted_from_repo_removes_coverage():
     ) as mock_upsert_repo, patch(
         "services.webhook.handle_coverage_report.get_file_tree"
     ) as mock_tree, patch(
-        "services.webhook.handle_coverage_report.get_all_coverages"
-    ) as mock_all_cov, patch(
-        "services.webhook.handle_coverage_report.delete_coverages_by_paths"
-    ) as mock_delete:
+        "services.webhook.handle_coverage_report.delete_stale_coverages"
+    ) as mock_delete_stale:
 
         mock_token.return_value = "fake-token"
         mock_repo.return_value = {"target_branch": "main"}
@@ -510,9 +499,7 @@ def test_scenario3_file_deleted_from_repo_removes_coverage():
         mock_tree.return_value = [
             {"path": "services/github/github_manager.py", "type": "blob"},
         ]
-        mock_all_cov.return_value = [
-            {"full_path": "deleted/old_file.py", "statement_coverage": 50.0},
-        ]
+        mock_delete_stale.return_value = 1
 
         result = handle_coverage_report(
             owner_id=12345,
@@ -526,10 +513,10 @@ def test_scenario3_file_deleted_from_repo_removes_coverage():
         )
 
         assert result is True
-        mock_delete.assert_called_once_with(
+        mock_delete_stale.assert_called_once_with(
             owner_id=12345,
             repo_id=67890,
-            file_paths=["deleted/old_file.py"],
+            current_files={"services/github/github_manager.py"},
         )
 
 

@@ -19,10 +19,7 @@ from services.github.check_suites.get_circleci_workflow_id import (
     get_circleci_workflow_ids_from_check_suite,
 )
 from services.github.trees.get_file_tree import get_file_tree
-from services.supabase.coverages.delete_coverages_by_paths import (
-    delete_coverages_by_paths,
-)
-from services.supabase.coverages.get_all_coverages import get_all_coverages
+from services.supabase.coverages.delete_stale_coverages import delete_stale_coverages
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.coverages.upsert_coverages import upsert_coverages
 from services.supabase.repo_coverage.upsert_repo_coverage import upsert_repo_coverage
@@ -294,28 +291,11 @@ def handle_coverage_report(
 
     # Delete coverage records for files that no longer exist in the repo
     tree_items = get_file_tree(owner_name, repo_name, head_branch, github_token)
-    current_repo_files = {item["path"] for item in tree_items if item["type"] == "blob"}
-    logger.info("Found %d files in repo tree", len(current_repo_files))
-
-    all_coverage_records = get_all_coverages(owner_id=owner_id, repo_id=repo_id)
-    logger.info(
-        "Found %d existing coverage records in database", len(all_coverage_records)
+    current_files = {item["path"] for item in tree_items if item["type"] == "blob"}
+    delete_stale_coverages(
+        owner_id=owner_id,
+        repo_id=repo_id,
+        current_files=current_files,
     )
-
-    stale_paths = [
-        record["full_path"]
-        for record in all_coverage_records
-        if record["full_path"] not in current_repo_files
-    ]
-
-    if stale_paths:
-        logger.info(
-            "Deleting %d stale coverage records: %s", len(stale_paths), stale_paths
-        )
-        delete_coverages_by_paths(
-            owner_id=owner_id, repo_id=repo_id, file_paths=stale_paths
-        )
-    else:
-        logger.info("No stale coverage records to delete")
 
     return upsert_result
