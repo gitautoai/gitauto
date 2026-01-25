@@ -1,4 +1,8 @@
+import os
 import random
+
+os.environ.setdefault("GITAUTO_API_KEY", "test-api-key")
+
 import pytest
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.github_types import BaseArgs
