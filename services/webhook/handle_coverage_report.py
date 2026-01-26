@@ -120,6 +120,8 @@ def handle_coverage_report(
     )
 
     for artifact in artifacts:
+        # GitHub API returns "name": https://docs.github.com/en/rest/actions/artifacts
+        # CircleCI API returns "path" (no name field): https://circleci.com/docs/api/v2/#operation/getJobArtifacts
         if source == "github":
             artifact_name = artifact.get("name", "")
         else:
@@ -127,9 +129,12 @@ def handle_coverage_report(
 
         logger.info("Processing artifact: %s", artifact_name)
 
-        # Check for coverage artifacts - lcov files, coverage reports, or default artifact
+        # Check for coverage artifacts by artifact name (GitHub) or path (CircleCI)
+        # GitHub Actions artifact names: "coverage-report", "php-coverage", "js-coverage"
+        # CircleCI artifact paths: "lcov.info", "php/lcov.info", "js/lcov.info"
+        artifact_name_lower = artifact_name.lower()
         if not (
-            artifact_name.endswith("lcov.info") or artifact_name == "coverage-report"
+            "lcov.info" in artifact_name_lower or "coverage" in artifact_name_lower
         ):
             logger.info("Skipping non-coverage artifact: %s", artifact_name)
             continue

@@ -556,3 +556,429 @@ def test_handle_coverage_report_fallback_to_default_branch():
             "feature-branch",
             "main",
         )
+
+
+def test_handle_coverage_report_multi_language_artifact_names():
+    """Test multi-language artifact naming patterns like php-coverage, js-coverage"""
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
+        "services.webhook.handle_coverage_report.get_workflow_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo:
+
+        mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
+        mock_artifacts.return_value = [
+            {"id": 123, "name": "php-coverage"},
+            {"id": 456, "name": "js-coverage"},
+        ]
+        mock_download.return_value = sample_lcov
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=222,
+            head_branch="main",
+            user_name="test-user",
+        )
+
+        assert result is True
+        assert mock_download.call_count == 2
+
+
+def test_handle_coverage_report_coverage_prefix_artifact_names():
+    """Test artifact names with coverage prefix like coverage-php, coverage-js"""
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
+        "services.webhook.handle_coverage_report.get_workflow_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo:
+
+        mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
+        mock_artifacts.return_value = [
+            {"id": 123, "name": "coverage-backend"},
+            {"id": 456, "name": "coverage-frontend"},
+        ]
+        mock_download.return_value = sample_lcov
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=222,
+            head_branch="main",
+            user_name="test-user",
+        )
+
+        assert result is True
+        assert mock_download.call_count == 2
+
+
+def test_handle_coverage_report_case_insensitive_coverage():
+    """Test that 'coverage' matching is case-insensitive"""
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
+        "services.webhook.handle_coverage_report.get_workflow_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo:
+
+        mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
+        mock_artifacts.return_value = [
+            {"id": 123, "name": "PHP-Coverage"},
+            {"id": 456, "name": "COVERAGE-JS"},
+        ]
+        mock_download.return_value = sample_lcov
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=222,
+            head_branch="main",
+            user_name="test-user",
+        )
+
+        assert result is True
+        assert mock_download.call_count == 2
+
+
+def test_handle_coverage_report_circleci_coverage_pattern():
+    """Test CircleCI artifacts with 'coverage' in path (same patterns as GitHub)"""
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
+        "services.webhook.handle_coverage_report.get_circleci_token"
+    ) as mock_get_token, patch(
+        "services.webhook.handle_coverage_report.get_circleci_workflow_ids_from_check_suite"
+    ) as mock_workflow_ids, patch(
+        "services.webhook.handle_coverage_report.get_circleci_workflow_jobs"
+    ) as mock_jobs, patch(
+        "services.webhook.handle_coverage_report.get_circleci_job_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_circleci_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo:
+
+        mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
+        mock_get_token.return_value = {"token": "circle-token"}
+        mock_workflow_ids.return_value = ["workflow-123"]
+        mock_jobs.return_value = [
+            {"job_number": 1, "name": "php-test", "status": "success"},
+            {"job_number": 2, "name": "js-test", "status": "success"},
+        ]
+        mock_artifacts.side_effect = [
+            [{"path": "php-coverage", "url": "http://example.com/php"}],
+            [{"path": "js-coverage", "url": "http://example.com/js"}],
+        ]
+        mock_download.return_value = sample_lcov
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=333,
+            head_branch="main",
+            user_name="test-user",
+            source="circleci",
+        )
+
+        assert result is True
+        assert mock_download.call_count == 2
+
+
+def test_handle_coverage_report_circleci_coverage_prefix():
+    """Test CircleCI artifacts with coverage prefix (same as GitHub coverage-backend)"""
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
+        "services.webhook.handle_coverage_report.get_circleci_token"
+    ) as mock_get_token, patch(
+        "services.webhook.handle_coverage_report.get_circleci_workflow_ids_from_check_suite"
+    ) as mock_workflow_ids, patch(
+        "services.webhook.handle_coverage_report.get_circleci_workflow_jobs"
+    ) as mock_jobs, patch(
+        "services.webhook.handle_coverage_report.get_circleci_job_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_circleci_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo:
+
+        mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
+        mock_get_token.return_value = {"token": "circle-token"}
+        mock_workflow_ids.return_value = ["workflow-123"]
+        mock_jobs.return_value = [
+            {"job_number": 1, "name": "test-job", "status": "success"}
+        ]
+        mock_artifacts.return_value = [
+            {"path": "coverage-backend", "url": "http://example.com/backend"},
+            {"path": "coverage-frontend", "url": "http://example.com/frontend"},
+        ]
+        mock_download.return_value = sample_lcov
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=333,
+            head_branch="main",
+            user_name="test-user",
+            source="circleci",
+        )
+
+        assert result is True
+        assert mock_download.call_count == 2
+
+
+def test_handle_coverage_report_circleci_case_insensitive():
+    """Test CircleCI artifacts with case-insensitive coverage (same as GitHub)"""
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
+        "services.webhook.handle_coverage_report.get_circleci_token"
+    ) as mock_get_token, patch(
+        "services.webhook.handle_coverage_report.get_circleci_workflow_ids_from_check_suite"
+    ) as mock_workflow_ids, patch(
+        "services.webhook.handle_coverage_report.get_circleci_workflow_jobs"
+    ) as mock_jobs, patch(
+        "services.webhook.handle_coverage_report.get_circleci_job_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_circleci_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo:
+
+        mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
+        mock_get_token.return_value = {"token": "circle-token"}
+        mock_workflow_ids.return_value = ["workflow-123"]
+        mock_jobs.return_value = [
+            {"job_number": 1, "name": "test-job", "status": "success"}
+        ]
+        mock_artifacts.return_value = [
+            {"path": "PHP-Coverage", "url": "http://example.com/php"},
+            {"path": "COVERAGE-JS", "url": "http://example.com/js"},
+        ]
+        mock_download.return_value = sample_lcov
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=333,
+            head_branch="main",
+            user_name="test-user",
+            source="circleci",
+        )
+
+        assert result is True
+        assert mock_download.call_count == 2
+
+
+def test_handle_coverage_report_github_lcov_pattern():
+    """Test GitHub artifacts with 'lcov.info' in name"""
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
+        "services.webhook.handle_coverage_report.get_workflow_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo:
+
+        mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
+        mock_artifacts.return_value = [
+            {"id": 123, "name": "php-lcov.info"},
+            {"id": 456, "name": "js-lcov.info"},
+        ]
+        mock_download.return_value = sample_lcov
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=222,
+            head_branch="main",
+            user_name="test-user",
+        )
+
+        assert result is True
+        assert mock_download.call_count == 2
+
+
+def test_handle_coverage_report_circleci_directory_paths():
+    """Test CircleCI artifacts with directory paths like php/lcov.info"""
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
+        "services.webhook.handle_coverage_report.get_circleci_token"
+    ) as mock_get_token, patch(
+        "services.webhook.handle_coverage_report.get_circleci_workflow_ids_from_check_suite"
+    ) as mock_workflow_ids, patch(
+        "services.webhook.handle_coverage_report.get_circleci_workflow_jobs"
+    ) as mock_jobs, patch(
+        "services.webhook.handle_coverage_report.get_circleci_job_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_circleci_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo:
+
+        mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
+        mock_get_token.return_value = {"token": "circle-token"}
+        mock_workflow_ids.return_value = ["workflow-123"]
+        mock_jobs.return_value = [
+            {"job_number": 1, "name": "php-test", "status": "success"},
+            {"job_number": 2, "name": "js-test", "status": "success"},
+        ]
+        mock_artifacts.side_effect = [
+            [{"path": "php/lcov.info", "url": "http://example.com/php/lcov.info"}],
+            [{"path": "js/lcov.info", "url": "http://example.com/js/lcov.info"}],
+        ]
+        mock_download.return_value = sample_lcov
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=333,
+            head_branch="main",
+            user_name="test-user",
+            source="circleci",
+        )
+
+        assert result is True
+        assert mock_download.call_count == 2
