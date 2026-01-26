@@ -545,34 +545,6 @@ All code analysis, generation, and file processing happens on our Lambda instanc
 - Configuration: `config.py` - Centralized environment variable management
 - Webhook Processing: `services/webhook/` - GitHub event handlers
 
-### Key Service Layers
-
-#### GitHub Integration (`services/github/`)
-
-- API Management: `github_manager.py` - Core GitHub API client
-- Authentication: `token/` - JWT and installation token handling
-- Repository Operations: `repositories/`, `branches/`, `commits/`
-- Issue/PR Management: `issues/`, `pulls/`, `comments/`
-- Webhook Processing: Handles GitHub events (issues, PRs, check runs)
-
-#### AI Model Integration
-
-- Anthropic: `services/anthropic/` - Claude API integration with function calling
-- OpenAI: `services/openai/` - GPT model integration (legacy support)
-- Model Selection: `services/model_selection.py` - Dynamic model routing
-
-#### Database Layer (`services/supabase/`)
-
-- Installation Management: Track GitHub app installations
-- Usage Tracking: Monitor API usage and billing
-- Repository Data: Store repo metadata and coverage stats
-- Issue/PR Tracking: Link GitHub entities to internal records
-
-#### External Integrations
-
-- Stripe: `services/stripe/` - Payment and subscription management
-- Slack: `services/slack/` - Internal notifications
-
 ### Event-Driven Architecture
 
 #### Webhook Event Flow
@@ -939,7 +911,7 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
 3. Run ruff linting: `ruff check . --fix` (fix ALL ruff errors, not just modified files - if any errors remain unfixed, STOP and fix them before continuing)
 4. Check for print statements and built-in logging:
    - Run `ruff check --select=T201 . --exclude schemas/,venv/` to find print statements - **FIX ALL before continuing** (use custom logger instead)
-   - Run `grep -r "^import logging$" --include="*.py" . --exclude-dir=venv | grep -v "utils/logging/logging_config.py"` to find built-in logging imports - **FIX ALL before continuing** (use `from utils.logging.logging_config import logger` instead). Note: `utils/logging/logging_config.py` is excluded because it's the central logging module.
+   - Run `scripts/lint/check_builtin_logging.sh` to find built-in logging imports - **FIX ALL before continuing** (use `from utils.logging.logging_config import logger` instead)
 5. **CRITICAL**: Check `git status` FIRST to see ALL changes including deleted/renamed files
 6. Get list of modified, created, AND deleted files ONCE: `(git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard) | sort -u`
    - This command captures: modified files, staged files, and newly created untracked files

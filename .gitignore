@@ -5,7 +5,8 @@
 .pytest_cache
 .ruff_cache
 __pycache__
-/scripts/
+/scripts/*
+!/scripts/lint/
 coverage.*
 coverage/
 infrastructure/lambda-env-backup.json
