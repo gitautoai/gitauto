@@ -19,6 +19,14 @@ def copy_repo_from_efs_to_tmp(efs_dir: str, clone_dir: str):
     ]
 
     logger.info("Copying EFS to /tmp: %s -> %s", efs_dir, clone_dir)
-    shutil.copytree(efs_dir, clone_dir, ignore=shutil.ignore_patterns(*dirs_to_skip))
+
+    # dirs_exist_ok=True: if clone_dir exists (e.g., read_file_content cached package.json),
+    # copytree overwrites existing files with EFS versions, leaves other files untouched
+    shutil.copytree(
+        efs_dir,
+        clone_dir,
+        ignore=shutil.ignore_patterns(*dirs_to_skip),
+        dirs_exist_ok=True,
+    )
     logger.info("Copy completed: %s", clone_dir)
     return clone_dir
