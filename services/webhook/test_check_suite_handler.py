@@ -58,6 +58,7 @@ def mock_pr_data():
         "title": "Test PR",
         "body": "Test PR description",
         "user": {"login": "test-user"},
+        "base": {"ref": "main"},
     }
 
 
@@ -112,7 +113,9 @@ async def test_handle_check_suite_skips_non_gitauto_branch(
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
 async def test_handle_check_suite_skips_when_trigger_disabled(
+    mock_get_pr,
     mock_get_repo,
     mock_get_token,
     mock_get_failed_runs,
@@ -131,12 +134,19 @@ async def test_handle_check_suite_skips_when_trigger_disabled(
             "head_sha": "abc123",
         }
     ]
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+        "base": {"ref": "main"},
+    }
     mock_get_repo.return_value = {"trigger_on_test_failure": False}
 
     await handle_check_suite(payload)
 
     mock_get_token.assert_called_once()
     mock_get_failed_runs.assert_called_once()
+    mock_get_pr.assert_called_once()
     mock_get_repo.assert_called_once_with(owner_id=11111, repo_id=98765)
 
 
@@ -144,6 +154,7 @@ async def test_handle_check_suite_skips_when_trigger_disabled(
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
 @patch("services.webhook.check_suite_handler.slack_notify")
 @patch("services.webhook.check_suite_handler.has_comment_with_text")
 @patch("services.webhook.check_suite_handler.create_comment")
@@ -155,6 +166,7 @@ async def test_handle_check_suite_skips_when_comment_exists(
     mock_create_comment,
     mock_has_comment,
     mock_slack_notify,
+    mock_get_pr,
     mock_get_repo,
     mock_get_token,
     mock_get_failed_runs,
@@ -173,6 +185,12 @@ async def test_handle_check_suite_skips_when_comment_exists(
             "head_sha": "abc123",
         }
     ]
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+        "base": {"ref": "main"},
+    }
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
     mock_has_comment.return_value = True
 
@@ -180,6 +198,7 @@ async def test_handle_check_suite_skips_when_comment_exists(
 
     mock_get_token.assert_called_once()
     mock_get_failed_runs.assert_called_once()
+    mock_get_pr.assert_called_once()
     mock_get_repo.assert_called_once()
     mock_has_comment.assert_called_once()
     mock_create_comment.assert_not_called()
@@ -253,7 +272,12 @@ async def test_handle_check_suite_race_condition_prevention(
     )
     mock_create_user_request.return_value = 12345
     mock_cancel_workflows.return_value = None
-    mock_get_pr.return_value = {"title": "Test PR"}
+    mock_get_pr.return_value = {
+        "title": "Test PR",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+        "base": {"ref": "main"},
+    }
     mock_get_pr_files.return_value = [{"filename": "test.py", "status": "modified"}]
     mock_get_workflow_logs.return_value = "Error: Test failure"
     mock_clean_logs.return_value = "Cleaned error log"
@@ -367,6 +391,7 @@ async def test_handle_check_suite_full_workflow(
         "title": "Test PR",
         "body": "Test PR description",
         "user": {"login": "test-user"},
+        "base": {"ref": "main"},
     }
     mock_get_changes.return_value = [
         {
@@ -481,6 +506,7 @@ async def test_handle_check_suite_with_404_logs(
         "title": "Test PR",
         "body": "Test PR description",
         "user": {"login": "test-user"},
+        "base": {"ref": "main"},
     }
     mock_get_changes.return_value = [
         {
@@ -566,6 +592,7 @@ async def test_handle_check_suite_with_none_logs(
         "title": "Test PR",
         "body": "Test PR description",
         "user": {"login": "test-user"},
+        "base": {"ref": "main"},
     }
     mock_get_changes.return_value = [
         {
@@ -655,6 +682,7 @@ async def test_handle_check_suite_with_existing_retry_pair(
         "title": "Test PR",
         "body": "Test PR description",
         "user": {"login": "test-user"},
+        "base": {"ref": "main"},
     }
     mock_get_changes.return_value = [
         {
@@ -756,6 +784,7 @@ async def test_handle_check_suite_with_closed_pr(
         "title": "Test PR",
         "body": "Test PR description",
         "user": {"login": "test-user"},
+        "base": {"ref": "main"},
     }
     mock_get_changes.return_value = [
         {
@@ -848,6 +877,7 @@ async def test_handle_check_suite_with_deleted_branch(
         "title": "Test PR",
         "body": "Test PR description",
         "user": {"login": "test-user"},
+        "base": {"ref": "main"},
     }
     mock_get_changes.return_value = [
         {
@@ -949,6 +979,7 @@ async def test_check_run_handler_token_accumulation(
         "title": "Test PR",
         "body": "Test PR description",
         "user": {"login": "test-user"},
+        "base": {"ref": "main"},
     }
     mock_get_changes.return_value = [
         {
@@ -1065,6 +1096,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
         "title": "Test PR",
         "body": "Test PR description",
         "user": {"login": "test-user"},
+        "base": {"ref": "main"},
     }
     mock_get_changes.return_value = [
         {
@@ -1189,6 +1221,7 @@ async def test_handle_check_suite_codecov_failure(
         "title": "Test PR",
         "body": "Test PR description",
         "user": {"login": "test-user"},
+        "base": {"ref": "main"},
     }
     mock_get_changes.return_value = [
         {
@@ -1309,6 +1342,7 @@ async def test_handle_check_suite_codecov_no_token(
         "title": "Test PR",
         "body": "Test PR description",
         "user": {"login": "test-user"},
+        "base": {"ref": "main"},
     }
     mock_get_changes.return_value = [
         {
@@ -1412,6 +1446,7 @@ async def test_handle_check_suite_max_iterations_forces_verification(
         "title": "Test PR",
         "body": "Test PR description",
         "user": {"login": "test-user"},
+        "base": {"ref": "main"},
     }
     mock_get_changes.return_value = [
         {
