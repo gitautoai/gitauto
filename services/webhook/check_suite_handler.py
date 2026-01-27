@@ -276,13 +276,7 @@ async def handle_check_suite(
         comment_msg = f"I've made {gitauto_commit_count} commits trying to fix this, but the tests keep failing with slightly different errors. I'm going to stop here to avoid an infinite loop. Could you take a look?"
         msg = f"Stopped after {gitauto_commit_count} commits in PR #{pull_number} - preventing infinite loop"
         logger.info(msg)
-        create_comment(
-            owner=owner_name,
-            repo=repo_name,
-            token=token,
-            issue_number=pull_number,
-            body=comment_msg,
-        )
+        create_comment(body=comment_msg, base_args=base_args)
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
@@ -292,13 +286,7 @@ async def handle_check_suite(
     msg = CHECK_RUN_STUMBLED_MESSAGE
     add_log_message(msg, log_messages)
     body = create_progress_bar(p=p, msg="\n".join(log_messages))
-    comment_url = create_comment(
-        owner=owner_name,
-        repo=repo_name,
-        token=token,
-        issue_number=pull_number,
-        body=body,
-    )
+    comment_url = create_comment(body=body, base_args=base_args)
     base_args["comment_url"] = comment_url
 
     # Create a usage record
