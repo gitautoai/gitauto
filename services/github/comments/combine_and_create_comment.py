@@ -70,7 +70,7 @@ def combine_and_create_comment(
         body = user_message
 
     # Create the comment
-    base_args = cast(
+    comment_args = cast(
         BaseArgs,
         {
             "owner": owner_name,
@@ -79,4 +79,4 @@ def combine_and_create_comment(
             "issue_number": issue_number,
         },
     )
-    create_comment(body=body, base_args=base_args)
+    create_comment(body=body, base_args=comment_args)

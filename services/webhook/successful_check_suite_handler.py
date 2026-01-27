@@ -58,8 +58,8 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     installation_id = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
 
-    # Create base_args for create_comment calls
-    base_args = cast(
+    # Create args for create_comment calls
+    comment_args = cast(
         BaseArgs,
         {
             "owner": owner_name,
@@ -200,7 +200,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             token=token,
             identifiers=[BLOCKED],
         )
-        create_comment(body=msg, base_args=base_args)
+        create_comment(body=msg, base_args=comment_args)
         slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
         slack_notify(slack_msg)
         return
@@ -228,7 +228,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
                 token=token,
                 identifiers=[BLOCKED],
             )
-            create_comment(body=msg, base_args=base_args)
+            create_comment(body=msg, base_args=comment_args)
             slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
             slack_notify(slack_msg)
             return
@@ -258,6 +258,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             token=token,
             identifiers=[BLOCKED],
         )
-        create_comment(body=msg, base_args=base_args)
+        create_comment(body=msg, base_args=comment_args)
         slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
         slack_notify(slack_msg)
