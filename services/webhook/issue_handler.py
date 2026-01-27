@@ -423,7 +423,12 @@ async def create_pr_from_issue(
     base_args["clone_dir"] = clone_dir
     clone_task = asyncio.create_task(
         prepare_repo_for_work(
-            owner_name, repo_name, base_branch, new_branch_name, token, clone_dir
+            owner=owner_name,
+            repo=repo_name,
+            base_branch=base_branch,
+            pr_branch=new_branch_name,
+            token=token,
+            clone_dir=clone_dir,
         )
     )
 

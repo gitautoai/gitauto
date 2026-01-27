@@ -179,7 +179,8 @@ async def handle_check_suite(
     full_pr = get_pull_request(
         owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
     )
-    pull_title = full_pr["title"] if full_pr else f"Check run failure: {check_run_name}"
+    pull_title = full_pr["title"]
+    target_branch = full_pr["base"]["ref"]
 
     # Get repository settings - check if trigger_on_test_failure is enabled
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
@@ -229,7 +230,12 @@ async def handle_check_suite(
     base_args["clone_dir"] = clone_dir
     clone_task = asyncio.create_task(
         prepare_repo_for_work(
-            owner_name, repo_name, head_branch, head_branch, token, clone_dir
+            owner=owner_name,
+            repo=repo_name,
+            base_branch=target_branch,
+            pr_branch=head_branch,
+            token=token,
+            clone_dir=clone_dir,
         )
     )
 

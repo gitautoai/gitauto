@@ -4,14 +4,18 @@ from datetime import datetime
 import json
 from pathlib import Path
 import time
-from typing import Any
 
 # Local imports
 from config import GITHUB_APP_USER_NAME
 from constants.agent import MAX_ITERATIONS
+from payloads.github.pull_request_review_comment.types import (
+    PullRequestReviewCommentPayload,
+)
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
 from services.efs.start_async_install_on_efs import start_async_install_on_efs
+from services.git.get_clone_dir import get_clone_dir
+from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
@@ -23,11 +27,6 @@ from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.github_types import ReviewBaseArgs
-from services.github.types.owner import Owner
-from services.github.types.pull_request import PullRequest
-from services.github.types.repository import Repository
-from services.git.get_clone_dir import get_clone_dir
-from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.openai.functions.functions import TOOLS_FOR_PRS
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
@@ -41,50 +40,52 @@ from utils.time.get_timeout_message import get_timeout_message
 
 
 async def handle_review_run(
-    payload: dict[str, Any], lambda_info: dict[str, str | None] | None = None
+    payload: PullRequestReviewCommentPayload,
+    lambda_info: dict[str, str | None] | None = None,
 ):
     current_time = time.time()
     trigger = "review_comment"
     set_trigger(trigger)
 
     # Extract review comment etc
-    review: dict[str, Any] = payload["comment"]
-    review_id: int = review["id"]
-    review_node_id: str = review["node_id"]
-    review_path: str = review["path"]
-    review_subject_type: str = review["subject_type"]
-    review_line: int = review["line"]
-    review_side: str = review["side"]
+    review = payload["comment"]
+    review_id = review["id"]
+    review_node_id = review["node_id"]
+    review_path = review["path"]
+    review_subject_type = review["subject_type"]
+    review_line = review["line"]
+    review_side = review["side"]
     # review_position: int = review["position"]
-    review_body: str = review["body"]
+    review_body = review["body"]
 
-    comment_author: dict[str, Any] = review["user"]
-    comment_author_type: str = comment_author["type"]
+    comment_author = review["user"]
+    comment_author_type = comment_author["type"]
     if comment_author_type == "Bot":
         return
 
     # Extract repository related variables
-    repo: Repository = payload["repository"]
-    repo_id: int = repo["id"]
-    repo_name: str = repo["name"]
-    is_fork: bool = repo["fork"]
+    repo = payload["repository"]
+    repo_id = repo["id"]
+    repo_name = repo["name"]
+    is_fork = repo["fork"]
 
     # Extract owner related variables
-    owner: Owner = repo["owner"]
-    owner_type: str = owner["type"]
-    owner_id: int = owner["id"]
-    owner_name: str = owner["login"]
+    owner = repo["owner"]
+    owner_type = owner["type"]
+    owner_id = owner["id"]
+    owner_name = owner["login"]
 
     # Extract PR related variables
-    pull_request: PullRequest = payload["pull_request"]
-    pull_number: int = pull_request["number"]
+    pull_request = payload["pull_request"]
+    pull_number = pull_request["number"]
     set_pr_number(pull_number)
-    pull_title: str = pull_request["title"]
-    pull_body: str = pull_request["body"]
-    pull_url: str = pull_request["url"]
-    pull_file_url: str = f"{pull_url}/files"
-    head_branch: str = pull_request["head"]["ref"]  # gitauto/issue-167-20250101-155924
-    pull_user: str = pull_request["user"]["login"]
+    pull_title = pull_request["title"]
+    pull_body = pull_request["body"]
+    pull_url = pull_request["url"]
+    pull_file_url = f"{pull_url}/files"
+    head_branch = pull_request["head"]["ref"]  # gitauto/issue-167-20250101-155924
+    base_branch = pull_request["base"]["ref"]  # main, master, etc.
+    pull_user = pull_request["user"]["login"]
     if pull_user != GITHUB_APP_USER_NAME:
         return
 
@@ -168,7 +169,12 @@ async def handle_review_run(
     base_args["clone_dir"] = clone_dir
     clone_task = asyncio.create_task(
         prepare_repo_for_work(
-            owner_name, repo_name, head_branch, head_branch, token, clone_dir
+            owner=owner_name,
+            repo=repo_name,
+            base_branch=base_branch,
+            pr_branch=head_branch,
+            token=token,
+            clone_dir=clone_dir,
         )
     )
 

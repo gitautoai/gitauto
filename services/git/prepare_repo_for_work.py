@@ -14,6 +14,7 @@ from utils.logging.logging_config import logger
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 async def prepare_repo_for_work(
+    *,
     owner: str,
     repo: str,
     base_branch: str,

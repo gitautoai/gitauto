@@ -9,12 +9,11 @@ from config import (
     PR_BODY_STARTS_WITH,
     PRODUCT_ID,
 )
-
-# Local imports (AWS)
+from payloads.github.pull_request_review_comment.types import (
+    PullRequestReviewCommentPayload,
+)
 from services.aws.delete_scheduler import delete_scheduler
 from services.aws.get_schedulers import get_schedulers_by_owner_id
-
-# Local imports (GitHub)
 from services.github.comments.create_gitauto_button_comment import (
     create_gitauto_button_comment,
 )
@@ -26,17 +25,11 @@ from services.github.types.github_types import (
 )
 from services.github.types.owner import OwnerType
 from services.github.types.webhook.push import PushWebhookPayload
-
-# Local imports (Resend)
 from services.resend.get_first_name import get_first_name
 from services.resend.send_email import send_email
 from services.resend.text.suspend_email import get_suspend_email_text
 from services.resend.text.uninstall_email import get_uninstall_email_text
-
-# Local imports (Slack)
 from services.slack.slack_notify import slack_notify
-
-# Local imports (Supabase)
 from services.supabase.installations.delete_installation import delete_installation
 from services.supabase.installations.unsuspend_installation import (
     unsuspend_installation,
@@ -45,8 +38,6 @@ from services.supabase.issues.update_issue_merged import update_issue_merged
 from services.supabase.usage.get_usage_by_pr import get_usage_by_pr
 from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
-
-# Local imports (Webhooks)
 from services.webhook.check_suite_handler import handle_check_suite
 from services.webhook.handle_coverage_report import handle_coverage_report
 from services.webhook.handle_installation import handle_installation_created
@@ -63,8 +54,6 @@ from services.webhook.review_run_handler import handle_review_run
 from services.webhook.successful_check_suite_handler import (
     handle_successful_check_suite,
 )
-
-# Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 
@@ -304,7 +293,10 @@ async def handle_webhook_event(
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_comment
     # Do nothing when action is "deleted"
     if event_name == "pull_request_review_comment" and action in ("created", "edited"):
-        await handle_review_run(payload=payload, lambda_info=lambda_info)
+        await handle_review_run(
+            payload=cast(PullRequestReviewCommentPayload, payload),
+            lambda_info=lambda_info,
+        )
         return
 
     # Add workflow_run event handler (GitHub Actions)
