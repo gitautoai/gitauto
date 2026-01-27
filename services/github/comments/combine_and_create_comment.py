@@ -1,9 +1,11 @@
 from datetime import datetime
+from typing import cast
 
 from config import PRODUCT_ID
 
 # Local imports (GitHub)
 from services.github.comments.create_comment import create_comment
+from services.github.types.github_types import BaseArgs
 
 # Local imports (Stripe)
 from services.stripe.check_availability import check_availability
@@ -68,10 +70,13 @@ def combine_and_create_comment(
         body = user_message
 
     # Create the comment
-    create_comment(
-        owner=owner_name,
-        repo=repo_name,
-        token=token,
-        issue_number=issue_number,
-        body=body,
+    comment_args = cast(
+        BaseArgs,
+        {
+            "owner": owner_name,
+            "repo": repo_name,
+            "token": token,
+            "issue_number": issue_number,
+        },
     )
+    create_comment(body=body, base_args=comment_args)

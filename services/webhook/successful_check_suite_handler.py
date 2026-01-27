@@ -15,7 +15,7 @@ from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.merge_pull_request import MergeMethod, merge_pull_request
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.types.github_types import CheckSuiteCompletedPayload
+from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
 from services.slack.slack_notify import slack_notify
 from services.supabase.client import supabase
 from services.supabase.repository_features.get_repository_features import (
@@ -57,6 +57,17 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     # Get installation token
     installation_id = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
+
+    # Create args for create_comment calls
+    comment_args = cast(
+        BaseArgs,
+        {
+            "owner": owner_name,
+            "repo": repo_name,
+            "token": token,
+            "issue_number": pr_number,
+        },
+    )
 
     head_sha = check_suite["head_sha"]
     base_branch = pull_request["base"]["ref"]
@@ -189,13 +200,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             token=token,
             identifiers=[BLOCKED],
         )
-        create_comment(
-            owner=owner_name,
-            repo=repo_name,
-            token=token,
-            issue_number=pr_number,
-            body=msg,
-        )
+        create_comment(body=msg, base_args=comment_args)
         slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
         slack_notify(slack_msg)
         return
@@ -223,13 +228,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
                 token=token,
                 identifiers=[BLOCKED],
             )
-            create_comment(
-                owner=owner_name,
-                repo=repo_name,
-                token=token,
-                issue_number=pr_number,
-                body=msg,
-            )
+            create_comment(body=msg, base_args=comment_args)
             slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
             slack_notify(slack_msg)
             return
@@ -259,12 +258,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             token=token,
             identifiers=[BLOCKED],
         )
-        create_comment(
-            owner=owner_name,
-            repo=repo_name,
-            token=token,
-            issue_number=pr_number,
-            body=msg,
-        )
+        create_comment(body=msg, base_args=comment_args)
         slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
         slack_notify(slack_msg)

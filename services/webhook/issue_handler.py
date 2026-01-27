@@ -137,13 +137,7 @@ async def create_pr_from_issue(
     msg = "Got your request."
     add_log_message(msg, log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
-    comment_url = create_comment(
-        owner=owner_name,
-        repo=repo_name,
-        token=token,
-        issue_number=issue_number,
-        body=comment_body,
-    )
+    comment_url = create_comment(body=comment_body, base_args=base_args)
     base_args["comment_url"] = comment_url
 
     # Get some base args
@@ -297,13 +291,7 @@ async def create_pr_from_issue(
         description = describe_image(base64_image=base64_image, context=context)
         description = f"## {url['alt']}\n\n{description}"
         issue_comments.append(description)
-        create_comment(
-            owner=owner_name,
-            repo=repo_name,
-            token=token,
-            issue_number=issue_number,
-            body=description,
-        )
+        create_comment(body=description, base_args=base_args)
 
     # Check out the URLs in the issue body
     reference_contents: list[str] = []

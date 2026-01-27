@@ -92,13 +92,13 @@ def test_combine_and_create_comment_success_subscription_user(
         sender_name=sender_name,
     )
     expected_body = base_comment + mock_request_issue_comment.return_value
-    mock_create_comment.assert_called_once_with(
-        owner=owner_name,
-        repo=repo_name,
-        token=token,
-        issue_number=issue_number,
-        body=expected_body,
-    )
+    mock_create_comment.assert_called_once()
+    call_kwargs = mock_create_comment.call_args.kwargs
+    assert call_kwargs["body"] == expected_body
+    assert call_kwargs["base_args"]["owner"] == owner_name
+    assert call_kwargs["base_args"]["repo"] == repo_name
+    assert call_kwargs["base_args"]["token"] == token
+    assert call_kwargs["base_args"]["issue_number"] == issue_number
 
 
 def test_combine_and_create_comment_credit_user(
@@ -176,13 +176,13 @@ def test_combine_and_create_comment_no_period_end_date(
     )
 
     mock_request_issue_comment.assert_not_called()
-    mock_create_comment.assert_called_once_with(
-        owner=owner_name,
-        repo=repo_name,
-        token=token,
-        issue_number=issue_number,
-        body=base_comment,
-    )
+    mock_create_comment.assert_called_once()
+    call_kwargs = mock_create_comment.call_args.kwargs
+    assert call_kwargs["body"] == base_comment
+    assert call_kwargs["base_args"]["owner"] == owner_name
+    assert call_kwargs["base_args"]["repo"] == repo_name
+    assert call_kwargs["base_args"]["token"] == token
+    assert call_kwargs["base_args"]["issue_number"] == issue_number
 
 
 def test_combine_and_create_comment_default_end_date(
@@ -217,13 +217,13 @@ def test_combine_and_create_comment_default_end_date(
     )
 
     mock_request_issue_comment.assert_not_called()
-    mock_create_comment.assert_called_once_with(
-        owner=owner_name,
-        repo=repo_name,
-        token=token,
-        issue_number=issue_number,
-        body=base_comment,
-    )
+    mock_create_comment.assert_called_once()
+    call_kwargs = mock_create_comment.call_args.kwargs
+    assert call_kwargs["body"] == base_comment
+    assert call_kwargs["base_args"]["owner"] == owner_name
+    assert call_kwargs["base_args"]["repo"] == repo_name
+    assert call_kwargs["base_args"]["token"] == token
+    assert call_kwargs["base_args"]["issue_number"] == issue_number
 
 
 def test_combine_and_create_comment_cannot_proceed_with_user_message(
@@ -260,13 +260,13 @@ def test_combine_and_create_comment_cannot_proceed_with_user_message(
         sender_name=sender_name,
     )
 
-    mock_create_comment.assert_called_once_with(
-        owner=owner_name,
-        repo=repo_name,
-        token=token,
-        issue_number=issue_number,
-        body="You have reached your request limit.",
-    )
+    mock_create_comment.assert_called_once()
+    call_kwargs = mock_create_comment.call_args.kwargs
+    assert call_kwargs["body"] == "You have reached your request limit."
+    assert call_kwargs["base_args"]["owner"] == owner_name
+    assert call_kwargs["base_args"]["repo"] == repo_name
+    assert call_kwargs["base_args"]["token"] == token
+    assert call_kwargs["base_args"]["issue_number"] == issue_number
 
 
 def test_combine_and_create_comment_cannot_proceed_no_user_message(
@@ -304,13 +304,13 @@ def test_combine_and_create_comment_cannot_proceed_no_user_message(
     )
 
     expected_body = base_comment + mock_request_issue_comment.return_value
-    mock_create_comment.assert_called_once_with(
-        owner=owner_name,
-        repo=repo_name,
-        token=token,
-        issue_number=issue_number,
-        body=expected_body,
-    )
+    mock_create_comment.assert_called_once()
+    call_kwargs = mock_create_comment.call_args.kwargs
+    assert call_kwargs["body"] == expected_body
+    assert call_kwargs["base_args"]["owner"] == owner_name
+    assert call_kwargs["base_args"]["repo"] == repo_name
+    assert call_kwargs["base_args"]["token"] == token
+    assert call_kwargs["base_args"]["issue_number"] == issue_number
 
 
 def test_combine_and_create_comment_product_id_replacement(
@@ -347,13 +347,13 @@ def test_combine_and_create_comment_product_id_replacement(
             "Generate PR - custom-product when ready."
             + mock_request_issue_comment.return_value
         )
-        mock_create_comment.assert_called_once_with(
-            owner=owner_name,
-            repo=repo_name,
-            token=token,
-            issue_number=issue_number,
-            body=expected_body,
-        )
+        mock_create_comment.assert_called_once()
+        call_kwargs = mock_create_comment.call_args.kwargs
+        assert call_kwargs["body"] == expected_body
+        assert call_kwargs["base_args"]["owner"] == owner_name
+        assert call_kwargs["base_args"]["repo"] == repo_name
+        assert call_kwargs["base_args"]["token"] == token
+        assert call_kwargs["base_args"]["issue_number"] == issue_number
 
 
 def test_combine_and_create_comment_no_product_id_replacement_for_gitauto(
@@ -383,13 +383,13 @@ def test_combine_and_create_comment_no_product_id_replacement_for_gitauto(
     )
 
     expected_body = base_comment + mock_request_issue_comment.return_value
-    mock_create_comment.assert_called_once_with(
-        owner=owner_name,
-        repo=repo_name,
-        token=token,
-        issue_number=issue_number,
-        body=expected_body,
-    )
+    mock_create_comment.assert_called_once()
+    call_kwargs = mock_create_comment.call_args.kwargs
+    assert call_kwargs["body"] == expected_body
+    assert call_kwargs["base_args"]["owner"] == owner_name
+    assert call_kwargs["base_args"]["repo"] == repo_name
+    assert call_kwargs["base_args"]["token"] == token
+    assert call_kwargs["base_args"]["issue_number"] == issue_number
 
 
 def test_combine_and_create_comment_exception_handling(mock_create_comment):
