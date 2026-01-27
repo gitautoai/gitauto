@@ -27,6 +27,7 @@ def mock_review_comment_payload():
             "url": "https://api.github.com/repos/test-owner/test-repo/pulls/123",
             "user": {"login": "gitauto-ai[bot]"},
             "head": {"ref": "feature-branch", "sha": "abc123def456"},
+            "base": {"ref": "main"},
         },
         "repository": {
             "id": 98765,
