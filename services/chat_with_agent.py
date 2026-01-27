@@ -184,9 +184,9 @@ async def chat_with_agent(
 
         if isinstance(tool_args, dict):
             tool_args.pop("base_args", None)
-            tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
+            tool_result = tools_to_call[tool_name](**tool_args, **base_args)
         else:
-            tool_result = tools_to_call[tool_name](base_args=base_args)
+            tool_result = tools_to_call[tool_name](**base_args)
         if inspect.iscoroutine(tool_result):
             tool_result = await tool_result
 

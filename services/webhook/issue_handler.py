@@ -138,11 +138,11 @@ async def create_pr_from_issue(
     add_log_message(msg, log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     comment_url = create_comment(
+        body=comment_body,
         owner=owner_name,
         repo=repo_name,
         token=token,
         issue_number=issue_number,
-        body=comment_body,
     )
     base_args["comment_url"] = comment_url
 
@@ -298,11 +298,11 @@ async def create_pr_from_issue(
         description = f"## {url['alt']}\n\n{description}"
         issue_comments.append(description)
         create_comment(
+            body=description,
             owner=owner_name,
             repo=repo_name,
             token=token,
             issue_number=issue_number,
-            body=description,
         )
 
     # Check out the URLs in the issue body

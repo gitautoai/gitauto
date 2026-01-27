@@ -6,12 +6,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def create_comment(
-    *,
-    owner: str,
-    repo: str,
-    token: str,
-    issue_number: int,
-    body: str,
+    *, body: str, owner: str, repo: str, token: str, issue_number: int, **_kwargs
 ):
     # https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment
     response = requests.post(
