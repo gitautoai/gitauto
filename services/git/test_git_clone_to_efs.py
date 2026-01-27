@@ -43,19 +43,19 @@ async def test_git_clone_to_efs_success(
         )
 
         assert result == "/mnt/efs/repo"
-        mock_exec.assert_called_once_with(
+        # Always uses init + fetch + checkout (not git clone) to avoid race condition
+        assert mock_exec.call_count == 4
+        calls = mock_exec.call_args_list
+        assert calls[0][0] == ("git", "init")
+        assert calls[1][0] == (
             "git",
-            "clone",
-            "--depth",
-            "1",
-            "--branch",
-            "main",
+            "remote",
+            "add",
+            "origin",
             "https://github.com/owner/repo.git",
-            "/mnt/efs/repo",
-            cwd=None,
-            stdout=-1,
-            stderr=-1,
         )
+        assert calls[2][0] == ("git", "fetch", "--depth", "1", "origin", "main")
+        assert calls[3][0] == ("git", "checkout", "-f", "main")
 
 
 @pytest.mark.asyncio
