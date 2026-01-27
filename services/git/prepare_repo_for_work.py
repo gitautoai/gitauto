@@ -6,8 +6,8 @@ from services.efs.symlink_dependencies import symlink_dependencies
 from services.git.get_clone_url import get_clone_url
 from services.git.git_checkout import git_checkout
 from services.git.git_clone_to_efs import git_clone_to_efs
-from services.git.git_fetch_to_efs import git_fetch
-from services.git.git_pull import git_pull
+from services.git.git_fetch import git_fetch
+from services.git.git_reset import git_reset
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
@@ -31,7 +31,7 @@ async def prepare_repo_for_work(
         logger.info("EFS clone exists, updating: %s", efs_dir)
         fetch_ok = await git_fetch(efs_dir, clone_url, base_branch)
         if fetch_ok:
-            await git_pull(efs_dir, clone_url, base_branch)
+            await git_reset(efs_dir)
     else:
         logger.info("No EFS clone, creating: %s", efs_dir)
         await git_clone_to_efs(efs_dir, clone_url, base_branch)
@@ -42,7 +42,8 @@ async def prepare_repo_for_work(
     # Step 3: Symlink dependencies (node_modules, venv, etc.) to avoid re-installing
     symlink_dependencies(efs_dir, clone_dir)
 
-    # Step 4: Fetch, checkout, and pull PR branch
-    await git_fetch(clone_dir, clone_url, pr_branch)
-    await git_checkout(clone_dir, pr_branch)
-    await git_pull(clone_dir, clone_url, pr_branch)
+    # Step 4: Fetch, checkout, and reset PR branch
+    fetch_ok = await git_fetch(clone_dir, clone_url, pr_branch)
+    if fetch_ok:
+        await git_checkout(clone_dir, pr_branch)
+        await git_reset(clone_dir)
