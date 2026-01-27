@@ -277,11 +277,11 @@ async def handle_check_suite(
         msg = f"Stopped after {gitauto_commit_count} commits in PR #{pull_number} - preventing infinite loop"
         logger.info(msg)
         create_comment(
-            body=comment_msg,
             owner=owner_name,
             repo=repo_name,
             token=token,
             issue_number=pull_number,
+            body=comment_msg,
         )
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
@@ -293,11 +293,11 @@ async def handle_check_suite(
     add_log_message(msg, log_messages)
     body = create_progress_bar(p=p, msg="\n".join(log_messages))
     comment_url = create_comment(
-        body=body,
         owner=owner_name,
         repo=repo_name,
         token=token,
         issue_number=pull_number,
+        body=body,
     )
     base_args["comment_url"] = comment_url
 

@@ -69,9 +69,9 @@ def combine_and_create_comment(
 
     # Create the comment
     create_comment(
-        body=body,
         owner=owner_name,
         repo=repo_name,
         token=token,
         issue_number=issue_number,
+        body=body,
     )

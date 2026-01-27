@@ -19,11 +19,11 @@ def test_create_comment_success(test_owner, test_repo, test_token):
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
         result = create_comment(
-            body="Test comment",
             owner=test_owner,
             repo=test_repo,
             token=test_token,
             issue_number=123,
+            body="Test comment",
         )
 
     # Assert
@@ -41,11 +41,11 @@ def test_create_comment_request_error(test_owner, test_repo, test_token):
     with patch("services.github.comments.create_comment.requests.post") as mock_post:
         mock_post.return_value = mock_response
         result = create_comment(
-            body="Test comment",
             owner=test_owner,
             repo=test_repo,
             token=test_token,
             issue_number=123,
+            body="Test comment",
         )
 
     # Assert
