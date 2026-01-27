@@ -24,6 +24,7 @@ def read_file_content(
             logger.info("node: Read %s from %s", file_name, local_path)
             return content
 
+    # Fallback: fetch from GitHub API
     content = get_raw_content(
         owner=owner, repo=repo, file_path=file_name, ref=branch, token=token
     )

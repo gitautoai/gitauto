@@ -35,9 +35,19 @@ def mock_git_clone_to_efs():
 
 
 @pytest.fixture
-def mock_git_pull():
+def mock_git_fetch():
     with patch(
-        "services.webhook.process_repositories.git_pull",
+        "services.webhook.process_repositories.git_fetch",
+        new_callable=AsyncMock,
+        return_value=True,
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_git_reset():
+    with patch(
+        "services.webhook.process_repositories.git_reset",
         new_callable=AsyncMock,
         return_value=True,
     ) as mock:
@@ -100,12 +110,13 @@ def sample_stats():
 
 
 @pytest.mark.asyncio
-async def test_process_repositories_efs_exists_pulls(
+async def test_process_repositories_efs_exists_fetches(
     sample_repositories,
     sample_stats,
     mock_get_efs_dir,
     mock_get_clone_url,
-    mock_git_pull,
+    mock_git_fetch,
+    mock_git_reset,
     mock_os_path_exists,
     mock_get_default_branch,
     mock_get_repository_stats,
@@ -126,7 +137,8 @@ async def test_process_repositories_efs_exists_pulls(
     )
 
     assert mock_get_default_branch.call_count == 2
-    assert mock_git_pull.call_count == 2
+    assert mock_git_fetch.call_count == 2
+    assert mock_git_reset.call_count == 2
     assert mock_get_repository_stats.call_count == 2
     assert mock_upsert_repository.call_count == 4  # 2 repos x 2 calls (insert + update)
 
@@ -164,7 +176,8 @@ async def test_process_repositories_efs_not_exists_clones(
 async def test_process_repositories_empty_list(
     mock_get_efs_dir,
     mock_get_clone_url,
-    mock_git_pull,
+    mock_git_fetch,
+    mock_git_reset,
     mock_os_path_exists,
     mock_get_default_branch,
     mock_get_repository_stats,
@@ -181,7 +194,8 @@ async def test_process_repositories_empty_list(
     )
 
     mock_get_default_branch.assert_not_called()
-    mock_git_pull.assert_not_called()
+    mock_git_fetch.assert_not_called()
+    mock_git_reset.assert_not_called()
     mock_get_repository_stats.assert_not_called()
     mock_upsert_repository.assert_not_called()
 
@@ -191,7 +205,8 @@ async def test_process_repositories_stats_saved_correctly(
     sample_stats,
     mock_get_efs_dir,
     mock_get_clone_url,
-    mock_git_pull,
+    mock_git_fetch,
+    mock_git_reset,
     mock_os_path_exists,
     mock_get_default_branch,
     mock_get_repository_stats,
@@ -244,7 +259,8 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_clone_to_efs,
-    mock_git_pull,
+    mock_git_fetch,
+    mock_git_reset,
     mock_os_path_exists,
     mock_get_default_branch,
     mock_get_repository_stats,
@@ -276,7 +292,8 @@ async def test_process_repositories_empty_repo_skips_clone(
 
     mock_get_default_branch.assert_called_once()
     mock_git_clone_to_efs.assert_not_called()
-    mock_git_pull.assert_not_called()
+    mock_git_fetch.assert_not_called()
+    mock_git_reset.assert_not_called()
     mock_get_repository_stats.assert_not_called()
     # Only called once without stats (empty repo skips clone)
     mock_upsert_repository.assert_called_once_with(

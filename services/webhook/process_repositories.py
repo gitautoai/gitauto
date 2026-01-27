@@ -5,7 +5,8 @@ import os
 from services.efs.get_efs_dir import get_efs_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import git_clone_to_efs
-from services.git.git_pull import git_pull
+from services.git.git_fetch import git_fetch
+from services.git.git_reset import git_reset
 from services.github.branches.get_default_branch import get_default_branch
 from services.github.repositories.get_repository_stats import get_repository_stats
 from services.github.types.owner import OwnerType
@@ -61,7 +62,9 @@ async def process_repositories(
 
         if os.path.exists(efs_git_dir):
             logger.info("EFS clone exists, updating: %s", efs_dir)
-            await git_pull(efs_dir, clone_url, default_branch)
+            fetch_ok = await git_fetch(efs_dir, clone_url, default_branch)
+            if fetch_ok:
+                await git_reset(efs_dir)
         else:
             logger.info("No EFS clone, creating: %s", efs_dir)
             await git_clone_to_efs(efs_dir, clone_url, default_branch)

@@ -38,9 +38,9 @@ def mock_git_fetch():
 
 
 @pytest.fixture
-def mock_git_pull():
+def mock_git_reset():
     with patch(
-        "services.git.prepare_repo_for_work.git_pull",
+        "services.git.prepare_repo_for_work.git_reset",
         new_callable=AsyncMock,
         return_value=True,
     ) as mock:
@@ -84,7 +84,7 @@ async def test_prepare_repo_efs_exists_fetches_and_pulls(
     mock_get_clone_url,
     mock_os_path_exists,
     mock_git_fetch,
-    mock_git_pull,
+    mock_git_reset,
     mock_git_checkout,
     mock_copy_repo,
     mock_symlink,
@@ -105,11 +105,7 @@ async def test_prepare_repo_efs_exists_fetches_and_pulls(
         "https://x-access-token:token@github.com/owner/repo.git",
         "main",
     )
-    mock_git_pull.assert_any_call(
-        "/mnt/efs/owner/repo",
-        "https://x-access-token:token@github.com/owner/repo.git",
-        "main",
-    )
+    mock_git_reset.assert_any_call("/mnt/efs/owner/repo")
     mock_copy_repo.assert_called_once()
     mock_symlink.assert_called_once()
 
@@ -121,7 +117,7 @@ async def test_prepare_repo_efs_not_exists_clones(
     mock_os_path_exists,
     mock_git_clone_to_efs,
     mock_git_fetch,
-    mock_git_pull,
+    mock_git_reset,
     mock_git_checkout,
     mock_copy_repo,
     mock_symlink,
@@ -150,7 +146,7 @@ async def test_prepare_repo_fetches_pr_branch(
     mock_get_clone_url,
     mock_os_path_exists,
     mock_git_fetch,
-    mock_git_pull,
+    mock_git_reset,
     mock_git_checkout,
     mock_copy_repo,
     mock_symlink,
@@ -172,8 +168,4 @@ async def test_prepare_repo_fetches_pr_branch(
         "feature",
     )
     mock_git_checkout.assert_called_once_with("/tmp/repo", "feature")
-    mock_git_pull.assert_any_call(
-        "/tmp/repo",
-        "https://x-access-token:token@github.com/owner/repo.git",
-        "feature",
-    )
+    mock_git_reset.assert_any_call("/tmp/repo")
