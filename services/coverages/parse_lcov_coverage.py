@@ -6,6 +6,8 @@ from services.coverages.coverage_types import CoverageReport, CoverageStats
 from services.coverages.create_coverage_report import create_coverage_report
 from services.coverages.create_empty_stats import create_empty_stats
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.is_code_file import is_code_file
+from utils.files.is_migration_file import is_migration_file
 from utils.files.is_test_file import is_test_file
 from utils.logging.logging_config import logger
 
@@ -29,8 +31,12 @@ def parse_lcov_coverage(lcov_content: str):
             # Start of new file section
             current_file = line[3:]
 
-            # Skip test files
-            if is_test_file(current_file):
+            # Skip non-code files, test files, and migration files
+            if (
+                not is_code_file(current_file)
+                or is_test_file(current_file)
+                or is_migration_file(current_file)
+            ):
                 current_file = None
 
                 # Skip to the next SF:

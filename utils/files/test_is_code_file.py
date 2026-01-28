@@ -114,6 +114,13 @@ def test_is_code_file_non_code_extensions():
     assert is_code_file("document.pdf") is False
     assert is_code_file("package.lock") is False
     assert is_code_file("environment.env") is False
+    assert is_code_file(".env.dev") is False
+    assert is_code_file(".env.prod") is False
+    assert is_code_file("codegen-document.yml") is False
+    assert is_code_file("serverless.yml") is False
+    assert is_code_file(".vscode/launch.json") is False
+    assert is_code_file("tsconfig.json") is False
+    assert is_code_file(".prettierrc") is False
 
 
 def test_is_code_file_files_without_extension():
@@ -156,3 +163,37 @@ def test_is_code_file_real_world_examples():
     assert is_code_file("config/database.yml") is False
     assert is_code_file("README.md") is False
     assert is_code_file("package-lock.json") is False
+
+
+def test_is_code_file_env_files():
+    assert is_code_file(".env") is False
+    assert is_code_file(".env.dev") is False
+    assert is_code_file(".env.prod") is False
+    assert is_code_file(".env.localhost") is False
+    assert is_code_file(".env.local") is False
+
+
+def test_is_code_file_template_files():
+    assert is_code_file("template.handlebars") is False
+    assert is_code_file("email/body.handlebars") is False
+    assert is_code_file("templates/index.handlebars") is False
+
+
+def test_is_code_file_asset_files():
+    assert is_code_file("assets/logo.png") is False
+    assert is_code_file("assets/document.pdf") is False
+    assert is_code_file("images/icon.svg") is False
+    assert is_code_file("data/users.csv") is False
+    assert is_code_file("tables/mapper.csv") is False
+
+
+def test_is_code_file_style_files():
+    assert is_code_file("styles.css") is False
+    assert is_code_file("src/styles/main.css") is False
+
+
+def test_is_code_file_config_data_files():
+    assert is_code_file("config/settings.json") is False
+    assert is_code_file("configs/form_config.json") is False
+    assert is_code_file("codegen-document.yml") is False
+    assert is_code_file("serverless.yml") is False
