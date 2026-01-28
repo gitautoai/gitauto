@@ -38,6 +38,7 @@ def sample_base_args():
         reviewers=[],
         github_urls=[],
         other_urls=[],
+        clone_dir="/tmp/test-owner/test-repo/pr-123",
     )
 
 

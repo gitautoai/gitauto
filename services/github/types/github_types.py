@@ -44,10 +44,10 @@ class BaseArgs(TypedDict):
     reviewers: list[str]
     github_urls: list[str]
     other_urls: list[str]
+    clone_dir: str
 
     # Optional fields
     check_run_name: NotRequired[str]
-    clone_dir: NotRequired[str]
     comment_url: NotRequired[str | None]
     issuer_email: NotRequired[str]
     pull_number: NotRequired[int]

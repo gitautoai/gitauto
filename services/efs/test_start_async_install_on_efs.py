@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 import asyncio
 from collections import defaultdict
 from typing import cast
@@ -18,7 +20,7 @@ def create_mock_create_task(mock_task):
 
 
 @pytest.mark.asyncio
-async def test_start_async_install_on_efs_creates_task():
+async def test_start_async_install_on_efs_creates_install_task():
     base_args = {
         "owner": "test-owner",
         "owner_id": 12345,
@@ -48,7 +50,7 @@ async def test_start_async_install_on_efs_creates_task():
 
 
 @pytest.mark.asyncio
-async def test_start_async_install_on_efs_reuses_successful_task():
+async def test_start_async_install_on_efs_reuses_successful_tasks():
     base_args = {
         "owner": "test-owner",
         "owner_id": 12345,
@@ -57,17 +59,17 @@ async def test_start_async_install_on_efs_reuses_successful_task():
         "base_branch": "test-branch",
     }
 
-    existing_task = MagicMock(spec=asyncio.Task)
-    existing_task.done.return_value = True
-    existing_task.exception.return_value = None
-    existing_task.result.return_value = True
+    existing_install_task = MagicMock(spec=asyncio.Task)
+    existing_install_task.done.return_value = True
+    existing_install_task.exception.return_value = None
+    existing_install_task.result.return_value = True
 
     with patch(
         "services.efs.start_async_install_on_efs.asyncio.create_task"
     ) as mock_create:
         with patch(
             "services.efs.start_async_install_on_efs.install_tasks",
-            {"/mnt/efs/test-owner/test-repo": {"node": existing_task}},
+            {"/mnt/efs/test-owner/test-repo": {"node": existing_install_task}},
         ):
             with patch(
                 "services.efs.start_async_install_on_efs.get_efs_dir",
@@ -79,7 +81,7 @@ async def test_start_async_install_on_efs_reuses_successful_task():
 
 
 @pytest.mark.asyncio
-async def test_start_async_install_on_efs_retries_failed_task():
+async def test_start_async_install_on_efs_retries_failed_install_task():
     base_args = {
         "owner": "test-owner",
         "owner_id": 12345,
@@ -88,19 +90,24 @@ async def test_start_async_install_on_efs_retries_failed_task():
         "base_branch": "test-branch",
     }
 
-    failed_task = MagicMock(spec=asyncio.Task)
-    failed_task.done.return_value = True
-    failed_task.exception.return_value = None
-    failed_task.result.return_value = False
+    failed_install_task = MagicMock(spec=asyncio.Task)
+    failed_install_task.done.return_value = True
+    failed_install_task.exception.return_value = None
+    failed_install_task.result.return_value = False
 
     new_task = MagicMock(spec=asyncio.Task)
-    mock_tasks = {"/mnt/efs/test-owner/test-repo": {"node": failed_task}}
+    mock_install_tasks = {
+        "/mnt/efs/test-owner/test-repo": {"node": failed_install_task}
+    }
 
     with patch(
         "services.efs.start_async_install_on_efs.asyncio.create_task",
         side_effect=create_mock_create_task(new_task),
     ) as mock_create:
-        with patch("services.efs.start_async_install_on_efs.install_tasks", mock_tasks):
+        with patch(
+            "services.efs.start_async_install_on_efs.install_tasks",
+            mock_install_tasks,
+        ):
             with patch(
                 "services.efs.start_async_install_on_efs.get_efs_dir",
                 return_value="/mnt/efs/test-owner/test-repo",
@@ -111,7 +118,7 @@ async def test_start_async_install_on_efs_retries_failed_task():
 
 
 @pytest.mark.asyncio
-async def test_start_async_install_on_efs_skips_in_progress_task():
+async def test_start_async_install_on_efs_skips_in_progress_tasks():
     base_args = {
         "owner": "test-owner",
         "owner_id": 12345,
@@ -120,15 +127,15 @@ async def test_start_async_install_on_efs_skips_in_progress_task():
         "base_branch": "test-branch",
     }
 
-    in_progress_task = MagicMock(spec=asyncio.Task)
-    in_progress_task.done.return_value = False
+    in_progress_install_task = MagicMock(spec=asyncio.Task)
+    in_progress_install_task.done.return_value = False
 
     with patch(
         "services.efs.start_async_install_on_efs.asyncio.create_task"
     ) as mock_create:
         with patch(
             "services.efs.start_async_install_on_efs.install_tasks",
-            {"/mnt/efs/test-owner/test-repo": {"node": in_progress_task}},
+            {"/mnt/efs/test-owner/test-repo": {"node": in_progress_install_task}},
         ):
             with patch(
                 "services.efs.start_async_install_on_efs.get_efs_dir",

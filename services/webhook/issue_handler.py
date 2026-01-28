@@ -11,8 +11,11 @@ from constants.agent import MAX_ITERATIONS
 from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
+from services.efs.get_efs_dir import get_efs_dir
 from services.efs.start_async_install_on_efs import start_async_install_on_efs
 from services.git.get_clone_dir import get_clone_dir
+from services.git.get_clone_url import get_clone_url
+from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
 from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.openai.functions.functions import TOOLS_FOR_ISSUES
 from services.resend.send_email import send_email
@@ -225,7 +228,12 @@ async def create_pr_from_issue(
         slack_notify(availability_status["log_message"], thread_ts)
         return
 
-    # Start async package installation early to run in parallel with LLM processing (returns immediately if already installed on EFS)
+    # Start clone and install tasks early to run in parallel with LLM processing
+    efs_dir = get_efs_dir(owner_name, repo_name)
+    clone_url = get_clone_url(owner_name, repo_name, token)
+    clone_tasks[efs_dir] = asyncio.create_task(
+        git_clone_to_efs(efs_dir, clone_url, base_args["base_branch"])
+    )
     start_async_install_on_efs(base_args)
 
     # Create a usage record
@@ -425,7 +433,6 @@ async def create_pr_from_issue(
         prepare_repo_for_work(
             owner=owner_name,
             repo=repo_name,
-            base_branch=base_branch,
             pr_branch=new_branch_name,
             token=token,
             clone_dir=clone_dir,

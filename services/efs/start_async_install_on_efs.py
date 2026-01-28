@@ -28,7 +28,6 @@ def start_async_install_on_efs(base_args: BaseArgs):
     repo = base_args["repo"]
     token = base_args["token"]
     base_branch = base_args["base_branch"]
-    clone_dir = base_args.get("clone_dir")
     efs_dir = get_efs_dir(owner, repo)
 
     for name, func in _INSTALLERS:
@@ -49,7 +48,7 @@ def start_async_install_on_efs(base_args: BaseArgs):
         if name not in install_tasks[efs_dir]:
             # Don't await - runs in background, checked later by is_efs_install_ready()
             task = asyncio.create_task(
-                func(owner, owner_id, repo, base_branch, token, efs_dir, clone_dir)
+                func(owner, owner_id, repo, base_branch, token, efs_dir)
             )
             install_tasks[efs_dir][name] = task
             logger.info("%s: Started async installation", name)

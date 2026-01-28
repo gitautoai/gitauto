@@ -10,19 +10,18 @@ from utils.logging.logging_config import logger
 def read_file_content(
     file_name: str,
     *,
-    clone_dir: str | None,
+    local_dir: str,
     owner: str,
     repo: str,
     branch: str,
     token: str,
 ):
-    if clone_dir:
-        local_path = os.path.join(clone_dir, file_name)
-        if os.path.exists(local_path):
-            with open(local_path, "r", encoding=UTF8) as f:
-                content = f.read()
-            logger.info("node: Read %s from %s", file_name, local_path)
-            return content
+    local_path = os.path.join(local_dir, file_name)
+    if os.path.exists(local_path):
+        with open(local_path, "r", encoding=UTF8) as f:
+            content = f.read()
+        logger.info("node: Read %s from %s", file_name, local_path)
+        return content
 
     # Fallback: fetch from GitHub API
     content = get_raw_content(
@@ -31,11 +30,9 @@ def read_file_content(
     if content:
         logger.info("node: Fetched %s from GitHub API", file_name)
 
-        # Save to clone_dir so subsequent calls find it locally
-        if clone_dir:
-            local_path = os.path.join(clone_dir, file_name)
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            with open(local_path, "w", encoding=UTF8) as f:
-                f.write(content)
+        # Save to local_dir so subsequent calls find it locally
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        with open(local_path, "w", encoding=UTF8) as f:
+            f.write(content)
 
     return content

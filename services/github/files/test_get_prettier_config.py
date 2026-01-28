@@ -19,6 +19,7 @@ def base_args():
             "repo": "test_repo",
             "token": "test_token",
             "base_branch": "main",
+            "clone_dir": "/tmp/test_owner/test_repo/pr-123",
         },
     )
 

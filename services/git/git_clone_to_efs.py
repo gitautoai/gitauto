@@ -1,8 +1,16 @@
+import asyncio
 import os
 
 from utils.command.run_subprocess_async import run_subprocess_async
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
+
+# clone_tasks example:
+# {
+#   "/mnt/efs/owner1/repo1": Task[str | None],
+#   "/mnt/efs/owner2/repo2": Task[str | None]
+# }
+clone_tasks: dict[str, asyncio.Task[str | None]] = {}
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -12,11 +20,11 @@ async def git_clone_to_efs(efs_dir: str, clone_url: str, branch: str):
 
     efs_git_dir = os.path.join(efs_dir, ".git")
     if os.path.exists(efs_git_dir):
-        logger.info(
-            "EFS already has .git at %s, skipping clone. Contents: %s",
-            efs_dir,
-            os.listdir(efs_dir),
+        logger.info("EFS already has .git at %s, ensuring latest", efs_dir)
+        await run_subprocess_async(
+            ["git", "fetch", "--depth", "1", "origin", branch], efs_dir
         )
+        await run_subprocess_async(["git", "reset", "--hard", "FETCH_HEAD"], efs_dir)
         return efs_dir
 
     # Always use init + fetch + checkout instead of clone

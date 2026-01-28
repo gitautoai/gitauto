@@ -18,7 +18,7 @@ CONFIG_FILES = [
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def get_eslint_config(base_args: BaseArgs):
-    clone_dir = base_args.get("clone_dir")
+    clone_dir = base_args["clone_dir"]
     owner = base_args["owner"]
     repo = base_args["repo"]
     token = base_args["token"]
@@ -27,7 +27,7 @@ def get_eslint_config(base_args: BaseArgs):
     for config_file in CONFIG_FILES:
         content = read_file_content(
             config_file,
-            clone_dir=clone_dir,
+            local_dir=clone_dir,
             owner=owner,
             repo=repo,
             branch=branch,
@@ -39,7 +39,7 @@ def get_eslint_config(base_args: BaseArgs):
     # ESLint config can also be defined in package.json under the "eslintConfig" key
     package_content = read_file_content(
         "package.json",
-        clone_dir=clone_dir,
+        local_dir=clone_dir,
         owner=owner,
         repo=repo,
         branch=branch,
