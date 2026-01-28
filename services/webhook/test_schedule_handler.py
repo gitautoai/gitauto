@@ -209,9 +209,11 @@ def test_schedule_handler_skips_export_only_files(
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.evaluate_condition")
 @patch("services.webhook.schedule_handler.create_issue")
 def test_schedule_handler_skips_empty_files(
     mock_create_issue,
+    mock_evaluate_condition,
     mock_get_raw_content,
     mock_get_all_coverages,
     mock_get_file_tree,
@@ -248,6 +250,7 @@ def test_schedule_handler_skips_empty_files(
         return content_map.get(file_path or "")
 
     mock_get_raw_content.side_effect = mock_empty_content_side_effect
+    mock_evaluate_condition.return_value = (True, "has logic worth testing")
     mock_create_issue.return_value = (
         200,
         {"html_url": "https://github.com/test/issue/2"},
