@@ -32,7 +32,7 @@ def insert_usage(
     lambda_log_stream: str | None = None,
     lambda_request_id: str | None = None,
 ):
-    data, _ = (
+    result = (
         supabase.table(table_name="usage")
         .insert(
             json={
@@ -56,4 +56,4 @@ def insert_usage(
         )
         .execute()
     )
-    return cast(int, data[1][0]["id"])
+    return cast(int, result.data[0]["id"])

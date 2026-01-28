@@ -6,7 +6,7 @@
 # Standard imports
 import hashlib
 import random
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 import pytest
 from config import GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
 from services.webhook.check_suite_handler import handle_check_suite
@@ -159,8 +159,10 @@ async def test_handle_check_suite_skips_when_trigger_disabled(
 @patch("services.webhook.check_suite_handler.has_comment_with_text")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_skips_when_comment_exists(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_create_comment,
@@ -226,8 +228,10 @@ async def test_handle_check_suite_skips_when_comment_exists(
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_race_condition_prevention(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_update_usage,
@@ -343,8 +347,10 @@ async def test_handle_check_suite_race_condition_prevention(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_full_workflow(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_timeout_check,
@@ -464,8 +470,10 @@ async def test_handle_check_suite_full_workflow(
 @patch("services.webhook.check_suite_handler.create_permission_url")
 @patch("services.webhook.check_suite_handler.get_installation_permissions")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_with_404_logs(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_get_permissions,
@@ -552,8 +560,10 @@ async def test_handle_check_suite_with_404_logs(
 @patch("services.webhook.check_suite_handler.get_workflow_run_logs")
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_with_none_logs(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_update_comment,
@@ -638,8 +648,10 @@ async def test_handle_check_suite_with_none_logs(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.clean_logs")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_with_existing_retry_pair(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_clean_logs,
@@ -741,8 +753,10 @@ async def test_handle_check_suite_with_existing_retry_pair(
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.is_pull_request_open")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_with_closed_pr(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_is_pr_open,
@@ -833,8 +847,10 @@ async def test_handle_check_suite_with_closed_pr(
 @patch("services.webhook.check_suite_handler.is_pull_request_open")
 @patch("services.webhook.check_suite_handler.check_branch_exists")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_with_deleted_branch(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_branch_exists,
@@ -931,8 +947,10 @@ async def test_handle_check_suite_with_deleted_branch(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_check_run_handler_token_accumulation(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_timeout_check,
@@ -1049,8 +1067,10 @@ async def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_suite_handler.is_pull_request_open")
 @patch("services.webhook.check_suite_handler.check_branch_exists")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_skips_duplicate_older_request(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_branch_exists,
@@ -1168,8 +1188,10 @@ async def test_handle_check_suite_skips_duplicate_older_request(
 @patch("services.webhook.check_suite_handler.get_codecov_token")
 @patch("services.webhook.check_suite_handler.get_codecov_commit_coverage")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_codecov_failure(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_get_codecov_coverage,
@@ -1290,8 +1312,10 @@ async def test_handle_check_suite_codecov_failure(
 @patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.check_suite_handler.get_codecov_token")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_codecov_no_token(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_get_codecov_token,
@@ -1397,9 +1421,11 @@ async def test_handle_check_suite_codecov_no_token(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.check_suite_handler.start_async_install_on_efs")
-@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 @patch("services.webhook.check_suite_handler.MAX_ITERATIONS", 2)
 async def test_handle_check_suite_max_iterations_forces_verification(
+    _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
     mock_timeout_check,

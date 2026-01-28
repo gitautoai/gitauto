@@ -1,6 +1,10 @@
+# pylint: disable=import-outside-toplevel
 import json
+import os
 from datetime import datetime
 from unittest.mock import Mock, patch
+
+import pytest
 import requests
 
 from services.supabase.usage.count_completed_unique_requests import (
@@ -34,7 +38,9 @@ def test_count_completed_unique_requests_with_valid_data():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = ((None, mock_data), None)
+        mock_response = Mock()
+        mock_response.data = mock_data
+        mock_table.execute.return_value = mock_response
 
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -88,7 +94,9 @@ def test_count_completed_unique_requests_with_duplicate_data():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = ((None, mock_data), None)
+        mock_response = Mock()
+        mock_response.data = mock_data
+        mock_table.execute.return_value = mock_response
 
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -110,7 +118,9 @@ def test_count_completed_unique_requests_with_empty_data():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = ((None, []), None)
+        mock_response = Mock()
+        mock_response.data = []
+        mock_table.execute.return_value = mock_response
 
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -119,7 +129,7 @@ def test_count_completed_unique_requests_with_empty_data():
 
 
 def test_count_completed_unique_requests_with_none_data():
-    """Test with None data response"""
+    """Test with None data response - should return empty set due to exception handling"""
     with patch(
         "services.supabase.usage.count_completed_unique_requests.supabase"
     ) as mock_supabase:
@@ -129,7 +139,9 @@ def test_count_completed_unique_requests_with_none_data():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = ((None, None), None)
+        mock_response = Mock()
+        mock_response.data = None
+        mock_table.execute.return_value = mock_response
 
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -157,7 +169,9 @@ def test_count_completed_unique_requests_with_zero_installation_id():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = ((None, mock_data), None)
+        mock_response = Mock()
+        mock_response.data = mock_data
+        mock_table.execute.return_value = mock_response
 
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(0, start_date)
@@ -187,7 +201,9 @@ def test_count_completed_unique_requests_with_negative_installation_id():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = ((None, mock_data), None)
+        mock_response = Mock()
+        mock_response.data = mock_data
+        mock_table.execute.return_value = mock_response
 
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(-1, start_date)
@@ -217,7 +233,9 @@ def test_count_completed_unique_requests_with_large_installation_id():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = ((None, mock_data), None)
+        mock_response = Mock()
+        mock_response.data = mock_data
+        mock_table.execute.return_value = mock_response
 
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(999999999, start_date)
@@ -253,7 +271,9 @@ def test_count_completed_unique_requests_with_special_characters():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = ((None, mock_data), None)
+        mock_response = Mock()
+        mock_response.data = mock_data
+        mock_table.execute.return_value = mock_response
 
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -415,7 +435,9 @@ def test_count_completed_unique_requests_with_malformed_data():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = ((None, mock_data), None)
+        mock_response = Mock()
+        mock_response.data = mock_data
+        mock_table.execute.return_value = mock_response
 
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -444,7 +466,9 @@ def test_count_completed_unique_requests_with_different_start_dates():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = ((None, mock_data), None)
+        mock_response = Mock()
+        mock_response.data = mock_data
+        mock_table.execute.return_value = mock_response
 
         # Test with different datetime formats
         start_dates = [
@@ -480,7 +504,9 @@ def test_count_completed_unique_requests_with_single_record():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = ((None, mock_data), None)
+        mock_response = Mock()
+        mock_response.data = mock_data
+        mock_table.execute.return_value = mock_response
 
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -516,7 +542,9 @@ def test_count_completed_unique_requests_with_numeric_strings():
         mock_table.gt.return_value = mock_table
         mock_table.eq.return_value = mock_table
         mock_table.in_.return_value = mock_table
-        mock_table.execute.return_value = ((None, mock_data), None)
+        mock_response = Mock()
+        mock_response.data = mock_data
+        mock_table.execute.return_value = mock_response
 
         start_date = datetime(2023, 1, 1)
         result = count_completed_unique_requests(123, start_date)
@@ -533,3 +561,35 @@ def test_count_completed_unique_requests_query_parameters():
     ) as mock_supabase:
         mock_table = Mock()
         mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_table
+        mock_table.gt.return_value = mock_table
+        mock_table.eq.return_value = mock_table
+        mock_table.in_.return_value = mock_table
+        mock_response = Mock()
+        mock_response.data = []
+        mock_table.execute.return_value = mock_response
+
+        start_date = datetime(2023, 1, 1)
+        count_completed_unique_requests(123, start_date)
+
+        mock_supabase.table.assert_called_once_with("usage")
+        mock_table.select.assert_called_once()
+        mock_table.gt.assert_called_once_with("created_at", start_date)
+        mock_table.eq.assert_any_call("installation_id", 123)
+
+
+@pytest.mark.skipif(bool(os.environ.get("CI")), reason="Integration test")
+def test_count_completed_unique_requests_integration(test_installation_id):
+    from datetime import timedelta
+    from config import TZ
+
+    start_date = datetime.now(TZ) - timedelta(days=365)
+    result = count_completed_unique_requests(test_installation_id, start_date)
+    assert isinstance(result, set)
+    for item in result:
+        assert "/" in item
+        assert "#" in item
+
+    result = count_completed_unique_requests(999999999, start_date)
+    assert isinstance(result, set)
+    assert len(result) == 0

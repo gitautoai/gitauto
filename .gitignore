@@ -7,6 +7,7 @@
 __pycache__
 /scripts/*
 !/scripts/lint/
+!/scripts/sentry/
 coverage.*
 coverage/
 infrastructure/lambda-env-backup.json
