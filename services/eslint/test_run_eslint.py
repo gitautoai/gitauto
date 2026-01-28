@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 
 import pytest
 
+from constants.efs import EFS_TIMEOUT_SECONDS
 from services.eslint.run_eslint import run_eslint
 from services.github.types.github_types import BaseArgs
 
@@ -311,7 +312,7 @@ async def test_run_eslint_timeout_returns_none(base_args):
                                 "services.eslint.run_eslint.subprocess.run"
                             ) as mock_run:
                                 mock_run.side_effect = subprocess.TimeoutExpired(
-                                    cmd="npx eslint", timeout=30
+                                    cmd="npx eslint", timeout=EFS_TIMEOUT_SECONDS
                                 )
 
                                 coro = run_eslint(

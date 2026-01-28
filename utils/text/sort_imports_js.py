@@ -1,7 +1,9 @@
 import os
 import subprocess
 import tempfile
+
 from config import UTF8
+from constants.efs import EFS_TIMEOUT_SECONDS
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -51,7 +53,7 @@ def sort_js_ts_imports(content: str):
         ],
         capture_output=True,
         text=True,
-        timeout=30,
+        timeout=EFS_TIMEOUT_SECONDS,
         check=False,
     )
 

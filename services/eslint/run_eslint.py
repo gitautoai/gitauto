@@ -5,6 +5,7 @@ import subprocess
 import sentry_sdk
 
 from config import UTF8
+from constants.efs import EFS_TIMEOUT_SECONDS
 from services.efs.get_efs_dir import get_efs_dir
 from services.efs.is_efs_install_ready import is_efs_install_ready
 from services.efs.symlink_dependencies import symlink_dependencies
@@ -77,7 +78,7 @@ async def run_eslint(*, base_args: BaseArgs, file_path: str, file_content: str):
         ["npx", "--yes", "eslint", "--fix", "--format", "json", full_path],
         capture_output=True,
         text=True,
-        timeout=30,
+        timeout=EFS_TIMEOUT_SECONDS,
         check=False,
         cwd=clone_dir,
         env=env,

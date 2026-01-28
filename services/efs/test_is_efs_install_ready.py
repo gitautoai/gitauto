@@ -82,7 +82,7 @@ async def test_is_efs_install_ready_returns_false_when_wrong_installer():
 
 
 @pytest.mark.asyncio
-async def test_is_efs_install_ready_uses_default_timeout():
+async def test_is_efs_install_ready_uses_default_name():
     async def coro():
         return True
 
