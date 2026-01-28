@@ -910,7 +910,7 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
 2. Run black formatting: `black .`
 3. Run ruff linting: `ruff check . --fix` (fix ALL ruff errors, not just modified files - if any errors remain unfixed, STOP and fix them before continuing)
 4. Check for print statements and built-in logging:
-   - Run `ruff check --select=T201 . --exclude schemas/,venv/` to find print statements - **FIX ALL before continuing** (use custom logger instead)
+   - Run `ruff check --select=T201 . --exclude schemas/,venv/,scripts/` to find print statements - **FIX ALL before continuing** (use custom logger instead)
    - Run `scripts/lint/check_builtin_logging.sh` to find built-in logging imports - **FIX ALL before continuing** (use `from utils.logging.logging_config import logger` instead)
 5. **CRITICAL**: Check `git status` FIRST to see ALL changes including deleted/renamed files
 6. Get list of modified, created, AND deleted files ONCE: `(git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard) | sort -u`
