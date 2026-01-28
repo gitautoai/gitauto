@@ -2,9 +2,8 @@ from datetime import datetime, timedelta
 
 from postgrest.exceptions import APIError
 
+from constants.supabase import SUPABASE_BATCH_SIZE
 from services.supabase.client import supabase
-
-BATCH_SIZE = 1000
 
 
 def clear_old_content(retention_days: int = 14):
@@ -18,7 +17,7 @@ def clear_old_content(retention_days: int = 14):
                 .select("id")
                 .lt("created_at", cutoff_date)
                 .neq("input_content", "")
-                .limit(BATCH_SIZE)
+                .limit(SUPABASE_BATCH_SIZE)
                 .execute()
             )
 
@@ -33,7 +32,7 @@ def clear_old_content(retention_days: int = 14):
 
             total_cleared += len(ids)
 
-            if len(ids) < BATCH_SIZE:
+            if len(ids) < SUPABASE_BATCH_SIZE:
                 break
 
         return total_cleared
