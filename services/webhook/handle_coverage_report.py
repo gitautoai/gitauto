@@ -200,9 +200,11 @@ def handle_coverage_report(
         owner_id=owner_id, repo_id=repo_id, filenames=current_paths
     )
 
-    # Prepare data for upsert
+    # Prepare data for upsert (file-level only, not directory or repository aggregates)
     upsert_data = []
     for coverage in seen.values():
+        if coverage.get("level") != "file":
+            continue
         try:
             existing_record = existing_records.get(coverage["full_path"]) or {}
             item = {
