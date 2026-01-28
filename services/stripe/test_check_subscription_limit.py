@@ -1,6 +1,7 @@
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import pytest
+from stripe import Subscription
 from config import TZ, ONE_YEAR_FROM_NOW
 from services.stripe.check_subscription_limit import (
     check_subscription_limit,
@@ -32,27 +33,42 @@ def create_mock_subscription(
     start_timestamp=1640995200,
     end_timestamp=1643673600,
 ):
-    """Helper to create a mock subscription with proper structure."""
-    mock_recurring = MagicMock()
-    mock_recurring.interval = interval
-
-    mock_price = MagicMock()
-    mock_price.product = product_id
-    mock_price.recurring = mock_recurring
-
-    mock_item = MagicMock()
-    mock_item.price = mock_price
-    mock_item.quantity = quantity
-    mock_item.current_period_start = start_timestamp
-    mock_item.current_period_end = end_timestamp
-
-    mock_items = MagicMock()
-    mock_items.data = [mock_item]
-
-    mock_subscription = MagicMock()
-    mock_subscription.items = mock_items
-
-    return mock_subscription
+    """Helper to create a real Subscription object matching Stripe API response structure."""
+    data = {
+        "id": "sub_test123",
+        "object": "subscription",
+        "status": "active",
+        "items": {
+            "object": "list",
+            "data": [
+                {
+                    "id": "si_test123",
+                    "object": "subscription_item",
+                    "current_period_start": start_timestamp,
+                    "current_period_end": end_timestamp,
+                    "quantity": quantity,
+                    "price": {
+                        "id": "price_test123",
+                        "object": "price",
+                        "product": product_id,
+                        "recurring": {
+                            "interval": interval,
+                            "interval_count": 1,
+                        },
+                        "unit_amount": 10000,
+                    },
+                    "plan": {
+                        "id": "price_test123",
+                        "product": product_id,
+                        "interval": interval,
+                    },
+                }
+            ],
+            "has_more": False,
+            "total_count": 1,
+        },
+    }
+    return Subscription.construct_from(data, key=None)
 
 
 @pytest.fixture
@@ -296,10 +312,10 @@ def test_check_subscription_limit_handles_malformed_subscription_data(
     sample_installation_id,
 ):
     """Test that function returns default values when subscription data is malformed."""
-    mock_items = MagicMock()
-    mock_items.data = []
-    malformed_subscription = MagicMock()
-    malformed_subscription.items = mock_items
+    malformed_subscription = Subscription.construct_from(
+        {"id": "sub_malformed", "object": "subscription", "items": {"data": []}},
+        key=None,
+    )
 
     # Setup mocks
     mock_get_base_request_limit.return_value = 100

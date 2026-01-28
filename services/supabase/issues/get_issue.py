@@ -16,7 +16,7 @@ def get_issue(
     repo_name: str,
     issue_number: int,
 ):
-    data, _ = (
+    result = (
         supabase.table(table_name="issues")
         .select("*")
         .eq(column="owner_type", value=owner_type)
@@ -25,6 +25,6 @@ def get_issue(
         .eq(column="issue_number", value=issue_number)
         .execute()
     )
-    if not data[1]:
+    if not result.data:
         return None
-    return cast(Issues, data[1][0])
+    return cast(Issues, result.data[0])
