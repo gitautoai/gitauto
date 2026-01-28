@@ -910,7 +910,7 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
 2. Run black formatting: `black .`
 3. Run ruff linting: `ruff check . --fix` (fix ALL ruff errors, not just modified files - if any errors remain unfixed, STOP and fix them before continuing)
 4. Check for print statements and built-in logging:
-   - Run `ruff check --select=T201 . --exclude schemas/,venv/` to find print statements - **FIX ALL before continuing** (use custom logger instead)
+   - Run `ruff check --select=T201 . --exclude schemas/,venv/,scripts/` to find print statements - **FIX ALL before continuing** (use custom logger instead)
    - Run `scripts/lint/check_builtin_logging.sh` to find built-in logging imports - **FIX ALL before continuing** (use `from utils.logging.logging_config import logger` instead)
 5. **CRITICAL**: Check `git status` FIRST to see ALL changes including deleted/renamed files
 6. Get list of modified, created, AND deleted files ONCE: `(git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard) | sort -u`
@@ -967,6 +967,10 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
       - Bad example: "GitAuto is sunsetting Jira integration to deliver the best possible GitHub experience" (too corporate)
       - Bad example: "Removed unused Jira code paths" (sounds like failure)
       - Bad example: "Fixed a race condition that caused GitAuto to occasionally fail" (exposes internals, sounds like bug)
+
+17. If fixing a Sentry issue, list similar issues and resolve them:
+    - Use `python3 scripts/sentry/get_issue.py AGENT-XXX` to check related issues
+    - Use `python3 scripts/sentry/resolve_issue.py AGENT-XXX AGENT-YYY ...` to resolve fixed issues
 
 **CRITICAL GIT RULES:**
 
