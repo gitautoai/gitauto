@@ -21,10 +21,24 @@ async def git_clone_to_efs(efs_dir: str, clone_url: str, branch: str):
     efs_git_dir = os.path.join(efs_dir, ".git")
     if os.path.exists(efs_git_dir):
         logger.info("EFS already has .git at %s, ensuring latest", efs_dir)
+
+        # EFS persists across Lambda invocations; origin URL may contain expired token
         await run_subprocess_async(
+            ["git", "remote", "set-url", "origin", clone_url], efs_dir
+        )
+        returncode, _ = await run_subprocess_async(
             ["git", "fetch", "--depth", "1", "origin", branch], efs_dir
         )
-        await run_subprocess_async(["git", "reset", "--hard", "FETCH_HEAD"], efs_dir)
+        if returncode == 0:
+            fetch_head = os.path.join(efs_git_dir, "FETCH_HEAD")
+            if os.path.exists(fetch_head):
+                with open(fetch_head, encoding="utf-8") as f:
+                    logger.info("FETCH_HEAD: %s", f.read().strip())
+            else:
+                logger.warning("FETCH_HEAD missing despite fetch success")
+            await run_subprocess_async(
+                ["git", "reset", "--hard", "FETCH_HEAD"], efs_dir
+            )
         return efs_dir
 
     # Always use init + fetch + checkout instead of clone
@@ -35,6 +49,5 @@ async def git_clone_to_efs(efs_dir: str, clone_url: str, branch: str):
         ["git", "fetch", "--depth", "1", "origin", branch], efs_dir
     )
     await run_subprocess_async(["git", "checkout", "-f", branch], efs_dir)
-
     logger.info("git clone completed: %s", efs_dir)
     return efs_dir
