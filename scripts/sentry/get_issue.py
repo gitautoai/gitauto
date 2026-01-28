@@ -39,10 +39,21 @@ def get_sentry_issue(issue_id: str):
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
+    logs_path = f"/tmp/sentry_{issue_id.lower()}_logs.txt"
+    with open(logs_path, "w", encoding="utf-8") as f:
+        for entry in data.get("entries", []):
+            if entry.get("type") == "breadcrumbs":
+                for crumb in entry.get("data", {}).get("values", []):
+                    ts = crumb.get("timestamp", "")
+                    cat = crumb.get("category", "")
+                    msg = crumb.get("message") or ""
+                    f.write(f"{ts} [{cat}] {msg}\n")
+
     print(f"\nIssue ID: {issue_id}")
     print(f"Event ID: {data.get('eventID')}")
     print(f"Timestamp: {data.get('dateCreated')}")
     print(f"Full JSON saved to: {output_path}")
+    print(f"Logs saved to: {logs_path}")
     print()
 
     for entry in data.get("entries", []):  # pylint: disable=too-many-nested-blocks
