@@ -961,9 +961,12 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
       - **NEVER use typical marketing keywords**: "all-in", "doubling down", "sunsetting", "deeper features", "polished product", "game-changer", "seamless"
       - **NEVER frame things negatively**: "unused", "nobody used", "removing unused" - this is embarrassing
       - **Be straightforward and honest** like a dev talking to other devs
+      - **Users don't know GitAuto internals** - They don't know we clone repos, install dependencies, set up working environments, etc. When relevant, educate them on what GitAuto does
+      - **Frame bug fixes as features** - Don't say "fixed X" or "fixed error". Instead describe the improvement positively
       - Good example: "We're dropping Jira integration to focus on GitHub. Less code to maintain, fewer edge cases to handle, and we can ship GitHub features faster."
       - Bad example: "GitAuto is sunsetting Jira integration to deliver the best possible GitHub experience" (too corporate)
       - Bad example: "Removed unused Jira code paths" (sounds like failure)
+      - Bad example: "Fixed a race condition that caused GitAuto to occasionally fail" (exposes internals, sounds like bug)
 
 **CRITICAL GIT RULES:**
 

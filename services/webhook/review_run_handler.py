@@ -13,8 +13,11 @@ from payloads.github.pull_request_review_comment.types import (
 )
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
+from services.efs.get_efs_dir import get_efs_dir
 from services.efs.start_async_install_on_efs import start_async_install_on_efs
 from services.git.get_clone_dir import get_clone_dir
+from services.git.get_clone_url import get_clone_url
+from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
 from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.reply_to_comment import reply_to_comment
@@ -120,6 +123,7 @@ async def handle_review_run(
         # Fallback to single comment if thread fetch fails
         review_comment += f"{review_body}"
 
+    clone_dir = get_clone_dir(owner_name, repo_name, pull_number)
     base_args: ReviewBaseArgs = {
         # Required fields
         "input_from": "github",
@@ -147,6 +151,7 @@ async def handle_review_run(
         "reviewers": [],
         "github_urls": [],
         "other_urls": [],
+        "clone_dir": clone_dir,
         # Extra fields for backward compatibility
         "pull_number": pull_number,
         "pull_title": pull_title,
@@ -165,20 +170,22 @@ async def handle_review_run(
     }
 
     # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
-    clone_dir = get_clone_dir(owner_name, repo_name, pull_number)
-    base_args["clone_dir"] = clone_dir
     clone_task = asyncio.create_task(
         prepare_repo_for_work(
             owner=owner_name,
             repo=repo_name,
-            base_branch=base_branch,
             pr_branch=head_branch,
             token=token,
             clone_dir=clone_dir,
         )
     )
 
-    # Install dependencies to EFS (fire-and-forget, returns immediately if already installed)
+    # Start clone and install tasks
+    efs_dir = get_efs_dir(owner_name, repo_name)
+    clone_url = get_clone_url(owner_name, repo_name, token)
+    clone_tasks[efs_dir] = asyncio.create_task(
+        git_clone_to_efs(efs_dir, clone_url, base_branch)
+    )
     start_async_install_on_efs(base_args)
 
     # Create a usage record

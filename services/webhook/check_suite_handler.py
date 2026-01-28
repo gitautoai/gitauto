@@ -16,8 +16,11 @@ from services.chat_with_agent import chat_with_agent
 from services.circleci.get_build_logs import get_circleci_build_logs
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
 from services.codecov.get_commit_coverage import get_codecov_commit_coverage
+from services.efs.get_efs_dir import get_efs_dir
 from services.efs.start_async_install_on_efs import start_async_install_on_efs
 from services.git.get_clone_dir import get_clone_dir
+from services.git.get_clone_url import get_clone_url
+from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
 from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.check_suites.get_failed_check_runs import (
@@ -191,6 +194,7 @@ async def handle_check_suite(
     start_msg = f"Check run handler started for `{check_run_name}` in PR #{pull_number} in `{owner_name}/{repo_name}`"
     thread_ts = slack_notify(start_msg)
 
+    clone_dir = get_clone_dir(owner_name, repo_name, pull_number)
     base_args: BaseArgs = {
         # Required fields
         "input_from": "github",
@@ -218,6 +222,7 @@ async def handle_check_suite(
         "reviewers": [],
         "github_urls": [],
         "other_urls": [],
+        "clone_dir": clone_dir,
         # Extra fields for backward compatibility
         "pull_number": pull_number,
         "workflow_id": circleci_workflow_id if is_circleci else github_run_id,
@@ -226,20 +231,22 @@ async def handle_check_suite(
     }
 
     # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
-    clone_dir = get_clone_dir(owner_name, repo_name, pull_number)
-    base_args["clone_dir"] = clone_dir
     clone_task = asyncio.create_task(
         prepare_repo_for_work(
             owner=owner_name,
             repo=repo_name,
-            base_branch=target_branch,
             pr_branch=head_branch,
             token=token,
             clone_dir=clone_dir,
         )
     )
 
-    # Install dependencies to EFS (fire-and-forget, returns immediately if already installed)
+    # Start clone and install tasks
+    efs_dir = get_efs_dir(owner_name, repo_name)
+    clone_url = get_clone_url(owner_name, repo_name, token)
+    clone_tasks[efs_dir] = asyncio.create_task(
+        git_clone_to_efs(efs_dir, clone_url, target_branch)
+    )
     start_async_install_on_efs(base_args)
 
     # Check if permission comment or stumbled comment already exists

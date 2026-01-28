@@ -120,6 +120,7 @@ def deconstruct_github_payload(
         "reviewers": reviewers,
         "github_urls": github_urls,
         "other_urls": other_urls,
+        "clone_dir": "",
     }
 
     return base_args, repo_settings

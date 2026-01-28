@@ -1,3 +1,5 @@
+# flake8: noqa: E402
+# pylint: disable=wrong-import-position
 import os
 import random
 
@@ -64,6 +66,7 @@ def create_test_base_args():
             "reviewers": [],
             "github_urls": [],
             "other_urls": [],
+            "clone_dir": "/tmp/test-owner/test-repo/pr-123",
         }
 
         # Apply any overrides

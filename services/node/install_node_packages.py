@@ -3,6 +3,7 @@ import fcntl
 import os
 
 from config import UTF8
+from services.git.git_clone_to_efs import clone_tasks
 from services.node.detect_package_manager import detect_package_manager
 from services.node.get_npm_cache_dir import set_npm_cache_env
 from services.node.read_file_content import read_file_content
@@ -72,11 +73,17 @@ async def install_node_packages(
     branch: str,
     token: str,
     efs_dir: str,
-    clone_dir: str | None = None,
 ):
+    # Wait for clone to complete before installing
+    clone_task = clone_tasks.get(efs_dir)
+    if clone_task:
+        logger.info("node: Waiting for clone task: %s", efs_dir)
+        await clone_task
+        logger.info("node: Clone task completed: %s", efs_dir)
+
     package_json_content = read_file_content(
         "package.json",
-        clone_dir=clone_dir,
+        local_dir=efs_dir,
         owner=owner,
         repo=repo,
         branch=branch,
@@ -88,7 +95,7 @@ async def install_node_packages(
 
     npmrc_content = read_file_content(
         ".npmrc",
-        clone_dir=clone_dir,
+        local_dir=efs_dir,
         owner=owner,
         repo=repo,
         branch=branch,
@@ -96,7 +103,7 @@ async def install_node_packages(
     )
 
     pkg_manager, lock_file_name, lock_file_content = detect_package_manager(
-        clone_dir, owner, repo, branch, token
+        efs_dir, owner, repo, branch, token
     )
 
     # Ensure EFS directory exists
