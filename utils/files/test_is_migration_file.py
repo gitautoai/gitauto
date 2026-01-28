@@ -40,3 +40,23 @@ def test_is_migration_file_case_insensitive():
 
 def test_is_migration_file_with_empty_string():
     assert is_migration_file("") is False
+
+
+def test_is_migration_file_migrate_mongo():
+    assert is_migration_file("migrate-mongo/.eslintrc.js") is True
+    assert (
+        is_migration_file("migrate-mongo/migrations/20200824193355-add-indices.js")
+        is True
+    )
+    assert is_migration_file("migrate-mongo/createConfig.js") is True
+    assert is_migration_file("migrate-mongo-config.js") is True
+    assert is_migration_file("migrate-mongo/assets/data.csv") is True
+    assert (
+        is_migration_file("migrate-mongo/cancellationConfigurationJSON/US/Alabama.json")
+        is True
+    )
+    assert is_migration_file("migrate-mongo/createConfig.d.ts") is True
+    assert is_migration_file("migrate-mongo/migrate-mongo.d.ts") is True
+    assert (
+        is_migration_file("migrate-mongo/configureCancellationConfiguration.js") is True
+    )
