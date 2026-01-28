@@ -968,6 +968,10 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
       - Bad example: "Removed unused Jira code paths" (sounds like failure)
       - Bad example: "Fixed a race condition that caused GitAuto to occasionally fail" (exposes internals, sounds like bug)
 
+17. If fixing a Sentry issue, list similar issues and resolve them:
+    - Use `python3 scripts/sentry/get_issue.py AGENT-XXX` to check related issues
+    - Use `python3 scripts/sentry/resolve_issue.py AGENT-XXX AGENT-YYY ...` to resolve fixed issues
+
 **CRITICAL GIT RULES:**
 
 - **NEVER EVER use `git add .`** - this adds ALL files including unrelated changes
