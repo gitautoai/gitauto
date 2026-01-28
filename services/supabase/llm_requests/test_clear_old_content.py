@@ -3,10 +3,8 @@ from unittest.mock import Mock, patch
 
 from postgrest.exceptions import APIError
 
-from services.supabase.llm_requests.clear_old_content import (
-    BATCH_SIZE,
-    clear_old_content,
-)
+from constants.supabase import SUPABASE_BATCH_SIZE
+from services.supabase.llm_requests.clear_old_content import clear_old_content
 
 
 @patch("services.supabase.llm_requests.clear_old_content.supabase")
@@ -47,7 +45,7 @@ def test_clear_old_content_single_batch(mock_datetime, mock_supabase):
     mock_table.select.assert_called_with("id")
     mock_select.lt.assert_called_with("created_at", expected_cutoff)
     mock_lt_select.neq.assert_called_with("input_content", "")
-    mock_neq.limit.assert_called_with(BATCH_SIZE)
+    mock_neq.limit.assert_called_with(SUPABASE_BATCH_SIZE)
     mock_table.update.assert_called_with({"input_content": "", "output_content": ""})
     mock_update.in_.assert_called_with("id", [1, 2, 3])
 
@@ -58,8 +56,10 @@ def test_clear_old_content_multiple_batches(mock_datetime, mock_supabase):
     fixed_now = datetime(2025, 12, 1, 12, 0, 0)
     mock_datetime.now.return_value = fixed_now
 
-    batch1_ids = [{"id": i} for i in range(BATCH_SIZE)]
-    batch2_ids = [{"id": i} for i in range(BATCH_SIZE, BATCH_SIZE + 500)]
+    batch1_ids = [{"id": i} for i in range(SUPABASE_BATCH_SIZE)]
+    batch2_ids = [
+        {"id": i} for i in range(SUPABASE_BATCH_SIZE, SUPABASE_BATCH_SIZE + 500)
+    ]
 
     mock_select_result1 = Mock()
     mock_select_result1.data = batch1_ids
@@ -79,7 +79,11 @@ def test_clear_old_content_multiple_batches(mock_datetime, mock_supabase):
     mock_select.lt.return_value = mock_lt_select
     mock_lt_select.neq.return_value = mock_neq
     mock_neq.limit.return_value = mock_limit
-    mock_limit.execute.side_effect = [mock_select_result1, mock_select_result2]
+    mock_limit.execute.side_effect = [
+        mock_select_result1,
+        mock_select_result2,
+        Mock(data=[]),
+    ]
 
     mock_table.update.return_value = mock_update
     mock_update.in_.return_value = mock_in
@@ -87,7 +91,7 @@ def test_clear_old_content_multiple_batches(mock_datetime, mock_supabase):
 
     result = clear_old_content()
 
-    assert result == BATCH_SIZE + 500
+    assert result == SUPABASE_BATCH_SIZE + 500
     assert mock_table.update.call_count == 2
 
 
