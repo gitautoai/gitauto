@@ -18,6 +18,11 @@ async def git_clone_to_efs(efs_dir: str, clone_url: str, branch: str):
     logger.info("Cloning base to EFS: branch=%s dir=%s", branch, efs_dir)
     os.makedirs(efs_dir, exist_ok=True)
 
+    # EFS directories may be owned by different Lambda instances; mark as safe
+    await run_subprocess_async(
+        ["git", "config", "--global", "--add", "safe.directory", efs_dir], efs_dir
+    )
+
     efs_git_dir = os.path.join(efs_dir, ".git")
     if os.path.exists(efs_git_dir):
         logger.info("EFS already has .git at %s, ensuring latest", efs_dir)
