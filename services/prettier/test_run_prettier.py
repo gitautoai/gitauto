@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 
 import pytest
 
+from constants.efs import EFS_TIMEOUT_SECONDS
 from services.github.types.github_types import BaseArgs
 from services.prettier.run_prettier import run_prettier
 
@@ -221,7 +222,7 @@ async def test_run_prettier_timeout(base_args):
                                 "services.prettier.run_prettier.subprocess.run"
                             ) as mock_run:
                                 mock_run.side_effect = subprocess.TimeoutExpired(
-                                    cmd="npx prettier", timeout=30
+                                    cmd="npx prettier", timeout=EFS_TIMEOUT_SECONDS
                                 )
 
                                 coro = run_prettier(
