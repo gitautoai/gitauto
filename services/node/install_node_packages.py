@@ -74,6 +74,7 @@ async def install_node_packages(
     branch: str,
     token: str,
     efs_dir: str,
+    timeout: int = EFS_TIMEOUT_SECONDS,
 ):
     # Wait for clone to complete before installing
     clone_task = clone_tasks.get(efs_dir)
@@ -176,7 +177,7 @@ async def install_node_packages(
                 stderr=asyncio.subprocess.PIPE,
             )
             _, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=EFS_TIMEOUT_SECONDS
+                process.communicate(), timeout=timeout
             )
 
             if process.returncode != 0:
