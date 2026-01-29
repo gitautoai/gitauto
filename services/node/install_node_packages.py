@@ -174,15 +174,29 @@ async def install_node_packages(
                 cwd=efs_dir,
                 env=env,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            _, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=timeout
+                stderr=asyncio.subprocess.STDOUT,
             )
 
+            try:
+                stdout, _ = await asyncio.wait_for(
+                    process.communicate(), timeout=timeout
+                )
+            except asyncio.TimeoutError:
+                process.kill()
+                stdout, _ = await process.communicate()
+                logger.error(
+                    "node: %s install timed out. Output:\n%s",
+                    pkg_manager,
+                    stdout.decode(),
+                )
+                raise
+
             if process.returncode != 0:
+                logger.error(
+                    "node: %s install failed. Output:\n%s", pkg_manager, stdout.decode()
+                )
                 raise RuntimeError(
-                    f"{pkg_manager} install failed at {efs_dir} with code {process.returncode}: {stderr.decode()}"
+                    f"{pkg_manager} install failed at {efs_dir} with code {process.returncode}"
                 )
 
             logger.info("node: Package installation completed successfully")
