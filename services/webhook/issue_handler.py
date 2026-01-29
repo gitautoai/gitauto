@@ -415,7 +415,7 @@ async def create_pr_from_issue(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
     create_empty_commit(
-        base_args=base_args, message="Initial empty commit to create PR"
+        base_args=base_args, message="Initial empty commit to create PR [skip ci]"
     )
 
     issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
