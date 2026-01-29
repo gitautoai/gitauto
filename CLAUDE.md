@@ -440,6 +440,12 @@ Use `scripts/aws/filter_log_events_across_streams.py`. Example:
 python3 scripts/aws/filter_log_events_across_streams.py --hours 24 --owner Foxquilt --repo foxcom-forms --trigger schedule
 ```
 
+#### SSH to NAT Instance (EFS Mounted at /mnt/efs)
+
+```bash
+ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
+```
+
 ## GitHub API Access for Production Customer Repository Investigation
 
 ### Getting Installation Access Token for Production

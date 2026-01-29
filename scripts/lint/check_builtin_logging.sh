@@ -3,7 +3,9 @@
 # Exit 0 if no issues, exit 1 if bad imports found
 matches=$(grep -r "^import logging$" --include="*.py" . --exclude-dir=venv | grep -v "utils/logging/logging_config.py")
 if [ -n "$matches" ]; then
+    echo "ERROR: Found built-in logging imports (use utils.logging.logging_config instead):"
     echo "$matches"
     exit 1
 fi
+echo "OK: No built-in logging imports found"
 exit 0

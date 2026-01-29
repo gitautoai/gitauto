@@ -3,7 +3,7 @@ from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import git_clone_to_efs
 from services.github.branches.get_default_branch import get_default_branch
 from services.github.token.get_installation_token import get_installation_access_token
-from services.node.install_node_packages import install_node_packages
+from services.node.ensure_node_packages import ensure_node_packages
 from services.supabase.installations.get_installation_by_owner import (
     get_installation_by_owner,
 )
@@ -47,14 +47,13 @@ async def clone_and_install(owner: str, repo: str, api_key: str):
     await git_clone_to_efs(efs_dir, clone_url, branch)
 
     logger.info("Installing node packages")
-    result = await install_node_packages(
+    result = await ensure_node_packages(
         owner=owner,
         owner_id=owner_id,
         repo=repo,
         branch=branch,
         token=token,
         efs_dir=efs_dir,
-        timeout=840,  # 14 min (Lambda max is 15 min)
     )
 
     logger.info("Clone and install completed for %s/%s", owner, repo)

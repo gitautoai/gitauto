@@ -17,7 +17,7 @@ from services.circleci.get_build_logs import get_circleci_build_logs
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
 from services.codecov.get_commit_coverage import get_codecov_commit_coverage
 from services.efs.get_efs_dir import get_efs_dir
-from services.efs.start_async_install_on_efs import start_async_install_on_efs
+from services.node.ensure_node_packages import ensure_node_packages
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
@@ -247,7 +247,10 @@ async def handle_check_suite(
     clone_tasks[efs_dir] = asyncio.create_task(
         git_clone_to_efs(efs_dir, clone_url, target_branch)
     )
-    start_async_install_on_efs(base_args)
+    node_ready = await ensure_node_packages(
+        owner_name, owner_id, repo_name, target_branch, token, efs_dir
+    )
+    logger.info("node: ready=%s", node_ready)
 
     # Check if permission comment or stumbled comment already exists
     if has_comment_with_text(

@@ -152,6 +152,39 @@ Resources:
         - Key: Name
           Value: gitauto-nat-sg
 
+  # =============================================================================
+  # IAM Role for NAT Instance
+  # - Enables AWS Systems Manager (SSM) to run commands on this instance remotely
+  # - Lambda calls SSM SendCommand API to run long-running tasks on EC2 (e.g., yarn install)
+  # - This bypasses Lambda's 15-minute timeout
+  # - EFS symlink operations (e.g., yarn linking 872 packages) are slow; some repos need 20+ minutes
+  # =============================================================================
+  NATInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: gitauto-nat-instance-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        # AmazonSSMManagedInstanceCore allows SSM agent to communicate with SSM service
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: Name
+          Value: gitauto-nat-instance-role
+
+  # Instance Profile wraps the IAM Role so it can be attached to EC2 instances
+  NATInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: gitauto-nat-instance-profile
+      Roles:
+        - !Ref NATInstanceRole
+
   # Using Amazon Linux 2023 AMI with NAT configuration
   # https://docs.aws.amazon.com/vpc/latest/userguide/VPC_NAT_Instance.html
   NATInstance:
@@ -160,6 +193,7 @@ Resources:
       InstanceType: t3.nano # ~$4/mo
       ImageId: ami-0edea6d05015c16a4 # Amazon Linux 2023 - Verified: aws ec2 describe-images --region us-west-1 --owners amazon --filters "Name=name,Values=al2023-ami-2023*-x86_64" --query 'Images | sort_by(@, &CreationDate) | [-1].[ImageId,Name]'
       KeyName: gitauto # Private key: infrastructure/nat-instance-ssh-private-key.pem
+      IamInstanceProfile: !Ref NATInstanceProfile
       SubnetId: !Ref PublicSubnet
       SecurityGroupIds:
         - !Ref NATSecurityGroup
@@ -251,6 +285,10 @@ Resources:
           FromPort: 2049
           ToPort: 2049
           SourceSecurityGroupId: !Ref LambdaSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          SourceSecurityGroupId: !Ref NATSecurityGroup
       Tags:
         - Key: Name
           Value: gitauto-efs-sg

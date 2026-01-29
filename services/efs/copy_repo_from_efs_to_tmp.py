@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from constants.efs import DEPENDENCY_DIRS
+from constants.aws import DEPENDENCY_DIRS
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
