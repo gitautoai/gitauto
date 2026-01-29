@@ -168,7 +168,7 @@ class TestUpsertRepoCoverage:
         result = upsert_repo_coverage(sample_repo_coverage_data)
 
         # Verify
-        assert result == []
+        assert not result
         mock_supabase_client.table.assert_called_once_with("repo_coverage")
 
     def test_null_result_data(self, mock_supabase_client, sample_repo_coverage_data):

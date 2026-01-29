@@ -9,7 +9,7 @@ from services.anthropic.remove_get_remote_file_content_before_replace_remote_fil
 
 def test_remove_get_remote_file_content_before_replace_remote_file_content_empty_list():
     result = remove_get_remote_file_content_before_replace_remote_file_content([])
-    assert result == []
+    assert not result
 
 
 def test_remove_get_remote_file_content_before_replace_remote_file_content_no_file_content():

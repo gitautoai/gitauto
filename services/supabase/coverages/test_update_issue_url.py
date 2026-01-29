@@ -92,7 +92,7 @@ class TestUpdateIssueUrl:
         mock_table.eq.assert_any_call("repo_id", repo_id)
         mock_table.eq.assert_any_call("full_path", file_path)
         mock_table.execute.assert_called_once()
-        assert result == []
+        assert not result
 
     def test_update_issue_url_with_zero_repo_id(self, mock_supabase_success):
         """Test update with zero repo_id"""

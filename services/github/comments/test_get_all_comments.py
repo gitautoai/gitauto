@@ -66,7 +66,7 @@ def test_get_all_comments_empty_response(owner, repo, token, mock_requests_get):
 
     result = get_all_comments(owner=owner, repo=repo, issue_number=123, token=token)
 
-    assert result == []
+    assert not result
     mock_requests_get.assert_called_once()
 
 
@@ -109,7 +109,7 @@ def test_get_all_comments_http_error(owner, repo, token, mock_requests_get):
 
     result = get_all_comments(owner=owner, repo=repo, issue_number=123, token=token)
 
-    assert result == []
+    assert not result
 
 
 def test_get_all_comments_network_error(owner, repo, token, mock_requests_get):
@@ -117,7 +117,7 @@ def test_get_all_comments_network_error(owner, repo, token, mock_requests_get):
 
     result = get_all_comments(owner=owner, repo=repo, issue_number=123, token=token)
 
-    assert result == []
+    assert not result
 
 
 def test_get_all_comments_uses_github_api_url_constant(

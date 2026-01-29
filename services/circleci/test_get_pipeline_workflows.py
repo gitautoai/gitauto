@@ -41,7 +41,7 @@ def test_get_pipeline_workflows_not_found(mock_get):
 
     result = get_pipeline_workflows(pipeline_id, token)
 
-    assert result == []
+    assert not result
 
 
 @patch("services.circleci.get_pipeline_workflows.requests.get")
@@ -56,7 +56,7 @@ def test_get_pipeline_workflows_empty_items(mock_get):
 
     result = get_pipeline_workflows(pipeline_id, token)
 
-    assert result == []
+    assert not result
 
 
 @patch("services.circleci.get_pipeline_workflows.requests.get")
@@ -71,4 +71,4 @@ def test_get_pipeline_workflows_http_error(mock_get):
 
     result = get_pipeline_workflows(pipeline_id, token)
 
-    assert result == []
+    assert not result

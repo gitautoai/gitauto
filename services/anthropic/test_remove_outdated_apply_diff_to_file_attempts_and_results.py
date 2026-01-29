@@ -9,7 +9,7 @@ from services.anthropic.remove_outdated_apply_diff_to_file_attempts_and_results 
 
 def test_remove_outdated_apply_diff_to_file_attempts_and_results_empty_list():
     result = remove_outdated_apply_diff_to_file_attempts_and_results([])
-    assert result == []
+    assert not result
 
 
 def test_remove_outdated_apply_diff_to_file_attempts_and_results_no_diff_results():

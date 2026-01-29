@@ -186,7 +186,7 @@ class TestUpsertCoverages:
         result = upsert_coverages(coverage_records)
 
         # Assert
-        assert result == []
+        assert not result
 
     def test_upsert_coverages_none_result_data(
         self, mock_supabase, sample_coverage_record

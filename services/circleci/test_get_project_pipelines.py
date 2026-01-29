@@ -55,7 +55,7 @@ def test_get_project_pipelines_not_found(mock_get):
 
     result = get_project_pipelines(project_slug, token)
 
-    assert result == []
+    assert not result
 
 
 @patch("services.circleci.get_project_pipelines.requests.get")
@@ -97,4 +97,4 @@ def test_get_project_pipelines_http_error(mock_get):
 
     result = get_project_pipelines(project_slug, token)
 
-    assert result == []
+    assert not result

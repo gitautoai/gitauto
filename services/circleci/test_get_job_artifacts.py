@@ -51,7 +51,7 @@ def test_get_circleci_job_artifacts_empty_response():
             project_slug="gh/owner/repo", job_number="456", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_http_error():
@@ -66,7 +66,7 @@ def test_get_circleci_job_artifacts_http_error():
             project_slug="gh/owner/repo", job_number="999", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_404_response():
@@ -82,7 +82,7 @@ def test_get_circleci_job_artifacts_404_response():
             project_slug="gh/owner/repo", job_number="789", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_missing_items_key():
@@ -114,7 +114,7 @@ def test_get_circleci_job_artifacts_connection_error():
         )
 
         # Verify the result is an empty list (default_return_value from handle_exceptions)
-        assert result == []
+        assert not result
 
         # Verify the get function was called with the expected parameters
         mock_get.assert_called_once()
@@ -136,7 +136,7 @@ def test_get_circleci_job_artifacts_json_decode_error():
         )
 
         # Verify the result is an empty list (default_return_value from handle_exceptions)
-        assert result == []
+        assert not result
         assert "gh/owner/repo" in mock_get.call_args[1]["url"]
 
 
@@ -248,7 +248,7 @@ def test_get_circleci_job_artifacts_timeout_error():
             project_slug="gh/owner/repo", job_number="606", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
         mock_get.assert_called_once()
 
 
@@ -267,7 +267,7 @@ def test_get_circleci_job_artifacts_http_error_500():
             project_slug="gh/owner/repo", job_number="707", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_http_error_401():
@@ -286,7 +286,7 @@ def test_get_circleci_job_artifacts_http_error_401():
             project_slug="gh/owner/repo", job_number="808", circle_token="invalid-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_url_construction():
@@ -330,7 +330,7 @@ def test_get_circleci_job_artifacts_various_http_errors(status_code):
             project_slug="gh/owner/repo", job_number="909", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_empty_project_slug():
@@ -352,7 +352,7 @@ def test_get_circleci_job_artifacts_empty_project_slug():
             headers={"Circle-Token": "test-token"},
             timeout=TIMEOUT,
         )
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_empty_token():
@@ -373,7 +373,7 @@ def test_get_circleci_job_artifacts_empty_token():
             headers={"Circle-Token": ""},
             timeout=TIMEOUT,
         )
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_connection_error_specific():
@@ -385,7 +385,7 @@ def test_get_circleci_job_artifacts_connection_error_specific():
             project_slug="gh/owner/repo", job_number="404", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
         mock_get.assert_called_once()
 
 
@@ -398,7 +398,7 @@ def test_get_circleci_job_artifacts_request_exception():
             project_slug="gh/owner/repo", job_number="505", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_malformed_json_response():
@@ -415,7 +415,7 @@ def test_get_circleci_job_artifacts_malformed_json_response():
         )
 
         # Should handle gracefully and return empty list due to .get("items", [])
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_none_response():
@@ -432,7 +432,7 @@ def test_get_circleci_job_artifacts_none_response():
         )
 
         # Should handle gracefully and return empty list
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_type_annotation_coverage():
@@ -448,7 +448,7 @@ def test_get_circleci_job_artifacts_type_annotation_coverage():
         )
 
         # This should trigger the list[CircleCIArtifact]() return on line 19
-        assert result == []
+        assert not result
         assert isinstance(result, list)
 
 
@@ -463,7 +463,7 @@ def test_get_circleci_job_artifacts_ssl_error():
             project_slug="gh/owner/repo", job_number="606", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_dns_error():
@@ -475,7 +475,7 @@ def test_get_circleci_job_artifacts_dns_error():
             project_slug="gh/owner/repo", job_number="707", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_with_special_characters():
@@ -499,7 +499,7 @@ def test_get_circleci_job_artifacts_with_special_characters():
             headers={"Circle-Token": "test-token"},
             timeout=TIMEOUT,
         )
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_large_job_number():
@@ -524,7 +524,7 @@ def test_get_circleci_job_artifacts_large_job_number():
             headers={"Circle-Token": "test-token"},
             timeout=TIMEOUT,
         )
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_unicode_characters():
@@ -605,7 +605,7 @@ def test_get_circleci_job_artifacts_attribute_error():
             project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_key_error():
@@ -622,7 +622,7 @@ def test_get_circleci_job_artifacts_key_error():
             project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_type_error():
@@ -639,7 +639,7 @@ def test_get_circleci_job_artifacts_type_error():
             project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_generic_exception():
@@ -656,7 +656,7 @@ def test_get_circleci_job_artifacts_generic_exception():
             project_slug="gh/owner/repo", job_number="123", circle_token="test-token"
         )
 
-        assert result == []
+        assert not result
 
 
 def test_get_circleci_job_artifacts_import_coverage():
@@ -686,7 +686,7 @@ def test_get_circleci_job_artifacts_404_return_type():
         )
 
         # Verify the result is an empty list (from line 19: return list[CircleCIArtifact]())
-        assert result == []
+        assert not result
         assert isinstance(result, list)
 
         # Verify that raise_for_status was NOT called for 404

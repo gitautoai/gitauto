@@ -176,7 +176,7 @@ def test_get_workflow_runs_neither_commit_sha_nor_branch_returns_empty_list(
     """Test that empty list is returned when neither commit_sha nor branch is provided."""
     # Act & Assert
     result = get_workflow_runs(test_owner, test_repo, test_token)
-    assert result == []  # Default return value from handle_exceptions decorator
+    assert not result  # Default return value from handle_exceptions decorator
 
 
 def test_get_workflow_runs_empty_commit_sha_and_branch_returns_empty_list(
@@ -187,7 +187,7 @@ def test_get_workflow_runs_empty_commit_sha_and_branch_returns_empty_list(
     result = get_workflow_runs(
         test_owner, test_repo, test_token, commit_sha="", branch=""
     )
-    assert result == []  # Default return value from handle_exceptions decorator
+    assert not result  # Default return value from handle_exceptions decorator
 
 
 def test_get_workflow_runs_none_commit_sha_and_empty_branch_returns_empty_list(
@@ -198,7 +198,7 @@ def test_get_workflow_runs_none_commit_sha_and_empty_branch_returns_empty_list(
     result = get_workflow_runs(
         test_owner, test_repo, test_token, commit_sha=None, branch=""
     )
-    assert result == []  # Default return value from handle_exceptions decorator
+    assert not result  # Default return value from handle_exceptions decorator
 
 
 def test_get_workflow_runs_http_error(test_owner, test_repo, test_token):
@@ -226,7 +226,7 @@ def test_get_workflow_runs_http_error(test_owner, test_repo, test_token):
 
     # Assert
     mock_get.assert_called_once()
-    assert result == []  # Default return value from handle_exceptions decorator
+    assert not result  # Default return value from handle_exceptions decorator
 
 
 def test_get_workflow_runs_request_exception(test_owner, test_repo, test_token):
@@ -246,7 +246,7 @@ def test_get_workflow_runs_request_exception(test_owner, test_repo, test_token):
 
     # Assert
     mock_get.assert_called_once()
-    assert result == []  # Default return value from handle_exceptions decorator
+    assert not result  # Default return value from handle_exceptions decorator
 
 
 def test_get_workflow_runs_rate_limit_exceeded(test_owner, test_repo, test_token):
@@ -292,7 +292,7 @@ def test_get_workflow_runs_rate_limit_exceeded(test_owner, test_repo, test_token
     # Assert
     assert mock_get.call_count == 2
     mock_sleep.assert_called_once_with(15)  # 10 seconds + 5 buffer
-    assert result == []
+    assert not result
 
 
 def test_get_workflow_runs_secondary_rate_limit(test_owner, test_repo, test_token):
@@ -334,7 +334,7 @@ def test_get_workflow_runs_secondary_rate_limit(test_owner, test_repo, test_toke
     # Assert
     assert mock_get.call_count == 2
     mock_sleep.assert_called_once_with(30)
-    assert result == []
+    assert not result
 
 
 def test_get_workflow_runs_json_decode_error(test_owner, test_repo, test_token):
@@ -361,7 +361,7 @@ def test_get_workflow_runs_json_decode_error(test_owner, test_repo, test_token):
     mock_get.assert_called_once()
     mock_response.raise_for_status.assert_called_once()
     mock_response.json.assert_called_once()
-    assert result == []  # Default return value from handle_exceptions decorator
+    assert not result  # Default return value from handle_exceptions decorator
 
 
 def test_get_workflow_runs_missing_workflow_runs_key(test_owner, test_repo, test_token):
@@ -388,7 +388,7 @@ def test_get_workflow_runs_missing_workflow_runs_key(test_owner, test_repo, test
     mock_get.assert_called_once()
     mock_response.raise_for_status.assert_called_once()
     mock_response.json.assert_called_once()
-    assert result == []  # Default return value from handle_exceptions decorator
+    assert not result  # Default return value from handle_exceptions decorator
 
 
 def test_get_workflow_runs_url_construction_with_commit_sha():

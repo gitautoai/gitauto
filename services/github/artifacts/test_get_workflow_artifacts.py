@@ -115,7 +115,7 @@ def test_get_workflow_artifacts_empty_response(
     result = get_workflow_artifacts("owner", "repo", 123, "test_token")
 
     # Verify result
-    assert result == []
+    assert not result
 
 
 @patch("services.github.artifacts.get_workflow_artifacts.requests.get")
@@ -134,7 +134,7 @@ def test_get_workflow_artifacts_missing_artifacts_key(
     result = get_workflow_artifacts("owner", "repo", 123, "test_token")
 
     # Verify result (should return empty list due to .get("artifacts", []))
-    assert result == []
+    assert not result
 
 
 @patch("services.github.artifacts.get_workflow_artifacts.requests.get")
@@ -187,7 +187,7 @@ def test_get_workflow_artifacts_http_error_returns_default(
     result = get_workflow_artifacts("owner", "repo", 123, "test_token")
 
     # Verify default return value
-    assert result == []
+    assert not result
 
 
 @patch("services.github.artifacts.get_workflow_artifacts.requests.get")
@@ -206,7 +206,7 @@ def test_get_workflow_artifacts_json_decode_error_returns_default(
     result = get_workflow_artifacts("owner", "repo", 123, "test_token")
 
     # Verify default return value
-    assert result == []
+    assert not result
 
 
 @patch("services.github.artifacts.get_workflow_artifacts.requests.get")
@@ -223,7 +223,7 @@ def test_get_workflow_artifacts_request_exception_returns_default(
     result = get_workflow_artifacts("owner", "repo", 123, "test_token")
 
     # Verify default return value
-    assert result == []
+    assert not result
 
 
 @patch("services.github.artifacts.get_workflow_artifacts.requests.get")
@@ -282,7 +282,7 @@ def test_get_workflow_artifacts_various_parameters(
     mock_create_headers.assert_called_once_with(token=token)
 
     # Verify result
-    assert result == []
+    assert not result
 
 
 @patch("services.github.artifacts.get_workflow_artifacts.requests.get")

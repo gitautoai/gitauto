@@ -97,4 +97,4 @@ def test_get_comments_request_error(test_owner, test_repo, test_token):
         result = get_comments(123, base_args)
 
     # Assert
-    assert result == []  # The handle_exceptions decorator should return [] on error
+    assert not result  # The handle_exceptions decorator should return [] on error

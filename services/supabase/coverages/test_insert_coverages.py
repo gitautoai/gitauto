@@ -69,7 +69,7 @@ def test_insert_coverages_returns_empty_data(mock_supabase, sample_coverage_reco
 
     result = insert_coverages(sample_coverage_record)
 
-    assert result == []
+    assert not result
     mock_supabase.table.assert_called_once_with("coverages")
     mock_supabase.table.return_value.insert.assert_called_once_with(
         sample_coverage_record

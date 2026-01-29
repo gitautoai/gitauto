@@ -122,7 +122,7 @@ def test_get_file_tree_empty_repository(
 
         result = get_file_tree(test_owner, test_repo, "main", test_token)
 
-        assert result == []
+        assert not result
 
 
 def test_get_file_tree_not_found(
@@ -137,7 +137,7 @@ def test_get_file_tree_not_found(
 
         result = get_file_tree(test_owner, test_repo, "nonexistent-branch", test_token)
 
-        assert result == []
+        assert not result
 
 
 def test_get_file_tree_truncated_warning(
@@ -185,7 +185,7 @@ def test_get_file_tree_empty_tree_response(
 
         result = get_file_tree(test_owner, test_repo, "main", test_token)
 
-        assert result == []
+        assert not result
 
 
 def test_get_file_tree_exception_handling(
@@ -200,7 +200,7 @@ def test_get_file_tree_exception_handling(
 
         result = get_file_tree(test_owner, test_repo, "main", test_token)
 
-        assert result == []
+        assert not result
 
 
 def test_get_file_tree_http_error_handling(
@@ -223,7 +223,7 @@ def test_get_file_tree_http_error_handling(
 
         result = get_file_tree(test_owner, test_repo, "main", test_token)
 
-        assert result == []
+        assert not result
 
 
 def test_get_file_tree_409_without_empty_message(
@@ -246,7 +246,7 @@ def test_get_file_tree_409_without_empty_message(
 
         result = get_file_tree(test_owner, test_repo, "main", test_token)
 
-        assert result == []
+        assert not result
 
 
 def test_get_file_tree_no_truncated_key(

@@ -57,7 +57,7 @@ def test_get_workflow_jobs_without_token(mock_get):
     result = get_circleci_workflow_jobs(workflow_id, "")
 
     # Should return empty list due to exception handling
-    assert result == []
+    assert not result
 
 
 @patch("services.circleci.get_workflow_jobs.requests.get")
@@ -73,4 +73,4 @@ def test_get_workflow_jobs_with_invalid_workflow_id(mock_get):
     result = get_circleci_workflow_jobs(workflow_id, token)
 
     # Should return empty list for 404
-    assert result == []
+    assert not result

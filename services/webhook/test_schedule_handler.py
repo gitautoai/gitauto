@@ -112,7 +112,7 @@ def test_get_all_coverages_contract():
             mock_result
         )
         result = get_all_coverages(owner_id=789, repo_id=123)
-        assert result == []
+        assert not result
         assert result is not None
         assert isinstance(result, list)
 

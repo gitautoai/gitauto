@@ -115,7 +115,7 @@ def test_get_review_thread_comments_comment_not_found_returns_empty_list(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert result == []
+    assert not result
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -131,7 +131,7 @@ def test_get_review_thread_comments_no_review_threads_returns_empty_list(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert result == []
+    assert not result
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -151,7 +151,7 @@ def test_get_review_thread_comments_empty_thread_comments_returns_empty_list(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert result == []
+    assert not result
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -167,7 +167,7 @@ def test_get_review_thread_comments_repository_not_found_returns_empty_list(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert result == []
+    assert not result
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -183,7 +183,7 @@ def test_get_review_thread_comments_pull_request_not_found_returns_empty_list(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert result == []
+    assert not result
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -198,7 +198,7 @@ def test_get_review_thread_comments_empty_response_returns_empty_list(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert result == []
+    assert not result
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -264,7 +264,7 @@ def test_get_review_thread_comments_handles_graphql_exception_returns_empty_list
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert result == []
+        assert not result
 
 
 def test_get_review_thread_comments_handles_client_execute_exception_returns_empty_list(
@@ -282,7 +282,7 @@ def test_get_review_thread_comments_handles_client_execute_exception_returns_emp
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert result == []
+        assert not result
 
 
 def test_get_review_thread_comments_with_different_parameters(mock_graphql_client):
@@ -355,7 +355,7 @@ def test_get_review_thread_comments_malformed_response_structure(
 
         result = get_review_thread_comments(**sample_params)
 
-        assert result == []
+        assert not result
         mock_graphql_client.execute.assert_called_once()
 
 
@@ -522,7 +522,7 @@ def test_get_review_thread_comments_thread_with_missing_comments_structure(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert result == []
+    assert not result
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -544,7 +544,7 @@ def test_get_review_thread_comments_non_dict_result_from_client(
 
         result = get_review_thread_comments(**sample_params)
 
-        assert result == []
+        assert not result
         mock_graphql_client.execute.assert_called_once()
 
 
@@ -669,7 +669,7 @@ def test_get_review_thread_comments_comment_without_id_field(
     result = get_review_thread_comments(**sample_params)
 
     # Should return empty list since no comment matches the target comment_node_id
-    assert result == []
+    assert not result
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -847,7 +847,7 @@ def test_get_review_thread_comments_parameter_validation():
             token="ghp_very_long_token_string_with_special_characters_123456789",
         )
 
-        assert result == []
+        assert not result
         mock_get_client.assert_called_once_with(
             "ghp_very_long_token_string_with_special_characters_123456789"
         )
@@ -868,7 +868,7 @@ def test_get_review_thread_comments_handles_attribute_error_returns_empty_list(
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert result == []
+        assert not result
 
 
 def test_get_review_thread_comments_handles_key_error_returns_empty_list(
@@ -886,7 +886,7 @@ def test_get_review_thread_comments_handles_key_error_returns_empty_list(
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert result == []
+        assert not result
 
 
 def test_get_review_thread_comments_handles_type_error_returns_empty_list(
@@ -904,7 +904,7 @@ def test_get_review_thread_comments_handles_type_error_returns_empty_list(
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert result == []
+        assert not result
 
 
 def test_get_review_thread_comments_handles_json_decode_error_returns_empty_list(
@@ -926,7 +926,7 @@ def test_get_review_thread_comments_handles_json_decode_error_returns_empty_list
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert result == []
+        assert not result
 
 
 def test_get_review_thread_comments_handles_http_error_returns_empty_list(
@@ -952,7 +952,7 @@ def test_get_review_thread_comments_handles_http_error_returns_empty_list(
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert result == []
+        assert not result
 
 
 def test_get_review_thread_comments_with_none_comment_node_id(
@@ -967,7 +967,7 @@ def test_get_review_thread_comments_with_none_comment_node_id(
     result = get_review_thread_comments(**sample_params)
 
     # Assert - should return empty list since None won't match any comment id
-    assert result == []
+    assert not result
     mock_graphql_client.execute.assert_called_once()
 
 

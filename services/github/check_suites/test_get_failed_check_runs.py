@@ -78,7 +78,7 @@ def test_returns_empty_when_no_failures(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -96,7 +96,7 @@ def test_returns_empty_when_api_error(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -114,7 +114,7 @@ def test_returns_empty_when_not_found(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -132,7 +132,7 @@ def test_returns_empty_when_unauthorized(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -152,7 +152,7 @@ def test_returns_empty_when_response_has_no_check_runs_key(
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -170,7 +170,7 @@ def test_returns_empty_when_forbidden(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -188,7 +188,7 @@ def test_returns_empty_when_check_runs_array_is_empty(mock_create_headers, mock_
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -203,7 +203,7 @@ def test_returns_empty_when_network_timeout(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -218,7 +218,7 @@ def test_returns_empty_when_connection_error(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -233,7 +233,7 @@ def test_returns_empty_when_http_error(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -248,7 +248,7 @@ def test_returns_empty_when_request_exception(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -402,7 +402,7 @@ def test_returns_empty_when_json_parsing_fails(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")
@@ -444,7 +444,7 @@ def test_returns_empty_when_unprocessable_entity(mock_create_headers, mock_get):
         "owner", "repo", 12345, "test-token"
     )
 
-    assert result == []
+    assert not result
 
 
 @patch("services.github.check_suites.get_failed_check_runs.requests.get")

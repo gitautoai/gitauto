@@ -120,7 +120,7 @@ def test_get_file_tree_list_nonexistent_directory(base_args, mock_tree_items):
 
         result = get_file_tree_list(base_args, dir_path="nonexistent")
 
-        assert result == []
+        assert not result
 
 
 def test_get_file_tree_list_empty_repository(base_args):
@@ -131,7 +131,7 @@ def test_get_file_tree_list_empty_repository(base_args):
 
         result = get_file_tree_list(base_args)
 
-        assert result == []
+        assert not result
 
 
 def test_get_file_tree_list_dir_path_with_trailing_slash(base_args, mock_tree_items):
@@ -168,7 +168,7 @@ def test_get_file_tree_list_exception_handling(base_args):
 
         result = get_file_tree_list(base_args)
 
-        assert result == []  # Default return value from handle_exceptions decorator
+        assert not result  # Default return value from handle_exceptions decorator
 
 
 def test_get_file_tree_list_single_file_directory(base_args):
@@ -221,7 +221,7 @@ def test_get_file_tree_list_none_tree_items(base_args):
 
         result = get_file_tree_list(base_args)
 
-        assert result == []
+        assert not result
 
 
 def test_get_file_tree_list_root_only_files(base_args):
