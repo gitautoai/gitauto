@@ -80,6 +80,12 @@ def mock_upsert_repository():
 
 
 @pytest.fixture
+def mock_run_install_via_ssm():
+    with patch("services.webhook.process_repositories.run_install_via_ssm") as mock:
+        yield mock
+
+
+@pytest.fixture
 def sample_repositories():
     return [
         {
@@ -121,6 +127,7 @@ async def test_process_repositories_efs_exists_fetches(
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
+    mock_run_install_via_ssm,
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
@@ -141,6 +148,7 @@ async def test_process_repositories_efs_exists_fetches(
     assert mock_git_reset.call_count == 2
     assert mock_get_repository_stats.call_count == 2
     assert mock_upsert_repository.call_count == 4  # 2 repos x 2 calls (insert + update)
+    assert mock_run_install_via_ssm.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -154,6 +162,7 @@ async def test_process_repositories_efs_not_exists_clones(
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
+    mock_run_install_via_ssm,
 ):
     mock_os_path_exists.return_value = False
     mock_get_repository_stats.return_value = sample_stats
@@ -170,6 +179,7 @@ async def test_process_repositories_efs_not_exists_clones(
 
     assert mock_git_clone_to_efs.call_count == 2
     assert mock_upsert_repository.call_count == 4  # 2 repos x 2 calls (insert + update)
+    assert mock_run_install_via_ssm.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -182,6 +192,7 @@ async def test_process_repositories_empty_list(
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
+    mock_run_install_via_ssm,
 ):
     await process_repositories(
         owner_id=12345,
@@ -198,6 +209,7 @@ async def test_process_repositories_empty_list(
     mock_git_reset.assert_not_called()
     mock_get_repository_stats.assert_not_called()
     mock_upsert_repository.assert_not_called()
+    mock_run_install_via_ssm.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -211,6 +223,7 @@ async def test_process_repositories_stats_saved_correctly(
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
+    mock_run_install_via_ssm,
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
@@ -265,6 +278,7 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
+    mock_run_install_via_ssm,
 ):
     mock_get_default_branch.return_value = ("main", True)
     single_repo = cast(
@@ -295,6 +309,7 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_git_fetch.assert_not_called()
     mock_git_reset.assert_not_called()
     mock_get_repository_stats.assert_not_called()
+    mock_run_install_via_ssm.assert_not_called()
     # Only called once without stats (empty repo skips clone)
     mock_upsert_repository.assert_called_once_with(
         owner_id=12345,
