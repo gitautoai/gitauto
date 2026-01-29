@@ -11,6 +11,7 @@ from services.github.branches.get_default_branch import get_default_branch
 from services.github.repositories.get_repository_stats import get_repository_stats
 from services.github.types.owner import OwnerType
 from services.github.types.repository import RepositoryAddedOrRemoved
+from services.ssm.run_install_via_ssm import run_install_via_ssm
 from services.supabase.repositories.upsert_repository import upsert_repository
 from services.website.sync_files_from_github_to_coverage import (
     sync_files_from_github_to_coverage,
@@ -68,6 +69,9 @@ async def process_repositories(
         else:
             logger.info("No EFS clone, creating: %s", efs_dir)
             await git_clone_to_efs(efs_dir, clone_url, default_branch)
+
+        # Start package install on EC2 (fire-and-forget)
+        run_install_via_ssm(efs_dir, owner_id)
 
         # Get stats and update repository
         stats = get_repository_stats(local_path=efs_dir)
