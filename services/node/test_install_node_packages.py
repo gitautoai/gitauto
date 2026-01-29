@@ -171,9 +171,12 @@ async def test_install_node_packages_runs_npm_install():
     mock_lock_file = MagicMock()
     mock_lock_file.fileno.return_value = 1
 
+    mock_stdout = MagicMock()
+    mock_stdout.readline = AsyncMock(side_effect=[b""])
+
     mock_process = MagicMock()
-    mock_process.returncode = 0
-    mock_process.communicate = AsyncMock(return_value=(b"", b""))
+    mock_process.stdout = mock_stdout
+    mock_process.wait = AsyncMock(return_value=0)
 
     with patch("services.node.install_node_packages.read_file_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
@@ -286,9 +289,12 @@ async def test_install_node_packages_uses_npm_token():
     mock_lock_file = MagicMock()
     mock_lock_file.fileno.return_value = 1
 
+    mock_stdout = MagicMock()
+    mock_stdout.readline = AsyncMock(side_effect=[b""])
+
     mock_process = MagicMock()
-    mock_process.returncode = 0
-    mock_process.communicate = AsyncMock(return_value=(b"", b""))
+    mock_process.stdout = mock_stdout
+    mock_process.wait = AsyncMock(return_value=0)
 
     with patch("services.node.install_node_packages.read_file_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
@@ -328,9 +334,12 @@ async def test_install_node_packages_uses_npm_token():
 
 @pytest.mark.asyncio
 async def test_install_node_packages_sanitizes_http_to_https_in_npmrc():
+    mock_stdout = MagicMock()
+    mock_stdout.readline = AsyncMock(side_effect=[b""])
+
     mock_process = MagicMock()
-    mock_process.returncode = 0
-    mock_process.communicate = AsyncMock(return_value=(b"", b""))
+    mock_process.stdout = mock_stdout
+    mock_process.wait = AsyncMock(return_value=0)
 
     written_content = {}
 
@@ -388,9 +397,12 @@ async def test_install_node_packages_sanitizes_http_to_https_in_npmrc():
 
 @pytest.mark.asyncio
 async def test_install_node_packages_preserves_https_in_npmrc():
+    mock_stdout = MagicMock()
+    mock_stdout.readline = AsyncMock(side_effect=[b""])
+
     mock_process = MagicMock()
-    mock_process.returncode = 0
-    mock_process.communicate = AsyncMock(return_value=(b"", b""))
+    mock_process.stdout = mock_stdout
+    mock_process.wait = AsyncMock(return_value=0)
 
     written_content = {}
 
@@ -451,9 +463,12 @@ async def test_install_node_packages_handles_npm_failure():
     mock_lock_file = MagicMock()
     mock_lock_file.fileno.return_value = 1
 
+    mock_stdout = MagicMock()
+    mock_stdout.readline = AsyncMock(side_effect=[b"npm ERR!\n", b""])
+
     mock_process = MagicMock()
-    mock_process.returncode = 1
-    mock_process.communicate = AsyncMock(return_value=(b"npm ERR!", b""))
+    mock_process.stdout = mock_stdout
+    mock_process.wait = AsyncMock(return_value=1)
 
     with patch("services.node.install_node_packages.read_file_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
