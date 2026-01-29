@@ -191,7 +191,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t3.nano # ~$4/mo
-      ImageId: ami-0edea6d05015c16a4 # Amazon Linux 2023 - Verified: aws ec2 describe-images --region us-west-1 --owners amazon --filters "Name=name,Values=al2023-ami-2023*-x86_64" --query 'Images | sort_by(@, &CreationDate) | [-1].[ImageId,Name]'
+      ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
       KeyName: gitauto # Private key: infrastructure/nat-instance-ssh-private-key.pem
       IamInstanceProfile: !Ref NATInstanceProfile
       SubnetId: !Ref PublicSubnet
@@ -199,12 +199,14 @@ Resources:
         - !Ref NATSecurityGroup
       SourceDestCheck: false # Required for NAT
       UserData:
-        Fn::Base64: |
+        Fn::Base64: !Sub |
           #!/bin/bash
           set -e # Exit on error
+
           # Enable IP forwarding
           echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
           sysctl -p
+
           # Enable NAT - detect primary interface dynamically
           IFACE=$(ip route | grep default | awk '{print $5}')
           if [ -z "$IFACE" ]; then
@@ -222,9 +224,24 @@ Resources:
           iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
           service iptables save
           echo "NAT setup complete" >> /var/log/nat-setup.log
+
+          # Mount EFS for running yarn/npm install via SSM
+          yum install -y amazon-efs-utils
+          mkdir -p /mnt/efs
+          echo "${GitAutoEFS}:/ /mnt/efs efs defaults,_netdev 0 0" >> /etc/fstab
+          mount -a
+          echo "EFS mounted at /mnt/efs" >> /var/log/nat-setup.log
+
+          # Install Node.js and yarn for package management
+          curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+          yum install -y nodejs
+          npm install -g yarn
+          echo "Node.js $(node -v) and yarn $(yarn -v) installed" >> /var/log/nat-setup.log
       Tags:
         - Key: Name
           Value: gitauto-nat-instance
+        - Key: EFSMount
+          Value: enabled
 
   # Elastic IP for NAT Instance (consistent public IP)
   NATEIP:
