@@ -2,11 +2,11 @@
 import json
 import subprocess
 from typing import cast
-from unittest.mock import AsyncMock, MagicMock, mock_open, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from constants.efs import EFS_TIMEOUT_SECONDS
+from constants.aws import EFS_TIMEOUT_SECONDS
 from services.eslint.run_eslint import run_eslint
 from services.github.types.github_types import BaseArgs
 
@@ -89,10 +89,7 @@ async def test_run_eslint_sets_npm_cache_env_on_lambda(base_args):
             "services.eslint.run_eslint.set_npm_cache_env",
             side_effect=mock_set_npm_cache_env,
         ):
-            with patch(
-                "services.eslint.run_eslint.is_efs_install_ready",
-                new_callable=AsyncMock,
-            ) as mock_efs:
+            with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
                 mock_efs.return_value = True
                 with patch(
                     "services.eslint.run_eslint.get_efs_dir",
@@ -136,9 +133,7 @@ async def test_run_eslint_returns_fixed_content(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch(
-            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-        ) as mock_efs:
+        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
@@ -188,9 +183,7 @@ async def test_run_eslint_with_unfixable_errors(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch(
-            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-        ) as mock_efs:
+        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
@@ -227,9 +220,7 @@ async def test_run_eslint_with_json_decode_error(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch(
-            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-        ) as mock_efs:
+        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
@@ -264,9 +255,7 @@ async def test_run_eslint_fatal_error_returns_none(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch(
-            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-        ) as mock_efs:
+        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
@@ -298,9 +287,7 @@ async def test_run_eslint_timeout_returns_none(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch(
-            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-        ) as mock_efs:
+        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
@@ -343,9 +330,7 @@ async def test_run_eslint_supported_extensions(base_args, file_path):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch(
-            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-        ) as mock_efs:
+        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
@@ -385,9 +370,7 @@ async def test_run_eslint_creates_directories(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch(
-            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-        ) as mock_efs:
+        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
@@ -423,9 +406,7 @@ async def test_run_eslint_sets_flat_config_false_for_legacy_config(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch(
-            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-        ) as mock_efs:
+        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
@@ -465,9 +446,7 @@ async def test_run_eslint_does_not_set_flat_config_for_new_config(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": "eslint.config.js", "content": "export default {};"},
     ):
-        with patch(
-            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-        ) as mock_efs:
+        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
@@ -516,9 +495,7 @@ async def test_run_eslint_legacy_config_variants(base_args, config_filename):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": config_filename, "content": "{}"},
     ):
-        with patch(
-            "services.eslint.run_eslint.is_efs_install_ready", new_callable=AsyncMock
-        ) as mock_efs:
+        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"

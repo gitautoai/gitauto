@@ -14,7 +14,7 @@ from payloads.github.pull_request_review_comment.types import (
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
 from services.efs.get_efs_dir import get_efs_dir
-from services.efs.start_async_install_on_efs import start_async_install_on_efs
+from services.node.ensure_node_packages import ensure_node_packages
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
@@ -186,7 +186,10 @@ async def handle_review_run(
     clone_tasks[efs_dir] = asyncio.create_task(
         git_clone_to_efs(efs_dir, clone_url, base_branch)
     )
-    start_async_install_on_efs(base_args)
+    node_ready = await ensure_node_packages(
+        owner_name, owner_id, repo_name, base_branch, token, efs_dir
+    )
+    logger.info("node: ready=%s", node_ready)
 
     # Create a usage record
     usage_id = create_user_request(

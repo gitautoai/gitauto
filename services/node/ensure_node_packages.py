@@ -1,14 +1,11 @@
-import asyncio
 import fcntl
 import os
 
 from config import UTF8
-from constants.efs import EFS_TIMEOUT_SECONDS
 from services.git.git_clone_to_efs import clone_tasks
 from services.node.detect_package_manager import detect_package_manager
-from services.node.get_npm_cache_dir import set_npm_cache_env
 from services.node.read_file_content import read_file_content
-from services.supabase.npm_tokens.get_npm_token import get_npm_token
+from services.ssm.run_install_via_ssm import run_install_via_ssm
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
@@ -67,21 +64,23 @@ def _can_reuse_packages(
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
-async def install_node_packages(
+async def ensure_node_packages(
     owner: str,
     owner_id: int,
     repo: str,
     branch: str,
     token: str,
     efs_dir: str,
-    timeout: int = EFS_TIMEOUT_SECONDS,
 ):
     # Wait for clone to complete before installing
     clone_task = clone_tasks.get(efs_dir)
     if clone_task:
         logger.info("node: Waiting for clone task: %s", efs_dir)
-        await clone_task
-        logger.info("node: Clone task completed: %s", efs_dir)
+        result = await clone_task
+        if result:
+            logger.info("node: Clone task completed: %s", efs_dir)
+        else:
+            logger.warning("node: Clone task failed: %s", efs_dir)
 
     package_json_content = read_file_content(
         "package.json",
@@ -157,58 +156,10 @@ async def install_node_packages(
                     f.write(lock_file_content)
                 logger.info("node: Wrote %s to %s", lock_file_name, lock_path)
 
-            logger.info("node: Running %s install in %s", pkg_manager, efs_dir)
-
-            env = os.environ.copy()
-            set_npm_cache_env(env)
-
-            npm_token = get_npm_token(owner_id)
-            if npm_token:
-                env["NPM_TOKEN"] = npm_token
-                masked = f"{npm_token[:4]}...{npm_token[-4:]}"
-                logger.info("node: Using NPM_TOKEN %s for private packages", masked)
-
-            process = await asyncio.create_subprocess_exec(
-                pkg_manager,
-                "install",
-                cwd=efs_dir,
-                env=env,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.STDOUT,
-            )
-
-            output_lines: list[str] = []
-
-            async def read_output():
-                assert process.stdout is not None
-                while True:
-                    line = await process.stdout.readline()
-                    if not line:
-                        break
-                    output_lines.append(line.decode())
-                return await process.wait()
-
-            try:
-                returncode = await asyncio.wait_for(read_output(), timeout=timeout)
-            except asyncio.TimeoutError:
-                process.kill()
-                output = "".join(output_lines)
-                logger.error(
-                    "node: %s install timed out. Output:\n%s", pkg_manager, output
-                )
-                raise
-
-            if returncode != 0:
-                output = "".join(output_lines)
-                logger.error(
-                    "node: %s install failed. Output:\n%s", pkg_manager, output
-                )
-                raise RuntimeError(
-                    f"{pkg_manager} install failed at {efs_dir} with code {returncode}"
-                )
-
-            logger.info("node: Package installation completed successfully")
-            return True
+            # Trigger SSM install on EC2 (fire and forget, bypasses Lambda 15-min timeout)
+            run_install_via_ssm(efs_dir, owner_id, pkg_manager)
+            logger.info("node: Triggered SSM install for %s", efs_dir)
+            return False  # Packages not ready yet, installing in background
 
         finally:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)

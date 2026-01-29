@@ -257,7 +257,7 @@ async def test_stripe_customer_id_update(
 @patch("services.webhook.issue_handler.describe_image")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -356,7 +356,7 @@ async def test_image_urls_processing(
 @patch("services.webhook.issue_handler.get_base64")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -447,7 +447,7 @@ async def test_image_unsupported_format_skipped(
 @patch("services.webhook.issue_handler.describe_image")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -540,7 +540,7 @@ async def test_image_base64_fetch_failed(
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -632,7 +632,7 @@ async def test_timeout_approaching_breaks_loop(
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -724,7 +724,7 @@ async def test_branch_deleted_breaks_loop(
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -832,7 +832,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -937,7 +937,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -1031,7 +1031,7 @@ async def test_retry_counter_reset_on_successful_loop(
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -1126,7 +1126,7 @@ async def test_non_test_file_skipped_in_header_merge(
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -1229,7 +1229,7 @@ async def test_test_file_header_merge(
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -1331,7 +1331,7 @@ async def test_test_file_header_merge_no_content(
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -1435,7 +1435,7 @@ async def test_test_file_header_merge_no_change(
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -1543,7 +1543,7 @@ async def test_credits_depleted_email_sent(
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.get_owner")
 @patch("services.webhook.issue_handler.create_comment")
 @patch("services.webhook.issue_handler.check_availability")
@@ -1557,7 +1557,7 @@ async def test_issue_handler_token_accumulation(
     mock_check_availability,
     mock_create_comment,
     mock_get_owner,
-    mock_start_async_install_on_efs,
+    mock_ensure_node_packages,
     mock_prepare_repo,
     mock_create_user_request,
     mock_chat_with_agent,
@@ -1691,8 +1691,8 @@ async def test_issue_handler_token_accumulation(
         },
     )
 
-    # Verify start_async_install_on_efs was called with base_args
-    mock_start_async_install_on_efs.assert_called_once()
+    # Verify ensure_node_packages was called with base_args
+    mock_ensure_node_packages.assert_called_once()
 
     # Verify update_usage was called with accumulated tokens
     mock_update_usage.assert_called_once()
@@ -1723,7 +1723,7 @@ async def test_issue_handler_token_accumulation(
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.start_async_install_on_efs")
+@patch("services.webhook.issue_handler.ensure_node_packages")
 @patch("services.webhook.issue_handler.get_owner")
 @patch("services.webhook.issue_handler.create_comment")
 @patch("services.webhook.issue_handler.check_availability")
@@ -1735,7 +1735,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_check_availability,
     mock_create_comment,
     mock_get_owner,
-    mock_start_async_install_on_efs,
+    mock_ensure_node_packages,
     mock_prepare_repo,
     mock_create_user_request,
     mock_chat_with_agent,

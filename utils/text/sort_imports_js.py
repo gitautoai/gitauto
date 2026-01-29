@@ -3,7 +3,7 @@ import subprocess
 import tempfile
 
 from config import UTF8
-from constants.efs import EFS_TIMEOUT_SECONDS
+from constants.aws import EFS_TIMEOUT_SECONDS
 from utils.error.handle_exceptions import handle_exceptions
 
 

@@ -1,11 +1,11 @@
 # pylint: disable=unused-argument
 import subprocess
 from typing import cast
-from unittest.mock import AsyncMock, MagicMock, mock_open, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from constants.efs import EFS_TIMEOUT_SECONDS
+from constants.aws import EFS_TIMEOUT_SECONDS
 from services.github.types.github_types import BaseArgs
 from services.prettier.run_prettier import run_prettier
 
@@ -30,10 +30,7 @@ async def test_run_prettier_success(base_args):
         "services.prettier.run_prettier.get_prettier_config",
         return_value={"filename": ".prettierrc", "content": "{}"},
     ):
-        with patch(
-            "services.prettier.run_prettier.is_efs_install_ready",
-            new_callable=AsyncMock,
-        ) as mock_efs:
+        with patch("services.prettier.run_prettier.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.prettier.run_prettier.get_efs_dir",
@@ -77,8 +74,7 @@ async def test_run_prettier_sets_npm_cache_env_on_lambda(base_args):
             side_effect=mock_set_npm_cache_env,
         ):
             with patch(
-                "services.prettier.run_prettier.is_efs_install_ready",
-                new_callable=AsyncMock,
+                "services.prettier.run_prettier.is_efs_install_ready"
             ) as mock_efs:
                 mock_efs.return_value = True
                 with patch(
@@ -170,10 +166,7 @@ async def test_run_prettier_subprocess_failure(base_args):
         "services.prettier.run_prettier.get_prettier_config",
         return_value={"filename": ".prettierrc", "content": "{}"},
     ):
-        with patch(
-            "services.prettier.run_prettier.is_efs_install_ready",
-            new_callable=AsyncMock,
-        ) as mock_efs:
+        with patch("services.prettier.run_prettier.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.prettier.run_prettier.get_efs_dir",
@@ -206,10 +199,7 @@ async def test_run_prettier_timeout(base_args):
         "services.prettier.run_prettier.get_prettier_config",
         return_value={"filename": ".prettierrc", "content": "{}"},
     ):
-        with patch(
-            "services.prettier.run_prettier.is_efs_install_ready",
-            new_callable=AsyncMock,
-        ) as mock_efs:
+        with patch("services.prettier.run_prettier.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.prettier.run_prettier.get_efs_dir",
@@ -257,10 +247,7 @@ async def test_run_prettier_supported_extensions(base_args, file_path):
         "services.prettier.run_prettier.get_prettier_config",
         return_value={"filename": ".prettierrc", "content": "{}"},
     ):
-        with patch(
-            "services.prettier.run_prettier.is_efs_install_ready",
-            new_callable=AsyncMock,
-        ) as mock_efs:
+        with patch("services.prettier.run_prettier.is_efs_install_ready") as mock_efs:
             mock_efs.return_value = True
             with patch(
                 "services.prettier.run_prettier.get_efs_dir",

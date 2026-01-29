@@ -1,102 +1,47 @@
-import asyncio
 from unittest.mock import patch
-
-import pytest
 
 from services.efs.is_efs_install_ready import is_efs_install_ready
 
 
-@pytest.mark.asyncio
-async def test_is_efs_install_ready_returns_true_when_install_succeeds():
-    async def coro():
-        return True
-
-    task = asyncio.create_task(coro())
-    await task
-
+def test_is_efs_install_ready_returns_true_when_bin_exists():
     with patch(
-        "services.efs.is_efs_install_ready.install_tasks",
-        {"/mnt/efs/owner/repo": {"node": task}},
+        "services.efs.is_efs_install_ready.get_efs_dir",
+        return_value="/mnt/efs/owner/repo",
     ):
         with patch(
-            "services.efs.is_efs_install_ready.get_efs_dir",
-            return_value="/mnt/efs/owner/repo",
+            "services.efs.is_efs_install_ready.os.path.exists", return_value=True
         ):
-            result = await is_efs_install_ready("owner", "repo", "node")
+            with patch(
+                "services.efs.is_efs_install_ready.os.listdir",
+                return_value=["eslint", "prettier"],
+            ):
+                result = is_efs_install_ready("owner", "repo", "node")
 
     assert result is True
 
 
-@pytest.mark.asyncio
-async def test_is_efs_install_ready_returns_false_when_install_fails():
-    async def coro():
-        return False
-
-    task = asyncio.create_task(coro())
-    await task
-
+def test_is_efs_install_ready_returns_false_when_bin_empty():
     with patch(
-        "services.efs.is_efs_install_ready.install_tasks",
-        {"/mnt/efs/owner/repo": {"node": task}},
+        "services.efs.is_efs_install_ready.get_efs_dir",
+        return_value="/mnt/efs/owner/repo",
     ):
         with patch(
-            "services.efs.is_efs_install_ready.get_efs_dir",
-            return_value="/mnt/efs/owner/repo",
+            "services.efs.is_efs_install_ready.os.path.exists", return_value=True
         ):
-            result = await is_efs_install_ready("owner", "repo", "node")
+            with patch("services.efs.is_efs_install_ready.os.listdir", return_value=[]):
+                result = is_efs_install_ready("owner", "repo", "node")
 
     assert result is False
 
 
-@pytest.mark.asyncio
-async def test_is_efs_install_ready_returns_false_when_no_task():
-    with patch("services.efs.is_efs_install_ready.install_tasks", {}):
-        with patch(
-            "services.efs.is_efs_install_ready.get_efs_dir",
-            return_value="/mnt/efs/owner/repo",
-        ):
-            result = await is_efs_install_ready("owner", "repo", "node")
-
-    assert result is False
-
-
-@pytest.mark.asyncio
-async def test_is_efs_install_ready_returns_false_when_wrong_installer():
-    async def coro():
-        return True
-
-    task = asyncio.create_task(coro())
-    await task
-
+def test_is_efs_install_ready_returns_false_when_bin_not_exists():
     with patch(
-        "services.efs.is_efs_install_ready.install_tasks",
-        {"/mnt/efs/owner/repo": {"python": task}},
+        "services.efs.is_efs_install_ready.get_efs_dir",
+        return_value="/mnt/efs/owner/repo",
     ):
         with patch(
-            "services.efs.is_efs_install_ready.get_efs_dir",
-            return_value="/mnt/efs/owner/repo",
+            "services.efs.is_efs_install_ready.os.path.exists", return_value=False
         ):
-            result = await is_efs_install_ready("owner", "repo", "node")
+            result = is_efs_install_ready("owner", "repo", "node")
 
     assert result is False
-
-
-@pytest.mark.asyncio
-async def test_is_efs_install_ready_uses_default_name():
-    async def coro():
-        return True
-
-    task = asyncio.create_task(coro())
-    await task
-
-    with patch(
-        "services.efs.is_efs_install_ready.install_tasks",
-        {"/mnt/efs/owner/repo": {"node": task}},
-    ):
-        with patch(
-            "services.efs.is_efs_install_ready.get_efs_dir",
-            return_value="/mnt/efs/owner/repo",
-        ):
-            result = await is_efs_install_ready("owner", "repo")
-
-    assert result is True
