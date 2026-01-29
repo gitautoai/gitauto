@@ -18,10 +18,10 @@ def mock_get_base_request_limit():
 
 
 @pytest.fixture
-def mock_count_completed_unique_requests():
-    """Fixture to mock count_completed_unique_requests function."""
+def mock_count_unique_requests():
+    """Fixture to mock count_unique_requests function."""
     with patch(
-        "services.stripe.check_subscription_limit.count_completed_unique_requests"
+        "services.stripe.check_subscription_limit.count_unique_requests"
     ) as mock:
         yield mock
 
@@ -91,14 +91,14 @@ def sample_installation_id():
 
 def test_check_subscription_limit_monthly_subscription_with_requests_left(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_monthly_subscription,
     sample_installation_id,
 ):
     """Test monthly subscription with requests remaining."""
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
-    mock_count_completed_unique_requests.return_value = {
+    mock_count_unique_requests.return_value = {
         "req1",
         "req2",
         "req3",
@@ -116,21 +116,21 @@ def test_check_subscription_limit_monthly_subscription_with_requests_left(
 
     # Verify function calls
     mock_get_base_request_limit.assert_called_once_with("prod_test123")
-    mock_count_completed_unique_requests.assert_called_once_with(
+    mock_count_unique_requests.assert_called_once_with(
         sample_installation_id, datetime.fromtimestamp(1640995200, tz=TZ)
     )
 
 
 def test_check_subscription_limit_monthly_subscription_no_requests_left(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_monthly_subscription,
     sample_installation_id,
 ):
     """Test monthly subscription with no requests remaining."""
     # Setup mocks
     mock_get_base_request_limit.return_value = 50
-    mock_count_completed_unique_requests.return_value = set(
+    mock_count_unique_requests.return_value = set(
         f"req{i}" for i in range(50)
     )  # 50 requests used
 
@@ -147,14 +147,14 @@ def test_check_subscription_limit_monthly_subscription_no_requests_left(
 
 def test_check_subscription_limit_monthly_subscription_exceeded_limit(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_monthly_subscription,
     sample_installation_id,
 ):
     """Test monthly subscription with requests exceeding limit."""
     # Setup mocks
     mock_get_base_request_limit.return_value = 30
-    mock_count_completed_unique_requests.return_value = set(
+    mock_count_unique_requests.return_value = set(
         f"req{i}" for i in range(35)
     )  # 35 requests used
 
@@ -170,14 +170,14 @@ def test_check_subscription_limit_monthly_subscription_exceeded_limit(
 
 def test_check_subscription_limit_yearly_subscription(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_yearly_subscription,
     sample_installation_id,
 ):
     """Test yearly subscription with 12x multiplier."""
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
-    mock_count_completed_unique_requests.return_value = {
+    mock_count_unique_requests.return_value = {
         "req1",
         "req2",
     }  # 2 requests used
@@ -195,7 +195,7 @@ def test_check_subscription_limit_yearly_subscription(
 
 def test_check_subscription_limit_with_quantity_greater_than_one(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_installation_id,
 ):
     """Test subscription with quantity > 1."""
@@ -205,7 +205,7 @@ def test_check_subscription_limit_with_quantity_greater_than_one(
 
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
-    mock_count_completed_unique_requests.return_value = {"req1"}  # 1 request used
+    mock_count_unique_requests.return_value = {"req1"}  # 1 request used
 
     result = check_subscription_limit(
         subscription_with_quantity, sample_installation_id
@@ -219,7 +219,7 @@ def test_check_subscription_limit_with_quantity_greater_than_one(
 
 def test_check_subscription_limit_yearly_with_quantity(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_installation_id,
 ):
     """Test yearly subscription with quantity > 1."""
@@ -229,7 +229,7 @@ def test_check_subscription_limit_yearly_with_quantity(
 
     # Setup mocks
     mock_get_base_request_limit.return_value = 50
-    mock_count_completed_unique_requests.return_value = set()  # 0 requests used
+    mock_count_unique_requests.return_value = set()  # 0 requests used
 
     result = check_subscription_limit(
         yearly_subscription_with_quantity, sample_installation_id
@@ -243,14 +243,14 @@ def test_check_subscription_limit_yearly_with_quantity(
 
 def test_check_subscription_limit_with_empty_unique_requests(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_monthly_subscription,
     sample_installation_id,
 ):
     """Test subscription with no completed requests."""
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
-    mock_count_completed_unique_requests.return_value = set()  # No requests used
+    mock_count_unique_requests.return_value = set()  # No requests used
 
     result = check_subscription_limit(
         sample_monthly_subscription, sample_installation_id
@@ -264,14 +264,14 @@ def test_check_subscription_limit_with_empty_unique_requests(
 
 def test_check_subscription_limit_handles_get_base_request_limit_exception(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_monthly_subscription,
     sample_installation_id,
 ):
     """Test that function returns default values when get_base_request_limit raises exception."""
     # Setup mocks
     mock_get_base_request_limit.side_effect = Exception("Stripe API error")
-    mock_count_completed_unique_requests.return_value = {"req1"}
+    mock_count_unique_requests.return_value = {"req1"}
 
     result = check_subscription_limit(
         sample_monthly_subscription, sample_installation_id
@@ -286,14 +286,14 @@ def test_check_subscription_limit_handles_get_base_request_limit_exception(
 
 def test_check_subscription_limit_handles_count_requests_exception(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_monthly_subscription,
     sample_installation_id,
 ):
-    """Test that function returns default values when count_completed_unique_requests raises exception."""
+    """Test that function returns default values when count_unique_requests raises exception."""
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
-    mock_count_completed_unique_requests.side_effect = Exception("Database error")
+    mock_count_unique_requests.side_effect = Exception("Database error")
 
     result = check_subscription_limit(
         sample_monthly_subscription, sample_installation_id
@@ -308,7 +308,7 @@ def test_check_subscription_limit_handles_count_requests_exception(
 
 def test_check_subscription_limit_handles_malformed_subscription_data(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_installation_id,
 ):
     """Test that function returns default values when subscription data is malformed."""
@@ -319,7 +319,7 @@ def test_check_subscription_limit_handles_malformed_subscription_data(
 
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
-    mock_count_completed_unique_requests.return_value = {"req1"}
+    mock_count_unique_requests.return_value = {"req1"}
 
     result = check_subscription_limit(malformed_subscription, sample_installation_id)
 
@@ -343,7 +343,7 @@ def test_check_subscription_limit_handles_malformed_subscription_data(
 )
 def test_check_subscription_limit_request_limit_calculation(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_installation_id,
     interval,
     base_limit,
@@ -357,7 +357,7 @@ def test_check_subscription_limit_request_limit_calculation(
 
     # Setup mocks
     mock_get_base_request_limit.return_value = base_limit
-    mock_count_completed_unique_requests.return_value = set()  # No requests used
+    mock_count_unique_requests.return_value = set()  # No requests used
 
     result = check_subscription_limit(subscription, sample_installation_id)
 
@@ -369,14 +369,14 @@ def test_check_subscription_limit_request_limit_calculation(
 
 def test_check_subscription_limit_return_type_structure(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_monthly_subscription,
     sample_installation_id,
 ):
     """Test that the function returns the correct SubscriptionLimitResult structure."""
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
-    mock_count_completed_unique_requests.return_value = {"req1"}
+    mock_count_unique_requests.return_value = {"req1"}
 
     result = check_subscription_limit(
         sample_monthly_subscription, sample_installation_id
@@ -395,14 +395,14 @@ def test_check_subscription_limit_return_type_structure(
 
 def test_check_subscription_limit_with_zero_base_limit(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_monthly_subscription,
     sample_installation_id,
 ):
     """Test subscription with zero base request limit."""
     # Setup mocks
     mock_get_base_request_limit.return_value = 0
-    mock_count_completed_unique_requests.return_value = set()
+    mock_count_unique_requests.return_value = set()
 
     result = check_subscription_limit(
         sample_monthly_subscription, sample_installation_id
@@ -416,14 +416,14 @@ def test_check_subscription_limit_with_zero_base_limit(
 
 def test_check_subscription_limit_with_negative_base_limit(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_monthly_subscription,
     sample_installation_id,
 ):
     """Test subscription with negative base request limit (edge case)."""
     # Setup mocks
     mock_get_base_request_limit.return_value = -10
-    mock_count_completed_unique_requests.return_value = set()
+    mock_count_unique_requests.return_value = set()
 
     result = check_subscription_limit(
         sample_monthly_subscription, sample_installation_id
@@ -437,7 +437,7 @@ def test_check_subscription_limit_with_negative_base_limit(
 
 def test_check_subscription_limit_datetime_conversion(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_installation_id,
 ):
     """Test that timestamps are correctly converted to datetime objects with proper timezone."""
@@ -447,7 +447,7 @@ def test_check_subscription_limit_datetime_conversion(
 
     # Setup mocks
     mock_get_base_request_limit.return_value = 100
-    mock_count_completed_unique_requests.return_value = {"req1"}
+    mock_count_unique_requests.return_value = {"req1"}
 
     result = check_subscription_limit(subscription, sample_installation_id)
 
@@ -458,14 +458,14 @@ def test_check_subscription_limit_datetime_conversion(
 
 def test_check_subscription_limit_boundary_condition_exactly_zero_requests_left(
     mock_get_base_request_limit,
-    mock_count_completed_unique_requests,
+    mock_count_unique_requests,
     sample_monthly_subscription,
     sample_installation_id,
 ):
     """Test boundary condition where requests_left is exactly 0."""
     # Setup mocks - limit equals used requests
     mock_get_base_request_limit.return_value = 5
-    mock_count_completed_unique_requests.return_value = set(
+    mock_count_unique_requests.return_value = set(
         f"req{i}" for i in range(5)
     )  # Exactly 5 requests used
 

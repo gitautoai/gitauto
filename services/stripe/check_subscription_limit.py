@@ -4,9 +4,7 @@ from typing import TypedDict
 from stripe import Subscription
 
 from config import TZ, ONE_YEAR_FROM_NOW
-from services.supabase.usage.count_completed_unique_requests import (
-    count_completed_unique_requests,
-)
+from services.supabase.usage.count_unique_requests import count_unique_requests
 from services.stripe.get_base_request_limit import get_base_request_limit
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -55,7 +53,7 @@ def check_subscription_limit(
     start_date = datetime.fromtimestamp(timestamp=start_date_seconds, tz=TZ)
     end_date = datetime.fromtimestamp(timestamp=end_date_seconds, tz=TZ)
 
-    unique_requests = count_completed_unique_requests(installation_id, start_date)
+    unique_requests = count_unique_requests(installation_id, start_date)
     requests_left = request_limit - len(unique_requests)
     can_proceed = requests_left > 0
 
