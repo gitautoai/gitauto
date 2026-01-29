@@ -54,6 +54,7 @@ async def clone_and_install(owner: str, repo: str, api_key: str):
         branch=branch,
         token=token,
         efs_dir=efs_dir,
+        timeout=840,  # 14 min (Lambda max is 15 min)
     )
 
     logger.info("Clone and install completed for %s/%s", owner, repo)

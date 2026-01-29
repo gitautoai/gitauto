@@ -328,9 +328,6 @@ async def test_install_node_packages_uses_npm_token():
 
 @pytest.mark.asyncio
 async def test_install_node_packages_sanitizes_http_to_https_in_npmrc():
-    mock_lock_file = MagicMock()
-    mock_lock_file.fileno.return_value = 1
-
     mock_process = MagicMock()
     mock_process.returncode = 0
     mock_process.communicate = AsyncMock(return_value=(b"", b""))
@@ -456,7 +453,7 @@ async def test_install_node_packages_handles_npm_failure():
 
     mock_process = MagicMock()
     mock_process.returncode = 1
-    mock_process.communicate = AsyncMock(return_value=(b"", b"npm ERR!"))
+    mock_process.communicate = AsyncMock(return_value=(b"npm ERR!", b""))
 
     with patch("services.node.install_node_packages.read_file_content") as mock_get:
         with patch("services.node.install_node_packages.os.makedirs"):
