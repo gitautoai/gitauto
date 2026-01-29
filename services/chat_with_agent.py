@@ -17,6 +17,7 @@ from services.slack.slack_notify import slack_notify
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_target_test_file import is_target_test_file
 from utils.files.is_test_file import is_test_file
+from utils.formatting.collapse_list import collapse_list
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger
 from utils.number.is_valid_line_number import is_valid_line_number
@@ -283,7 +284,7 @@ async def chat_with_agent(
                 file_list = [line[2:] for line in result_lines if line.startswith("- ")]
 
         if file_list and isinstance(tool_args, dict):
-            msg = f"Searched repository for `{tool_args['query']}` and found: \n- {'\n- '.join(file_list)}\n"
+            msg = f"Searched repository for `{tool_args['query']}` and found:\n{collapse_list(file_list)}\n"
         elif isinstance(tool_args, dict):
             msg = f"Searched repository for `{tool_args['query']}` but found no matching files."
         else:
@@ -297,9 +298,9 @@ async def chat_with_agent(
                 and "dir_path" in tool_args
                 and tool_args["dir_path"]
             ):
-                msg = f"Listed contents of directory '{tool_args['dir_path']}': \n- {'\n- '.join(file_list)}\n"
+                msg = f"Listed contents of directory '{tool_args['dir_path']}':\n{collapse_list(file_list)}\n"
             else:
-                msg = f"Listed root directory contents: \n- {'\n- '.join(file_list)}\n"
+                msg = f"Listed root directory contents:\n{collapse_list(file_list)}\n"
         elif (
             isinstance(tool_args, dict)
             and "dir_path" in tool_args

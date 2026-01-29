@@ -6,6 +6,9 @@
 .ruff_cache
 __pycache__
 /scripts/*
+!/scripts/git/
+/scripts/git/*
+!/scripts/git/list_changed_files.sh
 !/scripts/lint/
 !/scripts/sentry/
 coverage.*
