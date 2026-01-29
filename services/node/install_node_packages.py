@@ -3,6 +3,7 @@ import fcntl
 import os
 
 from config import UTF8
+from constants.efs import EFS_TIMEOUT_SECONDS
 from services.git.git_clone_to_efs import clone_tasks
 from services.node.detect_package_manager import detect_package_manager
 from services.node.get_npm_cache_dir import set_npm_cache_env
@@ -142,8 +143,11 @@ async def install_node_packages(
 
             if npmrc_content:
                 npmrc_path = os.path.join(efs_dir, ".npmrc")
+                sanitized_npmrc = npmrc_content.replace(
+                    "http://registry.npmjs.org", "https://registry.npmjs.org"
+                )
                 with open(npmrc_path, "w", encoding=UTF8) as f:
-                    f.write(npmrc_content)
+                    f.write(sanitized_npmrc)
                 logger.info("node: Wrote .npmrc to %s", npmrc_path)
 
             if lock_file_name and lock_file_content:
@@ -171,7 +175,9 @@ async def install_node_packages(
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            _, stderr = await asyncio.wait_for(process.communicate(), timeout=300)
+            _, stderr = await asyncio.wait_for(
+                process.communicate(), timeout=EFS_TIMEOUT_SECONDS
+            )
 
             if process.returncode != 0:
                 raise RuntimeError(

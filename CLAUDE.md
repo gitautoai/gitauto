@@ -272,6 +272,16 @@ Sentry CLI is available for accessing error logs and issues.
 brew install getsentry/tools/sentry-cli
 ```
 
+#### Listing Recent Issues
+
+```bash
+# List issues from last 24 hours
+source .env && sentry-cli issues list --org gitauto-ai --project agent --query "lastSeen:-24h"
+
+# List issues from last 7 days
+source .env && sentry-cli issues list --org gitauto-ai --project agent --query "lastSeen:-7d"
+```
+
 #### Accessing Sentry Issues
 
 Sentry issues are identified by IDs like `AGENT-129`. Use the Python script for detailed issue analysis:
