@@ -93,18 +93,20 @@ def merge_test_file_headers(
     new_header = config["format"].format(rules=rules_str)
 
     if matches:
-        content_without_comments = file_content
+        content = file_content
         for match in reversed(matches):
             end_pos = match.end()
-            if (
-                end_pos < len(content_without_comments)
-                and content_without_comments[end_pos] == "\n"
-            ):
+            if end_pos < len(content) and content[end_pos] == "\n":
                 end_pos += 1
-            content_without_comments = (
-                content_without_comments[: match.start()]
-                + content_without_comments[end_pos:]
-            )
-        content_without_comments = content_without_comments.lstrip()
-        return new_header + "\n" + content_without_comments
-    return new_header + "\n" + file_content
+            content = content[: match.start()] + content[end_pos:]
+        content = content.lstrip()
+    else:
+        content = file_content
+
+    if file_path_lower.endswith(".php"):
+        php_tag_match = re.match(r"(<\?php\b[^\n]*\n?)", content)
+        if php_tag_match:
+            php_tag = php_tag_match.group(1)
+            rest = content[len(php_tag) :]
+            return php_tag + new_header + "\n" + rest
+    return new_header + "\n" + content

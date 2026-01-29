@@ -133,8 +133,8 @@ class MyTest extends TestCase {
 }
 """
     result = merge_test_file_headers(file_content, "MyTest.php")
-    expected = r"""// phpcs:disable unused-variable
-<?php
+    expected = r"""<?php
+// phpcs:disable unused-variable
 use PHPUnit\Framework\TestCase;
 
 class MyTest extends TestCase {
@@ -142,5 +142,22 @@ class MyTest extends TestCase {
         $this->assertTrue(true);
     }
 }
+"""
+    assert result == expected
+
+
+def test_merge_test_file_headers_php_with_existing_header():
+    file_content = r"""<?php
+// phpcs:disable some-other-rule
+use PHPUnit\Framework\TestCase;
+
+class MyTest extends TestCase {}
+"""
+    result = merge_test_file_headers(file_content, "MyTest.php")
+    expected = r"""<?php
+// phpcs:disable some-other-rule, unused-variable
+use PHPUnit\Framework\TestCase;
+
+class MyTest extends TestCase {}
 """
     assert result == expected
