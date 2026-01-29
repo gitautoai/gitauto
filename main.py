@@ -18,6 +18,7 @@ from services.slack.slack_notify import slack_notify
 from services.supabase.webhook_deliveries.insert_webhook_delivery import (
     insert_webhook_delivery,
 )
+from services.efs.clone_and_install import clone_and_install
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.webhook_handler import handle_webhook_event
 from services.website.sync_files_from_github_to_coverage import (
@@ -172,3 +173,12 @@ async def api_sync_files_from_github_to_coverage(
         api_key=api_key,
     )
     return {"status": "syncing"}
+
+
+@app.post(path="/api/{owner}/{repo}/clone_and_install")
+async def api_clone_and_install(
+    owner: str,
+    repo: str,
+    api_key: str = Header(..., alias="X-API-Key"),
+):
+    return await clone_and_install(owner, repo, api_key)
