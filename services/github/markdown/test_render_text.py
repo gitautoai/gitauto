@@ -1,7 +1,8 @@
 from unittest.mock import patch, MagicMock
+
 import pytest
 import requests
-from requests import HTTPError
+from requests.exceptions import HTTPError
 
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.markdown.render_text import render_text
@@ -38,7 +39,7 @@ def mock_headers():
 @pytest.fixture
 def mock_post_request(mock_response):
     """Fixture providing a mocked post request."""
-    with patch("services.github.markdown.render_text.post") as mock_post:
+    with patch("services.github.markdown.render_text.requests.post") as mock_post:
         mock_post.return_value = mock_response
         yield mock_post
 
@@ -207,7 +208,7 @@ def test_render_text_http_error_returns_empty_string(mock_base_args):
     """Test that HTTP errors return empty string due to handle_exceptions decorator."""
     text = "Test content"
 
-    with patch("services.github.markdown.render_text.post") as mock_post:
+    with patch("services.github.markdown.render_text.requests.post") as mock_post:
         mock_response = MagicMock()
         # Create a proper HTTPError with a response object
         http_error = HTTPError("404 Not Found")
@@ -229,7 +230,7 @@ def test_render_text_request_exception_returns_empty_string(mock_base_args):
     """Test that request exceptions return empty string due to handle_exceptions decorator."""
     text = "Test content"
 
-    with patch("services.github.markdown.render_text.post") as mock_post:
+    with patch("services.github.markdown.render_text.requests.post") as mock_post:
         mock_post.side_effect = requests.RequestException("Connection error")
 
         result = render_text(mock_base_args, text)
@@ -252,7 +253,7 @@ def test_render_text_returns_response_text(mock_base_args):
     text = "Test content"
     expected_response = "<h1>Rendered HTML</h1>"
 
-    with patch("services.github.markdown.render_text.post") as mock_post:
+    with patch("services.github.markdown.render_text.requests.post") as mock_post:
         mock_response = MagicMock()
         mock_response.text = expected_response
         mock_response.raise_for_status.return_value = None
@@ -356,7 +357,7 @@ def test_render_text_json_decode_error_returns_empty_string(mock_base_args):
     """Test that JSON decode errors return empty string due to handle_exceptions decorator."""
     text = "Test content"
 
-    with patch("services.github.markdown.render_text.post") as mock_post:
+    with patch("services.github.markdown.render_text.requests.post") as mock_post:
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
         mock_response.text = "Invalid JSON response"
@@ -374,7 +375,7 @@ def test_render_text_attribute_error_returns_empty_string(mock_base_args):
     """Test that attribute errors return empty string due to handle_exceptions decorator."""
     text = "Test content"
 
-    with patch("services.github.markdown.render_text.post") as mock_post:
+    with patch("services.github.markdown.render_text.requests.post") as mock_post:
         # Create a mock response that doesn't have a text attribute
         mock_response = MagicMock(spec=[])  # Empty spec means no attributes
         mock_response.raise_for_status = MagicMock()

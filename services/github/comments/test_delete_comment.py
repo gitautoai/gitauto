@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 import requests
 from faker import Faker
-from requests import HTTPError
+from requests.exceptions import HTTPError
 
 from services.github.comments.delete_comment import delete_comment
 
@@ -24,7 +24,9 @@ def test_delete_comment_success(mock_delete_response):
     token = fake.sha256()
     comment_id = fake.random_int(min=1000, max=99999)
 
-    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+    with patch(
+        "services.github.comments.delete_comment.requests.delete"
+    ) as mock_delete:
         with patch(
             "services.github.comments.delete_comment.create_headers"
         ) as mock_headers:
@@ -50,7 +52,9 @@ def test_delete_comment_with_different_comment_id(mock_delete_response):
     token = fake.sha256()
     comment_id = fake.random_int(min=1000, max=99999)
 
-    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+    with patch(
+        "services.github.comments.delete_comment.requests.delete"
+    ) as mock_delete:
         mock_delete.return_value = mock_delete_response
 
         delete_comment(
@@ -76,7 +80,9 @@ def test_delete_comment_404_returns_none_silently():
     mock_response.status_code = 404
     mock_response.raise_for_status.side_effect = HTTPError("404 Not Found")
 
-    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+    with patch(
+        "services.github.comments.delete_comment.requests.delete"
+    ) as mock_delete:
         mock_delete.return_value = mock_response
 
         result = delete_comment(
@@ -101,7 +107,9 @@ def test_delete_comment_non_404_error_handled_by_decorator():
     mock_response.status_code = 500
     mock_response.raise_for_status.side_effect = HTTPError("500 Server Error")
 
-    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+    with patch(
+        "services.github.comments.delete_comment.requests.delete"
+    ) as mock_delete:
         mock_delete.return_value = mock_response
 
         result = delete_comment(
@@ -121,7 +129,9 @@ def test_delete_comment_request_timeout_handled():
     token = fake.sha256()
     comment_id = fake.random_int(min=1000, max=99999)
 
-    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+    with patch(
+        "services.github.comments.delete_comment.requests.delete"
+    ) as mock_delete:
         mock_delete.side_effect = requests.exceptions.Timeout("Request timed out")
 
         result = delete_comment(
@@ -141,7 +151,9 @@ def test_delete_comment_uses_correct_timeout(mock_delete_response):
     token = fake.sha256()
     comment_id = fake.random_int(min=1000, max=99999)
 
-    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+    with patch(
+        "services.github.comments.delete_comment.requests.delete"
+    ) as mock_delete:
         with patch("services.github.comments.delete_comment.TIMEOUT", 60):
             mock_delete.return_value = mock_delete_response
 
@@ -163,7 +175,9 @@ def test_delete_comment_uses_github_api_url(mock_delete_response):
     token = fake.sha256()
     comment_id = fake.random_int(min=1000, max=99999)
 
-    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+    with patch(
+        "services.github.comments.delete_comment.requests.delete"
+    ) as mock_delete:
         with patch(
             "services.github.comments.delete_comment.GITHUB_API_URL",
             "https://custom.api.github.com",
@@ -188,7 +202,9 @@ def test_delete_comment_with_various_comment_ids(mock_delete_response, comment_i
     repo = fake.slug()
     token = fake.sha256()
 
-    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+    with patch(
+        "services.github.comments.delete_comment.requests.delete"
+    ) as mock_delete:
         mock_delete.return_value = mock_delete_response
 
         delete_comment(
@@ -209,7 +225,9 @@ def test_delete_comment_connection_error_handled():
     token = fake.sha256()
     comment_id = fake.random_int(min=1000, max=99999)
 
-    with patch("services.github.comments.delete_comment.delete") as mock_delete:
+    with patch(
+        "services.github.comments.delete_comment.requests.delete"
+    ) as mock_delete:
         mock_delete.side_effect = requests.exceptions.ConnectionError(
             "Connection failed"
         )

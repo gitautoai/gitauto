@@ -62,6 +62,6 @@ def test_object_with_get_method():
 def test_default_types():
     d = {"name": "test"}
     assert safe_get_attribute(d, "missing", None) is None
-    assert safe_get_attribute(d, "missing", []) == []
+    assert not safe_get_attribute(d, "missing", [])
     assert safe_get_attribute(d, "missing", {}) == {}
     assert safe_get_attribute(d, "missing", False) is False

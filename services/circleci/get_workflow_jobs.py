@@ -1,5 +1,5 @@
 # Third-party libraries
-from requests import get
+import requests
 
 # Internal libraries
 from config import TIMEOUT
@@ -17,7 +17,7 @@ def get_circleci_workflow_jobs(workflow_id: str, circle_token: str):
     url = f"{base_url}/workflow/{workflow_id}/job"
     headers = {"Circle-Token": circle_token}
 
-    response = get(url=url, headers=headers, timeout=TIMEOUT)
+    response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
     if response.status_code == 404:
         return list[CircleCIWorkflowJob]()
     response.raise_for_status()

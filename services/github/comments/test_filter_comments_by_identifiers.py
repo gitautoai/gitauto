@@ -8,7 +8,7 @@ from services.github.comments.filter_comments_by_identifiers import (
 def test_filter_comments_by_identifiers_empty_comments():
     """Test with empty comments list"""
     result = filter_comments_by_identifiers([], ["identifier"])
-    assert result == []
+    assert not result
 
 
 def test_filter_comments_by_identifiers_empty_identifiers():
@@ -20,7 +20,7 @@ def test_filter_comments_by_identifiers_empty_identifiers():
         "gitauto-ai[bot]",
     ):
         result = filter_comments_by_identifiers(comments, [])
-        assert result == []
+        assert not result
 
 
 def test_filter_comments_by_identifiers_matching_comment():
@@ -57,7 +57,7 @@ def test_filter_comments_by_identifiers_wrong_user():
         "gitauto-ai[bot]",
     ):
         result = filter_comments_by_identifiers(comments, ["test-identifier"])
-        assert result == []
+        assert not result
 
 
 def test_filter_comments_by_identifiers_no_identifier_match():
@@ -75,7 +75,7 @@ def test_filter_comments_by_identifiers_no_identifier_match():
         "gitauto-ai[bot]",
     ):
         result = filter_comments_by_identifiers(comments, ["test-identifier"])
-        assert result == []
+        assert not result
 
 
 def test_filter_comments_by_identifiers_multiple_identifiers():
@@ -182,7 +182,7 @@ def test_filter_comments_by_identifiers_exception_handling():
     ):
         result = filter_comments_by_identifiers(malformed_comments, ["test-identifier"])
         # Should return empty list due to @handle_exceptions decorator with default_return_value=[]
-        assert result == []
+        assert not result
 
 
 def test_filter_comments_by_identifiers_case_sensitive():
@@ -200,7 +200,7 @@ def test_filter_comments_by_identifiers_case_sensitive():
         "gitauto-ai[bot]",
     ):
         result = filter_comments_by_identifiers(comments, ["test-identifier"])
-        assert result == []
+        assert not result
 
         result = filter_comments_by_identifiers(comments, ["TEST-IDENTIFIER"])
         assert len(result) == 1

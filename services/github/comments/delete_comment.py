@@ -1,4 +1,5 @@
-from requests import HTTPError, delete
+import requests
+from requests.exceptions import HTTPError
 
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.utils.create_headers import create_headers
@@ -10,7 +11,7 @@ def delete_comment(*, owner: str, repo: str, token: str, comment_id: int):
     """https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#delete-an-issue-comment"""
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/comments/{comment_id}"
     headers: dict[str, str] = create_headers(token=token)
-    response = delete(url=url, headers=headers, timeout=TIMEOUT)
+    response = requests.delete(url=url, headers=headers, timeout=TIMEOUT)
 
     try:
         response.raise_for_status()

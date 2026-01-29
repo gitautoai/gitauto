@@ -40,7 +40,7 @@ def test_get_workflow_run_path_success(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_path.get"
+        "services.github.workflow_runs.get_workflow_run_path.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_path.create_headers"
     ) as mock_create_headers:
@@ -71,7 +71,7 @@ def test_get_workflow_run_path_404_not_found(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_path.get"
+        "services.github.workflow_runs.get_workflow_run_path.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_path.create_headers"
     ) as mock_create_headers:
@@ -99,7 +99,7 @@ def test_get_workflow_run_path_404_without_not_found_text(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_path.get"
+        "services.github.workflow_runs.get_workflow_run_path.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_path.create_headers"
     ) as mock_create_headers:
@@ -127,7 +127,7 @@ def test_get_workflow_run_path_http_error(test_owner, test_repo, test_token):
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_path.get"
+        "services.github.workflow_runs.get_workflow_run_path.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_path.create_headers"
     ) as mock_create_headers:
@@ -159,7 +159,7 @@ def test_get_workflow_run_path_rate_limit_exceeded(test_owner, test_repo, test_t
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_path.get"
+        "services.github.workflow_runs.get_workflow_run_path.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_path.create_headers"
     ) as mock_create_headers, patch(
@@ -194,7 +194,7 @@ def test_get_workflow_run_path_json_decode_error(test_owner, test_repo, test_tok
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_path.get"
+        "services.github.workflow_runs.get_workflow_run_path.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_path.create_headers"
     ) as mock_create_headers:
@@ -222,7 +222,7 @@ def test_get_workflow_run_path_url_construction(test_owner, test_repo, test_toke
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_path.get"
+        "services.github.workflow_runs.get_workflow_run_path.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_path.create_headers"
     ) as mock_create_headers, patch(
@@ -251,7 +251,7 @@ def test_get_workflow_run_path_timeout_parameter(test_owner, test_repo, test_tok
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_path.get"
+        "services.github.workflow_runs.get_workflow_run_path.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_path.create_headers"
     ) as mock_create_headers, patch(
@@ -276,7 +276,7 @@ def test_get_workflow_run_path_missing_path_key(test_owner, test_repo, test_toke
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_path.get"
+        "services.github.workflow_runs.get_workflow_run_path.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_path.create_headers"
     ) as mock_create_headers:

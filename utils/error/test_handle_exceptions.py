@@ -369,7 +369,7 @@ def test_handle_exceptions_preserves_return_type():
     assert isinstance(result, list)
 
     error_result = get_items(-1)
-    assert error_result == []
+    assert not error_result
     assert isinstance(error_result, list)
 
 

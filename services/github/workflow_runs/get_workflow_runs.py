@@ -1,6 +1,6 @@
 # Third party imports
 from typing import cast
-from requests import get
+import requests
 
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT
@@ -33,7 +33,7 @@ def get_workflow_runs(
         else:
             url += f"&branch={branch}"
 
-        response = get(url=url, headers=headers, timeout=TIMEOUT)
+        response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
         response.raise_for_status()
 
         runs = response.json().get("workflow_runs", [])

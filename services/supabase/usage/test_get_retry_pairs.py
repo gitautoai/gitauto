@@ -45,7 +45,7 @@ def test_get_retry_workflow_id_hash_pairs_with_empty_response_data():
 
         result = get_retry_workflow_id_hash_pairs(123, 456, 789)
 
-        assert result == []
+        assert not result
 
 
 def test_get_retry_workflow_id_hash_pairs_with_none_response_data():
@@ -63,7 +63,7 @@ def test_get_retry_workflow_id_hash_pairs_with_none_response_data():
 
         result = get_retry_workflow_id_hash_pairs(123, 456, 789)
 
-        assert result == []
+        assert not result
 
 
 def test_get_retry_workflow_id_hash_pairs_with_none_retry_pairs():
@@ -81,7 +81,7 @@ def test_get_retry_workflow_id_hash_pairs_with_none_retry_pairs():
 
         result = get_retry_workflow_id_hash_pairs(123, 456, 789)
 
-        assert result == []
+        assert not result
 
 
 def test_get_retry_workflow_id_hash_pairs_with_missing_key():
@@ -99,7 +99,7 @@ def test_get_retry_workflow_id_hash_pairs_with_missing_key():
 
         result = get_retry_workflow_id_hash_pairs(123, 456, 789)
 
-        assert result == []
+        assert not result
 
 
 def test_get_retry_workflow_id_hash_pairs_with_exception():
@@ -108,7 +108,7 @@ def test_get_retry_workflow_id_hash_pairs_with_exception():
 
         result = get_retry_workflow_id_hash_pairs(123, 456, 789)
 
-        assert result == []
+        assert not result
 
 
 def test_get_retry_workflow_id_hash_pairs_with_empty_list():
@@ -126,7 +126,7 @@ def test_get_retry_workflow_id_hash_pairs_with_empty_list():
 
         result = get_retry_workflow_id_hash_pairs(123, 456, 789)
 
-        assert result == []
+        assert not result
 
 
 def test_get_retry_workflow_id_hash_pairs_with_single_hash():
@@ -153,7 +153,7 @@ def test_get_retry_workflow_id_hash_pairs_with_attribute_error():
 
         result = get_retry_workflow_id_hash_pairs(123, 456, 789)
 
-        assert result == []
+        assert not result
 
 
 def test_get_retry_workflow_id_hash_pairs_with_key_error():
@@ -162,7 +162,7 @@ def test_get_retry_workflow_id_hash_pairs_with_key_error():
 
         result = get_retry_workflow_id_hash_pairs(123, 456, 789)
 
-        assert result == []
+        assert not result
 
 
 def test_get_retry_workflow_id_hash_pairs_with_type_error():
@@ -171,7 +171,7 @@ def test_get_retry_workflow_id_hash_pairs_with_type_error():
 
         result = get_retry_workflow_id_hash_pairs(123, 456, 789)
 
-        assert result == []
+        assert not result
 
 
 def test_get_retry_workflow_id_hash_pairs_with_json_decode_error():
@@ -180,7 +180,7 @@ def test_get_retry_workflow_id_hash_pairs_with_json_decode_error():
 
         result = get_retry_workflow_id_hash_pairs(123, 456, 789)
 
-        assert result == []
+        assert not result
 
 
 def test_get_retry_workflow_id_hash_pairs_with_zero_values():
@@ -279,7 +279,7 @@ def test_get_retry_workflow_id_hash_pairs_with_response_execute_exception():
 
         result = get_retry_workflow_id_hash_pairs(123, 456, 789)
 
-        assert result == []
+        assert not result
 
 
 def test_get_retry_workflow_id_hash_pairs_with_response_data_access_exception():
@@ -299,4 +299,4 @@ def test_get_retry_workflow_id_hash_pairs_with_response_data_access_exception():
         mock_table.execute.return_value = mock_response
 
         result = get_retry_workflow_id_hash_pairs(123, 456, 789)
-        assert result == []
+        assert not result

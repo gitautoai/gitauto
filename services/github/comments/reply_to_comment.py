@@ -1,4 +1,4 @@
-from requests import post
+import requests
 
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.types.github_types import BaseArgs
@@ -19,6 +19,8 @@ def reply_to_comment(base_args: BaseArgs, body: str):
         raise ValueError("pull_number and review_id are required for reply_to_comment")
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies"
     headers: dict[str, str] = create_headers(token=token)
-    response = post(url=url, headers=headers, json={"body": body}, timeout=TIMEOUT)
+    response = requests.post(
+        url=url, headers=headers, json={"body": body}, timeout=TIMEOUT
+    )
     response.raise_for_status()
     return response.json()["url"]

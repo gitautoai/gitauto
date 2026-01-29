@@ -10,7 +10,7 @@ def test_get_all_coverages_integration_with_nonexistent_repo():
     result = get_all_coverages(owner_id=789, repo_id=nonexistent_repo_id)
 
     # Verify - should return empty list for non-existent repo
-    assert result == []
+    assert not result
 
 
 def test_get_all_coverages_integration_with_zero_repo_id():
@@ -19,7 +19,7 @@ def test_get_all_coverages_integration_with_zero_repo_id():
     result = get_all_coverages(owner_id=789, repo_id=0)
 
     # Verify - should return empty list for repo_id 0
-    assert result == []
+    assert not result
 
 
 def test_get_all_coverages_integration_function_signature():

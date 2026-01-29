@@ -3,7 +3,7 @@ import io
 import zipfile
 
 # Third-party libraries
-from requests import get
+import requests
 
 # Internal libraries
 from config import GITHUB_API_URL, TIMEOUT, UTF8
@@ -19,7 +19,7 @@ def get_workflow_run_logs(owner: str, repo: str, run_id: int, token: str):
     """https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#download-workflow-run-logs"""
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs/{run_id}/logs"
     headers = create_headers(media_type="", token=token)
-    response = get(url=url, headers=headers, timeout=TIMEOUT)
+    response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
     if response.status_code == 404 and "Not Found" in response.text:
         return response.status_code
     response.raise_for_status()

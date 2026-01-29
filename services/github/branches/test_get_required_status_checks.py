@@ -97,7 +97,7 @@ def test_get_required_status_checks_404_no_protection(
         )
 
         assert status_code == 404
-        assert result == []
+        assert not result
 
 
 def test_get_required_status_checks_no_required_checks(
@@ -119,7 +119,7 @@ def test_get_required_status_checks_no_required_checks(
         )
 
         assert status_code == 200
-        assert result == []
+        assert not result
 
 
 def test_get_required_status_checks_only_contexts(test_owner, test_repo, test_token):

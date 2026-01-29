@@ -85,7 +85,7 @@ class TestSearchUrls:
 
         result = search_urls("test query")
 
-        assert result == []
+        assert not result
 
     @patch("services.google.search.search")
     def test_search_urls_exception_handling(self, mock_search):
@@ -95,7 +95,7 @@ class TestSearchUrls:
         result = search_urls("test query")
 
         # Should return default value [] due to handle_exceptions decorator
-        assert result == []
+        assert not result
 
 
 class TestScrapeContentFromUrl:
@@ -347,7 +347,7 @@ class TestGoogleSearch:
 
         result = google_search(base_args, "")
 
-        assert result == []
+        assert not result
 
     @patch("services.google.search.scrape_content_from_url")
     @patch("services.google.search.search_urls")
@@ -437,7 +437,7 @@ class TestGoogleSearch:
 
         result = google_search(base_args, "test query")
 
-        assert result == []
+        assert not result
         mock_scrape.assert_not_called()
 
     @patch("services.google.search.scrape_content_from_url")
@@ -453,7 +453,7 @@ class TestGoogleSearch:
         result = google_search(base_args, "test query")
 
         # Should return default value [] due to handle_exceptions decorator
-        assert result == []
+        assert not result
 
     def test_google_search_with_falsy_query_values(self, create_test_base_args):
         """Test google_search with various falsy query values."""
@@ -463,7 +463,7 @@ class TestGoogleSearch:
 
         for falsy_value in falsy_values:
             result = google_search(base_args, falsy_value)
-            assert result == [], f"Expected [] for falsy query value: {falsy_value}"
+            assert not result, f"Expected [] for falsy query value: {falsy_value}"
 
 
 class TestConstants:

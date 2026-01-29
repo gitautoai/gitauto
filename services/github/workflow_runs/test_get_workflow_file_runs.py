@@ -90,4 +90,4 @@ def test_get_workflow_file_runs_empty(mock_get):
         token="test-token",
     )
 
-    assert runs == []
+    assert not runs

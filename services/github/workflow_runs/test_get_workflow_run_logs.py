@@ -89,7 +89,7 @@ def test_get_workflow_run_logs_success(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -126,7 +126,7 @@ def test_get_workflow_run_logs_404_not_found(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -161,7 +161,7 @@ def test_get_workflow_run_logs_404_without_not_found_text(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -192,7 +192,7 @@ def test_get_workflow_run_logs_failed_step_not_found(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -223,7 +223,7 @@ def test_get_workflow_run_logs_failed_step_none(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -254,7 +254,7 @@ def test_get_workflow_run_logs_failed_step_file_not_in_zip(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -295,7 +295,7 @@ def test_get_workflow_run_logs_empty_zip(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -341,7 +341,7 @@ def test_get_workflow_run_logs_short_log_lines(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -382,7 +382,7 @@ def test_get_workflow_run_logs_exactly_29_char_lines(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -422,7 +422,7 @@ def test_get_workflow_run_logs_timestamp_removal_verification(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -451,7 +451,7 @@ def test_get_workflow_run_logs_url_construction(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -484,7 +484,7 @@ def test_get_workflow_run_logs_timeout_parameter(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -519,7 +519,7 @@ def test_get_workflow_run_logs_http_error_after_404_check(
 
     # Act - function has handle_exceptions decorator, so it should return default value
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers:
@@ -548,7 +548,7 @@ def test_get_workflow_run_logs_invalid_zip_content(
 
     # Act - function has handle_exceptions decorator, so it should return default value
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -596,7 +596,7 @@ def test_get_workflow_run_logs_different_log_file_names(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -637,7 +637,7 @@ def test_get_workflow_run_logs_unicode_content(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -675,7 +675,7 @@ def test_get_workflow_run_logs_empty_log_file(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(
@@ -717,7 +717,7 @@ def test_get_workflow_run_logs_single_line_log(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_run_logs.get"
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_run_logs.create_headers"
     ) as mock_create_headers, patch(

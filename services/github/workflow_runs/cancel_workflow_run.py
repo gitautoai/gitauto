@@ -1,5 +1,5 @@
 # Third party imports
-from requests import post
+import requests
 
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT
@@ -12,4 +12,4 @@ def cancel_workflow_run(owner: str, repo: str, run_id: int, token: str):
     """https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#cancel-a-workflow-run"""
     headers = create_headers(token=token, media_type="")
     cancel_url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/actions/runs/{run_id}/cancel"
-    post(url=cancel_url, headers=headers, timeout=TIMEOUT)
+    requests.post(url=cancel_url, headers=headers, timeout=TIMEOUT)

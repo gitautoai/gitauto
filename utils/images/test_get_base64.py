@@ -25,7 +25,7 @@ def mock_response():
 @pytest.fixture
 def mock_requests_get():
     """Mock requests.get function."""
-    with patch("utils.images.get_base64.get") as mock_get:
+    with patch("utils.images.get_base64.requests.get") as mock_get:
         yield mock_get
 
 

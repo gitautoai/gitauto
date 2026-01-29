@@ -45,7 +45,7 @@ def test_get_usage_by_pr_empty_result():
 
         result = get_usage_by_pr(owner_id=123, repo_id=456, pr_number=789)
 
-        assert result == []
+        assert not result
 
 
 def test_get_usage_by_pr_with_exception():
@@ -54,4 +54,4 @@ def test_get_usage_by_pr_with_exception():
 
         result = get_usage_by_pr(owner_id=123, repo_id=456, pr_number=789)
 
-        assert result == []
+        assert not result

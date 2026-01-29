@@ -1,8 +1,9 @@
 from unittest.mock import patch, MagicMock
 import json
+
 import pytest
 import requests
-from requests import HTTPError
+from requests.exceptions import HTTPError
 
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.installations.get_installation_permissions import (
@@ -44,7 +45,7 @@ def test_get_installation_permissions_success(mock_response, mock_headers):
     expected_url = f"{GITHUB_API_URL}/app/installations/{installation_id}"
 
     with patch(
-        "services.github.installations.get_installation_permissions.get"
+        "services.github.installations.get_installation_permissions.requests.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
     ) as mock_create_headers, patch(
@@ -84,7 +85,7 @@ def test_get_installation_permissions_no_permissions_key(mock_headers):
     mock_response.raise_for_status.return_value = None
 
     with patch(
-        "services.github.installations.get_installation_permissions.get"
+        "services.github.installations.get_installation_permissions.requests.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
     ) as mock_create_headers, patch(
@@ -110,7 +111,7 @@ def test_get_installation_permissions_empty_permissions(mock_headers):
     mock_response.raise_for_status.return_value = None
 
     with patch(
-        "services.github.installations.get_installation_permissions.get"
+        "services.github.installations.get_installation_permissions.requests.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
     ) as mock_create_headers, patch(
@@ -141,7 +142,7 @@ def test_get_installation_permissions_http_error(mock_headers):
     mock_response.raise_for_status.side_effect = http_error
 
     with patch(
-        "services.github.installations.get_installation_permissions.get"
+        "services.github.installations.get_installation_permissions.requests.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
     ) as mock_create_headers, patch(
@@ -164,7 +165,7 @@ def test_get_installation_permissions_request_exception(mock_headers):
     mock_jwt = "mock_jwt_token"
 
     with patch(
-        "services.github.installations.get_installation_permissions.get"
+        "services.github.installations.get_installation_permissions.requests.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
     ) as mock_create_headers, patch(
@@ -191,7 +192,7 @@ def test_get_installation_permissions_json_decode_error(mock_headers):
     mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
 
     with patch(
-        "services.github.installations.get_installation_permissions.get"
+        "services.github.installations.get_installation_permissions.requests.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
     ) as mock_create_headers, patch(
@@ -217,7 +218,7 @@ def test_get_installation_permissions_with_different_installation_ids():
         expected_url = f"{GITHUB_API_URL}/app/installations/{installation_id}"
 
         with patch(
-            "services.github.installations.get_installation_permissions.get"
+            "services.github.installations.get_installation_permissions.requests.get"
         ) as mock_get, patch(
             "services.github.installations.get_installation_permissions.create_headers"
         ) as mock_create_headers, patch(
@@ -246,7 +247,7 @@ def test_get_installation_permissions_always_uses_jwt():
     mock_jwt = "mock_jwt_token"
 
     with patch(
-        "services.github.installations.get_installation_permissions.get"
+        "services.github.installations.get_installation_permissions.requests.get"
     ) as mock_get, patch(
         "services.github.installations.get_installation_permissions.create_headers"
     ) as mock_create_headers, patch(

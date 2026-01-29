@@ -64,7 +64,7 @@ def test_get_all_coverages_returns_empty_list_when_no_data(mock_supabase_client)
 
     result = get_all_coverages(owner_id=789, repo_id=123)
 
-    assert result == []
+    assert not result
 
 
 def test_get_all_coverages_returns_empty_list_when_data_is_none(mock_supabase_client):
@@ -77,7 +77,7 @@ def test_get_all_coverages_returns_empty_list_when_data_is_none(mock_supabase_cl
 
     result = get_all_coverages(owner_id=789, repo_id=123)
 
-    assert result == []
+    assert not result
 
 
 def test_get_all_coverages_exception_handling(mock_supabase_client):
@@ -86,4 +86,4 @@ def test_get_all_coverages_exception_handling(mock_supabase_client):
 
     result = get_all_coverages(owner_id=789, repo_id=123)
 
-    assert result == []
+    assert not result

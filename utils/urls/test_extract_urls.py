@@ -24,10 +24,10 @@ def test_extract_image_urls_with_svg():
 
 def test_extract_image_urls_with_invalid_input():
     result = extract_image_urls("")
-    assert result == []
+    assert not result
 
     result = extract_image_urls("<img>")
-    assert result == []
+    assert not result
 
 
 def test_extract_urls_with_github_urls():
