@@ -913,8 +913,8 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
    - Run `ruff check --select=T201 . --exclude schemas/,venv/,scripts/` to find print statements - **FIX ALL before continuing** (use custom logger instead)
    - Run `scripts/lint/check_builtin_logging.sh` to find built-in logging imports - **FIX ALL before continuing** (use `from utils.logging.logging_config import logger` instead)
 5. **CRITICAL**: Check `git status` FIRST to see ALL changes including deleted/renamed files
-6. Get list of modified, created, AND deleted files ONCE: `(git diff --name-only; git diff --name-only --staged; git ls-files --others --exclude-standard) | sort -u`
-   - This command captures: modified files, staged files, and newly created untracked files
+6. Get list of modified, created, AND deleted files ONCE: `scripts/git/list_changed_files.sh`
+   - This script captures: modified files, staged files, and newly created untracked files
    - NOTE: Deleted files that are already staged won't appear in this list but MUST be included in the commit
    - Store this list and use it for all subsequent steps
    - Extract Python files from this list: filter for `.py` files
