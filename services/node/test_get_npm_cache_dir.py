@@ -8,6 +8,7 @@ def test_set_npm_cache_env_sets_on_lambda():
         env = {}
         set_npm_cache_env(env)
         assert env["npm_config_cache"] == "/tmp/.npm"
+        assert env["YARN_CACHE_FOLDER"] == "/tmp/.yarn"
 
 
 def test_set_npm_cache_env_does_nothing_locally():
@@ -15,3 +16,4 @@ def test_set_npm_cache_env_does_nothing_locally():
         env = {}
         set_npm_cache_env(env)
         assert "npm_config_cache" not in env
+        assert "YARN_CACHE_FOLDER" not in env
