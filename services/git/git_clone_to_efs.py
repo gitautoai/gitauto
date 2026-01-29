@@ -32,9 +32,21 @@ async def git_clone_to_efs(efs_dir: str, clone_url: str, branch: str):
         logger.info("EFS already has .git at %s, ensuring latest", efs_dir)
 
         # EFS persists across Lambda invocations; origin URL may contain expired token
-        await run_subprocess_async(
-            ["git", "remote", "set-url", "origin", clone_url], efs_dir
+        # Check if origin remote exists (may be missing if previous clone was interrupted)
+        returncode, _ = await run_subprocess_async(
+            ["git", "remote", "get-url", "origin"], efs_dir
         )
+        if returncode == 0:
+            # Origin exists, update URL with fresh token
+            await run_subprocess_async(
+                ["git", "remote", "set-url", "origin", clone_url], efs_dir
+            )
+        else:
+            # Origin missing (incomplete previous clone), add it
+            await run_subprocess_async(
+                ["git", "remote", "add", "origin", clone_url], efs_dir
+            )
+
         returncode, _ = await run_subprocess_async(
             ["git", "fetch", "--depth", "1", "origin", branch], efs_dir
         )
