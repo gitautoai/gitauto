@@ -71,7 +71,7 @@ def sample_artifacts():
     ]
 
 
-@patch("services.github.artifacts.get_workflow_artifacts.get")
+@patch("services.github.artifacts.get_workflow_artifacts.requests.get")
 @patch("services.github.artifacts.get_workflow_artifacts.create_headers")
 def test_get_workflow_artifacts_success(
     mock_create_headers, mock_get, mock_response, mock_headers
@@ -99,7 +99,7 @@ def test_get_workflow_artifacts_success(
     assert result[1]["name"] == "test-results"
 
 
-@patch("services.github.artifacts.get_workflow_artifacts.get")
+@patch("services.github.artifacts.get_workflow_artifacts.requests.get")
 @patch("services.github.artifacts.get_workflow_artifacts.create_headers")
 def test_get_workflow_artifacts_empty_response(
     mock_create_headers, mock_get, mock_headers
@@ -118,7 +118,7 @@ def test_get_workflow_artifacts_empty_response(
     assert result == []
 
 
-@patch("services.github.artifacts.get_workflow_artifacts.get")
+@patch("services.github.artifacts.get_workflow_artifacts.requests.get")
 @patch("services.github.artifacts.get_workflow_artifacts.create_headers")
 def test_get_workflow_artifacts_missing_artifacts_key(
     mock_create_headers, mock_get, mock_headers
@@ -137,7 +137,7 @@ def test_get_workflow_artifacts_missing_artifacts_key(
     assert result == []
 
 
-@patch("services.github.artifacts.get_workflow_artifacts.get")
+@patch("services.github.artifacts.get_workflow_artifacts.requests.get")
 @patch("services.github.artifacts.get_workflow_artifacts.create_headers")
 def test_get_workflow_artifacts_with_different_parameters(
     mock_create_headers, mock_get, mock_response, mock_headers
@@ -163,7 +163,7 @@ def test_get_workflow_artifacts_with_different_parameters(
     assert len(result) == 2
 
 
-@patch("services.github.artifacts.get_workflow_artifacts.get")
+@patch("services.github.artifacts.get_workflow_artifacts.requests.get")
 @patch("services.github.artifacts.get_workflow_artifacts.create_headers")
 def test_get_workflow_artifacts_http_error_returns_default(
     mock_create_headers, mock_get, mock_headers
@@ -190,7 +190,7 @@ def test_get_workflow_artifacts_http_error_returns_default(
     assert result == []
 
 
-@patch("services.github.artifacts.get_workflow_artifacts.get")
+@patch("services.github.artifacts.get_workflow_artifacts.requests.get")
 @patch("services.github.artifacts.get_workflow_artifacts.create_headers")
 def test_get_workflow_artifacts_json_decode_error_returns_default(
     mock_create_headers, mock_get, mock_headers
@@ -209,7 +209,7 @@ def test_get_workflow_artifacts_json_decode_error_returns_default(
     assert result == []
 
 
-@patch("services.github.artifacts.get_workflow_artifacts.get")
+@patch("services.github.artifacts.get_workflow_artifacts.requests.get")
 @patch("services.github.artifacts.get_workflow_artifacts.create_headers")
 def test_get_workflow_artifacts_request_exception_returns_default(
     mock_create_headers, mock_get, mock_headers
@@ -226,7 +226,7 @@ def test_get_workflow_artifacts_request_exception_returns_default(
     assert result == []
 
 
-@patch("services.github.artifacts.get_workflow_artifacts.get")
+@patch("services.github.artifacts.get_workflow_artifacts.requests.get")
 @patch("services.github.artifacts.get_workflow_artifacts.create_headers")
 def test_get_workflow_artifacts_single_artifact(
     mock_create_headers, mock_get, mock_headers, sample_artifacts
@@ -257,7 +257,7 @@ def test_get_workflow_artifacts_single_artifact(
         ("owner-with-dashes", "repo_with_underscores", 123456789, "sk-token-123"),
     ],
 )
-@patch("services.github.artifacts.get_workflow_artifacts.get")
+@patch("services.github.artifacts.get_workflow_artifacts.requests.get")
 @patch("services.github.artifacts.get_workflow_artifacts.create_headers")
 def test_get_workflow_artifacts_various_parameters(
     mock_create_headers, mock_get, mock_headers, owner, repo, run_id, token
@@ -285,7 +285,7 @@ def test_get_workflow_artifacts_various_parameters(
     assert result == []
 
 
-@patch("services.github.artifacts.get_workflow_artifacts.get")
+@patch("services.github.artifacts.get_workflow_artifacts.requests.get")
 @patch("services.github.artifacts.get_workflow_artifacts.create_headers")
 def test_get_workflow_artifacts_does_not_call_raise_for_status(
     mock_create_headers, mock_get, mock_headers

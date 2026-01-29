@@ -7,7 +7,7 @@ from config import UTF8
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
 
 
-@patch("services.circleci.get_workflow_jobs.get")
+@patch("services.circleci.get_workflow_jobs.requests.get")
 def test_get_workflow_jobs_with_valid_token(mock_get):
     """Test getting workflow jobs with valid token and workflow ID."""
     workflow_id = "test-workflow-id"
@@ -44,7 +44,7 @@ def test_get_workflow_jobs_with_valid_token(mock_get):
     assert len(success_jobs) >= 1
 
 
-@patch("services.circleci.get_workflow_jobs.get")
+@patch("services.circleci.get_workflow_jobs.requests.get")
 def test_get_workflow_jobs_without_token(mock_get):
     """Test getting workflow jobs without token."""
     workflow_id = "test-workflow-id"
@@ -60,7 +60,7 @@ def test_get_workflow_jobs_without_token(mock_get):
     assert result == []
 
 
-@patch("services.circleci.get_workflow_jobs.get")
+@patch("services.circleci.get_workflow_jobs.requests.get")
 def test_get_workflow_jobs_with_invalid_workflow_id(mock_get):
     """Test getting workflow jobs with invalid workflow ID."""
     workflow_id = "invalid-workflow-id-123"

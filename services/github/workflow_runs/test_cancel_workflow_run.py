@@ -13,7 +13,7 @@ def test_cancel_workflow_run_success(test_owner, test_repo, test_token):
 
     # Act
     with patch(
-        "services.github.workflow_runs.cancel_workflow_run.post"
+        "services.github.workflow_runs.cancel_workflow_run.requests.post"
     ) as mock_post, patch(
         "services.github.workflow_runs.cancel_workflow_run.create_headers"
     ) as mock_create_headers:
@@ -53,7 +53,7 @@ def test_cancel_workflow_run_http_error(test_owner, test_repo, test_token):
 
     # Act
     with patch(
-        "services.github.workflow_runs.cancel_workflow_run.post"
+        "services.github.workflow_runs.cancel_workflow_run.requests.post"
     ) as mock_post, patch(
         "services.github.workflow_runs.cancel_workflow_run.create_headers"
     ) as mock_create_headers:
@@ -73,7 +73,7 @@ def test_cancel_workflow_run_request_exception(test_owner, test_repo, test_token
 
     # Act
     with patch(
-        "services.github.workflow_runs.cancel_workflow_run.post"
+        "services.github.workflow_runs.cancel_workflow_run.requests.post"
     ) as mock_post, patch(
         "services.github.workflow_runs.cancel_workflow_run.create_headers"
     ) as mock_create_headers:
@@ -105,7 +105,7 @@ def test_cancel_workflow_run_rate_limit_exceeded(test_owner, test_repo, test_tok
 
     # Act
     with patch(
-        "services.github.workflow_runs.cancel_workflow_run.post"
+        "services.github.workflow_runs.cancel_workflow_run.requests.post"
     ) as mock_post, patch(
         "services.github.workflow_runs.cancel_workflow_run.create_headers"
     ) as mock_create_headers, patch(
@@ -146,7 +146,7 @@ def test_cancel_workflow_run_secondary_rate_limit(test_owner, test_repo, test_to
 
     # Act
     with patch(
-        "services.github.workflow_runs.cancel_workflow_run.post"
+        "services.github.workflow_runs.cancel_workflow_run.requests.post"
     ) as mock_post, patch(
         "services.github.workflow_runs.cancel_workflow_run.create_headers"
     ) as mock_create_headers, patch(
@@ -177,7 +177,7 @@ def test_cancel_workflow_run_url_construction(test_owner, test_repo, test_token)
 
     # Act
     with patch(
-        "services.github.workflow_runs.cancel_workflow_run.post"
+        "services.github.workflow_runs.cancel_workflow_run.requests.post"
     ) as mock_post, patch(
         "services.github.workflow_runs.cancel_workflow_run.create_headers"
     ) as mock_create_headers, patch(
@@ -204,7 +204,7 @@ def test_cancel_workflow_run_timeout_parameter(test_owner, test_repo, test_token
 
     # Act
     with patch(
-        "services.github.workflow_runs.cancel_workflow_run.post"
+        "services.github.workflow_runs.cancel_workflow_run.requests.post"
     ) as mock_post, patch(
         "services.github.workflow_runs.cancel_workflow_run.create_headers"
     ) as mock_create_headers, patch(

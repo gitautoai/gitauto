@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 from services.circleci.get_pipeline_workflows import get_pipeline_workflows
 
 
-@patch("services.circleci.get_pipeline_workflows.get")
+@patch("services.circleci.get_pipeline_workflows.requests.get")
 def test_get_pipeline_workflows_success(mock_get):
     pipeline_id = "test-pipeline-id"
     token = "test-token"
@@ -30,7 +30,7 @@ def test_get_pipeline_workflows_success(mock_get):
     )
 
 
-@patch("services.circleci.get_pipeline_workflows.get")
+@patch("services.circleci.get_pipeline_workflows.requests.get")
 def test_get_pipeline_workflows_not_found(mock_get):
     pipeline_id = "nonexistent-pipeline"
     token = "test-token"
@@ -44,7 +44,7 @@ def test_get_pipeline_workflows_not_found(mock_get):
     assert result == []
 
 
-@patch("services.circleci.get_pipeline_workflows.get")
+@patch("services.circleci.get_pipeline_workflows.requests.get")
 def test_get_pipeline_workflows_empty_items(mock_get):
     pipeline_id = "test-pipeline-id"
     token = "test-token"
@@ -59,7 +59,7 @@ def test_get_pipeline_workflows_empty_items(mock_get):
     assert result == []
 
 
-@patch("services.circleci.get_pipeline_workflows.get")
+@patch("services.circleci.get_pipeline_workflows.requests.get")
 def test_get_pipeline_workflows_http_error(mock_get):
     pipeline_id = "test-pipeline-id"
     token = "test-token"

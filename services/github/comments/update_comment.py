@@ -1,4 +1,4 @@
-from requests import patch
+import requests
 
 
 from config import TIMEOUT
@@ -16,7 +16,7 @@ def update_comment(body: str, base_args: BaseArgs, **_kwargs):
     if comment_url is None:
         return None
 
-    response = patch(
+    response = requests.patch(
         url=comment_url,
         headers=create_headers(token=token),
         json={"body": body},

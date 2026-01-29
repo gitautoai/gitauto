@@ -9,7 +9,7 @@ from config import UTF8
 from services.circleci.get_build_logs import get_circleci_build_logs
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_with_valid_token(mock_get):
     """Test getting build logs with valid token and project slug."""
     project_slug = "test/project/slug"
@@ -42,7 +42,7 @@ def test_get_build_logs_with_valid_token(mock_get):
     assert "CircleCI Build Log" in result
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_without_token(mock_get):
     """Test getting build logs without token."""
     project_slug = "test/project/slug"
@@ -57,7 +57,7 @@ def test_get_build_logs_without_token(mock_get):
     assert result == 404
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_with_invalid_build_number(mock_get):
     """Test getting build logs with invalid build number."""
     project_slug = "test/project/slug"
@@ -73,7 +73,7 @@ def test_get_build_logs_with_invalid_build_number(mock_get):
     assert result == 404
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_successful_build(mock_get):
     """Test getting logs from a successful build (should return None)."""
     project_slug = "test/project/slug"
@@ -99,7 +99,7 @@ def test_get_build_logs_successful_build(mock_get):
     assert result is None
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_authentication_failed(mock_get):
     """Test getting build logs with authentication failure."""
     project_slug = "test/project/slug"
@@ -115,7 +115,7 @@ def test_get_build_logs_authentication_failed(mock_get):
     assert result == "CircleCI authentication failed. Please check your token."
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_infrastructure_fail_status(mock_get):
     """Test getting logs from a build with infrastructure_fail status."""
     project_slug = "test/project/slug"
@@ -165,7 +165,7 @@ def test_get_build_logs_infrastructure_fail_status(mock_get):
     assert "Infrastructure failure occurred" in result
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_timedout_status(mock_get):
     """Test getting logs from a build with timedout status."""
     project_slug = "test/project/slug"
@@ -208,7 +208,7 @@ def test_get_build_logs_timedout_status(mock_get):
     assert "Build timed out" in result
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_no_steps(mock_get):
     """Test getting logs from a build with no steps."""
     project_slug = "test/project/slug"
@@ -227,7 +227,7 @@ def test_get_build_logs_no_steps(mock_get):
     assert result == "No error logs found in CircleCI build."
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_no_actions(mock_get):
     """Test getting logs from a build with steps but no actions."""
     project_slug = "test/project/slug"
@@ -250,7 +250,7 @@ def test_get_build_logs_no_actions(mock_get):
     assert result == "No error logs found in CircleCI build."
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_no_failed_actions(mock_get):
     """Test getting logs from a build with successful actions only."""
     project_slug = "test/project/slug"
@@ -280,7 +280,7 @@ def test_get_build_logs_no_failed_actions(mock_get):
     assert result == "No error logs found in CircleCI build."
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_no_output_url(mock_get):
     """Test getting logs from a failed action without output_url."""
     project_slug = "test/project/slug"
@@ -308,7 +308,7 @@ def test_get_build_logs_no_output_url(mock_get):
     assert result == "No error logs found in CircleCI build."
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_log_request_failed(mock_get):
     """Test getting logs when log request fails."""
     project_slug = "test/project/slug"
@@ -344,7 +344,7 @@ def test_get_build_logs_log_request_failed(mock_get):
     assert result == "No error logs found in CircleCI build."
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_non_list_log_data(mock_get):
     """Test getting logs when log data is not a list."""
     project_slug = "test/project/slug"
@@ -385,7 +385,7 @@ def test_get_build_logs_non_list_log_data(mock_get):
     assert "This is a string log instead of list" in result
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_non_dict_log_entries(mock_get):
     """Test getting logs when log entries are not dictionaries."""
     project_slug = "test/project/slug"
@@ -432,7 +432,7 @@ def test_get_build_logs_non_dict_log_entries(mock_get):
     assert "dict entry" in result
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_carriage_return_cleanup(mock_get):
     """Test that carriage returns are properly cleaned up in log messages."""
     project_slug = "test/project/slug"
@@ -479,7 +479,7 @@ def test_get_build_logs_carriage_return_cleanup(mock_get):
     assert "\r" not in result
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_multiple_failed_actions_only_first_processed(mock_get):
     """Test that only the first failed action per step is processed."""
     project_slug = "test/project/slug"
@@ -531,7 +531,7 @@ def test_get_build_logs_multiple_failed_actions_only_first_processed(mock_get):
     assert call_count == 1
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_multiple_steps_with_logs(mock_get):
     """Test getting logs from multiple steps with failed actions."""
     project_slug = "test/project/slug"
@@ -590,7 +590,7 @@ def test_get_build_logs_multiple_steps_with_logs(mock_get):
     assert "\n\n" in result
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_missing_step_name(mock_get):
     """Test getting logs from a step without a name."""
     project_slug = "test/project/slug"
@@ -632,7 +632,7 @@ def test_get_build_logs_missing_step_name(mock_get):
     assert "Log message" in result
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_http_error_raises_for_status(mock_get):
     """Test that HTTP errors are raised when raise_on_error=True."""
     project_slug = "test/project/slug"
@@ -653,7 +653,7 @@ def test_get_build_logs_http_error_raises_for_status(mock_get):
         get_circleci_build_logs(project_slug, build_number, token)
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_missing_steps_key(mock_get):
     """Test getting logs from build data without steps key."""
     project_slug = "test/project/slug"
@@ -676,7 +676,7 @@ def test_get_build_logs_missing_steps_key(mock_get):
     assert result == "No error logs found in CircleCI build."
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_missing_actions_key(mock_get):
     """Test getting logs from step without actions key."""
     project_slug = "test/project/slug"
@@ -704,7 +704,7 @@ def test_get_build_logs_missing_actions_key(mock_get):
     assert result == "No error logs found in CircleCI build."
 
 
-@patch("services.circleci.get_build_logs.get")
+@patch("services.circleci.get_build_logs.requests.get")
 def test_get_build_logs_empty_log_message(mock_get):
     """Test getting logs with empty message."""
     project_slug = "test/project/slug"

@@ -72,7 +72,7 @@ def test_get_failed_step_log_file_name_success(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ) as mock_create_headers:
@@ -105,7 +105,7 @@ def test_get_failed_step_log_file_name_no_failed_steps(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ) as mock_create_headers:
@@ -131,7 +131,7 @@ def test_get_failed_step_log_file_name_404_not_found(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ) as mock_create_headers:
@@ -170,7 +170,7 @@ def test_get_failed_step_log_file_name_404_without_not_found_text(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ) as mock_create_headers:
@@ -213,7 +213,7 @@ def test_get_failed_step_log_file_name_multiple_jobs_first_failed(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
@@ -242,7 +242,7 @@ def test_get_failed_step_log_file_name_missing_job_name(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
@@ -267,7 +267,7 @@ def test_get_failed_step_log_file_name_empty_jobs_list(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
@@ -292,7 +292,7 @@ def test_get_failed_step_log_file_name_missing_jobs_key(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
@@ -320,7 +320,7 @@ def test_get_failed_step_log_file_name_url_construction(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ) as mock_create_headers, patch(
@@ -351,7 +351,7 @@ def test_get_failed_step_log_file_name_timeout_parameter(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ) as mock_create_headers, patch(
@@ -379,7 +379,7 @@ def test_get_failed_step_log_file_name_http_error(test_owner, test_repo, test_to
 
     # Act & Assert - function doesn't have handle_exceptions decorator, so it should raise
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ) as mock_create_headers:
@@ -416,7 +416,7 @@ def test_get_failed_step_log_file_name_missing_step_fields(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
@@ -448,7 +448,7 @@ def test_get_failed_step_log_file_name_missing_steps_key(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):
@@ -473,7 +473,7 @@ def test_get_failed_step_log_file_name_empty_steps_list(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_failed_step_log_file_name.get"
+        "services.github.workflow_runs.get_failed_step_log_file_name.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_failed_step_log_file_name.create_headers"
     ):

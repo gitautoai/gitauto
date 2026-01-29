@@ -1,7 +1,7 @@
 from unittest.mock import patch, MagicMock
 import pytest
 import requests
-from requests import HTTPError
+from requests.exceptions import HTTPError
 
 # pylint: disable=unused-argument
 from config import TIMEOUT
@@ -48,7 +48,7 @@ def test_reply_to_comment_success(
     mock_base_args, mock_post_response, mock_create_headers
 ):
     """Test successful reply to comment creation."""
-    with patch("services.github.comments.reply_to_comment.post") as mock_post:
+    with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
 
         result = reply_to_comment(mock_base_args, "Test reply body")
@@ -77,7 +77,7 @@ def test_reply_to_comment_with_empty_body(
     mock_base_args, mock_post_response, mock_create_headers
 ):
     """Test reply to comment with empty body."""
-    with patch("services.github.comments.reply_to_comment.post") as mock_post:
+    with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
 
         result = reply_to_comment(mock_base_args, "")
@@ -110,7 +110,7 @@ It contains multiple paragraphs.
 - And some bullet points
 - With various content"""
 
-    with patch("services.github.comments.reply_to_comment.post") as mock_post:
+    with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
 
         result = reply_to_comment(mock_base_args, multiline_body)
@@ -138,7 +138,7 @@ def test_reply_to_comment_with_special_characters(
     """Test reply to comment with special characters in body."""
     special_body = "Reply with special chars: @user #123 $var & <tag> \"quotes\" 'apostrophes' 中文 🚀"
 
-    with patch("services.github.comments.reply_to_comment.post") as mock_post:
+    with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
 
         result = reply_to_comment(mock_base_args, special_body)
@@ -162,7 +162,7 @@ def test_reply_to_comment_with_special_characters(
 
 def test_reply_to_comment_http_error_handled(mock_base_args, mock_create_headers):
     """Test that HTTP errors are handled by the decorator and return None."""
-    with patch("services.github.comments.reply_to_comment.post") as mock_post:
+    with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_response = MagicMock()
         # Create a proper HTTPError with a response object
         http_error = HTTPError("404 Not Found")
@@ -185,7 +185,7 @@ def test_reply_to_comment_request_exception_handled(
     mock_base_args, mock_create_headers
 ):
     """Test that request exceptions are handled by the decorator and return None."""
-    with patch("services.github.comments.reply_to_comment.post") as mock_post:
+    with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.side_effect = requests.exceptions.RequestException("Connection error")
 
         result = reply_to_comment(mock_base_args, "Test body")
@@ -199,7 +199,7 @@ def test_reply_to_comment_json_decode_error_handled(
     mock_base_args, mock_create_headers
 ):
     """Test that JSON decode errors are handled by the decorator and return None."""
-    with patch("services.github.comments.reply_to_comment.post") as mock_post:
+    with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
         mock_response.json.side_effect = ValueError("Invalid JSON")
@@ -233,7 +233,9 @@ def test_reply_to_comment_url_construction(
         base_args = {**mock_base_args, **case}
         expected_url = f"https://api.github.com/repos/{case['owner']}/{case['repo']}/pulls/{case['pull_number']}/comments/{case['review_id']}/replies"
 
-        with patch("services.github.comments.reply_to_comment.post") as mock_post:
+        with patch(
+            "services.github.comments.reply_to_comment.requests.post"
+        ) as mock_post:
             mock_post.return_value = mock_post_response
 
             # Intentionally passing merged dict to test runtime behavior
@@ -255,7 +257,9 @@ def test_reply_to_comment_different_tokens(
     for token in test_tokens:
         base_args = {**mock_base_args, "token": token}
 
-        with patch("services.github.comments.reply_to_comment.post") as mock_post:
+        with patch(
+            "services.github.comments.reply_to_comment.requests.post"
+        ) as mock_post:
             mock_post.return_value = mock_post_response
 
             # Intentionally passing merged dict to test runtime behavior
@@ -275,7 +279,9 @@ def test_reply_to_comment_response_url_extraction(mock_base_args, mock_create_he
     ]
 
     for response_data in test_responses:
-        with patch("services.github.comments.reply_to_comment.post") as mock_post:
+        with patch(
+            "services.github.comments.reply_to_comment.requests.post"
+        ) as mock_post:
             mock_response = MagicMock()
             mock_response.json.return_value = response_data
             mock_response.raise_for_status.return_value = None
@@ -300,7 +306,7 @@ def test_reply_to_comment_various_ids(
     base_args = {**mock_base_args, "pull_number": pull_number, "review_id": review_id}
     expected_url = f"https://api.github.com/repos/test-owner/test-repo/pulls/{pull_number}/comments/{review_id}/replies"
 
-    with patch("services.github.comments.reply_to_comment.post") as mock_post:
+    with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
 
         # Intentionally passing merged dict to test runtime behavior
@@ -345,7 +351,7 @@ def test_reply_to_comment_various_body_content(
     mock_base_args, mock_post_response, mock_create_headers, body_content
 ):
     """Test reply to comment with various body content formats."""
-    with patch("services.github.comments.reply_to_comment.post") as mock_post:
+    with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
 
         result = reply_to_comment(mock_base_args, body_content)

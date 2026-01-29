@@ -1,4 +1,4 @@
-from requests import post
+import requests
 
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.types.github_types import BaseArgs
@@ -15,6 +15,6 @@ def render_text(base_args: BaseArgs, text: str) -> str:
     url = f"{GITHUB_API_URL}/markdown"
     headers = create_headers(token=token)
     body = {"text": text, "mode": "gfm", "context": f"{owner}/{repo}"}
-    response = post(url=url, headers=headers, json=body, timeout=TIMEOUT)
+    response = requests.post(url=url, headers=headers, json=body, timeout=TIMEOUT)
     response.raise_for_status()
     return response.text

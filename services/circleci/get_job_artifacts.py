@@ -1,5 +1,5 @@
 # Third-party libraries
-from requests import get
+import requests
 
 # Internal libraries
 from config import TIMEOUT
@@ -14,7 +14,7 @@ def get_circleci_job_artifacts(project_slug: str, job_number: str, circle_token:
     url = f"{base_url}/project/{project_slug}/{job_number}/artifacts"
     headers = {"Circle-Token": circle_token}
 
-    response = get(url=url, headers=headers, timeout=TIMEOUT)
+    response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
     if response.status_code == 404:
         return list[CircleCIArtifact]()
     response.raise_for_status()

@@ -81,7 +81,7 @@ def test_get_workflow_runs_success_with_commit_sha(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_runs.get"
+        "services.github.workflow_runs.get_workflow_runs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers:
@@ -120,7 +120,7 @@ def test_get_workflow_runs_success_with_branch(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_runs.get"
+        "services.github.workflow_runs.get_workflow_runs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers:
@@ -152,7 +152,7 @@ def test_get_workflow_runs_both_commit_sha_and_branch_prefers_commit_sha(
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_runs.get"
+        "services.github.workflow_runs.get_workflow_runs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers:
@@ -214,7 +214,7 @@ def test_get_workflow_runs_http_error(test_owner, test_repo, test_token):
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_runs.get"
+        "services.github.workflow_runs.get_workflow_runs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers:
@@ -236,7 +236,7 @@ def test_get_workflow_runs_request_exception(test_owner, test_repo, test_token):
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_runs.get"
+        "services.github.workflow_runs.get_workflow_runs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers:
@@ -268,7 +268,7 @@ def test_get_workflow_runs_rate_limit_exceeded(test_owner, test_repo, test_token
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_runs.get"
+        "services.github.workflow_runs.get_workflow_runs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers, patch(
@@ -314,7 +314,7 @@ def test_get_workflow_runs_secondary_rate_limit(test_owner, test_repo, test_toke
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_runs.get"
+        "services.github.workflow_runs.get_workflow_runs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers, patch(
@@ -347,7 +347,7 @@ def test_get_workflow_runs_json_decode_error(test_owner, test_repo, test_token):
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_runs.get"
+        "services.github.workflow_runs.get_workflow_runs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers:
@@ -376,7 +376,7 @@ def test_get_workflow_runs_missing_workflow_runs_key(test_owner, test_repo, test
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_runs.get"
+        "services.github.workflow_runs.get_workflow_runs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers:
@@ -404,7 +404,7 @@ def test_get_workflow_runs_url_construction_with_commit_sha():
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_runs.get"
+        "services.github.workflow_runs.get_workflow_runs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers, patch(
@@ -436,7 +436,7 @@ def test_get_workflow_runs_url_construction_with_branch():
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_runs.get"
+        "services.github.workflow_runs.get_workflow_runs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers, patch(
@@ -465,7 +465,7 @@ def test_get_workflow_runs_timeout_parameter(test_owner, test_repo, test_token):
 
     # Act
     with patch(
-        "services.github.workflow_runs.get_workflow_runs.get"
+        "services.github.workflow_runs.get_workflow_runs.requests.get"
     ) as mock_get, patch(
         "services.github.workflow_runs.get_workflow_runs.create_headers"
     ) as mock_create_headers, patch(

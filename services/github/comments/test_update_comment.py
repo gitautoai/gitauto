@@ -18,7 +18,7 @@ def test_update_comment_success(
     )
 
     # Act
-    with patch("services.github.comments.update_comment.patch") as mock_patch:
+    with patch("services.github.comments.update_comment.requests.patch") as mock_patch:
         mock_patch.return_value = mock_response
         result = update_comment("Updated comment", base_args)
 
@@ -37,7 +37,7 @@ def test_update_comment_none_url(
     )
 
     # Act
-    with patch("services.github.comments.update_comment.patch") as mock_patch:
+    with patch("services.github.comments.update_comment.requests.patch") as mock_patch:
         result = update_comment("Test comment", base_args)
 
     # Assert
@@ -60,7 +60,7 @@ def test_update_comment_request_error(
     )
 
     # Act
-    with patch("services.github.comments.update_comment.patch") as mock_patch:
+    with patch("services.github.comments.update_comment.requests.patch") as mock_patch:
         mock_patch.return_value = mock_response
         result = update_comment("Test comment", base_args)
 
@@ -84,7 +84,7 @@ def test_update_comment_empty_body(
     )
 
     # Act
-    with patch("services.github.comments.update_comment.patch") as mock_patch:
+    with patch("services.github.comments.update_comment.requests.patch") as mock_patch:
         mock_patch.return_value = mock_response
         result = update_comment("", base_args)
 
@@ -109,7 +109,9 @@ def test_update_comment_with_headers(
     )
 
     # Act
-    with patch("services.github.comments.update_comment.patch") as mock_patch, patch(
+    with patch(
+        "services.github.comments.update_comment.requests.patch"
+    ) as mock_patch, patch(
         "services.github.comments.update_comment.create_headers"
     ) as mock_create_headers:
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
@@ -134,7 +136,7 @@ def test_update_comment_missing_comment_url_key(
     )
 
     # Act
-    with patch("services.github.comments.update_comment.patch") as mock_patch:
+    with patch("services.github.comments.update_comment.requests.patch") as mock_patch:
         result = update_comment("Test comment", base_args)
 
     # Assert
@@ -157,7 +159,9 @@ def test_update_comment_404_not_found(
     )
 
     # Act
-    with patch("services.github.comments.update_comment.patch") as mock_patch, patch(
+    with patch(
+        "services.github.comments.update_comment.requests.patch"
+    ) as mock_patch, patch(
         "services.github.comments.update_comment.logger"
     ) as mock_logger:
         mock_patch.return_value = mock_response
@@ -186,9 +190,9 @@ def test_update_comment_uses_timeout(
     )
 
     # Act
-    with patch("services.github.comments.update_comment.patch") as mock_patch, patch(
-        "services.github.comments.update_comment.TIMEOUT", 30
-    ):
+    with patch(
+        "services.github.comments.update_comment.requests.patch"
+    ) as mock_patch, patch("services.github.comments.update_comment.TIMEOUT", 30):
         mock_patch.return_value = mock_response
         result = update_comment("Test comment", base_args)
 
@@ -214,7 +218,7 @@ def test_update_comment_calls_raise_for_status(
     )
 
     # Act
-    with patch("services.github.comments.update_comment.patch") as mock_patch:
+    with patch("services.github.comments.update_comment.requests.patch") as mock_patch:
         mock_patch.return_value = mock_response
         result = update_comment("Test comment", base_args)
 

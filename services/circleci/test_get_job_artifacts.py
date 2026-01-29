@@ -20,7 +20,7 @@ def test_get_circleci_job_artifacts_success():
     }
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -44,7 +44,7 @@ def test_get_circleci_job_artifacts_empty_response():
     mock_response.json.return_value = {"items": []}
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -59,7 +59,7 @@ def test_get_circleci_job_artifacts_http_error():
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = RuntimeError("HTTP 404")
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -75,7 +75,7 @@ def test_get_circleci_job_artifacts_404_response():
     mock_response.status_code = 404
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -94,7 +94,7 @@ def test_get_circleci_job_artifacts_missing_items_key():
     }
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         get_circleci_job_artifacts(
@@ -105,7 +105,7 @@ def test_get_circleci_job_artifacts_missing_items_key():
 def test_get_circleci_job_artifacts_connection_error():
     """Test handling of connection errors through the handle_exceptions decorator."""
     # Mock the requests.get function to raise a ConnectionError
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.side_effect = ConnectionError("Failed to establish a connection")
 
         # Call the function and verify it returns the default empty list
@@ -127,7 +127,7 @@ def test_get_circleci_job_artifacts_json_decode_error():
     mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "{invalid", 0)
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         # Call the function and verify it returns the default empty list
@@ -154,7 +154,7 @@ def test_get_circleci_job_artifacts_unexpected_response_structure():
     }
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         get_circleci_job_artifacts(
@@ -172,7 +172,7 @@ def test_get_circleci_job_artifacts_timeout_parameter():
     }
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         get_circleci_job_artifacts(
@@ -203,7 +203,7 @@ def test_get_circleci_job_artifacts_with_node_index():
     }
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -228,7 +228,7 @@ def test_get_circleci_job_artifacts_with_next_page_token():
     }
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -241,7 +241,7 @@ def test_get_circleci_job_artifacts_with_next_page_token():
 
 def test_get_circleci_job_artifacts_timeout_error():
     """Test handling of timeout errors through the handle_exceptions decorator."""
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.side_effect = requests.exceptions.Timeout("Request timed out")
 
         result = get_circleci_job_artifacts(
@@ -260,7 +260,7 @@ def test_get_circleci_job_artifacts_http_error_500():
     http_error = requests.exceptions.HTTPError(response=mock_response)
     mock_response.raise_for_status.side_effect = http_error
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -279,7 +279,7 @@ def test_get_circleci_job_artifacts_http_error_401():
     http_error = requests.exceptions.HTTPError(response=mock_response)
     mock_response.raise_for_status.side_effect = http_error
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -295,7 +295,7 @@ def test_get_circleci_job_artifacts_url_construction():
     mock_response.json.return_value = {"items": []}
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         # Test with different project slug format
@@ -323,7 +323,7 @@ def test_get_circleci_job_artifacts_various_http_errors(status_code):
     http_error = requests.exceptions.HTTPError(response=mock_response)
     mock_response.raise_for_status.side_effect = http_error
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -339,7 +339,7 @@ def test_get_circleci_job_artifacts_empty_project_slug():
     mock_response.json.return_value = {"items": []}
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -361,7 +361,7 @@ def test_get_circleci_job_artifacts_empty_token():
     mock_response.json.return_value = {"items": []}
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -378,7 +378,7 @@ def test_get_circleci_job_artifacts_empty_token():
 
 def test_get_circleci_job_artifacts_connection_error_specific():
     """Test handling of specific connection errors."""
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
 
         result = get_circleci_job_artifacts(
@@ -391,7 +391,7 @@ def test_get_circleci_job_artifacts_connection_error_specific():
 
 def test_get_circleci_job_artifacts_request_exception():
     """Test handling of general request exceptions."""
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.side_effect = requests.exceptions.RequestException("Request failed")
 
         result = get_circleci_job_artifacts(
@@ -407,7 +407,7 @@ def test_get_circleci_job_artifacts_malformed_json_response():
     mock_response.json.return_value = "not a dict"  # Invalid structure
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -424,7 +424,7 @@ def test_get_circleci_job_artifacts_none_response():
     mock_response.json.return_value = None
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -440,7 +440,7 @@ def test_get_circleci_job_artifacts_type_annotation_coverage():
     mock_response = MagicMock()
     mock_response.status_code = 404
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -454,7 +454,7 @@ def test_get_circleci_job_artifacts_type_annotation_coverage():
 
 def test_get_circleci_job_artifacts_ssl_error():
     """Test handling of SSL errors."""
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.side_effect = requests.exceptions.SSLError(
             "SSL certificate verification failed"
         )
@@ -468,7 +468,7 @@ def test_get_circleci_job_artifacts_ssl_error():
 
 def test_get_circleci_job_artifacts_dns_error():
     """Test handling of DNS resolution errors."""
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.side_effect = requests.exceptions.ConnectionError("DNS lookup failed")
 
         result = get_circleci_job_artifacts(
@@ -484,7 +484,7 @@ def test_get_circleci_job_artifacts_with_special_characters():
     mock_response.json.return_value = {"items": []}
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -508,7 +508,7 @@ def test_get_circleci_job_artifacts_large_job_number():
     mock_response.json.return_value = {"items": []}
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         large_job_number = "999999999999"
@@ -541,7 +541,7 @@ def test_get_circleci_job_artifacts_unicode_characters():
     }
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -578,7 +578,7 @@ def test_get_circleci_job_artifacts_response_with_extra_fields():
     }
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -598,7 +598,7 @@ def test_get_circleci_job_artifacts_attribute_error():
     )
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -615,7 +615,7 @@ def test_get_circleci_job_artifacts_key_error():
     mock_response.json.side_effect = KeyError("Missing required key")
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -632,7 +632,7 @@ def test_get_circleci_job_artifacts_type_error():
     mock_response.json.side_effect = TypeError("unsupported operand type(s)")
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -649,7 +649,7 @@ def test_get_circleci_job_artifacts_generic_exception():
     mock_response.json.side_effect = RuntimeError("Unexpected error occurred")
     mock_response.raise_for_status.return_value = None
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(
@@ -678,7 +678,7 @@ def test_get_circleci_job_artifacts_404_return_type():
     # Ensure raise_for_status is not called for 404
     mock_response.raise_for_status = MagicMock()
 
-    with patch("services.circleci.get_job_artifacts.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
         mock_get.return_value = mock_response
 
         result = get_circleci_job_artifacts(

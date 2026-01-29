@@ -1,5 +1,5 @@
 # Third-party libraries
-from requests import get
+import requests
 
 # Internal libraries
 from config import TIMEOUT
@@ -19,7 +19,7 @@ def get_circleci_build_logs(project_slug: str, build_number: int, circle_token: 
     headers = {"Circle-Token": circle_token}
 
     # Get build details using v1.1 API
-    response = get(url=url, headers=headers, timeout=TIMEOUT)
+    response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
     if response.status_code == 404:
         return 404
     if response.status_code == 401:
@@ -55,7 +55,9 @@ def get_circleci_build_logs(project_slug: str, build_number: int, circle_token: 
                 continue
 
             # Fetch the actual log output
-            log_response = get(url=output_url, headers=headers, timeout=TIMEOUT)
+            log_response = requests.get(
+                url=output_url, headers=headers, timeout=TIMEOUT
+            )
             if log_response.status_code != 200:
                 continue
 

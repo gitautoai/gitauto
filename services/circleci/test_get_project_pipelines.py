@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 from services.circleci.get_project_pipelines import get_project_pipelines
 
 
-@patch("services.circleci.get_project_pipelines.get")
+@patch("services.circleci.get_project_pipelines.requests.get")
 def test_get_project_pipelines_success(mock_get):
     project_slug = "gh/owner/repo"
     token = "test-token"
@@ -27,7 +27,7 @@ def test_get_project_pipelines_success(mock_get):
     mock_get.assert_called_once()
 
 
-@patch("services.circleci.get_project_pipelines.get")
+@patch("services.circleci.get_project_pipelines.requests.get")
 def test_get_project_pipelines_with_branch(mock_get):
     project_slug = "gh/owner/repo"
     token = "test-token"
@@ -44,7 +44,7 @@ def test_get_project_pipelines_with_branch(mock_get):
     assert "branch=main" in call_url
 
 
-@patch("services.circleci.get_project_pipelines.get")
+@patch("services.circleci.get_project_pipelines.requests.get")
 def test_get_project_pipelines_not_found(mock_get):
     project_slug = "gh/nonexistent/repo"
     token = "test-token"
@@ -58,7 +58,7 @@ def test_get_project_pipelines_not_found(mock_get):
     assert result == []
 
 
-@patch("services.circleci.get_project_pipelines.get")
+@patch("services.circleci.get_project_pipelines.requests.get")
 def test_get_project_pipelines_pagination(mock_get):
     project_slug = "gh/owner/repo"
     token = "test-token"
@@ -85,7 +85,7 @@ def test_get_project_pipelines_pagination(mock_get):
     assert mock_get.call_count == 2
 
 
-@patch("services.circleci.get_project_pipelines.get")
+@patch("services.circleci.get_project_pipelines.requests.get")
 def test_get_project_pipelines_http_error(mock_get):
     project_slug = "gh/owner/repo"
     token = "test-token"

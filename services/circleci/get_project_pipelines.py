@@ -1,5 +1,5 @@
 # Third-party libraries
-from requests import get
+import requests
 
 # Internal libraries
 from config import TIMEOUT
@@ -30,7 +30,7 @@ def get_project_pipelines(
         if params:
             url += "?" + "&".join(params)
 
-        response = get(url=url, headers=headers, timeout=TIMEOUT)
+        response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
         if response.status_code == 404:
             return []
         response.raise_for_status()

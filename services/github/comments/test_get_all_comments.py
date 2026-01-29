@@ -29,7 +29,7 @@ def token():
 
 @pytest.fixture
 def mock_requests_get():
-    with patch("services.github.comments.get_all_comments.get") as mock:
+    with patch("services.github.comments.get_all_comments.requests.get") as mock:
         yield mock
 
 
