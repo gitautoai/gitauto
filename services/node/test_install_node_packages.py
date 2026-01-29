@@ -327,6 +327,129 @@ async def test_install_node_packages_uses_npm_token():
 
 
 @pytest.mark.asyncio
+async def test_install_node_packages_sanitizes_http_to_https_in_npmrc():
+    mock_lock_file = MagicMock()
+    mock_lock_file.fileno.return_value = 1
+
+    mock_process = MagicMock()
+    mock_process.returncode = 0
+    mock_process.communicate = AsyncMock(return_value=(b"", b""))
+
+    written_content = {}
+
+    def mock_open_side_effect(path, *_args, **_kwargs):
+        mock_file = MagicMock()
+        mock_file.fileno.return_value = 1
+        mock_file.__enter__ = MagicMock(return_value=mock_file)
+        mock_file.__exit__ = MagicMock(return_value=False)
+
+        def write_side_effect(content):
+            written_content[path] = content
+
+        mock_file.write = MagicMock(side_effect=write_side_effect)
+        return mock_file
+
+    with patch("services.node.install_node_packages.read_file_content") as mock_get:
+        with patch("services.node.install_node_packages.os.makedirs"):
+            with patch(
+                "services.node.install_node_packages._can_reuse_packages",
+                return_value=False,
+            ):
+                with patch("builtins.open", side_effect=mock_open_side_effect):
+                    with patch("services.node.install_node_packages.fcntl.flock"):
+                        with patch(
+                            "services.node.install_node_packages.asyncio.create_subprocess_exec",
+                            return_value=mock_process,
+                        ):
+                            with patch(
+                                "services.node.install_node_packages.get_npm_token",
+                                return_value=None,
+                            ):
+                                mock_get.side_effect = [
+                                    '{"name": "test"}',
+                                    "registry=http://registry.npmjs.org/",
+                                    None,
+                                    None,
+                                ]
+
+                                await install_node_packages(
+                                    owner="owner",
+                                    owner_id=123,
+                                    repo="repo",
+                                    branch="main",
+                                    token="token",
+                                    efs_dir="/mnt/efs/owner/repo",
+                                )
+
+                                npmrc_path = "/mnt/efs/owner/repo/.npmrc"
+                                assert npmrc_path in written_content
+                                assert (
+                                    written_content[npmrc_path]
+                                    == "registry=https://registry.npmjs.org/"
+                                )
+
+
+@pytest.mark.asyncio
+async def test_install_node_packages_preserves_https_in_npmrc():
+    mock_process = MagicMock()
+    mock_process.returncode = 0
+    mock_process.communicate = AsyncMock(return_value=(b"", b""))
+
+    written_content = {}
+
+    def mock_open_side_effect(path, *_args, **_kwargs):
+        mock_file = MagicMock()
+        mock_file.fileno.return_value = 1
+        mock_file.__enter__ = MagicMock(return_value=mock_file)
+        mock_file.__exit__ = MagicMock(return_value=False)
+
+        def write_side_effect(content):
+            written_content[path] = content
+
+        mock_file.write = MagicMock(side_effect=write_side_effect)
+        return mock_file
+
+    with patch("services.node.install_node_packages.read_file_content") as mock_get:
+        with patch("services.node.install_node_packages.os.makedirs"):
+            with patch(
+                "services.node.install_node_packages._can_reuse_packages",
+                return_value=False,
+            ):
+                with patch("builtins.open", side_effect=mock_open_side_effect):
+                    with patch("services.node.install_node_packages.fcntl.flock"):
+                        with patch(
+                            "services.node.install_node_packages.asyncio.create_subprocess_exec",
+                            return_value=mock_process,
+                        ):
+                            with patch(
+                                "services.node.install_node_packages.get_npm_token",
+                                return_value=None,
+                            ):
+                                mock_get.side_effect = [
+                                    '{"name": "test"}',
+                                    "registry=https://registry.npmjs.org/",
+                                    None,
+                                    None,
+                                ]
+
+                                await install_node_packages(
+                                    owner="owner",
+                                    owner_id=123,
+                                    repo="repo",
+                                    branch="main",
+                                    token="token",
+                                    efs_dir="/mnt/efs/owner/repo",
+                                )
+
+                                npmrc_path = "/mnt/efs/owner/repo/.npmrc"
+                                assert npmrc_path in written_content
+                                assert (
+                                    written_content[npmrc_path]
+                                    == "registry=https://registry.npmjs.org/"
+                                )
+
+
+@pytest.mark.asyncio
 async def test_install_node_packages_handles_npm_failure():
     mock_lock_file = MagicMock()
     mock_lock_file.fileno.return_value = 1
