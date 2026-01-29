@@ -74,9 +74,11 @@ def guess_test_file_path(impl_file: str):
 
     if suffix == ".php":
         candidates = [
-            parent / f"{stem}Test{suffix}",  # app/Services/UserServiceTest.php
-            # tests/app/Services/UserServiceTest.php
+            parent / f"{stem}Test{suffix}",  # php/class/security/functionTest.php
+            # tests/php/class/security/functionTest.php
             Path("tests") / parent / f"{stem}Test{suffix}",
+            # tests/php/unit/php/class/security/functionTest.php
+            Path("tests/php/unit") / parent / f"{stem}Test{suffix}",
         ]
         return [str(c) for c in candidates]
 

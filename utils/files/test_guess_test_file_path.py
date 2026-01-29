@@ -59,6 +59,15 @@ def test_php_file():
     assert candidates is not None
     assert "app/Services/UserServiceTest.php" in candidates
     assert "tests/app/Services/UserServiceTest.php" in candidates
+    assert "tests/php/unit/app/Services/UserServiceTest.php" in candidates
+
+
+def test_php_file_spiderplus_pattern():
+    candidates = guess_test_file_path("php/class/security/function.php")
+    assert candidates is not None
+    assert "php/class/security/functionTest.php" in candidates
+    assert "tests/php/class/security/functionTest.php" in candidates
+    assert "tests/php/unit/php/class/security/functionTest.php" in candidates
 
 
 def test_rust_file():
