@@ -5,7 +5,7 @@ from config import UTF8
 from services.git.git_clone_to_efs import clone_tasks
 from services.node.detect_package_manager import detect_package_manager
 from services.node.read_file_content import read_file_content
-from services.ssm.run_install_via_ssm import run_install_via_ssm
+from services.aws.run_install_via_ssm import run_install_via_ssm
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 

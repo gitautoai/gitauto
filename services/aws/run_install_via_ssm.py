@@ -1,8 +1,6 @@
-import boto3
-from mypy_boto3_ssm import SSMClient
-
-from constants.aws import NAT_INSTANCE_ID
 from constants.general import IS_PRD
+from services.aws.clients import ssm_client
+from services.aws.get_nat_instance_id import get_nat_instance_id
 from services.supabase.npm_tokens.get_npm_token import get_npm_token
 from utils.logging.logging_config import logger
 
@@ -16,8 +14,9 @@ def run_install_via_ssm(
         logger.info("ssm: Skipping in non-prod environment")
         return None
 
-    if not NAT_INSTANCE_ID:
-        logger.error("ssm: NAT_INSTANCE_ID not configured")
+    nat_instance_id = get_nat_instance_id()
+    if not nat_instance_id:
+        logger.error("ssm: NAT instance not found")
         return None
 
     npm_token = get_npm_token(owner_id)
@@ -28,9 +27,8 @@ def run_install_via_ssm(
 
     command = f"{env_prefix}cd {efs_dir} && {pkg_manager} install"
 
-    ssm: SSMClient = boto3.client("ssm", region_name="us-west-1")
-    response = ssm.send_command(
-        InstanceIds=[NAT_INSTANCE_ID],
+    response = ssm_client.send_command(
+        InstanceIds=[nat_instance_id],
         DocumentName="AWS-RunShellScript",
         Parameters={"commands": [command]},
         TimeoutSeconds=1800,
